@@ -116,16 +116,26 @@ const AiCreditsWidget = () => {
     .sort((a, b) => b[1].credits - a[1].credits)
     .slice(0, 4);
 
-  const monthLabel = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", {
-    month: "long",
-    year: "numeric",
-  });
+  // Month label follows the billing period returned by the backend (Brazil time),
+  // never the device clock — otherwise the label can disagree with the numbers.
+  const monthLabel = (status?.period_start ? new Date(status.period_start) : new Date())
+    .toLocaleDateString(isPt ? "pt-BR" : "en-US", {
+      month: "long",
+      year: "numeric",
+      timeZone: "America/Sao_Paulo",
+    });
 
   const unlimited = !!status?.unlimited;
   const included = status?.included ?? 0;
-  const used = status?.used ?? total;
+  // Shield: never under-report. If the aggregate and the itemized rows disagree,
+  // show the larger value (the itemized list is the raw ledger).
+  const rpcUsed = status?.used ?? 0;
+  const used = status ? Math.max(rpcUsed, pooled ? 0 : total) : total;
+  const trailing30 = status?.trailing_30d_used ?? 0;
+  const suspiciousZero = !loading && !!status && used === 0 && trailing30 > 0;
   const remaining = Math.max(included - used, 0);
-  const pct = status?.pct ?? 0;
+  const pct = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : (status?.pct ?? 0);
+
   const purchased = status?.purchased ?? 0;
   const pooled = !!status?.pooled;
   const perMember = status?.per_member ?? included;
