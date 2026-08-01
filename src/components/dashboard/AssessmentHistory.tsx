@@ -1,13 +1,21 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   FileText, ClipboardList, Calendar, MapPin, ChevronRight,
-  CheckCircle2, Activity, Loader2, RotateCcw,
+  CheckCircle2, Activity, Loader2, RotateCcw, Trash2, X,
 } from "lucide-react";
 import { buildResumeAssessmentLink } from "@/lib/assessmentLinks";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const painRegionLabels: Record<string, string> = {
   head: "Cabeça", neck: "Pescoço", right_shoulder: "Ombro D.", left_shoulder: "Ombro E.",
@@ -24,11 +32,46 @@ const painRegionLabels: Record<string, string> = {
 
 interface AssessmentHistoryProps {
   assessments: any[];
+  onDeleted?: (deletedIds: string[]) => void;
 }
 
-const AssessmentHistory = ({ assessments }: AssessmentHistoryProps) => {
+const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const toggle = (id: string) =>
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelected([]);
+  };
+
+  const handleDelete = async () => {
+    if (selected.length === 0) return;
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.rpc("delete_my_assessments", { _ids: selected });
+      if (error) throw error;
+      const count = typeof data === "number" ? data : selected.length;
+      toast.success(
+        count === 1
+          ? "1 avaliação excluída permanentemente"
+          : `${count} avaliações excluídas permanentemente`,
+      );
+      onDeleted?.(selected);
+      exitSelectMode();
+    } catch (e: any) {
+      toast.error("Não foi possível excluir", { description: e?.message });
+    } finally {
+      setDeleting(false);
+      setConfirmOpen(false);
+    }
+  };
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -43,10 +86,54 @@ const AssessmentHistory = ({ assessments }: AssessmentHistoryProps) => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-        <FileText className="h-5 w-5 text-muted-foreground" />
-        {t("dashboard.history")}
-      </h2>
+      <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
+        <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+          <FileText className="h-5 w-5 text-muted-foreground" />
+          {t("dashboard.history")}
+        </h2>
+        {assessments.length > 0 && (
+          <div className="flex items-center gap-2">
+            {selectMode ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5"
+                  onClick={() =>
+                    setSelected(selected.length === assessments.length ? [] : assessments.map((a) => a.id))
+                  }
+                >
+                  {selected.length === assessments.length ? "Limpar seleção" : "Selecionar tudo"}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5"
+                  disabled={selected.length === 0 || deleting}
+                  onClick={() => setConfirmOpen(true)}
+                >
+                  {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                  Excluir ({selected.length})
+                </Button>
+                <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={exitSelectMode}>
+                  <X className="h-3.5 w-3.5" />
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5 text-muted-foreground"
+                onClick={() => setSelectMode(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Gerenciar histórico
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
       {assessments.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
@@ -65,7 +152,7 @@ const AssessmentHistory = ({ assessments }: AssessmentHistoryProps) => {
               .slice(0, 3);
             const extraRegions = (a.pain_regions || []).length - 3;
             const isInProgress = a.status === "in_progress";
-            const isClickable = a.diagnosis || ["completed", "diagnosis_complete"].includes(a.status);
+            const isClickable = !selectMode && (a.diagnosis || ["completed", "diagnosis_complete"].includes(a.status));
             const resumeCtx = a.clinic_id
               ? { clinicId: a.clinic_id }
               : a.professional_id
@@ -74,17 +161,35 @@ const AssessmentHistory = ({ assessments }: AssessmentHistoryProps) => {
             const resumeLink = isInProgress && resumeCtx
               ? buildResumeAssessmentLink(resumeCtx, a.id)
               : null;
+            const isSelected = selected.includes(a.id);
 
             return (
               <Card
                 key={a.id}
                 className={`hover:shadow-md transition-all border-border/60 hover:border-border group ${
                   isInProgress ? "border-blue-300/60 bg-blue-50/30" : ""
-                } ${isClickable ? "cursor-pointer" : ""}`}
-                onClick={isClickable ? () => navigate(`/assessment/view/${a.id}`) : undefined}
+                } ${isSelected ? "border-destructive/60 bg-destructive/5" : ""} ${
+                  isClickable || selectMode ? "cursor-pointer" : ""
+                }`}
+                onClick={
+                  selectMode
+                    ? () => toggle(a.id)
+                    : isClickable
+                      ? () => navigate(`/assessment/view/${a.id}`)
+                      : undefined
+                }
               >
                 <CardContent className="py-4 px-5">
                   <div className="flex items-center gap-3">
+                    {selectMode && (
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggle(a.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="shrink-0"
+                        aria-label="Selecionar avaliação"
+                      />
+                    )}
                     <div className="flex-1 flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -125,7 +230,7 @@ const AssessmentHistory = ({ assessments }: AssessmentHistoryProps) => {
                           )}
                         </div>
                       )}
-                      {resumeLink && (
+                      {resumeLink && !selectMode && (
                         <Button
                           variant="default"
                           size="sm"
@@ -150,6 +255,32 @@ const AssessmentHistory = ({ assessments }: AssessmentHistoryProps) => {
           })}
         </div>
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir avaliações selecionadas?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Serão apagados permanentemente {selected.length === 1 ? "1 registro" : `${selected.length} registros`} e
+              os dados vinculados (laudos, questionários pendentes, notas e vínculos de diário de dor e exercícios).
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo..." : "Excluir definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
