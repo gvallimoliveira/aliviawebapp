@@ -259,9 +259,21 @@ const ExerciseChecklist = ({
       {visiblePrograms.map((prog) => (
         <Card key={prog.programId}>
           <CardHeader className="pb-2 pt-4 px-4">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-              <span>{prog.professionalName}</span>
-              <Badge variant="outline" className="text-[10px]">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-start justify-between gap-2">
+              <span className="flex flex-col min-w-0">
+                <span className="truncate">
+                  {(t("exercise_checklist.prescribed_by") || "Prescrito por {name}").replace(
+                    "{name}",
+                    prog.professionalName || "—",
+                  )}
+                </span>
+                {prog.programName && (
+                  <span className="text-[10px] text-muted-foreground/80 truncate">
+                    {(t("exercise_checklist.for_patient") || "Para: {name}").replace("{name}", prog.programName)}
+                  </span>
+                )}
+              </span>
+              <Badge variant="outline" className="text-[10px] shrink-0">
                 {prog.items.length} {prog.items.length === 1
                   ? (t("exercise_checklist.exercise") || "exercício")
                   : (t("exercise_checklist.exercises") || "exercícios")}
