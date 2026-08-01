@@ -454,6 +454,12 @@ Deno.serve(async (req) => {
       if (!payload?.ticket_id) return json({ error: "ticket_id required" }, 400);
       return json(await notifyTicket(String(payload.ticket_id)));
     }
+    if (action === "dsr") {
+      if (!isService) return json({ error: "Forbidden" }, 403);
+      if (!payload?.request_id) return json({ error: "request_id required" }, 400);
+      return json(await notifyDsr(String(payload.request_id)));
+    }
+
     if (action === "push_status" || action === "test_push") {
       if (!callerUser) return json({ error: "Forbidden" }, 403);
       const emails = await adminEmails();
