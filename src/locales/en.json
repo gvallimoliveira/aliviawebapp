@@ -1441,5 +1441,7 @@
   "conditions.status_inactive": "Inactive",
   "conditions.last_update": "Last update",
   "conditions.tracking_for": "Tracking",
-  "diary.also_log": "Also log:"
+  "diary.also_log": "Also log:",
+  "exercise_checklist.hidden_one": "1 program from another condition is hidden.",
+  "exercise_checklist.hidden_many": "{n} programs from other conditions are hidden."
 }

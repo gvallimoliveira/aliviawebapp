@@ -1441,5 +1441,7 @@
   "conditions.status_inactive": "Inativa",
   "conditions.last_update": "Última atualização",
   "conditions.tracking_for": "Acompanhando",
-  "diary.also_log": "Registrar também:"
+  "diary.also_log": "Registrar também:",
+  "exercise_checklist.hidden_one": "1 programa de outra condição está oculto.",
+  "exercise_checklist.hidden_many": "{n} programas de outras condições estão ocultos."
 }
