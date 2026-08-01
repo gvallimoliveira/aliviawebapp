@@ -117,8 +117,8 @@ const AssessmentHistory = ({
           <FileText className="h-5 w-5 text-muted-foreground" />
           {t("dashboard.history")}
         </h2>
-        {assessments.length > 0 && (
-          <div className="flex items-center gap-2">
+        {visible.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
             {selectMode ? (
               <>
                 <Button
@@ -126,10 +126,10 @@ const AssessmentHistory = ({
                   size="sm"
                   className="h-8 text-xs gap-1.5"
                   onClick={() =>
-                    setSelected(selected.length === assessments.length ? [] : assessments.map((a) => a.id))
+                    setSelected(selected.length === visible.length ? [] : visible.map((a) => a.id))
                   }
                 >
-                  {selected.length === assessments.length ? "Limpar seleção" : "Selecionar tudo"}
+                  {selected.length === visible.length ? "Limpar seleção" : "Selecionar tudo"}
                 </Button>
                 <Button
                   variant="destructive"
@@ -147,20 +147,38 @@ const AssessmentHistory = ({
                 </Button>
               </>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs gap-1.5 text-muted-foreground"
-                onClick={() => setSelectMode(true)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Gerenciar histórico
-              </Button>
+              <>
+                {hasOtherConditions && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs text-muted-foreground"
+                    onClick={() => setShowAll((v) => !v)}
+                  >
+                    {showAll ? "Ver só a condição em foco" : `Ver todas (${all.length})`}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5 text-muted-foreground"
+                  onClick={() => setSelectMode(true)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Gerenciar histórico
+                </Button>
+              </>
             )}
           </div>
         )}
       </div>
-      {assessments.length === 0 ? (
+      {selectMode && hasOtherConditions && (
+        <p className="text-xs text-muted-foreground mb-3">
+          Mostrando todas as avaliações (todas as condições) para que a exclusão remova também os
+          cards de condições e a nota de dor.
+        </p>
+      )}
+      {visible.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
             <ClipboardList className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
@@ -169,7 +187,8 @@ const AssessmentHistory = ({
         </Card>
       ) : (
         <div className="space-y-3">
-          {assessments.map((a) => {
+          {visible.map((a) => {
+
             const statusConfig = getStatusConfig(a.status);
             const StatusIcon = statusConfig.icon;
             const hypothesis = (a as any).final_hypothesis?.trim() || a.diagnosis?.hypothesis;
