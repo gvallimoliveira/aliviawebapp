@@ -180,6 +180,17 @@ const AiCreditsWidget = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* Shield: month reads zero but there is recent usage → flag instead of silently showing 0 */}
+        {suspiciousZero && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+              {isPt
+                ? `O mês corrente está em zero, mas registramos ${trailing30.toFixed(1)} créditos nos últimos 30 dias. Isso é normal logo após a virada do mês — se persistir, avise o suporte.`
+                : `The current month reads zero, yet ${trailing30.toFixed(1)} credits were logged in the last 30 days. That's expected right after a month rollover — if it persists, contact support.`}
+            </p>
+          </div>
+        )}
         {/* Unlimited card for VIP + partners */}
         {unlimited ? (
           <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
