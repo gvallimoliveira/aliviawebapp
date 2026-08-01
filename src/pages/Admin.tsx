@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, ShieldCheck, Loader2, LayoutDashboard, Users, UserCheck, FileText, MessageSquare, Mail, Brain, Zap } from "lucide-react";
+import { Trash2, Plus, ShieldCheck, Loader2, LayoutDashboard, Users, UserCheck, FileText, MessageSquare, Mail, Brain, Zap, ShieldAlert } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import ProfessionalManagement from "@/components/admin/ProfessionalManagement";
@@ -21,6 +21,7 @@ import SupportTicketManagement from "@/components/admin/SupportTicketManagement"
 import LeadManagement from "@/components/admin/LeadManagement";
 import AdminAgentKnowledge from "@/components/admin/AdminAgentKnowledge";
 import AdminAiUsage from "@/components/admin/AdminAiUsage";
+import AdminLgpdCenter from "@/components/admin/AdminLgpdCenter";
 
 interface VipUser {
   id: string;
@@ -263,6 +264,10 @@ const Admin = () => {
               <Zap className="h-3.5 w-3.5" />
               {isPt ? "Uso de IA" : "AI Usage"}
             </TabsTrigger>
+            <TabsTrigger value="lgpd" className="gap-1.5">
+              <ShieldAlert className="h-3.5 w-3.5" />
+              LGPD
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -374,6 +379,10 @@ const Admin = () => {
 
           <TabsContent value="ai-usage">
             <AdminAiUsage isPt={isPt} />
+          </TabsContent>
+
+          <TabsContent value="lgpd">
+            <AdminLgpdCenter />
           </TabsContent>
         </Tabs>
       </main>
