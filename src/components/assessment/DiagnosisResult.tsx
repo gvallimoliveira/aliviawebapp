@@ -66,6 +66,120 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
 const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData, testResults, hideFooterActions, redFlagPayload }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
+
+  const reportUserName = patientName || user?.user_metadata?.full_name || "Paciente";
+
+  const resolveBranding = async () => {
+    if (!assessmentId) return {};
+    try {
+      const { data: a } = await supabase
+        .from("assessments")
+        .select("clinic_id, professional_id")
+        .eq("id", assessmentId)
+        .maybeSingle();
+      if (!a) return {};
+      const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
+      const branding = await resolveAssessmentBranding({
+        clinicId: (a as any).clinic_id || null,
+        professionalId: (a as any).professional_id || null,
+        userId: user?.id || null,
+      });
+      return {
+        professionalLogoUrl: branding.professionalLogoUrl,
+        clinicLogoUrl: branding.clinicLogoUrl,
+        clinicName: branding.clinicName,
+        responsibleProfessional: branding.responsibleProfessional,
+      };
+    } catch {
+      return {};
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setPdfLoading(true);
+    try {
+      const { generateAssessmentPdf } = await import("@/utils/generatePdf");
+      const branding = await resolveBranding();
+      await generateAssessmentPdf({
+        diagnosis,
+        language,
+        userName: reportUserName,
+        anamnesisData,
+        painRegions,
+        testResults,
+        ...branding,
+      } as any);
+      toast({ title: t("pdf.success") });
+    } catch (err) {
+      console.error("PDF export error:", err);
+      toast({ title: t("pdf.error"), variant: "destructive" });
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handleShareWhatsApp = async () => {
+    setWhatsappLoading(true);
+    try {
+      const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
+      const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
+      const branding = await resolveBranding();
+      const pdfBlob = await generateAssessmentPdfBlob({
+        diagnosis,
+        language,
+        userName: reportUserName,
+        anamnesisData,
+        painRegions,
+        testResults,
+        ...branding,
+      } as any);
+
+      const patientLabel = reportUserName || diagnosis.hypothesis || "Paciente";
+      const nativeShareResult = await sharePdfFile({
+        blob: pdfBlob,
+        fileName: `AliviA_Relatorio_${patientLabel.replace(/\s+/g, "_")}.pdf`,
+        title: "Aliv.iA",
+        text: language === "pt" ? `Relatório em PDF de ${patientLabel}` : `PDF report for ${patientLabel}`,
+      });
+      if (nativeShareResult === "shared" || nativeShareResult === "cancelled") return;
+
+      let publicUrl: string | null = null;
+      const fileId = assessmentId || crypto.randomUUID();
+      try {
+        const filePath = user ? `${user.id}/${fileId}_hypothesis.pdf` : `${fileId}_hypothesis.pdf`;
+        const { error: uploadError } = await supabase.storage
+          .from("assessment-reports")
+          .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
+        if (uploadError) throw uploadError;
+        publicUrl = supabase.storage.from("assessment-reports").getPublicUrl(filePath).data.publicUrl;
+      } catch (uploadErr) {
+        console.warn("Upload failed, downloading locally", uploadErr);
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `alivia_assessment_${fileId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({ title: t("pdf.success") });
+        return;
+      }
+
+      const { getPublicOrigin } = await import("@/lib/getPublicOrigin");
+      const pdfLine = publicUrl ? `\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${publicUrl}` : "";
+      const text = `🩺 *Aliv.iA*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${pdfLine}\n\n💡 ${language === "pt" ? "Faça sua avaliação" : "Start your assessment"}:\n${getPublicOrigin()}`;
+      await shareTextOrOpenWhatsApp(text, "Aliv.iA");
+    } catch (err) {
+      console.error("WhatsApp share error:", err);
+      toast({ title: t("pdf.error"), variant: "destructive" });
+    } finally {
+      setWhatsappLoading(false);
+    }
+  };
+
 
   // 5-minute countdown timer for basic mode urgency
   const [secondsLeft, setSecondsLeft] = useState(300);
