@@ -3546,6 +3546,7 @@ export type Database = {
         Args: { _clinic_id: string }
         Returns: string
       }
+      credit_period_start: { Args: never; Returns: string }
       dismiss_assessment_red_flags: {
         Args: { _assessment_id: string; _reason: string }
         Returns: undefined

@@ -29,6 +29,9 @@ interface CreditStatus {
   pct: number;
   period_start: string;
   period_end: string;
+  timezone?: string;
+  trailing_30d_used?: number;
+  last_usage_at?: string | null;
   clinic_id: string | null;
   clinic_size: string | null;
 }
@@ -113,21 +116,31 @@ const AiCreditsWidget = () => {
     .sort((a, b) => b[1].credits - a[1].credits)
     .slice(0, 4);
 
-  const monthLabel = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", {
-    month: "long",
-    year: "numeric",
-  });
+  // Month label follows the billing period returned by the backend (Brazil time),
+  // never the device clock — otherwise the label can disagree with the numbers.
+  const monthLabel = (status?.period_start ? new Date(status.period_start) : new Date())
+    .toLocaleDateString(isPt ? "pt-BR" : "en-US", {
+      month: "long",
+      year: "numeric",
+      timeZone: "America/Sao_Paulo",
+    });
 
   const unlimited = !!status?.unlimited;
   const included = status?.included ?? 0;
-  const used = status?.used ?? total;
-  const remaining = Math.max(included - used, 0);
-  const pct = status?.pct ?? 0;
   const purchased = status?.purchased ?? 0;
   const pooled = !!status?.pooled;
   const perMember = status?.per_member ?? included;
   const clinicMembers = status?.clinic_members ?? 0;
   const personalUsed = status?.personal_used ?? total;
+  // Shield: never under-report. If the aggregate and the itemized rows disagree,
+  // show the larger value (the itemized list is the raw ledger).
+  const rpcUsed = status?.used ?? 0;
+  const used = status ? Math.max(rpcUsed, pooled ? 0 : total) : total;
+  const trailing30 = status?.trailing_30d_used ?? 0;
+  const suspiciousZero = !loading && !!status && used === 0 && trailing30 > 0;
+  const remaining = Math.max(included - used, 0);
+  const pct = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : (status?.pct ?? 0);
+
   const daysToReset = status?.period_end
     ? Math.max(0, Math.ceil((new Date(status.period_end).getTime() - Date.now()) / 86400000))
     : null;
@@ -167,6 +180,17 @@ const AiCreditsWidget = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* Shield: month reads zero but there is recent usage → flag instead of silently showing 0 */}
+        {suspiciousZero && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+              {isPt
+                ? `O mês corrente está em zero, mas registramos ${trailing30.toFixed(1)} créditos nos últimos 30 dias. Isso é normal logo após a virada do mês — se persistir, avise o suporte.`
+                : `The current month reads zero, yet ${trailing30.toFixed(1)} credits were logged in the last 30 days. That's expected right after a month rollover — if it persists, contact support.`}
+            </p>
+          </div>
+        )}
         {/* Unlimited card for VIP + partners */}
         {unlimited ? (
           <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
