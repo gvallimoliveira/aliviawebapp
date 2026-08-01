@@ -58,6 +58,12 @@ const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) =
       const { data, error } = await supabase.rpc("delete_my_assessments", { _ids: selected });
       if (error) throw error;
       const count = typeof data === "number" ? data : selected.length;
+      if (count === 0) {
+        toast.error("Nenhuma avaliação foi excluída", {
+          description: "Você não tem permissão para excluir estes registros.",
+        });
+        return;
+      }
       toast.success(
         count === 1
           ? "1 avaliação excluída permanentemente"
