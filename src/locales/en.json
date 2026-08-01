@@ -1433,5 +1433,13 @@
   "diagnosis.report_title": "Assessment report",
   "diagnosis.download_report": "Download PDF report",
   "diagnosis.report_hint_full": "You can already download or send the report with the clinical hypothesis. If you generate the treatment plan, a new complete report (with exercises and phases) will be available on the next screen.",
-  "diagnosis.report_hint": "Download or send the report with the clinical hypothesis."
+  "diagnosis.report_hint": "Download or send the report with the clinical hypothesis.",
+  "conditions.title": "My conditions",
+  "conditions.subtitle": "Each region/diagnosis has its own pain tracking, history and exercises.",
+  "conditions.assessments_short": "assess.",
+  "conditions.status_active": "Active",
+  "conditions.status_inactive": "Inactive",
+  "conditions.last_update": "Last update",
+  "conditions.tracking_for": "Tracking",
+  "diary.also_log": "Also log:"
 }

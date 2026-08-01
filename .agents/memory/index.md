@@ -96,3 +96,4 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Admin Subscription Management](mem://features/admin-subscription-management) — Reembolso não rebaixa; cancelar/rebaixar/reativar via painel Admin → Profissionais com auditoria.
 - [Admin Alert Center](mem://features/admin-alert-center) — Alertas de ticket de suporte e vendas/reembolsos Stripe via `notify-admin` (trigger + cron + auditoria).
 
+- [Multi-Condition Dashboard](mem://features/multi-condition-dashboard) — Painel pessoal agrupa avaliações por região/episódio; diário de dor, evolução e histórico por condição.

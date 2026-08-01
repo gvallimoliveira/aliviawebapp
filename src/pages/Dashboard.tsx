@@ -16,6 +16,9 @@ import ReferralCard from "@/components/dashboard/ReferralCard";
 import WelcomeSection from "@/components/dashboard/WelcomeSection";
 import QuickActions from "@/components/dashboard/QuickActions";
 import AssessmentHistory from "@/components/dashboard/AssessmentHistory";
+import ConditionOverviewCards from "@/components/dashboard/ConditionOverviewCards";
+import ConditionSelector from "@/components/dashboard/ConditionSelector";
+import { usePainConditions } from "@/hooks/usePainConditions";
 import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 
 import ConfirmEmailBanner from "@/components/dashboard/ConfirmEmailBanner";
@@ -627,6 +630,17 @@ const Dashboard = () => {
     navigate(`/dashboard?tab=messages&conv=${convId}`, { replace: true });
   }, [navigate]);
 
+  // Agrupa avaliações em condições clínicas (lombar, ombro D., cotovelo E. ...)
+  const {
+    conditions,
+    activeCondition,
+    focusKey: conditionFocusKey,
+    selectCondition,
+  } = usePainConditions(assessments);
+
+  const conditionAssessments = activeCondition ? activeCondition.assessments : assessments;
+
+
   // Tutorial é estritamente do contexto ativo (clinic/professional/personal),
   // então NÃO precisamos mais forçar troca de tab/contexto durante o tour.
   // Cada perfil tem seus próprios passos com targets que existem na sua tela.
@@ -652,9 +666,21 @@ const Dashboard = () => {
   const renderClientContent = () => (
     <>
       <UpgradeBanner premiumAccess={premiumAccess} premiumLoading={premiumLoading} professional={professional} />
-      
-      {/* Evolution Summary Card */}
-      <EvolutionSummary assessments={assessments} />
+
+      {/* Minhas condições — um acompanhamento por região/diagnóstico */}
+      <ConditionOverviewCards
+        conditions={conditions}
+        activeKey={conditionFocusKey}
+        onSelect={selectCondition}
+      />
+      <ConditionSelector
+        conditions={conditions}
+        activeKey={conditionFocusKey}
+        onSelect={selectCondition}
+      />
+
+      {/* Evolution Summary Card (da condição em foco) */}
+      <EvolutionSummary assessments={conditionAssessments} />
       
       <QuickActions hasPremiumAccess={premiumAccess?.has_access} premiumLoading={premiumLoading} />
       <ReferralCard availableDiscount={premiumAccess?.available_discount} />
@@ -663,16 +689,18 @@ const Dashboard = () => {
       <ExerciseChecklist />
 
       {/* AI Adaptive Progression - only for self-service premium */}
-      <AdaptiveProgressionCard premiumAccess={premiumAccess} assessments={assessments} />
+      <AdaptiveProgressionCard premiumAccess={premiumAccess} assessments={conditionAssessments} />
 
       {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
-        <div data-onboarding="patient-diary"><PainDiary /></div>
+        <div data-onboarding="patient-diary">
+          <PainDiary conditions={conditions} activeConditionKey={conditionFocusKey} />
+        </div>
       )}
       {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
-        <AssessmentComparison assessments={assessments} />
+        <AssessmentComparison assessments={conditionAssessments} />
       )}
 
-      <AssessmentHistory assessments={assessments} />
+      <AssessmentHistory assessments={conditionAssessments} />
     </>
   );
 

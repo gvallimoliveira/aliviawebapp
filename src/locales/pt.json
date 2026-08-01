@@ -1433,5 +1433,13 @@
   "diagnosis.report_title": "Laudo da avaliação",
   "diagnosis.download_report": "Baixar laudo em PDF",
   "diagnosis.report_hint_full": "Você já pode baixar ou enviar o laudo com a hipótese clínica. Se gerar o plano de tratamento, um novo laudo completo (com exercícios e fases) ficará disponível na tela seguinte.",
-  "diagnosis.report_hint": "Baixe ou envie o laudo com a hipótese clínica."
+  "diagnosis.report_hint": "Baixe ou envie o laudo com a hipótese clínica.",
+  "conditions.title": "Minhas condições",
+  "conditions.subtitle": "Cada região/diagnóstico tem seu próprio acompanhamento de dor, histórico e exercícios.",
+  "conditions.assessments_short": "aval.",
+  "conditions.status_active": "Ativa",
+  "conditions.status_inactive": "Inativa",
+  "conditions.last_update": "Última atualização",
+  "conditions.tracking_for": "Acompanhando",
+  "diary.also_log": "Registrar também:"
 }
