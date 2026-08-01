@@ -1,7 +1,24 @@
 import jsPDF from "jspdf";
 import { regionsByView, type View, type ClickableRegion } from "@/components/assessment/painMapData";
 import { questionnaires, getApplicableQuestionnaires } from "@/data/questionnaireData";
+import { functionalTests } from "@/data/functionalTestsData";
+import ptLocale from "@/locales/pt.json";
+import enLocale from "@/locales/en.json";
+import esLocale from "@/locales/es.json";
 import { registerInterFonts } from "./fonts/registerInterFonts";
+
+/**
+ * Resolves the display name of a functional test (id → i18n name), so the PDF
+ * "Test Results" section is never blank when the assessment only stored
+ * `{ testId, painful }` entries.
+ */
+function resolveFunctionalTestName(testId: string, isPt: boolean, lang?: string): string {
+  const def = functionalTests.find((t) => t.id === testId);
+  const dict = (lang === "es" ? esLocale : isPt ? ptLocale : enLocale) as Record<string, string>;
+  if (def && dict[def.nameKey]) return dict[def.nameKey];
+  return testId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 
 /**
  * Creates a new jsPDF document with the embedded Inter font family registered.
@@ -1163,7 +1180,7 @@ async function renderPainMapSection(doc: jsPDF, y: number, painRegions: string[]
 }
 
 // ── Render Test Results Section ──
-function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt: boolean): number {
+function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt: boolean, lang?: string): number {
   // Normalize: could be null, empty object {}, or array
   if (!testResults) return y;
   if (typeof testResults === "object" && !Array.isArray(testResults) && Object.keys(testResults).length === 0) return y;
@@ -1286,31 +1303,50 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
     y += 2;
   }
 
-  // Render generic test results (non-questionnaire)
-  if (genericItems.length > 0) {
+  // Render generic test results (non-questionnaire).
+  // Functional tests are stored as { testId, painful } — resolve name/result first
+  // and only draw the section when there is something to show (avoids blank block).
+  const painfulLabel = isPt
+    ? "Doloroso / desconfortável"
+    : lang === "es" ? "Doloroso / incómodo" : "Painful / uncomfortable";
+  const okLabel = isPt
+    ? "Sem desconforto"
+    : lang === "es" ? "Sin molestias" : "No discomfort";
+
+  const genericRows = genericItems
+    .map((test: any) => {
+      const name = test.name || test.testName
+        || (test.testId ? resolveFunctionalTestName(test.testId, isPt, lang) : "")
+        || (typeof test.id === "string" ? resolveFunctionalTestName(test.id, isPt, lang) : "");
+      let result = test.result ?? test.score ?? test.value ?? "";
+      if (result === "" && typeof test.painful === "boolean") {
+        result = test.painful ? painfulLabel : okLabel;
+      }
+      return { name, result: String(result), painful: test.painful === true };
+    })
+    .filter((r) => r.name);
+
+  if (genericRows.length > 0) {
     y = checkPage(doc, y, 16);
     y = renderSectionTitle(doc, y, isPt ? "Resultados dos Testes" : "Test Results", COLORS.primary);
 
-    for (const test of genericItems) {
+    for (const row of genericRows) {
       y = checkPage(doc, y, 10);
-      const name = test.name || test.testName || test.id || "";
-      const result = test.result || test.score || test.value || "";
-      if (name) {
-        doc.setFont("Inter", "bold");
-        doc.setFontSize(8);
-        doc.setTextColor(...COLORS.foreground);
-        doc.text(`${name}: `, SECTION_X, y);
-        const lw = doc.getTextWidth(`${name}: `);
-        doc.setFont("Inter", "normal");
-        doc.setTextColor(...COLORS.muted);
-        const availW = SECTION_TEXT_W - lw;
-        const resultLines = doc.splitTextToSize(String(result), availW > 30 ? availW : SECTION_TEXT_W);
-        doc.text(resultLines, SECTION_X + lw, y);
-        y += resultLines.length * 3.5 + 1.5;
-      }
+      doc.setFont("Inter", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.foreground);
+      doc.text(`${row.name}: `, SECTION_X, y);
+      const lw = doc.getTextWidth(`${row.name}: `);
+      doc.setFont("Inter", "normal");
+      doc.setTextColor(...(row.painful ? COLORS.red : COLORS.muted));
+      const availW = SECTION_TEXT_W - lw;
+      const resultLines = doc.splitTextToSize(row.result, availW > 30 ? availW : SECTION_TEXT_W);
+      doc.text(resultLines, SECTION_X + lw, y);
+      y += resultLines.length * 3.5 + 1.5;
     }
     y += 4;
   }
+
 
   return y;
 }
@@ -1918,7 +1954,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
 
   // ── Test Results (Questionnaires) — right after anamnesis ──
   if (testResults) {
-    y = renderTestResultsSection(doc, y, testResults, isPt);
+    y = renderTestResultsSection(doc, y, testResults, isPt, language);
   }
 
   // ── Joint Mobility (ROM) — before pain map / VAS ──
