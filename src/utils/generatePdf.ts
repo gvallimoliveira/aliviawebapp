@@ -1954,7 +1954,7 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
 
   // ── Test Results (Questionnaires) — right after anamnesis ──
   if (testResults) {
-    y = renderTestResultsSection(doc, y, testResults, isPt);
+    y = renderTestResultsSection(doc, y, testResults, isPt, language);
   }
 
   // ── Joint Mobility (ROM) — before pain map / VAS ──
