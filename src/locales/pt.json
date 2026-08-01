@@ -256,6 +256,7 @@
   "diagnosis.treatment_cta_text": "Sua hipótese preliminar está pronta! Agora gere seu plano de tratamento personalizado em 3 fases.",
   "diagnosis.generate_treatment": "Gerar Plano de Tratamento",
   "diagnosis.back": "Voltar",
+  "diagnosis.back_to_dashboard": "Voltar ao meu painel",
   "diagnosis.new_assessment": "Nova Avaliação",
   "diagnosis.hypothesis": "Hipótese",
   "diagnosis.result_title": "Resultado da Avaliação",
