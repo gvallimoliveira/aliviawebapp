@@ -680,7 +680,9 @@ const Dashboard = () => {
         conditions={conditions}
         activeKey={conditionFocusKey}
         onSelect={selectCondition}
+        onOpenAssessment={(id) => navigate(`/assessment/view/${id}`)}
       />
+
       <ConditionSelector
         conditions={conditions}
         activeKey={conditionFocusKey}
