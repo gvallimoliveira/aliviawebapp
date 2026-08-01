@@ -183,18 +183,21 @@ const ExerciseChecklist = ({
         });
 
       // Check if all done after this toggle
-      const totalItems = programs.reduce((sum, p) => sum + p.items.length, 0);
-      if (newSet.size === totalItems) {
+      const visibleIds = visiblePrograms.flatMap((p) => p.items.map((i) => i.id));
+      if (visibleIds.length > 0 && visibleIds.every((id) => newSet.has(id))) {
         toast.success(t("exercise_checklist.all_done") || "Parabéns! Todos os exercícios concluídos hoje! 🎉");
       }
     }
   };
 
-  if (loading || programs.length === 0) return null;
+  if (loading || visiblePrograms.length === 0) return null;
 
-  const totalItems = programs.reduce((sum, p) => sum + p.items.length, 0);
-  const completedCount = completedToday.size;
+  const totalItems = visiblePrograms.reduce((sum, p) => sum + p.items.length, 0);
+  const completedCount = visiblePrograms
+    .flatMap((p) => p.items)
+    .filter((i) => completedToday.has(i.id)).length;
   const progressPercent = totalItems > 0 ? (completedCount / totalItems) * 100 : 0;
+
 
   return (
     <div className="space-y-4">
