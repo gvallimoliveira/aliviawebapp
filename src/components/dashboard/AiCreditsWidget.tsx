@@ -29,6 +29,9 @@ interface CreditStatus {
   pct: number;
   period_start: string;
   period_end: string;
+  timezone?: string;
+  trailing_30d_used?: number;
+  last_usage_at?: string | null;
   clinic_id: string | null;
   clinic_size: string | null;
 }
