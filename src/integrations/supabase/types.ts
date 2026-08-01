@@ -3699,6 +3699,7 @@ export type Database = {
       get_my_active_exercise_programs: {
         Args: never
         Returns: {
+          assessment_id: string
           created_at: string
           expires_at: string
           notes: string
