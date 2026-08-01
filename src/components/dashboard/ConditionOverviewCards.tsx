@@ -24,7 +24,7 @@ const painColor = (score: number | null) => {
  */
 const ConditionOverviewCards = ({ conditions, activeKey, onSelect }: Props) => {
   const { t } = useLanguage();
-  if (conditions.length < 2) return null;
+  if (conditions.length === 0) return null;
 
   return (
     <div className="space-y-2">
