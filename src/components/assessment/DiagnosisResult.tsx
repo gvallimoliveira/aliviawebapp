@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Timer } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, ArrowLeft, Sparkles, Lock, Timer, FileText, Download, Share2, Loader2, LayoutDashboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 import EmergencyBanner from "@/components/EmergencyBanner";
+
 
 
 interface Diagnosis {
@@ -62,6 +66,120 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
 const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData, testResults, hideFooterActions, redFlagPayload }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
+
+  const reportUserName = patientName || user?.user_metadata?.full_name || "Paciente";
+
+  const resolveBranding = async () => {
+    if (!assessmentId) return {};
+    try {
+      const { data: a } = await supabase
+        .from("assessments")
+        .select("clinic_id, professional_id")
+        .eq("id", assessmentId)
+        .maybeSingle();
+      if (!a) return {};
+      const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
+      const branding = await resolveAssessmentBranding({
+        clinicId: (a as any).clinic_id || null,
+        professionalId: (a as any).professional_id || null,
+        userId: user?.id || null,
+      });
+      return {
+        professionalLogoUrl: branding.professionalLogoUrl,
+        clinicLogoUrl: branding.clinicLogoUrl,
+        clinicName: branding.clinicName,
+        responsibleProfessional: branding.responsibleProfessional,
+      };
+    } catch {
+      return {};
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setPdfLoading(true);
+    try {
+      const { generateAssessmentPdf } = await import("@/utils/generatePdf");
+      const branding = await resolveBranding();
+      await generateAssessmentPdf({
+        diagnosis,
+        language,
+        userName: reportUserName,
+        anamnesisData,
+        painRegions,
+        testResults,
+        ...branding,
+      } as any);
+      toast({ title: t("pdf.success") });
+    } catch (err) {
+      console.error("PDF export error:", err);
+      toast({ title: t("pdf.error"), variant: "destructive" });
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handleShareWhatsApp = async () => {
+    setWhatsappLoading(true);
+    try {
+      const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
+      const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
+      const branding = await resolveBranding();
+      const pdfBlob = await generateAssessmentPdfBlob({
+        diagnosis,
+        language,
+        userName: reportUserName,
+        anamnesisData,
+        painRegions,
+        testResults,
+        ...branding,
+      } as any);
+
+      const patientLabel = reportUserName || diagnosis.hypothesis || "Paciente";
+      const nativeShareResult = await sharePdfFile({
+        blob: pdfBlob,
+        fileName: `AliviA_Relatorio_${patientLabel.replace(/\s+/g, "_")}.pdf`,
+        title: "Aliv.iA",
+        text: language === "pt" ? `Relatório em PDF de ${patientLabel}` : `PDF report for ${patientLabel}`,
+      });
+      if (nativeShareResult === "shared" || nativeShareResult === "cancelled") return;
+
+      let publicUrl: string | null = null;
+      const fileId = assessmentId || crypto.randomUUID();
+      try {
+        const filePath = user ? `${user.id}/${fileId}_hypothesis.pdf` : `${fileId}_hypothesis.pdf`;
+        const { error: uploadError } = await supabase.storage
+          .from("assessment-reports")
+          .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
+        if (uploadError) throw uploadError;
+        publicUrl = supabase.storage.from("assessment-reports").getPublicUrl(filePath).data.publicUrl;
+      } catch (uploadErr) {
+        console.warn("Upload failed, downloading locally", uploadErr);
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `alivia_assessment_${fileId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast({ title: t("pdf.success") });
+        return;
+      }
+
+      const { getPublicOrigin } = await import("@/lib/getPublicOrigin");
+      const pdfLine = publicUrl ? `\n\n📄 ${language === "pt" ? "Relatório em PDF" : "PDF Report"}:\n${publicUrl}` : "";
+      const text = `🩺 *Aliv.iA*\n\n📋 *${t("diagnosis.hypothesis")}:* ${diagnosis.hypothesis}${pdfLine}\n\n💡 ${language === "pt" ? "Faça sua avaliação" : "Start your assessment"}:\n${getPublicOrigin()}`;
+      await shareTextOrOpenWhatsApp(text, "Aliv.iA");
+    } catch (err) {
+      console.error("WhatsApp share error:", err);
+      toast({ title: t("pdf.error"), variant: "destructive" });
+    } finally {
+      setWhatsappLoading(false);
+    }
+  };
+
 
   // 5-minute countdown timer for basic mode urgency
   const [secondsLeft, setSecondsLeft] = useState(300);
@@ -219,6 +337,36 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         </Card>
       )}
 
+      {/* Premium: report actions (PDF / WhatsApp) available already at this step */}
+      {mode === "premium" && (
+        <Card className="rounded-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              {t("pdf.export") || "Laudo em PDF"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {onGenerateTreatment
+                ? "Você já pode baixar ou enviar o laudo com a hipótese clínica. Se gerar o plano de tratamento, um novo laudo completo (com exercícios e fases) ficará disponível na tela seguinte."
+                : "Baixe ou envie o laudo com a hipótese clínica."}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleExportPdf} disabled={pdfLoading} className="rounded-xl gap-2">
+                {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {t("pdf.export") || "Baixar PDF"}
+              </Button>
+              <Button variant="outline" onClick={handleShareWhatsApp} disabled={whatsappLoading} className="rounded-xl gap-2">
+                {whatsappLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+                WhatsApp
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
       {/* Basic mode: blurred preview + unlock CTA */}
       {mode === "basic" && (
         <>
@@ -360,11 +508,18 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
             <ArrowLeft className="h-4 w-4" />
             {t("diagnosis.back")}
           </Button>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {user && (
+              <Button variant="secondary" onClick={() => navigate("/dashboard")} className="rounded-xl gap-2">
+                <LayoutDashboard className="h-4 w-4" />
+                {t("diagnosis.back_to_dashboard") || "Voltar ao meu painel"}
+              </Button>
+            )}
             <Button onClick={onNewAssessment} className="rounded-xl">
               {t("diagnosis.new_assessment")}
             </Button>
           </div>
+
         </div>
       )}
     </motion.div>

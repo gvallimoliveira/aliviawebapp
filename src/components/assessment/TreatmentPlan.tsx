@@ -22,7 +22,9 @@ import {
   Share2,
   Loader2,
   Stethoscope,
+  LayoutDashboard,
 } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -580,15 +582,24 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
       <EmergencyBanner />
 
       {/* Actions */}
-      <div className="flex justify-between pt-4">
+      <div className="flex flex-wrap justify-between gap-2 pt-4">
         <Button variant="outline" onClick={onBack} className="gap-2 rounded-xl">
           <ArrowLeft className="h-4 w-4" />
           {t("treatment.back_to_diagnosis")}
         </Button>
-        <Button onClick={onNewAssessment} className="rounded-xl">
-          {t("treatment.new_assessment")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {user && (
+            <Button variant="secondary" onClick={() => (window.location.href = "/dashboard")} className="rounded-xl gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              {t("diagnosis.back_to_dashboard") || "Voltar ao meu painel"}
+            </Button>
+          )}
+          <Button onClick={onNewAssessment} className="rounded-xl">
+            {t("treatment.new_assessment")}
+          </Button>
+        </div>
       </div>
+
     </motion.div>
   );
 };
