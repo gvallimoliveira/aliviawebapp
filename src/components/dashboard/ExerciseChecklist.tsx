@@ -85,7 +85,9 @@ const ExerciseChecklist = ({
         programId: p.program_id,
         programName: p.patient_name || "",
         professionalName: p.professional_name || "",
+        assessmentId: p.assessment_id || null,
         items: (itemsByProgram.get(p.program_id) || [])
+
           .sort((a: any, b: any) => a.sort_order - b.sort_order)
           .map((item: any) => ({
             id: item.id,
