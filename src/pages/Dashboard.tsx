@@ -640,6 +640,14 @@ const Dashboard = () => {
 
   const conditionAssessments = activeCondition ? activeCondition.assessments : assessments;
 
+  // id da avaliação -> rótulo da condição (usado no histórico "todas as condições")
+  const conditionLabelById = useMemo(() => {
+    const map: Record<string, string> = {};
+    conditions.forEach((c) => c.assessments.forEach((a: any) => { map[a.id] = c.label; }));
+    return map;
+  }, [conditions]);
+
+
 
   // Tutorial é estritamente do contexto ativo (clinic/professional/personal),
   // então NÃO precisamos mais forçar troca de tab/contexto durante o tour.
@@ -707,8 +715,11 @@ const Dashboard = () => {
 
       <AssessmentHistory
         assessments={conditionAssessments}
+        allAssessments={assessments}
+        conditionLabels={conditionLabelById}
         onDeleted={(ids) => setAssessments((prev) => prev.filter((a) => !ids.includes(a.id)))}
       />
+
     </>
   );
 

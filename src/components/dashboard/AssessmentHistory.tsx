@@ -31,17 +31,34 @@ const painRegionLabels: Record<string, string> = {
 };
 
 interface AssessmentHistoryProps {
+  /** avaliações da condição em foco */
   assessments: any[];
+  /** todas as avaliações do usuário (todas as condições) */
+  allAssessments?: any[];
+  /** id da avaliação -> rótulo da condição */
+  conditionLabels?: Record<string, string>;
   onDeleted?: (deletedIds: string[]) => void;
 }
 
-const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) => {
+const AssessmentHistory = ({
+  assessments,
+  allAssessments,
+  conditionLabels,
+  onDeleted,
+}: AssessmentHistoryProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  const all = allAssessments && allAssessments.length ? allAssessments : assessments;
+  const hasOtherConditions = all.length > assessments.length;
+  // Em modo de gerenciamento mostramos TODAS as avaliações, para que excluir
+  // realmente elimine os cards de condições e a nota de dor correspondentes.
+  const visible = showAll || selectMode ? all : assessments;
 
   const toggle = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -50,6 +67,7 @@ const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) =
     setSelectMode(false);
     setSelected([]);
   };
+
 
   const handleDelete = async () => {
     if (selected.length === 0) return;
@@ -99,8 +117,8 @@ const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) =
           <FileText className="h-5 w-5 text-muted-foreground" />
           {t("dashboard.history")}
         </h2>
-        {assessments.length > 0 && (
-          <div className="flex items-center gap-2">
+        {visible.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
             {selectMode ? (
               <>
                 <Button
@@ -108,10 +126,10 @@ const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) =
                   size="sm"
                   className="h-8 text-xs gap-1.5"
                   onClick={() =>
-                    setSelected(selected.length === assessments.length ? [] : assessments.map((a) => a.id))
+                    setSelected(selected.length === visible.length ? [] : visible.map((a) => a.id))
                   }
                 >
-                  {selected.length === assessments.length ? "Limpar seleção" : "Selecionar tudo"}
+                  {selected.length === visible.length ? "Limpar seleção" : "Selecionar tudo"}
                 </Button>
                 <Button
                   variant="destructive"
@@ -129,20 +147,38 @@ const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) =
                 </Button>
               </>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs gap-1.5 text-muted-foreground"
-                onClick={() => setSelectMode(true)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Gerenciar histórico
-              </Button>
+              <>
+                {hasOtherConditions && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs text-muted-foreground"
+                    onClick={() => setShowAll((v) => !v)}
+                  >
+                    {showAll ? "Ver só a condição em foco" : `Ver todas (${all.length})`}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5 text-muted-foreground"
+                  onClick={() => setSelectMode(true)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Gerenciar histórico
+                </Button>
+              </>
             )}
           </div>
         )}
       </div>
-      {assessments.length === 0 ? (
+      {selectMode && hasOtherConditions && (
+        <p className="text-xs text-muted-foreground mb-3">
+          Mostrando todas as avaliações (todas as condições) para que a exclusão remova também os
+          cards de condições e a nota de dor.
+        </p>
+      )}
+      {visible.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
             <ClipboardList className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
@@ -151,7 +187,8 @@ const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) =
         </Card>
       ) : (
         <div className="space-y-3">
-          {assessments.map((a) => {
+          {visible.map((a) => {
+
             const statusConfig = getStatusConfig(a.status);
             const StatusIcon = statusConfig.icon;
             const hypothesis = (a as any).final_hypothesis?.trim() || a.diagnosis?.hypothesis;
@@ -217,7 +254,14 @@ const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) =
                               day: "2-digit", month: "short", year: "numeric",
                             })}
                           </div>
+                          {(showAll || selectMode) && conditionLabels?.[a.id] && (
+                            <Badge variant="outline" className="text-[10px] px-2 py-0.5 max-w-[140px] truncate">
+                              {conditionLabels[a.id]}
+                            </Badge>
+                          )}
                         </div>
+
+
                         <Badge variant="outline" className={`text-[10px] px-2 py-0.5 gap-1 ${statusConfig.color}`}>
                           <StatusIcon className={`h-3 w-3 ${a.status === "in_progress" ? "animate-spin" : ""}`} />
                           {statusConfig.label}
