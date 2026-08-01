@@ -1576,6 +1576,7 @@ export type Database = {
           handled_at: string | null
           handled_by: string | null
           id: string
+          notified_at: string | null
           request_type: string
           status: string
           updated_at: string
@@ -1587,6 +1588,7 @@ export type Database = {
           handled_at?: string | null
           handled_by?: string | null
           id?: string
+          notified_at?: string | null
           request_type: string
           status?: string
           updated_at?: string
@@ -1598,6 +1600,7 @@ export type Database = {
           handled_at?: string | null
           handled_by?: string | null
           id?: string
+          notified_at?: string | null
           request_type?: string
           status?: string
           updated_at?: string

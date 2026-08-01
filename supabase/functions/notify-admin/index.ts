@@ -251,7 +251,130 @@ async function notifyTicket(ticketId: string) {
   return { ok: delivered, results };
 }
 
+const DSR_LABELS: Record<string, string> = {
+  access: "Acesso — confirmação e detalhe do tratamento",
+  portability: "Portabilidade dos dados",
+  correction: "Correção de dados incorretos",
+  deletion: "Exclusão da conta e dos dados",
+  consent_revocation: "Revogação de consentimento",
+};
+
+const DSR_NEXT_STEPS: Record<string, string> = {
+  access:
+    "Confirme a identidade pelo e-mail da conta e responda em até 15 dias com as categorias de dados, finalidades, bases legais e compartilhamentos. O botão “Exportar meus dados (.json)” em Minha Conta já cobre a maior parte.",
+  portability:
+    "A portabilidade é atendida pelo próprio export (.json em Minha Conta e .zip no painel profissional). Só há ação manual se o titular pedir outro formato ou o export falhar.",
+  correction:
+    "Campos editáveis podem ser corrigidos pelo próprio titular em Minha Conta. Dado clínico de prontuário não é apagado: registre retificação/aditamento mantendo o histórico.",
+  deletion:
+    "Verifique identidade e prazo legal de guarda de prontuário. Se o titular é paciente de um profissional/clínica, encaminhe ao controlador. Se é conta própria: cancele assinatura ativa, elimine/anonimize os dados e mantenha só o mínimo fiscal/prontuário.",
+  consent_revocation:
+    "Interrompa o tratamento baseado em consentimento (follow-ups, notificações, novas análises de IA) e registre a revogação. Dados sob outra base legal permanecem.",
+};
+
+/** Confirmation email sent to the data subject (LGPD art. 18 — 15-day deadline). */
+async function sendSubjectEmail(email: string, label: string) {
+  if (!RESEND_API_KEY) return { status: "skipped", detail: "no RESEND_API_KEY" };
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111">
+      <h2 style="color:#0f766e;margin:0 0 12px">Recebemos sua solicitação</h2>
+      <p style="margin:0 0 10px">Registramos seu pedido de <strong>${escapeHtml(label)}</strong> na Aliv.iA.</p>
+      <p style="margin:0 0 10px">Responderemos em até <strong>15 dias</strong> neste mesmo e-mail, conforme a LGPD (Lei 13.709/2018).</p>
+      <p style="margin:0 0 10px">Você também pode baixar uma cópia dos seus dados a qualquer momento em
+        <a href="https://aliviawebapp.com.br/conta">Minha Conta → Privacidade e meus dados</a>.</p>
+      <p style="margin:0 0 10px">Encarregado (DPO): Guilherme Vallim de Oliveira — aliviawebapp@gmail.com.</p>
+      <p style="margin:16px 0 0;font-size:12px;color:#666">
+        <a href="https://aliviawebapp.com.br/privacidade">Política de Privacidade</a>
+      </p>
+    </div>`;
+
+  const resp = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: Deno.env.get("ALERT_EMAIL_FROM") || "Aliv.iA <onboarding@resend.dev>",
+      to: [email],
+      subject: "[Aliv.iA] Recebemos sua solicitação de privacidade",
+      html,
+    }),
+  });
+  const raw = await resp.text();
+  if (!resp.ok) return { status: "failed", detail: `[${resp.status}] ${raw.slice(0, 300)}` };
+  return { status: "sent", detail: null };
+}
+
+async function notifyDsr(requestId: string) {
+  const { data: r } = await supabase
+    .from("data_subject_requests")
+    .select("*")
+    .eq("id", requestId)
+    .maybeSingle();
+  if (!r) return { ok: false, reason: "request not found" };
+
+  let email: string | null = null;
+  let name: string | null = null;
+  try {
+    const { data: u } = await supabase.auth.admin.getUserById(r.user_id);
+    email = u?.user?.email ?? null;
+    const { data: p } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", r.user_id)
+      .maybeSingle();
+    name = p?.full_name ?? null;
+  } catch { /* noop */ }
+
+  const label = DSR_LABELS[r.request_type] || r.request_type;
+  const deadline = new Date(new Date(r.created_at).getTime() + 15 * 24 * 60 * 60 * 1000);
+
+  const { delivered, results } = await dispatch({
+    event_type: "data_subject_request",
+    title: "🛡️ Novo pedido LGPD do titular",
+    body: String(r.details || "").slice(0, 600) || undefined,
+    ref: r.id,
+    fields: {
+      "Tipo": label,
+      "De": name || email || r.user_id,
+      "E-mail": email || "—",
+      "Prazo de resposta (15 dias)": deadline.toLocaleDateString("pt-BR"),
+      "Próximos passos": DSR_NEXT_STEPS[r.request_type] || "—",
+    },
+    url: "https://aliviawebapp.com.br/admin?tab=support",
+  });
+
+  // Acknowledgement to the data subject runs regardless of the admin channels.
+  let subject: { status: string; detail: string | null } = { status: "skipped", detail: "no email" };
+  if (email) {
+    try {
+      subject = (await sendSubjectEmail(email, label)) as any;
+    } catch (e) {
+      subject = { status: "failed", detail: String(e).slice(0, 300) };
+    }
+    await supabase.from("admin_alert_log").insert({
+      event_type: "data_subject_request_ack",
+      channel: "email",
+      status: subject.status,
+      title: `Confirmação ao titular — ${label}`,
+      ref: r.id,
+      detail: subject.detail,
+      payload: { to: email },
+    });
+  }
+
+  if (delivered) {
+    await supabase
+      .from("data_subject_requests")
+      .update({ notified_at: new Date().toISOString() })
+      .eq("id", r.id);
+  }
+  return { ok: delivered, results, subject_ack: subject };
+}
+
 /** Retry every ticket that was never delivered (safety net, runs on cron). */
+
 async function sweep() {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const { data: pending } = await supabase
@@ -267,7 +390,29 @@ async function sweep() {
     const r = await notifyTicket(t.id);
     if (r.ok) processed.push(t.id);
   }
-  return { checked: pending?.length || 0, delivered: processed.length, ids: processed };
+  // Same safety net for LGPD requests that never reached any admin channel.
+  const { data: pendingDsr } = await supabase
+    .from("data_subject_requests")
+    .select("id")
+    .is("notified_at", null)
+    .gte("created_at", since)
+    .order("created_at", { ascending: true })
+    .limit(20);
+
+  const dsrDelivered: string[] = [];
+  for (const r of pendingDsr || []) {
+    const out = await notifyDsr(r.id);
+    if (out.ok) dsrDelivered.push(r.id);
+  }
+
+  return {
+    checked: pending?.length || 0,
+    delivered: processed.length,
+    ids: processed,
+    dsr_checked: pendingDsr?.length || 0,
+    dsr_delivered: dsrDelivered.length,
+  };
+
 }
 
 Deno.serve(async (req) => {
@@ -309,6 +454,12 @@ Deno.serve(async (req) => {
       if (!payload?.ticket_id) return json({ error: "ticket_id required" }, 400);
       return json(await notifyTicket(String(payload.ticket_id)));
     }
+    if (action === "dsr") {
+      if (!isService) return json({ error: "Forbidden" }, 403);
+      if (!payload?.request_id) return json({ error: "request_id required" }, 400);
+      return json(await notifyDsr(String(payload.request_id)));
+    }
+
     if (action === "push_status" || action === "test_push") {
       if (!callerUser) return json({ error: "Forbidden" }, 403);
       const emails = await adminEmails();
