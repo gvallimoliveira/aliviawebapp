@@ -705,7 +705,10 @@ const Dashboard = () => {
         <AssessmentComparison assessments={conditionAssessments} />
       )}
 
-      <AssessmentHistory assessments={conditionAssessments} />
+      <AssessmentHistory
+        assessments={conditionAssessments}
+        onDeleted={(ids) => setAssessments((prev) => prev.filter((a) => !ids.includes(a.id)))}
+      />
     </>
   );
 
