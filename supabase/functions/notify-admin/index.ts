@@ -390,7 +390,29 @@ async function sweep() {
     const r = await notifyTicket(t.id);
     if (r.ok) processed.push(t.id);
   }
-  return { checked: pending?.length || 0, delivered: processed.length, ids: processed };
+  // Same safety net for LGPD requests that never reached any admin channel.
+  const { data: pendingDsr } = await supabase
+    .from("data_subject_requests")
+    .select("id")
+    .is("notified_at", null)
+    .gte("created_at", since)
+    .order("created_at", { ascending: true })
+    .limit(20);
+
+  const dsrDelivered: string[] = [];
+  for (const r of pendingDsr || []) {
+    const out = await notifyDsr(r.id);
+    if (out.ok) dsrDelivered.push(r.id);
+  }
+
+  return {
+    checked: pending?.length || 0,
+    delivered: processed.length,
+    ids: processed,
+    dsr_checked: pendingDsr?.length || 0,
+    dsr_delivered: dsrDelivered.length,
+  };
+
 }
 
 Deno.serve(async (req) => {
