@@ -3660,6 +3660,23 @@ export type Database = {
           weeks_estimate: number
         }[]
       }
+      get_dsr_admin: {
+        Args: never
+        Returns: {
+          created_at: string
+          deliveries: Json
+          details: string
+          handled_at: string
+          id: string
+          notified_at: string
+          request_type: string
+          status: string
+          subject_email: string
+          subject_name: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       get_hep_professional: {
         Args: { _token: string }
         Returns: {
