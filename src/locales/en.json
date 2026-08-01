@@ -1445,5 +1445,7 @@
   "exercise_checklist.hidden_one": "1 program from another condition is hidden.",
   "exercise_checklist.hidden_many": "{n} programs from other conditions are hidden.",
   "progression.cta_hint": "Generate a personalized analysis based on your pain diary and adherence (costs 0.25 credit).",
-  "progression.generate": "Generate suggestion"
+  "progression.generate": "Generate suggestion",
+  "exercise_checklist.prescribed_by": "Prescribed by {name}",
+  "exercise_checklist.for_patient": "For: {name}"
 }
