@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ interface ProgramWithItems {
   programId: string;
   programName: string;
   professionalName: string;
+  assessmentId: string | null;
   items: {
     id: string;
     name: string;
@@ -23,7 +24,20 @@ interface ProgramWithItems {
   }[];
 }
 
-const ExerciseChecklist = () => {
+interface Props {
+  /** IDs das avaliações da condição em foco (vazio/undefined = sem filtro) */
+  conditionAssessmentIds?: string[];
+  /** Rótulo da condição em foco, usado no aviso de filtro */
+  conditionLabel?: string;
+  /** Só filtra quando o paciente tem mais de uma condição */
+  filterByCondition?: boolean;
+}
+
+const ExerciseChecklist = ({
+  conditionAssessmentIds,
+  conditionLabel,
+  filterByCondition = false,
+}: Props) => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const [programs, setPrograms] = useState<ProgramWithItems[]>([]);
@@ -46,6 +60,7 @@ const ExerciseChecklist = () => {
       setLoading(false);
       return;
     }
+
 
     const programIds = myPrograms.map((p: any) => p.program_id);
 
@@ -70,7 +85,9 @@ const ExerciseChecklist = () => {
         programId: p.program_id,
         programName: p.patient_name || "",
         professionalName: p.professional_name || "",
+        assessmentId: p.assessment_id || null,
         items: (itemsByProgram.get(p.program_id) || [])
+
           .sort((a: any, b: any) => a.sort_order - b.sort_order)
           .map((item: any) => ({
             id: item.id,
@@ -111,14 +128,32 @@ const ExerciseChecklist = () => {
     fetchData();
   }, [fetchData]);
 
+  // Mostra apenas os HEP vinculados à condição em foco.
+  // Programas sem avaliação vinculada (legado / criados manualmente) seguem visíveis.
+  const visiblePrograms = useMemo(() => {
+    if (!filterByCondition || !conditionAssessmentIds || conditionAssessmentIds.length === 0) {
+      return programs;
+    }
+    const allowed = new Set(conditionAssessmentIds);
+    const matched = programs.filter((p) => p.assessmentId && allowed.has(p.assessmentId));
+    const unlinked = programs.filter((p) => !p.assessmentId);
+    return [...matched, ...unlinked];
+  }, [programs, filterByCondition, conditionAssessmentIds]);
+
+  const hiddenCount = programs.length - visiblePrograms.length;
+
   // Check if all done
   useEffect(() => {
-    const totalItems = programs.reduce((sum, p) => sum + p.items.length, 0);
-    if (totalItems > 0 && completedToday.size === totalItems && !allDone) {
+    const totalItems = visiblePrograms.reduce((sum, p) => sum + p.items.length, 0);
+    const doneVisible = visiblePrograms
+      .flatMap((p) => p.items)
+      .filter((i) => completedToday.has(i.id)).length;
+    if (totalItems > 0 && doneVisible === totalItems && !allDone) {
       setAllDone(true);
       setTimeout(() => setAllDone(false), 3000);
     }
-  }, [completedToday, programs]);
+  }, [completedToday, visiblePrograms]);
+
 
   const toggleExercise = async (programId: string, itemId: string) => {
     if (!user) return;
@@ -148,25 +183,41 @@ const ExerciseChecklist = () => {
         });
 
       // Check if all done after this toggle
-      const totalItems = programs.reduce((sum, p) => sum + p.items.length, 0);
-      if (newSet.size === totalItems) {
+      const visibleIds = visiblePrograms.flatMap((p) => p.items.map((i) => i.id));
+      if (visibleIds.length > 0 && visibleIds.every((id) => newSet.has(id))) {
         toast.success(t("exercise_checklist.all_done") || "Parabéns! Todos os exercícios concluídos hoje! 🎉");
       }
     }
   };
 
-  if (loading || programs.length === 0) return null;
+  if (loading || visiblePrograms.length === 0) return null;
 
-  const totalItems = programs.reduce((sum, p) => sum + p.items.length, 0);
-  const completedCount = completedToday.size;
+  const totalItems = visiblePrograms.reduce((sum, p) => sum + p.items.length, 0);
+  const completedCount = visiblePrograms
+    .flatMap((p) => p.items)
+    .filter((i) => completedToday.has(i.id)).length;
   const progressPercent = totalItems > 0 ? (completedCount / totalItems) * 100 : 0;
+
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+      <h2 className="text-xl font-semibold text-foreground flex items-center gap-2 flex-wrap">
         <Dumbbell className="h-5 w-5 text-muted-foreground" />
         {t("exercise_checklist.title") || "Exercícios do Dia"}
+        {filterByCondition && conditionLabel && (
+          <Badge variant="outline" className="text-[10px] font-normal max-w-[200px] truncate">
+            {conditionLabel}
+          </Badge>
+        )}
       </h2>
+      {hiddenCount > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {hiddenCount === 1
+            ? t("exercise_checklist.hidden_one") || "1 programa de outra condição está oculto."
+            : (t("exercise_checklist.hidden_many") || "{n} programas de outras condições estão ocultos.").replace("{n}", String(hiddenCount))}
+        </p>
+      )}
+
 
       {/* Progress Card */}
       <Card className="border-border/60">
@@ -205,7 +256,7 @@ const ExerciseChecklist = () => {
       </Card>
 
       {/* Exercise Items */}
-      {programs.map((prog) => (
+      {visiblePrograms.map((prog) => (
         <Card key={prog.programId}>
           <CardHeader className="pb-2 pt-4 px-4">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">

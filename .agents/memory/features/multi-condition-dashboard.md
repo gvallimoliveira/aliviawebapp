@@ -17,3 +17,6 @@ Um paciente pode ter várias condições em paralelo (ex.: lombar, ombro D., cot
 
 ## Diário de dor
 `pain_diary_entries.condition_key` (nullable = legado/Geral). Índice único `(user_id, logged_at, coalesce(condition_key,''))` permite 1 registro por condição por dia. Streak/semana contam o dia se QUALQUER condição foi registrada. A UI permite registrar rapidamente as outras condições no mesmo dia ("Registrar também").
+
+## HEP por condição
+`get_my_active_exercise_programs()` retorna `assessment_id`. O `ExerciseChecklist` recebe os IDs das avaliações da condição em foco e mostra só os programas vinculados a elas (programas sem avaliação vinculada continuam visíveis; os de outras condições viram contador "ocultos"). Filtro só ativa com 2+ condições. Progresso/parabéns contam apenas os exercícios visíveis.

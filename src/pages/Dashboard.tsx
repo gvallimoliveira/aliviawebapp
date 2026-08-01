@@ -686,7 +686,12 @@ const Dashboard = () => {
       <ReferralCard availableDiscount={premiumAccess?.available_discount} />
 
       {/* Exercise Checklist */}
-      <ExerciseChecklist />
+      <ExerciseChecklist
+        conditionAssessmentIds={(activeCondition?.assessments || []).map((a) => a.id)}
+        conditionLabel={activeCondition?.label}
+        filterByCondition={conditions.length > 1}
+      />
+
 
       {/* AI Adaptive Progression - only for self-service premium */}
       <AdaptiveProgressionCard premiumAccess={premiumAccess} assessments={conditionAssessments} />
