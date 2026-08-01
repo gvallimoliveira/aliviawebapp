@@ -19,6 +19,7 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 
 
 ## Memories
+- [AI Credits Period Timezone](mem://business/ai-credits-period-timezone) — Mês de créditos = fuso Brasília via `credit_period_start()`; escudos anti-falha no widget.
 - [No Email Confirmation](mem://constraints/no-email-confirmation) — Signup sem etapa de confirmação; implicações e como reverter.
 - [Auth Stability](mem://constraints/auth-stability) — Forbidden patterns around login (SW/PWA/cache) and required safeguards.
 - [Visual Direction](mem://style/visual-direction) — Brand identity, colors, shapes, and official slogan.
