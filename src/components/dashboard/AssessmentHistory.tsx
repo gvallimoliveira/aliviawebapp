@@ -31,17 +31,34 @@ const painRegionLabels: Record<string, string> = {
 };
 
 interface AssessmentHistoryProps {
+  /** avaliações da condição em foco */
   assessments: any[];
+  /** todas as avaliações do usuário (todas as condições) */
+  allAssessments?: any[];
+  /** id da avaliação -> rótulo da condição */
+  conditionLabels?: Record<string, string>;
   onDeleted?: (deletedIds: string[]) => void;
 }
 
-const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) => {
+const AssessmentHistory = ({
+  assessments,
+  allAssessments,
+  conditionLabels,
+  onDeleted,
+}: AssessmentHistoryProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  const all = allAssessments && allAssessments.length ? allAssessments : assessments;
+  const hasOtherConditions = all.length > assessments.length;
+  // Em modo de gerenciamento mostramos TODAS as avaliações, para que excluir
+  // realmente elimine os cards de condições e a nota de dor correspondentes.
+  const visible = showAll || selectMode ? all : assessments;
 
   const toggle = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -50,6 +67,7 @@ const AssessmentHistory = ({ assessments, onDeleted }: AssessmentHistoryProps) =
     setSelectMode(false);
     setSelected([]);
   };
+
 
   const handleDelete = async () => {
     if (selected.length === 0) return;
