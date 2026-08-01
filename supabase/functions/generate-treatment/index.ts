@@ -439,24 +439,74 @@ Generate a personalized 3-phase treatment plan in valid JSON format. Focus exerc
         jsonStr = jsonStr.slice(braceStart);
       }
     }
-    // Layer 3: Trim trailing content after last closing brace
-    const lastBrace = jsonStr.lastIndexOf('}');
-    if (lastBrace !== -1 && lastBrace < jsonStr.length - 1) {
-      jsonStr = jsonStr.slice(0, lastBrace + 1);
-    }
+
+    /**
+     * Repairs JSON that was cut off mid-generation (token limit): drops the
+     * incomplete tail and closes every still-open array/object.
+     * This is what used to break the premium treatment plan with
+     * "Expected ',' or ']' after array element".
+     */
+    const repairTruncatedJson = (raw: string): string => {
+      const stack: string[] = [];
+      let inString = false;
+      let escaped = false;
+      let lastSafe = -1; // index (inclusive) of last completed value at depth >= 1
+
+      for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+        if (inString) {
+          if (escaped) { escaped = false; continue; }
+          if (ch === '\\') { escaped = true; continue; }
+          if (ch === '"') { inString = false; if (stack.length) lastSafe = i; }
+          continue;
+        }
+        if (ch === '"') { inString = true; continue; }
+        if (ch === '{' || ch === '[') { stack.push(ch === '{' ? '}' : ']'); continue; }
+        if (ch === '}' || ch === ']') { stack.pop(); if (stack.length) lastSafe = i; continue; }
+        if (ch === ',' && stack.length) { lastSafe = i - 1; continue; }
+        if (/[\d\w]/.test(ch) && stack.length) lastSafe = i; // numbers / true / false / null
+      }
+
+      let body = raw;
+      if (stack.length > 0 && lastSafe >= 0) {
+        // Truncated: cut back to the last fully-formed value, then close everything.
+        body = raw.slice(0, lastSafe + 1).replace(/,\s*$/, '');
+        body += stack.reverse().join('');
+      }
+      return body;
+    };
 
     let treatmentPlan: any;
     try {
-      treatmentPlan = JSON.parse(jsonStr);
+      // Layer 3: Trim trailing content after last closing brace only when the
+      // payload is already balanced (otherwise it destroys truncated output).
+      let candidate = jsonStr;
+      try {
+        JSON.parse(candidate);
+      } catch {
+        const lastBrace = candidate.lastIndexOf('}');
+        if (lastBrace !== -1 && lastBrace < candidate.length - 1) {
+          const trimmed = candidate.slice(0, lastBrace + 1);
+          try { JSON.parse(trimmed); candidate = trimmed; } catch { /* keep original */ }
+        }
+      }
+      treatmentPlan = JSON.parse(candidate);
     } catch (parseErr) {
-      // Layer 4: Fix common JSON issues (trailing commas)
-      console.error("Initial JSON parse failed, attempting cleanup:", parseErr);
+      // Layer 4: trailing commas, control chars, then truncation repair
+      console.warn("Initial JSON parse failed, attempting cleanup:", parseErr);
       const cleaned = jsonStr
         .replace(/,\s*}/g, '}')
         .replace(/,\s*]/g, ']')
         .replace(/[\x00-\x1F\x7F]/g, (ch: string) => ch === '\n' || ch === '\r' || ch === '\t' ? ch : '');
-      treatmentPlan = JSON.parse(cleaned);
+      try {
+        treatmentPlan = JSON.parse(cleaned);
+      } catch {
+        const repaired = repairTruncatedJson(jsonStr);
+        console.warn("[generate-treatment] using truncation repair layer");
+        treatmentPlan = JSON.parse(repaired);
+      }
     }
+
 
     if (admin && treatmentPlan && typeof treatmentPlan === "object") {
       await setCachedAiResponse(admin, "generate-treatment", cachePayload, { treatmentPlan }, AI_CACHE_TTL_30D);
