@@ -128,14 +128,32 @@ const ExerciseChecklist = ({
     fetchData();
   }, [fetchData]);
 
+  // Mostra apenas os HEP vinculados à condição em foco.
+  // Programas sem avaliação vinculada (legado / criados manualmente) seguem visíveis.
+  const visiblePrograms = useMemo(() => {
+    if (!filterByCondition || !conditionAssessmentIds || conditionAssessmentIds.length === 0) {
+      return programs;
+    }
+    const allowed = new Set(conditionAssessmentIds);
+    const matched = programs.filter((p) => p.assessmentId && allowed.has(p.assessmentId));
+    const unlinked = programs.filter((p) => !p.assessmentId);
+    return [...matched, ...unlinked];
+  }, [programs, filterByCondition, conditionAssessmentIds]);
+
+  const hiddenCount = programs.length - visiblePrograms.length;
+
   // Check if all done
   useEffect(() => {
-    const totalItems = programs.reduce((sum, p) => sum + p.items.length, 0);
-    if (totalItems > 0 && completedToday.size === totalItems && !allDone) {
+    const totalItems = visiblePrograms.reduce((sum, p) => sum + p.items.length, 0);
+    const doneVisible = visiblePrograms
+      .flatMap((p) => p.items)
+      .filter((i) => completedToday.has(i.id)).length;
+    if (totalItems > 0 && doneVisible === totalItems && !allDone) {
       setAllDone(true);
       setTimeout(() => setAllDone(false), 3000);
     }
-  }, [completedToday, programs]);
+  }, [completedToday, visiblePrograms]);
+
 
   const toggleExercise = async (programId: string, itemId: string) => {
     if (!user) return;
