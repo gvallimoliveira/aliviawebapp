@@ -2242,18 +2242,32 @@ function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number
 function renderSubSection(doc: jsPDF, y: number, title: string, body: string): number {
   doc.setFontSize(8);
   const lines = doc.splitTextToSize(body, SECTION_TEXT_W);
-  const minBodyLines = Math.min(lines.length, 3);
+  const minBodyLines = Math.min(lines.length, 4);
   const neededForGroup = 5 + minBodyLines * 3.5 + 6;
   y = checkPage(doc, y, neededForGroup);
-  doc.setFont("Inter", "bold");
-  doc.setFontSize(9);
-  doc.setTextColor(...COLORS.foreground);
-  doc.text(title, SECTION_X, y);
-  y += 5;
+
+  const drawTitle = (yy: number) => {
+    doc.setFont("Inter", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(title, SECTION_X, yy);
+    return yy + 5;
+  };
+
+  y = drawTitle(y);
+
   doc.setFont("Inter", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
-  y = checkPage(doc, y, lines.length * 3.5);
+  // Never leave the title orphaned: if the body needs a new page, move the
+  // title along with it instead of printing it alone at the bottom.
+  const yAfterCheck = checkPage(doc, y, Math.min(lines.length, 4) * 3.5);
+  if (yAfterCheck !== y) {
+    y = drawTitle(yAfterCheck);
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...COLORS.muted);
+  }
   doc.text(lines, SECTION_X, y);
   y += lines.length * 3.5 + 6;
   return y;
