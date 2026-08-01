@@ -1,7 +1,24 @@
 import jsPDF from "jspdf";
 import { regionsByView, type View, type ClickableRegion } from "@/components/assessment/painMapData";
 import { questionnaires, getApplicableQuestionnaires } from "@/data/questionnaireData";
+import { functionalTests } from "@/data/functionalTestsData";
+import ptLocale from "@/locales/pt.json";
+import enLocale from "@/locales/en.json";
+import esLocale from "@/locales/es.json";
 import { registerInterFonts } from "./fonts/registerInterFonts";
+
+/**
+ * Resolves the display name of a functional test (id → i18n name), so the PDF
+ * "Test Results" section is never blank when the assessment only stored
+ * `{ testId, painful }` entries.
+ */
+function resolveFunctionalTestName(testId: string, isPt: boolean, lang?: string): string {
+  const def = functionalTests.find((t) => t.id === testId);
+  const dict = (lang === "es" ? esLocale : isPt ? ptLocale : enLocale) as Record<string, string>;
+  if (def && dict[def.nameKey]) return dict[def.nameKey];
+  return testId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 
 /**
  * Creates a new jsPDF document with the embedded Inter font family registered.
