@@ -14,6 +14,7 @@ interface ProgramWithItems {
   programId: string;
   programName: string;
   professionalName: string;
+  assessmentId: string | null;
   items: {
     id: string;
     name: string;
@@ -23,7 +24,20 @@ interface ProgramWithItems {
   }[];
 }
 
-const ExerciseChecklist = () => {
+interface Props {
+  /** IDs das avaliações da condição em foco (vazio/undefined = sem filtro) */
+  conditionAssessmentIds?: string[];
+  /** Rótulo da condição em foco, usado no aviso de filtro */
+  conditionLabel?: string;
+  /** Só filtra quando o paciente tem mais de uma condição */
+  filterByCondition?: boolean;
+}
+
+const ExerciseChecklist = ({
+  conditionAssessmentIds,
+  conditionLabel,
+  filterByCondition = false,
+}: Props) => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const [programs, setPrograms] = useState<ProgramWithItems[]>([]);
@@ -46,6 +60,7 @@ const ExerciseChecklist = () => {
       setLoading(false);
       return;
     }
+
 
     const programIds = myPrograms.map((p: any) => p.program_id);
 
