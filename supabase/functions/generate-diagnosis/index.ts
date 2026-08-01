@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, forceRefresh, assessmentId } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, forceRefresh, assessmentId, previousBasicDiagnosis } = await req.json();
     const creditDecision = await assertCreditsAvailable(req, { function_name: "generate-diagnosis" });
     console.log("[ai-credits] generate-diagnosis decision:", JSON.stringify({
       reason: creditDecision.reason,
@@ -61,7 +61,7 @@ serve(async (req) => {
       }
     };
 
-    const cachePayload = { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed };
+    const cachePayload = { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ diagnosis: unknown }>(admin, "generate-diagnosis", cachePayload);
       if (cached) {
@@ -501,6 +501,18 @@ ${redFlagsDismissed ? `- The red flag(s) have ALREADY been dismissed by the atte
 - Still provide a "hypothesis" field so the professional has a working differential, but the "disclaimer" and "summary" must make crystal clear that medical clearance is required before any treatment plan.`}
 ` : ""}
 
+${previousBasicDiagnosis?.hypothesis ? `
+DIAGNOSTIC CONTINUITY (MANDATORY — the patient already received a first hypothesis):
+This same patient completed the free/basic assessment moments ago and was shown this preliminary hypothesis:
+- Previous hypothesis: "${previousBasicDiagnosis.hypothesis}"
+- Previous confidence: "${previousBasicDiagnosis.confidence || "n/a"}"
+- Previous summary: "${previousBasicDiagnosis.summary || "n/a"}"
+
+Rules:
+1. If the new data (questionnaires, functional tests, extra anamnesis) does NOT contradict that hypothesis, KEEP THE SAME DIAGNOSTIC LINE and the same hypothesis naming/terminology. Refine, deepen and detail it (mechanism, severity, involved structures) instead of renaming it. Do not swap synonyms or reframe the pain mechanism just for style — a patient reading both reports must recognise it as one continuous reasoning.
+2. Only change the hypothesis when the new objective data genuinely contradicts or outweighs the previous one.
+3. When (and only when) you change it, you MUST fill the "hypothesisChange" field with: the previous hypothesis, the current one, and a clear patient-friendly justification naming which premium answers/tests drove the revision. If you keep the same line, set "hypothesisChange" to null.
+` : ""}
 Response format (JSON):
 {
   "hypothesis": "Main diagnostic hypothesis name",
@@ -512,7 +524,8 @@ Response format (JSON):
   "reasoning": "Why this hypothesis based on the provided data, including questionnaire score interpretation",
   "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
   "functionalProfile": "Summary of the patient's functional limitations based on questionnaire subscale scores (e.g., most affected areas: daily activities, sport, quality of life)",`}
-  "disclaimer": "${isProfessional ? (lang === "English" ? "Preliminary hypothesis for triage purposes. The definitive diagnosis will be the responsibility of the attending physiotherapist." : "Hipótese preliminar para fins de triagem. O diagnóstico definitivo será de responsabilidade do fisioterapeuta responsável.") : "Medical disclaimer text"}"
+  ${previousBasicDiagnosis?.hypothesis && !isBasic ? `"hypothesisChange": null | { "previousHypothesis": "...", "currentHypothesis": "...", "reason": "Patient-friendly explanation of why the hypothesis changed, citing the premium answers/tests responsible" },
+  ` : ""}"disclaimer": "${isProfessional ? (lang === "English" ? "Preliminary hypothesis for triage purposes. The definitive diagnosis will be the responsibility of the attending physiotherapist." : "Hipótese preliminar para fins de triagem. O diagnóstico definitivo será de responsabilidade do fisioterapeuta responsável.") : "Medical disclaimer text"}"
 }`;
 
     const userPrompt = `Patient anamnesis data:

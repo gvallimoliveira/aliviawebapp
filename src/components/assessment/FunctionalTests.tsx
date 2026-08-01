@@ -171,22 +171,22 @@ const FunctionalTests = ({ painRegions, onComplete, onBack, hasQuestionnaires = 
               {/* Binary answer */}
               <div className="space-y-2">
                 <p className="text-sm font-medium text-foreground">{t("ftest.question")}</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
                   <Button
                     variant={answeredCurrent?.painful === true ? "default" : "outline"}
-                    className="h-auto py-3 rounded-xl gap-2"
+                    className="h-auto min-h-12 w-full py-3 px-3 rounded-xl gap-2 whitespace-normal text-center leading-snug"
                     onClick={() => handleAnswer(true)}
                   >
-                    <X className="h-4 w-4" />
-                    {t("ftest.painful")}
+                    <X className="h-4 w-4 shrink-0" />
+                    <span className="min-w-0">{t("ftest.painful")}</span>
                   </Button>
                   <Button
                     variant={answeredCurrent?.painful === false ? "default" : "outline"}
-                    className="h-auto py-3 rounded-xl gap-2"
+                    className="h-auto min-h-12 w-full py-3 px-3 rounded-xl gap-2 whitespace-normal text-center leading-snug"
                     onClick={() => handleAnswer(false)}
                   >
-                    <Check className="h-4 w-4" />
-                    {t("ftest.no_pain")}
+                    <Check className="h-4 w-4 shrink-0" />
+                    <span className="min-w-0">{t("ftest.no_pain")}</span>
                   </Button>
                 </div>
               </div>

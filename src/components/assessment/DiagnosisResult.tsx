@@ -17,6 +17,11 @@ interface Diagnosis {
   reasoning?: string;
   recommendations?: string[];
   disclaimer: string;
+  hypothesisChange?: {
+    previousHypothesis?: string;
+    currentHypothesis?: string;
+    reason?: string;
+  } | null;
 }
 
 interface DiagnosisResultProps {
@@ -33,6 +38,8 @@ interface DiagnosisResultProps {
   anamnesisData?: any;
   testResults?: any;
   hideFooterActions?: boolean;
+  /** Probatory red-flag payload from this flow, carried into the premium upgrade. */
+  redFlagPayload?: any;
 }
 
 const BlurredPreview = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -52,7 +59,7 @@ const BlurredPreview = ({ title, children }: { title: string; children: React.Re
   </Card>
 );
 
-const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData, testResults, hideFooterActions }: DiagnosisResultProps) => {
+const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateTreatment, assessmentId, patientName, patientEmail, painRegions, painScore, anamnesisData, testResults, hideFooterActions, redFlagPayload }: DiagnosisResultProps) => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
 
@@ -124,6 +131,39 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
           <p className="text-sm text-muted-foreground leading-relaxed">{diagnosis.summary}</p>
         </CardContent>
       </Card>
+
+      {/* Continuity: hypothesis refined/changed vs. the basic assessment */}
+      {mode === "premium" && diagnosis.hypothesisChange?.reason && (
+        <Card className="rounded-xl border-primary/30 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" />
+              {language === "en"
+                ? "Your hypothesis was refined"
+                : language === "es"
+                ? "Tu hipótesis fue refinada"
+                : "Sua hipótese foi refinada"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {diagnosis.hypothesisChange.previousHypothesis && (
+              <p className="text-sm text-foreground">
+                <span className="text-muted-foreground">
+                  {language === "en" ? "Initial assessment" : language === "es" ? "Evaluación inicial" : "Avaliação inicial"}:
+                </span>{" "}
+                {diagnosis.hypothesisChange.previousHypothesis}
+                {" → "}
+                <span className="font-medium">
+                  {diagnosis.hypothesisChange.currentHypothesis || diagnosis.hypothesis}
+                </span>
+              </p>
+            )}
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {diagnosis.hypothesisChange.reason}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Premium-only sections (shown normally for premium, blurred for basic) */}
       {mode === "premium" && diagnosis.explanation && (
@@ -242,6 +282,12 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                       painScore: painScore,
                       capturedName: patientName || "",
                       capturedEmail: patientEmail || "",
+                      redFlagPayload: redFlagPayload || null,
+                      basicDiagnosis: {
+                        hypothesis: diagnosis.hypothesis,
+                        confidence: diagnosis.confidence,
+                        summary: diagnosis.summary,
+                      },
                     });
                     sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-data", upgradeData);
@@ -273,6 +319,12 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
                       painScore: painScore,
                       capturedName: patientName || "",
                       capturedEmail: patientEmail || "",
+                      redFlagPayload: redFlagPayload || null,
+                      basicDiagnosis: {
+                        hypothesis: diagnosis.hypothesis,
+                        confidence: diagnosis.confidence,
+                        summary: diagnosis.summary,
+                      },
                     });
                     sessionStorage.setItem("alivia-basic-upgrade-data", upgradeData);
                     localStorage.setItem("alivia-basic-upgrade-data", upgradeData);

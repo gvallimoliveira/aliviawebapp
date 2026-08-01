@@ -88,6 +88,7 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [External Assessment Upload](mem://features/external-assessment-upload) — Upload PDF/imagem de avaliação externa, IA mapeia para o padrão Aliv.iA, vira avaliação nativa via prefillData no ManualAssessmentModal.
 - [AI Credits Workspace Plan](mem://business/ai-credits-workspace-plan) — Plano de créditos de IA: tabelas, edge functions, IDs Stripe, carência 20% da clínica e Fase 7 futura (dashboard admin de rentabilidade por período/tipo de cliente).
 - [Credits Sufficiency Table on Landings](mem://features/credits-sufficiency-table-landings) — Tabela de "quantas vezes cabem no plano" para landings Pro/Clínica/Acadêmico, tranquilizando sobre suficiência dos créditos.
+- [Continuidade básica → premium](mem://features/basic-to-premium-continuity) — Red flags reaproveitadas (sem repetir a etapa) e hipótese diagnóstica contínua com explicação de mudança no upgrade.
 - [LGPD Compliance](mem://features/lgpd-compliance) — Controlador/DPO, páginas /privacidade e /termos, consentimento versionado, direitos do titular e proibição de session replay.
 
 - [Chat Addon Flag](mem://features/chat-addon-flag) — `ENABLE_CHAT_ADDON=false`: card de venda do Chat do Agente só volta a aparecer no mesmo deploy do enforcement do chat.
