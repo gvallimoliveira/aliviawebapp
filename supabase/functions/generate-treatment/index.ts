@@ -397,7 +397,7 @@ Generate a personalized 3-phase treatment plan in valid JSON format. Focus exerc
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3,
-        max_tokens: 4000,
+        max_tokens: 8000,
       }),
     });
 
