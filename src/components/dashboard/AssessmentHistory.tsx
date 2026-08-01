@@ -255,6 +255,7 @@ const AssessmentHistory = ({
                             })}
                           </div>
                         </div>
+
                         <Badge variant="outline" className={`text-[10px] px-2 py-0.5 gap-1 ${statusConfig.color}`}>
                           <StatusIcon className={`h-3 w-3 ${a.status === "in_progress" ? "animate-spin" : ""}`} />
                           {statusConfig.label}
