@@ -1429,5 +1429,9 @@
   "dashboard.continue_assessment": "Continuar evaluación",
   "assessment.prefilled.badge": "De la evaluación anterior",
   "assessment.prefilled.banner": "Algunos campos se pre-rellenaron con base en la evaluación anterior. Revise y edite si algo cambió.",
-  "assessment.prefilled.lastPainScore": "EVA anterior: {{value}}/10 (solo referencia)"
+  "assessment.prefilled.lastPainScore": "EVA anterior: {{value}}/10 (solo referencia)",
+  "diagnosis.report_title": "Informe de la evaluación",
+  "diagnosis.download_report": "Descargar informe en PDF",
+  "diagnosis.report_hint_full": "Ya puedes descargar o enviar el informe con la hipótesis clínica. Si generas el plan de tratamiento, un nuevo informe completo (con ejercicios y fases) estará disponible en la pantalla siguiente.",
+  "diagnosis.report_hint": "Descarga o envía el informe con la hipótesis clínica."
 }

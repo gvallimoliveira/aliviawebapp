@@ -343,20 +343,22 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
-              {t("pdf.export") || "Laudo em PDF"}
+              {t("diagnosis.report_title") || "Laudo da avaliação"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-muted-foreground leading-relaxed">
               {onGenerateTreatment
-                ? "Você já pode baixar ou enviar o laudo com a hipótese clínica. Se gerar o plano de tratamento, um novo laudo completo (com exercícios e fases) ficará disponível na tela seguinte."
-                : "Baixe ou envie o laudo com a hipótese clínica."}
+                ? t("diagnosis.report_hint_full") ||
+                  "Você já pode baixar ou enviar o laudo com a hipótese clínica. Se gerar o plano de tratamento, um novo laudo completo (com exercícios e fases) ficará disponível na tela seguinte."
+                : t("diagnosis.report_hint") || "Baixe ou envie o laudo com a hipótese clínica."}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button onClick={handleExportPdf} disabled={pdfLoading} className="rounded-xl gap-2">
                 {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                {t("pdf.export") || "Baixar PDF"}
+                {t("diagnosis.download_report") || "Baixar laudo em PDF"}
               </Button>
+
               <Button variant="outline" onClick={handleShareWhatsApp} disabled={whatsappLoading} className="rounded-xl gap-2">
                 {whatsappLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
                 WhatsApp
