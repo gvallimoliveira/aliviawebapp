@@ -970,6 +970,28 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         return;
       }
 
+      case "call-renegotiate": {
+        // The other side rebuilt its peer connection: the caller must produce a
+        // brand new offer instead of replaying the stale one.
+        if (payload.callId !== currentCallId) return;
+        if (!isCallerRef.current) return;
+        if (!["calling", "connecting"].includes(stateRef.current)) return;
+        if (connectedOnceRef.current) return;
+
+        const stream = localStreamRef.current;
+        if (!isStreamUsable(stream)) return;
+
+        console.warn("[VideoCall][Caller] call-renegotiate received — rebuilding offer");
+        negotiationStartedRef.current = null;
+        appliedOfferSdpRef.current = null;
+        appliedAnswerSdpRef.current = null;
+        processingSignalsRef.current.clear();
+        resetPeerSession(stream);
+        setStateSync("calling");
+        await beginCallerNegotiation(convId, payload.callId);
+        return;
+      }
+
       case "offer": {
         if (payload.callId !== currentCallId) {
           console.log("[VideoCall][Receiver] offer ignored — callId mismatch:", payload.callId, "expected:", currentCallId);
@@ -990,6 +1012,28 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           }
           return;
         }
+
+        // A DIFFERENT offer over an already-negotiated connection means the
+        // caller restarted the negotiation: rebuild locally before applying it.
+        if (
+          payload.sdp &&
+          appliedOfferSdpRef.current &&
+          appliedOfferSdpRef.current !== payload.sdp &&
+          !connectedOnceRef.current &&
+          pc.signalingState === "stable"
+        ) {
+          const localStream = localStreamRef.current;
+          if (isStreamUsable(localStream)) {
+            console.warn("[VideoCall][Receiver] new offer after stale negotiation — rebuilding peer connection");
+            appliedOfferSdpRef.current = null;
+            appliedAnswerSdpRef.current = null;
+            processingSignalsRef.current.clear();
+            createPeerConnection(localStream!, convId, payload.callId);
+            await handleSignalRef.current(convId, payload);
+            return;
+          }
+        }
+
 
         const signalKey = `offer:${payload.callId}:${payload.sdp || ""}`;
         if (processingSignalsRef.current.has(signalKey)) {
