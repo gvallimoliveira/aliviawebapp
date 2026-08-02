@@ -941,16 +941,28 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     if (stateRef.current !== "idle") return;
 
     joinedFromPushRef.current = callId;
-    const { data, error } = await (supabase.from("video_call_sessions" as any) as any)
+    let row: any = null;
+    const { data } = await (supabase.from("video_call_sessions" as any) as any)
       .select("*")
       .eq("id", callId)
       .eq("conversation_id", convId)
       .maybeSingle();
-    if (error || !data || data.status !== "ringing" || new Date(data.expires_at).getTime() <= Date.now()) {
+    row = data;
+
+    // Cold boot from a notification can race the session hydration. Fall back
+    // to the server-side pending lookup so the ringing popup still appears.
+    if (!row) {
+      const { data: pending } = await supabase.functions.invoke("video-call-session", {
+        body: { action: "pending" },
+      });
+      if (pending?.call?.id === callId) row = pending.call;
+    }
+
+    if (!row || row.status !== "ringing" || new Date(row.expires_at).getTime() <= Date.now()) {
       toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
       return;
     }
-    presentPersistedIncomingCall(data as PersistedCallSession);
+    presentPersistedIncomingCall(row as PersistedCallSession);
     void sendSignal(convId, { type: "call-ready", callId });
   }, [presentPersistedIncomingCall, sendSignal, t]);
 
