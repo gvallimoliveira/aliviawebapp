@@ -1109,6 +1109,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         const pc = pcRef.current;
         if (!pc) {
           console.error("[VideoCall][Caller] answer received but NO PC");
+          if (await attemptAutoRetryRef.current("answer-without-pc")) return;
           endCallInternal(true, "Falha ao aplicar a resposta da videochamada");
           return;
         }
