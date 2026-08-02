@@ -569,6 +569,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           return;
         }
 
+        // Residual/stale negotiation state: rebuild everything once more
+        // before telling the user the call failed.
+        if (await attemptAutoRetryRef.current("connection-timeout")) return;
+
         toast({ title: message, variant: "destructive" });
         endCallInternal(true, message);
       })();
