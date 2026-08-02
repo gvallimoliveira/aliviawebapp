@@ -1137,6 +1137,38 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           void beginCallerNegotiation(call.conversation_id, call.id);
         }
 
+        // Durable SDP fallback. Broadcast remains the fast path, but database
+        // changes recover offer/answer delivery after a channel reconnect.
+        if (
+          call.id === callIdRef.current &&
+          call.recipient_user_id === user.id &&
+          call.offer_sdp &&
+          call.offer_sdp !== appliedOfferSdpRef.current &&
+          (stateRef.current === "ringing" || stateRef.current === "connecting")
+        ) {
+          void handleSignalRef.current(call.conversation_id, {
+            type: "offer",
+            callId: call.id,
+            sdp: call.offer_sdp,
+            from: call.caller_user_id,
+          });
+        }
+
+        if (
+          call.id === callIdRef.current &&
+          call.caller_user_id === user.id &&
+          call.answer_sdp &&
+          call.answer_sdp !== appliedAnswerSdpRef.current &&
+          stateRef.current === "connecting"
+        ) {
+          void handleSignalRef.current(call.conversation_id, {
+            type: "answer",
+            callId: call.id,
+            sdp: call.answer_sdp,
+            from: call.recipient_user_id,
+          });
+        }
+
         if (call.id === callIdRef.current && TERMINAL_STATUSES.includes(call.status)) {
           if (stateRef.current === "calling" && call.status === "missed") toast({ title: t("chat.video_no_answer") });
           resetToIdle();
@@ -1367,22 +1399,19 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         const answer = await pc.createAnswer();
         console.log("[VideoCall][Receiver] createAnswer OK — setLocalDescription...");
         await pc.setLocalDescription(answer);
+        await waitForIceGathering(pc);
         console.log("[VideoCall][Receiver] setLocalDescription OK — sending answer...");
         startConnectionTimeout();
+
+        const answerSdp = pc.localDescription?.sdp || answer.sdp || "";
+        await persistSignal(callId, "answer", answerSdp);
 
         const answerSent = await sendSignal(convId, {
           type: "answer",
           callId,
-          sdp: answer.sdp,
+          sdp: answerSdp,
         });
-
-        if (!answerSent) {
-          console.error("[VideoCall][Receiver] sendSignal(answer) FAILED");
-          endCallInternal(true, "Falha ao enviar a resposta da videochamada");
-          return;
-        } else {
-          console.log("[VideoCall][Receiver] answer sent OK (from buffered offer path)");
-        }
+        console.log("[VideoCall][Receiver] buffered answer transport result", answerSent);
       } catch (error) {
         console.error("[VideoCall] Late offer answer failed", error);
         endCallInternal(true, "Falha ao concluir a videochamada");
@@ -1397,9 +1426,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       });
 
       if (!acceptSent) {
-        console.error("[VideoCall][Receiver] sendSignal(call-accept) FAILED");
-        endCallInternal(true, "Falha ao confirmar a videochamada");
-        return;
+        console.warn("[VideoCall][Receiver] call-accept transport unavailable; durable accepted status will recover negotiation");
       } else {
         console.log("[VideoCall][Receiver] call-accept sent OK — waiting for offer...");
       }
@@ -1446,9 +1473,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     sendSignal,
     setStateSync,
     startConnectionTimeout,
+    persistSignal,
     t,
     updatePersistedCall,
     user,
+    waitForIceGathering,
   ]);
 
   const handleRejectCall = useCallback(() => {
