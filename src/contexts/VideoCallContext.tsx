@@ -697,6 +697,50 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     }
   }, [stopStream, t]);
 
+  // Caller side: create and send the offer once the recipient accepted.
+  // Reachable from two independent paths (realtime broadcast `call-accept` and
+  // the durable database status change), guarded to negotiate only once.
+  const beginCallerNegotiation = useCallback(async (
+    convId: string,
+    callId: string,
+    otherName?: string,
+  ) => {
+    if (negotiationStartedRef.current === callId) return;
+    if (stateRef.current !== "calling") return;
+    negotiationStartedRef.current = callId;
+
+    clearCallTimeout();
+    if (otherName) setRemoteUserName(otherName);
+    setStateSync("connecting");
+    startConnectionTimeout();
+
+    const stream = localStreamRef.current;
+    if (!stream) {
+      endCallInternal(true, "Falha ao iniciar a mídia local da videochamada");
+      return;
+    }
+
+    const pc = createPeerConnection(stream, convId, callId);
+
+    try {
+      const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+      console.log("[VideoCall][Caller] createOffer OK — sdp length:", offer.sdp?.length);
+      await pc.setLocalDescription(offer);
+      const offerSent = await sendSignal(convId, { type: "offer", callId, sdp: offer.sdp });
+
+      if (!offerSent) {
+        console.error("[VideoCall][Caller] sendSignal(offer) FAILED");
+        endCallInternal(true, "Falha ao enviar a oferta da videochamada");
+      } else {
+        console.log("[VideoCall][Caller] offer sent OK");
+      }
+    } catch (error) {
+      console.error("[VideoCall] Offer failed", error);
+      endCallInternal(true, "Falha ao negociar a videochamada");
+    }
+  }, [clearCallTimeout, createPeerConnection, endCallInternal, sendSignal, setStateSync, startConnectionTimeout]);
+
+
   const handleSignal = useCallback(async (convId: string, payload: SignalPayload) => {
     if (!user || payload.from === user.id) {
       return;
