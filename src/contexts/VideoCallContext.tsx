@@ -1120,7 +1120,12 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       });
       return;
     }
-    if (stateRef.current !== "idle" && callIdRef.current !== call.id) return;
+    if (stateRef.current !== "idle") {
+      // A delayed INSERT/ringing event for the same call must never move an
+      // already accepted call backwards from connecting/connected to ringing.
+      if (callIdRef.current === call.id && stateRef.current === "ringing") return;
+      return;
+    }
 
     persistedCallRef.current = call;
     callIdRef.current = call.id;
@@ -1184,7 +1189,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       .on("postgres_changes", { event: "*", schema: "public", table: "video_call_sessions" }, (event: any) => {
         const call = event.new as PersistedCallSession | undefined;
         if (!call) return;
-        if (call.recipient_user_id === user.id && call.status === "ringing") presentPersistedIncomingCall(call);
+        if (
+          call.recipient_user_id === user.id &&
+          call.status === "ringing" &&
+          stateRef.current === "idle"
+        ) presentPersistedIncomingCall(call);
 
         // Durable accept path: if the broadcast `call-accept` never landed
         // (recipient booting from a push, app in background), the database
