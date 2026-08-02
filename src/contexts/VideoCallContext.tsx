@@ -1049,7 +1049,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           (call.status === "accepted" || call.status === "connecting") &&
           stateRef.current === "calling"
         ) {
-          void beginCallerNegotiation(call.conversation_id, call.id, call.caller_name);
+          void beginCallerNegotiation(call.conversation_id, call.id);
         }
 
         if (call.id === callIdRef.current && TERMINAL_STATUSES.includes(call.status)) {
