@@ -210,6 +210,8 @@ export function usePushNotifications() {
   const unsubscribe = useCallback(async () => {
     if (!isSupported || !user) return;
     setLoading(true);
+    // Manual opt-out is the only way the flag is cleared.
+    writeOptIn(false);
     try {
       const reg = await navigator.serviceWorker.getRegistration("/sw-push.js");
       if (!reg) {
