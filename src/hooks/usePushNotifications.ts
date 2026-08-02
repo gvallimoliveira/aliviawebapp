@@ -127,26 +127,34 @@ export function usePushNotifications() {
     }
     setPermission(Notification.permission as PushPermission);
 
-    // Check if already subscribed (only if SW already registered)
+    // Already granted: self-heal a subscription lost to an app update.
     if (Notification.permission === "granted" && user) {
-      navigator.serviceWorker.getRegistration("/sw-push.js").then(async (reg) => {
-        if (reg) {
-          const sub = await reg.pushManager.getSubscription();
-          if (sub && isStaleSubscription(sub)) {
-            // VAPID keys rotated on the server — drop the dead subscription.
-            const endpoint = sub.endpoint;
-            await sub.unsubscribe().catch(() => {});
-            await (supabase.from("push_subscriptions" as any) as any)
-              .delete()
-              .eq("user_id", user.id)
-              .eq("endpoint", endpoint);
-            setSubscribed(false);
-          } else {
-            setSubscribed(!!sub);
+      (async () => {
+        try {
+          if (readOptIn()) {
+            const healed = await healPushSubscription(user.id);
+            setSubscribed(healed);
+            if (healed) return;
           }
+          const reg = await navigator.serviceWorker.getRegistration("/sw-push.js");
+          if (reg) {
+            const sub = await reg.pushManager.getSubscription();
+            if (sub && isStaleSubscription(sub)) {
+              const endpoint = sub.endpoint;
+              await sub.unsubscribe().catch(() => {});
+              await (supabase.from("push_subscriptions" as any) as any)
+                .delete()
+                .eq("user_id", user.id)
+                .eq("endpoint", endpoint);
+              setSubscribed(false);
+            } else {
+              setSubscribed(!!sub);
+            }
+          }
+        } finally {
+          setReady(true);
         }
-        setReady(true);
-      }).catch(() => setReady(true));
+      })();
     } else {
       setReady(true);
     }
