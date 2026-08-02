@@ -149,6 +149,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const endingRef = useRef(false);
   const connectedOnceRef = useRef(false);
   const disconnectRestartAttemptsRef = useRef(0);
+  // Auto-retry of the whole negotiation (fresh RTCPeerConnection + new SDP).
+  const retryAttemptsRef = useRef(0);
+  const retryingRef = useRef(false);
+  const isCallerRef = useRef(false);
+  const attemptAutoRetryRef = useRef<(reason: string) => Promise<boolean>>(async () => false);
   const handleSignalRef = useRef<(convId: string, payload: SignalPayload) => Promise<void>>(async () => {});
   const persistedCallRef = useRef<PersistedCallSession | null>(null);
   // Set when the user opened the app from a push notification: we show the
