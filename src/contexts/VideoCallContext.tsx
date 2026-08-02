@@ -274,6 +274,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       clearTimeout(joinConfirmTimeoutRef.current);
       joinConfirmTimeoutRef.current = null;
     }
+    if (acceptResendTimeoutRef.current) {
+      clearTimeout(acceptResendTimeoutRef.current);
+      acceptResendTimeoutRef.current = null;
+    }
+    negotiationStartedRef.current = null;
     resetPeerSession();
     resetVisualState();
   }, [clearCallTimeout, resetPeerSession, resetVisualState]);
