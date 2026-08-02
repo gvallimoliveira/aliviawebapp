@@ -646,23 +646,28 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     clearDisconnectGrace();
 
     disconnectGraceRef.current = window.setTimeout(() => {
-      const pc = pcRef.current;
-      if (!pc) {
-        return;
-      }
-
-      if (disconnectRestartAttemptsRef.current < 1) {
-        disconnectRestartAttemptsRef.current += 1;
-        try {
-          pc.restartIce();
-          startConnectionTimeout("Tentando restabelecer a videochamada");
+      void (async () => {
+        const pc = pcRef.current;
+        if (!pc) {
           return;
-        } catch (error) {
-          console.warn("[VideoCall] ICE restart failed", error);
         }
-      }
 
-      endCallInternal(true, "Falha ao manter a conexão da videochamada");
+        if (disconnectRestartAttemptsRef.current < 1) {
+          disconnectRestartAttemptsRef.current += 1;
+          try {
+            pc.restartIce();
+            startConnectionTimeout("Tentando restabelecer a videochamada");
+            return;
+          } catch (error) {
+            console.warn("[VideoCall] ICE restart failed", error);
+          }
+        }
+
+        // Never connected yet → full renegotiation instead of hanging up.
+        if (!connectedOnceRef.current && await attemptAutoRetryRef.current("ice-failure-before-connect")) return;
+
+        endCallInternal(true, "Falha ao manter a conexão da videochamada");
+      })();
     }, DISCONNECT_GRACE_MS);
   }, [clearDisconnectGrace, endCallInternal, startConnectionTimeout]);
 
