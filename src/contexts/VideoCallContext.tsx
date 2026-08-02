@@ -297,6 +297,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     negotiationStartedRef.current = null;
     appliedOfferSdpRef.current = null;
     appliedAnswerSdpRef.current = null;
+    retryAttemptsRef.current = 0;
+    retryingRef.current = false;
     processingSignalsRef.current.clear();
     resetPeerSession();
     resetVisualState();
