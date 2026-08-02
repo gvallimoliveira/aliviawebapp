@@ -1558,20 +1558,15 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     // of any tab. Navigating early was tearing down the receiver UI on mobile.
   }, [
     createPeerConnection,
-    endCallInternal,
     fetchCallRow,
-    flushPendingCandidates,
     getMedia,
     insertSystemMessage,
     resetToIdle,
     sendSignal,
     setStateSync,
     startConnectionTimeout,
-    persistSignal,
-    t,
     updatePersistedCall,
     user,
-    waitForIceGathering,
   ]);
 
   const handleRejectCall = useCallback(() => {
