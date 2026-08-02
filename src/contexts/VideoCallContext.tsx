@@ -149,6 +149,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   // ringing UI optimistically and wait for the caller to re-affirm the call.
   const joinConfirmTimeoutRef = useRef<number | null>(null);
   const joinedFromPushRef = useRef<string | null>(null);
+  // Guards the caller's offer creation: the accept can arrive twice (broadcast
+  // + database realtime) and must only negotiate once.
+  const negotiationStartedRef = useRef<string | null>(null);
+  const acceptResendTimeoutRef = useRef<number | null>(null);
 
   const setStateSync = useCallback((nextState: VideoCallState) => {
     stateRef.current = nextState;
