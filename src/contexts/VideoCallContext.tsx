@@ -1239,7 +1239,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     // of negotiating a dead call and logging a failure in the chat.
     const currentRow = await fetchCallRow(callId);
     if (isTerminalRow(currentRow)) {
-      toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
+      toast({ title: "A chamada não está mais ativa" });
       resetToIdle();
       return;
     }
