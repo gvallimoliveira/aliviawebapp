@@ -56,7 +56,11 @@ const ICE_SERVERS: RTCIceServer[] = [
   },
 ];
 
-const CALL_TIMEOUT_MS = 45_000;
+// Must match `expires_at` of the durable session (video-call-session: 90s), so
+// the caller never gives up while the recipient is still booting from a push.
+const CALL_TIMEOUT_MS = 90_000;
+const ACCEPT_RESEND_MS = 3_000;
+const TERMINAL_STATUSES = ["rejected", "missed", "ended", "failed"];
 const CONNECTION_TIMEOUT_MS = 30_000;
 const DISCONNECT_GRACE_MS = 6_000;
 const SYSTEM_PREFIX = "📹 ";
