@@ -1089,6 +1089,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           console.error("[VideoCall] Answer failed", error);
           if (isPeerConnected() || (pc.signalingState === "stable" && pc.localDescription?.type === "answer")) {
             console.warn("[VideoCall][Receiver] late duplicate offer failed after negotiation; keeping call active");
+          } else if (await attemptAutoRetryRef.current("answer-failed")) {
+            console.warn("[VideoCall][Receiver] answer failed — auto-retry started");
           } else {
             endCallInternal(true, "Falha ao concluir a videochamada");
           }
