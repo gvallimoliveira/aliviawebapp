@@ -99,6 +99,7 @@ const App = () => {
               <ScrollToTop />
               <GlobalMobileMenu />
               <RealtimeNotifier />
+              <PushSubscriptionKeeper />
               <ManualAssessmentResumer />
               <PasskeyEnrollPrompt />
               <Suspense fallback={<RouteFallback />}>
