@@ -1233,6 +1233,17 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     setIsRinging(false);
     setStateSync("connecting");
     endingRef.current = false;
+
+    // The caller may already have hung up (or the invite expired) while the
+    // recipient was opening the app from the notification: end quietly instead
+    // of negotiating a dead call and logging a failure in the chat.
+    const currentRow = await fetchCallRow(callId);
+    if (isTerminalRow(currentRow)) {
+      toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
+      resetToIdle();
+      return;
+    }
+
     const persisted = await updatePersistedCall("accepted");
     if (!persisted) {
       toast({ title: "Não foi possível confirmar a chamada", variant: "destructive" });
