@@ -1039,7 +1039,20 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         const call = event.new as PersistedCallSession | undefined;
         if (!call) return;
         if (call.recipient_user_id === user.id && call.status === "ringing") presentPersistedIncomingCall(call);
-        if (call.id === callIdRef.current && ["rejected", "missed", "ended", "failed"].includes(call.status)) {
+
+        // Durable accept path: if the broadcast `call-accept` never landed
+        // (recipient booting from a push, app in background), the database
+        // status change still triggers the caller's offer.
+        if (
+          call.id === callIdRef.current &&
+          call.caller_user_id === user.id &&
+          (call.status === "accepted" || call.status === "connecting") &&
+          stateRef.current === "calling"
+        ) {
+          void beginCallerNegotiation(call.conversation_id, call.id, call.caller_name);
+        }
+
+        if (call.id === callIdRef.current && TERMINAL_STATUSES.includes(call.status)) {
           if (stateRef.current === "calling" && call.status === "missed") toast({ title: t("chat.video_no_answer") });
           resetToIdle();
         }
@@ -1051,7 +1064,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       document.removeEventListener("visibilitychange", onResume);
       supabase.removeChannel(channel);
     };
-  }, [presentPersistedIncomingCall, resetToIdle, t, user?.id]);
+  }, [beginCallerNegotiation, presentPersistedIncomingCall, resetToIdle, t, user?.id]);
 
   // 1) App was opened/reloaded by the notification (URL carries the call).
   useEffect(() => {
