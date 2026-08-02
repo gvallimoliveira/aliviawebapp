@@ -403,6 +403,23 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     return true;
   }, []);
 
+  // The database row is the durable truth about a call. Used before giving up
+  // or before writing a failure message, so we never contradict it.
+  const fetchCallRow = useCallback(async (callId: string) => {
+    try {
+      const { data } = await (supabase.from("video_call_sessions" as any) as any)
+        .select("*")
+        .eq("id", callId)
+        .maybeSingle();
+      return (data as PersistedCallSession | null) ?? null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const isTerminalRow = (row: PersistedCallSession | null) =>
+    Boolean(row && (TERMINAL_STATUSES.includes(row.status) || new Date(row.expires_at).getTime() <= Date.now()));
+
   const endCallInternal = useCallback((sendEndSignal: boolean, endMessage?: string) => {
     if (endingRef.current) {
       return;
