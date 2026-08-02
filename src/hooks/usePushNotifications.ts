@@ -196,6 +196,7 @@ export function usePushNotifications() {
       );
       if (error) throw error;
 
+      writeOptIn(true);
       setSubscribed(true);
       setLoading(false);
       return true;
