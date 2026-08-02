@@ -18,6 +18,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ClinicProvider } from "@/contexts/ClinicContext";
 import { VoiceRecorderProvider } from "@/contexts/VoiceRecorderContext";
 import RealtimeNotifier from "@/components/RealtimeNotifier";
+import PushSubscriptionKeeper from "@/components/PushSubscriptionKeeper";
 import ManualAssessmentResumer from "@/components/dashboard/ManualAssessmentResumer";
 import PasskeyEnrollPrompt from "@/components/auth/PasskeyEnrollPrompt";
 
@@ -99,6 +100,7 @@ const App = () => {
               <ScrollToTop />
               <GlobalMobileMenu />
               <RealtimeNotifier />
+              <PushSubscriptionKeeper />
               <ManualAssessmentResumer />
               <PasskeyEnrollPrompt />
               <Suspense fallback={<RouteFallback />}>

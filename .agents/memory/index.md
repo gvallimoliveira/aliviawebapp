@@ -12,7 +12,8 @@ Pro Access: Registration strictly via landing page with payment first. Stripe br
 Clinic Mode: Staff must use institutional clinic links, not personal links, to prevent private abuse. Treatments are free in clinic mode.
 Gateway/UI: Use `overflow-x-hidden` on gateway root to keep header sticky. Mobile carousels use horizontal 'peek' effect (~2.5 cards).
 Auth is critical: NO global Service Workers / PWA cache layers may intercept Supabase auth. Test login on desktop AND mobile before shipping any change to AuthContext, supabase client, main.tsx, or SW config.
-Push: triggers do banco chamam `notify-user` com `x-internal-secret` (anon key em http_post = 401). Sempre conferir `push_delivery_log`.
+Push: triggers do banco chamam `notify-user` com `x-internal-secret` (anon key em http_post = 401). Sempre conferir `push_delivery_log`. Opt-in de push é sticky (`push_opt_in_enabled_v1`) e se auto-restaura após updates; só opt-out manual desativa.
+Videochamada: fluxo CONGELADO (signaling durável + retry automático). Não mexer em VideoCallContext/video_call_sessions/triggers de push de chamada sem pedido direto do usuário.
 Final Hypothesis: PRO/Clinic owner+therapist podem sobrescrever hipótese da IA; override substitui em prontuário, PDF e WhatsApp.
 Support page: ao lançar/mudar feature relevante, atualizar Support.tsx + ClinicSupport.tsx + pt/en/es na MESMA loop.
 Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário entra direto, sem etapa /verificar-email. NÃO criar gates de email_confirmed_at em checkout/reset.
@@ -99,3 +100,5 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Admin Alert Center](mem://features/admin-alert-center) — Alertas de ticket de suporte e vendas/reembolsos Stripe via `notify-admin` (trigger + cron + auditoria).
 
 - [Multi-Condition Dashboard](mem://features/multi-condition-dashboard) — Painel pessoal agrupa avaliações por região/episódio; diário de dor, evolução e histórico por condição.
+- [Video Call Flow Frozen](mem://features/video-call-frozen) — Fluxo de videochamada congelado: arquivos e regras que não podem mudar sem autorização.
+- [Push Opt-In Persistence](mem://features/push-opt-in-persistence) — Autorização de push sticky, heal automático pós-update e opt-out manual.
