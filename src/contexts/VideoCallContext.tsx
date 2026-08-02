@@ -63,6 +63,9 @@ const ACCEPT_RESEND_MS = 3_000;
 const TERMINAL_STATUSES = ["rejected", "missed", "ended", "failed"];
 const CONNECTION_TIMEOUT_MS = 30_000;
 const DISCONNECT_GRACE_MS = 6_000;
+// A first attempt must never die from residual state: rebuild the peer
+// connection from scratch and renegotiate before declaring a failure.
+const MAX_CONNECT_RETRIES = 2;
 const SYSTEM_PREFIX = "📹 ";
 
 interface SignalPayload {
