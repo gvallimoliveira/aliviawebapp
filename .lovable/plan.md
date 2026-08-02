@@ -1,56 +1,46 @@
 ## Diagnóstico confirmado
 
-**Do I know what the issue is? Sim.**
+Os registros das tentativas de **14:02–14:05 UTC** mostram que a primeira chamada não falhou antes de conectar: os dois aparelhos registraram **“Videochamada iniciada”**, a sessão recebeu `connected_at`, e cerca de 1–2 segundos depois o lado chamador gravou **“Falha ao conectar a videochamada”** e encerrou a sessão. A segunda tentativa permaneceu ativa até o desligamento manual.
 
-Os registros das tentativas de **13:38, 13:44 e 13:45 UTC** mostram o mesmo padrão: a sessão muda para `accepted`, nunca chega a `connected` e é encerrada entre 6 e 16 segundos depois. As mensagens do anexo são emitidas exclusivamente quando `sendSignal()` devolve `false` ao enviar `call-accept` ou `answer`.
+A causa está na concorrência entre os três caminhos que hoje entregam o mesmo SDP: broadcast, evento da sessão e polling a cada segundo. Em `VideoCallContext.tsx`, esses caminhos podem entrar simultaneamente em `handleSignal()` antes de `appliedOfferSdpRef`/`appliedAnswerSdpRef` serem preenchidos. Assim, a mesma oferta/resposta é aplicada duas vezes ao `RTCPeerConnection`; a segunda aplicação pode lançar erro de estado mesmo depois da conexão ter sido estabelecida, e o `catch` atual encerra a chamada como falha. Isso explica precisamente a conexão por 2 segundos seguida de queda na primeira tentativa.
 
-A regressão está em `src/contexts/VideoCallContext.tsx`:
+Há ainda uma regressão de estado no backend: ao persistir uma oferta ou resposta, `video-call-session` força a sessão para `connecting` mesmo se ela já estiver `connected`. Isso permite que uma atualização atrasada faça o estado durável andar para trás e alimente novamente os caminhos de recuperação.
 
-- A versão anteriormente funcional enviava os sinais diretamente pelo canal e deixava a negociação prosseguir.
-- A versão atual passou a exigir que o canal armazenado esteja exatamente em `SUBSCRIBED` e trata qualquer falha/timeout de confirmação do envio como encerramento definitivo.
-- `createRealtimeChannel()` reutiliza o canal existente mesmo se ele estiver `CLOSED`, `TIMED_OUT` ou `CHANNEL_ERROR`; portanto, `waitForChannelReady()` pode ficar preso a um canal morto.
-- Em seguida, `handleAcceptCall()` encerra uma chamada já aceita quando o `call-accept` ou a `answer` não recebe confirmação. Isso explica exatamente “Falha ao confirmar...” e “Falha ao enviar a resposta...”, inclusive com os dois apps abertos.
-- O backend respondeu **200** em todas as operações das sessões; logo, a falha não está no convite, no push ou no aceite persistido.
+No fluxo vindo da notificação, a evidência disponível confirma uma corrida de inicialização, mas não identifica sozinha qual requisição falhou. A correção será acompanhada de telemetria técnica por etapa para tornar esse caminho determinístico sem alterar push, notificação ou popup.
 
-## Correção
+## Implementação
 
-1. **Consertar o ciclo de vida do canal Realtime**
-   - Recriar o canal quando estiver `CLOSED`, `TIMED_OUT` ou `CHANNEL_ERROR`, em vez de reutilizá-lo indefinidamente.
-   - Esperar uma nova assinatura real e registrar transições de status com `callId`, lado da chamada e tipo do sinal.
-   - Evitar canais duplicados durante reconexão.
+1. **Serializar oferta e resposta por chamada**
+   - Criar travas de processamento por `callId + tipo + SDP` antes do primeiro `await`.
+   - Fazer broadcast, evento da sessão e polling compartilharem a mesma operação idempotente em vez de iniciarem negociações paralelas.
+   - Marcar SDP como recebido/em processamento imediatamente e como aplicado apenas após sucesso; liberar a trava somente quando for seguro tentar novamente.
 
-2. **Remover o falso encerramento por confirmação de transporte**
-   - Não interpretar a ausência de ACK do broadcast como prova de que o outro aparelho não recebeu o sinal.
-   - `call-accept`, `offer` e `answer` terão reenvio idempotente; uma tentativa sem ACK não encerrará imediatamente mídia e sessão.
-   - Encerrar apenas por estado terminal persistido, rejeição explícita, expiração ou timeout real da negociação.
+2. **Tornar a máquina de estados monotônica**
+   - Impedir `connected → connecting` na função `video-call-session`.
+   - Rejeitar atualizações atrasadas de uma sessão terminal e preservar os timestamps existentes.
+   - No cliente, ignorar eventos duráveis atrasados que representem regressão do estado local.
 
-3. **Adicionar caminho durável para a negociação WebRTC**
-   - Manter o broadcast como caminho rápido.
-   - Persistir temporariamente `offer` e `answer` na sessão da chamada por meio da função autenticada existente, com leitura restrita aos dois participantes.
-   - Cada lado recuperará o SDP persistido se o broadcast falhar; o guard idempotente impedirá aplicar a mesma descrição duas vezes.
-   - Aguardar a coleta ICE necessária antes de persistir o SDP, reduzindo dependência de candidatos efêmeros; manter o envio incremental como otimização.
-   - Limpar os dados de negociação ao finalizar a chamada.
+3. **Não derrubar uma chamada saudável por duplicata tardia**
+   - Tratar SDP idêntico, `InvalidStateError` por descrição já aplicada e sinais antigos como duplicatas benignas.
+   - Antes de encerrar em um erro de negociação, verificar `connectionState`, `iceConnectionState`, `connectedOnceRef` e o estado durável.
+   - Se a chamada já conectou, manter a mídia e registrar apenas diagnóstico técnico; encerrar somente por falha real persistente após a janela de recuperação.
 
-4. **Preservar tudo que já funciona**
-   - Não alterar push, service worker, triggers, `notify-user`, abertura pelo aviso nem o popup de atender/recusar.
-   - Não reativar o `VideoCallListener` legado; somente o `VideoCallProvider` continuará como fonte única.
+4. **Fortalecer a primeira abertura via notificação**
+   - Tornar `joinCallFromPush` reexecutável quando a sessão/auth ainda estiver hidratando, sem deixar `joinedFromPushRef` bloquear uma nova tentativa válida.
+   - Desabilitar o botão Atender durante uma única operação e tornar o aceite idempotente no backend.
+   - Aguardar sessão ativa, canal e mídia em etapas independentes; uma indisponibilidade transitória não fechará o popup nem encerrará a chamada.
+   - Manter intactos o trigger, push, service worker, link da notificação e fluxo anterior ao aceite.
 
-5. **Impedir poluição do chat**
-   - Registrar uma única mensagem final por chamada.
-   - Falhas transitórias de transporte ficarão apenas no log técnico; o chat só mostrará falha quando a sessão realmente terminar sem conexão.
+5. **Adicionar telemetria útil sem poluir o chat**
+   - Registrar por `callId`, participante, etapa, origem do sinal (`broadcast`, evento ou polling), estados WebRTC e motivo de encerramento.
+   - Preencher `failure_reason` somente em falha terminal real.
+   - Não criar mensagens de falha no chat para duplicatas, reconexões ou erros transitórios.
 
 ## Validação obrigatória
 
-- Teste automatizado do canal em `SUBSCRIBED`, `TIMED_OUT`, `CHANNEL_ERROR` e reconexão.
-- Teste da perda de `call-accept`, `offer`, `answer` e ACK, comprovando recuperação pelo estado durável.
-- Teste com dois contextos de navegador e mídia simulada: chamada deve percorrer `ringing → accepted → connecting → connected` e permanecer ativa até desligamento explícito.
-- Verificação final no banco: `accepted_at` e `connected_at` preenchidos, sem mensagem de falha no chat.
-- Conferência separada com ambos os apps abertos e com entrada pela notificação, sem mexer no transporte das notificações.
-
-<presentation-actions>
-  <presentation-open-history>View History</presentation-open-history>
-</presentation-actions>
-
-<presentation-actions>
-<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
-</presentation-actions>
+- Testes automatizados com oferta e resposta chegando simultaneamente pelos três caminhos; cada SDP deve ser aplicado uma única vez.
+- Teste de atualização atrasada comprovando que uma sessão `connected` nunca volta a `connecting`.
+- Teste de `InvalidStateError` duplicado após conexão comprovando que a chamada permanece ativa.
+- Teste de partida fria via notificação com hidratação atrasada, aceite único e recuperação do canal.
+- Teste em dois contextos de navegador com mídia simulada: primeira chamada deve percorrer `ringing → accepted → connecting → connected` e permanecer ativa até desligamento explícito.
+- Conferência final no banco e chat: `connected_at` preenchido, `failure_reason` vazio em sucesso e nenhuma mensagem de falha/encerramento automático.
