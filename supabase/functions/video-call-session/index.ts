@@ -25,6 +25,13 @@ const SignalSchema = z.object({
 
 const PendingSchema = z.object({ action: z.literal("pending") });
 const BodySchema = z.discriminatedUnion("action", [StartSchema, UpdateSchema, SignalSchema, PendingSchema]);
+const TERMINAL_STATUSES = new Set(["rejected", "missed", "ended", "failed"]);
+const STATUS_ORDER: Record<string, number> = {
+  ringing: 0,
+  accepted: 1,
+  connecting: 2,
+  connected: 3,
+};
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -92,11 +99,11 @@ Deno.serve(async (req) => {
         const isCallerOffer = body.kind === "offer" && current.caller_user_id === user.id;
         const isRecipientAnswer = body.kind === "answer" && current.recipient_user_id === user.id;
         if (!isCallerOffer && !isRecipientAnswer) return json({ error: "Invalid signaling role" }, 403);
-        if (["rejected", "missed", "ended", "failed"].includes(current.status)) return json({ error: "Call is no longer active" }, 409);
+        if (TERMINAL_STATUSES.has(current.status)) return json({ error: "Call is no longer active" }, 409);
 
         const signalPatch = body.kind === "offer"
-          ? { offer_sdp: body.sdp, status: "connecting" }
-          : { answer_sdp: body.sdp, status: "connecting" };
+          ? { offer_sdp: body.sdp, ...(current.status === "connected" ? {} : { status: "connecting" }) }
+          : { answer_sdp: body.sdp, ...(current.status === "connected" ? {} : { status: "connecting" }) };
         const { data, error } = await admin
           .from("video_call_sessions")
           .update(signalPatch)
@@ -109,11 +116,21 @@ Deno.serve(async (req) => {
 
       const recipientOnly = new Set(["accepted", "rejected"]);
       if (recipientOnly.has(body.status) && current.recipient_user_id !== user.id) return json({ error: "Recipient action required" }, 403);
-      const terminal = new Set(["rejected", "missed", "ended", "failed"]);
+      if (TERMINAL_STATUSES.has(current.status)) {
+        return body.status === current.status
+          ? json({ call: current })
+          : json({ error: "Call is no longer active" }, 409);
+      }
+      const currentOrder = STATUS_ORDER[current.status];
+      const nextOrder = STATUS_ORDER[body.status];
+      if (nextOrder !== undefined && currentOrder !== undefined && nextOrder < currentOrder) {
+        console.log(`[VideoCallSession] ignored state regression call=${current.id} ${current.status}->${body.status}`);
+        return json({ call: current });
+      }
       const patch: Record<string, unknown> = { status: body.status };
-      if (body.status === "accepted") patch.accepted_at = new Date().toISOString();
-      if (body.status === "connected") patch.connected_at = new Date().toISOString();
-      if (terminal.has(body.status)) {
+      if (body.status === "accepted" && !current.accepted_at) patch.accepted_at = new Date().toISOString();
+      if (body.status === "connected" && !current.connected_at) patch.connected_at = new Date().toISOString();
+      if (TERMINAL_STATUSES.has(body.status)) {
         patch.ended_at = new Date().toISOString();
         patch.offer_sdp = null;
         patch.answer_sdp = null;

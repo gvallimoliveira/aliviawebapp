@@ -158,6 +158,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const acceptResendAttemptsRef = useRef(0);
   const appliedOfferSdpRef = useRef<string | null>(null);
   const appliedAnswerSdpRef = useRef<string | null>(null);
+  const processingSignalsRef = useRef<Set<string>>(new Set());
 
   const setStateSync = useCallback((nextState: VideoCallState) => {
     stateRef.current = nextState;
@@ -287,6 +288,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     negotiationStartedRef.current = null;
     appliedOfferSdpRef.current = null;
     appliedAnswerSdpRef.current = null;
+    processingSignalsRef.current.clear();
     resetPeerSession();
     resetVisualState();
   }, [clearCallTimeout, resetPeerSession, resetVisualState]);
@@ -468,6 +470,16 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
   const isTerminalRow = (row: PersistedCallSession | null) =>
     Boolean(row && (TERMINAL_STATUSES.includes(row.status) || new Date(row.expires_at).getTime() <= Date.now()));
+
+  const isPeerConnected = useCallback(() => {
+    const pc = pcRef.current;
+    return Boolean(
+      connectedOnceRef.current ||
+      pc?.connectionState === "connected" ||
+      pc?.iceConnectionState === "connected" ||
+      pc?.iceConnectionState === "completed",
+    );
+  }, []);
 
   const endCallInternal = useCallback((sendEndSignal: boolean, endMessage?: string) => {
     if (endingRef.current) {
@@ -889,6 +901,13 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           return;
         }
 
+        const signalKey = `offer:${payload.callId}:${payload.sdp || ""}`;
+        if (processingSignalsRef.current.has(signalKey)) {
+          console.log("[VideoCall][Receiver] concurrent duplicate offer ignored");
+          return;
+        }
+        processingSignalsRef.current.add(signalKey);
+
         if (acceptResendTimeoutRef.current) {
           clearInterval(acceptResendTimeoutRef.current);
           acceptResendTimeoutRef.current = null;
@@ -934,7 +953,13 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           console.log("[VideoCall][Receiver] answer transport result", answerSent);
         } catch (error) {
           console.error("[VideoCall] Answer failed", error);
-          endCallInternal(true, "Falha ao concluir a videochamada");
+          if (isPeerConnected() || (pc.signalingState === "stable" && pc.localDescription?.type === "answer")) {
+            console.warn("[VideoCall][Receiver] late duplicate offer failed after negotiation; keeping call active");
+          } else {
+            endCallInternal(true, "Falha ao concluir a videochamada");
+          }
+        } finally {
+          processingSignalsRef.current.delete(signalKey);
         }
         return;
       }
@@ -954,6 +979,13 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
         if (payload.sdp && appliedAnswerSdpRef.current === payload.sdp && pc.remoteDescription) return;
 
+        const signalKey = `answer:${payload.callId}:${payload.sdp || ""}`;
+        if (processingSignalsRef.current.has(signalKey)) {
+          console.log("[VideoCall][Caller] concurrent duplicate answer ignored");
+          return;
+        }
+        processingSignalsRef.current.add(signalKey);
+
         try {
           console.log("[VideoCall][Caller] answer received — setRemoteDescription...");
           await pc.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: payload.sdp }));
@@ -964,7 +996,13 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           startConnectionTimeout();
         } catch (error) {
           console.error("[VideoCall] Handle answer failed", error);
-          endCallInternal(true, "Falha ao conectar a videochamada");
+          if (isPeerConnected() || (pc.signalingState === "stable" && pc.remoteDescription?.type === "answer")) {
+            console.warn("[VideoCall][Caller] late duplicate answer failed after negotiation; keeping call active");
+          } else {
+            endCallInternal(true, "Falha ao conectar a videochamada");
+          }
+        } finally {
+          processingSignalsRef.current.delete(signalKey);
         }
         return;
       }
@@ -1146,29 +1184,35 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     if (stateRef.current !== "idle") return;
 
     joinedFromPushRef.current = callId;
-    let row: any = null;
-    const { data } = await (supabase.from("video_call_sessions" as any) as any)
-      .select("*")
-      .eq("id", callId)
-      .eq("conversation_id", convId)
-      .maybeSingle();
-    row = data;
+    try {
+      let row: any = null;
+      const { data } = await (supabase.from("video_call_sessions" as any) as any)
+        .select("*")
+        .eq("id", callId)
+        .eq("conversation_id", convId)
+        .maybeSingle();
+      row = data;
 
-    // Cold boot from a notification can race the session hydration. Fall back
-    // to the server-side pending lookup so the ringing popup still appears.
-    if (!row) {
-      const { data: pending } = await supabase.functions.invoke("video-call-session", {
-        body: { action: "pending" },
-      });
-      if (pending?.call?.id === callId) row = pending.call;
-    }
+      // Cold boot from a notification can race the session hydration. Fall back
+      // to the server-side pending lookup so the ringing popup still appears.
+      if (!row) {
+        const { data: pending } = await supabase.functions.invoke("video-call-session", {
+          body: { action: "pending" },
+        });
+        if (pending?.call?.id === callId) row = pending.call;
+      }
 
-    if (!row || row.status !== "ringing" || new Date(row.expires_at).getTime() <= Date.now()) {
-      toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
-      return;
+      if (!row || row.status !== "ringing" || new Date(row.expires_at).getTime() <= Date.now()) {
+        toast({ title: t("chat.video_call_expired") || "A chamada não está mais ativa" });
+        return;
+      }
+      presentPersistedIncomingCall(row as PersistedCallSession);
+      void sendSignal(convId, { type: "call-ready", callId });
+    } finally {
+      // This ref is an in-flight lock, not a permanent "already joined" flag.
+      // Auth/session hydration or a transient request failure must be retryable.
+      if (joinedFromPushRef.current === callId) joinedFromPushRef.current = null;
     }
-    presentPersistedIncomingCall(row as PersistedCallSession);
-    void sendSignal(convId, { type: "call-ready", callId });
   }, [presentPersistedIncomingCall, sendSignal, t]);
 
   // Durable recovery path: realtime while open, plus a pending-call lookup on
@@ -1393,6 +1437,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     endCallInternal,
     getMedia,
     insertSystemMessage,
+    isPeerConnected,
     resetToIdle,
     safeAttach,
     sendSignal,
