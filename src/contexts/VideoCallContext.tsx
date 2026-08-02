@@ -93,6 +93,8 @@ interface PersistedCallSession {
   push_devices_found?: number;
   push_sent?: number;
   failure_reason?: string | null;
+  offer_sdp?: string | null;
+  answer_sdp?: string | null;
 }
 
 interface VideoCallProviderProps {
@@ -154,6 +156,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const negotiationStartedRef = useRef<string | null>(null);
   const acceptResendTimeoutRef = useRef<number | null>(null);
   const acceptResendAttemptsRef = useRef(0);
+  const appliedOfferSdpRef = useRef<string | null>(null);
+  const appliedAnswerSdpRef = useRef<string | null>(null);
 
   const setStateSync = useCallback((nextState: VideoCallState) => {
     stateRef.current = nextState;
@@ -281,6 +285,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     }
     acceptResendAttemptsRef.current = 0;
     negotiationStartedRef.current = null;
+    appliedOfferSdpRef.current = null;
+    appliedAnswerSdpRef.current = null;
     resetPeerSession();
     resetVisualState();
   }, [clearCallTimeout, resetPeerSession, resetVisualState]);
@@ -301,8 +307,17 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
   const createRealtimeChannel = useCallback((convId: string) => {
     const existing = channelsRef.current.get(convId);
-    if (existing) {
+    const existingStatus = channelStatusRef.current.get(convId);
+    const unusableStatuses = new Set(["CLOSED", "CHANNEL_ERROR", "TIMED_OUT"]);
+    if (existing && !unusableStatuses.has(existingStatus || "")) {
       return existing;
+    }
+
+    if (existing) {
+      console.warn("[VideoCall] Replacing unavailable realtime channel", convId, existingStatus);
+      channelsRef.current.delete(convId);
+      channelStatusRef.current.delete(convId);
+      void supabase.removeChannel(existing);
     }
 
     const channel = supabase.channel(`video-${convId}`, {
@@ -317,8 +332,9 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       }
     });
 
-    channel.subscribe((status) => {
+    channel.subscribe((status, error) => {
       channelStatusRef.current.set(convId, status);
+      console.log("[VideoCall] Realtime channel status", convId, status, error?.message || "");
     });
 
     channelsRef.current.set(convId, channel);
@@ -326,12 +342,15 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   }, []);
 
   const waitForChannelReady = useCallback(async (convId: string) => {
-    createRealtimeChannel(convId);
+    let channel = createRealtimeChannel(convId);
 
-    for (let attempt = 0; attempt < 20; attempt += 1) {
+    for (let attempt = 0; attempt < 30; attempt += 1) {
       const status = channelStatusRef.current.get(convId);
       if (status === "SUBSCRIBED") {
         return true;
+      }
+      if (["CLOSED", "CHANNEL_ERROR", "TIMED_OUT"].includes(status || "")) {
+        channel = createRealtimeChannel(convId);
       }
       await delay(150);
     }
@@ -376,6 +395,34 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     return false;
   }, [user, waitForChannelReady]);
+
+  const persistSignal = useCallback(async (callId: string, kind: "offer" | "answer", sdp: string) => {
+    const { data, error } = await supabase.functions.invoke("video-call-session", {
+      body: { action: "signal", call_id: callId, kind, sdp },
+    });
+    if (error || data?.error) {
+      console.warn("[VideoCall] Failed to persist signaling fallback", kind, error || data?.error);
+      return false;
+    }
+    if (data?.call) persistedCallRef.current = data.call as PersistedCallSession;
+    return true;
+  }, []);
+
+  const waitForIceGathering = useCallback(async (pc: RTCPeerConnection) => {
+    if (pc.iceGatheringState === "complete") return;
+    await new Promise<void>((resolve) => {
+      const timeout = window.setTimeout(done, 2_500);
+      function done() {
+        clearTimeout(timeout);
+        pc.removeEventListener("icegatheringstatechange", onChange);
+        resolve();
+      }
+      function onChange() {
+        if (pc.iceGatheringState === "complete") done();
+      }
+      pc.addEventListener("icegatheringstatechange", onChange);
+    });
+  }, []);
 
   const resetToIdle = useCallback(() => {
     cleanup();
@@ -735,19 +782,16 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
       console.log("[VideoCall][Caller] createOffer OK — sdp length:", offer.sdp?.length);
       await pc.setLocalDescription(offer);
-      const offerSent = await sendSignal(convId, { type: "offer", callId, sdp: offer.sdp });
-
-      if (!offerSent) {
-        console.error("[VideoCall][Caller] sendSignal(offer) FAILED");
-        endCallInternal(true, "Falha ao enviar a oferta da videochamada");
-      } else {
-        console.log("[VideoCall][Caller] offer sent OK");
-      }
+      await waitForIceGathering(pc);
+      const offerSdp = pc.localDescription?.sdp || offer.sdp;
+      await persistSignal(callId, "offer", offerSdp || "");
+      const offerSent = await sendSignal(convId, { type: "offer", callId, sdp: offerSdp });
+      console.log("[VideoCall][Caller] offer transport result", offerSent);
     } catch (error) {
       console.error("[VideoCall] Offer failed", error);
       endCallInternal(true, "Falha ao negociar a videochamada");
     }
-  }, [clearCallTimeout, createPeerConnection, endCallInternal, sendSignal, setStateSync, startConnectionTimeout]);
+  }, [clearCallTimeout, createPeerConnection, endCallInternal, persistSignal, sendSignal, setStateSync, startConnectionTimeout, waitForIceGathering]);
 
 
   const handleSignal = useCallback(async (convId: string, payload: SignalPayload) => {
@@ -837,6 +881,14 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           return;
         }
 
+        if (payload.sdp && appliedOfferSdpRef.current === payload.sdp && pc.remoteDescription) {
+          const existingAnswer = pc.localDescription;
+          if (existingAnswer?.type === "answer") {
+            void sendSignal(convId, { type: "answer", callId: payload.callId, sdp: existingAnswer.sdp }, false);
+          }
+          return;
+        }
+
         if (acceptResendTimeoutRef.current) {
           clearInterval(acceptResendTimeoutRef.current);
           acceptResendTimeoutRef.current = null;
@@ -860,27 +912,26 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         try {
           console.log("[VideoCall][Receiver] offer received WITH PC — setRemoteDescription...");
           await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: payload.sdp }));
+          appliedOfferSdpRef.current = payload.sdp || null;
           console.log("[VideoCall][Receiver] setRemoteDescription OK — flushing candidates...");
           await flushPendingCandidates();
           console.log("[VideoCall][Receiver] flushPendingCandidates OK — createAnswer...");
           const answer = await pc.createAnswer();
           console.log("[VideoCall][Receiver] createAnswer OK — sdp length:", answer.sdp?.length);
           await pc.setLocalDescription(answer);
+          await waitForIceGathering(pc);
           console.log("[VideoCall][Receiver] setLocalDescription OK — sending answer...");
           startConnectionTimeout();
+
+          const answerSdp = pc.localDescription?.sdp || answer.sdp || "";
+          await persistSignal(payload.callId, "answer", answerSdp);
 
           const answerSent = await sendSignal(convId, {
             type: "answer",
             callId: payload.callId,
-            sdp: answer.sdp,
+            sdp: answerSdp,
           });
-
-          if (!answerSent) {
-            console.error("[VideoCall][Receiver] sendSignal(answer) FAILED");
-            endCallInternal(true, "Falha ao enviar a resposta da videochamada");
-          } else {
-            console.log("[VideoCall][Receiver] answer sent OK");
-          }
+          console.log("[VideoCall][Receiver] answer transport result", answerSent);
         } catch (error) {
           console.error("[VideoCall] Answer failed", error);
           endCallInternal(true, "Falha ao concluir a videochamada");
@@ -901,9 +952,12 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           return;
         }
 
+        if (payload.sdp && appliedAnswerSdpRef.current === payload.sdp && pc.remoteDescription) return;
+
         try {
           console.log("[VideoCall][Caller] answer received — setRemoteDescription...");
           await pc.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: payload.sdp }));
+          appliedAnswerSdpRef.current = payload.sdp || null;
           console.log("[VideoCall][Caller] setRemoteDescription(answer) OK — flushing candidates...");
           await flushPendingCandidates();
           console.log("[VideoCall][Caller] flushPendingCandidates OK after answer");
@@ -959,11 +1013,74 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     sendSignal,
     setStateSync,
     startConnectionTimeout,
+    persistSignal,
     t,
     user,
+    waitForIceGathering,
   ]);
 
   handleSignalRef.current = handleSignal;
+
+  // Realtime notifications are an optimization, not a single point of
+  // failure. While a call is active, poll the participant-scoped row so a
+  // temporarily unavailable websocket cannot strand accepted calls.
+  useEffect(() => {
+    if (!user || !["calling", "ringing", "connecting"].includes(state)) return;
+
+    let active = true;
+    const recoverDurableSignal = async () => {
+      const callId = callIdRef.current;
+      if (!active || !callId) return;
+      const call = await fetchCallRow(callId);
+      if (!active || !call || call.id !== callIdRef.current) return;
+
+      if (TERMINAL_STATUSES.includes(call.status)) {
+        resetToIdle();
+        return;
+      }
+
+      if (
+        call.caller_user_id === user.id &&
+        stateRef.current === "calling" &&
+        (call.status === "accepted" || call.status === "connecting" || Boolean(call.offer_sdp))
+      ) {
+        void beginCallerNegotiation(call.conversation_id, call.id);
+      }
+
+      if (
+        call.recipient_user_id === user.id &&
+        call.offer_sdp &&
+        call.offer_sdp !== appliedOfferSdpRef.current
+      ) {
+        void handleSignalRef.current(call.conversation_id, {
+          type: "offer",
+          callId: call.id,
+          sdp: call.offer_sdp,
+          from: call.caller_user_id,
+        });
+      }
+
+      if (
+        call.caller_user_id === user.id &&
+        call.answer_sdp &&
+        call.answer_sdp !== appliedAnswerSdpRef.current
+      ) {
+        void handleSignalRef.current(call.conversation_id, {
+          type: "answer",
+          callId: call.id,
+          sdp: call.answer_sdp,
+          from: call.recipient_user_id,
+        });
+      }
+    };
+
+    void recoverDurableSignal();
+    const interval = window.setInterval(() => void recoverDurableSignal(), 1_000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [beginCallerNegotiation, fetchCallRow, resetToIdle, state, user?.id]);
 
   useEffect(() => {
     if (!user) {
@@ -1003,7 +1120,12 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       });
       return;
     }
-    if (stateRef.current !== "idle" && callIdRef.current !== call.id) return;
+    if (stateRef.current !== "idle") {
+      // A delayed INSERT/ringing event for the same call must never move an
+      // already accepted call backwards from connecting/connected to ringing.
+      if (callIdRef.current === call.id && stateRef.current === "ringing") return;
+      return;
+    }
 
     persistedCallRef.current = call;
     callIdRef.current = call.id;
@@ -1067,7 +1189,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       .on("postgres_changes", { event: "*", schema: "public", table: "video_call_sessions" }, (event: any) => {
         const call = event.new as PersistedCallSession | undefined;
         if (!call) return;
-        if (call.recipient_user_id === user.id && call.status === "ringing") presentPersistedIncomingCall(call);
+        if (
+          call.recipient_user_id === user.id &&
+          call.status === "ringing" &&
+          stateRef.current === "idle"
+        ) presentPersistedIncomingCall(call);
 
         // Durable accept path: if the broadcast `call-accept` never landed
         // (recipient booting from a push, app in background), the database
@@ -1079,6 +1205,38 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           stateRef.current === "calling"
         ) {
           void beginCallerNegotiation(call.conversation_id, call.id);
+        }
+
+        // Durable SDP fallback. Broadcast remains the fast path, but database
+        // changes recover offer/answer delivery after a channel reconnect.
+        if (
+          call.id === callIdRef.current &&
+          call.recipient_user_id === user.id &&
+          call.offer_sdp &&
+          call.offer_sdp !== appliedOfferSdpRef.current &&
+          (stateRef.current === "ringing" || stateRef.current === "connecting")
+        ) {
+          void handleSignalRef.current(call.conversation_id, {
+            type: "offer",
+            callId: call.id,
+            sdp: call.offer_sdp,
+            from: call.caller_user_id,
+          });
+        }
+
+        if (
+          call.id === callIdRef.current &&
+          call.caller_user_id === user.id &&
+          call.answer_sdp &&
+          call.answer_sdp !== appliedAnswerSdpRef.current &&
+          stateRef.current === "connecting"
+        ) {
+          void handleSignalRef.current(call.conversation_id, {
+            type: "answer",
+            callId: call.id,
+            sdp: call.answer_sdp,
+            from: call.recipient_user_id,
+          });
         }
 
         if (call.id === callIdRef.current && TERMINAL_STATUSES.includes(call.status)) {
@@ -1311,22 +1469,19 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         const answer = await pc.createAnswer();
         console.log("[VideoCall][Receiver] createAnswer OK — setLocalDescription...");
         await pc.setLocalDescription(answer);
+        await waitForIceGathering(pc);
         console.log("[VideoCall][Receiver] setLocalDescription OK — sending answer...");
         startConnectionTimeout();
+
+        const answerSdp = pc.localDescription?.sdp || answer.sdp || "";
+        await persistSignal(callId, "answer", answerSdp);
 
         const answerSent = await sendSignal(convId, {
           type: "answer",
           callId,
-          sdp: answer.sdp,
+          sdp: answerSdp,
         });
-
-        if (!answerSent) {
-          console.error("[VideoCall][Receiver] sendSignal(answer) FAILED");
-          endCallInternal(true, "Falha ao enviar a resposta da videochamada");
-          return;
-        } else {
-          console.log("[VideoCall][Receiver] answer sent OK (from buffered offer path)");
-        }
+        console.log("[VideoCall][Receiver] buffered answer transport result", answerSent);
       } catch (error) {
         console.error("[VideoCall] Late offer answer failed", error);
         endCallInternal(true, "Falha ao concluir a videochamada");
@@ -1341,9 +1496,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       });
 
       if (!acceptSent) {
-        console.error("[VideoCall][Receiver] sendSignal(call-accept) FAILED");
-        endCallInternal(true, "Falha ao confirmar a videochamada");
-        return;
+        console.warn("[VideoCall][Receiver] call-accept transport unavailable; durable accepted status will recover negotiation");
       } else {
         console.log("[VideoCall][Receiver] call-accept sent OK — waiting for offer...");
       }
@@ -1390,9 +1543,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     sendSignal,
     setStateSync,
     startConnectionTimeout,
+    persistSignal,
     t,
     updatePersistedCall,
     user,
+    waitForIceGathering,
   ]);
 
   const handleRejectCall = useCallback(() => {

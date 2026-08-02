@@ -3394,6 +3394,7 @@ export type Database = {
       video_call_sessions: {
         Row: {
           accepted_at: string | null
+          answer_sdp: string | null
           caller_name: string
           caller_user_id: string
           connected_at: string | null
@@ -3403,6 +3404,7 @@ export type Database = {
           expires_at: string
           failure_reason: string | null
           id: string
+          offer_sdp: string | null
           push_devices_found: number
           push_errors: Json
           push_sent: number
@@ -3413,6 +3415,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          answer_sdp?: string | null
           caller_name?: string
           caller_user_id: string
           connected_at?: string | null
@@ -3422,6 +3425,7 @@ export type Database = {
           expires_at: string
           failure_reason?: string | null
           id?: string
+          offer_sdp?: string | null
           push_devices_found?: number
           push_errors?: Json
           push_sent?: number
@@ -3432,6 +3436,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          answer_sdp?: string | null
           caller_name?: string
           caller_user_id?: string
           connected_at?: string | null
@@ -3441,6 +3446,7 @@ export type Database = {
           expires_at?: string
           failure_reason?: string | null
           id?: string
+          offer_sdp?: string | null
           push_devices_found?: number
           push_errors?: Json
           push_sent?: number

@@ -16,8 +16,15 @@ const UpdateSchema = z.object({
   failure_reason: z.string().trim().max(300).optional(),
 });
 
+const SignalSchema = z.object({
+  action: z.literal("signal"),
+  call_id: z.string().uuid(),
+  kind: z.enum(["offer", "answer"]),
+  sdp: z.string().min(1).max(250_000),
+});
+
 const PendingSchema = z.object({ action: z.literal("pending") });
-const BodySchema = z.discriminatedUnion("action", [StartSchema, UpdateSchema, PendingSchema]);
+const BodySchema = z.discriminatedUnion("action", [StartSchema, UpdateSchema, SignalSchema, PendingSchema]);
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -72,7 +79,7 @@ Deno.serve(async (req) => {
       return json({ call: data || null });
     }
 
-    if (body.action === "update") {
+    if (body.action === "update" || body.action === "signal") {
       const { data: current, error: readError } = await admin
         .from("video_call_sessions")
         .select("*")
@@ -81,13 +88,36 @@ Deno.serve(async (req) => {
       if (readError || !current) return json({ error: "Call not found" }, 404);
       if (current.caller_user_id !== user.id && current.recipient_user_id !== user.id) return json({ error: "Forbidden" }, 403);
 
+      if (body.action === "signal") {
+        const isCallerOffer = body.kind === "offer" && current.caller_user_id === user.id;
+        const isRecipientAnswer = body.kind === "answer" && current.recipient_user_id === user.id;
+        if (!isCallerOffer && !isRecipientAnswer) return json({ error: "Invalid signaling role" }, 403);
+        if (["rejected", "missed", "ended", "failed"].includes(current.status)) return json({ error: "Call is no longer active" }, 409);
+
+        const signalPatch = body.kind === "offer"
+          ? { offer_sdp: body.sdp, status: "connecting" }
+          : { answer_sdp: body.sdp, status: "connecting" };
+        const { data, error } = await admin
+          .from("video_call_sessions")
+          .update(signalPatch)
+          .eq("id", body.call_id)
+          .select()
+          .single();
+        if (error) return json({ error: error.message }, 500);
+        return json({ call: data });
+      }
+
       const recipientOnly = new Set(["accepted", "rejected"]);
       if (recipientOnly.has(body.status) && current.recipient_user_id !== user.id) return json({ error: "Recipient action required" }, 403);
       const terminal = new Set(["rejected", "missed", "ended", "failed"]);
       const patch: Record<string, unknown> = { status: body.status };
       if (body.status === "accepted") patch.accepted_at = new Date().toISOString();
       if (body.status === "connected") patch.connected_at = new Date().toISOString();
-      if (terminal.has(body.status)) patch.ended_at = new Date().toISOString();
+      if (terminal.has(body.status)) {
+        patch.ended_at = new Date().toISOString();
+        patch.offer_sdp = null;
+        patch.answer_sdp = null;
+      }
       if (body.failure_reason) patch.failure_reason = body.failure_reason;
 
       const { data, error } = await admin.from("video_call_sessions").update(patch).eq("id", body.call_id).select().single();
