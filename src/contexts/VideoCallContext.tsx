@@ -919,6 +919,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       }
     }
   }, [
+    beginCallerNegotiation,
     clearCallTimeout,
     createPeerConnection,
     endCallInternal,
