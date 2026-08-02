@@ -1181,14 +1181,27 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     clearCallTimeout();
     timeoutRef.current = window.setTimeout(() => {
-      if (stateRef.current === "calling") {
+      if (stateRef.current !== "calling") return;
+
+      void (async () => {
+        // Never hang up on a recipient who already accepted: the durable row is
+        // authoritative and the accept can be in flight.
+        const row = await fetchCallRow(callId);
+        if (row && (row.status === "accepted" || row.status === "connecting" || row.status === "connected")) {
+          void beginCallerNegotiation(conversationId, callId);
+          return;
+        }
+
+        if (stateRef.current !== "calling") return;
         toast({ title: t("chat.video_no_answer") });
         void insertSystemMessage(conversationId, "Videochamada não atendida");
         endCallInternal(true);
-      }
+      })();
     }, CALL_TIMEOUT_MS);
   }, [
+    beginCallerNegotiation,
     clearCallTimeout,
+    fetchCallRow,
     createRealtimeChannel,
     endCallInternal,
     getMedia,
