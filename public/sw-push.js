@@ -27,25 +27,16 @@ self.addEventListener("push", (event) => {
       return;
     }
 
-    const isCall = kind === "video-call";
     const title = data.title || "Aliv.iA";
+    // Minimal, Apple Web Push–compatible payload. Fields like `actions`,
+    // `requireInteraction`, `renotify` and `vibrate` are ignored or rejected on
+    // iOS and can prevent the notification from being displayed at all.
     const options = {
       body: data.body || "",
       icon: "/pwa-icon-192.png",
       badge: "/pwa-icon-192.png",
       data: { url: data.url || "/", kind, callId: data.call_id || null },
       tag,
-      renotify: isCall, // re-alert if same tag is reissued
-      requireInteraction: isCall, // keep call notification visible
-      vibrate: isCall
-        ? [400, 200, 400, 200, 400, 200, 400, 200, 400]
-        : [200, 100, 200],
-      actions: isCall
-        ? [
-            { action: "accept", title: "Atender" },
-            { action: "reject", title: "Recusar" },
-          ]
-        : undefined,
     };
     event.waitUntil(self.registration.showNotification(title, options));
   } catch (e) {

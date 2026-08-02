@@ -3008,6 +3008,48 @@ export type Database = {
         }
         Relationships: []
       }
+      push_delivery_log: {
+        Row: {
+          category: string | null
+          created_at: string
+          detail: string | null
+          devices: number
+          id: string
+          kind: string | null
+          ref: string | null
+          sent: number
+          status: string
+          title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          detail?: string | null
+          devices?: number
+          id?: string
+          kind?: string | null
+          ref?: string | null
+          sent?: number
+          status?: string
+          title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          detail?: string | null
+          devices?: number
+          id?: string
+          kind?: string | null
+          ref?: string | null
+          sent?: number
+          status?: string
+          title?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string

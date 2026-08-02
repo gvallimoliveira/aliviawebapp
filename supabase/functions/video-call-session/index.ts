@@ -112,7 +112,8 @@ Deno.serve(async (req) => {
     const recipientUserId = participants.find((id) => id !== user.id);
     if (!recipientUserId) return json({ error: "No recipient found" }, 422);
 
-    const expiresAt = new Date(Date.now() + 45_000).toISOString();
+    // Give the recipient enough time to open the app from the push notification.
+    const expiresAt = new Date(Date.now() + 90_000).toISOString();
     const { data: call, error: createError } = await admin
       .from("video_call_sessions")
       .insert({
@@ -121,43 +122,20 @@ Deno.serve(async (req) => {
         caller_user_id: user.id,
         recipient_user_id: recipientUserId,
         caller_name: body.caller_name,
-        // Do not expose the invitation through Realtime until push delivery has
-        // been attempted and the caller has received the durable call ID.
-        status: "connecting",
+        // The push notification is fired by the database trigger
+        // `trg_push_video_call_ringing` (same proven internal path used by
+        // assessment alerts), so the invitation is durable even if this
+        // function's response never reaches the caller.
+        status: "ringing",
         expires_at: expiresAt,
       })
       .select()
       .single();
     if (createError || !call) return json({ error: createError?.message || "Unable to create call" }, 500);
 
-    const pushResponse = await fetch(`${url}/functions/v1/send-push-notification`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: recipientUserId,
-        title: "Chamada de vídeo recebida",
-        body: `${body.caller_name} está te chamando…`,
-        url: `/dashboard?tab=messages&conv=${body.conversation_id}&call=${call.id}`,
-        kind: "video-call",
-        tag: `video-call-${call.id}`,
-        call_id: call.id,
-        category: "messages",
-      }),
-    });
-    const pushResult = await pushResponse.json().catch(() => ({ error: `HTTP ${pushResponse.status}` }));
-    const sent = Number(pushResult?.sent || 0);
-    const devices = Number(pushResult?.devices || pushResult?.targets || 0);
-    const errors = Array.isArray(pushResult?.errors) ? pushResult.errors : pushResult?.error ? [String(pushResult.error)] : [];
-    const { data: readyCall } = await admin.from("video_call_sessions").update({
-      status: "ringing",
-      push_devices_found: devices,
-      push_sent: sent,
-      push_errors: errors,
-      failure_reason: sent > 0 ? null : (devices === 0 ? "no_registered_device" : "push_delivery_failed"),
-    }).eq("id", call.id).select().single();
+    console.log(`[VideoCallSession] call=${call.id} caller=${user.id} recipient=${recipientUserId} (push via db trigger)`);
+    return json({ call });
 
-    console.log(`[VideoCallSession] call=${call.id} caller=${user.id} recipient=${recipientUserId} devices=${devices} sent=${sent}`);
-    return json({ call: readyCall || { ...call, status: "ringing", push_devices_found: devices, push_sent: sent }, delivery: { devices, sent, errors } });
   } catch (error) {
     console.error("[VideoCallSession] Unexpected error", error);
     return json({ error: error instanceof Error ? error.message : String(error) }, 500);

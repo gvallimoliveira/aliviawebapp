@@ -91,3 +91,6 @@ verify_jwt = false
 verify_jwt = false
 
 
+
+[functions.notify-user]
+verify_jwt = false

@@ -12,6 +12,7 @@ Pro Access: Registration strictly via landing page with payment first. Stripe br
 Clinic Mode: Staff must use institutional clinic links, not personal links, to prevent private abuse. Treatments are free in clinic mode.
 Gateway/UI: Use `overflow-x-hidden` on gateway root to keep header sticky. Mobile carousels use horizontal 'peek' effect (~2.5 cards).
 Auth is critical: NO global Service Workers / PWA cache layers may intercept Supabase auth. Test login on desktop AND mobile before shipping any change to AuthContext, supabase client, main.tsx, or SW config.
+Push: triggers do banco chamam `notify-user` com `x-internal-secret` (anon key em http_post = 401). Sempre conferir `push_delivery_log`.
 Final Hypothesis: PRO/Clinic owner+therapist podem sobrescrever hipótese da IA; override substitui em prontuário, PDF e WhatsApp.
 Support page: ao lançar/mudar feature relevante, atualizar Support.tsx + ClinicSupport.tsx + pt/en/es na MESMA loop.
 Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário entra direto, sem etapa /verificar-email. NÃO criar gates de email_confirmed_at em checkout/reset.
@@ -83,6 +84,7 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 
 - [AI Voice Recorder](mem://features/ai-voice-recorder) — FAB de gravação durante avaliação manual; Gemini transcreve+resume; áudio descartado, texto fica em `assessment_voice_notes`.
 - [Agent Security Protocol](mem://tech/agent-security-protocol) — Blindagem anti-prompt-injection do Agente Clínico: papéis só via backend, sigilo total de internals/usuários.
+- [Push Notification Transport](mem://tech/push-notification-transport) — Caminho obrigatório de push (notify-user + segredo interno), trigger de videochamada, payload mínimo iOS e log de entrega.
 - [Agent Research Niches](mem://features/agent-research-niches) — 10 nichos iniciais do Agente de Raciocínio Clínico (PEDro ≥ 7) salvos em `agent_settings.preferred_niches`.
 - [Agent Knowledge Validation](mem://features/agent-knowledge-validation) — Cross-check obrigatório de título contra PubMed/Crossref; PMID como link primário; action `revalidate` para varredura.
 - [External Assessment Upload](mem://features/external-assessment-upload) — Upload PDF/imagem de avaliação externa, IA mapeia para o padrão Aliv.iA, vira avaliação nativa via prefillData no ManualAssessmentModal.
