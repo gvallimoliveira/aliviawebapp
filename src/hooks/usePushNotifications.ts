@@ -29,6 +29,75 @@ function isStaleSubscription(sub: PushSubscription): boolean {
 
 export type PushPermission = "default" | "granted" | "denied" | "unsupported";
 
+/** Sticky opt-in flag: survives deploys, caches and SW re-registrations. */
+const OPT_IN_KEY = "push_opt_in_enabled_v1";
+
+function readOptIn(): boolean {
+  try {
+    return localStorage.getItem(OPT_IN_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function writeOptIn(value: boolean) {
+  try {
+    if (value) localStorage.setItem(OPT_IN_KEY, "true");
+    else localStorage.removeItem(OPT_IN_KEY);
+  } catch {
+    /* noop */
+  }
+}
+
+/**
+ * Silently restores the push subscription after an app update.
+ * Never prompts: only runs when the user already granted permission and
+ * previously opted in. Re-registers the push SW, re-subscribes if the
+ * browser dropped the subscription, and re-upserts the device row.
+ */
+export async function healPushSubscription(userId: string): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    return false;
+  }
+  if (Notification.permission !== "granted") return false;
+  if (!readOptIn()) return false;
+
+  try {
+    const reg =
+      (await navigator.serviceWorker.getRegistration("/sw-push.js")) ??
+      (await navigator.serviceWorker.register("/sw-push.js", { scope: "/" }));
+    await navigator.serviceWorker.ready.catch(() => {});
+
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && isStaleSubscription(sub)) {
+      await sub.unsubscribe().catch(() => {});
+      sub = null;
+    }
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer,
+      });
+    }
+
+    const subJson = sub.toJSON();
+    await (supabase.from("push_subscriptions" as any) as any).upsert(
+      {
+        user_id: userId,
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys?.p256dh || "",
+        auth: subJson.keys?.auth || "",
+      },
+      { onConflict: "user_id,endpoint" },
+    );
+    return true;
+  } catch (err) {
+    console.warn("[push] heal failed", err);
+    return false;
+  }
+}
+
 export function usePushNotifications() {
   const { user } = useAuth();
   const [permission, setPermission] = useState<PushPermission>("default");
