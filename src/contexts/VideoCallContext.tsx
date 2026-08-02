@@ -153,6 +153,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   // + database realtime) and must only negotiate once.
   const negotiationStartedRef = useRef<string | null>(null);
   const acceptResendTimeoutRef = useRef<number | null>(null);
+  const acceptResendAttemptsRef = useRef(0);
 
   const setStateSync = useCallback((nextState: VideoCallState) => {
     stateRef.current = nextState;
@@ -275,9 +276,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       joinConfirmTimeoutRef.current = null;
     }
     if (acceptResendTimeoutRef.current) {
-      clearTimeout(acceptResendTimeoutRef.current);
+      clearInterval(acceptResendTimeoutRef.current);
       acceptResendTimeoutRef.current = null;
     }
+    acceptResendAttemptsRef.current = 0;
     negotiationStartedRef.current = null;
     resetPeerSession();
     resetVisualState();
@@ -642,7 +644,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       const connectionState = pc.connectionState;
       if (connectionState === "connected") {
         markConnected();
-      } else if ((connectionState === "disconnected" || connectionState === "failed") && (Boolean(pc.remoteDescription) || connectedOnceRef.current || stateRef.current === "connecting" || stateRef.current === "connected")) {
+      } else if ((connectionState === "disconnected" || connectionState === "failed") && (Boolean(pc.remoteDescription) || connectedOnceRef.current)) {
         scheduleDisconnectRecovery();
       }
     };
@@ -651,7 +653,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       const iceState = pc.iceConnectionState;
       if (iceState === "connected" || iceState === "completed") {
         markConnected();
-      } else if ((iceState === "disconnected" || iceState === "failed") && (Boolean(pc.remoteDescription) || connectedOnceRef.current || stateRef.current === "connecting" || stateRef.current === "connected")) {
+      } else if ((iceState === "disconnected" || iceState === "failed") && (Boolean(pc.remoteDescription) || connectedOnceRef.current)) {
         scheduleDisconnectRecovery();
       }
     };
@@ -705,7 +707,14 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     callId: string,
     otherName?: string,
   ) => {
-    if (negotiationStartedRef.current === callId) return;
+    if (negotiationStartedRef.current === callId) {
+      const existingOffer = pcRef.current?.localDescription;
+      if (stateRef.current === "connecting" && existingOffer?.type === "offer") {
+        console.log("[VideoCall][Caller] duplicate accept — re-sending existing offer");
+        await sendSignal(convId, { type: "offer", callId, sdp: existingOffer.sdp });
+      }
+      return;
+    }
     if (stateRef.current !== "calling") return;
     negotiationStartedRef.current = callId;
 
@@ -825,6 +834,26 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         if (!pc) {
           console.log("[VideoCall][Receiver] offer received but NO PC yet — buffering SDP (length:", payload.sdp?.length, ")");
           incomingOfferSdpRef.current = payload.sdp || null;
+          return;
+        }
+
+        if (acceptResendTimeoutRef.current) {
+          clearInterval(acceptResendTimeoutRef.current);
+          acceptResendTimeoutRef.current = null;
+          acceptResendAttemptsRef.current = 0;
+        }
+
+        // An offer may be deliberately repeated when the first answer was lost.
+        // In that case, resend the already-created answer instead of applying
+        // the same remote description again in the stable signaling state.
+        const existingAnswer = pc.localDescription;
+        if (pc.signalingState === "stable" && existingAnswer?.type === "answer") {
+          console.log("[VideoCall][Receiver] duplicate offer — re-sending existing answer");
+          await sendSignal(convId, {
+            type: "answer",
+            callId: payload.callId,
+            sdp: existingAnswer.sdp,
+          });
           return;
         }
 
@@ -1321,11 +1350,23 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
       // The caller may not have been subscribed to the channel yet when the
       // accept went out. Resend once until the offer actually arrives.
-      if (acceptResendTimeoutRef.current) clearTimeout(acceptResendTimeoutRef.current);
-      acceptResendTimeoutRef.current = window.setTimeout(() => {
-        if (stateRef.current !== "connecting") return;
-        if (pcRef.current?.remoteDescription) return;
-        console.log("[VideoCall][Receiver] no offer yet — resending call-accept");
+      if (acceptResendTimeoutRef.current) clearInterval(acceptResendTimeoutRef.current);
+      acceptResendAttemptsRef.current = 0;
+      acceptResendTimeoutRef.current = window.setInterval(() => {
+        if (stateRef.current !== "connecting" || pcRef.current?.remoteDescription) {
+          if (acceptResendTimeoutRef.current) clearInterval(acceptResendTimeoutRef.current);
+          acceptResendTimeoutRef.current = null;
+          return;
+        }
+
+        acceptResendAttemptsRef.current += 1;
+        if (acceptResendAttemptsRef.current > 3) {
+          if (acceptResendTimeoutRef.current) clearInterval(acceptResendTimeoutRef.current);
+          acceptResendTimeoutRef.current = null;
+          return;
+        }
+
+        console.log("[VideoCall][Receiver] no offer yet — resending call-accept", acceptResendAttemptsRef.current);
         void sendSignal(convId, {
           type: "call-accept",
           callId,
