@@ -1187,6 +1187,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     isPeerConnected,
     queueCandidate,
     remoteUserName,
+    resetPeerSession,
     resetToIdle,
     sendSignal,
     setStateSync,
