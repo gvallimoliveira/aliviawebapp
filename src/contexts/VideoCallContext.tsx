@@ -1511,6 +1511,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     setIncomingCallerName("");
     setRemoteUserName(otherName);
     setStateSync("calling");
+    isCallerRef.current = true;
+    retryAttemptsRef.current = 0;
     endingRef.current = false;
     createRealtimeChannel(conversationId);
 
