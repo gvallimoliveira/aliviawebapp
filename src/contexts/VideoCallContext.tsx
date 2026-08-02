@@ -1319,6 +1319,20 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         console.log("[VideoCall][Receiver] call-accept sent OK — waiting for offer...");
       }
 
+      // The caller may not have been subscribed to the channel yet when the
+      // accept went out. Resend once until the offer actually arrives.
+      if (acceptResendTimeoutRef.current) clearTimeout(acceptResendTimeoutRef.current);
+      acceptResendTimeoutRef.current = window.setTimeout(() => {
+        if (stateRef.current !== "connecting") return;
+        if (pcRef.current?.remoteDescription) return;
+        console.log("[VideoCall][Receiver] no offer yet — resending call-accept");
+        void sendSignal(convId, {
+          type: "call-accept",
+          callId,
+          fromName: user.user_metadata?.full_name || "Usuário",
+        });
+      }, ACCEPT_RESEND_MS);
+
       startConnectionTimeout();
     }
 
@@ -1327,6 +1341,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   }, [
     createPeerConnection,
     endCallInternal,
+    fetchCallRow,
     flushPendingCandidates,
     getMedia,
     insertSystemMessage,
@@ -1334,6 +1349,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     sendSignal,
     setStateSync,
     startConnectionTimeout,
+    t,
     updatePersistedCall,
     user,
   ]);
