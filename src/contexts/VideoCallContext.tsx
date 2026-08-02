@@ -63,6 +63,9 @@ const ACCEPT_RESEND_MS = 3_000;
 const TERMINAL_STATUSES = ["rejected", "missed", "ended", "failed"];
 const CONNECTION_TIMEOUT_MS = 30_000;
 const DISCONNECT_GRACE_MS = 6_000;
+// A first attempt must never die from residual state: rebuild the peer
+// connection from scratch and renegotiate before declaring a failure.
+const MAX_CONNECT_RETRIES = 2;
 const SYSTEM_PREFIX = "📹 ";
 
 interface SignalPayload {
@@ -74,7 +77,8 @@ interface SignalPayload {
     | "call-accept"
     | "call-reject"
     | "call-end"
-    | "call-ready";
+    | "call-ready"
+    | "call-renegotiate";
   callId: string;
   sdp?: string;
   candidate?: RTCIceCandidateInit;
@@ -145,6 +149,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   const endingRef = useRef(false);
   const connectedOnceRef = useRef(false);
   const disconnectRestartAttemptsRef = useRef(0);
+  // Auto-retry of the whole negotiation (fresh RTCPeerConnection + new SDP).
+  const retryAttemptsRef = useRef(0);
+  const retryingRef = useRef(false);
+  const isCallerRef = useRef(false);
+  const attemptAutoRetryRef = useRef<(reason: string) => Promise<boolean>>(async () => false);
   const handleSignalRef = useRef<(convId: string, payload: SignalPayload) => Promise<void>>(async () => {});
   const persistedCallRef = useRef<PersistedCallSession | null>(null);
   // Set when the user opened the app from a push notification: we show the
@@ -288,6 +297,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     negotiationStartedRef.current = null;
     appliedOfferSdpRef.current = null;
     appliedAnswerSdpRef.current = null;
+    retryAttemptsRef.current = 0;
+    retryingRef.current = false;
     processingSignalsRef.current.clear();
     resetPeerSession();
     resetVisualState();
@@ -558,6 +569,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           return;
         }
 
+        // Residual/stale negotiation state: rebuild everything once more
+        // before telling the user the call failed.
+        if (await attemptAutoRetryRef.current("connection-timeout")) return;
+
         toast({ title: message, variant: "destructive" });
         endCallInternal(true, message);
       })();
@@ -631,23 +646,28 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     clearDisconnectGrace();
 
     disconnectGraceRef.current = window.setTimeout(() => {
-      const pc = pcRef.current;
-      if (!pc) {
-        return;
-      }
-
-      if (disconnectRestartAttemptsRef.current < 1) {
-        disconnectRestartAttemptsRef.current += 1;
-        try {
-          pc.restartIce();
-          startConnectionTimeout("Tentando restabelecer a videochamada");
+      void (async () => {
+        const pc = pcRef.current;
+        if (!pc) {
           return;
-        } catch (error) {
-          console.warn("[VideoCall] ICE restart failed", error);
         }
-      }
 
-      endCallInternal(true, "Falha ao manter a conexão da videochamada");
+        if (disconnectRestartAttemptsRef.current < 1) {
+          disconnectRestartAttemptsRef.current += 1;
+          try {
+            pc.restartIce();
+            startConnectionTimeout("Tentando restabelecer a videochamada");
+            return;
+          } catch (error) {
+            console.warn("[VideoCall] ICE restart failed", error);
+          }
+        }
+
+        // Never connected yet → full renegotiation instead of hanging up.
+        if (!connectedOnceRef.current && await attemptAutoRetryRef.current("ice-failure-before-connect")) return;
+
+        endCallInternal(true, "Falha ao manter a conexão da videochamada");
+      })();
     }, DISCONNECT_GRACE_MS);
   }, [clearDisconnectGrace, endCallInternal, startConnectionTimeout]);
 
@@ -801,9 +821,79 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       console.log("[VideoCall][Caller] offer transport result", offerSent);
     } catch (error) {
       console.error("[VideoCall] Offer failed", error);
+      if (await attemptAutoRetryRef.current("offer-failed")) return;
       endCallInternal(true, "Falha ao negociar a videochamada");
     }
   }, [clearCallTimeout, createPeerConnection, endCallInternal, persistSignal, sendSignal, setStateSync, startConnectionTimeout, waitForIceGathering]);
+
+  /**
+   * Rebuilds the negotiation from scratch (new RTCPeerConnection, fresh SDP)
+   * while keeping the same call/session and local media. Guarantees that a
+   * first attempt is never terminated because of residual peer state.
+   */
+  const attemptAutoRetry = useCallback(async (reason: string) => {
+    const convId = activeConvIdRef.current;
+    const callId = callIdRef.current;
+
+    if (!convId || !callId) return false;
+    if (endingRef.current || retryingRef.current) return false;
+    if (connectedOnceRef.current) return false;
+    if (retryAttemptsRef.current >= MAX_CONNECT_RETRIES) return false;
+    if (!["calling", "connecting"].includes(stateRef.current)) return false;
+
+    const row = await fetchCallRow(callId);
+    if (isTerminalRow(row)) return false;
+
+    const stream = localStreamRef.current;
+    if (!isStreamUsable(stream)) return false;
+
+    retryingRef.current = true;
+    retryAttemptsRef.current += 1;
+    console.warn("[VideoCall] auto-retry", retryAttemptsRef.current, "reason:", reason);
+
+    try {
+      clearConnectionTimeout();
+      clearDisconnectGrace();
+      negotiationStartedRef.current = null;
+      appliedOfferSdpRef.current = null;
+      appliedAnswerSdpRef.current = null;
+      incomingOfferSdpRef.current = null;
+      processingSignalsRef.current.clear();
+      resetPeerSession(stream);
+      disconnectRestartAttemptsRef.current = 0;
+
+      if (isCallerRef.current) {
+        setStateSync("calling");
+        await beginCallerNegotiation(convId, callId);
+        return true;
+      }
+
+      // Receiver: prepare a clean peer connection and ask for a new offer.
+      setStateSync("connecting");
+      createPeerConnection(stream!, convId, callId);
+      startConnectionTimeout();
+      await sendSignal(convId, { type: "call-renegotiate", callId });
+      return true;
+    } finally {
+      retryingRef.current = false;
+    }
+  }, [
+    beginCallerNegotiation,
+    clearConnectionTimeout,
+    clearDisconnectGrace,
+    createPeerConnection,
+    fetchCallRow,
+    resetPeerSession,
+    sendSignal,
+    setStateSync,
+    startConnectionTimeout,
+  ]);
+
+  useEffect(() => {
+    attemptAutoRetryRef.current = attemptAutoRetry;
+  }, [attemptAutoRetry]);
+
+
 
 
   const handleSignal = useCallback(async (convId: string, payload: SignalPayload) => {
@@ -880,6 +970,28 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         return;
       }
 
+      case "call-renegotiate": {
+        // The other side rebuilt its peer connection: the caller must produce a
+        // brand new offer instead of replaying the stale one.
+        if (payload.callId !== currentCallId) return;
+        if (!isCallerRef.current) return;
+        if (!["calling", "connecting"].includes(stateRef.current)) return;
+        if (connectedOnceRef.current) return;
+
+        const stream = localStreamRef.current;
+        if (!isStreamUsable(stream)) return;
+
+        console.warn("[VideoCall][Caller] call-renegotiate received — rebuilding offer");
+        negotiationStartedRef.current = null;
+        appliedOfferSdpRef.current = null;
+        appliedAnswerSdpRef.current = null;
+        processingSignalsRef.current.clear();
+        resetPeerSession(stream);
+        setStateSync("calling");
+        await beginCallerNegotiation(convId, payload.callId);
+        return;
+      }
+
       case "offer": {
         if (payload.callId !== currentCallId) {
           console.log("[VideoCall][Receiver] offer ignored — callId mismatch:", payload.callId, "expected:", currentCallId);
@@ -900,6 +1012,28 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           }
           return;
         }
+
+        // A DIFFERENT offer over an already-negotiated connection means the
+        // caller restarted the negotiation: rebuild locally before applying it.
+        if (
+          payload.sdp &&
+          appliedOfferSdpRef.current &&
+          appliedOfferSdpRef.current !== payload.sdp &&
+          !connectedOnceRef.current &&
+          pc.signalingState === "stable"
+        ) {
+          const localStream = localStreamRef.current;
+          if (isStreamUsable(localStream)) {
+            console.warn("[VideoCall][Receiver] new offer after stale negotiation — rebuilding peer connection");
+            appliedOfferSdpRef.current = null;
+            appliedAnswerSdpRef.current = null;
+            processingSignalsRef.current.clear();
+            createPeerConnection(localStream!, convId, payload.callId);
+            await handleSignalRef.current(convId, payload);
+            return;
+          }
+        }
+
 
         const signalKey = `offer:${payload.callId}:${payload.sdp || ""}`;
         if (processingSignalsRef.current.has(signalKey)) {
@@ -955,6 +1089,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           console.error("[VideoCall] Answer failed", error);
           if (isPeerConnected() || (pc.signalingState === "stable" && pc.localDescription?.type === "answer")) {
             console.warn("[VideoCall][Receiver] late duplicate offer failed after negotiation; keeping call active");
+          } else if (await attemptAutoRetryRef.current("answer-failed")) {
+            console.warn("[VideoCall][Receiver] answer failed — auto-retry started");
           } else {
             endCallInternal(true, "Falha ao concluir a videochamada");
           }
@@ -973,6 +1109,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         const pc = pcRef.current;
         if (!pc) {
           console.error("[VideoCall][Caller] answer received but NO PC");
+          if (await attemptAutoRetryRef.current("answer-without-pc")) return;
           endCallInternal(true, "Falha ao aplicar a resposta da videochamada");
           return;
         }
@@ -998,6 +1135,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           console.error("[VideoCall] Handle answer failed", error);
           if (isPeerConnected() || (pc.signalingState === "stable" && pc.remoteDescription?.type === "answer")) {
             console.warn("[VideoCall][Caller] late duplicate answer failed after negotiation; keeping call active");
+          } else if (await attemptAutoRetryRef.current("apply-answer-failed")) {
+            console.warn("[VideoCall][Caller] answer apply failed — auto-retry started");
           } else {
             endCallInternal(true, "Falha ao conectar a videochamada");
           }
@@ -1048,6 +1187,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     isPeerConnected,
     queueCandidate,
     remoteUserName,
+    resetPeerSession,
     resetToIdle,
     sendSignal,
     setStateSync,
@@ -1371,6 +1511,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     setIncomingCallerName("");
     setRemoteUserName(otherName);
     setStateSync("calling");
+    isCallerRef.current = true;
+    retryAttemptsRef.current = 0;
     endingRef.current = false;
     createRealtimeChannel(conversationId);
 
@@ -1464,6 +1606,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     setIsRinging(false);
     setStateSync("connecting");
+    isCallerRef.current = false;
+    retryAttemptsRef.current = 0;
     endingRef.current = false;
 
     // The caller may already have hung up (or the invite expired) while the
