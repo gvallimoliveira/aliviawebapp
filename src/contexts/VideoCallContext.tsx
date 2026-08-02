@@ -1045,6 +1045,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     createPeerConnection,
     endCallInternal,
     flushPendingCandidates,
+    isPeerConnected,
     queueCandidate,
     remoteUserName,
     resetToIdle,
@@ -1437,7 +1438,6 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     endCallInternal,
     getMedia,
     insertSystemMessage,
-    isPeerConnected,
     resetToIdle,
     safeAttach,
     sendSignal,
@@ -1504,34 +1504,13 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     console.log("[VideoCall][Receiver] PC created — hasPendingOffer:", Boolean(pendingOfferSdp), "sdpLen:", pendingOfferSdp?.length);
 
     if (pendingOfferSdp) {
-      try {
-        incomingOfferSdpRef.current = null;
-        console.log("[VideoCall][Receiver] setRemoteDescription(buffered offer)...");
-        await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: pendingOfferSdp }));
-        console.log("[VideoCall][Receiver] setRemoteDescription OK — flushing candidates...");
-        await flushPendingCandidates();
-        console.log("[VideoCall][Receiver] createAnswer...");
-        const answer = await pc.createAnswer();
-        console.log("[VideoCall][Receiver] createAnswer OK — setLocalDescription...");
-        await pc.setLocalDescription(answer);
-        await waitForIceGathering(pc);
-        console.log("[VideoCall][Receiver] setLocalDescription OK — sending answer...");
-        startConnectionTimeout();
-
-        const answerSdp = pc.localDescription?.sdp || answer.sdp || "";
-        await persistSignal(callId, "answer", answerSdp);
-
-        const answerSent = await sendSignal(convId, {
-          type: "answer",
-          callId,
-          sdp: answerSdp,
-        });
-        console.log("[VideoCall][Receiver] buffered answer transport result", answerSent);
-      } catch (error) {
-        console.error("[VideoCall] Late offer answer failed", error);
-        endCallInternal(true, "Falha ao concluir a videochamada");
-        return;
-      }
+      incomingOfferSdpRef.current = null;
+      await handleSignalRef.current(convId, {
+        type: "offer",
+        callId,
+        sdp: pendingOfferSdp,
+        from: persistedCallRef.current?.caller_user_id || "remote-caller",
+      });
     } else {
       console.log("[VideoCall][Receiver] NO buffered offer — sending call-accept and waiting for offer...");
       const acceptSent = await sendSignal(convId, {

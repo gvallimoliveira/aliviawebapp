@@ -101,9 +101,12 @@ Deno.serve(async (req) => {
         if (!isCallerOffer && !isRecipientAnswer) return json({ error: "Invalid signaling role" }, 403);
         if (TERMINAL_STATUSES.has(current.status)) return json({ error: "Call is no longer active" }, 409);
 
+        // SDP persistence must never mutate call status. A signal request can
+        // race the final `connected` update; writing `connecting` here used to
+        // regress a healthy call after it had already connected.
         const signalPatch = body.kind === "offer"
-          ? { offer_sdp: body.sdp, ...(current.status === "connected" ? {} : { status: "connecting" }) }
-          : { answer_sdp: body.sdp, ...(current.status === "connected" ? {} : { status: "connecting" }) };
+          ? { offer_sdp: body.sdp }
+          : { answer_sdp: body.sdp };
         const { data, error } = await admin
           .from("video_call_sessions")
           .update(signalPatch)
@@ -137,9 +140,25 @@ Deno.serve(async (req) => {
       }
       if (body.failure_reason) patch.failure_reason = body.failure_reason;
 
-      const { data, error } = await admin.from("video_call_sessions").update(patch).eq("id", body.call_id).select().single();
+      const { data, error } = await admin
+        .from("video_call_sessions")
+        .update(patch)
+        .eq("id", body.call_id)
+        .eq("status", current.status)
+        .select()
+        .maybeSingle();
       if (error) return json({ error: error.message }, 500);
-      return json({ call: data });
+      if (data) return json({ call: data });
+
+      // Another participant advanced the state after our read. Return the
+      // newer row rather than overwriting it with a stale transition.
+      const { data: latest, error: latestError } = await admin
+        .from("video_call_sessions")
+        .select("*")
+        .eq("id", body.call_id)
+        .single();
+      if (latestError) return json({ error: latestError.message }, 500);
+      return json({ call: latest });
     }
 
     const { data: conversation, error: conversationError } = await admin
