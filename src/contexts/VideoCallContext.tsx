@@ -56,7 +56,11 @@ const ICE_SERVERS: RTCIceServer[] = [
   },
 ];
 
-const CALL_TIMEOUT_MS = 45_000;
+// Must match `expires_at` of the durable session (video-call-session: 90s), so
+// the caller never gives up while the recipient is still booting from a push.
+const CALL_TIMEOUT_MS = 90_000;
+const ACCEPT_RESEND_MS = 3_000;
+const TERMINAL_STATUSES = ["rejected", "missed", "ended", "failed"];
 const CONNECTION_TIMEOUT_MS = 30_000;
 const DISCONNECT_GRACE_MS = 6_000;
 const SYSTEM_PREFIX = "📹 ";
@@ -145,6 +149,10 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   // ringing UI optimistically and wait for the caller to re-affirm the call.
   const joinConfirmTimeoutRef = useRef<number | null>(null);
   const joinedFromPushRef = useRef<string | null>(null);
+  // Guards the caller's offer creation: the accept can arrive twice (broadcast
+  // + database realtime) and must only negotiate once.
+  const negotiationStartedRef = useRef<string | null>(null);
+  const acceptResendTimeoutRef = useRef<number | null>(null);
 
   const setStateSync = useCallback((nextState: VideoCallState) => {
     stateRef.current = nextState;
@@ -266,6 +274,11 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       clearTimeout(joinConfirmTimeoutRef.current);
       joinConfirmTimeoutRef.current = null;
     }
+    if (acceptResendTimeoutRef.current) {
+      clearTimeout(acceptResendTimeoutRef.current);
+      acceptResendTimeoutRef.current = null;
+    }
+    negotiationStartedRef.current = null;
     resetPeerSession();
     resetVisualState();
   }, [clearCallTimeout, resetPeerSession, resetVisualState]);
@@ -390,6 +403,23 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     return true;
   }, []);
 
+  // The database row is the durable truth about a call. Used before giving up
+  // or before writing a failure message, so we never contradict it.
+  const fetchCallRow = useCallback(async (callId: string) => {
+    try {
+      const { data } = await (supabase.from("video_call_sessions" as any) as any)
+        .select("*")
+        .eq("id", callId)
+        .maybeSingle();
+      return (data as PersistedCallSession | null) ?? null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const isTerminalRow = (row: PersistedCallSession | null) =>
+    Boolean(row && (TERMINAL_STATUSES.includes(row.status) || new Date(row.expires_at).getTime() <= Date.now()));
+
   const endCallInternal = useCallback((sendEndSignal: boolean, endMessage?: string) => {
     if (endingRef.current) {
       return;
@@ -454,12 +484,24 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     clearConnectionTimeout();
 
     connectionTimeoutRef.current = window.setTimeout(() => {
-      if (stateRef.current === "connecting" || stateRef.current === "calling") {
+      if (stateRef.current !== "connecting" && stateRef.current !== "calling") return;
+
+      void (async () => {
+        const callId = callIdRef.current;
+        const row = callId ? await fetchCallRow(callId) : null;
+
+        // The other side already hung up / the invite expired: end quietly
+        // instead of logging a misleading connection failure in the chat.
+        if (isTerminalRow(row)) {
+          endCallInternal(false);
+          return;
+        }
+
         toast({ title: message, variant: "destructive" });
         endCallInternal(true, message);
-      }
+      })();
     }, CONNECTION_TIMEOUT_MS);
-  }, [clearConnectionTimeout, endCallInternal]);
+  }, [clearConnectionTimeout, endCallInternal, fetchCallRow]);
 
   const markConnected = useCallback(() => {
     if (connectedOnceRef.current) {
@@ -655,6 +697,50 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     }
   }, [stopStream, t]);
 
+  // Caller side: create and send the offer once the recipient accepted.
+  // Reachable from two independent paths (realtime broadcast `call-accept` and
+  // the durable database status change), guarded to negotiate only once.
+  const beginCallerNegotiation = useCallback(async (
+    convId: string,
+    callId: string,
+    otherName?: string,
+  ) => {
+    if (negotiationStartedRef.current === callId) return;
+    if (stateRef.current !== "calling") return;
+    negotiationStartedRef.current = callId;
+
+    clearCallTimeout();
+    if (otherName) setRemoteUserName(otherName);
+    setStateSync("connecting");
+    startConnectionTimeout();
+
+    const stream = localStreamRef.current;
+    if (!stream) {
+      endCallInternal(true, "Falha ao iniciar a mídia local da videochamada");
+      return;
+    }
+
+    const pc = createPeerConnection(stream, convId, callId);
+
+    try {
+      const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+      console.log("[VideoCall][Caller] createOffer OK — sdp length:", offer.sdp?.length);
+      await pc.setLocalDescription(offer);
+      const offerSent = await sendSignal(convId, { type: "offer", callId, sdp: offer.sdp });
+
+      if (!offerSent) {
+        console.error("[VideoCall][Caller] sendSignal(offer) FAILED");
+        endCallInternal(true, "Falha ao enviar a oferta da videochamada");
+      } else {
+        console.log("[VideoCall][Caller] offer sent OK");
+      }
+    } catch (error) {
+      console.error("[VideoCall] Offer failed", error);
+      endCallInternal(true, "Falha ao negociar a videochamada");
+    }
+  }, [clearCallTimeout, createPeerConnection, endCallInternal, sendSignal, setStateSync, startConnectionTimeout]);
+
+
   const handleSignal = useCallback(async (convId: string, payload: SignalPayload) => {
     if (!user || payload.from === user.id) {
       return;
@@ -724,41 +810,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           return;
         }
 
-        clearCallTimeout();
         console.log("[VideoCall][Caller] call-accept received — creating offer");
-        setRemoteUserName(payload.fromName || remoteUserName || "Usuário");
-        setStateSync("connecting");
-        startConnectionTimeout();
-
-        const stream = localStreamRef.current;
-        if (!stream) {
-          endCallInternal(true, "Falha ao iniciar a mídia local da videochamada");
-          return;
-        }
-
-        const pc = createPeerConnection(stream, convId, payload.callId);
-
-        try {
-          const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
-          console.log("[VideoCall][Caller] createOffer OK — sdp length:", offer.sdp?.length);
-          await pc.setLocalDescription(offer);
-          console.log("[VideoCall][Caller] setLocalDescription OK");
-          const offerSent = await sendSignal(convId, {
-            type: "offer",
-            callId: payload.callId,
-            sdp: offer.sdp,
-          });
-
-          if (!offerSent) {
-            console.error("[VideoCall][Caller] sendSignal(offer) FAILED");
-            endCallInternal(true, "Falha ao enviar a oferta da videochamada");
-          } else {
-            console.log("[VideoCall][Caller] offer sent OK");
-          }
-        } catch (error) {
-          console.error("[VideoCall] Offer failed", error);
-          endCallInternal(true, "Falha ao negociar a videochamada");
-        }
+        await beginCallerNegotiation(convId, payload.callId, payload.fromName || remoteUserName || "Usuário");
         return;
       }
 
@@ -866,6 +919,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       }
     }
   }, [
+    beginCallerNegotiation,
     clearCallTimeout,
     createPeerConnection,
     endCallInternal,
@@ -985,7 +1039,20 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         const call = event.new as PersistedCallSession | undefined;
         if (!call) return;
         if (call.recipient_user_id === user.id && call.status === "ringing") presentPersistedIncomingCall(call);
-        if (call.id === callIdRef.current && ["rejected", "missed", "ended", "failed"].includes(call.status)) {
+
+        // Durable accept path: if the broadcast `call-accept` never landed
+        // (recipient booting from a push, app in background), the database
+        // status change still triggers the caller's offer.
+        if (
+          call.id === callIdRef.current &&
+          call.caller_user_id === user.id &&
+          (call.status === "accepted" || call.status === "connecting") &&
+          stateRef.current === "calling"
+        ) {
+          void beginCallerNegotiation(call.conversation_id, call.id);
+        }
+
+        if (call.id === callIdRef.current && TERMINAL_STATUSES.includes(call.status)) {
           if (stateRef.current === "calling" && call.status === "missed") toast({ title: t("chat.video_no_answer") });
           resetToIdle();
         }
@@ -997,7 +1064,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       document.removeEventListener("visibilitychange", onResume);
       supabase.removeChannel(channel);
     };
-  }, [presentPersistedIncomingCall, resetToIdle, t, user?.id]);
+  }, [beginCallerNegotiation, presentPersistedIncomingCall, resetToIdle, t, user?.id]);
 
   // 1) App was opened/reloaded by the notification (URL carries the call).
   useEffect(() => {
@@ -1114,14 +1181,27 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     clearCallTimeout();
     timeoutRef.current = window.setTimeout(() => {
-      if (stateRef.current === "calling") {
+      if (stateRef.current !== "calling") return;
+
+      void (async () => {
+        // Never hang up on a recipient who already accepted: the durable row is
+        // authoritative and the accept can be in flight.
+        const row = await fetchCallRow(callId);
+        if (row && (row.status === "accepted" || row.status === "connecting" || row.status === "connected")) {
+          void beginCallerNegotiation(conversationId, callId);
+          return;
+        }
+
+        if (stateRef.current !== "calling") return;
         toast({ title: t("chat.video_no_answer") });
         void insertSystemMessage(conversationId, "Videochamada não atendida");
         endCallInternal(true);
-      }
+      })();
     }, CALL_TIMEOUT_MS);
   }, [
+    beginCallerNegotiation,
     clearCallTimeout,
+    fetchCallRow,
     createRealtimeChannel,
     endCallInternal,
     getMedia,
@@ -1153,6 +1233,17 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     setIsRinging(false);
     setStateSync("connecting");
     endingRef.current = false;
+
+    // The caller may already have hung up (or the invite expired) while the
+    // recipient was opening the app from the notification: end quietly instead
+    // of negotiating a dead call and logging a failure in the chat.
+    const currentRow = await fetchCallRow(callId);
+    if (isTerminalRow(currentRow)) {
+      toast({ title: "A chamada não está mais ativa" });
+      resetToIdle();
+      return;
+    }
+
     const persisted = await updatePersistedCall("accepted");
     if (!persisted) {
       toast({ title: "Não foi possível confirmar a chamada", variant: "destructive" });
@@ -1228,6 +1319,20 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
         console.log("[VideoCall][Receiver] call-accept sent OK — waiting for offer...");
       }
 
+      // The caller may not have been subscribed to the channel yet when the
+      // accept went out. Resend once until the offer actually arrives.
+      if (acceptResendTimeoutRef.current) clearTimeout(acceptResendTimeoutRef.current);
+      acceptResendTimeoutRef.current = window.setTimeout(() => {
+        if (stateRef.current !== "connecting") return;
+        if (pcRef.current?.remoteDescription) return;
+        console.log("[VideoCall][Receiver] no offer yet — resending call-accept");
+        void sendSignal(convId, {
+          type: "call-accept",
+          callId,
+          fromName: user.user_metadata?.full_name || "Usuário",
+        });
+      }, ACCEPT_RESEND_MS);
+
       startConnectionTimeout();
     }
 
@@ -1236,6 +1341,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
   }, [
     createPeerConnection,
     endCallInternal,
+    fetchCallRow,
     flushPendingCandidates,
     getMedia,
     insertSystemMessage,
@@ -1243,6 +1349,7 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     sendSignal,
     setStateSync,
     startConnectionTimeout,
+    t,
     updatePersistedCall,
     user,
   ]);
