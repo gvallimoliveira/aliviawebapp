@@ -1021,6 +1021,67 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
   handleSignalRef.current = handleSignal;
 
+  // Realtime notifications are an optimization, not a single point of
+  // failure. While a call is active, poll the participant-scoped row so a
+  // temporarily unavailable websocket cannot strand accepted calls.
+  useEffect(() => {
+    if (!user || !["calling", "ringing", "connecting"].includes(state)) return;
+
+    let active = true;
+    const recoverDurableSignal = async () => {
+      const callId = callIdRef.current;
+      if (!active || !callId) return;
+      const call = await fetchCallRow(callId);
+      if (!active || !call || call.id !== callIdRef.current) return;
+
+      if (TERMINAL_STATUSES.includes(call.status)) {
+        resetToIdle();
+        return;
+      }
+
+      if (
+        call.caller_user_id === user.id &&
+        stateRef.current === "calling" &&
+        (call.status === "accepted" || call.status === "connecting" || Boolean(call.offer_sdp))
+      ) {
+        void beginCallerNegotiation(call.conversation_id, call.id);
+      }
+
+      if (
+        call.recipient_user_id === user.id &&
+        call.offer_sdp &&
+        call.offer_sdp !== appliedOfferSdpRef.current
+      ) {
+        void handleSignalRef.current(call.conversation_id, {
+          type: "offer",
+          callId: call.id,
+          sdp: call.offer_sdp,
+          from: call.caller_user_id,
+        });
+      }
+
+      if (
+        call.caller_user_id === user.id &&
+        call.answer_sdp &&
+        call.answer_sdp !== appliedAnswerSdpRef.current
+      ) {
+        void handleSignalRef.current(call.conversation_id, {
+          type: "answer",
+          callId: call.id,
+          sdp: call.answer_sdp,
+          from: call.recipient_user_id,
+        });
+      }
+    };
+
+    void recoverDurableSignal();
+    const interval = window.setInterval(() => void recoverDurableSignal(), 1_000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [beginCallerNegotiation, fetchCallRow, resetToIdle, state, user?.id]);
+
   useEffect(() => {
     if (!user) {
       return;
