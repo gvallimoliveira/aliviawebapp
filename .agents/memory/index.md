@@ -84,6 +84,7 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 
 - [AI Voice Recorder](mem://features/ai-voice-recorder) — FAB de gravação durante avaliação manual; Gemini transcreve+resume; áudio descartado, texto fica em `assessment_voice_notes`.
 - [Agent Security Protocol](mem://tech/agent-security-protocol) — Blindagem anti-prompt-injection do Agente Clínico: papéis só via backend, sigilo total de internals/usuários.
+- [Push Notification Transport](mem://tech/push-notification-transport) — Caminho obrigatório de push (notify-user + segredo interno), trigger de videochamada, payload mínimo iOS e log de entrega.
 - [Agent Research Niches](mem://features/agent-research-niches) — 10 nichos iniciais do Agente de Raciocínio Clínico (PEDro ≥ 7) salvos em `agent_settings.preferred_niches`.
 - [Agent Knowledge Validation](mem://features/agent-knowledge-validation) — Cross-check obrigatório de título contra PubMed/Crossref; PMID como link primário; action `revalidate` para varredura.
 - [External Assessment Upload](mem://features/external-assessment-upload) — Upload PDF/imagem de avaliação externa, IA mapeia para o padrão Aliv.iA, vira avaliação nativa via prefillData no ManualAssessmentModal.
