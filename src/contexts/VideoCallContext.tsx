@@ -1606,6 +1606,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
 
     setIsRinging(false);
     setStateSync("connecting");
+    isCallerRef.current = false;
+    retryAttemptsRef.current = 0;
     endingRef.current = false;
 
     // The caller may already have hung up (or the invite expired) while the
