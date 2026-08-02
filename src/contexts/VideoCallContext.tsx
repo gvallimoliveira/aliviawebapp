@@ -810,41 +810,8 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
           return;
         }
 
-        clearCallTimeout();
         console.log("[VideoCall][Caller] call-accept received — creating offer");
-        setRemoteUserName(payload.fromName || remoteUserName || "Usuário");
-        setStateSync("connecting");
-        startConnectionTimeout();
-
-        const stream = localStreamRef.current;
-        if (!stream) {
-          endCallInternal(true, "Falha ao iniciar a mídia local da videochamada");
-          return;
-        }
-
-        const pc = createPeerConnection(stream, convId, payload.callId);
-
-        try {
-          const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
-          console.log("[VideoCall][Caller] createOffer OK — sdp length:", offer.sdp?.length);
-          await pc.setLocalDescription(offer);
-          console.log("[VideoCall][Caller] setLocalDescription OK");
-          const offerSent = await sendSignal(convId, {
-            type: "offer",
-            callId: payload.callId,
-            sdp: offer.sdp,
-          });
-
-          if (!offerSent) {
-            console.error("[VideoCall][Caller] sendSignal(offer) FAILED");
-            endCallInternal(true, "Falha ao enviar a oferta da videochamada");
-          } else {
-            console.log("[VideoCall][Caller] offer sent OK");
-          }
-        } catch (error) {
-          console.error("[VideoCall] Offer failed", error);
-          endCallInternal(true, "Falha ao negociar a videochamada");
-        }
+        await beginCallerNegotiation(convId, payload.callId, payload.fromName || remoteUserName || "Usuário");
         return;
       }
 
