@@ -484,12 +484,24 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
     clearConnectionTimeout();
 
     connectionTimeoutRef.current = window.setTimeout(() => {
-      if (stateRef.current === "connecting" || stateRef.current === "calling") {
+      if (stateRef.current !== "connecting" && stateRef.current !== "calling") return;
+
+      void (async () => {
+        const callId = callIdRef.current;
+        const row = callId ? await fetchCallRow(callId) : null;
+
+        // The other side already hung up / the invite expired: end quietly
+        // instead of logging a misleading connection failure in the chat.
+        if (isTerminalRow(row)) {
+          endCallInternal(false);
+          return;
+        }
+
         toast({ title: message, variant: "destructive" });
         endCallInternal(true, message);
-      }
+      })();
     }, CONNECTION_TIMEOUT_MS);
-  }, [clearConnectionTimeout, endCallInternal]);
+  }, [clearConnectionTimeout, endCallInternal, fetchCallRow]);
 
   const markConnected = useCallback(() => {
     if (connectedOnceRef.current) {
