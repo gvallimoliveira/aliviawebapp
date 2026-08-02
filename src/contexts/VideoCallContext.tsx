@@ -821,9 +821,79 @@ export function VideoCallProvider({ conversationIds, onNavigateToChat, children 
       console.log("[VideoCall][Caller] offer transport result", offerSent);
     } catch (error) {
       console.error("[VideoCall] Offer failed", error);
+      if (await attemptAutoRetryRef.current("offer-failed")) return;
       endCallInternal(true, "Falha ao negociar a videochamada");
     }
   }, [clearCallTimeout, createPeerConnection, endCallInternal, persistSignal, sendSignal, setStateSync, startConnectionTimeout, waitForIceGathering]);
+
+  /**
+   * Rebuilds the negotiation from scratch (new RTCPeerConnection, fresh SDP)
+   * while keeping the same call/session and local media. Guarantees that a
+   * first attempt is never terminated because of residual peer state.
+   */
+  const attemptAutoRetry = useCallback(async (reason: string) => {
+    const convId = activeConvIdRef.current;
+    const callId = callIdRef.current;
+
+    if (!convId || !callId) return false;
+    if (endingRef.current || retryingRef.current) return false;
+    if (connectedOnceRef.current) return false;
+    if (retryAttemptsRef.current >= MAX_CONNECT_RETRIES) return false;
+    if (!["calling", "connecting"].includes(stateRef.current)) return false;
+
+    const row = await fetchCallRow(callId);
+    if (isTerminalRow(row)) return false;
+
+    const stream = localStreamRef.current;
+    if (!isStreamUsable(stream)) return false;
+
+    retryingRef.current = true;
+    retryAttemptsRef.current += 1;
+    console.warn("[VideoCall] auto-retry", retryAttemptsRef.current, "reason:", reason);
+
+    try {
+      clearConnectionTimeout();
+      clearDisconnectGrace();
+      negotiationStartedRef.current = null;
+      appliedOfferSdpRef.current = null;
+      appliedAnswerSdpRef.current = null;
+      incomingOfferSdpRef.current = null;
+      processingSignalsRef.current.clear();
+      resetPeerSession(stream);
+      disconnectRestartAttemptsRef.current = 0;
+
+      if (isCallerRef.current) {
+        setStateSync("calling");
+        await beginCallerNegotiation(convId, callId);
+        return true;
+      }
+
+      // Receiver: prepare a clean peer connection and ask for a new offer.
+      setStateSync("connecting");
+      createPeerConnection(stream!, convId, callId);
+      startConnectionTimeout();
+      await sendSignal(convId, { type: "call-renegotiate", callId });
+      return true;
+    } finally {
+      retryingRef.current = false;
+    }
+  }, [
+    beginCallerNegotiation,
+    clearConnectionTimeout,
+    clearDisconnectGrace,
+    createPeerConnection,
+    fetchCallRow,
+    resetPeerSession,
+    sendSignal,
+    setStateSync,
+    startConnectionTimeout,
+  ]);
+
+  useEffect(() => {
+    attemptAutoRetryRef.current = attemptAutoRetry;
+  }, [attemptAutoRetry]);
+
+
 
 
   const handleSignal = useCallback(async (convId: string, payload: SignalPayload) => {
