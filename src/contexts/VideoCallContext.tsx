@@ -77,7 +77,8 @@ interface SignalPayload {
     | "call-accept"
     | "call-reject"
     | "call-end"
-    | "call-ready";
+    | "call-ready"
+    | "call-renegotiate";
   callId: string;
   sdp?: string;
   candidate?: RTCIceCandidateInit;
