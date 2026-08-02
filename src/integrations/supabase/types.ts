@@ -3927,6 +3927,24 @@ export type Database = {
         }
         Returns: string
       }
+      search_marketplace_professionals: {
+        Args: { _city?: string; _state?: string }
+        Returns: {
+          bio: string
+          city: string
+          clinic_address: string
+          clinic_name: string
+          crefito: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          profile_photo_url: string
+          social_media: string
+          specialties: string[]
+          state: string
+        }[]
+      }
       try_direct_clinic_add: {
         Args: {
           _clinic_id: string
