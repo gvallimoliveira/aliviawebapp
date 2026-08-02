@@ -61,28 +61,15 @@ const ProfessionalSearch = () => {
 
   const fetchProfessionals = async () => {
     setLoading(true);
-    // Vitrine pública: profissionais aprovados E ativos com acesso PRO
-    // válido — assinatura paga, acesso anual ou parceiro liberado pelo admin.
-    // O modo acadêmico (sem flag de parceiro) fica fora do marketplace.
-    const nowIso = new Date().toISOString();
-    let query = (supabase.from("professionals" as any) as any)
-      .select("*")
-      .eq("active", true)
-      .eq("approved", true)
-      .eq("active_profile_mode", "professional")
-      .or(
-        [
-          "and(subscription_status.eq.active,subscription_stripe_id.not.is.null)",
-          `pro_access_expires_at.gt.${nowIso}`,
-          `subscription_grace_until.gt.${nowIso}`,
-          "is_partner.eq.true",
-        ].join(",")
-      );
-
-    if (stateFilter) query = query.eq("state", stateFilter);
-    if (cityFilter) query = query.ilike("city", `%${cityFilter}%`);
-    const { data } = await query.order("full_name");
-    const sorted = (data || []).sort((a: any, b: any) => {
+    // Vitrine pública: RPC security-definer que retorna apenas profissionais
+    // aprovados, ativos e com acesso PRO válido (assinatura, acesso anual ou
+    // parceiro liberado pelo admin). O modo acadêmico fica fora do marketplace.
+    const { data, error } = await (supabase.rpc as any)("search_marketplace_professionals", {
+      _state: stateFilter || null,
+      _city: cityFilter || null,
+    });
+    if (error) console.error("fetchProfessionals failed", error);
+    const sorted = ((data as any[]) || []).sort((a: any, b: any) => {
       if (a.crefito === "359566-F") return -1;
       if (b.crefito === "359566-F") return 1;
       return 0;
@@ -90,6 +77,7 @@ const ProfessionalSearch = () => {
     setProfessionals(sorted);
     setLoading(false);
   };
+
 
   const handleReferral = async (professionalId: string) => {
     if (!user) return;
