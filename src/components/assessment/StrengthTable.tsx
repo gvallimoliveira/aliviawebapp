@@ -728,14 +728,30 @@ export default function StrengthTable({
         },
       });
       if (error) throw error;
+      const normTrials = (raw: any): StrengthTrial[] | undefined => {
+        if (!Array.isArray(raw) || raw.length === 0) return undefined;
+        const list = raw
+          .map((t: any) => {
+            const v = String(t?.value ?? t ?? "").trim();
+            const ttp = t?.timeToPeak ?? t?.time_to_peak ?? t?.peakTime;
+            return {
+              value: v,
+              ...(ttp == null || String(ttp).trim() === ""
+                ? {}
+                : { timeToPeak: String(ttp).trim() }),
+            } as StrengthTrial;
+          })
+          .filter((t) => t.value !== "");
+        return list.length ? list : undefined;
+      };
       const extracted: StrengthRow[] = Array.isArray(data?.rows)
         ? data.rows
             .map((r: any) => ({
               movement: String(r?.movement ?? "").trim(),
               leftValue: r?.leftValue == null ? "" : String(r.leftValue).trim(),
               rightValue: r?.rightValue == null ? "" : String(r.rightValue).trim(),
-              leftTrials: Array.isArray(r?.leftTrials) ? r.leftTrials : undefined,
-              rightTrials: Array.isArray(r?.rightTrials) ? r.rightTrials : undefined,
+              leftTrials: normTrials(r?.leftTrials),
+              rightTrials: normTrials(r?.rightTrials),
               unit: "kgf",
               aiExtracted: true,
             }))
@@ -748,8 +764,18 @@ export default function StrengthTable({
       }
       // Merge: keep existing non-empty rows, then append extracted ones.
       const existingFilled = sanitizeStrengthRows(rows);
+      const restoreScroll = preserveScroll();
       onChange([...existingFilled, ...extracted]);
-      toast({ title: s(lang, "extractOk") });
+      restoreScroll();
+      const trialCount = extracted.reduce(
+        (acc, r) => acc + (r.leftTrials?.length || 0) + (r.rightTrials?.length || 0),
+        0,
+      );
+      toast({
+        title: s(lang, "extractOk"),
+        description: `${extracted.length} ${s(lang, "colMovement").toLowerCase()} • ${trialCount} ${s(lang, "trialsCount")}`,
+      });
+
     } catch (err: any) {
       console.error("Dynamometry extract error:", err);
       toast({
