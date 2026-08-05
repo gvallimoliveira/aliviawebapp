@@ -469,33 +469,39 @@ export default function StrengthTable({
             </thead>
             <tbody>
               {cleaned.map((r, i) => {
-                const asym = computeAsymmetry(r.leftValue, r.rightValue);
+                const L = computeSideStats(r.leftValue, r.leftTrials);
+                const R = computeSideStats(r.rightValue, r.rightTrials);
+                const asym = computeRowAsymmetry(r);
+                const renderSide = (st: SideStats, initialKey: string) =>
+                  st.mean == null ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    <div className="flex flex-col items-center gap-0.5">
+                      <Badge variant="secondary" className="font-mono">
+                        <span className="mr-1 opacity-70">{s(lang, initialKey)}</span>
+                        {st.count > 1 ? st.mean : st.best}
+                      </Badge>
+                      {st.count > 1 && (
+                        <span className="text-[10px] leading-tight text-muted-foreground">
+                          {s(lang, "meanLabel")} · {s(lang, "bestLabel")} {st.best} · n={st.count}
+                          {st.cv != null ? ` · CV ${st.cv}%` : ""}
+                        </span>
+                      )}
+                      {st.meanTimeToPeak != null && (
+                        <span className="text-[10px] leading-tight text-muted-foreground">
+                          {s(lang, "meanPeakTime")}: {st.meanTimeToPeak}s
+                        </span>
+                      )}
+                    </div>
+                  );
                 return (
                   <tr
                     key={i}
                     className={cn("border-t border-border", i % 2 === 1 && "bg-muted/20")}
                   >
                     <td className="px-3 py-2 text-foreground">{r.movement || "—"}</td>
-                    <td className="px-3 py-2 text-center">
-                      {r.leftValue ? (
-                        <Badge variant="secondary" className="font-mono">
-                          <span className="mr-1 opacity-70">{s(lang, "initialLeft")}</span>
-                          {r.leftValue}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      {r.rightValue ? (
-                        <Badge variant="secondary" className="font-mono">
-                          <span className="mr-1 opacity-70">{s(lang, "initialRight")}</span>
-                          {r.rightValue}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
+                    <td className="px-3 py-2 text-center">{renderSide(L, "initialLeft")}</td>
+                    <td className="px-3 py-2 text-center">{renderSide(R, "initialRight")}</td>
                     <td className="px-3 py-2 text-center">
                       {asym == null ? (
                         <span className="text-muted-foreground">—</span>
@@ -508,6 +514,7 @@ export default function StrengthTable({
                   </tr>
                 );
               })}
+
             </tbody>
           </table>
         </div>
