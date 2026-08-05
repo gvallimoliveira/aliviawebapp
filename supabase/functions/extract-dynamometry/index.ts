@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
         temperature: 0.1,
       },
       MODEL_CHAIN,
-      { functionName: "extract-dynamometry", maxTokens: 1500 },
+      { functionName: "extract-dynamometry", maxTokens: 3000 },
     );
 
     if (!aiResp.ok) {
