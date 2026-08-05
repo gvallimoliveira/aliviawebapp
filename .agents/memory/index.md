@@ -102,4 +102,4 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Multi-Condition Dashboard](mem://features/multi-condition-dashboard) — Painel pessoal agrupa avaliações por região/episódio; diário de dor, evolução e histórico por condição.
 - [Video Call Flow Frozen](mem://features/video-call-frozen) — Fluxo de videochamada congelado: arquivos e regras que não podem mudar sem autorização.
 - [Push Opt-In Persistence](mem://features/push-opt-in-persistence) — Autorização de push sticky, heal automático pós-update e opt-out manual.
-- [Strength Multiple Trials](mem://features/strength-multiple-trials) — Dinamometria com 2-3 medidas por lado: média, melhor, n, CV e tempo até o pico.
+- [Strength Dynamometry](mem://features/strength-dynamometry) — Dinamometria: medidas múltiplas, tempo até o pico opcional, assimetria L/R e agonista/antagonista com limite de 10% (verde/vermelho).

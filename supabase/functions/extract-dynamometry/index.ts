@@ -24,7 +24,7 @@ Regras importantes:
 - Se um dos lados estiver ausente, deixe vazio ("").
 - MUITO IMPORTANTE: relatórios costumam trazer 2 ou 3 medidas (tentativas) do MESMO movimento para cada lado. Capture TODAS elas em "leftTrials"/"rightTrials", uma entrada por medida, na ordem em que aparecem. NUNCA descarte medidas repetidas.
 - Em "leftValue"/"rightValue" coloque o MELHOR (maior) valor daquele lado.
-- Se o relatório informar "tempo até o pico" (ou time to peak) de cada medida, inclua em "timeToPeak" (em segundos) da respectiva medida.
+- O "tempo até o pico" (time to peak) é OPCIONAL: muitos equipamentos não fornecem esse dado. Se existir, inclua em "timeToPeak" (segundos) da respectiva medida; caso contrário, OMITA o campo (não invente valores).
 - Identifique o lado por rótulos como "Esquerda/Direita", "E/D", "L/R".
 - Não invente nomes — use exatamente o nome do movimento como aparece no relatório (traduza levemente para português se estiver em outro idioma).
 - Não inclua linhas vazias, totais ou cabeçalhos.
@@ -44,7 +44,7 @@ Rules:
 - If one side is missing, leave it empty ("").
 - VERY IMPORTANT: reports often contain 2 or 3 trials of the SAME movement per side. Capture ALL of them in "leftTrials"/"rightTrials", one entry per trial, in the order shown. NEVER drop repeated measurements.
 - "leftValue"/"rightValue" must hold the BEST (highest) value of that side.
-- If the report shows a "time to peak" per trial, include it in "timeToPeak" (seconds).
+- "time to peak" is OPTIONAL: many devices do not provide it. Include it in "timeToPeak" (seconds) only when present; otherwise OMIT the field (never invent values).
 - Use the movement name as written in the report.
 - Skip empty rows, totals, headers.
 - Values must be numeric (use a dot as decimal separator).
@@ -63,7 +63,7 @@ Reglas:
 - Si falta un lado, déjelo vacío ("").
 - MUY IMPORTANTE: los informes suelen traer 2 o 3 medidas del MISMO movimiento por lado. Capture TODAS en "leftTrials"/"rightTrials", una entrada por medida, en el orden mostrado. NUNCA descarte medidas repetidas.
 - "leftValue"/"rightValue" deben tener el MEJOR (mayor) valor de ese lado.
-- Si el informe muestra "tiempo al pico" por medida, inclúyalo en "timeToPeak" (segundos).
+- El "tiempo al pico" es OPCIONAL: muchos equipos no lo ofrecen. Inclúyalo en "timeToPeak" (segundos) solo si existe; si no, OMITA el campo (no invente valores).
 - Use el nombre del movimiento tal como aparece.
 - Omita filas vacías, totales y encabezados.
 - Valores numéricos con punto decimal.

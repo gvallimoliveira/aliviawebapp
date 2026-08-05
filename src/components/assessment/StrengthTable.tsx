@@ -155,11 +155,154 @@ export const computeRowAsymmetry = (row: StrengthRow): number | null => {
 };
 
 
-const asymmetryBadgeClass = (pct: number): string => {
-  if (pct <= 10) return "bg-emerald-100 text-emerald-700 border-emerald-200";
-  if (pct <= 20) return "bg-amber-100 text-amber-700 border-amber-200";
-  return "bg-rose-100 text-rose-700 border-rose-200";
+/**
+ * Agonist/antagonist pairs evaluated within the SAME side.
+ * Matching is keyword based so it works for pt/en/es movement labels.
+ */
+type PairDef = {
+  key: string;
+  region: RegExp;
+  a: { label: Record<string, string>; re: RegExp };
+  b: { label: Record<string, string>; re: RegExp };
+  title: Record<string, string>;
 };
+
+const norm = (t: string) =>
+  t
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const PAIRS: PairDef[] = [
+  {
+    key: "shoulderRotation",
+    region: /(ombro|shoulder|hombro)/,
+    a: {
+      label: { pt: "Rot. interna", en: "Int. rotation", es: "Rot. interna" },
+      re: /(rotac|rotat).*(intern|medial)|(intern|medial).*(rotac|rotat)/,
+    },
+    b: {
+      label: { pt: "Rot. externa", en: "Ext. rotation", es: "Rot. externa" },
+      re: /(rotac|rotat).*(extern|lateral)|(extern|lateral).*(rotac|rotat)/,
+    },
+    title: {
+      pt: "Ombro — rotação interna vs externa",
+      en: "Shoulder — internal vs external rotation",
+      es: "Hombro — rotación interna vs externa",
+    },
+  },
+  {
+    key: "knee",
+    region: /(joelho|knee|rodilla)/,
+    a: {
+      label: { pt: "Extensão", en: "Extension", es: "Extensión" },
+      re: /(exten)/,
+    },
+    b: { label: { pt: "Flexão", en: "Flexion", es: "Flexión" }, re: /(flex)/ },
+    title: {
+      pt: "Joelho — extensão vs flexão",
+      en: "Knee — extension vs flexion",
+      es: "Rodilla — extensión vs flexión",
+    },
+  },
+  {
+    key: "hipSagittal",
+    region: /(quadril|hip|cadera)/,
+    a: {
+      label: { pt: "Extensão", en: "Extension", es: "Extensión" },
+      re: /(exten)/,
+    },
+    b: { label: { pt: "Flexão", en: "Flexion", es: "Flexión" }, re: /(flex)/ },
+    title: {
+      pt: "Quadril — extensão vs flexão",
+      en: "Hip — extension vs flexion",
+      es: "Cadera — extensión vs flexión",
+    },
+  },
+  {
+    key: "hipFrontal",
+    region: /(quadril|hip|cadera)/,
+    a: {
+      label: { pt: "Adução", en: "Adduction", es: "Aducción" },
+      re: /(aducao|aducc|adduc|aduc)/,
+    },
+    b: {
+      label: { pt: "Abdução", en: "Abduction", es: "Abducción" },
+      re: /(abduc)/,
+    },
+    title: {
+      pt: "Quadril — adução vs abdução",
+      en: "Hip — adduction vs abduction",
+      es: "Cadera — aducción vs abducción",
+    },
+  },
+];
+
+export type AgonistAntagonistResult = {
+  key: string;
+  title: Record<string, string>;
+  aLabel: Record<string, string>;
+  bLabel: Record<string, string>;
+  /** Per side: mean of agonist, mean of antagonist and asymmetry % */
+  left: { a: number | null; b: number | null; asym: number | null };
+  right: { a: number | null; b: number | null; asym: number | null };
+};
+
+/** Computes intra-side agonist/antagonist asymmetries for the known pairs. */
+export const computeAgonistAntagonist = (
+  rows: StrengthRow[] | undefined | null,
+): AgonistAntagonistResult[] => {
+  const clean = sanitizeStrengthRows(rows);
+  if (clean.length === 0) return [];
+  const out: AgonistAntagonistResult[] = [];
+
+  for (const pair of PAIRS) {
+    const findRow = (re: RegExp) =>
+      clean.find((r) => {
+        const m = norm(r.movement);
+        // Abduction must not be captured by the adduction regex and vice-versa.
+        if (pair.key === "hipFrontal" && re === pair.a.re && /abduc/.test(m)) return false;
+        return pair.region.test(m) && re.test(m);
+      });
+    const rowA = findRow(pair.a.re);
+    const rowB = findRow(pair.b.re);
+    if (!rowA || !rowB) continue;
+
+    const side = (which: "left" | "right") => {
+      const sa = computeSideStats(
+        which === "left" ? rowA.leftValue : rowA.rightValue,
+        which === "left" ? rowA.leftTrials : rowA.rightTrials,
+      );
+      const sb = computeSideStats(
+        which === "left" ? rowB.leftValue : rowB.rightValue,
+        which === "left" ? rowB.leftTrials : rowB.rightTrials,
+      );
+      return {
+        a: sa.mean,
+        b: sb.mean,
+        asym:
+          sa.mean != null && sb.mean != null ? computeAsymmetry(sa.mean, sb.mean) : null,
+      };
+    };
+
+    out.push({
+      key: pair.key,
+      title: pair.title,
+      aLabel: pair.a.label,
+      bLabel: pair.b.label,
+      left: side("left"),
+      right: side("right"),
+    });
+  }
+  return out;
+};
+
+/** ≤10% is acceptable (green); above 10% is highlighted in red. */
+const asymmetryBadgeClass = (pct: number): string =>
+  pct <= 10
+    ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+    : "bg-rose-100 text-rose-700 border-rose-200";
+
 
 type Lang = "pt" | "en" | "es" | string;
 
@@ -210,6 +353,13 @@ const STR: Record<string, Record<string, string>> = {
     cvLabel: "Variação",
     peakTimeLabel: "Tempo até o pico (s)",
     meanPeakTime: "Tempo médio até o pico",
+    peakTimeOptionalLabel: "Tempo até o pico (opcional)",
+    showPeakTime: "Registrar tempo até o pico (opcional)",
+    hidePeakTime: "Ocultar tempo até o pico",
+    peakTimeNote: "Opcional — alguns dinamômetros não fornecem esse dado.",
+    agonistTitle: "Assimetria agonista/antagonista (mesmo lado)",
+    agonistHint: "Acima de 10% merece atenção.",
+
   },
   en: {
     title: "Dynamometry — Muscle Strength (kgf)",
@@ -257,6 +407,13 @@ const STR: Record<string, Record<string, string>> = {
     cvLabel: "Variation",
     peakTimeLabel: "Time to peak (s)",
     meanPeakTime: "Mean time to peak",
+    peakTimeOptionalLabel: "Time to peak (optional)",
+    showPeakTime: "Record time to peak (optional)",
+    hidePeakTime: "Hide time to peak",
+    peakTimeNote: "Optional — some dynamometers do not provide this metric.",
+    agonistTitle: "Agonist/antagonist asymmetry (same side)",
+    agonistHint: "Above 10% deserves attention.",
+
   },
   es: {
     title: "Dinamometría — Fuerza Muscular (kgf)",
@@ -304,6 +461,13 @@ const STR: Record<string, Record<string, string>> = {
     cvLabel: "Variación",
     peakTimeLabel: "Tiempo al pico (s)",
     meanPeakTime: "Tiempo medio al pico",
+    peakTimeOptionalLabel: "Tiempo al pico (opcional)",
+    showPeakTime: "Registrar tiempo al pico (opcional)",
+    hidePeakTime: "Ocultar tiempo al pico",
+    peakTimeNote: "Opcional — algunos dinamómetros no ofrecen este dato.",
+    agonistTitle: "Asimetría agonista/antagonista (mismo lado)",
+    agonistHint: "Por encima del 10% merece atención.",
+
   },
 };
 
@@ -335,6 +499,72 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+const pick = (map: Record<string, string>, lang: Lang) => map[lang as string] ?? map.pt;
+
+/** Intra-side agonist/antagonist asymmetry summary (shoulder rotation, knee, hip). */
+export function AgonistAntagonistPanel({
+  rows,
+  lang = "pt",
+}: {
+  rows: StrengthRow[];
+  lang?: Lang;
+}) {
+  const pairs = computeAgonistAntagonist(rows);
+  if (pairs.length === 0) return null;
+
+  const cell = (v: number | null) =>
+    v == null ? (
+      <span className="text-muted-foreground text-xs">—</span>
+    ) : (
+      <Badge variant="outline" className={cn("font-mono text-[11px]", asymmetryBadgeClass(v))}>
+        {v}%
+      </Badge>
+    );
+
+  return (
+    <div className="mt-3 rounded-xl border border-border bg-muted/20 p-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-1">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground">
+          {s(lang, "agonistTitle")}
+        </span>
+        <span className="text-[10px] text-muted-foreground">{s(lang, "agonistHint")}</span>
+      </div>
+      <div className="mt-2 space-y-1.5">
+        {pairs.map((p) => (
+          <div
+            key={p.key}
+            className="grid grid-cols-[1fr_56px_56px] items-center gap-2 rounded-lg border border-border bg-background/60 px-2 py-1.5"
+          >
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-foreground leading-tight">
+                {pick(p.title, lang)}
+              </p>
+              <p className="text-[10px] text-muted-foreground font-mono">
+                {pick(p.aLabel, lang)} {p.left.a ?? "—"}/{p.right.a ?? "—"} ·{" "}
+                {pick(p.bLabel, lang)} {p.left.b ?? "—"}/{p.right.b ?? "—"}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-[9px] uppercase text-muted-foreground">
+                {s(lang, "initialLeft")}
+              </p>
+              {cell(p.left.asym)}
+            </div>
+            <div className="text-center">
+              <p className="text-[9px] uppercase text-muted-foreground">
+                {s(lang, "initialRight")}
+              </p>
+              {cell(p.right.asym)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+
 export default function StrengthTable({
   value,
   onChange,
@@ -348,6 +578,16 @@ export default function StrengthTable({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const [importMsgIdx, setImportMsgIdx] = useState(0);
+  // Time to peak is optional: only shown when the therapist asks for it or when
+  // the imported report already carried the data.
+  const anyPeakTime = rows.some((r) =>
+    [...(r.leftTrials || []), ...(r.rightTrials || [])].some(
+      (t) => t?.timeToPeak && String(t.timeToPeak).trim() !== "",
+    ),
+  );
+  const [showPeak, setShowPeak] = useState(false);
+  const peakVisible = showPeak || anyPeakTime;
+
 
   const update = (i: number, field: keyof StrengthRow, val: string) => {
     if (!onChange) return;
@@ -575,7 +815,9 @@ export default function StrengthTable({
             </tbody>
           </table>
         </div>
+        <AgonistAntagonistPanel rows={cleaned} lang={lang} />
       </div>
+
     );
   }
 
@@ -826,7 +1068,15 @@ export default function StrengthTable({
                         </div>
                         <div className="mt-1.5 space-y-1.5">
                           {trials.map((t, tIdx) => (
-                            <div key={tIdx} className="grid grid-cols-[1fr_1fr_32px] gap-1.5 items-center">
+                            <div
+                              key={tIdx}
+                              className={cn(
+                                "grid gap-1.5 items-center",
+                                peakVisible
+                                  ? "grid-cols-[1fr_1fr_32px]"
+                                  : "grid-cols-[1fr_32px]",
+                              )}
+                            >
                               <Input
                                 value={t.value}
                                 onChange={(e) => updateTrial(i, side, tIdx, "value", e.target.value)}
@@ -835,16 +1085,18 @@ export default function StrengthTable({
                                 aria-label={`${s(lang, "trialN")} ${tIdx + 1}`}
                                 className="h-8 text-xs text-center font-mono"
                               />
-                              <Input
-                                value={t.timeToPeak || ""}
-                                onChange={(e) =>
-                                  updateTrial(i, side, tIdx, "timeToPeak", e.target.value)
-                                }
-                                placeholder={s(lang, "peakTimeLabel")}
-                                inputMode="decimal"
-                                aria-label={s(lang, "peakTimeLabel")}
-                                className="h-8 text-xs text-center font-mono"
-                              />
+                              {peakVisible && (
+                                <Input
+                                  value={t.timeToPeak || ""}
+                                  onChange={(e) =>
+                                    updateTrial(i, side, tIdx, "timeToPeak", e.target.value)
+                                  }
+                                  placeholder={s(lang, "peakTimeOptionalLabel")}
+                                  inputMode="decimal"
+                                  aria-label={s(lang, "peakTimeOptionalLabel")}
+                                  className="h-8 text-xs text-center font-mono"
+                                />
+                              )}
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -857,6 +1109,7 @@ export default function StrengthTable({
                               </Button>
                             </div>
                           ))}
+
                           <Button
                             type="button"
                             variant="ghost"
@@ -879,7 +1132,16 @@ export default function StrengthTable({
 
       </div>
 
-      <div className="mt-3 flex justify-end">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowPeak((v) => !v)}
+          className="h-8 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          {peakVisible ? s(lang, "hidePeakTime") : s(lang, "showPeakTime")}
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -891,6 +1153,10 @@ export default function StrengthTable({
           {s(lang, "addRow")}
         </Button>
       </div>
+      <p className="mt-1 text-[10px] text-muted-foreground">{s(lang, "peakTimeNote")}</p>
+
+      <AgonistAntagonistPanel rows={rows} lang={lang} />
+
     </div>
   );
 }
