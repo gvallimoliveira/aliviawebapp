@@ -407,6 +407,13 @@ const STR: Record<string, Record<string, string>> = {
     cvLabel: "Variation",
     peakTimeLabel: "Time to peak (s)",
     meanPeakTime: "Mean time to peak",
+    peakTimeOptionalLabel: "Time to peak (optional)",
+    showPeakTime: "Record time to peak (optional)",
+    hidePeakTime: "Hide time to peak",
+    peakTimeNote: "Optional — some dynamometers do not provide this metric.",
+    agonistTitle: "Agonist/antagonist asymmetry (same side)",
+    agonistHint: "Above 10% deserves attention.",
+
   },
   es: {
     title: "Dinamometría — Fuerza Muscular (kgf)",
