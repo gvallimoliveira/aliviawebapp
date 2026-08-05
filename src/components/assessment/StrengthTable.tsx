@@ -1068,7 +1068,15 @@ export default function StrengthTable({
                         </div>
                         <div className="mt-1.5 space-y-1.5">
                           {trials.map((t, tIdx) => (
-                            <div key={tIdx} className="grid grid-cols-[1fr_1fr_32px] gap-1.5 items-center">
+                            <div
+                              key={tIdx}
+                              className={cn(
+                                "grid gap-1.5 items-center",
+                                peakVisible
+                                  ? "grid-cols-[1fr_1fr_32px]"
+                                  : "grid-cols-[1fr_32px]",
+                              )}
+                            >
                               <Input
                                 value={t.value}
                                 onChange={(e) => updateTrial(i, side, tIdx, "value", e.target.value)}
@@ -1077,16 +1085,18 @@ export default function StrengthTable({
                                 aria-label={`${s(lang, "trialN")} ${tIdx + 1}`}
                                 className="h-8 text-xs text-center font-mono"
                               />
-                              <Input
-                                value={t.timeToPeak || ""}
-                                onChange={(e) =>
-                                  updateTrial(i, side, tIdx, "timeToPeak", e.target.value)
-                                }
-                                placeholder={s(lang, "peakTimeLabel")}
-                                inputMode="decimal"
-                                aria-label={s(lang, "peakTimeLabel")}
-                                className="h-8 text-xs text-center font-mono"
-                              />
+                              {peakVisible && (
+                                <Input
+                                  value={t.timeToPeak || ""}
+                                  onChange={(e) =>
+                                    updateTrial(i, side, tIdx, "timeToPeak", e.target.value)
+                                  }
+                                  placeholder={s(lang, "peakTimeOptionalLabel")}
+                                  inputMode="decimal"
+                                  aria-label={s(lang, "peakTimeOptionalLabel")}
+                                  className="h-8 text-xs text-center font-mono"
+                                />
+                              )}
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -1099,6 +1109,7 @@ export default function StrengthTable({
                               </Button>
                             </div>
                           ))}
+
                           <Button
                             type="button"
                             variant="ghost"
