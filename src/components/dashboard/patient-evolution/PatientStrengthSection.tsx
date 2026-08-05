@@ -6,6 +6,8 @@ import StrengthTable, {
   sanitizeStrengthRows,
   createInitialStrengthRows,
   computeAsymmetry,
+  computeSideStats,
+  computeRowAsymmetry,
   type StrengthRow,
 } from "@/components/assessment/StrengthTable";
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
@@ -104,9 +106,15 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
       const arr = movementSeries.get(r.movement) || [];
       arr.push({
         date: fmtDate(a.created_at),
-        L: r.leftValue,
-        R: r.rightValue,
-        asym: computeAsymmetry(r.leftValue, r.rightValue),
+        L: (() => {
+          const st = computeSideStats(r.leftValue, r.leftTrials);
+          return st.count > 1 ? `${st.mean} (n=${st.count})` : r.leftValue;
+        })(),
+        R: (() => {
+          const st = computeSideStats(r.rightValue, r.rightTrials);
+          return st.count > 1 ? `${st.mean} (n=${st.count})` : r.rightValue;
+        })(),
+        asym: computeRowAsymmetry(r),
       });
       movementSeries.set(r.movement, arr);
     });
