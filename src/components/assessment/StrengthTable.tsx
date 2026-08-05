@@ -683,7 +683,10 @@ export default function StrengthTable({
 
       <div className="space-y-2 sm:space-y-1.5">
         {rows.map((row, i) => {
-          const asym = computeAsymmetry(row.leftValue, row.rightValue);
+          const asym = computeRowAsymmetry(row);
+          const leftStats = computeSideStats(row.leftValue, row.leftTrials);
+          const rightStats = computeSideStats(row.rightValue, row.rightTrials);
+
           return (
             <div key={i} className="group">
               {/* Mobile */}
