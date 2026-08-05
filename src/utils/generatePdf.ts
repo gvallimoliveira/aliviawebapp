@@ -94,7 +94,14 @@ interface AnamnesisData {
   /** Joint mobility / Range of Motion table (manual assessment). */
   romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
   /** Dynamometry / muscle strength table (manual assessment). Values in kgf. */
-  strengthTable?: Array<{ movement: string; leftValue: string; rightValue: string; unit?: string }>;
+  strengthTable?: Array<{
+    movement: string;
+    leftValue: string;
+    rightValue: string;
+    unit?: string;
+    leftTrials?: Array<{ value: string; timeToPeak?: string }>;
+    rightTrials?: Array<{ value: string; timeToPeak?: string }>;
+  }>;
   /** Free-text clinical history (manual assessment anamnesis). */
   history?: string;
   /** Free-text complementary exams (imaging, lab, etc.). */
@@ -1009,6 +1016,22 @@ function renderRomTableSection(
   doc.text(colRight, xRight + valueColW / 2, y + 4.8, { align: "center" });
   y += headerH;
 
+  if (hasTrials) {
+    doc.setFont("Inter", "italic");
+    doc.setFontSize(6.8);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(
+      language === "es"
+        ? "Valor mostrado = media de las medidas del lado."
+        : isPt
+          ? "Valor exibido = média das medidas do lado."
+          : "Displayed value = mean of the side's trials.",
+      SECTION_X,
+      y + 3.2,
+    );
+    y += 4.5;
+  }
+
   doc.setFont("Inter", "normal");
   doc.setFontSize(9);
 
@@ -1049,19 +1072,59 @@ function renderRomTableSection(
 function renderStrengthTableSection(
   doc: jsPDF,
   y: number,
-  rows: Array<{ movement: string; leftValue: string; rightValue: string; unit?: string }> | undefined,
+  rows:
+    | Array<{
+        movement: string;
+        leftValue: string;
+        rightValue: string;
+        unit?: string;
+        leftTrials?: Array<{ value: string; timeToPeak?: string }>;
+        rightTrials?: Array<{ value: string; timeToPeak?: string }>;
+      }>
+    | undefined,
   isPt: boolean,
   language: string,
 ): number {
   if (!rows || rows.length === 0) return y;
+  const sideAgg = (
+    value: string | undefined,
+    trials: Array<{ value: string; timeToPeak?: string }> | undefined,
+  ): { display: string; detail: string; mean: number | null } => {
+    const nums = (trials || [])
+      .map((t) => parseFloat(String(t?.value ?? "").replace(",", ".")))
+      .filter((n) => isFinite(n) && n > 0);
+    if (nums.length === 0) {
+      const single = parseFloat(String(value || "").replace(",", "."));
+      return {
+        display: (value || "").trim() || "—",
+        detail: "",
+        mean: isFinite(single) && single > 0 ? single : null,
+      };
+    }
+    const mean = Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 10) / 10;
+    const best = Math.round(Math.max(...nums) * 10) / 10;
+    const bestLbl = language === "es" ? "mejor" : isPt ? "melhor" : "best";
+    return { display: String(mean), detail: `${bestLbl} ${best} · n=${nums.length}`, mean };
+  };
+
   const cleaned = rows
-    .map((r) => ({
-      movement: (r?.movement || "").trim(),
-      leftValue: (r?.leftValue || "").trim(),
-      rightValue: (r?.rightValue || "").trim(),
-    }))
+    .map((r) => {
+      const L = sideAgg(r?.leftValue, r?.leftTrials);
+      const R = sideAgg(r?.rightValue, r?.rightTrials);
+      return {
+        movement: (r?.movement || "").trim(),
+        leftValue: L.display === "—" ? "" : L.display,
+        rightValue: R.display === "—" ? "" : R.display,
+        leftDetail: L.detail,
+        rightDetail: R.detail,
+        leftMean: L.mean,
+        rightMean: R.mean,
+      };
+    })
     .filter((r) => r.movement || r.leftValue || r.rightValue);
   if (cleaned.length === 0) return y;
+
+  const hasTrials = cleaned.some((r) => r.leftDetail || r.rightDetail);
 
   const title =
     language === "es"
@@ -1098,12 +1161,29 @@ function renderStrengthTableSection(
   doc.text(colAsym, xAsym + asymColW / 2, y + 4.8, { align: "center" });
   y += headerH;
 
+  if (hasTrials) {
+    doc.setFont("Inter", "italic");
+    doc.setFontSize(6.8);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(
+      language === "es"
+        ? "Valor mostrado = media de las medidas del lado."
+        : isPt
+          ? "Valor exibido = média das medidas do lado."
+          : "Displayed value = mean of the side's trials.",
+      SECTION_X,
+      y + 3.2,
+    );
+    y += 4.5;
+  }
+
   doc.setFont("Inter", "normal");
   doc.setFontSize(9);
 
   cleaned.forEach((r, i) => {
     const movLines = doc.splitTextToSize(r.movement || "—", movColW - 3);
-    const rowH = Math.max(7, movLines.length * 4.2 + 2.5);
+    const detailH = r.leftDetail || r.rightDetail ? 3.6 : 0;
+    const rowH = Math.max(7, movLines.length * 4.2 + 2.5) + detailH;
     y = checkPage(doc, y, rowH + 1);
 
     drawRoundedRect(
@@ -1127,9 +1207,18 @@ function renderStrengthTableSection(
     doc.text(r.leftValue || "—", xLeft + valueColW / 2, y + 4.5, { align: "center" });
     doc.text(r.rightValue || "—", xRight + valueColW / 2, y + 4.5, { align: "center" });
 
-    // Asymmetry calc
-    const L = parseFloat(r.leftValue.replace(",", "."));
-    const R = parseFloat(r.rightValue.replace(",", "."));
+    if (r.leftDetail || r.rightDetail) {
+      doc.setFont("Inter", "normal");
+      doc.setFontSize(6.2);
+      doc.setTextColor(...COLORS.muted);
+      if (r.leftDetail) doc.text(r.leftDetail, xLeft + valueColW / 2, y + 8, { align: "center" });
+      if (r.rightDetail) doc.text(r.rightDetail, xRight + valueColW / 2, y + 8, { align: "center" });
+      doc.setFontSize(9);
+    }
+
+    // Asymmetry calc (uses the mean of trials when available)
+    const L = r.leftMean ?? NaN;
+    const R = r.rightMean ?? NaN;
     let asymText = "—";
     if (isFinite(L) && isFinite(R) && L > 0 && R > 0) {
       const pct = Math.round((Math.abs(L - R) / Math.max(L, R)) * 100);

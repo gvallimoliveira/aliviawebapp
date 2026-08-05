@@ -7,10 +7,24 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+/** One individual measurement (trial) of a movement on one side. */
+export type StrengthTrial = {
+  /** Peak force in kgf. */
+  value: string;
+  /** Optional time to peak force, in seconds. */
+  timeToPeak?: string;
+};
+
 export type StrengthRow = {
   movement: string;
+  /** Representative (best) value for the left side. */
   leftValue: string;
+  /** Representative (best) value for the right side. */
   rightValue: string;
+  /** All individual measurements for the left side (2-3 trials are common). */
+  leftTrials?: StrengthTrial[];
+  /** All individual measurements for the right side. */
+  rightTrials?: StrengthTrial[];
   /** Always "kgf" today. Kept on the row for future-proofing. */
   unit?: string;
   /** True when row was filled by AI extraction and still needs human review. */
@@ -27,17 +41,96 @@ export const EMPTY_STRENGTH_ROW: StrengthRow = {
 export const createInitialStrengthRows = (n = 2): StrengthRow[] =>
   Array.from({ length: n }, () => ({ ...EMPTY_STRENGTH_ROW }));
 
+export const parseNum = (v: string | number | undefined | null): number | null => {
+  if (v == null) return null;
+  const n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
+  return isFinite(n) ? n : null;
+};
+
+const sanitizeTrials = (trials: unknown): StrengthTrial[] => {
+  if (!Array.isArray(trials)) return [];
+  return trials
+    .map((t: any) => ({
+      value: String(t?.value ?? t ?? "").trim(),
+      timeToPeak:
+        t?.timeToPeak == null || String(t.timeToPeak).trim() === ""
+          ? undefined
+          : String(t.timeToPeak).trim(),
+    }))
+    .filter((t) => parseNum(t.value) != null)
+    .slice(0, 10);
+};
+
+/** Aggregated stats for one side, derived from its trials (or single value). */
+export type SideStats = {
+  count: number;
+  best: number | null;
+  mean: number | null;
+  /** Coefficient of variation (%) across trials — reliability indicator. */
+  cv: number | null;
+  meanTimeToPeak: number | null;
+};
+
+export const computeSideStats = (
+  value: string | number | undefined,
+  trials: StrengthTrial[] | undefined,
+): SideStats => {
+  const nums = (trials || [])
+    .map((t) => parseNum(t.value))
+    .filter((n): n is number => n != null && n > 0);
+  if (nums.length === 0) {
+    const single = parseNum(value as string);
+    return {
+      count: single != null && single > 0 ? 1 : 0,
+      best: single != null && single > 0 ? single : null,
+      mean: single != null && single > 0 ? single : null,
+      cv: null,
+      meanTimeToPeak: null,
+    };
+  }
+  const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+  const best = Math.max(...nums);
+  let cv: number | null = null;
+  if (nums.length > 1 && mean > 0) {
+    const variance = nums.reduce((a, b) => a + (b - mean) ** 2, 0) / (nums.length - 1);
+    cv = Math.round((Math.sqrt(variance) / mean) * 1000) / 10;
+  }
+  const times = (trials || [])
+    .map((t) => parseNum(t.timeToPeak))
+    .filter((n): n is number => n != null && n > 0);
+  return {
+    count: nums.length,
+    best: Math.round(best * 10) / 10,
+    mean: Math.round(mean * 10) / 10,
+    cv,
+    meanTimeToPeak:
+      times.length > 0
+        ? Math.round((times.reduce((a, b) => a + b, 0) / times.length) * 100) / 100
+        : null,
+  };
+};
+
 export const sanitizeStrengthRows = (
   rows: StrengthRow[] | undefined | null,
 ): StrengthRow[] => {
   if (!Array.isArray(rows)) return [];
   return rows
-    .map((r) => ({
-      movement: (r?.movement || "").trim(),
-      leftValue: (r?.leftValue || "").trim(),
-      rightValue: (r?.rightValue || "").trim(),
-      unit: (r?.unit || "kgf").trim() || "kgf",
-    }))
+    .map((r) => {
+      const leftTrials = sanitizeTrials(r?.leftTrials);
+      const rightTrials = sanitizeTrials(r?.rightTrials);
+      const leftStats = computeSideStats(r?.leftValue, leftTrials);
+      const rightStats = computeSideStats(r?.rightValue, rightTrials);
+      const left = (r?.leftValue || "").trim();
+      const right = (r?.rightValue || "").trim();
+      return {
+        movement: (r?.movement || "").trim(),
+        leftValue: left || (leftStats.best != null ? String(leftStats.best) : ""),
+        rightValue: right || (rightStats.best != null ? String(rightStats.best) : ""),
+        ...(leftTrials.length > 0 ? { leftTrials } : {}),
+        ...(rightTrials.length > 0 ? { rightTrials } : {}),
+        unit: (r?.unit || "kgf").trim() || "kgf",
+      } as StrengthRow;
+    })
     .filter((r) => r.movement || r.leftValue || r.rightValue);
 };
 
@@ -52,6 +145,15 @@ export const computeAsymmetry = (
   const max = Math.max(L, R);
   return Math.round((Math.abs(L - R) / max) * 100);
 };
+
+/** Asymmetry using the MEAN of trials when available (more reliable than a single best). */
+export const computeRowAsymmetry = (row: StrengthRow): number | null => {
+  const L = computeSideStats(row.leftValue, row.leftTrials);
+  const R = computeSideStats(row.rightValue, row.rightTrials);
+  if (L.mean == null || R.mean == null) return null;
+  return computeAsymmetry(L.mean, R.mean);
+};
+
 
 const asymmetryBadgeClass = (pct: number): string => {
   if (pct <= 10) return "bg-emerald-100 text-emerald-700 border-emerald-200";
@@ -97,6 +199,17 @@ const STR: Record<string, Record<string, string>> = {
     extractMsg3: "Tabelando valores de força…",
     extractMsg4: "Quase lá — organizando os resultados…",
     empty: "Nenhum dado de dinamometria registrado.",
+    trialsLabel: "Medidas",
+    trialsHint: "2 a 3 medidas por lado deixam o resultado mais fidedigno.",
+    addTrial: "Adicionar medida",
+    removeTrial: "Remover medida",
+    trialN: "Medida",
+    meanLabel: "Média",
+    bestLabel: "Melhor",
+    trialsCount: "medidas",
+    cvLabel: "Variação",
+    peakTimeLabel: "Tempo até o pico (s)",
+    meanPeakTime: "Tempo médio até o pico",
   },
   en: {
     title: "Dynamometry — Muscle Strength (kgf)",
@@ -133,6 +246,17 @@ const STR: Record<string, Record<string, string>> = {
     extractMsg3: "Tabulating strength values…",
     extractMsg4: "Almost there — organizing results…",
     empty: "No dynamometry data recorded.",
+    trialsLabel: "Trials",
+    trialsHint: "2 to 3 trials per side make the result more reliable.",
+    addTrial: "Add trial",
+    removeTrial: "Remove trial",
+    trialN: "Trial",
+    meanLabel: "Mean",
+    bestLabel: "Best",
+    trialsCount: "trials",
+    cvLabel: "Variation",
+    peakTimeLabel: "Time to peak (s)",
+    meanPeakTime: "Mean time to peak",
   },
   es: {
     title: "Dinamometría — Fuerza Muscular (kgf)",
@@ -169,6 +293,17 @@ const STR: Record<string, Record<string, string>> = {
     extractMsg3: "Tabulando valores de fuerza…",
     extractMsg4: "Casi listo — organizando resultados…",
     empty: "Sin datos de dinamometría registrados.",
+    trialsLabel: "Medidas",
+    trialsHint: "2 a 3 medidas por lado hacen el resultado más fiable.",
+    addTrial: "Agregar medida",
+    removeTrial: "Eliminar medida",
+    trialN: "Medida",
+    meanLabel: "Media",
+    bestLabel: "Mejor",
+    trialsCount: "medidas",
+    cvLabel: "Variación",
+    peakTimeLabel: "Tiempo al pico (s)",
+    meanPeakTime: "Tiempo medio al pico",
   },
 };
 
@@ -221,6 +356,63 @@ export default function StrengthTable({
     );
     onChange(next);
   };
+
+  const trialsKey = (side: "left" | "right"): "leftTrials" | "rightTrials" =>
+    side === "left" ? "leftTrials" : "rightTrials";
+  const valueKey = (side: "left" | "right"): "leftValue" | "rightValue" =>
+    side === "left" ? "leftValue" : "rightValue";
+
+  /** Keeps the representative value in sync with the best trial. */
+  const withSyncedValue = (row: StrengthRow, side: "left" | "right"): StrengthRow => {
+    const st = computeSideStats("", row[trialsKey(side)]);
+    if (st.best == null) return row;
+    return { ...row, [valueKey(side)]: String(st.best) };
+  };
+
+  const updateTrial = (
+    i: number,
+    side: "left" | "right",
+    tIdx: number,
+    field: keyof StrengthTrial,
+    val: string,
+  ) => {
+    if (!onChange) return;
+    onChange(
+      rows.map((r, idx) => {
+        if (idx !== i) return r;
+        const list = [...(r[trialsKey(side)] || [])];
+        list[tIdx] = { ...(list[tIdx] || { value: "" }), [field]: val };
+        return withSyncedValue({ ...r, [trialsKey(side)]: list, aiExtracted: false }, side);
+      }),
+    );
+  };
+
+  const addTrial = (i: number, side: "left" | "right") => {
+    if (!onChange) return;
+    onChange(
+      rows.map((r, idx) => {
+        if (idx !== i) return r;
+        const existing = r[trialsKey(side)] || [];
+        // Seed the first trial with the value already typed in the main field.
+        const seed = existing.length === 0 && r[valueKey(side)]
+          ? [{ value: r[valueKey(side)] }]
+          : existing;
+        return { ...r, [trialsKey(side)]: [...seed, { value: "" }], aiExtracted: false };
+      }),
+    );
+  };
+
+  const removeTrial = (i: number, side: "left" | "right", tIdx: number) => {
+    if (!onChange) return;
+    onChange(
+      rows.map((r, idx) => {
+        if (idx !== i) return r;
+        const list = (r[trialsKey(side)] || []).filter((_, k) => k !== tIdx);
+        return withSyncedValue({ ...r, [trialsKey(side)]: list, aiExtracted: false }, side);
+      }),
+    );
+  };
+
 
   const addRow = () => onChange?.([...rows, { ...EMPTY_STRENGTH_ROW }]);
 
@@ -275,9 +467,12 @@ export default function StrengthTable({
               movement: String(r?.movement ?? "").trim(),
               leftValue: r?.leftValue == null ? "" : String(r.leftValue).trim(),
               rightValue: r?.rightValue == null ? "" : String(r.rightValue).trim(),
+              leftTrials: Array.isArray(r?.leftTrials) ? r.leftTrials : undefined,
+              rightTrials: Array.isArray(r?.rightTrials) ? r.rightTrials : undefined,
               unit: "kgf",
               aiExtracted: true,
             }))
+            .map((r: StrengthRow) => sanitizeStrengthRows([r])[0] ? { ...sanitizeStrengthRows([r])[0], aiExtracted: true } : r)
             .filter((r: StrengthRow) => r.movement || r.leftValue || r.rightValue)
         : [];
       if (extracted.length === 0) {
@@ -331,33 +526,39 @@ export default function StrengthTable({
             </thead>
             <tbody>
               {cleaned.map((r, i) => {
-                const asym = computeAsymmetry(r.leftValue, r.rightValue);
+                const L = computeSideStats(r.leftValue, r.leftTrials);
+                const R = computeSideStats(r.rightValue, r.rightTrials);
+                const asym = computeRowAsymmetry(r);
+                const renderSide = (st: SideStats, initialKey: string) =>
+                  st.mean == null ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    <div className="flex flex-col items-center gap-0.5">
+                      <Badge variant="secondary" className="font-mono">
+                        <span className="mr-1 opacity-70">{s(lang, initialKey)}</span>
+                        {st.count > 1 ? st.mean : st.best}
+                      </Badge>
+                      {st.count > 1 && (
+                        <span className="text-[10px] leading-tight text-muted-foreground">
+                          {s(lang, "meanLabel")} · {s(lang, "bestLabel")} {st.best} · n={st.count}
+                          {st.cv != null ? ` · CV ${st.cv}%` : ""}
+                        </span>
+                      )}
+                      {st.meanTimeToPeak != null && (
+                        <span className="text-[10px] leading-tight text-muted-foreground">
+                          {s(lang, "meanPeakTime")}: {st.meanTimeToPeak}s
+                        </span>
+                      )}
+                    </div>
+                  );
                 return (
                   <tr
                     key={i}
                     className={cn("border-t border-border", i % 2 === 1 && "bg-muted/20")}
                   >
                     <td className="px-3 py-2 text-foreground">{r.movement || "—"}</td>
-                    <td className="px-3 py-2 text-center">
-                      {r.leftValue ? (
-                        <Badge variant="secondary" className="font-mono">
-                          <span className="mr-1 opacity-70">{s(lang, "initialLeft")}</span>
-                          {r.leftValue}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-center">
-                      {r.rightValue ? (
-                        <Badge variant="secondary" className="font-mono">
-                          <span className="mr-1 opacity-70">{s(lang, "initialRight")}</span>
-                          {r.rightValue}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
+                    <td className="px-3 py-2 text-center">{renderSide(L, "initialLeft")}</td>
+                    <td className="px-3 py-2 text-center">{renderSide(R, "initialRight")}</td>
                     <td className="px-3 py-2 text-center">
                       {asym == null ? (
                         <span className="text-muted-foreground">—</span>
@@ -370,6 +571,7 @@ export default function StrengthTable({
                   </tr>
                 );
               })}
+
             </tbody>
           </table>
         </div>
@@ -481,7 +683,10 @@ export default function StrengthTable({
 
       <div className="space-y-2 sm:space-y-1.5">
         {rows.map((row, i) => {
-          const asym = computeAsymmetry(row.leftValue, row.rightValue);
+          const asym = computeRowAsymmetry(row);
+          const leftStats = computeSideStats(row.leftValue, row.leftTrials);
+          const rightStats = computeSideStats(row.rightValue, row.rightTrials);
+
           return (
             <div key={i} className="group">
               {/* Mobile */}
@@ -590,9 +795,88 @@ export default function StrengthTable({
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
+
+              {/* Trials (multiple measurements per side) */}
+              <div className="mt-1.5 rounded-xl border border-dashed border-border bg-muted/20 p-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                    {s(lang, "trialsLabel")}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground text-right">
+                    {s(lang, "trialsHint")}
+                  </span>
+                </div>
+                <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
+                  {(["left", "right"] as const).map((side) => {
+                    const trials = row[side === "left" ? "leftTrials" : "rightTrials"] || [];
+                    const st = side === "left" ? leftStats : rightStats;
+                    return (
+                      <div key={side} className="rounded-lg border border-border bg-background/60 p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            {s(lang, side === "left" ? "shortLeft" : "shortRight")}
+                          </span>
+                          {st.count > 1 && (
+                            <span className="text-[10px] font-mono text-muted-foreground">
+                              {s(lang, "meanLabel")} {st.mean} · {s(lang, "bestLabel")} {st.best} · n=
+                              {st.count}
+                              {st.cv != null ? ` · CV ${st.cv}%` : ""}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1.5 space-y-1.5">
+                          {trials.map((t, tIdx) => (
+                            <div key={tIdx} className="grid grid-cols-[1fr_1fr_32px] gap-1.5 items-center">
+                              <Input
+                                value={t.value}
+                                onChange={(e) => updateTrial(i, side, tIdx, "value", e.target.value)}
+                                placeholder={`${s(lang, "trialN")} ${tIdx + 1} (kgf)`}
+                                inputMode="decimal"
+                                aria-label={`${s(lang, "trialN")} ${tIdx + 1}`}
+                                className="h-8 text-xs text-center font-mono"
+                              />
+                              <Input
+                                value={t.timeToPeak || ""}
+                                onChange={(e) =>
+                                  updateTrial(i, side, tIdx, "timeToPeak", e.target.value)
+                                }
+                                placeholder={s(lang, "peakTimeLabel")}
+                                inputMode="decimal"
+                                aria-label={s(lang, "peakTimeLabel")}
+                                className="h-8 text-xs text-center font-mono"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeTrial(i, side, tIdx)}
+                                aria-label={s(lang, "removeTrial")}
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => addTrial(i, side)}
+                            className="h-7 gap-1 px-2 text-[11px] text-primary hover:bg-primary/5"
+                          >
+                            <Plus className="h-3 w-3" />
+                            {s(lang, "addTrial")}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           );
         })}
+
       </div>
 
       <div className="mt-3 flex justify-end">
