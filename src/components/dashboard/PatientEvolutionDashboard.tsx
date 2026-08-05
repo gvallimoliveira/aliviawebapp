@@ -202,16 +202,30 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const backTab = isClinicMode ? "patients" : "professional";
   const buildAssessmentViewUrl = (assessmentId: string, email?: string | null) =>
     `/assessment/view/${assessmentId}?from=professional&tab=${backTab}${email ? `&patient=${encodeURIComponent(email)}` : ""}`;
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialPatient = searchParams.get("patient");
-  const [selectedEmail, setSelectedEmail] = useState<string | null>(initialPatient);
+  const [selectedEmail, setSelectedEmailState] = useState<string | null>(initialPatient);
+  // Keep the open patient chart in the URL (?patient=...) so that when the OS
+  // kills / backgrounds the PWA tab (app switch on mobile), the session
+  // restore in sessionPersistence brings the user right back to the same
+  // patient chart — same behavior as the clinical agent thread routes.
+  const setSelectedEmail = useCallback((value: string | null) => {
+    setSelectedEmailState(value);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value) next.set("patient", value);
+      else next.delete("patient");
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
   useEffect(() => { onSelectionChange?.(selectedEmail); }, [selectedEmail, onSelectionChange]);
   // Sync with URL: if the `patient` query param is removed (e.g. user taps
   // the Patients tab in the bottom bar), collapse back to the list view.
   const patientParam = searchParams.get("patient");
   useEffect(() => {
-    setSelectedEmail((prev) => (patientParam ?? null) === prev ? prev : (patientParam ?? null));
+    setSelectedEmailState((prev) => (patientParam ?? null) === prev ? prev : (patientParam ?? null));
   }, [patientParam]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [notes, setNotes] = useState<Record<string, string>>({});
