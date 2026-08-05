@@ -578,6 +578,16 @@ export default function StrengthTable({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const [importMsgIdx, setImportMsgIdx] = useState(0);
+  // Time to peak is optional: only shown when the therapist asks for it or when
+  // the imported report already carried the data.
+  const anyPeakTime = rows.some((r) =>
+    [...(r.leftTrials || []), ...(r.rightTrials || [])].some(
+      (t) => t?.timeToPeak && String(t.timeToPeak).trim() !== "",
+    ),
+  );
+  const [showPeak, setShowPeak] = useState(false);
+  const peakVisible = showPeak || anyPeakTime;
+
 
   const update = (i: number, field: keyof StrengthRow, val: string) => {
     if (!onChange) return;
