@@ -815,7 +815,9 @@ export default function StrengthTable({
             </tbody>
           </table>
         </div>
+        <AgonistAntagonistPanel rows={cleaned} lang={lang} />
       </div>
+
     );
   }
 
