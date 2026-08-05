@@ -703,23 +703,39 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     if (deletingAssessmentId) return;
     setDeletingAssessmentId(assessmentId);
     try {
-      // Cleanup related data
-      const { data: programs } = await (supabase as any)
-        .from("exercise_programs")
-        .select("id")
-        .eq("assessment_id", assessmentId);
-      if (programs) {
-        for (const prog of programs) {
-          await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
-          await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
+      // Cleanup related data — nunca deve impedir a exclusão principal
+      try {
+        const { data: programs } = await (supabase as any)
+          .from("exercise_programs")
+          .select("id")
+          .eq("assessment_id", assessmentId);
+        if (programs) {
+          for (const prog of programs) {
+            await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
+            await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
+          }
         }
+        if (professionalId) {
+          await supabase.from("professional_notes").delete().eq("professional_id", professionalId).eq("assessment_id", assessmentId);
+        }
+        await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", assessmentId);
+      } catch (cleanupErr) {
+        console.warn("[deleteAssessment] cleanup falhou (ignorado):", cleanupErr);
       }
-      if (professionalId) {
-        await supabase.from("professional_notes").delete().eq("professional_id", professionalId).eq("assessment_id", assessmentId);
-      }
-      await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", assessmentId);
-      const { error } = await supabase.from("assessments").delete().eq("id", assessmentId);
+
+      const { error, data: deleted } = await supabase
+        .from("assessments")
+        .delete()
+        .eq("id", assessmentId)
+        .select("id");
       if (error) throw error;
+      if (!deleted || deleted.length === 0) {
+        throw new Error(
+          language === "pt"
+            ? "Sem permissão para excluir esta avaliação."
+            : "You don't have permission to delete this assessment.",
+        );
+      }
       // Remove from in-memory list
       const idx = assessments.findIndex((a) => a.id === assessmentId);
       if (idx >= 0) assessments.splice(idx, 1);
@@ -732,6 +748,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       setDeleteAssessmentTarget(null);
     }
   };
+
 
   const handleAddExternalPatient = async () => {
     if (!newPatientName.trim() || !professionalId) return;
