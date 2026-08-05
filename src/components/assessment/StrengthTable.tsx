@@ -1132,7 +1132,16 @@ export default function StrengthTable({
 
       </div>
 
-      <div className="mt-3 flex justify-end">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowPeak((v) => !v)}
+          className="h-8 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          {peakVisible ? s(lang, "hidePeakTime") : s(lang, "showPeakTime")}
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -1144,6 +1153,10 @@ export default function StrengthTable({
           {s(lang, "addRow")}
         </Button>
       </div>
+      <p className="mt-1 text-[10px] text-muted-foreground">{s(lang, "peakTimeNote")}</p>
+
+      <AgonistAntagonistPanel rows={rows} lang={lang} />
+
     </div>
   );
 }
