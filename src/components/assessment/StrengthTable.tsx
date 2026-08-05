@@ -461,6 +461,13 @@ const STR: Record<string, Record<string, string>> = {
     cvLabel: "Variación",
     peakTimeLabel: "Tiempo al pico (s)",
     meanPeakTime: "Tiempo medio al pico",
+    peakTimeOptionalLabel: "Tiempo al pico (opcional)",
+    showPeakTime: "Registrar tiempo al pico (opcional)",
+    hidePeakTime: "Ocultar tiempo al pico",
+    peakTimeNote: "Opcional — algunos dinamómetros no ofrecen este dato.",
+    agonistTitle: "Asimetría agonista/antagonista (mismo lado)",
+    agonistHint: "Por encima del 10% merece atención.",
+
   },
 };
 
