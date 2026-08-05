@@ -353,6 +353,13 @@ const STR: Record<string, Record<string, string>> = {
     cvLabel: "Variação",
     peakTimeLabel: "Tempo até o pico (s)",
     meanPeakTime: "Tempo médio até o pico",
+    peakTimeOptionalLabel: "Tempo até o pico (opcional)",
+    showPeakTime: "Registrar tempo até o pico (opcional)",
+    hidePeakTime: "Ocultar tempo até o pico",
+    peakTimeNote: "Opcional — alguns dinamômetros não fornecem esse dado.",
+    agonistTitle: "Assimetria agonista/antagonista (mesmo lado)",
+    agonistHint: "Acima de 10% merece atenção.",
+
   },
   en: {
     title: "Dynamometry — Muscle Strength (kgf)",
