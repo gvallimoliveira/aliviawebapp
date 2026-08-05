@@ -164,27 +164,10 @@ const AddPatientModal = ({
         else patientRow.professional_id = professionalId;
         const { error } = await (supabase.from("patients" as any) as any).insert(patientRow);
         if (error) throw error;
+        // NÃO criar avaliação placeholder aqui: o registro em `patients` já é
+        // suficiente para o paciente aparecer nas listas. Placeholders geravam
+        // "1 avaliação" fantasma logo após o cadastro.
 
-        if (email.trim()) {
-          const { data: existing } = await supabase
-            .from("assessments")
-            .select("id")
-            .eq(clinicId ? "clinic_id" : "professional_id", clinicId || professionalId)
-            .eq("patient_email", email.trim())
-            .limit(1);
-          if (!existing || existing.length === 0) {
-            const assessmentRow: any = {
-              type: "professional",
-              status: "completed",
-              patient_name: nextName,
-              patient_email: email.trim(),
-              anamnesis_data: { externalPatient: true },
-            };
-            if (clinicId) assessmentRow.clinic_id = clinicId;
-            else assessmentRow.professional_id = professionalId;
-            await supabase.from("assessments").insert(assessmentRow);
-          }
-        }
       }
 
       const savedName = nextName;

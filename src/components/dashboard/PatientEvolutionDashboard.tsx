@@ -703,23 +703,39 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     if (deletingAssessmentId) return;
     setDeletingAssessmentId(assessmentId);
     try {
-      // Cleanup related data
-      const { data: programs } = await (supabase as any)
-        .from("exercise_programs")
-        .select("id")
-        .eq("assessment_id", assessmentId);
-      if (programs) {
-        for (const prog of programs) {
-          await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
-          await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
+      // Cleanup related data — nunca deve impedir a exclusão principal
+      try {
+        const { data: programs } = await (supabase as any)
+          .from("exercise_programs")
+          .select("id")
+          .eq("assessment_id", assessmentId);
+        if (programs) {
+          for (const prog of programs) {
+            await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
+            await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
+          }
         }
+        if (professionalId) {
+          await supabase.from("professional_notes").delete().eq("professional_id", professionalId).eq("assessment_id", assessmentId);
+        }
+        await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", assessmentId);
+      } catch (cleanupErr) {
+        console.warn("[deleteAssessment] cleanup falhou (ignorado):", cleanupErr);
       }
-      if (professionalId) {
-        await supabase.from("professional_notes").delete().eq("professional_id", professionalId).eq("assessment_id", assessmentId);
-      }
-      await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", assessmentId);
-      const { error } = await supabase.from("assessments").delete().eq("id", assessmentId);
+
+      const { error, data: deleted } = await supabase
+        .from("assessments")
+        .delete()
+        .eq("id", assessmentId)
+        .select("id");
       if (error) throw error;
+      if (!deleted || deleted.length === 0) {
+        throw new Error(
+          language === "pt"
+            ? "Sem permissão para excluir esta avaliação."
+            : "You don't have permission to delete this assessment.",
+        );
+      }
       // Remove from in-memory list
       const idx = assessments.findIndex((a) => a.id === assessmentId);
       if (idx >= 0) assessments.splice(idx, 1);
@@ -733,20 +749,20 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     }
   };
 
+
   const handleAddExternalPatient = async () => {
     if (!newPatientName.trim() || !professionalId) return;
     setAddingPatient(true);
     try {
-      // Create a placeholder assessment so the patient appears in the list
-      const email = newPatientEmail.trim() || `external_${Date.now()}@manual.alivia`;
-      await supabase.from("assessments").insert({
-        type: "professional",
-        status: "completed",
+      // Cadastra somente o paciente. Nada de avaliação placeholder — isso
+      // fazia o paciente nascer com "1 avaliação" fantasma.
+      const { error } = await (supabase as any).from("patients").insert({
         professional_id: professionalId,
-        patient_name: newPatientName.trim(),
-        patient_email: email,
-        anamnesis_data: { externalPatient: true, phone: newPatientPhone.trim() || undefined },
+        full_name: newPatientName.trim(),
+        email: newPatientEmail.trim() || null,
+        phone: newPatientPhone.replace(/\D/g, "") || null,
       });
+      if (error) throw error;
       toast({ title: t("pro.patient_added") });
       setAddPatientOpen(false);
       setNewPatientName("");
@@ -755,11 +771,12 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       // Trigger parent reload
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
     } catch (err: any) {
-      toast({ title: t("pro.patient_add_error"), variant: "destructive" });
+      toast({ title: t("pro.patient_add_error"), description: err?.message, variant: "destructive" });
     } finally {
       setAddingPatient(false);
     }
   };
+
 
 
   useEffect(() => {
