@@ -795,7 +795,6 @@ export default function StrengthTable({
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
-              </div>
 
               {/* Trials (multiple measurements per side) */}
               <div className="mt-1.5 rounded-xl border border-dashed border-border bg-muted/20 p-2">
