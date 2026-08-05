@@ -357,6 +357,63 @@ export default function StrengthTable({
     onChange(next);
   };
 
+  const trialsKey = (side: "left" | "right"): "leftTrials" | "rightTrials" =>
+    side === "left" ? "leftTrials" : "rightTrials";
+  const valueKey = (side: "left" | "right"): "leftValue" | "rightValue" =>
+    side === "left" ? "leftValue" : "rightValue";
+
+  /** Keeps the representative value in sync with the best trial. */
+  const withSyncedValue = (row: StrengthRow, side: "left" | "right"): StrengthRow => {
+    const st = computeSideStats("", row[trialsKey(side)]);
+    if (st.best == null) return row;
+    return { ...row, [valueKey(side)]: String(st.best) };
+  };
+
+  const updateTrial = (
+    i: number,
+    side: "left" | "right",
+    tIdx: number,
+    field: keyof StrengthTrial,
+    val: string,
+  ) => {
+    if (!onChange) return;
+    onChange(
+      rows.map((r, idx) => {
+        if (idx !== i) return r;
+        const list = [...(r[trialsKey(side)] || [])];
+        list[tIdx] = { ...(list[tIdx] || { value: "" }), [field]: val };
+        return withSyncedValue({ ...r, [trialsKey(side)]: list, aiExtracted: false }, side);
+      }),
+    );
+  };
+
+  const addTrial = (i: number, side: "left" | "right") => {
+    if (!onChange) return;
+    onChange(
+      rows.map((r, idx) => {
+        if (idx !== i) return r;
+        const existing = r[trialsKey(side)] || [];
+        // Seed the first trial with the value already typed in the main field.
+        const seed = existing.length === 0 && r[valueKey(side)]
+          ? [{ value: r[valueKey(side)] }]
+          : existing;
+        return { ...r, [trialsKey(side)]: [...seed, { value: "" }], aiExtracted: false };
+      }),
+    );
+  };
+
+  const removeTrial = (i: number, side: "left" | "right", tIdx: number) => {
+    if (!onChange) return;
+    onChange(
+      rows.map((r, idx) => {
+        if (idx !== i) return r;
+        const list = (r[trialsKey(side)] || []).filter((_, k) => k !== tIdx);
+        return withSyncedValue({ ...r, [trialsKey(side)]: list, aiExtracted: false }, side);
+      }),
+    );
+  };
+
+
   const addRow = () => onChange?.([...rows, { ...EMPTY_STRENGTH_ROW }]);
 
   const removeRow = (i: number) => {
