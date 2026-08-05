@@ -968,223 +968,219 @@ export default function StrengthTable({
         ))}
       </div>
 
-      {/* Header (desktop only) */}
-      <div className="hidden sm:grid grid-cols-[1fr_120px_120px_64px_36px] gap-2 px-1 pb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
-        <div>{s(lang, "colMovement")}</div>
-        <div className="text-center">{s(lang, "colLeft")}</div>
-        <div className="text-center">{s(lang, "colRight")}</div>
-        <div className="text-center">{s(lang, "asymTitle")}</div>
-        <div />
-      </div>
-
-      <div className="space-y-2 sm:space-y-1.5">
+      <div className="space-y-2">
         {rows.map((row, i) => {
           const asym = computeRowAsymmetry(row);
           const leftStats = computeSideStats(row.leftValue, row.leftTrials);
           const rightStats = computeSideStats(row.rightValue, row.rightTrials);
+          const isEmptyRow =
+            !row.movement.trim() && !row.leftValue.trim() && !row.rightValue.trim();
+          const open = openRows[i] ?? isEmptyRow;
 
           return (
-            <div key={i} className="group">
-              {/* Mobile */}
-              <div className="sm:hidden rounded-xl border border-border bg-background/40 p-2 space-y-1.5">
-                <Input
-                  value={row.movement}
-                  onChange={(e) => update(i, "movement", e.target.value)}
-                  placeholder={s(lang, "placeholderMovement")}
-                  className="h-9 text-sm"
-                />
-                <div className="grid grid-cols-[1fr_1fr_36px] gap-1.5 items-end">
-                  <div className="space-y-1">
-                    <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
-                        {s(lang, "initialLeft")}
-                      </span>
-                      {s(lang, "shortLeft")}
-                    </span>
-                    <Input
-                      value={row.leftValue}
-                      onChange={(e) => update(i, "leftValue", e.target.value)}
-                      placeholder="kgf"
-                      inputMode="decimal"
-                      aria-label={s(lang, "colLeft")}
-                      className="h-9 text-sm text-center font-mono"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
-                        {s(lang, "initialRight")}
-                      </span>
-                      {s(lang, "shortRight")}
-                    </span>
-                    <Input
-                      value={row.rightValue}
-                      onChange={(e) => update(i, "rightValue", e.target.value)}
-                      placeholder="kgf"
-                      inputMode="decimal"
-                      aria-label={s(lang, "colRight")}
-                      className="h-9 text-sm text-center font-mono"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeRow(i)}
-                    aria-label={s(lang, "removeRow")}
-                    className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            <div
+              key={i}
+              className="rounded-xl border border-border bg-background/50 overflow-hidden"
+            >
+              {/* Collapsed header — movement name + quick summary */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => toggleRow(i, !open)}
+                  aria-expanded={open}
+                  className="flex flex-1 min-w-0 items-center gap-2 px-2.5 py-2.5 text-left hover:bg-muted/40 transition-colors"
+                >
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                      open && "rotate-180",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "flex-1 min-w-0 truncate text-sm font-medium",
+                      row.movement.trim() ? "text-foreground" : "text-muted-foreground",
+                    )}
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                {asym != null && (
-                  <div className="flex items-center gap-1.5 pt-0.5">
-                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      {s(lang, "asymTitle")}
+                    {row.movement.trim() || s(lang, "untitledMovement")}
+                  </span>
+                  {!open && (
+                    <span className="flex shrink-0 items-center gap-1">
+                      {leftStats.best != null && (
+                        <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[10px]">
+                          {s(lang, "initialLeft")} {leftStats.best}
+                        </Badge>
+                      )}
+                      {rightStats.best != null && (
+                        <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[10px]">
+                          {s(lang, "initialRight")} {rightStats.best}
+                        </Badge>
+                      )}
+                      {asym != null && (
+                        <Badge
+                          variant="outline"
+                          className={cn("h-5 px-1.5 font-mono text-[10px]", asymmetryBadgeClass(asym))}
+                        >
+                          {asym}%
+                        </Badge>
+                      )}
                     </span>
-                    <Badge variant="outline" className={cn("font-mono text-[10px] h-5 px-1.5", asymmetryBadgeClass(asym))}>
-                      {asym}%
-                    </Badge>
-                  </div>
-                )}
-              </div>
-
-              {/* Desktop */}
-              <div className="hidden sm:grid grid-cols-[1fr_120px_120px_64px_36px] gap-2 items-center">
-                <Input
-                  value={row.movement}
-                  onChange={(e) => update(i, "movement", e.target.value)}
-                  placeholder={s(lang, "placeholderMovement")}
-                  className="h-9 text-sm"
-                />
-                <Input
-                  value={row.leftValue}
-                  onChange={(e) => update(i, "leftValue", e.target.value)}
-                  placeholder={s(lang, "placeholderValue")}
-                  inputMode="decimal"
-                  className="h-9 text-sm text-center font-mono"
-                />
-                <Input
-                  value={row.rightValue}
-                  onChange={(e) => update(i, "rightValue", e.target.value)}
-                  placeholder={s(lang, "placeholderValue")}
-                  inputMode="decimal"
-                  className="h-9 text-sm text-center font-mono"
-                />
-                <div className="text-center">
-                  {asym == null ? (
-                    <span className="text-muted-foreground text-xs">—</span>
-                  ) : (
-                    <Badge variant="outline" className={cn("font-mono text-[11px]", asymmetryBadgeClass(asym))}>
-                      {asym}%
-                    </Badge>
                   )}
-                </div>
+                </button>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   onClick={() => removeRow(i)}
                   aria-label={s(lang, "removeRow")}
-                  className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  className="mr-1 h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
 
-              {/* Trials (multiple measurements per side) */}
-              <div className="mt-1.5 rounded-xl border border-dashed border-border bg-muted/20 p-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
-                    {s(lang, "trialsLabel")}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground text-right">
-                    {s(lang, "trialsHint")}
-                  </span>
-                </div>
-                <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
-                  {(["left", "right"] as const).map((side) => {
-                    const trials = row[side === "left" ? "leftTrials" : "rightTrials"] || [];
-                    const st = side === "left" ? leftStats : rightStats;
-                    return (
-                      <div key={side} className="rounded-lg border border-border bg-background/60 p-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            {s(lang, side === "left" ? "shortLeft" : "shortRight")}
-                          </span>
-                          {st.count > 1 && (
-                            <span className="text-[10px] font-mono text-muted-foreground">
-                              {s(lang, "meanLabel")} {st.mean} · {s(lang, "bestLabel")} {st.best} · n=
-                              {st.count}
-                              {st.cv != null ? ` · CV ${st.cv}%` : ""}
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-1.5 space-y-1.5">
-                          {trials.map((t, tIdx) => (
-                            <div
-                              key={tIdx}
-                              className={cn(
-                                "grid gap-1.5 items-center",
-                                peakVisible
-                                  ? "grid-cols-[1fr_1fr_32px]"
-                                  : "grid-cols-[1fr_32px]",
-                              )}
-                            >
-                              <Input
-                                value={t.value}
-                                onChange={(e) => updateTrial(i, side, tIdx, "value", e.target.value)}
-                                placeholder={`${s(lang, "trialN")} ${tIdx + 1} (kgf)`}
-                                inputMode="decimal"
-                                aria-label={`${s(lang, "trialN")} ${tIdx + 1}`}
-                                className="h-8 text-xs text-center font-mono"
-                              />
-                              {peakVisible && (
-                                <Input
-                                  value={t.timeToPeak || ""}
-                                  onChange={(e) =>
-                                    updateTrial(i, side, tIdx, "timeToPeak", e.target.value)
-                                  }
-                                  placeholder={s(lang, "peakTimeOptionalLabel")}
-                                  inputMode="decimal"
-                                  aria-label={s(lang, "peakTimeOptionalLabel")}
-                                  className="h-8 text-xs text-center font-mono"
-                                />
-                              )}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeTrial(i, side, tIdx)}
-                                aria-label={s(lang, "removeTrial")}
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          ))}
+              {open && (
+                <div className="border-t border-border px-2.5 py-2.5 space-y-3">
+                  {/* Movement name */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {s(lang, "colMovement")}
+                    </label>
+                    <Input
+                      value={row.movement}
+                      onChange={(e) => update(i, "movement", e.target.value)}
+                      placeholder={s(lang, "placeholderMovement")}
+                      className="h-9 text-sm"
+                    />
+                  </div>
 
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => addTrial(i, side)}
-                            className="h-7 gap-1 px-2 text-[11px] text-primary hover:bg-primary/5"
-                          >
-                            <Plus className="h-3 w-3" />
-                            {s(lang, "addTrial")}
-                          </Button>
+                  {/* Measurements per side */}
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {(["left", "right"] as const).map((side) => {
+                      const trials = row[side === "left" ? "leftTrials" : "rightTrials"] || [];
+                      const st = side === "left" ? leftStats : rightStats;
+                      return (
+                        <div key={side} className="rounded-lg border border-border bg-muted/20 p-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+                              {s(lang, side === "left" ? "initialLeft" : "initialRight")}
+                            </span>
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground">
+                              {s(lang, side === "left" ? "shortLeft" : "shortRight")}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 space-y-2">
+                            {trials.length === 0 && (
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-medium text-muted-foreground">
+                                  {s(lang, "trialN")} 1 (kgf)
+                                </label>
+                                <Input
+                                  value={side === "left" ? row.leftValue : row.rightValue}
+                                  onChange={(e) =>
+                                    update(i, side === "left" ? "leftValue" : "rightValue", e.target.value)
+                                  }
+                                  placeholder="kgf"
+                                  inputMode="decimal"
+                                  className="h-9 text-sm text-center font-mono"
+                                />
+                              </div>
+                            )}
+
+                            {trials.map((t, tIdx) => (
+                              <div key={tIdx} className="flex items-end gap-1.5">
+                                <div className="flex-1 space-y-1">
+                                  <label className="text-[10px] font-medium text-muted-foreground">
+                                    {s(lang, "trialN")} {tIdx + 1} (kgf)
+                                  </label>
+                                  <Input
+                                    value={t.value}
+                                    onChange={(e) => updateTrial(i, side, tIdx, "value", e.target.value)}
+                                    placeholder="kgf"
+                                    inputMode="decimal"
+                                    aria-label={`${s(lang, "trialN")} ${tIdx + 1} (kgf)`}
+                                    className="h-9 text-sm text-center font-mono"
+                                  />
+                                </div>
+                                {peakVisible && (
+                                  <div className="flex-1 space-y-1">
+                                    <label className="text-[10px] font-medium text-muted-foreground">
+                                      {s(lang, "peakTrialN")} {tIdx + 1} (s)
+                                    </label>
+                                    <Input
+                                      value={t.timeToPeak || ""}
+                                      onChange={(e) =>
+                                        updateTrial(i, side, tIdx, "timeToPeak", e.target.value)
+                                      }
+                                      placeholder="s"
+                                      inputMode="decimal"
+                                      aria-label={`${s(lang, "peakTrialN")} ${tIdx + 1} (s)`}
+                                      className="h-9 text-sm text-center font-mono"
+                                    />
+                                  </div>
+                                )}
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeTrial(i, side, tIdx)}
+                                  aria-label={s(lang, "removeTrial")}
+                                  className="h-9 w-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            ))}
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => addTrial(i, side)}
+                              className="h-7 gap-1 px-2 text-[11px] text-primary hover:bg-primary/5"
+                            >
+                              <Plus className="h-3 w-3" />
+                              {s(lang, "addTrial")}
+                            </Button>
+
+                            {st.count > 1 && (
+                              <p className="text-[10px] font-mono text-muted-foreground">
+                                {s(lang, "meanLabel")} {st.mean} · {s(lang, "bestLabel")} {st.best} · n=
+                                {st.count}
+                                {st.cv != null ? ` · CV ${st.cv}%` : ""}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[10px] text-muted-foreground">{s(lang, "trialsHint")}</span>
+                    {asym != null && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          {s(lang, "asymTitle")}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={cn("h-5 px-1.5 font-mono text-[10px]", asymmetryBadgeClass(asym))}
+                        >
+                          {asym}%
+                        </Badge>
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           );
         })}
 
       </div>
+
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <Button
