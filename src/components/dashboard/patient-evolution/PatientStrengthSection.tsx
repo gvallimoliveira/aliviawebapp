@@ -101,7 +101,10 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
         title: "Dinamometria salva",
         description: `Registrada na avaliação de ${fmtDate(target.created_at)}.`,
       });
+      const restoreScroll = preserveScroll();
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+      restoreScroll();
+
     } catch (e: any) {
       toast({
         title: "Não foi possível salvar",
