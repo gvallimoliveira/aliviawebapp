@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Dumbbell, Plus, Trash2, Upload, Sparkles, Loader2, AlertTriangle } from "lucide-react";
+import { Dumbbell, Plus, Trash2, Upload, Sparkles, Loader2, AlertTriangle, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -359,6 +359,8 @@ const STR: Record<string, Record<string, string>> = {
     peakTimeNote: "Opcional — alguns dinamômetros não fornecem esse dado.",
     agonistTitle: "Assimetria agonista/antagonista (mesmo lado)",
     agonistHint: "Acima de 10% merece atenção.",
+    untitledMovement: "Movimento sem nome — toque para preencher",
+    peakTrialN: "Tempo de pico",
 
   },
   en: {
@@ -413,6 +415,8 @@ const STR: Record<string, Record<string, string>> = {
     peakTimeNote: "Optional — some dynamometers do not provide this metric.",
     agonistTitle: "Agonist/antagonist asymmetry (same side)",
     agonistHint: "Above 10% deserves attention.",
+    untitledMovement: "Unnamed movement — tap to fill in",
+    peakTrialN: "Time to peak",
 
   },
   es: {
@@ -467,6 +471,8 @@ const STR: Record<string, Record<string, string>> = {
     peakTimeNote: "Opcional — algunos dinamómetros no ofrecen este dato.",
     agonistTitle: "Asimetría agonista/antagonista (mismo lado)",
     agonistHint: "Por encima del 10% merece atención.",
+    untitledMovement: "Movimiento sin nombre — toque para completar",
+    peakTrialN: "Tiempo al pico",
 
   },
 };
@@ -615,6 +621,12 @@ export default function StrengthTable({
   const [showPeak, setShowPeak] = useState(false);
   const peakVisible = showPeak || anyPeakTime;
 
+  // Each movement is a collapsible card. Collapsed by default so a long test
+  // stays scannable; empty rows open automatically so they can be filled.
+  const [openRows, setOpenRows] = useState<Record<number, boolean>>({});
+  const toggleRow = (i: number, open: boolean) =>
+    setOpenRows((prev) => ({ ...prev, [i]: open }));
+
 
   const update = (i: number, field: keyof StrengthRow, val: string) => {
     if (!onChange) return;
@@ -681,7 +693,10 @@ export default function StrengthTable({
   };
 
 
-  const addRow = () => onChange?.([...rows, { ...EMPTY_STRENGTH_ROW }]);
+  const addRow = () => {
+    toggleRow(rows.length, true);
+    onChange?.([...rows, { ...EMPTY_STRENGTH_ROW }]);
+  };
 
   const removeRow = (i: number) => {
     if (!onChange) return;
