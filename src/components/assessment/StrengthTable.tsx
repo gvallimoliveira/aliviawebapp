@@ -499,6 +499,72 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+const pick = (map: Record<string, string>, lang: Lang) => map[lang as string] ?? map.pt;
+
+/** Intra-side agonist/antagonist asymmetry summary (shoulder rotation, knee, hip). */
+export function AgonistAntagonistPanel({
+  rows,
+  lang = "pt",
+}: {
+  rows: StrengthRow[];
+  lang?: Lang;
+}) {
+  const pairs = computeAgonistAntagonist(rows);
+  if (pairs.length === 0) return null;
+
+  const cell = (v: number | null) =>
+    v == null ? (
+      <span className="text-muted-foreground text-xs">—</span>
+    ) : (
+      <Badge variant="outline" className={cn("font-mono text-[11px]", asymmetryBadgeClass(v))}>
+        {v}%
+      </Badge>
+    );
+
+  return (
+    <div className="mt-3 rounded-xl border border-border bg-muted/20 p-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-1">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground">
+          {s(lang, "agonistTitle")}
+        </span>
+        <span className="text-[10px] text-muted-foreground">{s(lang, "agonistHint")}</span>
+      </div>
+      <div className="mt-2 space-y-1.5">
+        {pairs.map((p) => (
+          <div
+            key={p.key}
+            className="grid grid-cols-[1fr_56px_56px] items-center gap-2 rounded-lg border border-border bg-background/60 px-2 py-1.5"
+          >
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-foreground leading-tight">
+                {pick(p.title, lang)}
+              </p>
+              <p className="text-[10px] text-muted-foreground font-mono">
+                {pick(p.aLabel, lang)} {p.left.a ?? "—"}/{p.right.a ?? "—"} ·{" "}
+                {pick(p.bLabel, lang)} {p.left.b ?? "—"}/{p.right.b ?? "—"}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-[9px] uppercase text-muted-foreground">
+                {s(lang, "initialLeft")}
+              </p>
+              {cell(p.left.asym)}
+            </div>
+            <div className="text-center">
+              <p className="text-[9px] uppercase text-muted-foreground">
+                {s(lang, "initialRight")}
+              </p>
+              {cell(p.right.asym)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+
 export default function StrengthTable({
   value,
   onChange,
