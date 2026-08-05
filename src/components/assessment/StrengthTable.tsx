@@ -576,8 +576,35 @@ export default function StrengthTable({
   const { toast } = useToast();
   const rows = Array.isArray(value) ? value : [];
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const [importing, setImporting] = useState(false);
   const [importMsgIdx, setImportMsgIdx] = useState(0);
+
+  /**
+   * Keeps the dynamometry section visually anchored while the surrounding page
+   * re-renders (import/save can remount parents and reset window scroll).
+   * Captures the section's offset from the viewport top and restores it over a
+   * few frames after the update.
+   */
+  const preserveScroll = () => {
+    const el = rootRef.current;
+    if (!el) return () => {};
+    const before = el.getBoundingClientRect().top;
+    return () => {
+      let frames = 0;
+      const restore = () => {
+        const node = rootRef.current;
+        if (node) {
+          const after = node.getBoundingClientRect().top;
+          const delta = after - before;
+          if (Math.abs(delta) > 2) window.scrollBy({ top: delta, behavior: "auto" });
+        }
+        if (frames++ < 12) window.requestAnimationFrame(restore);
+      };
+      window.requestAnimationFrame(restore);
+    };
+  };
+
   // Time to peak is optional: only shown when the therapist asks for it or when
   // the imported report already carried the data.
   const anyPeakTime = rows.some((r) =>
@@ -701,14 +728,30 @@ export default function StrengthTable({
         },
       });
       if (error) throw error;
+      const normTrials = (raw: any): StrengthTrial[] | undefined => {
+        if (!Array.isArray(raw) || raw.length === 0) return undefined;
+        const list = raw
+          .map((t: any) => {
+            const v = String(t?.value ?? t ?? "").trim();
+            const ttp = t?.timeToPeak ?? t?.time_to_peak ?? t?.peakTime;
+            return {
+              value: v,
+              ...(ttp == null || String(ttp).trim() === ""
+                ? {}
+                : { timeToPeak: String(ttp).trim() }),
+            } as StrengthTrial;
+          })
+          .filter((t) => t.value !== "");
+        return list.length ? list : undefined;
+      };
       const extracted: StrengthRow[] = Array.isArray(data?.rows)
         ? data.rows
             .map((r: any) => ({
               movement: String(r?.movement ?? "").trim(),
               leftValue: r?.leftValue == null ? "" : String(r.leftValue).trim(),
               rightValue: r?.rightValue == null ? "" : String(r.rightValue).trim(),
-              leftTrials: Array.isArray(r?.leftTrials) ? r.leftTrials : undefined,
-              rightTrials: Array.isArray(r?.rightTrials) ? r.rightTrials : undefined,
+              leftTrials: normTrials(r?.leftTrials),
+              rightTrials: normTrials(r?.rightTrials),
               unit: "kgf",
               aiExtracted: true,
             }))
@@ -721,8 +764,18 @@ export default function StrengthTable({
       }
       // Merge: keep existing non-empty rows, then append extracted ones.
       const existingFilled = sanitizeStrengthRows(rows);
+      const restoreScroll = preserveScroll();
       onChange([...existingFilled, ...extracted]);
-      toast({ title: s(lang, "extractOk") });
+      restoreScroll();
+      const trialCount = extracted.reduce(
+        (acc, r) => acc + (r.leftTrials?.length || 0) + (r.rightTrials?.length || 0),
+        0,
+      );
+      toast({
+        title: s(lang, "extractOk"),
+        description: `${extracted.length} ${s(lang, "colMovement").toLowerCase()} • ${trialCount} ${s(lang, "trialsCount")}`,
+      });
+
     } catch (err: any) {
       console.error("Dynamometry extract error:", err);
       toast({
@@ -835,7 +888,8 @@ export default function StrengthTable({
   const hasAiExtracted = rows.some((r) => r.aiExtracted);
 
   return (
-    <div className={cn(!bare && "rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-sm")}>
+    <div ref={rootRef} className={cn(!bare && "rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-sm")}>
+
       <div className="flex items-start gap-3 mb-3">
         <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-primary/10 text-primary shrink-0">
           <Dumbbell className="h-4 w-4" />

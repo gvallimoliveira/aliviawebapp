@@ -51,10 +51,31 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
 
   const [rows, setRows] = React.useState<StrengthRow[]>(initialRows);
   const [saving, setSaving] = React.useState(false);
+  const cardRef = React.useRef<HTMLDivElement>(null);
+
+  /** Keeps the section anchored while parents re-render after a save/reload. */
+  const preserveScroll = () => {
+    const el = cardRef.current;
+    if (!el) return () => {};
+    const before = el.getBoundingClientRect().top;
+    return () => {
+      let frames = 0;
+      const restore = () => {
+        const node = cardRef.current;
+        if (node) {
+          const delta = node.getBoundingClientRect().top - before;
+          if (Math.abs(delta) > 2) window.scrollBy({ top: delta, behavior: "auto" });
+        }
+        if (frames++ < 20) window.requestAnimationFrame(restore);
+      };
+      window.requestAnimationFrame(restore);
+    };
+  };
 
   React.useEffect(() => setRows(initialRows), [initialRows]);
 
   if (!target) return null;
+
 
   const savedSerialized = JSON.stringify(
     sanitizeStrengthRows(target?.anamnesis_data?.strengthTable),
@@ -80,7 +101,10 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
         title: "Dinamometria salva",
         description: `Registrada na avaliação de ${fmtDate(target.created_at)}.`,
       });
+      const restoreScroll = preserveScroll();
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
+      restoreScroll();
+
     } catch (e: any) {
       toast({
         title: "Não foi possível salvar",
@@ -121,7 +145,8 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
   });
 
   return (
-    <Card>
+    <Card ref={cardRef} id="dinamometria">
+
       <CardContent className="space-y-4 pt-5">
         <StrengthTable
           value={rows}

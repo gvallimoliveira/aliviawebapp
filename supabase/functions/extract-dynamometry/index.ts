@@ -1,6 +1,7 @@
 // Extract dynamometry (muscle strength) data from an uploaded image or PDF.
-// Returns a normalized array of { movement, leftValue, rightValue, unit:"kgf" }.
-// The original file is NOT stored — only the extracted text is returned.
+// Returns a normalized array of rows with ALL trials per side:
+//   { movement, leftValue, rightValue, leftTrials[], rightTrials[], unit:"kgf" }
+// The original file is NOT stored — only the extracted data is returned.
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -8,91 +9,148 @@ import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 
+// Vision-heavy table reading: Pro first (accuracy matters far more than cost on
+// a one-shot import), Flash as fallback.
 const MODEL_CHAIN = [
+  "google/gemini-2.5-pro",
   "google/gemini-2.5-flash",
   "google/gemini-2.5-flash-lite",
 ];
 
+// Bump whenever the prompt / schema changes so cached extractions are invalidated.
+const PROMPT_VERSION = "v3-trials-strict";
+
+const COMMON_RULES_PT = `REGRAS DE LEITURA DA TABELA (siga à risca):
+1. Percorra o documento LINHA POR LINHA, de cima para baixo. Cada linha da tabela é uma MEDIDA.
+2. NUNCA agrupe, resuma ou deduplique medidas: se o mesmo movimento aparece em 2, 3 ou mais linhas (tentativas/repetições), TODAS entram como itens separados em "leftTrials" ou "rightTrials" do MESMO movimento, na ordem em que aparecem.
+3. Um movimento com 3 medidas à esquerda e 3 à direita gera UMA linha de saída com 3 itens em "leftTrials" e 3 em "rightTrials".
+4. Identifique o lado por rótulos como "Esquerda/Direita", "Esq/Dir", "E/D", "L/R", "Left/Right".
+5. "leftValue"/"rightValue" = MAIOR (melhor) valor daquele lado.
+6. Se o relatório trouxer coluna de MÉDIA por movimento/lado, informe em "reportedLeftMean"/"reportedRightMean" (não substitui as medidas).
+7. Tempo até o pico (time to peak) é OPCIONAL: preencha "timeToPeak" (segundos) da medida SOMENTE se o valor estiver no documento. Se não houver, OMITA — nunca invente.
+8. Unidade alvo: kgf. Se o relatório usar Newton (N), divida por 9.80665 e arredonde para 1 decimal. Se usar libras (lb), divida por 2.20462.
+9. Use o nome do movimento exatamente como aparece no relatório (pode traduzir levemente).
+10. Ignore cabeçalhos, totais, linhas vazias e observações. Valores numéricos com ponto decimal.
+11. Não deixe nenhuma medida visível fora da saída. Conte as medidas do documento e confira antes de responder.`;
+
+const COMMON_RULES_EN = `TABLE READING RULES (follow strictly):
+1. Walk the document LINE BY LINE, top to bottom. Each table row is one MEASUREMENT.
+2. NEVER group, summarize or deduplicate measurements: if the same movement appears in 2, 3 or more rows (trials), ALL of them become separate items in "leftTrials"/"rightTrials" of the SAME movement, in the order shown.
+3. A movement with 3 left and 3 right measurements yields ONE output row with 3 items in "leftTrials" and 3 in "rightTrials".
+4. Identify the side by labels such as "Left/Right", "L/R", "Esq/Dir", "E/D".
+5. "leftValue"/"rightValue" = the HIGHEST (best) value on that side.
+6. If the report shows a MEAN column per movement/side, report it in "reportedLeftMean"/"reportedRightMean" (it does not replace the trials).
+7. Time to peak is OPTIONAL: fill "timeToPeak" (seconds) for a measurement ONLY if present in the document. Otherwise OMIT it — never invent values.
+8. Target unit: kgf. Convert Newtons by dividing by 9.80665 (1 decimal); pounds by dividing by 2.20462.
+9. Use the movement name as written in the report.
+10. Skip headers, totals, empty rows and comments. Numeric values with a dot decimal separator.
+11. Do not leave any visible measurement out. Count the measurements in the document and double-check before answering.`;
+
+const COMMON_RULES_ES = `REGLAS DE LECTURA DE LA TABLA (síguelas al pie de la letra):
+1. Recorre el documento LÍNEA POR LÍNEA, de arriba a abajo. Cada fila es una MEDIDA.
+2. NUNCA agrupes, resumas ni elimines medidas duplicadas: si el mismo movimiento aparece en 2, 3 o más filas (intentos), TODAS entran como ítems separados en "leftTrials"/"rightTrials" del MISMO movimiento, en el orden mostrado.
+3. Un movimiento con 3 medidas izquierdas y 3 derechas genera UNA fila con 3 ítems en "leftTrials" y 3 en "rightTrials".
+4. Identifica el lado por rótulos como "Izquierda/Derecha", "I/D", "Esq/Dir", "L/R".
+5. "leftValue"/"rightValue" = el MAYOR (mejor) valor de ese lado.
+6. Si el informe trae columna de MEDIA por movimiento/lado, indícala en "reportedLeftMean"/"reportedRightMean" (no reemplaza las medidas).
+7. El tiempo al pico es OPCIONAL: rellena "timeToPeak" (segundos) SOLO si el valor está en el documento. Si no, OMÍTELO — nunca lo inventes.
+8. Unidad objetivo: kgf. Newtons: divide por 9.80665 (1 decimal); libras: divide por 2.20462.
+9. Usa el nombre del movimiento tal como aparece.
+10. Omite encabezados, totales, filas vacías y comentarios. Valores numéricos con punto decimal.
+11. No dejes ninguna medida fuera. Cuenta las medidas del documento y verifica antes de responder.`;
+
 const PROMPTS: Record<string, string> = {
-  pt: `Você é um assistente clínico especializado em fisioterapia.
-Receberá uma imagem ou PDF de um relatório de DINAMOMETRIA (avaliação de força muscular).
-Extraia EXCLUSIVAMENTE os pares de medidas no formato:
-  movimento testado / valor lado esquerdo / valor lado direito
+  pt: `Você é um assistente clínico especializado em fisioterapia e leitura de laudos de DINAMOMETRIA (força muscular).
+Sua tarefa é extrair TODAS as medidas de força presentes na imagem/PDF e devolvê-las pela ferramenta estruturada.
 
-Regras importantes:
-- Unidade alvo: kgf (quilograma-força). Se o relatório usar Newton (N), converta dividindo por 9.80665 e arredonde para 1 casa decimal.
-- Se um dos lados estiver ausente, deixe vazio ("").
-- MUITO IMPORTANTE: relatórios costumam trazer 2 ou 3 medidas (tentativas) do MESMO movimento para cada lado. Capture TODAS elas em "leftTrials"/"rightTrials", uma entrada por medida, na ordem em que aparecem. NUNCA descarte medidas repetidas.
-- Em "leftValue"/"rightValue" coloque o MELHOR (maior) valor daquele lado.
-- O "tempo até o pico" (time to peak) é OPCIONAL: muitos equipamentos não fornecem esse dado. Se existir, inclua em "timeToPeak" (segundos) da respectiva medida; caso contrário, OMITA o campo (não invente valores).
-- Identifique o lado por rótulos como "Esquerda/Direita", "E/D", "L/R".
-- Não invente nomes — use exatamente o nome do movimento como aparece no relatório (traduza levemente para português se estiver em outro idioma).
-- Não inclua linhas vazias, totais ou cabeçalhos.
-- Valores devem ser numéricos (use ponto como separador decimal).
+${COMMON_RULES_PT}
 
-Responda APENAS com um JSON válido no formato:
-{ "rows": [ { "movement": "...", "leftValue": "32.5", "rightValue": "30.1",
-             "leftTrials": [ { "value": "31.0", "timeToPeak": "3.64" }, { "value": "32.5", "timeToPeak": "2.91" } ],
-             "rightTrials": [ { "value": "30.1", "timeToPeak": "4.72" }, { "value": "29.4", "timeToPeak": "3.18" } ] } ] }`,
-  en: `You are a clinical assistant specialized in physiotherapy.
-You will receive an image or PDF of a DYNAMOMETRY (muscle strength) report.
-Extract ONLY the measurement triplets in the format:
-  tested movement / left value / right value
+Use SEMPRE a ferramenta "return_dynamometry". Nunca escreva texto livre.`,
+  en: `You are a clinical assistant specialized in physiotherapy and in reading DYNAMOMETRY (muscle strength) reports.
+Your task is to extract EVERY strength measurement present in the image/PDF and return it through the structured tool.
 
-Rules:
-- Target unit: kgf (kilogram-force). If the report uses Newtons (N), convert by dividing by 9.80665 and round to 1 decimal place.
-- If one side is missing, leave it empty ("").
-- VERY IMPORTANT: reports often contain 2 or 3 trials of the SAME movement per side. Capture ALL of them in "leftTrials"/"rightTrials", one entry per trial, in the order shown. NEVER drop repeated measurements.
-- "leftValue"/"rightValue" must hold the BEST (highest) value of that side.
-- "time to peak" is OPTIONAL: many devices do not provide it. Include it in "timeToPeak" (seconds) only when present; otherwise OMIT the field (never invent values).
-- Use the movement name as written in the report.
-- Skip empty rows, totals, headers.
-- Values must be numeric (use a dot as decimal separator).
+${COMMON_RULES_EN}
 
-Reply ONLY with a valid JSON object:
-{ "rows": [ { "movement": "...", "leftValue": "32.5", "rightValue": "30.1",
-             "leftTrials": [ { "value": "31.0", "timeToPeak": "3.64" }, { "value": "32.5", "timeToPeak": "2.91" } ],
-             "rightTrials": [ { "value": "30.1", "timeToPeak": "4.72" }, { "value": "29.4", "timeToPeak": "3.18" } ] } ] }`,
-  es: `Eres un asistente clínico especializado en fisioterapia.
-Recibirás una imagen o PDF de un informe de DINAMOMETRÍA (fuerza muscular).
-Extrae SOLO las tríadas de medidas en el formato:
-  movimiento evaluado / valor lado izquierdo / valor lado derecho
+ALWAYS use the "return_dynamometry" tool. Never write free text.`,
+  es: `Eres un asistente clínico especializado en fisioterapia y en la lectura de informes de DINAMOMETRÍA (fuerza muscular).
+Tu tarea es extraer TODAS las medidas de fuerza presentes en la imagen/PDF y devolverlas mediante la herramienta estructurada.
 
-Reglas:
-- Unidad objetivo: kgf. Si el informe usa Newtons (N), convierte dividiendo por 9.80665 (1 decimal).
-- Si falta un lado, déjelo vacío ("").
-- MUY IMPORTANTE: los informes suelen traer 2 o 3 medidas del MISMO movimiento por lado. Capture TODAS en "leftTrials"/"rightTrials", una entrada por medida, en el orden mostrado. NUNCA descarte medidas repetidas.
-- "leftValue"/"rightValue" deben tener el MEJOR (mayor) valor de ese lado.
-- El "tiempo al pico" es OPCIONAL: muchos equipos no lo ofrecen. Inclúyalo en "timeToPeak" (segundos) solo si existe; si no, OMITA el campo (no invente valores).
-- Use el nombre del movimiento tal como aparece.
-- Omita filas vacías, totales y encabezados.
-- Valores numéricos con punto decimal.
+${COMMON_RULES_ES}
 
-Responde SOLO con JSON válido:
-{ "rows": [ { "movement": "...", "leftValue": "32.5", "rightValue": "30.1",
-             "leftTrials": [ { "value": "31.0", "timeToPeak": "3.64" }, { "value": "32.5", "timeToPeak": "2.91" } ],
-             "rightTrials": [ { "value": "30.1", "timeToPeak": "4.72" }, { "value": "29.4", "timeToPeak": "3.18" } ] } ] }`,
+Usa SIEMPRE la herramienta "return_dynamometry". Nunca escribas texto libre.`,
 };
 
+const TRIAL_SCHEMA = {
+  type: "object",
+  properties: {
+    value: { type: "string", description: "Force value in kgf (dot decimal)." },
+    timeToPeak: {
+      type: "string",
+      description: "Time to peak in seconds. OMIT when not shown in the document.",
+    },
+  },
+  required: ["value"],
+  additionalProperties: false,
+} as const;
+
+const TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "return_dynamometry",
+      description: "Return every dynamometry measurement found in the document.",
+      parameters: {
+        type: "object",
+        properties: {
+          rows: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                movement: { type: "string" },
+                leftValue: { type: "string", description: "Best (highest) left value." },
+                rightValue: { type: "string", description: "Best (highest) right value." },
+                leftTrials: { type: "array", items: TRIAL_SCHEMA },
+                rightTrials: { type: "array", items: TRIAL_SCHEMA },
+                reportedLeftMean: { type: "string" },
+                reportedRightMean: { type: "string" },
+              },
+              required: ["movement"],
+              additionalProperties: false,
+            },
+          },
+          totalMeasurementsSeen: {
+            type: "number",
+            description: "How many individual measurements you counted in the document.",
+          },
+        },
+        required: ["rows"],
+        additionalProperties: false,
+      },
+    },
+  },
+];
+
 function safeJsonExtract(text: string): unknown {
-  // Layer 1: direct
   try { return JSON.parse(text); } catch { /* fallthrough */ }
-  // Layer 2: strip markdown fences
   const stripped = text.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
   try { return JSON.parse(stripped); } catch { /* fallthrough */ }
-  // Layer 3: first { ... last }
   const first = stripped.indexOf("{");
   const last = stripped.lastIndexOf("}");
   if (first >= 0 && last > first) {
     try { return JSON.parse(stripped.slice(first, last + 1)); } catch { /* fallthrough */ }
   }
-  // Layer 4: regex pick `"rows": [...]`
   const m = stripped.match(/"rows"\s*:\s*(\[[\s\S]*?\])/);
   if (m) {
     try { return { rows: JSON.parse(m[1]) }; } catch { /* fallthrough */ }
   }
   return { rows: [] };
 }
+
+const num = (v: unknown): number | null => {
+  const n = parseFloat(String(v ?? "").replace(",", ".").replace(/[^\d.\-]/g, ""));
+  return isFinite(n) ? n : null;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -135,12 +193,13 @@ Deno.serve(async (req) => {
       : "pt";
     const systemPrompt = PROMPTS[lang] || PROMPTS.pt;
 
-    // Cache: same file bytes → same extraction (30d). Hash is computed inside
-    // buildCacheKey via stable stringify of the payload object.
+    // Cache: same file bytes + same prompt version → same extraction (30d).
+    // PROMPT_VERSION is part of the key so prompt/schema upgrades invalidate
+    // older (less complete) extractions of the very same file.
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
-    const cachePayload = { fileBase64, mimeType: mimeType || "", lang };
+    const cachePayload = { fileBase64, mimeType: mimeType || "", lang, promptVersion: PROMPT_VERSION };
     if (admin) {
       const cached = await getCachedAiResponse<{ rows: unknown[] }>(admin, "extract-dynamometry", cachePayload);
       if (cached) {
@@ -150,15 +209,16 @@ Deno.serve(async (req) => {
       }
     }
 
-
     const mt = (mimeType || "").toLowerCase();
     const isPdf = mt.includes("pdf");
-    const isImage = mt.startsWith("image/") || !isPdf; // default to image when unknown
 
-    // Build OpenAI-compatible multimodal user content
-    const userContent: Array<Record<string, unknown>> = [
-      { type: "text", text: "Extraia os dados de dinamometria deste arquivo." },
-    ];
+    const askText = lang === "en"
+      ? "Extract EVERY dynamometry measurement from this file, including all repeated trials per movement and side."
+      : lang === "es"
+        ? "Extrae TODAS las medidas de dinamometría de este archivo, incluidas todas las repeticiones por movimiento y lado."
+        : "Extraia TODAS as medidas de dinamometria deste arquivo, incluindo todas as repetições (tentativas) de cada movimento e lado.";
+
+    const userContent: Array<Record<string, unknown>> = [{ type: "text", text: askText }];
     if (isPdf) {
       userContent.push({
         type: "file",
@@ -173,7 +233,6 @@ Deno.serve(async (req) => {
         image_url: { url: `data:${mt || "image/jpeg"};base64,${fileBase64}` },
       });
     }
-    void isImage;
 
     const aiResp = await callAiWithFallback(
       apiKey,
@@ -182,11 +241,12 @@ Deno.serve(async (req) => {
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
         ],
-        response_format: { type: "json_object" },
+        tools: TOOLS,
+        tool_choice: { type: "function", function: { name: "return_dynamometry" } },
         temperature: 0.1,
       },
       MODEL_CHAIN,
-      { functionName: "extract-dynamometry", maxTokens: 3000 },
+      { functionName: "extract-dynamometry", maxTokens: 8000 },
     );
 
     if (!aiResp.ok) {
@@ -205,23 +265,37 @@ Deno.serve(async (req) => {
     }
 
     const data = await aiResp.json();
-    const text = data?.choices?.[0]?.message?.content ?? "";
-    const parsed = safeJsonExtract(typeof text === "string" ? text : JSON.stringify(text));
-    const rowsRaw: any[] = Array.isArray((parsed as any)?.rows) ? (parsed as any).rows : [];
+    const msg = data?.choices?.[0]?.message;
+    const toolArgs = msg?.tool_calls?.[0]?.function?.arguments;
+    let parsed: any = null;
+    if (toolArgs) {
+      parsed = typeof toolArgs === "string" ? safeJsonExtract(toolArgs) : toolArgs;
+    }
+    if (!parsed || !Array.isArray(parsed?.rows)) {
+      const text = msg?.content ?? "";
+      parsed = safeJsonExtract(typeof text === "string" ? text : JSON.stringify(text));
+    }
+    const rowsRaw: any[] = Array.isArray(parsed?.rows) ? parsed.rows : [];
 
     const normTrials = (raw: any): Array<{ value: string; timeToPeak?: string }> => {
       if (!Array.isArray(raw)) return [];
       return raw
         .map((t: any) => {
-          const value = String(t?.value ?? t?.force ?? t ?? "").trim();
+          const value = String(t?.value ?? t?.force ?? t?.peak ?? t ?? "").trim();
           const ttp = t?.timeToPeak ?? t?.time_to_peak ?? t?.peakTime;
           return {
             value,
             ...(ttp == null || String(ttp).trim() === "" ? {} : { timeToPeak: String(ttp).trim() }),
           };
         })
-        .filter((t) => t.value !== "" && isFinite(parseFloat(t.value.replace(",", "."))))
-        .slice(0, 10);
+        .filter((t) => t.value !== "" && num(t.value) != null)
+        .slice(0, 12);
+    };
+
+    const meanOf = (list: Array<{ value: string }>): number | null => {
+      const nums = list.map((t) => num(t.value)).filter((n): n is number => n != null);
+      if (!nums.length) return null;
+      return nums.reduce((a, b) => a + b, 0) / nums.length;
     };
 
     const rows = rowsRaw
@@ -229,30 +303,60 @@ Deno.serve(async (req) => {
         const leftTrials = normTrials(r?.leftTrials ?? r?.left_trials);
         const rightTrials = normTrials(r?.rightTrials ?? r?.right_trials);
         const bestOf = (list: Array<{ value: string }>): string => {
-          const nums = list
-            .map((t) => parseFloat(t.value.replace(",", ".")))
-            .filter((n) => isFinite(n));
+          const nums = list.map((t) => num(t.value)).filter((n): n is number => n != null);
           return nums.length ? String(Math.max(...nums)) : "";
         };
         const left = r?.leftValue == null ? "" : String(r.leftValue).trim();
         const right = r?.rightValue == null ? "" : String(r.rightValue).trim();
+
+        // Seed trials from single values so downstream stats always have data.
+        const lTrials = leftTrials.length ? leftTrials : left ? [{ value: left }] : [];
+        const rTrials = rightTrials.length ? rightTrials : right ? [{ value: right }] : [];
+
+        // Consistency check against a mean printed on the report (never discards data).
+        const flags: string[] = [];
+        const check = (reported: unknown, list: Array<{ value: string }>, side: string) => {
+          const rep = num(reported);
+          const calc = meanOf(list);
+          if (rep == null || calc == null || calc === 0) return;
+          if (Math.abs(rep - calc) / calc > 0.15) flags.push(`${side}:mean_mismatch`);
+        };
+        check(r?.reportedLeftMean ?? r?.reported_left_mean, lTrials, "left");
+        check(r?.reportedRightMean ?? r?.reported_right_mean, rTrials, "right");
+
+        const calcL = meanOf(lTrials);
+        const calcR = meanOf(rTrials);
+
         return {
           movement: String(r?.movement ?? r?.test ?? r?.name ?? "").trim(),
-          leftValue: left || bestOf(leftTrials),
-          rightValue: right || bestOf(rightTrials),
-          ...(leftTrials.length ? { leftTrials } : {}),
-          ...(rightTrials.length ? { rightTrials } : {}),
+          leftValue: left || bestOf(lTrials),
+          rightValue: right || bestOf(rTrials),
+          ...(lTrials.length ? { leftTrials: lTrials } : {}),
+          ...(rTrials.length ? { rightTrials: rTrials } : {}),
+          ...(calcL != null ? { leftMean: String(Math.round(calcL * 10) / 10) } : {}),
+          ...(calcR != null ? { rightMean: String(Math.round(calcR * 10) / 10) } : {}),
+          ...(flags.length ? { reviewFlags: flags } : {}),
           unit: "kgf",
         };
       })
       .filter((r) => r.movement || r.leftValue || r.rightValue)
       .slice(0, 60); // safety cap
 
+    const trialCount = rows.reduce(
+      (acc, r: any) => acc + (r.leftTrials?.length || 0) + (r.rightTrials?.length || 0),
+      0,
+    );
+    console.log(
+      `[extract-dynamometry] rows=${rows.length} trials=${trialCount} claimed=${parsed?.totalMeasurementsSeen ?? "?"}`,
+    );
+
+    const payload = { rows, trialCount, promptVersion: PROMPT_VERSION };
+
     if (admin && rows.length > 0) {
-      await setCachedAiResponse(admin, "extract-dynamometry", cachePayload, { rows }, 30 * 24 * 3600);
+      await setCachedAiResponse(admin, "extract-dynamometry", cachePayload, payload, 30 * 24 * 3600);
     }
 
-    return new Response(JSON.stringify({ rows }), {
+    return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
