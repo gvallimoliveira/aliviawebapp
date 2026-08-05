@@ -737,16 +737,15 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     if (!newPatientName.trim() || !professionalId) return;
     setAddingPatient(true);
     try {
-      // Create a placeholder assessment so the patient appears in the list
-      const email = newPatientEmail.trim() || `external_${Date.now()}@manual.alivia`;
-      await supabase.from("assessments").insert({
-        type: "professional",
-        status: "completed",
+      // Cadastra somente o paciente. Nada de avaliação placeholder — isso
+      // fazia o paciente nascer com "1 avaliação" fantasma.
+      const { error } = await (supabase as any).from("patients").insert({
         professional_id: professionalId,
-        patient_name: newPatientName.trim(),
-        patient_email: email,
-        anamnesis_data: { externalPatient: true, phone: newPatientPhone.trim() || undefined },
+        full_name: newPatientName.trim(),
+        email: newPatientEmail.trim() || null,
+        phone: newPatientPhone.replace(/\D/g, "") || null,
       });
+      if (error) throw error;
       toast({ title: t("pro.patient_added") });
       setAddPatientOpen(false);
       setNewPatientName("");
@@ -755,11 +754,12 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       // Trigger parent reload
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
     } catch (err: any) {
-      toast({ title: t("pro.patient_add_error"), variant: "destructive" });
+      toast({ title: t("pro.patient_add_error"), description: err?.message, variant: "destructive" });
     } finally {
       setAddingPatient(false);
     }
   };
+
 
 
   useEffect(() => {
