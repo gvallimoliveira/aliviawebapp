@@ -199,6 +199,17 @@ const STR: Record<string, Record<string, string>> = {
     extractMsg3: "Tabelando valores de força…",
     extractMsg4: "Quase lá — organizando os resultados…",
     empty: "Nenhum dado de dinamometria registrado.",
+    trialsLabel: "Medidas",
+    trialsHint: "2 a 3 medidas por lado deixam o resultado mais fidedigno.",
+    addTrial: "Adicionar medida",
+    removeTrial: "Remover medida",
+    trialN: "Medida",
+    meanLabel: "Média",
+    bestLabel: "Melhor",
+    trialsCount: "medidas",
+    cvLabel: "Variação",
+    peakTimeLabel: "Tempo até o pico (s)",
+    meanPeakTime: "Tempo médio até o pico",
   },
   en: {
     title: "Dynamometry — Muscle Strength (kgf)",
@@ -235,6 +246,17 @@ const STR: Record<string, Record<string, string>> = {
     extractMsg3: "Tabulating strength values…",
     extractMsg4: "Almost there — organizing results…",
     empty: "No dynamometry data recorded.",
+    trialsLabel: "Trials",
+    trialsHint: "2 to 3 trials per side make the result more reliable.",
+    addTrial: "Add trial",
+    removeTrial: "Remove trial",
+    trialN: "Trial",
+    meanLabel: "Mean",
+    bestLabel: "Best",
+    trialsCount: "trials",
+    cvLabel: "Variation",
+    peakTimeLabel: "Time to peak (s)",
+    meanPeakTime: "Mean time to peak",
   },
   es: {
     title: "Dinamometría — Fuerza Muscular (kgf)",
@@ -271,6 +293,17 @@ const STR: Record<string, Record<string, string>> = {
     extractMsg3: "Tabulando valores de fuerza…",
     extractMsg4: "Casi listo — organizando resultados…",
     empty: "Sin datos de dinamometría registrados.",
+    trialsLabel: "Medidas",
+    trialsHint: "2 a 3 medidas por lado hacen el resultado más fiable.",
+    addTrial: "Agregar medida",
+    removeTrial: "Eliminar medida",
+    trialN: "Medida",
+    meanLabel: "Media",
+    bestLabel: "Mejor",
+    trialsCount: "medidas",
+    cvLabel: "Variación",
+    peakTimeLabel: "Tiempo al pico (s)",
+    meanPeakTime: "Tiempo medio al pico",
   },
 };
 
@@ -377,9 +410,12 @@ export default function StrengthTable({
               movement: String(r?.movement ?? "").trim(),
               leftValue: r?.leftValue == null ? "" : String(r.leftValue).trim(),
               rightValue: r?.rightValue == null ? "" : String(r.rightValue).trim(),
+              leftTrials: Array.isArray(r?.leftTrials) ? r.leftTrials : undefined,
+              rightTrials: Array.isArray(r?.rightTrials) ? r.rightTrials : undefined,
               unit: "kgf",
               aiExtracted: true,
             }))
+            .map((r: StrengthRow) => sanitizeStrengthRows([r])[0] ? { ...sanitizeStrengthRows([r])[0], aiExtracted: true } : r)
             .filter((r: StrengthRow) => r.movement || r.leftValue || r.rightValue)
         : [];
       if (extracted.length === 0) {
