@@ -1016,21 +1016,8 @@ function renderRomTableSection(
   doc.text(colRight, xRight + valueColW / 2, y + 4.8, { align: "center" });
   y += headerH;
 
-  if (hasTrials) {
-    doc.setFont("Inter", "italic");
-    doc.setFontSize(6.8);
-    doc.setTextColor(...COLORS.muted);
-    doc.text(
-      language === "es"
-        ? "Valor mostrado = media de las medidas del lado."
-        : isPt
-          ? "Valor exibido = média das medidas do lado."
-          : "Displayed value = mean of the side's trials.",
-      SECTION_X,
-      y + 3.2,
-    );
-    y += 4.5;
-  }
+
+
 
   doc.setFont("Inter", "normal");
   doc.setFontSize(9);
