@@ -795,9 +795,89 @@ export default function StrengthTable({
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
+              </div>
+
+              {/* Trials (multiple measurements per side) */}
+              <div className="mt-1.5 rounded-xl border border-dashed border-border bg-muted/20 p-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                    {s(lang, "trialsLabel")}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground text-right">
+                    {s(lang, "trialsHint")}
+                  </span>
+                </div>
+                <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
+                  {(["left", "right"] as const).map((side) => {
+                    const trials = row[side === "left" ? "leftTrials" : "rightTrials"] || [];
+                    const st = side === "left" ? leftStats : rightStats;
+                    return (
+                      <div key={side} className="rounded-lg border border-border bg-background/60 p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            {s(lang, side === "left" ? "shortLeft" : "shortRight")}
+                          </span>
+                          {st.count > 1 && (
+                            <span className="text-[10px] font-mono text-muted-foreground">
+                              {s(lang, "meanLabel")} {st.mean} · {s(lang, "bestLabel")} {st.best} · n=
+                              {st.count}
+                              {st.cv != null ? ` · CV ${st.cv}%` : ""}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1.5 space-y-1.5">
+                          {trials.map((t, tIdx) => (
+                            <div key={tIdx} className="grid grid-cols-[1fr_1fr_32px] gap-1.5 items-center">
+                              <Input
+                                value={t.value}
+                                onChange={(e) => updateTrial(i, side, tIdx, "value", e.target.value)}
+                                placeholder={`${s(lang, "trialN")} ${tIdx + 1} (kgf)`}
+                                inputMode="decimal"
+                                aria-label={`${s(lang, "trialN")} ${tIdx + 1}`}
+                                className="h-8 text-xs text-center font-mono"
+                              />
+                              <Input
+                                value={t.timeToPeak || ""}
+                                onChange={(e) =>
+                                  updateTrial(i, side, tIdx, "timeToPeak", e.target.value)
+                                }
+                                placeholder={s(lang, "peakTimeLabel")}
+                                inputMode="decimal"
+                                aria-label={s(lang, "peakTimeLabel")}
+                                className="h-8 text-xs text-center font-mono"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeTrial(i, side, tIdx)}
+                                aria-label={s(lang, "removeTrial")}
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => addTrial(i, side)}
+                            className="h-7 gap-1 px-2 text-[11px] text-primary hover:bg-primary/5"
+                          >
+                            <Plus className="h-3 w-3" />
+                            {s(lang, "addTrial")}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           );
         })}
+
       </div>
 
       <div className="mt-3 flex justify-end">
