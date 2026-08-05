@@ -155,11 +155,154 @@ export const computeRowAsymmetry = (row: StrengthRow): number | null => {
 };
 
 
-const asymmetryBadgeClass = (pct: number): string => {
-  if (pct <= 10) return "bg-emerald-100 text-emerald-700 border-emerald-200";
-  if (pct <= 20) return "bg-amber-100 text-amber-700 border-amber-200";
-  return "bg-rose-100 text-rose-700 border-rose-200";
+/**
+ * Agonist/antagonist pairs evaluated within the SAME side.
+ * Matching is keyword based so it works for pt/en/es movement labels.
+ */
+type PairDef = {
+  key: string;
+  region: RegExp;
+  a: { label: Record<string, string>; re: RegExp };
+  b: { label: Record<string, string>; re: RegExp };
+  title: Record<string, string>;
 };
+
+const norm = (t: string) =>
+  t
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const PAIRS: PairDef[] = [
+  {
+    key: "shoulderRotation",
+    region: /(ombro|shoulder|hombro)/,
+    a: {
+      label: { pt: "Rot. interna", en: "Int. rotation", es: "Rot. interna" },
+      re: /(rotac|rotat).*(intern|medial)|(intern|medial).*(rotac|rotat)/,
+    },
+    b: {
+      label: { pt: "Rot. externa", en: "Ext. rotation", es: "Rot. externa" },
+      re: /(rotac|rotat).*(extern|lateral)|(extern|lateral).*(rotac|rotat)/,
+    },
+    title: {
+      pt: "Ombro — rotação interna vs externa",
+      en: "Shoulder — internal vs external rotation",
+      es: "Hombro — rotación interna vs externa",
+    },
+  },
+  {
+    key: "knee",
+    region: /(joelho|knee|rodilla)/,
+    a: {
+      label: { pt: "Extensão", en: "Extension", es: "Extensión" },
+      re: /(exten)/,
+    },
+    b: { label: { pt: "Flexão", en: "Flexion", es: "Flexión" }, re: /(flex)/ },
+    title: {
+      pt: "Joelho — extensão vs flexão",
+      en: "Knee — extension vs flexion",
+      es: "Rodilla — extensión vs flexión",
+    },
+  },
+  {
+    key: "hipSagittal",
+    region: /(quadril|hip|cadera)/,
+    a: {
+      label: { pt: "Extensão", en: "Extension", es: "Extensión" },
+      re: /(exten)/,
+    },
+    b: { label: { pt: "Flexão", en: "Flexion", es: "Flexión" }, re: /(flex)/ },
+    title: {
+      pt: "Quadril — extensão vs flexão",
+      en: "Hip — extension vs flexion",
+      es: "Cadera — extensión vs flexión",
+    },
+  },
+  {
+    key: "hipFrontal",
+    region: /(quadril|hip|cadera)/,
+    a: {
+      label: { pt: "Adução", en: "Adduction", es: "Aducción" },
+      re: /(aducao|aducc|adduc|aduc)/,
+    },
+    b: {
+      label: { pt: "Abdução", en: "Abduction", es: "Abducción" },
+      re: /(abduc)/,
+    },
+    title: {
+      pt: "Quadril — adução vs abdução",
+      en: "Hip — adduction vs abduction",
+      es: "Cadera — aducción vs abducción",
+    },
+  },
+];
+
+export type AgonistAntagonistResult = {
+  key: string;
+  title: Record<string, string>;
+  aLabel: Record<string, string>;
+  bLabel: Record<string, string>;
+  /** Per side: mean of agonist, mean of antagonist and asymmetry % */
+  left: { a: number | null; b: number | null; asym: number | null };
+  right: { a: number | null; b: number | null; asym: number | null };
+};
+
+/** Computes intra-side agonist/antagonist asymmetries for the known pairs. */
+export const computeAgonistAntagonist = (
+  rows: StrengthRow[] | undefined | null,
+): AgonistAntagonistResult[] => {
+  const clean = sanitizeStrengthRows(rows);
+  if (clean.length === 0) return [];
+  const out: AgonistAntagonistResult[] = [];
+
+  for (const pair of PAIRS) {
+    const findRow = (re: RegExp) =>
+      clean.find((r) => {
+        const m = norm(r.movement);
+        // Abduction must not be captured by the adduction regex and vice-versa.
+        if (pair.key === "hipFrontal" && re === pair.a.re && /abduc/.test(m)) return false;
+        return pair.region.test(m) && re.test(m);
+      });
+    const rowA = findRow(pair.a.re);
+    const rowB = findRow(pair.b.re);
+    if (!rowA || !rowB) continue;
+
+    const side = (which: "left" | "right") => {
+      const sa = computeSideStats(
+        which === "left" ? rowA.leftValue : rowA.rightValue,
+        which === "left" ? rowA.leftTrials : rowA.rightTrials,
+      );
+      const sb = computeSideStats(
+        which === "left" ? rowB.leftValue : rowB.rightValue,
+        which === "left" ? rowB.leftTrials : rowB.rightTrials,
+      );
+      return {
+        a: sa.mean,
+        b: sb.mean,
+        asym:
+          sa.mean != null && sb.mean != null ? computeAsymmetry(sa.mean, sb.mean) : null,
+      };
+    };
+
+    out.push({
+      key: pair.key,
+      title: pair.title,
+      aLabel: pair.a.label,
+      bLabel: pair.b.label,
+      left: side("left"),
+      right: side("right"),
+    });
+  }
+  return out;
+};
+
+/** ≤10% is acceptable (green); above 10% is highlighted in red. */
+const asymmetryBadgeClass = (pct: number): string =>
+  pct <= 10
+    ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+    : "bg-rose-100 text-rose-700 border-rose-200";
+
 
 type Lang = "pt" | "en" | "es" | string;
 
