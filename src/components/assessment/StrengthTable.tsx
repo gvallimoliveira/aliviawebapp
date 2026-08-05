@@ -7,10 +7,24 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+/** One individual measurement (trial) of a movement on one side. */
+export type StrengthTrial = {
+  /** Peak force in kgf. */
+  value: string;
+  /** Optional time to peak force, in seconds. */
+  timeToPeak?: string;
+};
+
 export type StrengthRow = {
   movement: string;
+  /** Representative (best) value for the left side. */
   leftValue: string;
+  /** Representative (best) value for the right side. */
   rightValue: string;
+  /** All individual measurements for the left side (2-3 trials are common). */
+  leftTrials?: StrengthTrial[];
+  /** All individual measurements for the right side. */
+  rightTrials?: StrengthTrial[];
   /** Always "kgf" today. Kept on the row for future-proofing. */
   unit?: string;
   /** True when row was filled by AI extraction and still needs human review. */
@@ -27,17 +41,96 @@ export const EMPTY_STRENGTH_ROW: StrengthRow = {
 export const createInitialStrengthRows = (n = 2): StrengthRow[] =>
   Array.from({ length: n }, () => ({ ...EMPTY_STRENGTH_ROW }));
 
+export const parseNum = (v: string | number | undefined | null): number | null => {
+  if (v == null) return null;
+  const n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
+  return isFinite(n) ? n : null;
+};
+
+const sanitizeTrials = (trials: unknown): StrengthTrial[] => {
+  if (!Array.isArray(trials)) return [];
+  return trials
+    .map((t: any) => ({
+      value: String(t?.value ?? t ?? "").trim(),
+      timeToPeak:
+        t?.timeToPeak == null || String(t.timeToPeak).trim() === ""
+          ? undefined
+          : String(t.timeToPeak).trim(),
+    }))
+    .filter((t) => parseNum(t.value) != null)
+    .slice(0, 10);
+};
+
+/** Aggregated stats for one side, derived from its trials (or single value). */
+export type SideStats = {
+  count: number;
+  best: number | null;
+  mean: number | null;
+  /** Coefficient of variation (%) across trials — reliability indicator. */
+  cv: number | null;
+  meanTimeToPeak: number | null;
+};
+
+export const computeSideStats = (
+  value: string | number | undefined,
+  trials: StrengthTrial[] | undefined,
+): SideStats => {
+  const nums = (trials || [])
+    .map((t) => parseNum(t.value))
+    .filter((n): n is number => n != null && n > 0);
+  if (nums.length === 0) {
+    const single = parseNum(value as string);
+    return {
+      count: single != null && single > 0 ? 1 : 0,
+      best: single != null && single > 0 ? single : null,
+      mean: single != null && single > 0 ? single : null,
+      cv: null,
+      meanTimeToPeak: null,
+    };
+  }
+  const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+  const best = Math.max(...nums);
+  let cv: number | null = null;
+  if (nums.length > 1 && mean > 0) {
+    const variance = nums.reduce((a, b) => a + (b - mean) ** 2, 0) / (nums.length - 1);
+    cv = Math.round((Math.sqrt(variance) / mean) * 1000) / 10;
+  }
+  const times = (trials || [])
+    .map((t) => parseNum(t.timeToPeak))
+    .filter((n): n is number => n != null && n > 0);
+  return {
+    count: nums.length,
+    best: Math.round(best * 10) / 10,
+    mean: Math.round(mean * 10) / 10,
+    cv,
+    meanTimeToPeak:
+      times.length > 0
+        ? Math.round((times.reduce((a, b) => a + b, 0) / times.length) * 100) / 100
+        : null,
+  };
+};
+
 export const sanitizeStrengthRows = (
   rows: StrengthRow[] | undefined | null,
 ): StrengthRow[] => {
   if (!Array.isArray(rows)) return [];
   return rows
-    .map((r) => ({
-      movement: (r?.movement || "").trim(),
-      leftValue: (r?.leftValue || "").trim(),
-      rightValue: (r?.rightValue || "").trim(),
-      unit: (r?.unit || "kgf").trim() || "kgf",
-    }))
+    .map((r) => {
+      const leftTrials = sanitizeTrials(r?.leftTrials);
+      const rightTrials = sanitizeTrials(r?.rightTrials);
+      const leftStats = computeSideStats(r?.leftValue, leftTrials);
+      const rightStats = computeSideStats(r?.rightValue, rightTrials);
+      const left = (r?.leftValue || "").trim();
+      const right = (r?.rightValue || "").trim();
+      return {
+        movement: (r?.movement || "").trim(),
+        leftValue: left || (leftStats.best != null ? String(leftStats.best) : ""),
+        rightValue: right || (rightStats.best != null ? String(rightStats.best) : ""),
+        ...(leftTrials.length > 0 ? { leftTrials } : {}),
+        ...(rightTrials.length > 0 ? { rightTrials } : {}),
+        unit: (r?.unit || "kgf").trim() || "kgf",
+      } as StrengthRow;
+    })
     .filter((r) => r.movement || r.leftValue || r.rightValue);
 };
 
@@ -52,6 +145,15 @@ export const computeAsymmetry = (
   const max = Math.max(L, R);
   return Math.round((Math.abs(L - R) / max) * 100);
 };
+
+/** Asymmetry using the MEAN of trials when available (more reliable than a single best). */
+export const computeRowAsymmetry = (row: StrengthRow): number | null => {
+  const L = computeSideStats(row.leftValue, row.leftTrials);
+  const R = computeSideStats(row.rightValue, row.rightTrials);
+  if (L.mean == null || R.mean == null) return null;
+  return computeAsymmetry(L.mean, R.mean);
+};
+
 
 const asymmetryBadgeClass = (pct: number): string => {
   if (pct <= 10) return "bg-emerald-100 text-emerald-700 border-emerald-200";
