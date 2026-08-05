@@ -145,7 +145,8 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
   });
 
   return (
-    <Card>
+    <Card ref={cardRef} id="dinamometria">
+
       <CardContent className="space-y-4 pt-5">
         <StrengthTable
           value={rows}
