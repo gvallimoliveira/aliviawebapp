@@ -1207,19 +1207,181 @@ function renderStrengthTableSection(
     const L = r.leftMean ?? NaN;
     const R = r.rightMean ?? NaN;
     let asymText = "—";
+    let asymColor: [number, number, number] = COLORS.muted as [number, number, number];
     if (isFinite(L) && isFinite(R) && L > 0 && R > 0) {
       const pct = Math.round((Math.abs(L - R) / Math.max(L, R)) * 100);
       asymText = `${pct}%`;
+      asymColor = pct > 10 ? [190, 45, 60] : [22, 130, 95];
     }
-    doc.setFont("Inter", "normal");
-    doc.setTextColor(...COLORS.muted);
+    doc.setFont("Inter", "bold");
+    doc.setTextColor(...asymColor);
     doc.text(asymText, xAsym + asymColW / 2, y + 4.5, { align: "center" });
 
     y += rowH + 0.5;
   });
 
+  y = renderAgonistAntagonistBlock(doc, y + 2, cleaned, isPt, language);
+
   return y + 4;
 }
+
+/** Intra-side agonist/antagonist asymmetries (shoulder rotation, knee, hip). */
+function renderAgonistAntagonistBlock(
+  doc: jsPDF,
+  y: number,
+  cleaned: Array<{ movement: string; leftMean: number | null; rightMean: number | null }>,
+  isPt: boolean,
+  language: string,
+): number {
+  const norm = (t: string) =>
+    t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  type Pair = { title: string; region: RegExp; aRe: RegExp; bRe: RegExp; excludeA?: RegExp };
+  const pairs: Pair[] = [
+    {
+      title:
+        language === "es"
+          ? "Hombro — rotación interna vs externa"
+          : isPt
+            ? "Ombro — rotação interna vs externa"
+            : "Shoulder — internal vs external rotation",
+      region: /(ombro|shoulder|hombro)/,
+      aRe: /(rotac|rotat).*(intern|medial)|(intern|medial).*(rotac|rotat)/,
+      bRe: /(rotac|rotat).*(extern|lateral)|(extern|lateral).*(rotac|rotat)/,
+    },
+    {
+      title:
+        language === "es"
+          ? "Rodilla — extensión vs flexión"
+          : isPt
+            ? "Joelho — extensão vs flexão"
+            : "Knee — extension vs flexion",
+      region: /(joelho|knee|rodilla)/,
+      aRe: /exten/,
+      bRe: /flex/,
+    },
+    {
+      title:
+        language === "es"
+          ? "Cadera — extensión vs flexión"
+          : isPt
+            ? "Quadril — extensão vs flexão"
+            : "Hip — extension vs flexion",
+      region: /(quadril|hip|cadera)/,
+      aRe: /exten/,
+      bRe: /flex/,
+    },
+    {
+      title:
+        language === "es"
+          ? "Cadera — aducción vs abducción"
+          : isPt
+            ? "Quadril — adução vs abdução"
+            : "Hip — adduction vs abduction",
+      region: /(quadril|hip|cadera)/,
+      aRe: /(aducao|aducc|adduc|aduc)/,
+      bRe: /abduc/,
+      excludeA: /abduc/,
+    },
+  ];
+
+  const lines: Array<{ title: string; left: string; right: string; worst: number }> = [];
+  for (const p of pairs) {
+    const find = (re: RegExp, exclude?: RegExp) =>
+      cleaned.find((r) => {
+        const m = norm(r.movement);
+        if (exclude && exclude.test(m)) return false;
+        return p.region.test(m) && re.test(m);
+      });
+    const a = find(p.aRe, p.excludeA);
+    const b = find(p.bRe);
+    if (!a || !b) continue;
+    const side = (k: "leftMean" | "rightMean") => {
+      const av = a[k];
+      const bv = b[k];
+      if (av == null || bv == null || av <= 0 || bv <= 0) return null;
+      return Math.round((Math.abs(av - bv) / Math.max(av, bv)) * 100);
+    };
+    const l = side("leftMean");
+    const r = side("rightMean");
+    if (l == null && r == null) continue;
+    lines.push({
+      title: p.title,
+      left: l == null ? "—" : `${l}%`,
+      right: r == null ? "—" : `${r}%`,
+      worst: Math.max(l ?? 0, r ?? 0),
+    });
+  }
+  if (lines.length === 0) return y;
+
+  const heading =
+    language === "es"
+      ? "Asimetría agonista/antagonista (mismo lado)"
+      : isPt
+        ? "Assimetria agonista/antagonista (mesmo lado)"
+        : "Agonist/antagonist asymmetry (same side)";
+  const colLeft = language === "es" ? "Izquierda" : isPt ? "Esquerda" : "Left";
+  const colRight = language === "es" ? "Derecha" : isPt ? "Direita" : "Right";
+
+  y = checkPage(doc, y, 14 + lines.length * 7);
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.primary);
+  doc.text(heading, SECTION_X, y + 4);
+  y += 7;
+
+  const valueColW = 22;
+  const labelW = SECTION_TEXT_W - valueColW * 2;
+  const xLabel = SECTION_X;
+  const xL = xLabel + labelW;
+  const xR = xL + valueColW;
+
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...COLORS.muted);
+  doc.text(colLeft, xL + valueColW / 2, y + 3, { align: "center" });
+  doc.text(colRight, xR + valueColW / 2, y + 3, { align: "center" });
+  y += 5;
+
+  lines.forEach((ln, i) => {
+    const labelLines = doc.splitTextToSize(ln.title, labelW - 3);
+    const rowH = Math.max(7, labelLines.length * 4.2 + 2.5);
+    y = checkPage(doc, y, rowH + 1);
+    drawRoundedRect(
+      doc,
+      MARGIN,
+      y,
+      CONTENT_WIDTH,
+      rowH,
+      0.8,
+      i % 2 === 1 ? [248, 246, 242] : COLORS.white,
+      COLORS.border,
+    );
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(labelLines, xLabel, y + 4.5);
+
+    const paint = (text: string, x: number) => {
+      const pct = parseInt(text, 10);
+      const color: [number, number, number] = isFinite(pct)
+        ? pct > 10
+          ? [190, 45, 60]
+          : [22, 130, 95]
+        : (COLORS.muted as [number, number, number]);
+      doc.setFont("Inter", "bold");
+      doc.setTextColor(...color);
+      doc.text(text, x + valueColW / 2, y + 4.5, { align: "center" });
+    };
+    paint(ln.left, xL);
+    paint(ln.right, xR);
+
+    y += rowH + 0.5;
+  });
+
+  return y + 2;
+}
+
 
 // ── Render Pain Map Images Section ──
 async function renderPainMapSection(doc: jsPDF, y: number, painRegions: string[], isPt: boolean): Promise<number> {
