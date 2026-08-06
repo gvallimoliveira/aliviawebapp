@@ -204,7 +204,25 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
     });
   };
 
-  const generate = async () => {
+  const fetchSessionNotes = async () => {
+    const email = assessment?.patient_email || assessment?.email;
+    if (!email) return undefined;
+    try {
+      const { data } = await supabase
+        .from("session_notes")
+        .select("session_date, content")
+        .eq("patient_email", email)
+        .order("session_date", { ascending: true })
+        .limit(12);
+      const notes = (data || []).filter((n: any) => (n.content || "").trim().length > 0);
+      return notes.length > 0 ? notes : undefined;
+    } catch (e) {
+      console.warn("session notes fetch failed", e);
+      return undefined;
+    }
+  };
+
+  const generate = async (forceRefresh = false) => {
     setLoading(true);
     try {
       if (isDemo) {
@@ -219,6 +237,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
           });
         }
       } else {
+        const sessionNotes = await fetchSessionNotes();
         const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
           body: {
             anamnesisData: assessment.anamnesis_data,
@@ -228,6 +247,8 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
             diagnosis: assessment.diagnosis,
             language,
             assessmentTimeline: buildTimeline(),
+            sessionNotes,
+            forceRefresh,
           },
         });
         if (error) throw error;
@@ -245,6 +266,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
       setLoading(false);
     }
   };
+
 
   // Auto-regenerate impression when assessment is flagged (e.g. after a pending
   // questionnaire is completed by the patient).
