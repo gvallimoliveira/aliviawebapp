@@ -2142,8 +2142,16 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   // ── Clinical Impression (if available) ──
   const clinicalImpression = (diagnosis as any)?.clinicalImpression;
   if (clinicalImpression?.overview) {
-    y = checkPage(doc, y, 50);
-    y += 4;
+    const ciCardOpts = {
+      fill: COLORS.primaryLight,
+      stroke: COLORS.primary,
+      padX: 8,
+      padY: 7,
+      body: { font: "Inter", weight: "italic" as const, size: 9, lineHeight: 4.5, textColor: COLORS.foreground },
+      bottomSafety: 2,
+    };
+    // Title must never be orphaned from its card.
+    y = keepTitleWithCard(doc, y + 4, 6, clinicalImpression.overview, ciCardOpts);
     const ciTitle = isPt ? "Impressão Clínica" : "Clinical Impression";
     doc.setFont("Inter", "bold");
     doc.setFontSize(11);
@@ -2152,14 +2160,8 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     y += 6;
 
     // Overview in rounded box — RIGID (italic 9; lineHeight 4.5; safety for italic descenders)
-    y = drawTextCard(doc, y, clinicalImpression.overview, {
-      fill: COLORS.primaryLight,
-      stroke: COLORS.primary,
-      padX: 8,
-      padY: 7,
-      body: { font: "Inter", weight: "italic", size: 9, lineHeight: 4.5, textColor: COLORS.foreground },
-      bottomSafety: 2,
-    });
+    y = drawTextCard(doc, y, clinicalImpression.overview, ciCardOpts);
+
     y += 1;
 
     // Therapeutic objectives — badges em flow horizontal, com wrap por linha
