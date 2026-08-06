@@ -515,7 +515,7 @@ Rules:
 ` : ""}
 Response format (JSON):
 {
-  "hypothesis": "Main diagnostic hypothesis name",
+  "hypothesis": "SHORT diagnostic label ONLY: condition + affected structure/side (+ optional mechanism category). ONE sentence, max 20 words, no semicolons/lists. NEVER include aggravating or relieving factors, ROM/strength values, pain scores, functional impact, mobility findings, prognosis or reasoning — those go in summary/reasoning",
   "confidence": "low" | "moderate" | "high",
   "summary": "Brief 1-2 sentence summary of the hypothesis",
   "redFlags": ${redFlagsList.length > 0 ? JSON.stringify(redFlagsList) : "[]"},
