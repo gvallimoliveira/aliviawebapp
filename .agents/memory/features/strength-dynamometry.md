@@ -5,7 +5,7 @@ type: feature
 ---
 
 - Cada movimento/lado aceita 2–3+ medidas (`leftTrials`/`rightTrials`); o sistema mostra força máxima, média, n e CV.
-- **Tempo até o pico é OPCIONAL** (muitos dinamômetros não fornecem). Campo escondido por padrão, exibido via toggle ou quando o laudo importado já traz o dado. A IA nunca deve inventar esse valor.
+- **Tempo até o pico é OPCIONAL** (muitos dinamômetros não fornecem). Sem toggle: o campo fica sempre visível e vazio; se vazio, não entra no relatório/PDF; se preenchido (manual ou pela extração), entra. A IA nunca deve inventar esse valor.
 - Dados essenciais: força máxima e média por medida, movimento, lado, assimetria e data (panorama evolutivo).
 - Assimetrias calculadas pela **média** das medidas:
   - Lado direito vs esquerdo (por movimento).
