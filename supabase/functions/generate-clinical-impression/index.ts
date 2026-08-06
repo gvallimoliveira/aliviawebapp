@@ -125,17 +125,59 @@ Rules:
     if (Array.isArray(anamnesisData?.romTable) && anamnesisData.romTable.length > 0) {
       const rom = anamnesisData.romTable.filter((r: any) => r?.joint || r?.leftValue || r?.rightValue);
       if (rom.length > 0) {
-        lines.push(`- Joint mobility (ROM):\n${rom.map((r: any) => `    • ${r.joint || "?"}: L ${r.leftValue || "—"} | R ${r.rightValue || "—"}`).join("\n")}`);
+        lines.push(
+          `- **RANGE OF MOTION (ROM) — MUST BE DISCUSSED EXPLICITLY:**\n${rom
+            .map((r: any) => {
+              const asym = asymmetryPct(num(r.leftValue), num(r.rightValue));
+              return `    • ${r.joint || "?"}: L ${r.leftValue || "—"} | R ${r.rightValue || "—"}${asym != null ? ` | L/R difference ${asym}%${asym > 10 ? " (RELEVANT, >10%)" : ""}` : ""}${r.notes ? ` | notes: ${r.notes}` : ""}`;
+            })
+            .join("\n")}`,
+        );
       }
     }
     const strength = Array.isArray(anamnesisData?.strengthTable)
       ? anamnesisData.strengthTable.filter((r: any) => r?.movement || r?.leftValue || r?.rightValue)
       : [];
     if (strength.length > 0) {
-      lines.push(`- Dynamometry (muscle strength, kgf) — weigh asymmetries > 20% as a sign of inhibition/weakness (D.I.F.I):\n${strength.map((r: any) => `    • ${r.movement || "?"}: L ${r.leftValue || "—"} kgf | R ${r.rightValue || "—"} kgf`).join("\n")}`);
+      const rowLines = strength.map((r: any) => {
+        const L = sideStats(r.leftValue, r.leftTrials);
+        const R = sideStats(r.rightValue, r.rightTrials);
+        const asym = asymmetryPct(L.mean, R.mean);
+        const fmt = (s: ReturnType<typeof sideStats>) =>
+          s.mean == null
+            ? "—"
+            : `mean ${s.mean} kgf, best ${s.best} kgf, ${s.count} trial(s)${s.cv != null ? `, CV ${s.cv}%` : ""}${s.meanTimeToPeak != null ? `, mean time to peak ${s.meanTimeToPeak}s` : ""}${s.trials.length ? ` [trials: ${s.trials.join(", ")}]` : ""}`;
+        return `    • ${r.movement || "?"}\n        - Left: ${fmt(L)}\n        - Right: ${fmt(R)}\n        - L/R asymmetry (by mean): ${asym != null ? `${asym}%${asym > 10 ? " → ABOVE 10%, clinically relevant deficit on the weaker side" : " → within 10%, symmetric"}` : "not computable"}`;
+      });
+      lines.push(
+        `- **DYNAMOMETRY (objective muscle strength, kgf) — CENTRAL OBJECTIVE DATA, MUST BE DISCUSSED IN DETAIL WITH THE ACTUAL NUMBERS. Threshold: asymmetry ≤10% = acceptable, >10% = relevant deficit/inhibition (D.I.F.I). CV >15% = poor reproducibility of the trials:**\n${rowLines.join("\n")}`,
+      );
+      const pairs = agonistAntagonist(strength);
+      if (pairs.length > 0) {
+        lines.push(
+          `- **AGONIST/ANTAGONIST BALANCE within the SAME side (same >10% threshold) — discuss explicitly:**\n${pairs
+            .map(
+              (p) =>
+                `    • ${p.title}: LEFT ${p.aLabel} ${p.left.a ?? "—"} kgf vs ${p.bLabel} ${p.left.b ?? "—"} kgf${p.left.asym != null ? ` → ${p.left.asym}%${p.left.asym > 10 ? " (IMBALANCE)" : ""}` : ""} | RIGHT ${p.aLabel} ${p.right.a ?? "—"} kgf vs ${p.bLabel} ${p.right.b ?? "—"} kgf${p.right.asym != null ? ` → ${p.right.asym}%${p.right.asym > 10 ? " (IMBALANCE)" : ""}` : ""}`,
+            )
+            .join("\n")}`,
+        );
+      }
     } else {
       lines.push(`- Dynamometry: NOT RECORDED — do not infer or invent strength values; reason from the data above without speculating about objective strength.`);
     }
+
+    const notes = Array.isArray(sessionNotes)
+      ? sessionNotes.filter((n: any) => (n?.content || "").trim().length > 0).slice(0, 12)
+      : [];
+    if (notes.length > 0) {
+      lines.push(
+        `- **SESSION EVOLUTION NOTES (follow-up records written by the therapist — extract the clinically useful observations and incorporate them):**\n${notes
+          .map((n: any) => `    • ${n.session_date || n.date || "?"}: ${String(n.content).replace(/\s+/g, " ").slice(0, 700)}`)
+          .join("\n")}`,
+      );
+    }
+
 
     lines.push("\nGenerate the clinical impression now.");
     const userPrompt = lines.join("\n");
