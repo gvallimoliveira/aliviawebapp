@@ -199,7 +199,7 @@ RULES:
               diagnosis: {
                 type: "object",
                 properties: {
-                  hypothesis: { type: "string" },
+                  hypothesis: { type: "string", description: "SHORT diagnostic label only: condition + structure/side (+ optional mechanism category). One sentence, max 20 words. No aggravating factors, no measurements, no functional impact, no reasoning." },
                   summary: { type: "string" },
                   reasoning: { type: "string" },
                   confidence: { type: "string", enum: ["low", "moderate", "high"] },
