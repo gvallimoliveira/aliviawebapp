@@ -295,7 +295,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
           </CardTitle>
           <div className="flex items-center gap-2">
             {impression && (
-              <Button variant="ghost" size="sm" onClick={generate} disabled={loading} className="h-7 px-2 text-xs gap-1">
+              <Button variant="ghost" size="sm" onClick={() => generate(true)} disabled={loading} className="h-7 px-2 text-xs gap-1">
                 <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
                 Regenerar
               </Button>
@@ -307,7 +307,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         {!impression && !loading && (
           <div className="text-center py-4 space-y-3">
             <p className="text-sm text-muted-foreground">Gere uma visão integrativa do quadro clínico baseada nos dados da avaliação.</p>
-            <Button onClick={generate} size="sm" className="rounded-xl gap-1.5">
+            <Button onClick={() => generate()} size="sm" className="rounded-xl gap-1.5">
               <Sparkles className="h-3.5 w-3.5" />
               Gerar Impressão Clínica
             </Button>
