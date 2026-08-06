@@ -321,7 +321,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         )}
         {impression && (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground italic leading-relaxed">{impression.overview}</p>
+            <p className="text-sm text-muted-foreground italic leading-relaxed whitespace-pre-line">{impression.overview}</p>
             {impression.therapeuticObjectives?.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs font-semibold text-foreground">Objetivos Terapêuticos Principais:</p>
