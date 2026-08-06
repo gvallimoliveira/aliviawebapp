@@ -190,6 +190,11 @@ REGRAS:
 - Se a região da queixa não tiver exercícios suficientes no nível escolhido, complete com exercícios de região adjacente/geral no mesmo nível e AUMENTE a dose (séries/reps/carga descrita nas observações) em vez de rebaixar o programa.
 - Cubra mobilidade → ativação → fortalecimento progressivo.
 - EVITE exercícios em superfície instável (bosu, disco, almofada). Prefira estabilidade em solo firme com perturbações por carga, elásticos ou mudança do centro de gravidade, e redução da base de apoio (ponta de pé, apoio em anilhas para demanda de foot core).
+- TRIAGEM ERGONÔMICA / POSICIONAL (obrigatória, vale também para mobilidade e alongamento): avalie a POSIÇÃO exigida pelo exercício, não apenas carga e intensidade. Uma carga leve numa posição provocativa continua sendo provocativa.
+  * Dor anterior de joelho (condropatia patelar/DFP, tendinopatia patelar ou quadricipital, hoffite), irritabilidade alta ou restrição de flexão de joelho → selecione APENAS exercícios amigáveis ao joelho: NÃO use posições ajoelhada ou semi-ajoelhada (ex.: alongamento de flexores de quadril ajoelhado), agachamento/afundo em amplitude final, flexão profunda sob carga ou pressão direta sobre a patela/gordura infrapatelar.
+  * Prefira variações em pé, decúbito dorsal/ventral, lateral ou sentado: alongamento de flexores de quadril em pé ou em decúbito (posição de Thomas na maca/cama), alongamento de quadríceps em prono, extensão de quadril em pé com elástico, isometrias em amplitude indolor.
+  * Mesma lógica em outras regiões: evite posições overhead/ABER em ombro irritável, flexão lombar carregada em amplitude final na dor discal aguda, extensão cervical prolongada em cervical irritável.
+  * Nas observações, deixe claro por que a posição escolhida é segura para este paciente.
 - Ajuste dose ao nível: básico (2-3 séries, cargas leves), intermediário (3 séries, tempo sob tensão maior), avançado (3-4 séries, progressão de carga/velocidade/unilateral).
 - Observações curtas (máx 120 caracteres) explicando o objetivo e a progressão.
 
