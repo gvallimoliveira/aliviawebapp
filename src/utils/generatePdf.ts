@@ -1080,18 +1080,26 @@ function renderStrengthTableSection(
     const nums = (trials || [])
       .map((t) => parseFloat(String(t?.value ?? "").replace(",", ".")))
       .filter((n) => isFinite(n) && n > 0);
+    // Time to peak is optional: only rendered when at least one trial carries it.
+    const peaks = (trials || [])
+      .map((t) => parseFloat(String(t?.timeToPeak ?? "").replace(",", ".")))
+      .filter((n) => isFinite(n) && n > 0);
+    const peakLbl = language === "es" ? "t. pico" : isPt ? "t. pico" : "peak t.";
+    const peakTxt = peaks.length
+      ? ` · ${peakLbl} ${Math.round((peaks.reduce((a, b) => a + b, 0) / peaks.length) * 100) / 100}s`
+      : "";
     if (nums.length === 0) {
       const single = parseFloat(String(value || "").replace(",", "."));
       return {
         display: (value || "").trim() || "—",
-        detail: "",
+        detail: peakTxt ? peakTxt.replace(" · ", "") : "",
         mean: isFinite(single) && single > 0 ? single : null,
       };
     }
     const mean = Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 10) / 10;
     const best = Math.round(Math.max(...nums) * 10) / 10;
     const bestLbl = language === "es" ? "mejor" : isPt ? "melhor" : "best";
-    return { display: String(mean), detail: `${bestLbl} ${best} · n=${nums.length}`, mean };
+    return { display: String(mean), detail: `${bestLbl} ${best} · n=${nums.length}${peakTxt}`, mean };
   };
 
   const cleaned = rows
