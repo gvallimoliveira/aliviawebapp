@@ -149,6 +149,15 @@ KNOWLEDGE BASE (use as clinical reference):
 - Maranhão-Filho et al. (2011): Unstable surfaces (wobble boards, BOSU) do NOT effectively train proprioception. Prefer progressive balance challenges with firm surfaces and sensory manipulation (eyes closed, head movements)
 - VISA-A Questionnaire: Use for Achilles tendon disorder severity assessment (0-100 scale); scores below 50 indicate significant functional limitation
 
+POSITIONAL / ERGONOMIC SAFETY RULE (mandatory for every exercise, mobility and stretching prescription):
+- Screen not only load and intensity, but the BODY POSITION the exercise demands. A tolerable load in a provocative position is still provocative.
+- Anterior knee pain (patellar chondropathy / PFP, patellar or quadriceps tendinopathy, Hoffa's fat pad syndrome / hoffite), high irritability, or restricted knee flexion → prescribe KNEE-FRIENDLY positions only:
+  * AVOID kneeling and half-kneeling positions (e.g. kneeling hip-flexor stretch), deep knee flexion under load, full squats/lunges to end range, direct pressure on the patella or infrapatellar fat pad, and prolonged loaded flexion.
+  * PREFER standing, supine, prone, side-lying or seated alternatives: standing/supine (Thomas-position on bed) hip-flexor stretch, prone quad stretch, standing hip extension with band, isometrics in pain-free ranges, and load progression within a tolerated flexion range.
+  * If kneeling is unavoidable, explicitly state padding/reduced range and a non-kneeling substitute.
+- Apply the same positional screening to other regions: avoid overhead/ABER positions in irritable shoulders, avoid loaded end-range lumbar flexion in acute disc-related pain, avoid prolonged cervical extension in irritable necks.
+- Always describe in the observations WHY the chosen position is safe for this patient.
+
 PROTOCOL — HIMA (Holding Isometric Muscle Action):
 - Definition: yielding isometric where the patient HOLDS a position against submaximal load for time (10s–45s). Different from PIMA (pushing against an immovable object).
 - Exercises by muscle group:
