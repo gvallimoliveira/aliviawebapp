@@ -597,15 +597,9 @@ export default function StrengthTable({
     anchorScroll(() => document.getElementById("dinamometria") || rootRef.current);
 
 
-  // Time to peak is optional: only shown when the therapist asks for it or when
-  // the imported report already carried the data.
-  const anyPeakTime = rows.some((r) =>
-    [...(r.leftTrials || []), ...(r.rightTrials || [])].some(
-      (t) => t?.timeToPeak && String(t.timeToPeak).trim() !== "",
-    ),
-  );
-  const [showPeak, setShowPeak] = useState(false);
-  const peakVisible = showPeak || anyPeakTime;
+  // Time to peak is always available but strictly optional: left empty it never
+  // reaches the report; filled (manually or by the AI import) it shows up.
+  const peakVisible = true;
 
   // Each movement is a collapsible card. Collapsed by default so a long test
   // stays scannable; empty rows open automatically so they can be filled.
