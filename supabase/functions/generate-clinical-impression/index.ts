@@ -61,14 +61,20 @@ serve(async (req) => {
         : `\nIMPORTANT: The patient has ${assessmentTimeline.length} assessments over time. Analyze the FULL TIMELINE to identify evolution patterns, progressive improvement or worsening, and provide a clinical overview reflecting the patient's entire trajectory — not just the latest assessment.`
       : "";
 
-    const systemPrompt = `You are a clinical physiotherapy expert. Your task is to produce a brief integrative clinical impression based on assessment data. 
+    const systemPrompt = `You are a clinical physiotherapy expert. Your task is to produce a DEEP, detailed integrative clinical impression based on assessment data.
 
 Rules:
-- Write a concise overview (3-5 lines) integrating the clinical context: chief complaint, onset, pain characteristics, duration, functional questionnaire scores, and diagnostic hypothesis.${multiAssessment ? "\n- When multiple assessments exist, describe the clinical trajectory over time: whether the patient improved, worsened, or remained stable, referencing specific score changes." : ""}
+- Write a substantive overview (8-14 lines, in flowing clinical prose separated into short paragraphs) integrating: chief complaint, onset, pain characteristics and intensity per region, duration, functional questionnaire scores, and diagnostic hypothesis.${multiAssessment ? "\n- When multiple assessments exist, describe the clinical trajectory over time: whether the patient improved, worsened, or remained stable, referencing specific score changes." : ""}
+- OBJECTIVE TESTS ARE MANDATORY CONTENT when present. If dynamometry (strength) data is provided, you MUST dedicate an explicit part of the overview to it: cite the actual values (mean and best in kgf), the number of trials and reliability (CV% — above 15% means questionable reproducibility), left/right asymmetries and agonist/antagonist ratios within the same side, naming the movements. Interpret asymmetries above 10% as clinically relevant (deficit/inhibition per D.I.F.I) and state which side and which movement is deficient. Never treat these numbers as a footnote and never omit them.
+- If range of motion (ROM) data is provided, likewise discuss it explicitly: which joints/movements are restricted, side comparison, and how the restriction relates to the hypothesis and to the strength findings.
+- Explicitly CORRELATE the objective findings (strength, ROM) with the symptoms, the functional scores and the diagnostic hypothesis — do not list data without interpreting it.
+- If session evolution notes are provided, incorporate the clinically useful observations from them (response to load, pain behavior between sessions, adherence, intercurrences), citing them as reported during follow-up.
+- Only comment on data actually provided. Never invent values. If dynamometry or ROM was not recorded, do not speculate about them.
 - Do NOT mention specific exercises, treatment techniques, or therapeutic approaches.
 - Select exactly 2 main therapeutic objectives from this list ONLY: controle do quadro álgico, reequilibrar tensões miofasciais, exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar, modulação da dor.
 - Respond in ${langLabel}.
 - Use the tool provided to return the structured output.${timelineInstruction}`;
+
 
     // Build user prompt with only populated fields to reduce token spend.
     const lines: string[] = ["Current assessment data:"];
