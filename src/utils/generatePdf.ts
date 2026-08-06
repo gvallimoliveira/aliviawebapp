@@ -2419,15 +2419,18 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     doc.setLineWidth(0.3);
     doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
     y += 8;
-    y = renderSectionTitle(doc, y, isPt ? "Notas do Profissional" : "Professional Notes", COLORS.primary);
-    y = drawTextCard(doc, y, professionalNotes, {
+    const notesCardOpts: TextCardOptions = {
       fill: [245, 243, 240],
       stroke: COLORS.border,
       padX: 6,
       padY: 7,
       body: { font: "Inter", weight: "italic", size: 8, lineHeight: 4, textColor: COLORS.muted },
       bottomSafety: 2,
-    });
+    };
+    y = keepTitleWithCard(doc, y, 12, professionalNotes, notesCardOpts);
+    y = renderSectionTitle(doc, y, isPt ? "Notas do Profissional" : "Professional Notes", COLORS.primary);
+    y = drawTextCard(doc, y, professionalNotes, notesCardOpts);
+
     y += 4;
   }
 
