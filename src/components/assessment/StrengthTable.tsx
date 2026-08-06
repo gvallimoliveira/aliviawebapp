@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { anchorScroll } from "@/hooks/useScrollAnchor";
+
 
 /** One individual measurement (trial) of a movement on one side. */
 export type StrengthTrial = {
