@@ -13,6 +13,8 @@ import StrengthTable, {
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { anchorScroll } from "@/hooks/useScrollAnchor";
+
 
 interface Props {
   patient: any;
