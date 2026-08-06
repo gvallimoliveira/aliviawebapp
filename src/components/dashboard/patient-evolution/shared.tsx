@@ -204,7 +204,25 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
     });
   };
 
-  const generate = async () => {
+  const fetchSessionNotes = async () => {
+    const email = assessment?.patient_email || assessment?.email;
+    if (!email) return undefined;
+    try {
+      const { data } = await supabase
+        .from("session_notes")
+        .select("session_date, content")
+        .eq("patient_email", email)
+        .order("session_date", { ascending: true })
+        .limit(12);
+      const notes = (data || []).filter((n: any) => (n.content || "").trim().length > 0);
+      return notes.length > 0 ? notes : undefined;
+    } catch (e) {
+      console.warn("session notes fetch failed", e);
+      return undefined;
+    }
+  };
+
+  const generate = async (forceRefresh = false) => {
     setLoading(true);
     try {
       if (isDemo) {
@@ -219,6 +237,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
           });
         }
       } else {
+        const sessionNotes = await fetchSessionNotes();
         const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
           body: {
             anamnesisData: assessment.anamnesis_data,
@@ -228,6 +247,8 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
             diagnosis: assessment.diagnosis,
             language,
             assessmentTimeline: buildTimeline(),
+            sessionNotes,
+            forceRefresh,
           },
         });
         if (error) throw error;
@@ -245,6 +266,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
       setLoading(false);
     }
   };
+
 
   // Auto-regenerate impression when assessment is flagged (e.g. after a pending
   // questionnaire is completed by the patient).
@@ -273,7 +295,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
           </CardTitle>
           <div className="flex items-center gap-2">
             {impression && (
-              <Button variant="ghost" size="sm" onClick={generate} disabled={loading} className="h-7 px-2 text-xs gap-1">
+              <Button variant="ghost" size="sm" onClick={() => generate(true)} disabled={loading} className="h-7 px-2 text-xs gap-1">
                 <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
                 Regenerar
               </Button>
@@ -285,7 +307,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         {!impression && !loading && (
           <div className="text-center py-4 space-y-3">
             <p className="text-sm text-muted-foreground">Gere uma visão integrativa do quadro clínico baseada nos dados da avaliação.</p>
-            <Button onClick={generate} size="sm" className="rounded-xl gap-1.5">
+            <Button onClick={() => generate()} size="sm" className="rounded-xl gap-1.5">
               <Sparkles className="h-3.5 w-3.5" />
               Gerar Impressão Clínica
             </Button>
@@ -299,7 +321,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         )}
         {impression && (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground italic leading-relaxed">{impression.overview}</p>
+            <p className="text-sm text-muted-foreground italic leading-relaxed whitespace-pre-line">{impression.overview}</p>
             {impression.therapeuticObjectives?.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-xs font-semibold text-foreground">Objetivos Terapêuticos Principais:</p>
