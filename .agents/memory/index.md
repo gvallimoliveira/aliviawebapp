@@ -33,6 +33,7 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Treatment Plan Framework](mem://features/treatment-plan) — STEPS framework phases and professional clinical guidelines for severe pain.
 - [Clinical Knowledge Base](mem://clinical/knowledge-base) — Evidence-based protocols guiding AI reasoning (HIMA, HSR, McKenzie).
 - [Clinical Methodology](mem://clinical/methodology) — Core clinical concepts STEPS and D.I.F.I.
+- [Hypothesis Scope](mem://clinical/hypothesis-scope) — Hipótese diagnóstica curta (máx. 20 palavras), sem agravantes/medidas/impacto funcional; cuidado extra em avaliação externa.
 - [VIP Users](mem://features/vip-users) — Access rules for VIP admin emails.
 - [Pain Map Editor](mem://features/pain-map-editor) — Visual debug mode for admins to adjust SVG map paths.
 - [Balance Training Preference](mem://clinical/balance-training-preference) — Sem superfícies instáveis; estabilidade em solo firme com perturbações e base reduzida (foot core).
