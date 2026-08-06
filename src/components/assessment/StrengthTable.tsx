@@ -588,28 +588,12 @@ export default function StrengthTable({
 
   /**
    * Keeps the dynamometry section visually anchored while the surrounding page
-   * re-renders (import/save can remount parents and reset window scroll).
-   * Captures the section's offset from the viewport top and restores it over a
-   * few frames after the update.
+   * re-renders (import/save can remount parents and collapse the document,
+   * which makes the browser clamp scrollY to the top).
    */
-  const preserveScroll = () => {
-    const el = rootRef.current;
-    if (!el) return () => {};
-    const before = el.getBoundingClientRect().top;
-    return () => {
-      let frames = 0;
-      const restore = () => {
-        const node = rootRef.current;
-        if (node) {
-          const after = node.getBoundingClientRect().top;
-          const delta = after - before;
-          if (Math.abs(delta) > 2) window.scrollBy({ top: delta, behavior: "auto" });
-        }
-        if (frames++ < 12) window.requestAnimationFrame(restore);
-      };
-      window.requestAnimationFrame(restore);
-    };
-  };
+  const preserveScroll = () =>
+    anchorScroll(() => document.getElementById("dinamometria") || rootRef.current);
+
 
   // Time to peak is optional: only shown when the therapist asks for it or when
   // the imported report already carried the data.
