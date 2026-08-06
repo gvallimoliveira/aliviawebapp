@@ -117,13 +117,13 @@ serve(async (req) => {
     shadowLogAiUsage(req, { function_name: "generate-clinical-impression" });
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, forceRefresh } = await req.json();
+    const { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, forceRefresh } = await req.json();
 
     // Cache: identical clinical context → identical impression (7d).
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
-    const cachePayload = { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline };
+    const cachePayload = { v: PROMPT_VERSION, anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ clinicalImpression: { overview: string; therapeuticObjectives: string[] } }>(
         admin,
