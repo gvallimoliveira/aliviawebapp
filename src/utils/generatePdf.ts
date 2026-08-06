@@ -390,9 +390,51 @@ function measureWrappedLines(
 }
 
 /**
+ * Height a card WILL occupy (same math as drawTextCard) without drawing it.
+ * Used to keep a section title glued to its card (anti-orphan titles).
+ */
+function measureTextCardHeight(doc: jsPDF, text: string, opts: TextCardOptions): number {
+  const width = opts.width ?? CONTENT_WIDTH;
+  const padX = opts.padX ?? 8;
+  const padY = opts.padY ?? 8;
+  const safety = opts.bottomSafety ?? 2;
+  const innerW = width - padX * 2;
+  let labelBlockH = 0;
+  if (opts.label) {
+    const size = opts.label.size ?? Math.max(opts.body.size, 8);
+    doc.setFont("Inter", "bold");
+    doc.setFontSize(size);
+    let labelLines = doc.splitTextToSize(sanitizePdfText(opts.label.text), innerW) as string[];
+    if (!Array.isArray(labelLines)) labelLines = [labelLines as unknown as string];
+    labelBlockH = labelLines.length * (size * 0.45 + 1.5) + 2;
+  }
+  const bodyH = measureWrappedLines(doc, text, innerW, opts.body).length * opts.body.lineHeight;
+  return padY + labelBlockH + bodyH + padY + safety;
+}
+
+/**
+ * Breaks the page BEFORE a title when the title + its card would not fit
+ * together, so a heading never ends up alone at the bottom of a page.
+ * Never breaks when the card alone is taller than a full page.
+ */
+function keepTitleWithCard(
+  doc: jsPDF,
+  y: number,
+  titleH: number,
+  text: string,
+  opts: TextCardOptions,
+): number {
+  const cardH = measureTextCardHeight(doc, text, opts);
+  const pageCapacity = PAGE_BOTTOM - MARGIN;
+  const needed = titleH + Math.min(cardH, pageCapacity - titleH);
+  return checkPage(doc, y, needed);
+}
+
+/**
  * Draw a rounded text card whose height is computed from the ACTUAL wrapped
  * text using the body font/size. Returns the new y AFTER the card.
  */
+
 function drawTextCard(
   doc: jsPDF,
   y: number,
@@ -2055,22 +2097,9 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     y += 20;
   }
 
-  // ── External Assessment Banner (AI-interpreted external document) ──
-  if (anamnesisData?.source === "external_upload") {
-    const interpretedCount = anamnesisData.aiInterpretedFields?.length || 0;
-    const bannerText = isPt
-      ? `Avaliação externa interpretada por IA${interpretedCount ? ` · ${interpretedCount} campo(s) preenchido(s) automaticamente` : ""} e revisada pelo profissional antes da emissão.`
-      : `External assessment interpreted by AI${interpretedCount ? ` · ${interpretedCount} field(s) auto-filled` : ""} and reviewed by the professional before issuance.`;
-    y = drawTextCard(doc, y, bannerText, {
-      fill: COLORS.primaryLight,
-      stroke: COLORS.primary,
-      padX: 6,
-      padY: 5,
-      body: { font: "Inter", weight: "normal", size: 8, lineHeight: 3.8, textColor: COLORS.primary },
-      label: { text: isPt ? "AVALIAÇÃO EXTERNA · IA" : "EXTERNAL ASSESSMENT · AI", color: COLORS.primary, size: 8 },
-    });
-    y += 4;
-  }
+  // External assessments carry no AI disclaimer banner: the professional has
+  // already reviewed and approved the data in the patient chart.
+
 
 
   // ── Diagnosis Section (FIRST after patient info) ──
@@ -2113,8 +2142,17 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   // ── Clinical Impression (if available) ──
   const clinicalImpression = (diagnosis as any)?.clinicalImpression;
   if (clinicalImpression?.overview) {
-    y = checkPage(doc, y, 50);
-    y += 4;
+    const ciCardOpts: TextCardOptions = {
+      fill: COLORS.primaryLight,
+      stroke: COLORS.primary,
+      padX: 8,
+      padY: 7,
+      body: { font: "Inter", weight: "italic", size: 9, lineHeight: 4.5, textColor: COLORS.foreground },
+      bottomSafety: 2,
+    };
+
+    // Title must never be orphaned from its card.
+    y = keepTitleWithCard(doc, y + 4, 6, clinicalImpression.overview, ciCardOpts);
     const ciTitle = isPt ? "Impressão Clínica" : "Clinical Impression";
     doc.setFont("Inter", "bold");
     doc.setFontSize(11);
@@ -2123,14 +2161,8 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     y += 6;
 
     // Overview in rounded box — RIGID (italic 9; lineHeight 4.5; safety for italic descenders)
-    y = drawTextCard(doc, y, clinicalImpression.overview, {
-      fill: COLORS.primaryLight,
-      stroke: COLORS.primary,
-      padX: 8,
-      padY: 7,
-      body: { font: "Inter", weight: "italic", size: 9, lineHeight: 4.5, textColor: COLORS.foreground },
-      bottomSafety: 2,
-    });
+    y = drawTextCard(doc, y, clinicalImpression.overview, ciCardOpts);
+
     y += 1;
 
     // Therapeutic objectives — badges em flow horizontal, com wrap por linha
@@ -2387,15 +2419,18 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     doc.setLineWidth(0.3);
     doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
     y += 8;
-    y = renderSectionTitle(doc, y, isPt ? "Notas do Profissional" : "Professional Notes", COLORS.primary);
-    y = drawTextCard(doc, y, professionalNotes, {
+    const notesCardOpts: TextCardOptions = {
       fill: [245, 243, 240],
       stroke: COLORS.border,
       padX: 6,
       padY: 7,
       body: { font: "Inter", weight: "italic", size: 8, lineHeight: 4, textColor: COLORS.muted },
       bottomSafety: 2,
-    });
+    };
+    y = keepTitleWithCard(doc, y, 12, professionalNotes, notesCardOpts);
+    y = renderSectionTitle(doc, y, isPt ? "Notas do Profissional" : "Professional Notes", COLORS.primary);
+    y = drawTextCard(doc, y, professionalNotes, notesCardOpts);
+
     y += 4;
   }
 
