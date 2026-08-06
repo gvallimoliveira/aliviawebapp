@@ -10,6 +10,105 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/** Bump when the prompt/data blocks change so cached impressions are regenerated. */
+const PROMPT_VERSION = "ci-v2-deep-objective-tests";
+
+const num = (v: unknown): number | null => {
+  if (v == null) return null;
+  const n = typeof v === "number" ? v : parseFloat(String(v).replace(",", "."));
+  return isFinite(n) ? n : null;
+};
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
+/** Asymmetry (%) between two values, relative to the greater one. */
+const asymmetryPct = (a: number | null, b: number | null): number | null => {
+  if (a == null || b == null || a <= 0 || b <= 0) return null;
+  return Math.round((Math.abs(a - b) / Math.max(a, b)) * 100);
+};
+
+const sideStats = (value: unknown, trials: unknown) => {
+  const list = Array.isArray(trials) ? trials : [];
+  const nums = list.map((t: any) => num(t?.value ?? t)).filter((n): n is number => n != null && n > 0);
+  const times = list.map((t: any) => num(t?.timeToPeak)).filter((n): n is number => n != null && n > 0);
+  if (nums.length === 0) {
+    const single = num(value);
+    return {
+      count: single != null && single > 0 ? 1 : 0,
+      best: single != null && single > 0 ? round1(single) : null,
+      mean: single != null && single > 0 ? round1(single) : null,
+      cv: null as number | null,
+      meanTimeToPeak: null as number | null,
+      trials: [] as string[],
+    };
+  }
+  const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+  let cv: number | null = null;
+  if (nums.length > 1 && mean > 0) {
+    const variance = nums.reduce((a, b) => a + (b - mean) ** 2, 0) / (nums.length - 1);
+    cv = Math.round((Math.sqrt(variance) / mean) * 1000) / 10;
+  }
+  return {
+    count: nums.length,
+    best: round1(Math.max(...nums)),
+    mean: round1(mean),
+    cv,
+    meanTimeToPeak: times.length > 0 ? Math.round((times.reduce((a, b) => a + b, 0) / times.length) * 100) / 100 : null,
+    trials: list
+      .map((t: any) => {
+        const v = num(t?.value ?? t);
+        if (v == null) return null;
+        const tp = num(t?.timeToPeak);
+        return `${round1(v)} kgf${tp != null ? ` @ ${tp}s` : ""}`;
+      })
+      .filter((s): s is string => !!s),
+  };
+};
+
+const normTxt = (t: string) =>
+  String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+const PAIRS = [
+  {
+    title: "Shoulder — internal vs external rotation",
+    region: /(ombro|shoulder|hombro)/,
+    aLabel: "internal rotation",
+    aRe: /(rotac|rotat).*(intern|medial)|(intern|medial).*(rotac|rotat)/,
+    bLabel: "external rotation",
+    bRe: /(rotac|rotat).*(extern|lateral)|(extern|lateral).*(rotac|rotat)/,
+  },
+  { title: "Knee — extension vs flexion", region: /(joelho|knee|rodilla)/, aLabel: "extension", aRe: /(exten)/, bLabel: "flexion", bRe: /(flex)/ },
+  { title: "Hip — extension vs flexion", region: /(quadril|hip|cadera)/, aLabel: "extension", aRe: /(exten)/, bLabel: "flexion", bRe: /(flex)/ },
+  { title: "Hip — adduction vs abduction", region: /(quadril|hip|cadera)/, aLabel: "adduction", aRe: /(aducao|aducc|adduc|aduc)/, bLabel: "abduction", bRe: /(abduc)/ },
+];
+
+/** Intra-side agonist/antagonist balance for the known movement pairs. */
+const agonistAntagonist = (rows: any[]) => {
+  const out: Array<{
+    title: string; aLabel: string; bLabel: string;
+    left: { a: number | null; b: number | null; asym: number | null };
+    right: { a: number | null; b: number | null; asym: number | null };
+  }> = [];
+  for (const pair of PAIRS) {
+    const find = (re: RegExp, isAdduction: boolean) =>
+      rows.find((r: any) => {
+        const m = normTxt(r?.movement);
+        if (isAdduction && /abduc/.test(m)) return false;
+        return pair.region.test(m) && re.test(m);
+      });
+    const rowA = find(pair.aRe, pair.aLabel === "adduction");
+    const rowB = find(pair.bRe, false);
+    if (!rowA || !rowB) continue;
+    const side = (which: "left" | "right") => {
+      const sa = sideStats(which === "left" ? rowA.leftValue : rowA.rightValue, which === "left" ? rowA.leftTrials : rowA.rightTrials);
+      const sb = sideStats(which === "left" ? rowB.leftValue : rowB.rightValue, which === "left" ? rowB.leftTrials : rowB.rightTrials);
+      return { a: sa.mean, b: sb.mean, asym: asymmetryPct(sa.mean, sb.mean) };
+    };
+    out.push({ title: pair.title, aLabel: pair.aLabel, bLabel: pair.bLabel, left: side("left"), right: side("right") });
+  }
+  return out;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
