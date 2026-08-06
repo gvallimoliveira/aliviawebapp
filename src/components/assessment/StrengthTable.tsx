@@ -358,11 +358,11 @@ const STR: Record<string, Record<string, string>> = {
     peakTimeOptionalLabel: "Tempo até o pico (opcional)",
     showPeakTime: "Registrar tempo até o pico (opcional)",
     hidePeakTime: "Ocultar tempo até o pico",
-    peakTimeNote: "Opcional — alguns dinamômetros não fornecem esse dado.",
     agonistTitle: "Assimetria agonista/antagonista (mesmo lado)",
     agonistHint: "Acima de 10% merece atenção.",
     untitledMovement: "Movimento sem nome — toque para preencher",
     peakTrialN: "Tempo de pico",
+
 
   },
   en: {
@@ -414,11 +414,11 @@ const STR: Record<string, Record<string, string>> = {
     peakTimeOptionalLabel: "Time to peak (optional)",
     showPeakTime: "Record time to peak (optional)",
     hidePeakTime: "Hide time to peak",
-    peakTimeNote: "Optional — some dynamometers do not provide this metric.",
     agonistTitle: "Agonist/antagonist asymmetry (same side)",
     agonistHint: "Above 10% deserves attention.",
     untitledMovement: "Unnamed movement — tap to fill in",
     peakTrialN: "Time to peak",
+
 
   },
   es: {
@@ -470,11 +470,11 @@ const STR: Record<string, Record<string, string>> = {
     peakTimeOptionalLabel: "Tiempo al pico (opcional)",
     showPeakTime: "Registrar tiempo al pico (opcional)",
     hidePeakTime: "Ocultar tiempo al pico",
-    peakTimeNote: "Opcional — algunos dinamómetros no ofrecen este dato.",
     agonistTitle: "Asimetría agonista/antagonista (mismo lado)",
     agonistHint: "Por encima del 10% merece atención.",
     untitledMovement: "Movimiento sin nombre — toque para completar",
     peakTrialN: "Tiempo al pico",
+
 
   },
 };
@@ -1189,9 +1189,9 @@ export default function StrengthTable({
           {s(lang, "addRow")}
         </Button>
       </div>
-      <p className="mt-1 text-[10px] text-muted-foreground">{s(lang, "peakTimeNote")}</p>
 
       <AgonistAntagonistPanel rows={rows} lang={lang} />
+
 
     </div>
   );
