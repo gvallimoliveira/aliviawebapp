@@ -390,9 +390,51 @@ function measureWrappedLines(
 }
 
 /**
+ * Height a card WILL occupy (same math as drawTextCard) without drawing it.
+ * Used to keep a section title glued to its card (anti-orphan titles).
+ */
+function measureTextCardHeight(doc: jsPDF, text: string, opts: TextCardOptions): number {
+  const width = opts.width ?? CONTENT_WIDTH;
+  const padX = opts.padX ?? 8;
+  const padY = opts.padY ?? 8;
+  const safety = opts.bottomSafety ?? 2;
+  const innerW = width - padX * 2;
+  let labelBlockH = 0;
+  if (opts.label) {
+    const size = opts.label.size ?? Math.max(opts.body.size, 8);
+    doc.setFont("Inter", "bold");
+    doc.setFontSize(size);
+    let labelLines = doc.splitTextToSize(sanitizePdfText(opts.label.text), innerW) as string[];
+    if (!Array.isArray(labelLines)) labelLines = [labelLines as unknown as string];
+    labelBlockH = labelLines.length * (size * 0.45 + 1.5) + 2;
+  }
+  const bodyH = measureWrappedLines(doc, text, innerW, opts.body).length * opts.body.lineHeight;
+  return padY + labelBlockH + bodyH + padY + safety;
+}
+
+/**
+ * Breaks the page BEFORE a title when the title + its card would not fit
+ * together, so a heading never ends up alone at the bottom of a page.
+ * Never breaks when the card alone is taller than a full page.
+ */
+function keepTitleWithCard(
+  doc: jsPDF,
+  y: number,
+  titleH: number,
+  text: string,
+  opts: TextCardOptions,
+): number {
+  const cardH = measureTextCardHeight(doc, text, opts);
+  const pageCapacity = PAGE_BOTTOM - MARGIN;
+  const needed = titleH + Math.min(cardH, pageCapacity - titleH);
+  return checkPage(doc, y, needed);
+}
+
+/**
  * Draw a rounded text card whose height is computed from the ACTUAL wrapped
  * text using the body font/size. Returns the new y AFTER the card.
  */
+
 function drawTextCard(
   doc: jsPDF,
   y: number,
