@@ -13,6 +13,8 @@ import StrengthTable, {
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { anchorScroll } from "@/hooks/useScrollAnchor";
+
 
 interface Props {
   patient: any;
@@ -54,23 +56,9 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
   const cardRef = React.useRef<HTMLDivElement>(null);
 
   /** Keeps the section anchored while parents re-render after a save/reload. */
-  const preserveScroll = () => {
-    const el = cardRef.current;
-    if (!el) return () => {};
-    const before = el.getBoundingClientRect().top;
-    return () => {
-      let frames = 0;
-      const restore = () => {
-        const node = cardRef.current;
-        if (node) {
-          const delta = node.getBoundingClientRect().top - before;
-          if (Math.abs(delta) > 2) window.scrollBy({ top: delta, behavior: "auto" });
-        }
-        if (frames++ < 20) window.requestAnimationFrame(restore);
-      };
-      window.requestAnimationFrame(restore);
-    };
-  };
+  const preserveScroll = () =>
+    anchorScroll(() => cardRef.current || document.getElementById("dinamometria"));
+
 
   React.useEffect(() => setRows(initialRows), [initialRows]);
 
