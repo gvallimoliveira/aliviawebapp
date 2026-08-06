@@ -54,6 +54,7 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Professional PDF Branding](mem://features/professional-pdf-branding) — Custom logo placement in PDF reports.
 - [AI Integration Rules](mem://tech/ai-integration) — 4-layer JSON extraction logic for AI responses.
 - [Clinical Impression](mem://features/clinical-impression) — AI summary of patient evolution across multiple assessments.
+- [Clinical Impression Depth](mem://features/clinical-impression-depth) — Impressão clínica profunda: obrigatório analisar dinamometria, ADM e notas de evolução das sessões.
 - [Internal Messaging](mem://features/internal-messaging) — Two-way P2P chat and permission differences.
 - [Internal Messaging Disclaimer](mem://tech/internal-messaging-disclaimer) — Liability disclaimer for chat interactions.
 - [Pro Express Reassessment](mem://features/pro-express-reassessment) — Reassessment pre-fills and highlights changes.
