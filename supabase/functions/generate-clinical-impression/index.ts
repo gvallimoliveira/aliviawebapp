@@ -292,7 +292,7 @@ Rules:
             properties: {
               overview: {
                 type: "string",
-                description: "Integrative clinical overview in 3-5 lines, incorporating timeline perspective when multiple assessments exist",
+                description: "Deep integrative clinical overview (8-14 lines, short paragraphs) that explicitly analyses dynamometry values/asymmetries, ROM findings and session evolution notes when provided, plus timeline perspective when multiple assessments exist",
               },
               therapeuticObjectives: {
                 type: "array",
@@ -316,7 +316,7 @@ Rules:
       ],
       tools,
       tool_choice: { type: "function", function: { name: "return_clinical_impression" } },
-    }, undefined, { functionName: "generate-clinical-impression", maxTokens: 1500 });
+    }, undefined, { functionName: "generate-clinical-impression", maxTokens: 3000 });
 
     if (!response.ok) {
       const errText = await response.text();
