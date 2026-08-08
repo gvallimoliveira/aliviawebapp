@@ -403,7 +403,7 @@ const Account = () => {
                 {t.test_push}
               </Button>
             </div>
-            <NotificationPreferences />
+            <NotificationPreferences variant={personalOnly ? "patient" : "professional"} />
             <InstallAppDialog open={installOpen} onOpenChange={setInstallOpen} />
           </CardContent>
         </Card>
