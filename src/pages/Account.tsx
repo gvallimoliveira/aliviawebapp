@@ -64,6 +64,9 @@ const Account = () => {
   const [testingPush, setTestingPush] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
   const push = usePushNotifications();
+  const isProfessional = useIsProfessionalAccount();
+  const personalOnly = isProfessional === false;
+
 
   const t = isPt ? {
     title: "Minha Conta",
