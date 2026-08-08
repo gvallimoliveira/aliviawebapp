@@ -118,7 +118,8 @@ Deno.serve(async (req) => {
             userId,
             "📝 Diário de Dor",
             "Como está sua dor hoje? Registre no diário para acompanhar sua evolução.",
-            "/dashboard"
+            "/dashboard",
+            "care_plan",
           );
           if (sent) results.diary_reminders++;
         } catch (e) {
@@ -157,7 +158,8 @@ Deno.serve(async (req) => {
               userId,
               "⭐ Avaliação Premium disponível",
               "Você ainda tem avaliações premium para realizar. Aproveite!",
-              "/assessment/premium"
+              "/assessment/premium",
+              "payments",
             );
             if (sent) results.premium_reminders++;
           } catch (e) {
@@ -188,7 +190,8 @@ Deno.serve(async (req) => {
               userId,
               "🩺 Avaliação Gratuita",
               "Descubra o que pode estar causando sua dor. Faça uma avaliação gratuita agora.",
-              "/assessment/basic"
+              "/assessment/basic",
+              "my_assessment",
             );
             if (sent) results.basic_invites++;
           } catch (e) {
@@ -280,7 +283,8 @@ Deno.serve(async (req) => {
               a.user_id,
               "📋 Avaliação incompleta",
               "Sua avaliação está quase pronta! Continue de onde parou.",
-              `/assessment/${a.type || "basic"}`
+              `/assessment/${a.type || "basic"}`,
+              "my_assessment",
             );
             if (sent) results.abandoned_reminders++;
           } catch (e) {
@@ -318,7 +322,8 @@ Deno.serve(async (req) => {
               assessment.user_id,
               "⏰ Boleto expirando em breve",
               "Seu boleto expira em 2 dias. Caso não tenha pago, gere um novo para não perder seus dados da avaliação.",
-              "/dashboard"
+              "/dashboard",
+              "payments",
             );
             if (sent) results.boleto_expiry_reminders++;
           } catch (e) {
@@ -365,7 +370,7 @@ Deno.serve(async (req) => {
             if (!userId || notifiedUsers.has(userId) || !usersWithPush.has(userId) || usersCompletedToday.has(userId)) continue;
 
             try {
-              const sent = await notifyUser(userId, "💪 Hora dos exercícios!", "Seus exercícios de hoje estão te esperando. Marque cada um ao concluir!", "/dashboard");
+              const sent = await notifyUser(userId, "💪 Hora dos exercícios!", "Seus exercícios de hoje estão te esperando. Marque cada um ao concluir!", "/dashboard", "care_plan");
               if (sent) { results.exercise_reminders++; notifiedUsers.add(userId); }
             } catch (e) { results.errors.push(`exercise_reminder ${userId}: ${e}`); }
           }
@@ -490,7 +495,8 @@ Deno.serve(async (req) => {
                 userId,
                 "📊 Que tal uma reavaliação?",
                 "Já se passaram 30+ dias. Refaça a avaliação para acompanhar sua evolução.",
-                "/dashboard"
+                "/dashboard",
+                "my_assessment",
               );
               if (sent) results.reassessment_suggestions++;
             } catch (e) { results.errors.push(`reassessment ${userId}: ${e}`); }
@@ -535,7 +541,8 @@ Deno.serve(async (req) => {
               userId,
               `🏆 ${streak} dias seguidos!`,
               `Você completou ${streak} dias de diário. Continue assim — a consistência é a chave da recuperação.`,
-              "/dashboard"
+              "/dashboard",
+              "care_plan",
             );
             if (sent) results.streak_milestones++;
           } catch (e) { results.errors.push(`streak ${userId}: ${e}`); }
