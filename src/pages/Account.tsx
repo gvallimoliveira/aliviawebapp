@@ -353,7 +353,12 @@ const Account = () => {
               <div className="space-y-1 text-sm">
                 <p className="font-medium text-foreground">{t.push_bg_title}</p>
                 <p className="text-xs text-muted-foreground">
-                  {isStandalone ? t.push_bg_installed : t.push_bg_desc}
+                  {isStandalone
+                    ? t.push_bg_installed
+                    : personalOnly
+                      ? t.push_bg_desc_personal
+                      : t.push_bg_desc}
+
                 </p>
                 {!isStandalone && (
                   <Button
