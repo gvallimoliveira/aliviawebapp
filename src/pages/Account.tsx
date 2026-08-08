@@ -31,7 +31,9 @@ import PrivacyRightsCard from "@/components/account/PrivacyRightsCard";
 import SubscriptionCard from "@/components/account/SubscriptionCard";
 
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useIsProfessionalAccount } from "@/hooks/useIsProfessionalAccount";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
+
 import InstallAppDialog from "@/components/InstallAppDialog";
 import { Bell, BellOff, Send, Smartphone, Download } from "lucide-react";
 
