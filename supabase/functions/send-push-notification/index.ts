@@ -242,6 +242,9 @@ Deno.serve(async (req) => {
       "red_flags",
       "questionnaires",
       "billing",
+      "care_plan",
+      "my_assessment",
+      "payments",
     ];
     const cat = category ? String(category) : null;
     if (cat && VALID_CATEGORIES.includes(cat) && targetUserIds.length > 0) {
