@@ -85,6 +85,9 @@ const Account = () => {
     sign_in: "Fazer login",
     notifications: "Notificações",
     notifications_desc: "Controle os avisos de mensagens, avaliações e videochamadas neste dispositivo.",
+    notifications_desc_personal: "Controle os lembretes do seu tratamento, avaliações e mensagens neste dispositivo.",
+    push_bg_desc_personal: "Lembretes dos seus exercícios, diário de dor, resultado da avaliação, mensagens do seu fisioterapeuta e pagamentos chegam mesmo com o Aliv.iA fechado ou minimizado — desde que o app esteja instalado na tela de início do celular.",
+
     push_enabled: "Ativas neste dispositivo",
     push_disabled: "Inativas neste dispositivo",
     push_unsupported: "Este navegador não suporta notificações push.",
