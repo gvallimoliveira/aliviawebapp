@@ -325,7 +325,10 @@ const Account = () => {
               {push.subscribed ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
               {t.notifications}
             </CardTitle>
-            <CardDescription>{t.notifications_desc}</CardDescription>
+            <CardDescription>
+              {personalOnly ? t.notifications_desc_personal : t.notifications_desc}
+            </CardDescription>
+
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
