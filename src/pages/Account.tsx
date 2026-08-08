@@ -129,6 +129,9 @@ const Account = () => {
     sign_in: "Sign in",
     notifications: "Notifications",
     notifications_desc: "Control message, assessment and video-call alerts on this device.",
+    notifications_desc_personal: "Control your treatment reminders, assessment and message alerts on this device.",
+    push_bg_desc_personal: "Exercise reminders, pain diary, assessment results, messages from your physio and payment alerts arrive even with Aliv.iA closed or minimized — as long as the app is installed on your phone's home screen.",
+
     push_enabled: "Enabled on this device",
     push_disabled: "Disabled on this device",
     push_unsupported: "This browser does not support push notifications.",
