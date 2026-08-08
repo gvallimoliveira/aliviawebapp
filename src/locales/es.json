@@ -1451,5 +1451,9 @@
   "progression.cta_hint": "Genera un análisis personalizado según tu diario de dolor y adherencia (cuesta 0,25 crédito).",
   "progression.generate": "Generar sugerencia",
   "exercise_checklist.prescribed_by": "Prescrito por {name}",
-  "exercise_checklist.for_patient": "Para: {name}"
+  "exercise_checklist.for_patient": "Para: {name}",
+  "support.patient.tool.notifications.title": "Notificaciones de mi tratamiento",
+  "support.patient.tool.notifications.desc": "En Mi cuenta → Notificaciones activas los avisos en el móvil y eliges qué recibir: Mi tratamiento y ejercicios (recordatorio del HEP, diario de dolor y logros de racha), Mi evaluación (evaluación para retomar, resultado listo y sugerencia de reevaluación), Mensajes de tu fisioterapeuta (chat y videollamada) y Pagos (boleto por vencer, pago confirmado, premium disponible). Cada opción es independiente y vale para todos tus dispositivos.",
+  "support.pro.tool.notifications.title": "Notificaciones del profesional",
+  "support.pro.tool.notifications.desc": "En Mi cuenta → Notificaciones controlas los avisos clínicos: nuevas evaluaciones y reevaluaciones recibidas por tu enlace, mensajes y llamadas, red flags, cuestionarios y ejercicios completados, además de suscripción y cobro. Si también usas Aliv.iA como paciente, aparece un bloque aparte de 'Uso personal' con los recordatorios de tu propio tratamiento."
 }

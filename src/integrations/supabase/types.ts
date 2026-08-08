@@ -2152,8 +2152,11 @@ export type Database = {
         Row: {
           assessments: boolean
           billing: boolean
+          care_plan: boolean
           created_at: string
           messages: boolean
+          my_assessment: boolean
+          payments: boolean
           questionnaires: boolean
           red_flags: boolean
           updated_at: string
@@ -2162,8 +2165,11 @@ export type Database = {
         Insert: {
           assessments?: boolean
           billing?: boolean
+          care_plan?: boolean
           created_at?: string
           messages?: boolean
+          my_assessment?: boolean
+          payments?: boolean
           questionnaires?: boolean
           red_flags?: boolean
           updated_at?: string
@@ -2172,8 +2178,11 @@ export type Database = {
         Update: {
           assessments?: boolean
           billing?: boolean
+          care_plan?: boolean
           created_at?: string
           messages?: boolean
+          my_assessment?: boolean
+          payments?: boolean
           questionnaires?: boolean
           red_flags?: boolean
           updated_at?: string

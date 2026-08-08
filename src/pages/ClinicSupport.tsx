@@ -261,6 +261,12 @@ const categories: ToolCategory[] = [
     icon: Heart,
     items: [
       {
+        key: "notification_center",
+        icon: Bell,
+        title: "Central de notificações por perfil",
+        desc: "Em Minha conta → Notificações cada pessoa escolhe o que recebe no celular. Quem atende (dono, terapeuta, secretaria) tem a lista clínica completa: novas avaliações e reavaliações pelos links da clínica, mensagens e ligações, red flags, questionários e exercícios concluídos, assinatura e cobrança. Quem usa o Aliv.iA apenas como paciente vê uma lista própria — tratamento e exercícios, minha avaliação, mensagens do fisioterapeuta e pagamentos. Profissionais que também se acompanham como pacientes têm os dois blocos separados, então desligar um não desliga o outro.",
+      },
+      {
         key: "pain_diary",
         icon: BookOpen,
         title: "Diário de dor para o paciente",

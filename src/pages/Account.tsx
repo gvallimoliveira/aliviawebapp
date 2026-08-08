@@ -31,7 +31,9 @@ import PrivacyRightsCard from "@/components/account/PrivacyRightsCard";
 import SubscriptionCard from "@/components/account/SubscriptionCard";
 
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useIsProfessionalAccount } from "@/hooks/useIsProfessionalAccount";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
+
 import InstallAppDialog from "@/components/InstallAppDialog";
 import { Bell, BellOff, Send, Smartphone, Download } from "lucide-react";
 
@@ -62,6 +64,9 @@ const Account = () => {
   const [testingPush, setTestingPush] = useState(false);
   const [installOpen, setInstallOpen] = useState(false);
   const push = usePushNotifications();
+  const isProfessional = useIsProfessionalAccount();
+  const personalOnly = isProfessional === false;
+
 
   const t = isPt ? {
     title: "Minha Conta",
@@ -83,6 +88,9 @@ const Account = () => {
     sign_in: "Fazer login",
     notifications: "Notificações",
     notifications_desc: "Controle os avisos de mensagens, avaliações e videochamadas neste dispositivo.",
+    notifications_desc_personal: "Controle os lembretes do seu tratamento, avaliações e mensagens neste dispositivo.",
+    push_bg_desc_personal: "Lembretes dos seus exercícios, diário de dor, resultado da avaliação, mensagens do seu fisioterapeuta e pagamentos chegam mesmo com o Aliv.iA fechado ou minimizado — desde que o app esteja instalado na tela de início do celular.",
+
     push_enabled: "Ativas neste dispositivo",
     push_disabled: "Inativas neste dispositivo",
     push_unsupported: "Este navegador não suporta notificações push.",
@@ -124,6 +132,9 @@ const Account = () => {
     sign_in: "Sign in",
     notifications: "Notifications",
     notifications_desc: "Control message, assessment and video-call alerts on this device.",
+    notifications_desc_personal: "Control your treatment reminders, assessment and message alerts on this device.",
+    push_bg_desc_personal: "Exercise reminders, pain diary, assessment results, messages from your physio and payment alerts arrive even with Aliv.iA closed or minimized — as long as the app is installed on your phone's home screen.",
+
     push_enabled: "Enabled on this device",
     push_disabled: "Disabled on this device",
     push_unsupported: "This browser does not support push notifications.",
@@ -314,7 +325,10 @@ const Account = () => {
               {push.subscribed ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
               {t.notifications}
             </CardTitle>
-            <CardDescription>{t.notifications_desc}</CardDescription>
+            <CardDescription>
+              {personalOnly ? t.notifications_desc_personal : t.notifications_desc}
+            </CardDescription>
+
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-3">
@@ -339,7 +353,12 @@ const Account = () => {
               <div className="space-y-1 text-sm">
                 <p className="font-medium text-foreground">{t.push_bg_title}</p>
                 <p className="text-xs text-muted-foreground">
-                  {isStandalone ? t.push_bg_installed : t.push_bg_desc}
+                  {isStandalone
+                    ? t.push_bg_installed
+                    : personalOnly
+                      ? t.push_bg_desc_personal
+                      : t.push_bg_desc}
+
                 </p>
                 {!isStandalone && (
                   <Button
@@ -384,7 +403,7 @@ const Account = () => {
                 {t.test_push}
               </Button>
             </div>
-            <NotificationPreferences />
+            <NotificationPreferences variant={personalOnly ? "patient" : "professional"} />
             <InstallAppDialog open={installOpen} onOpenChange={setInstallOpen} />
           </CardContent>
         </Card>

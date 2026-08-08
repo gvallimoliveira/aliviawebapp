@@ -106,3 +106,4 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Video Call Flow Frozen](mem://features/video-call-frozen) — Fluxo de videochamada congelado: arquivos e regras que não podem mudar sem autorização.
 - [Push Opt-In Persistence](mem://features/push-opt-in-persistence) — Autorização de push sticky, heal automático pós-update e opt-out manual.
 - [Strength Dynamometry](mem://features/strength-dynamometry) — Dinamometria: medidas múltiplas, tempo até o pico opcional, assimetria L/R e agonista/antagonista com limite de 10% (verde/vermelho).
+- [Notification Preferences by Account](mem://features/notification-preferences-by-account) — Toggles de notificação distintos para conta pessoal (paciente) e profissional; toda push nova precisa de `category`.
