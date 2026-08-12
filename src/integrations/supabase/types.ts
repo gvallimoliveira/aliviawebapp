@@ -3605,6 +3605,21 @@ export type Database = {
         Args: { _professional_id: string }
         Returns: undefined
       }
+      admin_list_patient_users: {
+        Args: never
+        Returns: {
+          basic_count: number
+          created_at: string
+          email: string
+          full_name: string
+          granted_premium: boolean
+          last_assessment_at: string
+          paid_premium: boolean
+          premium_count: number
+          signup_origin: string
+          user_id: string
+        }[]
+      }
       admin_purge_user_data:
         | { Args: { _email?: string; _user_id: string }; Returns: Json }
         | {
