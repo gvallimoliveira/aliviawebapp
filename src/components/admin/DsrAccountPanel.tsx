@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -81,11 +81,13 @@ const DsrAccountPanel = ({
   userId,
   requestId,
   requestType,
+  autoLoad = false,
   onPurged,
 }: {
   userId: string;
   requestId: string;
   requestType: string;
+  autoLoad?: boolean;
   onPurged: () => void;
 }) => {
   const [loading, setLoading] = useState(false);
@@ -110,6 +112,11 @@ const DsrAccountPanel = ({
     }
     setDossier(data as Dossier);
   };
+
+  useEffect(() => {
+    if (autoLoad && !dossier && !loading) void inspect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoLoad, userId]);
 
   const purge = async () => {
     setPurging(true);
