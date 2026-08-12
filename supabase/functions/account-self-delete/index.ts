@@ -213,6 +213,7 @@ serve(async (req) => {
     const { data: report, error: purgeErr } = await admin.rpc("admin_purge_user_data", {
       _user_id: me.id,
       _email: me.email ?? null,
+      _caller: me.id,
     });
     if (purgeErr) return json({ error: purgeErr.message }, 400);
 

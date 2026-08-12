@@ -85,6 +85,7 @@ async function purgeAccount(opts: {
   actor: string;
   origin: "admin" | "self" | "scheduled";
   protocol?: string | null;
+  callerId?: string | null;
 }) {
   const push = await pushSubject(
     opts.userId,
@@ -97,6 +98,7 @@ async function purgeAccount(opts: {
   const { data: report, error: purgeErr } = await admin.rpc("admin_purge_user_data", {
     _user_id: opts.userId,
     _email: opts.email,
+    _caller: opts.callerId ?? opts.userId,
   });
   if (purgeErr) return { ok: false as const, error: purgeErr.message };
 
@@ -293,6 +295,7 @@ serve(async (req) => {
       const { data: inventory, error: invErr } = await admin.rpc("admin_user_data_inventory", {
         _user_id: userId,
         _email: email,
+        _caller: caller.id,
       });
       if (invErr) return json({ error: invErr.message }, 400);
       return json({ account, classification, inventory: inventory ?? [], account_exists: !!au });
@@ -310,6 +313,7 @@ serve(async (req) => {
         actor: caller.email ?? caller.id,
         origin: "admin",
         protocol: frozen?.protocol ?? null,
+        callerId: caller.id,
       });
       if (!res.ok) return json({ error: res.error }, 400);
       return json(res);
