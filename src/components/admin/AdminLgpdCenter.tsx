@@ -224,8 +224,11 @@ const AdminLgpdCenter = () => {
     if (status === "completed") return <Badge className="bg-primary/15 text-primary border-primary/30">Concluído</Badge>;
     if (status === "rejected") return <Badge variant="destructive">Recusado</Badge>;
     if (status === "in_progress") return <Badge variant="secondary">Em andamento</Badge>;
+    if (status === "scheduled") return <Badge className="bg-amber-500/15 text-amber-700 border-amber-500/30">Exclusão agendada</Badge>;
+    if (status === "cancelled") return <Badge variant="outline">Cancelado pelo titular</Badge>;
     return <Badge variant="outline">Pendente</Badge>;
   };
+
 
   return (
     <div className="space-y-6">
