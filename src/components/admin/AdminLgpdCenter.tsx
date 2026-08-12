@@ -178,7 +178,7 @@ const AdminLgpdCenter = () => {
       return d >= 0 && d <= 5;
     });
     const undelivered = rows.filter(
-      (r) => !(r.deliveries || []).some((d) => d.status === "sent" || d.status === "ok"),
+      (r) => !(r.alerts || []).some((d) => d.status === "sent" || d.status === "ok"),
     );
     return { total: rows.length, pending: pending.length, late: late.length, soon: soon.length, undelivered: undelivered.length };
   }, [rows]);
@@ -277,7 +277,7 @@ const AdminLgpdCenter = () => {
             <Accordion type="single" collapsible className="w-full">
               {rows.map((row) => {
                 const { due, daysLeft, done } = deadlineInfo(row.created_at, row.status);
-                const deliveries = row.deliveries || [];
+                const deliveries = row.alerts || [];
                 const anySent = deliveries.some((d) => d.status === "sent" || d.status === "ok");
                 return (
                   <AccordionItem key={row.id} value={row.id}>
