@@ -237,11 +237,14 @@ serve(async (req) => {
       auth_user_deleted: !delErr,
       auth_error: delErr?.message ?? null,
       deleted: (report as any)?.deleted ?? {},
-      subject_notified: mail.ok,
+      subject_notified: mail.ok || push.ok,
+      email_ok: mail.ok,
       notify_detail: mail.detail,
+      push_ok: push.ok,
+      push_detail: push.detail,
     });
 
-    return json({ ok: true, mode, protocol, report, auth_user_deleted: !delErr });
+    return json({ ok: true, mode, protocol, report, auth_user_deleted: !delErr, push_sent: push.ok });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
