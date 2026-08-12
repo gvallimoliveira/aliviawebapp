@@ -186,8 +186,19 @@ serve(async (req) => {
          ${GRACE_DAYS} dias. Se mudar de ideia, entre na sua conta e cancele em Minha conta → Privacidade.</p>
          ${RETAINED_HTML}`,
       );
-      await appendAudit(requestId, { event: "subject_notified", ok: mail.ok, detail: mail.detail });
-      return json({ ok: true, mode, protocol, scheduled_purge_at: scheduledAt });
+      const push = await pushSubject(
+        me.id,
+        `Pedido registrado · ${protocol}`,
+        `Sua exclusão foi agendada para ${GRACE_DAYS} dias. Guarde o protocolo ${protocol}.`,
+      );
+      await appendAudit(requestId, {
+        event: "subject_notified",
+        email_ok: mail.ok,
+        email_detail: mail.detail,
+        push_ok: push.ok,
+        push_detail: push.detail,
+      });
+      return json({ ok: true, mode, protocol, scheduled_purge_at: scheduledAt, push_sent: push.ok });
     }
 
     // ---------- immediate purge ----------
