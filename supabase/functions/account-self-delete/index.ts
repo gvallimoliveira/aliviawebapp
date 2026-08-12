@@ -202,6 +202,14 @@ serve(async (req) => {
     }
 
     // ---------- immediate purge ----------
+    // Push receipt FIRST: the purge removes the device subscriptions, so this is
+    // the last moment the titular can be reached on the device.
+    const push = await pushSubject(
+      me.id,
+      `Exclusão concluída · ${protocol}`,
+      `Sua conta e seus dados foram excluídos. Protocolo ${protocol}.`,
+    );
+
     const { data: report, error: purgeErr } = await admin.rpc("admin_purge_user_data", {
       _user_id: me.id,
       _email: me.email ?? null,
