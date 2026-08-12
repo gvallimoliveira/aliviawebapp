@@ -16,3 +16,8 @@ Regras:
 - Suboperadores declarados: Lovable/Supabase, Stripe, Resend, provedores de IA via gateway.
 - Admin → LGPD: cada pedido tem o painel "Origem da conta e dados vinculados" (`src/components/admin/DsrAccountPanel.tsx` + edge `admin-dsr-account`, actions `inspect`/`purge`). Mostra provider de cadastro, tipo de conta (paciente/PRO/estudante/clínica), datas e inventário de registros por tabela (`admin_user_data_inventory`).
 - Exclusão executada por `admin_purge_user_data` + remoção do login; exige motivo e grava auditoria no próprio pedido. Retidos sempre: `data_subject_requests`, `consent_records`, `admin_alert_log`, `subscription_admin_actions`, `vip_users`, `patients`, `session_notes`, `professional_notes` (prontuário sob guarda legal).
+- Protocolo e identidade congelada: cada pedido recebe `protocol` (`LGPD-AAAA-NNNN`) e snapshot imutável de `requester_email`/`requester_name`/tipo de conta/provider via trigger `dsr_fill_snapshot`. Nunca depender do login para identificar o solicitante — ele pode já ter sido excluído.
+- Trilha de auditoria estruturada na coluna `audit` (jsonb): eventos `opened`, `scheduled`, `cancelled_by_subject`, `subject_notified`, `purged`, `completed`. Exibida no Admin → LGPD junto do botão "Copiar comprovante".
+- Autoatendimento: edge `account-self-delete` (`request` com mode `grace` = 7 dias / `immediate`, e `cancel`) exposto em Minha Conta → Privacidade. Exige digitar "EXCLUIR".
+- Cron diário `dsr-scheduled-purge` (05:15 UTC) chama `admin-dsr-account` action `run_scheduled` para executar exclusões agendadas vencidas.
+

@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, ShieldCheck, Download, Send } from "lucide-react";
+import { Loader2, ShieldCheck, Download, Send, Clock, Trash2 } from "lucide-react";
 
 type RequestType = "access" | "portability" | "correction" | "deletion" | "consent_revocation";
 
@@ -26,19 +26,39 @@ const REQUEST_LABELS: Record<RequestType, string> = {
   consent_revocation: "Revogação de consentimento",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  pending: "em análise",
+  in_progress: "em andamento",
+  scheduled: "exclusão agendada",
+  completed: "concluído",
+  rejected: "recusado",
+  cancelled: "cancelado por você",
+};
+
+type DsrItem = {
+  id: string;
+  protocol: string | null;
+  request_type: string;
+  status: string;
+  created_at: string;
+  scheduled_purge_at: string | null;
+};
+
 const PrivacyRightsCard = () => {
   const { user } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [sending, setSending] = useState(false);
   const [requestType, setRequestType] = useState<RequestType>("deletion");
   const [details, setDetails] = useState("");
-  const [pending, setPending] = useState<{ id: string; request_type: string; status: string; created_at: string }[]>([]);
+  const [pending, setPending] = useState<DsrItem[]>([]);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const loadRequests = async () => {
     if (!user) return;
     const { data } = await supabase
       .from("data_subject_requests")
-      .select("id, request_type, status, created_at")
+      .select("id, protocol, request_type, status, created_at, scheduled_purge_at")
       .order("created_at", { ascending: false })
       .limit(5);
     setPending(data ?? []);
@@ -123,6 +143,63 @@ const PrivacyRightsCard = () => {
     }
   };
 
+  const scheduled = pending.find((r) => r.status === "scheduled") ?? null;
+
+  const handleSelfDelete = async (mode: "grace" | "immediate") => {
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("account-self-delete", {
+        body: { action: "request", mode, confirm: confirmText.trim().toUpperCase() },
+      });
+      if (error || (data as any)?.error) {
+        throw new Error((data as any)?.error || error?.message);
+      }
+      setConfirmText("");
+      if (mode === "immediate") {
+        toast({
+          title: `Conta excluída · protocolo ${(data as any)?.protocol ?? ""}`,
+          description: "Seus dados foram apagados. Você será desconectado agora.",
+        });
+        await supabase.auth.signOut();
+        window.location.href = "/";
+        return;
+      }
+      await loadRequests();
+      toast({
+        title: `Exclusão agendada · protocolo ${(data as any)?.protocol ?? ""}`,
+        description: "Você tem 7 dias para cancelar, caso mude de ideia.",
+      });
+    } catch (e) {
+      toast({
+        title: "Não foi possível excluir",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDeletion = async () => {
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("account-self-delete", {
+        body: { action: "cancel" },
+      });
+      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
+      await loadRequests();
+      toast({ title: "Exclusão cancelada", description: "Sua conta e seus dados foram mantidos." });
+    } catch (e) {
+      toast({
+        title: "Não foi possível cancelar",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -193,21 +270,97 @@ const PrivacyRightsCard = () => {
           </Button>
         </div>
 
+        <div className="space-y-3 border-t border-border pt-4">
+          <div>
+            <p className="text-sm font-medium text-destructive">Excluir minha conta agora</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Você mesmo pode executar a exclusão, sem esperar análise. Apagamos seu login, perfil,
+              avaliações, diário de dor, conversas e programas de exercício. Ficam retidos apenas os
+              registros exigidos por lei: comprovante deste pedido, registros de consentimento e
+              prontuários feitos por profissionais (prazo legal de guarda).
+            </p>
+          </div>
+
+          {scheduled ? (
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+              <p className="text-xs font-medium">
+                Exclusão agendada · protocolo {scheduled.protocol ?? scheduled.id.slice(0, 8)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Seus dados serão apagados automaticamente em{" "}
+                {scheduled.scheduled_purge_at
+                  ? new Date(scheduled.scheduled_purge_at).toLocaleString("pt-BR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })
+                  : "breve"}
+                . Você pode cancelar até essa data.
+              </p>
+              <Button size="sm" variant="outline" onClick={handleCancelDeletion} disabled={deleting}>
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Cancelar exclusão
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="dsr-confirm" className="text-xs">
+                Para confirmar, digite EXCLUIR
+              </Label>
+              <input
+                id="dsr-confirm"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="EXCLUIR"
+                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                  disabled={deleting || confirmText.trim().toUpperCase() !== "EXCLUIR"}
+                  onClick={() => handleSelfDelete("grace")}
+                >
+                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                  Agendar em 7 dias (posso cancelar)
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="gap-2"
+                  disabled={deleting || confirmText.trim().toUpperCase() !== "EXCLUIR"}
+                  onClick={() => handleSelfDelete("immediate")}
+                >
+                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  Excluir agora (irreversível)
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {pending.length > 0 && (
           <div className="space-y-2 border-t border-border pt-4">
             <p className="text-xs font-medium text-foreground">Minhas solicitações</p>
             <ul className="space-y-1 text-xs text-muted-foreground">
               {pending.map((r) => (
                 <li key={r.id} className="flex justify-between gap-3">
-                  <span>{REQUEST_LABELS[r.request_type as RequestType] ?? r.request_type}</span>
+                  <span>
+                    <span className="font-mono">{r.protocol ?? r.id.slice(0, 8)}</span>{" "}
+                    {REQUEST_LABELS[r.request_type as RequestType] ?? r.request_type}
+                  </span>
                   <span className="shrink-0">
-                    {new Date(r.created_at).toLocaleDateString("pt-BR")} · {r.status}
+                    {new Date(r.created_at).toLocaleDateString("pt-BR")} · {STATUS_LABELS[r.status] ?? r.status}
                   </span>
                 </li>
               ))}
             </ul>
+            <p className="text-xs text-muted-foreground">
+              Guarde o número de protocolo: ele identifica seu pedido em qualquer contato conosco.
+            </p>
           </div>
         )}
+
       </CardContent>
     </Card>
   );
