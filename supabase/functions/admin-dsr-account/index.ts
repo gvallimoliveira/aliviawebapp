@@ -130,8 +130,11 @@ async function purgeAccount(opts: {
       auth_user_deleted: !delErr,
       auth_error: delErr?.message ?? null,
       deleted,
-      subject_notified: mail.ok,
+      subject_notified: mail.ok || push.ok,
+      email_ok: mail.ok,
       notify_detail: mail.detail,
+      push_ok: push.ok,
+      push_detail: push.detail,
     });
   }
 
@@ -140,8 +143,9 @@ async function purgeAccount(opts: {
     report,
     auth_user_deleted: !delErr,
     auth_error: delErr?.message ?? null,
-    subject_notified: mail.ok,
+    subject_notified: mail.ok || push.ok,
     notify_detail: mail.detail,
+    push_sent: push.ok,
   };
 }
 
@@ -175,6 +179,7 @@ serve(async (req) => {
           reason: "Exclusão solicitada pelo titular (janela de arrependimento encerrada).",
           actor: "sistema (agendado)",
           origin: "scheduled",
+          protocol: (r as any).protocol,
         });
         results.push({ protocol: (r as any).protocol, ...res });
       }
@@ -304,6 +309,7 @@ serve(async (req) => {
         reason: reason.trim(),
         actor: caller.email ?? caller.id,
         origin: "admin",
+        protocol: frozen?.protocol ?? null,
       });
       if (!res.ok) return json({ error: res.error }, 400);
       return json(res);
