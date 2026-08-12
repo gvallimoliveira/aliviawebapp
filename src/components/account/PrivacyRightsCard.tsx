@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, ShieldCheck, Download, Send } from "lucide-react";
+import { Loader2, ShieldCheck, Download, Send, Clock, Trash2 } from "lucide-react";
 
 type RequestType = "access" | "portability" | "correction" | "deletion" | "consent_revocation";
 
@@ -26,19 +26,39 @@ const REQUEST_LABELS: Record<RequestType, string> = {
   consent_revocation: "Revogação de consentimento",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  pending: "em análise",
+  in_progress: "em andamento",
+  scheduled: "exclusão agendada",
+  completed: "concluído",
+  rejected: "recusado",
+  cancelled: "cancelado por você",
+};
+
+type DsrItem = {
+  id: string;
+  protocol: string | null;
+  request_type: string;
+  status: string;
+  created_at: string;
+  scheduled_purge_at: string | null;
+};
+
 const PrivacyRightsCard = () => {
   const { user } = useAuth();
   const [exporting, setExporting] = useState(false);
   const [sending, setSending] = useState(false);
   const [requestType, setRequestType] = useState<RequestType>("deletion");
   const [details, setDetails] = useState("");
-  const [pending, setPending] = useState<{ id: string; request_type: string; status: string; created_at: string }[]>([]);
+  const [pending, setPending] = useState<DsrItem[]>([]);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const loadRequests = async () => {
     if (!user) return;
     const { data } = await supabase
       .from("data_subject_requests")
-      .select("id, request_type, status, created_at")
+      .select("id, protocol, request_type, status, created_at, scheduled_purge_at")
       .order("created_at", { ascending: false })
       .limit(5);
     setPending(data ?? []);
@@ -120,6 +140,63 @@ const PrivacyRightsCard = () => {
       });
     } finally {
       setSending(false);
+    }
+  };
+
+  const scheduled = pending.find((r) => r.status === "scheduled") ?? null;
+
+  const handleSelfDelete = async (mode: "grace" | "immediate") => {
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("account-self-delete", {
+        body: { action: "request", mode, confirm: confirmText.trim().toUpperCase() },
+      });
+      if (error || (data as any)?.error) {
+        throw new Error((data as any)?.error || error?.message);
+      }
+      setConfirmText("");
+      if (mode === "immediate") {
+        toast({
+          title: `Conta excluída · protocolo ${(data as any)?.protocol ?? ""}`,
+          description: "Seus dados foram apagados. Você será desconectado agora.",
+        });
+        await supabase.auth.signOut();
+        window.location.href = "/";
+        return;
+      }
+      await loadRequests();
+      toast({
+        title: `Exclusão agendada · protocolo ${(data as any)?.protocol ?? ""}`,
+        description: "Você tem 7 dias para cancelar, caso mude de ideia.",
+      });
+    } catch (e) {
+      toast({
+        title: "Não foi possível excluir",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDeletion = async () => {
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("account-self-delete", {
+        body: { action: "cancel" },
+      });
+      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message);
+      await loadRequests();
+      toast({ title: "Exclusão cancelada", description: "Sua conta e seus dados foram mantidos." });
+    } catch (e) {
+      toast({
+        title: "Não foi possível cancelar",
+        description: e instanceof Error ? e.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
