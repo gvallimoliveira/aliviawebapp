@@ -1571,37 +1571,61 @@ export type Database = {
       }
       data_subject_requests: {
         Row: {
+          account_created_at: string | null
+          audit: Json
           created_at: string
           details: string | null
           handled_at: string | null
           handled_by: string | null
           id: string
           notified_at: string | null
+          protocol: string | null
           request_type: string
+          requester_account_type: string | null
+          requester_email: string | null
+          requester_name: string | null
+          requester_signup_provider: string | null
+          scheduled_purge_at: string | null
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_created_at?: string | null
+          audit?: Json
           created_at?: string
           details?: string | null
           handled_at?: string | null
           handled_by?: string | null
           id?: string
           notified_at?: string | null
+          protocol?: string | null
           request_type: string
+          requester_account_type?: string | null
+          requester_email?: string | null
+          requester_name?: string | null
+          requester_signup_provider?: string | null
+          scheduled_purge_at?: string | null
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_created_at?: string | null
+          audit?: Json
           created_at?: string
           details?: string | null
           handled_at?: string | null
           handled_by?: string | null
           id?: string
           notified_at?: string | null
+          protocol?: string | null
           request_type?: string
+          requester_account_type?: string | null
+          requester_email?: string | null
+          requester_name?: string | null
+          requester_signup_provider?: string | null
+          scheduled_purge_at?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -3624,6 +3648,10 @@ export type Database = {
         Args: { _assessment_id: string; _reason: string }
         Returns: undefined
       }
+      dsr_append_audit: {
+        Args: { _event: Json; _request_id: string }
+        Returns: undefined
+      }
       ensure_current_credit_quota: {
         Args: { _user_id: string }
         Returns: {
@@ -3733,13 +3761,20 @@ export type Database = {
       get_dsr_admin: {
         Args: never
         Returns: {
+          account_created_at: string
+          account_exists: boolean
+          account_type: string
+          alerts: Json
+          audit: Json
           created_at: string
-          deliveries: Json
           details: string
           handled_at: string
           id: string
           notified_at: string
+          protocol: string
           request_type: string
+          scheduled_purge_at: string
+          signup_provider: string
           status: string
           subject_email: string
           subject_name: string
