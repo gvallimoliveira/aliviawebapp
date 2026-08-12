@@ -58,6 +58,25 @@ const RETAINED_HTML = `
   profissional de saúde, sujeito ao prazo mínimo de guarda.</p>
   <p>Encarregado (DPO): Guilherme Vallim de Oliveira — aliviawebapp@gmail.com</p>`;
 
+/** Push receipt fired a few ms before the purge wipes the device subscriptions. */
+async function pushSubject(userId: string, title: string, body: string) {
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/notify-user`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-secret": INTERNAL_SECRET,
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({ user_id: userId, title, body, url: "/", category: "account", kind: "lgpd" }),
+    });
+    const out = await resp.json().catch(() => ({}));
+    return { ok: resp.ok && (out as any)?.status === "sent", detail: JSON.stringify(out).slice(0, 200) };
+  } catch (e) {
+    return { ok: false, detail: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 async function purgeAccount(opts: {
   userId: string;
   email: string | null;
@@ -65,7 +84,16 @@ async function purgeAccount(opts: {
   reason: string;
   actor: string;
   origin: "admin" | "self" | "scheduled";
+  protocol?: string | null;
 }) {
+  const push = await pushSubject(
+    opts.userId,
+    opts.protocol ? `Exclusão concluída · ${opts.protocol}` : "Exclusão concluída",
+    opts.protocol
+      ? `Sua conta e seus dados foram excluídos. Protocolo ${opts.protocol}.`
+      : "Sua conta e seus dados foram excluídos conforme seu pedido.",
+  );
+
   const { data: report, error: purgeErr } = await admin.rpc("admin_purge_user_data", {
     _user_id: opts.userId,
     _email: opts.email,
