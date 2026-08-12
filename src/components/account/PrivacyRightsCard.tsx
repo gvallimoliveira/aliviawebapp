@@ -193,21 +193,97 @@ const PrivacyRightsCard = () => {
           </Button>
         </div>
 
+        <div className="space-y-3 border-t border-border pt-4">
+          <div>
+            <p className="text-sm font-medium text-destructive">Excluir minha conta agora</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Você mesmo pode executar a exclusão, sem esperar análise. Apagamos seu login, perfil,
+              avaliações, diário de dor, conversas e programas de exercício. Ficam retidos apenas os
+              registros exigidos por lei: comprovante deste pedido, registros de consentimento e
+              prontuários feitos por profissionais (prazo legal de guarda).
+            </p>
+          </div>
+
+          {scheduled ? (
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+              <p className="text-xs font-medium">
+                Exclusão agendada · protocolo {scheduled.protocol ?? scheduled.id.slice(0, 8)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Seus dados serão apagados automaticamente em{" "}
+                {scheduled.scheduled_purge_at
+                  ? new Date(scheduled.scheduled_purge_at).toLocaleString("pt-BR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })
+                  : "breve"}
+                . Você pode cancelar até essa data.
+              </p>
+              <Button size="sm" variant="outline" onClick={handleCancelDeletion} disabled={deleting}>
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Cancelar exclusão
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="dsr-confirm" className="text-xs">
+                Para confirmar, digite EXCLUIR
+              </Label>
+              <input
+                id="dsr-confirm"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="EXCLUIR"
+                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                  disabled={deleting || confirmText.trim().toUpperCase() !== "EXCLUIR"}
+                  onClick={() => handleSelfDelete("grace")}
+                >
+                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+                  Agendar em 7 dias (posso cancelar)
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="gap-2"
+                  disabled={deleting || confirmText.trim().toUpperCase() !== "EXCLUIR"}
+                  onClick={() => handleSelfDelete("immediate")}
+                >
+                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  Excluir agora (irreversível)
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {pending.length > 0 && (
           <div className="space-y-2 border-t border-border pt-4">
             <p className="text-xs font-medium text-foreground">Minhas solicitações</p>
             <ul className="space-y-1 text-xs text-muted-foreground">
               {pending.map((r) => (
                 <li key={r.id} className="flex justify-between gap-3">
-                  <span>{REQUEST_LABELS[r.request_type as RequestType] ?? r.request_type}</span>
+                  <span>
+                    <span className="font-mono">{r.protocol ?? r.id.slice(0, 8)}</span>{" "}
+                    {REQUEST_LABELS[r.request_type as RequestType] ?? r.request_type}
+                  </span>
                   <span className="shrink-0">
-                    {new Date(r.created_at).toLocaleDateString("pt-BR")} · {r.status}
+                    {new Date(r.created_at).toLocaleDateString("pt-BR")} · {STATUS_LABELS[r.status] ?? r.status}
                   </span>
                 </li>
               ))}
             </ul>
+            <p className="text-xs text-muted-foreground">
+              Guarde o número de protocolo: ele identifica seu pedido em qualquer contato conosco.
+            </p>
           </div>
         )}
+
       </CardContent>
     </Card>
   );
