@@ -22,6 +22,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   Clock,
+  FileText,
+  Copy,
 } from "lucide-react";
 
 type Delivery = {
