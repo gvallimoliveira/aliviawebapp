@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, ShieldCheck, Loader2, LayoutDashboard, Users, UserCheck, FileText, MessageSquare, Mail, Brain, Zap, ShieldAlert } from "lucide-react";
+import { Trash2, Plus, ShieldCheck, Loader2, LayoutDashboard, Users, UserCheck, FileText, MessageSquare, Mail, Brain, Zap, ShieldAlert, HeartPulse } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import ProfessionalManagement from "@/components/admin/ProfessionalManagement";
@@ -22,6 +22,7 @@ import LeadManagement from "@/components/admin/LeadManagement";
 import AdminAgentKnowledge from "@/components/admin/AdminAgentKnowledge";
 import AdminAiUsage from "@/components/admin/AdminAiUsage";
 import AdminLgpdCenter from "@/components/admin/AdminLgpdCenter";
+import PatientUserManagement from "@/components/admin/PatientUserManagement";
 
 interface VipUser {
   id: string;
@@ -87,7 +88,7 @@ const Admin = () => {
   // Sync active tab with URL ?tab= parameter
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
-    const validTabs = ["dashboard", "users", "professionals", "content", "support", "leads", "agent", "ai-usage"];
+    const validTabs = ["dashboard", "users", "professionals", "content", "support", "leads", "agent", "ai-usage", "patients", "lgpd"];
     if (tabFromUrl && validTabs.includes(tabFromUrl)) {
       setActiveTab(tabFromUrl);
     }
@@ -239,6 +240,10 @@ const Admin = () => {
                 </Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="patients" className="gap-1.5">
+              <HeartPulse className="h-3.5 w-3.5" />
+              {isPt ? "Pacientes" : "Patients"}
+            </TabsTrigger>
             <TabsTrigger value="content" className="gap-1.5">
               <FileText className="h-3.5 w-3.5" />
               {isPt ? "Conteúdo" : "Content"}
@@ -359,6 +364,10 @@ const Admin = () => {
             <div className="mt-6">
               <PartnerManagement language={language} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="patients">
+            <PatientUserManagement language={language} />
           </TabsContent>
 
           <TabsContent value="content">
