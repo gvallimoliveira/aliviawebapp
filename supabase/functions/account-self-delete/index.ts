@@ -46,6 +46,38 @@ async function sendEmail(to: string | null, subject: string, html: string) {
   }
 }
 
+/**
+ * Push receipt. The e-mail channel is unreliable (domain/DNS not verified yet),
+ * so the push is the primary "your request was processed" signal. On an
+ * immediate purge it MUST be fired (and awaited) a few milliseconds before the
+ * login and the push subscriptions are wiped, otherwise there is no device left.
+ */
+async function pushSubject(userId: string, title: string, body: string) {
+  const secret = (Deno.env.get("INTERNAL_ALERT_SECRET") || "").trim();
+  try {
+    const resp = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-user`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-secret": secret,
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`,
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        title,
+        body,
+        url: "/minha-conta",
+        category: "account",
+        kind: "lgpd",
+      }),
+    });
+    const out = await resp.json().catch(() => ({}));
+    return { ok: resp.ok && (out as any)?.status === "sent", detail: JSON.stringify(out).slice(0, 200) };
+  } catch (e) {
+    return { ok: false, detail: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 const RETAINED_HTML = `
   <p>Mantemos apenas o que a lei exige: o registro deste pedido (prova de atendimento), os registros de
   consentimento e auditoria e o prontuário eventualmente criado por profissional de saúde, sujeito ao prazo
