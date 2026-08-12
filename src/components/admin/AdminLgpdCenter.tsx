@@ -291,6 +291,15 @@ const AdminLgpdCenter = () => {
                         </div>
                       </div>
 
+                      <DsrAccountPanel
+                        userId={row.user_id}
+                        requestId={row.id}
+                        requestType={row.request_type}
+                        onPurged={load}
+                      />
+
+
+
                       {row.details && (
                         <div>
                           <p className="text-xs font-semibold mb-1">Descrição / histórico</p>
