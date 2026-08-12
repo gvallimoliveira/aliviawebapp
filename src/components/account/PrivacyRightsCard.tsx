@@ -53,6 +53,7 @@ const PrivacyRightsCard = () => {
   const [pending, setPending] = useState<DsrItem[]>([]);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [lastProtocol, setLastProtocol] = useState<string | null>(null);
 
   const loadRequests = async () => {
     if (!user) return;
@@ -120,17 +121,23 @@ const PrivacyRightsCard = () => {
     if (!user) return;
     setSending(true);
     try {
-      const { error } = await supabase.from("data_subject_requests").insert({
-        user_id: user.id,
-        request_type: requestType,
-        details: details.trim() || null,
-      });
+      const { data, error } = await supabase
+        .from("data_subject_requests")
+        .insert({
+          user_id: user.id,
+          request_type: requestType,
+          details: details.trim() || null,
+        })
+        .select("id, protocol, request_type, status, created_at, scheduled_purge_at")
+        .maybeSingle();
       if (error) throw error;
       setDetails("");
+      const proto = (data as DsrItem | null)?.protocol ?? null;
+      setLastProtocol(proto);
       await loadRequests();
       toast({
-        title: "Solicitação registrada",
-        description: "Responderemos em até 15 dias no e-mail da sua conta.",
+        title: proto ? `Protocolo ${proto}` : "Solicitação registrada",
+        description: "Pedido registrado agora. Prazo legal de resposta: 15 dias.",
       });
     } catch (e) {
       toast({
@@ -155,6 +162,7 @@ const PrivacyRightsCard = () => {
         throw new Error((data as any)?.error || error?.message);
       }
       setConfirmText("");
+      setLastProtocol(((data as any)?.protocol as string) ?? null);
       if (mode === "immediate") {
         toast({
           title: `Conta excluída · protocolo ${(data as any)?.protocol ?? ""}`,
@@ -338,6 +346,29 @@ const PrivacyRightsCard = () => {
             </div>
           )}
         </div>
+
+        {lastProtocol && (
+          <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 space-y-1">
+            <p className="text-xs font-medium">Pedido registrado · protocolo</p>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-sm">{lastProtocol}</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+                onClick={() => {
+                  void navigator.clipboard.writeText(lastProtocol);
+                  toast({ title: "Protocolo copiado" });
+                }}
+              >
+                Copiar
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Guarde este número: ele comprova a data do seu pedido e identifica o atendimento.
+            </p>
+          </div>
+        )}
 
         {pending.length > 0 && (
           <div className="space-y-2 border-t border-border pt-4">
