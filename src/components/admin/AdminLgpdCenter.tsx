@@ -32,9 +32,12 @@ type Delivery = {
   created_at: string;
 };
 
+type AuditEvent = Record<string, unknown> & { event?: string; at?: string; actor?: string; note?: string };
+
 type DsrRow = {
   id: string;
   user_id: string;
+  protocol: string | null;
   request_type: string;
   status: string;
   details: string | null;
@@ -42,12 +45,44 @@ type DsrRow = {
   updated_at: string;
   handled_at: string | null;
   notified_at: string | null;
+  scheduled_purge_at: string | null;
   subject_name: string | null;
   subject_email: string | null;
-  deliveries: Delivery[] | null;
+  account_type: string | null;
+  signup_provider: string | null;
+  account_created_at: string | null;
+  account_exists: boolean;
+  audit: AuditEvent[] | null;
+  alerts: Delivery[] | null;
+};
+
+const ACCOUNT_TYPE_LABEL: Record<string, string> = {
+  patient: "Paciente (conta pessoal)",
+  professional: "Profissional (PRO)",
+  student: "Estudante (Acadêmico)",
+  clinic_staff: "Equipe de clínica",
+};
+
+const PROVIDER_LABEL: Record<string, string> = {
+  email: "E-mail e senha",
+  google: "Google",
+  apple: "Apple",
+  azure: "Microsoft",
+  phone: "Telefone (SMS)",
+};
+
+const AUDIT_LABEL: Record<string, string> = {
+  opened: "Pedido aberto pelo titular",
+  scheduled: "Exclusão agendada (janela de arrependimento)",
+  cancelled_by_subject: "Exclusão cancelada pelo titular",
+  subject_notified: "Titular notificado por e-mail",
+  purged: "Dados excluídos",
+  completed: "Pedido concluído",
+  note: "Providência registrada",
 };
 
 const DEADLINE_DAYS = 15;
+
 
 const TYPE_LABEL: Record<string, string> = {
   access: "Acesso aos dados",
