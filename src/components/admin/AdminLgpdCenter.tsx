@@ -287,6 +287,9 @@ const AdminLgpdCenter = () => {
                     <AccordionTrigger className="hover:no-underline">
                       <div className="flex flex-1 flex-col items-start gap-1 pr-3 text-left">
                         <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="secondary" className="font-mono text-[11px]">
+                            {row.protocol || row.id.slice(0, 8)}
+                          </Badge>
                           <span className="font-medium text-sm">
                             {TYPE_LABEL[row.request_type] || row.request_type}
                           </span>
@@ -306,12 +309,70 @@ const AdminLgpdCenter = () => {
                           )}
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          {row.subject_name || "—"} · {row.subject_email || "e-mail indisponível"} ·{" "}
+                          {row.subject_name || "—"} · {row.subject_email || "e-mail não registrado"} ·{" "}
                           {fmt(row.created_at)}
                         </span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="space-y-5">
+                      <div className="rounded-lg border border-border p-3 space-y-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-xs font-semibold flex items-center gap-1.5">
+                            <FileText className="h-3.5 w-3.5 text-primary" />
+                            Identidade do solicitante (registrada na abertura)
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const txt = [
+                                `Protocolo: ${row.protocol ?? row.id}`,
+                                `Titular: ${row.subject_name ?? "—"} · ${row.subject_email ?? "—"}`,
+                                `Tipo de conta: ${ACCOUNT_TYPE_LABEL[row.account_type ?? ""] ?? row.account_type ?? "—"}`,
+                                `Cadastro: ${PROVIDER_LABEL[row.signup_provider ?? ""] ?? row.signup_provider ?? "—"} · conta criada ${fmt(row.account_created_at)}`,
+                                `Pedido: ${TYPE_LABEL[row.request_type] ?? row.request_type} · aberto ${fmt(row.created_at)} · status ${row.status}`,
+                              ].join("\n");
+                              void navigator.clipboard.writeText(txt);
+                              toast({ title: "Comprovante copiado" });
+                            }}
+                          >
+                            <Copy className="h-3.5 w-3.5 mr-1" /> Copiar comprovante
+                          </Button>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-3 text-xs">
+                          <div>
+                            <p className="text-muted-foreground">Nome</p>
+                            <p className="font-medium break-words">{row.subject_name || "—"}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">E-mail</p>
+                            <p className="font-medium break-words">{row.subject_email || "—"}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Tipo de conta</p>
+                            <p className="font-medium">
+                              {ACCOUNT_TYPE_LABEL[row.account_type ?? ""] || row.account_type || "—"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Forma de cadastro</p>
+                            <p className="font-medium">
+                              {PROVIDER_LABEL[row.signup_provider ?? ""] || row.signup_provider || "—"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Conta criada em</p>
+                            <p className="font-medium">{fmt(row.account_created_at)}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Login atual</p>
+                            <p className="font-medium">
+                              {row.account_exists ? "ativo" : "já removido (dados excluídos)"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="grid gap-3 sm:grid-cols-3 text-xs">
                         <div className="rounded-lg border border-border p-3">
                           <p className="text-muted-foreground mb-1">Recebido em</p>
@@ -325,17 +386,69 @@ const AdminLgpdCenter = () => {
                           </p>
                         </div>
                         <div className="rounded-lg border border-border p-3">
-                          <p className="text-muted-foreground mb-1">Tratado em</p>
-                          <p className="font-medium">{fmt(row.handled_at)}</p>
+                          <p className="text-muted-foreground mb-1">
+                            {row.scheduled_purge_at ? "Exclusão automática em" : "Tratado em"}
+                          </p>
+                          <p className="font-medium">
+                            {fmt(row.scheduled_purge_at ?? row.handled_at)}
+                          </p>
                         </div>
                       </div>
 
-                      <DsrAccountPanel
-                        userId={row.user_id}
-                        requestId={row.id}
-                        requestType={row.request_type}
-                        onPurged={load}
-                      />
+                      {row.account_exists ? (
+                        <DsrAccountPanel
+                          userId={row.user_id}
+                          requestId={row.id}
+                          requestType={row.request_type}
+                          autoLoad
+                          onPurged={load}
+                        />
+                      ) : (
+                        <p className="text-xs text-muted-foreground rounded-lg border border-border p-3">
+                          O login deste titular já foi removido — não há mais dados vinculados para excluir.
+                          Este registro é mantido como prova do atendimento do pedido.
+                        </p>
+                      )}
+
+                      {(row.audit?.length ?? 0) > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold mb-2">Trilha de providências</p>
+                          <ol className="space-y-2">
+                            {row.audit!.map((ev, i) => (
+                              <li key={i} className="text-xs border-l-2 border-primary/30 pl-3">
+                                <p className="font-medium">
+                                  {AUDIT_LABEL[String(ev.event ?? "")] || String(ev.event ?? "evento")}
+                                  <span className="text-muted-foreground font-normal">
+                                    {" "}· {fmt(typeof ev.at === "string" ? ev.at : null)}
+                                  </span>
+                                </p>
+                                {ev.actor ? (
+                                  <p className="text-muted-foreground">por {String(ev.actor)}</p>
+                                ) : null}
+                                {ev.reason ? (
+                                  <p className="text-muted-foreground">motivo: {String(ev.reason)}</p>
+                                ) : null}
+                                {ev.note ? <p className="text-muted-foreground">{String(ev.note)}</p> : null}
+                                {ev.deleted ? (
+                                  <p className="text-muted-foreground break-words">
+                                    apagados:{" "}
+                                    {Object.entries(ev.deleted as Record<string, unknown>)
+                                      .map(([k, v]) => `${k} (${String(v)})`)
+                                      .join(", ") || "—"}
+                                  </p>
+                                ) : null}
+                                {typeof ev.subject_notified === "boolean" ? (
+                                  <p className={ev.subject_notified ? "text-primary" : "text-destructive"}>
+                                    e-mail ao titular: {ev.subject_notified ? "enviado" : "falhou"}
+                                    {ev.notify_detail ? ` — ${String(ev.notify_detail)}` : ""}
+                                  </p>
+                                ) : null}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+
 
 
 
