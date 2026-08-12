@@ -97,3 +97,6 @@ verify_jwt = false
 
 [functions.admin-dsr-account]
 verify_jwt = false
+
+[functions.account-self-delete]
+verify_jwt = false
