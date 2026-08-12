@@ -39,6 +39,7 @@ type Dossier = {
     professional_crefito: string | null;
     subscription_status: string | null;
     subscription_stripe_id: string | null;
+    protocol?: string | null;
     clinic_memberships: { id: string; clinic_id: string; role: string; status: string }[];
     granted_premium: boolean;
     assessments_total: number;
@@ -48,6 +49,7 @@ type Dossier = {
     first_activity: string | null;
   };
   inventory: InventoryItem[];
+  account_exists?: boolean;
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -99,7 +101,7 @@ const DsrAccountPanel = ({
   const inspect = async () => {
     setLoading(true);
     const { data, error } = await supabase.functions.invoke("admin-dsr-account", {
-      body: { action: "inspect", user_id: userId },
+      body: { action: "inspect", user_id: userId, request_id: requestId },
     });
     setLoading(false);
     if (error || (data as any)?.error) {
@@ -169,6 +171,10 @@ const DsrAccountPanel = ({
       ) : (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
+            {c!.protocol && <Badge variant="outline" className="font-mono">{c!.protocol}</Badge>}
+            {dossier.account_exists === false && (
+              <Badge variant="destructive">Login já removido — dados congelados do pedido</Badge>
+            )}
             <Badge className="bg-primary/15 text-primary border-primary/30">
               {TYPE_LABEL[c!.account_type] || c!.account_type}
             </Badge>
