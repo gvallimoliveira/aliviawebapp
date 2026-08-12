@@ -14,3 +14,5 @@ Regras:
 - Direitos do titular: `src/components/account/PrivacyRightsCard.tsx` em Minha Conta — exportação JSON dos dados e registro de solicitações em `data_subject_requests` (acesso, portabilidade, correção, exclusão, revogação). Prazo de resposta: 15 dias.
 - Prontuário pode ser retido pelo prazo legal de guarda; demais dados eliminados/anonimizados.
 - Suboperadores declarados: Lovable/Supabase, Stripe, Resend, provedores de IA via gateway.
+- Admin → LGPD: cada pedido tem o painel "Origem da conta e dados vinculados" (`src/components/admin/DsrAccountPanel.tsx` + edge `admin-dsr-account`, actions `inspect`/`purge`). Mostra provider de cadastro, tipo de conta (paciente/PRO/estudante/clínica), datas e inventário de registros por tabela (`admin_user_data_inventory`).
+- Exclusão executada por `admin_purge_user_data` + remoção do login; exige motivo e grava auditoria no próprio pedido. Retidos sempre: `data_subject_requests`, `consent_records`, `admin_alert_log`, `subscription_admin_actions`, `vip_users`, `patients`, `session_notes`, `professional_notes` (prontuário sob guarda legal).

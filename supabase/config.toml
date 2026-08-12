@@ -94,3 +94,6 @@ verify_jwt = false
 
 [functions.notify-user]
 verify_jwt = false
+
+[functions.admin-dsr-account]
+verify_jwt = false

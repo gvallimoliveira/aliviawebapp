@@ -3581,6 +3581,14 @@ export type Database = {
         Args: { _professional_id: string }
         Returns: undefined
       }
+      admin_purge_user_data: {
+        Args: { _email?: string; _user_id: string }
+        Returns: Json
+      }
+      admin_user_data_inventory: {
+        Args: { _email?: string; _user_id: string }
+        Returns: Json
+      }
       can_manage_clinic: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
