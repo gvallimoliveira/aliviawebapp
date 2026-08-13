@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, HeartPulse, Search, ChevronLeft, ChevronRight, Crown, Circle, FileText, Sparkles } from "lucide-react";
+import { Loader2, HeartPulse, Search, ChevronLeft, ChevronRight, Crown, Circle, FileText, Sparkles, Link2, Unlink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const PAGE_SIZE = 10;
@@ -22,7 +22,16 @@ interface PatientUser {
   paid_premium: boolean;
   granted_premium: boolean;
   last_assessment_at: string | null;
+  linked_assessment_count?: number;
+  linked_professional_names?: string[] | null;
+  linked_clinic_names?: string[] | null;
+  link_source?: "assessment" | "patient_record" | "both" | "none" | null;
 }
+
+const isLinked = (p: PatientUser) =>
+  (p.linked_professional_names?.length || 0) > 0 ||
+  (p.linked_clinic_names?.length || 0) > 0 ||
+  (p.linked_assessment_count || 0) > 0;
 
 type PatientType = "premium" | "granted" | "basic" | "no_assessment";
 
@@ -71,6 +80,7 @@ const PatientUserManagement = ({ language }: { language: string }) => {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | PatientType>("all");
+  const [linkFilter, setLinkFilter] = useState<"all" | "linked" | "isolated">("all");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -96,19 +106,29 @@ const PatientUserManagement = ({ language }: { language: string }) => {
     return acc;
   }, [rows]);
 
+  const linkCounts = useMemo(() => {
+    let linked = 0;
+    rows.forEach((r) => { if (isLinked(r)) linked += 1; });
+    return { linked, isolated: rows.length - linked };
+  }, [rows]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
       if (typeFilter !== "all" && classify(r) !== typeFilter) return false;
+      if (linkFilter === "linked" && !isLinked(r)) return false;
+      if (linkFilter === "isolated" && isLinked(r)) return false;
       if (!q) return true;
       return (
         (r.full_name || "").toLowerCase().includes(q) ||
-        (r.email || "").toLowerCase().includes(q)
+        (r.email || "").toLowerCase().includes(q) ||
+        (r.linked_professional_names || []).some((n) => n.toLowerCase().includes(q)) ||
+        (r.linked_clinic_names || []).some((n) => n.toLowerCase().includes(q))
       );
     });
-  }, [rows, query, typeFilter]);
+  }, [rows, query, typeFilter, linkFilter]);
 
-  useEffect(() => { setPage(1); }, [query, typeFilter, rows.length]);
+  useEffect(() => { setPage(1); }, [query, typeFilter, linkFilter, rows.length]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -147,7 +167,7 @@ const PatientUserManagement = ({ language }: { language: string }) => {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={isPt ? "Buscar por nome ou email..." : "Search by name or email..."}
+              placeholder={isPt ? "Buscar por nome, email, profissional ou clínica..." : "Search by name, email, professional or clinic..."}
               className="pl-9"
             />
           </div>
@@ -164,7 +184,22 @@ const PatientUserManagement = ({ language }: { language: string }) => {
               ))}
             </SelectContent>
           </Select>
+          <Select value={linkFilter} onValueChange={(v) => setLinkFilter(v as any)}>
+            <SelectTrigger className="sm:w-[240px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{isPt ? "Vínculo: todos" : "Link: all"}</SelectItem>
+              <SelectItem value="linked">
+                {isPt ? "Vinculado a profissional/clínica" : "Linked to professional/clinic"} ({linkCounts.linked})
+              </SelectItem>
+              <SelectItem value="isolated">
+                {isPt ? "Isolado (sem vínculo)" : "Isolated (no link)"} ({linkCounts.isolated})
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
           {TYPE_ORDER.map((k) => {
@@ -201,6 +236,7 @@ const PatientUserManagement = ({ language }: { language: string }) => {
                     <TableHead>{isPt ? "Nome" : "Name"}</TableHead>
                     <TableHead>{isPt ? "E-mail" : "Email"}</TableHead>
                     <TableHead>{isPt ? "Situação" : "Status"}</TableHead>
+                    <TableHead>{isPt ? "Vínculo" : "Link"}</TableHead>
                     <TableHead className="text-center">{isPt ? "Básicas" : "Basic"}</TableHead>
                     <TableHead className="text-center">Premium</TableHead>
                     <TableHead>{isPt ? "Última avaliação" : "Last assessment"}</TableHead>
@@ -221,6 +257,39 @@ const PatientUserManagement = ({ language }: { language: string }) => {
                             <Icon className="h-3 w-3" />
                             {isPt ? meta.pt : meta.en}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {isLinked(r) ? (
+                            <div className="space-y-1">
+                              <Badge variant="outline" className="gap-1 border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-400">
+                                <Link2 className="h-3 w-3" />
+                                {isPt ? "Vinculado" : "Linked"}
+                              </Badge>
+                              <div className="text-[11px] text-muted-foreground leading-tight">
+                                {(r.linked_professional_names || []).join(", ")}
+                                {(r.linked_clinic_names || []).length > 0 && (
+                                  <span className="block">🏥 {(r.linked_clinic_names || []).join(", ")}</span>
+                                )}
+                                {(r.linked_assessment_count || 0) > 0 && (
+                                  <span className="block opacity-70">
+                                    {isPt
+                                      ? `${r.linked_assessment_count} aval. via link profissional`
+                                      : `${r.linked_assessment_count} assessment(s) via pro link`}
+                                  </span>
+                                )}
+                                {r.link_source === "patient_record" && (
+                                  <span className="block opacity-70">
+                                    {isPt ? "Consta na lista de pacientes" : "In patient list"}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <Badge variant="outline" className="gap-1 text-muted-foreground">
+                              <Unlink className="h-3 w-3" />
+                              {isPt ? "Isolado" : "Isolated"}
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-center">{r.basic_count}</TableCell>
                         <TableCell className="text-center">{r.premium_count}</TableCell>
