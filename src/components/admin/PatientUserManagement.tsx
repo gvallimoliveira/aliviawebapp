@@ -184,7 +184,22 @@ const PatientUserManagement = ({ language }: { language: string }) => {
               ))}
             </SelectContent>
           </Select>
+          <Select value={linkFilter} onValueChange={(v) => setLinkFilter(v as any)}>
+            <SelectTrigger className="sm:w-[240px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{isPt ? "Vínculo: todos" : "Link: all"}</SelectItem>
+              <SelectItem value="linked">
+                {isPt ? "Vinculado a profissional/clínica" : "Linked to professional/clinic"} ({linkCounts.linked})
+              </SelectItem>
+              <SelectItem value="isolated">
+                {isPt ? "Isolado (sem vínculo)" : "Isolated (no link)"} ({linkCounts.isolated})
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
           {TYPE_ORDER.map((k) => {
