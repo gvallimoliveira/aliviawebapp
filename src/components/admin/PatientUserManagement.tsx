@@ -80,6 +80,7 @@ const PatientUserManagement = ({ language }: { language: string }) => {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | PatientType>("all");
+  const [linkFilter, setLinkFilter] = useState<"all" | "linked" | "isolated">("all");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
