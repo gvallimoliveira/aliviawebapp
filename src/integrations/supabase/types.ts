@@ -3614,6 +3614,10 @@ export type Database = {
           full_name: string
           granted_premium: boolean
           last_assessment_at: string
+          link_source: string
+          linked_assessment_count: number
+          linked_clinic_names: string[]
+          linked_professional_names: string[]
           paid_premium: boolean
           premium_count: number
           signup_origin: string
