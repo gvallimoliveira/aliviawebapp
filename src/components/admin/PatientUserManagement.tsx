@@ -167,7 +167,7 @@ const PatientUserManagement = ({ language }: { language: string }) => {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={isPt ? "Buscar por nome ou email..." : "Search by name or email..."}
+              placeholder={isPt ? "Buscar por nome, email, profissional ou clínica..." : "Search by name, email, professional or clinic..."}
               className="pl-9"
             />
           </div>
