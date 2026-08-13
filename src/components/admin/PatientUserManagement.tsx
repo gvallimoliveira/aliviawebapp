@@ -22,7 +22,16 @@ interface PatientUser {
   paid_premium: boolean;
   granted_premium: boolean;
   last_assessment_at: string | null;
+  linked_assessment_count?: number;
+  linked_professional_names?: string[] | null;
+  linked_clinic_names?: string[] | null;
+  link_source?: "assessment" | "patient_record" | "both" | "none" | null;
 }
+
+const isLinked = (p: PatientUser) =>
+  (p.linked_professional_names?.length || 0) > 0 ||
+  (p.linked_clinic_names?.length || 0) > 0 ||
+  (p.linked_assessment_count || 0) > 0;
 
 type PatientType = "premium" | "granted" | "basic" | "no_assessment";
 
