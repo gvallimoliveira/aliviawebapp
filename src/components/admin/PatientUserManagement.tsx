@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, HeartPulse, Search, ChevronLeft, ChevronRight, Crown, Circle, FileText, Sparkles } from "lucide-react";
+import { Loader2, HeartPulse, Search, ChevronLeft, ChevronRight, Crown, Circle, FileText, Sparkles, Link2, Unlink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const PAGE_SIZE = 10;
