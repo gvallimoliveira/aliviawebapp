@@ -106,19 +106,29 @@ const PatientUserManagement = ({ language }: { language: string }) => {
     return acc;
   }, [rows]);
 
+  const linkCounts = useMemo(() => {
+    let linked = 0;
+    rows.forEach((r) => { if (isLinked(r)) linked += 1; });
+    return { linked, isolated: rows.length - linked };
+  }, [rows]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
       if (typeFilter !== "all" && classify(r) !== typeFilter) return false;
+      if (linkFilter === "linked" && !isLinked(r)) return false;
+      if (linkFilter === "isolated" && isLinked(r)) return false;
       if (!q) return true;
       return (
         (r.full_name || "").toLowerCase().includes(q) ||
-        (r.email || "").toLowerCase().includes(q)
+        (r.email || "").toLowerCase().includes(q) ||
+        (r.linked_professional_names || []).some((n) => n.toLowerCase().includes(q)) ||
+        (r.linked_clinic_names || []).some((n) => n.toLowerCase().includes(q))
       );
     });
-  }, [rows, query, typeFilter]);
+  }, [rows, query, typeFilter, linkFilter]);
 
-  useEffect(() => { setPage(1); }, [query, typeFilter, rows.length]);
+  useEffect(() => { setPage(1); }, [query, typeFilter, linkFilter, rows.length]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
