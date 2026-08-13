@@ -236,6 +236,7 @@ const PatientUserManagement = ({ language }: { language: string }) => {
                     <TableHead>{isPt ? "Nome" : "Name"}</TableHead>
                     <TableHead>{isPt ? "E-mail" : "Email"}</TableHead>
                     <TableHead>{isPt ? "Situação" : "Status"}</TableHead>
+                    <TableHead>{isPt ? "Vínculo" : "Link"}</TableHead>
                     <TableHead className="text-center">{isPt ? "Básicas" : "Basic"}</TableHead>
                     <TableHead className="text-center">Premium</TableHead>
                     <TableHead>{isPt ? "Última avaliação" : "Last assessment"}</TableHead>
