@@ -258,6 +258,39 @@ const PatientUserManagement = ({ language }: { language: string }) => {
                             {isPt ? meta.pt : meta.en}
                           </Badge>
                         </TableCell>
+                        <TableCell className="text-sm">
+                          {isLinked(r) ? (
+                            <div className="space-y-1">
+                              <Badge variant="outline" className="gap-1 border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-400">
+                                <Link2 className="h-3 w-3" />
+                                {isPt ? "Vinculado" : "Linked"}
+                              </Badge>
+                              <div className="text-[11px] text-muted-foreground leading-tight">
+                                {(r.linked_professional_names || []).join(", ")}
+                                {(r.linked_clinic_names || []).length > 0 && (
+                                  <span className="block">🏥 {(r.linked_clinic_names || []).join(", ")}</span>
+                                )}
+                                {(r.linked_assessment_count || 0) > 0 && (
+                                  <span className="block opacity-70">
+                                    {isPt
+                                      ? `${r.linked_assessment_count} aval. via link profissional`
+                                      : `${r.linked_assessment_count} assessment(s) via pro link`}
+                                  </span>
+                                )}
+                                {r.link_source === "patient_record" && (
+                                  <span className="block opacity-70">
+                                    {isPt ? "Consta na lista de pacientes" : "In patient list"}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <Badge variant="outline" className="gap-1 text-muted-foreground">
+                              <Unlink className="h-3 w-3" />
+                              {isPt ? "Isolado" : "Isolated"}
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell className="text-center">{r.basic_count}</TableCell>
                         <TableCell className="text-center">{r.premium_count}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">
