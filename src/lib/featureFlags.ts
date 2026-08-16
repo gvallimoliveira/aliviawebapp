@@ -12,3 +12,12 @@ export const ENABLE_CLINICAL_AGENT = true;
 // expor a venda antes disso gera dúvida ("estou pagando pelo quê?").
 // Virar true no mesmo deploy em que o enforcement do chat for ligado.
 export const ENABLE_CHAT_ADDON = false;
+
+// Mecanismo de dor (nociceptivo / neuropático / nociplástico) — roteiro segmentado.
+// Passos A1-A4 (código puro + colunas/tabela) já entregues e inertes.
+// Virar true apenas quando o passo B1 (triagem no fluxo manual PRO) for implementado.
+export const ENABLE_PAIN_MECHANISM = false;
+
+// Mapa corporal v2: lista de chips espelhando o SVG, contador e pain extent.
+// Flag independente do mecanismo — permite reverter só o mapa.
+export const ENABLE_PAINMAP_V2 = false;
