@@ -950,6 +950,8 @@ export type Database = {
           needs_reimpression: boolean
           original_assessment_id: string | null
           paid_at: string | null
+          pain_extent: number | null
+          pain_mechanism: Json | null
           pain_regions: string[] | null
           pain_score: number | null
           patient_email: string | null
@@ -986,6 +988,8 @@ export type Database = {
           needs_reimpression?: boolean
           original_assessment_id?: string | null
           paid_at?: string | null
+          pain_extent?: number | null
+          pain_mechanism?: Json | null
           pain_regions?: string[] | null
           pain_score?: number | null
           patient_email?: string | null
@@ -1022,6 +1026,8 @@ export type Database = {
           needs_reimpression?: boolean
           original_assessment_id?: string | null
           paid_at?: string | null
+          pain_extent?: number | null
+          pain_mechanism?: Json | null
           pain_regions?: string[] | null
           pain_score?: number | null
           patient_email?: string | null
@@ -2291,6 +2297,53 @@ export type Database = {
           view_name?: string
         }
         Relationships: []
+      }
+      pain_mechanism_screenings: {
+        Row: {
+          answers: Json
+          assessment_id: string
+          created_at: string
+          created_by: string | null
+          csi_band: string | null
+          csi_score: number | null
+          id: string
+          result: Json | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          assessment_id: string
+          created_at?: string
+          created_by?: string | null
+          csi_band?: string | null
+          csi_score?: number | null
+          id?: string
+          result?: Json | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          assessment_id?: string
+          created_at?: string
+          created_by?: string | null
+          csi_band?: string | null
+          csi_score?: number | null
+          id?: string
+          result?: Json | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pain_mechanism_screenings_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       patient_files: {
         Row: {
@@ -3851,6 +3904,8 @@ export type Database = {
           needs_reimpression: boolean
           original_assessment_id: string | null
           paid_at: string | null
+          pain_extent: number | null
+          pain_mechanism: Json | null
           pain_regions: string[] | null
           pain_score: number | null
           patient_email: string | null
