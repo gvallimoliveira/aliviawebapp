@@ -1,78 +1,139 @@
-# Mecanismo de dor + mapa corporal aprimorado — roteiro em 5 fases
+# Mecanismo de dor + mapa corporal — roteiro segmentado (baixo risco)
 
-Objetivo: incorporar a classificação de mecanismo de dor (nociceptiva / neuropática / nociplástica, com eixo central x periférico) e um mapa corporal mais interativo/mensurável, sem quebrar o fluxo atual de avaliação (básica, premium, manual PRO, clínica, externa).
+Princípios que valem para todos os passos:
 
-Base científica usada como referência: critérios de dor nociplástica (Kosek et al., 2021), gradação de dor neuropática (Finnerup et al., 2016), Central Sensitization Inventory versão PT-BR, e literatura de *digital pain drawing* / pain extent como desfecho (2020-2024).
-
----
-
-## Fase 1 — Fundação de dados e vocabulário clínico
-
-O que muda: cria a base para armazenar mecanismo de dor sem alterar telas.
-
-- Nova coluna estruturada em `assessments` para o bloco de mecanismo: mecanismo predominante, mecanismo secundário (dor mista), confiança, sinais que sustentaram a decisão, e sinalizador de sensibilização central.
-- Nova tabela de respostas de triagem de sensibilização (CSI reduzido) ligada à avaliação, com escore e faixa interpretativa.
-- Campo de `pain_extent` (número de regiões marcadas + percentual de superfície estimada) gravado por avaliação, para virar métrica de evolução.
-- Dicionário único de mecanismos em `src/lib/painMechanism.ts`: rótulos, cores semânticas (tokens do design system), descrições curtas para paciente e descrições técnicas para profissional/acadêmico.
-- Traduções pt/en/es dos novos rótulos.
-
-Entrega verificável: migração aplicada com GRANT/RLS, tipos regenerados, helper com testes unitários de classificação por regras.
-
-## Fase 2 — Triagem de mecanismo dentro da avaliação
-
-O que muda: passo novo, curto, depois da anamnese e antes dos testes funcionais.
-
-- Bloco de 8-10 itens derivados de instrumentos validados: descritores de dor (queimação, choque, formigamento), distribuição (dermatomal x difusa), proporcionalidade estímulo-resposta, dor espontânea, hipersensibilidade a luz/som/toque, sono e fadiga.
-- Regras determinísticas locais fazem a primeira triagem (sem custo de IA): se descritores neuropáticos + distribuição dermatomal → suspeita neuropática; se dor difusa + multissítio + hipersensibilidade multissensorial → suspeita nociplástica; caso contrário nociceptiva.
-- Fluxo básico (paciente) recebe versão enxuta com linguagem leiga; fluxo PRO/clínica recebe versão completa com escore CSI e tri-state (sim / não / não sei).
-- Continuidade: quem já respondeu na avaliação básica não repete no upgrade premium (mesma regra já usada para red flags).
-
-Entrega verificável: avaliação básica e premium concluídas ponta a ponta em preview, com o bloco aparecendo uma única vez.
-
-## Fase 3 — Mapa corporal: seleção dupla e pain extent
-
-O que muda: `PainMap` e a lista de regiões passam a ser espelhos um do outro.
-
-- Lista de chips ao lado do SVG: clicar no corpo tica o chip, clicar no chip acende a região. Contagem visível de regiões selecionadas.
-- Intensidade por região (leve / moderada / intensa) com escala de cor, em vez de marcação binária.
-- Camada opcional de tipo de sensação por região (dói / formiga / queima / adormece) — alimenta a Fase 2 com evidência topográfica.
-- Cálculo e exibição de *pain extent* como número comparável entre avaliações.
-- Manter a semântica anatômica já definida (cervical = posterior, pescoço = anterior) e o refinamento por região existente.
-
-Entrega verificável: screenshots mobile e desktop do mapa com chips sincronizados; extent gravado e visível no resumo.
-
-## Fase 4 — IA, prontuário e PDF
-
-O que muda: o mecanismo entra no raciocínio e nos documentos.
-
-- Prompts de `generate-diagnosis`, `interpret-external-assessment` e do agente clínico recebem o bloco de mecanismo como entrada obrigatória e devolvem campo próprio de mecanismo — sem inflar a hipótese, que continua sendo rótulo curto (máx. 20 palavras).
-- Regras de tratamento sensíveis ao mecanismo: quadro nociplástico prioriza educação em dor, exposição gradual e regulação do sono, com carga progressiva sem provas de dor; quadro neuropático prioriza descompressão neural e progressão mais lenta; nociceptivo mantém a lógica atual de carga.
-- Prontuário do paciente e resumo da avaliação exibem badge de mecanismo com explicação em uma linha.
-- PDF ganha uma seção compacta "Mecanismo predominante de dor" com os sinais que sustentaram a leitura, respeitando os 158mm úteis e a proteção de títulos órfãos.
-
-Entrega verificável: um PDF gerado de avaliação premium e um de avaliação externa, ambos com a seção nova bem paginada.
-
-## Fase 5 — Evolução, painéis e conteúdo
-
-O que muda: o mecanismo e o extent viram acompanhamento e argumento de venda.
-
-- Diário de dor e painel multi-condição passam a mostrar *pain extent* junto do EVA, por condição clínica.
-- Impressão clínica e relatório de evolução comentam mudança de mecanismo ao longo do tratamento (ex.: nociplástico → nociceptivo com redução de extent).
-- Painel acadêmico: micro-explicações e citações inline dos critérios, como material de estudo.
-- Atualização obrigatória de `Support.tsx` + `ClinicSupport.tsx` em pt/en/es na mesma entrega.
-- Roteiro de Reels: "mesma nota de dor, mecanismos diferentes" usando o mapa novo.
-
-Entrega verificável: painel pessoal e painel PRO com a métrica nova; páginas de suporte atualizadas nos três idiomas.
+1. **Só adicionar, nunca substituir de início.** Cada campo/tabela novo é opcional; avaliação antiga sem os dados continua válida e a UI mostra "não avaliado".
+2. **Feature flag por passo** em `src/lib/featureFlags.ts` (ex.: `ENABLE_PAIN_MECHANISM`, `ENABLE_PAINMAP_V2`). Flag desligada = comportamento atual byte a byte.
+3. **Um passo = um assunto = um deploy.** Se der problema, basta desligar a flag ou reverter um passo.
+4. **Ordem obrigatória:** dados → cálculo puro (testável) → UI → IA → documentos → painéis.
+5. **Nada de tocar** em auth, videochamada, push, cliente Supabase ou fluxo de pagamento em nenhum passo.
+6. Ao fim de cada passo, um **checklist de não-regressão** fixo: avaliação básica completa, avaliação premium completa, avaliação manual PRO, avaliação por link de clínica, avaliação externa por upload, PDF gerado.
 
 ---
 
-## Notas técnicas
+## Bloco A — Fundação invisível (nenhuma mudança de tela)
 
-- Arquivos principais afetados: `src/components/assessment/painMapData.ts`, `PainMap.tsx`, `PainMapView.tsx`, `AnamnesisForm.tsx`, `AssessmentStepper.tsx`, `AssessmentSummaryView.tsx`, `DiagnosisResult.tsx`, `src/utils/generatePdf.ts`, `src/lib/painConditions.ts`, edge functions `generate-diagnosis`, `generate-treatment-plan`, `interpret-external-assessment`, `clinical-agent-chat`, `agent-generate-hep`.
-- Nada de superfície instável nas recomendações geradas; triagem posicional (joelho irritável → sem ajoelhar) continua válida e passa a considerar mecanismo.
-- Fluxo de videochamada, push e auth permanecem intocados.
-- Cada fase é entregável e testável isoladamente; nenhuma fase depende de dados retroativos — avaliações antigas ficam sem mecanismo e a UI trata isso como "não avaliado".
+### Passo A1 — Vocabulário e regras em código puro
+- Novo arquivo `src/lib/painMechanism.ts`: tipos (`nociceptive | neuropathic | nociplastic | mixed | unknown`), eixo periférico/central, rótulos pt/en/es, descrição leiga e descrição técnica, cor via token semântico.
+- Função pura `classifyMechanism(input)` implementando os critérios (Kosek 2021 para nociplástica, Finnerup 2016 para neuropática) e devolvendo mecanismo + confiança + lista de sinais.
+- Testes unitários com casos-âncora (lombalgia mecânica, radiculopatia, fibromialgia-like, quadro misto).
+- Risco: zero. Nada importa esse arquivo ainda.
 
-## Ordem sugerida
+### Passo A2 — Extent de dor em código puro
+- Função pura `computePainExtent(regions)` → contagem de regiões + peso de superfície por região, usando os ids já existentes em `painMapData.ts`.
+- Testes unitários. Nenhuma tela usa ainda.
+- Risco: zero.
 
-Fase 1 e 2 na mesma sequência (dados + coleta), depois 3, depois 4, e 5 por último. Se quiser resultado visível mais rápido, invertemos 3 antes de 2.
+### Passo A3 — Colunas novas, todas opcionais
+- Migração adicionando a `assessments`: `pain_mechanism jsonb` (nullable) e `pain_extent numeric` (nullable). Sem NOT NULL, sem default que altere linhas existentes, sem mexer em policies vigentes.
+- Nenhuma escrita ainda; só o espaço existe.
+- Risco: baixo. Rollback = ignorar as colunas.
+
+### Passo A4 — Tabela de triagem de sensibilização
+- Migração criando `pain_mechanism_screenings` (avaliação, respostas jsonb, escore, faixa) com GRANT + RLS espelhando exatamente as policies já usadas em tabelas filhas de `assessments`.
+- Sem uso na aplicação ainda.
+- Risco: baixo e isolado (tabela nova não afeta nada existente).
+
+## Bloco B — Coleta (UI nova, atrás de flag)
+
+### Passo B1 — Passo de triagem só no fluxo PRO/manual
+- Componente novo `PainMechanismScreening.tsx` (8-10 itens, tri-state sim/não/não sei), inserido apenas no `ManualAssessmentModal`, atrás da flag.
+- Grava em `pain_mechanism_screenings` + `pain_mechanism` (resultado da função pura A1). Nada de IA envolvida.
+- Escolhemos o fluxo manual primeiro porque é o de menor volume e usado por você mesmo em teste.
+- Risco: contido a um fluxo. Flag off restaura o modal atual.
+
+### Passo B2 — Mesma triagem no fluxo premium do paciente
+- Versão enxuta com linguagem leiga dentro do `AssessmentStepper`, respeitando a continuidade: se a avaliação básica já respondeu, o passo é pulado (mesma mecânica de reaproveitamento já usada nas red flags).
+- Risco: médio-baixo. Único ponto de atenção é a numeração/progresso do stepper — testar retomada de avaliação interrompida.
+
+### Passo B3 — Triagem no fluxo básico (gratuito)
+- Versão de 4 itens, para alimentar a hipótese básica e servir de gancho de upgrade.
+- Só depois de B2 estar estável em produção por alguns dias.
+- Risco: baixo, mas é o fluxo de maior volume — por isso vem por último na coleta.
+
+## Bloco C — Mapa corporal v2 (isolado do resto)
+
+### Passo C1 — Lista de chips espelhando o SVG
+- Em `PainMap.tsx`, adicionar coluna/linha de chips sincronizada com as regiões (clique no chip acende o corpo e vice-versa) + contador. Estrutura de dados **inalterada** (`painRegions: string[]`).
+- Flag `ENABLE_PAINMAP_V2`.
+- Risco: baixo — mudança puramente de apresentação, sem alterar o que é salvo.
+
+### Passo C2 — Extent visível
+- Mostrar o extent (A2) no mapa e gravar em `assessments.pain_extent` no submit. Ainda sem uso clínico.
+- Risco: baixo.
+
+### Passo C3 — Intensidade por região (mudança de formato — o passo mais delicado)
+- Novo formato `{ id, intensity }` guardado em campo **separado** (`pain_regions_detail`), mantendo `painRegions` como está para todo o resto do sistema ler.
+- Camada de compatibilidade em `src/lib/anamnesisCompat.ts` para converter nos dois sentidos.
+- Só migramos consumidores depois, um a um, se o formato provar valor.
+- Risco: este é o único passo com risco real de retrabalho; por isso fica atrás de flag própria e sem substituir o campo antigo.
+
+### Passo C4 — Sensação por região (opcional)
+- Tipo de sensação por região (dói / formiga / queima / adormece) alimentando a triagem B1/B2 como evidência topográfica.
+- Só se C3 estiver estável.
+
+## Bloco D — IA (uma função por passo, nunca duas juntas)
+
+### Passo D1 — `generate-diagnosis` recebe o bloco
+- Bloco de mecanismo entra no prompt como **contexto**, e a função devolve um campo novo `pain_mechanism` no JSON. A hipótese continua rótulo curto de até 20 palavras (regra vigente preservada, é o principal risco a vigiar).
+- Fallback: se o campo novo vier ausente/inválido, usa o resultado determinístico de A1. Nunca falha a geração por causa dele.
+- Risco: médio — mitigado pelo fallback e pela camada de extração JSON em 4 níveis já existente.
+
+### Passo D2 — `interpret-external-assessment`
+- Mesmo tratamento, com atenção extra ao texto bagunçado de arquivos externos.
+
+### Passo D3 — `generate-treatment` sensível ao mecanismo
+- Regras de plano por mecanismo: nociplástico → educação em dor, exposição gradual, sono, progressão sem provas de dor; neuropático → progressão mais lenta e cuidado neural; nociceptivo → lógica de carga atual mantida.
+- Mantém as restrições já vigentes: sem superfícies instáveis; triagem posicional (joelho irritável não ajoelha).
+- Risco: médio. Testar que planos de casos nociceptivos continuam idênticos aos de hoje.
+
+### Passo D4 — Agente clínico e HEP
+- `clinical-agent-chat` e `agent-generate-hep` passam a ler o mecanismo do prontuário. Último da fila porque depende de tudo acima.
+
+## Bloco E — Exibição e documentos
+
+### Passo E1 — Badge no resumo e no prontuário
+- Badge de mecanismo + uma linha de explicação em `AssessmentSummaryView`, `DiagnosisResult` e no prontuário do paciente. Ausente = nada é exibido.
+- Risco: baixo.
+
+### Passo E2 — Seção no PDF
+- Seção compacta "Mecanismo predominante de dor" em `generatePdf.ts`, respeitando 158mm úteis e o helper de proteção de títulos órfãos.
+- Verificação obrigatória: gerar PDF de avaliação premium **e** de avaliação externa e conferir paginação.
+- Risco: médio (PDF é historicamente sensível a paginação) — por isso é um passo isolado.
+
+## Bloco F — Evolução e comunicação
+
+### Passo F1 — Extent no diário de dor e painel multi-condição
+- Extent ao lado do EVA, por condição clínica.
+
+### Passo F2 — Impressão clínica e relatório de evolução
+- Comentar mudança de mecanismo entre avaliações (ex.: nociplástico → nociceptivo com queda de extent).
+
+### Passo F3 — Suporte e conteúdo
+- Atualizar `Support.tsx` + `ClinicSupport.tsx` em pt/en/es (regra do projeto) e produzir o roteiro de Reels "mesma nota de dor, mecanismos diferentes".
+
+---
+
+## Mapa de risco resumido
+
+| Passo | Risco | Rollback |
+|---|---|---|
+| A1, A2 | nenhum | apagar arquivo |
+| A3, A4 | baixo | colunas/tabela ignoradas |
+| B1, B2, B3 | baixo/médio | flag off |
+| C1, C2 | baixo | flag off |
+| C3, C4 | médio (formato) | campo antigo intacto |
+| D1–D4 | médio (prompt) | fallback determinístico + revert da função |
+| E1 | baixo | flag off |
+| E2 | médio (paginação PDF) | revert de um arquivo |
+| F1–F3 | baixo | revert de UI |
+
+## Sugestão de agrupamento por sessão de trabalho
+
+- Sessão 1: A1 + A2 + A3 + A4 (tudo invisível, nenhum risco de crash).
+- Sessão 2: B1 (só fluxo manual, você testa em si mesmo).
+- Sessão 3: C1 + C2.
+- Sessão 4: B2, depois B3 em deploy separado.
+- Sessão 5: D1, depois D2, depois D3 — um por deploy.
+- Sessão 6: E1 + E2.
+- Sessão 7: D4 + F1 + F2 + F3.
