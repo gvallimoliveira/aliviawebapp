@@ -824,19 +824,13 @@ async function generatePainMapImages(painRegions: string[]): Promise<{ view: str
     if (selectedInView.length === 0) continue;
 
     const imgBase64 = await loadImageAsBase64(viewImages[view]);
-    if (!imgBase64) continue;
 
     const pathsSvg = selectedInView.map(r =>
       `<path d="${r.d}" fill="rgba(220, 50, 50, 0.45)" stroke="rgba(200, 40, 40, 0.8)" stroke-width="1.5"/>`
     ).join("\n");
 
-    const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 440" width="200" height="440">
-      <image href="${imgBase64}" x="0" y="0" width="200" height="440" preserveAspectRatio="xMidYMid slice"/>
-      ${pathsSvg}
-    </svg>`;
-
     try {
-      const dataUrl = await svgToDataUrl(svgStr, 200, 440);
+      const dataUrl = await composePainMapPng(imgBase64, pathsSvg);
       const viewLabels: Record<string, string> = { front: "Frontal", back: "Posterior", left: "Lat. Esq.", right: "Lat. Dir." };
       results.push({ view: viewLabels[view] || view, dataUrl });
     } catch (e) {
@@ -847,25 +841,60 @@ async function generatePainMapImages(painRegions: string[]): Promise<{ view: str
   return results;
 }
 
-function svgToDataUrl(svgStr: string, w: number, h: number): Promise<string> {
+function loadHtmlImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) { reject("No canvas context"); return; }
-      ctx.drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject("Image load failed"); };
-    img.src = url;
+    img.decoding = "sync";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Image load failed"));
+    img.src = src;
   });
 }
+
+/**
+ * Composes the body silhouette + selected pain regions into a single PNG.
+ * The background photo is drawn directly onto the canvas (never nested inside
+ * the SVG), because Safari/iOS refuses to rasterize <image href="data:..."/>
+ * inside an SVG loaded through an <img> tag — which made the body disappear
+ * from the PDF and left only the red region visible.
+ */
+async function composePainMapPng(bodyDataUrl: string | null, pathsSvg: string): Promise<string> {
+  const SCALE = 3;
+  const W = 200;
+  const H = 440;
+  const canvas = document.createElement("canvas");
+  canvas.width = W * SCALE;
+  canvas.height = H * SCALE;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("No canvas context");
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.scale(SCALE, SCALE);
+
+  // 1) Body photo
+  if (bodyDataUrl) {
+    try {
+      const bodyImg = await loadHtmlImage(bodyDataUrl);
+      ctx.drawImage(bodyImg, 0, 0, W, H);
+    } catch (e) {
+      console.error("Pain map: body image failed, rendering regions only", e);
+    }
+  }
+
+  // 2) Region overlay (paths only – always rasterizes reliably)
+  const overlaySvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${pathsSvg}</svg>`;
+  const overlayUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(overlaySvg)}`;
+  try {
+    const overlayImg = await loadHtmlImage(overlayUrl);
+    ctx.drawImage(overlayImg, 0, 0, W, H);
+  } catch (e) {
+    console.error("Pain map: overlay rasterization failed", e);
+  }
+
+  return canvas.toDataURL("image/png");
+}
+
 
 // ── Render Anamnesis Section ──
 function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData, isPt: boolean): number {
