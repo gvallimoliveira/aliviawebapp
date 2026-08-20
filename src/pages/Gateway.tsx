@@ -22,7 +22,7 @@ const fadeUp = {
 
 const Gateway = () => {
   const { t, toggleLanguage, language } = useLanguage();
-  const { user, signOut } = useAuth();
+  const { user, signOut, ready } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -38,6 +38,12 @@ const Gateway = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    if (ready && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [ready, user, navigate]);
+
+  useEffect(() => {
     setSeo({
       title: "Aliv.iA — Autoavaliação Musculoesquelética com IA",
       description: "Sistema de raciocínio clínico com IA: autoavaliação musculoesquelética, hipótese preliminar e plano de tratamento personalizado em minutos.",
@@ -47,6 +53,7 @@ const Gateway = () => {
     setLandingJsonLd();
     setOrganizationJsonLd();
   }, []);
+
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden flex flex-col">
