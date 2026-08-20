@@ -22,7 +22,7 @@ const fadeUp = {
 
 const Gateway = () => {
   const { t, toggleLanguage, language } = useLanguage();
-  const { user, signOut } = useAuth();
+  const { user, signOut, ready } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
