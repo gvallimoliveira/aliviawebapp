@@ -665,7 +665,17 @@ const Assessment = () => {
       setDiagnosis(result.diagnosis);
       const id = currentAssessmentId || assessmentId;
       if (id) {
-        await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "diagnosis_complete" });
+        const rf = resolveRedFlagPayload();
+        await updateAssessment(id, {
+          diagnosis: result.diagnosis as any,
+          status: "diagnosis_complete",
+          // Safety net: guarantees the screening record exists on the saved
+          // assessment even if the flow was resumed after the screening step.
+          ...(rf ? { red_flags: rf as any } : {}),
+          ...(capturedName || user?.user_metadata?.full_name
+            ? { patient_name: capturedName || user?.user_metadata?.full_name }
+            : {}),
+        });
       }
       if (result.diagnosis.confidence === "low" && !hasRetried && !extraInfo) {
         setStep("low_confidence");
