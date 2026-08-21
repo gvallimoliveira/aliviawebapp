@@ -58,6 +58,9 @@ interface AssessmentDraft {
   capturedEmail: string | null;
   capturedName: string | null;
   isUpgradeFlow: boolean;
+  /** Probatory red-flag screening carried across resumes so it never gets lost. */
+  redFlagAnswers?: Record<string, boolean>;
+  redFlagPayload?: any;
 }
 
 const getUpgradeData = () => {
