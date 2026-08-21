@@ -269,6 +269,20 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [mechanismAnswers, setMechanismAnswers] = useState<MechanismAnswers>(
     createEmptyMechanismAnswers,
   );
+  // Duração em semanas inferida do texto livre ("6 semanas", "3 meses", "1 ano").
+  const durationWeeks = (() => {
+    const t = (duration || "").toLowerCase();
+    const n = parseFloat(t.replace(",", ".").replace(/[^\d.,]/g, " ").trim().split(/\s+/)[0]);
+    if (!Number.isFinite(n)) return null;
+    if (/ano|year/.test(t)) return Math.round(n * 52);
+    if (/m[êe]s|month/.test(t)) return Math.round(n * 4.3);
+    if (/semana|week/.test(t)) return Math.round(n);
+    if (/dia|day/.test(t)) return Math.round(n / 7);
+    return null;
+  })();
+  const suggestedDistribution = ENABLE_PAIN_MECHANISM
+    ? suggestDistribution(painRegions)
+    : "unknown";
 
   // Questionários (mesmo fluxo da avaliação premium/link)
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
