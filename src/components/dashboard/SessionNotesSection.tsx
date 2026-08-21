@@ -130,12 +130,12 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
   const handleSave = async () => {
     if (!formContent.trim()) return;
-    if (isDemo) { toast({ title: "Demo: anotações não são salvas" }); setShowForm(false); setEditingNote(null); setFormContent(""); return; }
+    if (isDemo) { toast({ title: "Demo: anotações não são salvas" }); setShowForm(false); setEditingNote(null); setFormContent(""); setFormObservation(""); return; }
     setSaving(true);
     try {
       if (editingNote) {
         await (supabase.from("session_notes" as any) as any)
-          .update({ content: formContent, session_date: format(formDate, "yyyy-MM-dd") })
+          .update({ content: formContent, observation: formObservation || null, session_date: format(formDate, "yyyy-MM-dd") })
           .eq("id", editingNote.id);
       } else {
         await (supabase.from("session_notes" as any) as any)
@@ -144,13 +144,16 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
             patient_email: patientEmail,
             session_date: format(formDate, "yyyy-MM-dd"),
             content: formContent,
+            observation: formObservation || null,
           });
       }
       toast({ title: editingNote ? t("session_notes.updated") : t("session_notes.created") });
       setShowForm(false);
       setEditingNote(null);
       setFormContent("");
+      setFormObservation("");
       setFormDate(new Date());
+
       fetchNotes();
     } catch {
       toast({ title: t("session_notes.error"), variant: "destructive" });
