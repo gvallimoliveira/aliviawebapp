@@ -194,6 +194,8 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
         patient_email: patientEmail,
         session_date: today,
         content: note.content,
+        observation: note.observation || null,
+
       });
       toast({ title: t("session_notes.repeated") || "Evolução repetida na data de hoje" });
       fetchNotes();
