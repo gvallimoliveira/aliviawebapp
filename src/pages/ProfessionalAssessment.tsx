@@ -31,6 +31,7 @@ import {
 } from "@/lib/reassessmentSteps";
 import { fetchPatientPrefillExtras } from "@/lib/reassessmentPrefill";
 import { normalizeAnamnesisForReassessment } from "@/lib/reassessmentNormalize";
+import { painExtentValue } from "@/lib/painExtent";
 import {
   saveAssessmentProgress,
   getAssessmentProgress,
@@ -485,6 +486,7 @@ const ProfessionalAssessment = () => {
       await updateAssessment(id, {
         anamnesis_data: data as any,
         pain_regions: data.painRegions,
+        pain_extent: painExtentValue(data.painRegions),
         pain_score: data.painScore,
       });
     }
@@ -608,6 +610,7 @@ const ProfessionalAssessment = () => {
           await updateAssessment(id, {
             anamnesis_data: data as any,
             pain_regions: data.painRegions,
+            pain_extent: painExtentValue(data.painRegions),
             pain_score: data.painScore,
           });
         }

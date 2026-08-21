@@ -1412,9 +1412,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 "rules",
                 mechanismAnswers.csiScore,
               ),
-              pain_extent: computePainExtent(painRegions).surfacePercent,
             }
           : {}),
+        // Passo C2 — extensão de dor sempre que houver regiões marcadas.
+        pain_extent: computePainExtent(painRegions).surfacePercent || null,
+
         // test_results MUST be an array of questionnaire results — that's what AssessmentView,
         // generatePdf and clinical-impression all expect. Free-text functional observations
         // already live inside anamnesis_data.functionalTests.

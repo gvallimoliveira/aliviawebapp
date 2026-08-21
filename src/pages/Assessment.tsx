@@ -29,6 +29,7 @@ import OfflineBanner from "@/components/assessment/OfflineBanner";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { saveDraft, getDraft, clearDraft } from "@/lib/sessionPersistence";
 import { buildRedFlagPayload, type RedFlagPayload } from "@/lib/redFlags";
+import { painExtentValue } from "@/lib/painExtent";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "final_notes" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
@@ -408,6 +409,7 @@ const Assessment = () => {
               payment_status: "covered",
               anamnesis_data: upgradeData.anamnesisData as any,
               pain_regions: upgradeData.painRegions || [],
+              pain_extent: painExtentValue(upgradeData.painRegions || []),
               pain_score: upgradeData.painScore ?? null,
               patient_name: upgradeData.capturedName || null,
               patient_email: upgradeData.capturedEmail || null,
@@ -565,6 +567,7 @@ const Assessment = () => {
       await updateAssessment(id, {
         anamnesis_data: data as any,
         pain_regions: data.painRegions,
+        pain_extent: painExtentValue(data.painRegions),
         pain_score: data.painScore,
       });
     }
