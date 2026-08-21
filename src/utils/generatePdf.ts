@@ -2939,6 +2939,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
 
   // ── AI Narrative Summary ──
   y = renderSectionTitle(doc, y, isPt ? "Resumo Narrativo (IA)" : "AI Narrative Summary", COLORS.primary);
+  y = drawTextCard(doc, y, options.summary.narrative, {
 
     fill: COLORS.primaryLight,
     stroke: COLORS.primary,
