@@ -224,10 +224,9 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
 
       {/* Passo C2 — contador + extensão estimada de dor (sem lista de regiões) */}
       {ENABLE_PAINMAP_V2 && !debugMode && (
-        <div className="mx-auto max-w-md space-y-2">
+        <div className="mx-auto max-w-md">
+          {(() => {
 
-
-          {/* Passo C2 — contador + extensão estimada de dor */}
           {(() => {
             const extent = computePainExtent(selectedRegions);
             if (extent.regionCount === 0) return null;
