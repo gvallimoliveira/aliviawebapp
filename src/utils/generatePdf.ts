@@ -566,7 +566,8 @@ function renderRedFlagsAuditTable(
   const yesLabel = isPt ? "SIM" : "YES";
   const noLabel = isPt ? "NÃO" : "NO";
 
-  y = checkPage(doc, y, 30);
+  // Keep the title together with the subtitle and the first rows
+  y = checkPage(doc, y, 58);
   y += 4;
   y = renderSectionTitle(doc, y, title, COLORS.foreground);
 
@@ -972,7 +973,7 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
   }
   if (anamnesis.painScoreMode === "per_region" && anamnesis.painScoresPerRegion && Object.keys(anamnesis.painScoresPerRegion).length > 0) {
     const regionScores = Object.entries(anamnesis.painScoresPerRegion)
-      .map(([key, score]) => `${translateKey(key, isPt)}: ${score}/10`)
+      .map(([key, score]) => `${painRegionLabel(key, isPt)}: ${score}/10`)
       .join(", ");
     fields.push({ label: isPt ? "Dor por Regiao" : "Pain by Region", value: regionScores });
   }
@@ -1744,6 +1745,15 @@ function renderVasBar(doc: jsPDF, barX: number, y: number, barW: number, barH: n
   return y;
 }
 
+/** Human label for a pain-map region id (falls back to i18n key translation). */
+function painRegionLabel(id: string, isPt: boolean): string {
+  for (const view of Object.values(regionsByView)) {
+    const r = view.find((reg: any) => reg.id === id);
+    if (r) return isPt ? r.label_pt : r.label_en;
+  }
+  return translateKey(id, isPt);
+}
+
 function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: number | undefined, anamnesisData?: AnamnesisData | any): number {
   const hasPerRegion = anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0;
   const score = painScore ?? anamnesisData?.painScore;
@@ -1761,7 +1771,7 @@ function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: numbe
 
     for (const [key, regionScore] of entries) {
       y = checkPage(doc, y, 26);
-      const label = `${translateKey(key, isPt)} — ${regionScore}/10`;
+      const label = `${painRegionLabel(key, isPt)} — ${regionScore}/10`;
       y = renderVasBar(doc, barX, y, barW, barH, regionScore, label, isPt);
       y += 2;
     }
@@ -1836,8 +1846,9 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
   y = 48;
 
-  // Patient name
-  if (options.patientName) {
+  // Patient name — always rendered so the report is never anonymous
+  {
+    const nameValue = options.patientName?.trim() || (isPt ? "Paciente" : "Patient");
     drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 4, COLORS.background, COLORS.border);
     doc.setFont("Inter", "bold");
     doc.setFontSize(9);
@@ -1845,9 +1856,10 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     const pLabel = isPt ? "Paciente: " : "Patient: ";
     doc.text(pLabel, MARGIN + 6, y + 9);
     doc.setFont("Inter", "normal");
-    doc.text(options.patientName, MARGIN + 6 + doc.getTextWidth(pLabel), y + 9);
+    doc.text(nameValue, MARGIN + 6 + doc.getTextWidth(pLabel) + 1.5, y + 9);
     y += 20;
   }
+
 
   // Diagnosis section
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Preliminar" : "Preliminary Hypothesis", COLORS.primary);
@@ -1874,7 +1886,11 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   // Red flags (documented but non-blocking when professional supervised)
   y = renderRedFlagsCard(doc, y, options.redFlags, isPt, options.redFlagsDismissal);
-  y = renderRedFlagsAuditTable(doc, y, options.redFlagAnswers, options.redFlagsAnsweredAt, isPt);
+
+  // ── Anamnesis summary (same fields shown in the online assessment summary) ──
+  if (options.anamnesisData) {
+    y = renderAnamnesisSection(doc, y, options.anamnesisData, isPt);
+  }
 
   // ── Pain Score (VAS) — uses shared renderer ──
   y = renderVasSection(doc, y, isPt, options.painScore, options.anamnesisData);
@@ -1883,6 +1899,11 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   if (options.painRegions && options.painRegions.length > 0) {
     y = await renderPainMapSection(doc, y, options.painRegions, isPt);
   }
+
+
+  // ── Safety screening record (probatory Q&A) ──
+  y = renderRedFlagsAuditTable(doc, y, options.redFlagAnswers, options.redFlagsAnsweredAt, isPt);
+
 
   // Premium upsell banner
   y += 6;
@@ -2113,8 +2134,9 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   }
 
 
-  // ── Patient Info ──
-  if (userName) {
+  // ── Patient Info — always rendered so no report is anonymous ──
+  {
+    const nameValue = userName?.trim() || (isPt ? "Paciente" : "Patient");
     drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 4, COLORS.background, COLORS.border);
     doc.setFont("Inter", "bold");
     doc.setFontSize(9);
@@ -2122,9 +2144,10 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     doc.text(isPt ? "Paciente: " : "Patient: ", MARGIN + 6, y + 9);
     const labelW = doc.getTextWidth(isPt ? "Paciente: " : "Patient: ");
     doc.setFont("Inter", "normal");
-    doc.text(userName, MARGIN + 6 + labelW, y + 9);
+    doc.text(nameValue, MARGIN + 6 + labelW + 1.5, y + 9);
     y += 20;
   }
+
 
   // External assessments carry no AI disclaimer banner: the professional has
   // already reviewed and approved the data in the patient chart.
