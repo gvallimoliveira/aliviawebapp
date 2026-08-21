@@ -364,6 +364,13 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
                   <p className={cn("text-xs text-muted-foreground whitespace-pre-wrap", !isExpanded && isLong && "line-clamp-3")}>
                     {note.content}
                   </p>
+                  {note.observation?.trim() && (
+                    <div className="mt-1 rounded-md border-l-2 border-primary/40 bg-background/60 px-2 py-1">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground/80">Observação</p>
+                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{note.observation}</p>
+                    </div>
+                  )}
+
                   {isLong && (
                     <Button
                       variant="ghost"
