@@ -1836,8 +1836,9 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
   y = 48;
 
-  // Patient name
-  if (options.patientName) {
+  // Patient name — always rendered so the report is never anonymous
+  {
+    const nameValue = options.patientName?.trim() || (isPt ? "Paciente" : "Patient");
     drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 4, COLORS.background, COLORS.border);
     doc.setFont("Inter", "bold");
     doc.setFontSize(9);
@@ -1845,9 +1846,10 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     const pLabel = isPt ? "Paciente: " : "Patient: ";
     doc.text(pLabel, MARGIN + 6, y + 9);
     doc.setFont("Inter", "normal");
-    doc.text(options.patientName, MARGIN + 6 + doc.getTextWidth(pLabel), y + 9);
+    doc.text(nameValue, MARGIN + 6 + doc.getTextWidth(pLabel), y + 9);
     y += 20;
   }
+
 
   // Diagnosis section
   y = renderSectionTitle(doc, y, isPt ? "Hipótese Preliminar" : "Preliminary Hypothesis", COLORS.primary);
