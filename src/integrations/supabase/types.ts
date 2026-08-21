@@ -3237,6 +3237,36 @@ export type Database = {
           },
         ]
       }
+      session_note_templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          name: string
+          observation: string | null
+          owner_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          name: string
+          observation?: string | null
+          owner_user_id?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          name?: string
+          observation?: string | null
+          owner_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       session_notes: {
         Row: {
           appointment_id: string | null
@@ -3246,6 +3276,7 @@ export type Database = {
           external_import_data: Json | null
           id: string
           import_batch_id: string | null
+          observation: string | null
           patient_email: string
           professional_id: string
           session_date: string
@@ -3259,6 +3290,7 @@ export type Database = {
           external_import_data?: Json | null
           id?: string
           import_batch_id?: string | null
+          observation?: string | null
           patient_email: string
           professional_id: string
           session_date?: string
@@ -3272,6 +3304,7 @@ export type Database = {
           external_import_data?: Json | null
           id?: string
           import_batch_id?: string | null
+          observation?: string | null
           patient_email?: string
           professional_id?: string
           session_date?: string
