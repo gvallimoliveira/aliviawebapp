@@ -529,9 +529,62 @@ export default function PatientDetailView(props: any) {
                         await new Promise((r) => setTimeout(r, 1500));
                         summary = mockEvolutionSummary;
                       } else {
-                        const normalizeQ = (tr: any) => Array.isArray(tr) ? tr.filter((t: any) => t.questionnaireId && t.percentageScore != null).map((t: any) => ({ id: t.questionnaireId, name: t.questionnaireName || t.questionnaireId, score: Math.round(t.percentageScore) })) : [];
-                        const payload = { assessments: [{ date: firstA.created_at, pain_score: firstA.pain_score, hypothesis: firstA.diagnosis?.hypothesis, pain_regions: firstA.pain_regions || [], questionnaires: normalizeQ(firstA.test_results) }, { date: lastA.created_at, pain_score: lastA.pain_score, hypothesis: lastA.diagnosis?.hypothesis, pain_regions: lastA.pain_regions || [], questionnaires: normalizeQ(lastA.test_results) }], language };
+                        // Deep payload: full timeline (anamnesis, questionnaires with subscales,
+                        // dynamometry/ROM tables, functional tests) + therapist session notes.
+                        const normalizeTr = (tr: any): any[] => Array.isArray(tr) ? tr : (tr && typeof tr === "object" && Object.keys(tr).length > 0 ? [tr] : []);
+                        const normalizeQ = (tr: any) => normalizeTr(tr)
+                          .filter((t: any) => t.questionnaireId && t.percentageScore != null)
+                          .map((t: any) => ({
+                            id: t.questionnaireId,
+                            name: t.questionnaireName || t.questionnaireId,
+                            score: Math.round(t.percentageScore),
+                            interpretation: t.interpretation || undefined,
+                            subscales: t.subscaleScores && typeof t.subscaleScores === "object"
+                              ? Object.fromEntries(Object.entries(t.subscaleScores).map(([k, v]: [string, any]) => [k, typeof v === "number" ? Math.round(v) : v]))
+                              : undefined,
+                          }));
+                        const normalizeFunctional = (tr: any) => normalizeTr(tr)
+                          .filter((t: any) => !t.questionnaireId && (t.name || t.testName))
+                          .map((t: any) => ({ name: t.testName || t.name, result: t.result ?? t.value ?? t.outcome ?? undefined }));
+                        const ANAMNESIS_KEYS = ["chiefComplaint", "customComplaint", "onset", "evolution", "painTypes", "painPattern", "aggravatingFactors", "relievingFactors", "activityLevel", "previousTreatments", "painWeeklyFrequency", "painNightWaking", "hasEdema", "hadTwist", "painRegionRefinements"];
+                        const buildAssessmentPayload = (a: any) => {
+                          const ad: any = a.anamnesis_data || {};
+                          const anamnesis: Record<string, any> = {};
+                          for (const k of ANAMNESIS_KEYS) if (ad[k] != null) anamnesis[k] = ad[k];
+                          return {
+                            date: a.created_at,
+                            pain_score: a.pain_score,
+                            pain_scores_per_region: ad.painScoresPerRegion || undefined,
+                            hypothesis: a.diagnosis?.hypothesis,
+                            diagnosis_summary: a.diagnosis?.summary,
+                            pain_regions: a.pain_regions || [],
+                            anamnesis,
+                            questionnaires: normalizeQ(a.test_results),
+                            functional_tests: normalizeFunctional(a.test_results),
+                            strengthTable: Array.isArray(ad.strengthTable) ? ad.strengthTable : undefined,
+                            romTable: Array.isArray(ad.romTable) ? ad.romTable : undefined,
+                          };
+                        };
+                        let sessionNotes: any[] | undefined;
+                        try {
+                          const email = (firstA as any).patient_email || patient.email;
+                          if (email) {
+                            const { data: notesData } = await (supabase as any)
+                              .from("session_notes")
+                              .select("session_date, content, observation")
+                              .eq("patient_email", email)
+                              .order("session_date", { ascending: true })
+                              .limit(20);
+                            sessionNotes = (notesData || []).filter((n: any) => (n.content || n.observation || "").trim().length > 0);
+                          }
+                        } catch (e) { console.warn("[evolution] session notes fetch failed", e); }
+                        const payload = {
+                          assessments: withDiagnosis.map(buildAssessmentPayload),
+                          sessionNotes,
+                          language,
+                        };
                         const { data: summaryData, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
+
                         if (error) throw new Error(error?.message || "Erro ao conectar com o servidor de IA");
                         if (!summaryData || summaryData?.error) throw new Error(summaryData?.error || "Resposta inválida da IA");
                         if (!summaryData.narrative || !summaryData.conclusion || !summaryData.recommendation) throw new Error("Resumo incompleto gerado pela IA. Tente novamente.");

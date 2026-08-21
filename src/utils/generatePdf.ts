@@ -2616,10 +2616,15 @@ function renderSubSection(doc: jsPDF, y: number, title: string, body: string): n
 export interface EvolutionSummary {
   narrative: string;
   painChange: string;
+  anamnesisSynthesis?: string;
+  questionnaireAnalysis?: string;
+  objectiveFindings?: string;
+  sessionNotesSynthesis?: string;
   questionnaireChanges?: { name: string; firstScore: number; lastScore: number; changePercent: number }[];
   conclusion: string;
   recommendation: "discharge" | "continue" | "reassess";
 }
+
 
 export interface EvolutionPdfOptions {
   patientName: string;
@@ -2935,6 +2940,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   // ── AI Narrative Summary ──
   y = renderSectionTitle(doc, y, isPt ? "Resumo Narrativo (IA)" : "AI Narrative Summary", COLORS.primary);
   y = drawTextCard(doc, y, options.summary.narrative, {
+
     fill: COLORS.primaryLight,
     stroke: COLORS.primary,
     padX: 6,
@@ -2943,6 +2949,36 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     bottomSafety: 2,
   });
   y += 4;
+
+  // ── Deep clinical analysis (optional AI sections) ──
+  const deepSections: { title: string; body?: string }[] = [
+    {
+      title: isPt ? "Síntese da Anamnese" : isEs ? "Síntesis de la Anamnesis" : "Anamnesis Synthesis",
+      body: options.summary.anamnesisSynthesis,
+    },
+    {
+      title: isPt ? "Análise dos Questionários" : isEs ? "Análisis de los Cuestionarios" : "Questionnaire Analysis",
+      body: options.summary.questionnaireAnalysis,
+    },
+    {
+      title: isPt ? "Testes Objetivos (Dinamometria / ADM)" : isEs ? "Pruebas Objetivas (Dinamometría / ROM)" : "Objective Tests (Dynamometry / ROM)",
+      body: options.summary.objectiveFindings,
+    },
+    {
+      title: isPt ? "Evolução das Sessões" : isEs ? "Evolución de las Sesiones" : "Session Course",
+      body: options.summary.sessionNotesSynthesis,
+    },
+  ].filter((s) => (s.body || "").trim().length > 0);
+
+  if (deepSections.length > 0) {
+    y = renderSectionTitle(doc, y, isPt ? "Análise Clínica Detalhada" : isEs ? "Análisis Clínico Detallado" : "Detailed Clinical Analysis", COLORS.primary);
+    for (const section of deepSections) {
+      y = renderSubSection(doc, y, section.title, (section.body || "").trim());
+      y += 2;
+    }
+    y += 2;
+  }
+
 
   // ── Conclusion + Recommendation Badge ──
   y = renderSectionTitle(doc, y, isPt ? "Conclusão" : "Conclusion", COLORS.primary);

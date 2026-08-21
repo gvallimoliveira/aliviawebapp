@@ -717,39 +717,35 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     if (deletingAssessmentId) return;
     setDeletingAssessmentId(assessmentId);
     try {
-      // Cleanup related data — nunca deve impedir a exclusão principal
-      try {
-        const { data: programs } = await (supabase as any)
-          .from("exercise_programs")
-          .select("id")
-          .eq("assessment_id", assessmentId);
-        if (programs) {
-          for (const prog of programs) {
-            await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
-            await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
-          }
-        }
-        if (professionalId) {
-          await supabase.from("professional_notes").delete().eq("professional_id", professionalId).eq("assessment_id", assessmentId);
-        }
-        await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", assessmentId);
-      } catch (cleanupErr) {
-        console.warn("[deleteAssessment] cleanup falhou (ignorado):", cleanupErr);
-      }
+      // Exclusão via RPC segura: valida permissão (paciente, profissional vinculado
+      // ou equipe da clínica) e limpa/desvincula registros filhos que bloqueiam o delete
+      // (encaminhamentos, programas, questionários pendentes, notas de voz, etc.).
+      const { data: rpcOk, error: rpcError } = await (supabase as any).rpc("delete_assessment_secure", {
+        _assessment_id: assessmentId,
+      });
 
-      const { error, data: deleted } = await supabase
-        .from("assessments")
-        .delete()
-        .eq("id", assessmentId)
-        .select("id");
-      if (error) throw error;
-      if (!deleted || deleted.length === 0) {
+      if (rpcError) {
+        // Fallback: tentativa direta (RLS) caso a função ainda não esteja disponível
+        console.warn("[deleteAssessment] RPC falhou, tentando delete direto:", rpcError);
+        const { error, data: deleted } = await supabase
+          .from("assessments")
+          .delete()
+          .eq("id", assessmentId)
+          .select("id");
+        if (error) throw error;
+        if (!deleted || deleted.length === 0) {
+          throw new Error(
+            language === "pt"
+              ? "Sem permissão para excluir esta avaliação."
+              : "You don't have permission to delete this assessment.",
+          );
+        }
+      } else if (rpcOk === false) {
         throw new Error(
-          language === "pt"
-            ? "Sem permissão para excluir esta avaliação."
-            : "You don't have permission to delete this assessment.",
+          language === "pt" ? "Avaliação não encontrada." : "Assessment not found.",
         );
       }
+
       // Remove from in-memory list
       const idx = assessments.findIndex((a) => a.id === assessmentId);
       if (idx >= 0) assessments.splice(idx, 1);
@@ -762,6 +758,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       setDeleteAssessmentTarget(null);
     }
   };
+
 
 
   const handleAddExternalPatient = async () => {
