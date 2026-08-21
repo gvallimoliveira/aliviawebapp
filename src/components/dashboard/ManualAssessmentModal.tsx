@@ -240,7 +240,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Dor
   const [painScore, setPainScore] = useState<number>(5);
-  const [painType, setPainType] = useState("");
+  // Tipo de dor global — multi-seleção. `painType` (string) é mantido como
+  // "tipo principal" para compatibilidade com prefill/draft/legado.
+  const [painTypes, setPainTypes] = useState<string[]>([]);
+  const painType = painTypes[0] || "";
+  const setPainType = (v: string) => setPainTypes(v ? [v] : []);
   const [painRegions, setPainRegions] = useState<string[]>([]);
   // Per-region pain score (0-10). Filled automatically when the user marks a
   // region (defaults to the general slider value) and editable via per-region
