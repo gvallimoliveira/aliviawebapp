@@ -55,6 +55,8 @@ export interface AnamnesisData {
   // Patient identification (pre-assessment)
   cpf?: string;
   birthDate?: string;
+  /** Passos B2/B3 — triagem leiga de mecanismo de dor. */
+  painMechanism?: LiteMechanismAnswers;
 }
 
 interface AnamnesisFormProps {
