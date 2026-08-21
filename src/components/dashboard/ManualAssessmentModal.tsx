@@ -34,6 +34,15 @@ import {
   saveManualAssessmentSession,
   clearManualAssessmentSession,
 } from "@/lib/manualAssessmentSession";
+import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
+import PainMechanismScreening, {
+  createEmptyMechanismAnswers,
+  sanitizeMechanismAnswers,
+  hasMechanismAnswers,
+  type MechanismAnswers,
+} from "@/components/assessment/PainMechanismScreening";
+import { classifyMechanism, toStoredMechanism } from "@/lib/painMechanism";
+import { computePainExtent, suggestDistribution } from "@/lib/painExtent";
 import {
   AlertDialog,
   AlertDialogAction,
