@@ -495,6 +495,7 @@ const ClinicAssessment = () => {
         pain_regions: data.painRegions,
         pain_extent: painExtentValue(data.painRegions),
         pain_score: data.painScore,
+        ...buildMechanismPayload(data),
       });
     }
     if (reassessHasQuestionnaire) {
