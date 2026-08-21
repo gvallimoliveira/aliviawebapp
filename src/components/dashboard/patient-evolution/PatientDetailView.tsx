@@ -599,7 +599,12 @@ export default function PatientDetailView(props: any) {
                       a.download = `AliviA_Evolucao_${patient.name.replace(/\s/g, "_")}.pdf`;
                       a.click();
                       URL.revokeObjectURL(url);
-                      if (!isDemo) {
+                      // Em desktop/tablet o arquivo já fica salvo localmente: não abrir WhatsApp.
+                      const isMobileDevice = typeof navigator !== "undefined"
+                        && /Android|iPhone|iPod/i.test(navigator.userAgent)
+                        && typeof window !== "undefined"
+                        && window.matchMedia?.("(pointer: coarse)").matches;
+                      if (!isDemo && isMobileDevice) {
                         const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
                         const nativeShareResult = await sharePdfFile({ blob, fileName: `AliviA_Evolucao_${patient.name.replace(/\s+/g, "_")}.pdf`, title: "Aliv.iA", text: `${t("evolution.title")} - ${patient.name}` });
                         if (nativeShareResult === "shared" || nativeShareResult === "cancelled") { toast({ title: t("evolution.success") }); return; }
@@ -616,6 +621,7 @@ export default function PatientDetailView(props: any) {
                           toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });
                         }
                       }
+
                       toast({ title: t("evolution.success") });
                     } catch (err: any) {
                       console.error("Evolution report error:", err);
