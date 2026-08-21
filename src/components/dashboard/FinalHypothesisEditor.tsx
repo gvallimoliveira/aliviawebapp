@@ -127,6 +127,91 @@ const FinalHypothesisEditor = ({
       })
     : null;
 
+  const editForm = (
+    <div className="space-y-3">
+      <RadioGroup
+        value={mode}
+        onValueChange={(v) => setMode(v as "agree" | "override")}
+        className="space-y-2"
+      >
+        <div className="flex items-start gap-2">
+          <RadioGroupItem value="agree" id={`fh-agree-${assessmentId}`} className="mt-0.5" />
+          <Label htmlFor={`fh-agree-${assessmentId}`} className="text-sm cursor-pointer leading-snug">
+            Concordo com a hipótese da IA
+            {aiHypothesis && (
+              <span className="block text-xs text-muted-foreground mt-0.5">“{aiHypothesis}”</span>
+            )}
+          </Label>
+        </div>
+        <div className="flex items-start gap-2">
+          <RadioGroupItem value="override" id={`fh-override-${assessmentId}`} className="mt-0.5" />
+          <Label htmlFor={`fh-override-${assessmentId}`} className="text-sm cursor-pointer">
+            Ajustar / Sobrescrever
+          </Label>
+        </div>
+      </RadioGroup>
+
+      {mode === "override" && (
+        <div className="space-y-1">
+          <Textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.slice(0, MAX_LEN))}
+            placeholder="Ex: Síndrome femoropatelar bilateral"
+            className="min-h-[60px] text-sm"
+            maxLength={MAX_LEN}
+            autoFocus
+          />
+          <p className="text-[11px] text-muted-foreground text-right">
+            {draft.length}/{MAX_LEN}
+          </p>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5">
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : mode === "agree" && hasOverride ? (
+            <RotateCcw className="h-3.5 w-3.5" />
+          ) : (
+            <Check className="h-3.5 w-3.5" />
+          )}
+          {mode === "agree" && hasOverride ? "Restaurar IA" : "Salvar"}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={saving} className="gap-1.5">
+          <X className="h-3.5 w-3.5" />
+          Cancelar
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (variant === "inline") {
+    return (
+      <div className="pt-2 mt-2 border-t border-border/60">
+        {isEditing ? (
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+              <UserCheck className="h-3.5 w-3.5 text-primary" />
+              Hipótese final (profissional)
+            </p>
+            {editForm}
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={startEdit}
+            className="h-7 px-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            {hasOverride ? "Editar hipótese final" : "Ajustar / sobrescrever hipótese"}
+          </Button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <Card className="rounded-xl border-primary/20 bg-primary/[0.02]">
       <CardHeader className="pb-2">
