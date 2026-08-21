@@ -51,13 +51,15 @@ const PROMPT_STARTERS = [
   "/trilha ombro 1",
 ];
 function ThreadRow({
-  thread, patientName, active, onOpen, onDelete,
+  thread, patientName, active, onOpen, onDelete, onExportPdf, exporting,
 }: {
   thread: Thread;
   patientName?: string;
   active: boolean;
   onOpen: () => void;
   onDelete: () => void;
+  onExportPdf: () => void;
+  exporting?: boolean;
 }) {
   return (
     <div
@@ -67,7 +69,7 @@ function ThreadRow({
           : "border-border/50 bg-card/70 hover:bg-muted/40"
       }`}
     >
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_2.75rem] items-center gap-2">
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_2.75rem_2.75rem] items-center gap-2">
         <button
           type="button"
           onClick={onOpen}
@@ -81,6 +83,20 @@ function ThreadRow({
               <div className="mt-1 truncate text-xs text-primary/80">📋 {patientName}</div>
             )}
           </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onExportPdf();
+          }}
+          disabled={exporting}
+          className="flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-xl border border-primary/25 bg-primary/10 text-primary shadow-sm transition-colors hover:bg-primary/15 active:scale-[0.98] disabled:opacity-60"
+          aria-label="Salvar conversa em PDF"
+          title="Salvar conversa em PDF"
+        >
+          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
         </button>
 
         <button
