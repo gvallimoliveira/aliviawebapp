@@ -2134,8 +2134,9 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   }
 
 
-  // ── Patient Info ──
-  if (userName) {
+  // ── Patient Info — always rendered so no report is anonymous ──
+  {
+    const nameValue = userName?.trim() || (isPt ? "Paciente" : "Patient");
     drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 14, 4, COLORS.background, COLORS.border);
     doc.setFont("Inter", "bold");
     doc.setFontSize(9);
@@ -2143,9 +2144,10 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     doc.text(isPt ? "Paciente: " : "Patient: ", MARGIN + 6, y + 9);
     const labelW = doc.getTextWidth(isPt ? "Paciente: " : "Patient: ");
     doc.setFont("Inter", "normal");
-    doc.text(userName, MARGIN + 6 + labelW, y + 9);
+    doc.text(nameValue, MARGIN + 6 + labelW + 1.5, y + 9);
     y += 20;
   }
+
 
   // External assessments carry no AI disclaimer banner: the professional has
   // already reviewed and approved the data in the patient chart.
