@@ -39,6 +39,8 @@ import PainMechanismScreening, {
   createEmptyMechanismAnswers,
   sanitizeMechanismAnswers,
   hasMechanismAnswers,
+  PAIN_TYPE_TO_DESCRIPTOR,
+  DESCRIPTOR_TO_PAIN_TYPE,
   type MechanismAnswers,
 } from "@/components/assessment/PainMechanismScreening";
 import { classifyMechanism, toStoredMechanism } from "@/lib/painMechanism";
