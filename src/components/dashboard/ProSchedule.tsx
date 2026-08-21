@@ -245,7 +245,11 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [batchConfirming, setBatchConfirming] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
-  const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [serviceFilters, setServiceFilters] = useState<string[]>([]);
+  const isServiceVisible = (type?: string | null) =>
+    serviceFilters.length === 0 || serviceFilters.includes(type || "fisioterapia");
+  const toggleServiceFilter = (key: string) =>
+    setServiceFilters((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   const [formProfessionalId, setFormProfessionalId] = useState(professionalId || "");
   const [evolutionReloadTick, setEvolutionReloadTick] = useState(0);
 
