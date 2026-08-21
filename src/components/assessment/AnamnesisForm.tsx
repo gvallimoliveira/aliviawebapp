@@ -14,6 +14,13 @@ import PainMap from "./PainMap";
 import { formatCpf } from "@/utils/masks";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
+import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
+import PainMechanismLite, {
+  createEmptyLiteAnswers,
+  isLiteScreeningComplete,
+  sanitizeLiteAnswers,
+  type LiteMechanismAnswers,
+} from "./PainMechanismLite";
 
 export interface AnamnesisData {
   chiefComplaint: string; // deprecated, kept for backward compat
