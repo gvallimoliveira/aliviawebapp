@@ -39,6 +39,8 @@ import PainMechanismScreening, {
   createEmptyMechanismAnswers,
   sanitizeMechanismAnswers,
   hasMechanismAnswers,
+  PAIN_TYPE_TO_DESCRIPTOR,
+  DESCRIPTOR_TO_PAIN_TYPE,
   type MechanismAnswers,
 } from "@/components/assessment/PainMechanismScreening";
 import { classifyMechanism, toStoredMechanism } from "@/lib/painMechanism";
@@ -240,7 +242,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // Dor
   const [painScore, setPainScore] = useState<number>(5);
-  const [painType, setPainType] = useState("");
+  // Tipo de dor global — multi-seleção. `painType` (string) é mantido como
+  // "tipo principal" para compatibilidade com prefill/draft/legado.
+  const [painTypes, setPainTypes] = useState<string[]>([]);
+  const painType = painTypes[0] || "";
+  const setPainType = (v: string) => setPainTypes(v ? [v] : []);
   const [painRegions, setPainRegions] = useState<string[]>([]);
   // Per-region pain score (0-10). Filled automatically when the user marks a
   // region (defaults to the general slider value) and editable via per-region
@@ -283,6 +289,38 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const suggestedDistribution = ENABLE_PAIN_MECHANISM
     ? suggestDistribution(painRegions)
     : "unknown";
+
+  /**
+   * Tipos de dor "efetivos": união do que foi marcado no seletor com o que
+   * veio dos descritores da triagem de mecanismo (correlação bidirecional).
+   */
+  const effectivePainTypes = (() => {
+    const set = new Set(painTypes);
+    if (ENABLE_PAIN_MECHANISM) {
+      mechanismAnswers.descriptors.forEach((d) => {
+        const t = DESCRIPTOR_TO_PAIN_TYPE[d];
+        if (t) set.add(t);
+      });
+    }
+    return Array.from(set);
+  })();
+
+  /** Marca/desmarca um tipo de dor e espelha o descritor equivalente. */
+  const togglePainType = (t: string) => {
+    const on = effectivePainTypes.includes(t);
+    setPainTypes(on ? painTypes.filter((x) => x !== t) : [...new Set([...painTypes, t])]);
+    const desc = PAIN_TYPE_TO_DESCRIPTOR[t];
+    if (ENABLE_PAIN_MECHANISM && desc) {
+      setMechanismAnswers((prev) => ({
+        ...prev,
+        descriptors: on
+          ? prev.descriptors.filter((d) => d !== desc)
+          : [...new Set([...prev.descriptors, desc])],
+      }));
+    }
+  };
+
+
 
   // Questionários (mesmo fluxo da avaliação premium/link)
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
@@ -630,7 +668,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const draftState = {
     step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
-    painScore, painType, painRegions, painScoresPerRegion, painTypesPerRegion, painRegionRefinements,
+    painScore, painType, painTypes, painRegions, painScoresPerRegion, painTypesPerRegion, painRegionRefinements,
     redFlagsChecked, additionalClinicalNotes, mechanismAnswers, questionnaireResults, deferQuestionnaires,
     functionalTests, romTable, strengthTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
@@ -662,7 +700,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setOccupation(p.occupation ?? "");
     setComplementaryExams(p.complementaryExams ?? "");
     setPainScore(p.painScore ?? 5);
-    setPainType(p.painType ?? "");
+    setPainTypes(
+      Array.isArray((p as any).painTypes) && (p as any).painTypes.length > 0
+        ? ((p as any).painTypes as string[])
+        : p.painType
+          ? [p.painType]
+          : [],
+    );
     setPainRegions(p.painRegions ?? []);
     setPainScoresPerRegion(p.painScoresPerRegion ?? {});
     setPainTypesPerRegion((p as any).painTypesPerRegion ?? {});
@@ -707,7 +751,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setOccupation(an.occupation || "");
     setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
-    setPainType(an.painType || (Array.isArray(an.painTypes) ? an.painTypes[0] : "") || "");
+    setPainTypes(
+      Array.isArray(an.painTypes) && an.painTypes.length > 0
+        ? (an.painTypes as string[])
+        : an.painType
+          ? [an.painType]
+          : [],
+    );
     setPainRegions(
       Array.isArray(a.pain_regions)
         ? a.pain_regions.filter((id: string) => !SIMPLIFIED_EXCLUDED_IDS.has(id))
@@ -806,7 +856,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setOccupation(an.occupation || "");
     setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
-    setPainType(an.painType || "");
+    setPainTypes(
+      Array.isArray((an as any).painTypes) && (an as any).painTypes.length > 0
+        ? ((an as any).painTypes as string[])
+        : an.painType
+          ? [an.painType]
+          : [],
+    );
     setPainRegions(
       Array.isArray(a.pain_regions)
         ? a.pain_regions.filter((id: string) => !SIMPLIFIED_EXCLUDED_IDS.has(id))
@@ -1039,8 +1095,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     comorbidities,
     occupation,
     complementaryExams,
-    painType,
-    painTypes: painType ? [painType] : [],
+    painType: effectivePainTypes[0] || "",
+    painTypes: effectivePainTypes,
     // Per-region pain scores e tipos (usados pela Comparação de Dor por Região
     // e pelo prompt da IA quando há múltiplas regiões marcadas).
     painScoresPerRegion,
@@ -1085,7 +1141,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             ...buildAnamnesisData(),
             painRegions,
             painScore,
-            painTypes: painType ? [painType] : [],
+            painTypes: effectivePainTypes,
             redFlags: redFlagsChecked,
           },
           questionnaireResults,
@@ -2073,21 +2129,47 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       </DemoShield>
                     </div>
                     <div>
-                      <Label className="text-xs">{isPt ? "Tipo de dor" : "Pain type"}</Label>
+                      <Label className="text-xs">
+                        {isPt ? "Tipo de dor (pode marcar mais de um)" : "Pain type (multi-select)"}
+                      </Label>
+                      {ENABLE_PAIN_MECHANISM && (
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          {isPt
+                            ? "O que você marcar aqui já entra como descritor na triagem de mecanismo abaixo (e vice-versa)."
+                            : "Selections here are mirrored as descriptors in the mechanism screening below."}
+                        </p>
+                      )}
                       <DemoShield on={demoMode} onAutofill={() => autofill(painType, MOCK_MANUAL_CASE.painType, setPainType, "")}>
-                        <Select value={painType} onValueChange={setPainType}>
-                          <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="local">{isPt ? "Local" : "Local"}</SelectItem>
-                            <SelectItem value="radiating">{isPt ? "Irradiada" : "Radiating"}</SelectItem>
-                            <SelectItem value="burning">{isPt ? "Queimação" : "Burning"}</SelectItem>
-                            <SelectItem value="tingling">{isPt ? "Formigamento" : "Tingling"}</SelectItem>
-                            <SelectItem value="throbbing">{isPt ? "Latejante" : "Throbbing"}</SelectItem>
-                            <SelectItem value="stabbing">{isPt ? "Pontada" : "Stabbing"}</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {(
+                            [
+                              ["local", "Local", "Local"],
+                              ["radiating", "Irradiada", "Radiating"],
+                              ["burning", "Queimação", "Burning"],
+                              ["tingling", "Formigamento", "Tingling"],
+                              ["throbbing", "Latejante", "Throbbing"],
+                              ["stabbing", "Pontada", "Stabbing"],
+                            ] as [string, string, string][]
+                          ).map(([v, pt, en]) => {
+                            const active = effectivePainTypes.includes(v);
+                            return (
+                              <Button
+                                key={v}
+                                type="button"
+                                size="sm"
+                                variant={active ? "default" : "outline"}
+                                className="h-8 px-2.5 text-xs"
+                                disabled={demoMode}
+                                onClick={() => togglePainType(v)}
+                              >
+                                {isPt ? pt : en}
+                              </Button>
+                            );
+                          })}
+                        </div>
                       </DemoShield>
                     </div>
+
                   </>
                 )}
 
