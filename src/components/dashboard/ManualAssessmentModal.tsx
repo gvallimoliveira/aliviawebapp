@@ -265,6 +265,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Persistido em anamnesis_data.additionalClinicalNotes e usado pela IA.
   const [additionalClinicalNotes, setAdditionalClinicalNotes] = useState("");
 
+  // Passo B1 — triagem de mecanismo de dor (flag ENABLE_PAIN_MECHANISM).
+  const [mechanismAnswers, setMechanismAnswers] = useState<MechanismAnswers>(
+    createEmptyMechanismAnswers,
+  );
+
   // Questionários (mesmo fluxo da avaliação premium/link)
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
   // Quando ligado, os questionários ficam pendentes e são enviados ao paciente
