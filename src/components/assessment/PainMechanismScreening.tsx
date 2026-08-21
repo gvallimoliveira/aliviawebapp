@@ -42,6 +42,24 @@ export interface MechanismAnswers {
   csiScore: number | null;
 }
 
+/**
+ * Correlação entre o seletor "Tipo de dor" (global e por região) e os
+ * descritores da triagem de mecanismo. Evita perguntar duas vezes a mesma
+ * coisa: marcar um lado reflete no outro.
+ */
+export const PAIN_TYPE_TO_DESCRIPTOR: Record<string, string> = {
+  local: "local",
+  radiating: "electric",
+  burning: "burning",
+  tingling: "tingling",
+  throbbing: "throbbing",
+  stabbing: "stabbing",
+};
+
+export const DESCRIPTOR_TO_PAIN_TYPE: Record<string, string> = Object.entries(
+  PAIN_TYPE_TO_DESCRIPTOR,
+).reduce((acc, [type, desc]) => ({ ...acc, [desc]: type }), {});
+
 export const createEmptyMechanismAnswers = (): MechanismAnswers => ({
   descriptors: [],
   distribution: "unknown",
