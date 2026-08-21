@@ -3135,7 +3135,8 @@ export async function generateAgentChatPdfBlob(options: AgentChatPdfOptions): Pr
     metaBits.push(`Conversa iniciada em ${new Date(options.createdAt).toLocaleDateString("pt-BR")}`);
   }
   metaBits.push(`Emitido em ${new Date().toLocaleDateString("pt-BR")}`);
-  doc.text(truncateToWidth(doc, metaBits.join(" · "), SECTION_TEXT_W), SECTION_X, MARGIN + 13);
+  const metaLines: string[] = doc.splitTextToSize(metaBits.join(" · "), SECTION_TEXT_W).slice(0, 2);
+  doc.text(metaLines, SECTION_X, MARGIN + 12.5, { lineHeightFactor: 1.25 });
 
   doc.setFont("Inter", "bold");
   doc.setFontSize(8.5);
