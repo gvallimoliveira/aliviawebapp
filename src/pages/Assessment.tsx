@@ -153,6 +153,8 @@ const Assessment = () => {
       if (draft.capturedEmail) setCapturedEmail(draft.capturedEmail);
       if (draft.capturedName) setCapturedName(draft.capturedName);
       if (draft.isUpgradeFlow) setIsUpgradeFlow(draft.isUpgradeFlow);
+      if (draft.redFlagAnswers && Object.keys(draft.redFlagAnswers).length) setRedFlagAnswers(draft.redFlagAnswers);
+      if (draft.redFlagPayload) setRedFlagPayload(draft.redFlagPayload);
       setStep(draft.step);
       toast({
         title: language === "pt" ? "Avaliação retomada" : language === "es" ? "Evaluación reanudada" : "Assessment resumed",
