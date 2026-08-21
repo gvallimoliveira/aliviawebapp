@@ -3146,8 +3146,8 @@ export async function generateAgentChatPdfBlob(options: AgentChatPdfOptions): Pr
     MARGIN + 18,
   );
 
-  y = MARGIN + 26;
-  const COLUMN_TOP_FIRST = y;
+  columnTop = MARGIN + 26;
+  y = columnTop;
 
   // ── Messages ────────────────────────────────────────────────────────────
   const PAD = 2;
