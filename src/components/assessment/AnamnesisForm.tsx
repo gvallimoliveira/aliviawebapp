@@ -778,6 +778,17 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
             </div>
           </div>
         );
+      case "pain_mechanism":
+        return (
+          <PainMechanismLite
+            value={data.painMechanism ?? createEmptyLiteAnswers()}
+            onChange={(next) => setData({ ...data, painMechanism: next })}
+            painRegions={data.painRegions}
+            painTypes={data.painTypes}
+            variant={mode === "premium" ? "premium" : "basic"}
+            language={language}
+          />
+        );
       case "evolution":
         return (
           <div className="space-y-4">
