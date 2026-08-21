@@ -3286,6 +3286,5 @@ export async function generateAgentChatPdfBlob(options: AgentChatPdfOptions): Pr
     doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN, 288, { align: "right" });
   }
 
-  void COLUMN_TOP_FIRST;
   return doc.output("blob");
 }
