@@ -751,7 +751,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setOccupation(an.occupation || "");
     setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
-    setPainType(an.painType || (Array.isArray(an.painTypes) ? an.painTypes[0] : "") || "");
+    setPainTypes(
+      Array.isArray(an.painTypes) && an.painTypes.length > 0
+        ? (an.painTypes as string[])
+        : an.painType
+          ? [an.painType]
+          : [],
+    );
     setPainRegions(
       Array.isArray(a.pain_regions)
         ? a.pain_regions.filter((id: string) => !SIMPLIFIED_EXCLUDED_IDS.has(id))
@@ -850,7 +856,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setOccupation(an.occupation || "");
     setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
-    setPainType(an.painType || "");
+    setPainTypes(
+      Array.isArray((an as any).painTypes) && (an as any).painTypes.length > 0
+        ? ((an as any).painTypes as string[])
+        : an.painType
+          ? [an.painType]
+          : [],
+    );
     setPainRegions(
       Array.isArray(a.pain_regions)
         ? a.pain_regions.filter((id: string) => !SIMPLIFIED_EXCLUDED_IDS.has(id))
@@ -1083,7 +1095,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     comorbidities,
     occupation,
     complementaryExams,
-    painType,
+    painType: effectivePainTypes[0] || "",
     painTypes: effectivePainTypes,
     // Per-region pain scores e tipos (usados pela Comparação de Dor por Região
     // e pelo prompt da IA quando há múltiplas regiões marcadas).
