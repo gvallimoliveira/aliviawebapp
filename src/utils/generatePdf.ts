@@ -3089,15 +3089,18 @@ export async function generateAgentChatPdfBlob(options: AgentChatPdfOptions): Pr
 
   let col = 0;
   let y = TOP;
+  /** Top of the columns on the current page (first page reserves the header). */
+  let columnTop = TOP;
 
   const nextColumn = () => {
     if (col === 0) {
       col = 1;
-      y = TOP;
+      y = columnTop;
     } else {
       doc.addPage();
       col = 0;
-      y = TOP;
+      columnTop = TOP;
+      y = columnTop;
     }
   };
 
