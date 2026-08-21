@@ -22,9 +22,17 @@ interface SessionNote {
   id: string;
   session_date: string;
   content: string;
+  observation?: string | null;
   created_at: string;
   updated_at: string;
   appointment_id?: string | null;
+}
+
+interface NoteTemplate {
+  id: string;
+  name: string;
+  content: string;
+  observation?: string | null;
 }
 
 interface SessionNotesSectionProps {
@@ -42,10 +50,64 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   const [editingNote, setEditingNote] = useState<SessionNote | null>(null);
   const [formDate, setFormDate] = useState<Date>(new Date());
   const [formContent, setFormContent] = useState("");
+  const [formObservation, setFormObservation] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [templates, setTemplates] = useState<NoteTemplate[]>([]);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+
+  const fetchTemplates = useCallback(async () => {
+    if (isDemo) return;
+    const { data } = await (supabase.from("session_note_templates" as any) as any)
+      .select("id, name, content, observation")
+      .eq("professional_id", professionalId)
+      .order("name", { ascending: true });
+    setTemplates((data as NoteTemplate[]) || []);
+  }, [professionalId, isDemo]);
+
+  useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
+
+  const applyPrevious = () => {
+    const previous = notes[0];
+    if (!previous) {
+      toast({ title: "Sem evolução anterior para copiar" });
+      return;
+    }
+    setFormContent(previous.content || "");
+    setFormObservation(previous.observation || "");
+    toast({ title: "Preenchido com a evolução anterior" });
+  };
+
+  const applyTemplate = (id: string) => {
+    const tpl = templates.find((x) => x.id === id);
+    if (!tpl) return;
+    setFormContent(tpl.content || "");
+    setFormObservation(tpl.observation || "");
+  };
+
+  const saveAsTemplate = async () => {
+    if (!formContent.trim()) return;
+    const name = window.prompt("Nome do modelo de evolução:");
+    if (!name?.trim()) return;
+    setSavingTemplate(true);
+    try {
+      await (supabase.from("session_note_templates" as any) as any).insert({
+        professional_id: professionalId,
+        name: name.trim(),
+        content: formContent,
+        observation: formObservation || null,
+      });
+      toast({ title: "Modelo salvo" });
+      fetchTemplates();
+    } catch {
+      toast({ title: "Não foi possível salvar o modelo", variant: "destructive" });
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
 
   const fetchNotes = useCallback(async () => {
     if (isDemo) {
