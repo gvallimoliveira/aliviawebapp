@@ -991,7 +991,62 @@ export default function PatientDetailView(props: any) {
       <RegionPainComparison assessments={patient.assessments} />
 
       {/* Evolução de questionários funcionais */}
-      {questionnaireEvolution.length > 0 ? questionnaireEvolution.map((chart: any) => <Card key={chart.displayTitle}><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><ClipboardList className="h-4 w-4 text-primary" />{t("pro.questionnaire_evolution")} — {chart.displayTitle}</CardTitle><CardDescription className="text-xs">Pontuação total + 3 maiores limitações funcionais (%)</CardDescription></CardHeader><CardContent>{chart.data.length > 1 ? <div className="h-64"><ResponsiveContainer width="100%" height="100%"><LineChart data={chart.data}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" domain={[0, 100]} /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} formatter={(value: any, name: string) => [`${value}%`, name]} /><Legend /><Line type="monotone" dataKey={chart.totalKey} stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 5 }} connectNulls />{chart.subscaleKeys.map((sub: any, i: number) => <Line key={sub.key} type="monotone" dataKey={sub.key} stroke={SUBSCALE_COLORS[i % SUBSCALE_COLORS.length]} strokeWidth={1.5} strokeDasharray="5 3" dot={{ r: 3 }} connectNulls />)}</LineChart></ResponsiveContainer></div> : <div className="h-56"><ResponsiveContainer width="100%" height="100%"><BarChart data={chart.data}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" domain={[0, 100]} /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} formatter={(value: any, name: string) => [`${value}%`, name]} /><Legend /><Bar dataKey={chart.totalKey} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />{chart.subscaleKeys.map((sub: any, i: number) => <Bar key={sub.key} dataKey={sub.key} fill={SUBSCALE_COLORS[i % SUBSCALE_COLORS.length]} radius={[4, 4, 0, 0]} />)}</BarChart></ResponsiveContainer></div>}</CardContent></Card>) : <Card className="border-dashed"><CardContent className="py-6 text-center"><ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p><p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p></CardContent></Card>}
+      {questionnaireEvolution.length > 0 ? questionnaireEvolution.map((chart: any) => (
+        <Card key={chart.displayTitle}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-primary" />
+              {t("pro.questionnaire_evolution")} — {chart.displayTitle}
+            </CardTitle>
+            <CardDescription className="text-xs">
+              {language === "pt"
+                ? `Pontuação total + 3 principais limitações funcionais (%) — ${chart.data.length} medição(ões)`
+                : `Total score + top 3 functional limitations (%) — ${chart.data.length} measurement(s)`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chart.data} margin={{ top: 18, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                  <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" unit="%" domain={[0, 100]} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }}
+                    formatter={(value: any, name: string) => [`${value}%`, name]}
+                    labelFormatter={(label: any, payload: any) => {
+                      const p = payload?.[0]?.payload;
+                      const extras = [p?.context, p?.interpretation].filter(Boolean).join(" • ");
+                      return extras ? `${label} — ${extras}` : label;
+                    }}
+                  />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey={chart.totalKey} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} minPointSize={2}>
+                    <LabelList dataKey={chart.totalKey} position="top" formatter={(v: any) => `${v}%`} className="fill-muted-foreground" style={{ fontSize: 10 }} />
+                  </Bar>
+                  {chart.subscaleKeys.map((sub: any, i: number) => (
+                    <Bar key={sub.key} dataKey={sub.key} fill={SUBSCALE_COLORS[i % SUBSCALE_COLORS.length]} radius={[4, 4, 0, 0]} minPointSize={2} />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {chart.data.length === 1 && (
+              <p className="text-[11px] text-muted-foreground italic">
+                {language === "pt" ? "Primeira medição — linha de base para comparações futuras." : "First measurement — baseline for future comparisons."}
+              </p>
+            )}
+            {chart.allZero && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 dark:bg-emerald-950/20 dark:border-emerald-800/50 px-3 py-2">
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                  {language === "pt"
+                    ? "Sem limitações funcionais registradas neste período (0% em todas as medições)."
+                    : "No functional limitations recorded in this period (0% across all measurements)."}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )) : <Card className="border-dashed"><CardContent className="py-6 text-center"><ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p><p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p></CardContent></Card>}
 
       {/* Voice notes (insumos brutos sobem antes das notas escritas) */}
       {!isDemo && patient?.assessments?.length > 0 && (
