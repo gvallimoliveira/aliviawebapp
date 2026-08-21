@@ -224,6 +224,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
             onClick={() => {
               setEditingNote(null);
               setFormContent("");
+              setFormObservation("");
               setFormDate(new Date());
               setShowForm(!showForm);
             }}
@@ -237,7 +238,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
         {/* Form */}
         {showForm && (
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs", !formDate && "text-muted-foreground")}>
@@ -259,17 +260,59 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
                 <Badge variant="outline" className="text-[10px]">{t("session_notes.editing")}</Badge>
               )}
             </div>
-            <Textarea
-              placeholder={t("session_notes.placeholder")}
-              value={formContent}
-              onChange={(e) => setFormContent(e.target.value)}
-              className="text-xs min-h-[80px] resize-y"
-            />
+
+            {/* Atalhos: evolução anterior e modelos */}
+            {!isDemo && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-[11px]" onClick={applyPrevious} disabled={notes.length === 0}>
+                  <Copy className="h-3 w-3" />
+                  Preencher com evolução anterior
+                </Button>
+                {templates.length > 0 && (
+                  <Select onValueChange={applyTemplate}>
+                    <SelectTrigger className="h-7 w-[190px] text-[11px]">
+                      <SelectValue placeholder="Usar modelo…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((tpl) => (
+                        <SelectItem key={tpl.id} value={tpl.id} className="text-xs">{tpl.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-[11px] text-muted-foreground" onClick={saveAsTemplate} disabled={savingTemplate || !formContent.trim()}>
+                  {savingTemplate ? <Loader2 className="h-3 w-3 animate-spin" /> : <BookmarkPlus className="h-3 w-3" />}
+                  Salvar como modelo
+                </Button>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Evolução da sessão</p>
+              <Textarea
+                placeholder={t("session_notes.placeholder")}
+                value={formContent}
+                onChange={(e) => setFormContent(e.target.value)}
+                className="text-xs min-h-[80px] resize-y"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Observação (opcional)</p>
+              <Textarea
+                placeholder="Intercorrências, combinados com o paciente, ajustes de conduta…"
+                value={formObservation}
+                onChange={(e) => setFormObservation(e.target.value)}
+                className="text-xs min-h-[50px] resize-y"
+              />
+            </div>
+
             <div className="flex gap-2">
               <Button size="sm" className="rounded-xl gap-1.5 text-xs" onClick={handleSave} disabled={saving || !formContent.trim()}>
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5" />}
                 {editingNote ? t("session_notes.save_edit") : t("session_notes.save")}
               </Button>
+
               <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setShowForm(false); setEditingNote(null); }}>
                 {t("session_notes.cancel")}
               </Button>
