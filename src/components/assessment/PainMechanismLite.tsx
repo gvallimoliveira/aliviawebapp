@@ -2,9 +2,9 @@
  * Passos B2 (premium) e B3 (básica) do roteiro "Mecanismo de dor".
  *
  * Versão leiga da triagem de mecanismo de dor, usada nos fluxos de
- * autoavaliação do paciente. Mesma estrutura de dados do B1
- * (`MechanismAnswers`), mas com linguagem simples, sem CSI e sem itens que
- * exigem exame físico. Classificação segue 100% determinística.
+ * autoavaliação do paciente. Mesma base de dados do B1 (`MechanismAnswers`),
+ * com linguagem simples, sem CSI e sem itens que exigem exame físico.
+ * Classificação 100% determinística (`classifyMechanism`), nenhuma IA.
  *
  * - `variant="basic"`: 4 itens (fluxo gratuito, maior volume).
  * - `variant="premium"`: 6 itens (inclui fadiga e hipersensibilidade).
@@ -18,25 +18,20 @@ import {
   getMechanismLabel,
   getMechanismLay,
   getMechanismTokenClass,
+  type MechanismResult,
   type TriState,
 } from "@/lib/painMechanism";
 import { suggestDistribution } from "@/lib/painExtent";
-import type { MechanismAnswers } from "./PainMechanismScreening";
+import {
+  createEmptyMechanismAnswers,
+  sanitizeMechanismAnswers,
+  PAIN_TYPE_TO_DESCRIPTOR,
+  type MechanismAnswers,
+} from "./PainMechanismScreening";
 
 type Lang = "pt" | "en" | "es";
 
-interface PainMechanismLiteProps {
-  value: MechanismAnswers;
-  onChange: (next: MechanismAnswers) => void;
-  painRegions: string[];
-  /** Tipos de dor já marcados na etapa anterior (correlação, evita repetir pergunta). */
-  painTypes?: string[];
-  variant: "basic" | "premium";
-  language: string;
-  durationWeeks?: number | null;
-}
-
-type ItemKey =
+export type LiteItemKey =
   | "proportionateToStimulus"
   | "spontaneousPain"
   | "neuroSensation"
@@ -44,7 +39,27 @@ type ItemKey =
   | "persistentFatigue"
   | "multisensoryHypersensitivity";
 
-const ITEM_COPY: Record<ItemKey, Record<Lang, string>> = {
+/** Respostas da versão leiga: base do B1 + registro de quais itens foram respondidos. */
+export interface LiteMechanismAnswers extends MechanismAnswers {
+  answered: LiteItemKey[];
+}
+
+export const createEmptyLiteAnswers = (): LiteMechanismAnswers => ({
+  ...createEmptyMechanismAnswers(),
+  answered: [],
+});
+
+export const sanitizeLiteAnswers = (raw: unknown): LiteMechanismAnswers => {
+  const base = sanitizeMechanismAnswers(raw);
+  const answered = Array.isArray((raw as any)?.answered)
+    ? ((raw as any).answered as unknown[]).map(String).filter((k): k is LiteItemKey =>
+        ALL_ITEMS.includes(k as LiteItemKey),
+      )
+    : [];
+  return { ...base, answered };
+};
+
+const ITEM_COPY: Record<LiteItemKey, Record<Lang, string>> = {
   proportionateToStimulus: {
     pt: "Sua dor aumenta e diminui conforme o que você faz (posição, esforço, movimento)?",
     en: "Does your pain increase and decrease with what you do (position, effort, movement)?",
@@ -83,36 +98,76 @@ const ANSWER_COPY = {
   unknown: { pt: "Não sei", en: "Not sure", es: "No sé" },
 };
 
-const BASIC_ITEMS: ItemKey[] = [
+const BASIC_ITEMS: LiteItemKey[] = [
   "proportionateToStimulus",
   "spontaneousPain",
   "neuroSensation",
   "nonRestorativeSleep",
 ];
 
-const PREMIUM_ITEMS: ItemKey[] = [
+const PREMIUM_ITEMS: LiteItemKey[] = [
   ...BASIC_ITEMS,
   "persistentFatigue",
   "multisensoryHypersensitivity",
 ];
 
-/** Descritores neuropáticos adicionados quando o paciente confirma a sensação. */
+const ALL_ITEMS: LiteItemKey[] = PREMIUM_ITEMS;
+
+/** Descritores neuropáticos aplicados quando o paciente confirma a sensação. */
 const LITE_NEURO_DESCRIPTORS = ["tingling", "burning"];
 
 export const liteItemsFor = (variant: "basic" | "premium") =>
   variant === "premium" ? PREMIUM_ITEMS : BASIC_ITEMS;
 
-/** Todos os itens visíveis respondidos (inclui "não sei" como resposta válida)? */
+/** Todos os itens visíveis respondidos ("não sei" conta como resposta). */
 export const isLiteScreeningComplete = (
-  value: MechanismAnswers,
+  value: LiteMechanismAnswers,
   variant: "basic" | "premium",
-): boolean =>
-  liteItemsFor(variant).every((key) => {
-    if (key === "neuroSensation") return value.descriptors.length > 0 || value.__neuro === false;
-    return value[key as keyof MechanismAnswers] !== undefined && (value as any)[`__answered_${key}`] !== undefined
-      ? true
-      : (value as any)[key] !== null || (value as any)[`__unknown_${key}`] === true;
+): boolean => liteItemsFor(variant).every((key) => value.answered.includes(key));
+
+export const hasLiteAnswers = (value: LiteMechanismAnswers): boolean =>
+  value.answered.length > 0;
+
+/** Traduz os tipos de dor da anamnese em descritores do modelo. */
+export const painTypesToDescriptors = (painTypes: string[]): string[] =>
+  painTypes
+    .map((pt) => PAIN_TYPE_TO_DESCRIPTOR[pt.split(".").pop() || ""] || pt.split(".").pop() || "")
+    .filter(Boolean);
+
+export const classifyLite = (
+  value: LiteMechanismAnswers,
+  painRegions: string[],
+  painTypes: string[],
+  durationWeeks: number | null = null,
+): MechanismResult => {
+  const suggested = suggestDistribution(painRegions);
+  return classifyMechanism({
+    descriptors: Array.from(
+      new Set([...value.descriptors, ...painTypesToDescriptors(painTypes)]),
+    ),
+    distribution: suggested === "unknown" ? value.distribution : suggested,
+    proportionateToStimulus: value.proportionateToStimulus,
+    spontaneousPain: value.spontaneousPain,
+    multisensoryHypersensitivity: value.multisensoryHypersensitivity,
+    nonRestorativeSleep: value.nonRestorativeSleep,
+    persistentFatigue: value.persistentFatigue,
+    objectiveNeuroSigns: null,
+    durationWeeks,
+    csiScore: null,
+    regionCount: painRegions.length,
   });
+};
+
+interface PainMechanismLiteProps {
+  value: LiteMechanismAnswers;
+  onChange: (next: LiteMechanismAnswers) => void;
+  painRegions: string[];
+  /** Tipos de dor já marcados na etapa anterior (evita repetir a pergunta). */
+  painTypes?: string[];
+  variant: "basic" | "premium";
+  language: string;
+  durationWeeks?: number | null;
+}
 
 const PainMechanismLite = ({
   value,
@@ -131,52 +186,37 @@ const PainMechanismLite = ({
     return suggested === "unknown" ? value.distribution : suggested;
   }, [painRegions, value.distribution]);
 
-  const neuroAnswer: TriState = value.descriptors.some((d) =>
-    LITE_NEURO_DESCRIPTORS.includes(d),
-  )
-    ? true
-    : value.__neuroAnswered
-      ? false
-      : null;
+  const neuroAnswer: TriState = value.answered.includes("neuroSensation")
+    ? value.descriptors.some((d) => LITE_NEURO_DESCRIPTORS.includes(d))
+      ? true
+      : false
+    : null;
 
-  const setItem = (key: ItemKey, answer: TriState) => {
+  const setItem = (key: LiteItemKey, answer: TriState) => {
+    const answered = Array.from(new Set([...value.answered, key]));
     if (key === "neuroSensation") {
       const others = value.descriptors.filter((d) => !LITE_NEURO_DESCRIPTORS.includes(d));
       onChange({
         ...value,
+        answered,
         distribution,
         descriptors: answer === true ? [...others, ...LITE_NEURO_DESCRIPTORS] : others,
-        __neuroAnswered: answer !== null,
       });
       return;
     }
-    onChange({ ...value, distribution, [key]: answer } as MechanismAnswers);
+    onChange({ ...value, answered, distribution, [key]: answer } as LiteMechanismAnswers);
+  };
+
+  const isSelected = (key: LiteItemKey, opt: TriState) => {
+    if (!value.answered.includes(key)) return false;
+    const current: TriState = key === "neuroSensation" ? neuroAnswer : (value as any)[key];
+    return current === opt;
   };
 
   const result = useMemo(
-    () =>
-      classifyMechanism({
-        descriptors: [
-          ...value.descriptors,
-          ...painTypes.map((p) => p.split(".").pop() || ""),
-        ].filter(Boolean),
-        distribution,
-        proportionateToStimulus: value.proportionateToStimulus,
-        spontaneousPain: value.spontaneousPain,
-        multisensoryHypersensitivity: value.multisensoryHypersensitivity,
-        nonRestorativeSleep: value.nonRestorativeSleep,
-        persistentFatigue: value.persistentFatigue,
-        objectiveNeuroSigns: null,
-        durationWeeks,
-        csiScore: null,
-        regionCount: painRegions.length,
-      }),
-    [value, distribution, painTypes, durationWeeks, painRegions.length],
+    () => classifyLite(value, painRegions, painTypes, durationWeeks),
+    [value, painRegions, painTypes, durationWeeks],
   );
-
-  const answeredCount = items.filter((key) =>
-    key === "neuroSensation" ? neuroAnswer !== null : (value as any)[key] !== null,
-  ).length;
 
   return (
     <div className="space-y-4">
@@ -198,75 +238,62 @@ const PainMechanismLite = ({
       </div>
 
       <div className="space-y-3">
-        {items.map((key) => {
-          const current: TriState = key === "neuroSensation" ? neuroAnswer : (value as any)[key];
-          return (
-            <Card key={key} className="rounded-xl border-border/60">
-              <CardContent className="py-3 px-4 space-y-2">
-                <p className="text-sm text-foreground leading-snug">{ITEM_COPY[key][lang]}</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {([true, false, null] as TriState[]).map((opt) => {
-                    const label =
-                      opt === true
-                        ? ANSWER_COPY.yes[lang]
-                        : opt === false
-                          ? ANSWER_COPY.no[lang]
-                          : ANSWER_COPY.unknown[lang];
-                    const selected = current === opt && !(current === null && opt === null && answeredCountIsUnset(value, key));
-                    return (
-                      <Button
-                        key={String(opt)}
-                        type="button"
-                        size="sm"
-                        variant={selected ? "default" : "outline"}
-                        className="rounded-xl text-xs"
-                        onClick={() => setItem(key, opt)}
-                      >
-                        {label}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {items.map((key) => (
+          <Card key={key} className="rounded-xl border-border/60">
+            <CardContent className="py-3 px-4 space-y-2">
+              <p className="text-sm text-foreground leading-snug">{ITEM_COPY[key][lang]}</p>
+              <div className="grid grid-cols-3 gap-2">
+                {([true, false, null] as TriState[]).map((opt) => (
+                  <Button
+                    key={String(opt)}
+                    type="button"
+                    size="sm"
+                    variant={isSelected(key, opt) ? "default" : "outline"}
+                    className="rounded-xl text-xs"
+                    onClick={() => setItem(key, opt)}
+                  >
+                    {opt === true
+                      ? ANSWER_COPY.yes[lang]
+                      : opt === false
+                        ? ANSWER_COPY.no[lang]
+                        : ANSWER_COPY.unknown[lang]}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {answeredCount >= Math.min(3, items.length) && result.mechanism !== "unknown" && (
-        <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+      {value.answered.length >= Math.min(3, items.length) &&
+        result.mechanism !== "unknown" && (
+          <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                {lang === "pt"
+                  ? "Padrão predominante"
+                  : lang === "es"
+                    ? "Patrón predominante"
+                    : "Predominant pattern"}
+              </span>
+              <Badge variant="outline" className={getMechanismTokenClass(result.mechanism)}>
+                {getMechanismLabel(result.mechanism, lang)}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground leading-snug">
+              {getMechanismLay(result.mechanism, lang)}
+            </p>
+            <p className="text-[10px] text-muted-foreground/80">
               {lang === "pt"
-                ? "Padrão predominante"
+                ? "Impressão automática de triagem — não substitui avaliação profissional."
                 : lang === "es"
-                  ? "Patrón predominante"
-                  : "Predominant pattern"}
-            </span>
-            <Badge variant="outline" className={getMechanismTokenClass(result.mechanism)}>
-              {getMechanismLabel(result.mechanism, lang)}
-            </Badge>
+                  ? "Impresión automática de triaje — no sustituye la evaluación profesional."
+                  : "Automatic screening impression — not a substitute for professional assessment."}
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground leading-snug">
-            {getMechanismLay(result.mechanism, lang)}
-          </p>
-          <p className="text-[10px] text-muted-foreground/80">
-            {lang === "pt"
-              ? "Impressão automática de triagem — não substitui avaliação profissional."
-              : lang === "es"
-                ? "Impresión automática de triaje — no sustituye la evaluación profesional."
-                : "Automatic screening impression — not a substitute for professional assessment."}
-          </p>
-        </div>
-      )}
+        )}
     </div>
   );
 };
-
-/** "Não sei" só fica marcado depois de clicado (evita marcar por padrão). */
-function answeredCountIsUnset(value: MechanismAnswers, key: ItemKey): boolean {
-  if (key === "neuroSensation") return !value.__neuroAnswered;
-  return !(value.__unknownKeys ?? []).includes(key);
-}
 
 export default PainMechanismLite;
