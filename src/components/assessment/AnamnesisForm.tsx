@@ -449,7 +449,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
   };
 
   // Define step IDs for clarity
-  type StepId = "complaint" | "onset" | "surgery" | "painmap" | "region_detail" | "migraine_screening" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "pain_frequency" | "gym" | "painscore";
+  type StepId = "complaint" | "onset" | "surgery" | "painmap" | "region_detail" | "migraine_screening" | "sex_age" | "paintype" | "pain_mechanism" | "evolution" | "factors" | "duration" | "pain_frequency" | "gym" | "painscore";
 
   // Check if migraine screening should show
   const needsMigraineScreening = () => {
