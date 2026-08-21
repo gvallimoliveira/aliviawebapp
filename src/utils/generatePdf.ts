@@ -3110,7 +3110,21 @@ export async function generateAgentChatPdfBlob(options: AgentChatPdfOptions): Pr
   };
 
   // ── Header (full width, first page only) ────────────────────────────────
-  drawRoundedRect(doc, MARGIN, MARGIN - 6, CONTENT_WIDTH, 26, 3, COLORS.primaryLight, COLORS.border);
+  const metaBits: string[] = [];
+  if (options.professionalName) metaBits.push(`Profissional: ${options.professionalName}`);
+  if (options.patientName) metaBits.push(`Paciente: ${options.patientName}`);
+  if (options.createdAt) {
+    metaBits.push(`Conversa iniciada em ${new Date(options.createdAt).toLocaleDateString("pt-BR")}`);
+  }
+  metaBits.push(`Emitido em ${new Date().toLocaleDateString("pt-BR")}`);
+
+  doc.setFont("Inter", "normal");
+  doc.setFontSize(8);
+  const metaLines: string[] = (doc.splitTextToSize(metaBits.join(" · "), SECTION_TEXT_W) as string[]).slice(0, 2);
+  const headerH = 22 + metaLines.length * 4;
+
+  drawRoundedRect(doc, MARGIN, MARGIN - 6, CONTENT_WIDTH, headerH, 3, COLORS.primaryLight, COLORS.border);
+
   doc.setFont("Inter", "bold");
   doc.setFontSize(14);
   doc.setTextColor(...COLORS.primary);
@@ -3128,15 +3142,7 @@ export async function generateAgentChatPdfBlob(options: AgentChatPdfOptions): Pr
   doc.setFont("Inter", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.muted);
-  const metaBits: string[] = [];
-  if (options.professionalName) metaBits.push(`Profissional: ${options.professionalName}`);
-  if (options.patientName) metaBits.push(`Paciente: ${options.patientName}`);
-  if (options.createdAt) {
-    metaBits.push(`Conversa iniciada em ${new Date(options.createdAt).toLocaleDateString("pt-BR")}`);
-  }
-  metaBits.push(`Emitido em ${new Date().toLocaleDateString("pt-BR")}`);
-  const metaLines: string[] = doc.splitTextToSize(metaBits.join(" · "), SECTION_TEXT_W).slice(0, 2);
-  doc.text(metaLines, SECTION_X, MARGIN + 12.5, { lineHeightFactor: 1.25 });
+  doc.text(metaLines, SECTION_X, MARGIN + 12.5, { lineHeightFactor: 1.3 });
 
   doc.setFont("Inter", "bold");
   doc.setFontSize(8.5);
@@ -3144,10 +3150,10 @@ export async function generateAgentChatPdfBlob(options: AgentChatPdfOptions): Pr
   doc.text(
     truncateToWidth(doc, sanitizePdfText(options.title) || "Conversa", SECTION_TEXT_W),
     SECTION_X,
-    MARGIN + 18,
+    MARGIN + 12.5 + metaLines.length * 4 + 2,
   );
 
-  columnTop = MARGIN + 26;
+  columnTop = MARGIN - 6 + headerH + 4;
   y = columnTop;
 
   // ── Messages ────────────────────────────────────────────────────────────
