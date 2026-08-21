@@ -288,6 +288,38 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     ? suggestDistribution(painRegions)
     : "unknown";
 
+  /**
+   * Tipos de dor "efetivos": união do que foi marcado no seletor com o que
+   * veio dos descritores da triagem de mecanismo (correlação bidirecional).
+   */
+  const effectivePainTypes = (() => {
+    const set = new Set(painTypes);
+    if (ENABLE_PAIN_MECHANISM) {
+      mechanismAnswers.descriptors.forEach((d) => {
+        const t = DESCRIPTOR_TO_PAIN_TYPE[d];
+        if (t) set.add(t);
+      });
+    }
+    return Array.from(set);
+  })();
+
+  /** Marca/desmarca um tipo de dor e espelha o descritor equivalente. */
+  const togglePainType = (t: string) => {
+    const on = effectivePainTypes.includes(t);
+    setPainTypes(on ? painTypes.filter((x) => x !== t) : [...new Set([...painTypes, t])]);
+    const desc = PAIN_TYPE_TO_DESCRIPTOR[t];
+    if (ENABLE_PAIN_MECHANISM && desc) {
+      setMechanismAnswers((prev) => ({
+        ...prev,
+        descriptors: on
+          ? prev.descriptors.filter((d) => d !== desc)
+          : [...new Set([...prev.descriptors, desc])],
+      }));
+    }
+  };
+
+
+
   // Questionários (mesmo fluxo da avaliação premium/link)
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
   // Quando ligado, os questionários ficam pendentes e são enviados ao paciente
