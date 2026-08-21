@@ -1010,12 +1010,15 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       return { key: "_", label: "" };
     };
 
+    // Group strictly by questionnaireId so the full history of a scale stays in a
+    // single chart. The anatomical/diagnostic context travels with each data point
+    // (shown in the tooltip) instead of splitting the chart in fragments.
     const groups = new Map<string, {
       questionnaireId: string;
       name: string;
-      contextLabel: string;
       qDef: typeof questionnaires[0] | undefined;
-      entries: { date: string; percentageScore: number; subscaleScores: Record<string, number> }[];
+      contextLabels: string[];
+      entries: { date: string; sortAt: number; context: string; interpretation?: string; percentageScore: number; subscaleScores: Record<string, number> }[];
     }>();
 
     patient.assessments.forEach((a: any) => {
@@ -1025,26 +1028,27 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         const name = r.questionnaireName || r.questionnaireId.toUpperCase();
         const qDef = questionnaires.find((q) => q.id === r.questionnaireId);
         const ctx = buildContext(qDef, a);
-        const groupKey = `${r.questionnaireId}::${ctx.key}`;
-        if (!groups.has(groupKey)) {
-          groups.set(groupKey, {
+        if (!groups.has(r.questionnaireId)) {
+          groups.set(r.questionnaireId, {
             questionnaireId: r.questionnaireId,
             name,
-            contextLabel: ctx.label,
             qDef,
+            contextLabels: [],
             entries: [],
           });
         }
-        groups.get(groupKey)!.entries.push({
+        const g = groups.get(r.questionnaireId)!;
+        if (ctx.label && !g.contextLabels.includes(ctx.label)) g.contextLabels.push(ctx.label);
+        g.entries.push({
           date: new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }),
+          sortAt: new Date(a.created_at).getTime(),
+          context: ctx.label,
+          interpretation: r.interpretation || r.severityLabel || undefined,
           percentageScore: r.percentageScore,
           subscaleScores: r.subscaleScores || {},
         });
       });
     });
-
-    // (We always show the context label when available, so no per-questionnaire
-    // disambiguation count is needed.)
 
     const charts: {
       name: string;
@@ -1052,43 +1056,56 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       contextLabel: string;
       totalKey: string;
       subscaleKeys: { key: string; label: string }[];
+      allZero: boolean;
       data: any[];
     }[] = [];
 
     groups.forEach((info) => {
-      const { name, contextLabel, qDef, entries } = info;
+      const { name, contextLabels, qDef, entries } = info;
       if (entries.length === 0) return;
+      entries.sort((a, b) => a.sortAt - b.sortAt);
 
-      const latestEntry = entries[entries.length - 1];
       const subscaleLabels = qDef?.subscaleLabels || {};
       const isHigherWorse = qDef?.scoringDirection === "higher_worse";
 
-      const subscaleEntries = Object.entries(latestEntry.subscaleScores)
-        .filter(([key]) => subscaleLabels[key])
-        .map(([key, value]) => ({
-          key,
-          label: subscaleLabels[key]?.[lang] || key,
-          score: value as number,
-        }))
-        .sort((a, b) => isHigherWorse ? b.score - a.score : a.score - b.score)
+      // Pick the 3 most relevant subscales using the WORST value across the whole
+      // history (not just the latest run) — otherwise a normalized last assessment
+      // (all zeros) would produce an apparently empty chart.
+      const worst = new Map<string, number>();
+      entries.forEach((e) => {
+        Object.entries(e.subscaleScores).forEach(([key, value]) => {
+          if (!subscaleLabels[key] || value == null) return;
+          const v = value as number;
+          const prev = worst.get(key);
+          if (prev == null) worst.set(key, v);
+          else worst.set(key, isHigherWorse ? Math.max(prev, v) : Math.min(prev, v));
+        });
+      });
+
+      const subscaleEntries = Array.from(worst.entries())
+        .map(([key, score]) => ({ key, label: subscaleLabels[key]?.[lang] || key, score }))
+        .sort((a, b) => (isHigherWorse ? b.score - a.score : a.score - b.score))
         .slice(0, 3);
 
-      // Always surface the anatomical/diagnostic context when we have one,
-      // so the clinician immediately knows which body region or condition
-      // the chart refers to (e.g. "ODI — Lombar" vs "ODI — Cervical").
+      const contextLabel = contextLabels.slice(0, 2).join(" + ") + (contextLabels.length > 2 ? "…" : "");
       const displayTitle = contextLabel ? `${name} — ${contextLabel}` : name;
-      const totalKey = `${displayTitle} (Total)`;
+      const totalKey = `${name} (Total)`;
+      let allZero = true;
       const data = entries.map((entry, i) => {
+        const total = Math.round(entry.percentageScore);
+        if (total > 0) allZero = false;
         const point: any = {
           index: i + 1,
           date: entry.date,
-          [totalKey]: Math.round(entry.percentageScore),
+          context: entry.context,
+          interpretation: entry.interpretation,
+          [totalKey]: total,
         };
         subscaleEntries.forEach((sub) => {
           const subscaleValue = entry.subscaleScores[sub.key];
-          if (subscaleValue != null) {
-            point[sub.label] = Math.round(subscaleValue);
-          }
+          const v = subscaleValue != null ? Math.round(subscaleValue as number) : 0;
+          if (v > 0) allZero = false;
+          point[sub.label] = v;
         });
         return point;
       });
@@ -1099,12 +1116,14 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         contextLabel,
         totalKey,
         subscaleKeys: subscaleEntries.map((s) => ({ key: s.label, label: s.label })),
+        allZero,
         data,
       });
     });
 
     return charts;
   }, [patient]);
+
 
   const SUBSCALE_COLORS = [
     "hsl(210, 70%, 55%)",
