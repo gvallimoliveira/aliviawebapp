@@ -1098,6 +1098,11 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "migraine_screening": return !!data.hasPhotophobia && !!data.hasNausea && !!data.headacheCrisisFrequency;
       case "sex_age": return data.sex !== "" && data.ageRange !== "";
       case "paintype": return data.painTypes.length > 0;
+      case "pain_mechanism":
+        return isLiteScreeningComplete(
+          sanitizeLiteAnswers(data.painMechanism),
+          mode === "premium" ? "premium" : "basic",
+        );
       case "evolution": return data.evolution !== "";
       case "factors": return data.activityLevel !== "";
       case "duration": return data.painDuration !== "";
