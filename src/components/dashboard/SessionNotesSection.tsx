@@ -204,8 +204,10 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
     setEditingNote(note);
     setFormDate(new Date(note.session_date + "T12:00:00"));
     setFormContent(note.content);
+    setFormObservation(note.observation || "");
     setShowForm(true);
   };
+
 
   return (
     <Card>
