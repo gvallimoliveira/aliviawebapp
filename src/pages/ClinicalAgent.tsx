@@ -445,6 +445,58 @@ const ClinicalAgent = () => {
     }
   };
 
+  /** Exports a whole conversation as a compact 2-column Aliv.iA PDF transcript. */
+  const exportThreadPdf = async (thread: Thread) => {
+    setExportingThreadId(thread.id);
+    try {
+      const { data, error } = await supabase
+        .from("agent_messages")
+        .select("role, parts, citations, created_at")
+        .eq("thread_id", thread.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      const rows = (data || []) as any[];
+      if (rows.length === 0) {
+        toast.error("Esta conversa ainda não tem mensagens.");
+        return;
+      }
+
+      const pdfMessages = rows.map((m) => ({
+        role: m.role,
+        created_at: m.created_at,
+        citations: m.citations || [],
+        text: (Array.isArray(m.parts) ? m.parts : [])
+          .map((p: any) => (p?.type === "text" ? p.text || "" : p?.quiz ? "[Quiz gerado no chat]" : ""))
+          .filter(Boolean)
+          .join("\n\n"),
+      }));
+
+      const patient = patients.find((p) => p.id === thread.patient_id) || resolvedLinkedPatient;
+      const { generateAgentChatPdfBlob } = await import("@/utils/generatePdf");
+      const blob = await generateAgentChatPdfBlob({
+        title: thread.title,
+        messages: pdfMessages,
+        professionalName: user?.user_metadata?.full_name || null,
+        patientName: patient?.full_name || null,
+        createdAt: thread.created_at || null,
+      });
+
+      const safeTitle = (thread.title || "conversa").replace(/[^\p{L}\p{N}]+/gu, "_").slice(0, 40);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `AliviA_Conversa_${safeTitle}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF da conversa gerado");
+    } catch (err) {
+      console.error("Agent chat PDF error:", err);
+      toast.error("Não foi possível gerar o PDF da conversa.");
+    } finally {
+      setExportingThreadId(null);
+    }
+  };
+
   const deleteThread = async (id: string) => {
     setThreads(prev => prev.filter(t => t.id !== id));
     if (activeThread?.id === id) {
