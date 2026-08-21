@@ -408,6 +408,7 @@ const Assessment = () => {
               payment_status: "covered",
               anamnesis_data: upgradeData.anamnesisData as any,
               pain_regions: upgradeData.painRegions || [],
+              pain_extent: painExtentValue(upgradeData.painRegions || []),
               pain_score: upgradeData.painScore ?? null,
               patient_name: upgradeData.capturedName || null,
               patient_email: upgradeData.capturedEmail || null,
@@ -565,6 +566,7 @@ const Assessment = () => {
       await updateAssessment(id, {
         anamnesis_data: data as any,
         pain_regions: data.painRegions,
+        pain_extent: painExtentValue(data.painRegions),
         pain_score: data.painScore,
       });
     }

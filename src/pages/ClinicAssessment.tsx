@@ -492,6 +492,7 @@ const ClinicAssessment = () => {
       await updateAssessment(id, {
         anamnesis_data: data as any,
         pain_regions: data.painRegions,
+        pain_extent: painExtentValue(data.painRegions),
         pain_score: data.painScore,
       });
     }
@@ -632,6 +633,7 @@ const ClinicAssessment = () => {
           await updateAssessment(id, {
             anamnesis_data: data as any,
             pain_regions: data.painRegions,
+            pain_extent: painExtentValue(data.painRegions),
             pain_score: data.painScore,
           });
         }
