@@ -146,6 +146,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         anamnesisData,
         painRegions,
         testResults,
+        ...redFlagPdfFields,
         ...branding,
       } as any);
 
