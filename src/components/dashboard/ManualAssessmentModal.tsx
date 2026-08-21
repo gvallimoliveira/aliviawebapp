@@ -1452,6 +1452,23 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
       }
 
+      // Passo B1 — registra a triagem de mecanismo (auditável). Falha aqui
+      // nunca invalida a avaliação já salva.
+      if (savedId && ENABLE_PAIN_MECHANISM && hasMechanismAnswers(mechanismAnswers)) {
+        try {
+          await supabase.from("pain_mechanism_screenings" as any).insert({
+            assessment_id: savedId,
+            created_by: user?.id || null,
+            answers: { ...mechanismAnswers, durationWeeks, regionCount: painRegions.length },
+            csi_score: mechanismAnswers.csiScore,
+            result: row.pain_mechanism ?? null,
+            source: "manual",
+          });
+        } catch {
+          /* silencioso por design */
+        }
+      }
+
       // Persist scheduled specialty questionnaires as pending rows tied to this assessment.
       let createdSpecialtyPending = 0;
       if (savedId) {
