@@ -166,7 +166,8 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
     { id: "ankle_left", label_pt: "Tornozelo (lat. esq.)", label_en: "Ankle (left lat.)",
       d: "M74,380 L124,380 L122,396 L76,396Z" },
     { id: "foot_left", label_pt: "Pé (lat. esq.)", label_en: "Foot (left lat.)",
-      d: "M76,396 L122,396 L132,400 C138,406 140,414 134,420 C128,426 114,428 100,424 C86,420 76,412 74,404Z" },
+      d: "M76,396 L84,391 L96,397 C109,403 102,412 99,413 C93,412 81,414 56,410 C32,410 20,423 16,400 Z" },
+
   ],
 
   // ═══════════════════════════════════════════════════════════════════════════
