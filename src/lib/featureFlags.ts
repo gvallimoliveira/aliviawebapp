@@ -20,4 +20,4 @@ export const ENABLE_PAIN_MECHANISM = true;
 
 // Mapa corporal v2: lista de chips espelhando o SVG, contador e pain extent.
 // Flag independente do mecanismo — permite reverter só o mapa.
-export const ENABLE_PAINMAP_V2 = false;
+export const ENABLE_PAINMAP_V2 = true;

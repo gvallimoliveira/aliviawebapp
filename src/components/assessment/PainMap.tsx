@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { regionsByView, getAllRegions, type View, type ClickableRegion } from "./painMapData";
 import PainMapPathEditor from "./PainMapPathEditor";
+import { ENABLE_PAINMAP_V2 } from "@/lib/featureFlags";
+import { computePainExtent } from "@/lib/painExtent";
 import bodyFront from "@/assets/body-front.jpg";
 import bodyBack from "@/assets/body-back.jpg";
 import bodyLeft from "@/assets/body-left.jpg";
@@ -219,6 +221,56 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
           )}
         </div>
       </div>
+
+      {/* Passo C1 — chips espelhando o SVG da vista atual (clique sincronizado) */}
+      {ENABLE_PAINMAP_V2 && !debugMode && (
+        <div className="mx-auto max-w-md space-y-2">
+          <div className="flex flex-wrap gap-1.5 justify-center">
+            {regions.map((region) => {
+              const isSelected = selectedRegions.includes(region.id);
+              return (
+                <button
+                  key={region.id}
+                  type="button"
+                  onClick={() => toggleRegion(region.id)}
+                  onMouseEnter={() => setHoveredRegion(region.id)}
+                  onMouseLeave={() => setHoveredRegion(null)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                    isSelected
+                      ? "bg-destructive/15 border-destructive/40 text-destructive"
+                      : "bg-muted/40 border-border/60 text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {getLabel(region)}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Passo C2 — contador + extensão estimada de dor */}
+          {(() => {
+            const extent = computePainExtent(selectedRegions);
+            if (extent.regionCount === 0) return null;
+            const bandLabel = {
+              none: { pt: "—", en: "—", es: "—" },
+              localized: { pt: "localizada", en: "localized", es: "localizada" },
+              regional: { pt: "regional", en: "regional", es: "regional" },
+              widespread: { pt: "difusa / múltiplos sítios", en: "widespread / multisite", es: "difusa / múltiples sitios" },
+            }[extent.band];
+            const lang = language === "pt" ? "pt" : language === "es" ? "es" : "en";
+            return (
+              <p className="text-center text-[11px] text-muted-foreground">
+                {lang === "pt"
+                  ? `${extent.regionCount} região(ões) · ${extent.segmentCount} segmento(s) · ~${extent.surfacePercent}% da superfície corporal · `
+                  : lang === "es"
+                  ? `${extent.regionCount} región(es) · ${extent.segmentCount} segmento(s) · ~${extent.surfacePercent}% de la superficie corporal · `
+                  : `${extent.regionCount} region(s) · ${extent.segmentCount} segment(s) · ~${extent.surfacePercent}% of body surface · `}
+                <span className="font-medium text-foreground">{bandLabel[lang]}</span>
+              </p>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Selected regions chips */}
       {selectedRegions.length > 0 && (
