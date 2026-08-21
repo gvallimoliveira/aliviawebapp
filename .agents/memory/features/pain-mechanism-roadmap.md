@@ -15,8 +15,10 @@ Regras do roteiro: só adicionar (nunca substituir), uma flag por bloco, um pass
 - **A4 concluído** — tabela `pain_mechanism_screenings` (RLS: dono + admin; sem acesso anônimo — fluxos anônimos usam só o jsonb em `assessments`).
 - Testes em `src/test/pain-mechanism.test.ts`.
 - **B1 concluído** — `src/components/assessment/PainMechanismScreening.tsx` (descritores, distribuição com sugestão do mapa, 6 itens tri-state, CSI opcional, badge determinístico) inserido no fim da etapa "Intensidade & Tipo" do `ManualAssessmentModal` (sem criar nova etapa, para não reindexar o stepper). Salva `assessments.pain_mechanism` + `pain_extent` só quando houve triagem, e registra auditoria em `pain_mechanism_screenings` (falha silenciosa, nunca invalida o save). Entra no autosave do rascunho.
-- **Pendentes**: B2 (premium), B3 (básica), C1-C4 (mapa v2), D1-D4 (IA), E1-E2 (badge e PDF), F1-F3 (evolução/suporte).
+- **C1 concluído** — `PainMap.tsx`: lista de chips da vista atual espelhando o SVG (clique/hover sincronizados nos dois sentidos). Estrutura de dados inalterada (`painRegions: string[]`).
+- **C2 concluído** — contador + `~% de superfície corporal` + faixa (localizada/regional/difusa) exibidos no mapa, e gravação de `assessments.pain_extent` via `painExtentValue()` nos fluxos premium/básico (`Assessment.tsx`), link profissional, link de clínica e manual PRO. Null quando não há regiões.
+- **Pendentes**: B2 (premium), B3 (básica), C3-C4 (intensidade/sensação por região), D1-D4 (IA), E1-E2 (badge e PDF), F1-F3 (evolução/suporte).
 
 ## Flags
 `ENABLE_PAIN_MECHANISM` — **true** desde B1: liga a triagem/UI de mecanismo (hoje só no fluxo manual PRO).
-`ENABLE_PAINMAP_V2` — **false**: liga chips espelhados + extent no mapa.
+`ENABLE_PAINMAP_V2` — **true** desde C1/C2: liga chips espelhados + contador/extent no mapa. Off volta ao mapa antigo (gravação de `pain_extent` continua, é inofensiva).

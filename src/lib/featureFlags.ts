@@ -19,5 +19,6 @@ export const ENABLE_CHAT_ADDON = false;
 export const ENABLE_PAIN_MECHANISM = true;
 
 // Mapa corporal v2: lista de chips espelhando o SVG, contador e pain extent.
+// Passos C1 (chips espelhados) e C2 (contador + extensão) entregues.
 // Flag independente do mecanismo — permite reverter só o mapa.
 export const ENABLE_PAINMAP_V2 = true;
