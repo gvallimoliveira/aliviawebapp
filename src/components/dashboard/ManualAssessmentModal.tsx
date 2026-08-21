@@ -700,7 +700,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setOccupation(p.occupation ?? "");
     setComplementaryExams(p.complementaryExams ?? "");
     setPainScore(p.painScore ?? 5);
-    setPainType(p.painType ?? "");
+    setPainTypes(
+      Array.isArray((p as any).painTypes) && (p as any).painTypes.length > 0
+        ? ((p as any).painTypes as string[])
+        : p.painType
+          ? [p.painType]
+          : [],
+    );
     setPainRegions(p.painRegions ?? []);
     setPainScoresPerRegion(p.painScoresPerRegion ?? {});
     setPainTypesPerRegion((p as any).painTypesPerRegion ?? {});
