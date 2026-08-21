@@ -14,6 +14,13 @@ import PainMap from "./PainMap";
 import { formatCpf } from "@/utils/masks";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
+import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
+import PainMechanismLite, {
+  createEmptyLiteAnswers,
+  isLiteScreeningComplete,
+  sanitizeLiteAnswers,
+  type LiteMechanismAnswers,
+} from "./PainMechanismLite";
 
 export interface AnamnesisData {
   chiefComplaint: string; // deprecated, kept for backward compat
@@ -55,6 +62,8 @@ export interface AnamnesisData {
   // Patient identification (pre-assessment)
   cpf?: string;
   birthDate?: string;
+  /** Passos B2/B3 — triagem leiga de mecanismo de dor. */
+  painMechanism?: LiteMechanismAnswers;
 }
 
 interface AnamnesisFormProps {
@@ -139,6 +148,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     painScoresPerRegion: {},
     cpf: "",
     birthDate: "",
+    painMechanism: createEmptyLiteAnswers(),
   });
 
   // ── Autosave (local + nuvem) ─────────────────────────────────────────────
@@ -439,7 +449,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
   };
 
   // Define step IDs for clarity
-  type StepId = "complaint" | "onset" | "surgery" | "painmap" | "region_detail" | "migraine_screening" | "sex_age" | "paintype" | "evolution" | "factors" | "duration" | "pain_frequency" | "gym" | "painscore";
+  type StepId = "complaint" | "onset" | "surgery" | "painmap" | "region_detail" | "migraine_screening" | "sex_age" | "paintype" | "pain_mechanism" | "evolution" | "factors" | "duration" | "pain_frequency" | "gym" | "painscore";
 
   // Check if migraine screening should show
   const needsMigraineScreening = () => {
@@ -472,7 +482,10 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       base.push("migraine_screening");
     }
     base.push("sex_age");
-    base.push("paintype", "evolution", "factors", "duration", "pain_frequency", "gym", "painscore");
+    base.push("paintype");
+    // Passos B2/B3 — triagem leiga de mecanismo de dor logo após o tipo de dor.
+    if (ENABLE_PAIN_MECHANISM) base.push("pain_mechanism");
+    base.push("evolution", "factors", "duration", "pain_frequency", "gym", "painscore");
     return base.filter((id) => allowGroup(groupOf(id)));
   };
 
@@ -764,6 +777,17 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
               ))}
             </div>
           </div>
+        );
+      case "pain_mechanism":
+        return (
+          <PainMechanismLite
+            value={data.painMechanism ?? createEmptyLiteAnswers()}
+            onChange={(next) => setData({ ...data, painMechanism: next })}
+            painRegions={data.painRegions}
+            painTypes={data.painTypes}
+            variant={mode === "premium" ? "premium" : "basic"}
+            language={language}
+          />
         );
       case "evolution":
         return (
@@ -1074,6 +1098,11 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "migraine_screening": return !!data.hasPhotophobia && !!data.hasNausea && !!data.headacheCrisisFrequency;
       case "sex_age": return data.sex !== "" && data.ageRange !== "";
       case "paintype": return data.painTypes.length > 0;
+      case "pain_mechanism":
+        return isLiteScreeningComplete(
+          sanitizeLiteAnswers(data.painMechanism),
+          mode === "premium" ? "premium" : "basic",
+        );
       case "evolution": return data.evolution !== "";
       case "factors": return data.activityLevel !== "";
       case "duration": return data.painDuration !== "";

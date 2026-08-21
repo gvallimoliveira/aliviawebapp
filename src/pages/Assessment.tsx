@@ -30,6 +30,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { saveDraft, getDraft, clearDraft } from "@/lib/sessionPersistence";
 import { buildRedFlagPayload, type RedFlagPayload } from "@/lib/redFlags";
 import { painExtentValue } from "@/lib/painExtent";
+import { buildMechanismPayload } from "@/components/assessment/PainMechanismLite";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "final_notes" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
@@ -569,6 +570,7 @@ const Assessment = () => {
         pain_regions: data.painRegions,
         pain_extent: painExtentValue(data.painRegions),
         pain_score: data.painScore,
+        ...buildMechanismPayload(data),
       });
     }
     if (mode === "premium") {
