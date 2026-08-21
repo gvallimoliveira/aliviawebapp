@@ -977,30 +977,33 @@ export default function StrengthTable({
               key={i}
               className="rounded-xl border border-border bg-background/50 overflow-hidden"
             >
-              {/* Collapsed header — movement name + quick summary */}
+              {/* Collapsed header — movement name + quick summary centered */}
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => toggleRow(i, !open)}
                   aria-expanded={open}
-                  className="flex flex-1 min-w-0 items-center gap-2 px-2.5 py-2.5 text-left hover:bg-muted/40 transition-colors"
+                  className="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2 px-2.5 py-2.5 text-left hover:bg-muted/40 transition-colors"
                 >
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-                      open && "rotate-180",
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "flex-1 min-w-0 truncate text-sm font-medium",
-                      row.movement.trim() ? "text-foreground" : "text-muted-foreground",
-                    )}
-                  >
-                    {row.movement.trim() || s(lang, "untitledMovement")}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                        open && "rotate-180",
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "flex-1 min-w-0 truncate text-sm font-medium",
+                        row.movement.trim() ? "text-foreground" : "text-muted-foreground",
+                      )}
+                    >
+                      {row.movement.trim() || s(lang, "untitledMovement")}
+                    </span>
                   </span>
+
                   {!open && (
-                    <span className="flex shrink-0 items-center gap-1">
+                    <span className="flex items-center justify-center gap-1">
                       {leftStats.best != null && (
                         <Badge variant="secondary" className="h-5 px-1.5 font-mono text-[10px]">
                           {s(lang, "initialLeft")} {leftStats.best}
@@ -1021,6 +1024,8 @@ export default function StrengthTable({
                       )}
                     </span>
                   )}
+
+                  <span />
                 </button>
                 <Button
                   type="button"
