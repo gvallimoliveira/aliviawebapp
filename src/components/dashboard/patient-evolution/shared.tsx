@@ -17,15 +17,19 @@ export function normalizeTestResults(tr: any): any[] {
 
 const ASSESSMENT_TREATMENT_FIELDS = "id, anamnesis_data, test_results, diagnosis, treatment_plan, payment_status";
 
-export const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, clinicMode, onUnlocked }: {
+export const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, clinicMode, compact, conditionLabel, onUnlocked }: {
   assessmentId: string;
   lifetimeTreatment?: boolean;
   clinicMode?: boolean;
+  /** Linha discreta (dentro do card de hipótese) em vez do bloco promocional. */
+  compact?: boolean;
+  conditionLabel?: string | null;
   onUnlocked: (treatmentPlan: any) => void;
 }) => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+
 
   const handleUnlock = async () => {
     setLoading(true);
