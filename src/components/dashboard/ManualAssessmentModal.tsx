@@ -1335,6 +1335,30 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           return vals.length > 0 ? Math.max(...vals) : painScore;
         })(),
         red_flags: redFlagsChecked.length > 0 ? { detected: redFlagsChecked } : null,
+        // Passo B1 — mecanismo de dor (determinístico) + extensão de dor.
+        // Só grava quando houve triagem; avaliações sem triagem seguem nulas.
+        ...(ENABLE_PAIN_MECHANISM && hasMechanismAnswers(mechanismAnswers)
+          ? {
+              pain_mechanism: toStoredMechanism(
+                classifyMechanism({
+                  descriptors: mechanismAnswers.descriptors,
+                  distribution: mechanismAnswers.distribution,
+                  proportionateToStimulus: mechanismAnswers.proportionateToStimulus,
+                  spontaneousPain: mechanismAnswers.spontaneousPain,
+                  multisensoryHypersensitivity: mechanismAnswers.multisensoryHypersensitivity,
+                  nonRestorativeSleep: mechanismAnswers.nonRestorativeSleep,
+                  persistentFatigue: mechanismAnswers.persistentFatigue,
+                  objectiveNeuroSigns: mechanismAnswers.objectiveNeuroSigns,
+                  durationWeeks,
+                  csiScore: mechanismAnswers.csiScore,
+                  regionCount: painRegions.length,
+                }),
+                "rules",
+                mechanismAnswers.csiScore,
+              ),
+              pain_extent: computePainExtent(painRegions).surfacePercent,
+            }
+          : {}),
         // test_results MUST be an array of questionnaire results — that's what AssessmentView,
         // generatePdf and clinical-impression all expect. Free-text functional observations
         // already live inside anamnesis_data.functionalTests.
