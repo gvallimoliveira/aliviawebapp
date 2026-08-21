@@ -566,7 +566,8 @@ function renderRedFlagsAuditTable(
   const yesLabel = isPt ? "SIM" : "YES";
   const noLabel = isPt ? "NÃO" : "NO";
 
-  y = checkPage(doc, y, 30);
+  // Keep the title together with the subtitle and the first rows
+  y = checkPage(doc, y, 58);
   y += 4;
   y = renderSectionTitle(doc, y, title, COLORS.foreground);
 
@@ -972,7 +973,7 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
   }
   if (anamnesis.painScoreMode === "per_region" && anamnesis.painScoresPerRegion && Object.keys(anamnesis.painScoresPerRegion).length > 0) {
     const regionScores = Object.entries(anamnesis.painScoresPerRegion)
-      .map(([key, score]) => `${translateKey(key, isPt)}: ${score}/10`)
+      .map(([key, score]) => `${painRegionLabel(key, isPt)}: ${score}/10`)
       .join(", ");
     fields.push({ label: isPt ? "Dor por Regiao" : "Pain by Region", value: regionScores });
   }
@@ -1744,6 +1745,15 @@ function renderVasBar(doc: jsPDF, barX: number, y: number, barW: number, barH: n
   return y;
 }
 
+/** Human label for a pain-map region id (falls back to i18n key translation). */
+function painRegionLabel(id: string, isPt: boolean): string {
+  for (const view of Object.values(regionsByView)) {
+    const r = view.find((reg: any) => reg.id === id);
+    if (r) return isPt ? r.label_pt : r.label_en;
+  }
+  return translateKey(id, isPt);
+}
+
 function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: number | undefined, anamnesisData?: AnamnesisData | any): number {
   const hasPerRegion = anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0;
   const score = painScore ?? anamnesisData?.painScore;
@@ -1761,7 +1771,7 @@ function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: numbe
 
     for (const [key, regionScore] of entries) {
       y = checkPage(doc, y, 26);
-      const label = `${translateKey(key, isPt)} — ${regionScore}/10`;
+      const label = `${painRegionLabel(key, isPt)} — ${regionScore}/10`;
       y = renderVasBar(doc, barX, y, barW, barH, regionScore, label, isPt);
       y += 2;
     }
@@ -1846,7 +1856,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     const pLabel = isPt ? "Paciente: " : "Patient: ";
     doc.text(pLabel, MARGIN + 6, y + 9);
     doc.setFont("Inter", "normal");
-    doc.text(nameValue, MARGIN + 6 + doc.getTextWidth(pLabel), y + 9);
+    doc.text(nameValue, MARGIN + 6 + doc.getTextWidth(pLabel) + 1.5, y + 9);
     y += 20;
   }
 
