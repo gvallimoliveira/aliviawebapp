@@ -14,8 +14,9 @@ Regras do roteiro: só adicionar (nunca substituir), uma flag por bloco, um pass
 - **A3 concluído** — `assessments.pain_mechanism jsonb` e `assessments.pain_extent numeric`, ambos nullable.
 - **A4 concluído** — tabela `pain_mechanism_screenings` (RLS: dono + admin; sem acesso anônimo — fluxos anônimos usam só o jsonb em `assessments`).
 - Testes em `src/test/pain-mechanism.test.ts`.
-- **Pendentes**: B1 (triagem no `ManualAssessmentModal`), B2 (premium), B3 (básica), C1-C4 (mapa v2), D1-D4 (IA), E1-E2 (badge e PDF), F1-F3 (evolução/suporte).
+- **B1 concluído** — `src/components/assessment/PainMechanismScreening.tsx` (descritores, distribuição com sugestão do mapa, 6 itens tri-state, CSI opcional, badge determinístico) inserido no fim da etapa "Intensidade & Tipo" do `ManualAssessmentModal` (sem criar nova etapa, para não reindexar o stepper). Salva `assessments.pain_mechanism` + `pain_extent` só quando houve triagem, e registra auditoria em `pain_mechanism_screenings` (falha silenciosa, nunca invalida o save). Entra no autosave do rascunho.
+- **Pendentes**: B2 (premium), B3 (básica), C1-C4 (mapa v2), D1-D4 (IA), E1-E2 (badge e PDF), F1-F3 (evolução/suporte).
 
-## Flags (ambas `false` hoje)
-`ENABLE_PAIN_MECHANISM` — liga a triagem/UI de mecanismo.
-`ENABLE_PAINMAP_V2` — liga chips espelhados + extent no mapa.
+## Flags
+`ENABLE_PAIN_MECHANISM` — **true** desde B1: liga a triagem/UI de mecanismo (hoje só no fluxo manual PRO).
+`ENABLE_PAINMAP_V2` — **false**: liga chips espelhados + extent no mapa.
