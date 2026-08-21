@@ -3284,7 +3284,7 @@ export async function generateAgentChatPdfBlob(options: AgentChatPdfOptions): Pr
     doc.text(
       truncateToWidth(
         doc,
-        "Aliv.iA — Registro de conversa do Agente de Raciocínio Clínico. Conteúdo de apoio ao raciocínio clínico; não substitui avaliação nem constitui prescrição automática.",
+        "Aliv.iA — Registro de conversa do Agente de Raciocínio Clínico. Apoio ao raciocínio clínico; não substitui avaliação.",
         CONTENT_WIDTH - 16,
       ),
       MARGIN,
