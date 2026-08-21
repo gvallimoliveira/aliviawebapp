@@ -965,9 +965,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 {/* Day cells */}
                 {days.map((day) => {
                   const dateStr = format(day, "yyyy-MM-dd");
-                  const filteredApts = serviceFilter === "all"
-                    ? appointments.filter((a) => a.appointment_date === dateStr)
-                    : appointments.filter((a) => a.appointment_date === dateStr && (a.service_type || "fisioterapia") === serviceFilter);
+                  const filteredApts = appointments.filter(
+                    (a) => a.appointment_date === dateStr && isServiceVisible(a.service_type),
+                  );
                   const cellApts = getAptsForSlot(filteredApts, slot);
                   const isOver = dropTarget?.date === dateStr && dropTarget?.hour === slot;
 
