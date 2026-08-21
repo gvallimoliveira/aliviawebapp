@@ -143,17 +143,18 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
     { id: "shoulder_left", label_pt: "Ombro Esquerdo (lat.)", label_en: "Left Shoulder (lat.)",
       d: "M103,74 L115,82 L118,94 L121,111 L96,115 L67,118 L72,90 L77,78 Z" },
     { id: "arm_left", label_pt: "Braço (lat. esq.)", label_en: "Arm (left lat.)",
-      d: "M121,146 L154,139 L155,164 L116,172 Z" },
+      d: "M87,118 L119,112 L143,136 L116,154 Z" },
     { id: "elbow_left", label_pt: "Cotovelo (lat. esq.)", label_en: "Elbow (left lat.)",
-      d: "M150,140 L168,136 L172,160 L154,164Z" },
+      d: "M126,148 L150,144 L157,155 L154,164 Z" },
     { id: "forearm_left", label_pt: "Antebraço (lat. esq.)", label_en: "Forearm (left lat.)",
       d: "M121,166 L153,160 L156,213 L122,214 Z" },
     { id: "hand_left", label_pt: "Mão (lat. esq.)", label_en: "Hand (left lat.)",
       d: "M119,214 L178,214 L182,234 C184,244 182,250 178,254 C174,254 168,254 122,249 Z" },
     { id: "thoracic_left", label_pt: "Torácica (lat. esq.)", label_en: "Thoracic (left)",
-      d: "M121,109 L141,131 L121,153 L80,129 Z" },
+      d: "M93,130 L95,152 L69,159 L57,128 Z" },
     { id: "lumbar_left", label_pt: "Lombar (lat. esq.)", label_en: "Lumbar (left)",
-      d: "M56,120 L81,120 L106,149 L66,155 Z" },
+      d: "M63,159 L91,156 L98,183 L60,184 Z" },
+
     { id: "hip_left", label_pt: "Quadril (lat. esq.)", label_en: "Hip (left lat.)",
       d: "M19,185 L94,186 L105,230 L26,223 Z" },
     { id: "thigh_left", label_pt: "Coxa (lat. esq.)", label_en: "Thigh (left lat.)",
@@ -165,7 +166,8 @@ export const regionsByView: Record<View, ClickableRegion[]> = {
     { id: "ankle_left", label_pt: "Tornozelo (lat. esq.)", label_en: "Ankle (left lat.)",
       d: "M74,380 L124,380 L122,396 L76,396Z" },
     { id: "foot_left", label_pt: "Pé (lat. esq.)", label_en: "Foot (left lat.)",
-      d: "M76,396 L122,396 L132,400 C138,406 140,414 134,420 C128,426 114,428 100,424 C86,420 76,412 74,404Z" },
+      d: "M76,396 L84,391 L96,397 C109,403 102,412 99,413 C93,412 81,414 56,410 C32,410 20,423 16,400 Z" },
+
   ],
 
   // ═══════════════════════════════════════════════════════════════════════════
