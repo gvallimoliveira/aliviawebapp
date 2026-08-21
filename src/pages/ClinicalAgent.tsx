@@ -143,6 +143,7 @@ const ClinicalAgent = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [generatingHep, setGeneratingHep] = useState(false);
+  const [exportingThreadId, setExportingThreadId] = useState<string | null>(null);
   const [hepLevel, setHepLevel] = useState<"auto" | "beginner" | "intermediate" | "advanced">("auto");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
