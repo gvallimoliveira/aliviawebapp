@@ -34,6 +34,15 @@ import {
   saveManualAssessmentSession,
   clearManualAssessmentSession,
 } from "@/lib/manualAssessmentSession";
+import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
+import PainMechanismScreening, {
+  createEmptyMechanismAnswers,
+  sanitizeMechanismAnswers,
+  hasMechanismAnswers,
+  type MechanismAnswers,
+} from "@/components/assessment/PainMechanismScreening";
+import { classifyMechanism, toStoredMechanism } from "@/lib/painMechanism";
+import { computePainExtent, suggestDistribution } from "@/lib/painExtent";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -255,6 +264,25 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Observações clínicas adicionais (campo livre exibido após as red flags).
   // Persistido em anamnesis_data.additionalClinicalNotes e usado pela IA.
   const [additionalClinicalNotes, setAdditionalClinicalNotes] = useState("");
+
+  // Passo B1 — triagem de mecanismo de dor (flag ENABLE_PAIN_MECHANISM).
+  const [mechanismAnswers, setMechanismAnswers] = useState<MechanismAnswers>(
+    createEmptyMechanismAnswers,
+  );
+  // Duração em semanas inferida do texto livre ("6 semanas", "3 meses", "1 ano").
+  const durationWeeks = (() => {
+    const t = (duration || "").toLowerCase();
+    const n = parseFloat(t.replace(",", ".").replace(/[^\d.,]/g, " ").trim().split(/\s+/)[0]);
+    if (!Number.isFinite(n)) return null;
+    if (/ano|year/.test(t)) return Math.round(n * 52);
+    if (/m[êe]s|month/.test(t)) return Math.round(n * 4.3);
+    if (/semana|week/.test(t)) return Math.round(n);
+    if (/dia|day/.test(t)) return Math.round(n / 7);
+    return null;
+  })();
+  const suggestedDistribution = ENABLE_PAIN_MECHANISM
+    ? suggestDistribution(painRegions)
+    : "unknown";
 
   // Questionários (mesmo fluxo da avaliação premium/link)
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
@@ -603,7 +631,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
     painScore, painType, painRegions, painScoresPerRegion, painTypesPerRegion, painRegionRefinements,
-    redFlagsChecked, additionalClinicalNotes, questionnaireResults, deferQuestionnaires,
+    redFlagsChecked, additionalClinicalNotes, mechanismAnswers, questionnaireResults, deferQuestionnaires,
     functionalTests, romTable, strengthTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
   };
@@ -641,6 +669,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainRegionRefinements((p as any).painRegionRefinements ?? {});
     setRedFlagsChecked(p.redFlagsChecked ?? []);
     setAdditionalClinicalNotes((p as any).additionalClinicalNotes ?? "");
+    setMechanismAnswers(sanitizeMechanismAnswers((p as any).mechanismAnswers));
     setQuestionnaireResults(p.questionnaireResults ?? []);
     setDeferQuestionnaires(Boolean((p as any).deferQuestionnaires));
     setFunctionalTests(p.functionalTests ?? "");
@@ -1306,6 +1335,30 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           return vals.length > 0 ? Math.max(...vals) : painScore;
         })(),
         red_flags: redFlagsChecked.length > 0 ? { detected: redFlagsChecked } : null,
+        // Passo B1 — mecanismo de dor (determinístico) + extensão de dor.
+        // Só grava quando houve triagem; avaliações sem triagem seguem nulas.
+        ...(ENABLE_PAIN_MECHANISM && hasMechanismAnswers(mechanismAnswers)
+          ? {
+              pain_mechanism: toStoredMechanism(
+                classifyMechanism({
+                  descriptors: mechanismAnswers.descriptors,
+                  distribution: mechanismAnswers.distribution,
+                  proportionateToStimulus: mechanismAnswers.proportionateToStimulus,
+                  spontaneousPain: mechanismAnswers.spontaneousPain,
+                  multisensoryHypersensitivity: mechanismAnswers.multisensoryHypersensitivity,
+                  nonRestorativeSleep: mechanismAnswers.nonRestorativeSleep,
+                  persistentFatigue: mechanismAnswers.persistentFatigue,
+                  objectiveNeuroSigns: mechanismAnswers.objectiveNeuroSigns,
+                  durationWeeks,
+                  csiScore: mechanismAnswers.csiScore,
+                  regionCount: painRegions.length,
+                }),
+                "rules",
+                mechanismAnswers.csiScore,
+              ),
+              pain_extent: computePainExtent(painRegions).surfacePercent,
+            }
+          : {}),
         // test_results MUST be an array of questionnaire results — that's what AssessmentView,
         // generatePdf and clinical-impression all expect. Free-text functional observations
         // already live inside anamnesis_data.functionalTests.
@@ -1397,6 +1450,23 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           await q;
         }
 
+      }
+
+      // Passo B1 — registra a triagem de mecanismo (auditável). Falha aqui
+      // nunca invalida a avaliação já salva.
+      if (savedId && ENABLE_PAIN_MECHANISM && hasMechanismAnswers(mechanismAnswers)) {
+        try {
+          await supabase.from("pain_mechanism_screenings" as any).insert({
+            assessment_id: savedId,
+            created_by: user?.id || null,
+            answers: { ...mechanismAnswers, durationWeeks, regionCount: painRegions.length },
+            csi_score: mechanismAnswers.csiScore,
+            result: row.pain_mechanism ?? null,
+            source: "manual",
+          });
+        } catch {
+          /* silencioso por design */
+        }
       }
 
       // Persist scheduled specialty questionnaires as pending rows tied to this assessment.
@@ -1498,6 +1568,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
     setPainRegions([]); setPainScoresPerRegion({}); setPainTypesPerRegion({});
     setRedFlagsChecked([]); setAdditionalClinicalNotes("");
+    setMechanismAnswers(createEmptyMechanismAnswers());
     setQuestionnaireResults([]); setDeferQuestionnaires(false);
     setPendingShareUrl(null); setPendingShareOpen(false); setPendingCount(null);
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
@@ -2107,7 +2178,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </div>
                   </div>
                 )}
+
+                {/* Passo B1 — triagem de mecanismo de dor (atrás de flag) */}
+                {ENABLE_PAIN_MECHANISM && (
+                  <PainMechanismScreening
+                    value={mechanismAnswers}
+                    onChange={setMechanismAnswers}
+                    regionCount={painRegions.length}
+                    durationWeeks={durationWeeks}
+                    suggestedDistribution={suggestedDistribution}
+                    isPt={isPt}
+                    disabled={demoMode}
+                  />
+                )}
               </div>
+
             )}
 
 

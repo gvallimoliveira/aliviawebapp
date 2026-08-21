@@ -14,9 +14,9 @@ export const ENABLE_CLINICAL_AGENT = true;
 export const ENABLE_CHAT_ADDON = false;
 
 // Mecanismo de dor (nociceptivo / neuropático / nociplástico) — roteiro segmentado.
-// Passos A1-A4 (código puro + colunas/tabela) já entregues e inertes.
-// Virar true apenas quando o passo B1 (triagem no fluxo manual PRO) for implementado.
-export const ENABLE_PAIN_MECHANISM = false;
+// Passos A1-A4 (fundação) e B1 (triagem no fluxo manual PRO) entregues.
+// Ligada: a triagem aparece na etapa "Intensidade & Tipo" do fluxo manual.
+export const ENABLE_PAIN_MECHANISM = true;
 
 // Mapa corporal v2: lista de chips espelhando o SVG, contador e pain extent.
 // Flag independente do mecanismo — permite reverter só o mapa.
