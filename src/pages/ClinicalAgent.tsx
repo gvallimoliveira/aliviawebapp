@@ -31,6 +31,7 @@ type Thread = {
   patient_id: string | null;
   archived: boolean;
   updated_at: string;
+  created_at?: string;
   mentor_mode?: boolean;
 };
 
