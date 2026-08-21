@@ -166,3 +166,13 @@ export function suggestDistribution(
   if (extent.band === "regional") return "regional";
   return "localized";
 }
+
+/**
+ * Passo C2 — valor pronto para gravar em `assessments.pain_extent`.
+ * Retorna null quando não há regiões marcadas (mantém a coluna nula,
+ * ou seja, "não avaliado", em vez de gravar 0).
+ */
+export function painExtentValue(regions: string[] | null | undefined): number | null {
+  const extent = computePainExtent(regions);
+  return extent.regionCount > 0 ? extent.surfacePercent : null;
+}
