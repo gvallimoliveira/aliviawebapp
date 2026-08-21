@@ -17,15 +17,19 @@ export function normalizeTestResults(tr: any): any[] {
 
 const ASSESSMENT_TREATMENT_FIELDS = "id, anamnesis_data, test_results, diagnosis, treatment_plan, payment_status";
 
-export const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, clinicMode, onUnlocked }: {
+export const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, clinicMode, compact, conditionLabel, onUnlocked }: {
   assessmentId: string;
   lifetimeTreatment?: boolean;
   clinicMode?: boolean;
+  /** Linha discreta (dentro do card de hipótese) em vez do bloco promocional. */
+  compact?: boolean;
+  conditionLabel?: string | null;
   onUnlocked: (treatmentPlan: any) => void;
 }) => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+
 
   const handleUnlock = async () => {
     setLoading(true);
@@ -72,6 +76,22 @@ export const TreatmentUnlockCTA = ({ assessmentId, lifetimeTreatment, clinicMode
       setLoading(false);
     }
   };
+
+  if (compact) {
+    const priceSuffix = clinicMode || lifetimeTreatment ? "" : ` — ${PRO_TREATMENT_PRICE_FORMATTED}`;
+    return (
+      <div className="pt-2 mt-2 border-t border-border/60 flex flex-wrap items-center gap-2">
+        <p className="text-xs text-muted-foreground flex-1 min-w-[180px]">
+          Gerar plano de tratamento{conditionLabel ? <> para <span className="italic text-foreground">{conditionLabel}</span></> : null}?
+        </p>
+        <Button onClick={handleUnlock} disabled={loading} size="sm" variant="outline" className="h-7 gap-1.5 text-xs rounded-lg">
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          {loading ? "Gerando…" : `Gerar plano${priceSuffix}`}
+        </Button>
+      </div>
+    );
+  }
+
 
   return (
     <div className="border-t border-primary/20 pt-3">

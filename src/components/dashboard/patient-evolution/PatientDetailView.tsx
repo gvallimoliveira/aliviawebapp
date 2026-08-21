@@ -51,9 +51,11 @@ const SUBSCALE_COLORS = [
 interface DiagnosticHypothesisBlockProps {
   assessment: any;
   isDemo?: boolean;
+  /** Convite discreto de plano de tratamento renderizado dentro do card. */
+  treatmentInvite?: React.ReactNode;
 }
 
-const DiagnosticHypothesisBlock = ({ assessment, isDemo }: DiagnosticHypothesisBlockProps) => {
+const DiagnosticHypothesisBlock = ({ assessment, isDemo, treatmentInvite }: DiagnosticHypothesisBlockProps) => {
   const canEdit = propsUseCanEditFinalHypothesis(assessment);
   const [localFinal, setLocalFinal] = React.useState<string | null>(assessment.final_hypothesis ?? null);
   const [localFinalAt, setLocalFinalAt] = React.useState<string | null>(assessment.final_hypothesis_at ?? null);
@@ -73,45 +75,46 @@ const DiagnosticHypothesisBlock = ({ assessment, isDemo }: DiagnosticHypothesisB
     : null;
 
   return (
-    <>
-      <Card className="border-primary/20">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Stethoscope className="h-4 w-4 text-primary" />
-            Hipótese Diagnóstica
-            {hasOverride && <Badge variant="secondary" className="text-[10px] ml-1">Revisada pelo fisioterapeuta</Badge>}
-          </CardTitle>
-          {assessmentDate && (
-            <CardDescription className="text-xs">Caso atual — avaliação de {assessmentDate}</CardDescription>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm font-semibold text-foreground leading-relaxed">{displayed}</p>
-          {hasOverride && formattedDate && <p className="text-[11px] text-muted-foreground">Atualizada em {formattedDate}</p>}
-          {!hasOverride && assessment.diagnosis?.confidence === "high" && <Badge variant="outline" className="text-[10px] capitalize">Confiança: {assessment.diagnosis.confidence}</Badge>}
-          {assessment.diagnosis?.reasoning && <p className="text-xs text-muted-foreground leading-relaxed mt-1">{assessment.diagnosis.reasoning}</p>}
-          {hasOverride && aiHypothesis && (
-            <div className="mt-2 pt-2 border-t border-border/60">
-              <p className="text-[11px] text-muted-foreground"><Sparkles className="inline h-3 w-3 mr-1 -mt-0.5" />Sugestão original da IA: <span className="italic">{aiHypothesis}</span></p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      {canEdit && !isDemo && (
-        <FinalHypothesisEditor
-          assessmentId={assessment.id}
-          aiHypothesis={aiHypothesis}
-          finalHypothesis={localFinal}
-          finalHypothesisAt={localFinalAt}
-          onSaved={(newValue) => {
-            setLocalFinal(newValue);
-            setLocalFinalAt(newValue ? new Date().toISOString() : null);
-          }}
-        />
-      )}
-    </>
+    <Card className="border-primary/20">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Stethoscope className="h-4 w-4 text-primary" />
+          Hipótese Diagnóstica
+          {hasOverride && <Badge variant="secondary" className="text-[10px] ml-1">Revisada pelo fisioterapeuta</Badge>}
+        </CardTitle>
+        {assessmentDate && (
+          <CardDescription className="text-xs">Caso atual — avaliação de {assessmentDate}</CardDescription>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <p className="text-sm font-semibold text-foreground leading-relaxed">{displayed}</p>
+        {hasOverride && formattedDate && <p className="text-[11px] text-muted-foreground">Atualizada em {formattedDate}</p>}
+        {!hasOverride && assessment.diagnosis?.confidence === "high" && <Badge variant="outline" className="text-[10px] capitalize">Confiança: {assessment.diagnosis.confidence}</Badge>}
+        {assessment.diagnosis?.reasoning && <p className="text-xs text-muted-foreground leading-relaxed mt-1">{assessment.diagnosis.reasoning}</p>}
+        {hasOverride && aiHypothesis && (
+          <div className="mt-2 pt-2 border-t border-border/60">
+            <p className="text-[11px] text-muted-foreground"><Sparkles className="inline h-3 w-3 mr-1 -mt-0.5" />Sugestão original da IA: <span className="italic">{aiHypothesis}</span></p>
+          </div>
+        )}
+        {canEdit && !isDemo && (
+          <FinalHypothesisEditor
+            assessmentId={assessment.id}
+            aiHypothesis={aiHypothesis}
+            finalHypothesis={localFinal}
+            finalHypothesisAt={localFinalAt}
+            variant="inline"
+            onSaved={(newValue) => {
+              setLocalFinal(newValue);
+              setLocalFinalAt(newValue ? new Date().toISOString() : null);
+            }}
+          />
+        )}
+        {treatmentInvite}
+      </CardContent>
+    </Card>
   );
 };
+
 
 interface GenerateHypothesisCardProps {
   assessment: any;
@@ -879,20 +882,123 @@ export default function PatientDetailView(props: any) {
         const target = latestWithDiagnosis || latestAssessment;
         if (!target) return null;
         const hasHypothesis = !!target.diagnosis?.hypothesis;
+
+        // Convite discreto de plano de tratamento — vive dentro do card de hipótese
+        const treatmentInvite = (() => {
+          const a = latestWithDiagnosis;
+          if (!a) return null;
+          const isPaidPending = !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating");
+          if (a.treatment_plan) {
+            return (
+              <div className="pt-2 mt-2 border-t border-border/60 flex flex-wrap items-center gap-2">
+                <p className="text-xs text-emerald-700 dark:text-emerald-400 flex-1 min-w-[180px] flex items-center gap-1.5">
+                  <FileCheck className="h-3.5 w-3.5" />
+                  {t("pro.treatment_unlocked")}
+                </p>
+                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => navigate(buildAssessmentViewUrl(a.id, props.selectedEmail))}>
+                  {t("pro.view_treatment")}<ChevronRight className="h-3 w-3" />
+                </Button>
+              </div>
+            );
+          }
+          if (isPaidPending) {
+            return <TreatmentPaidRetry assessmentId={a.id} onGenerated={(treatmentPlan) => { a.treatment_plan = treatmentPlan; setNotes((prev: any) => ({ ...prev })); }} />;
+          }
+          if (!a.diagnosis) return null;
+          const label = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || null;
+          return (
+            <TreatmentUnlockCTA
+              assessmentId={a.id}
+              lifetimeTreatment={lifetimeTreatment}
+              clinicMode={!!clinicId}
+              compact
+              conditionLabel={label}
+              onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); }}
+            />
+          );
+        })();
+
         return (
           <>
-            {hasHypothesis ? (
-              <DiagnosticHypothesisBlock assessment={target} isDemo={isDemo} />
-            ) : (
-              <GenerateHypothesisCard
-                assessment={target}
-                isDemo={isDemo}
-                onGenerated={(dx) => {
-                  target.diagnosis = dx;
-                  setNotes?.((prev: any) => ({ ...prev }));
-                }}
-              />
-            )}
+            <div ref={treatmentSectionRef} id="treatment-unlock-section" className={`scroll-mt-24 transition-shadow rounded-xl ${treatmentHighlight ? "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse" : ""}`}>
+              {hasHypothesis ? (
+                <DiagnosticHypothesisBlock assessment={target} isDemo={isDemo} treatmentInvite={treatmentInvite} />
+              ) : (
+                <GenerateHypothesisCard
+                  assessment={target}
+                  isDemo={isDemo}
+                  onGenerated={(dx) => {
+                    target.diagnosis = dx;
+                    setNotes?.((prev: any) => ({ ...prev }));
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Outras condições sem plano — link discreto e colapsável */}
+            {(() => {
+              const allPending = getPendingTreatmentAssessments(patient.assessments);
+              const rawOthers = latestWithDiagnosis ? allPending.filter((a: any) => a.id !== latestWithDiagnosis.id) : allPending;
+              const normRegions = (a: any): string[] => Array.isArray(a.pain_regions) ? [...a.pain_regions].map((r: any) => String(r).toLowerCase().trim()).filter(Boolean).sort() : [];
+              const latestRegions = new Set(latestWithDiagnosis ? normRegions(latestWithDiagnosis) : []);
+              const sortedDesc = [...rawOthers].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+              const seenRegionKeys = new Set<string>();
+              const others: any[] = [];
+              for (const a of sortedDesc) {
+                const regions = normRegions(a);
+                if (latestRegions.size > 0 && regions.some((r) => latestRegions.has(r))) continue;
+                const key = regions.length > 0 ? regions.join("|") : "__no_region__";
+                if (seenRegionKeys.has(key)) continue;
+                seenRegionKeys.add(key);
+                others.push(a);
+              }
+              if (others.length === 0) return null;
+              const isClinic = !!clinicId;
+              const headerLabel = language === "pt"
+                ? `Outras condições sem plano — ${others.length}`
+                : language === "es"
+                  ? `Otras condiciones sin plan — ${others.length}`
+                  : `Other conditions without a plan — ${others.length}`;
+              return (
+                <Card className="border-border/60">
+                  <CardContent className="py-2 px-4">
+                    <CollapsibleSection
+                      storageKey={`patient:${patient.groupKey || patient.email}:other-conditions`}
+                      header={<div className="text-xs text-muted-foreground">{headerLabel}</div>}
+                    >
+                      <div className="space-y-2 pt-2">
+                        {others.map((a: any) => {
+                          const dateStr = new Date(a.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "short", year: "numeric" });
+                          const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—";
+                          const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0 ? a.pain_regions.join(", ") : null;
+                          return (
+                            <div key={a.id} className="rounded-lg border border-border/60 bg-muted/20 p-3">
+                              <div className="flex items-start justify-between gap-2 flex-wrap">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-foreground">{dateStr}</p>
+                                  <p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>
+                                  {region && <p className="text-[10px] text-muted-foreground mt-0.5">{language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}</p>}
+                                </div>
+                                {a.pain_score != null && <Badge variant="outline" className="text-[10px] shrink-0">{language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10</Badge>}
+                              </div>
+                              <TreatmentUnlockCTA
+                                assessmentId={a.id}
+                                lifetimeTreatment={lifetimeTreatment}
+                                clinicMode={isClinic}
+                                compact
+                                conditionLabel={hypothesis !== "—" ? hypothesis : null}
+                                onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CollapsibleSection>
+                  </CardContent>
+                </Card>
+              );
+            })()}
+
             <ClinicalImpressionCard
               assessment={target}
               existingImpression={target.diagnosis?.clinicalImpression}
@@ -903,50 +1009,6 @@ export default function PatientDetailView(props: any) {
         );
       })()}
 
-      <div ref={treatmentSectionRef} id="treatment-unlock-section" className={`scroll-mt-24 transition-shadow rounded-xl ${treatmentHighlight ? "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse" : ""}`}>
-        {latestWithDiagnosis && (() => {
-          const a = latestWithDiagnosis;
-          const hasTreatment = a.treatment_plan;
-          const isPaidPending = !a.treatment_plan && (a.payment_status === "treatment_paid" || a.payment_status === "treatment_generating");
-          const needsUnlock = a.diagnosis && !a.treatment_plan && !isPaidPending;
-          if (hasTreatment) return <Card className="border-emerald-200 bg-emerald-500/5"><CardContent className="py-4 px-5"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><FileCheck className="h-5 w-5 text-emerald-600" /><div><p className="text-sm font-semibold text-emerald-700">{t("pro.treatment_unlocked")}</p><p className="text-xs text-muted-foreground">Plano de tratamento disponível para este paciente.</p></div></div><Button variant="outline" size="sm" className="gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => navigate(buildAssessmentViewUrl(a.id, props.selectedEmail))}>{t("pro.view_treatment")}<ChevronRight className="h-3 w-3" /></Button></div></CardContent></Card>;
-          if (isPaidPending) return <TreatmentPaidRetry assessmentId={a.id} onGenerated={(treatmentPlan) => { a.treatment_plan = treatmentPlan; setNotes((prev: any) => ({ ...prev })); }} />;
-          if (needsUnlock) return <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent"><CardContent className="py-5 px-5 space-y-3"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0"><Sparkles className="h-5 w-5 text-primary" /></div><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-foreground">Plano de Tratamento Personalizado</p><p className="text-xs text-muted-foreground">Programa completo em 3 fases com exercícios progressivos, metas semanais e critérios de alta.</p></div></div><TreatmentUnlockCTA assessmentId={a.id} lifetimeTreatment={lifetimeTreatment} clinicMode={!!clinicId} onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); }} /></CardContent></Card>;
-          return null;
-        })()}
-
-        {(() => {
-          const allPending = getPendingTreatmentAssessments(patient.assessments);
-          const rawOthers = latestWithDiagnosis ? allPending.filter((a: any) => a.id !== latestWithDiagnosis.id) : allPending;
-          // Only suggest treatment unlock for the MOST RECENT pending assessment per body region.
-          // If the latest (already shown above) covers a region, hide any older pending assessment
-          // that shares any of those regions — the current clinical picture supersedes them.
-          const normRegions = (a: any): string[] => Array.isArray(a.pain_regions) ? [...a.pain_regions].map((r: any) => String(r).toLowerCase().trim()).filter(Boolean).sort() : [];
-          const latestRegions = new Set(latestWithDiagnosis ? normRegions(latestWithDiagnosis) : []);
-          const sortedDesc = [...rawOthers].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-          const seenRegionKeys = new Set<string>();
-          const others: any[] = [];
-          for (const a of sortedDesc) {
-            const regions = normRegions(a);
-            // Skip if any region overlaps with the latest assessment's regions
-            if (latestRegions.size > 0 && regions.some((r) => latestRegions.has(r))) continue;
-            // Group key: sorted joined regions (or "__no_region__" if empty)
-            const key = regions.length > 0 ? regions.join("|") : "__no_region__";
-            if (seenRegionKeys.has(key)) continue;
-            seenRegionKeys.add(key);
-            others.push(a);
-          }
-          if (others.length === 0) return null;
-          const isClinic = !!clinicId;
-          const headerColor = isClinic ? "text-primary" : "text-amber-700";
-          const cardBorder = isClinic ? "border-primary/20 bg-primary/5" : "border-amber-200 bg-amber-500/5";
-          const itemBorder = isClinic ? "border-primary/20" : "border-amber-200/70";
-          const headerLabel = isClinic
-            ? (language === "pt" ? "Outras avaliações sem plano gerado" : language === "es" ? "Otras evaluaciones sin plan generado" : "Other assessments without a generated plan")
-            : (language === "pt" ? "Outras avaliações sem plano de tratamento" : language === "es" ? "Otras evaluaciones sin plan de tratamiento" : "Other assessments without treatment plan");
-          return <Card className={`mt-3 ${cardBorder}`}><CardHeader className="pb-2"><CardTitle className={`text-sm flex items-center gap-2 ${headerColor}`}>{isClinic ? <Sparkles className="h-4 w-4" /> : <Lock className="h-4 w-4" />}{headerLabel}</CardTitle></CardHeader><CardContent className="space-y-3 pt-0">{others.map((a: any) => { const dateStr = new Date(a.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "short", year: "numeric" }); const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—"; const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0 ? a.pain_regions.join(", ") : null; return <div key={a.id} className={`rounded-xl border ${itemBorder} bg-background p-3 space-y-2`}><div className="flex items-start justify-between gap-2 flex-wrap"><div className="flex-1 min-w-0"><p className="text-xs font-semibold text-foreground">{dateStr}</p><p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>{region && <p className="text-[10px] text-muted-foreground mt-0.5">{language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}</p>}</div>{a.pain_score != null && <Badge variant="outline" className="text-[10px] shrink-0">{language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10</Badge>}</div><TreatmentUnlockCTA assessmentId={a.id} lifetimeTreatment={lifetimeTreatment} clinicMode={isClinic} onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); }} /></div>; })}</CardContent></Card>;
-        })()}
-      </div>
 
       {/* Anamnese resumida da última avaliação — colapsável (Extra C: atalho ver completa) */}
       {latestAnamnesisFields.length > 0 && (

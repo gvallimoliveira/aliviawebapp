@@ -12,19 +12,29 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  NotebookPen, Plus, CalendarIcon, Loader2, Trash2, Pencil, ChevronDown, ChevronUp, Copy,
+  NotebookPen, Plus, CalendarIcon, Loader2, Trash2, Pencil, ChevronDown, ChevronUp, Copy, BookmarkPlus,
 } from "lucide-react";
+
 
 interface SessionNote {
   id: string;
   session_date: string;
   content: string;
+  observation?: string | null;
   created_at: string;
   updated_at: string;
   appointment_id?: string | null;
+}
+
+interface NoteTemplate {
+  id: string;
+  name: string;
+  content: string;
+  observation?: string | null;
 }
 
 interface SessionNotesSectionProps {
@@ -42,10 +52,64 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   const [editingNote, setEditingNote] = useState<SessionNote | null>(null);
   const [formDate, setFormDate] = useState<Date>(new Date());
   const [formContent, setFormContent] = useState("");
+  const [formObservation, setFormObservation] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [templates, setTemplates] = useState<NoteTemplate[]>([]);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+
+  const fetchTemplates = useCallback(async () => {
+    if (isDemo) return;
+    const { data } = await (supabase.from("session_note_templates" as any) as any)
+      .select("id, name, content, observation")
+      .eq("professional_id", professionalId)
+      .order("name", { ascending: true });
+    setTemplates((data as NoteTemplate[]) || []);
+  }, [professionalId, isDemo]);
+
+  useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
+
+  const applyPrevious = () => {
+    const previous = notes[0];
+    if (!previous) {
+      toast({ title: "Sem evolução anterior para copiar" });
+      return;
+    }
+    setFormContent(previous.content || "");
+    setFormObservation(previous.observation || "");
+    toast({ title: "Preenchido com a evolução anterior" });
+  };
+
+  const applyTemplate = (id: string) => {
+    const tpl = templates.find((x) => x.id === id);
+    if (!tpl) return;
+    setFormContent(tpl.content || "");
+    setFormObservation(tpl.observation || "");
+  };
+
+  const saveAsTemplate = async () => {
+    if (!formContent.trim()) return;
+    const name = window.prompt("Nome do modelo de evolução:");
+    if (!name?.trim()) return;
+    setSavingTemplate(true);
+    try {
+      await (supabase.from("session_note_templates" as any) as any).insert({
+        professional_id: professionalId,
+        name: name.trim(),
+        content: formContent,
+        observation: formObservation || null,
+      });
+      toast({ title: "Modelo salvo" });
+      fetchTemplates();
+    } catch {
+      toast({ title: "Não foi possível salvar o modelo", variant: "destructive" });
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
 
   const fetchNotes = useCallback(async () => {
     if (isDemo) {
@@ -68,12 +132,12 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
   const handleSave = async () => {
     if (!formContent.trim()) return;
-    if (isDemo) { toast({ title: "Demo: anotações não são salvas" }); setShowForm(false); setEditingNote(null); setFormContent(""); return; }
+    if (isDemo) { toast({ title: "Demo: anotações não são salvas" }); setShowForm(false); setEditingNote(null); setFormContent(""); setFormObservation(""); return; }
     setSaving(true);
     try {
       if (editingNote) {
         await (supabase.from("session_notes" as any) as any)
-          .update({ content: formContent, session_date: format(formDate, "yyyy-MM-dd") })
+          .update({ content: formContent, observation: formObservation || null, session_date: format(formDate, "yyyy-MM-dd") })
           .eq("id", editingNote.id);
       } else {
         await (supabase.from("session_notes" as any) as any)
@@ -82,13 +146,16 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
             patient_email: patientEmail,
             session_date: format(formDate, "yyyy-MM-dd"),
             content: formContent,
+            observation: formObservation || null,
           });
       }
       toast({ title: editingNote ? t("session_notes.updated") : t("session_notes.created") });
       setShowForm(false);
       setEditingNote(null);
       setFormContent("");
+      setFormObservation("");
       setFormDate(new Date());
+
       fetchNotes();
     } catch {
       toast({ title: t("session_notes.error"), variant: "destructive" });
@@ -127,6 +194,8 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
         patient_email: patientEmail,
         session_date: today,
         content: note.content,
+        observation: note.observation || null,
+
       });
       toast({ title: t("session_notes.repeated") || "Evolução repetida na data de hoje" });
       fetchNotes();
@@ -139,8 +208,10 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
     setEditingNote(note);
     setFormDate(new Date(note.session_date + "T12:00:00"));
     setFormContent(note.content);
+    setFormObservation(note.observation || "");
     setShowForm(true);
   };
+
 
   return (
     <Card>
@@ -157,6 +228,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
             onClick={() => {
               setEditingNote(null);
               setFormContent("");
+              setFormObservation("");
               setFormDate(new Date());
               setShowForm(!showForm);
             }}
@@ -170,7 +242,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
         {/* Form */}
         {showForm && (
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs", !formDate && "text-muted-foreground")}>
@@ -192,17 +264,59 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
                 <Badge variant="outline" className="text-[10px]">{t("session_notes.editing")}</Badge>
               )}
             </div>
-            <Textarea
-              placeholder={t("session_notes.placeholder")}
-              value={formContent}
-              onChange={(e) => setFormContent(e.target.value)}
-              className="text-xs min-h-[80px] resize-y"
-            />
+
+            {/* Atalhos: evolução anterior e modelos */}
+            {!isDemo && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-[11px]" onClick={applyPrevious} disabled={notes.length === 0}>
+                  <Copy className="h-3 w-3" />
+                  Preencher com evolução anterior
+                </Button>
+                {templates.length > 0 && (
+                  <Select onValueChange={applyTemplate}>
+                    <SelectTrigger className="h-7 w-[190px] text-[11px]">
+                      <SelectValue placeholder="Usar modelo…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((tpl) => (
+                        <SelectItem key={tpl.id} value={tpl.id} className="text-xs">{tpl.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-[11px] text-muted-foreground" onClick={saveAsTemplate} disabled={savingTemplate || !formContent.trim()}>
+                  {savingTemplate ? <Loader2 className="h-3 w-3 animate-spin" /> : <BookmarkPlus className="h-3 w-3" />}
+                  Salvar como modelo
+                </Button>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Evolução da sessão</p>
+              <Textarea
+                placeholder={t("session_notes.placeholder")}
+                value={formContent}
+                onChange={(e) => setFormContent(e.target.value)}
+                className="text-xs min-h-[80px] resize-y"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Observação (opcional)</p>
+              <Textarea
+                placeholder="Intercorrências, combinados com o paciente, ajustes de conduta…"
+                value={formObservation}
+                onChange={(e) => setFormObservation(e.target.value)}
+                className="text-xs min-h-[50px] resize-y"
+              />
+            </div>
+
             <div className="flex gap-2">
               <Button size="sm" className="rounded-xl gap-1.5 text-xs" onClick={handleSave} disabled={saving || !formContent.trim()}>
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5" />}
                 {editingNote ? t("session_notes.save_edit") : t("session_notes.save")}
               </Button>
+
               <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setShowForm(false); setEditingNote(null); }}>
                 {t("session_notes.cancel")}
               </Button>
@@ -252,6 +366,13 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
                   <p className={cn("text-xs text-muted-foreground whitespace-pre-wrap", !isExpanded && isLong && "line-clamp-3")}>
                     {note.content}
                   </p>
+                  {note.observation?.trim() && (
+                    <div className="mt-1 rounded-md border-l-2 border-primary/40 bg-background/60 px-2 py-1">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground/80">Observação</p>
+                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{note.observation}</p>
+                    </div>
+                  )}
+
                   {isLong && (
                     <Button
                       variant="ghost"
