@@ -248,6 +248,8 @@ const Assessment = () => {
     capturedEmail,
     capturedName,
     isUpgradeFlow,
+    redFlagAnswers,
+    redFlagPayload,
   ]);
 
   // Global flush triggers: any input blur, tab hidden, page hide, or unload.
