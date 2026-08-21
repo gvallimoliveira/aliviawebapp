@@ -31,6 +31,7 @@ import {
 import { fetchPatientPrefillExtras } from "@/lib/reassessmentPrefill";
 import { normalizeAnamnesisForReassessment } from "@/lib/reassessmentNormalize";
 import { painExtentValue } from "@/lib/painExtent";
+import { buildMechanismPayload } from "@/components/assessment/PainMechanismLite";
 import {
   saveAssessmentProgress,
   getAssessmentProgress,
