@@ -31,6 +31,7 @@ type Thread = {
   patient_id: string | null;
   archived: boolean;
   updated_at: string;
+  created_at?: string;
   mentor_mode?: boolean;
 };
 
@@ -51,13 +52,15 @@ const PROMPT_STARTERS = [
   "/trilha ombro 1",
 ];
 function ThreadRow({
-  thread, patientName, active, onOpen, onDelete,
+  thread, patientName, active, onOpen, onDelete, onExportPdf, exporting,
 }: {
   thread: Thread;
   patientName?: string;
   active: boolean;
   onOpen: () => void;
   onDelete: () => void;
+  onExportPdf: () => void;
+  exporting?: boolean;
 }) {
   return (
     <div
@@ -67,7 +70,7 @@ function ThreadRow({
           : "border-border/50 bg-card/70 hover:bg-muted/40"
       }`}
     >
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_2.75rem] items-center gap-2">
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_2.75rem_2.75rem] items-center gap-2">
         <button
           type="button"
           onClick={onOpen}
@@ -81,6 +84,20 @@ function ThreadRow({
               <div className="mt-1 truncate text-xs text-primary/80">📋 {patientName}</div>
             )}
           </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onExportPdf();
+          }}
+          disabled={exporting}
+          className="flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-xl border border-primary/25 bg-primary/10 text-primary shadow-sm transition-colors hover:bg-primary/15 active:scale-[0.98] disabled:opacity-60"
+          aria-label="Salvar conversa em PDF"
+          title="Salvar conversa em PDF"
+        >
+          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
         </button>
 
         <button
@@ -126,6 +143,7 @@ const ClinicalAgent = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [generatingHep, setGeneratingHep] = useState(false);
+  const [exportingThreadId, setExportingThreadId] = useState<string | null>(null);
   const [hepLevel, setHepLevel] = useState<"auto" | "beginner" | "intermediate" | "advanced">("auto");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
@@ -426,6 +444,58 @@ const ClinicalAgent = () => {
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } finally {
       setGeneratingHep(false);
+    }
+  };
+
+  /** Exports a whole conversation as a compact 2-column Aliv.iA PDF transcript. */
+  const exportThreadPdf = async (thread: Thread) => {
+    setExportingThreadId(thread.id);
+    try {
+      const { data, error } = await supabase
+        .from("agent_messages")
+        .select("role, parts, citations, created_at")
+        .eq("thread_id", thread.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      const rows = (data || []) as any[];
+      if (rows.length === 0) {
+        toast.error("Esta conversa ainda não tem mensagens.");
+        return;
+      }
+
+      const pdfMessages = rows.map((m) => ({
+        role: m.role,
+        created_at: m.created_at,
+        citations: m.citations || [],
+        text: (Array.isArray(m.parts) ? m.parts : [])
+          .map((p: any) => (p?.type === "text" ? p.text || "" : p?.quiz ? "[Quiz gerado no chat]" : ""))
+          .filter(Boolean)
+          .join("\n\n"),
+      }));
+
+      const patient = patients.find((p) => p.id === thread.patient_id) || resolvedLinkedPatient;
+      const { generateAgentChatPdfBlob } = await import("@/utils/generatePdf");
+      const blob = await generateAgentChatPdfBlob({
+        title: thread.title,
+        messages: pdfMessages,
+        professionalName: user?.user_metadata?.full_name || null,
+        patientName: patient?.full_name || null,
+        createdAt: thread.created_at || null,
+      });
+
+      const safeTitle = (thread.title || "conversa").replace(/[^\p{L}\p{N}]+/gu, "_").slice(0, 40);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `AliviA_Conversa_${safeTitle}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF da conversa gerado");
+    } catch (err) {
+      console.error("Agent chat PDF error:", err);
+      toast.error("Não foi possível gerar o PDF da conversa.");
+    } finally {
+      setExportingThreadId(null);
     }
   };
 
@@ -769,6 +839,8 @@ const ClinicalAgent = () => {
                 active={active}
                 onOpen={() => { setActiveThread(t); setSheetOpen(false); navigate(`/agente/${t.id}`); }}
                 onDelete={() => deleteThread(t.id)}
+                onExportPdf={() => exportThreadPdf(t)}
+                exporting={exportingThreadId === t.id}
               />
             );
           })}
