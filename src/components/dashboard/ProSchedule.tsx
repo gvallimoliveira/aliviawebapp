@@ -889,28 +889,39 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         </div>
       </div>
 
-      {/* Service filter */}
+      {/* Service filter (multi-select) */}
       <div className="flex items-center gap-2 flex-wrap">
         <button
-          onClick={() => setServiceFilter("all")}
+          onClick={() => setServiceFilters([])}
           className={cn("px-2.5 py-1 rounded-full text-[10px] font-medium border transition-colors",
-            serviceFilter === "all" ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:bg-muted"
+            serviceFilters.length === 0 ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:bg-muted"
           )}
         >
           {isPt ? "Todos" : "All"}
         </button>
-        {Object.entries(SERVICE_TYPE_LABELS).map(([key, labels]) => (
-          <button
-            key={key}
-            onClick={() => setServiceFilter(key)}
-            className={cn("px-2.5 py-1 rounded-full text-[10px] font-medium border transition-colors flex items-center gap-1.5",
-              serviceFilter === key ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:bg-muted"
-            )}
-          >
-            <span className={cn("w-2 h-2 rounded-full", SERVICE_TYPE_DOT[key])} />
-            {labels[language] || labels.en}
-          </button>
-        ))}
+        {Object.entries(SERVICE_TYPE_LABELS).map(([key, labels]) => {
+          const active = serviceFilters.includes(key);
+          return (
+            <button
+              key={key}
+              aria-pressed={active}
+              onClick={() => toggleServiceFilter(key)}
+              className={cn("px-2.5 py-1 rounded-full text-[10px] font-medium border transition-colors flex items-center gap-1.5",
+                active ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:bg-muted"
+              )}
+            >
+              <span className={cn("w-2 h-2 rounded-full", SERVICE_TYPE_DOT[key])} />
+              {labels[language] || labels.en}
+              {active && <Check className="h-3 w-3" />}
+            </button>
+          );
+        })}
+        {serviceFilters.length > 1 && (
+          <span className="text-[10px] text-muted-foreground">
+            {isPt ? `${serviceFilters.length} serviços exibidos` : `${serviceFilters.length} services shown`}
+          </span>
+        )}
+
         {!isMobile && (
           <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 ml-auto">
             <GripVertical className="h-3 w-3" />
