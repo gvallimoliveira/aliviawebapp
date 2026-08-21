@@ -839,6 +839,8 @@ const ClinicalAgent = () => {
                 active={active}
                 onOpen={() => { setActiveThread(t); setSheetOpen(false); navigate(`/agente/${t.id}`); }}
                 onDelete={() => deleteThread(t.id)}
+                onExportPdf={() => exportThreadPdf(t)}
+                exporting={exportingThreadId === t.id}
               />
             );
           })}
