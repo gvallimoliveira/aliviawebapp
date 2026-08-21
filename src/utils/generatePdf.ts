@@ -3043,3 +3043,246 @@ function normalizeTestResults(tr: any): any[] {
   if (tr && typeof tr === "object" && Object.keys(tr).length > 0) return [tr];
   return [];
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AGENT CHAT TRANSCRIPT PDF (compact 2-column layout)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AgentChatPdfCitation {
+  id?: string;
+  title?: string;
+  authors?: string;
+  year?: number;
+  pedro_score?: number;
+  doi?: string;
+  source_url?: string;
+  pmid?: string;
+}
+
+export interface AgentChatPdfMessage {
+  role: string;
+  text: string;
+  created_at?: string;
+  citations?: AgentChatPdfCitation[] | null;
+}
+
+export interface AgentChatPdfOptions {
+  title: string;
+  messages: AgentChatPdfMessage[];
+  professionalName?: string | null;
+  patientName?: string | null;
+  createdAt?: string | null;
+}
+
+/**
+ * Renders a Clinical Agent conversation as a compact, newspaper-style
+ * 2-column transcript so a long chat fits in very few pages.
+ */
+export async function generateAgentChatPdfBlob(options: AgentChatPdfOptions): Promise<Blob> {
+  const doc = createPdfDoc();
+
+  const COL_GAP = 8;
+  const COL_W = (SECTION_TEXT_W - COL_GAP) / 2;
+  const COL_X = [SECTION_X, SECTION_X + COL_W + COL_GAP];
+  const TOP = MARGIN;
+  const BOTTOM = PAGE_BOTTOM;
+
+  let col = 0;
+  let y = TOP;
+
+  const nextColumn = () => {
+    if (col === 0) {
+      col = 1;
+      y = TOP;
+    } else {
+      doc.addPage();
+      col = 0;
+      y = TOP;
+    }
+  };
+
+  /** Ensures `needed` mm are available in the current column. */
+  const ensure = (needed: number) => {
+    if (y + needed > BOTTOM) nextColumn();
+  };
+
+  // ── Header (full width, first page only) ────────────────────────────────
+  drawRoundedRect(doc, MARGIN, MARGIN - 6, CONTENT_WIDTH, 26, 3, COLORS.primaryLight, COLORS.border);
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(...COLORS.primary);
+  doc.text("Aliv.iA", SECTION_X, MARGIN + 2);
+
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.foreground);
+  doc.text(
+    truncateToWidth(doc, "Registro de Conversa — Agente de Raciocínio Clínico", SECTION_TEXT_W),
+    SECTION_X,
+    MARGIN + 8,
+  );
+
+  doc.setFont("Inter", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.muted);
+  const metaBits: string[] = [];
+  if (options.professionalName) metaBits.push(`Profissional: ${options.professionalName}`);
+  if (options.patientName) metaBits.push(`Paciente: ${options.patientName}`);
+  if (options.createdAt) {
+    metaBits.push(`Conversa iniciada em ${new Date(options.createdAt).toLocaleDateString("pt-BR")}`);
+  }
+  metaBits.push(`Emitido em ${new Date().toLocaleDateString("pt-BR")}`);
+  doc.text(truncateToWidth(doc, metaBits.join(" · "), SECTION_TEXT_W), SECTION_X, MARGIN + 13);
+
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...COLORS.foreground);
+  doc.text(
+    truncateToWidth(doc, sanitizePdfText(options.title) || "Conversa", SECTION_TEXT_W),
+    SECTION_X,
+    MARGIN + 18,
+  );
+
+  y = MARGIN + 26;
+  const COLUMN_TOP_FIRST = y;
+
+  // ── Messages ────────────────────────────────────────────────────────────
+  const PAD = 2;
+  const LINE_H = 3.4;
+
+  for (const msg of options.messages) {
+    const isUser = msg.role === "user";
+    const label = isUser ? "Você" : "Aliv.iA";
+    const time = msg.created_at
+      ? new Date(msg.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+      : "";
+    const body = sanitizePdfText(msg.text);
+    if (!body) continue;
+
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(7.5);
+    const lines: string[] = doc.splitTextToSize(body, COL_W - PAD * 2 - 2);
+
+    // Header (label) must never be orphaned: require label + 2 lines of text.
+    ensure(5 + LINE_H * Math.min(2, lines.length) + PAD * 2);
+
+    let index = 0;
+    let first = true;
+    while (index < lines.length) {
+      const available = BOTTOM - y;
+      const headerH = first ? 5 : 0;
+      const capacity = Math.max(1, Math.floor((available - headerH - PAD * 2) / LINE_H));
+      const chunk = lines.slice(index, index + capacity);
+      const boxH = headerH + chunk.length * LINE_H + PAD * 2;
+
+      drawRoundedRect(
+        doc,
+        COL_X[col],
+        y,
+        COL_W,
+        boxH,
+        1.5,
+        isUser ? COLORS.white : COLORS.primaryLight,
+        COLORS.border,
+      );
+
+      let ty = y + PAD + 2.6;
+      if (first) {
+        doc.setFont("Inter", "bold");
+        doc.setFontSize(6.8);
+        doc.setTextColor(...(isUser ? COLORS.muted : COLORS.primary));
+        doc.text(label, COL_X[col] + PAD + 1, ty);
+        if (time) {
+          doc.setFont("Inter", "normal");
+          doc.setTextColor(...COLORS.muted);
+          doc.text(time, COL_X[col] + COL_W - PAD - 1, ty, { align: "right" });
+        }
+        ty += 4.4;
+      }
+
+      doc.setFont("Inter", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(...COLORS.foreground);
+      for (const line of chunk) {
+        doc.text(line, COL_X[col] + PAD + 1, ty);
+        ty += LINE_H;
+      }
+
+      y += boxH + 2;
+      index += chunk.length;
+      first = false;
+      if (index < lines.length) nextColumn();
+    }
+  }
+
+  // ── Scientific references ───────────────────────────────────────────────
+  const seen = new Set<string>();
+  const refs: AgentChatPdfCitation[] = [];
+  for (const msg of options.messages) {
+    for (const c of msg.citations || []) {
+      const key = (c.doi || c.pmid || c.source_url || c.title || "").toLowerCase().trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      refs.push(c);
+    }
+  }
+
+  if (refs.length > 0) {
+    ensure(14);
+    doc.setFont("Inter", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...COLORS.primary);
+    doc.text("Referências científicas", COL_X[col], y + 3);
+    y += 7;
+
+    refs.forEach((ref, i) => {
+      const parts: string[] = [];
+      const head = `${i + 1}. ${sanitizePdfText(ref.title) || "Referência"}`;
+      const detail: string[] = [];
+      if (ref.authors) detail.push(sanitizePdfText(ref.authors));
+      if (ref.year) detail.push(String(ref.year));
+      if (typeof ref.pedro_score === "number") detail.push(`PEDro ${ref.pedro_score}`);
+      if (ref.pmid) detail.push(`PMID ${ref.pmid}`);
+      else if (ref.doi) detail.push(`DOI ${ref.doi}`);
+      parts.push(head);
+      if (detail.length) parts.push(detail.join(" · "));
+
+      doc.setFont("Inter", "normal");
+      doc.setFontSize(7);
+      const refLines: string[] = doc.splitTextToSize(parts.join("\n"), COL_W - 2);
+      ensure(refLines.length * 3.1 + 2);
+      doc.setTextColor(...COLORS.foreground);
+      let ry = y + 2.4;
+      for (const line of refLines) {
+        doc.text(line, COL_X[col], ry);
+        ry += 3.1;
+      }
+      y += refLines.length * 3.1 + 2.5;
+    });
+  }
+
+  // ── Footer on every page ────────────────────────────────────────────────
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, 283, PAGE_WIDTH - MARGIN, 283);
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(
+      truncateToWidth(
+        doc,
+        "Aliv.iA — Registro de conversa do Agente de Raciocínio Clínico. Conteúdo de apoio ao raciocínio clínico; não substitui avaliação nem constitui prescrição automática.",
+        CONTENT_WIDTH - 16,
+      ),
+      MARGIN,
+      288,
+    );
+    doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN, 288, { align: "right" });
+  }
+
+  void COLUMN_TOP_FIRST;
+  return doc.output("blob");
+}
