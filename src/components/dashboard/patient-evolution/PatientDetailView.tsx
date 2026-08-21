@@ -51,9 +51,11 @@ const SUBSCALE_COLORS = [
 interface DiagnosticHypothesisBlockProps {
   assessment: any;
   isDemo?: boolean;
+  /** Convite discreto de plano de tratamento renderizado dentro do card. */
+  treatmentInvite?: React.ReactNode;
 }
 
-const DiagnosticHypothesisBlock = ({ assessment, isDemo }: DiagnosticHypothesisBlockProps) => {
+const DiagnosticHypothesisBlock = ({ assessment, isDemo, treatmentInvite }: DiagnosticHypothesisBlockProps) => {
   const canEdit = propsUseCanEditFinalHypothesis(assessment);
   const [localFinal, setLocalFinal] = React.useState<string | null>(assessment.final_hypothesis ?? null);
   const [localFinalAt, setLocalFinalAt] = React.useState<string | null>(assessment.final_hypothesis_at ?? null);
@@ -73,45 +75,46 @@ const DiagnosticHypothesisBlock = ({ assessment, isDemo }: DiagnosticHypothesisB
     : null;
 
   return (
-    <>
-      <Card className="border-primary/20">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Stethoscope className="h-4 w-4 text-primary" />
-            Hipótese Diagnóstica
-            {hasOverride && <Badge variant="secondary" className="text-[10px] ml-1">Revisada pelo fisioterapeuta</Badge>}
-          </CardTitle>
-          {assessmentDate && (
-            <CardDescription className="text-xs">Caso atual — avaliação de {assessmentDate}</CardDescription>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm font-semibold text-foreground leading-relaxed">{displayed}</p>
-          {hasOverride && formattedDate && <p className="text-[11px] text-muted-foreground">Atualizada em {formattedDate}</p>}
-          {!hasOverride && assessment.diagnosis?.confidence === "high" && <Badge variant="outline" className="text-[10px] capitalize">Confiança: {assessment.diagnosis.confidence}</Badge>}
-          {assessment.diagnosis?.reasoning && <p className="text-xs text-muted-foreground leading-relaxed mt-1">{assessment.diagnosis.reasoning}</p>}
-          {hasOverride && aiHypothesis && (
-            <div className="mt-2 pt-2 border-t border-border/60">
-              <p className="text-[11px] text-muted-foreground"><Sparkles className="inline h-3 w-3 mr-1 -mt-0.5" />Sugestão original da IA: <span className="italic">{aiHypothesis}</span></p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      {canEdit && !isDemo && (
-        <FinalHypothesisEditor
-          assessmentId={assessment.id}
-          aiHypothesis={aiHypothesis}
-          finalHypothesis={localFinal}
-          finalHypothesisAt={localFinalAt}
-          onSaved={(newValue) => {
-            setLocalFinal(newValue);
-            setLocalFinalAt(newValue ? new Date().toISOString() : null);
-          }}
-        />
-      )}
-    </>
+    <Card className="border-primary/20">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Stethoscope className="h-4 w-4 text-primary" />
+          Hipótese Diagnóstica
+          {hasOverride && <Badge variant="secondary" className="text-[10px] ml-1">Revisada pelo fisioterapeuta</Badge>}
+        </CardTitle>
+        {assessmentDate && (
+          <CardDescription className="text-xs">Caso atual — avaliação de {assessmentDate}</CardDescription>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <p className="text-sm font-semibold text-foreground leading-relaxed">{displayed}</p>
+        {hasOverride && formattedDate && <p className="text-[11px] text-muted-foreground">Atualizada em {formattedDate}</p>}
+        {!hasOverride && assessment.diagnosis?.confidence === "high" && <Badge variant="outline" className="text-[10px] capitalize">Confiança: {assessment.diagnosis.confidence}</Badge>}
+        {assessment.diagnosis?.reasoning && <p className="text-xs text-muted-foreground leading-relaxed mt-1">{assessment.diagnosis.reasoning}</p>}
+        {hasOverride && aiHypothesis && (
+          <div className="mt-2 pt-2 border-t border-border/60">
+            <p className="text-[11px] text-muted-foreground"><Sparkles className="inline h-3 w-3 mr-1 -mt-0.5" />Sugestão original da IA: <span className="italic">{aiHypothesis}</span></p>
+          </div>
+        )}
+        {canEdit && !isDemo && (
+          <FinalHypothesisEditor
+            assessmentId={assessment.id}
+            aiHypothesis={aiHypothesis}
+            finalHypothesis={localFinal}
+            finalHypothesisAt={localFinalAt}
+            variant="inline"
+            onSaved={(newValue) => {
+              setLocalFinal(newValue);
+              setLocalFinalAt(newValue ? new Date().toISOString() : null);
+            }}
+          />
+        )}
+        {treatmentInvite}
+      </CardContent>
+    </Card>
   );
 };
+
 
 interface GenerateHypothesisCardProps {
   assessment: any;
