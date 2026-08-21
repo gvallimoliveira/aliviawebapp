@@ -631,7 +631,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
     painScore, painType, painRegions, painScoresPerRegion, painTypesPerRegion, painRegionRefinements,
-    redFlagsChecked, additionalClinicalNotes, questionnaireResults, deferQuestionnaires,
+    redFlagsChecked, additionalClinicalNotes, mechanismAnswers, questionnaireResults, deferQuestionnaires,
     functionalTests, romTable, strengthTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
   };
@@ -669,6 +669,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainRegionRefinements((p as any).painRegionRefinements ?? {});
     setRedFlagsChecked(p.redFlagsChecked ?? []);
     setAdditionalClinicalNotes((p as any).additionalClinicalNotes ?? "");
+    setMechanismAnswers(sanitizeMechanismAnswers((p as any).mechanismAnswers));
     setQuestionnaireResults(p.questionnaireResults ?? []);
     setDeferQuestionnaires(Boolean((p as any).deferQuestionnaires));
     setFunctionalTests(p.functionalTests ?? "");
@@ -1526,6 +1527,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setComorbidities(""); setOccupation(""); setPainScore(5); setPainType("");
     setPainRegions([]); setPainScoresPerRegion({}); setPainTypesPerRegion({});
     setRedFlagsChecked([]); setAdditionalClinicalNotes("");
+    setMechanismAnswers(createEmptyMechanismAnswers());
     setQuestionnaireResults([]); setDeferQuestionnaires(false);
     setPendingShareUrl(null); setPendingShareOpen(false); setPendingCount(null);
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
