@@ -2107,7 +2107,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </div>
                   </div>
                 )}
+
+                {/* Passo B1 — triagem de mecanismo de dor (atrás de flag) */}
+                {ENABLE_PAIN_MECHANISM && (
+                  <PainMechanismScreening
+                    value={mechanismAnswers}
+                    onChange={setMechanismAnswers}
+                    regionCount={painRegions.length}
+                    durationWeeks={durationWeeks}
+                    suggestedDistribution={suggestedDistribution}
+                    isPt={isPt}
+                    disabled={demoMode}
+                  />
+                )}
               </div>
+
             )}
 
 
