@@ -2111,21 +2111,47 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       </DemoShield>
                     </div>
                     <div>
-                      <Label className="text-xs">{isPt ? "Tipo de dor" : "Pain type"}</Label>
+                      <Label className="text-xs">
+                        {isPt ? "Tipo de dor (pode marcar mais de um)" : "Pain type (multi-select)"}
+                      </Label>
+                      {ENABLE_PAIN_MECHANISM && (
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
+                          {isPt
+                            ? "O que você marcar aqui já entra como descritor na triagem de mecanismo abaixo (e vice-versa)."
+                            : "Selections here are mirrored as descriptors in the mechanism screening below."}
+                        </p>
+                      )}
                       <DemoShield on={demoMode} onAutofill={() => autofill(painType, MOCK_MANUAL_CASE.painType, setPainType, "")}>
-                        <Select value={painType} onValueChange={setPainType}>
-                          <SelectTrigger className="mt-1 h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="local">{isPt ? "Local" : "Local"}</SelectItem>
-                            <SelectItem value="radiating">{isPt ? "Irradiada" : "Radiating"}</SelectItem>
-                            <SelectItem value="burning">{isPt ? "Queimação" : "Burning"}</SelectItem>
-                            <SelectItem value="tingling">{isPt ? "Formigamento" : "Tingling"}</SelectItem>
-                            <SelectItem value="throbbing">{isPt ? "Latejante" : "Throbbing"}</SelectItem>
-                            <SelectItem value="stabbing">{isPt ? "Pontada" : "Stabbing"}</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {(
+                            [
+                              ["local", "Local", "Local"],
+                              ["radiating", "Irradiada", "Radiating"],
+                              ["burning", "Queimação", "Burning"],
+                              ["tingling", "Formigamento", "Tingling"],
+                              ["throbbing", "Latejante", "Throbbing"],
+                              ["stabbing", "Pontada", "Stabbing"],
+                            ] as [string, string, string][]
+                          ).map(([v, pt, en]) => {
+                            const active = effectivePainTypes.includes(v);
+                            return (
+                              <Button
+                                key={v}
+                                type="button"
+                                size="sm"
+                                variant={active ? "default" : "outline"}
+                                className="h-8 px-2.5 text-xs"
+                                disabled={demoMode}
+                                onClick={() => togglePainType(v)}
+                              >
+                                {isPt ? pt : en}
+                              </Button>
+                            );
+                          })}
+                        </div>
                       </DemoShield>
                     </div>
+
                   </>
                 )}
 
