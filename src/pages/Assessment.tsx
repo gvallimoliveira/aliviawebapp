@@ -58,6 +58,9 @@ interface AssessmentDraft {
   capturedEmail: string | null;
   capturedName: string | null;
   isUpgradeFlow: boolean;
+  /** Probatory red-flag screening carried across resumes so it never gets lost. */
+  redFlagAnswers?: Record<string, boolean>;
+  redFlagPayload?: any;
 }
 
 const getUpgradeData = () => {
@@ -150,6 +153,8 @@ const Assessment = () => {
       if (draft.capturedEmail) setCapturedEmail(draft.capturedEmail);
       if (draft.capturedName) setCapturedName(draft.capturedName);
       if (draft.isUpgradeFlow) setIsUpgradeFlow(draft.isUpgradeFlow);
+      if (draft.redFlagAnswers && Object.keys(draft.redFlagAnswers).length) setRedFlagAnswers(draft.redFlagAnswers);
+      if (draft.redFlagPayload) setRedFlagPayload(draft.redFlagPayload);
       setStep(draft.step);
       toast({
         title: language === "pt" ? "Avaliação retomada" : language === "es" ? "Evaluación reanudada" : "Assessment resumed",
@@ -213,6 +218,8 @@ const Assessment = () => {
       capturedEmail,
       capturedName,
       isUpgradeFlow,
+      redFlagAnswers,
+      redFlagPayload,
     };
     draftRef.current = draft;
 
@@ -241,6 +248,8 @@ const Assessment = () => {
     capturedEmail,
     capturedName,
     isUpgradeFlow,
+    redFlagAnswers,
+    redFlagPayload,
   ]);
 
   // Global flush triggers: any input blur, tab hidden, page hide, or unload.
@@ -497,6 +506,22 @@ const Assessment = () => {
     }
   };
 
+  /**
+   * Red-flag screening payload to persist. Falls back to rebuilding it from the
+   * raw answers so a resumed/restored session never saves an assessment without
+   * its probatory screening record (needed by the PDF report).
+   */
+  const resolveRedFlagPayload = (): RedFlagPayload | null => {
+    if (redFlagPayload) return redFlagPayload;
+    if (Object.keys(redFlagAnswers).length === 0) return null;
+    const anyPositive = Object.values(redFlagAnswers).some(Boolean);
+    return buildRedFlagPayload(
+      redFlagAnswers,
+      language,
+      anyPositive ? "continued_under_reservation" : "passed",
+    );
+  };
+
   const createAssessment = async () => {
     try {
       const { data, error } = await supabase
@@ -508,7 +533,7 @@ const Assessment = () => {
           patient_email: capturedEmail || user?.email || null,
           payment_status: mode === "premium" ? "covered" : "pending",
           original_assessment_id: mode === "premium" ? premiumAccess?.payment_id || null : null,
-          red_flags: redFlagPayload as any,
+          red_flags: resolveRedFlagPayload() as any,
         })
         .select("id")
         .single();
@@ -640,7 +665,17 @@ const Assessment = () => {
       setDiagnosis(result.diagnosis);
       const id = currentAssessmentId || assessmentId;
       if (id) {
-        await updateAssessment(id, { diagnosis: result.diagnosis as any, status: "diagnosis_complete" });
+        const rf = resolveRedFlagPayload();
+        await updateAssessment(id, {
+          diagnosis: result.diagnosis as any,
+          status: "diagnosis_complete",
+          // Safety net: guarantees the screening record exists on the saved
+          // assessment even if the flow was resumed after the screening step.
+          ...(rf ? { red_flags: rf as any } : {}),
+          ...(capturedName || user?.user_metadata?.full_name
+            ? { patient_name: capturedName || user?.user_metadata?.full_name }
+            : {}),
+        });
       }
       if (result.diagnosis.confidence === "low" && !hasRetried && !extraInfo) {
         setStep("low_confidence");

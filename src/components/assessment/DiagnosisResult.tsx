@@ -99,6 +99,16 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
     }
   };
 
+  // Red-flag screening record, so the downloaded report always carries the
+  // probatory answers from this very flow (not only when re-opened later).
+  const redFlagPdfFields = redFlagPayload
+    ? {
+        redFlags: (redFlagPayload as any).detected || [],
+        redFlagAnswers: (redFlagPayload as any).answers || [],
+        redFlagsAnsweredAt: (redFlagPayload as any).answered_at,
+      }
+    : {};
+
   const handleExportPdf = async () => {
     setPdfLoading(true);
     try {
@@ -111,6 +121,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         anamnesisData,
         painRegions,
         testResults,
+        ...redFlagPdfFields,
         ...branding,
       } as any);
       toast({ title: t("pdf.success") });
@@ -135,6 +146,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         anamnesisData,
         painRegions,
         testResults,
+        ...redFlagPdfFields,
         ...branding,
       } as any);
 
