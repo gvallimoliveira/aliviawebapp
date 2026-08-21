@@ -29,6 +29,7 @@ import OfflineBanner from "@/components/assessment/OfflineBanner";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { saveDraft, getDraft, clearDraft } from "@/lib/sessionPersistence";
 import { buildRedFlagPayload, type RedFlagPayload } from "@/lib/redFlags";
+import { painExtentValue } from "@/lib/painExtent";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "final_notes" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
