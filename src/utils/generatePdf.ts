@@ -2616,10 +2616,15 @@ function renderSubSection(doc: jsPDF, y: number, title: string, body: string): n
 export interface EvolutionSummary {
   narrative: string;
   painChange: string;
+  anamnesisSynthesis?: string;
+  questionnaireAnalysis?: string;
+  objectiveFindings?: string;
+  sessionNotesSynthesis?: string;
   questionnaireChanges?: { name: string; firstScore: number; lastScore: number; changePercent: number }[];
   conclusion: string;
   recommendation: "discharge" | "continue" | "reassess";
 }
+
 
 export interface EvolutionPdfOptions {
   patientName: string;
