@@ -482,7 +482,10 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       base.push("migraine_screening");
     }
     base.push("sex_age");
-    base.push("paintype", "evolution", "factors", "duration", "pain_frequency", "gym", "painscore");
+    base.push("paintype");
+    // Passos B2/B3 — triagem leiga de mecanismo de dor logo após o tipo de dor.
+    if (ENABLE_PAIN_MECHANISM) base.push("pain_mechanism");
+    base.push("evolution", "factors", "duration", "pain_frequency", "gym", "painscore");
     return base.filter((id) => allowGroup(groupOf(id)));
   };
 
