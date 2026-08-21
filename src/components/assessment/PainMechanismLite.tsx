@@ -22,6 +22,8 @@ import {
   type TriState,
 } from "@/lib/painMechanism";
 import { suggestDistribution } from "@/lib/painExtent";
+import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
+import { toStoredMechanism } from "@/lib/painMechanism";
 import {
   createEmptyMechanismAnswers,
   sanitizeMechanismAnswers,
@@ -297,3 +299,24 @@ const PainMechanismLite = ({
 };
 
 export default PainMechanismLite;
+
+/**
+ * Payload pronto para `assessments` (B2/B3). Vazio quando não houve triagem ou
+ * quando a flag está desligada — nunca sobrescreve dados existentes com null.
+ */
+export const buildMechanismPayload = (data: {
+  painMechanism?: unknown;
+  painRegions?: string[];
+  painTypes?: string[];
+}): Record<string, unknown> => {
+  if (!ENABLE_PAIN_MECHANISM) return {};
+  const lite = sanitizeLiteAnswers(data.painMechanism);
+  if (!hasLiteAnswers(lite)) return {};
+  return {
+    pain_mechanism: toStoredMechanism(
+      classifyLite(lite, data.painRegions ?? [], data.painTypes ?? []),
+      "rules",
+      null,
+    ),
+  };
+};
