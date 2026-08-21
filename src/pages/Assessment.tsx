@@ -506,6 +506,22 @@ const Assessment = () => {
     }
   };
 
+  /**
+   * Red-flag screening payload to persist. Falls back to rebuilding it from the
+   * raw answers so a resumed/restored session never saves an assessment without
+   * its probatory screening record (needed by the PDF report).
+   */
+  const resolveRedFlagPayload = (): RedFlagPayload | null => {
+    if (redFlagPayload) return redFlagPayload;
+    if (Object.keys(redFlagAnswers).length === 0) return null;
+    const anyPositive = Object.values(redFlagAnswers).some(Boolean);
+    return buildRedFlagPayload(
+      redFlagAnswers,
+      language,
+      anyPositive ? "continued_under_reservation" : "passed",
+    );
+  };
+
   const createAssessment = async () => {
     try {
       const { data, error } = await supabase
@@ -517,7 +533,7 @@ const Assessment = () => {
           patient_email: capturedEmail || user?.email || null,
           payment_status: mode === "premium" ? "covered" : "pending",
           original_assessment_id: mode === "premium" ? premiumAccess?.payment_id || null : null,
-          red_flags: redFlagPayload as any,
+          red_flags: resolveRedFlagPayload() as any,
         })
         .select("id")
         .single();
