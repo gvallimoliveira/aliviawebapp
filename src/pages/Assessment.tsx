@@ -30,6 +30,13 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { saveDraft, getDraft, clearDraft } from "@/lib/sessionPersistence";
 import { buildRedFlagPayload, type RedFlagPayload } from "@/lib/redFlags";
 import { painExtentValue } from "@/lib/painExtent";
+import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
+import { toStoredMechanism } from "@/lib/painMechanism";
+import {
+  classifyLite,
+  hasLiteAnswers,
+  sanitizeLiteAnswers,
+} from "@/components/assessment/PainMechanismLite";
 
 type AssessmentStep = "payment_check" | "welcome" | "redflags" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "final_notes" | "loading" | "low_confidence" | "result" | "loading_treatment" | "treatment";
 
