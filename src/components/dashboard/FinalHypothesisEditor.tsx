@@ -25,6 +25,12 @@ interface FinalHypothesisEditorProps {
   aiHypothesis: string | null | undefined;
   finalHypothesis: string | null | undefined;
   finalHypothesisAt?: string | null;
+  /**
+   * "card" (default) renders the standalone card.
+   * "inline" renders only the discreet trigger + expandable form, so it can live
+   * inside the Diagnostic Hypothesis card.
+   */
+  variant?: "card" | "inline";
   /** Called after a successful save, with the new value (null if cleared). */
   onSaved?: (newValue: string | null) => void;
 }
@@ -34,6 +40,7 @@ const FinalHypothesisEditor = ({
   aiHypothesis,
   finalHypothesis,
   finalHypothesisAt,
+  variant = "card",
   onSaved,
 }: FinalHypothesisEditorProps) => {
   const { toast } = useToast();
@@ -43,6 +50,7 @@ const FinalHypothesisEditor = ({
   const [mode, setMode] = useState<"agree" | "override">(hasOverride ? "override" : "agree");
   const [draft, setDraft] = useState(finalHypothesis ?? "");
   const [saving, setSaving] = useState(false);
+
 
   const startEdit = () => {
     setMode(hasOverride ? "override" : "agree");
