@@ -227,7 +227,6 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
         <div className="mx-auto max-w-md">
           {(() => {
 
-          {(() => {
             const extent = computePainExtent(selectedRegions);
             if (extent.regionCount === 0) return null;
             const bandLabel = {
