@@ -1877,6 +1877,14 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   // Red flags (documented but non-blocking when professional supervised)
   y = renderRedFlagsCard(doc, y, options.redFlags, isPt, options.redFlagsDismissal);
 
+  // ── Pain Score (VAS) — uses shared renderer ──
+  y = renderVasSection(doc, y, isPt, options.painScore, options.anamnesisData);
+
+  // ── Pain Map ──
+  if (options.painRegions && options.painRegions.length > 0) {
+    y = await renderPainMapSection(doc, y, options.painRegions, isPt);
+  }
+
   // ── Anamnesis summary (same fields shown in the online assessment summary) ──
   if (options.anamnesisData) {
     y = renderAnamnesisSection(doc, y, options.anamnesisData, isPt);
@@ -1885,14 +1893,6 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   // ── Safety screening record (probatory Q&A) ──
   y = renderRedFlagsAuditTable(doc, y, options.redFlagAnswers, options.redFlagsAnsweredAt, isPt);
 
-
-  // ── Pain Score (VAS) — uses shared renderer ──
-  y = renderVasSection(doc, y, isPt, options.painScore, options.anamnesisData);
-
-  // ── Pain Map ──
-  if (options.painRegions && options.painRegions.length > 0) {
-    y = await renderPainMapSection(doc, y, options.painRegions, isPt);
-  }
 
   // Premium upsell banner
   y += 6;
