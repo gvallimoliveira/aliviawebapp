@@ -564,11 +564,24 @@ const Assessment = () => {
     setAnamnesisData(data);
     const id = await createAssessment();
     if (id) {
+      // Passos B2/B3 — grava o mecanismo só quando houve triagem.
+      const lite = sanitizeLiteAnswers(data.painMechanism);
+      const mechanismPayload =
+        ENABLE_PAIN_MECHANISM && hasLiteAnswers(lite)
+          ? {
+              pain_mechanism: toStoredMechanism(
+                classifyLite(lite, data.painRegions, data.painTypes),
+                "rules",
+                null,
+              ) as any,
+            }
+          : {};
       await updateAssessment(id, {
         anamnesis_data: data as any,
         pain_regions: data.painRegions,
         pain_extent: painExtentValue(data.painRegions),
         pain_score: data.painScore,
+        ...mechanismPayload,
       });
     }
     if (mode === "premium") {
