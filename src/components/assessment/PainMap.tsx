@@ -222,30 +222,10 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
         </div>
       </div>
 
-      {/* Passo C1 — chips espelhando o SVG da vista atual (clique sincronizado) */}
+      {/* Passo C2 — contador + extensão estimada de dor (sem lista de regiões) */}
       {ENABLE_PAINMAP_V2 && !debugMode && (
         <div className="mx-auto max-w-md space-y-2">
-          <div className="flex flex-wrap gap-1.5 justify-center">
-            {regions.map((region) => {
-              const isSelected = selectedRegions.includes(region.id);
-              return (
-                <button
-                  key={region.id}
-                  type="button"
-                  onClick={() => toggleRegion(region.id)}
-                  onMouseEnter={() => setHoveredRegion(region.id)}
-                  onMouseLeave={() => setHoveredRegion(null)}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
-                    isSelected
-                      ? "bg-destructive/15 border-destructive/40 text-destructive"
-                      : "bg-muted/40 border-border/60 text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  {getLabel(region)}
-                </button>
-              );
-            })}
-          </div>
+
 
           {/* Passo C2 — contador + extensão estimada de dor */}
           {(() => {
