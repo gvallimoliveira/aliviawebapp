@@ -1078,7 +1078,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     occupation,
     complementaryExams,
     painType,
-    painTypes: painType ? [painType] : [],
+    painTypes: effectivePainTypes,
     // Per-region pain scores e tipos (usados pela Comparação de Dor por Região
     // e pelo prompt da IA quando há múltiplas regiões marcadas).
     painScoresPerRegion,
@@ -1123,7 +1123,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             ...buildAnamnesisData(),
             painRegions,
             painScore,
-            painTypes: painType ? [painType] : [],
+            painTypes: effectivePainTypes,
             redFlags: redFlagsChecked,
           },
           questionnaireResults,
