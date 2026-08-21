@@ -218,6 +218,8 @@ const Assessment = () => {
       capturedEmail,
       capturedName,
       isUpgradeFlow,
+      redFlagAnswers,
+      redFlagPayload,
     };
     draftRef.current = draft;
 
