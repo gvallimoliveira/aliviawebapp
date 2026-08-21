@@ -529,6 +529,16 @@ export function AgonistAntagonistPanel({
       </Badge>
     );
 
+  const sideResult = (sideLabel: string, a: number | null, b: number | null, asym: number | null) => (
+    <div className="flex items-center gap-1">
+      <span className="text-[10px] font-bold text-muted-foreground">{sideLabel}</span>
+      <Badge variant="secondary" className="font-mono text-[10px] px-1.5">
+        {a ?? "—"}/{b ?? "—"}
+      </Badge>
+      {cell(asym)}
+    </div>
+  );
+
   return (
     <div className="mt-3 rounded-xl border border-border bg-muted/20 p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-1">
@@ -541,34 +551,29 @@ export function AgonistAntagonistPanel({
         {pairs.map((p) => (
           <div
             key={p.key}
-            className="grid grid-cols-[1fr_56px_56px] items-center gap-2 rounded-lg border border-border bg-background/60 px-2 py-1.5"
+            className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-lg border border-border bg-background/60 px-2 py-1.5"
           >
             <div className="min-w-0">
               <p className="text-xs font-medium text-foreground leading-tight">
                 {pick(p.title, lang)}
               </p>
               <p className="text-[10px] text-muted-foreground font-mono">
-                {pick(p.aLabel, lang)} {p.left.a ?? "—"}/{p.right.a ?? "—"} ·{" "}
-                {pick(p.bLabel, lang)} {p.left.b ?? "—"}/{p.right.b ?? "—"}
+                {pick(p.aLabel, lang)} · {pick(p.bLabel, lang)}
               </p>
             </div>
-            <div className="text-center">
-              <p className="text-[9px] uppercase text-muted-foreground">
-                {s(lang, "initialLeft")}
-              </p>
-              {cell(p.left.asym)}
+
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              {sideResult(s(lang, "initialLeft"), p.left.a, p.left.b, p.left.asym)}
+              {sideResult(s(lang, "initialRight"), p.right.a, p.right.b, p.right.asym)}
             </div>
-            <div className="text-center">
-              <p className="text-[9px] uppercase text-muted-foreground">
-                {s(lang, "initialRight")}
-              </p>
-              {cell(p.right.asym)}
-            </div>
+
+            <span />
           </div>
         ))}
       </div>
     </div>
   );
+
 }
 
 
