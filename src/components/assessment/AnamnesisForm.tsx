@@ -148,6 +148,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     painScoresPerRegion: {},
     cpf: "",
     birthDate: "",
+    painMechanism: createEmptyLiteAnswers(),
   });
 
   // ── Autosave (local + nuvem) ─────────────────────────────────────────────
