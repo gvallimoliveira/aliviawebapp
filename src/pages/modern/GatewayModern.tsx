@@ -12,6 +12,7 @@ import LgpdBadge from "@/components/LgpdBadge";
 import logoAlivia from "@/assets/logo-alivia.png";
 import guilhermePhoto from "@/assets/guilherme-founder.jpeg";
 import AppVersionBadge from "@/components/AppVersionBadge";
+import { preloadProfessionalLanding } from "@/lib/professionalLandingLoader";
 
 import MobileNavSheet from "@/components/MobileNavSheet";
 
@@ -72,6 +73,25 @@ const GatewayModern = () => {
     });
     setLandingJsonLd();
     setOrganizationJsonLd();
+  }, []);
+
+  useEffect(() => {
+    const schedulePreload = () => {
+      const browserWindow = window as Window & {
+        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      };
+
+      if (typeof browserWindow.requestIdleCallback === "function") {
+        browserWindow.requestIdleCallback(preloadProfessionalLanding, { timeout: 1800 });
+      } else {
+        window.setTimeout(preloadProfessionalLanding, 800);
+      }
+    };
+
+    if (document.readyState === "complete") schedulePreload();
+    else window.addEventListener("load", schedulePreload, { once: true });
+
+    return () => window.removeEventListener("load", schedulePreload);
   }, []);
 
 
@@ -253,6 +273,9 @@ const GatewayModern = () => {
               initial="hidden" whileInView="visible" viewport={inView} variants={reveal} custom={4}
               className={`group relative rounded-2xl border-2 border-primary/30 bg-primary/[0.03] backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-[0_18px_50px_-24px_hsl(var(--primary)/0.4)] hover:border-primary/50 flex flex-col cursor-pointer ${CARD_MOTION}`}
               onClick={() => navigate("/profissionais")}
+              onPointerEnter={preloadProfessionalLanding}
+              onPointerDown={preloadProfessionalLanding}
+              onFocus={preloadProfessionalLanding}
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
