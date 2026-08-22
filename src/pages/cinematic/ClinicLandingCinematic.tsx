@@ -51,6 +51,17 @@ const ClinicLandingCinematic = () => {
   const [trialPhone, setTrialPhone] = useState("");
   const [trialCnpj, setTrialCnpj] = useState("");
 
+  // Hero cinematográfico (parallax + fade no scroll)
+  const heroRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
+  const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroOpacity = useTransform(heroProgress, [0, 0.65, 1], [1, 1, 0]);
+  const heroY = useTransform(heroProgress, [0, 1], [0, -80]);
+  const heroScale = useTransform(heroProgress, [0, 1], [1, 1.4]);
+  const heroGlow = useTransform(heroProgress, [0, 0.5, 1], [0.45, 0.6, 0.1]);
+
+
+
   useEffect(() => {
     setSeo({
       title: "Aliv.iA Clinic — Plataforma para clínicas de fisio",
