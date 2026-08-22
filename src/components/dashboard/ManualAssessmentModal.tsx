@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,7 +44,7 @@ import {
   DESCRIPTOR_TO_PAIN_TYPE,
   type MechanismAnswers,
 } from "@/components/assessment/PainMechanismScreening";
-import { classifyMechanism, toStoredMechanism } from "@/lib/painMechanism";
+import { classifyMechanism, toStoredMechanism, parseStoredMechanism, getSubtypeLabel } from "@/lib/painMechanism";
 import { computePainExtent, suggestDistribution } from "@/lib/painExtent";
 import {
   AlertDialog,
@@ -904,6 +904,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setAdditionalExternalInfo(an.additionalExternalInfo || "");
   }, [open, prefillData, editAssessment?.id]);
   useEffect(() => { if (!open) prefilledMarkerRef.current = null; }, [open]);
+
+  /**
+   * Bloco F2 — quando a avaliação nasce de uma reavaliação/prefill, mostramos a
+   * triagem de mecanismo anterior como referência (somente leitura).
+   */
+  const previousMechanismRef = useMemo(() => {
+    const src = prefillData?.row?.anamnesis_data?.painMechanism || (prefillData?.row as any)?.pain_mechanism;
+    const parsed = parseStoredMechanism(src);
+    if (!parsed?.mechanism) return null;
+    return {
+      mechanism: parsed.mechanism as string,
+      subtypeLabel: parsed.subtype ? getSubtypeLabel(parsed.subtype, isPt ? "pt" : "en") : null,
+      date: prefillData?.row?.created_at || null,
+    };
+  }, [prefillData, isPt]);
 
 
   // Conta pendentes vinculados a esta avaliação (modo edição) para exibir o
@@ -2299,6 +2314,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     regionCount={painRegions.length}
                     durationWeeks={durationWeeks}
                     suggestedDistribution={suggestedDistribution}
+                    previous={previousMechanismRef}
                     disabled={demoMode}
                   />
                 )}

@@ -35,6 +35,7 @@ import {
   subtypeChoicesFor,
 
   type MechanismBlock,
+  type PainMechanism,
   type MechanismResult,
   type MechanismSubtype,
   type MechanismDistribution,
@@ -213,6 +214,15 @@ export interface PainMechanismWizardProps {
   durationWeeks?: number | null;
   suggestedDistribution?: MechanismDistribution;
   disabled?: boolean;
+  /**
+   * Bloco F2 — triagem da avaliação anterior (reavaliação expressa). Serve só
+   * para exibir o comparativo; nunca sobrescreve o que o profissional marcar.
+   */
+  previous?: {
+    mechanism?: string | null;
+    subtypeLabel?: string | null;
+    date?: string | null;
+  } | null;
 }
 
 const PainMechanismWizard = ({
@@ -224,6 +234,7 @@ const PainMechanismWizard = ({
   durationWeeks = null,
   suggestedDistribution,
   disabled = false,
+  previous = null,
 }: PainMechanismWizardProps) => {
   const lang: Lang = language === "pt" ? "pt" : language === "es" ? "es" : "en";
   const isPro = variant === "pro";
@@ -314,6 +325,42 @@ const PainMechanismWizard = ({
           {COPY.optionalHint[lang]}
         </p>
       </div>
+
+      {/* F2 — comparativo com a triagem anterior (reavaliação) */}
+      {previous?.mechanism && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-2.5 space-y-1">
+          <p className="text-[11px] font-semibold text-primary">
+            {lang === "pt" ? "Triagem anterior" : lang === "es" ? "Triaje anterior" : "Previous screening"}
+            {previous.date && (
+              <span className="font-normal text-muted-foreground">
+                {" "}
+                • {new Date(previous.date).toLocaleDateString(lang === "pt" ? "pt-BR" : lang === "es" ? "es-ES" : "en-US")}
+              </span>
+            )}
+          </p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="outline" className={`text-[10px] ${getMechanismTokenClass(previous.mechanism as MechanismBlock)}`}>
+              {getMechanismLabel(previous.mechanism as PainMechanism, lang)}
+            </Badge>
+            {previous.subtypeLabel && (
+              <span className="text-[11px] text-muted-foreground">{previous.subtypeLabel}</span>
+            )}
+            {result.mechanism !== previous.mechanism && (
+              <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-700 bg-amber-50">
+                {lang === "pt" ? "mudou para " : lang === "es" ? "cambió a " : "changed to "}
+                {getMechanismLabel(result.mechanism, lang)}
+              </Badge>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            {lang === "pt"
+              ? "Revise os critérios: mantenha o que continua verdadeiro e desmarque o que mudou."
+              : lang === "es"
+                ? "Revise los criterios: mantenga lo que sigue siendo cierto y desmarque lo que cambió."
+                : "Review the criteria: keep what still applies and uncheck what changed."}
+          </p>
+        </div>
+      )}
 
 
       {/* Trilha de etapas */}
