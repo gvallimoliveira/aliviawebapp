@@ -815,11 +815,24 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
   const regionCount = input.regionCount ?? 0;
   if (regionCount >= 5) add("high_pain_extent", "nociplastic", 2);
 
+  // Subtipo CONFIRMADO pelo avaliador é evidência clínica: pesa no bloco
+  // correspondente (por isso as barras e, em quadros empatados, o mecanismo
+  // predominante mudam quando o subtipo muda).
+  const chosenSubtype = input.subtype ?? null;
+  const chosenOption = findSubtypeOption(chosenSubtype);
+  if (chosenOption) {
+    add(`subtype_${chosenOption.key}`, blockOfSubtype(chosenOption.key), chosenOption.boost);
+  }
 
   const csi = input.csiScore;
   const centralSensitizationLikely =
-    typeof csi === "number" && csi >= CSI_CENTRAL_THRESHOLD;
-  if (centralSensitizationLikely) add("csi_above_threshold", "nociplastic", 3);
+    (typeof csi === "number" && csi >= CSI_CENTRAL_THRESHOLD) ||
+    chosenSubtype === "nociplastic_primary" ||
+    chosenSubtype === "nociplastic_secondary" ||
+    chosenSubtype === "central_neuropathic";
+  if (typeof csi === "number" && csi >= CSI_CENTRAL_THRESHOLD)
+    add("csi_above_threshold", "nociplastic", 3);
+
 
   const answered = countAnswered(input);
   if (answered < 3) {
