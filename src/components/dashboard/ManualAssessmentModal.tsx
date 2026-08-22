@@ -2314,6 +2314,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     regionCount={painRegions.length}
                     durationWeeks={durationWeeks}
                     suggestedDistribution={suggestedDistribution}
+                    previous={previousMechanismRef}
                     disabled={demoMode}
                   />
                 )}
