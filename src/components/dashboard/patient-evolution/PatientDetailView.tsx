@@ -1079,12 +1079,15 @@ export default function PatientDetailView(props: any) {
               );
             })()}
 
-            <ClinicalImpressionCard
-              assessment={target}
-              existingImpression={target.diagnosis?.clinicalImpression}
-              allAssessments={patient?.assessments}
-              isDemo={isDemo}
-            />
+            <div id="sec-impressao-clinica" className="scroll-mt-24">
+              <ClinicalImpressionCard
+                assessment={target}
+                existingImpression={target.diagnosis?.clinicalImpression}
+                allAssessments={patient?.assessments}
+                isDemo={isDemo}
+              />
+            </div>
+
           </>
         );
       })()}
