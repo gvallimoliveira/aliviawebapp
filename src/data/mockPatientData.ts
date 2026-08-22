@@ -1046,6 +1046,64 @@ const rawMockPatientAssessments = [
   },
 ];
 
+/**
+ * Triagem "Saúde geral" do modo demo (hipertensão / diabetes / cardiopatia +
+ * medicação de uso contínuo), com o nível de controle por condição para demonstrar
+ * os três níveis de atenção: sem condição, condição controlada (âmbar) e condição
+ * não manejada (vermelho).
+ */
+const DEMO_HEALTH_HISTORY: Record<string, Record<string, any>> = {
+  "Maria Silva": {
+    healthConditions: ["hypertension"],
+    healthConditionsControl: { hypertension: "controlled" },
+    usesContinuousMedication: "yes",
+    continuousMedications: "Losartana 50mg (1x/dia)",
+  },
+  "João Santos": {
+    healthConditions: ["none"],
+    usesContinuousMedication: "no",
+  },
+  "Ana Oliveira": {
+    healthConditions: ["diabetes"],
+    healthConditionsControl: { diabetes: "uncontrolled" },
+    usesContinuousMedication: "yes",
+    continuousMedications: "Metformina 850mg (2x/dia)",
+  },
+  "Carlos Mendes": {
+    healthConditions: ["hypertension", "heart_disease"],
+    healthConditionsControl: { hypertension: "controlled", heart_disease: "partial" },
+    usesContinuousMedication: "yes",
+    continuousMedications: "Atenolol 25mg, AAS 100mg",
+  },
+  "Roberto Tavares": {
+    healthConditions: ["other"],
+    healthConditionsOther: "Hipotireoidismo",
+    healthConditionsOtherOnset: "gt_5y",
+    healthConditionsOtherControl: "controlled",
+    usesContinuousMedication: "yes",
+    continuousMedications: "Levotiroxina 75mcg",
+  },
+  "Juliana Castro": {
+    healthConditions: ["none"],
+    usesContinuousMedication: "no",
+  },
+  "Helena Rocha": {
+    healthConditions: ["other"],
+    healthConditionsOther: "Asma",
+    healthConditionsOtherOnset: "6m_2y",
+    healthConditionsOtherControl: "no_followup",
+    usesContinuousMedication: "no",
+  },
+};
+
+export const mockPatientAssessments = rawMockPatientAssessments.map((a: any) => {
+  const health = DEMO_HEALTH_HISTORY[a.patient_name];
+  if (!health) return a;
+  return { ...a, anamnesis_data: { ...health, ...(a.anamnesis_data || {}) } };
+});
+
+
+
 // Pre-built demo clinical impression for when user clicks "Gerar Impressão Clínica" in demo mode
 export const mockClinicalImpressions: Record<string, { overview: string; therapeuticObjectives: string[] }> = {
   "demo-001": {
