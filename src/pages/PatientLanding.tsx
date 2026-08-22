@@ -18,6 +18,12 @@ import ExitIntentPopup from "@/components/ExitIntentPopup";
 import LgpdBadge from "@/components/LgpdBadge";
 import SelfAssessmentDisclaimerSection from "@/components/SelfAssessmentDisclaimerSection";
 import InstallAppSection from "@/components/InstallAppSection";
+import ScrollProgress from "@/components/scroll/ScrollProgress";
+import Reveal from "@/components/scroll/Reveal";
+import PatientStatement from "@/components/scroll/PatientStatement";
+import PatientJourneyShowcase from "@/components/scroll/PatientJourneyShowcase";
+import BrandMarquee from "@/components/scroll/BrandMarquee";
+
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
 import { showNavOverlay, subscribeNavOverlay } from "@/lib/navigationOverlay";
 
@@ -162,6 +168,7 @@ const PatientLanding = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <ScrollProgress />
       <Header />
       <ReferralBanner />
       <main>
@@ -214,14 +221,17 @@ const PatientLanding = () => {
           </Link>
         </div>
         <SelfAssessmentDisclaimerSection />
-        <HighlightsSection />
-        <ComparisonSection />
-        <MethodologySection />
-        <HowItWorksSection />
-        <UpgradeFlowSection />
-        <TestimonialsSection />
-        <FaqSection />
-        <SocialSection />
+        <BrandMarquee />
+        <PatientStatement />
+        <PatientJourneyShowcase />
+        <Reveal><HighlightsSection /></Reveal>
+        <Reveal><ComparisonSection /></Reveal>
+        <Reveal><MethodologySection /></Reveal>
+        <Reveal><HowItWorksSection /></Reveal>
+        <Reveal scale><UpgradeFlowSection /></Reveal>
+        <Reveal><TestimonialsSection /></Reveal>
+        <Reveal><FaqSection /></Reveal>
+        <Reveal><SocialSection /></Reveal>
         <LgpdBadge />
       </main>
       <InstallAppSection />

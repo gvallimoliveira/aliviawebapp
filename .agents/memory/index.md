@@ -25,6 +25,7 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [No Email Confirmation](mem://constraints/no-email-confirmation) — Signup sem etapa de confirmação; implicações e como reverter.
 - [Auth Stability](mem://constraints/auth-stability) — Forbidden patterns around login (SW/PWA/cache) and required safeguards.
 - [Visual Direction](mem://style/visual-direction) — Brand identity, colors, shapes, and official slogan.
+- [Cinematic Landing Scroll](mem://style/cinematic-landing-scroll) — Primitivos de scroll cinematográfico das landings (ScrollProgress, Reveal, KineticStatement, StickyShowcase, BrandMarquee) e regra de 1 seção escura.
 - [Mobile UX](mem://style/mobile-ux) — Horizontal scrolling strategy for mobile views.
 - [Gateway Page](mem://features/gateway-page) — Profile selector layout and styling constraints.
 - [PDF Report Constraints](mem://features/pdf-report) — Layout margins and typography rules for PDFs.
