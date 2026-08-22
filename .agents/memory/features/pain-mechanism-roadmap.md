@@ -31,3 +31,6 @@ Regras do roteiro: só adicionar (nunca substituir), uma flag por bloco, um pass
 - `assessments.pain_mechanism` agora guarda `subtype` e `criteria` (auditoria/PDF futuros).
 - UI: `PainMechanismWizard.tsx` — etapa 1 critérios com barras ao vivo, etapa 2 subtipo (+ CSI e distribuição só no fluxo PRO), etapa 3 resultado com raciocínio.
 - Uso: fluxo manual PRO e reavaliação expressa (variant `pro`), avaliação premium (variant `patient`, linguagem leiga, sem itens de exame físico). Avaliação básica segue com `PainMechanismLite` (4 itens).
+
+## Subtipo com peso real (revisão)
+O subtipo confirmado na etapa 2 deixou de ser decorativo: cada opção tem `boost` (peso somado ao seu bloco) e `implication` (consequência clínica exibida na etapa 3). Consequências: as barras/% mudam ao trocar o subtipo; subtipo de outro bloco (ex.: nociplástica secundária em quadro nociceptivo) fixa o mecanismo secundário e leva o eixo a "misto"; `nociplastic_primary/secondary` e `central_neuropathic` marcam sensibilização central mesmo sem CSI. A etapa 2 oferece os subtipos do bloco dominante + de qualquer bloco com ≥ 40% do escore do topo (`subtypeChoicesFor`).
