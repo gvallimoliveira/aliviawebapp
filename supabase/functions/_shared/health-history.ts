@@ -16,6 +16,8 @@ export function formatHealthHistoryForPrompt(a: any): string {
       ? a.health_conditions
       : [];
   const other = a.healthConditionsOther || a.health_conditions_other || "";
+  const otherOnset = a.healthConditionsOtherOnset || a.health_conditions_other_onset || "";
+  const otherControl = a.healthConditionsOtherControl || a.health_conditions_other_control || "";
   const uses = a.usesContinuousMedication || a.uses_continuous_medication || "";
   const meds = a.continuousMedications || a.continuous_medications || a.medications || "";
 
@@ -25,6 +27,16 @@ export function formatHealthHistoryForPrompt(a: any): string {
       .map((c) => (c === "other" && other ? `Other: ${other}` : LABELS[c] || c))
       .join(", ");
     lines.push(`- Systemic health conditions: ${txt}`);
+    if (conds.includes("other") && (otherOnset || otherControl)) {
+      lines.push(
+        `- Other condition detail: onset ${otherOnset || "not specified"}; current control: ${otherControl || "not specified"}`,
+      );
+      if (otherControl === "uncontrolled" || otherControl === "no_followup") {
+        lines.push(
+          `- CAUTION: the additional condition is uncontrolled or without medical follow-up. Be conservative with intensity/progression and explicitly recommend medical evaluation.`,
+        );
+      }
+    }
     const risky = conds.filter((c) => c === "hypertension" || c === "diabetes" || c === "heart_disease");
     if (risky.length > 0) {
       lines.push(

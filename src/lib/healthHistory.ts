@@ -40,6 +40,36 @@ export const HEALTH_CONDITION_EMOJI: Record<HealthConditionId, string> = {
   none: "✅",
 };
 
+/** Perguntas de apoio quando o paciente marca "outra condição". */
+export const OTHER_ONSET_OPTIONS = [
+  { id: "lt_6m", pt: "Menos de 6 meses", en: "Less than 6 months", es: "Menos de 6 meses" },
+  { id: "6m_2y", pt: "Entre 6 meses e 2 anos", en: "Between 6 months and 2 years", es: "Entre 6 meses y 2 años" },
+  { id: "2y_5y", pt: "Entre 2 e 5 anos", en: "Between 2 and 5 years", es: "Entre 2 y 5 años" },
+  { id: "gt_5y", pt: "Mais de 5 anos", en: "More than 5 years", es: "Más de 5 años" },
+  { id: "unknown", pt: "Não sei dizer", en: "Not sure", es: "No sé decir" },
+] as const;
+
+export const OTHER_CONTROL_OPTIONS = [
+  { id: "controlled", pt: "Controlada com acompanhamento", en: "Controlled with follow-up", es: "Controlada con seguimiento" },
+  { id: "partial", pt: "Parcialmente controlada", en: "Partially controlled", es: "Parcialmente controlada" },
+  { id: "uncontrolled", pt: "Não controlada / em investigação", en: "Uncontrolled / under investigation", es: "No controlada / en investigación" },
+  { id: "no_followup", pt: "Sem acompanhamento médico", en: "No medical follow-up", es: "Sin seguimiento médico" },
+  { id: "unknown", pt: "Não sei", en: "Not sure", es: "No sé" },
+] as const;
+
+export const otherOnsetLabel = (id: string, lang: Lang): string => {
+  const o = OTHER_ONSET_OPTIONS.find((x) => x.id === id);
+  return o ? pick(o, lang) : id;
+};
+
+export const otherControlLabel = (id: string, lang: Lang): string => {
+  const o = OTHER_CONTROL_OPTIONS.find((x) => x.id === id);
+  return o ? pick(o, lang) : id;
+};
+
+/** Controle que exige atenção clínica extra. */
+export const RISK_CONTROL_IDS = ["uncontrolled", "no_followup"];
+
 export interface HealthHistoryData {
   /** Ids de HealthConditionId. "none" é exclusivo. */
   healthConditions?: string[];
@@ -49,6 +79,10 @@ export interface HealthHistoryData {
   usesContinuousMedication?: string;
   /** Quais medicamentos de uso contínuo. */
   continuousMedications?: string;
+  /** Triagem de apoio para "outra condição": desde quando. */
+  healthConditionsOtherOnset?: string;
+  /** Triagem de apoio para "outra condição": controle atual. */
+  healthConditionsOtherControl?: string;
 }
 
 type Lang = "pt" | "en" | "es" | string;
@@ -74,6 +108,10 @@ export function normalizeHealthHistory(raw: any): HealthHistoryData {
       a.usesContinuousMedication ?? a.uses_continuous_medication ?? undefined,
     continuousMedications:
       a.continuousMedications ?? a.continuous_medications ?? a.medications ?? undefined,
+    healthConditionsOtherOnset:
+      a.healthConditionsOtherOnset ?? a.health_conditions_other_onset ?? undefined,
+    healthConditionsOtherControl:
+      a.healthConditionsOtherControl ?? a.health_conditions_other_control ?? undefined,
   };
 }
 
@@ -90,7 +128,12 @@ export function formatHealthConditions(raw: any, lang: Lang = "pt"): string {
     .map((id) => {
       if (id === "other") {
         const other = (h.healthConditionsOther || "").trim();
-        return other ? `${healthConditionLabel("other", lang)}: ${other}` : healthConditionLabel("other", lang);
+        const base = other ? `${healthConditionLabel("other", lang)}: ${other}` : healthConditionLabel("other", lang);
+        const extras = [
+          h.healthConditionsOtherOnset ? otherOnsetLabel(h.healthConditionsOtherOnset, lang) : "",
+          h.healthConditionsOtherControl ? otherControlLabel(h.healthConditionsOtherControl, lang) : "",
+        ].filter(Boolean);
+        return extras.length > 0 ? `${base} (${extras.join(" • ")})` : base;
       }
       return healthConditionLabel(id, lang);
     });
@@ -130,4 +173,31 @@ export function healthHistorySummary(
   const medication = formatContinuousMedication(raw, lang);
   if (!conditions && !medication) return null;
   return { conditions, medication };
+}
+
+/** Condições que exigem cuidado extra na dosagem de exercício. */
+export const RISK_CONDITION_IDS: HealthConditionId[] = ["hypertension", "diabetes", "heart_disease"];
+
+/** Retorna as condições de risco presentes + se a "outra condição" está descontrolada. */
+export function getHealthRiskFlags(raw: any): {
+  riskConditions: HealthConditionId[];
+  uncontrolledOther: boolean;
+  hasRisk: boolean;
+} {
+  const h = normalizeHealthHistory(raw);
+  const list = h.healthConditions || [];
+  const riskConditions = RISK_CONDITION_IDS.filter((id) => list.includes(id));
+  const uncontrolledOther =
+    list.includes("other") && RISK_CONTROL_IDS.includes(h.healthConditionsOtherControl || "");
+  return { riskConditions, uncontrolledOther, hasRisk: riskConditions.length > 0 || uncontrolledOther };
+}
+
+/** Verdadeiro quando ainda não há resposta alguma de saúde geral. */
+export function isHealthHistoryEmpty(raw: any): boolean {
+  const h = normalizeHealthHistory(raw);
+  return (
+    (h.healthConditions || []).length === 0 &&
+    !h.usesContinuousMedication &&
+    !(h.continuousMedications || "").trim()
+  );
 }
