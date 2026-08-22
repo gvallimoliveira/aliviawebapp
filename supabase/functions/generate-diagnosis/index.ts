@@ -95,6 +95,59 @@ serve(async (req) => {
     const painScoreMode = anamnesisData.painScoreMode || "general";
     const painScoresPerRegion = anamnesisData.painScoresPerRegion || {};
 
+    // ---------------------------------------------------------------------
+    // Passo D1 — mecanismo de dor: contexto para a IA + fallback determinístico
+    // O cliente envia o resultado já classificado pelas regras (Kosek 2021 /
+    // Finnerup 2016). A IA pode refinar, mas nunca é obrigatória: se o campo
+    // vier ausente/inválido, usamos o determinístico. Sem triagem = sem bloco.
+    // ---------------------------------------------------------------------
+    const MECHANISM_KEYS = ["nociceptive", "neuropathic", "nociplastic", "mixed", "unknown"];
+    const AXIS_KEYS = ["peripheral", "central", "mixed", "unknown"];
+    const CONFIDENCE_KEYS = ["low", "moderate", "high"];
+
+    const rulesMechanism = (() => {
+      const raw = bodyPainMechanism ?? anamnesisData?.painMechanismResolved ?? null;
+      if (!raw || typeof raw !== "object") return null;
+      const m = String((raw as any).mechanism ?? "");
+      if (!MECHANISM_KEYS.includes(m) || m === "unknown") return null;
+      return raw as Record<string, any>;
+    })();
+
+    const painExtentValueNum = typeof bodyPainExtent === "number" ? bodyPainExtent : null;
+
+    const mechanismBlock = rulesMechanism ? `
+PAIN MECHANISM SCREENING (deterministic result already computed by Aliv.iA — MANDATORY context):
+The patient (or the attending physiotherapist) completed the pain mechanism screening. Rule-based result:
+- Predominant mechanism: ${rulesMechanism.mechanism}
+- Secondary mechanism: ${rulesMechanism.secondary || "none"}
+- Clinical subtype: ${rulesMechanism.subtype || "not specified"}
+- Axis: ${rulesMechanism.axis || "unknown"} (peripheral vs central)
+- Central sensitization likely: ${rulesMechanism.central_sensitization_likely ? "YES" : "no"}
+- Screening confidence: ${rulesMechanism.confidence || "low"}
+- Positive signals: ${Array.isArray(rulesMechanism.signals) && rulesMechanism.signals.length ? rulesMechanism.signals.join(", ") : "none recorded"}
+- Marked criteria: ${Array.isArray(rulesMechanism.criteria) && rulesMechanism.criteria.length ? rulesMechanism.criteria.join(", ") : "none recorded"}
+${typeof rulesMechanism.csi_score === "number" ? `- CSI score: ${rulesMechanism.csi_score} (>= 40 suggests central sensitization)` : ""}
+${painExtentValueNum !== null ? `- Pain extent: ~${painExtentValueNum}% of body surface (higher extent + long duration favors a nociplastic component)` : ""}
+
+HOW TO USE IT:
+- Frameworks: Kosek et al. 2021 (nociplastic criteria) and Finnerup et al. 2016 (neuropathic grading).
+- Treat the deterministic result as the baseline. Keep it unless the rest of the record clearly contradicts it — then explain the divergence in the "reasoning" field of pain_mechanism.
+- Nociceptive → predictable mechanical/load relationship, proportionate to tissue findings.
+- Neuropathic → neuroanatomically plausible distribution + neuropathic descriptors and/or objective sensorimotor signs.
+- Nociplastic → regional/multisite pain >= 3 months, disproportionate to tissue findings, hypersensitivity, poor sleep/fatigue.
+- The mechanism must NOT enter the "hypothesis" field: it stays inside the "pain_mechanism" object. The hypothesis remains a SHORT diagnostic label (max 20 words).
+` : "";
+
+    const mechanismJsonSpec = rulesMechanism ? `
+  "pain_mechanism": {
+    "mechanism": "nociceptive" | "neuropathic" | "nociplastic" | "mixed",
+    "secondary": null | "nociceptive" | "neuropathic" | "nociplastic",
+    "axis": "peripheral" | "central" | "mixed" | "unknown",
+    "confidence": "low" | "moderate" | "high",
+    "patient_explanation": "2-3 sentences in ${lang}, PLAIN LANGUAGE for a layperson (no jargon such as 'nociplastic', 'sensitization', 'dermatomal'): explain in everyday words why the pain behaves this way and what it means for the treatment. Warm, reassuring, never alarming.",
+    "reasoning": "1-2 sentences of clinical reasoning naming the findings that support this mechanism (technical language is fine here)"
+  },` : "";
+
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
     const isProfessional = mode === "professional";
