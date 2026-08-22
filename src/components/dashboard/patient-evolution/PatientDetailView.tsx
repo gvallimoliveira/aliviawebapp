@@ -27,7 +27,7 @@ import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, AlertTriangle, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
+import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
 import { Bar, BarChart, CartesianGrid, LabelList, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
