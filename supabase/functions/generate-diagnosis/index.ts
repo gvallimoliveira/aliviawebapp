@@ -573,7 +573,7 @@ Response format (JSON):
   "confidence": "low" | "moderate" | "high",
   "summary": "Brief 1-2 sentence summary of the hypothesis",
   "redFlags": ${redFlagsList.length > 0 ? JSON.stringify(redFlagsList) : "[]"},
-  "hypothesisSuppressed": ${redFlagsList.length > 0 && !redFlagsDismissed ? "true" : "false"},
+  "hypothesisSuppressed": ${redFlagsList.length > 0 && !redFlagsDismissed ? "true" : "false"},${mechanismJsonSpec}
   ${isBasic || isProfessional ? "" : `"explanation": "Detailed explanation of what's happening in the body (2-3 paragraphs). Reference questionnaire findings when available.",
   "reasoning": "Why this hypothesis based on the provided data, including questionnaire score interpretation",
   "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
