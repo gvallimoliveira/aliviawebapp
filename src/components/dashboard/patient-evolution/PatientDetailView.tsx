@@ -556,7 +556,7 @@ export default function PatientDetailView(props: any) {
                         const normalizeFunctional = (tr: any) => normalizeTr(tr)
                           .filter((t: any) => !t.questionnaireId && (t.name || t.testName))
                           .map((t: any) => ({ name: t.testName || t.name, result: t.result ?? t.value ?? t.outcome ?? undefined }));
-                        const ANAMNESIS_KEYS = ["chiefComplaint", "customComplaint", "onset", "evolution", "painTypes", "painPattern", "aggravatingFactors", "relievingFactors", "activityLevel", "previousTreatments", "painWeeklyFrequency", "painNightWaking", "hasEdema", "hadTwist", "painRegionRefinements"];
+                        const ANAMNESIS_KEYS = ["chiefComplaint", "customComplaint", "onset", "evolution", "painTypes", "painPattern", "aggravatingFactors", "relievingFactors", "activityLevel", "previousTreatments", "healthConditions", "healthConditionsOther", "usesContinuousMedication", "continuousMedications", "medications", "comorbidities", "painWeeklyFrequency", "painNightWaking", "hasEdema", "hadTwist", "painRegionRefinements"];
                         const buildAssessmentPayload = (a: any) => {
                           const ad: any = a.anamnesis_data || {};
                           const anamnesis: Record<string, any> = {};

@@ -4,6 +4,7 @@ import { mockPatientAssessments } from "@/data/mockPatientData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { formatHealthConditions, formatContinuousMedication, healthHistoryLabel } from "@/lib/healthHistory";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -894,6 +895,18 @@ const AssessmentView = () => {
                     <AnamnesisField
                       label={isPt ? "Informações Externas Adicionais" : "Additional External Info"}
                       value={anamnesis.additionalExternalInfo}
+                    />
+                  )}
+                  {formatHealthConditions(anamnesis, language) && (
+                    <AnamnesisField
+                      label={healthHistoryLabel("conditions", language)}
+                      value={formatHealthConditions(anamnesis, language)}
+                    />
+                  )}
+                  {formatContinuousMedication(anamnesis, language) && (
+                    <AnamnesisField
+                      label={healthHistoryLabel("medication", language)}
+                      value={formatContinuousMedication(anamnesis, language)}
                     />
                   )}
                   {anamnesis.evolution && (

@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { shadowLogAiUsage, assertCreditsAvailable } from "../_shared/ai-credits.ts";
 import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
+import { formatHealthHistoryForPrompt } from "../_shared/health-history.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -434,6 +435,7 @@ ${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]
 - Relieving factors: ${anamnesisData?.relievingFactors || "Not specified"}
 - Activity level: ${anamnesisData?.activityLevel}
 - Onset: ${anamnesisData?.onset}
+${formatHealthHistoryForPrompt(anamnesisData)}
 - Gym access: ${hasGym ? "Yes — has access to gym with free weights and resistance machines" : "No — no gym access, exercises should be bodyweight or use resistance bands"}
 
 Diagnostic hypothesis: ${diagnosis?.hypothesis || "Not available"}

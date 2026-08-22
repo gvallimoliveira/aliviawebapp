@@ -302,6 +302,10 @@ const categories: ToolCategory[] = [
 
 const faqKeys = [
   {
+    q: "Onde ficam as comorbidades (hipertensão, diabetes, cardiopatia) e a medicação contínua do paciente?",
+    a: "São perguntas obrigatórias da anamnese em todos os fluxos — avaliação manual, autoavaliação básica/premium e avaliação pelo link institucional da clínica. Ficam no prontuário do paciente, saem em todos os relatórios em PDF e são enviadas ao raciocínio clínico da IA, que adapta a dosagem dos exercícios e sinaliza precauções (evitar Valsalva e isometrias intensas na hipertensão/cardiopatia, cuidados com pé diabético, liberação médica antes de alta intensidade).",
+  },
+  {
     q: "Preciso confirmar meu email para começar a usar?",
     a: "Não. Ao se cadastrar, você entra direto no painel — sem esperar email de confirmação. Isso evita atrasos em provedores que costumam filtrar nossos emails. Você ainda pode usar normalmente recuperação de senha e receber notificações no email cadastrado.",
   },

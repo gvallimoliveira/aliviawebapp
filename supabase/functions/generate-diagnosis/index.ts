@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { shadowLogAiUsage, assertCreditsAvailable } from "../_shared/ai-credits.ts";
 import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
+import { formatHealthHistoryForPrompt } from "../_shared/health-history.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -602,6 +603,7 @@ ${Object.entries(painScoresPerRegion).map(([k, v]) => `    • ${k}: ${v}/10`).j
 - Pain duration: ${anamnesisData.painDuration || "Not specified"}
 - Sex: ${anamnesisData.sex || "Not specified"}
 - Age range: ${anamnesisData.ageRange || "Not specified"}
+${formatHealthHistoryForPrompt(anamnesisData)}
 - Prior surgery: ${hasPriorSurgery === "anamnesis.surgery.yes" ? `Yes — ${surgeryDetails}` : "No"}
 - Pain sub-area: ${painSubArea || "Not specified"}
 - Knee twist: ${hadTwist || "N/A"}
