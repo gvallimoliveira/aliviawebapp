@@ -306,45 +306,79 @@ const ClinicLandingCinematic = () => {
       </header>
 
       <main className="relative z-10 flex-1">
-        {/* ============ HERO ============ */}
-        <section className="py-16 md:py-24 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}>
-              <Badge variant="outline" className="mb-6 text-sm border-primary/30 text-primary gap-2 px-4 py-1.5">
+        {/* ============ HERO CINEMATOGRÁFICO ============ */}
+        <section ref={heroRef} className="relative h-[190vh]">
+          <div className="sticky top-0 flex h-[100svh] items-center justify-center overflow-hidden bg-foreground text-background">
+            <motion.div
+              aria-hidden="true"
+              style={reduced ? { opacity: 0.35 } : { opacity: heroGlow, scale: heroScale }}
+              className="pointer-events-none absolute h-[85vw] w-[85vw] max-h-[680px] max-w-[680px] rounded-full bg-primary/40 blur-[110px]"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 opacity-[0.07]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
+                backgroundSize: "64px 64px",
+              }}
+            />
+            <motion.div
+              style={reduced ? undefined : { opacity: heroOpacity, y: heroY }}
+              className="container relative z-10 max-w-4xl px-4 text-center"
+            >
+              <Badge variant="outline" className="mb-6 gap-2 border-background/25 bg-background/10 px-4 py-1.5 text-sm text-background">
                 <Building2 className="h-4 w-4" /> Aliv.iA Clinic
               </Badge>
+
+              <h1 className="mb-6 text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
+                Sua clínica inteira
+                <span className="block text-primary">em uma plataforma inteligente</span>
+              </h1>
+
+              <p className="mx-auto mb-6 max-w-2xl text-base text-background/70 md:text-lg">
+                Importe sua agenda atual em 1 minuto. Envie pré-avaliações por link.
+                Prontuário com IA, chat, vídeo e NPS — tudo com a sua marca.
+              </p>
+
+              <div className="mb-8">
+                <Badge className="gap-2 border-primary/40 bg-primary/20 px-4 py-1.5 text-sm text-background">
+                  <Gift className="h-4 w-4" /> 15 dias grátis — sem cartão, sem compromisso
+                </Badge>
+              </div>
+
+              <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Button size="lg" className="rounded-xl gap-2 text-base" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
+                  Começar teste grátis <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-xl gap-2 border-background/30 bg-transparent text-base text-background hover:bg-background/10 hover:text-background"
+                  onClick={() => navigate("/clinica/demo")}
+                >
+                  <Activity className="h-4 w-4" /> Experimentar Demo
+                </Button>
+              </div>
+              <p className="mt-3 text-xs text-background/50">Vagas limitadas por região</p>
             </motion.div>
-
-            <motion.h1 initial="hidden" animate="visible" variants={fadeUp} custom={1}
-              className="text-3xl md:text-5xl font-bold text-foreground mb-6 leading-tight">
-              Sua clínica inteira em uma plataforma inteligente
-            </motion.h1>
-
-            <motion.p initial="hidden" animate="visible" variants={fadeUp} custom={2}
-              className="text-lg text-muted-foreground mb-4 max-w-2xl mx-auto">
-              Importe sua agenda atual em 1 minuto. Envie pré-avaliações por link.
-              Tenha prontuário com IA, chat, vídeo e NPS — tudo com a sua marca.
-            </motion.p>
-
-            <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={2.5} className="mb-8">
-              <Badge className="bg-green-500/10 text-green-600 border-green-500/30 text-sm px-4 py-1.5 gap-2">
-                <Gift className="h-4 w-4" /> 15 dias grátis — sem compromisso, sem cartão
-              </Badge>
-            </motion.div>
-
-            <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={3} className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button size="lg" className="rounded-xl gap-2 text-base" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
-                Começar teste grátis <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Button size="lg" variant="outline" className="rounded-xl gap-2 text-base" onClick={() => navigate("/clinica/demo")}>
-                <Activity className="h-4 w-4" /> Experimentar Demo
-              </Button>
-            </motion.div>
-            <motion.p initial="hidden" animate="visible" variants={fadeUp} custom={3.5} className="text-xs text-muted-foreground mt-2">
-              Vagas limitadas por região
-            </motion.p>
           </div>
         </section>
+
+        <BrandMarquee />
+
+        <KineticStatement
+          kicker="Uma clínica sem retrabalho"
+          word="Escala"
+          caption="Agenda, prontuário, IA, teleconsulta e NPS operando no mesmo lugar — com a marca da sua clínica em cada entrega."
+        />
+
+        <ScrollWords
+          kicker="Por que trocar de sistema"
+          text="Planilhas não conversam com o WhatsApp, o prontuário vive em outro app e ninguém sabe qual paciente está prestes a abandonar o tratamento. O Aliv.iA Clinic junta captação, evolução clínica e inteligência preditiva em uma única operação."
+        />
+
+
 
         {/* ============ DIFERENCIAIS EXCLUSIVOS ============ */}
         <section className="py-16 px-4 relative">
