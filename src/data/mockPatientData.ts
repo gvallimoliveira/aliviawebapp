@@ -1,5 +1,5 @@
 // Mock patient assessment data for professional demo/preview
-export const mockPatientAssessments = [
+const rawMockPatientAssessments = [
   {
     id: "demo-001",
     professional_id: "demo",
