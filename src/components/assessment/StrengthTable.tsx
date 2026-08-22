@@ -476,8 +476,10 @@ const STR: Record<string, Record<string, string>> = {
     hidePeakTime: "Ocultar tiempo al pico",
     agonistTitle: "Asimetría agonista/antagonista (mismo lado)",
     agonistHint: "Por encima del 10% merece atención.",
-    untitledMovement: "Movimiento sin nombre — toque para completar",
+    untitledMovement: "Sin nombre — toque para completar",
     peakTrialN: "Tiempo al pico",
+
+
 
 
   },
