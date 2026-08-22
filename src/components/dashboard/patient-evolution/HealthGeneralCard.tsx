@@ -89,6 +89,8 @@ interface FormState {
   healthConditionsOther: string;
   healthConditionsOtherOnset: string;
   healthConditionsOtherControl: string;
+  /** Controle por condição de risco (hipertensão / diabetes / cardiopatia). */
+  healthConditionsControl: Record<string, string>;
   usesContinuousMedication: string;
   continuousMedications: string;
   change_summary: string;
@@ -103,6 +105,7 @@ const emptyForm = (): FormState => ({
   healthConditionsOther: "",
   healthConditionsOtherOnset: "",
   healthConditionsOtherControl: "",
+  healthConditionsControl: {},
   usesContinuousMedication: "",
   continuousMedications: "",
   change_summary: "",
@@ -114,8 +117,8 @@ const emptyForm = (): FormState => ({
  * Seção fixa "Saúde geral" do prontuário: mostra sempre as comorbidades
  * essenciais (hipertensão / diabetes / cardiopatia / outra) e a medicação de
  * uso contínuo do registro mais recente — vindo da anamnese OU de um registro
- * manual do profissional — sinalizando condições de risco e mantendo o
- * histórico completo das alterações.
+ * manual do profissional — sinalizando o nível de atenção (condição controlada
+ * pesa menos que condição não manejada) e mantendo o histórico das alterações.
  */
 const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
   assessments,
@@ -125,7 +128,9 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
   patientName,
   clinicId,
   readOnly,
+  onRiskChange,
 }) => {
+
   const { language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
