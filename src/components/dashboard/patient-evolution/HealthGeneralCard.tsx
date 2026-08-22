@@ -151,6 +151,12 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
   const canEdit = !readOnly && !!user;
 
   const loadManual = useCallback(async () => {
+    if (isDemo) {
+      // Modo demonstração: registros mockados, sem tocar no banco.
+      const { mockHealthRecords } = await import("@/data/mockProDemoExtras");
+      setManualRecords((patientEmail && mockHealthRecords[patientEmail]) || []);
+      return;
+    }
     if (!patientId && !patientEmail) return;
     const sb = supabase as any;
     let q = sb.from("patient_health_records").select("*").order("recorded_at", { ascending: false });
@@ -159,7 +165,8 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
     else q = q.eq("patient_email", patientEmail);
     const { data, error } = await q;
     if (!error) setManualRecords(data || []);
-  }, [patientId, patientEmail]);
+  }, [patientId, patientEmail, isDemo]);
+
 
   useEffect(() => {
     loadManual();
