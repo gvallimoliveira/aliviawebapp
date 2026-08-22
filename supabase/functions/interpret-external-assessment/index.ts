@@ -102,6 +102,7 @@ RULES:
 - Diagnosis: produce a clinical hypothesis grounded ONLY in what the file shows. Mark confidence as "low" if data is sparse, "moderate" otherwise, "high" only when extensive objective findings support it.
 - CRITICAL — "hypothesis" MUST be a SHORT diagnostic label only: the clinical condition + affected structure/side, optionally the mechanism category (e.g. "Dor femoropatelar no joelho direito, possivelmente relacionada a fatores mecânicos e de carga"). Hard limits: ONE sentence, maximum 20 words, no semicolons, no lists. NEVER include in "hypothesis": aggravating/relieving factors, ROM or strength values, VAS scores, functional impact, mobility findings, prognosis or reasoning. All of that belongs in "summary"/"reasoning" only. External files often bring messy, mixed text — extract only the diagnostic label from it and never copy long descriptive sentences into "hypothesis".
 - Clinical impression: 3–5 line integrative overview + EXACTLY 2 therapeutic objectives chosen from this list ONLY: controle do quadro álgico, reequilibrar tensões miofasciais, exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar, modulação da dor.
+- painMechanismScreening: map the file's findings to the pain mechanism screening criteria (Kosek 2021 / Finnerup 2016). Select ONLY criterion keys that the file EXPLICITLY supports (never infer to fill the list), add durationMonths and csiScore only when stated, and quote the supporting text in "evidence". Omit the whole object if there is no usable evidence — an empty/invented screening is worse than none.
 - additionalExternalInfo: free-form bucket for anything relevant that doesn't fit other fields (imaging reports, lab values, custom scales, prior treatments described, professional comments, etc.). Be thorough — nothing relevant should be lost.
 - aiInterpretedFields: list every top-level field you populated (e.g. ["chiefComplaint","painRegions","romTable","diagnosis"]) so the UI can flag them for the user to review.
 - If the file is illegible or clearly not a clinical assessment, return interpretable=false with a short reason.`;
@@ -195,6 +196,26 @@ RULES:
                   required: ["name", "score"],
                   additionalProperties: false,
                 },
+              },
+              painMechanismScreening: {
+                type: "object",
+                description: "Pain mechanism screening evidence found EXPLICITLY in the file. Omit entirely if the file gives no usable evidence.",
+                properties: {
+                  criteria: {
+                    type: "array",
+                    description: "Criterion keys explicitly supported by the file text. Allowed keys ONLY: noc_movement_relation, noc_rest_relief, noc_localized, noc_palpation, noc_inflammatory, neu_burning_shock, neu_dermatomal, neu_paresthesia, neu_neurodynamic, neu_sensory_loss, neu_motor_deficit, nop_disproportionate, nop_multisite, nop_hypersensitivity, nop_sleep_fatigue, nop_chronic, nop_migrating.",
+                    items: { type: "string" },
+                  },
+                  suggestedSubtype: {
+                    type: "string",
+                    description: "Only if clearly supported. One of: mechanical, inflammatory, peripheral_neuropathic, central_neuropathic, nociplastic_primary, nociplastic_secondary.",
+                    enum: ["mechanical", "inflammatory", "peripheral_neuropathic", "central_neuropathic", "nociplastic_primary", "nociplastic_secondary"],
+                  },
+                  durationMonths: { type: "number", description: "Symptom duration in months, if stated." },
+                  csiScore: { type: "number", description: "Central Sensitization Inventory total score, only if the file states it." },
+                  evidence: { type: "string", description: "Short quote/paraphrase from the file justifying the selected criteria." },
+                },
+                additionalProperties: false,
               },
               diagnosis: {
                 type: "object",

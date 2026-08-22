@@ -40,6 +40,7 @@ import { openWhatsAppDeferred } from "@/lib/whatsappShare";
 import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { useClinic } from "@/contexts/ClinicContext";
+import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechanismScreening";
 
 
 const SUBSCALE_COLORS = [
@@ -911,6 +912,11 @@ export default function PatientDetailView(props: any) {
                 romTable: interpretation.romTable,
                 strengthTable: interpretation.strengthTable,
                 functionalTests: interpretation.functionalTests,
+                // Passo D2 — triagem de mecanismo de dor extraída do arquivo externo
+                // (pré-preenchida para revisão do profissional).
+                mechanismAnswers: mechanismAnswersFromExternal(
+                  (interpretation as any).painMechanismScreening,
+                ) || undefined,
               },
             };
             setExternalPrefill({

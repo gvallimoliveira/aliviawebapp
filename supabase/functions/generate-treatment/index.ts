@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, forceRefresh } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, forceRefresh, painMechanism: bodyPainMechanism, painExtent: bodyPainExtent } = await req.json();
     const creditDecision = await assertCreditsAvailable(req, { function_name: "generate-treatment" });
     console.log("[ai-credits] generate-treatment decision:", JSON.stringify({
       reason: creditDecision.reason,
@@ -42,7 +42,23 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
-    const cachePayload = { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language };
+    // Passo D3 — mecanismo de dor entra na chave de cache: o mesmo caso com
+    // mecanismo diferente precisa de um plano diferente.
+    const resolvedMechanism = (() => {
+      const raw = (diagnosis && typeof diagnosis === "object" ? (diagnosis as any).pain_mechanism : null)
+        ?? bodyPainMechanism
+        ?? (anamnesisData && typeof anamnesisData === "object" ? (anamnesisData as any).painMechanismResolved : null);
+      if (!raw || typeof raw !== "object") return null;
+      const m = String((raw as any).mechanism ?? "");
+      if (!["nociceptive", "neuropathic", "nociplastic", "mixed"].includes(m)) return null;
+      return raw as Record<string, any>;
+    })();
+    const resolvedExtent = typeof bodyPainExtent === "number"
+      ? bodyPainExtent
+      : typeof (resolvedMechanism as any)?.pain_extent === "number"
+        ? (resolvedMechanism as any).pain_extent
+        : null;
+    const cachePayload = { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, painMechanism: resolvedMechanism, painExtent: resolvedExtent };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ treatmentPlan: unknown }>(admin, "generate-treatment", cachePayload);
       if (cached) {
@@ -103,7 +119,57 @@ Each exercise MUST include practical dosage (sets, reps OR duration, frequency) 
 ABSOLUTE RULE: If this protocol block is present, the "exercises" array in EVERY phase MUST contain at least 6 concrete exercises mixing the 4 axes above. A plan with empty or near-empty exercise lists is invalid.
 ` : "";
 
+    // -------------------------------------------------------------------
+    // Passo D3 — protocolo por mecanismo de dor (Kosek 2021 / Finnerup 2016).
+    // Só entra no prompt quando houve triagem; sem triagem o plano segue o
+    // raciocínio padrão (a triagem é opcional na avaliação manual).
+    // -------------------------------------------------------------------
+    const mechanismProtocol = resolvedMechanism ? `
+
+PROTOCOL — PAIN MECHANISM DRIVEN PRESCRIPTION (MANDATORY when this block is present):
+Screening result for this patient (frameworks: Kosek et al. 2021 for nociplastic, Finnerup et al. 2016 for neuropathic):
+- Predominant mechanism: ${resolvedMechanism.mechanism}
+- Secondary mechanism: ${resolvedMechanism.secondary || "none"}
+- Clinical subtype: ${resolvedMechanism.subtype || "not specified"}
+- Axis: ${resolvedMechanism.axis || "unknown"} (peripheral vs central)
+- Central sensitization likely: ${resolvedMechanism.central_sensitization_likely ? "YES" : "no"}
+- Screening confidence: ${resolvedMechanism.confidence || "low"}
+${typeof resolvedMechanism.csi_score === "number" ? `- CSI score: ${resolvedMechanism.csi_score} (>= 40 supports central sensitization)` : ""}
+${resolvedExtent !== null ? `- Pain extent: ~${resolvedExtent}% of body surface` : ""}
+
+The mechanism DICTATES the dosage logic, the progression speed and the education content of every phase:
+
+A) NOCICEPTIVE (peripheral, load/tissue driven):
+   - Classic tissue-directed progression: relative rest/unloading only while irritable, then progressive mechanical loading (HIMA → HSR when tendon; graded strength otherwise).
+   - Dose by load and tissue tolerance; use pain during exercise <= 3/10 as the guardrail.
+   - Progress phases on measurable objective criteria (ROM, strength, tolerance to load).
+   - Inflammatory/irritative subtype: lower irritability FIRST (isometrics, thermal/analgesic resources, unloading), only then load.
+
+B) NEUROPATHIC (nerve involved):
+   - Include neural mobility work: neurodynamic sliders BEFORE tensioners, low amplitude, no reproduction of paresthesia/shock.
+   - Postures/exercises must NOT hold the nerve in tension or in the compressive position (e.g. avoid loaded end-range positions that close the neural interface).
+   - If lumbar radicular: use McKenzie directional preference and monitor CENTRALIZATION; stop any direction that peripheralizes.
+   - Progression is SLOWER; guardrail is the neural symptom (burning/shock/numbness), not just pain intensity.
+   - Educate on symptom fluctuation and on the difference between "sensitive nerve" and "damaged nerve".
+
+C) NOCIPLASTIC (sensitized system, central axis):
+   - Lead with PAIN NEUROSCIENCE EDUCATION + graded exposure and time-contingent (not pain-contingent) dosing.
+   - Start clearly BELOW the tolerance threshold, use aerobic/global movement, breathing and pacing; accept a mild transient increase in symptoms without dropping the plan.
+   - Prioritize sleep, stress and activity regularity as explicit plan items (they are treatment, not advice).
+   - AVOID: passive-only, high-intensity provocative testing, and load jumps. Do NOT chase a structural culprit — reinforce that hurt does not equal harm.
+   - Progression on function and consistency (adherence, minutes, ADL milestones), never on pain reduction alone.
+
+D) MIXED / secondary sensitization:
+   - Treat the tissue AND the sensitization: keep mechanical progression for the nociceptive component, but pace and educate as in the nociplastic protocol, using the MORE irritable component to set the ceiling.
+
+SAFETY (unchanged, applies to all mechanisms): no unstable surfaces (BOSU/wobble boards) — use firm ground, reduced base of support, load/band perturbations and sensory manipulation instead; and respect the positional/ergonomic screening rules below.
+
+REQUIRED OUTPUT: add a "painMechanismStrategy" field to the JSON with:
+{ "mechanism": "${resolvedMechanism.mechanism}", "rationale": "1-2 sentences on how this mechanism shaped the plan", "patientMessage": "2-3 sentences in ${lang} in PLAIN LANGUAGE (no jargon like 'nociplastic', 'sensitization', 'neurodynamic'), warm and reassuring, explaining how the plan respects the way this pain behaves", "avoid": ["what to avoid for this mechanism"], "progressionRule": "criteria used to progress phases for this mechanism" }
+` : "";
+
     const systemPrompt = `You are an experienced physiotherapist AI assistant (musculoskeletal, cardiorespiratory and geriatric). Based on the patient's data, diagnostic hypothesis, and functional test results, create a personalized treatment plan in 3 phases.
+${mechanismProtocol}
 ${includePedro ? PEDRO_KNOWLEDGE_BASE : ""}
 ${cardioGeriProtocol}
 
@@ -371,6 +437,7 @@ ${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]
 - Gym access: ${hasGym ? "Yes — has access to gym with free weights and resistance machines" : "No — no gym access, exercises should be bodyweight or use resistance bands"}
 
 Diagnostic hypothesis: ${diagnosis?.hypothesis || "Not available"}
+${resolvedMechanism ? `Pain mechanism screening: predominant ${resolvedMechanism.mechanism}${resolvedMechanism.secondary ? ` + secondary ${resolvedMechanism.secondary}` : ""}${resolvedMechanism.subtype ? ` (subtype: ${resolvedMechanism.subtype})` : ""}, axis ${resolvedMechanism.axis || "unknown"}, confidence ${resolvedMechanism.confidence || "low"}${resolvedExtent !== null ? `, pain extent ~${resolvedExtent}% of body surface` : ""}. FOLLOW the pain-mechanism protocol and return "painMechanismStrategy".` : "Pain mechanism screening: not performed — use standard clinical reasoning and do NOT return painMechanismStrategy."}
 
 ${questionnaireResults && questionnaireResults.length > 0 ? `Validated questionnaire results:
 ${questionnaireResults.map((q: any) => `- ${q.questionnaireName} (${q.questionnaireId.toUpperCase()}): Total score ${q.percentageScore}% | Interpretation: ${q.interpretation_pt || q.interpretation_en} | Severity: ${q.severity}

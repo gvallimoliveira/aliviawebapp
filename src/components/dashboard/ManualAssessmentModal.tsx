@@ -874,6 +874,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPainRegionRefinements(an.painRegionRefinements && typeof an.painRegionRefinements === "object" ? an.painRegionRefinements : {});
     setRedFlagsChecked(Array.isArray(a.red_flags?.detected) ? a.red_flags.detected : []);
     setAdditionalClinicalNotes(an.additionalClinicalNotes || "");
+    // Passo D2 — triagem de mecanismo pré-preenchida pela leitura do arquivo externo.
+    setMechanismAnswers(
+      (an as any).mechanismAnswers
+        ? sanitizeMechanismAnswers((an as any).mechanismAnswers)
+        : createEmptyMechanismAnswers(),
+    );
     setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
     setFunctionalTests(an.functionalTests || "");
     setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(2));
@@ -1216,6 +1222,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           },
           questionnaireResults,
           diagnosis: aiDiagnosis || (diagnosisText ? { summary: diagnosisText } : null),
+          // Passo D3 — mecanismo de dor guia a dosagem/progressão do plano.
+          painMechanism: (aiDiagnosis as any)?.pain_mechanism || buildProMechanism(),
           mode: "professional",
           language,
         },
