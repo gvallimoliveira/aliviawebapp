@@ -213,6 +213,15 @@ export interface PainMechanismWizardProps {
   durationWeeks?: number | null;
   suggestedDistribution?: MechanismDistribution;
   disabled?: boolean;
+  /**
+   * Bloco F2 — triagem da avaliação anterior (reavaliação expressa). Serve só
+   * para exibir o comparativo; nunca sobrescreve o que o profissional marcar.
+   */
+  previous?: {
+    mechanism?: string | null;
+    subtypeLabel?: string | null;
+    date?: string | null;
+  } | null;
 }
 
 const PainMechanismWizard = ({
@@ -224,6 +233,7 @@ const PainMechanismWizard = ({
   durationWeeks = null,
   suggestedDistribution,
   disabled = false,
+  previous = null,
 }: PainMechanismWizardProps) => {
   const lang: Lang = language === "pt" ? "pt" : language === "es" ? "es" : "en";
   const isPro = variant === "pro";
