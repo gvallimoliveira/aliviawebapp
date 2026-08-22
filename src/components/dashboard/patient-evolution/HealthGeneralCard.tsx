@@ -418,25 +418,33 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               {(latest.data.healthConditions || []).map((cid) => {
                 const isRisk = RISK_CONDITION_IDS.includes(cid as any);
+                const ctrl =
+                  cid === "other"
+                    ? latest.data.healthConditionsOtherControl || ""
+                    : (latest.data.healthConditionsControl || {})[cid] || "";
+                const isManaged = MANAGED_CONTROL_IDS.includes(ctrl);
+                const isUnmanaged = RISK_CONTROL_IDS.includes(ctrl);
+                const tone =
+                  cid === "none"
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                    : isUnmanaged || (isRisk && !isManaged)
+                      ? "border-destructive/40 bg-destructive/10 text-destructive"
+                      : isManaged
+                        ? "border-amber-300 bg-amber-50 text-amber-700"
+                        : "";
                 return (
-                  <Badge
-                    key={cid}
-                    variant="outline"
-                    className={
-                      isRisk
-                        ? "border-destructive/40 bg-destructive/10 text-destructive"
-                        : cid === "none"
-                          ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                          : ""
-                    }
-                  >
-                    {isRisk && <AlertTriangle className="h-3 w-3 mr-1" />}
+                  <Badge key={cid} variant="outline" className={tone}>
+                    {(isUnmanaged || (isRisk && !isManaged)) && <AlertTriangle className="h-3 w-3 mr-1" />}
                     {healthConditionLabel(cid, language)}
+                    {ctrl && cid !== "other" && (
+                      <span className="ml-1 font-normal opacity-80">• {otherControlLabel(ctrl, language)}</span>
+                    )}
                   </Badge>
                 );
               })}
               {sourceBadge(latest.source, latest.raw)}
             </div>
+
 
             {latest.data.healthConditions?.includes("other") && (
               <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-1 text-sm">
