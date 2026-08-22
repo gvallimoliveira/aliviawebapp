@@ -191,6 +191,8 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
     const fromManual = (manualRecords || []).map((r: any) => ({
       key: `m-${r.id}`,
       date: `${r.recorded_at}T12:00:00`,
+      // Desempate entre registros do mesmo dia: vale o salvo/editado mais recente.
+      tie: new Date(r.updated_at || r.created_at || `${r.recorded_at}T12:00:00`).getTime(),
       source: "manual" as const,
       data: normalizeHealthHistory({
         healthConditions: r.health_conditions,
@@ -204,10 +206,16 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
       raw: r,
     }));
 
-    return [...fromAssessments, ...fromManual].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-    );
+    return [...fromAssessments, ...fromManual].sort((a: any, b: any) => {
+      const diff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (diff !== 0) return diff;
+      // Mesmo dia: prevalece o registro manual mais recente (e manual acima da avaliação).
+      const at = a.tie ?? new Date(a.date).getTime();
+      const bt = b.tie ?? new Date(b.date).getTime();
+      return bt - at;
+    });
   }, [assessments, manualRecords]);
+
 
   const latest = records[0];
   const previous = records.slice(1);
