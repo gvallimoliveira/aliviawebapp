@@ -159,7 +159,12 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
     }
     if (!patientId && !patientEmail) return;
     const sb = supabase as any;
-    let q = sb.from("patient_health_records").select("*").order("recorded_at", { ascending: false });
+    let q = sb
+      .from("patient_health_records")
+      .select("*")
+      .order("recorded_at", { ascending: false })
+      .order("created_at", { ascending: false });
+
     if (patientId && patientEmail) q = q.or(`patient_id.eq.${patientId},patient_email.eq.${patientEmail}`);
     else if (patientId) q = q.eq("patient_id", patientId);
     else q = q.eq("patient_email", patientEmail);
