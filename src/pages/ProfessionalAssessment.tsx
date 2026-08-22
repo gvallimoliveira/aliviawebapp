@@ -562,6 +562,10 @@ const ProfessionalAssessment = () => {
     setStep("loading");
     try {
       const bodyData: any = { anamnesisData: data, testResults: [], questionnaireResults: qResults, mode: "professional", language, assessmentId: currentId || assessmentId };
+      // Passo D1 — mecanismo/extensão de dor como contexto clínico para a IA.
+      const mechPayload = buildMechanismPayload(data as any);
+      if (mechPayload.pain_mechanism) bodyData.painMechanism = mechPayload.pain_mechanism;
+      bodyData.painExtent = painExtentValue((data as any).painRegions);
       const result = await invokeDiagnosisWithRetry(bodyData);
 
       const id = currentId || assessmentId;
