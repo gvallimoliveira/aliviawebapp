@@ -325,6 +325,42 @@ const PainMechanismWizard = ({
         </p>
       </div>
 
+      {/* F2 — comparativo com a triagem anterior (reavaliação) */}
+      {previous?.mechanism && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-2.5 space-y-1">
+          <p className="text-[11px] font-semibold text-primary">
+            {lang === "pt" ? "Triagem anterior" : lang === "es" ? "Triaje anterior" : "Previous screening"}
+            {previous.date && (
+              <span className="font-normal text-muted-foreground">
+                {" "}
+                • {new Date(previous.date).toLocaleDateString(lang === "pt" ? "pt-BR" : lang === "es" ? "es-ES" : "en-US")}
+              </span>
+            )}
+          </p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="outline" className={`text-[10px] ${getMechanismTokenClass(previous.mechanism as MechanismBlock)}`}>
+              {getMechanismLabel(previous.mechanism as PainMechanism, lang)}
+            </Badge>
+            {previous.subtypeLabel && (
+              <span className="text-[11px] text-muted-foreground">{previous.subtypeLabel}</span>
+            )}
+            {result.mechanism !== previous.mechanism && (
+              <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-700 bg-amber-50">
+                {lang === "pt" ? "mudou para " : lang === "es" ? "cambió a " : "changed to "}
+                {getMechanismLabel(result.mechanism, lang)}
+              </Badge>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            {lang === "pt"
+              ? "Revise os critérios: mantenha o que continua verdadeiro e desmarque o que mudou."
+              : lang === "es"
+                ? "Revise los criterios: mantenga lo que sigue siendo cierto y desmarque lo que cambió."
+                : "Review the criteria: keep what still applies and uncheck what changed."}
+          </p>
+        </div>
+      )}
+
 
       {/* Trilha de etapas */}
       <div className="flex items-center gap-1.5">
