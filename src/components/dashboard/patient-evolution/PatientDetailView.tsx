@@ -1256,7 +1256,7 @@ export default function PatientDetailView(props: any) {
 
       {/* Histórico detalhado — notas privadas por avaliação (Extra A: título renomeado) — colapsável (fechado por padrão para reduzir muro de texto) */}
       <Separator className="opacity-40" />
-      <div data-refresh-tick={assessmentRefreshTick}>
+      <div id="sec-historico" className="scroll-mt-24" data-refresh-tick={assessmentRefreshTick}>
         <CollapsibleSection
           storageKey={`patient:${patient.groupKey || patient.email}:historico`}
           defaultOpen={true}
