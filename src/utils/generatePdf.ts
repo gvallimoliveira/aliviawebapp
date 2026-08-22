@@ -74,6 +74,20 @@ interface Diagnosis {
   reasoning?: string;
   recommendations?: string[];
   disclaimer: string;
+  /** Diagnósticos diferenciais considerados (só entra no PDF quando includeInPdf). */
+  differentialDiagnosis?: {
+    differentials?: Array<{
+      hypothesis?: string;
+      plausibility?: string;
+      competesBecause?: string;
+      arguesAgainst?: string | null;
+      discriminators?: string[];
+      whyItMatters?: string;
+      referralFlag?: boolean;
+    }>;
+    includeInPdf?: boolean;
+    generatedAt?: string;
+  } | null;
 }
 
 interface AnamnesisData {
@@ -2258,6 +2272,9 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
     y = renderSubSection(doc, y, isPt ? "Raciocínio Clínico" : "Clinical Reasoning", diagnosis.reasoning);
   }
 
+  // Diagnósticos diferenciais (opcional — só quando marcado no prontuário)
+  y = renderDifferentialBlock(doc, y, diagnosis.differentialDiagnosis, isPt);
+
   // ── Clinical Impression (if available) ──
   const clinicalImpression = (diagnosis as any)?.clinicalImpression;
   if (clinicalImpression?.overview) {
@@ -2730,6 +2747,71 @@ function renderPainMechanismBlock(
 }
 
 // ── Helper: Sub-section with body text ──
+/**
+ * Bloco opcional "Diagnósticos diferenciais considerados".
+ * Só é renderizado quando o profissional marcou `includeInPdf` no prontuário.
+ */
+function renderDifferentialBlock(
+  doc: jsPDF,
+  y: number,
+  differential: Diagnosis["differentialDiagnosis"],
+  isPt: boolean,
+): number {
+  const items = (differential?.differentials || []).filter((d) => d?.hypothesis);
+  if (!differential?.includeInPdf || items.length === 0) return y;
+
+  const plausibilityLabel = (p?: string) =>
+    isPt
+      ? p === "high" ? "plausibilidade alta" : p === "low" ? "plausibilidade baixa" : "plausibilidade média"
+      : p === "high" ? "high plausibility" : p === "low" ? "low plausibility" : "medium plausibility";
+
+  y = checkPage(doc, y, 40);
+  y += 4;
+  y = renderSectionTitle(
+    doc, y,
+    isPt ? "Diagnósticos Diferenciais Considerados" : "Differential Diagnoses Considered",
+    COLORS.primary,
+    30,
+  );
+
+  for (const item of items) {
+    const parts: string[] = [];
+    if (item.competesBecause) parts.push(`${isPt ? "Por que compete" : "Why it competes"}: ${item.competesBecause}`);
+    if (item.arguesAgainst) parts.push(`${isPt ? "O que fala contra" : "Arguments against"}: ${item.arguesAgainst}`);
+    if (item.discriminators?.length) {
+      parts.push(`${isPt ? "Como diferenciar" : "How to differentiate"}: ${item.discriminators.join(" | ")}`);
+    }
+    if (item.whyItMatters) parts.push(`${isPt ? "Por que importa" : "Why it matters"}: ${item.whyItMatters}`);
+
+    const label = `${item.hypothesis} (${plausibilityLabel(item.plausibility)}${item.referralFlag ? isPt ? " — triagem médica" : " — medical screening" : ""})`;
+
+    y = drawTextCard(doc, y, parts.join("\n"), {
+      fill: COLORS.background,
+      stroke: COLORS.border,
+      padX: 7,
+      padY: 6,
+      label: { text: label, color: COLORS.foreground, size: 9 },
+      body: { font: "Inter", weight: "normal", size: 8, lineHeight: 4, textColor: COLORS.muted },
+    });
+    y += 2;
+  }
+
+  doc.setFont("Inter", "italic");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...COLORS.muted);
+  y = checkPage(doc, y, 8);
+  doc.text(
+    isPt
+      ? "Hipóteses concorrentes levantadas como apoio ao raciocínio clínico. A decisão diagnóstica é do fisioterapeuta responsável."
+      : "Competing hypotheses raised to support clinical reasoning. The diagnostic decision belongs to the attending physiotherapist.",
+    SECTION_X, y,
+  );
+  y += 6;
+  doc.setFont("Inter", "normal");
+
+  return y;
+}
+
 function renderSubSection(doc: jsPDF, y: number, title: string, body: string): number {
   const LH = 3.5;
   doc.setFontSize(8);

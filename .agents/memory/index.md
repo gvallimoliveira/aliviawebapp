@@ -84,6 +84,7 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Partner Access Model](mem://business/partner-access-model) — Desacoplamento PRO/Clínica/Premium e tabela granted_premium_users para Premium B2C por e-mail.
 - [Partner Temporary CREFITO](mem://features/partner-temporary-crefito) — CREFITO placeholder `NNNNNN-X` criado no painel de parceiros nunca classifica a conta como profissional formado.
 
+- [Assisted Differential Diagnosis](mem://features/differential-diagnosis) — Diferenciais só em confiança baixa/moderada, geração manual, adoção como hipótese final e bloco opcional no PDF.
 - [Final Hypothesis Overrule](mem://features/final-hypothesis-overrule) — Profissional pode sobrescrever hipótese da IA no prontuário e PDF.
 - [Support Page Maintenance](mem://process/support-page-maintenance) — Toda feature relevante exige atualização imediata de Support.tsx + ClinicSupport.tsx + pt/en/es na mesma loop.
 - [Autogestão de Assinatura](mem://features/subscription-self-service) — Usuário cancela/retoma/muda para anual em Minha Conta; admin avisado na hora; auditoria self_*.

@@ -44,6 +44,8 @@ import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechan
 import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
 import MechanismEvolutionCard from "./MechanismEvolutionCard";
 import HealthGeneralCard from "./HealthGeneralCard";
+import DifferentialDiagnosisPanel from "./DifferentialDiagnosisPanel";
+import { shouldOfferDifferential } from "@/lib/differentialDiagnosis";
 import PatientSectionRail from "./PatientSectionRail";
 
 import { getHealthRiskAssessment, isHealthHistoryEmpty, normalizeHealthHistory, type HealthRiskAssessment } from "@/lib/healthHistory";
@@ -109,6 +111,18 @@ const DiagnosticHypothesisBlock = ({ assessment, isDemo, treatmentInvite }: Diag
           <div className="mt-2 pt-2 border-t border-border/60">
             <p className="text-[11px] text-muted-foreground"><Sparkles className="inline h-3 w-3 mr-1 -mt-0.5" />Sugestão original da IA: <span className="italic">{aiHypothesis}</span></p>
           </div>
+        )}
+        {/* Diagnóstico diferencial assistido — só com confiança baixa/moderada e sem hipótese final. */}
+        {shouldOfferDifferential({ ...assessment, final_hypothesis: localFinal }) && (
+          <DifferentialDiagnosisPanel
+            assessment={assessment}
+            canAdopt={canEdit}
+            isDemo={isDemo}
+            onAdopted={(hyp) => {
+              setLocalFinal(hyp);
+              setLocalFinalAt(new Date().toISOString());
+            }}
+          />
         )}
         {canEdit && !isDemo && (
           <FinalHypothesisEditor

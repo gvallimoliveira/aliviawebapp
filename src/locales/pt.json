@@ -1497,5 +1497,7 @@
   "cine.deliverables.i6.desc": "Se precisar, encontre profissionais na sua região e converse pelo chat dentro do app.",
   "cine.closing.heading": "Sua dor merece um caminho claro",
   "cine.closing.sub": "Comece pela autoavaliação gratuita ou vá direto para a premium com plano de tratamento completo.",
-  "cine.closing.note": "Ferramenta de triagem e educação em saúde. Não substitui consulta presencial."
+  "cine.closing.note": "Ferramenta de triagem e educação em saúde. Não substitui consulta presencial.",
+  "support.pro.tool.differential_diagnosis.title": "Diagnóstico diferencial assistido",
+  "support.pro.tool.differential_diagnosis.desc": "Só aparece quando a confiança da hipótese da IA é baixa ou moderada. Gera, sob clique, 2 a 4 hipóteses concorrentes com plausibilidade, motivo da competição, o que fala contra e discriminadores práticos (testes e perguntas). Você pode adotar uma como hipótese final, jogar os discriminadores nas observações da sessão e escolher se o bloco entra no PDF. Se houver sinais de alerta, a ferramenta sinaliza triagem médica."
 }

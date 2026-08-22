@@ -59,6 +59,6 @@ Comando para aprofundar um diferencial específico em conversa, aproveitando o c
 
 ## Pontos abertos
 
-1. Incluir também confiança **alta** com um "diferencial de segurança" mínimo (1 alternativa crítica), ou manter só baixa/moderada?
-2. Gerar automático em background quando a confiança for baixa (pronto ao abrir) ou sempre exigir clique?
-3. Os discriminadores devem poder virar automaticamente testes na próxima reavaliação/HEP, ou só sugestão textual?
+1. Incluir também confiança **alta** com um "diferencial de segurança" mínimo (1 alternativa crítica), ou manter só baixa/moderada? No momento nao
+2. Gerar automático em background quando a confiança for baixa (pronto ao abrir) ou sempre exigir clique? Exigir clique 
+3. Os discriminadores devem poder virar automaticamente testes na próxima reavaliação/HEP, ou só sugestão textual? Podem

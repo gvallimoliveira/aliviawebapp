@@ -1497,5 +1497,7 @@
   "cine.deliverables.i6.desc": "Si lo necesitas, encuentra profesionales en tu zona y conversa por el chat de la app.",
   "cine.closing.heading": "Tu dolor merece un camino claro",
   "cine.closing.sub": "Empieza con la autoevaluación gratuita o ve directo a la premium con plan de tratamiento completo.",
-  "cine.closing.note": "Herramienta de triaje y educación en salud. No sustituye la consulta presencial."
+  "cine.closing.note": "Herramienta de triaje y educación en salud. No sustituye la consulta presencial.",
+  "support.pro.tool.differential_diagnosis.title": "Diagnóstico diferencial asistido",
+  "support.pro.tool.differential_diagnosis.desc": "Solo aparece cuando la confianza de la hipótesis de la IA es baja o moderada. Genera, bajo clic, de 2 a 4 hipótesis competidoras con plausibilidad, por qué compiten, qué habla en contra y discriminadores prácticos (pruebas y preguntas). Puedes adoptar una como hipótesis final, enviar los discriminadores a las notas de sesión y decidir si el bloque entra en el PDF."
 }
