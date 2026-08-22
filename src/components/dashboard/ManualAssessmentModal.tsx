@@ -44,7 +44,7 @@ import {
   DESCRIPTOR_TO_PAIN_TYPE,
   type MechanismAnswers,
 } from "@/components/assessment/PainMechanismScreening";
-import { classifyMechanism, toStoredMechanism } from "@/lib/painMechanism";
+import { classifyMechanism, toStoredMechanism, parseStoredMechanism, getSubtypeLabel } from "@/lib/painMechanism";
 import { computePainExtent, suggestDistribution } from "@/lib/painExtent";
 import {
   AlertDialog,
