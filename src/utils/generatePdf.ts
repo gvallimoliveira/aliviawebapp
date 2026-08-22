@@ -1530,10 +1530,44 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
   const questionnaireItems = items.filter((t: any) => t.questionnaireId && t.percentageScore != null);
   const genericItems = items.filter((t: any) => !t.questionnaireId);
 
+  const measureQuestionnaireCard = (q: any): number => {
+    const qDef = questionnaires.find(qd => qd.id === q.questionnaireId);
+    const fullName = qDef ? (isPt ? qDef.fullName_pt : qDef.fullName_en) : "";
+    const severity = q.severity || "";
+    const interpretation = isPt ? (q.interpretation_pt || severity) : (q.interpretation_en || severity);
+    const entries = q.subscaleScores && typeof q.subscaleScores === "object" ? Object.entries(q.subscaleScores) : [];
+
+    // Match the exact fonts used by the card before wrapping. This avoids a
+    // shorter estimate when a previous PDF block left another font active.
+    doc.setFont("Inter", "bold");
+    doc.setFontSize(8);
+    const interpLines = interpretation ? doc.splitTextToSize(interpretation, TEXT_MAX_WIDTH - 8) : [];
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(7);
+    const fullNameLines = fullName ? doc.splitTextToSize(fullName, TEXT_MAX_WIDTH - 40) : [];
+    const subscaleRows = entries.length > 1 ? Math.ceil(entries.length / 2) : 0;
+
+    return 12
+      + (fullNameLines.length * 3.5)
+      + (interpLines.length * 3.5 + 1)
+      + (subscaleRows * 4.5 + (entries.length > 1 ? 1 : 0))
+      + (qDef ? 4 : 0)
+      + 6;
+  };
+
   // Render validated questionnaire results
   if (questionnaireItems.length > 0) {
-    y = checkPage(doc, y, 44);
-    y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary, 30);
+    // Keep the heading and the ENTIRE first questionnaire card on the same
+    // page. A fixed guard was insufficient for questionnaires with long names,
+    // interpretations or subscales, leaving the heading orphaned.
+    const firstCardH = measureQuestionnaireCard(questionnaireItems[0]);
+    y = renderSectionTitle(
+      doc,
+      y,
+      isPt ? "Questionários Funcionais" : "Functional Questionnaires",
+      COLORS.primary,
+      firstCardH + 4,
+    );
 
     for (const q of questionnaireItems) {
       const qDef = questionnaires.find(qd => qd.id === q.questionnaireId);
@@ -1549,7 +1583,7 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
       const interpLines = interpretation ? doc.splitTextToSize(interpretation, TEXT_MAX_WIDTH - 8) : [];
       const fullNameLines = fullName ? doc.splitTextToSize(fullName, TEXT_MAX_WIDTH - 40) : [];
       const subscaleRows = hasSubscales ? Math.ceil(entries.length / 2) : 0;
-      const cardH = 12 + (fullNameLines.length * 3.5) + (interpLines.length * 3.5 + 1) + (subscaleRows * 4.5 + (hasSubscales ? 1 : 0)) + (qDef ? 4 : 0) + 6;
+      const cardH = measureQuestionnaireCard(q);
       y = checkPage(doc, y, cardH + 4);
 
       const cardStartY = y - 2;
@@ -2899,8 +2933,6 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   const lastQ = lastTests.filter((t: any) => t.questionnaireId && t.percentageScore != null);
 
   if (firstQ.length > 0 || lastQ.length > 0) {
-    y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary);
-
     // Find questionnaires present in both
     const matched: { name: string; firstPct: number; lastPct: number; change: number }[] = [];
     const onlyFirst: string[] = [];
@@ -2922,6 +2954,18 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
       }
     }
 
+    // Reserve the real first content block before drawing the heading. The
+    // table itself paginates row by row, so it must not run a second whole-table
+    // break that could strand the title on the previous page.
+    const firstComparisonContentH = matched.length > 0 ? 17 : 10;
+    y = renderSectionTitle(
+      doc,
+      y,
+      isPt ? "Questionários Funcionais" : "Functional Questionnaires",
+      COLORS.primary,
+      firstComparisonContentH,
+    );
+
     // Render matched questionnaires table
     if (matched.length > 0) {
       const headerLabels = [
@@ -2933,7 +2977,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
       const colWidths = [CONTENT_WIDTH * 0.4, CONTENT_WIDTH * 0.18, CONTENT_WIDTH * 0.18, CONTENT_WIDTH * 0.24];
 
       // Table header
-      y = checkPage(doc, y, 10 + matched.length * 8);
+      y = checkPage(doc, y, 17);
       drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 8, 2, COLORS.primary);
       doc.setFont("Inter", "bold");
       doc.setFontSize(7);
