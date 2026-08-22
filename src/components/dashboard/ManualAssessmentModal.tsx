@@ -1423,32 +1423,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           return vals.length > 0 ? Math.max(...vals) : painScore;
         })(),
         red_flags: redFlagsChecked.length > 0 ? { detected: redFlagsChecked } : null,
-        // Passo B1 — mecanismo de dor (determinístico) + extensão de dor.
+        // Passo B1/D1 — mecanismo de dor: prioriza o refinamento da IA (que já
+        // vem validado com fallback determinístico na edge function) e cai no
+        // cálculo local quando não houve chamada de IA.
         // Só grava quando houve triagem; avaliações sem triagem seguem nulas.
-        ...(ENABLE_PAIN_MECHANISM && hasMechanismAnswers(mechanismAnswers)
-          ? {
-              pain_mechanism: toStoredMechanism(
-                classifyMechanism({
-                  descriptors: mechanismAnswers.descriptors,
-                  distribution: mechanismAnswers.distribution,
-                  criteria: mechanismAnswers.criteria,
-                  subtype: mechanismAnswers.subtype,
-                  proportionateToStimulus: mechanismAnswers.proportionateToStimulus,
-                  spontaneousPain: mechanismAnswers.spontaneousPain,
-                  multisensoryHypersensitivity: mechanismAnswers.multisensoryHypersensitivity,
-                  nonRestorativeSleep: mechanismAnswers.nonRestorativeSleep,
-                  persistentFatigue: mechanismAnswers.persistentFatigue,
-                  objectiveNeuroSigns: mechanismAnswers.objectiveNeuroSigns,
-                  durationWeeks,
-                  csiScore: mechanismAnswers.csiScore,
-                  regionCount: painRegions.length,
-                }),
-                "rules",
-                mechanismAnswers.csiScore,
-                mechanismAnswers.criteria,
-              ),
-            }
-          : {}),
+        ...(() => {
+          const aiMech = (aiDiagnosis as any)?.pain_mechanism;
+          const mech = (aiMech && typeof aiMech === "object" ? aiMech : null) ?? buildProMechanism();
+          return mech ? { pain_mechanism: mech } : {};
+        })(),
         // Passo C2 — extensão de dor sempre que houver regiões marcadas.
         pain_extent: computePainExtent(painRegions).surfacePercent || null,
 
