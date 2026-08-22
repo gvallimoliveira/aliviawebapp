@@ -128,7 +128,7 @@ export const isLiteScreeningComplete = (
 ): boolean => liteItemsFor(variant).every((key) => value.answered.includes(key));
 
 export const hasLiteAnswers = (value: LiteMechanismAnswers): boolean =>
-  value.answered.length > 0;
+  value.answered.length > 0 || value.criteria.length > 0;
 
 /** Traduz os tipos de dor da anamnese em descritores do modelo. */
 export const painTypesToDescriptors = (painTypes: string[]): string[] =>
@@ -148,6 +148,8 @@ export const classifyLite = (
       new Set([...value.descriptors, ...painTypesToDescriptors(painTypes)]),
     ),
     distribution: suggested === "unknown" ? value.distribution : suggested,
+    criteria: value.criteria,
+    subtype: value.subtype,
     proportionateToStimulus: value.proportionateToStimulus,
     spontaneousPain: value.spontaneousPain,
     multisensoryHypersensitivity: value.multisensoryHypersensitivity,
@@ -317,6 +319,7 @@ export const buildMechanismPayload = (data: {
       classifyLite(lite, data.painRegions ?? [], data.painTypes ?? []),
       "rules",
       null,
+      lite.criteria,
     ),
   };
 };
