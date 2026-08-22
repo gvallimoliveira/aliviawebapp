@@ -150,3 +150,31 @@ describe("computePainExtent", () => {
     expect(computePainExtent(all).surfacePercent).toBeLessThanOrEqual(100);
   });
 });
+
+describe("triagem aprofundada (critérios ponderados + subtipo)", () => {
+  it("critérios neuropáticos levam a neuropática periférica", () => {
+    const r = classifyMechanism({
+      criteria: ["neu_burning_shock", "neu_dermatomal", "neu_neurodynamic", "neu_sensory_loss"],
+    });
+    expect(r.mechanism).toBe("neuropathic");
+    expect(r.subtype).toBe("peripheral_neuropathic");
+    expect(r.axis).toBe("peripheral");
+  });
+
+  it("critérios nociplásticos levam a eixo central", () => {
+    const r = classifyMechanism({
+      criteria: ["nop_multisite", "nop_hypersensitivity", "nop_migrating", "nop_disproportionate"],
+    });
+    expect(r.mechanism).toBe("nociplastic");
+    expect(r.axis).toBe("central");
+  });
+
+  it("subtipo escolhido pelo avaliador sobrepõe a sugestão", () => {
+    const r = classifyMechanism({
+      criteria: ["noc_movement_relation", "noc_rest_relief", "noc_localized"],
+      subtype: "inflammatory",
+    });
+    expect(r.mechanism).toBe("nociceptive");
+    expect(r.subtype).toBe("inflammatory");
+  });
+});

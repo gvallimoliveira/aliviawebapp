@@ -15,6 +15,8 @@ import { formatCpf } from "@/utils/masks";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
+import PainMechanismWizard from "./PainMechanismWizard";
+import { suggestDistribution } from "@/lib/painExtent";
 import PainMechanismLite, {
   createEmptyLiteAnswers,
   isLiteScreeningComplete,
@@ -779,13 +781,48 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
           </div>
         );
       case "pain_mechanism":
-        return (
+        return mode === "premium" ? (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold">
+                {language === "pt"
+                  ? "Como sua dor se comporta"
+                  : language === "es"
+                    ? "Cómo se comporta su dolor"
+                    : "How your pain behaves"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {language === "pt"
+                  ? "Essas respostas ajudam a entender o tipo de dor, não só onde ela dói."
+                  : language === "es"
+                    ? "Estas respuestas ayudan a entender el tipo de dolor, no solo dónde duele."
+                    : "These answers help us understand the type of pain, not just where it hurts."}
+              </p>
+            </div>
+            <PainMechanismWizard
+              value={data.painMechanism ?? createEmptyLiteAnswers()}
+              onChange={(next) =>
+                setData({
+                  ...data,
+                  painMechanism: {
+                    ...(data.painMechanism ?? createEmptyLiteAnswers()),
+                    ...next,
+                  },
+                })
+              }
+              variant="patient"
+              language={language}
+              regionCount={data.painRegions?.length ?? 0}
+              suggestedDistribution={suggestDistribution(data.painRegions ?? [])}
+            />
+          </div>
+        ) : (
           <PainMechanismLite
             value={data.painMechanism ?? createEmptyLiteAnswers()}
             onChange={(next) => setData({ ...data, painMechanism: next })}
             painRegions={data.painRegions}
             painTypes={data.painTypes}
-            variant={mode === "premium" ? "premium" : "basic"}
+            variant="basic"
             language={language}
           />
         );

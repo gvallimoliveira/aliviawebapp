@@ -39,6 +39,8 @@ export interface MechanismScreeningInput {
   /** Descritores relatados (ver NEUROPATHIC_DESCRIPTORS / NOCICEPTIVE_DESCRIPTORS). */
   descriptors?: string[];
   distribution?: MechanismDistribution;
+  /** Critérios clínicos marcados na triagem aprofundada (ver MECHANISM_CRITERIA). */
+  criteria?: string[];
   /** Dor proporcional ao estímulo/atividade (padrão mecânico claro). */
   proportionateToStimulus?: TriState;
   /** Dor espontânea, sem gatilho identificável. */
@@ -57,7 +59,10 @@ export interface MechanismScreeningInput {
   csiScore?: number | null;
   /** Número de regiões marcadas no mapa corporal. */
   regionCount?: number | null;
+  /** Subtipo escolhido/confirmado pelo avaliador (sobrepõe a sugestão automática). */
+  subtype?: MechanismSubtype | null;
 }
+
 
 export interface MechanismSignal {
   /** Chave estável para i18n / auditoria. */
@@ -70,6 +75,8 @@ export interface MechanismSignal {
 export interface MechanismResult {
   mechanism: PainMechanism;
   secondary: PainMechanism | null;
+  /** Subtipo do mecanismo predominante (etapa 2 da triagem). */
+  subtype: MechanismSubtype | null;
   axis: PainMechanismAxis;
   confidence: MechanismConfidence;
   scores: Record<"nociceptive" | "neuropathic" | "nociplastic", number>;
@@ -107,6 +114,433 @@ export const CSI_CENTRAL_THRESHOLD = 40;
 // ---------------------------------------------------------------------------
 
 type Lang = "pt" | "en" | "es";
+
+// ---------------------------------------------------------------------------
+// Critérios clínicos ponderados (triagem aprofundada — etapa 1 do assistente)
+// ---------------------------------------------------------------------------
+
+export type MechanismBlock = Exclude<PainMechanism, "mixed" | "unknown">;
+
+export interface MechanismCriterion {
+  key: string;
+  block: MechanismBlock;
+  weight: number;
+  /** Redação técnica (profissional). */
+  label: Record<Lang, string>;
+  /** Redação leiga (paciente premium). */
+  lay: Record<Lang, string>;
+  /** Requer exame físico — oculto nos fluxos de autoavaliação. */
+  requiresExam?: boolean;
+}
+
+export const MECHANISM_CRITERIA: MechanismCriterion[] = [
+  // --- Nociceptivo ---
+  {
+    key: "noc_movement_relation",
+    block: "nociceptive",
+    weight: 3,
+    label: {
+      pt: "Relação clara com movimento, carga ou postura",
+      en: "Clear relationship with movement, load or posture",
+      es: "Relación clara con movimiento, carga o postura",
+    },
+    lay: {
+      pt: "A dor piora ou melhora conforme o movimento, o esforço ou a posição",
+      en: "Pain worsens or eases with movement, effort or position",
+      es: "El dolor empeora o mejora según el movimiento, esfuerzo o posición",
+    },
+  },
+  {
+    key: "noc_rest_relief",
+    block: "nociceptive",
+    weight: 2,
+    label: {
+      pt: "Alivia com repouso ou descarga da estrutura",
+      en: "Relieved by rest or unloading",
+      es: "Alivia con reposo o descarga",
+    },
+    lay: {
+      pt: "Descansar ou parar o esforço alivia a dor",
+      en: "Resting or stopping the effort relieves the pain",
+      es: "Descansar o parar el esfuerzo alivia el dolor",
+    },
+  },
+  {
+    key: "noc_localized",
+    block: "nociceptive",
+    weight: 2,
+    label: {
+      pt: "Dor localizada, sem irradiação para longe",
+      en: "Localized pain, no distal radiation",
+      es: "Dolor localizado, sin irradiación distal",
+    },
+    lay: {
+      pt: "A dor fica em um ponto, sem se espalhar para longe",
+      en: "Pain stays in one spot, without spreading far",
+      es: "El dolor se queda en un punto, sin extenderse lejos",
+    },
+  },
+  {
+    key: "noc_palpation",
+    block: "nociceptive",
+    weight: 2,
+    requiresExam: true,
+    label: {
+      pt: "Palpação/teste de carga reproduz exatamente a dor do paciente",
+      en: "Palpation/load test reproduces the exact pain",
+      es: "Palpación/prueba de carga reproduce exactamente el dolor",
+    },
+    lay: {
+      pt: "Apertar a região reproduz exatamente a mesma dor",
+      en: "Pressing the area reproduces the exact same pain",
+      es: "Presionar la zona reproduce exactamente el mismo dolor",
+    },
+  },
+  {
+    key: "noc_inflammatory",
+    block: "nociceptive",
+    weight: 2,
+    label: {
+      pt: "Rigidez matinal > 30 min, calor ou edema local",
+      en: "Morning stiffness > 30 min, local heat or swelling",
+      es: "Rigidez matinal > 30 min, calor o edema local",
+    },
+    lay: {
+      pt: "Rigidez ao acordar por mais de 30 minutos, calor ou inchaço na região",
+      en: "Morning stiffness over 30 minutes, heat or swelling in the area",
+      es: "Rigidez al despertar más de 30 minutos, calor o hinchazón",
+    },
+  },
+  // --- Neuropático ---
+  {
+    key: "neu_burning_shock",
+    block: "neuropathic",
+    weight: 3,
+    label: {
+      pt: "Queimação, choque elétrico ou dor em facada no trajeto",
+      en: "Burning, electric shock or stabbing along a nerve path",
+      es: "Ardor, descarga eléctrica o dolor punzante en el trayecto",
+    },
+    lay: {
+      pt: "Sensação de queimação ou choque na região",
+      en: "Burning or electric shock sensation in the area",
+      es: "Sensación de ardor o descarga en la zona",
+    },
+  },
+  {
+    key: "neu_dermatomal",
+    block: "neuropathic",
+    weight: 3,
+    label: {
+      pt: "Distribuição dermatomérica / tronco nervoso plausível",
+      en: "Plausible dermatomal / nerve trunk distribution",
+      es: "Distribución dermatomérica / tronco nervioso plausible",
+    },
+    lay: {
+      pt: "A dor desce ou sobe seguindo uma faixa, como um fio",
+      en: "Pain travels along a band, like a line down the limb",
+      es: "El dolor recorre una franja, como una línea",
+    },
+  },
+  {
+    key: "neu_paresthesia",
+    block: "neuropathic",
+    weight: 2,
+    label: {
+      pt: "Formigamento, agulhadas ou adormecimento",
+      en: "Tingling, pins and needles or numbness",
+      es: "Hormigueo, agujas o adormecimiento",
+    },
+    lay: {
+      pt: "Formigamento, agulhadas ou parte adormecida",
+      en: "Tingling, pins and needles or numb area",
+      es: "Hormigueo, agujas o zona adormecida",
+    },
+  },
+  {
+    key: "neu_neurodynamic",
+    block: "neuropathic",
+    weight: 3,
+    requiresExam: true,
+    label: {
+      pt: "Teste neurodinâmico positivo (SLR, Slump, ULNT)",
+      en: "Positive neurodynamic test (SLR, Slump, ULNT)",
+      es: "Prueba neurodinámica positiva (SLR, Slump, ULNT)",
+    },
+    lay: {
+      pt: "Esticar a perna ou o braço reproduz a dor no trajeto",
+      en: "Stretching the leg or arm reproduces the travelling pain",
+      es: "Estirar la pierna o el brazo reproduce el dolor",
+    },
+  },
+  {
+    key: "neu_sensory_loss",
+    block: "neuropathic",
+    weight: 3,
+    requiresExam: true,
+    label: {
+      pt: "Alteração sensitiva objetiva no território (hipo/hiperestesia, alodinia)",
+      en: "Objective sensory change in the territory (hypo/hyperesthesia, allodynia)",
+      es: "Alteración sensitiva objetiva en el territorio",
+    },
+    lay: {
+      pt: "A pele da região sente diferente do lado oposto",
+      en: "Skin in the area feels different from the other side",
+      es: "La piel de la zona se siente diferente del otro lado",
+    },
+  },
+  {
+    key: "neu_motor_deficit",
+    block: "neuropathic",
+    weight: 3,
+    requiresExam: true,
+    label: {
+      pt: "Déficit motor ou reflexo alterado no mesmo território",
+      en: "Motor deficit or altered reflex in the same territory",
+      es: "Déficit motor o reflejo alterado en el mismo territorio",
+    },
+    lay: {
+      pt: "Perda de força visível na região afetada",
+      en: "Noticeable loss of strength in the affected area",
+      es: "Pérdida de fuerza notable en la zona afectada",
+    },
+  },
+  // --- Nociplástico ---
+  {
+    key: "nop_disproportionate",
+    block: "nociplastic",
+    weight: 3,
+    label: {
+      pt: "Dor desproporcional ao achado tecidual / exame de imagem",
+      en: "Pain disproportionate to tissue or imaging findings",
+      es: "Dolor desproporcionado al hallazgo tisular o de imagen",
+    },
+    lay: {
+      pt: "A dor parece muito maior do que a lesão explicaria",
+      en: "Pain feels far greater than the injury would explain",
+      es: "El dolor parece mucho mayor de lo que explicaría la lesión",
+    },
+  },
+  {
+    key: "nop_multisite",
+    block: "nociplastic",
+    weight: 3,
+    label: {
+      pt: "Dor em múltiplos sítios ou distribuição difusa",
+      en: "Pain in multiple sites or widespread distribution",
+      es: "Dolor en múltiples sitios o distribución difusa",
+    },
+    lay: {
+      pt: "Dói em vários lugares do corpo, não só em um",
+      en: "It hurts in several places, not just one",
+      es: "Duele en varios lugares, no solo en uno",
+    },
+  },
+  {
+    key: "nop_hypersensitivity",
+    block: "nociplastic",
+    weight: 3,
+    label: {
+      pt: "Hipersensibilidade a toque leve, luz, som ou cheiro",
+      en: "Hypersensitivity to light touch, light, sound or smell",
+      es: "Hipersensibilidad al tacto leve, luz, sonido u olor",
+    },
+    lay: {
+      pt: "Toque leve, luz, barulho ou cheiro incomodam mais que antes",
+      en: "Light touch, light, noise or smells bother more than before",
+      es: "El tacto leve, la luz, el ruido o los olores molestan más",
+    },
+  },
+  {
+    key: "nop_sleep_fatigue",
+    block: "nociplastic",
+    weight: 2,
+    label: {
+      pt: "Sono não restaurador, fadiga ou névoa mental associados",
+      en: "Non-restorative sleep, fatigue or brain fog",
+      es: "Sueño no reparador, fatiga o niebla mental",
+    },
+    lay: {
+      pt: "Sono ruim, cansaço constante ou dificuldade de concentração",
+      en: "Poor sleep, constant tiredness or trouble concentrating",
+      es: "Sueño malo, cansancio constante o dificultad para concentrarse",
+    },
+  },
+  {
+    key: "nop_chronic",
+    block: "nociplastic",
+    weight: 2,
+    label: {
+      pt: "Sintomas contínuos há mais de 3 meses",
+      en: "Continuous symptoms for over 3 months",
+      es: "Síntomas continuos por más de 3 meses",
+    },
+    lay: {
+      pt: "A dor já dura mais de 3 meses sem parar",
+      en: "Pain has lasted more than 3 months without stopping",
+      es: "El dolor ya dura más de 3 meses sin parar",
+    },
+  },
+  {
+    key: "nop_migrating",
+    block: "nociplastic",
+    weight: 2,
+    label: {
+      pt: "Dor migratória ou que se espalha sem padrão anatômico",
+      en: "Migrating pain or spreading without anatomical pattern",
+      es: "Dolor migratorio o que se extiende sin patrón anatómico",
+    },
+    lay: {
+      pt: "A dor muda de lugar ou se espalha sem explicação",
+      en: "Pain moves around or spreads with no clear reason",
+      es: "El dolor cambia de lugar o se extiende sin explicación",
+    },
+  },
+];
+
+export const criteriaForBlock = (
+  block: MechanismBlock,
+  opts: { includeExam?: boolean } = {},
+): MechanismCriterion[] =>
+  MECHANISM_CRITERIA.filter(
+    (c) => c.block === block && (opts.includeExam !== false || !c.requiresExam),
+  );
+
+export const MECHANISM_BLOCK_ORDER: MechanismBlock[] = [
+  "nociceptive",
+  "neuropathic",
+  "nociplastic",
+];
+
+/** Soma máxima possível por bloco — usada para normalizar as barras da UI. */
+export const blockMaxScore = (block: MechanismBlock, includeExam = true): number =>
+  criteriaForBlock(block, { includeExam }).reduce((sum, c) => sum + c.weight, 0);
+
+// ---------------------------------------------------------------------------
+// Subtipos (etapa 2 do assistente)
+// ---------------------------------------------------------------------------
+
+export type MechanismSubtype =
+  | "mechanical"
+  | "inflammatory"
+  | "peripheral_neuropathic"
+  | "central_neuropathic"
+  | "nociplastic_primary"
+  | "nociplastic_secondary";
+
+export interface MechanismSubtypeOption {
+  key: MechanismSubtype;
+  label: Record<Lang, string>;
+  hint: Record<Lang, string>;
+  axis: PainMechanismAxis;
+  /** Critérios que sugerem este subtipo. */
+  supportedBy: string[];
+}
+
+export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]> = {
+  nociceptive: [
+    {
+      key: "mechanical",
+      axis: "peripheral",
+      label: { pt: "Mecânica / de carga", en: "Mechanical / load-related", es: "Mecánica / de carga" },
+      hint: {
+        pt: "Dor previsível com carga e movimento, alivia com descarga.",
+        en: "Predictable with load and movement, eases with unloading.",
+        es: "Previsible con carga y movimiento, alivia con descarga.",
+      },
+      supportedBy: ["noc_movement_relation", "noc_rest_relief", "noc_palpation"],
+    },
+    {
+      key: "inflammatory",
+      axis: "peripheral",
+      label: { pt: "Inflamatória / irritativa", en: "Inflammatory / irritative", es: "Inflamatoria / irritativa" },
+      hint: {
+        pt: "Rigidez matinal prolongada, calor, edema, dor em repouso.",
+        en: "Prolonged morning stiffness, heat, swelling, pain at rest.",
+        es: "Rigidez matinal prolongada, calor, edema, dolor en reposo.",
+      },
+      supportedBy: ["noc_inflammatory"],
+    },
+  ],
+  neuropathic: [
+    {
+      key: "peripheral_neuropathic",
+      axis: "peripheral",
+      label: { pt: "Periférica (nervo/raiz)", en: "Peripheral (nerve/root)", es: "Periférica (nervio/raíz)" },
+      hint: {
+        pt: "Lesão ou compressão neural plausível, distribuição neuroanatômica, teste neurodinâmico positivo.",
+        en: "Plausible nerve lesion/compression, neuroanatomical distribution, positive neurodynamic test.",
+        es: "Lesión o compresión neural plausible, distribución neuroanatómica, prueba neurodinámica positiva.",
+      },
+      supportedBy: ["neu_dermatomal", "neu_neurodynamic", "neu_sensory_loss", "neu_motor_deficit"],
+    },
+    {
+      key: "central_neuropathic",
+      axis: "central",
+      label: { pt: "Central", en: "Central", es: "Central" },
+      hint: {
+        pt: "Distribuição não segmentar (hemicorpo, abaixo de um nível), lesão central conhecida.",
+        en: "Non-segmental distribution (hemibody, below a level), known central lesion.",
+        es: "Distribución no segmentaria (hemicuerpo, bajo un nivel), lesión central conocida.",
+      },
+      supportedBy: ["neu_burning_shock", "nop_hypersensitivity"],
+    },
+  ],
+  nociplastic: [
+    {
+      key: "nociplastic_primary",
+      axis: "central",
+      label: { pt: "Primária (isolada)", en: "Primary (isolated)", es: "Primaria (aislada)" },
+      hint: {
+        pt: "Sem fonte nociceptiva ou neuropática que explique o quadro (padrão fibromiálgico).",
+        en: "No nociceptive or neuropathic source explains the picture (fibromyalgia-like).",
+        es: "Sin fuente nociceptiva o neuropática que explique el cuadro.",
+      },
+      supportedBy: ["nop_multisite", "nop_migrating", "nop_hypersensitivity"],
+    },
+    {
+      key: "nociplastic_secondary",
+      axis: "mixed",
+      label: { pt: "Secundária (sobreposta)", en: "Secondary (superimposed)", es: "Secundaria (sobrepuesta)" },
+      hint: {
+        pt: "Sensibilização sobreposta a uma fonte tecidual ou neural ainda ativa.",
+        en: "Sensitization superimposed on an active tissue or nerve source.",
+        es: "Sensibilización sobrepuesta a una fuente tisular o neural activa.",
+      },
+      supportedBy: ["nop_disproportionate", "nop_chronic", "nop_sleep_fatigue"],
+    },
+  ],
+};
+
+export const subtypeOptionsFor = (m: PainMechanism): MechanismSubtypeOption[] =>
+  m === "nociceptive" || m === "neuropathic" || m === "nociplastic"
+    ? MECHANISM_SUBTYPES[m]
+    : [];
+
+export const getSubtypeLabel = (s: MechanismSubtype | null, lang: Lang = "pt"): string | null => {
+  if (!s) return null;
+  for (const list of Object.values(MECHANISM_SUBTYPES)) {
+    const found = list.find((o) => o.key === s);
+    if (found) return found.label[lang];
+  }
+  return null;
+};
+
+/** Sugere o subtipo do mecanismo predominante a partir dos critérios marcados. */
+export const suggestSubtype = (
+  mechanism: PainMechanism,
+  criteria: string[],
+): MechanismSubtype | null => {
+  const options = subtypeOptionsFor(mechanism);
+  if (options.length === 0) return null;
+  const scored = options
+    .map((o) => ({ o, n: o.supportedBy.filter((k) => criteria.includes(k)).length }))
+    .sort((a, b) => b.n - a.n);
+  if (scored[0].n === 0) return null;
+  if (scored[0].n === scored[1]?.n) return options[0].key;
+  return scored[0].o.key;
+};
+
 
 interface MechanismCopy {
   label: Record<Lang, string>;
@@ -223,7 +657,9 @@ const countAnswered = (input: MechanismScreeningInput): number => {
   if (input.descriptors && input.descriptors.length > 0) n += 1;
   if (typeof input.durationWeeks === "number") n += 1;
   if (typeof input.csiScore === "number") n += 1;
+  n += input.criteria?.length ?? 0;
   return n;
+
 };
 
 export function classifyMechanism(input: MechanismScreeningInput): MechanismResult {
@@ -285,8 +721,16 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
   const chronic = (input.durationWeeks ?? 0) >= 12;
   if (chronic) add("chronic_duration", "nociplastic", 2);
 
+  // Critérios clínicos ponderados da triagem aprofundada.
+  const markedCriteria = input.criteria ?? [];
+  for (const key of markedCriteria) {
+    const criterion = MECHANISM_CRITERIA.find((c) => c.key === key);
+    if (criterion) add(criterion.key, criterion.block, criterion.weight);
+  }
+
   const regionCount = input.regionCount ?? 0;
   if (regionCount >= 5) add("high_pain_extent", "nociplastic", 2);
+
 
   const csi = input.csiScore;
   const centralSensitizationLikely =
@@ -298,6 +742,7 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
     return {
       mechanism: "unknown",
       secondary: null,
+      subtype: null,
       axis: "unknown",
       confidence: "low",
       scores,
@@ -318,6 +763,7 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
     return {
       mechanism: "unknown",
       secondary: null,
+      subtype: null,
       axis: "unknown",
       confidence: "low",
       scores,
@@ -335,13 +781,22 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
       ? secondKey
       : null;
 
+  const dominant = tie ? topKey : (mechanism as MechanismBlock);
+  const subtype: MechanismSubtype | null =
+    input.subtype ?? suggestSubtype(dominant, markedCriteria);
+
   let axis: PainMechanismAxis = "unknown";
-  const dominant = tie ? topKey : mechanism;
-  if (dominant === "nociplastic") axis = "central";
+  const subtypeAxis = subtype
+    ? subtypeOptionsFor(dominant).find((o) => o.key === subtype)?.axis
+    : undefined;
+  if (subtypeAxis) axis = subtypeAxis;
+  else if (dominant === "nociplastic") axis = "central";
   else if (dominant === "neuropathic")
     axis = centralSensitizationLikely ? "mixed" : "peripheral";
   else if (dominant === "nociceptive")
     axis = centralSensitizationLikely ? "mixed" : "peripheral";
+  if (axis !== "mixed" && centralSensitizationLikely && dominant !== "nociplastic")
+    axis = "mixed";
 
   let confidence: MechanismConfidence = "low";
   const margin = topScore - secondScore;
@@ -351,6 +806,7 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
   return {
     mechanism,
     secondary,
+    subtype,
     axis,
     confidence,
     scores,
@@ -358,12 +814,16 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
     centralSensitizationLikely,
     source: "rules",
   };
+
 }
 
 /** Payload gravado em `assessments.pain_mechanism` (jsonb). */
 export interface StoredPainMechanism {
   mechanism: PainMechanism;
   secondary: PainMechanism | null;
+  subtype: MechanismSubtype | null;
+  /** Critérios clínicos marcados na triagem (auditoria). */
+  criteria: string[];
   axis: PainMechanismAxis;
   confidence: MechanismConfidence;
   signals: string[];
@@ -377,10 +837,13 @@ export function toStoredMechanism(
   result: MechanismResult,
   source: "rules" | "ai" = "rules",
   csiScore?: number | null,
+  criteria: string[] = [],
 ): StoredPainMechanism {
   return {
     mechanism: result.mechanism,
     secondary: result.secondary,
+    subtype: result.subtype,
+    criteria,
     axis: result.axis,
     confidence: result.confidence,
     signals: result.signals.map((s) => s.key),
@@ -397,8 +860,18 @@ export function parseStoredMechanism(raw: unknown): StoredPainMechanism | null {
   const obj = raw as Record<string, unknown>;
   const m = obj.mechanism;
   if (typeof m !== "string" || !(m in PAIN_MECHANISM_COPY)) return null;
+  const subtypeRaw = String((obj as any).subtype ?? "");
+  const knownSubtypes = Object.values(MECHANISM_SUBTYPES)
+    .flat()
+    .map((o) => o.key as string);
   return {
     mechanism: m as PainMechanism,
+    subtype: knownSubtypes.includes(subtypeRaw)
+      ? (subtypeRaw as MechanismSubtype)
+      : null,
+    criteria: Array.isArray((obj as any).criteria)
+      ? (obj as any).criteria.map(String)
+      : [],
     secondary:
       typeof obj.secondary === "string" && obj.secondary in PAIN_MECHANISM_COPY
         ? (obj.secondary as PainMechanism)

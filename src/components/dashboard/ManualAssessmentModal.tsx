@@ -35,7 +35,8 @@ import {
   clearManualAssessmentSession,
 } from "@/lib/manualAssessmentSession";
 import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
-import PainMechanismScreening, {
+import PainMechanismWizard from "@/components/assessment/PainMechanismWizard";
+import {
   createEmptyMechanismAnswers,
   sanitizeMechanismAnswers,
   hasMechanismAnswers,
@@ -1399,6 +1400,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 classifyMechanism({
                   descriptors: mechanismAnswers.descriptors,
                   distribution: mechanismAnswers.distribution,
+                  criteria: mechanismAnswers.criteria,
+                  subtype: mechanismAnswers.subtype,
                   proportionateToStimulus: mechanismAnswers.proportionateToStimulus,
                   spontaneousPain: mechanismAnswers.spontaneousPain,
                   multisensoryHypersensitivity: mechanismAnswers.multisensoryHypersensitivity,
@@ -1411,6 +1414,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 }),
                 "rules",
                 mechanismAnswers.csiScore,
+                mechanismAnswers.criteria,
               ),
             }
           : {}),
@@ -2265,13 +2269,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
                 {/* Passo B1 — triagem de mecanismo de dor (atrás de flag) */}
                 {ENABLE_PAIN_MECHANISM && (
-                  <PainMechanismScreening
+                  <PainMechanismWizard
                     value={mechanismAnswers}
                     onChange={setMechanismAnswers}
+                    variant="pro"
+                    language={isPt ? "pt" : "en"}
                     regionCount={painRegions.length}
                     durationWeeks={durationWeeks}
                     suggestedDistribution={suggestedDistribution}
-                    isPt={isPt}
                     disabled={demoMode}
                   />
                 )}

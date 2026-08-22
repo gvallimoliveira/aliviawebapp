@@ -27,8 +27,15 @@ import {
   NOCICEPTIVE_DESCRIPTORS,
   type MechanismDistribution,
   type MechanismResult,
+  type MechanismSubtype,
   type TriState,
+  MECHANISM_CRITERIA,
+  MECHANISM_SUBTYPES,
 } from "@/lib/painMechanism";
+
+const KNOWN_SUBTYPES: string[] = Object.values(MECHANISM_SUBTYPES)
+  .flat()
+  .map((o) => o.key);
 
 export interface MechanismAnswers {
   descriptors: string[];
@@ -40,6 +47,10 @@ export interface MechanismAnswers {
   persistentFatigue: TriState;
   objectiveNeuroSigns: TriState;
   csiScore: number | null;
+  /** Critérios clínicos ponderados marcados na triagem aprofundada. */
+  criteria: string[];
+  /** Subtipo confirmado pelo avaliador (etapa 2). */
+  subtype: MechanismSubtype | null;
 }
 
 /**
@@ -70,6 +81,8 @@ export const createEmptyMechanismAnswers = (): MechanismAnswers => ({
   persistentFatigue: null,
   objectiveNeuroSigns: null,
   csiScore: null,
+  criteria: [],
+  subtype: null,
 });
 
 export const sanitizeMechanismAnswers = (raw: unknown): MechanismAnswers => {
@@ -91,11 +104,18 @@ export const sanitizeMechanismAnswers = (raw: unknown): MechanismAnswers => {
     persistentFatigue: tri(o.persistentFatigue),
     objectiveNeuroSigns: tri(o.objectiveNeuroSigns),
     csiScore: typeof o.csiScore === "number" ? o.csiScore : null,
+    criteria: Array.isArray(o.criteria)
+      ? o.criteria.map(String).filter((k) => MECHANISM_CRITERIA.some((c) => c.key === k))
+      : [],
+    subtype: KNOWN_SUBTYPES.includes(String(o.subtype))
+      ? (o.subtype as MechanismSubtype)
+      : null,
   };
 };
 
 /** true quando o profissional respondeu algo — evita gravar triagem vazia. */
 export const hasMechanismAnswers = (a: MechanismAnswers): boolean =>
+  a.criteria.length > 0 ||
   a.descriptors.length > 0 ||
   a.distribution !== "unknown" ||
   a.csiScore !== null ||
