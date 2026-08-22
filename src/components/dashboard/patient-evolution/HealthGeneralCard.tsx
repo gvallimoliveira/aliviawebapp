@@ -672,8 +672,50 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
               </div>
             </div>
 
+            {RISK_CONDITION_IDS.filter((cid) => form.healthConditions.includes(cid)).map((cid) => (
+              <div key={cid} className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                <Label className="text-xs">
+                  {healthConditionLabel(cid, language)} —{" "}
+                  {txt("como está o controle hoje?", "how is it controlled today?", "¿cómo está el control hoy?")}
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {OTHER_CONTROL_OPTIONS.map((o) => {
+                    const active = (form.healthConditionsControl || {})[cid] === o.id;
+                    return (
+                      <Button
+                        key={o.id}
+                        type="button"
+                        size="sm"
+                        variant={active ? "default" : "outline"}
+                        className="h-8 text-xs"
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            healthConditionsControl: {
+                              ...(f.healthConditionsControl || {}),
+                              [cid]: active ? "" : o.id,
+                            },
+                          }))
+                        }
+                      >
+                        {otherControlLabel(o.id, language)}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {txt(
+                    "Condição controlada gera atenção moderada; não controlada ou sem acompanhamento eleva o nível de atenção.",
+                    "A controlled condition raises moderate attention; uncontrolled or without follow-up raises the attention level.",
+                    "Una condición controlada genera atención moderada; no controlada o sin seguimiento eleva el nivel de atención.",
+                  )}
+                </p>
+              </div>
+            ))}
+
             {form.healthConditions.includes("other") && (
               <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-3">
+
                 <div className="space-y-1.5">
                   <Label className="text-xs">{txt("Qual condição?", "Which condition?", "¿Cuál condición?")}</Label>
                   <Input
