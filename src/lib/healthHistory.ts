@@ -70,6 +70,9 @@ export const otherControlLabel = (id: string, lang: Lang): string => {
 /** Controle que exige atenção clínica extra. */
 export const RISK_CONTROL_IDS = ["uncontrolled", "no_followup"];
 
+/** Controle que indica condição manejada (risco reduzido, não igual a descontrolada). */
+export const MANAGED_CONTROL_IDS = ["controlled", "partial"];
+
 export interface HealthHistoryData {
   /** Ids de HealthConditionId. "none" é exclusivo. */
   healthConditions?: string[];
@@ -83,7 +86,10 @@ export interface HealthHistoryData {
   healthConditionsOtherOnset?: string;
   /** Triagem de apoio para "outra condição": controle atual. */
   healthConditionsOtherControl?: string;
+  /** Controle por condição de risco (ex.: { hypertension: "controlled" }). */
+  healthConditionsControl?: Record<string, string>;
 }
+
 
 type Lang = "pt" | "en" | "es" | string;
 
