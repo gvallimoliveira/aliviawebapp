@@ -20,17 +20,18 @@ const KineticStatement = ({ kicker, word, caption }: KineticStatementProps) => {
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
 
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.55, 1, 1.35]);
-  const letterSpacing = useTransform(scrollYProgress, [0, 0.5], ["0.35em", "-0.03em"]);
-  const wordOpacity = useTransform(scrollYProgress, [0, 0.18, 0.8, 1], [0, 1, 1, 0]);
-  const wordY = useTransform(scrollYProgress, [0, 0.5], ["2.5rem", "0rem"]);
-  const bracketInset = useTransform(scrollYProgress, [0, 0.55], ["1rem", "7rem"]);
-  const bracketOpacity = useTransform(scrollYProgress, [0.1, 0.4, 0.7], [0, 0.7, 0]);
-  const captionOpacity = useTransform(scrollYProgress, [0.42, 0.6, 0.9, 1], [0, 1, 1, 0]);
-  const glow = useTransform(scrollYProgress, [0.2, 0.5, 0.85], [0.2, 0.6, 0.1]);
+  const scale = useTransform(scrollYProgress, [0, 0.45, 1], [0.6, 1, 1.3]);
+  const letterSpacing = useTransform(scrollYProgress, [0, 0.45], ["0.3em", "-0.03em"]);
+  const wordOpacity = useTransform(scrollYProgress, [0, 0.15, 0.82, 1], [0, 1, 1, 0]);
+  const wordY = useTransform(scrollYProgress, [0, 0.45], ["2rem", "0rem"]);
+  const bracketInset = useTransform(scrollYProgress, [0, 0.5], ["1rem", "7rem"]);
+  const bracketOpacity = useTransform(scrollYProgress, [0.08, 0.35, 0.7], [0, 0.7, 0]);
+  const captionOpacity = useTransform(scrollYProgress, [0.35, 0.52, 0.9, 1], [0, 1, 1, 0]);
+  const glow = useTransform(scrollYProgress, [0.15, 0.45, 0.85], [0.2, 0.6, 0.1]);
 
   return (
-    <section ref={ref} className="relative h-[260vh] bg-foreground text-background">
+    <section ref={ref} className="relative h-[150vh] bg-foreground text-background">
+
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
         {/* Teal aura keeps the brand present even in the dark moment */}
         <motion.div
