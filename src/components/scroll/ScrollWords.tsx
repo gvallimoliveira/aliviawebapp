@@ -50,7 +50,7 @@ const ScrollWords = ({ kicker, text, footnote }: ScrollWordsProps) => {
         )}
         <p
           ref={ref}
-          className="flex flex-wrap text-2xl font-semibold leading-snug tracking-tight text-foreground/20 md:text-4xl md:leading-[1.25]"
+          className="flex flex-wrap text-2xl font-semibold leading-snug tracking-tight text-foreground/45 md:text-4xl md:leading-[1.25]"
         >
           {words.map((word, i) => {
             const start = i / words.length;
