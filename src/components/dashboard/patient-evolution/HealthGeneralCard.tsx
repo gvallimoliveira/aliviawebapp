@@ -159,7 +159,12 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
     }
     if (!patientId && !patientEmail) return;
     const sb = supabase as any;
-    let q = sb.from("patient_health_records").select("*").order("recorded_at", { ascending: false });
+    let q = sb
+      .from("patient_health_records")
+      .select("*")
+      .order("recorded_at", { ascending: false })
+      .order("created_at", { ascending: false });
+
     if (patientId && patientEmail) q = q.or(`patient_id.eq.${patientId},patient_email.eq.${patientEmail}`);
     else if (patientId) q = q.eq("patient_id", patientId);
     else q = q.eq("patient_email", patientEmail);
@@ -186,6 +191,8 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
     const fromManual = (manualRecords || []).map((r: any) => ({
       key: `m-${r.id}`,
       date: `${r.recorded_at}T12:00:00`,
+      // Desempate entre registros do mesmo dia: vale o salvo/editado mais recente.
+      tie: new Date(r.updated_at || r.created_at || `${r.recorded_at}T12:00:00`).getTime(),
       source: "manual" as const,
       data: normalizeHealthHistory({
         healthConditions: r.health_conditions,
@@ -199,10 +206,18 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
       raw: r,
     }));
 
-    return [...fromAssessments, ...fromManual].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-    );
+    return [...fromAssessments, ...fromManual].sort((a: any, b: any) => {
+      const dayA = new Date(a.date).setHours(0, 0, 0, 0);
+      const dayB = new Date(b.date).setHours(0, 0, 0, 0);
+      if (dayA !== dayB) return dayB - dayA;
+      // Mesmo dia: registro manual do profissional prevalece sobre a anamnese...
+      if (a.source !== b.source) return a.source === "manual" ? -1 : 1;
+      // ...e entre manuais vale o salvo/editado mais recentemente.
+      return (b.tie ?? new Date(b.date).getTime()) - (a.tie ?? new Date(a.date).getTime());
+    });
+
   }, [assessments, manualRecords]);
+
 
   const latest = records[0];
   const previous = records.slice(1);
