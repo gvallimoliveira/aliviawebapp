@@ -44,6 +44,8 @@ import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechan
 import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
 import MechanismEvolutionCard from "./MechanismEvolutionCard";
 import HealthGeneralCard from "./HealthGeneralCard";
+import PatientSectionRail from "./PatientSectionRail";
+
 import { getHealthRiskAssessment, isHealthHistoryEmpty, normalizeHealthHistory, type HealthRiskAssessment } from "@/lib/healthHistory";
 import { mechanismTrajectoryLines, buildMechanismTimeline } from "@/lib/painMechanismEvolution";
 
@@ -430,7 +432,9 @@ export default function PatientDetailView(props: any) {
 
   return (
     <div className="space-y-5">
+      <PatientSectionRail riskLevel={healthRisk?.level ?? null} />
       <div className="flex items-center justify-between">
+
         <Button variant="ghost" size="sm" onClick={() => props.setSelectedEmail(null)} className="gap-2 rounded-full bg-primary/5 px-4 py-2 text-primary border border-primary/20 hover:bg-primary/10 hover:border-primary/30 hover:shadow-sm transition-all shadow-sm">
           <ArrowLeft className="h-4 w-4" />
           <span className="font-medium">{t("pro.back_to_patients")}</span>
@@ -1079,12 +1083,15 @@ export default function PatientDetailView(props: any) {
               );
             })()}
 
-            <ClinicalImpressionCard
-              assessment={target}
-              existingImpression={target.diagnosis?.clinicalImpression}
-              allAssessments={patient?.assessments}
-              isDemo={isDemo}
-            />
+            <div id="sec-impressao-clinica" className="scroll-mt-24">
+              <ClinicalImpressionCard
+                assessment={target}
+                existingImpression={target.diagnosis?.clinicalImpression}
+                allAssessments={patient?.assessments}
+                isDemo={isDemo}
+              />
+            </div>
+
           </>
         );
       })()}
@@ -1092,7 +1099,8 @@ export default function PatientDetailView(props: any) {
 
       {/* Anamnese resumida da última avaliação — colapsável (Extra C: atalho ver completa) */}
       {latestAnamnesisFields.length > 0 && (
-        <Card>
+        <Card id="sec-anamnese" className="scroll-mt-24">
+
           <CardContent className="py-3">
             <CollapsibleSection
               storageKey={`patient:${patient.groupKey || patient.email}:anamnese`}
@@ -1134,21 +1142,26 @@ export default function PatientDetailView(props: any) {
       />
 
 
-      <AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
+      <div id="sec-timeline" className="scroll-mt-24"><AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} /></div>
 
       {/* Gráfico de evolução de dor */}
+      <div id="sec-evolucao-dor" className="scroll-mt-24">
       {painData.length > 1 ? <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />{t("pro.pain_evolution")}</CardTitle></CardHeader><CardContent><div className="h-56"><ResponsiveContainer width="100%" height="100%"><AreaChart data={painData}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} /><Area type="monotone" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4 }} name="Dor" /></AreaChart></ResponsiveContainer></div></CardContent></Card> : painData.length === 1 ? <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />{t("pro.pain_evolution")}</CardTitle></CardHeader><CardContent><div className="h-32"><ResponsiveContainer width="100%" height="100%"><BarChart data={painData}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} /><Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Dor" /></BarChart></ResponsiveContainer></div></CardContent></Card> : null}
+      </div>
 
       {/* Passo F1 — evolução longitudinal do mecanismo de dor */}
-      <MechanismEvolutionCard assessments={patient.assessments} />
+      <div id="sec-mecanismo-dor" className="scroll-mt-24"><MechanismEvolutionCard assessments={patient.assessments} /></div>
 
       {/* Mapa de Dor comparativo (agrupa logo após a linha do tempo) */}
+      <div id="sec-mapa-dor" className="scroll-mt-24">
       {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Stethoscope className="h-4 w-4 text-primary" />Mapa de Dor — Comparativo</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{patient.assessments.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => <div key={a.id} className="text-center space-y-2"><p className="text-xs font-medium text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}{a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}</p><PainMapView painRegions={a.pain_regions} compact /></div>)}</div></CardContent></Card>}
+      </div>
 
       {/* Comparação detalhada por região */}
-      <RegionPainComparison assessments={patient.assessments} />
+      <div id="sec-regioes-dor" className="scroll-mt-24"><RegionPainComparison assessments={patient.assessments} /></div>
 
       {/* Evolução de questionários funcionais */}
+      <div id="sec-questionarios" className="scroll-mt-24 space-y-5">
       {questionnaireEvolution.length > 0 ? questionnaireEvolution.map((chart: any) => (
         <Card key={chart.displayTitle}>
           <CardHeader className="pb-2">
@@ -1205,34 +1218,49 @@ export default function PatientDetailView(props: any) {
           </CardContent>
         </Card>
       )) : <Card className="border-dashed"><CardContent className="py-6 text-center"><ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p><p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p></CardContent></Card>}
+      </div>
 
       {/* Voice notes (insumos brutos sobem antes das notas escritas) */}
+      <div id="sec-notas-voz" className="scroll-mt-24">
       {!isDemo && patient?.assessments?.length > 0 && (
         <VoiceNoteCard assessmentIds={patient.assessments.map((a: any) => a.id)} />
       )}
+      </div>
+
 
       {/* Notas de sessão */}
+      <div id="sec-notas-sessao" className="scroll-mt-24">
       {selectedEmail && <SessionNotesSection professionalId={professionalId} patientEmail={selectedEmail} isDemo={isDemo} />}
+      </div>
 
       {/* Dinamometria — sempre disponível no prontuário (upload PDF/foto ou registro manual) */}
-      <PatientStrengthSection patient={patient} readOnly={readOnly} isDemo={isDemo} />
+      <div id="sec-dinamometria" className="scroll-mt-24">
+        <PatientStrengthSection patient={patient} readOnly={readOnly} isDemo={isDemo} />
+      </div>
 
 
       {/* Arquivos e fotos (bloco documental) */}
+      <div id="sec-arquivos" className="scroll-mt-24 space-y-5">
       {selectedEmail && <PatientFilesSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} isDemo={isDemo} />}
       {selectedEmail && !isDemo && <PatientPhotosSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} />}
+      </div>
 
       {/* Programas de exercícios enviados (ferramenta — desce após o bloco clínico) */}
+      <div id="sec-hep" className="scroll-mt-24">
       {(() => {
         const patientHeps = hepHistory.filter((h: any) => (h.patient_name || "").toLowerCase().trim() === (patient.name || "").toLowerCase().trim());
         if (patientHeps.length === 0) return null;
         const origin = window.location.origin;
         return <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Dumbbell className="h-4 w-4 text-primary" /> Programas de Exercícios Enviados</CardTitle><CardDescription className="text-xs">{patientHeps.length} programa(s) criado(s)</CardDescription></CardHeader><CardContent className="space-y-2">{patientHeps.map((hep: any) => { const link = `${origin}/hep/${hep.token}`; const isExpired = new Date(hep.expires_at) < new Date(); return <div key={hep.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg border bg-muted/30"><div className="min-w-0 flex-1"><p className="text-xs font-medium text-foreground truncate">{new Date(hep.created_at).toLocaleDateString("pt-BR")}{hep.notes && <span className="text-muted-foreground ml-2">— {hep.notes}</span>}</p><p className="text-[10px] text-muted-foreground truncate">{link}</p></div><div className="flex items-center gap-1 shrink-0">{isExpired && <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30">Expirado</Badge>}<Button variant="ghost" size="icon" className="h-7 w-7" title="Editar programa" onClick={() => handleEditHep(hep.id)}><Pencil className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" title="Copiar link" onClick={() => { navigator.clipboard.writeText(link); toast({ title: "Link copiado!" }); }}><Copy className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link" onClick={() => window.open(link, "_blank")}><ExternalLink className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" title="Enviar via WhatsApp" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Seu programa de exercícios: ${link}`)}`, "_blank")}><Share2 className="h-3.5 w-3.5" /></Button>{!readOnly && patient.email && <Button variant="ghost" size="icon" className="h-7 w-7" title={language === "pt" ? "Enviar via chat interno" : "Send via internal chat"} onClick={() => handleSendHepViaChat(link, patient.email)}><MessageCircle className="h-3.5 w-3.5" /></Button>}<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir programa" disabled={deletingHepId === hep.id} onClick={() => { if (confirm("Tem certeza que deseja excluir este programa de exercícios?")) handleDeleteHep(hep.id); }}>{deletingHepId === hep.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}</Button></div></div>; })}</CardContent></Card>;
       })()}
+      </div>
+
+
+
 
       {/* Histórico detalhado — notas privadas por avaliação (Extra A: título renomeado) — colapsável (fechado por padrão para reduzir muro de texto) */}
       <Separator className="opacity-40" />
-      <div data-refresh-tick={assessmentRefreshTick}>
+      <div id="sec-historico" className="scroll-mt-24" data-refresh-tick={assessmentRefreshTick}>
         <CollapsibleSection
           storageKey={`patient:${patient.groupKey || patient.email}:historico`}
           defaultOpen={true}
