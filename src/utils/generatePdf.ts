@@ -6,6 +6,14 @@ import ptLocale from "@/locales/pt.json";
 import enLocale from "@/locales/en.json";
 import esLocale from "@/locales/es.json";
 import { registerInterFonts } from "./fonts/registerInterFonts";
+import {
+  MECHANISM_CRITERIA,
+  getMechanismLabel,
+  getMechanismLay,
+  getMechanismTechnical,
+  getSubtypeLabel,
+  parseStoredMechanism,
+} from "@/lib/painMechanism";
 
 /**
  * Resolves the display name of a functional test (id → i18n name), so the PDF
@@ -131,6 +139,10 @@ export interface ResponsibleProfessional {
 
 interface PdfOptions {
   diagnosis: Diagnosis;
+  /** Passo E2 — triagem de mecanismo de dor (jsonb). Fallback: diagnosis.pain_mechanism. */
+  painMechanism?: unknown;
+  /** % de superfície corporal com dor (assessments.pain_extent). */
+  painExtent?: number | null;
   /** When set, replaces the AI hypothesis with the professional override. */
   finalHypothesis?: string;
   treatmentPlan?: TreatmentPlanData;
@@ -1798,6 +1810,9 @@ function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: numbe
 // ── Basic Report PDF (for WhatsApp sharing — hypothesis, confidence, summary, pain map, VAS, disclaimer) ──
 interface BasicReportOptions {
   diagnosis: Diagnosis;
+  /** Passo E2 — triagem de mecanismo de dor (jsonb). Fallback: diagnosis.pain_mechanism. */
+  painMechanism?: unknown;
+  painExtent?: number | null;
   /** When set, replaces the AI hypothesis with the professional override. */
   finalHypothesis?: string;
   language: string;
@@ -1880,6 +1895,14 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     drawBadge(doc, confLabel.toUpperCase(), MARGIN, y + 4, COLORS.green, COLORS.white);
     y += 12;
   }
+
+  // Passo E2 — mecanismo de dor (só quando houve triagem)
+  y = renderPainMechanismBlock(
+    doc, y,
+    (options.diagnosis as any)?.pain_mechanism ?? (options as any).painMechanism,
+    (options as any).painExtent ?? null,
+    isPt,
+  );
 
   // Summary
   y = renderSubSection(doc, y, isPt ? "Resumo" : "Summary", options.diagnosis.summary);
@@ -2041,7 +2064,7 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, redFlags, redFlagsDismissal, redFlagAnswers, redFlagsAnsweredAt, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, redFlags, redFlagsDismissal, redFlagAnswers, redFlagsAnsweredAt, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
   const doc = createPdfDoc();
   const isPt = language === "pt";
   let y = MARGIN;
@@ -2173,6 +2196,14 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
     drawBadge(doc, confLabel.toUpperCase(), MARGIN, y + 4, COLORS.green, COLORS.white);
     y += 12;
   }
+
+  // Passo E2 — mecanismo de dor (só quando houve triagem)
+  y = renderPainMechanismBlock(
+    doc, y,
+    (diagnosis as any)?.pain_mechanism ?? painMechanism,
+    painExtent ?? null,
+    isPt,
+  );
 
   // Summary
   y = renderSubSection(doc, y, isPt ? "Resumo" : "Summary", diagnosis.summary);
@@ -2569,6 +2600,85 @@ function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number
   doc.text(title, MARGIN + 16, y + 1);
   doc.setLineWidth(0.3);
   return y + 10;
+}
+
+// ── Passo E2 — bloco de mecanismo de dor no relatório ─────────────────────
+// Só imprime quando houve triagem registrada. Complementa a hipótese, nunca a
+// substitui. Respeita a largura útil de 158mm e protege o título contra órfão.
+function renderPainMechanismBlock(
+  doc: jsPDF,
+  y: number,
+  mechanismRaw: unknown,
+  painExtent: number | null | undefined,
+  isPt: boolean,
+): number {
+  const parsed = parseStoredMechanism(mechanismRaw);
+  if (!parsed || parsed.mechanism === "unknown") return y;
+
+  const lang: "pt" | "en" = isPt ? "pt" : "en";
+  const raw = (mechanismRaw || {}) as Record<string, any>;
+  const label = getMechanismLabel(parsed.mechanism, lang);
+  const subtype = getSubtypeLabel(parsed.subtype, lang);
+  const confMap: Record<string, string> = isPt
+    ? { low: "baixa", moderate: "moderada", high: "alta" }
+    : { low: "low", moderate: "moderate", high: "high" };
+
+  const headline = [
+    `${isPt ? "Mecanismo predominante" : "Predominant mechanism"}: ${label}`,
+    parsed.secondary && parsed.secondary !== "unknown"
+      ? `${isPt ? "secundário" : "secondary"}: ${getMechanismLabel(parsed.secondary, lang)}`
+      : null,
+    subtype ? `${isPt ? "subtipo" : "subtype"}: ${subtype}` : null,
+    parsed.central_sensitization_likely
+      ? (isPt ? "sensibilização central provável" : "central sensitization likely")
+      : null,
+    typeof parsed.csi_score === "number" ? `CSI: ${parsed.csi_score}` : null,
+    `${isPt ? "confiança da triagem" : "screening confidence"}: ${confMap[parsed.confidence] || parsed.confidence}`,
+    typeof painExtent === "number"
+      ? `${isPt ? "extensão da dor" : "pain extent"}: ~${painExtent}% ${isPt ? "da superfície corporal" : "of body surface"}`
+      : null,
+  ].filter(Boolean).join(" · ");
+
+  const explanation =
+    (typeof raw.patient_explanation === "string" && raw.patient_explanation.trim()) ||
+    getMechanismLay(parsed.mechanism, lang);
+  const technical = getMechanismTechnical(parsed.mechanism, lang);
+
+  const criteriaLabels = (parsed.criteria || [])
+    .map((key) => MECHANISM_CRITERIA.find((c) => c.key === key))
+    .filter(Boolean)
+    .map((c) => `• ${c!.label[lang]}`);
+
+  const bodyText = [
+    headline,
+    "",
+    explanation,
+    technical && technical !== explanation ? `\n${technical}` : null,
+    criteriaLabels.length
+      ? `\n${isPt ? "Critérios marcados na triagem" : "Criteria marked in screening"}:\n${criteriaLabels.join("\n")}`
+      : null,
+    `\n${isPt
+      ? `Origem: ${parsed.source === "ai" ? "triagem refinada por IA" : "regras clínicas (Kosek 2021 / Finnerup 2016)"}. Complementa a hipótese diagnóstica — não a substitui.`
+      : `Source: ${parsed.source === "ai" ? "AI-refined screening" : "clinical rules (Kosek 2021 / Finnerup 2016)"}. Complements the diagnostic hypothesis — does not replace it.`}`,
+  ].filter(Boolean).join("\n");
+
+  const cardOpts: TextCardOptions = {
+    fill: COLORS.background,
+    stroke: COLORS.border,
+    padX: 8,
+    padY: 7,
+    body: { font: "Inter", weight: "normal", size: 8.5, lineHeight: 4.2, textColor: COLORS.foreground },
+    bottomSafety: 2,
+  };
+
+  y = keepTitleWithCard(doc, y + 4, 6, bodyText, cardOpts);
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...COLORS.primary);
+  doc.text(isPt ? "Mecanismo de Dor" : "Pain Mechanism", MARGIN, y);
+  y += 6;
+  y = drawTextCard(doc, y, bodyText, cardOpts);
+  return y + 2;
 }
 
 // ── Helper: Sub-section with body text ──

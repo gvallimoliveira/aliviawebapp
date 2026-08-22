@@ -41,6 +41,7 @@ import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/l
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { useClinic } from "@/contexts/ClinicContext";
 import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechanismScreening";
+import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
 
 
 const SUBSCALE_COLORS = [
@@ -89,6 +90,12 @@ const DiagnosticHypothesisBlock = ({ assessment, isDemo, treatmentInvite }: Diag
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="text-sm font-semibold text-foreground leading-relaxed">{displayed}</p>
+        {/* Passo E1 — selo de mecanismo de dor (complementa, não substitui a hipótese) */}
+        <PainMechanismBadge
+          mechanism={assessment.diagnosis?.pain_mechanism ?? assessment.pain_mechanism}
+          painExtent={typeof assessment.pain_extent === "number" ? assessment.pain_extent : null}
+          variant="pro"
+        />
         {hasOverride && formattedDate && <p className="text-[11px] text-muted-foreground">Atualizada em {formattedDate}</p>}
         {!hasOverride && assessment.diagnosis?.confidence === "high" && <Badge variant="outline" className="text-[10px] capitalize">Confiança: {assessment.diagnosis.confidence}</Badge>}
         {assessment.diagnosis?.reasoning && <p className="text-xs text-muted-foreground leading-relaxed mt-1">{assessment.diagnosis.reasoning}</p>}

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
 import EmergencyBanner from "@/components/EmergencyBanner";
+import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
 
 
 
@@ -21,6 +22,8 @@ interface Diagnosis {
   reasoning?: string;
   recommendations?: string[];
   disclaimer: string;
+  /** Passo E1 — triagem de mecanismo de dor (jsonb), quando houve. */
+  pain_mechanism?: unknown;
   hypothesisChange?: {
     previousHypothesis?: string;
     currentHypothesis?: string;
@@ -240,6 +243,16 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
           {t("diagnosis.title")}
         </div>
         <h2 className="text-2xl font-bold text-foreground">{diagnosis.hypothesis}</h2>
+        {/* Passo E1 — mecanismo de dor em linguagem leiga */}
+        {diagnosis.pain_mechanism && (
+          <div className="flex justify-center">
+            <PainMechanismBadge
+              mechanism={diagnosis.pain_mechanism}
+              variant="patient"
+              language={(language === "en" || language === "es" ? language : "pt") as "pt" | "en" | "es"}
+            />
+          </div>
+        )}
       </div>
 
       {/* Confidence Badge — only show for high confidence */}
