@@ -437,6 +437,7 @@ ${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]
 - Gym access: ${hasGym ? "Yes — has access to gym with free weights and resistance machines" : "No — no gym access, exercises should be bodyweight or use resistance bands"}
 
 Diagnostic hypothesis: ${diagnosis?.hypothesis || "Not available"}
+${resolvedMechanism ? `Pain mechanism screening: predominant ${resolvedMechanism.mechanism}${resolvedMechanism.secondary ? ` + secondary ${resolvedMechanism.secondary}` : ""}${resolvedMechanism.subtype ? ` (subtype: ${resolvedMechanism.subtype})` : ""}, axis ${resolvedMechanism.axis || "unknown"}, confidence ${resolvedMechanism.confidence || "low"}${resolvedExtent !== null ? `, pain extent ~${resolvedExtent}% of body surface` : ""}. FOLLOW the pain-mechanism protocol and return "painMechanismStrategy".` : "Pain mechanism screening: not performed — use standard clinical reasoning and do NOT return painMechanismStrategy."}
 
 ${questionnaireResults && questionnaireResults.length > 0 ? `Validated questionnaire results:
 ${questionnaireResults.map((q: any) => `- ${q.questionnaireName} (${q.questionnaireId.toUpperCase()}): Total score ${q.percentageScore}% | Interpretation: ${q.interpretation_pt || q.interpretation_en} | Severity: ${q.severity}
