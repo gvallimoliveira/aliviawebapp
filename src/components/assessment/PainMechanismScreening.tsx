@@ -128,6 +128,44 @@ export const hasMechanismAnswers = (a: MechanismAnswers): boolean =>
     a.objectiveNeuroSigns,
   ].some((v) => v !== null);
 
+/**
+ * Passo D2 — converte a triagem extraída de uma avaliação EXTERNA pela IA
+ * (`painMechanismScreening` da edge function `interpret-external-assessment`)
+ * em `MechanismAnswers` pré-preenchido. O profissional sempre revisa antes de
+ * salvar; nada aqui é considerado definitivo.
+ */
+export const mechanismAnswersFromExternal = (raw: unknown): MechanismAnswers | null => {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, any>;
+  const criteria: string[] = Array.isArray(o.criteria)
+    ? o.criteria.map(String).filter((k) => MECHANISM_CRITERIA.some((c) => c.key === k))
+    : [];
+  const base = sanitizeMechanismAnswers({
+    criteria,
+    subtype: o.suggestedSubtype,
+    csiScore: typeof o.csiScore === "number" ? o.csiScore : null,
+  });
+  const has = (k: string) => criteria.includes(k);
+  const answers: MechanismAnswers = {
+    ...base,
+    // Deriva os gatilhos de sensibilização/neuro a partir dos critérios achados.
+    proportionateToStimulus: has("nop_disproportionate") ? false : base.proportionateToStimulus,
+    multisensoryHypersensitivity: has("nop_hypersensitivity") ? true : base.multisensoryHypersensitivity,
+    nonRestorativeSleep: has("nop_sleep_fatigue") ? true : base.nonRestorativeSleep,
+    persistentFatigue: has("nop_sleep_fatigue") ? true : base.persistentFatigue,
+    objectiveNeuroSigns:
+      has("neu_sensory_loss") || has("neu_motor_deficit") ? true : base.objectiveNeuroSigns,
+    distribution: has("neu_dermatomal")
+      ? "dermatomal"
+      : has("nop_multisite")
+        ? "multisite"
+        : has("noc_localized")
+          ? "localized"
+          : base.distribution,
+  };
+  return hasMechanismAnswers(answers) ? answers : null;
+};
+
 const DESCRIPTOR_COPY: Record<string, { pt: string; en: string }> = {
   aching: { pt: "Dói / dolorida", en: "Aching" },
   throbbing: { pt: "Pulsátil", en: "Throbbing" },
