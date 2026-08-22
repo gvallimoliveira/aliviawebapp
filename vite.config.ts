@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("react-day-picker") || id.includes("date-fns")) return "date";
           if (id.includes("@radix-ui")) return "radix";
           if (id.includes("lucide-react")) return "icons";
+          if (id.includes("@supabase")) return "data";
           return undefined;
         },
       },
