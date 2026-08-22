@@ -443,6 +443,12 @@ export interface MechanismSubtypeOption {
   boost: number;
   /** Consequência clínica exibida na etapa 3 (muda conforme o subtipo). */
   implication: Record<Lang, string>;
+  /** Versão em linguagem leiga (fluxo do paciente). */
+  lay: {
+    label: Record<Lang, string>;
+    hint: Record<Lang, string>;
+    implication: Record<Lang, string>;
+  };
 }
 
 
@@ -450,6 +456,11 @@ export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]
   nociceptive: [
     {
       key: "mechanical",
+      lay: {
+        label: { pt: "Dor ligada ao esforço", en: "Effort-related pain", es: "Dolor ligado al esfuerzo" },
+        hint: { pt: "Dói quando você usa ou carrega peso, e melhora quando você para ou descansa.", en: "It hurts when you use or load the area, and eases when you stop or rest.", es: "Duele cuando usa o carga la zona y mejora al parar o descansar." },
+        implication: { pt: "Bom sinal: dá para voltar a se movimentar aumentando a carga aos poucos.", en: "Good sign: you can get moving again by increasing load little by little.", es: "Buena señal: puede volver a moverse aumentando la carga poco a poco." },
+      },
       axis: "peripheral",
       boost: 2,
       label: { pt: "Mecânica / de carga", en: "Mechanical / load-related", es: "Mecánica / de carga" },
@@ -467,6 +478,11 @@ export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]
     },
     {
       key: "inflammatory",
+      lay: {
+        label: { pt: "Dor com inchaço ou calor", en: "Pain with swelling or heat", es: "Dolor con hinchazón o calor" },
+        hint: { pt: "Rigidez de manhã por bastante tempo, calor, inchaço ou dor mesmo parado.", en: "Long morning stiffness, heat, swelling or pain even at rest.", es: "Rigidez matinal prolongada, calor, hinchazón o dolor en reposo." },
+        implication: { pt: "A região está irritada: primeiro acalmar, depois voltar a carregar aos poucos.", en: "The area is irritated: settle it first, then load again gradually.", es: "La zona está irritada: primero calmarla y luego cargar gradualmente." },
+      },
       axis: "peripheral",
       boost: 3,
       label: { pt: "Inflamatória / irritativa", en: "Inflammatory / irritative", es: "Inflamatoria / irritativa" },
@@ -486,6 +502,11 @@ export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]
   neuropathic: [
     {
       key: "peripheral_neuropathic",
+      lay: {
+        label: { pt: "Dor de nervo em um trajeto", en: "Nerve pain along a path", es: "Dolor de nervio en un trayecto" },
+        hint: { pt: "A dor desce por um caminho (perna ou braço), com formigamento ou adormecimento.", en: "Pain travels down a path (leg or arm), with tingling or numbness.", es: "El dolor baja por un trayecto (pierna o brazo), con hormigueo o adormecimiento." },
+        implication: { pt: "O nervo está sensível: progressão mais lenta e cuidado com posições que puxam o nervo.", en: "The nerve is sensitive: slower progression and care with positions that tension it.", es: "El nervio está sensible: progresión más lenta y cuidado con posiciones que lo tensan." },
+      },
       axis: "peripheral",
       boost: 2,
       label: { pt: "Periférica (nervo/raiz)", en: "Peripheral (nerve/root)", es: "Periférica (nervio/raíz)" },
@@ -503,6 +524,11 @@ export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]
     },
     {
       key: "central_neuropathic",
+      lay: {
+        label: { pt: "Dor de origem no sistema nervoso", en: "Pain from the nervous system", es: "Dolor de origen nervioso central" },
+        hint: { pt: "Dor num lado do corpo inteiro ou abaixo de um nível, às vezes após lesão neurológica.", en: "Pain over a whole side of the body or below a level, sometimes after a neurological injury.", es: "Dolor en todo un lado del cuerpo o por debajo de un nivel." },
+        implication: { pt: "Foco em ganhar função com estímulos graduais e acompanhamento médico junto.", en: "Focus on regaining function with graded input and medical follow-up.", es: "Enfoque en recuperar función con estímulos graduales y seguimiento médico." },
+      },
       axis: "central",
       boost: 3,
       label: { pt: "Central", en: "Central", es: "Central" },
@@ -522,6 +548,11 @@ export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]
   nociplastic: [
     {
       key: "nociplastic_primary",
+      lay: {
+        label: { pt: "Dor por sistema de alarme sensível", en: "Pain from a sensitive alarm system", es: "Dolor por sistema de alarma sensible" },
+        hint: { pt: "Dor em vários lugares, sem uma lesão que explique tudo, com cansaço e sono ruim.", en: "Pain in several places, with no injury that explains it all, plus fatigue and poor sleep.", es: "Dolor en varios lugares, sin una lesión que lo explique, con cansancio y mal sueño." },
+        implication: { pt: "Nada de testar a dor no limite: movimento gradual, sono e ritmo valem mais que carga máxima.", en: "No testing pain at the limit: graded movement, sleep and pacing matter more than max load.", es: "Sin probar el dolor al límite: movimiento gradual, sueño y ritmo valen más que la carga máxima." },
+      },
       axis: "central",
       boost: 3,
       label: { pt: "Primária (isolada)", en: "Primary (isolated)", es: "Primaria (aislada)" },
@@ -539,6 +570,11 @@ export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]
     },
     {
       key: "nociplastic_secondary",
+      lay: {
+        label: { pt: "Lesão + alarme sensível junto", en: "Injury plus a sensitive alarm", es: "Lesión + alarma sensible" },
+        hint: { pt: "Existe uma lesão ou região machucada, mas a dor está bem maior do que o esperado.", en: "There is an injured area, but the pain is much bigger than expected.", es: "Hay una zona lesionada, pero el dolor es mucho mayor de lo esperado." },
+        implication: { pt: "Dois cuidados juntos: tratar a região afetada e acalmar o sistema de dor (sono, ritmo, informação).", en: "Two fronts: treat the affected area and calm the pain system (sleep, pacing, education).", es: "Dos frentes: tratar la zona afectada y calmar el sistema de dolor (sueño, ritmo, información)." },
+      },
       axis: "mixed",
       boost: 2,
       label: { pt: "Secundária (sobreposta)", en: "Secondary (superimposed)", es: "Secundaria (sobrepuesta)" },
@@ -579,13 +615,25 @@ export const blockOfSubtype = (s: MechanismSubtype): MechanismBlock => {
   return "nociceptive";
 };
 
-export const getSubtypeLabel = (s: MechanismSubtype | null, lang: Lang = "pt"): string | null =>
-  findSubtypeOption(s)?.label[lang] ?? null;
+export const getSubtypeLabel = (
+  s: MechanismSubtype | null,
+  lang: Lang = "pt",
+  lay = false,
+): string | null => {
+  const o = findSubtypeOption(s);
+  if (!o) return null;
+  return (lay ? o.lay.label[lang] : o.label[lang]) ?? null;
+};
 
 export const getSubtypeImplication = (
   s: MechanismSubtype | null,
   lang: Lang = "pt",
-): string | null => findSubtypeOption(s)?.implication[lang] ?? null;
+  lay = false,
+): string | null => {
+  const o = findSubtypeOption(s);
+  if (!o) return null;
+  return (lay ? o.lay.implication[lang] : o.implication[lang]) ?? null;
+};
 
 /**
  * Subtipos oferecidos na etapa 2: os do mecanismo predominante mais os de
