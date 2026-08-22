@@ -10,3 +10,12 @@
 export type LandingLayout = "cinematic" | "classic";
 
 export const LANDING_LAYOUT: LandingLayout = "cinematic";
+
+/**
+ * Landing geral (Gateway, seleção de perfil).
+ * "modern"  → layout atual com reveals discretos e malha técnica.
+ * "classic" → layout original preservado em `src/pages/legacy/GatewayClassic.tsx`.
+ */
+export type GatewayLayout = "modern" | "classic";
+
+export const GATEWAY_LAYOUT: GatewayLayout = "modern";
