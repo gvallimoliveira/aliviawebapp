@@ -95,8 +95,16 @@ const DifferentialDiagnosisPanel = ({
   const generate = async (forceRefresh = false) => {
     setLoading(true);
     setOpen(true);
+    // Ambiente simulado (demo profissional / demo clínica): 1 alternativa, sem IA.
+    if (isDemo) {
+      await new Promise((r) => setTimeout(r, 700));
+      setData(buildDemoDifferential(dx));
+      setLoading(false);
+      return;
+    }
     try {
       const body = {
+
         anamnesisData: context?.anamnesisData ?? assessment?.anamnesis_data,
         painRegions: context?.painRegions ?? assessment?.pain_regions,
         painScore: context?.painScore ?? assessment?.pain_score,
