@@ -110,7 +110,10 @@ const Header = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setMobileOpen(true)}
+            onClick={() => {
+              preloadProfessionalLanding();
+              setMobileOpen(true);
+            }}
             aria-label="Menu"
           >
             <Menu className="h-5 w-5" />
