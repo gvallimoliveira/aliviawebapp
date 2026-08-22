@@ -49,6 +49,13 @@ export const MOCK_EXTERNAL_INTERPRETATION = {
     overview: "Paciente de meia-idade com quadro crônico de dor mecânica em ombro direito, déficit de mobilidade ativa, fraqueza do manguito e impacto funcional moderado (DASH 42).",
     therapeuticObjectives: ["controle do quadro álgico", "fortalecimento"],
   },
+  painMechanismScreening: {
+    criteria: ["noc_movement_relation", "noc_rest_relief", "noc_localized"],
+    suggestedSubtype: "mechanical",
+    durationMonths: 3,
+    csiScore: null as number | null,
+    evidence: "Relato de dor mecânica que piora com elevação acima de 90° e alivia com repouso.",
+  },
   additionalExternalInfo:
     "Avaliação externa realizada em clínica parceira em 10/2025. Profissional sugeriu 10 sessões de cinesioterapia + terapia manual. Paciente relatou já ter feito 3 sessões com pequena melhora antes de procurar nova opinião.",
   aiInterpretedFields: [
@@ -56,8 +63,19 @@ export const MOCK_EXTERNAL_INTERPRETATION = {
     "medications", "occupation", "complementaryExams", "painScore", "painType",
     "painRegions", "painScoresPerRegion", "painRegionRefinements", "additionalClinicalNotes",
     "romTable", "strengthTable", "functionalTests", "questionnaireResults",
-    "diagnosis", "clinicalImpression", "additionalExternalInfo",
+    "diagnosis", "clinicalImpression", "additionalExternalInfo", "painMechanismScreening",
   ],
 };
 
-export type ExternalInterpretation = typeof MOCK_EXTERNAL_INTERPRETATION;
+export type ExternalInterpretation = Omit<
+  typeof MOCK_EXTERNAL_INTERPRETATION,
+  "painMechanismScreening"
+> & {
+  painMechanismScreening?: {
+    criteria?: string[];
+    suggestedSubtype?: string | null;
+    durationMonths?: number | null;
+    csiScore?: number | null;
+    evidence?: string | null;
+  };
+};
