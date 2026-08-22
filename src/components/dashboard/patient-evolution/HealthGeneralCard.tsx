@@ -63,9 +63,12 @@ interface HealthGeneralCardProps {
   clinicId?: string | null;
   /** Desliga a edição (demo / somente leitura). */
   readOnly?: boolean;
+  /** Modo demonstração: usa registros mockados em vez de consultar o banco. */
+  isDemo?: boolean;
   /** Notifica o nível de atenção recalculado (usado pelo atalho no histórico). */
   onRiskChange?: (risk: HealthRiskAssessment) => void;
 }
+
 
 
 const fmtDate = (iso: string) =>
@@ -128,8 +131,10 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
   patientName,
   clinicId,
   readOnly,
+  isDemo,
   onRiskChange,
 }) => {
+
 
   const { language } = useLanguage();
   const { user } = useAuth();
@@ -146,6 +151,12 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
   const canEdit = !readOnly && !!user;
 
   const loadManual = useCallback(async () => {
+    if (isDemo) {
+      // Modo demonstração: registros mockados, sem tocar no banco.
+      const { mockHealthRecords } = await import("@/data/mockProDemoExtras");
+      setManualRecords((patientEmail && mockHealthRecords[patientEmail]) || []);
+      return;
+    }
     if (!patientId && !patientEmail) return;
     const sb = supabase as any;
     let q = sb.from("patient_health_records").select("*").order("recorded_at", { ascending: false });
@@ -154,7 +165,8 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
     else q = q.eq("patient_email", patientEmail);
     const { data, error } = await q;
     if (!error) setManualRecords(data || []);
-  }, [patientId, patientEmail]);
+  }, [patientId, patientEmail, isDemo]);
+
 
   useEffect(() => {
     loadManual();

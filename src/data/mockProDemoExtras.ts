@@ -132,3 +132,76 @@ export const mockPatientFiles: Record<string, MockPatientFile[]> = {
   ],
 
 };
+
+// ─── Registros manuais de "Saúde geral" por patient_email (demo) ───
+// Demonstram a atualização feita pelo profissional direto no prontuário, sem
+// precisar de nova avaliação, e os níveis de atenção (controlada x não manejada).
+export interface MockHealthRecord {
+  id: string;
+  recorded_at: string;
+  author_name: string | null;
+  health_conditions: string[];
+  health_conditions_other: string | null;
+  health_conditions_other_onset: string | null;
+  health_conditions_other_control: string | null;
+  health_conditions_control: Record<string, string>;
+  uses_continuous_medication: string | null;
+  continuous_medications: string | null;
+  change_summary: string | null;
+  observations: string | null;
+  suggestions: string | null;
+}
+
+export const mockHealthRecords: Record<string, MockHealthRecord[]> = {
+  "maria.silva@exemplo.com": [
+    {
+      id: "hr-m1",
+      recorded_at: daysAgo(5),
+      author_name: "Dr. Demo (você)",
+      health_conditions: ["hypertension"],
+      health_conditions_other: null,
+      health_conditions_other_onset: null,
+      health_conditions_other_control: null,
+      health_conditions_control: { hypertension: "controlled" },
+      uses_continuous_medication: "yes",
+      continuous_medications: "Losartana 50mg (1x/dia)",
+      change_summary: "PA estabilizada em 124/78 mmHg nas últimas 3 sessões; cardiologista manteve a dose.",
+      observations: "Sem tontura ao levantar. Tolera bem exercício resistido moderado com respiração contínua.",
+      suggestions: "Manter aferição de PA antes das séries mais intensas e evitar Valsalva.",
+    },
+  ],
+  "ana.oliveira@exemplo.com": [
+    {
+      id: "hr-a1",
+      recorded_at: daysAgo(4),
+      author_name: "Dr. Demo (você)",
+      health_conditions: ["diabetes"],
+      health_conditions_other: null,
+      health_conditions_other_onset: null,
+      health_conditions_other_control: null,
+      health_conditions_control: { diabetes: "uncontrolled" },
+      uses_continuous_medication: "yes",
+      continuous_medications: "Metformina 850mg (2x/dia)",
+      change_summary: "Glicemia capilar 212 mg/dL na sessão; paciente sem consulta com endocrinologista há 8 meses.",
+      observations: "Relata formigamento plantar noturno — triagem de neuropatia pendente.",
+      suggestions: "Encaminhamento para reavaliação médica; inspeção de pés a cada sessão e progressão conservadora.",
+    },
+  ],
+  "carlos.mendes@exemplo.com": [
+    {
+      id: "hr-c1",
+      recorded_at: daysAgo(1),
+      author_name: "Dr. Demo (você)",
+      health_conditions: ["hypertension", "heart_disease"],
+      health_conditions_other: null,
+      health_conditions_other_onset: null,
+      health_conditions_other_control: null,
+      health_conditions_control: { hypertension: "controlled", heart_disease: "partial" },
+      uses_continuous_medication: "yes",
+      continuous_medications: "Atenolol 25mg, AAS 100mg",
+      change_summary: "Cardiologista liberou atividade leve a moderada; betabloqueador em uso.",
+      observations: "FC não é parâmetro confiável (betabloqueador) — usar percepção de esforço (Borg 11-13).",
+      suggestions: "Sem isometria sustentada em alta intensidade; liberação médica antes de progressão vigorosa.",
+    },
+  ],
+};

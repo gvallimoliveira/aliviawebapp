@@ -1128,7 +1128,9 @@ export default function PatientDetailView(props: any) {
         patientName={patient.name || null}
         clinicId={clinicId || null}
         readOnly={readOnly || isDemo}
+        isDemo={isDemo}
         onRiskChange={setHealthRisk}
+
       />
 
 
