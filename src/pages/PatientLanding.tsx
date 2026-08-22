@@ -23,6 +23,10 @@ import Reveal from "@/components/scroll/Reveal";
 import PatientStatement from "@/components/scroll/PatientStatement";
 import PatientJourneyShowcase from "@/components/scroll/PatientJourneyShowcase";
 import BrandMarquee from "@/components/scroll/BrandMarquee";
+import PatientManifesto from "@/components/scroll/PatientManifesto";
+import PatientDeliverables from "@/components/scroll/PatientDeliverables";
+import ClosingCta from "@/components/scroll/ClosingCta";
+
 
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
 import { showNavOverlay, subscribeNavOverlay } from "@/lib/navigationOverlay";
