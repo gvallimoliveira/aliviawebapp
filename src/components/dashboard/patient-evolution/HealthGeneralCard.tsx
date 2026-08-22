@@ -63,7 +63,10 @@ interface HealthGeneralCardProps {
   clinicId?: string | null;
   /** Desliga a edição (demo / somente leitura). */
   readOnly?: boolean;
+  /** Notifica o nível de atenção recalculado (usado pelo atalho no histórico). */
+  onRiskChange?: (risk: HealthRiskAssessment) => void;
 }
+
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
