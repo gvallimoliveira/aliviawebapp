@@ -496,6 +496,14 @@ const PainMechanismWizard = ({
               : getMechanismLay(result.mechanism, lang)}
           </p>
 
+          {getSubtypeImplication(result.subtype, lang) && (
+            <p className="rounded-md border border-primary/30 bg-primary/5 p-2 text-[11px] leading-snug">
+              <span className="font-semibold">{getSubtypeLabel(result.subtype, lang)}: </span>
+              {getSubtypeImplication(result.subtype, lang)}
+            </p>
+          )}
+
+
           {value.criteria.length > 0 && (
             <div className="space-y-1">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
