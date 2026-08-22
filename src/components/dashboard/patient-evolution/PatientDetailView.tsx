@@ -1217,11 +1217,12 @@ export default function PatientDetailView(props: any) {
       </div>
 
       {/* Voice notes (insumos brutos sobem antes das notas escritas) */}
-      <div id="sec-notas-voz" className="scroll-mt-24 space-y-5">
+      <div id="sec-notas-voz" className="scroll-mt-24">
       {!isDemo && patient?.assessments?.length > 0 && (
         <VoiceNoteCard assessmentIds={patient.assessments.map((a: any) => a.id)} />
-      </div>
       )}
+      </div>
+
 
       {/* Notas de sessão */}
       {selectedEmail && <SessionNotesSection professionalId={professionalId} patientEmail={selectedEmail} isDemo={isDemo} />}
