@@ -178,3 +178,24 @@ describe("triagem aprofundada (critérios ponderados + subtipo)", () => {
     expect(r.subtype).toBe("inflammatory");
   });
 });
+
+describe("subtipo confirmado altera o resultado", () => {
+  const base = {
+    criteria: ["noc_movement_relation", "noc_rest_relief", "noc_localized"],
+    durationWeeks: 4,
+  } as const;
+
+  it("subtipo inflamatório pesa mais no bloco nociceptivo que o mecânico", () => {
+    const mech = classifyMechanism({ ...base, subtype: "mechanical" });
+    const infl = classifyMechanism({ ...base, subtype: "inflammatory" });
+    expect(infl.scores.nociceptive).toBeGreaterThan(mech.scores.nociceptive);
+  });
+
+  it("nociplástica secundária num quadro nociceptivo muda eixo e secundário", () => {
+    const r = classifyMechanism({ ...base, subtype: "nociplastic_secondary" });
+    expect(r.scores.nociplastic).toBeGreaterThan(0);
+    expect(r.axis).toBe("mixed");
+    expect(r.secondary).toBe("nociplastic");
+    expect(r.centralSensitizationLikely).toBe(true);
+  });
+});
