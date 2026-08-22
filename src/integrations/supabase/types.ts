@@ -2421,6 +2421,7 @@ export type Database = {
           created_at: string
           created_by: string
           health_conditions: string[]
+          health_conditions_control: Json | null
           health_conditions_other: string | null
           health_conditions_other_control: string | null
           health_conditions_other_onset: string | null
@@ -2442,6 +2443,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           health_conditions?: string[]
+          health_conditions_control?: Json | null
           health_conditions_other?: string | null
           health_conditions_other_control?: string | null
           health_conditions_other_onset?: string | null
@@ -2463,6 +2465,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           health_conditions?: string[]
+          health_conditions_control?: Json | null
           health_conditions_other?: string | null
           health_conditions_other_control?: string | null
           health_conditions_other_onset?: string | null
