@@ -29,7 +29,16 @@ export default defineConfig(({ mode }) => ({
         // Split heavy libraries into separate chunks so they only load
         // when the feature that needs them is opened.
         manualChunks: (id) => {
+          // Vite's own preload helper is shared by every lazy route; if rollup
+          // parks it inside a feature chunk (pdf/charts), the app shell has to
+          // download that whole chunk just to boot.
+          if (id.includes("vite/preload-helper") || id.includes("vite/modulepreload")) {
+            return "vendor-utils";
+          }
           if (!id.includes("node_modules")) return undefined;
+          // Shared helper runtimes must live apart, otherwise the app shell
+          // ends up importing a tiny helper from a huge feature chunk.
+          if (/(tslib|@babel\/runtime|@swc\/helpers|clsx|tailwind-merge|class-variance-authority)\//.test(id)) return "vendor-utils";
           if (id.includes("recharts") || id.includes("d3-")) return "charts";
           if (id.includes("jspdf") || id.includes("html2canvas")) return "pdf";
           if (id.includes("jszip")) return "zip";
@@ -39,6 +48,7 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("react-day-picker") || id.includes("date-fns")) return "date";
           if (id.includes("@radix-ui")) return "radix";
           if (id.includes("lucide-react")) return "icons";
+          if (id.includes("@supabase")) return "data";
           return undefined;
         },
       },

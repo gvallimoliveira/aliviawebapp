@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
-import i18n from "@/i18n";
+import i18n, { changeLanguageSafely } from "@/i18n";
 
 type Language = "pt" | "en" | "es";
 
@@ -13,18 +13,20 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>("pt");
+  const [bundleTick, setBundleTick] = useState(0);
 
   const toggleLanguage = useCallback(() => {
     setLanguage((prev) => {
       const next = prev === "pt" ? "en" : prev === "en" ? "es" : "pt";
-      i18n.changeLanguage(next);
+      // en/es bundles are lazy-loaded; re-render once they are registered.
+      void changeLanguageSafely(next).then(() => setBundleTick((v) => v + 1));
       return next;
     });
   }, []);
 
   const t = useCallback(
     (key: string) => i18n.t(key),
-    [language]
+    [language, bundleTick]
   );
 
   return (

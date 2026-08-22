@@ -9,7 +9,11 @@ import {
   getManualAssessmentSession,
   type ManualAssessmentSession,
 } from "@/lib/manualAssessmentSession";
-import ManualAssessmentModal from "./ManualAssessmentModal";
+import { lazy, Suspense } from "react";
+
+// Carregado sob demanda: o modal arrasta gráficos/PDF e não deve pesar
+// no bundle inicial das páginas públicas.
+const ManualAssessmentModal = lazy(() => import("./ManualAssessmentModal"));
 
 /**
  * Reabre automaticamente o modal de Avaliação Manual quando o app é recarregado
@@ -160,15 +164,17 @@ const ManualAssessmentResumer = () => {
 
   if (!open || !session) return null;
   return (
-    <ManualAssessmentModal
-      open={open}
-      onOpenChange={handleOpenChange}
-      professionalId={session.professionalId}
-      clinicId={session.clinicId}
-      patientName={session.patientName}
-      patientEmail={session.patientEmail || undefined}
-      editAssessment={editAssessment}
-    />
+    <Suspense fallback={null}>
+      <ManualAssessmentModal
+        open={open}
+        onOpenChange={handleOpenChange}
+        professionalId={session.professionalId}
+        clinicId={session.clinicId}
+        patientName={session.patientName}
+        patientEmail={session.patientEmail || undefined}
+        editAssessment={editAssessment}
+      />
+    </Suspense>
   );
 };
 
