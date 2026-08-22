@@ -657,7 +657,7 @@ const ProfessionalLandingCinematic = () => {
             ? "Anamnesis, red flags, mapa de dolor, cuestionarios validados y razonamiento con IA — listos antes de que entre el paciente."
             : "Anamnese, red flags, mapa de dor, questionários validados e raciocínio com IA — prontos antes do paciente entrar."
         }
-        primaryLabel={t("b2b.cta_primary")}
+        primaryLabel={t("b2b.hero_cta")}
         onPrimary={handleCTA}
         secondaryLabel={t("b2b.pricing_title")}
         onSecondary={scrollToPricing}

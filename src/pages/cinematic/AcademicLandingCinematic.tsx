@@ -24,6 +24,12 @@ import {
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
+import ScrollProgress from "@/components/scroll/ScrollProgress";
+import BrandMarquee from "@/components/scroll/BrandMarquee";
+import KineticStatement from "@/components/scroll/KineticStatement";
+import ScrollWords from "@/components/scroll/ScrollWords";
+import HorizontalShowcase from "@/components/scroll/HorizontalShowcase";
+import CinematicClosing from "@/components/scroll/CinematicClosing";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -281,7 +287,8 @@ const AcademicLandingCinematic = () => {
       : `R$${PRO_PLAN_ANNUAL_PRICE.toFixed(2).replace(".", ",")}`;
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-clip">
+      <ScrollProgress />
       <Header />
 
       {/* Hero */}
@@ -331,6 +338,31 @@ const AcademicLandingCinematic = () => {
           </motion.p>
         </div>
       </section>
+
+      <BrandMarquee />
+
+      <KineticStatement
+        kicker={language === "en" ? "The real gap" : language === "es" ? "La brecha real" : "O verdadeiro salto"}
+        word={language === "en" ? "Reason" : language === "es" ? "Razonar" : "Raciocinar"}
+        caption={
+          language === "en"
+            ? "Knowing the content is not the same as reasoning through a patient. That is the skill you train here, every day."
+            : language === "es"
+            ? "Saber el contenido no es lo mismo que razonar frente a un paciente. Esa es la habilidad que entrenas aquí, todos los días."
+            : "Saber o conteúdo não é o mesmo que raciocinar diante de um paciente. É essa habilidade que você treina aqui, todos os dias."
+        }
+      />
+
+      <ScrollWords
+        kicker={language === "en" ? "From theory to clinic" : language === "es" ? "De la teoría a la clínica" : "Da teoria à clínica"}
+        text={
+          language === "en"
+            ? "Simulated cases, an evidence-trained agent and the same gold-standard flow professionals use. You reach your internship knowing what to do — not trying to remember."
+            : language === "es"
+            ? "Casos simulados, un agente entrenado en evidencia y el mismo flujo padrón-oro que usan los profesionales. Llegas a tus prácticas sabiendo qué hacer — no intentando recordar."
+            : "Casos simulados, um agente treinado em evidência e o mesmo fluxo padrão-ouro que profissionais usam. Você chega ao estágio sabendo o que fazer — não tentando lembrar."
+        }
+      />
 
       {/* Benefits */}
       <section className="py-16 md:py-20">
@@ -480,6 +512,16 @@ const AcademicLandingCinematic = () => {
           </motion.div>
         </div>
       </section>
+
+      <HorizontalShowcase
+        kicker={language === "en" ? "Your training kit" : language === "es" ? "Tu kit de entrenamiento" : "Seu kit de treino"}
+        heading={c.whyTitle}
+        items={c.benefits.slice(0, 8).map((b) => ({
+          icon: b.icon,
+          title: b.title,
+          description: b.desc,
+        }))}
+      />
 
       {/* Disclaimer / Diferenças */}
       <section className="py-16 md:py-20 bg-muted/30">
@@ -655,6 +697,22 @@ const AcademicLandingCinematic = () => {
           </div>
         </div>
       </section>
+
+      <CinematicClosing
+        kicker={c.badge}
+        heading={
+          language === "en"
+            ? "Graduate with the confidence of someone who has already assessed hundreds of patients"
+            : language === "es"
+            ? "Gradúate con la confianza de quien ya evaluó cientos de pacientes"
+            : "Saia da graduação com a confiança de quem já avaliou centenas de pacientes"
+        }
+        sub={c.pricingDesc}
+        primaryLabel={c.cta}
+        onPrimary={handleCTA}
+        secondaryLabel={c.heroSecondary}
+        onSecondary={scrollToPricing}
+      />
 
       <InstallAppSection />
       <Footer />
