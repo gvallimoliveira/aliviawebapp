@@ -22,6 +22,7 @@ import PushSubscriptionKeeper from "@/components/PushSubscriptionKeeper";
 import ManualAssessmentResumer from "@/components/dashboard/ManualAssessmentResumer";
 import PasskeyEnrollPrompt from "@/components/auth/PasskeyEnrollPrompt";
 import ProfessionalLanding from "@/pages/cinematic/ProfessionalLandingShell";
+import { LANDING_LAYOUT } from "@/lib/landingLayout";
 
 const Gateway = lazy(() => import("./pages/Gateway"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -40,6 +41,7 @@ const ExerciseProgram = lazy(() => import("./pages/ExerciseProgram"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
+const ProfessionalLandingClassic = lazy(() => import("./pages/legacy/ProfessionalLandingClassic"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
 const Support = lazy(() => import("./pages/Support"));
 const UpgradeWelcome = lazy(() => import("./pages/UpgradeWelcome"));
@@ -132,7 +134,7 @@ const App = () => {
                   <Route path="/blog/:slug" element={<BlogPost />} />
                   <Route
                     path="/profissionais"
-                    element={<ProfessionalLanding />}
+                    element={LANDING_LAYOUT === "classic" ? <ProfessionalLandingClassic /> : <ProfessionalLanding />}
                   />
                   <Route path="/profissionais/demo" element={<ProfessionalDemo />} />
                   <Route path="/complete-profile" element={<CompleteProfile />} />
