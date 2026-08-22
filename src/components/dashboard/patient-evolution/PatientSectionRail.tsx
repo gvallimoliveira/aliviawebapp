@@ -35,8 +35,11 @@ const PatientSectionRail = ({ riskLevel }: Props) => {
         const ids = PATIENT_SECTIONS.filter((s) => {
           const el = document.getElementById(s.id);
           // Wrappers de seções condicionais existem mas ficam vazios (altura 0).
-          return !!el && el.offsetHeight > 8;
+          if (!el || el.offsetHeight <= 8) return false;
+          // Seções que existem mas ainda não têm dado clínico se marcam sozinhas.
+          return el.dataset.railHide !== "true";
         }).map((s) => s.id);
+
 
         setPresentIds((prev) => (prev.length === ids.length && prev.every((v, i) => v === ids[i]) ? prev : ids));
       });
@@ -154,17 +157,18 @@ const PatientSectionRail = ({ riskLevel }: Props) => {
         </ul>
       </nav>
 
-      {/* Mobile: botão discreto + painel */}
+      {/* Mobile: aba vertical estreita colada na margem */}
       <button
         type="button"
         onClick={() => setMobileOpen((v) => !v)}
         aria-label={lang === "pt" ? "Atalhos do prontuário" : lang === "es" ? "Atajos del expediente" : "Record shortcuts"}
-        className="fixed left-2 top-1/2 z-40 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/90 text-primary shadow-lg backdrop-blur md:hidden"
+        className="fixed left-0 top-1/2 z-40 flex h-20 w-[18px] -translate-y-1/2 items-center justify-center rounded-r-md border border-l-0 border-border/50 bg-background/80 text-primary/70 shadow-sm backdrop-blur transition-colors active:bg-muted md:hidden"
       >
-        {mobileOpen ? <X className="h-4 w-4" /> : <List className="h-4 w-4" />}
+        {mobileOpen ? <X className="h-3 w-3" /> : <List className="h-3 w-3" />}
       </button>
 
       {mobileOpen && (
+
         <nav
           aria-label={lang === "pt" ? "Atalhos do prontuário" : lang === "es" ? "Atajos del expediente" : "Record shortcuts"}
           className="fixed left-2 top-1/2 z-40 w-56 -translate-y-1/2 rounded-2xl border border-border/60 bg-background/95 p-1.5 shadow-xl backdrop-blur md:hidden animate-scale-in"
