@@ -1234,9 +1234,23 @@ export default function PatientDetailView(props: any) {
       </div>
 
       {/* Dinamometria — sempre disponível no prontuário (upload PDF/foto ou registro manual) */}
-      <div id="sec-dinamometria" className="scroll-mt-24">
+      <div
+        id="sec-dinamometria"
+        className="scroll-mt-24"
+        data-rail-hide={
+          (patient?.assessments || []).some((a: any) =>
+            Array.isArray(a?.anamnesis_data?.strengthTable) &&
+            a.anamnesis_data.strengthTable.some(
+              (r: any) => r?.movement || r?.leftValue || r?.rightValue,
+            ),
+          )
+            ? undefined
+            : "true"
+        }
+      >
         <PatientStrengthSection patient={patient} readOnly={readOnly} isDemo={isDemo} />
       </div>
+
 
 
       {/* Arquivos e fotos (bloco documental) */}
