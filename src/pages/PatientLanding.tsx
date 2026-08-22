@@ -18,6 +18,12 @@ import ExitIntentPopup from "@/components/ExitIntentPopup";
 import LgpdBadge from "@/components/LgpdBadge";
 import SelfAssessmentDisclaimerSection from "@/components/SelfAssessmentDisclaimerSection";
 import InstallAppSection from "@/components/InstallAppSection";
+import ScrollProgress from "@/components/scroll/ScrollProgress";
+import Reveal from "@/components/scroll/Reveal";
+import KineticStatement from "@/components/scroll/KineticStatement";
+import PatientJourneyShowcase from "@/components/scroll/PatientJourneyShowcase";
+import BrandMarquee from "@/components/scroll/BrandMarquee";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
 import { showNavOverlay, subscribeNavOverlay } from "@/lib/navigationOverlay";
 
