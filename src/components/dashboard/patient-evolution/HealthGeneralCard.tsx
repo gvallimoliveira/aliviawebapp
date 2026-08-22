@@ -207,13 +207,15 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
     }));
 
     return [...fromAssessments, ...fromManual].sort((a: any, b: any) => {
-      const diff = new Date(b.date).getTime() - new Date(a.date).getTime();
-      if (diff !== 0) return diff;
-      // Mesmo dia: prevalece o registro manual mais recente (e manual acima da avaliação).
-      const at = a.tie ?? new Date(a.date).getTime();
-      const bt = b.tie ?? new Date(b.date).getTime();
-      return bt - at;
+      const dayA = new Date(a.date).setHours(0, 0, 0, 0);
+      const dayB = new Date(b.date).setHours(0, 0, 0, 0);
+      if (dayA !== dayB) return dayB - dayA;
+      // Mesmo dia: registro manual do profissional prevalece sobre a anamnese...
+      if (a.source !== b.source) return a.source === "manual" ? -1 : 1;
+      // ...e entre manuais vale o salvo/editado mais recentemente.
+      return (b.tie ?? new Date(b.date).getTime()) - (a.tie ?? new Date(a.date).getTime());
     });
+
   }, [assessments, manualRecords]);
 
 
