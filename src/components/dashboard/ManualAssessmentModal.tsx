@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { HEALTH_CONDITION_IDS, healthConditionLabel, formatHealthConditions, formatContinuousMedication } from "@/lib/healthHistory";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -238,6 +239,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [medications, setMedications] = useState("");
   const [previousSurgeries, setPreviousSurgeries] = useState("");
   const [comorbidities, setComorbidities] = useState("");
+  const [healthConditions, setHealthConditions] = useState<string[]>([]);
+  const [healthConditionsOther, setHealthConditionsOther] = useState("");
+  const [usesContinuousMedication, setUsesContinuousMedication] = useState("");
   const [occupation, setOccupation] = useState("");
   const [complementaryExams, setComplementaryExams] = useState("");
 
@@ -669,6 +673,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const draftState = {
     step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
+    healthConditions, healthConditionsOther, usesContinuousMedication,
     painScore, painType, painTypes, painRegions, painScoresPerRegion, painTypesPerRegion, painRegionRefinements,
     redFlagsChecked, additionalClinicalNotes, mechanismAnswers, questionnaireResults, deferQuestionnaires,
     functionalTests, romTable, strengthTable, clinicalImpression, diagnosisText, treatmentText,
@@ -698,6 +703,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setMedications(p.medications ?? "");
     setPreviousSurgeries(p.previousSurgeries ?? "");
     setComorbidities(p.comorbidities ?? "");
+    setHealthConditions(Array.isArray((p as any).healthConditions) ? (p as any).healthConditions : []);
+    setHealthConditionsOther((p as any).healthConditionsOther ?? "");
+    setUsesContinuousMedication((p as any).usesContinuousMedication ?? "");
     setOccupation(p.occupation ?? "");
     setComplementaryExams(p.complementaryExams ?? "");
     setPainScore(p.painScore ?? 5);
@@ -749,6 +757,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setMedications(an.medications || "");
     setPreviousSurgeries(an.previousSurgeries || an.previousTreatments || "");
     setComorbidities(an.comorbidities || "");
+    setHealthConditions(Array.isArray(an.healthConditions) ? an.healthConditions : []);
+    setHealthConditionsOther(an.healthConditionsOther || "");
+    setUsesContinuousMedication(an.usesContinuousMedication || (an.medications ? "yes" : ""));
     setOccupation(an.occupation || "");
     setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
@@ -854,6 +865,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setMedications(an.medications || "");
     setPreviousSurgeries(an.previousSurgeries || "");
     setComorbidities(an.comorbidities || "");
+    setHealthConditions(Array.isArray(an.healthConditions) ? an.healthConditions : []);
+    setHealthConditionsOther(an.healthConditionsOther || "");
+    setUsesContinuousMedication(an.usesContinuousMedication || (an.medications ? "yes" : ""));
     setOccupation(an.occupation || "");
     setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
@@ -1115,6 +1129,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     previousSurgeries,
     previousTreatments: previousSurgeries,
     comorbidities,
+    healthConditions,
+    healthConditionsOther,
+    usesContinuousMedication,
+    continuousMedications: usesContinuousMedication === "no" ? "" : medications,
     occupation,
     complementaryExams,
     painType: effectivePainTypes[0] || "",
@@ -1274,6 +1292,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         aggravating && `Piora com: ${aggravating}`,
         relieving && `Alivia com: ${relieving}`,
         occupation && `Ocupação: ${occupation}`,
+        formatHealthConditions({ healthConditions, healthConditionsOther }, "pt") &&
+          `Condições de saúde: ${formatHealthConditions({ healthConditions, healthConditionsOther }, "pt")}`,
+        formatContinuousMedication({ usesContinuousMedication, continuousMedications: medications }, "pt") &&
+          `Medicação de uso contínuo: ${formatContinuousMedication({ usesContinuousMedication, continuousMedications: medications }, "pt")}`,
         comorbidities && `Comorbidades: ${comorbidities}`,
         additionalClinicalNotes && `Observações clínicas adicionais: ${additionalClinicalNotes}`,
       ].filter(Boolean).join("\n");
@@ -1920,10 +1942,35 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs">{isPt ? "Medicações em uso" : "Current medications"}</Label>
-                    <DemoShield on={demoMode} onAutofill={() => autofill(medications, MOCK_MANUAL_CASE.medications, setMedications, "")}>
-                      <Textarea value={medications} onChange={(e) => setMedications(e.target.value)} rows={2} className="mt-1 text-sm" />
-                    </DemoShield>
+                    <Label className="text-xs">{isPt ? "Uso contínuo de medicamentos?" : "Continuous-use medication?"}</Label>
+                    <div className="mt-1 grid grid-cols-2 gap-2">
+                      {[{ v: "yes", l: isPt ? "Sim" : "Yes" }, { v: "no", l: isPt ? "Não" : "No" }].map((o) => (
+                        <Button
+                          key={o.v}
+                          type="button"
+                          size="sm"
+                          variant={usesContinuousMedication === o.v ? "default" : "outline"}
+                          className="h-9 rounded-lg text-sm"
+                          onClick={() => {
+                            setUsesContinuousMedication(o.v);
+                            if (o.v === "no") setMedications("");
+                          }}
+                        >
+                          {o.l}
+                        </Button>
+                      ))}
+                    </div>
+                    {usesContinuousMedication === "yes" && (
+                      <DemoShield on={demoMode} onAutofill={() => autofill(medications, MOCK_MANUAL_CASE.medications, setMedications, "")}>
+                        <Textarea
+                          value={medications}
+                          onChange={(e) => setMedications(e.target.value)}
+                          rows={2}
+                          className="mt-2 text-sm"
+                          placeholder={isPt ? "Quais medicamentos?" : "Which medications?"}
+                        />
+                      </DemoShield>
+                    )}
                   </div>
                   <div>
                     <Label className="text-xs">{isPt ? "Cirurgias prévias" : "Previous surgeries"}</Label>
@@ -1932,9 +1979,45 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </DemoShield>
                   </div>
                 </div>
+                <div>
+                  <Label className="text-xs">{isPt ? "Condições de saúde" : "Health conditions"}</Label>
+                  <div className="mt-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {HEALTH_CONDITION_IDS.map((id) => {
+                      const selected = healthConditions.includes(id);
+                      return (
+                        <Button
+                          key={id}
+                          type="button"
+                          size="sm"
+                          variant={selected ? "default" : "outline"}
+                          className="h-9 rounded-lg text-xs justify-start"
+                          onClick={() => {
+                            setHealthConditions((prev) => {
+                              if (id === "none") return prev.includes("none") ? [] : ["none"];
+                              return prev.includes(id)
+                                ? prev.filter((c) => c !== id)
+                                : [...prev.filter((c) => c !== "none"), id];
+                            });
+                            if (id === "other" && healthConditions.includes("other")) setHealthConditionsOther("");
+                          }}
+                        >
+                          {healthConditionLabel(id, language)}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  {healthConditions.includes("other") && (
+                    <Input
+                      value={healthConditionsOther}
+                      onChange={(e) => setHealthConditionsOther(e.target.value)}
+                      className="mt-2 text-sm h-9"
+                      placeholder={isPt ? "Qual condição?" : "Which condition?"}
+                    />
+                  )}
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs">{isPt ? "Comorbidades" : "Comorbidities"}</Label>
+                    <Label className="text-xs">{isPt ? "Outras comorbidades" : "Other comorbidities"}</Label>
                     <DemoShield on={demoMode} onAutofill={() => autofill(comorbidities, MOCK_MANUAL_CASE.comorbidities, setComorbidities, "")}>
                       <Input value={comorbidities} onChange={(e) => setComorbidities(e.target.value)} className="mt-1 text-sm h-9" />
                     </DemoShield>
