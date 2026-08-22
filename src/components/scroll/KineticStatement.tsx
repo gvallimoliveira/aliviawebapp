@@ -20,22 +20,23 @@ const KineticStatement = ({ kicker, word, caption }: KineticStatementProps) => {
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
 
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.65, 1, 1.25]);
-  const letterSpacing = useTransform(scrollYProgress, [0, 0.5], ["0.25em", "-0.02em"]);
-  const wordOpacity = useTransform(scrollYProgress, [0, 0.18, 0.8, 1], [0, 1, 1, 0.15]);
-  const bracketInset = useTransform(scrollYProgress, [0, 0.55], ["2rem", "6rem"]);
-  const bracketOpacity = useTransform(scrollYProgress, [0.1, 0.4, 0.7], [0, 0.55, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.55, 1, 1.35]);
+  const letterSpacing = useTransform(scrollYProgress, [0, 0.5], ["0.35em", "-0.03em"]);
+  const wordOpacity = useTransform(scrollYProgress, [0, 0.18, 0.8, 1], [0, 1, 1, 0]);
+  const wordY = useTransform(scrollYProgress, [0, 0.5], ["2.5rem", "0rem"]);
+  const bracketInset = useTransform(scrollYProgress, [0, 0.55], ["1rem", "7rem"]);
+  const bracketOpacity = useTransform(scrollYProgress, [0.1, 0.4, 0.7], [0, 0.7, 0]);
   const captionOpacity = useTransform(scrollYProgress, [0.42, 0.6, 0.9, 1], [0, 1, 1, 0]);
-  const glow = useTransform(scrollYProgress, [0.2, 0.5, 0.85], [0.15, 0.5, 0.1]);
+  const glow = useTransform(scrollYProgress, [0.2, 0.5, 0.85], [0.2, 0.6, 0.1]);
 
   return (
-    <section ref={ref} className="relative h-[220vh] bg-foreground text-background">
+    <section ref={ref} className="relative h-[260vh] bg-foreground text-background">
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
         {/* Teal aura keeps the brand present even in the dark moment */}
         <motion.div
           aria-hidden="true"
-          style={{ opacity: reduced ? 0.3 : glow }}
-          className="pointer-events-none absolute h-[70vw] w-[70vw] max-h-[520px] max-w-[520px] rounded-full bg-primary/40 blur-[90px]"
+          style={{ opacity: reduced ? 0.35 : glow }}
+          className="pointer-events-none absolute h-[75vw] w-[75vw] max-h-[580px] max-w-[580px] rounded-full bg-primary/40 blur-[120px]"
         />
 
         {/* Framing brackets */}
@@ -53,7 +54,7 @@ const KineticStatement = ({ kicker, word, caption }: KineticStatementProps) => {
         <div className="relative z-10 px-6 text-center">
           {kicker && (
             <motion.p
-              style={{ opacity: reduced ? 1 : wordOpacity }}
+              style={{ opacity: reduced ? 1 : wordOpacity, y: reduced ? 0 : wordY }}
               className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-primary"
             >
               {kicker}
@@ -63,7 +64,7 @@ const KineticStatement = ({ kicker, word, caption }: KineticStatementProps) => {
             style={
               reduced
                 ? undefined
-                : { scale, letterSpacing, opacity: wordOpacity }
+                : { scale, letterSpacing, opacity: wordOpacity, y: wordY, filter: "drop-shadow(0 0 24px rgba(59,130,246,0.35))" }
             }
             className="text-5xl font-semibold leading-none text-background md:text-7xl"
           >
