@@ -2064,7 +2064,7 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, redFlags, redFlagsDismissal, redFlagAnswers, redFlagsAnsweredAt, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, redFlags, redFlagsDismissal, redFlagAnswers, redFlagsAnsweredAt, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
   const doc = createPdfDoc();
   const isPt = language === "pt";
   let y = MARGIN;
@@ -2200,8 +2200,8 @@ async function _buildPdfDoc({ diagnosis, finalHypothesis, treatmentPlan, languag
   // Passo E2 — mecanismo de dor (só quando houve triagem)
   y = renderPainMechanismBlock(
     doc, y,
-    (diagnosis as any)?.pain_mechanism ?? options.painMechanism,
-    options.painExtent ?? null,
+    (diagnosis as any)?.pain_mechanism ?? painMechanism,
+    painExtent ?? null,
     isPt,
   );
 
