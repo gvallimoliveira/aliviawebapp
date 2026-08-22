@@ -35,7 +35,7 @@ import { normalizeAnamnesis } from "@/lib/anamnesisCompat";
 import {
   formatHealthConditions,
   formatContinuousMedication,
-  getHealthRiskFlags,
+  getHealthRiskAssessment,
   healthConditionLabel,
   healthHistoryLabel,
   isHealthHistoryEmpty,
@@ -43,10 +43,14 @@ import {
   otherControlLabel,
   otherOnsetLabel,
   HEALTH_CONDITION_IDS,
+  MANAGED_CONTROL_IDS,
   OTHER_CONTROL_OPTIONS,
   OTHER_ONSET_OPTIONS,
   RISK_CONDITION_IDS,
+  RISK_CONTROL_IDS,
+  type HealthRiskAssessment,
 } from "@/lib/healthHistory";
+
 
 interface HealthGeneralCardProps {
   assessments: any[];
