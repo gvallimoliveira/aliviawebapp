@@ -602,6 +602,7 @@ ${Object.entries(painScoresPerRegion).map(([k, v]) => `    • ${k}: ${v}/10`).j
 - Pain duration: ${anamnesisData.painDuration || "Not specified"}
 - Sex: ${anamnesisData.sex || "Not specified"}
 - Age range: ${anamnesisData.ageRange || "Not specified"}
+${formatHealthHistoryForPrompt(anamnesisData)}
 - Prior surgery: ${hasPriorSurgery === "anamnesis.surgery.yes" ? `Yes — ${surgeryDetails}` : "No"}
 - Pain sub-area: ${painSubArea || "Not specified"}
 - Knee twist: ${hadTwist || "N/A"}

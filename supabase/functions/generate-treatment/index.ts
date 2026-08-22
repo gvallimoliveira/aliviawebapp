@@ -434,6 +434,7 @@ ${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]
 - Relieving factors: ${anamnesisData?.relievingFactors || "Not specified"}
 - Activity level: ${anamnesisData?.activityLevel}
 - Onset: ${anamnesisData?.onset}
+${formatHealthHistoryForPrompt(anamnesisData)}
 - Gym access: ${hasGym ? "Yes — has access to gym with free weights and resistance machines" : "No — no gym access, exercises should be bodyweight or use resistance bands"}
 
 Diagnostic hypothesis: ${diagnosis?.hypothesis || "Not available"}
