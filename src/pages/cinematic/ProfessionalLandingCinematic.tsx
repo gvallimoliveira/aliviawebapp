@@ -183,8 +183,8 @@ const ProfessionalLandingCinematic = () => {
       <BrandMarquee />
 
       <KineticStatement
-        kicker={language === "en" ? "Every appointment" : language === "es" ? "Cada consulta" : "Toda consulta"}
-        word={language === "en" ? "30 min" : "30 min"}
+        kicker={language === "en" ? "Less time" : language === "es" ? "Menos tiempo" : "Em menos tempo"}
+        word={language === "en" ? "More results" : language === "es" ? "Más resultados" : "Com mais resultados"}
         caption={
           language === "en"
             ? "The time you get back on every visit when anamnesis, pain map and questionnaires arrive already done."
