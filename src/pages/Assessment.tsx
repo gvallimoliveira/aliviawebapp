@@ -656,6 +656,10 @@ const Assessment = () => {
     setStep("loading");
     try {
       const bodyData: any = { anamnesisData: data, testResults: tests, questionnaireResults, mode, language };
+      // Passo D1 — mecanismo/extensão de dor como contexto clínico para a IA.
+      const mechPayload = buildMechanismPayload(data as any);
+      if (mechPayload.pain_mechanism) bodyData.painMechanism = mechPayload.pain_mechanism;
+      bodyData.painExtent = painExtentValue((data as any).painRegions);
       if (mode === "premium" && previousBasicDiagnosis?.hypothesis) {
         bodyData.previousBasicDiagnosis = previousBasicDiagnosis;
       }

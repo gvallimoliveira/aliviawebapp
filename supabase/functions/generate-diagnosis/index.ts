@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, forceRefresh, assessmentId, previousBasicDiagnosis } = await req.json();
+    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, forceRefresh, assessmentId, previousBasicDiagnosis, painMechanism: bodyPainMechanism, painExtent: bodyPainExtent } = await req.json();
     const creditDecision = await assertCreditsAvailable(req, { function_name: "generate-diagnosis" });
     console.log("[ai-credits] generate-diagnosis decision:", JSON.stringify({
       reason: creditDecision.reason,
@@ -61,7 +61,7 @@ serve(async (req) => {
       }
     };
 
-    const cachePayload = { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null };
+    const cachePayload = { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null, painMechanism: bodyPainMechanism ?? null, painExtent: bodyPainExtent ?? null };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ diagnosis: unknown }>(admin, "generate-diagnosis", cachePayload);
       if (cached) {
@@ -94,6 +94,59 @@ serve(async (req) => {
     const painNightWaking = anamnesisData.painNightWaking || "";
     const painScoreMode = anamnesisData.painScoreMode || "general";
     const painScoresPerRegion = anamnesisData.painScoresPerRegion || {};
+
+    // ---------------------------------------------------------------------
+    // Passo D1 — mecanismo de dor: contexto para a IA + fallback determinístico
+    // O cliente envia o resultado já classificado pelas regras (Kosek 2021 /
+    // Finnerup 2016). A IA pode refinar, mas nunca é obrigatória: se o campo
+    // vier ausente/inválido, usamos o determinístico. Sem triagem = sem bloco.
+    // ---------------------------------------------------------------------
+    const MECHANISM_KEYS = ["nociceptive", "neuropathic", "nociplastic", "mixed", "unknown"];
+    const AXIS_KEYS = ["peripheral", "central", "mixed", "unknown"];
+    const CONFIDENCE_KEYS = ["low", "moderate", "high"];
+
+    const rulesMechanism = (() => {
+      const raw = bodyPainMechanism ?? anamnesisData?.painMechanismResolved ?? null;
+      if (!raw || typeof raw !== "object") return null;
+      const m = String((raw as any).mechanism ?? "");
+      if (!MECHANISM_KEYS.includes(m) || m === "unknown") return null;
+      return raw as Record<string, any>;
+    })();
+
+    const painExtentValueNum = typeof bodyPainExtent === "number" ? bodyPainExtent : null;
+
+    const mechanismBlock = rulesMechanism ? `
+PAIN MECHANISM SCREENING (deterministic result already computed by Aliv.iA — MANDATORY context):
+The patient (or the attending physiotherapist) completed the pain mechanism screening. Rule-based result:
+- Predominant mechanism: ${rulesMechanism.mechanism}
+- Secondary mechanism: ${rulesMechanism.secondary || "none"}
+- Clinical subtype: ${rulesMechanism.subtype || "not specified"}
+- Axis: ${rulesMechanism.axis || "unknown"} (peripheral vs central)
+- Central sensitization likely: ${rulesMechanism.central_sensitization_likely ? "YES" : "no"}
+- Screening confidence: ${rulesMechanism.confidence || "low"}
+- Positive signals: ${Array.isArray(rulesMechanism.signals) && rulesMechanism.signals.length ? rulesMechanism.signals.join(", ") : "none recorded"}
+- Marked criteria: ${Array.isArray(rulesMechanism.criteria) && rulesMechanism.criteria.length ? rulesMechanism.criteria.join(", ") : "none recorded"}
+${typeof rulesMechanism.csi_score === "number" ? `- CSI score: ${rulesMechanism.csi_score} (>= 40 suggests central sensitization)` : ""}
+${painExtentValueNum !== null ? `- Pain extent: ~${painExtentValueNum}% of body surface (higher extent + long duration favors a nociplastic component)` : ""}
+
+HOW TO USE IT:
+- Frameworks: Kosek et al. 2021 (nociplastic criteria) and Finnerup et al. 2016 (neuropathic grading).
+- Treat the deterministic result as the baseline. Keep it unless the rest of the record clearly contradicts it — then explain the divergence in the "reasoning" field of pain_mechanism.
+- Nociceptive → predictable mechanical/load relationship, proportionate to tissue findings.
+- Neuropathic → neuroanatomically plausible distribution + neuropathic descriptors and/or objective sensorimotor signs.
+- Nociplastic → regional/multisite pain >= 3 months, disproportionate to tissue findings, hypersensitivity, poor sleep/fatigue.
+- The mechanism must NOT enter the "hypothesis" field: it stays inside the "pain_mechanism" object. The hypothesis remains a SHORT diagnostic label (max 20 words).
+` : "";
+
+    const mechanismJsonSpec = rulesMechanism ? `
+  "pain_mechanism": {
+    "mechanism": "nociceptive" | "neuropathic" | "nociplastic" | "mixed",
+    "secondary": null | "nociceptive" | "neuropathic" | "nociplastic",
+    "axis": "peripheral" | "central" | "mixed" | "unknown",
+    "confidence": "low" | "moderate" | "high",
+    "patient_explanation": "2-3 sentences in ${lang}, PLAIN LANGUAGE for a layperson (no jargon such as 'nociplastic', 'sensitization', 'dermatomal'): explain in everyday words why the pain behaves this way and what it means for the treatment. Warm, reassuring, never alarming.",
+    "reasoning": "1-2 sentences of clinical reasoning naming the findings that support this mechanism (technical language is fine here)"
+  },` : "";
 
     const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
@@ -449,6 +502,7 @@ ${edemaBlock}
 ${lumbarShoulderBlock}
 ${radiculopathyBlock}
 ${multiComplaintBlock}
+${mechanismBlock}
 
 ${hasPhotophobia || hasVisualAura || hasNausea || headacheCrisisFrequency ? `
 MIGRAINE/CERVICOGENIC HEADACHE SCREENING DATA (MANDATORY — integrate into clinical reasoning):
@@ -519,7 +573,7 @@ Response format (JSON):
   "confidence": "low" | "moderate" | "high",
   "summary": "Brief 1-2 sentence summary of the hypothesis",
   "redFlags": ${redFlagsList.length > 0 ? JSON.stringify(redFlagsList) : "[]"},
-  "hypothesisSuppressed": ${redFlagsList.length > 0 && !redFlagsDismissed ? "true" : "false"},
+  "hypothesisSuppressed": ${redFlagsList.length > 0 && !redFlagsDismissed ? "true" : "false"},${mechanismJsonSpec}
   ${isBasic || isProfessional ? "" : `"explanation": "Detailed explanation of what's happening in the body (2-3 paragraphs). Reference questionnaire findings when available.",
   "reasoning": "Why this hypothesis based on the provided data, including questionnaire score interpretation",
   "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"],
@@ -676,6 +730,51 @@ Generate the diagnostic hypothesis in valid JSON format.`;
         .replace(/,\s*]/g, ']')
         .replace(/[\x00-\x1F\x7F]/g, (ch: string) => ch === '\n' || ch === '\r' || ch === '\t' ? ch : '');
       diagnosis = JSON.parse(cleaned);
+    }
+
+    // --- Passo D1: mecanismo de dor com fallback determinístico ---------------
+    // Nunca deixamos a geração falhar por causa deste campo: o resultado das
+    // regras é a base, a IA só refina o que for válido.
+    if (rulesMechanism && diagnosis && typeof diagnosis === "object") {
+      const ai = (diagnosis as any).pain_mechanism;
+      const pick = (v: unknown, allowed: string[], fb: string) =>
+        typeof v === "string" && allowed.includes(v) ? v : fb;
+      const text = (v: unknown) =>
+        typeof v === "string" && v.trim().length > 4 ? v.trim() : null;
+
+      const aiObj = ai && typeof ai === "object" ? (ai as Record<string, unknown>) : {};
+      const aiMechanism = typeof aiObj.mechanism === "string" && MECHANISM_KEYS.includes(aiObj.mechanism) && aiObj.mechanism !== "unknown"
+        ? (aiObj.mechanism as string)
+        : null;
+      const overridden = !!aiMechanism && aiMechanism !== rulesMechanism.mechanism;
+
+      (diagnosis as any).pain_mechanism = {
+        ...rulesMechanism,
+        mechanism: aiMechanism ?? rulesMechanism.mechanism,
+        secondary:
+          typeof aiObj.secondary === "string" && MECHANISM_KEYS.includes(aiObj.secondary) && aiObj.secondary !== "unknown"
+            ? aiObj.secondary
+            : (rulesMechanism.secondary ?? null),
+        axis: pick(aiObj.axis, AXIS_KEYS, rulesMechanism.axis || "unknown"),
+        confidence: pick(aiObj.confidence, CONFIDENCE_KEYS, rulesMechanism.confidence || "low"),
+        patient_explanation: text(aiObj.patient_explanation),
+        reasoning: text(aiObj.reasoning),
+        pain_extent: painExtentValueNum,
+        // "rules" quando a IA não trouxe nada aproveitável; "ai" quando refinou.
+        source: aiMechanism || text(aiObj.patient_explanation) ? "ai" : "rules",
+        rules_mechanism: rulesMechanism.mechanism,
+        ai_overrode_rules: overridden,
+        version: 1,
+      };
+      console.log("[generate-diagnosis] pain_mechanism:", JSON.stringify({
+        rules: rulesMechanism.mechanism,
+        final: (diagnosis as any).pain_mechanism.mechanism,
+        source: (diagnosis as any).pain_mechanism.source,
+        overridden,
+      }));
+    } else if (diagnosis && typeof diagnosis === "object" && (diagnosis as any).pain_mechanism) {
+      // Sem triagem no prontuário: descartamos qualquer mecanismo alucinado.
+      delete (diagnosis as any).pain_mechanism;
     }
 
     if (admin && diagnosis && typeof diagnosis === "object") {
