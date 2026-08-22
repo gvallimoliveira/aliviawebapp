@@ -29,6 +29,12 @@ export default defineConfig(({ mode }) => ({
         // Split heavy libraries into separate chunks so they only load
         // when the feature that needs them is opened.
         manualChunks: (id) => {
+          // Vite's own preload helper is shared by every lazy route; if rollup
+          // parks it inside a feature chunk (pdf/charts), the app shell has to
+          // download that whole chunk just to boot.
+          if (id.includes("vite/preload-helper") || id.includes("vite/modulepreload")) {
+            return "vendor-utils";
+          }
           if (!id.includes("node_modules")) return undefined;
           // Shared helper runtimes must live apart, otherwise the app shell
           // ends up importing a tiny helper from a huge feature chunk.
