@@ -168,6 +168,7 @@ const PatientLanding = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <ScrollProgress />
       <Header />
       <ReferralBanner />
       <main>
