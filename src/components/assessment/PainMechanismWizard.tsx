@@ -92,12 +92,49 @@ const COPY = {
       es: "Patrón nociplástico (sensibilización)",
     },
   } as Record<MechanismBlock, Record<Lang, string>>,
+  blocksLay: {
+    nociceptive: {
+      pt: "Dor de estrutura (músculo, tendão, articulação)",
+      en: "Tissue pain (muscle, tendon, joint)",
+      es: "Dolor de estructura (músculo, tendón, articulación)",
+    },
+    neuropathic: {
+      pt: "Dor de nervo",
+      en: "Nerve pain",
+      es: "Dolor de nervio",
+    },
+    nociplastic: {
+      pt: "Dor por sistema de alarme sensível",
+      en: "Pain from a sensitive alarm system",
+      es: "Dolor por sistema de alarma sensible",
+    },
+  } as Record<MechanismBlock, Record<Lang, string>>,
   next: { pt: "Avançar", en: "Next", es: "Avanzar" },
   back: { pt: "Voltar", en: "Back", es: "Volver" },
   subtypeTitle: {
     pt: "Refine o subtipo do mecanismo predominante",
     en: "Refine the predominant mechanism subtype",
     es: "Refine el subtipo del mecanismo predominante",
+  },
+  subtypeTitlePatient: {
+    pt: "Qual dessas descrições combina mais com a sua dor?",
+    en: "Which of these descriptions best matches your pain?",
+    es: "¿Cuál de estas descripciones se parece más a su dolor?",
+  },
+  subtypeSuggestedPatient: {
+    pt: "parece o seu caso",
+    en: "looks like your case",
+    es: "parece su caso",
+  },
+  subtypeNonePatient: {
+    pt: "Volte e marque o que combina com a sua dor para vermos qual descrição encaixa melhor.",
+    en: "Go back and check what matches your pain so we can suggest a description.",
+    es: "Vuelva y marque lo que coincide con su dolor para sugerir una descripción.",
+  },
+  balanceHint: {
+    pt: "Como as suas respostas se distribuem entre os tipos de dor:",
+    en: "How your answers are distributed across pain types:",
+    es: "Cómo se distribuyen sus respuestas entre los tipos de dolor:",
   },
   subtypeSuggested: { pt: "sugerido", en: "suggested", es: "sugerido" },
   subtypeNone: {
@@ -243,9 +280,19 @@ const PainMechanismWizard = ({
     onChange({ ...value, criteria: next, subtype: null });
   };
 
+  /**
+   * Percentual RELATIVO (balanço entre os três blocos). Normalizar pelo máximo
+   * de cada bloco fazia a barra saturar em 100% e esconder o efeito do
+   * subtipo; a distribuição relativa sempre reflete a mudança.
+   */
   const blockPercent = (block: MechanismBlock) => {
-    const max = blockMaxScore(block, includeExam) || 1;
-    return Math.min(100, Math.round((result.scores[block] / max) * 100));
+    const weighted = MECHANISM_BLOCK_ORDER.map(
+      (b) => result.scores[b] / (blockMaxScore(b, includeExam) || 1),
+    );
+    const total = weighted.reduce((a, b) => a + b, 0);
+    if (total <= 0) return 0;
+    const idx = MECHANISM_BLOCK_ORDER.indexOf(block);
+    return Math.round((weighted[idx] / total) * 100);
   };
 
 
@@ -298,7 +345,9 @@ const PainMechanismWizard = ({
             return (
               <div key={block} className="space-y-1.5 rounded-md border bg-background p-2.5">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-semibold">{COPY.blocks[block][lang]}</span>
+                  <span className="text-[11px] font-semibold">
+                    {(isPro ? COPY.blocks : COPY.blocksLay)[block][lang]}
+                  </span>
                   <Badge variant="outline" className={`text-[10px] ${getMechanismTokenClass(block)}`}>
                     {blockPercent(block)}%
                   </Badge>
@@ -345,9 +394,13 @@ const PainMechanismWizard = ({
       {/* Etapa 2 — subtipo (+ CSI e distribuição no fluxo pro) */}
       {stage === 1 && (
         <div className="space-y-3">
-          <Label className="text-[11px] font-semibold">{COPY.subtypeTitle[lang]}</Label>
+          <Label className="text-[11px] font-semibold">
+            {(isPro ? COPY.subtypeTitle : COPY.subtypeTitlePatient)[lang]}
+          </Label>
           {!dominantBlock && (
-            <p className="text-[11px] text-muted-foreground">{COPY.subtypeNone[lang]}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {(isPro ? COPY.subtypeNone : COPY.subtypeNonePatient)[lang]}
+            </p>
           )}
           {dominantBlock && (
             <div className="space-y-2">
@@ -364,25 +417,29 @@ const PainMechanismWizard = ({
                   >
                     <CardContent className="space-y-1 px-3 py-2.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-medium">{opt.label[lang]}</span>
-                        <Badge
-                          variant="outline"
-                          className={`text-[9px] ${getMechanismTokenClass(optBlock)}`}
-                        >
-                          {getMechanismLabel(optBlock, lang)}
-                        </Badge>
+                        <span className="text-xs font-medium">
+                          {isPro ? opt.label[lang] : opt.lay.label[lang]}
+                        </span>
+                        {isPro && (
+                          <Badge
+                            variant="outline"
+                            className={`text-[9px] ${getMechanismTokenClass(optBlock)}`}
+                          >
+                            {getMechanismLabel(optBlock, lang)}
+                          </Badge>
+                        )}
                         {autoSubtype === opt.key && (
                           <Badge variant="secondary" className="text-[9px]">
-                            {COPY.subtypeSuggested[lang]}
+                            {(isPro ? COPY.subtypeSuggested : COPY.subtypeSuggestedPatient)[lang]}
                           </Badge>
                         )}
                       </div>
                       <p className="text-[11px] leading-snug text-muted-foreground">
-                        {opt.hint[lang]}
+                        {isPro ? opt.hint[lang] : opt.lay.hint[lang]}
                       </p>
                       {selected && (
                         <p className="text-[11px] leading-snug text-primary">
-                          {opt.implication[lang]}
+                          {isPro ? opt.implication[lang] : opt.lay.implication[lang]}
                         </p>
                       )}
                     </CardContent>
@@ -449,9 +506,9 @@ const PainMechanismWizard = ({
             <Badge variant="outline" className={getMechanismTokenClass(result.mechanism)}>
               {getMechanismLabel(result.mechanism, lang)}
             </Badge>
-            {getSubtypeLabel(result.subtype, lang) && (
+            {getSubtypeLabel(result.subtype, lang, !isPro) && (
               <Badge variant="outline" className="text-[10px]">
-                {getSubtypeLabel(result.subtype, lang)}
+                {getSubtypeLabel(result.subtype, lang, !isPro)}
               </Badge>
             )}
             {result.secondary && (
@@ -476,11 +533,14 @@ const PainMechanismWizard = ({
             )}
           </div>
 
+          {!isPro && (
+            <p className="text-[10px] text-muted-foreground">{COPY.balanceHint[lang]}</p>
+          )}
           <div className="space-y-1.5">
             {MECHANISM_BLOCK_ORDER.map((block) => (
               <div key={block} className="space-y-0.5">
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                  <span>{COPY.blocks[block][lang]}</span>
+                  <span>{(isPro ? COPY.blocks : COPY.blocksLay)[block][lang]}</span>
                   <span>{blockPercent(block)}%</span>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -499,10 +559,12 @@ const PainMechanismWizard = ({
               : getMechanismLay(result.mechanism, lang)}
           </p>
 
-          {getSubtypeImplication(result.subtype, lang) && (
+          {getSubtypeImplication(result.subtype, lang, !isPro) && (
             <p className="rounded-md border border-primary/30 bg-primary/5 p-2 text-[11px] leading-snug">
-              <span className="font-semibold">{getSubtypeLabel(result.subtype, lang)}: </span>
-              {getSubtypeImplication(result.subtype, lang)}
+              <span className="font-semibold">
+                {getSubtypeLabel(result.subtype, lang, !isPro)}:{" "}
+              </span>
+              {getSubtypeImplication(result.subtype, lang, !isPro)}
             </p>
           )}
 
