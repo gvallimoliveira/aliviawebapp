@@ -56,11 +56,22 @@ const COPY = {
     en: "Check everything that matches your pain. This helps us understand the type of pain, not just where it hurts.",
     es: "Marque todo lo que coincida con su dolor. Ayuda a entender el tipo de dolor, no solo dónde duele.",
   },
+  optional: {
+    pt: "opcional",
+    en: "optional",
+    es: "opcional",
+  },
+  optionalHint: {
+    pt: "Preenchimento livre: pode preencher em parte ou pular sem prejudicar o resultado da avaliação.",
+    en: "Optional: fill in partially or skip — it won't affect the assessment result.",
+    es: "Opcional: puede completar en parte o saltar — no afecta el resultado.",
+  },
   steps: {
     pt: ["Critérios", "Subtipo", "Resultado"],
     en: ["Criteria", "Subtype", "Result"],
     es: ["Criterios", "Subtipo", "Resultado"],
   },
+
   blocks: {
     nociceptive: {
       pt: "Padrão nociceptivo (tecido)",
