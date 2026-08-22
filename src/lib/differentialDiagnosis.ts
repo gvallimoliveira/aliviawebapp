@@ -100,3 +100,85 @@ export function confidenceLabelPt(assessment: any): string {
   if (!conf) return "Confiança não declarada";
   return "Confiança moderada";
 }
+
+/**
+ * Diferencial de DEMONSTRAÇÃO (demo profissional e demo clínica).
+ * Não chama IA: retorna 1 única alternativa (em vez de 2–4) para agilizar a
+ * navegação no ambiente simulado, escolhida por região a partir da hipótese.
+ */
+export function buildDemoDifferential(diagnosis: any): DifferentialDiagnosisData {
+  const h = String(diagnosis?.hypothesis || "").toLowerCase();
+
+  const knee: DifferentialItem = {
+    hypothesis: "Tendinopatia patelar",
+    plausibility: "medium",
+    competesBecause:
+      "Dor anterior de joelho em agachamento e escadas também é típica de sobrecarga do tendão patelar, sobretudo com histórico de aumento de volume de treino.",
+    arguesAgainst: "Dor difusa peripatelar e crepitação apontam mais para irritação femoropatelar do que para dor focal no tendão.",
+    discriminators: [
+      "Palpação focal do polo inferior da patela vs. facetas patelares",
+      "Agachamento em declive (25°) unipodal: dor focal no tendão sugere tendinopatia",
+      "Teste terapêutico: isometria de extensão 5x45s — alívio imediato favorece tendinopatia",
+    ],
+    whyItMatters:
+      "Muda a dosagem: tendinopatia responde a carga isométrica/progressiva no tendão; dor femoropatelar pede controle de quadril e ajuste de carga articular.",
+  };
+
+  const lumbar: DifferentialItem = {
+    hypothesis: "Dor de origem sacroilíaca",
+    plausibility: "medium",
+    competesBecause:
+      "Dor lombar baixa unilateral que piora ao levantar da cadeira e em apoio unipodal pode ser gerada na articulação sacroilíaca, imitando padrão mecânico lombar.",
+    arguesAgainst: "Padrão de dor que muda com flexão/extensão repetida sugere componente lombar segmentar.",
+    discriminators: [
+      "Cluster de Laslett (≥3 testes positivos)",
+      "Movimentos repetidos (McKenzie): resposta direcional favorece origem lombar",
+      "Localização apontada pelo paciente com um dedo (Fortin sign)",
+    ],
+    whyItMatters: "Direciona o plano: estabilização/carga em cadeia posterior e pelve vs. preferência direcional lombar.",
+  };
+
+  const shoulder: DifferentialItem = {
+    hypothesis: "Dor cervical referida (C5-C6)",
+    plausibility: "medium",
+    competesBecause:
+      "Dor lateral de ombro sem restrição concordante e com piora em posturas prolongadas de cabeça/pescoço pode ser referida da coluna cervical.",
+    arguesAgainst: "Dor reprodutível em testes resistidos do manguito favorece origem local no ombro.",
+    discriminators: [
+      "Testes de compressão/distração cervical e Spurling",
+      "Reprodução da dor por movimentos ativos cervicais isolados",
+      "Alívio dos sintomas do ombro após mobilização cervical (teste terapêutico)",
+    ],
+    whyItMatters: "Evita tratar o ombro por semanas quando a fonte é cervical, retardando a resposta clínica.",
+  };
+
+  const generic: DifferentialItem = {
+    hypothesis: "Sensibilização central com componente nociplástico",
+    plausibility: "medium",
+    competesBecause:
+      "Dor persistente, desproporcional aos achados e com piora ligada a sono/estresse sugere modulação central sobreposta ao quadro mecânico.",
+    arguesAgainst: "Padrão mecânico claro (piora/alívio previsíveis com carga) ainda sustenta a hipótese principal.",
+    discriminators: [
+      "Triagem de mecanismo de dor (critérios de Kosek/Nijs)",
+      "Central Sensitization Inventory e qualidade do sono",
+      "Resposta à carga graduada em 2 semanas",
+    ],
+    whyItMatters:
+      "Altera a estratégia: educação em dor, regularidade e exposição graduada ganham peso sobre progressão agressiva de carga.",
+  };
+
+  const pick = /joelho|patel|condromal|femoropat/.test(h)
+    ? knee
+    : /lomb|sacro|disc|l4|l5|hérnia|hernia/.test(h)
+      ? lumbar
+      : /ombro|manguito|escapul|cervic/.test(h)
+        ? shoulder
+        : generic;
+
+  return {
+    differentials: [pick],
+    generatedAt: new Date().toISOString(),
+    model: "demo",
+    includeInPdf: false,
+  };
+}
