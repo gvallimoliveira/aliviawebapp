@@ -5,6 +5,7 @@ import { functionalTests } from "@/data/functionalTestsData";
 import ptLocale from "@/locales/pt.json";
 import enLocale from "@/locales/en.json";
 import esLocale from "@/locales/es.json";
+import { formatHealthConditions, formatContinuousMedication } from "@/lib/healthHistory";
 import { registerInterFonts } from "./fonts/registerInterFonts";
 import {
   MECHANISM_CRITERIA,
@@ -921,6 +922,15 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
   }
   if (anamnesis.onset) {
     fields.push({ label: isPt ? "Modo de Inicio" : "Onset", value: translateKey(anamnesis.onset, isPt) });
+  }
+  const _healthLang = isPt ? "pt" : "en";
+  const _healthConditions = formatHealthConditions(anamnesis, _healthLang);
+  if (_healthConditions) {
+    fields.push({ label: isPt ? "Condicoes de Saude" : "Health Conditions", value: _healthConditions });
+  }
+  const _continuousMed = formatContinuousMedication(anamnesis, _healthLang);
+  if (_continuousMed) {
+    fields.push({ label: isPt ? "Medicacao de Uso Continuo" : "Continuous Medication", value: _continuousMed });
   }
   if (anamnesis.painScore != null) {
     fields.push({ label: isPt ? "Nivel de Dor (EVA)" : "Pain Level (VAS)", value: `${anamnesis.painScore}/10` });
