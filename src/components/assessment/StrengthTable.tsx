@@ -420,8 +420,10 @@ const STR: Record<string, Record<string, string>> = {
     hidePeakTime: "Hide time to peak",
     agonistTitle: "Agonist/antagonist asymmetry (same side)",
     agonistHint: "Above 10% deserves attention.",
-    untitledMovement: "Unnamed — tap to fill in",
+    untitledMovement: "Unnamed",
     peakTrialN: "Time to peak",
+
+
 
 
 
