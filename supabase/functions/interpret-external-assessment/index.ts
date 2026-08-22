@@ -196,6 +196,26 @@ RULES:
                   additionalProperties: false,
                 },
               },
+              painMechanismScreening: {
+                type: "object",
+                description: "Pain mechanism screening evidence found EXPLICITLY in the file. Omit entirely if the file gives no usable evidence.",
+                properties: {
+                  criteria: {
+                    type: "array",
+                    description: "Criterion keys explicitly supported by the file text. Allowed keys ONLY: noc_movement_relation, noc_rest_relief, noc_localized, noc_palpation, noc_inflammatory, neu_burning_shock, neu_dermatomal, neu_paresthesia, neu_neurodynamic, neu_sensory_loss, neu_motor_deficit, nop_disproportionate, nop_multisite, nop_hypersensitivity, nop_sleep_fatigue, nop_chronic, nop_migrating.",
+                    items: { type: "string" },
+                  },
+                  suggestedSubtype: {
+                    type: "string",
+                    description: "Only if clearly supported. One of: mechanical, inflammatory, peripheral_neuropathic, central_neuropathic, nociplastic_primary, nociplastic_secondary.",
+                    enum: ["mechanical", "inflammatory", "peripheral_neuropathic", "central_neuropathic", "nociplastic_primary", "nociplastic_secondary"],
+                  },
+                  durationMonths: { type: "number", description: "Symptom duration in months, if stated." },
+                  csiScore: { type: "number", description: "Central Sensitization Inventory total score, only if the file states it." },
+                  evidence: { type: "string", description: "Short quote/paraphrase from the file justifying the selected criteria." },
+                },
+                additionalProperties: false,
+              },
               diagnosis: {
                 type: "object",
                 properties: {
