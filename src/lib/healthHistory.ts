@@ -118,8 +118,14 @@ export function normalizeHealthHistory(raw: any): HealthHistoryData {
       a.healthConditionsOtherOnset ?? a.health_conditions_other_onset ?? undefined,
     healthConditionsOtherControl:
       a.healthConditionsOtherControl ?? a.health_conditions_other_control ?? undefined,
+    healthConditionsControl:
+      (a.healthConditionsControl ?? a.health_conditions_control) &&
+      typeof (a.healthConditionsControl ?? a.health_conditions_control) === "object"
+        ? { ...(a.healthConditionsControl ?? a.health_conditions_control) }
+        : undefined,
   };
 }
+
 
 /** Texto das comorbidades (ex.: "Hipertensão, Diabetes, Outra: asma"). */
 export function formatHealthConditions(raw: any, lang: Lang = "pt"): string {
