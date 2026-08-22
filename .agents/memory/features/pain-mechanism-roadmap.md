@@ -23,3 +23,11 @@ Regras do roteiro: só adicionar (nunca substituir), uma flag por bloco, um pass
 ## Flags
 `ENABLE_PAIN_MECHANISM` — **true** desde B1: liga a triagem/UI de mecanismo (hoje só no fluxo manual PRO).
 `ENABLE_PAINMAP_V2` — **true** desde C1/C2: contador/extent no mapa (a lista de chips espelhados foi removida a pedido — só o mapa clicável + resumo de extensão). Off volta ao mapa antigo (gravação de `pain_extent` continua, é inofensiva).
+
+## Triagem aprofundada (revisão B1/B2 — assistente em 3 etapas)
+
+- `src/lib/painMechanism.ts` ganhou `MECHANISM_CRITERIA` (17 critérios ponderados em 3 blocos: nociceptivo, neuropático, nociplástico; `requiresExam` marca os que exigem exame físico) e `MECHANISM_SUBTYPES` (mecânica x inflamatória, periférica x central, nociplástica primária x secundária).
+- `classifyMechanism` aceita `criteria` e `subtype`; o subtipo escolhido pelo avaliador sobrepõe a sugestão automática e define o eixo periférico/central.
+- `assessments.pain_mechanism` agora guarda `subtype` e `criteria` (auditoria/PDF futuros).
+- UI: `PainMechanismWizard.tsx` — etapa 1 critérios com barras ao vivo, etapa 2 subtipo (+ CSI e distribuição só no fluxo PRO), etapa 3 resultado com raciocínio.
+- Uso: fluxo manual PRO e reavaliação expressa (variant `pro`), avaliação premium (variant `patient`, linguagem leiga, sem itens de exame físico). Avaliação básica segue com `PainMechanismLite` (4 itens).
