@@ -40,6 +40,7 @@ import { openWhatsAppDeferred } from "@/lib/whatsappShare";
 import { useCanEditFinalHypothesis as propsUseCanEditFinalHypothesis } from "@/lib/finalHypothesis";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { useClinic } from "@/contexts/ClinicContext";
+import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechanismScreening";
 
 
 const SUBSCALE_COLORS = [
