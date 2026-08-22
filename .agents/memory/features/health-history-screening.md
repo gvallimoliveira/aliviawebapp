@@ -20,6 +20,17 @@ Coleta obrigatória em TODOS os fluxos:
 - `ManualAssessmentModal.tsx` — chips de condições + toggle Sim/Não de uso contínuo (o campo
   "Medicações em uso" virou o "quais" do uso contínuo; comorbidades livres = "Outras comorbidades").
 
+Triagem de apoio quando o paciente marca "outra condição" (obrigatória para avançar):
+`healthConditionsOther` (qual), `healthConditionsOtherOnset` (`lt_6m`/`6m_2y`/`2y_5y`/`gt_5y`/`unknown`)
+e `healthConditionsOtherControl` (`controlled`/`partial`/`uncontrolled`/`no_followup`/`unknown`).
+Controle `uncontrolled` ou `no_followup` conta como risco e a IA recebe alerta para ser conservadora
+e recomendar avaliação médica.
+
+Prontuário: seção fixa `HealthGeneralCard.tsx` (id `saude-geral`) sempre visível acima da timeline,
+com badges vermelhos nas condições de risco, detalhe da "outra condição", medicação contínua e
+histórico de registros anteriores. O cabeçalho do histórico de avaliações traz um atalho
+"Saúde geral" que rola até o card e fica vermelho quando há risco.
+
 Exibição obrigatória: prontuário (`AssessmentView.tsx`), todos os PDFs
 (`generatePdf.ts` → resumo de anamnese) e payload da síntese de evolução.
 
