@@ -171,7 +171,7 @@ const PatientLanding = () => {
   }, [warmPatientDemo, setProgress, startProgressCreep, stopProgressCreep]);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-clip">
       <ScrollProgress />
       <Header />
       <ReferralBanner />
