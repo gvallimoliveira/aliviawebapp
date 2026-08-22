@@ -352,17 +352,37 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
   );
 
   return (
-    <Card id={id} className={`scroll-mt-24 ${risk.hasRisk ? "border-destructive/40 bg-destructive/[0.03]" : ""}`}>
+    <Card
+      id={id}
+      className={`scroll-mt-24 ${
+        attention
+          ? "border-destructive/40 bg-destructive/[0.03]"
+          : managedOnly
+            ? "border-amber-300/60 bg-amber-50/40"
+            : ""
+      }`}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2 flex-wrap">
-          <HeartPulse className={`h-4 w-4 ${risk.hasRisk ? "text-destructive" : "text-primary"}`} />
+          <HeartPulse
+            className={`h-4 w-4 ${attention ? "text-destructive" : managedOnly ? "text-amber-600" : "text-primary"}`}
+          />
           {txt("Saúde geral", "General health", "Salud general")}
-          {risk.hasRisk && (
+          {attention && (
             <Badge variant="outline" className="gap-1 border-destructive/40 bg-destructive/10 text-destructive text-[10px]">
               <AlertTriangle className="h-3 w-3" />
-              {txt("Condição de risco", "Risk condition", "Condición de riesgo")}
+              {risk.unmanaged.length > 0
+                ? txt("Condição não manejada", "Unmanaged condition", "Condición no manejada")
+                : txt("Controle não informado", "Control not informed", "Control no informado")}
             </Badge>
           )}
+          {managedOnly && (
+            <Badge variant="outline" className="gap-1 border-amber-300 bg-amber-50 text-amber-700 text-[10px]">
+              <HeartPulse className="h-3 w-3" />
+              {txt("Condição controlada", "Controlled condition", "Condición controlada")}
+            </Badge>
+          )}
+
           {latest && (
             <span className="text-[11px] font-normal text-muted-foreground">
               {txt("Registrado em", "Recorded on", "Registrado el")} {fmtDate(latest.date)}
