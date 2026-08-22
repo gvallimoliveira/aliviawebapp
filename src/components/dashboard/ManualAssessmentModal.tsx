@@ -2821,6 +2821,35 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     <Textarea value={diagnosisText} onChange={(e) => setDiagnosisText(e.target.value)} rows={8} className="mt-1 text-sm" />
                   </DemoShield>
                 </div>
+                {/* Refinar antes de fechar — diferenciais só com confiança baixa/moderada. */}
+                {!demoMode && shouldOfferDifferential({ diagnosis: aiDiagnosis }) && (
+                  <div className="rounded-lg border border-border/70 bg-muted/20 p-3">
+                    <p className="text-xs font-semibold text-foreground mb-1">
+                      {isPt ? "Refinar antes de fechar" : "Refine before closing"}
+                    </p>
+                    <DifferentialDiagnosisPanel
+                      diagnosis={aiDiagnosis}
+                      context={{
+                        anamnesisData: {
+                          ...buildAnamnesisData(),
+                          painRegions,
+                          painScore,
+                          painTypes: effectivePainTypes,
+                          redFlags: redFlagsChecked,
+                        },
+                        painRegions,
+                        painScore,
+                        questionnaireResults,
+                        redFlags: redFlagsChecked,
+                        painMechanism: (aiDiagnosis as any)?.pain_mechanism || buildProMechanism(),
+                        painExtent: computePainExtent(painRegions).surfacePercent || null,
+                      }}
+                      onAppendDiscriminators={(text) =>
+                        setAdditionalClinicalNotes((prev) => (prev ? `${prev}\n\n${text}` : text))
+                      }
+                    />
+                  </div>
+                )}
                 {(externalSource || additionalExternalInfo) && (
                   <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 space-y-2">
                     <Label className="text-xs flex items-center gap-1.5">
