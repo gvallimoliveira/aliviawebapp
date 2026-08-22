@@ -1,6 +1,7 @@
 import { LANDING_LAYOUT } from "@/lib/landingLayout";
+import type { ComponentType } from "react";
 
-type LandingModule = { default: React.ComponentType };
+type LandingModule = { default: ComponentType };
 
 let professionalLandingPromise: Promise<LandingModule> | null = null;
 
