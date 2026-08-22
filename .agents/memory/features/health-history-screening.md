@@ -40,3 +40,20 @@ glicêmico e pé diabético, liberação médica antes de alta intensidade, efei
 anti-hipertensivo, corticoide e anticoagulante).
 
 Nunca remover essas perguntas de nenhum fluxo sem pedido explícito do usuário.
+
+## Níveis de atenção (não binário)
+
+`getHealthRiskAssessment` (em `src/lib/healthHistory.ts`) classifica em três níveis:
+`none`, `managed` (âmbar — condição existe mas está controlada/parcialmente controlada,
+com fármaco ou outra estratégia) e `attention` (vermelho — não controlada, sem
+acompanhamento, ou controle não informado). Condição controlada NUNCA recebe o mesmo
+peso visual/clínico de condição não manejada.
+
+O controle por condição de risco fica em `healthConditionsControl`
+(`{ hypertension: "controlled", ... }`), persistido em
+`patient_health_records.health_conditions_control` (jsonb). O `HealthGeneralCard` reporta
+o nível recalculado via `onRiskChange`, e o atalho "Saúde geral" no histórico de avaliações
+usa esse valor — atualizando na hora em que o profissional salva.
+
+UX: o diálogo de "Atualizar" usa `onOpenAutoFocus={(e) => e.preventDefault()}` para não
+abrir o calendário/teclado automaticamente no campo de data.
