@@ -1117,7 +1117,14 @@ export default function PatientDetailView(props: any) {
       <Separator className="opacity-40" />
 
       {/* Linha do tempo das avaliações (visão longitudinal sobe acima dos gráficos detalhados) */}
-      <HealthGeneralCard assessments={patient.assessments} />
+      <HealthGeneralCard
+        assessments={patient.assessments}
+        patientId={patient.patientRecord?.id || null}
+        patientEmail={patient.email || null}
+        patientName={patient.name || null}
+        clinicId={clinicId || null}
+        readOnly={readOnly || isDemo}
+      />
 
       <AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
 
