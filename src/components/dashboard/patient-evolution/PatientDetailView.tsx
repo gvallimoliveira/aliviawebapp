@@ -44,6 +44,8 @@ import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechan
 import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
 import MechanismEvolutionCard from "./MechanismEvolutionCard";
 import HealthGeneralCard from "./HealthGeneralCard";
+import DifferentialDiagnosisPanel from "./DifferentialDiagnosisPanel";
+import { shouldOfferDifferential } from "@/lib/differentialDiagnosis";
 import PatientSectionRail from "./PatientSectionRail";
 
 import { getHealthRiskAssessment, isHealthHistoryEmpty, normalizeHealthHistory, type HealthRiskAssessment } from "@/lib/healthHistory";
