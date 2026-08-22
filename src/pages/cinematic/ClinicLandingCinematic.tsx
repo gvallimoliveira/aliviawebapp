@@ -430,6 +430,18 @@ const ClinicLandingCinematic = () => {
           </div>
         </section>
 
+        <HorizontalShowcase
+          kicker="Dentro do painel da clínica"
+          heading="Operação inteira, em movimento"
+          items={featureCategories.flatMap((c) => c.items).slice(0, 10).map((f) => ({
+            icon: f.icon,
+            title: f.title,
+            description: f.desc,
+          }))}
+        />
+
+
+
         {/* ============ FEATURES POR CATEGORIA ============ */}
         <section className="py-16 px-4 bg-muted/30">
           <div className="max-w-6xl mx-auto">
