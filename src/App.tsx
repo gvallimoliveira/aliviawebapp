@@ -21,7 +21,7 @@ import RealtimeNotifier from "@/components/RealtimeNotifier";
 import PushSubscriptionKeeper from "@/components/PushSubscriptionKeeper";
 import ManualAssessmentResumer from "@/components/dashboard/ManualAssessmentResumer";
 import PasskeyEnrollPrompt from "@/components/auth/PasskeyEnrollPrompt";
-import { loadProfessionalLanding } from "@/lib/professionalLandingLoader";
+import ProfessionalLanding from "@/pages/cinematic/ProfessionalLandingShell";
 
 const Gateway = lazy(() => import("./pages/Gateway"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -40,7 +40,6 @@ const ExerciseProgram = lazy(() => import("./pages/ExerciseProgram"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
-const ProfessionalLanding = lazy(loadProfessionalLanding);
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
 const Support = lazy(() => import("./pages/Support"));
 const UpgradeWelcome = lazy(() => import("./pages/UpgradeWelcome"));
@@ -76,13 +75,6 @@ const RouteFallback = () => (
       <div className="h-8 w-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
       <p className="text-sm text-muted-foreground">Carregando a próxima tela…</p>
     </div>
-  </div>
-);
-
-const ProfessionalLandingFallback = () => (
-  <div className="min-h-screen bg-background" aria-label="Carregando página para profissionais">
-    <div className="h-16 border-b border-border/40 bg-background" />
-    <div className="min-h-[620px] bg-gradient-to-br from-primary/5 via-background to-accent/20 md:min-h-[670px]" />
   </div>
 );
 
@@ -140,11 +132,7 @@ const App = () => {
                   <Route path="/blog/:slug" element={<BlogPost />} />
                   <Route
                     path="/profissionais"
-                    element={(
-                      <Suspense fallback={<ProfessionalLandingFallback />}>
-                        <ProfessionalLanding />
-                      </Suspense>
-                    )}
+                    element={<ProfessionalLanding />}
                   />
                   <Route path="/profissionais/demo" element={<ProfessionalDemo />} />
                   <Route path="/complete-profile" element={<CompleteProfile />} />

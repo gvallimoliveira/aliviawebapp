@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Stethoscope, Zap } from "lucide-react";
 import Header from "@/components/Header";
@@ -15,6 +15,7 @@ const ProfessionalLandingShell = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
+  const [loadBody, setLoadBody] = useState(false);
 
   useEffect(() => {
     setSeo({
@@ -25,6 +26,11 @@ const ProfessionalLandingShell = () => {
     });
     setMedicalBusinessJsonLd();
     setOrganizationJsonLd();
+  }, []);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setLoadBody(true));
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   const handleCTA = () => {
@@ -69,9 +75,13 @@ const ProfessionalLandingShell = () => {
             </div>
           </div>
         </section>
-        <Suspense fallback={<div className="h-24 border-t border-border/30 bg-muted/20" aria-hidden="true" />}>
-          <ProfessionalLandingBody />
-        </Suspense>
+        {loadBody ? (
+          <Suspense fallback={<div className="h-24 border-t border-border/30 bg-muted/20" aria-hidden="true" />}>
+            <ProfessionalLandingBody />
+          </Suspense>
+        ) : (
+          <div className="h-24 border-t border-border/30 bg-muted/20" aria-hidden="true" />
+        )}
       </main>
     </div>
   );
