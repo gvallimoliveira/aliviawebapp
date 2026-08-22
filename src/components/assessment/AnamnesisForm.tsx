@@ -19,10 +19,9 @@ import PainMechanismWizard from "./PainMechanismWizard";
 import { suggestDistribution } from "@/lib/painExtent";
 import PainMechanismLite, {
   createEmptyLiteAnswers,
-  isLiteScreeningComplete,
-  sanitizeLiteAnswers,
   type LiteMechanismAnswers,
 } from "./PainMechanismLite";
+
 
 export interface AnamnesisData {
   chiefComplaint: string; // deprecated, kept for backward compat
