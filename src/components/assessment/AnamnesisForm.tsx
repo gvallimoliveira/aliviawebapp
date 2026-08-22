@@ -63,9 +63,15 @@ export interface AnamnesisData {
   // Patient identification (pre-assessment)
   cpf?: string;
   birthDate?: string;
+  /** Antecedentes de saúde essenciais (hipertensão/diabetes/cardiopatia). */
+  healthConditions?: string[];
+  healthConditionsOther?: string;
+  usesContinuousMedication?: string;
+  continuousMedications?: string;
   /** Passos B2/B3 — triagem leiga de mecanismo de dor. */
   painMechanism?: LiteMechanismAnswers;
 }
+
 
 interface AnamnesisFormProps {
   mode: "basic" | "premium" | "professional";
