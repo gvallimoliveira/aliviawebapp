@@ -2846,10 +2846,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                         painMechanism: (aiDiagnosis as any)?.pain_mechanism || buildProMechanism(),
                         painExtent: computePainExtent(painRegions).surfacePercent || null,
                       }}
+                      isDemo={demoMode}
                       onAppendDiscriminators={(text) =>
                         setAdditionalClinicalNotes((prev) => (prev ? `${prev}\n\n${text}` : text))
                       }
                     />
+
                   </div>
                 )}
                 {(externalSource || additionalExternalInfo) && (
