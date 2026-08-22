@@ -23,6 +23,10 @@ import Reveal from "@/components/scroll/Reveal";
 import PatientStatement from "@/components/scroll/PatientStatement";
 import PatientJourneyShowcase from "@/components/scroll/PatientJourneyShowcase";
 import BrandMarquee from "@/components/scroll/BrandMarquee";
+import PatientManifesto from "@/components/scroll/PatientManifesto";
+import PatientDeliverables from "@/components/scroll/PatientDeliverables";
+import ClosingCta from "@/components/scroll/ClosingCta";
+
 
 import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
 import { showNavOverlay, subscribeNavOverlay } from "@/lib/navigationOverlay";
@@ -167,7 +171,7 @@ const PatientLanding = () => {
   }, [warmPatientDemo, setProgress, startProgressCreep, stopProgressCreep]);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-clip">
       <ScrollProgress />
       <Header />
       <ReferralBanner />
@@ -224,16 +228,20 @@ const PatientLanding = () => {
         <BrandMarquee />
         <PatientStatement />
         <PatientJourneyShowcase />
+        <PatientManifesto />
         <Reveal><HighlightsSection /></Reveal>
+        <PatientDeliverables />
         <Reveal><ComparisonSection /></Reveal>
         <Reveal><MethodologySection /></Reveal>
         <Reveal><HowItWorksSection /></Reveal>
         <Reveal scale><UpgradeFlowSection /></Reveal>
         <Reveal><TestimonialsSection /></Reveal>
+        <ClosingCta />
         <Reveal><FaqSection /></Reveal>
         <Reveal><SocialSection /></Reveal>
         <LgpdBadge />
       </main>
+
       <InstallAppSection />
       <Footer />
       <StickyCTA showProfessional={false} />
