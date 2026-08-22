@@ -745,27 +745,18 @@ const ClinicLandingCinematic = () => {
           </div>
         </section>
 
-        {/* ============ FINAL CTA ============ */}
-        <section className="py-16 px-4">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
-            className="max-w-3xl mx-auto text-center rounded-3xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-background to-primary/5 p-8 md:p-12">
-            <Sparkles className="h-10 w-10 text-primary mx-auto mb-4" />
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-              Pronto para transformar sua clínica?
-            </h2>
-            <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              15 dias grátis, sem cartão, sem compromisso. Importe sua agenda em 1 minuto e comece hoje.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button size="lg" className="rounded-xl gap-2" onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}>
-                Começar agora <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Button size="lg" variant="outline" className="rounded-xl gap-2" onClick={() => navigate("/clinica/demo")}>
-                <Activity className="h-4 w-4" /> Ver demo
-              </Button>
-            </div>
-          </motion.div>
-        </section>
+        {/* ============ FINAL CTA CINEMATOGRÁFICO ============ */}
+        <CinematicClosing
+          kicker="Aliv.iA Clinic"
+          heading="Pronto para transformar sua clínica?"
+          sub="15 dias grátis, sem cartão, sem compromisso. Importe sua agenda em 1 minuto e comece hoje."
+          note="Vagas limitadas por região"
+          primaryLabel="Começar agora"
+          onPrimary={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+          secondaryLabel="Ver demo"
+          onSecondary={() => navigate("/clinica/demo")}
+        />
+
       </main>
 
       <InstallAppSection />
