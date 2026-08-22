@@ -61,7 +61,7 @@ serve(async (req) => {
       }
     };
 
-    const cachePayload = { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null };
+    const cachePayload = { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null, painMechanism: bodyPainMechanism ?? null, painExtent: bodyPainExtent ?? null };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ diagnosis: unknown }>(admin, "generate-diagnosis", cachePayload);
       if (cached) {
