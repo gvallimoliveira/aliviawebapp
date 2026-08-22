@@ -430,7 +430,9 @@ export default function PatientDetailView(props: any) {
 
   return (
     <div className="space-y-5">
+      <PatientSectionRail riskLevel={healthRisk?.level ?? null} />
       <div className="flex items-center justify-between">
+
         <Button variant="ghost" size="sm" onClick={() => props.setSelectedEmail(null)} className="gap-2 rounded-full bg-primary/5 px-4 py-2 text-primary border border-primary/20 hover:bg-primary/10 hover:border-primary/30 hover:shadow-sm transition-all shadow-sm">
           <ArrowLeft className="h-4 w-4" />
           <span className="font-medium">{t("pro.back_to_patients")}</span>
