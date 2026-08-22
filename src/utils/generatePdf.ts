@@ -6,6 +6,14 @@ import ptLocale from "@/locales/pt.json";
 import enLocale from "@/locales/en.json";
 import esLocale from "@/locales/es.json";
 import { registerInterFonts } from "./fonts/registerInterFonts";
+import {
+  MECHANISM_CRITERIA,
+  getMechanismLabel,
+  getMechanismLay,
+  getMechanismTechnical,
+  getSubtypeLabel,
+  parseStoredMechanism,
+} from "@/lib/painMechanism";
 
 /**
  * Resolves the display name of a functional test (id → i18n name), so the PDF
@@ -1802,6 +1810,9 @@ function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: numbe
 // ── Basic Report PDF (for WhatsApp sharing — hypothesis, confidence, summary, pain map, VAS, disclaimer) ──
 interface BasicReportOptions {
   diagnosis: Diagnosis;
+  /** Passo E2 — triagem de mecanismo de dor (jsonb). Fallback: diagnosis.pain_mechanism. */
+  painMechanism?: unknown;
+  painExtent?: number | null;
   /** When set, replaces the AI hypothesis with the professional override. */
   finalHypothesis?: string;
   language: string;
