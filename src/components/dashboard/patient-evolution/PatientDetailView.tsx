@@ -42,6 +42,8 @@ import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { useClinic } from "@/contexts/ClinicContext";
 import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechanismScreening";
 import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
+import MechanismEvolutionCard from "./MechanismEvolutionCard";
+import { mechanismTrajectoryLines, buildMechanismTimeline } from "@/lib/painMechanismEvolution";
 
 
 const SUBSCALE_COLORS = [
