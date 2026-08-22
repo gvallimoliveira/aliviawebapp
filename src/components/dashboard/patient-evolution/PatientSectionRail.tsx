@@ -35,8 +35,11 @@ const PatientSectionRail = ({ riskLevel }: Props) => {
         const ids = PATIENT_SECTIONS.filter((s) => {
           const el = document.getElementById(s.id);
           // Wrappers de seções condicionais existem mas ficam vazios (altura 0).
-          return !!el && el.offsetHeight > 8;
+          if (!el || el.offsetHeight <= 8) return false;
+          // Seções que existem mas ainda não têm dado clínico se marcam sozinhas.
+          return el.dataset.railHide !== "true";
         }).map((s) => s.id);
+
 
         setPresentIds((prev) => (prev.length === ids.length && prev.every((v, i) => v === ids[i]) ? prev : ids));
       });
