@@ -147,7 +147,11 @@ export function formatHealthConditions(raw: any, lang: Lang = "pt"): string {
         ].filter(Boolean);
         return extras.length > 0 ? `${base} (${extras.join(" • ")})` : base;
       }
-      return healthConditionLabel(id, lang);
+      const ctrl = (h.healthConditionsControl || {})[id];
+      return ctrl
+        ? `${healthConditionLabel(id, lang)} (${otherControlLabel(ctrl, lang)})`
+        : healthConditionLabel(id, lang);
+
     });
   return parts.join(", ");
 }
