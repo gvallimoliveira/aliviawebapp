@@ -2933,8 +2933,6 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   const lastQ = lastTests.filter((t: any) => t.questionnaireId && t.percentageScore != null);
 
   if (firstQ.length > 0 || lastQ.length > 0) {
-    y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary);
-
     // Find questionnaires present in both
     const matched: { name: string; firstPct: number; lastPct: number; change: number }[] = [];
     const onlyFirst: string[] = [];
@@ -2956,6 +2954,18 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
       }
     }
 
+    // Reserve the real first content block before drawing the heading. The
+    // table itself paginates row by row, so it must not run a second whole-table
+    // break that could strand the title on the previous page.
+    const firstComparisonContentH = matched.length > 0 ? 17 : 10;
+    y = renderSectionTitle(
+      doc,
+      y,
+      isPt ? "Questionários Funcionais" : "Functional Questionnaires",
+      COLORS.primary,
+      firstComparisonContentH,
+    );
+
     // Render matched questionnaires table
     if (matched.length > 0) {
       const headerLabels = [
@@ -2967,7 +2977,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
       const colWidths = [CONTENT_WIDTH * 0.4, CONTENT_WIDTH * 0.18, CONTENT_WIDTH * 0.18, CONTENT_WIDTH * 0.24];
 
       // Table header
-      y = checkPage(doc, y, 10 + matched.length * 8);
+      y = checkPage(doc, y, 17);
       drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, 8, 2, COLORS.primary);
       doc.setFont("Inter", "bold");
       doc.setFontSize(7);
