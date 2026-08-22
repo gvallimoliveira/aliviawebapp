@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { shadowLogAiUsage, assertCreditsAvailable } from "../_shared/ai-credits.ts";
 import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
+import { formatHealthHistoryForPrompt } from "../_shared/health-history.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
