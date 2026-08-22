@@ -191,32 +191,44 @@ const PainMechanismWizard = ({
 
   const includeExam = isPro;
 
-  const result: MechanismResult = useMemo(
-    () =>
-      classifyMechanism({
-        descriptors: value.descriptors,
-        distribution: value.distribution,
-        criteria: value.criteria,
-        subtype: value.subtype,
-        proportionateToStimulus: value.proportionateToStimulus,
-        spontaneousPain: value.spontaneousPain,
-        multisensoryHypersensitivity: value.multisensoryHypersensitivity,
-        nonRestorativeSleep: value.nonRestorativeSleep,
-        persistentFatigue: value.persistentFatigue,
-        objectiveNeuroSigns: value.objectiveNeuroSigns,
-        durationWeeks,
-        csiScore: value.csiScore,
-        regionCount,
-      }),
+  const baseInput = useMemo(
+    () => ({
+      descriptors: value.descriptors,
+      distribution: value.distribution,
+      criteria: value.criteria,
+      proportionateToStimulus: value.proportionateToStimulus,
+      spontaneousPain: value.spontaneousPain,
+      multisensoryHypersensitivity: value.multisensoryHypersensitivity,
+      nonRestorativeSleep: value.nonRestorativeSleep,
+      persistentFatigue: value.persistentFatigue,
+      objectiveNeuroSigns: value.objectiveNeuroSigns,
+      durationWeeks,
+      csiScore: value.csiScore,
+      regionCount,
+    }),
     [value, durationWeeks, regionCount],
+  );
+
+  /** Classificação sem o subtipo — define quais subtipos vale oferecer. */
+  const baseResult: MechanismResult = useMemo(
+    () => classifyMechanism({ ...baseInput, subtype: null }),
+    [baseInput],
+  );
+
+  /** Classificação final: o subtipo confirmado pesa nas barras e no eixo. */
+  const result: MechanismResult = useMemo(
+    () => classifyMechanism({ ...baseInput, subtype: value.subtype }),
+    [baseInput, value.subtype],
   );
 
   const dominantBlock: MechanismBlock | null = useMemo(() => {
     const ranked = (
-      Object.entries(result.scores) as [MechanismBlock, number][]
+      Object.entries(baseResult.scores) as [MechanismBlock, number][]
     ).sort((a, b) => b[1] - a[1]);
     return ranked[0][1] > 0 ? ranked[0][0] : null;
-  }, [result.scores]);
+  }, [baseResult.scores]);
+
+  const subtypeChoices = useMemo(() => subtypeChoicesFor(baseResult), [baseResult]);
 
   const autoSubtype = dominantBlock ? suggestSubtype(dominantBlock, value.criteria) : null;
 
@@ -232,6 +244,7 @@ const PainMechanismWizard = ({
     const max = blockMaxScore(block, includeExam) || 1;
     return Math.min(100, Math.round((result.scores[block] / max) * 100));
   };
+
 
   const stepLabels = COPY.steps[lang];
 
