@@ -44,7 +44,7 @@ import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechan
 import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
 import MechanismEvolutionCard from "./MechanismEvolutionCard";
 import HealthGeneralCard from "./HealthGeneralCard";
-import { getHealthRiskFlags, isHealthHistoryEmpty, normalizeHealthHistory } from "@/lib/healthHistory";
+import { getHealthRiskAssessment, isHealthHistoryEmpty, normalizeHealthHistory, type HealthRiskAssessment } from "@/lib/healthHistory";
 import { mechanismTrajectoryLines, buildMechanismTimeline } from "@/lib/painMechanismEvolution";
 
 
@@ -274,6 +274,10 @@ export default function PatientDetailView(props: any) {
   } = props;
 
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
+  // Nível de atenção de "Saúde geral" reportado pelo card — recalculado sempre
+  // que o profissional salva alterações (condição controlada != não manejada).
+  const [healthRisk, setHealthRisk] = React.useState<HealthRiskAssessment | null>(null);
+
   // Avaliação incompleta/em andamento que o profissional decidiu retomar:
   // abre o ManualAssessmentModal em modo edição (não o link público de autoavaliação).
   const [resumeAssessment, setResumeAssessment] = React.useState<any | null>(null);
@@ -1124,7 +1128,9 @@ export default function PatientDetailView(props: any) {
         patientName={patient.name || null}
         clinicId={clinicId || null}
         readOnly={readOnly || isDemo}
+        onRiskChange={setHealthRisk}
       />
+
 
       <AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
 
@@ -1232,8 +1238,12 @@ export default function PatientDetailView(props: any) {
             <div className="flex items-center justify-between gap-2 pr-2">
               <h4 className="text-sm font-semibold text-foreground flex items-center gap-2"><NotebookPen className="h-4 w-4 text-primary" />{language === "pt" ? "Avaliações do paciente — abrir relatório completo" : language === "es" ? "Evaluaciones del paciente — abrir informe completo" : "Patient assessments — open full report"}<Badge variant="outline" className="text-[10px] font-normal">{patient.assessments.filter((a: any) => showArchivedAssessments ? true : !a.archived_at).length}</Badge>{(() => {
                 const latestHealth = patient.assessments.map((a: any) => normalizeHealthHistory(a.anamnesis_data)).filter((h: any) => !isHealthHistoryEmpty(h))[0];
-                const hasRisk = latestHealth ? getHealthRiskFlags(latestHealth).hasRisk : false;
-                return <Button variant="outline" size="sm" className={`h-7 text-[11px] gap-1.5 ${hasRisk ? "border-destructive/40 text-destructive hover:bg-destructive/10" : ""}`} onClick={(e) => { e.stopPropagation(); document.getElementById("saude-geral")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>{hasRisk ? <AlertTriangle className="h-3.5 w-3.5" /> : <HeartPulse className="h-3.5 w-3.5" />}{language === "pt" ? "Saúde geral" : language === "es" ? "Salud general" : "General health"}</Button>;
+                // Prioriza o nível recalculado pelo card (inclui registros manuais recém-salvos).
+                const level = healthRisk?.level ?? (latestHealth ? getHealthRiskAssessment(latestHealth).level : "none");
+                const attention = level === "attention";
+                const managed = level === "managed";
+                return <Button variant="outline" size="sm" className={`h-7 text-[11px] gap-1.5 ${attention ? "border-destructive/40 text-destructive hover:bg-destructive/10" : managed ? "border-amber-300 text-amber-700 hover:bg-amber-50" : ""}`} onClick={(e) => { e.stopPropagation(); document.getElementById("saude-geral")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>{attention ? <AlertTriangle className="h-3.5 w-3.5" /> : <HeartPulse className="h-3.5 w-3.5" />}{language === "pt" ? "Saúde geral" : language === "es" ? "Salud general" : "General health"}</Button>;
+
               })()}</h4>
               {patient.assessments.some((a: any) => a.archived_at) && <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground" onClick={(e) => { e.stopPropagation(); setShowArchivedAssessments((v: boolean) => !v); }}>{showArchivedAssessments ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}{showArchivedAssessments ? (language === "pt" ? "Ocultar arquivadas" : "Hide archived") : (language === "pt" ? `Mostrar arquivadas (${patient.assessments.filter((a: any) => a.archived_at).length})` : `Show archived (${patient.assessments.filter((a: any) => a.archived_at).length})`)}</Button>}
             </div>

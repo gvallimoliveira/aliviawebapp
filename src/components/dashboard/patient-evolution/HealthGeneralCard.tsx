@@ -35,7 +35,7 @@ import { normalizeAnamnesis } from "@/lib/anamnesisCompat";
 import {
   formatHealthConditions,
   formatContinuousMedication,
-  getHealthRiskFlags,
+  getHealthRiskAssessment,
   healthConditionLabel,
   healthHistoryLabel,
   isHealthHistoryEmpty,
@@ -43,10 +43,14 @@ import {
   otherControlLabel,
   otherOnsetLabel,
   HEALTH_CONDITION_IDS,
+  MANAGED_CONTROL_IDS,
   OTHER_CONTROL_OPTIONS,
   OTHER_ONSET_OPTIONS,
   RISK_CONDITION_IDS,
+  RISK_CONTROL_IDS,
+  type HealthRiskAssessment,
 } from "@/lib/healthHistory";
+
 
 interface HealthGeneralCardProps {
   assessments: any[];
@@ -59,7 +63,10 @@ interface HealthGeneralCardProps {
   clinicId?: string | null;
   /** Desliga a edição (demo / somente leitura). */
   readOnly?: boolean;
+  /** Notifica o nível de atenção recalculado (usado pelo atalho no histórico). */
+  onRiskChange?: (risk: HealthRiskAssessment) => void;
 }
+
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -82,6 +89,8 @@ interface FormState {
   healthConditionsOther: string;
   healthConditionsOtherOnset: string;
   healthConditionsOtherControl: string;
+  /** Controle por condição de risco (hipertensão / diabetes / cardiopatia). */
+  healthConditionsControl: Record<string, string>;
   usesContinuousMedication: string;
   continuousMedications: string;
   change_summary: string;
@@ -96,6 +105,7 @@ const emptyForm = (): FormState => ({
   healthConditionsOther: "",
   healthConditionsOtherOnset: "",
   healthConditionsOtherControl: "",
+  healthConditionsControl: {},
   usesContinuousMedication: "",
   continuousMedications: "",
   change_summary: "",
@@ -107,8 +117,8 @@ const emptyForm = (): FormState => ({
  * Seção fixa "Saúde geral" do prontuário: mostra sempre as comorbidades
  * essenciais (hipertensão / diabetes / cardiopatia / outra) e a medicação de
  * uso contínuo do registro mais recente — vindo da anamnese OU de um registro
- * manual do profissional — sinalizando condições de risco e mantendo o
- * histórico completo das alterações.
+ * manual do profissional — sinalizando o nível de atenção (condição controlada
+ * pesa menos que condição não manejada) e mantendo o histórico das alterações.
  */
 const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
   assessments,
@@ -118,7 +128,9 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
   patientName,
   clinicId,
   readOnly,
+  onRiskChange,
 }) => {
+
   const { language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -168,6 +180,7 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
         healthConditionsOther: r.health_conditions_other,
         healthConditionsOtherOnset: r.health_conditions_other_onset,
         healthConditionsOtherControl: r.health_conditions_other_control,
+        healthConditionsControl: r.health_conditions_control,
         usesContinuousMedication: r.uses_continuous_medication,
         continuousMedications: r.continuous_medications,
       }),
@@ -181,9 +194,30 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
 
   const latest = records[0];
   const previous = records.slice(1);
-  const risk = latest
-    ? getHealthRiskFlags(latest.data)
-    : { riskConditions: [], uncontrolledOther: false, hasRisk: false };
+  const risk = useMemo<HealthRiskAssessment>(
+    () =>
+      latest
+        ? getHealthRiskAssessment(latest.data)
+        : {
+            level: "none",
+            riskConditions: [],
+            managed: [],
+            unmanaged: [],
+            unknownControl: [],
+            uncontrolledOther: false,
+            hasRisk: false,
+          },
+    [latest],
+  );
+
+  // Recalcula o nível de atenção sempre que o registro mais recente muda
+  // (inclusive imediatamente após o profissional salvar uma alteração).
+  useEffect(() => {
+    onRiskChange?.(risk);
+  }, [risk, onRiskChange]);
+
+  const attention = risk.level === "attention";
+  const managedOnly = risk.level === "managed";
   const conditionsText = latest ? formatHealthConditions(latest.data, language) : "";
   const medicationText = latest ? formatContinuousMedication(latest.data, language) : "";
 
@@ -195,6 +229,7 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
       base.healthConditionsOther = latest.data.healthConditionsOther || "";
       base.healthConditionsOtherOnset = latest.data.healthConditionsOtherOnset || "";
       base.healthConditionsOtherControl = latest.data.healthConditionsOtherControl || "";
+      base.healthConditionsControl = { ...(latest.data.healthConditionsControl || {}) };
       base.usesContinuousMedication = latest.data.usesContinuousMedication || "";
       base.continuousMedications = latest.data.continuousMedications || "";
     }
@@ -210,6 +245,7 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
       healthConditionsOther: r.health_conditions_other || "",
       healthConditionsOtherOnset: r.health_conditions_other_onset || "",
       healthConditionsOtherControl: r.health_conditions_other_control || "",
+      healthConditionsControl: r.health_conditions_control || {},
       usesContinuousMedication: r.uses_continuous_medication || "",
       continuousMedications: r.continuous_medications || "",
       change_summary: r.change_summary || "",
@@ -218,6 +254,7 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
     });
     setDialogOpen(true);
   };
+
 
   const toggleCondition = (cid: string) => {
     setForm((f) => {
@@ -257,7 +294,13 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
         health_conditions_other_control: form.healthConditions.includes("other")
           ? form.healthConditionsOtherControl || null
           : null,
+        health_conditions_control: Object.fromEntries(
+          Object.entries(form.healthConditionsControl || {}).filter(
+            ([cid, v]) => !!v && form.healthConditions.includes(cid),
+          ),
+        ),
         uses_continuous_medication: form.usesContinuousMedication || null,
+
         continuous_medications: form.continuousMedications || null,
         change_summary: form.change_summary || null,
         observations: form.observations || null,
@@ -309,17 +352,37 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
   );
 
   return (
-    <Card id={id} className={`scroll-mt-24 ${risk.hasRisk ? "border-destructive/40 bg-destructive/[0.03]" : ""}`}>
+    <Card
+      id={id}
+      className={`scroll-mt-24 ${
+        attention
+          ? "border-destructive/40 bg-destructive/[0.03]"
+          : managedOnly
+            ? "border-amber-300/60 bg-amber-50/40"
+            : ""
+      }`}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2 flex-wrap">
-          <HeartPulse className={`h-4 w-4 ${risk.hasRisk ? "text-destructive" : "text-primary"}`} />
+          <HeartPulse
+            className={`h-4 w-4 ${attention ? "text-destructive" : managedOnly ? "text-amber-600" : "text-primary"}`}
+          />
           {txt("Saúde geral", "General health", "Salud general")}
-          {risk.hasRisk && (
+          {attention && (
             <Badge variant="outline" className="gap-1 border-destructive/40 bg-destructive/10 text-destructive text-[10px]">
               <AlertTriangle className="h-3 w-3" />
-              {txt("Condição de risco", "Risk condition", "Condición de riesgo")}
+              {risk.unmanaged.length > 0
+                ? txt("Condição não manejada", "Unmanaged condition", "Condición no manejada")
+                : txt("Controle não informado", "Control not informed", "Control no informado")}
             </Badge>
           )}
+          {managedOnly && (
+            <Badge variant="outline" className="gap-1 border-amber-300 bg-amber-50 text-amber-700 text-[10px]">
+              <HeartPulse className="h-3 w-3" />
+              {txt("Condição controlada", "Controlled condition", "Condición controlada")}
+            </Badge>
+          )}
+
           {latest && (
             <span className="text-[11px] font-normal text-muted-foreground">
               {txt("Registrado em", "Recorded on", "Registrado el")} {fmtDate(latest.date)}
@@ -355,25 +418,33 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               {(latest.data.healthConditions || []).map((cid) => {
                 const isRisk = RISK_CONDITION_IDS.includes(cid as any);
+                const ctrl =
+                  cid === "other"
+                    ? latest.data.healthConditionsOtherControl || ""
+                    : (latest.data.healthConditionsControl || {})[cid] || "";
+                const isManaged = MANAGED_CONTROL_IDS.includes(ctrl);
+                const isUnmanaged = RISK_CONTROL_IDS.includes(ctrl);
+                const tone =
+                  cid === "none"
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                    : isUnmanaged || (isRisk && !isManaged)
+                      ? "border-destructive/40 bg-destructive/10 text-destructive"
+                      : isManaged
+                        ? "border-amber-300 bg-amber-50 text-amber-700"
+                        : "";
                 return (
-                  <Badge
-                    key={cid}
-                    variant="outline"
-                    className={
-                      isRisk
-                        ? "border-destructive/40 bg-destructive/10 text-destructive"
-                        : cid === "none"
-                          ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                          : ""
-                    }
-                  >
-                    {isRisk && <AlertTriangle className="h-3 w-3 mr-1" />}
+                  <Badge key={cid} variant="outline" className={tone}>
+                    {(isUnmanaged || (isRisk && !isManaged)) && <AlertTriangle className="h-3 w-3 mr-1" />}
                     {healthConditionLabel(cid, language)}
+                    {ctrl && cid !== "other" && (
+                      <span className="ml-1 font-normal opacity-80">• {otherControlLabel(ctrl, language)}</span>
+                    )}
                   </Badge>
                 );
               })}
               {sourceBadge(latest.source, latest.raw)}
             </div>
+
 
             {latest.data.healthConditions?.includes("other") && (
               <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-1 text-sm">
@@ -549,7 +620,11 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
       </CardContent>
 
       <Dialog open={dialogOpen} onOpenChange={(o) => !saving && setDialogOpen(o)}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent
+          className="max-w-lg max-h-[85vh] overflow-y-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HeartPulse className="h-4 w-4 text-primary" />
@@ -597,8 +672,50 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
               </div>
             </div>
 
+            {RISK_CONDITION_IDS.filter((cid) => form.healthConditions.includes(cid)).map((cid) => (
+              <div key={cid} className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-2">
+                <Label className="text-xs">
+                  {healthConditionLabel(cid, language)} —{" "}
+                  {txt("como está o controle hoje?", "how is it controlled today?", "¿cómo está el control hoy?")}
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {OTHER_CONTROL_OPTIONS.map((o) => {
+                    const active = (form.healthConditionsControl || {})[cid] === o.id;
+                    return (
+                      <Button
+                        key={o.id}
+                        type="button"
+                        size="sm"
+                        variant={active ? "default" : "outline"}
+                        className="h-8 text-xs"
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            healthConditionsControl: {
+                              ...(f.healthConditionsControl || {}),
+                              [cid]: active ? "" : o.id,
+                            },
+                          }))
+                        }
+                      >
+                        {otherControlLabel(o.id, language)}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {txt(
+                    "Condição controlada gera atenção moderada; não controlada ou sem acompanhamento eleva o nível de atenção.",
+                    "A controlled condition raises moderate attention; uncontrolled or without follow-up raises the attention level.",
+                    "Una condición controlada genera atención moderada; no controlada o sin seguimiento eleva el nivel de atención.",
+                  )}
+                </p>
+              </div>
+            ))}
+
             {form.healthConditions.includes("other") && (
               <div className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-3">
+
                 <div className="space-y-1.5">
                   <Label className="text-xs">{txt("Qual condição?", "Which condition?", "¿Cuál condición?")}</Label>
                   <Input

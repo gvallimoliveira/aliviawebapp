@@ -37,12 +37,17 @@ export function formatHealthHistoryForPrompt(a: any): string {
         );
       }
     }
+    const control = a.healthConditionsControl || a.health_conditions_control || {};
     const risky = conds.filter((c) => c === "hypertension" || c === "diabetes" || c === "heart_disease");
     if (risky.length > 0) {
+      const detail = risky
+        .map((c) => `${LABELS[c]} (control: ${control?.[c] || "not informed"})`)
+        .join(" + ");
       lines.push(
-        `- MANDATORY SAFETY: patient reports ${risky.map((c) => LABELS[c]).join(" + ")}. Adjust exercise dosage accordingly (avoid Valsalva/breath-holding and sustained isometrics at high intensity with hypertension/cardiopathy; monitor perceived exertion; consider glycemic control, foot care and neuropathy screening with diabetes; recommend medical clearance before high-intensity work when cardiopathy is present). Mention these adaptations explicitly.`,
+        `- MANDATORY SAFETY: patient reports ${detail}. Conditions reported as "controlled"/"partial" require standard precautions; conditions reported as "uncontrolled", "no_followup" or with control NOT informed require conservative dosage and explicit recommendation of medical evaluation. Adjust exercise dosage accordingly (avoid Valsalva/breath-holding and sustained isometrics at high intensity with hypertension/cardiopathy; monitor perceived exertion; consider glycemic control, foot care and neuropathy screening with diabetes; recommend medical clearance before high-intensity work when cardiopathy is present). Mention these adaptations explicitly.`,
       );
     }
+
   }
   if (uses) {
     lines.push(

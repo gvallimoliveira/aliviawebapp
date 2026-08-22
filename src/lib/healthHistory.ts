@@ -70,6 +70,9 @@ export const otherControlLabel = (id: string, lang: Lang): string => {
 /** Controle que exige atenção clínica extra. */
 export const RISK_CONTROL_IDS = ["uncontrolled", "no_followup"];
 
+/** Controle que indica condição manejada (risco reduzido, não igual a descontrolada). */
+export const MANAGED_CONTROL_IDS = ["controlled", "partial"];
+
 export interface HealthHistoryData {
   /** Ids de HealthConditionId. "none" é exclusivo. */
   healthConditions?: string[];
@@ -83,7 +86,10 @@ export interface HealthHistoryData {
   healthConditionsOtherOnset?: string;
   /** Triagem de apoio para "outra condição": controle atual. */
   healthConditionsOtherControl?: string;
+  /** Controle por condição de risco (ex.: { hypertension: "controlled" }). */
+  healthConditionsControl?: Record<string, string>;
 }
+
 
 type Lang = "pt" | "en" | "es" | string;
 
@@ -112,8 +118,14 @@ export function normalizeHealthHistory(raw: any): HealthHistoryData {
       a.healthConditionsOtherOnset ?? a.health_conditions_other_onset ?? undefined,
     healthConditionsOtherControl:
       a.healthConditionsOtherControl ?? a.health_conditions_other_control ?? undefined,
+    healthConditionsControl:
+      (a.healthConditionsControl ?? a.health_conditions_control) &&
+      typeof (a.healthConditionsControl ?? a.health_conditions_control) === "object"
+        ? { ...(a.healthConditionsControl ?? a.health_conditions_control) }
+        : undefined,
   };
 }
+
 
 /** Texto das comorbidades (ex.: "Hipertensão, Diabetes, Outra: asma"). */
 export function formatHealthConditions(raw: any, lang: Lang = "pt"): string {
@@ -135,7 +147,11 @@ export function formatHealthConditions(raw: any, lang: Lang = "pt"): string {
         ].filter(Boolean);
         return extras.length > 0 ? `${base} (${extras.join(" • ")})` : base;
       }
-      return healthConditionLabel(id, lang);
+      const ctrl = (h.healthConditionsControl || {})[id];
+      return ctrl
+        ? `${healthConditionLabel(id, lang)} (${otherControlLabel(ctrl, lang)})`
+        : healthConditionLabel(id, lang);
+
     });
   return parts.join(", ");
 }
@@ -191,6 +207,76 @@ export function getHealthRiskFlags(raw: any): {
     list.includes("other") && RISK_CONTROL_IDS.includes(h.healthConditionsOtherControl || "");
   return { riskConditions, uncontrolledOther, hasRisk: riskConditions.length > 0 || uncontrolledOther };
 }
+
+/**
+ * Nível de atenção clínica graduado:
+ * - "none": nenhuma condição de risco.
+ * - "managed": condições presentes, mas controladas/parcialmente controladas
+ *   (com fármaco ou outra estratégia) — atenção moderada, não é risco alto.
+ * - "attention": alguma condição descontrolada, sem acompanhamento médico ou
+ *   com controle não informado.
+ */
+export type HealthRiskLevel = "none" | "managed" | "attention";
+
+export interface HealthRiskAssessment {
+  level: HealthRiskLevel;
+  riskConditions: HealthConditionId[];
+  /** Condições (inclui "other") com controle informado como adequado/parcial. */
+  managed: string[];
+  /** Condições descontroladas ou sem acompanhamento médico. */
+  unmanaged: string[];
+  /** Condições presentes sem informação de controle. */
+  unknownControl: string[];
+  uncontrolledOther: boolean;
+  /** Compatibilidade: existe alguma condição de risco registrada. */
+  hasRisk: boolean;
+}
+
+/** Controle de uma condição específica ("" quando não informado). */
+export function conditionControl(raw: any, conditionId: string): string {
+  const h = normalizeHealthHistory(raw);
+  if (conditionId === "other") return h.healthConditionsOtherControl || "";
+  return (h.healthConditionsControl || {})[conditionId] || "";
+}
+
+export function getHealthRiskAssessment(raw: any): HealthRiskAssessment {
+  const h = normalizeHealthHistory(raw);
+  const list = h.healthConditions || [];
+  const riskConditions = RISK_CONDITION_IDS.filter((id) => list.includes(id));
+  const tracked: string[] = [...riskConditions, ...(list.includes("other") ? ["other"] : [])];
+
+  const managed: string[] = [];
+  const unmanaged: string[] = [];
+  const unknownControl: string[] = [];
+
+  tracked.forEach((id) => {
+    const ctrl = conditionControl(h, id);
+    if (MANAGED_CONTROL_IDS.includes(ctrl)) managed.push(id);
+    else if (RISK_CONTROL_IDS.includes(ctrl)) unmanaged.push(id);
+    else unknownControl.push(id);
+  });
+
+  // "other" sem controle informado não gera atenção alta por si só.
+  const unknownRelevant = unknownControl.filter((id) => id !== "other");
+
+  const level: HealthRiskLevel =
+    unmanaged.length > 0 || unknownRelevant.length > 0
+      ? "attention"
+      : managed.length > 0
+        ? "managed"
+        : "none";
+
+  return {
+    level,
+    riskConditions,
+    managed,
+    unmanaged,
+    unknownControl,
+    uncontrolledOther: unmanaged.includes("other"),
+    hasRisk: riskConditions.length > 0 || unmanaged.includes("other"),
+  };
+}
+
 
 /** Verdadeiro quando ainda não há resposta alguma de saúde geral. */
 export function isHealthHistoryEmpty(raw: any): boolean {

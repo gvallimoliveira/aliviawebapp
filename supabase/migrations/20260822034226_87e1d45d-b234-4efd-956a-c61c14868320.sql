@@ -1,0 +1,1 @@
+ALTER TABLE public.patient_health_records ADD COLUMN IF NOT EXISTS health_conditions_control jsonb DEFAULT '{}'::jsonb;
