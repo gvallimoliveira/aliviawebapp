@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
           if (!id.includes("node_modules")) return undefined;
           // Shared helper runtimes must live apart, otherwise the app shell
           // ends up importing a tiny helper from a huge feature chunk.
-          if (/node_modules\/(tslib|@babel\/runtime|@swc\/helpers|object-assign|lodash|clsx|tailwind-merge|class-variance-authority)\//.test(id)) return "vendor-utils";
+          if (/(tslib|@babel\/runtime|@swc\/helpers|object-assign|lodash|clsx|tailwind-merge|class-variance-authority)\//.test(id)) return "vendor-utils";
           if (id.includes("recharts") || id.includes("d3-")) return "charts";
           if (id.includes("jspdf") || id.includes("html2canvas")) return "pdf";
           if (id.includes("jszip")) return "zip";
