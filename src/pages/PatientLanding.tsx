@@ -20,7 +20,7 @@ import SelfAssessmentDisclaimerSection from "@/components/SelfAssessmentDisclaim
 import InstallAppSection from "@/components/InstallAppSection";
 import ScrollProgress from "@/components/scroll/ScrollProgress";
 import Reveal from "@/components/scroll/Reveal";
-import KineticStatement from "@/components/scroll/KineticStatement";
+import PatientStatement from "@/components/scroll/PatientStatement";
 import PatientJourneyShowcase from "@/components/scroll/PatientJourneyShowcase";
 import BrandMarquee from "@/components/scroll/BrandMarquee";
 
