@@ -17,7 +17,7 @@ import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
 import PainMechanismWizard from "./PainMechanismWizard";
 import { suggestDistribution } from "@/lib/painExtent";
-import { HEALTH_CONDITION_IDS, healthConditionLabel } from "@/lib/healthHistory";
+import { HEALTH_CONDITION_IDS, healthConditionLabel, OTHER_ONSET_OPTIONS, OTHER_CONTROL_OPTIONS, otherOnsetLabel, otherControlLabel } from "@/lib/healthHistory";
 import PainMechanismLite, {
   createEmptyLiteAnswers,
   type LiteMechanismAnswers,
@@ -67,6 +67,8 @@ export interface AnamnesisData {
   /** Antecedentes de saúde essenciais (hipertensão/diabetes/cardiopatia). */
   healthConditions?: string[];
   healthConditionsOther?: string;
+  healthConditionsOtherOnset?: string;
+  healthConditionsOtherControl?: string;
   usesContinuousMedication?: string;
   continuousMedications?: string;
   /** Passos B2/B3 — triagem leiga de mecanismo de dor. */
@@ -244,7 +246,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       complaint: ["chiefComplaints"],
       onset: ["onset"],
       surgery: ["hasPriorSurgery", "surgeryDetails"],
-      health_history: ["healthConditions", "usesContinuousMedication", "continuousMedications"],
+      health_history: ["healthConditions", "healthConditionsOther", "healthConditionsOtherOnset", "healthConditionsOtherControl", "usesContinuousMedication", "continuousMedications"],
 
       painmap: ["painRegions"],
       region_detail: ["painSubArea", "hadTwist", "hadSprain", "hadDislocation", "ottawaPositive"],
@@ -607,7 +609,9 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
           setData({
             ...data,
             healthConditions: next,
-            ...(next.includes("other") ? {} : { healthConditionsOther: "" }),
+            ...(next.includes("other")
+              ? {}
+              : { healthConditionsOther: "", healthConditionsOtherOnset: "", healthConditionsOtherControl: "" }),
           });
         };
         const isEs = language === "es";
@@ -656,12 +660,65 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
                 })}
               </div>
               {conditions.includes("other") && (
-                <Input
-                  value={data.healthConditionsOther || ""}
-                  onChange={(e) => setData({ ...data, healthConditionsOther: e.target.value.slice(0, 200) })}
-                  placeholder={txt("Qual condição?", "Which condition?", "¿Cuál condición?")}
-                  maxLength={200}
-                />
+                <div className="space-y-4 rounded-xl border border-border/60 bg-muted/30 p-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm">
+                      {txt("Qual condição?", "Which condition?", "¿Cuál condición?")}
+                    </Label>
+                    <Input
+                      value={data.healthConditionsOther || ""}
+                      onChange={(e) => setData({ ...data, healthConditionsOther: e.target.value.slice(0, 200) })}
+                      placeholder={txt(
+                        "Ex.: asma, hipotireoidismo, artrite reumatoide",
+                        "e.g. asthma, hypothyroidism, rheumatoid arthritis",
+                        "Ej.: asma, hipotiroidismo, artritis reumatoide",
+                      )}
+                      maxLength={200}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">
+                      {txt("Desde quando?", "Since when?", "¿Desde cuándo?")}
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {OTHER_ONSET_OPTIONS.map((o) => (
+                        <Button
+                          key={o.id}
+                          type="button"
+                          size="sm"
+                          variant={data.healthConditionsOtherOnset === o.id ? "default" : "outline"}
+                          className="justify-start rounded-lg text-sm h-auto py-2"
+                          onClick={() => setData({ ...data, healthConditionsOtherOnset: o.id })}
+                        >
+                          {otherOnsetLabel(o.id, language)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm">
+                      {txt(
+                        "Como está o controle hoje?",
+                        "How is it controlled today?",
+                        "¿Cómo está el control hoy?",
+                      )}
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {OTHER_CONTROL_OPTIONS.map((o) => (
+                        <Button
+                          key={o.id}
+                          type="button"
+                          size="sm"
+                          variant={data.healthConditionsOtherControl === o.id ? "default" : "outline"}
+                          className="justify-start rounded-lg text-sm h-auto py-2 text-left"
+                          onClick={() => setData({ ...data, healthConditionsOtherControl: o.id })}
+                        >
+                          {otherControlLabel(o.id, language)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -1257,7 +1314,11 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "health_history": {
         const conds = data.healthConditions || [];
         if (conds.length === 0) return false;
-        if (conds.includes("other") && !(data.healthConditionsOther || "").trim()) return false;
+        if (conds.includes("other")) {
+          if (!(data.healthConditionsOther || "").trim()) return false;
+          if (!data.healthConditionsOtherOnset) return false;
+          if (!data.healthConditionsOtherControl) return false;
+        }
         if (!data.usesContinuousMedication) return false;
         if (data.usesContinuousMedication === "yes" && !(data.continuousMedications || "").trim()) return false;
         return true;
