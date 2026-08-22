@@ -177,17 +177,26 @@ const GatewayModern = () => {
           </motion.div>
 
           <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               {t("gateway.badge")}
             </div>
           </motion.div>
 
           <motion.h1
             initial="hidden" animate="visible" variants={fadeUp} custom={1}
-            className="mb-4 text-3xl font-bold leading-tight tracking-tight text-foreground md:text-4xl lg:text-5xl"
+            className="mb-5 text-3xl font-bold leading-[1.12] tracking-[-0.02em] text-foreground md:text-4xl lg:text-5xl"
           >
             {t("gateway.title")}
           </motion.h1>
+
+          <motion.div
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 1 }}
+            transition={{ delay: 0.35, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="mx-auto mb-6 h-px w-40 origin-center bg-gradient-to-r from-transparent via-primary/60 to-transparent"
+            aria-hidden="true"
+          />
+
 
           <motion.p
             initial="hidden" animate="visible" variants={fadeUp} custom={2}
