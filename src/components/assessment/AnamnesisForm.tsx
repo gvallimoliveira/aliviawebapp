@@ -459,9 +459,10 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
 
   const buildStepSequence = (): StepId[] => {
     // Map each StepId to a sub-group for reassessment filtering.
-    const groupOf = (id: StepId): "complaint" | "painmap" | "surgery" | "painscore" | "activity" | "identity" => {
+    const groupOf = (id: StepId): "complaint" | "painmap" | "surgery" | "painscore" | "painmechanism" | "activity" | "identity" => {
       switch (id) {
         case "painmap": return "painmap";
+        case "pain_mechanism": return "painmechanism";
         case "surgery": return "surgery";
         case "painscore": return "painscore";
         case "gym": return "activity";
