@@ -1530,10 +1530,44 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
   const questionnaireItems = items.filter((t: any) => t.questionnaireId && t.percentageScore != null);
   const genericItems = items.filter((t: any) => !t.questionnaireId);
 
+  const measureQuestionnaireCard = (q: any): number => {
+    const qDef = questionnaires.find(qd => qd.id === q.questionnaireId);
+    const fullName = qDef ? (isPt ? qDef.fullName_pt : qDef.fullName_en) : "";
+    const severity = q.severity || "";
+    const interpretation = isPt ? (q.interpretation_pt || severity) : (q.interpretation_en || severity);
+    const entries = q.subscaleScores && typeof q.subscaleScores === "object" ? Object.entries(q.subscaleScores) : [];
+
+    // Match the exact fonts used by the card before wrapping. This avoids a
+    // shorter estimate when a previous PDF block left another font active.
+    doc.setFont("Inter", "bold");
+    doc.setFontSize(8);
+    const interpLines = interpretation ? doc.splitTextToSize(interpretation, TEXT_MAX_WIDTH - 8) : [];
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(7);
+    const fullNameLines = fullName ? doc.splitTextToSize(fullName, TEXT_MAX_WIDTH - 40) : [];
+    const subscaleRows = entries.length > 1 ? Math.ceil(entries.length / 2) : 0;
+
+    return 12
+      + (fullNameLines.length * 3.5)
+      + (interpLines.length * 3.5 + 1)
+      + (subscaleRows * 4.5 + (entries.length > 1 ? 1 : 0))
+      + (qDef ? 4 : 0)
+      + 6;
+  };
+
   // Render validated questionnaire results
   if (questionnaireItems.length > 0) {
-    y = checkPage(doc, y, 44);
-    y = renderSectionTitle(doc, y, isPt ? "Questionários Funcionais" : "Functional Questionnaires", COLORS.primary, 30);
+    // Keep the heading and the ENTIRE first questionnaire card on the same
+    // page. A fixed guard was insufficient for questionnaires with long names,
+    // interpretations or subscales, leaving the heading orphaned.
+    const firstCardH = measureQuestionnaireCard(questionnaireItems[0]);
+    y = renderSectionTitle(
+      doc,
+      y,
+      isPt ? "Questionários Funcionais" : "Functional Questionnaires",
+      COLORS.primary,
+      firstCardH + 4,
+    );
 
     for (const q of questionnaireItems) {
       const qDef = questionnaires.find(qd => qd.id === q.questionnaireId);
@@ -1549,7 +1583,7 @@ function renderTestResultsSection(doc: jsPDF, y: number, testResults: any, isPt:
       const interpLines = interpretation ? doc.splitTextToSize(interpretation, TEXT_MAX_WIDTH - 8) : [];
       const fullNameLines = fullName ? doc.splitTextToSize(fullName, TEXT_MAX_WIDTH - 40) : [];
       const subscaleRows = hasSubscales ? Math.ceil(entries.length / 2) : 0;
-      const cardH = 12 + (fullNameLines.length * 3.5) + (interpLines.length * 3.5 + 1) + (subscaleRows * 4.5 + (hasSubscales ? 1 : 0)) + (qDef ? 4 : 0) + 6;
+      const cardH = measureQuestionnaireCard(q);
       y = checkPage(doc, y, cardH + 4);
 
       const cardStartY = y - 2;
