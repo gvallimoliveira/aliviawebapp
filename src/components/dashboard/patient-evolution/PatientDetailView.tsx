@@ -274,6 +274,10 @@ export default function PatientDetailView(props: any) {
   } = props;
 
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
+  // Nível de atenção de "Saúde geral" reportado pelo card — recalculado sempre
+  // que o profissional salva alterações (condição controlada != não manejada).
+  const [healthRisk, setHealthRisk] = React.useState<HealthRiskAssessment | null>(null);
+
   // Avaliação incompleta/em andamento que o profissional decidiu retomar:
   // abre o ManualAssessmentModal em modo edição (não o link público de autoavaliação).
   const [resumeAssessment, setResumeAssessment] = React.useState<any | null>(null);
