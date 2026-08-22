@@ -17,6 +17,7 @@ import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
 import PainMechanismWizard from "./PainMechanismWizard";
 import { suggestDistribution } from "@/lib/painExtent";
+import { HEALTH_CONDITION_IDS, healthConditionLabel } from "@/lib/healthHistory";
 import PainMechanismLite, {
   createEmptyLiteAnswers,
   type LiteMechanismAnswers,
@@ -1253,6 +1254,14 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "complaint": return data.chiefComplaints.length > 0 || data.customComplaint.trim() !== "";
       case "onset": return data.onset !== "";
       case "surgery": return data.hasPriorSurgery !== "";
+      case "health_history": {
+        const conds = data.healthConditions || [];
+        if (conds.length === 0) return false;
+        if (conds.includes("other") && !(data.healthConditionsOther || "").trim()) return false;
+        if (!data.usesContinuousMedication) return false;
+        if (data.usesContinuousMedication === "yes" && !(data.continuousMedications || "").trim()) return false;
+        return true;
+      }
       case "painmap": return data.painRegions.length > 0;
       case "region_detail": {
         if (data.painSubArea.length === 0) return false;
