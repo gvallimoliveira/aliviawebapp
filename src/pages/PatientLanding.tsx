@@ -221,14 +221,21 @@ const PatientLanding = () => {
           </Link>
         </div>
         <SelfAssessmentDisclaimerSection />
-        <HighlightsSection />
-        <ComparisonSection />
-        <MethodologySection />
-        <HowItWorksSection />
-        <UpgradeFlowSection />
-        <TestimonialsSection />
-        <FaqSection />
-        <SocialSection />
+        <BrandMarquee />
+        <KineticStatement
+          kicker={undefined}
+          word=""
+          caption={undefined}
+        />
+        <PatientJourneyShowcase />
+        <Reveal><HighlightsSection /></Reveal>
+        <Reveal><ComparisonSection /></Reveal>
+        <Reveal><MethodologySection /></Reveal>
+        <Reveal><HowItWorksSection /></Reveal>
+        <Reveal scale><UpgradeFlowSection /></Reveal>
+        <Reveal><TestimonialsSection /></Reveal>
+        <Reveal><FaqSection /></Reveal>
+        <Reveal><SocialSection /></Reveal>
         <LgpdBadge />
       </main>
       <InstallAppSection />
