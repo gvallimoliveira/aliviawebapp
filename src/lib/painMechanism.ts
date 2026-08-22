@@ -717,8 +717,16 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
   const chronic = (input.durationWeeks ?? 0) >= 12;
   if (chronic) add("chronic_duration", "nociplastic", 2);
 
+  // Critérios clínicos ponderados da triagem aprofundada.
+  const markedCriteria = input.criteria ?? [];
+  for (const key of markedCriteria) {
+    const criterion = MECHANISM_CRITERIA.find((c) => c.key === key);
+    if (criterion) add(criterion.key, criterion.block, criterion.weight);
+  }
+
   const regionCount = input.regionCount ?? 0;
   if (regionCount >= 5) add("high_pain_extent", "nociplastic", 2);
+
 
   const csi = input.csiScore;
   const centralSensitizationLikely =
