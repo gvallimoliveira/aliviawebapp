@@ -435,7 +435,16 @@ export interface MechanismSubtypeOption {
   axis: PainMechanismAxis;
   /** Critérios que sugerem este subtipo. */
   supportedBy: string[];
+  /**
+   * Peso somado ao bloco do subtipo quando o avaliador o CONFIRMA na etapa 2.
+   * É isso que faz a escolha do subtipo mexer nas barras e, em quadros
+   * empatados, no próprio mecanismo predominante.
+   */
+  boost: number;
+  /** Consequência clínica exibida na etapa 3 (muda conforme o subtipo). */
+  implication: Record<Lang, string>;
 }
+
 
 export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]> = {
   nociceptive: [
