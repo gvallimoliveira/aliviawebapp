@@ -160,6 +160,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     birthDate: "",
     healthConditions: [],
     healthConditionsOther: "",
+    healthConditionsOtherOnset: "",
+    healthConditionsOtherControl: "",
     usesContinuousMedication: "",
     continuousMedications: "",
     painMechanism: createEmptyLiteAnswers(),

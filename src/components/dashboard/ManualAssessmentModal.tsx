@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { HEALTH_CONDITION_IDS, healthConditionLabel, formatHealthConditions, formatContinuousMedication } from "@/lib/healthHistory";
+import { HEALTH_CONDITION_IDS, healthConditionLabel, formatHealthConditions, formatContinuousMedication, OTHER_ONSET_OPTIONS, OTHER_CONTROL_OPTIONS, otherOnsetLabel, otherControlLabel } from "@/lib/healthHistory";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -241,6 +241,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const [comorbidities, setComorbidities] = useState("");
   const [healthConditions, setHealthConditions] = useState<string[]>([]);
   const [healthConditionsOther, setHealthConditionsOther] = useState("");
+  const [healthConditionsOtherOnset, setHealthConditionsOtherOnset] = useState("");
+  const [healthConditionsOtherControl, setHealthConditionsOtherControl] = useState("");
   const [usesContinuousMedication, setUsesContinuousMedication] = useState("");
   const [occupation, setOccupation] = useState("");
   const [complementaryExams, setComplementaryExams] = useState("");
@@ -673,7 +675,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const draftState = {
     step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
-    healthConditions, healthConditionsOther, usesContinuousMedication,
+    healthConditions, healthConditionsOther, healthConditionsOtherOnset,
+    healthConditionsOtherControl, usesContinuousMedication,
     painScore, painType, painTypes, painRegions, painScoresPerRegion, painTypesPerRegion, painRegionRefinements,
     redFlagsChecked, additionalClinicalNotes, mechanismAnswers, questionnaireResults, deferQuestionnaires,
     functionalTests, romTable, strengthTable, clinicalImpression, diagnosisText, treatmentText,
@@ -705,6 +708,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setComorbidities(p.comorbidities ?? "");
     setHealthConditions(Array.isArray((p as any).healthConditions) ? (p as any).healthConditions : []);
     setHealthConditionsOther((p as any).healthConditionsOther ?? "");
+    setHealthConditionsOtherOnset((p as any).healthConditionsOtherOnset ?? "");
+    setHealthConditionsOtherControl((p as any).healthConditionsOtherControl ?? "");
     setUsesContinuousMedication((p as any).usesContinuousMedication ?? "");
     setOccupation(p.occupation ?? "");
     setComplementaryExams(p.complementaryExams ?? "");
@@ -759,6 +764,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setComorbidities(an.comorbidities || "");
     setHealthConditions(Array.isArray(an.healthConditions) ? an.healthConditions : []);
     setHealthConditionsOther(an.healthConditionsOther || "");
+    setHealthConditionsOtherOnset(an.healthConditionsOtherOnset || "");
+    setHealthConditionsOtherControl(an.healthConditionsOtherControl || "");
     setUsesContinuousMedication(an.usesContinuousMedication || (an.medications ? "yes" : ""));
     setOccupation(an.occupation || "");
     setComplementaryExams(an.complementaryExams || "");
@@ -867,6 +874,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setComorbidities(an.comorbidities || "");
     setHealthConditions(Array.isArray(an.healthConditions) ? an.healthConditions : []);
     setHealthConditionsOther(an.healthConditionsOther || "");
+    setHealthConditionsOtherOnset(an.healthConditionsOtherOnset || "");
+    setHealthConditionsOtherControl(an.healthConditionsOtherControl || "");
     setUsesContinuousMedication(an.usesContinuousMedication || (an.medications ? "yes" : ""));
     setOccupation(an.occupation || "");
     setComplementaryExams(an.complementaryExams || "");
@@ -1131,6 +1140,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     comorbidities,
     healthConditions,
     healthConditionsOther,
+    healthConditionsOtherOnset,
+    healthConditionsOtherControl,
     usesContinuousMedication,
     continuousMedications: usesContinuousMedication === "no" ? "" : medications,
     occupation,
@@ -1292,8 +1303,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         aggravating && `Piora com: ${aggravating}`,
         relieving && `Alivia com: ${relieving}`,
         occupation && `Ocupação: ${occupation}`,
-        formatHealthConditions({ healthConditions, healthConditionsOther }, "pt") &&
-          `Condições de saúde: ${formatHealthConditions({ healthConditions, healthConditionsOther }, "pt")}`,
+        formatHealthConditions({ healthConditions, healthConditionsOther, healthConditionsOtherOnset, healthConditionsOtherControl }, "pt") &&
+          `Condições de saúde: ${formatHealthConditions({ healthConditions, healthConditionsOther, healthConditionsOtherOnset, healthConditionsOtherControl }, "pt")}`,
         formatContinuousMedication({ usesContinuousMedication, continuousMedications: medications }, "pt") &&
           `Medicação de uso contínuo: ${formatContinuousMedication({ usesContinuousMedication, continuousMedications: medications }, "pt")}`,
         comorbidities && `Comorbidades: ${comorbidities}`,
@@ -1998,7 +2009,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                                 ? prev.filter((c) => c !== id)
                                 : [...prev.filter((c) => c !== "none"), id];
                             });
-                            if (id === "other" && healthConditions.includes("other")) setHealthConditionsOther("");
+                            if (id === "other" && healthConditions.includes("other")) {
+                              setHealthConditionsOther("");
+                              setHealthConditionsOtherOnset("");
+                              setHealthConditionsOtherControl("");
+                            }
                           }}
                         >
                           {healthConditionLabel(id, language)}
@@ -2007,12 +2022,48 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     })}
                   </div>
                   {healthConditions.includes("other") && (
-                    <Input
-                      value={healthConditionsOther}
-                      onChange={(e) => setHealthConditionsOther(e.target.value)}
-                      className="mt-2 text-sm h-9"
-                      placeholder={isPt ? "Qual condição?" : "Which condition?"}
-                    />
+                    <div className="mt-2 space-y-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+                      <Input
+                        value={healthConditionsOther}
+                        onChange={(e) => setHealthConditionsOther(e.target.value)}
+                        className="text-sm h-9"
+                        placeholder={isPt ? "Qual condição?" : "Which condition?"}
+                      />
+                      <div>
+                        <Label className="text-xs">{isPt ? "Desde quando?" : "Since when?"}</Label>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          {OTHER_ONSET_OPTIONS.map((o) => (
+                            <Button
+                              key={o.id}
+                              type="button"
+                              size="sm"
+                              variant={healthConditionsOtherOnset === o.id ? "default" : "outline"}
+                              className="h-8 rounded-lg text-xs"
+                              onClick={() => setHealthConditionsOtherOnset(o.id)}
+                            >
+                              {otherOnsetLabel(o.id, language)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs">{isPt ? "Controle atual" : "Current control"}</Label>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          {OTHER_CONTROL_OPTIONS.map((o) => (
+                            <Button
+                              key={o.id}
+                              type="button"
+                              size="sm"
+                              variant={healthConditionsOtherControl === o.id ? "default" : "outline"}
+                              className="h-8 rounded-lg text-xs"
+                              onClick={() => setHealthConditionsOtherControl(o.id)}
+                            >
+                              {otherControlLabel(o.id, language)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
