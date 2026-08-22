@@ -227,11 +227,20 @@ const PainMechanismWizard = ({
   return (
     <div className="space-y-4 rounded-lg border bg-muted/20 p-3">
       <div className="space-y-1">
-        <Label className="text-xs font-semibold">{COPY.title[lang]}</Label>
+        <Label className="text-xs font-semibold">
+          {COPY.title[lang]}{" "}
+          <span className="font-normal text-muted-foreground">
+            ({COPY.optional[lang]})
+          </span>
+        </Label>
         <p className="text-[11px] text-muted-foreground">
           {isPro ? COPY.subtitlePro[lang] : COPY.subtitlePatient[lang]}
         </p>
+        <p className="text-[11px] text-muted-foreground/80">
+          {COPY.optionalHint[lang]}
+        </p>
       </div>
+
 
       {/* Trilha de etapas */}
       <div className="flex items-center gap-1.5">
