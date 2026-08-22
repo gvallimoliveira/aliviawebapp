@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
+import { mechanismContextBlock, mechanismHepRules, resolveStoredMechanism } from "../_shared/pain-mechanism.ts";
 
 
 const corsHeaders = {
@@ -74,7 +75,7 @@ serve(async (req) => {
     // Match assessments by email (preferred) or name, scoped to professional/clinic
     let assessmentQuery = adminClient
       .from("assessments")
-      .select("id, anamnesis_data, diagnosis, final_hypothesis, pain_score, pain_regions")
+      .select("id, anamnesis_data, diagnosis, final_hypothesis, pain_score, pain_regions, pain_mechanism, pain_extent")
       .order("created_at", { ascending: false })
       .limit(1);
 
@@ -136,6 +137,16 @@ serve(async (req) => {
     const onset = anamnesis.onset || anamnesis.painOnset || "não informado";
     const previousTreatments = anamnesis.previousTreatments || anamnesis.treatments || "";
 
+    // Passo D4 — mecanismo de dor: diagnosis.pain_mechanism (refinado pela IA
+    // no D1) tem prioridade sobre a triagem crua salva na avaliação.
+    const painMechanism = resolveStoredMechanism((assessment.diagnosis as any)?.pain_mechanism)
+      || resolveStoredMechanism((assessment as any).pain_mechanism);
+    const painExtent = typeof (assessment as any).pain_extent === "number"
+      ? (assessment as any).pain_extent
+      : null;
+    const mechanismBlock = mechanismContextBlock(painMechanism, painExtent);
+    const mechanismRules = mechanismHepRules(painMechanism, painExtent);
+
     const LEVELS = ["beginner", "intermediate", "advanced"];
     const requestedLevel = LEVELS.includes(String(challenge_level)) ? String(challenge_level) : "auto";
 
@@ -169,6 +180,7 @@ NÍVEL DE ATIVIDADE FÍSICA / CAPACIDADE BASAL: ${activityLevel}
 TEMPO DE SINTOMAS: ${symptomDuration}
 INÍCIO/MECANISMO: ${onset}
 TRATAMENTOS PRÉVIOS: ${previousTreatments || "—"}
+${mechanismBlock || "MECANISMO DE DOR: sem triagem registrada — siga o raciocínio padrão."}
 
 CONVERSA RECENTE (pode conter decisões do fisioterapeuta sobre o nível desejado):
 ${convo || "(sem histórico)"}
@@ -196,7 +208,7 @@ REGRAS:
   * Mesma lógica em outras regiões: evite posições overhead/ABER em ombro irritável, flexão lombar carregada em amplitude final na dor discal aguda, extensão cervical prolongada em cervical irritável.
   * Nas observações, deixe claro por que a posição escolhida é segura para este paciente.
 - Ajuste dose ao nível: básico (2-3 séries, cargas leves), intermediário (3 séries, tempo sob tensão maior), avançado (3-4 séries, progressão de carga/velocidade/unilateral).
-- Observações curtas (máx 120 caracteres) explicando o objetivo e a progressão.
+${mechanismRules ? mechanismRules + "\n" : ""}- Observações curtas (máx 120 caracteres) explicando o objetivo e a progressão.
 
 Responda APENAS em JSON válido no formato:
 {
@@ -219,6 +231,8 @@ Responda APENAS em JSON válido no formato:
       pain_score: assessment.pain_score ?? null,
       anamnesis: assessment.anamnesis_data ?? null,
       requested_level: requestedLevel,
+      pain_mechanism: painMechanism,
+      pain_extent: painExtent,
       library: lib.map((e: any) => e.id).sort(),
     };
 

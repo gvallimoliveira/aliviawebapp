@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { shadowLogAiUsage, assertCreditsAvailable } from "../_shared/ai-credits.ts";
+import { mechanismSummary } from "../_shared/pain-mechanism.ts";
 
 function normalizeAnamnesis(raw: any) {
   if (!raw || typeof raw !== "object") return raw;
@@ -67,6 +68,11 @@ function compactAssessmentForPrompt(a: any) {
     date: a.created_at?.slice(0, 10),
     pain_score: a.pain_score,
     pain_regions: a.pain_regions || [],
+    // Passo D4 — mecanismo de dor da triagem (refinado pelo D1 quando existe).
+    pain_mechanism: mechanismSummary(
+      (a.diagnosis || {})?.pain_mechanism || a.pain_mechanism,
+      typeof a.pain_extent === "number" ? a.pain_extent : null,
+    ),
     chief_complaints: anamnesis?.chiefComplaints || (anamnesis?.chiefComplaint ? [anamnesis.chiefComplaint] : []),
     aggravating_factors: anamnesis?.aggravatingFactors || [],
     relieving_factors: anamnesis?.relievingFactors || [],
@@ -161,7 +167,7 @@ async function loadPatientContext(adminClient: any, patientId: string, userId: s
 
   const { data: assessments } = await adminClient
     .from("assessments")
-    .select("id, created_at, pain_score, pain_regions, anamnesis_data, test_results, diagnosis, final_hypothesis, treatment_plan, professional_id, clinic_id, patient_name, patient_email")
+    .select("id, created_at, pain_score, pain_regions, pain_mechanism, pain_extent, anamnesis_data, test_results, diagnosis, final_hypothesis, treatment_plan, professional_id, clinic_id, patient_name, patient_email")
     .or([
       patient.email ? `patient_email.eq.${patient.email.replace(/,/g, "%2C")}` : null,
       patient.full_name ? `patient_name.eq.${patient.full_name.replace(/,/g, "%2C")}` : null,
@@ -291,7 +297,10 @@ function buildSystemPrompt(patientCtx: any, evidence: any[], mentorMode = false)
 - Histórico recente de avaliações: ${JSON.stringify(patientCtx.assessments)}
 - HEPs ativos: ${JSON.stringify(patientCtx.active_heps)}
 - Diário de dor recente: ${JSON.stringify(patientCtx.recent_pain_diary)}
-- Anotações clínicas do profissional: ${JSON.stringify(patientCtx.clinician_notes)}`
+- Anotações clínicas do profissional: ${JSON.stringify(patientCtx.clinician_notes)}
+${patientCtx.latest_assessment?.pain_mechanism
+  ? `- MECANISMO DE DOR (triagem — Kosek 2021 / Finnerup 2016): ${JSON.stringify(patientCtx.latest_assessment.pain_mechanism)}. Use-o para orientar dosagem, velocidade de progressão e linguagem: nociceptiva → carga progressiva com guardrail de dor ≤3/10; neuropática → sliders antes de tensores, progressão lenta, atenção a sintoma irradiado; nociplástica → educação em dor, exposição gradual, dose por tempo (não por dor), sono/estresse; mista → teto pelo componente mais irritável. Cite o mecanismo quando justificar conduta e sinalize se a triagem tiver confiança baixa.`
+  : "- MECANISMO DE DOR: sem triagem registrada. Se for útil para a conduta, sugira ao profissional realizar a triagem de mecanismo de dor na avaliação/reavaliação."}`
     : "";
 
   const mentor = mentorMode
