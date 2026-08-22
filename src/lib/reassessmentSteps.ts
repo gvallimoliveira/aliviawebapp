@@ -7,6 +7,7 @@ export type ReassessStepId =
   | "painmap"
   | "surgery"
   | "painscore" // EVA
+  | "painmechanism" // triagem de mecanismo de dor (opcional)
   | "activity" // nível de atividade + acesso a academia
   | "questionnaire";
 
@@ -16,6 +17,7 @@ export const ALL_REASSESS_STEPS: ReassessStepId[] = [
   "painmap",
   "surgery",
   "painscore",
+  "painmechanism",
   "activity",
   "questionnaire",
 ];
@@ -35,6 +37,7 @@ export const DEFAULT_REASSESS_STEPS: ReassessStepId[] = [
   "painmap",
   "surgery",
   "painscore",
+  "painmechanism",
   "activity",
   "questionnaire",
 ];
@@ -122,6 +125,10 @@ export const mergeAnamnesisWithOriginal = (
     if (orig.painScoresPerRegion) merged.painScoresPerRegion = orig.painScoresPerRegion;
   }
 
+  if (!enabled.has("painmechanism")) {
+    if (orig.painMechanism) merged.painMechanism = orig.painMechanism;
+  }
+
   if (!enabled.has("activity")) {
     if (orig.activityLevel) merged.activityLevel = orig.activityLevel;
     if (orig.hasGymAccess) merged.hasGymAccess = orig.hasGymAccess;
@@ -174,5 +181,6 @@ export const buildAnamnesisFromOriginal = (original: {
     painNightWaking: orig.painNightWaking,
     painScoreMode: orig.painScoreMode || "general",
     painScoresPerRegion: orig.painScoresPerRegion || {},
+    painMechanism: orig.painMechanism,
   };
 };

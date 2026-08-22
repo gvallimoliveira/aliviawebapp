@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Stethoscope, Activity, Dumbbell, Heart, MapPin, Scissors, RotateCcw, Loader2, ShieldAlert } from "lucide-react";
+import { ClipboardList, Stethoscope, Activity, Dumbbell, Heart, MapPin, Brain, Scissors, RotateCcw, Loader2, ShieldAlert } from "lucide-react";
 import {
   ANAMNESIS_SUB_IDS,
   DEFAULT_REASSESS_STEPS,
@@ -30,6 +30,7 @@ const OPTIONS: Option[] = [
   { id: "complaint", group: "anamnesis", icon: ClipboardList, label: "Queixa principal e caracterização da dor", desc: "Tipo, evolução, fatores que pioram/aliviam, duração e frequência." },
   { id: "painmap", group: "anamnesis", icon: MapPin, label: "Mapa de dor", desc: "Regiões corporais acometidas." },
   { id: "painscore", group: "anamnesis", icon: Heart, label: "Intensidade da dor (EVA)", desc: "Escala 0–10, geral ou por região." },
+  { id: "painmechanism", group: "anamnesis", icon: Brain, label: "Triagem do tipo/mecanismo de dor", desc: "Opcional para o paciente — como a dor se comporta (linguagem simples)." },
   { id: "surgery", group: "anamnesis", icon: Scissors, label: "Histórico de cirurgia", desc: "Cirurgias prévias e detalhes." },
   { id: "activity", group: "anamnesis", icon: Activity, label: "Atividade física", desc: "Nível de atividade e acesso a academia." },
   { id: "questionnaire", group: "other", icon: Dumbbell, label: "Questionários validados", desc: "Reaplica os questionários funcionais com destaque das respostas anteriores." },
@@ -63,7 +64,7 @@ const ReassessmentConfigDialog = ({ open, onOpenChange, onConfirm, loading, pati
 
   const handleConfirm = () => {
     // Preserve a stable order for the URL
-    const order: ReassessStepId[] = ["redflags", "complaint", "painmap", "surgery", "painscore", "activity", "questionnaire"];
+    const order: ReassessStepId[] = ["redflags", "complaint", "painmap", "surgery", "painscore", "painmechanism", "activity", "questionnaire"];
     onConfirm(order.filter((id) => selected.has(id)));
   };
 
