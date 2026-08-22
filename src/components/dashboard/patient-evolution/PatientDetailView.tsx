@@ -1157,6 +1157,7 @@ export default function PatientDetailView(props: any) {
       <div id="sec-regioes-dor" className="scroll-mt-24"><RegionPainComparison assessments={patient.assessments} /></div>
 
       {/* Evolução de questionários funcionais */}
+      <div id="sec-questionarios" className="scroll-mt-24 space-y-5">
       {questionnaireEvolution.length > 0 ? questionnaireEvolution.map((chart: any) => (
         <Card key={chart.displayTitle}>
           <CardHeader className="pb-2">
@@ -1213,10 +1214,13 @@ export default function PatientDetailView(props: any) {
           </CardContent>
         </Card>
       )) : <Card className="border-dashed"><CardContent className="py-6 text-center"><ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p><p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p></CardContent></Card>}
+      </div>
 
       {/* Voice notes (insumos brutos sobem antes das notas escritas) */}
+      <div id="sec-notas-voz" className="scroll-mt-24 space-y-5">
       {!isDemo && patient?.assessments?.length > 0 && (
         <VoiceNoteCard assessmentIds={patient.assessments.map((a: any) => a.id)} />
+      </div>
       )}
 
       {/* Notas de sessão */}
