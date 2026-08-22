@@ -32,7 +32,12 @@ const PatientSectionRail = ({ riskLevel }: Props) => {
     const scan = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        const ids = PATIENT_SECTIONS.filter((s) => document.getElementById(s.id)).map((s) => s.id);
+        const ids = PATIENT_SECTIONS.filter((s) => {
+          const el = document.getElementById(s.id);
+          // Wrappers de seções condicionais existem mas ficam vazios (altura 0).
+          return !!el && el.offsetHeight > 8;
+        }).map((s) => s.id);
+
         setPresentIds((prev) => (prev.length === ids.length && prev.every((v, i) => v === ids[i]) ? prev : ids));
       });
     };
