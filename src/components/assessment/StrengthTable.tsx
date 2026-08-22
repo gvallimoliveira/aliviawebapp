@@ -40,7 +40,7 @@ export const EMPTY_STRENGTH_ROW: StrengthRow = {
   unit: "kgf",
 };
 
-export const createInitialStrengthRows = (n = 2): StrengthRow[] =>
+export const createInitialStrengthRows = (n = 1): StrengthRow[] =>
   Array.from({ length: n }, () => ({ ...EMPTY_STRENGTH_ROW }));
 
 export const parseNum = (v: string | number | undefined | null): number | null => {
@@ -360,8 +360,12 @@ const STR: Record<string, Record<string, string>> = {
     hidePeakTime: "Ocultar tempo até o pico",
     agonistTitle: "Assimetria agonista/antagonista (mesmo lado)",
     agonistHint: "Acima de 10% merece atenção.",
-    untitledMovement: "Movimento sem nome — toque para preencher",
+    untitledMovement: "Sem nome",
     peakTrialN: "Tempo de pico",
+
+
+
+
 
 
   },
@@ -416,8 +420,12 @@ const STR: Record<string, Record<string, string>> = {
     hidePeakTime: "Hide time to peak",
     agonistTitle: "Agonist/antagonist asymmetry (same side)",
     agonistHint: "Above 10% deserves attention.",
-    untitledMovement: "Unnamed movement — tap to fill in",
+    untitledMovement: "Unnamed",
     peakTrialN: "Time to peak",
+
+
+
+
 
 
   },
@@ -472,8 +480,12 @@ const STR: Record<string, Record<string, string>> = {
     hidePeakTime: "Ocultar tiempo al pico",
     agonistTitle: "Asimetría agonista/antagonista (mismo lado)",
     agonistHint: "Por encima del 10% merece atención.",
-    untitledMovement: "Movimiento sin nombre — toque para completar",
+    untitledMovement: "Sin nombre",
     peakTrialN: "Tiempo al pico",
+
+
+
+
 
 
   },

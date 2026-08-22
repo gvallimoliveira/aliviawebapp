@@ -48,7 +48,7 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
 
   const initialRows: StrengthRow[] = React.useMemo(() => {
     const existing = sanitizeStrengthRows(target?.anamnesis_data?.strengthTable);
-    return existing.length > 0 ? existing : createInitialStrengthRows(2);
+    return existing.length > 0 ? existing : createInitialStrengthRows(1);
   }, [target?.id, target?.anamnesis_data?.strengthTable]);
 
   const [rows, setRows] = React.useState<StrengthRow[]>(initialRows);
