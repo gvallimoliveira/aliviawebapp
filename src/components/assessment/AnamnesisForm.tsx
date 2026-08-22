@@ -243,6 +243,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       complaint: ["chiefComplaints"],
       onset: ["onset"],
       surgery: ["hasPriorSurgery", "surgeryDetails"],
+      health_history: ["healthConditions", "usesContinuousMedication", "continuousMedications"],
+
       painmap: ["painRegions"],
       region_detail: ["painSubArea", "hadTwist", "hadSprain", "hadDislocation", "ottawaPositive"],
       migraine_screening: ["hasPhotophobia", "hasVisualAura", "hasNausea", "headacheCrisisFrequency"],
