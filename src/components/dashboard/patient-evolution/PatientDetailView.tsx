@@ -911,6 +911,11 @@ export default function PatientDetailView(props: any) {
                 romTable: interpretation.romTable,
                 strengthTable: interpretation.strengthTable,
                 functionalTests: interpretation.functionalTests,
+                // Passo D2 — triagem de mecanismo de dor extraída do arquivo externo
+                // (pré-preenchida para revisão do profissional).
+                mechanismAnswers: mechanismAnswersFromExternal(
+                  (interpretation as any).painMechanismScreening,
+                ) || undefined,
               },
             };
             setExternalPrefill({
