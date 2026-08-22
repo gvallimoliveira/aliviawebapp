@@ -1150,7 +1150,7 @@ export default function PatientDetailView(props: any) {
       {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Stethoscope className="h-4 w-4 text-primary" />Mapa de Dor — Comparativo</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{patient.assessments.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => <div key={a.id} className="text-center space-y-2"><p className="text-xs font-medium text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}{a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}</p><PainMapView painRegions={a.pain_regions} compact /></div>)}</div></CardContent></Card>}
 
       {/* Comparação detalhada por região */}
-      <RegionPainComparison assessments={patient.assessments} />
+      <div id="sec-regioes-dor" className="scroll-mt-24"><RegionPainComparison assessments={patient.assessments} /></div>
 
       {/* Evolução de questionários funcionais */}
       {questionnaireEvolution.length > 0 ? questionnaireEvolution.map((chart: any) => (
