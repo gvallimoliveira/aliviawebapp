@@ -17,8 +17,28 @@ import MobileNavSheet from "@/components/MobileNavSheet";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.12, duration: 0.5 } }),
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
+  }),
 };
+
+/** Reveal discreto ao entrar na viewport (uma única vez). */
+const reveal = {
+  hidden: { opacity: 0, y: 28 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.08, duration: 0.65, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
+
+const inView = { once: true, margin: "-80px" } as const;
+
+/** Elevação sutil e sóbria no hover — sem exageros. */
+const CARD_MOTION =
+  "transition-[transform,box-shadow,border-color] duration-500 ease-out will-change-transform hover:-translate-y-1.5 motion-reduce:hover:translate-y-0";
 
 const GatewayModern = () => {
   const { t, toggleLanguage, language } = useLanguage();
@@ -171,8 +191,8 @@ const GatewayModern = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {/* Patient Card */}
             <motion.div
-              initial="hidden" animate="visible" variants={fadeUp} custom={3}
-              className="group rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-xl hover:border-primary/30 transition-all duration-300 flex flex-col cursor-pointer"
+              initial="hidden" whileInView="visible" viewport={inView} variants={reveal} custom={3}
+              className={`group rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-[0_18px_50px_-24px_hsl(var(--primary)/0.35)] hover:border-primary/30 flex flex-col cursor-pointer ${CARD_MOTION}`}
               onClick={() => navigate("/para-pacientes")}
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-4">
@@ -204,14 +224,14 @@ const GatewayModern = () => {
                 tabIndex={-1}
               >
                 {t("gateway.patient.cta")}
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </motion.div>
 
             {/* Professional Card */}
             <motion.div
-              initial="hidden" animate="visible" variants={fadeUp} custom={4}
-              className="group rounded-2xl border-2 border-primary/30 bg-primary/[0.03] backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-xl hover:shadow-primary/10 hover:border-primary/50 transition-all duration-300 flex flex-col cursor-pointer relative"
+              initial="hidden" whileInView="visible" viewport={inView} variants={reveal} custom={4}
+              className={`group relative rounded-2xl border-2 border-primary/30 bg-primary/[0.03] backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-[0_18px_50px_-24px_hsl(var(--primary)/0.4)] hover:border-primary/50 flex flex-col cursor-pointer ${CARD_MOTION}`}
               onClick={() => navigate("/profissionais")}
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -249,14 +269,14 @@ const GatewayModern = () => {
                 tabIndex={-1}
               >
                 {t("gateway.pro.cta")}
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </motion.div>
 
             {/* Clinic Card */}
             <motion.div
-              initial="hidden" animate="visible" variants={fadeUp} custom={5}
-              className="group relative rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-card via-card to-primary/5 backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-xl hover:border-primary/60 transition-all duration-300 flex flex-col cursor-pointer overflow-hidden"
+              initial="hidden" whileInView="visible" viewport={inView} variants={reveal} custom={5}
+              className={`group relative overflow-hidden rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-card via-card to-primary/5 backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-[0_18px_50px_-24px_hsl(var(--primary)/0.4)] hover:border-primary/60 flex flex-col cursor-pointer ${CARD_MOTION}`}
               onClick={() => navigate("/clinica")}
             >
               <div className="absolute -top-12 -right-12 h-24 w-24 rounded-full bg-primary/10 blur-2xl" aria-hidden="true" />
@@ -291,14 +311,14 @@ const GatewayModern = () => {
                 tabIndex={-1}
               >
                 {t("gateway.clinic.cta")}
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </motion.div>
 
             {/* Academic Card */}
             <motion.div
-              initial="hidden" animate="visible" variants={fadeUp} custom={6}
-              className="group relative rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-card via-card to-amber-500/5 backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-xl hover:border-amber-500/60 transition-all duration-300 flex flex-col cursor-pointer overflow-hidden"
+              initial="hidden" whileInView="visible" viewport={inView} variants={reveal} custom={6}
+              className={`group relative overflow-hidden rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-card via-card to-amber-500/5 backdrop-blur-sm p-6 md:p-7 text-left hover:shadow-[0_18px_50px_-24px_hsl(38_92%_50%/0.4)] hover:border-amber-500/60 flex flex-col cursor-pointer ${CARD_MOTION}`}
               onClick={() => navigate("/academico")}
             >
               <div className="absolute -top-12 -right-12 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl" aria-hidden="true" />
@@ -345,14 +365,14 @@ const GatewayModern = () => {
                 tabIndex={-1}
               >
                 {language === "pt" ? "Conhecer Aliv.iA Acadêmico" : language === "es" ? "Conocer Alivia Académico" : "Discover Alivia Academic"}
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </motion.div>
           </div>
 
           {/* Social proof badge */}
           <motion.div
-            initial="hidden" animate="visible" variants={fadeUp} custom={5}
+            initial="hidden" whileInView="visible" viewport={inView} variants={reveal} custom={5}
             className="mt-10 inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm text-muted-foreground"
           >
             <Activity className="h-4 w-4 text-primary" />
@@ -362,7 +382,7 @@ const GatewayModern = () => {
           {/* About section */}
           <motion.div
             id="about"
-            initial="hidden" animate="visible" variants={fadeUp} custom={6}
+            initial="hidden" whileInView="visible" viewport={inView} variants={reveal} custom={6}
             className="mt-12 max-w-2xl mx-auto rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-6 md:p-8 text-center"
           >
             <div className="flex justify-center mb-4">
