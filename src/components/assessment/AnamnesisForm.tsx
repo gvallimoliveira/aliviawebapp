@@ -477,6 +477,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         case "painmap": return "painmap";
         case "pain_mechanism": return "painmechanism";
         case "surgery": return "surgery";
+        case "health_history": return "identity"; // dado fundamental: sempre coletado
         case "painscore": return "painscore";
         case "gym": return "activity";
         case "sex_age": return "identity"; // identity is always kept
@@ -489,7 +490,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       return enabledSubs.includes(g);
     };
 
-    const base: StepId[] = ["complaint", "onset", "surgery", "painmap"];
+    const base: StepId[] = ["complaint", "onset", "surgery", "health_history", "painmap"];
     if (needsRegionDetail()) {
       base.push("region_detail");
     }
