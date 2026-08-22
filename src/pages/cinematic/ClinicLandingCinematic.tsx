@@ -379,14 +379,14 @@ const ClinicLandingCinematic = () => {
         <BrandMarquee />
 
         <KineticStatement
-          kicker="Uma clínica sem retrabalho"
-          word="Escala"
-          caption="Agenda, prontuário, IA, teleconsulta e NPS operando no mesmo lugar — com a marca da sua clínica em cada entrega."
+          kicker="Com sistema inteligente"
+          word="escala"
+          caption="Uma clínica com raciocínio clínico, automação e marca própria cresce sem depender do trabalho manual de cada fisioterapeuta."
         />
 
         <ScrollWords
           kicker="Por que trocar de sistema"
-          text="Planilhas não conversam com o WhatsApp, o prontuário vive em outro app e ninguém sabe qual paciente está prestes a abandonar o tratamento. O Aliv.iA Clinic junta captação, evolução clínica e inteligência preditiva em uma única operação."
+          text="Mudar para o Aliv.iA Clinic significa transformar dados em decisão. Capture pacientes com um link de pré-avaliação personalizado, acompanhe a satisfação com pesquisa NPS por link e otimize a operação com insights clínicos preditivos — tudo em um único painel, com a marca da sua clínica em cada ponto de contato."
         />
 
 
