@@ -1096,11 +1096,124 @@ const DEMO_HEALTH_HISTORY: Record<string, Record<string, any>> = {
   },
 };
 
+/**
+ * Triagem de mecanismo de dor (Bloco B/E) do modo demo — payload no mesmo formato
+ * de `assessments.pain_mechanism` (StoredPainMechanism, version 1). Cobre os três
+ * mecanismos e os eixos periférico / misto / central, para que o prontuário, o PDF,
+ * a evolução do mecanismo e a reavaliação express (que pré-carrega a triagem
+ * anterior) tenham dados coerentes na demonstração.
+ */
+const DEMO_PAIN_MECHANISM: Record<string, Record<string, any>> = {
+  "Maria Silva": {
+    mechanism: "neuropathic",
+    secondary: "nociceptive",
+    subtype: "peripheral_neuropathic",
+    criteria: ["neu_dermatomal", "neu_neurodynamic"],
+    axis: "peripheral",
+    confidence: "high",
+    signals: ["neu_burning_shock", "neu_dermatomal", "neu_paresthesia", "neu_neurodynamic", "noc_movement_relation"],
+    central_sensitization_likely: false,
+    csi_score: null,
+    source: "rules",
+    version: 1,
+  },
+  "João Santos": {
+    mechanism: "nociceptive",
+    secondary: null,
+    subtype: "mechanical",
+    criteria: ["noc_movement_relation", "noc_rest_relief"],
+    axis: "peripheral",
+    confidence: "high",
+    signals: ["noc_movement_relation", "noc_rest_relief", "noc_localized", "noc_palpation"],
+    central_sensitization_likely: false,
+    csi_score: null,
+    source: "rules",
+    version: 1,
+  },
+  "Ana Oliveira": {
+    mechanism: "nociceptive",
+    secondary: "neuropathic",
+    subtype: "mechanical",
+    criteria: ["noc_movement_relation", "neu_paresthesia"],
+    axis: "mixed",
+    confidence: "moderate",
+    signals: ["noc_movement_relation", "noc_palpation", "neu_paresthesia", "nop_sleep_fatigue"],
+    central_sensitization_likely: true,
+    csi_score: 38,
+    source: "rules",
+    version: 1,
+  },
+  "Carlos Mendes": {
+    mechanism: "nociceptive",
+    secondary: null,
+    subtype: "inflammatory",
+    criteria: ["noc_inflammatory"],
+    axis: "peripheral",
+    confidence: "moderate",
+    signals: ["noc_inflammatory", "noc_localized"],
+    central_sensitization_likely: false,
+    csi_score: null,
+    source: "rules",
+    version: 1,
+  },
+  "Roberto Tavares": {
+    mechanism: "nociceptive",
+    secondary: null,
+    subtype: "mechanical",
+    criteria: ["noc_movement_relation", "noc_palpation"],
+    axis: "peripheral",
+    confidence: "high",
+    signals: ["noc_movement_relation", "noc_rest_relief", "noc_palpation"],
+    central_sensitization_likely: false,
+    csi_score: null,
+    source: "rules",
+    version: 1,
+  },
+  "Juliana Castro": {
+    mechanism: "nociplastic",
+    secondary: "nociceptive",
+    subtype: "nociplastic_secondary",
+    criteria: ["nop_disproportionate", "nop_multisite", "nop_hypersensitivity"],
+    axis: "central",
+    confidence: "high",
+    signals: ["nop_disproportionate", "nop_multisite", "nop_hypersensitivity", "nop_sleep_fatigue", "nop_chronic"],
+    central_sensitization_likely: true,
+    csi_score: 52,
+    source: "rules",
+    version: 1,
+  },
+  "Helena Rocha": {
+    mechanism: "nociceptive",
+    secondary: "nociplastic",
+    subtype: "mechanical",
+    criteria: ["noc_movement_relation", "nop_sleep_fatigue"],
+    axis: "mixed",
+    confidence: "moderate",
+    signals: ["noc_movement_relation", "noc_localized", "nop_sleep_fatigue"],
+    central_sensitization_likely: true,
+    csi_score: 34,
+    source: "rules",
+    version: 1,
+  },
+};
+
 export const mockPatientAssessments = rawMockPatientAssessments.map((a: any) => {
   const health = DEMO_HEALTH_HISTORY[a.patient_name];
-  if (!health) return a;
-  return { ...a, anamnesis_data: { ...health, ...(a.anamnesis_data || {}) } };
+  const mech = DEMO_PAIN_MECHANISM[a.patient_name];
+  if (!health && !mech) return a;
+  return {
+    ...a,
+    // `pain_mechanism` alimenta prontuário/PDF; `anamnesis_data.painMechanism`
+    // alimenta o pré-carregamento da reavaliação express.
+    ...(mech ? { pain_mechanism: a.pain_mechanism ?? mech } : {}),
+    anamnesis_data: {
+      ...(health || {}),
+      ...(mech ? { painMechanism: mech } : {}),
+      ...(a.anamnesis_data || {}),
+    },
+  };
 });
+
 
 
 
