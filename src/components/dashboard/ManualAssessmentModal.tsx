@@ -1222,6 +1222,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           },
           questionnaireResults,
           diagnosis: aiDiagnosis || (diagnosisText ? { summary: diagnosisText } : null),
+          // Passo D3 — mecanismo de dor guia a dosagem/progressão do plano.
+          painMechanism: (aiDiagnosis as any)?.pain_mechanism || buildProMechanism(),
           mode: "professional",
           language,
         },
