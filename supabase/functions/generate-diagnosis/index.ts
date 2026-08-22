@@ -502,6 +502,7 @@ ${edemaBlock}
 ${lumbarShoulderBlock}
 ${radiculopathyBlock}
 ${multiComplaintBlock}
+${mechanismBlock}
 
 ${hasPhotophobia || hasVisualAura || hasNausea || headacheCrisisFrequency ? `
 MIGRAINE/CERVICOGENIC HEADACHE SCREENING DATA (MANDATORY — integrate into clinical reasoning):
