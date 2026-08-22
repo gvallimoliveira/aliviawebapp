@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { setSeo, setMedicalBusinessJsonLd, setOrganizationJsonLd } from "@/lib/seo";
@@ -24,13 +24,20 @@ import { CLINIC_SMALL, CLINIC_MEDIUM, CLINIC_LARGE } from "@/constants/clinicPri
 import LgpdBadge from "@/components/LgpdBadge";
 import InstallAppSection from "@/components/InstallAppSection";
 import MobileNavSheet from "@/components/MobileNavSheet";
+import ScrollProgress from "@/components/scroll/ScrollProgress";
+import Reveal from "@/components/scroll/Reveal";
+import BrandMarquee from "@/components/scroll/BrandMarquee";
+import KineticStatement from "@/components/scroll/KineticStatement";
+import ScrollWords from "@/components/scroll/ScrollWords";
+import HorizontalShowcase from "@/components/scroll/HorizontalShowcase";
+import CinematicClosing from "@/components/scroll/CinematicClosing";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.5 } }),
 };
 
-const ClinicLanding = () => {
+const ClinicLandingCinematic = () => {
   const { toggleLanguage, language } = useLanguage();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -246,7 +253,8 @@ const ClinicLanding = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background relative overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-background relative overflow-x-clip flex flex-col">
+      <ScrollProgress />
       <div className="blur-blob absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
       <div className="blur-blob absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/10 blur-3xl" />
 
@@ -721,4 +729,4 @@ const ClinicLanding = () => {
   );
 };
 
-export default ClinicLanding;
+export default ClinicLandingCinematic;
