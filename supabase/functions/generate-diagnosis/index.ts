@@ -732,6 +732,51 @@ Generate the diagnostic hypothesis in valid JSON format.`;
       diagnosis = JSON.parse(cleaned);
     }
 
+    // --- Passo D1: mecanismo de dor com fallback determinístico ---------------
+    // Nunca deixamos a geração falhar por causa deste campo: o resultado das
+    // regras é a base, a IA só refina o que for válido.
+    if (rulesMechanism && diagnosis && typeof diagnosis === "object") {
+      const ai = (diagnosis as any).pain_mechanism;
+      const pick = (v: unknown, allowed: string[], fb: string) =>
+        typeof v === "string" && allowed.includes(v) ? v : fb;
+      const text = (v: unknown) =>
+        typeof v === "string" && v.trim().length > 4 ? v.trim() : null;
+
+      const aiObj = ai && typeof ai === "object" ? (ai as Record<string, unknown>) : {};
+      const aiMechanism = typeof aiObj.mechanism === "string" && MECHANISM_KEYS.includes(aiObj.mechanism) && aiObj.mechanism !== "unknown"
+        ? (aiObj.mechanism as string)
+        : null;
+      const overridden = !!aiMechanism && aiMechanism !== rulesMechanism.mechanism;
+
+      (diagnosis as any).pain_mechanism = {
+        ...rulesMechanism,
+        mechanism: aiMechanism ?? rulesMechanism.mechanism,
+        secondary:
+          typeof aiObj.secondary === "string" && MECHANISM_KEYS.includes(aiObj.secondary) && aiObj.secondary !== "unknown"
+            ? aiObj.secondary
+            : (rulesMechanism.secondary ?? null),
+        axis: pick(aiObj.axis, AXIS_KEYS, rulesMechanism.axis || "unknown"),
+        confidence: pick(aiObj.confidence, CONFIDENCE_KEYS, rulesMechanism.confidence || "low"),
+        patient_explanation: text(aiObj.patient_explanation),
+        reasoning: text(aiObj.reasoning),
+        pain_extent: painExtentValueNum,
+        // "rules" quando a IA não trouxe nada aproveitável; "ai" quando refinou.
+        source: aiMechanism || text(aiObj.patient_explanation) ? "ai" : "rules",
+        rules_mechanism: rulesMechanism.mechanism,
+        ai_overrode_rules: overridden,
+        version: 1,
+      };
+      console.log("[generate-diagnosis] pain_mechanism:", JSON.stringify({
+        rules: rulesMechanism.mechanism,
+        final: (diagnosis as any).pain_mechanism.mechanism,
+        source: (diagnosis as any).pain_mechanism.source,
+        overridden,
+      }));
+    } else if (diagnosis && typeof diagnosis === "object" && (diagnosis as any).pain_mechanism) {
+      // Sem triagem no prontuário: descartamos qualquer mecanismo alucinado.
+      delete (diagnosis as any).pain_mechanism;
+    }
+
     if (admin && diagnosis && typeof diagnosis === "object") {
       await setCachedAiResponse(admin, "generate-diagnosis", cachePayload, { diagnosis }, AI_CACHE_TTL_30D);
     }
