@@ -59,6 +59,8 @@ export interface MechanismScreeningInput {
   csiScore?: number | null;
   /** Número de regiões marcadas no mapa corporal. */
   regionCount?: number | null;
+  /** Subtipo escolhido/confirmado pelo avaliador (sobrepõe a sugestão automática). */
+  subtype?: MechanismSubtype | null;
 }
 
 
@@ -73,6 +75,8 @@ export interface MechanismSignal {
 export interface MechanismResult {
   mechanism: PainMechanism;
   secondary: PainMechanism | null;
+  /** Subtipo do mecanismo predominante (etapa 2 da triagem). */
+  subtype: MechanismSubtype | null;
   axis: PainMechanismAxis;
   confidence: MechanismConfidence;
   scores: Record<"nociceptive" | "neuropathic" | "nociplastic", number>;
@@ -738,6 +742,7 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
     return {
       mechanism: "unknown",
       secondary: null,
+      subtype: null,
       axis: "unknown",
       confidence: "low",
       scores,
@@ -758,6 +763,7 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
     return {
       mechanism: "unknown",
       secondary: null,
+      subtype: null,
       axis: "unknown",
       confidence: "low",
       scores,
@@ -815,6 +821,9 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
 export interface StoredPainMechanism {
   mechanism: PainMechanism;
   secondary: PainMechanism | null;
+  subtype: MechanismSubtype | null;
+  /** Critérios clínicos marcados na triagem (auditoria). */
+  criteria: string[];
   axis: PainMechanismAxis;
   confidence: MechanismConfidence;
   signals: string[];
@@ -828,10 +837,13 @@ export function toStoredMechanism(
   result: MechanismResult,
   source: "rules" | "ai" = "rules",
   csiScore?: number | null,
+  criteria: string[] = [],
 ): StoredPainMechanism {
   return {
     mechanism: result.mechanism,
     secondary: result.secondary,
+    subtype: result.subtype,
+    criteria,
     axis: result.axis,
     confidence: result.confidence,
     signals: result.signals.map((s) => s.key),
@@ -848,8 +860,18 @@ export function parseStoredMechanism(raw: unknown): StoredPainMechanism | null {
   const obj = raw as Record<string, unknown>;
   const m = obj.mechanism;
   if (typeof m !== "string" || !(m in PAIN_MECHANISM_COPY)) return null;
+  const subtypeRaw = String((obj as any).subtype ?? "");
+  const knownSubtypes = Object.values(MECHANISM_SUBTYPES)
+    .flat()
+    .map((o) => o.key as string);
   return {
     mechanism: m as PainMechanism,
+    subtype: knownSubtypes.includes(subtypeRaw)
+      ? (subtypeRaw as MechanismSubtype)
+      : null,
+    criteria: Array.isArray((obj as any).criteria)
+      ? (obj as any).criteria.map(String)
+      : [],
     secondary:
       typeof obj.secondary === "string" && obj.secondary in PAIN_MECHANISM_COPY
         ? (obj.secondary as PainMechanism)
