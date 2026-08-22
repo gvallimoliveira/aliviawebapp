@@ -35,6 +35,7 @@ import {
   subtypeChoicesFor,
 
   type MechanismBlock,
+  type PainMechanism,
   type MechanismResult,
   type MechanismSubtype,
   type MechanismDistribution,
