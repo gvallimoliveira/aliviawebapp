@@ -905,6 +905,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   }, [open, prefillData, editAssessment?.id]);
   useEffect(() => { if (!open) prefilledMarkerRef.current = null; }, [open]);
 
+  /**
+   * Bloco F2 — quando a avaliação nasce de uma reavaliação/prefill, mostramos a
+   * triagem de mecanismo anterior como referência (somente leitura).
+   */
+  const previousMechanismRef = useMemo(() => {
+    const src = prefillData?.row?.anamnesis_data?.painMechanism || (prefillData?.row as any)?.pain_mechanism;
+    const parsed = parseStoredMechanism(src);
+    if (!parsed?.mechanism) return null;
+    return {
+      mechanism: parsed.mechanism as string,
+      subtypeLabel: parsed.subtype ? getSubtypeLabel(parsed.subtype, isPt ? "pt" : "en") : null,
+      date: prefillData?.row?.created_at || null,
+    };
+  }, [prefillData, isPt]);
+
 
   // Conta pendentes vinculados a esta avaliação (modo edição) para exibir o
   // banner com o link consolidado e botão de cancelar pendência.
