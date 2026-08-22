@@ -155,8 +155,13 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     painScoresPerRegion: {},
     cpf: "",
     birthDate: "",
+    healthConditions: [],
+    healthConditionsOther: "",
+    usesContinuousMedication: "",
+    continuousMedications: "",
     painMechanism: createEmptyLiteAnswers(),
   });
+
 
   // ── Autosave (local + nuvem) ─────────────────────────────────────────────
   const draft = useAutosaveDraft<{ step: number; data: AnamnesisData }>({
