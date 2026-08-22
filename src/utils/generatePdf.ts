@@ -2207,14 +2207,6 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
     y += 12;
   }
 
-  // Passo E2 — mecanismo de dor (só quando houve triagem)
-  y = renderPainMechanismBlock(
-    doc, y,
-    (diagnosis as any)?.pain_mechanism ?? painMechanism,
-    painExtent ?? null,
-    isPt,
-  );
-
   // Summary
   y = renderSubSection(doc, y, isPt ? "Resumo" : "Summary", diagnosis.summary);
 
@@ -2307,6 +2299,14 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
   if (anamnesisData) {
     y = renderAnamnesisSection(doc, y, anamnesisData, isPt);
   }
+
+  // Passo E2 — mecanismo de dor (apresentado após a anamnese)
+  y = renderPainMechanismBlock(
+    doc, y,
+    (diagnosis as any)?.pain_mechanism ?? painMechanism,
+    painExtent ?? null,
+    isPt,
+  );
 
   // ── Additional External Info (from external assessment upload) ──
   if (anamnesisData?.additionalExternalInfo?.trim()) {
