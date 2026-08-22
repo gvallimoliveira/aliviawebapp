@@ -42,7 +42,23 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
-    const cachePayload = { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language };
+    // Passo D3 — mecanismo de dor entra na chave de cache: o mesmo caso com
+    // mecanismo diferente precisa de um plano diferente.
+    const resolvedMechanism = (() => {
+      const raw = (diagnosis && typeof diagnosis === "object" ? (diagnosis as any).pain_mechanism : null)
+        ?? bodyPainMechanism
+        ?? (anamnesisData && typeof anamnesisData === "object" ? (anamnesisData as any).painMechanismResolved : null);
+      if (!raw || typeof raw !== "object") return null;
+      const m = String((raw as any).mechanism ?? "");
+      if (!["nociceptive", "neuropathic", "nociplastic", "mixed"].includes(m)) return null;
+      return raw as Record<string, any>;
+    })();
+    const resolvedExtent = typeof bodyPainExtent === "number"
+      ? bodyPainExtent
+      : typeof (resolvedMechanism as any)?.pain_extent === "number"
+        ? (resolvedMechanism as any).pain_extent
+        : null;
+    const cachePayload = { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, painMechanism: resolvedMechanism, painExtent: resolvedExtent };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ treatmentPlan: unknown }>(admin, "generate-treatment", cachePayload);
       if (cached) {
