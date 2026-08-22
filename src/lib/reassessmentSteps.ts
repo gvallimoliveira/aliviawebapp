@@ -27,6 +27,7 @@ export const ANAMNESIS_SUB_IDS: ReassessStepId[] = [
   "painmap",
   "surgery",
   "painscore",
+  "painmechanism",
   "activity",
 ];
 
