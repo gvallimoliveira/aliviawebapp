@@ -242,7 +242,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     "patient_name, patient_email, pain_score, pain_regions, anamnesis_data, " +
     "test_results, diagnosis, treatment_plan, red_flags, final_hypothesis, " +
     "final_hypothesis_by, final_hypothesis_at, original_assessment_id, redo_used, " +
-    "reviewed_at, archived_at, paid_at, created_at, updated_at";
+    "pain_mechanism, reviewed_at, archived_at, paid_at, created_at, updated_at";
 
   const loadPatientAssessments = async () => {
     // Load assessments linked to this professional
