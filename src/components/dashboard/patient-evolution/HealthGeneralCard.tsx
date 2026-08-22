@@ -294,7 +294,13 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
         health_conditions_other_control: form.healthConditions.includes("other")
           ? form.healthConditionsOtherControl || null
           : null,
+        health_conditions_control: Object.fromEntries(
+          Object.entries(form.healthConditionsControl || {}).filter(
+            ([cid, v]) => !!v && form.healthConditions.includes(cid),
+          ),
+        ),
         uses_continuous_medication: form.usesContinuousMedication || null,
+
         continuous_medications: form.continuousMedications || null,
         change_summary: form.change_summary || null,
         observations: form.observations || null,
