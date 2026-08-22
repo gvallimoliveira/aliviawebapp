@@ -21,7 +21,8 @@ import RealtimeNotifier from "@/components/RealtimeNotifier";
 import PushSubscriptionKeeper from "@/components/PushSubscriptionKeeper";
 import ManualAssessmentResumer from "@/components/dashboard/ManualAssessmentResumer";
 import PasskeyEnrollPrompt from "@/components/auth/PasskeyEnrollPrompt";
-import { loadProfessionalLanding } from "@/lib/professionalLandingLoader";
+import ProfessionalLanding from "@/pages/cinematic/ProfessionalLandingShell";
+import { LANDING_LAYOUT } from "@/lib/landingLayout";
 
 const Gateway = lazy(() => import("./pages/Gateway"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -40,7 +41,7 @@ const ExerciseProgram = lazy(() => import("./pages/ExerciseProgram"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
-const ProfessionalLanding = lazy(loadProfessionalLanding);
+const ProfessionalLandingClassic = lazy(() => import("./pages/legacy/ProfessionalLandingClassic"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
 const Support = lazy(() => import("./pages/Support"));
 const UpgradeWelcome = lazy(() => import("./pages/UpgradeWelcome"));
@@ -75,22 +76,6 @@ const RouteFallback = () => (
     <div className="flex flex-col items-center gap-3 text-center">
       <div className="h-8 w-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
       <p className="text-sm text-muted-foreground">Carregando a próxima tela…</p>
-    </div>
-  </div>
-);
-
-const ProfessionalLandingFallback = () => (
-  <div className="min-h-screen bg-background" aria-label="Carregando página para profissionais">
-    <div className="h-16 border-b border-border/40 bg-background" />
-    <div className="mx-auto flex max-w-4xl flex-col items-center px-4 py-20 text-center md:py-28">
-      <div className="mb-6 h-7 w-40 animate-pulse rounded-full bg-primary/10" />
-      <div className="mb-4 h-12 w-full max-w-2xl animate-pulse rounded-lg bg-muted md:h-16" />
-      <div className="mb-3 h-5 w-full max-w-xl animate-pulse rounded bg-muted/70" />
-      <div className="mb-8 h-5 w-4/5 max-w-md animate-pulse rounded bg-muted/70" />
-      <div className="flex w-full max-w-md gap-3">
-        <div className="h-11 flex-1 animate-pulse rounded-lg bg-primary/15" />
-        <div className="h-11 flex-1 animate-pulse rounded-lg bg-muted" />
-      </div>
     </div>
   </div>
 );
@@ -149,11 +134,7 @@ const App = () => {
                   <Route path="/blog/:slug" element={<BlogPost />} />
                   <Route
                     path="/profissionais"
-                    element={(
-                      <Suspense fallback={<ProfessionalLandingFallback />}>
-                        <ProfessionalLanding />
-                      </Suspense>
-                    )}
+                    element={LANDING_LAYOUT === "classic" ? <ProfessionalLandingClassic /> : <ProfessionalLanding />}
                   />
                   <Route path="/profissionais/demo" element={<ProfessionalDemo />} />
                   <Route path="/complete-profile" element={<CompleteProfile />} />

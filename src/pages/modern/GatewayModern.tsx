@@ -76,22 +76,8 @@ const GatewayModern = () => {
   }, []);
 
   useEffect(() => {
-    const schedulePreload = () => {
-      const browserWindow = window as Window & {
-        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-      };
-
-      if (typeof browserWindow.requestIdleCallback === "function") {
-        browserWindow.requestIdleCallback(preloadProfessionalLanding, { timeout: 1800 });
-      } else {
-        window.setTimeout(preloadProfessionalLanding, 800);
-      }
-    };
-
-    if (document.readyState === "complete") schedulePreload();
-    else window.addEventListener("load", schedulePreload, { once: true });
-
-    return () => window.removeEventListener("load", schedulePreload);
+    const timer = window.setTimeout(preloadProfessionalLanding, 120);
+    return () => window.clearTimeout(timer);
   }, []);
 
 
