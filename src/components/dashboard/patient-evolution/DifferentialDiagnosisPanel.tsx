@@ -25,12 +25,14 @@ import {
 } from "lucide-react";
 import {
   PLAUSIBILITY_LABEL,
+  buildDemoDifferential,
   confidenceLabelPt,
   getDifferentialData,
   sanitizeDifferentials,
   type DifferentialDiagnosisData,
   type DifferentialItem,
 } from "@/lib/differentialDiagnosis";
+
 
 interface Props {
   /** Avaliação (prontuário) — quando presente, o resultado é persistido. */
