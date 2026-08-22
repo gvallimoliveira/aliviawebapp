@@ -131,8 +131,10 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
   patientName,
   clinicId,
   readOnly,
+  isDemo,
   onRiskChange,
 }) => {
+
 
   const { language } = useLanguage();
   const { user } = useAuth();
