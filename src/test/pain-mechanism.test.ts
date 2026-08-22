@@ -183,7 +183,7 @@ describe("subtipo confirmado altera o resultado", () => {
   const base = {
     criteria: ["noc_movement_relation", "noc_rest_relief", "noc_localized"],
     durationWeeks: 4,
-  } as const;
+  };
 
   it("subtipo inflamatório pesa mais no bloco nociceptivo que o mecânico", () => {
     const mech = classifyMechanism({ ...base, subtype: "mechanical" });
