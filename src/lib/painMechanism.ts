@@ -872,28 +872,33 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
 
   const tie = topScore - secondScore <= 1 && secondScore > 0;
   const mechanism: PainMechanism = tie ? "mixed" : topKey;
-  const secondary: PainMechanism | null = tie
+  const dominant = topKey;
+  const subtype: MechanismSubtype | null =
+    chosenSubtype ?? suggestSubtype(dominant, markedCriteria);
+  const subtypeBlock = subtype ? blockOfSubtype(subtype) : null;
+
+  let secondary: PainMechanism | null = tie
     ? topKey
     : secondScore >= 3
       ? secondKey
       : null;
-
-  const dominant = tie ? topKey : (mechanism as MechanismBlock);
-  const subtype: MechanismSubtype | null =
-    input.subtype ?? suggestSubtype(dominant, markedCriteria);
+  // Subtipo de outro bloco (ex.: nociplástica secundária num quadro
+  // nociceptivo) firma esse bloco como mecanismo secundário.
+  if (subtypeBlock && subtypeBlock !== dominant) secondary = subtypeBlock;
+  if (secondary === mechanism) secondary = tie ? topKey : null;
 
   let axis: PainMechanismAxis = "unknown";
-  const subtypeAxis = subtype
-    ? subtypeOptionsFor(dominant).find((o) => o.key === subtype)?.axis
-    : undefined;
+  const subtypeAxis = findSubtypeOption(subtype)?.axis;
   if (subtypeAxis) axis = subtypeAxis;
   else if (dominant === "nociplastic") axis = "central";
-  else if (dominant === "neuropathic")
-    axis = centralSensitizationLikely ? "mixed" : "peripheral";
-  else if (dominant === "nociceptive")
-    axis = centralSensitizationLikely ? "mixed" : "peripheral";
-  if (axis !== "mixed" && centralSensitizationLikely && dominant !== "nociplastic")
+  else axis = centralSensitizationLikely ? "mixed" : "peripheral";
+  // Subtipo periférico + sensibilização documentada = eixo misto.
+  if (axis === "peripheral" && centralSensitizationLikely) axis = "mixed";
+  // Subtipo central confirmado num quadro predominantemente periférico
+  // também descreve um eixo misto, não puramente central.
+  if (axis === "central" && dominant !== "nociplastic" && subtypeBlock !== dominant)
     axis = "mixed";
+
 
   let confidence: MechanismConfidence = "low";
   const margin = topScore - secondScore;
