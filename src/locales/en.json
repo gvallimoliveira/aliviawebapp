@@ -1497,5 +1497,7 @@
   "cine.deliverables.i6.desc": "If you need it, find professionals near you and chat right inside the app.",
   "cine.closing.heading": "Your pain deserves a clear path",
   "cine.closing.sub": "Start with the free self-assessment or go straight to premium with a full treatment plan.",
-  "cine.closing.note": "Screening and health education tool. It does not replace in-person care."
+  "cine.closing.note": "Screening and health education tool. It does not replace in-person care.",
+  "support.pro.tool.differential_diagnosis.title": "Assisted differential diagnosis",
+  "support.pro.tool.differential_diagnosis.desc": "Shown only when the AI hypothesis confidence is low or moderate. On demand it generates 2 to 4 competing hypotheses with plausibility, why they compete, arguments against and practical discriminators (tests and questions). You can adopt one as the final hypothesis, send the discriminators to session notes and choose whether the block goes into the PDF. Red flags trigger a medical screening note."
 }

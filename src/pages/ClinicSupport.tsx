@@ -141,6 +141,12 @@ const categories: ToolCategory[] = [
         desc: "Resumo automático da evolução do paciente ao longo de várias avaliações. Útil em reuniões de equipe, troca de turno entre fisioterapeutas e laudos para convênio.",
       },
       {
+        key: "differential_diagnosis",
+        icon: Brain,
+        title: "Diagnóstico diferencial assistido",
+        desc: "Quando a confiança da hipótese da IA é baixa ou moderada, o card da hipótese diagnóstica (e a etapa de diagnóstico da avaliação manual) oferece um botão discreto para gerar 2 a 4 hipóteses concorrentes. Cada uma vem com plausibilidade, por que compete, o que fala contra e discriminadores práticos (testes/perguntas). O profissional pode adotar uma delas como hipótese final, enviar os discriminadores para as observações da sessão e decidir se o bloco entra no PDF. Não aparece em hipóteses de alta confiança.",
+      },
+      {
         key: "evolution_report",
         icon: TrendingUp,
         title: "Relatório de evolução para alta",

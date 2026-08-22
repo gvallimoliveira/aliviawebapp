@@ -54,6 +54,7 @@ const proTools = [
   { key: "messages", icon: MessageCircle },
   { key: "video_call", icon: Video },
   { key: "clinical_impression", icon: Brain },
+  { key: "differential_diagnosis", icon: Brain },
   { key: "hep", icon: Dumbbell },
   { key: "hep_templates", icon: FileText },
   { key: "ai_test_suggestions", icon: Lightbulb },
