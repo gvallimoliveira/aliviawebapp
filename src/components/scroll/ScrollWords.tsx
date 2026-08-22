@@ -20,7 +20,7 @@ const Word = ({
   children: string;
   reduced: boolean | null;
 }) => {
-  const opacity = useTransform(progress, range, [0.16, 1]);
+  const opacity = useTransform(progress, range, [0.5, 1]);
   return (
     <span className="relative mr-[0.28em] inline-block">
       <motion.span style={reduced ? undefined : { opacity }} className="text-foreground">
@@ -50,7 +50,7 @@ const ScrollWords = ({ kicker, text, footnote }: ScrollWordsProps) => {
         )}
         <p
           ref={ref}
-          className="flex flex-wrap text-2xl font-semibold leading-snug tracking-tight text-foreground/45 md:text-4xl md:leading-[1.25]"
+          className="flex flex-wrap text-2xl font-semibold leading-snug tracking-tight text-foreground/80 md:text-4xl md:leading-[1.25]"
         >
           {words.map((word, i) => {
             const start = i / words.length;
