@@ -43,6 +43,8 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechanismScreening";
 import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
 import MechanismEvolutionCard from "./MechanismEvolutionCard";
+import HealthGeneralCard from "./HealthGeneralCard";
+import { getHealthRiskFlags, isHealthHistoryEmpty, normalizeHealthHistory } from "@/lib/healthHistory";
 import { mechanismTrajectoryLines, buildMechanismTimeline } from "@/lib/painMechanismEvolution";
 
 
@@ -1115,6 +1117,8 @@ export default function PatientDetailView(props: any) {
       <Separator className="opacity-40" />
 
       {/* Linha do tempo das avaliações (visão longitudinal sobe acima dos gráficos detalhados) */}
+      <HealthGeneralCard assessments={patient.assessments} />
+
       <AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
 
       {/* Gráfico de evolução de dor */}
@@ -1219,7 +1223,11 @@ export default function PatientDetailView(props: any) {
           defaultOpen={true}
           header={
             <div className="flex items-center justify-between gap-2 pr-2">
-              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2"><NotebookPen className="h-4 w-4 text-primary" />{language === "pt" ? "Avaliações do paciente — abrir relatório completo" : language === "es" ? "Evaluaciones del paciente — abrir informe completo" : "Patient assessments — open full report"}<Badge variant="outline" className="text-[10px] font-normal">{patient.assessments.filter((a: any) => showArchivedAssessments ? true : !a.archived_at).length}</Badge></h4>
+              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2"><NotebookPen className="h-4 w-4 text-primary" />{language === "pt" ? "Avaliações do paciente — abrir relatório completo" : language === "es" ? "Evaluaciones del paciente — abrir informe completo" : "Patient assessments — open full report"}<Badge variant="outline" className="text-[10px] font-normal">{patient.assessments.filter((a: any) => showArchivedAssessments ? true : !a.archived_at).length}</Badge>{(() => {
+                const latestHealth = patient.assessments.map((a: any) => normalizeHealthHistory(a.anamnesis_data)).filter((h: any) => !isHealthHistoryEmpty(h))[0];
+                const hasRisk = latestHealth ? getHealthRiskFlags(latestHealth).hasRisk : false;
+                return <Button variant="outline" size="sm" className={`h-7 text-[11px] gap-1.5 ${hasRisk ? "border-destructive/40 text-destructive hover:bg-destructive/10" : ""}`} onClick={(e) => { e.stopPropagation(); document.getElementById("saude-geral")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>{hasRisk ? <AlertTriangle className="h-3.5 w-3.5" /> : <HeartPulse className="h-3.5 w-3.5" />}{language === "pt" ? "Saúde geral" : language === "es" ? "Salud general" : "General health"}</Button>;
+              })()}</h4>
               {patient.assessments.some((a: any) => a.archived_at) && <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-muted-foreground" onClick={(e) => { e.stopPropagation(); setShowArchivedAssessments((v: boolean) => !v); }}>{showArchivedAssessments ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}{showArchivedAssessments ? (language === "pt" ? "Ocultar arquivadas" : "Hide archived") : (language === "pt" ? `Mostrar arquivadas (${patient.assessments.filter((a: any) => a.archived_at).length})` : `Show archived (${patient.assessments.filter((a: any) => a.archived_at).length})`)}</Button>}
             </div>
           }
