@@ -224,16 +224,20 @@ const PatientLanding = () => {
         <BrandMarquee />
         <PatientStatement />
         <PatientJourneyShowcase />
+        <PatientManifesto />
         <Reveal><HighlightsSection /></Reveal>
+        <PatientDeliverables />
         <Reveal><ComparisonSection /></Reveal>
         <Reveal><MethodologySection /></Reveal>
         <Reveal><HowItWorksSection /></Reveal>
         <Reveal scale><UpgradeFlowSection /></Reveal>
         <Reveal><TestimonialsSection /></Reveal>
+        <ClosingCta />
         <Reveal><FaqSection /></Reveal>
         <Reveal><SocialSection /></Reveal>
         <LgpdBadge />
       </main>
+
       <InstallAppSection />
       <Footer />
       <StickyCTA showProfessional={false} />
