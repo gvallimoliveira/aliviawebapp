@@ -180,6 +180,7 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
         healthConditionsOther: r.health_conditions_other,
         healthConditionsOtherOnset: r.health_conditions_other_onset,
         healthConditionsOtherControl: r.health_conditions_other_control,
+        healthConditionsControl: r.health_conditions_control,
         usesContinuousMedication: r.uses_continuous_medication,
         continuousMedications: r.continuous_medications,
       }),
@@ -193,9 +194,30 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
 
   const latest = records[0];
   const previous = records.slice(1);
-  const risk = latest
-    ? getHealthRiskFlags(latest.data)
-    : { riskConditions: [], uncontrolledOther: false, hasRisk: false };
+  const risk = useMemo<HealthRiskAssessment>(
+    () =>
+      latest
+        ? getHealthRiskAssessment(latest.data)
+        : {
+            level: "none",
+            riskConditions: [],
+            managed: [],
+            unmanaged: [],
+            unknownControl: [],
+            uncontrolledOther: false,
+            hasRisk: false,
+          },
+    [latest],
+  );
+
+  // Recalcula o nível de atenção sempre que o registro mais recente muda
+  // (inclusive imediatamente após o profissional salvar uma alteração).
+  useEffect(() => {
+    onRiskChange?.(risk);
+  }, [risk, onRiskChange]);
+
+  const attention = risk.level === "attention";
+  const managedOnly = risk.level === "managed";
   const conditionsText = latest ? formatHealthConditions(latest.data, language) : "";
   const medicationText = latest ? formatContinuousMedication(latest.data, language) : "";
 
@@ -207,6 +229,7 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
       base.healthConditionsOther = latest.data.healthConditionsOther || "";
       base.healthConditionsOtherOnset = latest.data.healthConditionsOtherOnset || "";
       base.healthConditionsOtherControl = latest.data.healthConditionsOtherControl || "";
+      base.healthConditionsControl = { ...(latest.data.healthConditionsControl || {}) };
       base.usesContinuousMedication = latest.data.usesContinuousMedication || "";
       base.continuousMedications = latest.data.continuousMedications || "";
     }
@@ -222,6 +245,7 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
       healthConditionsOther: r.health_conditions_other || "",
       healthConditionsOtherOnset: r.health_conditions_other_onset || "",
       healthConditionsOtherControl: r.health_conditions_other_control || "",
+      healthConditionsControl: r.health_conditions_control || {},
       usesContinuousMedication: r.uses_continuous_medication || "",
       continuousMedications: r.continuous_medications || "",
       change_summary: r.change_summary || "",
@@ -230,6 +254,7 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
     });
     setDialogOpen(true);
   };
+
 
   const toggleCondition = (cid: string) => {
     setForm((f) => {
