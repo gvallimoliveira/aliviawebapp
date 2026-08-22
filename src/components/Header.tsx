@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
 import InstallAppDialog from "@/components/InstallAppDialog";
+import { preloadProfessionalLanding } from "@/lib/professionalLandingLoader";
 
 const Header = () => {
   const { t, toggleLanguage, language } = useLanguage();
@@ -71,6 +72,9 @@ const Header = () => {
           </a>
           <button
             onClick={() => go("/profissionais")}
+            onPointerEnter={preloadProfessionalLanding}
+            onPointerDown={preloadProfessionalLanding}
+            onFocus={preloadProfessionalLanding}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80"
           >
             <Stethoscope className="h-3.5 w-3.5" />
@@ -153,6 +157,8 @@ const Header = () => {
             </button>
             <button
               onClick={() => go("/profissionais")}
+              onPointerDown={preloadProfessionalLanding}
+              onFocus={preloadProfessionalLanding}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
             >
               <Stethoscope className="h-4 w-4" />

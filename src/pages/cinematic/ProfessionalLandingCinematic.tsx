@@ -25,7 +25,7 @@ import {
   BookOpen, Filter, Star, Sparkles,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
-import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
+import { lazy, Suspense } from "react";
 import { setSeo, setMedicalBusinessJsonLd, setOrganizationJsonLd } from "@/lib/seo";
 import LgpdBadge from "@/components/LgpdBadge";
 import { useEffect } from "react";
@@ -36,6 +36,8 @@ import KineticStatement from "@/components/scroll/KineticStatement";
 import ScrollWords from "@/components/scroll/ScrollWords";
 import HorizontalShowcase from "@/components/scroll/HorizontalShowcase";
 import CinematicClosing from "@/components/scroll/CinematicClosing";
+
+const ValidatedQuestionnairesTable = lazy(() => import("@/components/ValidatedQuestionnairesTable"));
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -139,25 +141,25 @@ const ProfessionalLandingCinematic = () => {
         <div className="blur-blob absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-accent/20" />
         <div className="blur-blob absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-primary/5 rounded-full blur-3xl" />
         <div className="container relative z-10 max-w-4xl mx-auto text-center px-4">
-          <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}>
+          <motion.div initial={{ y: 8 }} animate={{ y: 0 }} transition={{ duration: 0.35 }}>
             <Badge variant="outline" className="mb-6 border-primary/30 bg-primary/5 text-primary px-4 py-1.5 text-sm font-medium">
               <Stethoscope className="h-3.5 w-3.5 mr-1.5" />
               {t("b2b.badge")}
             </Badge>
           </motion.div>
           <motion.h1
-            initial="hidden" animate="visible" variants={fadeUp} custom={1}
+            initial={{ y: 10 }} animate={{ y: 0 }} transition={{ duration: 0.4 }}
             className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6"
           >
             {t("b2b.hero_title")}
           </motion.h1>
           <motion.p
-            initial="hidden" animate="visible" variants={fadeUp} custom={2}
+            initial={{ y: 10 }} animate={{ y: 0 }} transition={{ duration: 0.4, delay: 0.05 }}
             className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed"
           >
             {t("b2b.hero_subtitle")}
           </motion.p>
-          <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
+          <motion.div initial={{ y: 8 }} animate={{ y: 0 }} transition={{ duration: 0.4, delay: 0.1 }} className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button onClick={handleCTA} size="lg" className="rounded-xl gap-2 px-8 text-base">
               {t("b2b.hero_cta")}
               <ArrowRight className="h-4 w-4" />
@@ -536,7 +538,9 @@ const ProfessionalLandingCinematic = () => {
       </section>
 
       {/* Validated Questionnaires */}
-      <ValidatedQuestionnairesTable />
+      <Suspense fallback={<div className="min-h-80 bg-background" aria-hidden="true" />}>
+        <ValidatedQuestionnairesTable />
+      </Suspense>
 
       {/* Pricing — unified single card with toggle */}
       <section id="pricing" className="py-16 md:py-20 bg-muted/30">
