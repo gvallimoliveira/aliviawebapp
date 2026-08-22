@@ -17,6 +17,13 @@ Arquivo central: `src/lib/landingLayout.ts`
 
 `src/pages/Gateway.tsx` e os arquivos de landing raiz são apenas switchers.
 
+## Landing profissional (estrutura por blocos)
+`/profissionais` usa `cinematic/ProfessionalLandingShell.tsx` (hero síncrono) + `ProfessionalLandingBody.tsx`,
+que é só um orquestrador: cada seção vive em `cinematic/professional/sections/`, o conteúdo puro em
+`professional/content.ts`, e `professional/LazySection.tsx` monta cada bloco só quando ele se aproxima da
+viewport. Ao adicionar seção nova, criar um módulo próprio e registrá-lo no orquestrador — nunca voltar a
+concentrar tudo em um arquivo único (era a causa da lentidão percebida).
+
 ## Regra de tom
 A landing geral (Gateway) deve permanecer **mais formal e sóbria** que as demais: reveals discretos ao entrar
 na viewport, malha técnica de fundo muito suave, elevação leve nos cards no hover. Nada de efeitos
