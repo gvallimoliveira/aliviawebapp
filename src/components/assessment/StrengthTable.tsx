@@ -360,8 +360,10 @@ const STR: Record<string, Record<string, string>> = {
     hidePeakTime: "Ocultar tempo até o pico",
     agonistTitle: "Assimetria agonista/antagonista (mesmo lado)",
     agonistHint: "Acima de 10% merece atenção.",
-    untitledMovement: "Movimento sem nome — toque para preencher",
+    untitledMovement: "Sem nome — toque para preencher",
     peakTrialN: "Tempo de pico",
+
+
 
 
   },
