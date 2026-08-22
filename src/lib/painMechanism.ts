@@ -39,6 +39,8 @@ export interface MechanismScreeningInput {
   /** Descritores relatados (ver NEUROPATHIC_DESCRIPTORS / NOCICEPTIVE_DESCRIPTORS). */
   descriptors?: string[];
   distribution?: MechanismDistribution;
+  /** Critérios clínicos marcados na triagem aprofundada (ver MECHANISM_CRITERIA). */
+  criteria?: string[];
   /** Dor proporcional ao estímulo/atividade (padrão mecânico claro). */
   proportionateToStimulus?: TriState;
   /** Dor espontânea, sem gatilho identificável. */
@@ -58,6 +60,7 @@ export interface MechanismScreeningInput {
   /** Número de regiões marcadas no mapa corporal. */
   regionCount?: number | null;
 }
+
 
 export interface MechanismSignal {
   /** Chave estável para i18n / auditoria. */
