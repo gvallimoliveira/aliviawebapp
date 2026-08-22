@@ -592,6 +592,126 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
             )}
           </div>
         );
+      case "health_history": {
+        const conditions = data.healthConditions || [];
+        const toggleCondition = (id: string) => {
+          let next: string[];
+          if (id === "none") {
+            next = conditions.includes("none") ? [] : ["none"];
+          } else {
+            next = conditions.includes(id)
+              ? conditions.filter((c) => c !== id)
+              : [...conditions.filter((c) => c !== "none"), id];
+          }
+          setData({
+            ...data,
+            healthConditions: next,
+            ...(next.includes("other") ? {} : { healthConditionsOther: "" }),
+          });
+        };
+        const isEs = language === "es";
+        const isEn = language === "en";
+        const txt = (pt: string, en: string, es: string) => (isEn ? en : isEs ? es : pt);
+        return (
+          <div className="space-y-5">
+            <h3 className="text-lg font-semibold">
+              {txt("Saúde geral", "General health", "Salud general")}
+              {stepHasPrefill("health_history") && <PrefilledBadge />}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {txt(
+                "Essas informações ajudam a dosar exercícios com segurança.",
+                "This information helps us dose exercise safely.",
+                "Esta información ayuda a dosificar el ejercicio con seguridad.",
+              )}
+            </p>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">
+                {txt(
+                  "Você tem alguma dessas condições?",
+                  "Do you have any of these conditions?",
+                  "¿Tiene alguna de estas condiciones?",
+                )}
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {HEALTH_CONDITION_IDS.map((id) => {
+                  const selected = conditions.includes(id);
+                  return (
+                    <Button
+                      key={id}
+                      type="button"
+                      variant={selected ? "default" : "outline"}
+                      size="sm"
+                      className="justify-start text-left h-auto py-2.5 rounded-xl gap-2"
+                      onClick={() => toggleCondition(id)}
+                    >
+                      <div className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 ${selected ? "border-primary-foreground bg-primary-foreground/20" : "border-muted-foreground/30"}`}>
+                        {selected && <Check className="h-3 w-3" />}
+                      </div>
+                      <span className="text-sm">{healthConditionLabel(id, language)}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+              {conditions.includes("other") && (
+                <Input
+                  value={data.healthConditionsOther || ""}
+                  onChange={(e) => setData({ ...data, healthConditionsOther: e.target.value.slice(0, 200) })}
+                  placeholder={txt("Qual condição?", "Which condition?", "¿Cuál condición?")}
+                  maxLength={200}
+                />
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">
+                {txt(
+                  "Faz uso de remédios de uso contínuo?",
+                  "Do you take any continuous-use medication?",
+                  "¿Usa medicamentos de uso continuo?",
+                )}
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { v: "yes", label: txt("Sim", "Yes", "Sí"), emoji: "💊" },
+                  { v: "no", label: txt("Não", "No", "No"), emoji: "🚫" },
+                ].map((opt) => (
+                  <Card
+                    key={opt.v}
+                    className={`cursor-pointer transition-all ${data.usesContinuousMedication === opt.v ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`}
+                    onClick={() =>
+                      setData({
+                        ...data,
+                        usesContinuousMedication: opt.v,
+                        ...(opt.v === "no" ? { continuousMedications: "" } : {}),
+                      })
+                    }
+                  >
+                    <CardContent className="py-4 px-4 text-center">
+                      <span className="text-2xl block mb-1">{opt.emoji}</span>
+                      <span className="text-sm font-medium">{opt.label}</span>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              {data.usesContinuousMedication === "yes" && (
+                <Textarea
+                  value={data.continuousMedications || ""}
+                  onChange={(e) => setData({ ...data, continuousMedications: e.target.value.slice(0, 500) })}
+                  placeholder={txt(
+                    "Quais? Ex.: Losartana 50mg, Metformina 850mg",
+                    "Which ones? e.g. Losartan 50mg, Metformin 850mg",
+                    "¿Cuáles? Ej.: Losartán 50mg, Metformina 850mg",
+                  )}
+                  rows={3}
+                  maxLength={500}
+                />
+              )}
+            </div>
+          </div>
+        );
+      }
       case "painmap":
         return <PainMap selectedRegions={data.painRegions} onRegionsChange={(regions) => setData({ ...data, painRegions: regions })} />;
       case "region_detail": {
