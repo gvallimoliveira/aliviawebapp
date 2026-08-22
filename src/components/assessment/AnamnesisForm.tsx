@@ -19,10 +19,9 @@ import PainMechanismWizard from "./PainMechanismWizard";
 import { suggestDistribution } from "@/lib/painExtent";
 import PainMechanismLite, {
   createEmptyLiteAnswers,
-  isLiteScreeningComplete,
-  sanitizeLiteAnswers,
   type LiteMechanismAnswers,
 } from "./PainMechanismLite";
+
 
 export interface AnamnesisData {
   chiefComplaint: string; // deprecated, kept for backward compat
@@ -1136,10 +1135,10 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       case "sex_age": return data.sex !== "" && data.ageRange !== "";
       case "paintype": return data.painTypes.length > 0;
       case "pain_mechanism":
-        return isLiteScreeningComplete(
-          sanitizeLiteAnswers(data.painMechanism),
-          mode === "premium" ? "premium" : "basic",
-        );
+        // Triagem de mecanismo de dor é opcional: o paciente pode preencher
+        // parcialmente ou pular sem travar o fluxo.
+        return true;
+
       case "evolution": return data.evolution !== "";
       case "factors": return data.activityLevel !== "";
       case "duration": return data.painDuration !== "";

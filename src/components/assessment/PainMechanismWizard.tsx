@@ -56,11 +56,22 @@ const COPY = {
     en: "Check everything that matches your pain. This helps us understand the type of pain, not just where it hurts.",
     es: "Marque todo lo que coincida con su dolor. Ayuda a entender el tipo de dolor, no solo dónde duele.",
   },
+  optional: {
+    pt: "opcional",
+    en: "optional",
+    es: "opcional",
+  },
+  optionalHint: {
+    pt: "Preenchimento livre: pode preencher em parte ou pular sem prejudicar o resultado da avaliação.",
+    en: "Optional: fill in partially or skip — it won't affect the assessment result.",
+    es: "Opcional: puede completar en parte o saltar — no afecta el resultado.",
+  },
   steps: {
     pt: ["Critérios", "Subtipo", "Resultado"],
     en: ["Criteria", "Subtype", "Result"],
     es: ["Criterios", "Subtipo", "Resultado"],
   },
+
   blocks: {
     nociceptive: {
       pt: "Padrão nociceptivo (tecido)",
@@ -227,11 +238,20 @@ const PainMechanismWizard = ({
   return (
     <div className="space-y-4 rounded-lg border bg-muted/20 p-3">
       <div className="space-y-1">
-        <Label className="text-xs font-semibold">{COPY.title[lang]}</Label>
+        <Label className="text-xs font-semibold">
+          {COPY.title[lang]}{" "}
+          <span className="font-normal text-muted-foreground">
+            ({COPY.optional[lang]})
+          </span>
+        </Label>
         <p className="text-[11px] text-muted-foreground">
           {isPro ? COPY.subtitlePro[lang] : COPY.subtitlePatient[lang]}
         </p>
+        <p className="text-[11px] text-muted-foreground/80">
+          {COPY.optionalHint[lang]}
+        </p>
       </div>
+
 
       {/* Trilha de etapas */}
       <div className="flex items-center gap-1.5">
