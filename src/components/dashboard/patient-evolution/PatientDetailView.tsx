@@ -1128,7 +1128,9 @@ export default function PatientDetailView(props: any) {
         patientName={patient.name || null}
         clinicId={clinicId || null}
         readOnly={readOnly || isDemo}
+        onRiskChange={setHealthRisk}
       />
+
 
       <AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
 
