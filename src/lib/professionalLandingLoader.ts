@@ -14,7 +14,7 @@ export const loadProfessionalLanding = (): Promise<LandingModule> => {
   if (!professionalLandingPromise) {
     professionalLandingPromise = LANDING_LAYOUT === "classic"
       ? import("@/pages/legacy/ProfessionalLandingClassic")
-      : import("@/pages/cinematic/ProfessionalLandingCinematic");
+      : import("@/pages/cinematic/ProfessionalLandingShell");
   }
 
   return professionalLandingPromise;

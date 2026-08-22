@@ -13,6 +13,7 @@ const TTL_MS = 24 * 60 * 60 * 1000; // 24h — robust for PWA standalone (sessio
 const SplashScreen = () => {
   const [visible, setVisible] = useState(() => {
     if (typeof window === "undefined") return false;
+    if (window.location.pathname === "/profissionais") return false;
     try {
       const last = Number(localStorage.getItem(STORAGE_KEY) || "0");
       return !last || Date.now() - last > TTL_MS;

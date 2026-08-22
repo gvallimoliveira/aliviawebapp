@@ -82,16 +82,7 @@ const RouteFallback = () => (
 const ProfessionalLandingFallback = () => (
   <div className="min-h-screen bg-background" aria-label="Carregando página para profissionais">
     <div className="h-16 border-b border-border/40 bg-background" />
-    <div className="mx-auto flex max-w-4xl flex-col items-center px-4 py-20 text-center md:py-28">
-      <div className="mb-6 h-7 w-40 animate-pulse rounded-full bg-primary/10" />
-      <div className="mb-4 h-12 w-full max-w-2xl animate-pulse rounded-lg bg-muted md:h-16" />
-      <div className="mb-3 h-5 w-full max-w-xl animate-pulse rounded bg-muted/70" />
-      <div className="mb-8 h-5 w-4/5 max-w-md animate-pulse rounded bg-muted/70" />
-      <div className="flex w-full max-w-md gap-3">
-        <div className="h-11 flex-1 animate-pulse rounded-lg bg-primary/15" />
-        <div className="h-11 flex-1 animate-pulse rounded-lg bg-muted" />
-      </div>
-    </div>
+    <div className="min-h-[620px] bg-gradient-to-br from-primary/5 via-background to-accent/20 md:min-h-[670px]" />
   </div>
 );
 
