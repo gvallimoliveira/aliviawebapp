@@ -40,7 +40,7 @@ export const EMPTY_STRENGTH_ROW: StrengthRow = {
   unit: "kgf",
 };
 
-export const createInitialStrengthRows = (n = 2): StrengthRow[] =>
+export const createInitialStrengthRows = (n = 1): StrengthRow[] =>
   Array.from({ length: n }, () => ({ ...EMPTY_STRENGTH_ROW }));
 
 export const parseNum = (v: string | number | undefined | null): number | null => {
