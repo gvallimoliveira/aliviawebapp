@@ -1095,7 +1095,8 @@ export default function PatientDetailView(props: any) {
 
       {/* Anamnese resumida da última avaliação — colapsável (Extra C: atalho ver completa) */}
       {latestAnamnesisFields.length > 0 && (
-        <Card>
+        <Card id="sec-anamnese" className="scroll-mt-24">
+
           <CardContent className="py-3">
             <CollapsibleSection
               storageKey={`patient:${patient.groupKey || patient.email}:anamnese`}
