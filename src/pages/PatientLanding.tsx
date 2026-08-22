@@ -222,11 +222,7 @@ const PatientLanding = () => {
         </div>
         <SelfAssessmentDisclaimerSection />
         <BrandMarquee />
-        <KineticStatement
-          kicker={undefined}
-          word=""
-          caption={undefined}
-        />
+        <PatientStatement />
         <PatientJourneyShowcase />
         <Reveal><HighlightsSection /></Reveal>
         <Reveal><ComparisonSection /></Reveal>
