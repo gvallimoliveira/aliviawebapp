@@ -183,6 +183,9 @@ const AssessmentView = () => {
       if (assessment.type === "basic") {
         const pdfBlob = await generateBasicReportPdfBlob({
           diagnosis: assessment.diagnosis,
+          // Passo E2 — mecanismo de dor + extensão vão para o relatório
+          painMechanism: (assessment.diagnosis as any)?.pain_mechanism ?? (assessment as any).pain_mechanism,
+          painExtent: typeof (assessment as any).pain_extent === "number" ? (assessment as any).pain_extent : null,
           finalHypothesis,
           language,
           patientName: assessment.patient_name || (user?.user_metadata?.full_name as string) || undefined,
@@ -209,6 +212,9 @@ const AssessmentView = () => {
         });
         await generateAssessmentPdf({
           diagnosis: assessment.diagnosis,
+          // Passo E2 — mecanismo de dor + extensão vão para o relatório
+          painMechanism: (assessment.diagnosis as any)?.pain_mechanism ?? (assessment as any).pain_mechanism,
+          painExtent: typeof (assessment as any).pain_extent === "number" ? (assessment as any).pain_extent : null,
           finalHypothesis,
           treatmentPlan: assessment.treatment_plan,
           language,
@@ -242,6 +248,9 @@ const AssessmentView = () => {
       if (assessment.type === "basic") {
         pdfBlob = await generateBasicReportPdfBlob({
           diagnosis: assessment.diagnosis,
+          // Passo E2 — mecanismo de dor + extensão vão para o relatório
+          painMechanism: (assessment.diagnosis as any)?.pain_mechanism ?? (assessment as any).pain_mechanism,
+          painExtent: typeof (assessment as any).pain_extent === "number" ? (assessment as any).pain_extent : null,
           finalHypothesis,
           language,
           patientName: assessment.patient_name || (user?.user_metadata?.full_name as string) || undefined,
@@ -262,6 +271,9 @@ const AssessmentView = () => {
         });
         pdfBlob = await generateAssessmentPdfBlob({
           diagnosis: assessment.diagnosis,
+          // Passo E2 — mecanismo de dor + extensão vão para o relatório
+          painMechanism: (assessment.diagnosis as any)?.pain_mechanism ?? (assessment as any).pain_mechanism,
+          painExtent: typeof (assessment as any).pain_extent === "number" ? (assessment as any).pain_extent : null,
           finalHypothesis,
           treatmentPlan: assessment.treatment_plan,
           language,
