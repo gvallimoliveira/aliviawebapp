@@ -775,13 +775,22 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
       ? secondKey
       : null;
 
+  const dominant = tie ? topKey : (mechanism as MechanismBlock);
+  const subtype: MechanismSubtype | null =
+    input.subtype ?? suggestSubtype(dominant, markedCriteria);
+
   let axis: PainMechanismAxis = "unknown";
-  const dominant = tie ? topKey : mechanism;
-  if (dominant === "nociplastic") axis = "central";
+  const subtypeAxis = subtype
+    ? subtypeOptionsFor(dominant).find((o) => o.key === subtype)?.axis
+    : undefined;
+  if (subtypeAxis) axis = subtypeAxis;
+  else if (dominant === "nociplastic") axis = "central";
   else if (dominant === "neuropathic")
     axis = centralSensitizationLikely ? "mixed" : "peripheral";
   else if (dominant === "nociceptive")
     axis = centralSensitizationLikely ? "mixed" : "peripheral";
+  if (axis !== "mixed" && centralSensitizationLikely && dominant !== "nociplastic")
+    axis = "mixed";
 
   let confidence: MechanismConfidence = "low";
   const margin = topScore - secondScore;
@@ -791,6 +800,7 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
   return {
     mechanism,
     secondary,
+    subtype,
     axis,
     confidence,
     scores,
@@ -798,6 +808,7 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
     centralSensitizationLikely,
     source: "rules",
   };
+
 }
 
 /** Payload gravado em `assessments.pain_mechanism` (jsonb). */
