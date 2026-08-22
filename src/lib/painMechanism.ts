@@ -653,7 +653,9 @@ const countAnswered = (input: MechanismScreeningInput): number => {
   if (input.descriptors && input.descriptors.length > 0) n += 1;
   if (typeof input.durationWeeks === "number") n += 1;
   if (typeof input.csiScore === "number") n += 1;
+  n += input.criteria?.length ?? 0;
   return n;
+
 };
 
 export function classifyMechanism(input: MechanismScreeningInput): MechanismResult {
