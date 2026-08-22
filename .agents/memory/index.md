@@ -26,6 +26,7 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Auth Stability](mem://constraints/auth-stability) — Forbidden patterns around login (SW/PWA/cache) and required safeguards.
 - [Visual Direction](mem://style/visual-direction) — Brand identity, colors, shapes, and official slogan.
 - [Landing Layout Switch](mem://style/landing-layout-switch) — Alternar landings entre layout cinematográfico e original (LANDING_LAYOUT em src/lib/landingLayout.ts).
+- [Landing Layout Toggles](mem://features/landing-layout-toggles) — GATEWAY_LAYOUT (modern/classic) para a landing geral; tom formal obrigatório no Gateway.
 - [Cinematic Landing Scroll](mem://style/cinematic-landing-scroll) — Primitivos de scroll cinematográfico das landings (ScrollProgress, Reveal, KineticStatement, StickyShowcase, BrandMarquee) e regra de 1 seção escura.
 - [Mobile UX](mem://style/mobile-ux) — Horizontal scrolling strategy for mobile views.
 - [Gateway Page](mem://features/gateway-page) — Profile selector layout and styling constraints.
