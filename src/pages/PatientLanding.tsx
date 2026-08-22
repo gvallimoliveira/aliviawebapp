@@ -1,8 +1,13 @@
+import { Suspense, lazy } from "react";
 import { LANDING_LAYOUT } from "@/lib/landingLayout";
-import PatientLandingCinematic from "@/pages/cinematic/PatientLandingCinematic";
-import PatientLandingClassic from "@/pages/legacy/PatientLandingClassic";
 
-const PatientLanding = () =>
-  LANDING_LAYOUT === "classic" ? <PatientLandingClassic /> : <PatientLandingCinematic />;
+const PatientLandingCinematic = lazy(() => import("@/pages/cinematic/PatientLandingCinematic"));
+const PatientLandingClassic = lazy(() => import("@/pages/legacy/PatientLandingClassic"));
+
+const PatientLanding = () => (
+  <Suspense fallback={<div className="min-h-screen bg-background" />}>
+    {LANDING_LAYOUT === "classic" ? <PatientLandingClassic /> : <PatientLandingCinematic />}
+  </Suspense>
+);
 
 export default PatientLanding;
