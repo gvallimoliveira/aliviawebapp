@@ -2412,6 +2412,87 @@ export type Database = {
           },
         ]
       }
+      patient_health_records: {
+        Row: {
+          author_name: string | null
+          change_summary: string | null
+          clinic_id: string | null
+          continuous_medications: string | null
+          created_at: string
+          created_by: string
+          health_conditions: string[]
+          health_conditions_other: string | null
+          health_conditions_other_control: string | null
+          health_conditions_other_onset: string | null
+          id: string
+          observations: string | null
+          patient_email: string | null
+          patient_id: string | null
+          patient_name: string | null
+          recorded_at: string
+          suggestions: string | null
+          updated_at: string
+          uses_continuous_medication: string | null
+        }
+        Insert: {
+          author_name?: string | null
+          change_summary?: string | null
+          clinic_id?: string | null
+          continuous_medications?: string | null
+          created_at?: string
+          created_by?: string
+          health_conditions?: string[]
+          health_conditions_other?: string | null
+          health_conditions_other_control?: string | null
+          health_conditions_other_onset?: string | null
+          id?: string
+          observations?: string | null
+          patient_email?: string | null
+          patient_id?: string | null
+          patient_name?: string | null
+          recorded_at?: string
+          suggestions?: string | null
+          updated_at?: string
+          uses_continuous_medication?: string | null
+        }
+        Update: {
+          author_name?: string | null
+          change_summary?: string | null
+          clinic_id?: string | null
+          continuous_medications?: string | null
+          created_at?: string
+          created_by?: string
+          health_conditions?: string[]
+          health_conditions_other?: string | null
+          health_conditions_other_control?: string | null
+          health_conditions_other_onset?: string | null
+          id?: string
+          observations?: string | null
+          patient_email?: string | null
+          patient_id?: string | null
+          patient_name?: string | null
+          recorded_at?: string
+          suggestions?: string | null
+          updated_at?: string
+          uses_continuous_medication?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_health_records_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_health_records_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_photos: {
         Row: {
           category: string
