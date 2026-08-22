@@ -2600,7 +2600,11 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
 
 // ── Helper: Section Title ──
 function renderSectionTitle(doc: jsPDF, y: number, title: string, color: [number, number, number], extraContentHeight: number = 0): number {
-  y = checkPage(doc, y, 14 + extraContentHeight);
+  // Proteção global contra título órfão: além do título (14mm), exige espaço
+  // mínimo para o início do conteúdo da seção (>= 30mm) em TODOS os PDFs.
+  const MIN_CONTENT_GUARD = 30;
+  y = checkPage(doc, y, 14 + Math.max(extraContentHeight, MIN_CONTENT_GUARD));
+
   doc.setDrawColor(...color);
   doc.setLineWidth(2);
   doc.line(MARGIN, y, MARGIN + 12, y);
