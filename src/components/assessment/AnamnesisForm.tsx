@@ -780,7 +780,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
           </div>
         );
       case "pain_mechanism":
-        return mode === "premium" ? (
+        return mode === "premium" || mode === "professional" ? (
           <div className="space-y-4">
             <div className="space-y-1">
               <h3 className="text-lg font-semibold">
