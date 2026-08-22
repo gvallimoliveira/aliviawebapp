@@ -348,8 +348,9 @@ const PainMechanismWizard = ({
           )}
           {dominantBlock && (
             <div className="space-y-2">
-              {subtypeOptionsFor(dominantBlock).map((opt) => {
+              {subtypeChoices.map((opt) => {
                 const selected = (value.subtype ?? autoSubtype) === opt.key;
+                const optBlock = blockOfSubtype(opt.key);
                 return (
                   <Card
                     key={opt.key}
@@ -361,6 +362,12 @@ const PainMechanismWizard = ({
                     <CardContent className="space-y-1 px-3 py-2.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs font-medium">{opt.label[lang]}</span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[9px] ${getMechanismTokenClass(optBlock)}`}
+                        >
+                          {getMechanismLabel(optBlock, lang)}
+                        </Badge>
                         {autoSubtype === opt.key && (
                           <Badge variant="secondary" className="text-[9px]">
                             {COPY.subtypeSuggested[lang]}
@@ -368,14 +375,20 @@ const PainMechanismWizard = ({
                         )}
                       </div>
                       <p className="text-[11px] leading-snug text-muted-foreground">
-                        {isPro ? opt.hint[lang] : opt.hint[lang]}
+                        {opt.hint[lang]}
                       </p>
+                      {selected && (
+                        <p className="text-[11px] leading-snug text-primary">
+                          {opt.implication[lang]}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 );
               })}
             </div>
           )}
+
 
           {isPro && (
             <>
