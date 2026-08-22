@@ -29,6 +29,13 @@ import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTa
 import { setSeo, setMedicalBusinessJsonLd, setOrganizationJsonLd } from "@/lib/seo";
 import LgpdBadge from "@/components/LgpdBadge";
 import { useEffect } from "react";
+import ScrollProgress from "@/components/scroll/ScrollProgress";
+import Reveal from "@/components/scroll/Reveal";
+import BrandMarquee from "@/components/scroll/BrandMarquee";
+import KineticStatement from "@/components/scroll/KineticStatement";
+import ScrollWords from "@/components/scroll/ScrollWords";
+import HorizontalShowcase from "@/components/scroll/HorizontalShowcase";
+import CinematicClosing from "@/components/scroll/CinematicClosing";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -123,7 +130,8 @@ const ProfessionalLandingCinematic = () => {
     : `R$${PRO_PLAN_ANNUAL_PRICE.toFixed(2).replace(".", ",")}`;
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-clip">
+      <ScrollProgress />
       <Header />
 
       {/* Hero */}
@@ -171,6 +179,20 @@ const ProfessionalLandingCinematic = () => {
           </motion.div>
         </div>
       </section>
+
+      <BrandMarquee />
+
+      <KineticStatement
+        kicker={language === "en" ? "Every appointment" : language === "es" ? "Cada consulta" : "Toda consulta"}
+        word={language === "en" ? "30 min" : "30 min"}
+        caption={
+          language === "en"
+            ? "The time you get back on every visit when anamnesis, pain map and questionnaires arrive already done."
+            : language === "es"
+            ? "El tiempo que recuperas en cada consulta cuando la anamnesis, el mapa de dolor y los cuestionarios ya llegan listos."
+            : "O tempo que você recupera em cada atendimento quando anamnese, mapa de dor e questionários chegam prontos."
+        }
+      />
 
       {/* Early CTA — pricing teaser */}
       <section className="py-10 md:py-14">
@@ -247,6 +269,17 @@ const ProfessionalLandingCinematic = () => {
         </div>
       </section>
 
+      <ScrollWords
+        kicker={language === "en" ? "Clinical reasoning" : language === "es" ? "Razonamiento clínico" : "Raciocínio clínico"}
+        text={
+          language === "en"
+            ? "You did not study physiotherapy to fill in forms. Aliv.iA collects, organizes and structures the case so you can do what only you can: reason, decide and treat."
+            : language === "es"
+            ? "No estudiaste fisioterapia para llenar formularios. Aliv.iA recoge, organiza y estructura el caso para que hagas lo que solo tú puedes: razonar, decidir y tratar."
+            : "Você não estudou fisioterapia para preencher formulários. O Aliv.iA coleta, organiza e estrutura o caso para você fazer o que só você faz: raciocinar, decidir e tratar."
+        }
+      />
+
       {/* Benefits */}
       <section className="py-16 md:py-20">
         <div className="container max-w-5xl mx-auto px-4">
@@ -308,6 +341,16 @@ const ProfessionalLandingCinematic = () => {
           </motion.div>
         </div>
       </section>
+
+      <HorizontalShowcase
+        kicker={language === "en" ? "Inside the panel" : language === "es" ? "Dentro del panel" : "Dentro do painel"}
+        heading={t("b2b.features_title")}
+        items={features.slice(0, 8).map((f) => ({
+          icon: f.icon,
+          title: t(f.key),
+          description: t(f.descKey),
+        }))}
+      />
 
       {/* Biblioteca de Evidências por Nicho — destaque PRO */}
       <section className="py-14 md:py-20">
@@ -597,6 +640,28 @@ const ProfessionalLandingCinematic = () => {
           </Accordion>
         </div>
       </section>
+
+      <CinematicClosing
+        kicker={language === "en" ? "Ready when you are" : language === "es" ? "Cuando quieras" : "Quando você quiser"}
+        heading={
+          language === "en"
+            ? "Start your next appointment with the case already read"
+            : language === "es"
+            ? "Empieza tu próxima consulta con el caso ya leído"
+            : "Comece o próximo atendimento com o caso já lido"
+        }
+        sub={
+          language === "en"
+            ? "Anamnesis, red flags, pain map, validated questionnaires and AI reasoning — waiting for you before the patient walks in."
+            : language === "es"
+            ? "Anamnesis, red flags, mapa de dolor, cuestionarios validados y razonamiento con IA — listos antes de que entre el paciente."
+            : "Anamnese, red flags, mapa de dor, questionários validados e raciocínio com IA — prontos antes do paciente entrar."
+        }
+        primaryLabel={t("b2b.cta_primary")}
+        onPrimary={handleCTA}
+        secondaryLabel={t("b2b.pricing_title")}
+        onSecondary={scrollToPricing}
+      />
 
       <InstallAppSection />
       <Footer />
