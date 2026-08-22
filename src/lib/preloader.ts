@@ -32,8 +32,23 @@ export const startIdlePreloads = () => {
   if (started) return;
   started = true;
 
-  if (typeof window !== "undefined" && window.location.pathname.startsWith("/para-pacientes")) {
-    return;
+  // Marketing/landing routes must stay light: never compete with their
+  // first paint by warming dashboard/assessment chunks in the background.
+  const MARKETING_ROUTES = [
+    "/para-pacientes",
+    "/profissionais",
+    "/academico",
+    "/clinica",
+    "/blog",
+    "/landing-legacy",
+  ];
+  if (typeof window !== "undefined") {
+    const path = window.location.pathname;
+    const isRoot = path === "/" || path === "";
+    if (isRoot || MARKETING_ROUTES.some((r) => path.startsWith(r))) {
+      started = false; // allow preloads to start after the user navigates away
+      return;
+    }
   }
 
   // Stagger preloads so we never compete with the user's first interactions.
@@ -41,6 +56,7 @@ export const startIdlePreloads = () => {
     safeImport("Assessment", () => import("@/pages/Assessment"));
     safeImport("AssessmentView", () => import("@/pages/AssessmentView"));
   });
+
 
   idle(() => {
     safeImport("MessagesTab", () => import("@/components/dashboard/MessagesTab"));
