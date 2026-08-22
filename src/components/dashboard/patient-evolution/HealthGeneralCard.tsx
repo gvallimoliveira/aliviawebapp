@@ -620,7 +620,11 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
       </CardContent>
 
       <Dialog open={dialogOpen} onOpenChange={(o) => !saving && setDialogOpen(o)}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent
+          className="max-w-lg max-h-[85vh] overflow-y-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
+
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HeartPulse className="h-4 w-4 text-primary" />
