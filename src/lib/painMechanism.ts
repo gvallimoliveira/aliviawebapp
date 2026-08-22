@@ -435,29 +435,50 @@ export interface MechanismSubtypeOption {
   axis: PainMechanismAxis;
   /** Critérios que sugerem este subtipo. */
   supportedBy: string[];
+  /**
+   * Peso somado ao bloco do subtipo quando o avaliador o CONFIRMA na etapa 2.
+   * É isso que faz a escolha do subtipo mexer nas barras e, em quadros
+   * empatados, no próprio mecanismo predominante.
+   */
+  boost: number;
+  /** Consequência clínica exibida na etapa 3 (muda conforme o subtipo). */
+  implication: Record<Lang, string>;
 }
+
 
 export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]> = {
   nociceptive: [
     {
       key: "mechanical",
       axis: "peripheral",
+      boost: 2,
       label: { pt: "Mecânica / de carga", en: "Mechanical / load-related", es: "Mecánica / de carga" },
       hint: {
         pt: "Dor previsível com carga e movimento, alivia com descarga.",
         en: "Predictable with load and movement, eases with unloading.",
         es: "Previsible con carga y movimiento, alivia con descarga.",
       },
+      implication: {
+        pt: "Progressão guiada por carga: dose de exercício previsível, sem necessidade de evitar o movimento.",
+        en: "Load-guided progression: predictable exercise dose, no need to avoid movement.",
+        es: "Progresión guiada por carga: dosis de ejercicio previsible, sin evitar el movimiento.",
+      },
       supportedBy: ["noc_movement_relation", "noc_rest_relief", "noc_palpation"],
     },
     {
       key: "inflammatory",
       axis: "peripheral",
+      boost: 3,
       label: { pt: "Inflamatória / irritativa", en: "Inflammatory / irritative", es: "Inflamatoria / irritativa" },
       hint: {
         pt: "Rigidez matinal prolongada, calor, edema, dor em repouso.",
         en: "Prolonged morning stiffness, heat, swelling, pain at rest.",
         es: "Rigidez matinal prolongada, calor, edema, dolor en reposo.",
+      },
+      implication: {
+        pt: "Tecido irritável: controlar irritabilidade primeiro, cargas isométricas/baixa amplitude e progressão mais lenta.",
+        en: "Irritable tissue: settle irritability first, isometric/low-range loading and slower progression.",
+        es: "Tejido irritable: controlar la irritabilidad primero, cargas isométricas y progresión más lenta.",
       },
       supportedBy: ["noc_inflammatory"],
     },
@@ -466,22 +487,34 @@ export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]
     {
       key: "peripheral_neuropathic",
       axis: "peripheral",
+      boost: 2,
       label: { pt: "Periférica (nervo/raiz)", en: "Peripheral (nerve/root)", es: "Periférica (nervio/raíz)" },
       hint: {
         pt: "Lesão ou compressão neural plausível, distribuição neuroanatômica, teste neurodinâmico positivo.",
         en: "Plausible nerve lesion/compression, neuroanatomical distribution, positive neurodynamic test.",
         es: "Lesión o compresión neural plausible, distribución neuroanatómica, prueba neurodinámica positiva.",
       },
+      implication: {
+        pt: "Cuidado neural: descarga da estrutura irritada, mobilização neurodinâmica suave e progressão de carga mais lenta.",
+        en: "Nerve care: unload the irritated structure, gentle neurodynamic work and slower load progression.",
+        es: "Cuidado neural: descargar la estructura irritada, movilización neurodinámica suave y progresión lenta.",
+      },
       supportedBy: ["neu_dermatomal", "neu_neurodynamic", "neu_sensory_loss", "neu_motor_deficit"],
     },
     {
       key: "central_neuropathic",
       axis: "central",
+      boost: 3,
       label: { pt: "Central", en: "Central", es: "Central" },
       hint: {
         pt: "Distribuição não segmentar (hemicorpo, abaixo de um nível), lesão central conhecida.",
         en: "Non-segmental distribution (hemibody, below a level), known central lesion.",
         es: "Distribución no segmentaria (hemicuerpo, bajo un nivel), lesión central conocida.",
+      },
+      implication: {
+        pt: "Origem central: metas funcionais, estímulos sensoriais graduais e articulação com a equipe médica/neuro.",
+        en: "Central origin: functional goals, graded sensory input and coordination with the medical team.",
+        es: "Origen central: metas funcionales, estímulos sensoriales graduales y articulación con el equipo médico.",
       },
       supportedBy: ["neu_burning_shock", "nop_hypersensitivity"],
     },
@@ -490,40 +523,89 @@ export const MECHANISM_SUBTYPES: Record<MechanismBlock, MechanismSubtypeOption[]
     {
       key: "nociplastic_primary",
       axis: "central",
+      boost: 3,
       label: { pt: "Primária (isolada)", en: "Primary (isolated)", es: "Primaria (aislada)" },
       hint: {
         pt: "Sem fonte nociceptiva ou neuropática que explique o quadro (padrão fibromiálgico).",
         en: "No nociceptive or neuropathic source explains the picture (fibromyalgia-like).",
         es: "Sin fuente nociceptiva o neuropática que explique el cuadro.",
       },
+      implication: {
+        pt: "Sem prova de dor: educação em dor, exposição gradual, sono e regulação de esforço acima da carga máxima.",
+        en: "No pain-provocation testing: pain education, graded exposure, sleep and effort regulation over max load.",
+        es: "Sin provocación de dolor: educación en dolor, exposición gradual, sueño y regulación del esfuerzo.",
+      },
       supportedBy: ["nop_multisite", "nop_migrating", "nop_hypersensitivity"],
     },
     {
       key: "nociplastic_secondary",
       axis: "mixed",
+      boost: 2,
       label: { pt: "Secundária (sobreposta)", en: "Secondary (superimposed)", es: "Secundaria (sobrepuesta)" },
       hint: {
         pt: "Sensibilização sobreposta a uma fonte tecidual ou neural ainda ativa.",
         en: "Sensitization superimposed on an active tissue or nerve source.",
         es: "Sensibilización sobrepuesta a una fuente tisular o neural activa.",
       },
+      implication: {
+        pt: "Duas frentes: tratar a fonte periférica ativa e, em paralelo, reduzir sensibilização (educação, sono, ritmo).",
+        en: "Two fronts: treat the active peripheral source while reducing sensitization (education, sleep, pacing).",
+        es: "Dos frentes: tratar la fuente periférica activa y reducir la sensibilización (educación, sueño, ritmo).",
+      },
       supportedBy: ["nop_disproportionate", "nop_chronic", "nop_sleep_fatigue"],
     },
   ],
 };
+
+export const ALL_SUBTYPE_OPTIONS: MechanismSubtypeOption[] = Object.values(
+  MECHANISM_SUBTYPES,
+).flat();
 
 export const subtypeOptionsFor = (m: PainMechanism): MechanismSubtypeOption[] =>
   m === "nociceptive" || m === "neuropathic" || m === "nociplastic"
     ? MECHANISM_SUBTYPES[m]
     : [];
 
-export const getSubtypeLabel = (s: MechanismSubtype | null, lang: Lang = "pt"): string | null => {
-  if (!s) return null;
-  for (const list of Object.values(MECHANISM_SUBTYPES)) {
-    const found = list.find((o) => o.key === s);
-    if (found) return found.label[lang];
+export const findSubtypeOption = (
+  s: MechanismSubtype | null | undefined,
+): MechanismSubtypeOption | null =>
+  (s && ALL_SUBTYPE_OPTIONS.find((o) => o.key === s)) || null;
+
+/** Bloco (mecanismo) ao qual o subtipo pertence. */
+export const blockOfSubtype = (s: MechanismSubtype): MechanismBlock => {
+  for (const block of MECHANISM_BLOCK_ORDER) {
+    if (MECHANISM_SUBTYPES[block].some((o) => o.key === s)) return block;
   }
-  return null;
+  return "nociceptive";
+};
+
+export const getSubtypeLabel = (s: MechanismSubtype | null, lang: Lang = "pt"): string | null =>
+  findSubtypeOption(s)?.label[lang] ?? null;
+
+export const getSubtypeImplication = (
+  s: MechanismSubtype | null,
+  lang: Lang = "pt",
+): string | null => findSubtypeOption(s)?.implication[lang] ?? null;
+
+/**
+ * Subtipos oferecidos na etapa 2: os do mecanismo predominante mais os de
+ * qualquer bloco com pontuação relevante (>= 40% do topo). Isso permite, num
+ * quadro nociceptivo com sensibilização emergente, confirmar "nociplástica
+ * secundária" — e essa escolha pesa na classificação.
+ */
+export const subtypeChoicesFor = (result: MechanismResult): MechanismSubtypeOption[] => {
+  const top = Math.max(...MECHANISM_BLOCK_ORDER.map((b) => result.scores[b]), 0);
+  const dominant: MechanismBlock | null =
+    result.mechanism === "nociceptive" ||
+    result.mechanism === "neuropathic" ||
+    result.mechanism === "nociplastic"
+      ? result.mechanism
+      : null;
+  const blocks = MECHANISM_BLOCK_ORDER.filter(
+    (b) => b === dominant || (top > 0 && result.scores[b] >= top * 0.4),
+  );
+  const ordered = dominant ? [dominant, ...blocks.filter((b) => b !== dominant)] : blocks;
+  return ordered.flatMap((b) => MECHANISM_SUBTYPES[b]);
 };
 
 /** Sugere o subtipo do mecanismo predominante a partir dos critérios marcados. */
@@ -540,6 +622,8 @@ export const suggestSubtype = (
   if (scored[0].n === scored[1]?.n) return options[0].key;
   return scored[0].o.key;
 };
+
+
 
 
 interface MechanismCopy {
@@ -731,11 +815,24 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
   const regionCount = input.regionCount ?? 0;
   if (regionCount >= 5) add("high_pain_extent", "nociplastic", 2);
 
+  // Subtipo CONFIRMADO pelo avaliador é evidência clínica: pesa no bloco
+  // correspondente (por isso as barras e, em quadros empatados, o mecanismo
+  // predominante mudam quando o subtipo muda).
+  const chosenSubtype = input.subtype ?? null;
+  const chosenOption = findSubtypeOption(chosenSubtype);
+  if (chosenOption) {
+    add(`subtype_${chosenOption.key}`, blockOfSubtype(chosenOption.key), chosenOption.boost);
+  }
 
   const csi = input.csiScore;
   const centralSensitizationLikely =
-    typeof csi === "number" && csi >= CSI_CENTRAL_THRESHOLD;
-  if (centralSensitizationLikely) add("csi_above_threshold", "nociplastic", 3);
+    (typeof csi === "number" && csi >= CSI_CENTRAL_THRESHOLD) ||
+    chosenSubtype === "nociplastic_primary" ||
+    chosenSubtype === "nociplastic_secondary" ||
+    chosenSubtype === "central_neuropathic";
+  if (typeof csi === "number" && csi >= CSI_CENTRAL_THRESHOLD)
+    add("csi_above_threshold", "nociplastic", 3);
+
 
   const answered = countAnswered(input);
   if (answered < 3) {
@@ -775,28 +872,33 @@ export function classifyMechanism(input: MechanismScreeningInput): MechanismResu
 
   const tie = topScore - secondScore <= 1 && secondScore > 0;
   const mechanism: PainMechanism = tie ? "mixed" : topKey;
-  const secondary: PainMechanism | null = tie
+  const dominant = topKey;
+  const subtype: MechanismSubtype | null =
+    chosenSubtype ?? suggestSubtype(dominant, markedCriteria);
+  const subtypeBlock = subtype ? blockOfSubtype(subtype) : null;
+
+  let secondary: PainMechanism | null = tie
     ? topKey
     : secondScore >= 3
       ? secondKey
       : null;
-
-  const dominant = tie ? topKey : (mechanism as MechanismBlock);
-  const subtype: MechanismSubtype | null =
-    input.subtype ?? suggestSubtype(dominant, markedCriteria);
+  // Subtipo de outro bloco (ex.: nociplástica secundária num quadro
+  // nociceptivo) firma esse bloco como mecanismo secundário.
+  if (subtypeBlock && subtypeBlock !== dominant) secondary = subtypeBlock;
+  if (secondary === mechanism) secondary = tie ? topKey : null;
 
   let axis: PainMechanismAxis = "unknown";
-  const subtypeAxis = subtype
-    ? subtypeOptionsFor(dominant).find((o) => o.key === subtype)?.axis
-    : undefined;
+  const subtypeAxis = findSubtypeOption(subtype)?.axis;
   if (subtypeAxis) axis = subtypeAxis;
   else if (dominant === "nociplastic") axis = "central";
-  else if (dominant === "neuropathic")
-    axis = centralSensitizationLikely ? "mixed" : "peripheral";
-  else if (dominant === "nociceptive")
-    axis = centralSensitizationLikely ? "mixed" : "peripheral";
-  if (axis !== "mixed" && centralSensitizationLikely && dominant !== "nociplastic")
+  else axis = centralSensitizationLikely ? "mixed" : "peripheral";
+  // Subtipo periférico + sensibilização documentada = eixo misto.
+  if (axis === "peripheral" && centralSensitizationLikely) axis = "mixed";
+  // Subtipo central confirmado num quadro predominantemente periférico
+  // também descreve um eixo misto, não puramente central.
+  if (axis === "central" && dominant !== "nociplastic" && subtypeBlock !== dominant)
     axis = "mixed";
+
 
   let confidence: MechanismConfidence = "low";
   const margin = topScore - secondScore;

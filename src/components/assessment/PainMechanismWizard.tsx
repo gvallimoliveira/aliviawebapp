@@ -27,10 +27,13 @@ import {
   getMechanismTechnical,
   getMechanismTokenClass,
   getSubtypeLabel,
+  getSubtypeImplication,
+  blockOfSubtype,
   suggestSubtype,
   MECHANISM_BLOCK_ORDER,
   MECHANISM_CRITERIA,
-  subtypeOptionsFor,
+  subtypeChoicesFor,
+
   type MechanismBlock,
   type MechanismResult,
   type MechanismSubtype,
@@ -191,32 +194,44 @@ const PainMechanismWizard = ({
 
   const includeExam = isPro;
 
-  const result: MechanismResult = useMemo(
-    () =>
-      classifyMechanism({
-        descriptors: value.descriptors,
-        distribution: value.distribution,
-        criteria: value.criteria,
-        subtype: value.subtype,
-        proportionateToStimulus: value.proportionateToStimulus,
-        spontaneousPain: value.spontaneousPain,
-        multisensoryHypersensitivity: value.multisensoryHypersensitivity,
-        nonRestorativeSleep: value.nonRestorativeSleep,
-        persistentFatigue: value.persistentFatigue,
-        objectiveNeuroSigns: value.objectiveNeuroSigns,
-        durationWeeks,
-        csiScore: value.csiScore,
-        regionCount,
-      }),
+  const baseInput = useMemo(
+    () => ({
+      descriptors: value.descriptors,
+      distribution: value.distribution,
+      criteria: value.criteria,
+      proportionateToStimulus: value.proportionateToStimulus,
+      spontaneousPain: value.spontaneousPain,
+      multisensoryHypersensitivity: value.multisensoryHypersensitivity,
+      nonRestorativeSleep: value.nonRestorativeSleep,
+      persistentFatigue: value.persistentFatigue,
+      objectiveNeuroSigns: value.objectiveNeuroSigns,
+      durationWeeks,
+      csiScore: value.csiScore,
+      regionCount,
+    }),
     [value, durationWeeks, regionCount],
+  );
+
+  /** Classificação sem o subtipo — define quais subtipos vale oferecer. */
+  const baseResult: MechanismResult = useMemo(
+    () => classifyMechanism({ ...baseInput, subtype: null }),
+    [baseInput],
+  );
+
+  /** Classificação final: o subtipo confirmado pesa nas barras e no eixo. */
+  const result: MechanismResult = useMemo(
+    () => classifyMechanism({ ...baseInput, subtype: value.subtype }),
+    [baseInput, value.subtype],
   );
 
   const dominantBlock: MechanismBlock | null = useMemo(() => {
     const ranked = (
-      Object.entries(result.scores) as [MechanismBlock, number][]
+      Object.entries(baseResult.scores) as [MechanismBlock, number][]
     ).sort((a, b) => b[1] - a[1]);
     return ranked[0][1] > 0 ? ranked[0][0] : null;
-  }, [result.scores]);
+  }, [baseResult.scores]);
+
+  const subtypeChoices = useMemo(() => subtypeChoicesFor(baseResult), [baseResult]);
 
   const autoSubtype = dominantBlock ? suggestSubtype(dominantBlock, value.criteria) : null;
 
@@ -232,6 +247,7 @@ const PainMechanismWizard = ({
     const max = blockMaxScore(block, includeExam) || 1;
     return Math.min(100, Math.round((result.scores[block] / max) * 100));
   };
+
 
   const stepLabels = COPY.steps[lang];
 
@@ -335,8 +351,9 @@ const PainMechanismWizard = ({
           )}
           {dominantBlock && (
             <div className="space-y-2">
-              {subtypeOptionsFor(dominantBlock).map((opt) => {
+              {subtypeChoices.map((opt) => {
                 const selected = (value.subtype ?? autoSubtype) === opt.key;
+                const optBlock = blockOfSubtype(opt.key);
                 return (
                   <Card
                     key={opt.key}
@@ -348,6 +365,12 @@ const PainMechanismWizard = ({
                     <CardContent className="space-y-1 px-3 py-2.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs font-medium">{opt.label[lang]}</span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[9px] ${getMechanismTokenClass(optBlock)}`}
+                        >
+                          {getMechanismLabel(optBlock, lang)}
+                        </Badge>
                         {autoSubtype === opt.key && (
                           <Badge variant="secondary" className="text-[9px]">
                             {COPY.subtypeSuggested[lang]}
@@ -355,14 +378,20 @@ const PainMechanismWizard = ({
                         )}
                       </div>
                       <p className="text-[11px] leading-snug text-muted-foreground">
-                        {isPro ? opt.hint[lang] : opt.hint[lang]}
+                        {opt.hint[lang]}
                       </p>
+                      {selected && (
+                        <p className="text-[11px] leading-snug text-primary">
+                          {opt.implication[lang]}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 );
               })}
             </div>
           )}
+
 
           {isPro && (
             <>
@@ -469,6 +498,14 @@ const PainMechanismWizard = ({
               ? getMechanismTechnical(result.mechanism, lang)
               : getMechanismLay(result.mechanism, lang)}
           </p>
+
+          {getSubtypeImplication(result.subtype, lang) && (
+            <p className="rounded-md border border-primary/30 bg-primary/5 p-2 text-[11px] leading-snug">
+              <span className="font-semibold">{getSubtypeLabel(result.subtype, lang)}: </span>
+              {getSubtypeImplication(result.subtype, lang)}
+            </p>
+          )}
+
 
           {value.criteria.length > 0 && (
             <div className="space-y-1">
