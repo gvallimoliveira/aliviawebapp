@@ -37,6 +37,8 @@ const STEP_MAP: Record<string, string> = {
   redflag_alert: "redflags",
   anamnesis: "anamnesis",
   questionnaire: "questionnaire",
+  // Optional FABQ (yellow flags) step lives alongside the questionnaires.
+  psychosocial: "questionnaire",
   functional_tests: "functional_tests",
   loading: "result",
   low_confidence: "result",

@@ -139,6 +139,23 @@ HOW TO USE IT:
 - The mechanism must NOT enter the "hypothesis" field: it stays inside the "pain_mechanism" object. The hypothesis remains a SHORT diagnostic label (max 20 words).
 ` : "";
 
+    // Psychosocial (yellow flags) — FABQ applied inline or through the patient link.
+    const specialtyResults = Array.isArray(anamnesisData?.specialtyResults) ? anamnesisData.specialtyResults : [];
+    const fabq = specialtyResults.find((r: any) => typeof r?.questionnaireId === "string" && r.questionnaireId.startsWith("fabq"));
+    const psychosocialBlock = fabq ? `
+PSYCHOSOCIAL SCREENING — FEAR-AVOIDANCE (FABQ, already scored — MANDATORY context):
+- Instrument: ${fabq.questionnaireName || fabq.questionnaireId}
+- Total: ${fabq.score?.total}/${fabq.score?.max} (severity: ${fabq.score?.severity})
+${Array.isArray(fabq.score?.subscores) ? fabq.score.subscores.map((s: any) => `- ${s.label_en}: ${s.total}/${s.max}${s.cutoff != null ? ` (cut-off ${s.cutoff}${s.high ? " — ABOVE cut-off" : ""})` : ""}`).join("\n") : ""}
+- Interpretation: ${fabq.score?.interpretation_en || ""}
+
+HOW TO USE IT (Waddell et al. 1993; FABQ-Brasil, Abreu et al. 2008):
+- Above cut-off = relevant yellow flags. Prioritise pain neuroscience education, reassurance and GRADED EXPOSURE to feared movements over aggressive loading or passive therapies.
+- When the work subscale is high, mention occupational context and graded return to duties.
+- Do NOT put the FABQ score inside the "hypothesis" field: it belongs to the clinical reasoning and treatment considerations.
+- Never label the patient as catastrophising in patient-facing text; describe it as fear/insecurity about moving that treatment will address.
+` : "";
+
     const mechanismJsonSpec = rulesMechanism ? `
   "pain_mechanism": {
     "mechanism": "nociceptive" | "neuropathic" | "nociplastic" | "mixed",
@@ -504,6 +521,7 @@ ${lumbarShoulderBlock}
 ${radiculopathyBlock}
 ${multiComplaintBlock}
 ${mechanismBlock}
+${psychosocialBlock}
 
 ${hasPhotophobia || hasVisualAura || hasNausea || headacheCrisisFrequency ? `
 MIGRAINE/CERVICOGENIC HEADACHE SCREENING DATA (MANDATORY — integrate into clinical reasoning):

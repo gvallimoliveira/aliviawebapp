@@ -9,7 +9,8 @@ export type ReassessStepId =
   | "painscore" // EVA
   | "painmechanism" // triagem de mecanismo de dor (opcional)
   | "activity" // nível de atividade + acesso a academia
-  | "questionnaire";
+  | "questionnaire"
+  | "psychosocial"; // FABQ (yellow flags) — opcional, não depende de região
 
 export const ALL_REASSESS_STEPS: ReassessStepId[] = [
   "redflags",
@@ -20,6 +21,7 @@ export const ALL_REASSESS_STEPS: ReassessStepId[] = [
   "painmechanism",
   "activity",
   "questionnaire",
+  "psychosocial",
 ];
 
 export const ANAMNESIS_SUB_IDS: ReassessStepId[] = [

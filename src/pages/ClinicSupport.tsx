@@ -308,6 +308,10 @@ const categories: ToolCategory[] = [
 
 const faqKeys = [
   {
+    q: "Como aplico o FABQ-Brasil (medo-evitação / catastrofização) na clínica?",
+    a: "O FABQ-Brasil é um questionário complementar do domínio Psicossocial (yellow flags): não depende de região corporal, e sim do perfil do paciente. Fica no painel de \"Questionários complementares\" da avaliação manual e da avaliação pelo link institucional. A IA o sugere em dor persistente (> 3 meses), mecanismo nociplástico/sensibilização central, dor de alta intensidade ou relatos de medo de mover, recidiva e afastamento do trabalho — e qualquer terapeuta da equipe também pode aplicá-lo manualmente, na versão completa (16 itens) ou curta (FABQ-PA, 4 itens). Na reavaliação expressa, marque a etapa \"Perfil psicossocial (FABQ)\" e o próprio paciente responde pelo link. As subescalas Atividade Física (0–24, corte ≥ 15) e Trabalho (0–42, corte ≥ 34) ficam no prontuário, saem no PDF e orientam a IA a priorizar educação em dor e exposição gradual em vez de carga agressiva.",
+  },
+  {
     q: "Onde ficam as comorbidades (hipertensão, diabetes, cardiopatia) e a medicação contínua do paciente?",
     a: "São perguntas obrigatórias da anamnese em todos os fluxos — avaliação manual, autoavaliação básica/premium e avaliação pelo link institucional da clínica. Ficam no prontuário do paciente, saem em todos os relatórios em PDF e são enviadas ao raciocínio clínico da IA, que adapta a dosagem dos exercícios e sinaliza precauções (evitar Valsalva e isometrias intensas na hipertensão/cardiopatia, cuidados com pé diabético, liberação médica antes de alta intensidade).",
   },

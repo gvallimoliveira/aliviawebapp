@@ -1074,6 +1074,59 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
 }
 
 // ── Render Joint Mobility / ROM Table ──
+// ── Render Specialty / Psychosocial Questionnaires (FABQ, mMRC, TUG…) ──
+function renderSpecialtyResultsSection(doc: jsPDF, y: number, results: any[], isPt: boolean): number {
+  const items = (results || []).filter((r) => r && r.score && typeof r.score.total === "number");
+  if (items.length === 0) return y;
+
+  y = checkPage(doc, y, 26);
+  y = renderSectionTitle(
+    doc,
+    y,
+    isPt ? "Questionários Complementares" : "Complementary Questionnaires",
+    COLORS.primary,
+  );
+
+  for (const it of items) {
+    const name = it.questionnaireName || it.questionnaireId || "";
+    const interp = isPt ? (it.score.interpretation_pt || "") : (it.score.interpretation_en || "");
+    const subs: any[] = Array.isArray(it.score.subscores) ? it.score.subscores : [];
+
+    y = checkPage(doc, y, 14 + subs.length * 4.5);
+    doc.setFont("Inter", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(`${name}: ${it.score.total}/${it.score.max}`, SECTION_X, y);
+    y += 4;
+
+    for (const sub of subs) {
+      doc.setFont("Inter", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(...(sub.high ? COLORS.red : COLORS.muted));
+      const label = isPt ? sub.label_pt : sub.label_en;
+      const cut = sub.cutoff != null
+        ? ` (${isPt ? "corte" : "cut-off"} ${sub.cutoff}${sub.high ? (isPt ? " — acima" : " — above") : ""})`
+        : "";
+      doc.text(`• ${label}: ${sub.total}/${sub.max}${cut}`, SECTION_X + 2, y);
+      y += 4;
+    }
+
+    if (interp) {
+      doc.setFont("Inter", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(...COLORS.muted);
+      const lines = doc.splitTextToSize(interp, SECTION_TEXT_W);
+      y = checkPage(doc, y, lines.length * 3.6 + 2);
+      doc.text(lines, SECTION_X, y);
+      y += lines.length * 3.6 + 2;
+    }
+    y += 1.5;
+  }
+
+  y += 3;
+  return y;
+}
+
 function renderRomTableSection(
   doc: jsPDF,
   y: number,
@@ -2377,6 +2430,12 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
   // ── Test Results (Questionnaires) — right after anamnesis ──
   if (testResults) {
     y = renderTestResultsSection(doc, y, testResults, isPt, language);
+  }
+
+  // ── Specialty / Psychosocial questionnaires (FABQ etc.) ──
+  const specialtyResults = (anamnesisData as any)?.specialtyResults;
+  if (Array.isArray(specialtyResults) && specialtyResults.length > 0) {
+    y = renderSpecialtyResultsSection(doc, y, specialtyResults, isPt);
   }
 
   // ── Joint Mobility (ROM) — before pain map / VAS ──
