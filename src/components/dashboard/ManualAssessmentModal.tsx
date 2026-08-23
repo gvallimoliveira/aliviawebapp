@@ -29,6 +29,13 @@ import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import DifferentialDiagnosisPanel from "./patient-evolution/DifferentialDiagnosisPanel";
 import { shouldOfferDifferential } from "@/lib/differentialDiagnosis";
+import {
+  detectSacroiliacPain,
+  mergeSacroiliacCluster,
+  getSacroiliacClusterSuggestions,
+  sacroiliacClusterHint,
+  type TestSuggestion,
+} from "@/lib/sacroiliacCluster";
 import { MOCK_MANUAL_CASE } from "@/data/mockManualAssessmentCase";
 import SpecialtyQuestionnairesPanel, { type SpecialtyAppliedResult, type SpecialtyPanelHandle } from "./SpecialtyQuestionnairesPanel";
 import RomTable, { createInitialRomRows, sanitizeRomRows, type RomRow } from "@/components/assessment/RomTable";
