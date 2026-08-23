@@ -1300,6 +1300,31 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     }
   };
 
+  // ===== Cluster de Laslett (sacroilíaca) =====
+  // Sugerido automaticamente quando a avaliação descreve dor/incômodo na
+  // região sacroilíaca (sacro, pelve posterior, glúteo, lombar baixa).
+  const sijLang: "pt" | "en" | "es" = language === "en" ? "en" : language === "es" ? "es" : "pt";
+  const sacroiliacDetected = useMemo(
+    () =>
+      detectSacroiliacPain({
+        painRegionIds: painRegions,
+        texts: [
+          chiefComplaint,
+          history,
+          aggravating,
+          relieving,
+          painType,
+          ...painRegions.flatMap((id) => painRegionRefinements[id] || []),
+        ],
+      }),
+    [painRegions, painRegionRefinements, chiefComplaint, history, aggravating, relieving, painType],
+  );
+
+  const displayedSuggestions: TestSuggestion[] = useMemo(
+    () => mergeSacroiliacCluster(testSuggestions, sacroiliacDetected, sijLang),
+    [testSuggestions, sacroiliacDetected, sijLang],
+  );
+
   const generateTestSuggestions = async () => {
     if (demoMode) { demoUpsellToast(); return; }
     setSuggestingTests(true);
