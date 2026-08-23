@@ -113,3 +113,4 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Strength Dynamometry](mem://features/strength-dynamometry) — Dinamometria: medidas múltiplas, tempo até o pico opcional, assimetria L/R e agonista/antagonista com limite de 10% (verde/vermelho).
 - [Pain Mechanism Roadmap](mem://features/pain-mechanism-roadmap) — Roteiro segmentado de mecanismo de dor + mapa v2, status por passo e flags ENABLE_PAIN_MECHANISM / ENABLE_PAINMAP_V2.
 - [Notification Preferences by Account](mem://features/notification-preferences-by-account) — Toggles de notificação distintos para conta pessoal (paciente) e profissional; toda push nova precisa de `category`.
+- [FABQ / Psychosocial Questionnaires](mem://features/fabq-psychosocial) — FABQ-Brasil como domínio psicossocial (yellow flags): gatilhos, cortes das subescalas, etapa opcional na reavaliação e uso pela IA.
