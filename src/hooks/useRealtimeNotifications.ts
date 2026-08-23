@@ -92,34 +92,11 @@ export function useRealtimeNotifications() {
       if (proId) {
         const asmCh = supabase
           .channel(`rt-asm-${user.id}`)
-          .on(
-            "postgres_changes",
-            {
-              event: "INSERT",
-              schema: "public",
-              table: "assessments",
-              filter: `professional_id=eq.${proId}`,
-            },
-            (payload) => {
-              const row: any = payload.new;
-              if (!row) return;
-              const ad = row.anamnesis_data;
-              if (ad && typeof ad === "object" && (ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder)) return;
+          // Only notify when the patient FINISHES (status -> completed).
+          // We intentionally do NOT notify on INSERT: the assessment row is
+          // created as soon as the patient opens the link, which produced
+          // "nova avaliação recebida" before anything was filled in.
 
-
-
-              const name = row.patient_name || "Paciente";
-              toast("Nova avaliação recebida", {
-                description: `${name} iniciou uma avaliação para você.`,
-                action: {
-                  label: "Ver",
-                  onClick: () => navigate("/dashboard?tab=professional"),
-                },
-                duration: 10000,
-              });
-            },
-          )
-          // Fire when the patient finishes (status -> completed / reviewed_at set)
           .on(
             "postgres_changes",
             {
