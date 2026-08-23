@@ -1089,7 +1089,14 @@ function renderSpecialtyResultsSection(doc: jsPDF, y: number, results: any[], is
 
   for (const it of items) {
     const name = it.questionnaireName || it.questionnaireId || "";
-    const interp = isPt ? (it.score.interpretation_pt || "") : (it.score.interpretation_en || "");
+    // Psychosocial instruments (e.g. FABQ) are reported as raw scores only.
+    // No interpretive text / risk flags in the PDF — that stays in the clinician's record.
+    const isPsychosocial = it.domain === "psychosocial";
+    const interp = isPsychosocial
+      ? ""
+      : isPt
+        ? (it.score.interpretation_pt || "")
+        : (it.score.interpretation_en || "");
     const subs: any[] = Array.isArray(it.score.subscores) ? it.score.subscores : [];
 
     y = checkPage(doc, y, 14 + subs.length * 4.5);
@@ -1102,9 +1109,9 @@ function renderSpecialtyResultsSection(doc: jsPDF, y: number, results: any[], is
     for (const sub of subs) {
       doc.setFont("Inter", "normal");
       doc.setFontSize(7.5);
-      doc.setTextColor(...(sub.high ? COLORS.red : COLORS.muted));
+      doc.setTextColor(...(!isPsychosocial && sub.high ? COLORS.red : COLORS.muted));
       const label = isPt ? sub.label_pt : sub.label_en;
-      const cut = sub.cutoff != null
+      const cut = !isPsychosocial && sub.cutoff != null
         ? ` (${isPt ? "corte" : "cut-off"} ${sub.cutoff}${sub.high ? (isPt ? " — acima" : " — above") : ""})`
         : "";
       doc.text(`• ${label}: ${sub.total}/${sub.max}${cut}`, SECTION_X + 2, y);
@@ -1122,6 +1129,7 @@ function renderSpecialtyResultsSection(doc: jsPDF, y: number, results: any[], is
     }
     y += 1.5;
   }
+
 
   y += 3;
   return y;
