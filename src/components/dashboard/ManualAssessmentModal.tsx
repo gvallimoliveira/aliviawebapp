@@ -2782,6 +2782,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                                   <Badge variant="outline" className="text-[9px] py-0 px-1.5">
                                     {catLabel[s.category]?.[isPt ? "pt" : "en"] || s.category}
                                   </Badge>
+                                  {(s as TestSuggestion).cluster && (
+                                    <Badge variant="outline" className="text-[9px] py-0 px-1.5 border-amber-500/50 text-amber-700 dark:text-amber-400">
+                                      {isPt ? "Laslett" : "Laslett"}
+                                    </Badge>
+                                  )}
                                 </div>
                                 <p className="text-[11px] text-muted-foreground mt-0.5">{s.rationale}</p>
                               </div>
