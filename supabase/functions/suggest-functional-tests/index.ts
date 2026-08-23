@@ -28,6 +28,7 @@ serve(async (req) => {
       redFlags,
       questionnaireResults,
       currentTestsText,    // what the professional has already written
+      sacroiliacSuspected, // Laslett cluster already suggested deterministically in the UI
       language,
       forceRefresh,
     } = await req.json();
@@ -36,7 +37,7 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
-    const cachePayload = { anamnesis, painScore, painType, painRegions, redFlags, questionnaireResults, currentTestsText, language };
+    const cachePayload = { anamnesis, painScore, painType, painRegions, redFlags, questionnaireResults, currentTestsText, sacroiliacSuspected, language };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ suggestions: unknown[] }>(admin, "suggest-functional-tests", cachePayload);
       if (cached) {
@@ -61,6 +62,7 @@ Rules:
 - Be concise: each suggestion = test name + 1 short sentence explaining what it screens for and why it is relevant here.
 - Mix categories when useful (orthopedic special test, mobility, motor control, neurodynamic).
 - Order by clinical priority (most informative first).
+${sacroiliacSuspected ? `- SACROILIAC CONTEXT: the pain is in the sacroiliac/gluteal/low-lumbar region and the Laslett provocation cluster (distraction, thigh thrust, pelvic compression, sacral thrust, Gaenslen) is ALREADY being suggested to the therapist. Do NOT repeat those five tests. Suggest complementary tests that help differentiate SIJ pain from lumbar, hip or neural sources (e.g. active straight leg raise, FABER/FADIR, lumbar extension-rotation, neurodynamic testing, hip abductor control).` : ""}
 - Respond in ${langLabel}.
 - Use the tool to return the structured output. Minimum 2, maximum 6 suggestions.`;
 
