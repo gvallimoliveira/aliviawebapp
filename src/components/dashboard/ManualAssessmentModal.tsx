@@ -110,7 +110,7 @@ const REGION_GROUPS_DEF: { key: string; label_pt: string; label_en: string; matc
   { key: "upper_distal", label_pt: "Membro Superior — Distal (Cotovelo / Antebraço / Mão)", label_en: "Upper Limb — Distal (Elbow / Forearm / Hand)",
     match: (id) => id.includes("elbow") || id.includes("forearm") || id.includes("hand") },
   { key: "pelvis_hip", label_pt: "Pelve e Quadril (incl. Glúteo)", label_en: "Pelvis & Hip (incl. Gluteal)",
-    match: (id) => id.includes("hip") || id.includes("gluteal") },
+    match: (id) => id.includes("hip") || id.includes("gluteal") || id.includes("sij") || id.includes("sacr") },
   { key: "lower_proximal", label_pt: "Membro Inferior — Proximal (Coxa / Joelho)", label_en: "Lower Limb — Proximal (Thigh / Knee)",
     match: (id) => id.includes("thigh") || id.includes("knee") },
   { key: "lower_distal", label_pt: "Membro Inferior — Distal (Perna / Panturrilha / Tornozelo / Pé)", label_en: "Lower Limb — Distal (Leg / Calf / Ankle / Foot)",

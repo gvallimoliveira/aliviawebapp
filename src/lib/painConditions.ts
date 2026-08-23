@@ -61,6 +61,8 @@ const REGION_TO_CLUSTER: Record<string, [string, ("right" | "left")?]> = {
   chest: ["chest"],
   abdomen: ["abdomen"],
   pelvis: ["pelvis"],
+  right_sij: ["pelvis", "right"],
+  left_sij: ["pelvis", "left"],
   right_gluteal: ["pelvis", "right"],
   left_gluteal: ["pelvis", "left"],
   right_shoulder: ["shoulder", "right"],

@@ -60,6 +60,7 @@ const GROUP_SURFACE_WEIGHT: Record<BodyPartGroup, number> = {
 
 /** Ordem importa: padrões mais específicos primeiro. */
 const GROUP_PATTERNS: [RegExp, BodyPartGroup][] = [
+  [/sij|sacr/, "gluteal"],
   [/gluteal/, "gluteal"],
   [/head/, "head"],
   [/cervical|neck/, "cervical"],
