@@ -4,7 +4,7 @@
 // QuestionnaireDefinition shape used for the mandatory musculoskeletal
 // questionnaires.
 
-export type SpecialtyDomain = "cardio" | "geri";
+export type SpecialtyDomain = "cardio" | "geri" | "psychosocial";
 
 export interface SpecQItemOption {
   value: number;
@@ -24,12 +24,26 @@ export interface SpecQItem {
   max?: number;
 }
 
+export interface SpecQSubscore {
+  id: string;
+  label_pt: string;
+  label_en: string;
+  total: number;
+  max: number;
+  /** Clinical cut-off for "high risk", when the instrument defines one. */
+  cutoff?: number;
+  /** true when total >= cutoff. */
+  high?: boolean;
+}
+
 export interface SpecQScoreResult {
   total: number;
   max: number;
   interpretation_pt: string;
   interpretation_en: string;
   severity: "minimal" | "mild" | "moderate" | "severe" | "extreme";
+  /** Optional per-subscale breakdown (e.g. FABQ work / physical activity). */
+  subscores?: SpecQSubscore[];
 }
 
 export interface SpecQuestionnaire {
@@ -374,10 +388,182 @@ const SPPB: SpecQuestionnaire = {
 };
 
 // ---------------------------------------------------------------------------
+// Psicossocial — FABQ-Brasil (Fear-Avoidance Beliefs Questionnaire)
+// Waddell et al., 1993 · versão brasileira: Abreu, Faria, Cardoso &
+// Teixeira-Salmela, Cad. Saúde Pública, 2008.
+// 16 itens, 0–6. Subescalas pontuadas:
+//   Atividade física (FABQ-PA) = itens 2,3,4,5 → 0–24 (corte ≥ 15)
+//   Trabalho (FABQ-W)          = itens 6,7,9,10,11,12,15 → 0–42 (corte ≥ 34)
+// ---------------------------------------------------------------------------
+const FABQ_OPTIONS: SpecQItemOption[] = [
+  { value: 0, label_pt: "0 — Discordo totalmente", label_en: "0 — Completely disagree" },
+  { value: 1, label_pt: "1", label_en: "1" },
+  { value: 2, label_pt: "2", label_en: "2" },
+  { value: 3, label_pt: "3 — Indiferente", label_en: "3 — Unsure" },
+  { value: 4, label_pt: "4", label_en: "4" },
+  { value: 5, label_pt: "5", label_en: "5" },
+  { value: 6, label_pt: "6 — Concordo totalmente", label_en: "6 — Completely agree" },
+];
+
+const FABQ_TEXTS: { id: string; pt: string; en: string }[] = [
+  { id: "q1", pt: "1. Minha dor foi causada por atividade física.", en: "1. My pain was caused by physical activity." },
+  { id: "q2", pt: "2. A atividade física piora minha dor.", en: "2. Physical activity makes my pain worse." },
+  { id: "q3", pt: "3. A atividade física pode prejudicar a região dolorida.", en: "3. Physical activity might harm the painful area." },
+  { id: "q4", pt: "4. Eu não deveria fazer atividades físicas que (possam) piorar minha dor.", en: "4. I should not do physical activities which (might) make my pain worse." },
+  { id: "q5", pt: "5. Eu não posso fazer atividades físicas que (possam) piorar minha dor.", en: "5. I cannot do physical activities which (might) make my pain worse." },
+  { id: "q6", pt: "6. Minha dor foi causada pelo meu trabalho ou por um acidente de trabalho.", en: "6. My pain was caused by my work or by an accident at work." },
+  { id: "q7", pt: "7. Meu trabalho agravou minha dor.", en: "7. My work aggravated my pain." },
+  { id: "q8", pt: "8. Eu tenho um pedido de indenização/benefício por causa da minha dor.", en: "8. I have a claim for compensation for my pain." },
+  { id: "q9", pt: "9. Meu trabalho é muito pesado para mim.", en: "9. My work is too heavy for me." },
+  { id: "q10", pt: "10. Meu trabalho piora ou pioraria minha dor.", en: "10. My work makes or would make my pain worse." },
+  { id: "q11", pt: "11. Meu trabalho pode prejudicar a região dolorida.", en: "11. My work might harm the painful area." },
+  { id: "q12", pt: "12. Eu não deveria fazer meu trabalho normal com a dor que sinto hoje.", en: "12. I should not do my normal work with my present pain." },
+  { id: "q13", pt: "13. Eu não posso fazer meu trabalho normal com a dor que sinto hoje.", en: "13. I cannot do my normal work with my present pain." },
+  { id: "q14", pt: "14. Eu não posso fazer meu trabalho normal até que minha dor seja tratada.", en: "14. I cannot do my normal work till my pain is treated." },
+  { id: "q15", pt: "15. Eu não acho que voltarei ao meu trabalho normal dentro de 3 meses.", en: "15. I do not think that I will be back to my normal work within 3 months." },
+  { id: "q16", pt: "16. Eu não acho que algum dia serei capaz de voltar àquele trabalho.", en: "16. I do not think that I will ever be able to go back to that work." },
+];
+
+const FABQ_PA_IDS = ["q2", "q3", "q4", "q5"];
+const FABQ_W_IDS = ["q6", "q7", "q9", "q10", "q11", "q12", "q15"];
+const FABQ_PA_CUTOFF = 15;
+const FABQ_W_CUTOFF = 34;
+
+const sumIds = (a: Record<string, number>, ids: string[]) =>
+  ids.reduce((acc, id) => acc + (a[id] ?? 0), 0);
+
+const fabqInterpretation = (paHigh: boolean, wHigh: boolean, wModerate: boolean) => {
+  if (paHigh && wHigh) {
+    return {
+      pt: "Crenças de medo-evitação elevadas para atividade física E trabalho — risco alto de cronificação/incapacidade.",
+      en: "High fear-avoidance beliefs for physical activity AND work — high risk of chronicity/disability.",
+      severity: "severe" as const,
+    };
+  }
+  if (paHigh) {
+    return {
+      pt: "Medo-evitação elevado para atividade física — priorizar educação em dor e exposição gradual ao movimento.",
+      en: "High fear-avoidance for physical activity — prioritise pain education and graded exposure.",
+      severity: "moderate" as const,
+    };
+  }
+  if (wHigh) {
+    return {
+      pt: "Medo-evitação elevado relacionado ao trabalho — considerar orientação ocupacional e retorno gradual às tarefas.",
+      en: "High work-related fear-avoidance — consider occupational guidance and graded return to duties.",
+      severity: "moderate" as const,
+    };
+  }
+  if (wModerate) {
+    return {
+      pt: "Medo-evitação intermediário para o trabalho — monitorar; ainda abaixo do corte de risco alto.",
+      en: "Intermediate work-related fear-avoidance — monitor; still below the high-risk cut-off.",
+      severity: "mild" as const,
+    };
+  }
+  return {
+    pt: "Crenças de medo-evitação dentro do esperado — sem sinal de catastrofização relevante.",
+    en: "Fear-avoidance beliefs within expected range — no relevant catastrophising signal.",
+    severity: "minimal" as const,
+  };
+};
+
+const FABQ_TRIGGERS = [
+  "medo de mover", "medo de movimento", "medo de piorar", "medo de cair da coluna", "cinesiofobia", "kinesiophobia",
+  "catastrofização", "catastrofizacao", "catastrophizing", "evitação", "evitacao", "avoidance",
+  "dor crônica", "dor cronica", "chronic pain", "nociplástica", "nociplastica", "nociplastic",
+  "sensibilização central", "sensibilizacao central", "central sensitization",
+  "afastamento", "atestado", "licença médica", "licenca medica", "sick leave",
+  "dor relacionada ao trabalho", "ler", "dort", "work-related",
+  "recidiva", "recorrente", "não melhorou", "nao melhorou", "sem melhora", "failed treatment",
+  "insegurança para se movimentar", "inseguranca para se movimentar", "tenho medo",
+];
+
+const FABQ: SpecQuestionnaire = {
+  id: "fabq_brasil",
+  domain: "psychosocial",
+  name: "FABQ-Brasil",
+  fullName_pt: "Questionário de Crenças de Medo-Evitação (FABQ-Brasil)",
+  fullName_en: "Fear-Avoidance Beliefs Questionnaire (Brazilian version)",
+  description_pt: "16 itens (0–6) que medem crenças de medo-evitação e catastrofização em relação à atividade física e ao trabalho. Subescalas: Atividade Física (0–24, corte ≥ 15) e Trabalho (0–42, corte ≥ 34).",
+  description_en: "16 items (0–6) measuring fear-avoidance beliefs about physical activity and work. Subscales: Physical Activity (0–24, cut-off ≥ 15) and Work (0–42, cut-off ≥ 34).",
+  reference: "Waddell et al., 1993 · Abreu et al., 2008 (FABQ-Brasil)",
+  avgMinutes: 4,
+  triggers: FABQ_TRIGGERS,
+  items: FABQ_TEXTS.map((t) => ({ id: t.id, text_pt: t.pt, text_en: t.en, type: "choice" as const, options: FABQ_OPTIONS })),
+  scoring: (a) => {
+    const pa = sumIds(a, FABQ_PA_IDS);
+    const w = sumIds(a, FABQ_W_IDS);
+    const paHigh = pa >= FABQ_PA_CUTOFF;
+    const wHigh = w >= FABQ_W_CUTOFF;
+    const wModerate = !wHigh && w >= 29;
+    const interp = fabqInterpretation(paHigh, wHigh, wModerate);
+    return {
+      total: pa + w,
+      max: 66,
+      interpretation_pt: interp.pt,
+      interpretation_en: interp.en,
+      severity: interp.severity,
+      subscores: [
+        { id: "pa", label_pt: "Atividade física (FABQ-PA)", label_en: "Physical activity (FABQ-PA)", total: pa, max: 24, cutoff: FABQ_PA_CUTOFF, high: paHigh },
+        { id: "work", label_pt: "Trabalho (FABQ-W)", label_en: "Work (FABQ-W)", total: w, max: 42, cutoff: FABQ_W_CUTOFF, high: wHigh },
+      ],
+    };
+  },
+};
+
+const FABQ_PA: SpecQuestionnaire = {
+  id: "fabq_pa",
+  domain: "psychosocial",
+  name: "FABQ-PA",
+  fullName_pt: "FABQ-Brasil — subescala Atividade Física (versão curta)",
+  fullName_en: "FABQ (Brazilian version) — Physical Activity subscale (short form)",
+  description_pt: "Apenas os 4 itens de atividade física do FABQ-Brasil (0–24). Indicada quando não há vínculo ocupacional relevante. Corte de risco alto ≥ 15.",
+  description_en: "Only the 4 physical activity items of the Brazilian FABQ (0–24). Useful when there is no relevant occupational context. High-risk cut-off ≥ 15.",
+  reference: "Waddell et al., 1993 · Abreu et al., 2008 (FABQ-Brasil)",
+  avgMinutes: 1,
+  triggers: FABQ_TRIGGERS,
+  items: FABQ_TEXTS.filter((t) => FABQ_PA_IDS.includes(t.id)).map((t) => ({
+    id: t.id,
+    text_pt: t.pt.replace(/^\d+\.\s*/, ""),
+    text_en: t.en.replace(/^\d+\.\s*/, ""),
+    type: "choice" as const,
+    options: FABQ_OPTIONS,
+  })),
+  scoring: (a) => {
+    const pa = sumIds(a, FABQ_PA_IDS);
+    const paHigh = pa >= FABQ_PA_CUTOFF;
+    return {
+      total: pa,
+      max: 24,
+      interpretation_pt: paHigh
+        ? "Medo-evitação elevado para atividade física — priorizar educação em dor e exposição gradual ao movimento."
+        : pa >= 11
+        ? "Medo-evitação intermediário para atividade física — monitorar na reavaliação."
+        : "Crenças de medo-evitação dentro do esperado para atividade física.",
+      interpretation_en: paHigh
+        ? "High fear-avoidance for physical activity — prioritise pain education and graded exposure."
+        : pa >= 11
+        ? "Intermediate fear-avoidance for physical activity — monitor at reassessment."
+        : "Fear-avoidance beliefs within expected range for physical activity.",
+      severity: paHigh ? "moderate" : pa >= 11 ? "mild" : "minimal",
+      subscores: [
+        { id: "pa", label_pt: "Atividade física (FABQ-PA)", label_en: "Physical activity (FABQ-PA)", total: pa, max: 24, cutoff: FABQ_PA_CUTOFF, high: paHigh },
+      ],
+    };
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Public catalog
 // ---------------------------------------------------------------------------
 
-export const SPECIALTY_QUESTIONNAIRES: SpecQuestionnaire[] = [mMRC, CAT, Borg, TUG, FES_I, Berg, SPPB];
+export const SPECIALTY_QUESTIONNAIRES: SpecQuestionnaire[] = [mMRC, CAT, Borg, TUG, FES_I, Berg, SPPB, FABQ, FABQ_PA];
+
+/** Psychosocial (yellow flags) instruments — not tied to a body region. */
+export const PSYCHOSOCIAL_QUESTIONNAIRES: SpecQuestionnaire[] = SPECIALTY_QUESTIONNAIRES.filter(
+  (q) => q.domain === "psychosocial",
+);
 
 export const getSpecialtyQuestionnaire = (id: string): SpecQuestionnaire | undefined =>
   SPECIALTY_QUESTIONNAIRES.find((q) => q.id === id);

@@ -15,6 +15,7 @@ import RedFlagAlert from "@/components/assessment/RedFlagAlert";
 import RedFlagContinueScreen from "@/components/assessment/RedFlagContinueScreen";
 import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/AnamnesisForm";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
+import PsychosocialStep, { type PsychosocialStepResult } from "@/components/assessment/PsychosocialStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import ClinicalThinkingSkeleton from "@/components/assessment/ClinicalThinkingSkeleton";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
@@ -51,7 +52,7 @@ import {
 
 
 
-type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
+type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "psychosocial" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
 const ClinicAssessment = () => {
   const { clinicId } = useParams<{ clinicId: string }>();
@@ -70,6 +71,8 @@ const ClinicAssessment = () => {
   );
   const reassessHasAnamnesis = hasAnyAnamnesisSub(enabledSteps);
   const reassessHasQuestionnaire = isStepEnabled(enabledSteps, "questionnaire");
+  // Psychosocial (FABQ) is opt-in only: never part of the default full flow.
+  const reassessHasPsychosocial = enabledSteps ? enabledSteps.has("psychosocial") : false;
   const reassessHasRedflags = isStepEnabled(enabledSteps, "redflags");
 
   const [step, setStep] = useState<ClinicStep>("loading_check");
@@ -501,6 +504,9 @@ const ClinicAssessment = () => {
     }
     if (reassessHasQuestionnaire) {
       setStep("questionnaire");
+    } else if (reassessHasPsychosocial) {
+      setQuestionnaireResults((originalAssessment?.test_results as any) || []);
+      setStep("psychosocial");
     } else {
       const origTests = (originalAssessment?.test_results as any) || [];
       generateDiagnosis(data, origTests, id);
@@ -512,12 +518,39 @@ const ClinicAssessment = () => {
     if (assessmentId && results.length > 0) {
       await updateAssessment(assessmentId, { test_results: results as any });
     }
+    if (reassessHasPsychosocial) {
+      setStep("psychosocial");
+      return;
+    }
     generateDiagnosis(anamnesisData!, results, assessmentId);
   };
 
   const handleQuestionnaireSkip = () => {
     const fallback = reassessmentId ? ((originalAssessment?.test_results as any) || []) : [];
+    setQuestionnaireResults(fallback);
+    if (reassessHasPsychosocial) {
+      setStep("psychosocial");
+      return;
+    }
     generateDiagnosis(anamnesisData!, fallback, assessmentId);
+  };
+
+  // ── Optional psychosocial step (FABQ / yellow flags) ──
+  const finishAfterPsychosocial = async (result?: PsychosocialStepResult) => {
+    const base = (anamnesisData || {}) as any;
+    let data = base as AnamnesisData;
+    if (result) {
+      const prev = Array.isArray(base.specialtyResults) ? base.specialtyResults : [];
+      data = {
+        ...base,
+        specialtyResults: [...prev.filter((r: any) => r.questionnaireId !== result.questionnaireId), result],
+      } as AnamnesisData;
+      setAnamnesisData(data);
+      if (assessmentId) {
+        await updateAssessment(assessmentId, { anamnesis_data: data as any });
+      }
+    }
+    generateDiagnosis(data, questionnaireResults, assessmentId);
   };
 
   const invokeDiagnosisWithRetry = async (bodyData: any, attempts = 3): Promise<any> => {
@@ -727,7 +760,7 @@ const ClinicAssessment = () => {
             enabledStepIds={reassessmentId ? [
               ...(reassessHasRedflags ? ["redflags"] : []),
               ...(reassessHasAnamnesis ? ["anamnesis"] : []),
-              ...(reassessHasQuestionnaire ? ["questionnaire"] : []),
+              ...(reassessHasQuestionnaire || reassessHasPsychosocial ? ["questionnaire"] : []),
               "result",
             ] : undefined}
           />
@@ -933,6 +966,14 @@ const ClinicAssessment = () => {
             onBack={() => reassessHasAnamnesis ? setStep("anamnesis") : setStep("patient_info")}
             onSkip={handleQuestionnaireSkip}
             previousAnswers={previousQuestionnaireAnswers}
+          />
+        )}
+
+        {step === "psychosocial" && (
+          <PsychosocialStep
+            onComplete={(r) => finishAfterPsychosocial(r)}
+            onSkip={() => finishAfterPsychosocial()}
+            onBack={() => (reassessHasQuestionnaire ? setStep("questionnaire") : setStep("anamnesis"))}
           />
         )}
 

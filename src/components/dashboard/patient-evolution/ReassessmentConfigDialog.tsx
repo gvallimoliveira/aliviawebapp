@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Stethoscope, Activity, Dumbbell, Heart, MapPin, Brain, Scissors, RotateCcw, Loader2, ShieldAlert } from "lucide-react";
+import { ClipboardList, Stethoscope, Activity, Dumbbell, Heart, MapPin, Brain, Scissors, RotateCcw, Loader2, ShieldAlert, HeartHandshake } from "lucide-react";
 import {
   ANAMNESIS_SUB_IDS,
   DEFAULT_REASSESS_STEPS,
@@ -34,6 +34,7 @@ const OPTIONS: Option[] = [
   { id: "surgery", group: "anamnesis", icon: Scissors, label: "Histórico de cirurgia", desc: "Cirurgias prévias e detalhes." },
   { id: "activity", group: "anamnesis", icon: Activity, label: "Atividade física", desc: "Nível de atividade e acesso a academia." },
   { id: "questionnaire", group: "other", icon: Dumbbell, label: "Questionários validados", desc: "Reaplica os questionários funcionais com destaque das respostas anteriores." },
+  { id: "psychosocial", group: "other", icon: HeartHandshake, label: "Perfil psicossocial (FABQ)", desc: "Opcional — crenças de medo-evitação e catastrofização (yellow flags). Indicado em dor persistente, recidivas ou mecanismo nociplástico." },
   { id: "redflags", group: "other", icon: ShieldAlert, label: "Triagem de Red Flags", desc: "Opcional — a reavaliação pula esta etapa por padrão." },
 ];
 
@@ -60,11 +61,11 @@ const ReassessmentConfigDialog = ({ open, onOpenChange, onConfirm, loading, pati
 
   const anamnesisCount = ANAMNESIS_SUB_IDS.filter((id) => selected.has(id)).length;
   const hasQuestionnaire = selected.has("questionnaire");
-  const canConfirm = anamnesisCount > 0 || hasQuestionnaire;
+  const canConfirm = anamnesisCount > 0 || hasQuestionnaire || selected.has("psychosocial");
 
   const handleConfirm = () => {
     // Preserve a stable order for the URL
-    const order: ReassessStepId[] = ["redflags", "complaint", "painmap", "surgery", "painscore", "painmechanism", "activity", "questionnaire"];
+    const order: ReassessStepId[] = ["redflags", "complaint", "painmap", "surgery", "painscore", "painmechanism", "activity", "questionnaire", "psychosocial"];
     onConfirm(order.filter((id) => selected.has(id)));
   };
 
