@@ -764,7 +764,8 @@ const ClinicAssessment = () => {
             enabledStepIds={reassessmentId ? [
               ...(reassessHasRedflags ? ["redflags"] : []),
               ...(reassessHasAnamnesis ? ["anamnesis"] : []),
-              ...(reassessHasQuestionnaire || reassessHasPsychosocial ? ["questionnaire"] : []),
+              ...(reassessHasQuestionnaire ? ["questionnaire"] : []),
+              ...(reassessHasPsychosocial ? ["psychosocial"] : []),
               "result",
             ] : undefined}
           />
