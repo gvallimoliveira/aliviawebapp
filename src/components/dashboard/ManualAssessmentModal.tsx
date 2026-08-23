@@ -1364,6 +1364,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             interpretation: isPt ? r.interpretation_pt : r.interpretation_en,
           })),
           currentTestsText: functionalTests,
+          sacroiliacSuspected: sacroiliacDetected,
           language,
         },
       });
