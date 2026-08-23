@@ -29,6 +29,8 @@ const PROFESSIONAL_STEPS: Step[] = [
   { id: "result", label_pt: "Hipótese", label_en: "Hypothesis" },
 ];
 
+const PSYCHOSOCIAL_STEP: Step = { id: "psychosocial", label_pt: "Perfil", label_en: "Profile" };
+
 // Map current assessment step to stepper step
 const STEP_MAP: Record<string, string> = {
   welcome: "redflags",
@@ -56,11 +58,24 @@ interface AssessmentStepperProps {
 const AssessmentStepper = ({ currentStep, mode, enabledStepIds }: AssessmentStepperProps) => {
   const { language } = useLanguage();
   const baseSteps = mode === "premium" ? PREMIUM_STEPS : mode === "professional" ? PROFESSIONAL_STEPS : BASIC_STEPS;
-  const steps = enabledStepIds && enabledStepIds.length > 0
+  let steps = enabledStepIds && enabledStepIds.length > 0
     ? baseSteps.filter((s) => enabledStepIds.includes(s.id))
     : baseSteps;
-  const mappedStep = STEP_MAP[currentStep] || currentStep;
+
+  // FABQ (perfil psicossocial) é uma etapa própria quando explicitamente habilitada.
+  const showPsychosocial = !!enabledStepIds?.includes("psychosocial");
+  if (showPsychosocial) {
+    const resultIdx = steps.findIndex((s) => s.id === "result");
+    const insertAt = resultIdx >= 0 ? resultIdx : steps.length;
+    steps = [...steps.slice(0, insertAt), PSYCHOSOCIAL_STEP, ...steps.slice(insertAt)];
+  }
+
+  const mappedStep =
+    currentStep === "psychosocial" && showPsychosocial
+      ? "psychosocial"
+      : STEP_MAP[currentStep] || currentStep;
   const currentIndex = steps.findIndex((s) => s.id === mappedStep);
+
 
   return (
     <div className="mb-8">
