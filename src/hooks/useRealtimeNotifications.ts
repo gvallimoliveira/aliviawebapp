@@ -111,13 +111,12 @@ export function useRealtimeNotifications() {
               if (!row) return;
               const ad = row.anamnesis_data;
               if (ad && typeof ad === "object" && (ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder)) return;
-              const oldStatus = oldRow?.status;
-              const becameCompleted =
-                oldStatus !== undefined &&
-                oldStatus !== "completed" &&
-                row.status === "completed";
+              // payload.old may be empty (replica identity), so rely on the new
+              // status plus a local dedupe set.
+              if (row.status !== "completed") return;
+              if (notifiedRef.has(row.id)) return;
+              notifiedRef.add(row.id);
 
-              if (!becameCompleted) return;
               const name = row.patient_name || "Paciente";
               toast("Avaliação concluída", {
                 description: `${name} finalizou a avaliação. Toque para revisar.`,
