@@ -657,10 +657,14 @@ const ProfessionalAssessment = () => {
         }
         if (reassessHasQuestionnaire) {
           setStep("questionnaire");
+        } else if (reassessHasPsychosocial) {
+          setQuestionnaireResults((originalAssessment?.test_results as any) || []);
+          setStep("psychosocial");
         } else {
           const origTests = (originalAssessment?.test_results as any) || [];
           generateDiagnosis(data, origTests, id);
         }
+
       }
     } else {
       setStep("redflags");
