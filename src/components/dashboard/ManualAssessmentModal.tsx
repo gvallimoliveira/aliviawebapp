@@ -29,6 +29,13 @@ import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import DifferentialDiagnosisPanel from "./patient-evolution/DifferentialDiagnosisPanel";
 import { shouldOfferDifferential } from "@/lib/differentialDiagnosis";
+import {
+  detectSacroiliacPain,
+  mergeSacroiliacCluster,
+  getSacroiliacClusterSuggestions,
+  sacroiliacClusterHint,
+  type TestSuggestion,
+} from "@/lib/sacroiliacCluster";
 import { MOCK_MANUAL_CASE } from "@/data/mockManualAssessmentCase";
 import SpecialtyQuestionnairesPanel, { type SpecialtyAppliedResult, type SpecialtyPanelHandle } from "./SpecialtyQuestionnairesPanel";
 import RomTable, { createInitialRomRows, sanitizeRomRows, type RomRow } from "@/components/assessment/RomTable";
@@ -1293,6 +1300,31 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     }
   };
 
+  // ===== Cluster de Laslett (sacroilíaca) =====
+  // Sugerido automaticamente quando a avaliação descreve dor/incômodo na
+  // região sacroilíaca (sacro, pelve posterior, glúteo, lombar baixa).
+  const sijLang: "pt" | "en" | "es" = language === "en" ? "en" : language === "es" ? "es" : "pt";
+  const sacroiliacDetected = useMemo(
+    () =>
+      detectSacroiliacPain({
+        painRegionIds: painRegions,
+        texts: [
+          chiefComplaint,
+          history,
+          aggravating,
+          relieving,
+          painType,
+          ...painRegions.flatMap((id) => painRegionRefinements[id] || []),
+        ],
+      }),
+    [painRegions, painRegionRefinements, chiefComplaint, history, aggravating, relieving, painType],
+  );
+
+  const displayedSuggestions: TestSuggestion[] = useMemo(
+    () => mergeSacroiliacCluster(testSuggestions, sacroiliacDetected, sijLang),
+    [testSuggestions, sacroiliacDetected, sijLang],
+  );
+
   const generateTestSuggestions = async () => {
     if (demoMode) { demoUpsellToast(); return; }
     setSuggestingTests(true);
@@ -1332,6 +1364,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             interpretation: isPt ? r.interpretation_pt : r.interpretation_en,
           })),
           currentTestsText: functionalTests,
+          sacroiliacSuspected: sacroiliacDetected,
           language,
         },
       });
@@ -2695,7 +2728,23 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </Button>
                   </div>
 
-                  {testSuggestions.length === 0 && !suggestingTests && (
+                  {sacroiliacDetected && (
+                    <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-2 space-y-1">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+                        <Badge variant="outline" className="text-[9px] py-0 px-1.5 border-amber-500/50">
+                          {isPt ? "Cluster de Laslett" : "Laslett cluster"}
+                        </Badge>
+                        {isPt
+                          ? "Dor referida na região sacroilíaca/glútea"
+                          : "Pain reported in the sacroiliac/gluteal region"}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        {sacroiliacClusterHint(sijLang)}
+                      </p>
+                    </div>
+                  )}
+
+                  {displayedSuggestions.length === 0 && !suggestingTests && (
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
                       {isPt
                         ? "A IA analisa anamnese, regiões de dor, red flags e questionários para sugerir 2-6 testes ortopédicos, de mobilidade, flexibilidade ou controle motor adicionais. Clique em uma sugestão para adicioná-la ao bloco acima."
@@ -2703,9 +2752,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     </p>
                   )}
 
-                  {testSuggestions.length > 0 && (
+                  {displayedSuggestions.length > 0 && (
                     <div className="space-y-1.5">
-                      {testSuggestions.map((s, i) => {
+                      {displayedSuggestions.map((s, i) => {
                         const added = addedSuggestions.has(s.name);
                         const catLabel: Record<string, { pt: string; en: string }> = {
                           orthopedic: { pt: "Ortopédico", en: "Orthopedic" },
@@ -2734,6 +2783,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                                   <Badge variant="outline" className="text-[9px] py-0 px-1.5">
                                     {catLabel[s.category]?.[isPt ? "pt" : "en"] || s.category}
                                   </Badge>
+                                  {(s as TestSuggestion).cluster && (
+                                    <Badge variant="outline" className="text-[9px] py-0 px-1.5 border-amber-500/50 text-amber-700 dark:text-amber-400">
+                                      {isPt ? "Laslett" : "Laslett"}
+                                    </Badge>
+                                  )}
                                 </div>
                                 <p className="text-[11px] text-muted-foreground mt-0.5">{s.rationale}</p>
                               </div>
