@@ -2433,8 +2433,9 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
   }
 
   // ── Specialty / Psychosocial questionnaires (FABQ etc.) ──
-  if (Array.isArray(anamnesisData?.specialtyResults) && anamnesisData.specialtyResults.length > 0) {
-    y = renderSpecialtyResultsSection(doc, y, anamnesisData.specialtyResults, isPt);
+  const specialtyResults = (anamnesisData as any)?.specialtyResults;
+  if (Array.isArray(specialtyResults) && specialtyResults.length > 0) {
+    y = renderSpecialtyResultsSection(doc, y, specialtyResults, isPt);
   }
 
   // ── Joint Mobility (ROM) — before pain map / VAS ──
