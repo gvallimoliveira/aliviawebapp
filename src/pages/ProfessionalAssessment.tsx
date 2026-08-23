@@ -497,12 +497,17 @@ const ProfessionalAssessment = () => {
     }
     if (reassessHasQuestionnaire) {
       setStep("questionnaire");
+    } else if (reassessHasPsychosocial) {
+      // Questionários desligados, mas FABQ marcado: vai direto ao psicossocial.
+      setQuestionnaireResults((originalAssessment?.test_results as any) || []);
+      setStep("psychosocial");
     } else {
       // Skip questionnaire: reuse original test_results if any
       const origTests = (originalAssessment?.test_results as any) || [];
       generateDiagnosis(data, origTests, id);
     }
   };
+
 
   const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
     setQuestionnaireResults(results);
@@ -652,10 +657,14 @@ const ProfessionalAssessment = () => {
         }
         if (reassessHasQuestionnaire) {
           setStep("questionnaire");
+        } else if (reassessHasPsychosocial) {
+          setQuestionnaireResults((originalAssessment?.test_results as any) || []);
+          setStep("psychosocial");
         } else {
           const origTests = (originalAssessment?.test_results as any) || [];
           generateDiagnosis(data, origTests, id);
         }
+
       }
     } else {
       setStep("redflags");
