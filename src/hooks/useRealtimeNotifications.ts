@@ -110,7 +110,7 @@ export function useRealtimeNotifications() {
               filter: `professional_id=eq.${proId}`,
             },
             (payload) => {
-              const oldRow: any = payload.old;
+              
               const row: any = payload.new;
               if (!row) return;
               const ad = row.anamnesis_data;
