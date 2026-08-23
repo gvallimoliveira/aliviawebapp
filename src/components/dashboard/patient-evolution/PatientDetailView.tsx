@@ -43,6 +43,8 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechanismScreening";
 import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
 import MechanismEvolutionCard from "./MechanismEvolutionCard";
+import SpecialtyResultsCard from "./SpecialtyResultsCard";
+
 import HealthGeneralCard from "./HealthGeneralCard";
 import DifferentialDiagnosisPanel from "./DifferentialDiagnosisPanel";
 import { shouldOfferDifferential } from "@/lib/differentialDiagnosis";
@@ -1233,6 +1235,23 @@ export default function PatientDetailView(props: any) {
         </Card>
       )) : <Card className="border-dashed"><CardContent className="py-6 text-center"><ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p><p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p></CardContent></Card>}
       </div>
+
+      {/* Questionários complementares / psicossocial (FABQ) */}
+      <div
+        id="sec-especializados"
+        className="scroll-mt-24"
+        data-rail-hide={
+          (patient?.assessments || []).some((a: any) =>
+            Array.isArray(a?.anamnesis_data?.specialtyResults) && a.anamnesis_data.specialtyResults.length > 0,
+          )
+            ? undefined
+            : "true"
+        }
+      >
+        <SpecialtyResultsCard assessments={patient.assessments} />
+      </div>
+
+
 
       {/* Voice notes (insumos brutos sobem antes das notas escritas) */}
       <div id="sec-notas-voz" className="scroll-mt-24">

@@ -41,6 +41,8 @@ export const PATIENT_SECTIONS: PatientSectionDef[] = [
   { id: "sec-mapa-dor", icon: Map, label: { pt: "Mapa de dor", en: "Pain map", es: "Mapa de dolor" } },
   { id: "sec-regioes-dor", icon: ListChecks, label: { pt: "Comparativo por região", en: "Region comparison", es: "Comparativo por región" } },
   { id: "sec-questionarios", icon: FileText, label: { pt: "Questionários", en: "Questionnaires", es: "Cuestionarios" } },
+  { id: "sec-especializados", icon: Brain, label: { pt: "Questionários complementares", en: "Complementary questionnaires", es: "Cuestionarios complementarios" } },
+
   { id: "sec-notas-voz", icon: Mic, label: { pt: "Notas de voz", en: "Voice notes", es: "Notas de voz" } },
   { id: "sec-notas-sessao", icon: NotebookPen, label: { pt: "Notas de sessão", en: "Session notes", es: "Notas de sesión" } },
   { id: "sec-dinamometria", icon: Dumbbell, label: { pt: "Dinamometria", en: "Dynamometry", es: "Dinamometría" } },
