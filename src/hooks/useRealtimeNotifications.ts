@@ -25,6 +25,10 @@ export function useRealtimeNotifications() {
   const location = useLocation();
   const locRef = useRef(location);
   locRef.current = location;
+  // Assessment ids already toasted as "completed" (avoids repeat toasts on
+  // subsequent updates of the same row).
+  const notifiedRef = useRef<Set<string>>(new Set()).current;
+
 
   useEffect(() => {
     if (!user) return;
@@ -92,34 +96,11 @@ export function useRealtimeNotifications() {
       if (proId) {
         const asmCh = supabase
           .channel(`rt-asm-${user.id}`)
-          .on(
-            "postgres_changes",
-            {
-              event: "INSERT",
-              schema: "public",
-              table: "assessments",
-              filter: `professional_id=eq.${proId}`,
-            },
-            (payload) => {
-              const row: any = payload.new;
-              if (!row) return;
-              const ad = row.anamnesis_data;
-              if (ad && typeof ad === "object" && (ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder)) return;
+          // Only notify when the patient FINISHES (status -> completed).
+          // We intentionally do NOT notify on INSERT: the assessment row is
+          // created as soon as the patient opens the link, which produced
+          // "nova avaliação recebida" before anything was filled in.
 
-
-
-              const name = row.patient_name || "Paciente";
-              toast("Nova avaliação recebida", {
-                description: `${name} iniciou uma avaliação para você.`,
-                action: {
-                  label: "Ver",
-                  onClick: () => navigate("/dashboard?tab=professional"),
-                },
-                duration: 10000,
-              });
-            },
-          )
-          // Fire when the patient finishes (status -> completed / reviewed_at set)
           .on(
             "postgres_changes",
             {
@@ -129,18 +110,17 @@ export function useRealtimeNotifications() {
               filter: `professional_id=eq.${proId}`,
             },
             (payload) => {
-              const oldRow: any = payload.old;
+              
               const row: any = payload.new;
               if (!row) return;
               const ad = row.anamnesis_data;
               if (ad && typeof ad === "object" && (ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder)) return;
-              const oldStatus = oldRow?.status;
-              const becameCompleted =
-                oldStatus !== undefined &&
-                oldStatus !== "completed" &&
-                row.status === "completed";
+              // payload.old may be empty (replica identity), so rely on the new
+              // status plus a local dedupe set.
+              if (row.status !== "completed") return;
+              if (notifiedRef.has(row.id)) return;
+              notifiedRef.add(row.id);
 
-              if (!becameCompleted) return;
               const name = row.patient_name || "Paciente";
               toast("Avaliação concluída", {
                 description: `${name} finalizou a avaliação. Toque para revisar.`,
