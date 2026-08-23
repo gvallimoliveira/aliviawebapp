@@ -24,5 +24,5 @@ Novo domínio `psychosocial` em `src/data/specialtyQuestionnaires.ts`, ao lado d
 
 ## Persistência e saídas
 - Resultado gravado em `anamnesis_data.specialtyResults` (mesmo formato dos demais especializados, com `score.subscores`).
-- PDF: seção "Questionários Complementares" (`renderSpecialtyResultsSection`), antes de ROM/dinamometria; subescala acima do corte sai em vermelho.
+- PDF: seção "Questionários Complementares" (`renderSpecialtyResultsSection`), antes de ROM/dinamometria. Para o domínio `psychosocial` o PDF mostra APENAS a pontuação bruta (total e subescalas) — sem texto interpretativo, sem corte, sem vermelho. Interpretação/semáforo existem só no prontuário do profissional (nunca rotular o paciente como problema psicológico em documento).
 - IA (`generate-diagnosis`): bloco `psychosocialBlock` obriga priorizar educação em dor, reasseguramento e exposição gradual em vez de carga agressiva; score nunca entra no campo `hypothesis`; nunca rotular o paciente como catastrofizador em texto voltado ao paciente.
