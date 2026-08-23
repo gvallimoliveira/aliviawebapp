@@ -43,6 +43,8 @@ import { useClinic } from "@/contexts/ClinicContext";
 import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechanismScreening";
 import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
 import MechanismEvolutionCard from "./MechanismEvolutionCard";
+import SpecialtyResultsCard from "./SpecialtyResultsCard";
+
 import HealthGeneralCard from "./HealthGeneralCard";
 import DifferentialDiagnosisPanel from "./DifferentialDiagnosisPanel";
 import { shouldOfferDifferential } from "@/lib/differentialDiagnosis";
