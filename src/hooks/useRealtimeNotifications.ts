@@ -25,6 +25,10 @@ export function useRealtimeNotifications() {
   const location = useLocation();
   const locRef = useRef(location);
   locRef.current = location;
+  // Assessment ids already toasted as "completed" (avoids repeat toasts on
+  // subsequent updates of the same row).
+  const notifiedRef = useRef<Set<string>>(new Set()).current;
+
 
   useEffect(() => {
     if (!user) return;
