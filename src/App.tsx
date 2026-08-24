@@ -67,6 +67,7 @@ const AcademicLanding = lazy(() => import("./pages/AcademicLanding"));
 const AcademicSupport = lazy(() => import("./pages/AcademicSupport"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const StudioLanding = lazy(() => import("./pages/studio/StudioLanding"));
 
 
 const queryClient = new QueryClient();
@@ -160,6 +161,8 @@ const App = () => {
                   <Route path="/academico/suporte" element={<AcademicSupport />} />
                   <Route path="/privacidade" element={<PrivacyPolicy />} />
                   <Route path="/termos" element={<Terms />} />
+                  {/* Interno: landing mutável de marketing, só no preview + conta admin */}
+                  <Route path="/studio" element={<StudioLanding />} />
 
                   <Route path="*" element={<NotFound />} />
                 </Routes>

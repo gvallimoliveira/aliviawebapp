@@ -34,6 +34,8 @@ const HIDDEN_PATH_PREFIXES = [
   "/complete-profile",
   "/hep/",
   "/feedback/clinic",
+  // Studio interno: tela limpa para captura de conteúdo
+  "/studio",
 ];
 
 const PAGES_WITH_HEADER = [
