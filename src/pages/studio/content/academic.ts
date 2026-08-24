@@ -8,26 +8,34 @@ import stepReport from "@/assets/step-report.jpg";
 const academic: WorldContent = {
   id: "academico",
   label: "Acadêmico",
-  kickers: ["ALIV.IA ACADÊMICO", "PARA ESTUDANTES", "TREINO DE RACIOCÍNIO", "DA TEORIA À CONDUTA"],
+  kickers: ["ALIV.IA ACADÊMICO", "PARA ESTUDANTES", "TREINO DE RACIOCÍNIO", "DA TEORIA À CONDUTA", "ANTES DO ESTÁGIO", "PREÇO DE ESTUDANTE", "CASO REAL, RISCO ZERO"],
   headlines: [
     { strong: "A faculdade ensina o conteúdo. O raciocínio se treina.", rest: "Casos reais, testes validados e feedback estruturado enquanto você ainda está na graduação." },
     { strong: "Chegue no estágio sabendo por onde começar.", rest: "Avaliação, hipótese, diferenciais e conduta em um fluxo que você repete até virar natural." },
     { strong: "Estudar caso é diferente de estudar matéria.", rest: "Trilhas guiadas que partem da queixa e terminam em uma decisão defensável." },
     { strong: "Erre no simulador, não no paciente.", rest: "Ambiente simulado completo com prontuários, testes e relatórios fictícios." },
     { strong: "Evidência que você consegue citar na banca.", rest: "Protocolos com escore PEDro alto, validados contra PubMed e Crossref." },
+    { strong: "Decorar teste especial não é saber quando aplicar.", rest: "Aqui você escolhe o cluster e vê o que a evidência diria sobre a sua escolha." },
+    { strong: "Seu TCC agradece.", rest: "Fontes rastreáveis, com PMID, para embasar trabalho, seminário e apresentação." },
+    { strong: "O estagiário que raciocina é o que é convidado a ficar.", rest: "Treine o fluxo completo antes de estar diante do paciente real." },
   ],
   subs: [
     "O treino de raciocínio clínico que falta na graduação.",
     "Plano acadêmico com preço de estudante.",
     "Você aprende a decidir, não a decorar.",
     "Do primeiro semestre ao primeiro estágio.",
+    "Ambiente simulado, evidência real.",
+    "Repetição deliberada, do jeito que forma clínico.",
   ],
   kinetic: [
     { kicker: "O QUE SE TREINA", word: "Raciocínio", caption: "Da queixa à hipótese, com justificativa." },
     { kicker: "ANTES DO ESTÁGIO", word: "Confiança", caption: "Você já viu esse caso antes — no simulador." },
     { kicker: "SEM ATALHO", word: "Método", caption: "STEPS e D.I.F.I aplicados caso a caso." },
     { kicker: "SEMPRE", word: "Evidência", caption: "Cada conduta com fonte rastreável." },
+    { kicker: "NA BANCA", word: "Repertório", caption: "Argumento com autor, ano e escore." },
+    { kicker: "NO ESTÁGIO", word: "Prontidão", caption: "Você sabe o próximo passo sem travar." },
   ],
+
   metrics: [
     [
       { value: 10, label: "nichos de pesquisa clínica" },
