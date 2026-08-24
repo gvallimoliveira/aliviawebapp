@@ -47,6 +47,11 @@ const academic: WorldContent = {
       { value: 40, suffix: "+", label: "testes funcionais com técnica descrita" },
       { value: 1, suffix: " ambiente", label: "simulado sem risco ao paciente" },
     ],
+    [
+      { value: 6, label: "fases do método STEPS para treinar" },
+      { value: 4, label: "eixos do D.I.F.I em cada caso" },
+      { value: 0, suffix: " risco", label: "ao paciente enquanto você aprende" },
+    ],
   ],
   compare: [
     {
@@ -54,7 +59,13 @@ const academic: WorldContent = {
       before: ["Resumo de PDF na véspera", "Teste especial visto só no vídeo", "Chegar no estágio sem fluxo", "Conduta copiada do colega"],
       after: ["Caso clínico completo do início ao fim", "Cluster validado com critério de positividade", "Fluxo de avaliação decorado pela prática", "Conduta com evidência citável"],
     },
+    {
+      title: "Dois tipos de estudante no estágio",
+      before: ["Trava na primeira pergunta do preceptor", "Escolhe teste por palpite", "Não sabe justificar a conduta"],
+      after: ["Conduz a anamnese com roteiro próprio", "Escolhe cluster com critério de positividade", "Cita autor e escore da recomendação"],
+    },
   ],
+
   journeys: [
     {
       kicker: "TRILHAS",
