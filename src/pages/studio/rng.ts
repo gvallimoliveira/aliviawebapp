@@ -17,9 +17,12 @@ export type Rng = {
   int: (maxExclusive: number) => number;
   pick: <T>(items: readonly T[]) => T;
   pickMany: <T>(items: readonly T[], count: number) => T[];
+  /** Sorteio sem reposição com peso por item (usado pela dívida editorial). */
+  pickWeighted: <T>(items: readonly T[], weightOf: (item: T) => number, count: number) => T[];
   chance: (probability: number) => boolean;
   shuffle: <T>(items: readonly T[]) => T[];
 };
+
 
 export const createRng = (seed: string): Rng => {
   let state = hashString(seed) || 1;
