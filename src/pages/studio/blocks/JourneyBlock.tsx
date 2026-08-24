@@ -1,21 +1,18 @@
 import { motion } from "framer-motion";
+import { imageForTopic } from "../topics";
 import { sectionHeight, surfaceFor, type BlockProps } from "./shared";
 
 /**
- * Journey block — ONE screen, no scroll hijack.
+ * Journey block — ONE screen, no scroll hijack (precisa caber no frame de captura).
  *
- * The old version reused the sticky scrollytelling primitive, which needs a tall
- * spacer (steps * 85vh). Inside the Studio that broke twice: it left a long blank
- * gap while scrolling and the PNG export captured the whole spacer (mostly empty).
- * Studio arts must always fit the recording frame, so the journey renders as a
- * static, fully exportable composition.
- *
- * Coherence rule: only steps that declare their own screenshot show an image.
+ * REGRA TAXATIVA DE COERÊNCIA: a imagem vem do tópico do PRIMEIRO passo que
+ * possui screenshot exato. Nada de screenshot genérico ilustrando a jornada.
  */
-const JourneyBlock = ({ content, rng, treatment, format }: BlockProps) => {
-  const journey = rng.pick(content.journeys);
+const JourneyBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
+  const [journey] = picker.pick(content.journeys, 1, rng, (j) => j.steps.map((s) => s.topic));
   const steps = journey.steps.slice(0, 4);
-  const shot = steps.find((s) => s.image)?.image;
+  const shotStep = steps.find((s) => imageForTopic(s.topic));
+  const shot = imageForTopic(shotStep?.topic);
   const reversed = treatment === 1;
   const withImage = Boolean(shot) && treatment !== 2;
 
@@ -40,11 +37,11 @@ const JourneyBlock = ({ content, rng, treatment, format }: BlockProps) => {
           </h2>
 
           <div className={withImage ? "grid items-center gap-8 md:grid-cols-2" : ""}>
-            {withImage && (
+            {withImage && shot && (
               <div className={reversed ? "md:order-2" : ""}>
                 <img
                   src={shot}
-                  alt={journey.heading}
+                  alt={shotStep?.title ?? journey.heading}
                   loading="lazy"
                   className="w-full rounded-3xl border border-border object-cover shadow-[0_24px_60px_-30px_hsl(var(--foreground)/0.35)]"
                 />
