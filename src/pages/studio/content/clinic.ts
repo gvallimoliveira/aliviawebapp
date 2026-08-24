@@ -83,20 +83,72 @@ const clinic: WorldContent = {
     { tag: "AGENDA", title: "Encaixe por arrastar e soltar", description: "Grade da equipe com importação de agenda por imagem.", image: stepTreatment },
     { tag: "NPS", title: "Satisfação medida de verdade", description: "Pesquisa pública com painel de NPS e retorno direto ao chat.", image: stepQuestionnaires },
     { tag: "GOVERNANÇA", title: "Ressalva com autor e justificativa", description: "Hipóteses sob ressalva só são liberadas por um terapeuta da casa.", image: stepDiagnosis },
+    { tag: "DOCUMENTOS", title: "Exames do paciente no mesmo lugar", description: "Até 20 MB por paciente, acessíveis a quem tem permissão.", image: stepAnamnesis },
+    { tag: "ARQUIVO", title: "Arquive sem perder histórico", description: "A recepção organiza a lista e nada é apagado do prontuário.", image: stepReport },
+    { tag: "PERMISSÕES", title: "Cada função vê o que precisa", description: "Gestão, terapeuta e recepção com acessos distintos.", image: stepQuestionnaires },
   ],
   quotes: [
     '"Padrão clínico é o ativo mais valioso de uma clínica."',
     '"O paciente não deveria recontar a história a cada troca de terapeuta."',
     '"Documentação boa é gestão de risco."',
+    '"Clínica que não padroniza avaliação não escala — só acumula."',
+    '"Sua marca vale mais quando o processo sustenta a promessa."',
   ],
   marquee: [
     ["Prontuário compartilhado", "White label", "Agenda da equipe", "NPS", "Permissões por função"],
     ["Padrão de avaliação", "Relatório de alta", "Programa domiciliar", "Documentos do paciente", "Auditoria clínica"],
+    ["Link institucional", "Onboarding de terapeuta", "Indicadores de adesão", "Satisfação do paciente"],
   ],
   closings: [
     { title: "Sua clínica em um padrão só", sub: "15 dias de teste, sem cartão de crédito.", cta: "Ver o Aliv.iA Clínica" },
     { title: "Padronize sem burocratizar", sub: "Método para a equipe, liberdade para o clínico.", cta: "Quero testar na minha clínica" },
+    { title: "Teste com a sua equipe inteira", sub: "15 dias, sem cartão, com dados reais da sua rotina.", cta: "Começar o teste da clínica" },
   ],
+  sales: {
+    audience: "donos e gestores de clínica de fisioterapia",
+    proofs: [
+      "Toda a equipe avaliando pelo mesmo método clínico",
+      "Prontuário compartilhado com três níveis de permissão",
+      "Relatórios white label com logo e cores da clínica",
+      "Agenda da equipe com encaixe por arrastar e soltar",
+      "NPS com pesquisa pública e painel de satisfação",
+      "Tratamentos inclusos, sem custo por paciente no modo clínica",
+      "Link institucional para a recepção enviar antes da consulta",
+      "Histórico preservado mesmo com troca de terapeuta",
+    ],
+    objections: [
+      "Padronizar não engessa: o clínico continua sobrescrevendo a hipótese quando discorda.",
+      "Sem cartão de crédito para testar — você decide depois de ver funcionando.",
+      "A migração começa pelos pacientes novos; o histórico antigo entra no seu ritmo.",
+      "A recepção usa o mesmo sistema, sem treinamento longo.",
+    ],
+    offers: [
+      "15 dias de teste sem cartão de crédito.",
+      "Planos por tamanho de equipe, a partir de R$ 197/mês (ou R$ 112/mês no anual).",
+      "Tratamentos gerados no modo clínica não têm custo adicional.",
+    ],
+    ctas: [
+      "Link na bio para começar os 15 dias de teste",
+      "Comenta CLÍNICA que eu te mando os planos",
+      "Manda no direct quantos terapeutas você tem",
+      "Salva e mostra para o seu sócio",
+    ],
+    hashtags: [
+      "clinicadefisioterapia",
+      "gestaoclinica",
+      "fisioterapia",
+      "gestaodeclinicas",
+      "empreendedorismonasaude",
+      "prontuarioeletronico",
+      "equipemultidisciplinar",
+      "qualidadeassistencial",
+      "npsnasaude",
+      "aliviaapp",
+      "raciocinioclinico",
+      "marketingparaclinicas",
+    ],
+  },
 };
+
 
 export default clinic;
