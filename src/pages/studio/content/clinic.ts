@@ -1,8 +1,8 @@
 import type { WorldContent } from "./types";
 import stepAnamnesis from "@/assets/step-anamnesis.jpg";
 import stepReport from "@/assets/step-report.jpg";
-import stepQuestionnaires from "@/assets/step-questionnaires.jpg";
 import stepTreatment from "@/assets/step-treatment.jpg";
+import stepDiary from "@/assets/step-diary.jpg";
 import stepDiagnosis from "@/assets/step-diagnosis.jpg";
 
 const clinic: WorldContent = {
@@ -73,19 +73,22 @@ const clinic: WorldContent = {
       steps: [
         { title: "Link institucional", description: "Recepção envia, paciente responde antes de chegar.", image: stepAnamnesis },
         { title: "Avaliação padronizada", description: "Mesmo método, mesma triagem de segurança, em toda a equipe.", image: stepDiagnosis },
-        { title: "Evolução compartilhada", description: "Sessões, observações e programa domiciliar visíveis ao time.", image: stepTreatment },
+        { title: "Evolução compartilhada", description: "Sessões, observações e evolução visíveis para todo o time.", image: stepDiary },
         { title: "Relatório de alta", description: "Comparativo de evolução com a marca da clínica.", image: stepReport },
       ],
     },
   ],
   features: [
-    { tag: "WHITE LABEL", title: "A clínica no centro da entrega", description: "Logo e cores próprias nos relatórios e nas telas do paciente.", image: stepReport },
-    { tag: "AGENDA", title: "Encaixe por arrastar e soltar", description: "Grade da equipe com importação de agenda por imagem.", image: stepTreatment },
-    { tag: "NPS", title: "Satisfação medida de verdade", description: "Pesquisa pública com painel de NPS e retorno direto ao chat.", image: stepQuestionnaires },
+    { tag: "WHITE LABEL", title: "A clínica no centro da entrega", description: "Logo e cores próprias no relatório entregue ao paciente.", image: stepReport },
+    { tag: "AGENDA", title: "Encaixe por arrastar e soltar", description: "Grade da equipe com importação de agenda por imagem." },
+    { tag: "NPS", title: "Satisfação medida de verdade", description: "Pesquisa pública com painel de NPS e retorno direto ao chat." },
     { tag: "GOVERNANÇA", title: "Ressalva com autor e justificativa", description: "Hipóteses sob ressalva só são liberadas por um terapeuta da casa.", image: stepDiagnosis },
-    { tag: "DOCUMENTOS", title: "Exames do paciente no mesmo lugar", description: "Até 20 MB por paciente, acessíveis a quem tem permissão.", image: stepAnamnesis },
-    { tag: "ARQUIVO", title: "Arquive sem perder histórico", description: "A recepção organiza a lista e nada é apagado do prontuário.", image: stepReport },
-    { tag: "PERMISSÕES", title: "Cada função vê o que precisa", description: "Gestão, terapeuta e recepção com acessos distintos.", image: stepQuestionnaires },
+    { tag: "AVALIAÇÃO PADRÃO", title: "Mesma anamnese para toda a equipe", description: "História, saúde geral e red flags em campos comparáveis.", image: stepAnamnesis },
+    { tag: "CONDUTA", title: "Plano por fases com critério de progressão", description: "O mesmo raciocínio de tratamento em qualquer terapeuta da casa.", image: stepTreatment },
+    { tag: "DOCUMENTOS", title: "Exames do paciente no mesmo lugar", description: "Até 20 MB por paciente, acessíveis a quem tem permissão." },
+    { tag: "ARQUIVO", title: "Arquive sem perder histórico", description: "A recepção organiza a lista e nada é apagado do prontuário." },
+    { tag: "PERMISSÕES", title: "Cada função vê o que precisa", description: "Gestão, terapeuta e recepção com acessos distintos." },
+    { tag: "EVOLUÇÃO", title: "Do primeiro atendimento à alta", description: "Diário de dor e comparativo de evolução no mesmo prontuário.", image: stepDiary },
   ],
   quotes: [
     '"Padrão clínico é o ativo mais valioso de uma clínica."',
