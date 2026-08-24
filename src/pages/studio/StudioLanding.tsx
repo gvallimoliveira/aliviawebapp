@@ -216,7 +216,15 @@ const StudioLanding = () => {
           onOpen={(fav) => {
             update({ world: fav.world, format: fav.format, seed: fav.seed, from: null });
             setFavoritesOpen(false);
+            if (fav.blockIndex !== undefined) {
+              window.setTimeout(() => {
+                document
+                  .getElementById(`studio-block-${fav.blockIndex}`)
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 120);
+            }
           }}
+
           onRemove={remove}
           onClose={() => setFavoritesOpen(false)}
         />
