@@ -37,11 +37,15 @@ const HeroBlock = ({ content, rng, treatment, format }: BlockProps) => {
           <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-primary md:text-xs">{kicker}</p>
 
           <h1 className="text-3xl font-bold leading-[1.08] tracking-tight text-foreground md:text-5xl lg:text-6xl">
-            {headline.strong}{" "}
-            <span className="text-muted-foreground">{headline.rest}</span>
+            {headline.strong}
           </h1>
 
-          <p className="text-base text-muted-foreground md:text-lg">{sub}</p>
+          <p className="max-w-xl text-base leading-relaxed text-muted-foreground md:text-xl">
+            {headline.rest}
+          </p>
+
+          <p className="text-sm font-medium text-primary md:text-base">{sub}</p>
+
 
           <div className={`mt-2 h-px w-24 bg-primary/50 ${align === "center" ? "mx-auto" : ""}`} />
         </motion.div>
