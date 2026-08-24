@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ScrollProgress from "@/components/scroll/ScrollProgress";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,8 +11,12 @@ import { exportTextFile } from "./exportText";
 import { exportNodeAsPng } from "./exportImage";
 import { toast } from "sonner";
 import { WORLDS, isWorldId, type WorldId } from "./content";
+import { buildCoverage, readExposureLog, recordExposure, type ExposureLog } from "./coverage";
+import { createPicker } from "./picker";
+import { isTopicId, type TopicId } from "./topics";
 import StudioControls from "./StudioControls";
 import StudioFavorites from "./StudioFavorites";
+import StudioCoveragePanel from "./StudioCoveragePanel";
 import StudioCapture from "./StudioCapture";
 import { useStudioFavorites } from "./useStudioFavorites";
 import HeroBlock from "./blocks/HeroBlock";
@@ -26,6 +30,7 @@ import QuoteBlock from "./blocks/QuoteBlock";
 import ClosingBlock from "./blocks/ClosingBlock";
 import StudioMotion from "./blocks/StudioMotion";
 import type { BlockProps, StudioFormat } from "./blocks/shared";
+
 
 
 const BLOCKS = {
@@ -65,8 +70,10 @@ const StudioLanding = () => {
   const [params, setParams] = useSearchParams();
   const [hidden, setHidden] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [coverageOpen, setCoverageOpen] = useState(false);
   const [batchProgress, setBatchProgress] = useState<string | null>(null);
   const { favorites, isFavorite, toggle, isBlockFavorite, toggleBlock, remove } = useStudioFavorites();
+
 
   const world: WorldId = isWorldId(params.get("world")) ? (params.get("world") as WorldId) : "pro";
   const formatParam = params.get("format");
@@ -95,6 +102,45 @@ const StudioLanding = () => {
   /** Linhagem: `from=<mundo>:<seed>` faz a composição herdar parte de um favorito. */
   const from = params.get("from");
 
+  /** `force=<topico>` prioriza uma funcionalidade específica nesta versão. */
+  const forcedParam = params.get("force");
+  const forced: TopicId | undefined = isTopicId(forcedParam) ? forcedParam : undefined;
+
+  const versionKey = `${world}:${seed}:${from ?? ""}:${forced ?? ""}`;
+
+  /**
+   * ESTUDO DE COBERTURA ANTES DA DECISÃO CRIATIVA.
+   *
+   * O retrato de exposições é congelado por versão (guardado em ref, não em
+   * state) para que registrar o que foi ao ar não re-renderize a página e troque
+   * o conteúdo debaixo do usuário. Na versão seguinte o retrato já vem atualizado.
+   */
+  const exposureLogRef = useRef<ExposureLog>(readExposureLog());
+  const coverage = useMemo(
+    () => buildCoverage(world, content, exposureLogRef.current),
+    [world, content, versionKey],
+  );
+
+  const exposedRef = useRef<{ key: string; topics: Set<TopicId> }>({ key: versionKey, topics: new Set() });
+  if (exposedRef.current.key !== versionKey) exposedRef.current = { key: versionKey, topics: new Set() };
+
+  const picker = useMemo(
+    () =>
+      createPicker(
+        coverage,
+        (topics) => topics.forEach((t) => exposedRef.current.topics.add(t)),
+        forced,
+      ),
+    [coverage, forced],
+  );
+
+  /** Registra o que esta versão efetivamente colocou no ar. */
+  useEffect(() => {
+    const topics = [...exposedRef.current.topics];
+    if (topics.length === 0) return;
+    exposureLogRef.current = recordExposure(world, topics);
+  }, [versionKey, world]);
+
   const blocks = useMemo(() => {
     const inspiration = (() => {
       if (!from) return undefined;
@@ -104,6 +150,7 @@ const StudioLanding = () => {
     })();
     return composePage(createRng(`${world}:${seed}:layout`), inspiration);
   }, [world, seed, from]);
+
 
   const update = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
@@ -235,7 +282,7 @@ const StudioLanding = () => {
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
                   <StudioMotion kind={motion}>
-                    <Block content={content} rng={rng} treatment={treatment} format={format} />
+                    <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} />
                   </StudioMotion>
                 </StudioCapture>
               );
@@ -269,10 +316,13 @@ const StudioLanding = () => {
           onEvolveFavorite={evolveFavorite}
           onToggleFavorite={() => toggle(world, format, seed)}
           onOpenFavorites={() => setFavoritesOpen(true)}
+          onOpenCoverage={() => setCoverageOpen(true)}
+          forcedTopicLabel={forced ? coverage.byId[forced]?.label : undefined}
           onHide={() => setHidden(true)}
           onExportAllPng={exportAllPng}
           onExportAllCaptions={exportAllCaptions}
           batchProgress={batchProgress}
+
         />
       )}
 

@@ -1,8 +1,15 @@
+import type { TopicId } from "../topics";
+
 export type WorldId = "pro" | "academico" | "paciente" | "clinica";
 
 export type StudioMetric = { value: number; prefix?: string; suffix?: string; label: string };
 
-export type StudioStep = { title: string; description: string; image?: string };
+/**
+ * REGRA TAXATIVA: nenhum item de copy declara imagem. A imagem vem do `topic`
+ * (ver `topics.ts` / `imageForTopic`). Assunto sem screenshot exato não recebe
+ * imagem nenhuma — tipografia resolve. Zero fallback, zero imagem genérica.
+ */
+export type StudioStep = { title: string; description: string; topic: TopicId };
 
 /** Insumos de copy de vendas usados para montar a legenda pronta de cada seção. */
 export type WorldSales = {
@@ -28,14 +35,13 @@ export type WorldContent = {
   /** Headline em duas partes: destaque + complemento */
   headlines: { strong: string; rest: string }[];
   subs: string[];
-  kinetic: { kicker: string; word: string; caption: string }[];
+  kinetic: { kicker: string; word: string; caption: string; topic?: TopicId }[];
   metrics: StudioMetric[][];
-  compare: { title: string; before: string[]; after: string[] }[];
+  compare: { title: string; before: string[]; after: string[]; topics?: TopicId[] }[];
   journeys: { kicker: string; heading: string; steps: StudioStep[] }[];
-  features: { tag: string; title: string; description: string; image?: string }[];
-  quotes: string[];
+  features: { tag: string; title: string; description: string; topic: TopicId }[];
+  quotes: { text: string; topic?: TopicId }[];
   marquee: string[][];
   closings: { title: string; sub: string; cta: string }[];
   sales: WorldSales;
 };
-

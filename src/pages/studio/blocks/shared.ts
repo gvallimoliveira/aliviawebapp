@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Rng } from "../rng";
 import type { WorldContent } from "../content";
+import type { StudioPicker } from "../picker";
 
 export type StudioFormat = "9x16" | "1x1" | "free";
 
@@ -10,7 +11,14 @@ export type BlockProps = {
   /** Visual treatment index for this block instance */
   treatment: number;
   format: StudioFormat;
+  /**
+   * Seletor com consciência de cobertura. Blocos que escolhem copy de
+   * funcionalidade DEVEM usá-lo — sortear direto do array ignora o estudo
+   * editorial e desequilibra a divulgação.
+   */
+  picker: StudioPicker;
 };
+
 
 /** Surface treatments — all inside the brand palette. */
 export const SURFACES = [

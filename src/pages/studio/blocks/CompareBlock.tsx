@@ -3,9 +3,10 @@ import { Check, X } from "lucide-react";
 import { sectionHeight, surfaceFor, type BlockProps } from "./shared";
 
 /** Before / after columns. Treatments: 0 side-by-side cards, 1 stacked bands. */
-const CompareBlock = ({ content, rng, treatment, format }: BlockProps) => {
-  const compare = rng.pick(content.compare);
+const CompareBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
+  const [compare] = picker.pick(content.compare, 1, rng, (c) => c.topics ?? []);
   const stacked = treatment % 2 === 1;
+
 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center ${surfaceFor(treatment + 2)}`}>

@@ -1,18 +1,15 @@
 import type { WorldContent } from "./types";
-import stepAnamnesis from "@/assets/step-anamnesis.jpg";
-import stepTests from "@/assets/step-tests.jpg";
-import stepDiagnosis from "@/assets/step-diagnosis.jpg";
-import stepQuestionnaires from "@/assets/step-questionnaires.jpg";
-import stepReport from "@/assets/step-report.jpg";
-import stepPainMap from "@/assets/step-painmap.jpg";
-import stepTreatment from "@/assets/step-treatment.jpg";
-import stepDiary from "@/assets/step-diary.jpg";
 
-
+/**
+ * Copy do mundo Acadêmico.
+ * REGRA: cada item declara `topic`; imagem só vem do tópico (nunca genérica).
+ * REGRA DE VERDADE: nunca afirmar "sem paciente real" — o estudante usa o fluxo
+ * com pacientes reais (estágio, familiares), sempre com conduta final do supervisor.
+ */
 const academic: WorldContent = {
   id: "academico",
   label: "Acadêmico",
-  kickers: ["ALIV.IA ACADÊMICO", "PARA ESTUDANTES", "TREINO DE RACIOCÍNIO", "DA TEORIA À CONDUTA", "ANTES DO ESTÁGIO", "PREÇO DE ESTUDANTE", "CASO REAL, RISCO ZERO"],
+  kickers: ["ALIV.IA ACADÊMICO", "PARA ESTUDANTES", "TREINO DE RACIOCÍNIO", "DA TEORIA À CONDUTA", "ANTES DO ESTÁGIO", "PREÇO DE ESTUDANTE", "CASO REAL, COM SUPERVISÃO"],
   headlines: [
     { strong: "A faculdade ensina o conteúdo. O raciocínio se treina.", rest: "Casos reais, testes validados e feedback estruturado enquanto você ainda está na graduação." },
     { strong: "Chegue no estágio sabendo por onde começar.", rest: "Avaliação, hipótese, diferenciais e conduta em um fluxo que você repete até virar natural." },
@@ -22,6 +19,7 @@ const academic: WorldContent = {
     { strong: "Decorar teste especial não é saber quando aplicar.", rest: "Aqui você escolhe o cluster e vê o que a evidência diria sobre a sua escolha." },
     { strong: "Seu TCC agradece.", rest: "Fontes rastreáveis, com PMID, para embasar trabalho, seminário e apresentação." },
     { strong: "O estagiário que raciocina é o que é convidado a ficar.", rest: "Treine o fluxo completo antes de estar diante do paciente real." },
+    { strong: "Interpretar escore é habilidade clínica, não conta de matemática.", rest: "ODI, HOOS, FABQ e outros com ponto de corte e significado explicados caso a caso." },
   ],
   subs: [
     "O treino de raciocínio clínico que falta na graduação.",
@@ -32,12 +30,14 @@ const academic: WorldContent = {
     "Repetição deliberada, do jeito que forma clínico.",
   ],
   kinetic: [
-    { kicker: "O QUE SE TREINA", word: "Raciocínio", caption: "Da queixa à hipótese, com justificativa." },
-    { kicker: "NO ESTÁGIO", word: "Confiança", caption: "Você já conduziu esse fluxo antes — dezenas de vezes." },
-    { kicker: "SEM ATALHO", word: "Método", caption: "STEPS e D.I.F.I aplicados caso a caso." },
-    { kicker: "SEMPRE", word: "Evidência", caption: "Cada conduta com fonte rastreável." },
-    { kicker: "NA BANCA", word: "Repertório", caption: "Argumento com autor, ano e escore." },
-    { kicker: "NO ESTÁGIO", word: "Prontidão", caption: "Você sabe o próximo passo sem travar." },
+    { kicker: "O QUE SE TREINA", word: "Raciocínio", caption: "Da queixa à hipótese, com justificativa.", topic: "hypothesis" },
+    { kicker: "NO ESTÁGIO", word: "Confiança", caption: "Você já conduziu esse fluxo antes — dezenas de vezes.", topic: "academic-tracks" },
+    { kicker: "SEM ATALHO", word: "Método", caption: "STEPS e D.I.F.I aplicados caso a caso.", topic: "steps-method" },
+    { kicker: "SEMPRE", word: "Evidência", caption: "Cada conduta com fonte rastreável.", topic: "evidence-library" },
+    { kicker: "NA BANCA", word: "Repertório", caption: "Argumento com autor, ano e escore.", topic: "evidence-library" },
+    { kicker: "NO ESTÁGIO", word: "Prontidão", caption: "Você sabe o próximo passo sem travar.", topic: "anamnesis" },
+    { kicker: "NO TREINO", word: "Repetição", caption: "Ambiente simulado para errar antes de acertar.", topic: "simulated-env" },
+    { kicker: "NA DÚVIDA", word: "Diferenciais", caption: "O que mais explicaria esse quadro?", topic: "differential" },
   ],
 
   metrics: [
@@ -56,17 +56,30 @@ const academic: WorldContent = {
       { value: 4, label: "eixos do D.I.F.I em cada caso" },
       { value: 1, suffix: " prontuário", label: "por paciente do estágio ou da família" },
     ],
+    [
+      { value: 3, label: "mecanismos de dor para diferenciar" },
+      { value: 2, label: "escores de corte do FABQ-Brasil" },
+      { value: 1, suffix: " agente", label: "para discutir caso na véspera da prova" },
+    ],
   ],
   compare: [
     {
       title: "Duas formas de se preparar",
+      topics: ["academic-tracks", "functional-tests", "anamnesis", "evidence-library"],
       before: ["Resumo de PDF na véspera", "Teste especial visto só no vídeo", "Chegar no estágio sem fluxo", "Conduta copiada do colega"],
       after: ["Caso clínico completo do início ao fim", "Cluster validado com critério de positividade", "Fluxo de avaliação decorado pela prática", "Conduta com evidência citável"],
     },
     {
       title: "Dois tipos de estudante no estágio",
+      topics: ["anamnesis", "functional-tests", "evidence-library"],
       before: ["Trava na primeira pergunta do preceptor", "Escolhe teste por palpite", "Não sabe justificar a conduta"],
       after: ["Conduz a anamnese com roteiro próprio", "Escolhe cluster com critério de positividade", "Cita autor e escore da recomendação"],
+    },
+    {
+      title: "Duas formas de documentar um caso",
+      topics: ["report", "questionnaires", "pain-diary"],
+      before: ["Relato solto no caderno", "Escore anotado sem interpretação", "Evolução sem registro comparável"],
+      after: ["Relatório estruturado para o preceptor", "Escore com ponto de corte e significado", "Evolução com diário de dor e comparação"],
     },
   ],
 
@@ -75,34 +88,58 @@ const academic: WorldContent = {
       kicker: "TRILHAS",
       heading: "Como um caso é estudado aqui",
       steps: [
-        { title: "Caso apresentado", description: "Queixa, história e contexto — como chega no consultório.", image: stepAnamnesis },
-        { title: "Escolha dos testes", description: "Você seleciona, o sistema mostra o que a evidência recomenda.", image: stepTests },
-        { title: "Hipótese e diferenciais", description: "Declare a confiança e justifique. O sistema confronta.", image: stepDiagnosis },
-        { title: "Conduta e relatório", description: "Plano por fases e documento estruturado do seu raciocínio.", image: stepReport },
+        { title: "Caso apresentado", description: "Queixa, história e contexto — como chega no consultório.", topic: "anamnesis" },
+        { title: "Escolha dos testes", description: "Você seleciona, o sistema mostra o que a evidência recomenda.", topic: "functional-tests" },
+        { title: "Hipótese e diferenciais", description: "Declare a confiança e justifique. O sistema confronta.", topic: "hypothesis" },
+        { title: "Conduta e relatório", description: "Plano por fases e documento estruturado do seu raciocínio.", topic: "report" },
+      ],
+    },
+    {
+      kicker: "DO TREINO AO ESTÁGIO",
+      heading: "Duas frentes, um método",
+      steps: [
+        { title: "Ambiente simulado", description: "Casos fictícios para repetir o fluxo sem pressa.", topic: "simulated-env" },
+        { title: "Paciente do estágio", description: "Mesmo fluxo, prontuário real, conduta final do supervisor.", topic: "academic-tracks" },
+        { title: "Evidência citável", description: "Fontes com PEDro ≥ 7 e PMID para levar à discussão.", topic: "evidence-library" },
+        { title: "Acompanhamento", description: "Diário de dor e comparação semana a semana no mesmo caso.", topic: "pain-diary" },
       ],
     },
   ],
   features: [
-    { tag: "HIPÓTESE DIAGNÓSTICA", title: "Hipótese com nível de confiança e justificativa", description: "Você declara o raciocínio; o sistema confronta com resumo, mecanismo e diferenciais.", image: stepDiagnosis },
-    { tag: "ANAMNESE GUIADA", title: "Roteiro de perguntas que você repete até virar seu", description: "Queixa principal, história, saúde geral e red flags em campos comparáveis.", image: stepAnamnesis },
-    { tag: "TESTES FUNCIONAIS", title: "Cluster certo, no momento certo", description: "Técnica descrita e critério de positividade — Laslett, neurodinâmica, ombro.", image: stepTests },
-    { tag: "QUESTIONÁRIOS", title: "Aprenda a interpretar escores", description: "ODI, HOOS, FABQ e outros com ponto de corte e significado clínico.", image: stepQuestionnaires },
-    { tag: "MAPA DE DOR", title: "Topografia e mecanismo da dor", description: "Marcação corporal ligada à triagem nociceptiva, neuropática e nociplástica.", image: stepPainMap },
-    { tag: "CONDUTA POR FASES", title: "Do diagnóstico ao plano de tratamento", description: "Progressão em fases com critérios objetivos para avançar.", image: stepTreatment },
-    { tag: "RELATÓRIO", title: "Documente como se fosse perícia", description: "PDF acadêmico do seu raciocínio para levar ao preceptor.", image: stepReport },
-    { tag: "EVOLUÇÃO", title: "Acompanhe o caso do estágio semana a semana", description: "Diário de dor e comparação antes/depois no mesmo prontuário.", image: stepDiary },
+    { tag: "HIPÓTESE DIAGNÓSTICA", title: "Hipótese com nível de confiança e justificativa", description: "Você declara o raciocínio; o sistema confronta com resumo, mecanismo e diferenciais.", topic: "hypothesis" },
+    { tag: "ANAMNESE GUIADA", title: "Roteiro de perguntas que você repete até virar seu", description: "Queixa principal, história, saúde geral e red flags em campos comparáveis.", topic: "anamnesis" },
+    { tag: "TESTES FUNCIONAIS", title: "Cluster certo, no momento certo", description: "Técnica descrita e critério de positividade — Laslett, neurodinâmica, ombro.", topic: "functional-tests" },
+    { tag: "QUESTIONÁRIOS", title: "Aprenda a interpretar escores", description: "ODI, HOOS, FABQ e outros com ponto de corte e significado clínico.", topic: "questionnaires" },
+    { tag: "MAPA DE DOR", title: "Topografia da dor marcada no corpo", description: "Marcação corporal que alimenta a leitura clínica do caso.", topic: "pain-map" },
+    { tag: "CONDUTA POR FASES", title: "Do diagnóstico ao plano de tratamento", description: "Progressão em fases com critérios objetivos para avançar.", topic: "treatment-plan" },
+    { tag: "RELATÓRIO", title: "Documente como se fosse perícia", description: "PDF acadêmico do seu raciocínio para levar ao preceptor.", topic: "report" },
+    { tag: "EVOLUÇÃO", title: "Acompanhe o caso do estágio semana a semana", description: "Diário de dor e comparação antes/depois no mesmo prontuário.", topic: "pain-diary" },
+    { tag: "MECANISMO DE DOR", title: "Nociceptiva, neuropática ou nociplástica", description: "Critérios de Kosek e Finnerup aplicados ao caso que você está estudando.", topic: "pain-mechanism" },
+    { tag: "DIFERENCIAIS", title: "Treine a pergunta que o preceptor vai fazer", description: "O que mais explicaria esse quadro, e por que você descartou.", topic: "differential" },
+    { tag: "AGENTE CLÍNICO", title: "Discuta o caso na véspera da prova", description: "Um agente que questiona sua conduta e mostra a fonte.", topic: "clinical-agent" },
+    { tag: "SIMULADO", title: "Erre no treino, não no paciente", description: "Ambiente simulado para repetir o fluxo quantas vezes precisar.", topic: "simulated-env" },
+    { tag: "EVIDÊNCIA", title: "PEDro ≥ 7 com PMID para citar", description: "Biblioteca validada contra PubMed e Crossref, pronta para o TCC.", topic: "evidence-library" },
+    { tag: "STEPS", title: "Seis fases que organizam qualquer caso", description: "O método que evita pular etapa na hora da pressão.", topic: "steps-method" },
+    { tag: "D.I.F.I", title: "Dor, inibição, fraqueza e incapacidade", description: "Quatro eixos para descrever o caso sem reducionismo.", topic: "difi" },
+    { tag: "RED FLAGS", title: "Aprenda a reconhecer o que não é fisioterapia", description: "Triagem de sinais de alerta em toda avaliação, sem exceção.", topic: "red-flags" },
+    { tag: "SAÚDE GERAL", title: "Comorbidade muda a conduta", description: "Hipertensão, diabetes, cardiopatia e medicação contínua no raciocínio.", topic: "health-general" },
+    { tag: "FABQ-BRASIL", title: "Medo-evitação com escore e corte", description: "Aprenda a interpretar catastrofização sem rotular o paciente.", topic: "fabq" },
+    { tag: "DINAMOMETRIA", title: "Força medida e comparada entre lados", description: "Leitura de assimetria com critério objetivo de risco.", topic: "dynamometry" },
+    { tag: "ALTA", title: "Relatório de evolução comparativa", description: "Como demonstrar resultado do início ao fim do acompanhamento.", topic: "discharge-report" },
   ],
   quotes: [
-    '"O diagnóstico não é um chute com nome bonito."',
-    '"Quem treina raciocínio chega no estágio com repertório."',
-    '"Evidência sem aplicação é decoração de slide."',
-    '"Repetição deliberada forma clínico. Véspera de prova forma nota."',
-    '"Você vai ser lembrado pelas perguntas que soube fazer."',
+    { text: '"O diagnóstico não é um chute com nome bonito."', topic: "hypothesis" },
+    { text: '"Quem treina raciocínio chega no estágio com repertório."', topic: "academic-tracks" },
+    { text: '"Evidência sem aplicação é decoração de slide."', topic: "evidence-library" },
+    { text: '"Repetição deliberada forma clínico. Véspera de prova forma nota."', topic: "simulated-env" },
+    { text: '"Você vai ser lembrado pelas perguntas que soube fazer."', topic: "anamnesis" },
+    { text: '"Saber descartar vale tanto quanto saber nomear."', topic: "differential" },
   ],
   marquee: [
     ["Trilhas clínicas", "Casos comentados", "PEDro ≥ 7", "Ambiente simulado", "Testes validados"],
     ["Raciocínio clínico", "Red flags", "Questionários", "Mecanismo de dor", "Conduta baseada em evidência"],
     ["Laslett", "McKenzie", "Neurodinâmica", "FABQ-Brasil", "Oswestry"],
+    ["Diferenciais", "STEPS", "D.I.F.I", "Dinamometria", "Relatório para o preceptor"],
   ],
   closings: [
     { title: "Treine e aplique no estágio", sub: "Plano acadêmico com o fluxo completo de avaliação.", cta: "Ver o Aliv.iA Acadêmico" },
@@ -120,6 +157,8 @@ const academic: WorldContent = {
       "Fontes com PEDro ≥ 7 e PMID para citar no TCC",
       "Treino do método STEPS e do D.I.F.I caso a caso",
       "Relatórios modelo para aprender a documentar",
+      "Triagem de mecanismo de dor com critérios de Kosek e Finnerup",
+      "Diferenciais com critério de inclusão e exclusão por escrito",
     ],
     objections: [
       "Não é videoaula: você decide, o sistema confronta a sua escolha.",
