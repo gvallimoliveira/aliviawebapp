@@ -7,6 +7,8 @@ import { createRng, randomSeed } from "./rng";
 import { composePage } from "./composePage";
 import { WORLDS, isWorldId, type WorldId } from "./content";
 import StudioControls from "./StudioControls";
+import StudioFavorites from "./StudioFavorites";
+import { useStudioFavorites } from "./useStudioFavorites";
 import HeroBlock from "./blocks/HeroBlock";
 import MarqueeBlock from "./blocks/MarqueeBlock";
 import MetricsBlock from "./blocks/MetricsBlock";
@@ -54,6 +56,8 @@ const StudioLanding = () => {
   const { user, ready } = useAuth();
   const [params, setParams] = useSearchParams();
   const [hidden, setHidden] = useState(false);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const { favorites, isFavorite, toggle, remove } = useStudioFavorites();
 
   const world: WorldId = isWorldId(params.get("world")) ? (params.get("world") as WorldId) : "pro";
   const formatParam = params.get("format");
@@ -79,12 +83,32 @@ const StudioLanding = () => {
 
   const content = WORLDS[world];
 
-  const blocks = useMemo(() => composePage(createRng(`${world}:${seed}:layout`)), [world, seed]);
+  /** Linhagem: `from=<mundo>:<seed>` faz a composição herdar parte de um favorito. */
+  const from = params.get("from");
 
-  const update = (key: string, value: string) => {
+  const blocks = useMemo(() => {
+    const inspiration = (() => {
+      if (!from) return undefined;
+      const [fromWorld, fromSeed] = from.split(":");
+      if (!isWorldId(fromWorld) || !fromSeed) return undefined;
+      return composePage(createRng(`${fromWorld}:${fromSeed}:layout`));
+    })();
+    return composePage(createRng(`${world}:${seed}:layout`), inspiration);
+  }, [world, seed, from]);
+
+  const update = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
-    next.set(key, value);
+    Object.entries(patch).forEach(([key, value]) => {
+      if (value === null) next.delete(key);
+      else next.set(key, value);
+    });
     setParams(next, { replace: false });
+  };
+
+  const evolveFavorite = () => {
+    if (favorites.length === 0) return;
+    const pick = favorites[Math.floor(Math.random() * favorites.length)];
+    update({ world: pick.world, format: pick.format, from: pick.id, seed: randomSeed() });
   };
 
   const previewOnly = isPreviewEnvironment();
@@ -145,15 +169,42 @@ const StudioLanding = () => {
         </main>
       </div>
 
-      {!hidden && (
+      {hidden ? (
+        <button
+          type="button"
+          onClick={() => setHidden(false)}
+          className="fixed bottom-3 right-3 z-50 rounded-full border border-border bg-card/80 px-3 py-1.5 text-[11px] font-medium text-muted-foreground shadow-sm backdrop-blur transition-opacity hover:opacity-100 md:opacity-30 print:hidden"
+          title="Mostrar controles (tecla H)"
+        >
+          Studio
+        </button>
+      ) : (
         <StudioControls
           world={world}
           format={format}
           seed={seed}
-          onWorld={(w) => update("world", w)}
-          onFormat={(f) => update("format", f)}
-          onNewVersion={() => update("seed", randomSeed())}
+          favorited={isFavorite(world, seed)}
+          favoritesCount={favorites.length}
+          canEvolve={favorites.length > 0}
+          onWorld={(w) => update({ world: w })}
+          onFormat={(f) => update({ format: f })}
+          onNewVersion={() => update({ seed: randomSeed(), from: null })}
+          onEvolveFavorite={evolveFavorite}
+          onToggleFavorite={() => toggle(world, format, seed)}
+          onOpenFavorites={() => setFavoritesOpen(true)}
           onHide={() => setHidden(true)}
+        />
+      )}
+
+      {favoritesOpen && !hidden && (
+        <StudioFavorites
+          favorites={favorites}
+          onOpen={(fav) => {
+            update({ world: fav.world, format: fav.format, seed: fav.seed, from: null });
+            setFavoritesOpen(false);
+          }}
+          onRemove={remove}
+          onClose={() => setFavoritesOpen(false)}
         />
       )}
     </>
