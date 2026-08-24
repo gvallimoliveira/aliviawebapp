@@ -47,6 +47,11 @@ const clinic: WorldContent = {
       { value: 20, suffix: " MB", label: "de documentos por paciente" },
       { value: 100, suffix: "%", label: "dos relatórios com a marca da clínica" },
     ],
+    [
+      { value: 8, label: "membros no plano intermediário" },
+      { value: 1, suffix: " painel", label: "com adesão, evolução e NPS" },
+      { value: 0, suffix: " cartão", label: "exigido para começar o teste" },
+    ],
   ],
   compare: [
     {
@@ -54,7 +59,13 @@ const clinic: WorldContent = {
       before: ["Cada terapeuta com seu próprio padrão", "Prontuário em papel ou planilha", "Paciente recontando a história", "Relatório sem identidade da clínica"],
       after: ["Método único, link institucional", "Prontuário compartilhado com permissões", "Histórico completo em qualquer troca de terapeuta", "PDF com logo e cores da casa"],
     },
+    {
+      title: "Duas formas de crescer a clínica",
+      before: ["Qualidade dependendo do terapeuta de plantão", "Gestão sem número de adesão", "Satisfação medida por percepção", "Onboarding longo de cada contratação"],
+      after: ["Padrão de avaliação para toda a equipe", "Indicadores no painel de gestão", "NPS com pesquisa pública", "Novo terapeuta produtivo em dias"],
+    },
   ],
+
   journeys: [
     {
       kicker: "FLUXO DA CLÍNICA",
