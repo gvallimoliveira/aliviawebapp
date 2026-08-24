@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Check, Copy, Download, Loader2, Type } from "lucide-react";
+import { Check, Copy, Download, Loader2, Star, StarOff, Type } from "lucide-react";
 import { exportNodeAsPng } from "./exportImage";
 import { toast } from "sonner";
 
@@ -10,15 +10,31 @@ type Props = {
   visible: boolean;
   /** Legenda de vendas pronta para o Instagram desta seção */
   caption: string;
+  /** Ancora para reabrir a arte a partir dos favoritos */
+  anchorId?: string;
+  /** Esta arte está favoritada? */
+  favorited?: boolean;
+  /** Favoritar/desfavoritar apenas esta arte */
+  onToggleFavorite?: () => void;
   children: React.ReactNode;
 };
 
 /**
- * Envolve uma seção do Studio e oferece duas saídas de conteúdo:
+ * Envolve uma seção do Studio e oferece saídas de conteúdo:
  * - PNG em alta resolução (3x = ~1290x2790 no formato 9:16);
- * - legenda de vendas pronta (gancho, prova, oferta, CTA e hashtags).
+ * - legenda de vendas pronta (gancho, prova, oferta, CTA e hashtags);
+ * - favoritar a arte isolada (persistido no localStorage).
  */
-const StudioCapture = ({ fileName, visible, caption, children }: Props) => {
+const StudioCapture = ({
+  fileName,
+  visible,
+  caption,
+  anchorId,
+  favorited = false,
+  onToggleFavorite,
+  children,
+}: Props) => {
+
   const ref = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [captionOpen, setCaptionOpen] = useState(false);
