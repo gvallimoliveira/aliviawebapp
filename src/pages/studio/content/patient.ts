@@ -9,26 +9,35 @@ import stepReport from "@/assets/step-report.jpg";
 const patient: WorldContent = {
   id: "paciente",
   label: "Paciente",
-  kickers: ["ENTENDA SUA DOR", "PARA QUEM SENTE DOR", "PRIMEIRO PASSO", "SEM SAIR DE CASA"],
+  kickers: ["ENTENDA SUA DOR", "PARA QUEM SENTE DOR", "PRIMEIRO PASSO", "SEM SAIR DE CASA", "DOR TEM EXPLICAÇÃO", "ANTES DE ACEITAR CONVIVER", "DO CELULAR, EM MINUTOS"],
   headlines: [
     { strong: "Sua dor tem nome, causa e caminho.", rest: "Em poucos minutos você entende o que está acontecendo e o que fazer a seguir." },
     { strong: "Antes de aceitar “é só desgaste”, entenda o seu caso.", rest: "Uma avaliação guiada, com triagem de sinais de alerta e orientação clara." },
     { strong: "Você não precisa conviver com a dor por falta de informação.", rest: "Mapa de dor, questionário e um plano de exercícios pensado para o seu quadro." },
     { strong: "Um relatório para levar ao seu fisioterapeuta.", rest: "Tudo que você respondeu vira um documento organizado que acelera o atendimento." },
     { strong: "Do desconforto à direção.", rest: "Sem promessa de cura mágica: informação clínica responsável, do início ao fim." },
+    { strong: "Dor que dura meses não é normal — é sinal.", rest: "Descubra em minutos o que investigar e quando procurar um profissional." },
+    { strong: "Você já gastou mais com pomada do que com uma avaliação séria.", rest: "Uma avaliação guiada custa menos que um mês tentando adivinhar sozinho." },
+    { strong: "Pare de pesquisar sintoma no Google.", rest: "Responda no seu ritmo e receba uma explicação feita por fisioterapeuta." },
+    { strong: "Seu exercício errado pode estar mantendo a dor.", rest: "Programa em vídeo escolhido para o seu quadro, com progressão respeitosa." },
   ],
   subs: [
     "Avaliação guiada em poucos minutos, direto do celular.",
     "Feito por fisioterapeuta, com tecnologia por trás.",
     "Entender é o primeiro alívio.",
     "Você responde, o Aliv.iA organiza, seu fisioterapeuta decide.",
+    "Sem consultório, sem espera, sem palpite de internet.",
+    "Comece hoje, entenda hoje.",
   ],
   kinetic: [
     { kicker: "O QUE VOCÊ GANHA", word: "Clareza", caption: "Entender a dor muda como você lida com ela." },
     { kicker: "EM MINUTOS", word: "Direção", caption: "Saber o próximo passo, não só o nome do problema." },
     { kicker: "SEM MEDO", word: "Segurança", caption: "Triagem de sinais de alerta em toda avaliação." },
     { kicker: "TODOS OS DIAS", word: "Progresso", caption: "Diário de dor mostrando sua evolução real." },
+    { kicker: "NA CONSULTA", word: "Voz", caption: "Você chega com relatório, não com dúvida." },
+    { kicker: "EM CASA", word: "Autonomia", caption: "Exercícios certos, na ordem certa." },
   ],
+
   metrics: [
     [
       { value: 7, suffix: " min", label: "para concluir a avaliação" },
