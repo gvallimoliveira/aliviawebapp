@@ -95,17 +95,32 @@ const StudioLanding = () => {
   }
 
   if (!allowed) {
+    const needsLogin = !user;
+    const notPreview = !previewOnly;
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-6">
         <div className="max-w-md text-center">
           <h1 className="mb-3 text-2xl font-bold tracking-tight text-foreground">Aliv.iA Studio</h1>
-          <p className="text-sm text-muted-foreground">
-            Este ambiente é interno e existe apenas no preview do projeto, acessível com a conta de administração.
+          <p className="mb-4 text-sm text-muted-foreground">
+            {notPreview
+              ? "Este ambiente é interno e só abre no link de preview do projeto (id-preview--...lovable.app/studio)."
+              : needsLogin
+                ? "Você não está logado neste navegador. Entre com a sua conta de administração para abrir o Studio."
+                : `A conta ${user?.email} não tem acesso ao Studio. Entre com a sua conta de administração.`}
           </p>
+          {previewOnly && (
+            <a
+              href={`/auth?redirect=${encodeURIComponent("/studio")}`}
+              className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+            >
+              {needsLogin ? "Entrar" : "Trocar de conta"}
+            </a>
+          )}
         </div>
       </main>
     );
   }
+
 
   return (
     <>
