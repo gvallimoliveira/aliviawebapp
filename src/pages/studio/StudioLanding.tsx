@@ -9,6 +9,8 @@ import { buildCaption } from "./caption";
 import { buildFavoritesCaptions, buildPageCaptions } from "./captionFile";
 import { exportTextFile } from "./exportText";
 import { exportNodeAsPng } from "./exportImage";
+import { buildSchedule, buildScheduleFile } from "./schedule";
+import { removeThumb } from "./thumbs";
 import { toast } from "sonner";
 import { WORLDS, isWorldId, type WorldId } from "./content";
 import { buildCoverage, readExposureLog, recordExposure, type ExposureLog } from "./coverage";
@@ -212,6 +214,18 @@ const StudioLanding = () => {
     }
   };
 
+  const exportSchedule = async () => {
+    try {
+      await exportTextFile(
+        buildScheduleFile(buildSchedule(favorites)),
+        "alivia-studio-cronograma-postagens.txt",
+      );
+      toast.success("Cronograma de postagens baixado");
+    } catch {
+      toast.error("Não foi possível baixar o cronograma.");
+    }
+  };
+
   const exportFavoriteCaptions = async () => {
     try {
       await exportTextFile(buildFavoritesCaptions(favorites), "alivia-studio-favoritos-legendas.txt");
@@ -276,6 +290,7 @@ const StudioLanding = () => {
                   key={`${kind}-${i}`}
                   visible={!hidden}
                   anchorId={`studio-block-${i}`}
+                  favoriteId={`${world}:${seed}:${i}`}
                   favorited={isBlockFavorite(world, seed, i)}
                   onToggleFavorite={() => toggleBlock(world, format, seed, i, kind)}
                   caption={buildCaption(content, kind, createRng(`${world}:${seed}:caption:${kind}:${i}`))}
@@ -341,8 +356,12 @@ const StudioLanding = () => {
             }
           }}
 
-          onRemove={remove}
+          onRemove={(id) => {
+            remove(id);
+            removeThumb(id);
+          }}
           onExportCaptions={exportFavoriteCaptions}
+          onExportSchedule={exportSchedule}
           onClose={() => setFavoritesOpen(false)}
         />
       )}
