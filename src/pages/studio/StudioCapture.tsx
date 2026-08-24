@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Check, Copy, Download, Loader2, Type } from "lucide-react";
+import { Check, Copy, Download, Loader2, Star, StarOff, Type } from "lucide-react";
 import { exportNodeAsPng } from "./exportImage";
 import { toast } from "sonner";
 
@@ -10,15 +10,31 @@ type Props = {
   visible: boolean;
   /** Legenda de vendas pronta para o Instagram desta seção */
   caption: string;
+  /** Ancora para reabrir a arte a partir dos favoritos */
+  anchorId?: string;
+  /** Esta arte está favoritada? */
+  favorited?: boolean;
+  /** Favoritar/desfavoritar apenas esta arte */
+  onToggleFavorite?: () => void;
   children: React.ReactNode;
 };
 
 /**
- * Envolve uma seção do Studio e oferece duas saídas de conteúdo:
+ * Envolve uma seção do Studio e oferece saídas de conteúdo:
  * - PNG em alta resolução (3x = ~1290x2790 no formato 9:16);
- * - legenda de vendas pronta (gancho, prova, oferta, CTA e hashtags).
+ * - legenda de vendas pronta (gancho, prova, oferta, CTA e hashtags);
+ * - favoritar a arte isolada (persistido no localStorage).
  */
-const StudioCapture = ({ fileName, visible, caption, children }: Props) => {
+const StudioCapture = ({
+  fileName,
+  visible,
+  caption,
+  anchorId,
+  favorited = false,
+  onToggleFavorite,
+  children,
+}: Props) => {
+
   const ref = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
   const [captionOpen, setCaptionOpen] = useState(false);
@@ -51,13 +67,28 @@ const StudioCapture = ({ fileName, visible, caption, children }: Props) => {
   };
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} id={anchorId} className="relative scroll-mt-4">
       {children}
 
       {visible && (
         <div data-studio-no-export="1" className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2">
           <div className="flex gap-2">
+            {onToggleFavorite && (
+              <button
+                type="button"
+                onClick={onToggleFavorite}
+                title={favorited ? "Remover esta arte dos favoritos" : "Favoritar esta arte"}
+                className={`flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-[11px] font-medium shadow-sm backdrop-blur transition-opacity hover:opacity-100 md:opacity-40 ${
+                  favorited ? "bg-primary text-primary-foreground" : "bg-card/85 text-foreground"
+                }`}
+              >
+                {favorited ? <Star className="h-3.5 w-3.5 fill-current" /> : <StarOff className="h-3.5 w-3.5" />}
+                {favorited ? "Salva" : "Favoritar"}
+              </button>
+            )}
+
             <button
+
               type="button"
               onClick={() => setCaptionOpen((v) => !v)}
               title="Legenda de vendas pronta para o Instagram"

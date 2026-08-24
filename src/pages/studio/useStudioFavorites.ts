@@ -7,6 +7,9 @@ export type StudioFavorite = {
   world: WorldId;
   format: StudioFormat;
   seed: string;
+  /** Presente apenas quando o favorito é uma arte (bloco) isolada. */
+  blockIndex?: number;
+  blockKind?: string;
   label?: string;
   createdAt: number;
 };
@@ -25,9 +28,9 @@ const read = (): StudioFavorite[] => {
 };
 
 /**
- * Favoritos do Studio (localStorage). Guardam mundo + seed, então a versão
- * é reconstruída exatamente igual e também serve de "linhagem" para novas
- * composições (parte aprovada + parte nova).
+ * Favoritos do Studio (localStorage). Guardam mundo + seed (+ índice do bloco,
+ * quando é uma arte isolada), então a versão é reconstruída exatamente igual e
+ * também serve de "linhagem" para novas composições.
  */
 export const useStudioFavorites = () => {
   const [favorites, setFavorites] = useState<StudioFavorite[]>(read);
@@ -41,6 +44,7 @@ export const useStudioFavorites = () => {
   }, [favorites]);
 
   const idOf = (world: WorldId, seed: string) => `${world}:${seed}`;
+  const blockIdOf = (world: WorldId, seed: string, index: number) => `${world}:${seed}:${index}`;
 
   const isFavorite = useCallback(
     (world: WorldId, seed: string) => favorites.some((f) => f.id === idOf(world, seed)),
@@ -56,6 +60,27 @@ export const useStudioFavorites = () => {
     );
   }, []);
 
+  const isBlockFavorite = useCallback(
+    (world: WorldId, seed: string, index: number) =>
+      favorites.some((f) => f.id === blockIdOf(world, seed, index)),
+    [favorites],
+  );
+
+  const toggleBlock = useCallback(
+    (world: WorldId, format: StudioFormat, seed: string, index: number, kind: string) => {
+      const id = blockIdOf(world, seed, index);
+      setFavorites((list) =>
+        list.some((f) => f.id === id)
+          ? list.filter((f) => f.id !== id)
+          : [
+              { id, world, format, seed, blockIndex: index, blockKind: kind, createdAt: Date.now() },
+              ...list,
+            ],
+      );
+    },
+    [],
+  );
+
   const remove = useCallback((id: string) => {
     setFavorites((list) => list.filter((f) => f.id !== id));
   }, []);
@@ -64,5 +89,5 @@ export const useStudioFavorites = () => {
     setFavorites((list) => list.map((f) => (f.id === id ? { ...f, label } : f)));
   }, []);
 
-  return { favorites, isFavorite, toggle, remove, rename };
+  return { favorites, isFavorite, toggle, isBlockFavorite, toggleBlock, remove, rename };
 };

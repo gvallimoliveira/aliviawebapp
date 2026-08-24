@@ -33,9 +33,13 @@ const StudioFavorites = ({ favorites, onOpen, onRemove, onClose }: Props) => (
               onClick={() => onOpen(fav)}
               className="flex-1 text-left text-xs text-foreground"
             >
-              <span className="font-medium">{WORLDS[fav.world].label}</span>
-              <span className="text-muted-foreground"> · {fav.seed} · {fav.format}</span>
+              <span className="font-medium">
+                {WORLDS[fav.world].label}
+                {fav.blockKind ? ` · arte ${String((fav.blockIndex ?? 0) + 1).padStart(2, "0")} (${fav.blockKind})` : " · landing inteira"}
+              </span>
+              <span className="block text-muted-foreground">{fav.seed} · {fav.format}</span>
             </button>
+
             <Button
               size="sm"
               variant="ghost"

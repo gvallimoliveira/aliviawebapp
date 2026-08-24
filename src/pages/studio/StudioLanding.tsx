@@ -59,7 +59,7 @@ const StudioLanding = () => {
   const [params, setParams] = useSearchParams();
   const [hidden, setHidden] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
-  const { favorites, isFavorite, toggle, remove } = useStudioFavorites();
+  const { favorites, isFavorite, toggle, isBlockFavorite, toggleBlock, remove } = useStudioFavorites();
 
   const world: WorldId = isWorldId(params.get("world")) ? (params.get("world") as WorldId) : "pro";
   const formatParam = params.get("format");
@@ -167,6 +167,9 @@ const StudioLanding = () => {
                 <StudioCapture
                   key={`${kind}-${i}`}
                   visible={!hidden}
+                  anchorId={`studio-block-${i}`}
+                  favorited={isBlockFavorite(world, seed, i)}
+                  onToggleFavorite={() => toggleBlock(world, format, seed, i, kind)}
                   caption={buildCaption(content, kind, createRng(`${world}:${seed}:caption:${kind}:${i}`))}
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
@@ -175,6 +178,7 @@ const StudioLanding = () => {
                 </StudioCapture>
               );
             })}
+
           </div>
         </main>
       </div>
@@ -212,7 +216,15 @@ const StudioLanding = () => {
           onOpen={(fav) => {
             update({ world: fav.world, format: fav.format, seed: fav.seed, from: null });
             setFavoritesOpen(false);
+            if (fav.blockIndex !== undefined) {
+              window.setTimeout(() => {
+                document
+                  .getElementById(`studio-block-${fav.blockIndex}`)
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 120);
+            }
           }}
+
           onRemove={remove}
           onClose={() => setFavoritesOpen(false)}
         />
