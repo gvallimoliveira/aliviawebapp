@@ -96,7 +96,7 @@ const patient: WorldContent = {
     { tag: "PROGRAMA", title: "Exercícios em vídeo para casa", description: "Selecionados para o seu quadro, com progressão respeitosa.", image: stepTreatment },
     { tag: "RELATÓRIO", title: "Um documento para mostrar ao profissional", description: "Sua história, seus testes e sua evolução organizados em PDF.", image: stepReport },
     { tag: "MAIS DE UMA DOR", title: "Ombro e lombar acompanhados separadamente", description: "Cada condição com seu próprio histórico e seu próprio plano.", image: stepDiary },
-    { tag: "PROFISSIONAIS", title: "Encontre um fisioterapeuta perto de você", description: "Vitrine de profissionais que já trabalham com o método.", image: stepAnamnesis },
+    { tag: "PROFISSIONAIS", title: "Encontre um fisioterapeuta perto de você", description: "Vitrine de profissionais que já trabalham com o método." },
   ],
   quotes: [
     '"Entender a própria dor é o primeiro passo do tratamento."',
