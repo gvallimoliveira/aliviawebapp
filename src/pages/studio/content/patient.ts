@@ -49,6 +49,11 @@ const patient: WorldContent = {
       { value: 30, suffix: " dias", label: "de acompanhamento no diário de dor" },
       { value: 4, label: "regiões do corpo mapeadas por vez" },
     ],
+    [
+      { value: 1, suffix: " celular", label: "é tudo que você precisa para começar" },
+      { value: 24, suffix: "h", label: "de acesso ao seu plano, quando quiser" },
+      { value: 3, label: "fases de progressão dos exercícios" },
+    ],
   ],
   compare: [
     {
@@ -56,7 +61,13 @@ const patient: WorldContent = {
       before: ["Pesquisar sintoma no Google", "Ler fórum e ficar com mais medo", "Tomar remédio e esperar", "Chegar na consulta sem histórico"],
       after: ["Avaliação guiada passo a passo", "Explicação em linguagem clara", "Exercícios adequados ao seu quadro", "Relatório completo em mãos"],
     },
+    {
+      title: "Duas formas de encarar a dor crônica",
+      before: ["“Vou aguentando”", "Exercício aleatório do YouTube", "Sem registro do que melhora", "Cada profissional recomeçando do zero"],
+      after: ["Avaliação com sinais de alerta checados", "Programa escolhido para o seu quadro", "Diário de dor mostrando a curva", "Histórico organizado em um documento"],
+    },
   ],
+
   journeys: [
     {
       kicker: "COMO FUNCIONA",
