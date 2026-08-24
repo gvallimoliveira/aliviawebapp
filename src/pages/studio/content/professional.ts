@@ -77,6 +77,10 @@ const professional: WorldContent = {
     { kicker: "O QUE MUDA", word: "Clareza", caption: "Do relato confuso à hipótese defensável." },
     { kicker: "SEU DIFERENCIAL", word: "Método", caption: "STEPS e D.I.F.I guiando cada decisão." },
     { kicker: "NA PRÁTICA", word: "Autoridade", caption: "Relatórios que o paciente mostra para o médico." },
+    { kicker: "NO FINANCEIRO", word: "Valor", caption: "Quem documenta melhor, precifica melhor." },
+    { kicker: "NA ROTINA", word: "Tempo", caption: "A papelada sai durante a sessão, não depois." },
+    { kicker: "NA DÚVIDA", word: "Respaldo", caption: "Diferenciais listados e justificados por escrito." },
+    { kicker: "COM O PACIENTE", word: "Adesão", caption: "Programa em vídeo, entendido na primeira leitura." },
   ],
   metrics: [
     [
@@ -94,7 +98,18 @@ const professional: WorldContent = {
       { value: 15, suffix: "+", label: "questionários validados" },
       { value: 24, suffix: "h", label: "de prontuário sempre acessível" },
     ],
+    [
+      { value: 7, suffix: "+", label: "escore PEDro mínimo das fontes citadas" },
+      { value: 10, label: "nichos de pesquisa clínica acompanhados" },
+      { value: 0, suffix: " papel", label: "para arquivar depois da consulta" },
+    ],
+    [
+      { value: 5, suffix: " h/mês", label: "de burocracia devolvidas ao clínico" },
+      { value: 1, suffix: " PDF", label: "com a sua marca em cada alta" },
+      { value: 2, suffix: " cliques", label: "entre a sessão e o relatório" },
+    ],
   ],
+
   compare: [
     {
       title: "O antes e o depois do seu atendimento",
