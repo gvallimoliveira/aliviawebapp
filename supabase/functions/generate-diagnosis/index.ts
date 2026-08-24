@@ -156,6 +156,8 @@ HOW TO USE IT (Waddell et al. 1993; FABQ-Brasil, Abreu et al. 2008):
 - Never label the patient as catastrophising in patient-facing text; describe it as fear/insecurity about moving that treatment will address.
 ` : "";
 
+    const lang = language === "en" ? "English" : "Portuguese (Brazil)";
+
     const mechanismJsonSpec = rulesMechanism ? `
   "pain_mechanism": {
     "mechanism": "nociceptive" | "neuropathic" | "nociplastic" | "mixed",
@@ -166,7 +168,6 @@ HOW TO USE IT (Waddell et al. 1993; FABQ-Brasil, Abreu et al. 2008):
     "reasoning": "1-2 sentences of clinical reasoning naming the findings that support this mechanism (technical language is fine here)"
   },` : "";
 
-    const lang = language === "en" ? "English" : "Portuguese (Brazil)";
     const isBasic = mode === "basic";
     const isProfessional = mode === "professional";
 
