@@ -152,9 +152,21 @@ const StudioControls = ({
           Legendas .txt
         </Button>
 
+        <Button
+          size="sm"
+          variant={forcedTopicLabel ? "default" : "outline"}
+          className="h-8 max-w-[15rem] gap-1.5 rounded-xl text-xs"
+          onClick={onOpenCoverage}
+          title="Estudo de cobertura: o que já é muito divulgado e o que precisa de palco"
+        >
+          <BarChart3 className="h-3.5 w-3.5" />
+          <span className="truncate">{forcedTopicLabel ? `Foco: ${forcedTopicLabel}` : "Cobertura"}</span>
+        </Button>
+
         <Button size="sm" variant="ghost" className="h-8 gap-1.5 rounded-xl text-xs" onClick={onOpenFavorites}>
           Favoritos ({favoritesCount})
         </Button>
+
 
         <Button size="sm" variant="outline" className="h-8 gap-1.5 rounded-xl text-xs" onClick={copyLink}>
           <Copy className="h-3.5 w-3.5" />
