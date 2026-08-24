@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Check, Copy, Download, Loader2, Type } from "lucide-react";
-import { toPng } from "html-to-image";
+import { exportNodeAsPng } from "./exportImage";
 import { toast } from "sonner";
 
 type Props = {
@@ -25,22 +25,15 @@ const StudioCapture = ({ fileName, visible, caption, children }: Props) => {
   const [copied, setCopied] = useState(false);
 
   const download = async () => {
-    if (!ref.current) return;
+    if (!ref.current || busy) return;
     setBusy(true);
     try {
-      const dataUrl = await toPng(ref.current, {
-        pixelRatio: 3,
-        cacheBust: true,
-        backgroundColor: getComputedStyle(document.body).backgroundColor,
-        filter: (node) => !(node instanceof HTMLElement && node.dataset.studioNoExport === "1"),
-      });
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = `alivia-studio-${fileName}.png`;
-      link.click();
-      toast.success("Arte exportada em alta resolução");
-    } catch {
-      toast.error("Não foi possível exportar esta seção");
+      const { ratio, shared } = await exportNodeAsPng(ref.current, `alivia-studio-${fileName}.png`);
+      const scale = `${ratio.toFixed(1).replace(".0", "")}x`;
+      toast.success(shared ? `Arte pronta para compartilhar (${scale})` : `Arte exportada em ${scale}`);
+    } catch (error) {
+      console.error("[studio] export failed", error);
+      toast.error("Não foi possível exportar esta seção. Tente novamente com a barra oculta (tecla H).");
     } finally {
       setBusy(false);
     }
@@ -80,11 +73,11 @@ const StudioCapture = ({ fileName, visible, caption, children }: Props) => {
               type="button"
               onClick={download}
               disabled={busy}
-              title="Baixar esta arte em alta resolução (PNG 3x)"
+              title="Baixar esta arte em alta resolução"
               className="flex h-9 items-center gap-1.5 rounded-full border border-border bg-card/85 px-3 text-[11px] font-medium text-foreground shadow-sm backdrop-blur transition-opacity hover:opacity-100 md:opacity-40"
             >
               {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-              PNG 3x
+              {busy ? "Gerando…" : "Baixar PNG"}
             </button>
           </div>
 
