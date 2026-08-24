@@ -32,6 +32,10 @@ const BLOCKS = {
 
 const PREVIEW_MARKERS = ["id-preview--", "localhost", "127.0.0.1", ".lovableproject.com", "sandbox"];
 
+/** Dev sandbox (vite em localhost) — nunca existe em domínio publicado. */
+const isLocalDev = () =>
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+
 const isPreviewEnvironment = () =>
   PREVIEW_MARKERS.some((marker) => window.location.origin.includes(marker));
 
@@ -84,7 +88,7 @@ const StudioLanding = () => {
   };
 
   const previewOnly = isPreviewEnvironment();
-  const allowed = previewOnly && isFallbackVip(user?.email);
+  const allowed = previewOnly && (isFallbackVip(user?.email) || isLocalDev());
 
   if (!ready) {
     return <div className="min-h-screen bg-background" />;
