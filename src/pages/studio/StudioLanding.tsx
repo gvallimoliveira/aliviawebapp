@@ -102,6 +102,45 @@ const StudioLanding = () => {
   /** Linhagem: `from=<mundo>:<seed>` faz a composição herdar parte de um favorito. */
   const from = params.get("from");
 
+  /** `force=<topico>` prioriza uma funcionalidade específica nesta versão. */
+  const forcedParam = params.get("force");
+  const forced: TopicId | undefined = isTopicId(forcedParam) ? forcedParam : undefined;
+
+  const versionKey = `${world}:${seed}:${from ?? ""}:${forced ?? ""}`;
+
+  /**
+   * ESTUDO DE COBERTURA ANTES DA DECISÃO CRIATIVA.
+   *
+   * O retrato de exposições é congelado por versão (guardado em ref, não em
+   * state) para que registrar o que foi ao ar não re-renderize a página e troque
+   * o conteúdo debaixo do usuário. Na versão seguinte o retrato já vem atualizado.
+   */
+  const exposureLogRef = useRef<ExposureLog>(readExposureLog());
+  const coverage = useMemo(
+    () => buildCoverage(world, content, exposureLogRef.current),
+    [world, content, versionKey],
+  );
+
+  const exposedRef = useRef<{ key: string; topics: Set<TopicId> }>({ key: versionKey, topics: new Set() });
+  if (exposedRef.current.key !== versionKey) exposedRef.current = { key: versionKey, topics: new Set() };
+
+  const picker = useMemo(
+    () =>
+      createPicker(
+        coverage,
+        (topics) => topics.forEach((t) => exposedRef.current.topics.add(t)),
+        forced,
+      ),
+    [coverage, forced],
+  );
+
+  /** Registra o que esta versão efetivamente colocou no ar. */
+  useEffect(() => {
+    const topics = [...exposedRef.current.topics];
+    if (topics.length === 0) return;
+    exposureLogRef.current = recordExposure(world, topics);
+  }, [versionKey, world]);
+
   const blocks = useMemo(() => {
     const inspiration = (() => {
       if (!from) return undefined;
@@ -111,6 +150,7 @@ const StudioLanding = () => {
     })();
     return composePage(createRng(`${world}:${seed}:layout`), inspiration);
   }, [world, seed, from]);
+
 
   const update = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
