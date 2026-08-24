@@ -4,6 +4,10 @@ import stepTests from "@/assets/step-tests.jpg";
 import stepDiagnosis from "@/assets/step-diagnosis.jpg";
 import stepQuestionnaires from "@/assets/step-questionnaires.jpg";
 import stepReport from "@/assets/step-report.jpg";
+import stepPainMap from "@/assets/step-painmap.jpg";
+import stepTreatment from "@/assets/step-treatment.jpg";
+import stepDiary from "@/assets/step-diary.jpg";
+
 
 const academic: WorldContent = {
   id: "academico",
@@ -13,7 +17,7 @@ const academic: WorldContent = {
     { strong: "A faculdade ensina o conteúdo. O raciocínio se treina.", rest: "Casos reais, testes validados e feedback estruturado enquanto você ainda está na graduação." },
     { strong: "Chegue no estágio sabendo por onde começar.", rest: "Avaliação, hipótese, diferenciais e conduta em um fluxo que você repete até virar natural." },
     { strong: "Estudar caso é diferente de estudar matéria.", rest: "Trilhas guiadas que partem da queixa e terminam em uma decisão defensável." },
-    { strong: "Erre no simulador, não no paciente.", rest: "Ambiente simulado completo com prontuários, testes e relatórios fictícios." },
+    { strong: "Treine no simulado, aplique no estágio.", rest: "O mesmo fluxo padrão-ouro para casos fictícios e para pacientes reais, sempre com supervisão." },
     { strong: "Evidência que você consegue citar na banca.", rest: "Protocolos com escore PEDro alto, validados contra PubMed e Crossref." },
     { strong: "Decorar teste especial não é saber quando aplicar.", rest: "Aqui você escolhe o cluster e vê o que a evidência diria sobre a sua escolha." },
     { strong: "Seu TCC agradece.", rest: "Fontes rastreáveis, com PMID, para embasar trabalho, seminário e apresentação." },
@@ -24,12 +28,12 @@ const academic: WorldContent = {
     "Plano acadêmico com preço de estudante.",
     "Você aprende a decidir, não a decorar.",
     "Do primeiro semestre ao primeiro estágio.",
-    "Ambiente simulado, evidência real.",
+    "Do caso simulado ao paciente do estágio.",
     "Repetição deliberada, do jeito que forma clínico.",
   ],
   kinetic: [
     { kicker: "O QUE SE TREINA", word: "Raciocínio", caption: "Da queixa à hipótese, com justificativa." },
-    { kicker: "ANTES DO ESTÁGIO", word: "Confiança", caption: "Você já viu esse caso antes — no simulador." },
+    { kicker: "NO ESTÁGIO", word: "Confiança", caption: "Você já conduziu esse fluxo antes — dezenas de vezes." },
     { kicker: "SEM ATALHO", word: "Método", caption: "STEPS e D.I.F.I aplicados caso a caso." },
     { kicker: "SEMPRE", word: "Evidência", caption: "Cada conduta com fonte rastreável." },
     { kicker: "NA BANCA", word: "Repertório", caption: "Argumento com autor, ano e escore." },
@@ -45,12 +49,12 @@ const academic: WorldContent = {
     [
       { value: 15, suffix: "+", label: "questionários validados para estudar" },
       { value: 40, suffix: "+", label: "testes funcionais com técnica descrita" },
-      { value: 1, suffix: " ambiente", label: "simulado sem risco ao paciente" },
+      { value: 1, suffix: " fluxo", label: "igual no simulado e no paciente real" },
     ],
     [
       { value: 6, label: "fases do método STEPS para treinar" },
       { value: 4, label: "eixos do D.I.F.I em cada caso" },
-      { value: 0, suffix: " risco", label: "ao paciente enquanto você aprende" },
+      { value: 1, suffix: " prontuário", label: "por paciente do estágio ou da família" },
     ],
   ],
   compare: [
@@ -79,13 +83,14 @@ const academic: WorldContent = {
     },
   ],
   features: [
-    { tag: "AGENTE CLÍNICO", title: "Um tutor disponível na madrugada", description: "Discuta o caso, pergunte a fonte, peça o critério do teste.", image: stepDiagnosis },
-    { tag: "AMBIENTE SIMULADO", title: "Painel profissional completo, sem paciente real", description: "Prontuários fictícios para você navegar como um clínico.", image: stepReport },
-    { tag: "QUESTIONÁRIOS", title: "Aprenda a interpretar escores", description: "FABQ, Oswestry, DASH e outros — com cortes e significado clínico.", image: stepQuestionnaires },
-    { tag: "CASOS DE ESTUDO", title: "Biblioteca de casos comentados", description: "Da triagem de red flags à alta, com decisões explicadas.", image: stepTests },
-    { tag: "MECANISMO DE DOR", title: "Nociceptiva, neuropática ou nociplástica", description: "Roteiro baseado em Kosek e Finnerup, com implicação na conduta.", image: stepDiagnosis },
-    { tag: "DIFERENCIAIS", title: "Treine a hipótese que você quase esqueceu", description: "Diagnósticos diferenciais com critério de inclusão e exclusão.", image: stepAnamnesis },
-    { tag: "RELATÓRIOS", title: "Aprenda a escrever como se fosse perícia", description: "Documente o raciocínio de forma defensável desde a graduação.", image: stepReport },
+    { tag: "HIPÓTESE DIAGNÓSTICA", title: "Hipótese com nível de confiança e justificativa", description: "Você declara o raciocínio; o sistema confronta com resumo, mecanismo e diferenciais.", image: stepDiagnosis },
+    { tag: "ANAMNESE GUIADA", title: "Roteiro de perguntas que você repete até virar seu", description: "Queixa principal, história, saúde geral e red flags em campos comparáveis.", image: stepAnamnesis },
+    { tag: "TESTES FUNCIONAIS", title: "Cluster certo, no momento certo", description: "Técnica descrita e critério de positividade — Laslett, neurodinâmica, ombro.", image: stepTests },
+    { tag: "QUESTIONÁRIOS", title: "Aprenda a interpretar escores", description: "ODI, HOOS, FABQ e outros com ponto de corte e significado clínico.", image: stepQuestionnaires },
+    { tag: "MAPA DE DOR", title: "Topografia e mecanismo da dor", description: "Marcação corporal ligada à triagem nociceptiva, neuropática e nociplástica.", image: stepPainMap },
+    { tag: "CONDUTA POR FASES", title: "Do diagnóstico ao plano de tratamento", description: "Progressão em fases com critérios objetivos para avançar.", image: stepTreatment },
+    { tag: "RELATÓRIO", title: "Documente como se fosse perícia", description: "PDF acadêmico do seu raciocínio para levar ao preceptor.", image: stepReport },
+    { tag: "EVOLUÇÃO", title: "Acompanhe o caso do estágio semana a semana", description: "Diário de dor e comparação antes/depois no mesmo prontuário.", image: stepDiary },
   ],
   quotes: [
     '"O diagnóstico não é um chute com nome bonito."',
@@ -100,14 +105,14 @@ const academic: WorldContent = {
     ["Laslett", "McKenzie", "Neurodinâmica", "FABQ-Brasil", "Oswestry"],
   ],
   closings: [
-    { title: "Treine antes do paciente real", sub: "Plano acadêmico com acesso ao ambiente simulado.", cta: "Ver o Aliv.iA Acadêmico" },
+    { title: "Treine e aplique no estágio", sub: "Plano acadêmico com o fluxo completo de avaliação.", cta: "Ver o Aliv.iA Acadêmico" },
     { title: "Seu diferencial começa agora", sub: "Enquanto os outros decoram, você raciocina.", cta: "Quero estudar assim" },
     { title: "Chegue no estágio com repertório", sub: "Casos comentados e evidência citável.", cta: "Ativar acesso de estudante" },
   ],
   sales: {
     audience: "estudantes de fisioterapia e recém-formados",
     proofs: [
-      "Ambiente simulado completo, com prontuários fictícios",
+      "Fluxo completo para casos simulados e para pacientes reais do estágio ou da família",
       "Trilhas que vão da queixa até a conduta justificada",
       "Testes funcionais com técnica e critério de positividade",
       "Questionários validados com pontos de corte explicados",
@@ -118,13 +123,13 @@ const academic: WorldContent = {
     ],
     objections: [
       "Não é videoaula: você decide, o sistema confronta a sua escolha.",
-      "Não precisa esperar o estágio para praticar raciocínio clínico.",
+      "Dá para usar com paciente real do estágio ou da família — a conduta final é sempre do supervisor com CREFITO.",
       "Funciona no celular, entre uma aula e outra.",
       "Acesso acadêmico com condição de estudante, mediante comprovação de matrícula.",
     ],
     offers: [
       "Plano acadêmico com condição de estudante, comprovando matrícula.",
-      "Acesso ao ambiente simulado sem custo de paciente e sem risco clínico.",
+      "Ambiente simulado para treinar e prontuário real para o estágio, com supervisão do preceptor.",
       "Comece pelo painel demonstrativo antes de ativar o acesso.",
     ],
     ctas: [

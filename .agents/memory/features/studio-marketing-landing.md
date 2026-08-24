@@ -29,3 +29,11 @@ Nunca deve ser linkada nas páginas publicadas, nem entrar no sitemap (`public/r
 - Exportação: `StudioCapture.tsx` envolve cada seção e baixa PNG em `pixelRatio: 3` via `html-to-image`
   (arquivo `alivia-studio-<mundo>-<seed>-<n>-<bloco>.png`). O botão some junto com a barra (tecla H) e
   é excluído da captura por `data-studio-no-export="1"`.
+
+## Regra de coerência (obrigatória)
+
+- Toda `image` de bloco (features/journeys) deve mostrar **exatamente a tela do assunto** do título/tag.
+  Nada de reaproveitar screenshot genérico (ex.: relatório PDF ilustrando "painel"). Sem pontas soltas.
+- Mundo acadêmico: **nunca** afirmar "sem paciente real". O estudante usa o fluxo com pacientes reais
+  (estágio, familiares) — a ressalva correta é que a conduta final é do supervisor com CREFITO ativo.
+  O simulado é treino complementar, não limite do produto.
