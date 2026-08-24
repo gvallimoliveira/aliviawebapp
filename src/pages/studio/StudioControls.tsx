@@ -1,4 +1,4 @@
-import { Copy, EyeOff, FileText, Images, Loader2, RefreshCw, Shuffle, Sparkles, Star, StarOff } from "lucide-react";
+import { BarChart3, Copy, EyeOff, FileText, Images, Loader2, RefreshCw, Shuffle, Sparkles, Star, StarOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WORLD_IDS, WORLDS, type WorldId } from "./content";
@@ -17,6 +17,10 @@ type StudioControlsProps = {
   onEvolveFavorite: () => void;
   onToggleFavorite: () => void;
   onOpenFavorites: () => void;
+  /** Abre o estudo de cobertura editorial (o que está muito e pouco divulgado). */
+  onOpenCoverage: () => void;
+  /** Nome da funcionalidade que está sendo forçada nesta versão, se houver. */
+  forcedTopicLabel?: string;
   onHide: () => void;
   /** Exporta todas as artes da versão atual em PNG, uma a uma. */
   onExportAllPng: () => void;
@@ -25,6 +29,7 @@ type StudioControlsProps = {
   /** Indica progresso do lote de PNGs ("3/8") ou null quando parado. */
   batchProgress: string | null;
 };
+
 
 const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "9x16", label: "9:16" },
@@ -45,7 +50,10 @@ const StudioControls = ({
   onEvolveFavorite,
   onToggleFavorite,
   onOpenFavorites,
+  onOpenCoverage,
+  forcedTopicLabel,
   onHide,
+
   onExportAllPng,
   onExportAllCaptions,
   batchProgress,
@@ -144,9 +152,21 @@ const StudioControls = ({
           Legendas .txt
         </Button>
 
+        <Button
+          size="sm"
+          variant={forcedTopicLabel ? "default" : "outline"}
+          className="h-8 max-w-[15rem] gap-1.5 rounded-xl text-xs"
+          onClick={onOpenCoverage}
+          title="Estudo de cobertura: o que já é muito divulgado e o que precisa de palco"
+        >
+          <BarChart3 className="h-3.5 w-3.5" />
+          <span className="truncate">{forcedTopicLabel ? `Foco: ${forcedTopicLabel}` : "Cobertura"}</span>
+        </Button>
+
         <Button size="sm" variant="ghost" className="h-8 gap-1.5 rounded-xl text-xs" onClick={onOpenFavorites}>
           Favoritos ({favoritesCount})
         </Button>
+
 
         <Button size="sm" variant="outline" className="h-8 gap-1.5 rounded-xl text-xs" onClick={copyLink}>
           <Copy className="h-3.5 w-3.5" />
