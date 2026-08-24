@@ -37,8 +37,11 @@ Nunca deve ser linkada nas páginas publicadas, nem entrar no sitemap (`public/r
 - Mundo acadêmico: **nunca** afirmar "sem paciente real". O estudante usa o fluxo com pacientes reais
   (estágio, familiares) — a ressalva correta é que a conduta final é do supervisor com CREFITO ativo.
   O simulado é treino complementar, não limite do produto.
-- Sem fallback de imagem: bloco de feature sem screenshot correspondente renderiza só tipografia
-  (`FeatureBlock` não usa mais imagem genérica). Só declare `image` quando a tela for exatamente o assunto.
+- Sem fallback de imagem: bloco sem screenshot correspondente renderiza só tipografia.
+- A imagem NÃO é mais escolhida na copy: vem só de `imageForTopic(topic)` no registro canônico.
+  Detalhe completo do sistema mestre (tópicos, cobertura editorial, guardas de teste) em
+  `.agents/memory/features/studio-editorial-coverage.md` — consulte antes de gerar conteúdo.
+
 
 ## Volume e animação (ago/2026)
 
