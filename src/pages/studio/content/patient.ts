@@ -115,6 +115,8 @@ const patient: WorldContent = {
   ],
   features: [
     { tag: "MAPA DE DOR", title: "Aponte onde dói, no seu corpo", description: "Toque na região e descreva o padrão — sem precisar saber nomes técnicos.", topic: "pain-map" },
+    { tag: "LEITURA DO CASO", title: "Uma síntese de como você está evoluindo", description: "O Aliv.iA compara suas avaliações e resume o que mudou desde o começo.", topic: "clinical-impression" },
+
     { tag: "SEGURANÇA", title: "Sinais de alerta sempre checados", description: "Se algo exigir avaliação médica, o Aliv.iA avisa antes de qualquer exercício.", topic: "red-flags" },
     { tag: "DIÁRIO DE DOR", title: "Sua evolução em uma linha", description: "Registro diário simples que mostra se o plano está funcionando.", topic: "pain-diary" },
     { tag: "PROGRAMA", title: "Exercícios em vídeo para casa", description: "Selecionados para o seu quadro, com progressão respeitosa.", topic: "hep" },
