@@ -41,13 +41,37 @@ const professional: WorldContent = {
       strong: "Sua hipótese continua sendo sua.",
       rest: "A IA propõe, organiza e justifica. Você sobrescreve com uma linha e isso vale no prontuário, no PDF e no relatório.",
     },
+    {
+      strong: "O paciente não lembra o que você disse. O relatório lembra.",
+      rest: "Documento com sua marca, sua hipótese e o plano por fases — pronto em um clique, no fim da sessão.",
+    },
+    {
+      strong: "Cobrar mais começa por entregar diferente.",
+      rest: "Quem entrega avaliação estruturada, evidência citada e relatório de alta não disputa preço com ninguém.",
+    },
+    {
+      strong: "Você já perdeu paciente por falta de clareza, não de técnica.",
+      rest: "Quando o caso é explicado com mapa, escore e progressão, a adesão deixa de ser sorte.",
+    },
+    {
+      strong: "Evidência não é slide de congresso.",
+      rest: "Protocolos com PEDro ≥ 7 validados contra PubMed e Crossref, aplicados ao caso que está na sua frente.",
+    },
+    {
+      strong: "Sua agenda cheia não deveria custar suas noites.",
+      rest: "Anamnese, evolução e relatórios saem no horário do atendimento — não depois do jantar.",
+    },
   ],
   subs: [
     "Sistema de raciocínio clínico com alma de fisioterapeuta.",
     "Menos digitação, mais decisão clínica.",
     "O tempo que você gasta transcrevendo volta para o atendimento.",
     "Documentação de nível pericial, sem esforço de secretaria.",
+    "Feito por fisioterapeuta, para a rotina real de consultório.",
+    "A avaliação pronta antes da primeira sessão começar.",
+    "Autoridade clínica também se constrói no papel.",
   ],
+
   kinetic: [
     { kicker: "EM MENOS TEMPO", word: "Com mais resultados", caption: "A avaliação estruturada antes da primeira sessão." },
     { kicker: "O QUE MUDA", word: "Clareza", caption: "Do relato confuso à hipótese defensável." },
