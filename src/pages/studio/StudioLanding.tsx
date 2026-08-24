@@ -6,6 +6,10 @@ import { isFallbackVip } from "@/lib/vipEmails";
 import { createRng, randomSeed } from "./rng";
 import { composePage } from "./composePage";
 import { buildCaption } from "./caption";
+import { buildFavoritesCaptions, buildPageCaptions } from "./captionFile";
+import { exportTextFile } from "./exportText";
+import { exportNodeAsPng } from "./exportImage";
+import { toast } from "sonner";
 import { WORLDS, isWorldId, type WorldId } from "./content";
 import StudioControls from "./StudioControls";
 import StudioFavorites from "./StudioFavorites";
@@ -59,6 +63,7 @@ const StudioLanding = () => {
   const [params, setParams] = useSearchParams();
   const [hidden, setHidden] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<string | null>(null);
   const { favorites, isFavorite, toggle, isBlockFavorite, toggleBlock, remove } = useStudioFavorites();
 
   const world: WorldId = isWorldId(params.get("world")) ? (params.get("world") as WorldId) : "pro";
@@ -111,6 +116,51 @@ const StudioLanding = () => {
     if (favorites.length === 0) return;
     const pick = favorites[Math.floor(Math.random() * favorites.length)];
     update({ world: pick.world, format: pick.format, from: pick.id, seed: randomSeed() });
+  };
+
+  /** Exporta em sequência todas as artes visíveis (a barra é oculta durante o lote). */
+  const exportAllPng = async () => {
+    if (batchProgress) return;
+    setHidden(true);
+    await new Promise((r) => window.setTimeout(r, 250));
+    let ok = 0;
+    for (let i = 0; i < blocks.length; i++) {
+      setBatchProgress(`${i + 1}/${blocks.length}`);
+      const node = document.getElementById(`studio-block-${i}`);
+      if (!node) continue;
+      try {
+        await exportNodeAsPng(
+          node as HTMLElement,
+          `alivia-studio-${world}-${seed}-${String(i + 1).padStart(2, "0")}-${blocks[i].kind}.png`,
+        );
+        ok++;
+      } catch (error) {
+        console.error("[studio] batch export failed", i, error);
+      }
+    }
+    setBatchProgress(null);
+    setHidden(false);
+    toast[ok ? "success" : "error"](
+      ok ? `${ok} de ${blocks.length} artes exportadas` : "Não foi possível exportar as artes",
+    );
+  };
+
+  const exportAllCaptions = async () => {
+    try {
+      await exportTextFile(buildPageCaptions(world, seed, blocks), `alivia-studio-${world}-${seed}-legendas.txt`);
+      toast.success("Legendas desta versão baixadas");
+    } catch {
+      toast.error("Não foi possível baixar as legendas.");
+    }
+  };
+
+  const exportFavoriteCaptions = async () => {
+    try {
+      await exportTextFile(buildFavoritesCaptions(favorites), "alivia-studio-favoritos-legendas.txt");
+      toast.success("Legendas dos favoritos baixadas");
+    } catch {
+      toast.error("Não foi possível baixar as legendas dos favoritos.");
+    }
   };
 
   const previewOnly = isPreviewEnvironment();
@@ -207,6 +257,9 @@ const StudioLanding = () => {
           onToggleFavorite={() => toggle(world, format, seed)}
           onOpenFavorites={() => setFavoritesOpen(true)}
           onHide={() => setHidden(true)}
+          onExportAllPng={exportAllPng}
+          onExportAllCaptions={exportAllCaptions}
+          batchProgress={batchProgress}
         />
       )}
 
@@ -226,6 +279,7 @@ const StudioLanding = () => {
           }}
 
           onRemove={remove}
+          onExportCaptions={exportFavoriteCaptions}
           onClose={() => setFavoritesOpen(false)}
         />
       )}
