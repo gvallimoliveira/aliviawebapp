@@ -59,7 +59,7 @@ const StudioLanding = () => {
   const [params, setParams] = useSearchParams();
   const [hidden, setHidden] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
-  const { favorites, isFavorite, toggle, remove } = useStudioFavorites();
+  const { favorites, isFavorite, toggle, isBlockFavorite, toggleBlock, remove } = useStudioFavorites();
 
   const world: WorldId = isWorldId(params.get("world")) ? (params.get("world") as WorldId) : "pro";
   const formatParam = params.get("format");
