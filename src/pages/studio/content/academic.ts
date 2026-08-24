@@ -4,6 +4,10 @@ import stepTests from "@/assets/step-tests.jpg";
 import stepDiagnosis from "@/assets/step-diagnosis.jpg";
 import stepQuestionnaires from "@/assets/step-questionnaires.jpg";
 import stepReport from "@/assets/step-report.jpg";
+import stepPainMap from "@/assets/step-painmap.jpg";
+import stepTreatment from "@/assets/step-treatment.jpg";
+import stepDiary from "@/assets/step-diary.jpg";
+
 
 const academic: WorldContent = {
   id: "academico",
