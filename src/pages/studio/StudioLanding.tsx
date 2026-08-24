@@ -112,11 +112,20 @@ const StudioLanding = () => {
     setParams(next, { replace: false });
   };
 
+  /** Gera uma seed nova (garantidamente diferente) e volta ao topo. */
+  const newVersion = () => {
+    let next = randomSeed();
+    while (next === seed) next = randomSeed();
+    update({ seed: next, from: null });
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
+
   const evolveFavorite = () => {
     if (favorites.length === 0) return;
     const pick = favorites[Math.floor(Math.random() * favorites.length)];
     update({ world: pick.world, format: pick.format, from: pick.id, seed: randomSeed() });
   };
+
 
   /** Exporta em sequência todas as artes visíveis (a barra é oculta durante o lote). */
   const exportAllPng = async () => {
