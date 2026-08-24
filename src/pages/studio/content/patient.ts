@@ -94,20 +94,72 @@ const patient: WorldContent = {
     { tag: "SEGURANÇA", title: "Sinais de alerta sempre checados", description: "Se algo exigir avaliação médica, o Aliv.iA avisa antes de qualquer exercício.", image: stepAnamnesis },
     { tag: "DIÁRIO DE DOR", title: "Sua evolução em uma linha", description: "Registro diário simples que mostra se o plano está funcionando.", image: stepDiary },
     { tag: "PROGRAMA", title: "Exercícios em vídeo para casa", description: "Selecionados para o seu quadro, com progressão respeitosa.", image: stepTreatment },
+    { tag: "RELATÓRIO", title: "Um documento para mostrar ao profissional", description: "Sua história, seus testes e sua evolução organizados em PDF.", image: stepReport },
+    { tag: "MAIS DE UMA DOR", title: "Ombro e lombar acompanhados separadamente", description: "Cada condição com seu próprio histórico e seu próprio plano.", image: stepDiary },
+    { tag: "PROFISSIONAIS", title: "Encontre um fisioterapeuta perto de você", description: "Vitrine de profissionais que já trabalham com o método.", image: stepAnamnesis },
   ],
   quotes: [
     '"Entender a própria dor é o primeiro passo do tratamento."',
     '"Informação clínica responsável não promete cura — dá direção."',
     '"Você merece mais que “é só desgaste”."',
+    '"Dor crônica não se resolve com paciência — se resolve com plano."',
+    '"O corpo avisa. O problema é quando ninguém traduz."',
   ],
   marquee: [
     ["Dor lombar", "Ombro", "Joelho", "Cervical", "Tendinopatias"],
     ["Avaliação guiada", "Sinais de alerta", "Diário de dor", "Exercícios em vídeo", "Relatório"],
+    ["Dor no quadril", "Dor no pé", "Dor de cabeça tensional", "Dor ao correr"],
   ],
   closings: [
     { title: "Comece pela sua avaliação", sub: "Poucos minutos para entender o que está acontecendo.", cta: "Fazer minha avaliação" },
     { title: "Sua dor merece um plano", sub: "Não um palpite da internet.", cta: "Quero entender minha dor" },
+    { title: "Hoje é um bom dia para entender", sub: "Avaliação guiada direto do celular.", cta: "Começar agora" },
   ],
+  sales: {
+    audience: "quem convive com dor há semanas ou meses",
+    proofs: [
+      "Avaliação guiada em cerca de 7 minutos, direto do celular",
+      "Mapa de dor para apontar a região sem termo técnico",
+      "Triagem de sinais de alerta antes de qualquer exercício",
+      "Explicação da sua dor em linguagem que você entende",
+      "Programa de exercícios em vídeo, na sua fase de tratamento",
+      "Diário de dor com a curva da sua evolução",
+      "Relatório em PDF para levar ao fisioterapeuta ou médico",
+      "Vitrine de profissionais para continuar o cuidado",
+    ],
+    objections: [
+      "Não substitui consulta: organiza o seu caso para o profissional decidir melhor e mais rápido.",
+      "Você não precisa saber nome de músculo nem de exame — as perguntas são simples.",
+      "Se aparecer qualquer sinal de alerta, o sistema orienta procurar avaliação médica antes.",
+      "Dá para começar pela avaliação gratuita e só depois decidir se quer o plano completo.",
+    ],
+    offers: [
+      "Avaliação inicial gratuita; plano completo por R$ 109 em pagamento único.",
+      "Acompanhamento mensal por R$ 79,90, com diário de dor e programa em vídeo.",
+      "Comece grátis: você só avança se fizer sentido para o seu caso.",
+    ],
+    ctas: [
+      "Link na bio para fazer sua avaliação gratuita",
+      "Comenta DOR que eu te mando o link",
+      "Marca alguém que vive dizendo “é só desgaste”",
+      "Salva para fazer com calma hoje à noite",
+    ],
+    hashtags: [
+      "dorlombar",
+      "dornascostas",
+      "dornoombro",
+      "dornojoelho",
+      "fisioterapia",
+      "dorcronica",
+      "saudedacoluna",
+      "exercicioterapeutico",
+      "qualidadedevida",
+      "aliviaapp",
+      "hernia dediscoinfo",
+      "tendinite",
+    ],
+  },
 };
+
 
 export default patient;
