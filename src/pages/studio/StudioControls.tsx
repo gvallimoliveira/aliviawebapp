@@ -50,7 +50,10 @@ const StudioControls = ({
   onEvolveFavorite,
   onToggleFavorite,
   onOpenFavorites,
+  onOpenCoverage,
+  forcedTopicLabel,
   onHide,
+
   onExportAllPng,
   onExportAllCaptions,
   batchProgress,
