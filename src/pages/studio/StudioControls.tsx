@@ -168,11 +168,12 @@ const StudioControls = ({
           size="sm"
           variant="ghost"
           className="h-8 w-8 rounded-xl p-0"
-          onClick={() => window.location.reload()}
-          title="Recarregar"
+          onClick={onNewVersion}
+          title="Renovar conteúdo e criativos (nova seed)"
         >
           <RefreshCw className="h-3.5 w-3.5" />
         </Button>
+
       </div>
     </div>
   );
