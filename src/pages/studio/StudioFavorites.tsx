@@ -1,4 +1,4 @@
-import { Sparkles, Trash2, X } from "lucide-react";
+import { FileText, Sparkles, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WORLDS } from "./content";
 import type { StudioFavorite } from "./useStudioFavorites";
@@ -8,9 +8,11 @@ type Props = {
   onOpen: (fav: StudioFavorite) => void;
   onRemove: (id: string) => void;
   onClose: () => void;
+  /** Baixa um único .txt com as legendas de todos os favoritos. */
+  onExportCaptions: () => void;
 };
 
-const StudioFavorites = ({ favorites, onOpen, onRemove, onClose }: Props) => (
+const StudioFavorites = ({ favorites, onOpen, onRemove, onClose, onExportCaptions }: Props) => (
   <div className="fixed right-3 top-3 z-50 w-[min(320px,90vw)] rounded-2xl border border-border bg-card/95 p-3 shadow-[0_18px_50px_-24px_hsl(var(--foreground)/0.5)] backdrop-blur print:hidden">
     <div className="mb-2 flex items-center justify-between">
       <p className="text-sm font-semibold text-foreground">Favoritos</p>
@@ -52,6 +54,18 @@ const StudioFavorites = ({ favorites, onOpen, onRemove, onClose }: Props) => (
           </li>
         ))}
       </ul>
+    )}
+
+    {favorites.length > 0 && (
+      <Button
+        size="sm"
+        variant="outline"
+        className="mt-2 h-8 w-full gap-1.5 rounded-xl text-xs"
+        onClick={onExportCaptions}
+      >
+        <FileText className="h-3.5 w-3.5" />
+        Baixar legendas dos favoritos (.txt)
+      </Button>
     )}
 
     {favorites.length > 0 && (
