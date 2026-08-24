@@ -8,6 +8,7 @@ import { composePage } from "./composePage";
 import { WORLDS, isWorldId, type WorldId } from "./content";
 import StudioControls from "./StudioControls";
 import StudioFavorites from "./StudioFavorites";
+import StudioCapture from "./StudioCapture";
 import { useStudioFavorites } from "./useStudioFavorites";
 import HeroBlock from "./blocks/HeroBlock";
 import MarqueeBlock from "./blocks/MarqueeBlock";
