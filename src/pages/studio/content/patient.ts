@@ -155,7 +155,7 @@ const patient: WorldContent = {
       "exercicioterapeutico",
       "qualidadedevida",
       "aliviaapp",
-      "hernia dediscoinfo",
+      "herniadedisco",
       "tendinite",
     ],
   },
