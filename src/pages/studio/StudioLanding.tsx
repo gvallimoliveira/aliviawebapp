@@ -24,7 +24,9 @@ import FeatureBlock from "./blocks/FeatureBlock";
 import KineticBlock from "./blocks/KineticBlock";
 import QuoteBlock from "./blocks/QuoteBlock";
 import ClosingBlock from "./blocks/ClosingBlock";
+import StudioMotion from "./blocks/StudioMotion";
 import type { BlockProps, StudioFormat } from "./blocks/shared";
+
 
 const BLOCKS = {
   hero: HeroBlock,
