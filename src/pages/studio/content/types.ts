@@ -36,4 +36,6 @@ export type WorldContent = {
   quotes: string[];
   marquee: string[][];
   closings: { title: string; sub: string; cta: string }[];
+  sales: WorldSales;
 };
+
