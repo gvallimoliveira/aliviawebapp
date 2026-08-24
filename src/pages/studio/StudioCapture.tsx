@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Check, Copy, Download, FileText, Loader2, Star, StarOff, Type } from "lucide-react";
 import { exportNodeAsPng } from "./exportImage";
+import { captureThumb, removeThumb } from "./thumbs";
 import { exportTextFile } from "./exportText";
 import { toast } from "sonner";
 
@@ -13,6 +14,8 @@ type Props = {
   caption: string;
   /** Ancora para reabrir a arte a partir dos favoritos */
   anchorId?: string;
+  /** Id do favorito desta arte (mundo:seed:índice) — usado para a miniatura. */
+  favoriteId?: string;
   /** Esta arte está favoritada? */
   favorited?: boolean;
   /** Favoritar/desfavoritar apenas esta arte */
@@ -31,6 +34,7 @@ const StudioCapture = ({
   visible,
   caption,
   anchorId,
+  favoriteId,
   favorited = false,
   onToggleFavorite,
   children,
@@ -40,6 +44,14 @@ const StudioCapture = ({
   const [busy, setBusy] = useState(false);
   const [captionOpen, setCaptionOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  /** Favorita e captura a miniatura da arte para a galeria de favoritos. */
+  const handleFavorite = async () => {
+    onToggleFavorite?.();
+    if (!favoriteId) return;
+    if (favorited) removeThumb(favoriteId);
+    else if (ref.current) await captureThumb(ref.current, favoriteId);
+  };
 
   const download = async () => {
     if (!ref.current || busy) return;
@@ -86,7 +98,7 @@ const StudioCapture = ({
             {onToggleFavorite && (
               <button
                 type="button"
-                onClick={onToggleFavorite}
+                onClick={handleFavorite}
                 title={favorited ? "Remover esta arte dos favoritos" : "Favoritar esta arte"}
                 className={`flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-[11px] font-medium shadow-sm backdrop-blur transition-opacity hover:opacity-100 md:opacity-40 ${
                   favorited ? "bg-primary text-primary-foreground" : "bg-card/85 text-foreground"
