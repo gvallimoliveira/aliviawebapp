@@ -167,6 +167,9 @@ const StudioLanding = () => {
                 <StudioCapture
                   key={`${kind}-${i}`}
                   visible={!hidden}
+                  anchorId={`studio-block-${i}`}
+                  favorited={isBlockFavorite(world, seed, i)}
+                  onToggleFavorite={() => toggleBlock(world, format, seed, i, kind)}
                   caption={buildCaption(content, kind, createRng(`${world}:${seed}:caption:${kind}:${i}`))}
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
@@ -175,6 +178,7 @@ const StudioLanding = () => {
                 </StudioCapture>
               );
             })}
+
           </div>
         </main>
       </div>
