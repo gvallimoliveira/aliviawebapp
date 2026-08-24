@@ -346,7 +346,22 @@ const StudioLanding = () => {
           onClose={() => setFavoritesOpen(false)}
         />
       )}
+
+      {coverageOpen && !hidden && (
+        <StudioCoveragePanel
+          world={world}
+          forced={forced}
+          onForce={(topic) => {
+            update({ force: topic, seed: randomSeed(), from: null });
+            setCoverageOpen(false);
+            window.scrollTo({ top: 0, behavior: "auto" });
+          }}
+          onClearForce={() => update({ force: null })}
+          onClose={() => setCoverageOpen(false)}
+        />
+      )}
     </>
+
   );
 };
 
