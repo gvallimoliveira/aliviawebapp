@@ -8,26 +8,34 @@ import stepDiagnosis from "@/assets/step-diagnosis.jpg";
 const clinic: WorldContent = {
   id: "clinica",
   label: "Clínica",
-  kickers: ["ALIV.IA CLÍNICA", "PARA EQUIPES", "GESTÃO COM PADRÃO CLÍNICO", "MULTIPROFISSIONAL"],
+  kickers: ["ALIV.IA CLÍNICA", "PARA EQUIPES", "GESTÃO COM PADRÃO CLÍNICO", "MULTIPROFISSIONAL", "15 DIAS SEM CARTÃO", "WHITE LABEL", "QUALIDADE AUDITÁVEL"],
   headlines: [
     { strong: "Padrão clínico não pode depender de quem atendeu.", rest: "Toda a equipe avaliando pelo mesmo método, com o mesmo nível de documentação." },
     { strong: "Sua clínica com um prontuário só.", rest: "Recepção, fisioterapeutas e gestão olhando o mesmo paciente, com permissões diferentes." },
     { strong: "Quando o paciente troca de terapeuta, o raciocínio continua.", rest: "Histórico, hipótese, evolução e programa domiciliar sempre no mesmo lugar." },
     { strong: "Qualidade auditável, não prometida.", rest: "Cada hipótese com autor, cada ressalva com justificativa, cada relatório com marca própria." },
     { strong: "Sua marca no relatório, seu método no processo.", rest: "White label com logo e cores da clínica em toda documentação entregue." },
+    { strong: "Quem sai da sua clínica leva um documento, não uma sensação.", rest: "Relatório de alta com evolução comparativa e a identidade visual da casa." },
+    { strong: "Terapeuta novo entrando? O método já está pronto.", rest: "Onboarding clínico em dias, não em meses de acompanhamento de perto." },
+    { strong: "Você não escala uma clínica sem padronizar a avaliação.", rest: "Link institucional, triagem obrigatória e prontuário compartilhado por toda a equipe." },
   ],
   subs: [
     "O sistema de raciocínio clínico da sua equipe.",
     "15 dias de teste, sem cartão de crédito.",
     "Padronize a avaliação sem engessar o clínico.",
     "Agenda, prontuário e evidência no mesmo fluxo.",
+    "Gestão que enxerga adesão, evolução e satisfação.",
+    "Sua marca em cada documento entregue.",
   ],
   kinetic: [
     { kicker: "NA EQUIPE", word: "Padrão", caption: "Todos avaliando com o mesmo rigor." },
     { kicker: "PARA A GESTÃO", word: "Visibilidade", caption: "Adesão, evolução e satisfação em um painel." },
     { kicker: "NO ATENDIMENTO", word: "Continuidade", caption: "Nenhum caso recomeça do zero." },
     { kicker: "PARA A MARCA", word: "Autoridade", caption: "Relatórios com a identidade da clínica." },
+    { kicker: "NO RISCO", word: "Proteção", caption: "Documentação completa é gestão de risco." },
+    { kicker: "NO CRESCIMENTO", word: "Escala", caption: "Novo terapeuta entra com o método pronto." },
   ],
+
   metrics: [
     [
       { value: 15, suffix: " dias", label: "de teste sem cartão" },
