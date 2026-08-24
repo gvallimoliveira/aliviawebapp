@@ -133,6 +133,8 @@ const clinic: WorldContent = {
     { tag: "DINAMOMETRIA", title: "Força e assimetria no prontuário da casa", description: "Upload do laudo, extração dos valores e semáforo de risco.", topic: "dynamometry" },
     { tag: "MENSAGENS", title: "Canal com o paciente dentro do prontuário", description: "Conversa registrada, sem depender do WhatsApp pessoal.", topic: "messaging" },
     { tag: "LGPD", title: "Consentimento e privacidade sob controle", description: "Registro de consentimento e atendimento a pedidos do titular.", topic: "privacy" },
+    { tag: "RELATÓRIO", title: "O documento que o paciente leva para casa", description: "PDF completo da avaliação, com a marca da clínica no cabeçalho.", topic: "report" },
+
   ],
   quotes: [
     { text: '"Padrão clínico é o ativo mais valioso de uma clínica."', topic: "anamnesis" },
