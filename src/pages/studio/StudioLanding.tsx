@@ -252,7 +252,7 @@ const StudioLanding = () => {
           canEvolve={favorites.length > 0}
           onWorld={(w) => update({ world: w })}
           onFormat={(f) => update({ format: f })}
-          onNewVersion={() => update({ seed: randomSeed(), from: null })}
+          onNewVersion={newVersion}
           onEvolveFavorite={evolveFavorite}
           onToggleFavorite={() => toggle(world, format, seed)}
           onOpenFavorites={() => setFavoritesOpen(true)}
