@@ -166,8 +166,10 @@ const StudioLanding = () => {
                 <StudioCapture
                   key={`${kind}-${i}`}
                   visible={!hidden}
+                  caption={buildCaption(content, kind, createRng(`${world}:${seed}:caption:${kind}:${i}`))}
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
+
                   <Block content={content} rng={rng} treatment={treatment} format={format} />
                 </StudioCapture>
               );
