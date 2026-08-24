@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ScrollProgress from "@/components/scroll/ScrollProgress";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,8 +11,12 @@ import { exportTextFile } from "./exportText";
 import { exportNodeAsPng } from "./exportImage";
 import { toast } from "sonner";
 import { WORLDS, isWorldId, type WorldId } from "./content";
+import { buildCoverage, readExposureLog, recordExposure, type ExposureLog } from "./coverage";
+import { createPicker } from "./picker";
+import { isTopicId, type TopicId } from "./topics";
 import StudioControls from "./StudioControls";
 import StudioFavorites from "./StudioFavorites";
+import StudioCoveragePanel from "./StudioCoveragePanel";
 import StudioCapture from "./StudioCapture";
 import { useStudioFavorites } from "./useStudioFavorites";
 import HeroBlock from "./blocks/HeroBlock";
@@ -26,6 +30,7 @@ import QuoteBlock from "./blocks/QuoteBlock";
 import ClosingBlock from "./blocks/ClosingBlock";
 import StudioMotion from "./blocks/StudioMotion";
 import type { BlockProps, StudioFormat } from "./blocks/shared";
+
 
 
 const BLOCKS = {
