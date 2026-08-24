@@ -48,8 +48,30 @@ export const createRng = (seed: string): Rng => {
   const pickMany = <T,>(items: readonly T[], count: number) => shuffle(items).slice(0, count);
   const chance = (probability: number) => next() < probability;
 
-  return { next, int, pick, pickMany, chance, shuffle };
+  const pickWeighted = <T,>(items: readonly T[], weightOf: (item: T) => number, count: number) => {
+    const pool = [...items];
+    const out: T[] = [];
+    while (out.length < count && pool.length > 0) {
+      const weights = pool.map((item) => Math.max(0.0001, weightOf(item)));
+      const total = weights.reduce((a, b) => a + b, 0);
+      let ticket = next() * total;
+      let index = weights.length - 1;
+      for (let i = 0; i < weights.length; i += 1) {
+        ticket -= weights[i];
+        if (ticket <= 0) {
+          index = i;
+          break;
+        }
+      }
+      out.push(pool[index]);
+      pool.splice(index, 1);
+    }
+    return out;
+  };
+
+  return { next, int, pick, pickMany, pickWeighted, chance, shuffle };
 };
+
 
 /** Short human-friendly seed, e.g. "4f2a". */
 export const randomSeed = () => Math.random().toString(36).slice(2, 6);
