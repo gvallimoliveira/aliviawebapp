@@ -67,13 +67,28 @@ const StudioCapture = ({
   };
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} id={anchorId} className="relative scroll-mt-4">
       {children}
 
       {visible && (
         <div data-studio-no-export="1" className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2">
           <div className="flex gap-2">
+            {onToggleFavorite && (
+              <button
+                type="button"
+                onClick={onToggleFavorite}
+                title={favorited ? "Remover esta arte dos favoritos" : "Favoritar esta arte"}
+                className={`flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-[11px] font-medium shadow-sm backdrop-blur transition-opacity hover:opacity-100 md:opacity-40 ${
+                  favorited ? "bg-primary text-primary-foreground" : "bg-card/85 text-foreground"
+                }`}
+              >
+                {favorited ? <Star className="h-3.5 w-3.5 fill-current" /> : <StarOff className="h-3.5 w-3.5" />}
+                {favorited ? "Salva" : "Favoritar"}
+              </button>
+            )}
+
             <button
+
               type="button"
               onClick={() => setCaptionOpen((v) => !v)}
               title="Legenda de vendas pronta para o Instagram"
