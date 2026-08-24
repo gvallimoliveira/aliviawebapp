@@ -83,20 +83,72 @@ const academic: WorldContent = {
     { tag: "AMBIENTE SIMULADO", title: "Painel profissional completo, sem paciente real", description: "Prontuários fictícios para você navegar como um clínico.", image: stepReport },
     { tag: "QUESTIONÁRIOS", title: "Aprenda a interpretar escores", description: "FABQ, Oswestry, DASH e outros — com cortes e significado clínico.", image: stepQuestionnaires },
     { tag: "CASOS DE ESTUDO", title: "Biblioteca de casos comentados", description: "Da triagem de red flags à alta, com decisões explicadas.", image: stepTests },
+    { tag: "MECANISMO DE DOR", title: "Nociceptiva, neuropática ou nociplástica", description: "Roteiro baseado em Kosek e Finnerup, com implicação na conduta.", image: stepDiagnosis },
+    { tag: "DIFERENCIAIS", title: "Treine a hipótese que você quase esqueceu", description: "Diagnósticos diferenciais com critério de inclusão e exclusão.", image: stepAnamnesis },
+    { tag: "RELATÓRIOS", title: "Aprenda a escrever como se fosse perícia", description: "Documente o raciocínio de forma defensável desde a graduação.", image: stepReport },
   ],
   quotes: [
     '"O diagnóstico não é um chute com nome bonito."',
     '"Quem treina raciocínio chega no estágio com repertório."',
     '"Evidência sem aplicação é decoração de slide."',
+    '"Repetição deliberada forma clínico. Véspera de prova forma nota."',
+    '"Você vai ser lembrado pelas perguntas que soube fazer."',
   ],
   marquee: [
     ["Trilhas clínicas", "Casos comentados", "PEDro ≥ 7", "Ambiente simulado", "Testes validados"],
     ["Raciocínio clínico", "Red flags", "Questionários", "Mecanismo de dor", "Conduta baseada em evidência"],
+    ["Laslett", "McKenzie", "Neurodinâmica", "FABQ-Brasil", "Oswestry"],
   ],
   closings: [
     { title: "Treine antes do paciente real", sub: "Plano acadêmico com acesso ao ambiente simulado.", cta: "Ver o Aliv.iA Acadêmico" },
     { title: "Seu diferencial começa agora", sub: "Enquanto os outros decoram, você raciocina.", cta: "Quero estudar assim" },
+    { title: "Chegue no estágio com repertório", sub: "Casos comentados e evidência citável.", cta: "Ativar acesso de estudante" },
   ],
+  sales: {
+    audience: "estudantes de fisioterapia e recém-formados",
+    proofs: [
+      "Ambiente simulado completo, com prontuários fictícios",
+      "Trilhas que vão da queixa até a conduta justificada",
+      "Testes funcionais com técnica e critério de positividade",
+      "Questionários validados com pontos de corte explicados",
+      "Agente clínico para discutir caso na madrugada da prova",
+      "Fontes com PEDro ≥ 7 e PMID para citar no TCC",
+      "Treino do método STEPS e do D.I.F.I caso a caso",
+      "Relatórios modelo para aprender a documentar",
+    ],
+    objections: [
+      "Não é videoaula: você decide, o sistema confronta a sua escolha.",
+      "Não precisa esperar o estágio para praticar raciocínio clínico.",
+      "Funciona no celular, entre uma aula e outra.",
+      "Acesso acadêmico com condição de estudante, mediante comprovação de matrícula.",
+    ],
+    offers: [
+      "Plano acadêmico com condição de estudante, comprovando matrícula.",
+      "Acesso ao ambiente simulado sem custo de paciente e sem risco clínico.",
+      "Comece pelo painel demonstrativo antes de ativar o acesso.",
+    ],
+    ctas: [
+      "Link na bio para ativar seu acesso de estudante",
+      "Comenta ESTÁGIO que eu te mando o link",
+      "Marca aquele colega que entra em estágio agora",
+      "Salva para treinar antes da próxima prova prática",
+    ],
+    hashtags: [
+      "estudantedefisioterapia",
+      "fisioterapia",
+      "graduacaofisioterapia",
+      "raciocinioclinico",
+      "estagiofisioterapia",
+      "fisioestudante",
+      "provapratica",
+      "tccfisioterapia",
+      "evidenciacientifica",
+      "aliviaapp",
+      "anatomia",
+      "reabilitacao",
+    ],
+  },
 };
+
 
 export default academic;
