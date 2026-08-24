@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isFallbackVip } from "@/lib/vipEmails";
 import { createRng, randomSeed } from "./rng";
 import { composePage } from "./composePage";
+import { buildCaption } from "./caption";
 import { WORLDS, isWorldId, type WorldId } from "./content";
 import StudioControls from "./StudioControls";
 import StudioFavorites from "./StudioFavorites";
