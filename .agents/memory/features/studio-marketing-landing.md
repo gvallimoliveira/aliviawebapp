@@ -21,3 +21,8 @@ Nunca deve ser linkada nas páginas publicadas, nem entrar no sitemap (`public/r
 - Blocos em `src/pages/studio/blocks/` com "treatments" (variações de alinhamento/superfície).
 - Regra de identidade: tipografia e paleta do projeto são fixas (tokens semânticos); só composição,
   densidade, alinhamento e ordem variam.
+- Favoritos: `useStudioFavorites.ts` (localStorage `studio:favorites`, guarda mundo+formato+seed) e
+  painel `StudioFavorites.tsx`. "Evoluir favorito" gera nova seed com `?from=<mundo>:<seed>`; o
+  `composePage` herda ~60% da composição aprovada e sorteia o resto como novidade.
+- Barra de ferramentas pode ser ocultada (botão "Ocultar" ou tecla **H**); quando oculta sobra apenas
+  uma pílula discreta "Studio" no canto inferior direito para reabrir.
