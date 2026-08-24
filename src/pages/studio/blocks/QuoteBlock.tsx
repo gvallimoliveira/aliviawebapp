@@ -5,9 +5,10 @@ import { MESH_STYLE, sectionHeight, type BlockProps } from "./shared";
  * Typographic manifesto moment — the format that performs best as a still post.
  * Treatments: 0 tinted primary surface, 1 warm accent surface, 2 mesh + framed.
  */
-const QuoteBlock = ({ content, rng, treatment, format }: BlockProps) => {
-  const quote = rng.pick(content.quotes);
+const QuoteBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
+  const [quote] = picker.pick(content.quotes, 1, rng, (q) => [q.topic]);
   const surface = treatment === 0 ? "bg-primary/10" : treatment === 1 ? "bg-accent/50" : "bg-secondary/40";
+
 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}>
