@@ -1,10 +1,9 @@
 import type { WorldContent } from "./types";
-import stepAnamnesis from "@/assets/step-anamnesis.jpg";
-import stepReport from "@/assets/step-report.jpg";
-import stepTreatment from "@/assets/step-treatment.jpg";
-import stepDiary from "@/assets/step-diary.jpg";
-import stepDiagnosis from "@/assets/step-diagnosis.jpg";
 
+/**
+ * Copy do mundo Clínica.
+ * REGRA: cada item declara `topic`; imagem só vem do tópico (nunca genérica).
+ */
 const clinic: WorldContent = {
   id: "clinica",
   label: "Clínica",
@@ -18,6 +17,8 @@ const clinic: WorldContent = {
     { strong: "Quem sai da sua clínica leva um documento, não uma sensação.", rest: "Relatório de alta com evolução comparativa e a identidade visual da casa." },
     { strong: "Terapeuta novo entrando? O método já está pronto.", rest: "Onboarding clínico em dias, não em meses de acompanhamento de perto." },
     { strong: "Você não escala uma clínica sem padronizar a avaliação.", rest: "Link institucional, triagem obrigatória e prontuário compartilhado por toda a equipe." },
+    { strong: "Satisfação medida, não sentida.", rest: "Pesquisa pública com painel de NPS e retorno chegando direto no chat da equipe." },
+    { strong: "Exame do paciente não deveria morar no WhatsApp.", rest: "Documentos anexados ao prontuário, com permissão por função e limite por paciente." },
   ],
   subs: [
     "O sistema de raciocínio clínico da sua equipe.",
@@ -28,12 +29,14 @@ const clinic: WorldContent = {
     "Sua marca em cada documento entregue.",
   ],
   kinetic: [
-    { kicker: "NA EQUIPE", word: "Padrão", caption: "Todos avaliando com o mesmo rigor." },
-    { kicker: "PARA A GESTÃO", word: "Visibilidade", caption: "Adesão, evolução e satisfação em um painel." },
-    { kicker: "NO ATENDIMENTO", word: "Continuidade", caption: "Nenhum caso recomeça do zero." },
-    { kicker: "PARA A MARCA", word: "Autoridade", caption: "Relatórios com a identidade da clínica." },
-    { kicker: "NO RISCO", word: "Proteção", caption: "Documentação completa é gestão de risco." },
-    { kicker: "NO CRESCIMENTO", word: "Escala", caption: "Novo terapeuta entra com o método pronto." },
+    { kicker: "NA EQUIPE", word: "Padrão", caption: "Todos avaliando com o mesmo rigor.", topic: "anamnesis" },
+    { kicker: "PARA A GESTÃO", word: "Visibilidade", caption: "Adesão, evolução e satisfação em um painel.", topic: "nps" },
+    { kicker: "NO ATENDIMENTO", word: "Continuidade", caption: "Nenhum caso recomeça do zero.", topic: "shared-record" },
+    { kicker: "PARA A MARCA", word: "Autoridade", caption: "Relatórios com a identidade da clínica.", topic: "white-label" },
+    { kicker: "NO RISCO", word: "Proteção", caption: "Documentação completa é gestão de risco.", topic: "governance" },
+    { kicker: "NO CRESCIMENTO", word: "Escala", caption: "Novo terapeuta entra com o método pronto.", topic: "institutional-link" },
+    { kicker: "NA AGENDA", word: "Encaixe", caption: "Grade da equipe organizada por arrastar e soltar.", topic: "agenda" },
+    { kicker: "NO ARQUIVO", word: "Memória", caption: "Nada é apagado do prontuário, só organizado.", topic: "archive" },
   ],
 
   metrics: [
@@ -52,17 +55,36 @@ const clinic: WorldContent = {
       { value: 1, suffix: " painel", label: "com adesão, evolução e NPS" },
       { value: 0, suffix: " cartão", label: "exigido para começar o teste" },
     ],
+    [
+      { value: 1, suffix: " prontuário", label: "compartilhado por toda a equipe" },
+      { value: 6, label: "fases do método na conduta de qualquer terapeuta" },
+      { value: 2, label: "cliques entre a alta e o relatório comparativo" },
+    ],
   ],
   compare: [
     {
       title: "Antes e depois na operação",
+      topics: ["institutional-link", "shared-record", "permissions", "white-label"],
       before: ["Cada terapeuta com seu próprio padrão", "Prontuário em papel ou planilha", "Paciente recontando a história", "Relatório sem identidade da clínica"],
       after: ["Método único, link institucional", "Prontuário compartilhado com permissões", "Histórico completo em qualquer troca de terapeuta", "PDF com logo e cores da casa"],
     },
     {
       title: "Duas formas de crescer a clínica",
+      topics: ["anamnesis", "nps", "institutional-link"],
       before: ["Qualidade dependendo do terapeuta de plantão", "Gestão sem número de adesão", "Satisfação medida por percepção", "Onboarding longo de cada contratação"],
       after: ["Padrão de avaliação para toda a equipe", "Indicadores no painel de gestão", "NPS com pesquisa pública", "Novo terapeuta produtivo em dias"],
+    },
+    {
+      title: "Duas formas de tratar o histórico do paciente",
+      topics: ["documents", "archive", "clinical-impression"],
+      before: ["Exame perdido no WhatsApp", "Lista de pacientes inflada e confusa", "Evolução resumida de memória"],
+      after: ["Documentos anexados ao prontuário", "Arquivamento sem apagar histórico", "Impressão clínica lendo o caso inteiro"],
+    },
+    {
+      title: "Duas formas de responder por uma hipótese",
+      topics: ["governance", "discharge-report", "red-flags"],
+      before: ["Hipótese sem autor identificado", "Alta sem documento comparativo", "Triagem de segurança opcional"],
+      after: ["Ressalva liberada com autor e justificativa", "Relatório de alta com evolução lado a lado", "Red flags obrigatórias em toda avaliação"],
     },
   ],
 
@@ -71,36 +93,60 @@ const clinic: WorldContent = {
       kicker: "FLUXO DA CLÍNICA",
       heading: "Do agendamento ao relatório de alta",
       steps: [
-        { title: "Link institucional", description: "Recepção envia, paciente responde antes de chegar.", image: stepAnamnesis },
-        { title: "Avaliação padronizada", description: "Mesmo método, mesma triagem de segurança, em toda a equipe.", image: stepDiagnosis },
-        { title: "Evolução compartilhada", description: "Sessões, observações e evolução visíveis para todo o time.", image: stepDiary },
-        { title: "Relatório de alta", description: "Comparativo de evolução com a marca da clínica.", image: stepReport },
+        { title: "Link institucional", description: "Recepção envia, paciente responde antes de chegar.", topic: "institutional-link" },
+        { title: "Avaliação padronizada", description: "Mesmo método, mesma triagem de segurança, em toda a equipe.", topic: "anamnesis" },
+        { title: "Evolução compartilhada", description: "Sessões, observações e evolução visíveis para todo o time.", topic: "shared-record" },
+        { title: "Relatório de alta", description: "Comparativo de evolução com a marca da clínica.", topic: "discharge-report" },
+      ],
+    },
+    {
+      kicker: "GESTÃO",
+      heading: "O que a direção passa a enxergar",
+      steps: [
+        { title: "Agenda da equipe", description: "Grade com encaixe por arrastar e soltar e importação por imagem.", topic: "agenda" },
+        { title: "Permissões por função", description: "Gestão, terapeuta e recepção com acessos distintos.", topic: "permissions" },
+        { title: "Satisfação", description: "Pesquisa pública, painel de NPS e retorno direto no chat.", topic: "nps" },
+        { title: "Governança clínica", description: "Ressalvas liberadas com autor e justificativa registrados.", topic: "governance" },
       ],
     },
   ],
   features: [
-    { tag: "WHITE LABEL", title: "A clínica no centro da entrega", description: "Logo e cores próprias no relatório entregue ao paciente.", image: stepReport },
-    { tag: "AGENDA", title: "Encaixe por arrastar e soltar", description: "Grade da equipe com importação de agenda por imagem." },
-    { tag: "NPS", title: "Satisfação medida de verdade", description: "Pesquisa pública com painel de NPS e retorno direto ao chat." },
-    { tag: "GOVERNANÇA", title: "Ressalva com autor e justificativa", description: "Hipóteses sob ressalva só são liberadas por um terapeuta da casa.", image: stepDiagnosis },
-    { tag: "AVALIAÇÃO PADRÃO", title: "Mesma anamnese para toda a equipe", description: "História, saúde geral e red flags em campos comparáveis.", image: stepAnamnesis },
-    { tag: "CONDUTA", title: "Plano por fases com critério de progressão", description: "O mesmo raciocínio de tratamento em qualquer terapeuta da casa.", image: stepTreatment },
-    { tag: "DOCUMENTOS", title: "Exames do paciente no mesmo lugar", description: "Até 20 MB por paciente, acessíveis a quem tem permissão." },
-    { tag: "ARQUIVO", title: "Arquive sem perder histórico", description: "A recepção organiza a lista e nada é apagado do prontuário." },
-    { tag: "PERMISSÕES", title: "Cada função vê o que precisa", description: "Gestão, terapeuta e recepção com acessos distintos." },
-    { tag: "EVOLUÇÃO", title: "Do primeiro atendimento à alta", description: "Diário de dor e comparativo de evolução no mesmo prontuário.", image: stepDiary },
+    { tag: "WHITE LABEL", title: "A clínica no centro da entrega", description: "Logo e cores próprias no relatório entregue ao paciente.", topic: "white-label" },
+    { tag: "AGENDA", title: "Encaixe por arrastar e soltar", description: "Grade da equipe com importação de agenda por imagem.", topic: "agenda" },
+    { tag: "NPS", title: "Satisfação medida de verdade", description: "Pesquisa pública com painel de NPS e retorno direto ao chat.", topic: "nps" },
+    { tag: "GOVERNANÇA", title: "Ressalva com autor e justificativa", description: "Hipóteses sob ressalva só são liberadas por um terapeuta da casa.", topic: "governance" },
+    { tag: "AVALIAÇÃO PADRÃO", title: "Mesma anamnese para toda a equipe", description: "História, saúde geral e red flags em campos comparáveis.", topic: "anamnesis" },
+    { tag: "CONDUTA", title: "Plano por fases com critério de progressão", description: "O mesmo raciocínio de tratamento em qualquer terapeuta da casa.", topic: "treatment-plan" },
+    { tag: "DOCUMENTOS", title: "Exames do paciente no mesmo lugar", description: "Até 20 MB por paciente, acessíveis a quem tem permissão.", topic: "documents" },
+    { tag: "ARQUIVO", title: "Arquive sem perder histórico", description: "A recepção organiza a lista e nada é apagado do prontuário.", topic: "archive" },
+    { tag: "PERMISSÕES", title: "Cada função vê o que precisa", description: "Gestão, terapeuta e recepção com acessos distintos.", topic: "permissions" },
+    { tag: "EVOLUÇÃO", title: "Do primeiro atendimento à alta", description: "Diário de dor e comparativo de evolução no mesmo prontuário.", topic: "pain-diary" },
+    { tag: "LINK INSTITUCIONAL", title: "A avaliação sai no nome da clínica", description: "A recepção envia o link da casa, não o link pessoal do terapeuta.", topic: "institutional-link" },
+    { tag: "PRONTUÁRIO ÚNICO", title: "Troca de terapeuta sem perda de contexto", description: "Histórico, hipótese e conduta seguem com o paciente.", topic: "shared-record" },
+    { tag: "RELATÓRIO DE ALTA", title: "Resultado demonstrado em documento", description: "Evolução comparativa com a identidade visual da clínica.", topic: "discharge-report" },
+    { tag: "AGENTE CLÍNICO", title: "Segunda opinião para toda a equipe", description: "Discussão de conduta com evidência citada, disponível a qualquer hora.", topic: "clinical-agent" },
+    { tag: "REAVALIAÇÃO EXPRESSA", title: "Retorno documentado em minutos", description: "Pré-preenchida com o caso, destacando só o que mudou.", topic: "express-reassessment" },
+    { tag: "IMPRESSÃO CLÍNICA", title: "Leitura longitudinal do caso", description: "Síntese que considera testes externos e observações da evolução.", topic: "clinical-impression" },
+    { tag: "HEP", title: "Programa domiciliar padronizado", description: "Exercícios em vídeo com progressão e restrições respeitadas.", topic: "hep" },
+    { tag: "QUESTIONÁRIOS", title: "Desfecho medido com escala validada", description: "ODI, HOOS, DASH e outros comparáveis entre pacientes da casa.", topic: "questionnaires" },
+    { tag: "SAÚDE GERAL", title: "Comorbidade registrada com nível de risco", description: "Hipertensão, diabetes, cardiopatia e medicação contínua padronizados.", topic: "health-general" },
+    { tag: "DINAMOMETRIA", title: "Força e assimetria no prontuário da casa", description: "Upload do laudo, extração dos valores e semáforo de risco.", topic: "dynamometry" },
+    { tag: "MENSAGENS", title: "Canal com o paciente dentro do prontuário", description: "Conversa registrada, sem depender do WhatsApp pessoal.", topic: "messaging" },
+    { tag: "LGPD", title: "Consentimento e privacidade sob controle", description: "Registro de consentimento e atendimento a pedidos do titular.", topic: "privacy" },
   ],
   quotes: [
-    '"Padrão clínico é o ativo mais valioso de uma clínica."',
-    '"O paciente não deveria recontar a história a cada troca de terapeuta."',
-    '"Documentação boa é gestão de risco."',
-    '"Clínica que não padroniza avaliação não escala — só acumula."',
-    '"Sua marca vale mais quando o processo sustenta a promessa."',
+    { text: '"Padrão clínico é o ativo mais valioso de uma clínica."', topic: "anamnesis" },
+    { text: '"O paciente não deveria recontar a história a cada troca de terapeuta."', topic: "shared-record" },
+    { text: '"Documentação boa é gestão de risco."', topic: "governance" },
+    { text: '"Clínica que não padroniza avaliação não escala — só acumula."', topic: "institutional-link" },
+    { text: '"Sua marca vale mais quando o processo sustenta a promessa."', topic: "white-label" },
+    { text: '"Satisfação que ninguém mede é satisfação que ninguém melhora."', topic: "nps" },
   ],
   marquee: [
     ["Prontuário compartilhado", "White label", "Agenda da equipe", "NPS", "Permissões por função"],
     ["Padrão de avaliação", "Relatório de alta", "Programa domiciliar", "Documentos do paciente", "Auditoria clínica"],
     ["Link institucional", "Onboarding de terapeuta", "Indicadores de adesão", "Satisfação do paciente"],
+    ["Arquivamento", "Reavaliação expressa", "Impressão clínica", "Dinamometria", "LGPD"],
   ],
   closings: [
     { title: "Sua clínica em um padrão só", sub: "15 dias de teste, sem cartão de crédito.", cta: "Ver o Aliv.iA Clínica" },
@@ -118,12 +164,16 @@ const clinic: WorldContent = {
       "Tratamentos inclusos, sem custo por paciente no modo clínica",
       "Link institucional para a recepção enviar antes da consulta",
       "Histórico preservado mesmo com troca de terapeuta",
+      "Documentos do paciente anexados ao prontuário, até 20 MB",
+      "Arquivamento de pacientes sem perder histórico clínico",
+      "Ressalva clínica liberada com autor e justificativa registrados",
     ],
     objections: [
       "Padronizar não engessa: o clínico continua sobrescrevendo a hipótese quando discorda.",
       "Sem cartão de crédito para testar — você decide depois de ver funcionando.",
       "A migração começa pelos pacientes novos; o histórico antigo entra no seu ritmo.",
       "A recepção usa o mesmo sistema, sem treinamento longo.",
+      "Consentimento e privacidade tratados conforme a LGPD, com registro por paciente.",
     ],
     offers: [
       "15 dias de teste sem cartão de crédito.",
