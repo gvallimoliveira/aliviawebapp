@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isFallbackVip } from "@/lib/vipEmails";
 import { createRng, randomSeed } from "./rng";
 import { composePage } from "./composePage";
+import { buildCaption } from "./caption";
 import { WORLDS, isWorldId, type WorldId } from "./content";
 import StudioControls from "./StudioControls";
 import StudioFavorites from "./StudioFavorites";
@@ -166,8 +167,10 @@ const StudioLanding = () => {
                 <StudioCapture
                   key={`${kind}-${i}`}
                   visible={!hidden}
+                  caption={buildCaption(content, kind, createRng(`${world}:${seed}:caption:${kind}:${i}`))}
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
+
                   <Block content={content} rng={rng} treatment={treatment} format={format} />
                 </StudioCapture>
               );
