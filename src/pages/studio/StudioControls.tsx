@@ -1,4 +1,4 @@
-import { Copy, EyeOff, FileText, Images, Loader2, RefreshCw, Shuffle, Sparkles, Star, StarOff } from "lucide-react";
+import { BarChart3, Copy, EyeOff, FileText, Images, Loader2, RefreshCw, Shuffle, Sparkles, Star, StarOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WORLD_IDS, WORLDS, type WorldId } from "./content";
@@ -17,6 +17,10 @@ type StudioControlsProps = {
   onEvolveFavorite: () => void;
   onToggleFavorite: () => void;
   onOpenFavorites: () => void;
+  /** Abre o estudo de cobertura editorial (o que está muito e pouco divulgado). */
+  onOpenCoverage: () => void;
+  /** Nome da funcionalidade que está sendo forçada nesta versão, se houver. */
+  forcedTopicLabel?: string;
   onHide: () => void;
   /** Exporta todas as artes da versão atual em PNG, uma a uma. */
   onExportAllPng: () => void;
@@ -25,6 +29,7 @@ type StudioControlsProps = {
   /** Indica progresso do lote de PNGs ("3/8") ou null quando parado. */
   batchProgress: string | null;
 };
+
 
 const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "9x16", label: "9:16" },
