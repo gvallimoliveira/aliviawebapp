@@ -9,7 +9,17 @@ import stepDiagnosis from "@/assets/step-diagnosis.jpg";
 const professional: WorldContent = {
   id: "pro",
   label: "Profissional",
-  kickers: ["RACIOCÍNIO CLÍNICO", "PARA FISIOTERAPEUTAS", "CLÍNICA COM MÉTODO", "EVIDÊNCIA NA MÃO"],
+  kickers: [
+    "RACIOCÍNIO CLÍNICO",
+    "PARA FISIOTERAPEUTAS",
+    "CLÍNICA COM MÉTODO",
+    "EVIDÊNCIA NA MÃO",
+    "PRONTUÁRIO QUE PENSA",
+    "DOCUMENTAÇÃO SEM DOR",
+    "MENOS TECLADO, MAIS CLÍNICA",
+    "PADRÃO PERICIAL",
+  ],
+
   headlines: [
     {
       strong: "Você não estudou fisioterapia para preencher formulários.",
