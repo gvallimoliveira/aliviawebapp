@@ -282,7 +282,7 @@ const StudioLanding = () => {
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
                   <StudioMotion kind={motion}>
-                    <Block content={content} rng={rng} treatment={treatment} format={format} />
+                    <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} />
                   </StudioMotion>
                 </StudioCapture>
               );
@@ -316,10 +316,13 @@ const StudioLanding = () => {
           onEvolveFavorite={evolveFavorite}
           onToggleFavorite={() => toggle(world, format, seed)}
           onOpenFavorites={() => setFavoritesOpen(true)}
+          onOpenCoverage={() => setCoverageOpen(true)}
+          forcedTopicLabel={forced ? coverage.byId[forced]?.label : undefined}
           onHide={() => setHidden(true)}
           onExportAllPng={exportAllPng}
           onExportAllCaptions={exportAllCaptions}
           batchProgress={batchProgress}
+
         />
       )}
 
