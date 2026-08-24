@@ -5,6 +5,8 @@ import stepTests from "@/assets/step-tests.jpg";
 import stepTreatment from "@/assets/step-treatment.jpg";
 import stepReport from "@/assets/step-report.jpg";
 import stepDiagnosis from "@/assets/step-diagnosis.jpg";
+import stepQuestionnaires from "@/assets/step-questionnaires.jpg";
+
 
 const professional: WorldContent = {
   id: "pro",
