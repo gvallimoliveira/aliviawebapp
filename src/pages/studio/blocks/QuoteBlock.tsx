@@ -23,8 +23,9 @@ const QuoteBlock = ({ content, rng, treatment, format, picker }: BlockProps) => 
           className={`mx-auto max-w-3xl text-center ${treatment === 2 ? "rounded-3xl border border-primary/20 bg-background/70 p-8 md:p-14" : ""}`}
         >
           <p className="text-2xl font-semibold italic leading-snug tracking-tight text-primary md:text-4xl">
-            {quote}
+            {quote.text}
           </p>
+
           <footer className="mt-8 text-[11px] font-medium uppercase tracking-[0.32em] text-muted-foreground">
             Aliv.iA · {content.label}
           </footer>
