@@ -26,3 +26,6 @@ Nunca deve ser linkada nas páginas publicadas, nem entrar no sitemap (`public/r
   `composePage` herda ~60% da composição aprovada e sorteia o resto como novidade.
 - Barra de ferramentas pode ser ocultada (botão "Ocultar" ou tecla **H**); quando oculta sobra apenas
   uma pílula discreta "Studio" no canto inferior direito para reabrir.
+- Exportação: `StudioCapture.tsx` envolve cada seção e baixa PNG em `pixelRatio: 3` via `html-to-image`
+  (arquivo `alivia-studio-<mundo>-<seed>-<n>-<bloco>.png`). O botão some junto com a barra (tecla H) e
+  é excluído da captura por `data-studio-no-export="1"`.
