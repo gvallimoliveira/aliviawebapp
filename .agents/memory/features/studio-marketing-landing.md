@@ -39,3 +39,13 @@ Nunca deve ser linkada nas páginas publicadas, nem entrar no sitemap (`public/r
   O simulado é treino complementar, não limite do produto.
 - Sem fallback de imagem: bloco de feature sem screenshot correspondente renderiza só tipografia
   (`FeatureBlock` não usa mais imagem genérica). Só declare `image` quando a tela for exatamente o assunto.
+
+## Volume e animação (ago/2026)
+
+- `composePage` monta ~13-17 blocos por versão (miolo de 9-12 seções sem repetir a mesma
+  seção em sequência) e **2** momentos kinéticos, em terços diferentes da página.
+- ~50% dos blocos recebem animação de scroll via `blocks/StudioMotion.tsx`
+  (`focusPull`, `zoomIn`, `zoomOut`, `gradientDrift`, `parallaxScrub`, `maskWipe`, `tiltRise`).
+  Hero e closing sempre animam; nunca dois efeitos iguais em sequência.
+- Contrato de captura: todo efeito é **neutro** quando o bloco está centralizado
+  (progress ~0.5), para o PNG exportado nunca sair borrado/zoomado.

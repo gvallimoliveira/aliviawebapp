@@ -24,7 +24,9 @@ import FeatureBlock from "./blocks/FeatureBlock";
 import KineticBlock from "./blocks/KineticBlock";
 import QuoteBlock from "./blocks/QuoteBlock";
 import ClosingBlock from "./blocks/ClosingBlock";
+import StudioMotion from "./blocks/StudioMotion";
 import type { BlockProps, StudioFormat } from "./blocks/shared";
+
 
 const BLOCKS = {
   hero: HeroBlock,
@@ -219,7 +221,7 @@ const StudioLanding = () => {
             <style>{`.studio-square section { min-height: min(720px, 100vw) !important; }`}</style>
           )}
           <div className={format === "1x1" ? "studio-square" : undefined}>
-            {blocks.map(({ kind, treatment }, i) => {
+            {blocks.map(({ kind, treatment, motion }, i) => {
               const Block = BLOCKS[kind];
               const rng = createRng(`${world}:${seed}:${kind}:${i}`);
               return (
@@ -232,11 +234,13 @@ const StudioLanding = () => {
                   caption={buildCaption(content, kind, createRng(`${world}:${seed}:caption:${kind}:${i}`))}
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
-
-                  <Block content={content} rng={rng} treatment={treatment} format={format} />
+                  <StudioMotion kind={motion}>
+                    <Block content={content} rng={rng} treatment={treatment} format={format} />
+                  </StudioMotion>
                 </StudioCapture>
               );
             })}
+
 
           </div>
         </main>
