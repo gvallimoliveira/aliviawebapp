@@ -8,6 +8,7 @@ import { composePage } from "./composePage";
 import { WORLDS, isWorldId, type WorldId } from "./content";
 import StudioControls from "./StudioControls";
 import StudioFavorites from "./StudioFavorites";
+import StudioCapture from "./StudioCapture";
 import { useStudioFavorites } from "./useStudioFavorites";
 import HeroBlock from "./blocks/HeroBlock";
 import MarqueeBlock from "./blocks/MarqueeBlock";
@@ -162,7 +163,13 @@ const StudioLanding = () => {
               const Block = BLOCKS[kind];
               const rng = createRng(`${world}:${seed}:${kind}:${i}`);
               return (
-                <Block key={`${kind}-${i}`} content={content} rng={rng} treatment={treatment} format={format} />
+                <StudioCapture
+                  key={`${kind}-${i}`}
+                  visible={!hidden}
+                  fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
+                >
+                  <Block content={content} rng={rng} treatment={treatment} format={format} />
+                </StudioCapture>
               );
             })}
           </div>
