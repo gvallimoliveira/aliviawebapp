@@ -1,4 +1,4 @@
-import { Copy, EyeOff, RefreshCw, Shuffle, Sparkles, Star, StarOff } from "lucide-react";
+import { Copy, EyeOff, FileText, Images, Loader2, RefreshCw, Shuffle, Sparkles, Star, StarOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WORLD_IDS, WORLDS, type WorldId } from "./content";
@@ -18,6 +18,12 @@ type StudioControlsProps = {
   onToggleFavorite: () => void;
   onOpenFavorites: () => void;
   onHide: () => void;
+  /** Exporta todas as artes da versão atual em PNG, uma a uma. */
+  onExportAllPng: () => void;
+  /** Baixa um único .txt com as legendas de todas as artes da versão. */
+  onExportAllCaptions: () => void;
+  /** Indica progresso do lote de PNGs ("3/8") ou null quando parado. */
+  batchProgress: string | null;
 };
 
 const FORMATS: { id: StudioFormat; label: string }[] = [
@@ -40,6 +46,9 @@ const StudioControls = ({
   onToggleFavorite,
   onOpenFavorites,
   onHide,
+  onExportAllPng,
+  onExportAllCaptions,
+  batchProgress,
 }: StudioControlsProps) => {
   const copyLink = async () => {
     try {
@@ -110,6 +119,29 @@ const StudioControls = ({
         >
           {favorited ? <Star className="h-3.5 w-3.5 fill-current" /> : <StarOff className="h-3.5 w-3.5" />}
           {favorited ? "Favoritado" : "Favoritar"}
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 rounded-xl text-xs"
+          onClick={onExportAllPng}
+          disabled={!!batchProgress}
+          title="Baixar todas as artes desta versão em PNG"
+        >
+          {batchProgress ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Images className="h-3.5 w-3.5" />}
+          {batchProgress ? `PNGs ${batchProgress}` : "Baixar todas"}
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 rounded-xl text-xs"
+          onClick={onExportAllCaptions}
+          title="Baixar um .txt com todas as legendas desta versão"
+        >
+          <FileText className="h-3.5 w-3.5" />
+          Legendas .txt
         </Button>
 
         <Button size="sm" variant="ghost" className="h-8 gap-1.5 rounded-xl text-xs" onClick={onOpenFavorites}>

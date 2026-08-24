@@ -92,8 +92,8 @@ export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desir
 };
 
 /** Compartilha no mobile, baixa no desktop, abre em nova aba como último recurso. */
-const deliver = async (blob: Blob, fileName: string): Promise<boolean> => {
-  const file = new File([blob], fileName, { type: "image/png" });
+export const deliver = async (blob: Blob, fileName: string, mime = "image/png"): Promise<boolean> => {
+  const file = new File([blob], fileName, { type: mime });
   const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
 
   if (typeof nav.share === "function" && nav.canShare?.({ files: [file] })) {

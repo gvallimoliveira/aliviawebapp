@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { Check, Copy, Download, Loader2, Star, StarOff, Type } from "lucide-react";
+import { Check, Copy, Download, FileText, Loader2, Star, StarOff, Type } from "lucide-react";
 import { exportNodeAsPng } from "./exportImage";
+import { exportTextFile } from "./exportText";
 import { toast } from "sonner";
 
 type Props = {
@@ -66,6 +67,15 @@ const StudioCapture = ({
     }
   };
 
+  const downloadCaption = async () => {
+    try {
+      const { shared } = await exportTextFile(caption, `alivia-studio-${fileName}.txt`);
+      toast.success(shared ? "Legenda pronta para compartilhar" : "Legenda baixada em .txt");
+    } catch {
+      toast.error("Não foi possível baixar a legenda.");
+    }
+  };
+
   return (
     <div ref={ref} id={anchorId} className="relative scroll-mt-4">
       {children}
@@ -120,14 +130,26 @@ const StudioCapture = ({
                 onFocus={(e) => e.currentTarget.select()}
                 className="h-52 w-full resize-none rounded-lg border border-border bg-background p-2.5 text-[11px] leading-relaxed text-foreground"
               />
+              <div className="mt-2 flex gap-2">
               <button
                 type="button"
                 onClick={copyCaption}
-                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-2 text-[11px] font-semibold text-primary-foreground"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-2 text-[11px] font-semibold text-primary-foreground"
               >
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 {copied ? "Copiada" : "Copiar legenda"}
               </button>
+
+              <button
+                type="button"
+                onClick={downloadCaption}
+                title="Baixar a legenda em .txt"
+                className="flex items-center justify-center gap-1.5 rounded-full border border-border bg-background px-3 py-2 text-[11px] font-semibold text-foreground"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                TXT
+              </button>
+              </div>
             </div>
           )}
         </div>
