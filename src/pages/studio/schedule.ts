@@ -58,7 +58,7 @@ export type ScheduledPost = {
 
 /** Intercala os favoritos por mundo para variar o público a cada post. */
 const interleaveByWorld = (favorites: StudioFavorite[]) => {
-  const order: WorldId[] = ["pro", "patient", "academic", "clinic"];
+  const order: WorldId[] = ["pro", "paciente", "academico", "clinica"];
   const buckets = new Map<WorldId, StudioFavorite[]>();
   favorites.forEach((fav) => {
     const list = buckets.get(fav.world) ?? [];
