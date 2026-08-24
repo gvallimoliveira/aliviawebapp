@@ -4,6 +4,23 @@ export type StudioMetric = { value: number; prefix?: string; suffix?: string; la
 
 export type StudioStep = { title: string; description: string; image?: string };
 
+/** Insumos de copy de vendas usados para montar a legenda pronta de cada seção. */
+export type WorldSales = {
+  /** Público a quem a legenda fala, ex. "fisioterapeutas de consultório". */
+  audience: string;
+  /** Provas / benefícios concretos, em bullets. */
+  proofs: string[];
+  /** Quebras de objeção. */
+  objections: string[];
+  /** Linhas de oferta (preço, teste, garantia). */
+  offers: string[];
+  /** Chamadas para ação. */
+  ctas: string[];
+  /** Hashtags sem "#". */
+  hashtags: string[];
+};
+
+
 export type WorldContent = {
   id: WorldId;
   label: string;
