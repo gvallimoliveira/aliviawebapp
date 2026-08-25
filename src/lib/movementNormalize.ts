@@ -92,21 +92,19 @@ export const normalizeMovementKey = (label: string | undefined | null): string =
 };
 
 /**
- * Picks the best display label among variants of the same movement:
- * prefers the most recent non-empty label; falls back to the longest one.
+ * Picks the best display label among variants of the same movement.
+ * All variants share the same normalized key, so the fullest (longest) label
+ * is the clearest for display; ties resolve to the most recent label.
  */
 export const pickMovementLabel = (labels: string[]): string => {
   const clean = labels.map((l) => (l || "").trim()).filter(Boolean);
   if (clean.length === 0) return "";
-  // labels arrive oldest → newest; the last one reflects current terminology
-  const latest = clean[clean.length - 1];
-  // If the latest is a very terse abbreviation (< 12 chars) but a fuller
-  // variant exists, prefer the fullest for readability.
-  if (latest.length < 12) {
-    const longest = clean.slice().sort((a, b) => b.length - a.length)[0];
-    if (longest.length >= latest.length + 4) return longest;
+  // labels arrive oldest → newest; on equal length prefer the latest one
+  let best = clean[0];
+  for (const l of clean) {
+    if (l.length >= best.length) best = l;
   }
-  return latest;
+  return best;
 };
 
 /**
