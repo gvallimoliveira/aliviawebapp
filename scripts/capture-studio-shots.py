@@ -45,23 +45,38 @@ TARGETS = {
 async def shoot(page, topic, anchor):
     path = os.path.join(OUT_DIR, f"{topic}.jpg")
     if anchor:
-        loc = page.locator(
-            f"xpath=(//*[contains(normalize-space(.), '{anchor}')][not(self::script)][not(self::style)])[last()]"
-        ).first
+        # Sobe a árvore a partir do texto-âncora até achar um container com altura
+        # de card real (>= 260px) — evita recortar só o título.
+        found = await page.evaluate(
+            """(anchor) => {
+              document.querySelectorAll('[data-shot]').forEach(e => e.removeAttribute('data-shot'));
+              const nodes = Array.from(document.querySelectorAll('h1,h2,h3,h4,p,span,div,button'));
+              const hit = nodes.reverse().find(e => e.textContent && e.textContent.trim().includes(anchor));
+              if (!hit) return false;
+              let el = hit;
+              while (el && el.getBoundingClientRect().height < 260 && el.parentElement) el = el.parentElement;
+              el.setAttribute('data-shot', '1');
+              return true;
+            }""",
+            anchor,
+        )
+        if not found:
+            print(f"  !!  {topic}: âncora '{anchor}' não encontrada")
+            return False
+        target = page.locator("[data-shot]").first
         try:
-            card = loc.locator("xpath=ancestor-or-self::*[contains(@class,'rounded')][1]")
-            target = card if await card.count() else loc
             await target.scroll_into_view_if_needed()
-            await page.wait_for_timeout(700)
+            await page.wait_for_timeout(800)
             await target.screenshot(path=path, quality=88, type="jpeg")
             print(f"  ok  {topic} -> {path}")
             return True
         except Exception as exc:  # noqa: BLE001
-            print(f"  !!  {topic}: âncora '{anchor}' falhou ({exc})")
+            print(f"  !!  {topic}: recorte falhou ({exc})")
             return False
     await page.screenshot(path=path, quality=88, type="jpeg")
     print(f"  ok  {topic} -> {path}")
     return True
+
 
 
 async def main():
