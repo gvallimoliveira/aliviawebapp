@@ -278,6 +278,8 @@ const professional: WorldContent = {
     { text: '"Reavaliar é medir de novo, não lembrar de cor."', topic: "express-reassessment" },
     { text: '"O prontuário conta a história que a memória esquece."', topic: "report" },
     { text: '"Dor que não é classificada é tratada no escuro."', topic: "pain-mechanism" },
+    { text: '"A voz do paciente vira texto do prontuário sem perder a nuance."', topic: "voice-notes" },
+    { text: '"Transcrever não é luxo: é tempo devolvido para o clínico."', topic: "voice-notes" },
   ],
   marquee: [
     ["Raciocínio clínico", "Red flags", "STEPS", "D.I.F.I", "Evidência PEDro ≥ 7"],
