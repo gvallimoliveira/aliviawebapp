@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Brain, ShieldCheck, ShieldAlert, Activity, MapPin, ClipboardCheck, Target,
   FileText, Dumbbell, Calendar, Sparkles, CheckCircle2, AlertCircle, Info,
-  Download, Share2, Loader2, ArrowLeft, RotateCcw,
+  Download, Share2, Loader2, ArrowLeft, RotateCcw, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { regionsByView } from "./painMapData";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
@@ -67,6 +67,7 @@ const AssessmentSummaryView = ({
   const isPt = language === "pt";
   const [dismissOpen, setDismissOpen] = useState(false);
   const [reverting, setReverting] = useState(false);
+  const [showTriage, setShowTriage] = useState(false);
 
   const diagnosis = assessment.diagnosis || {};
   const displayHypothesis = assessment.final_hypothesis?.trim() || diagnosis.hypothesis;
@@ -89,7 +90,9 @@ const AssessmentSummaryView = ({
   }
   // Shape A: { detected: string[] } (manual flow / pro-clinic links)
   if (redFlagsList.length === 0 && rawRf && typeof rawRf === "object" && Array.isArray(rawRf.detected)) {
-    redFlagsList = rawRf.detected.filter((x: any) => typeof x === "string");
+    redFlagsList = rawRf.detected
+      .filter((x: any) => typeof x === "string")
+      .map((k: string) => (k.startsWith("redflags.") ? t(k) || k : k));
   }
   // Shape B: { key: true } (legacy patient flow)
   if (redFlagsList.length === 0 && rawRf && typeof rawRf === "object" && !Array.isArray(rawRf) && !("detected" in rawRf)) {
@@ -97,6 +100,31 @@ const AssessmentSummaryView = ({
       .filter(([, v]) => v === true)
       .map(([k]) => t(k) || k);
   }
+  // Full screening Q&A (probatory record) — normalized from both shapes.
+  type TriageEntry = { key: string; question: string; positive: boolean };
+  const triageAnswers: TriageEntry[] = (() => {
+    if (!rawRf || typeof rawRf !== "object" || Array.isArray(rawRf)) return [];
+    // Shape A (payload v1): stored question text in the answer-time locale
+    if (Array.isArray((rawRf as any).answers)) {
+      return (rawRf as any).answers
+        .filter((a: any) => a && typeof a === "object" && typeof a.key === "string")
+        .map((a: any) => ({
+          key: a.key as string,
+          question:
+            typeof a.question === "string" && a.question.trim()
+              ? a.question
+              : t(a.key) || a.key,
+          positive: a.answer === "yes",
+        }));
+    }
+    // Shape B (legacy): plain { "redflags.x": boolean } map
+    if (!("detected" in rawRf)) {
+      return Object.entries(rawRf as Record<string, unknown>)
+        .filter(([k, v]) => typeof v === "boolean" && k.startsWith("redflags."))
+        .map(([k, v]) => ({ key: k, question: t(k) || k, positive: v === true }));
+    }
+    return [];
+  })();
   const redFlagsDetected =
     redFlagsList.length > 0 ||
     (rawRf && typeof rawRf === "object" && !Array.isArray(rawRf)
@@ -304,6 +332,33 @@ const AssessmentSummaryView = ({
               </div>
             )}
           </>
+        )}
+        {triageAnswers.length > 0 && (
+          <div className="mt-3 ml-6">
+            <button
+              type="button"
+              onClick={() => setShowTriage((v) => !v)}
+              className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showTriage ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              {isPt ? "Respostas da triagem de segurança" : "Safety screening answers"}
+            </button>
+            {showTriage && (
+              <ul className="mt-2 space-y-1.5">
+                {triageAnswers.map((a) => (
+                  <li
+                    key={a.key}
+                    className="flex items-start justify-between gap-3 text-[11px] bg-background/70 rounded-lg px-2.5 py-1.5 border border-border/50"
+                  >
+                    <span className="text-foreground leading-snug">{a.question}</span>
+                    <span className={`shrink-0 font-semibold ${a.positive ? "text-amber-700" : "text-emerald-700"}`}>
+                      {a.positive ? (isPt ? "Sim" : "Yes") : isPt ? "Não" : "No"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </section>
 
