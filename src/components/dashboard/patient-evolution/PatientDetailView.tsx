@@ -310,6 +310,10 @@ export default function PatientDetailView(props: any) {
   const [registrationModalOpen, setRegistrationModalOpen] = React.useState(false);
   const [registrationPatient, setRegistrationPatient] = React.useState<PatientToEdit | null>(null);
   const [registrationLoading, setRegistrationLoading] = React.useState(false);
+  // Seleção do escopo do Relatório de Evolução (quais avaliações entram no comparativo)
+  const [evolutionPickerOpen, setEvolutionPickerOpen] = React.useState(false);
+  const [evolutionSelectedIds, setEvolutionSelectedIds] = React.useState<string[]>([]);
+  const [evolutionPeriod, setEvolutionPeriod] = React.useState<"all" | "30" | "60" | "90">("all");
 
   const fetchPatientRow = React.useCallback(async (id?: string | null) => {
     const sb = supabase as any;
