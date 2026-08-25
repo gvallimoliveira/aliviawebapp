@@ -189,6 +189,20 @@ const professional: WorldContent = {
         "FABQ-Brasil com escore e ponto de corte",
       ],
     },
+    {
+      title: "Duas formas de fazer a anamnese",
+      topics: ["voice-notes", "anamnesis"],
+      before: [
+        "Digitar enquanto o paciente fala",
+        "Perder detalhes por dividir atenção",
+        "Resumo feito depois da sessão",
+      ],
+      after: [
+        "Gravar e receber transcrição estruturada",
+        "Olho no paciente, não no teclado",
+        "Texto pronto no prontuário na hora",
+      ],
+    },
   ],
   journeys: [
     {
