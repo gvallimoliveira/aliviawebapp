@@ -194,7 +194,7 @@ export default function PatientRomSection({ patient, readOnly, isDemo }: Props) 
                         </tr>
                       </thead>
                       <tbody>
-                        {series.map((s, i) => (
+                        {entry.series.map((s, i) => (
                           <tr key={i} className="border-b border-border/50 last:border-0">
                             <td className="py-1.5 pr-3 text-muted-foreground">{s.date}</td>
                             <td className="py-1.5 px-2 text-center font-mono">{s.L || "—"}</td>
