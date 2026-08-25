@@ -150,7 +150,7 @@ const categories: ToolCategory[] = [
         key: "evolution_report",
         icon: TrendingUp,
         title: "Relatório de evolução para alta",
-        desc: "Gera um documento comparativo final com ganhos objetivos e narrativa clínica. Ideal para alta, prestação de contas e fechamento de pacote.",
+        desc: "Gera um documento comparativo final com ganhos objetivos e narrativa clínica. Antes de gerar, você escolhe o escopo: últimos 30/60/90 dias ou seleção manual das avaliações — quadros antigos não se misturam ao quadro atual. Ideal para alta, prestação de contas e fechamento de pacote.",
       },
       {
         key: "academic_mentor",
