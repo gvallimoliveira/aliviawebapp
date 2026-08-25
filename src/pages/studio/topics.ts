@@ -7,6 +7,13 @@ import stepReport from "@/assets/step-report.jpg";
 import stepDiagnosis from "@/assets/step-diagnosis.jpg";
 import stepQuestionnaires from "@/assets/step-questionnaires.jpg";
 import stepDiary from "@/assets/step-diary.jpg";
+import shotClinicalAgent from "@/assets/studio/clinical-agent.jpg";
+import shotMessaging from "@/assets/studio/messaging.jpg";
+import shotAgenda from "@/assets/studio/agenda.jpg";
+import shotPermissions from "@/assets/studio/permissions.jpg";
+import shotWhiteLabel from "@/assets/studio/white-label.jpg";
+import shotHep from "@/assets/studio/hep.jpg";
+
 
 /**
  * ============================================================================
