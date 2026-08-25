@@ -68,6 +68,10 @@ const professional: WorldContent = {
       strong: "Laudo de dinamometria não é planilha para você decifrar.",
       rest: "Faça upload, o sistema extrai as medidas, calcula assimetria entre os lados e sinaliza o risco.",
     },
+    {
+      strong: "Fale durante a sessão. O prontuário se escreve sozinho.",
+      rest: "Grave a anamnese em voz, receba o resumo estruturado e ganhe minutos de olho no paciente — não no teclado.",
+    },
   ],
   subs: [
     "Sistema de raciocínio clínico com alma de fisioterapeuta.",
