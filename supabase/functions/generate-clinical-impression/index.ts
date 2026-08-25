@@ -168,6 +168,7 @@ Rules:
 - If range of motion (ROM) data is provided, likewise discuss it explicitly: which joints/movements are restricted, side comparison, and how the restriction relates to the hypothesis and to the strength findings.
 - Explicitly CORRELATE the objective findings (strength, ROM) with the symptoms, the functional scores and the diagnostic hypothesis — do not list data without interpreting it.
 - If session evolution notes are provided, incorporate the clinically useful observations from them (response to load, pain behavior between sessions, adherence, intercurrences), citing them as reported during follow-up.
+- If anamnesis interview voice transcripts/summaries are provided, treat them as a PRIMARY source: they capture the patient's own words during the consultation. Integrate anything clinically relevant that is NOT already in the structured fields — nuances of onset and mechanism, direct quotes about pain behavior, psychosocial context, beliefs, goals and expectations. Do not quote them verbatim at length; synthesize.
 - Only comment on data actually provided. Never invent values. If dynamometry or ROM was not recorded, do not speculate about them.
 - Do NOT mention specific exercises, treatment techniques, or therapeutic approaches.
 - Select exactly 2 main therapeutic objectives from this list ONLY: controle do quadro álgico, reequilibrar tensões miofasciais, exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar, modulação da dor.
