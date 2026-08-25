@@ -143,6 +143,9 @@ const clinic: WorldContent = {
     { text: '"Clínica que não padroniza avaliação não escala — só acumula."', topic: "institutional-link" },
     { text: '"Sua marca vale mais quando o processo sustenta a promessa."', topic: "white-label" },
     { text: '"Satisfação que ninguém mede é satisfação que ninguém melhora."', topic: "nps" },
+    { text: '"Equipe alinhada não é equipe vigiada. É equipe com o mesmo mapa."', topic: "shared-record" },
+    { text: '"A rotatividade de terapeuta não pode virar amnésia do paciente."', topic: "archive" },
+    { text: '"Quem mede resultado não vende sessão. Vende alta."', topic: "discharge-report" },
   ],
   marquee: [
     ["Prontuário compartilhado", "White label", "Agenda da equipe", "NPS", "Permissões por função"],
