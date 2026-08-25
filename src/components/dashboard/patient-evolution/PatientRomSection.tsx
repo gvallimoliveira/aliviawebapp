@@ -8,6 +8,8 @@ import RomTable, {
   type RomRow,
 } from "@/components/assessment/RomTable";
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
+import MovementEvolutionChart from "./MovementEvolutionChart";
+import { normalizeMovementKey, parseMeasurementValue, pickMovementLabel } from "@/lib/movementNormalize";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
@@ -98,17 +100,33 @@ export default function PatientRomSection({ patient, readOnly, isDemo }: Props) 
   };
 
   // Longitudinal evolution (only across assessments that already have data).
+  // Movement names are normalized so spelling variants/abbreviations
+  // ("rot int quadril" vs "rotação interna de quadril") share one series.
   const assessmentsWithRom = assessments.filter(
     (a: any) => sanitizeRomRows(a?.anamnesis_data?.romTable).length > 0,
   );
   const hasMultiple = assessmentsWithRom.length >= 2;
-  const movementSeries = new Map<string, Array<{ date: string; L: string; R: string }>>();
+  const movementSeries = new Map<
+    string,
+    { label: string; labels: string[]; series: Array<{ date: string; L: string; R: string; esq: number | null; dir: number | null }> }
+  >();
   assessmentsWithRom.forEach((a: any) => {
     sanitizeRomRows(a.anamnesis_data.romTable).forEach((r) => {
-      const arr = movementSeries.get(r.joint) || [];
-      arr.push({ date: fmtDate(a.created_at), L: r.leftValue, R: r.rightValue });
-      movementSeries.set(r.joint, arr);
+      const key = normalizeMovementKey(r.joint) || r.joint.trim().toLowerCase();
+      const entry = movementSeries.get(key) || { label: "", labels: [], series: [] };
+      entry.labels.push(r.joint);
+      entry.series.push({
+        date: fmtDate(a.created_at),
+        L: r.leftValue,
+        R: r.rightValue,
+        esq: parseMeasurementValue(r.leftValue),
+        dir: parseMeasurementValue(r.rightValue),
+      });
+      movementSeries.set(key, entry);
     });
+  });
+  movementSeries.forEach((entry) => {
+    entry.label = pickMovementLabel(entry.labels);
   });
 
   return (
