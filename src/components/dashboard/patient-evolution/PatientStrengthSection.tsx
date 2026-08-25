@@ -188,10 +188,20 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
             }
           >
             <div className="space-y-3 pt-3">
-              {Array.from(movementSeries.entries()).map(([movement, series]) => (
+              {Array.from(movementSeries.entries()).map(([movement, entry]) => {
+                const numericCount = entry.series.filter(
+                  (s) => s.esq != null || s.dir != null,
+                ).length;
+                return (
                 <div key={movement} className="rounded-lg border border-border p-3">
-                  <p className="text-xs font-semibold text-foreground mb-2">{movement}</p>
-                  <div className="overflow-x-auto">
+                  <p className="text-xs font-semibold text-foreground mb-2">{entry.label}</p>
+                  {numericCount >= 2 && (
+                    <MovementEvolutionChart
+                      data={entry.series.map((s) => ({ date: s.date, esq: s.esq, dir: s.dir }))}
+                      unit="kgf"
+                    />
+                  )}
+                  <div className="overflow-x-auto mt-2">
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="text-left text-[10px] uppercase tracking-wide text-muted-foreground border-b border-border">
@@ -202,7 +212,7 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
                         </tr>
                       </thead>
                       <tbody>
-                        {series.map((s, i) => (
+                        {entry.series.map((s, i) => (
                           <tr key={i} className="border-b border-border/50 last:border-0">
                             <td className="py-1.5 pr-3 text-muted-foreground">{s.date}</td>
                             <td className="py-1.5 px-2 text-center font-mono">{s.L || "—"}</td>
