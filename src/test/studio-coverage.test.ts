@@ -75,6 +75,27 @@ describe("Studio · coerência do conteúdo", () => {
       expect(missing, `sem nenhuma copy declarada: ${missing.join(", ")}`).toEqual([]);
     });
 
+    it(`${world}: nenhuma headline termina em verbo infinitivo sem objeto (leitura adversa)`, () => {
+      /**
+       * Regra anti-ambiguidade: uma headline como "Assimetria calculada para você
+       * não precisar" se lê como "você não precisa DA FERRAMENTA", desvalorizando
+       * o recurso. Infinitivo pendurado no fim da frase ("precisar", "se preocupar",
+       * "calcular", "decidir"…) sem completar o objeto é proibido em títulos.
+       */
+      const dangling = /\b(para|pra)\s+(você\s+)?(não\s+)?(precisar|se\s+preocupar|calcular|pensar|decidir|fazer|medir|anotar)[\s.!?…"“”]*$/i;
+      const headlines: string[] = [
+        ...content.features.map((f) => f.title),
+        ...content.journeys.flatMap((j) => [j.heading, ...j.steps.map((s) => s.title)]),
+        ...content.compare.map((c) => c.title),
+        ...content.kinetic.map((k) => k.word),
+        ...content.quotes.map((q) => q.text),
+        ...content.closings.map((c) => c.title),
+      ];
+      headlines.forEach((h) => {
+        expect(dangling.test(h), `headline com infinitivo pendurado: "${h}"`).toBe(false);
+      });
+    });
+
     it(`${world}: cobertura prioriza assunto subexposto sobre assunto saturado`, () => {
       const coverage = buildCoverage(world, content, { [world]: {} });
       const ranked = [...coverage.topics].sort((a, b) => b.debt - a.debt);
