@@ -742,7 +742,97 @@ export default function PatientDetailView(props: any) {
       </div>
       </div>
 
+      {/* Seletor de escopo do Relatório de Evolução: período rápido ou avaliações específicas.
+          Evita misturar quadros clínicos antigos com o quadro atual no comparativo. */}
+      <Dialog open={evolutionPickerOpen} onOpenChange={(o) => { if (!evolutionLoading) setEvolutionPickerOpen(o); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              {t("evolution.title")}
+            </DialogTitle>
+            <DialogDescription>
+              {language === "pt"
+                ? "Escolha o período ou quais avaliações entram no comparativo. Quadros antigos fora da seleção não aparecem no relatório."
+                : language === "es"
+                  ? "Elige el período o qué evaluaciones entran en la comparación. Los cuadros antiguos fuera de la selección no aparecen en el informe."
+                  : "Choose the period or which assessments go into the comparison. Older clinical pictures outside the selection won't appear in the report."}
+            </DialogDescription>
+          </DialogHeader>
 
+          <div className="flex flex-wrap gap-1.5">
+            {([
+              { id: "all" as const, label: language === "pt" ? "Todas" : language === "es" ? "Todas" : "All" },
+              { id: "30" as const, label: language === "pt" ? "Últimos 30 dias" : language === "es" ? "Últimos 30 días" : "Last 30 days" },
+              { id: "60" as const, label: language === "pt" ? "Últimos 60 dias" : language === "es" ? "Últimos 60 días" : "Last 60 days" },
+              { id: "90" as const, label: language === "pt" ? "Últimos 90 dias" : language === "es" ? "Últimos 90 días" : "Last 90 days" },
+            ]).map((p) => (
+              <Badge
+                key={p.id}
+                variant={evolutionPeriod === p.id ? "default" : "outline"}
+                className="cursor-pointer text-xs px-2.5 py-1"
+                onClick={() => applyEvolutionPeriod(p.id === "all" ? null : Number(p.id))}
+              >
+                {p.label}
+              </Badge>
+            ))}
+          </div>
+
+          <div className="space-y-1.5 max-h-[40vh] overflow-y-auto pr-1">
+            {evolutionAssessments.map((a: any, idx: number) => {
+              const checked = evolutionSelectedIds.includes(a.id);
+              const dateLabel = new Date(a.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "short", year: "numeric" });
+              const hypothesis = a.diagnosis?.hypothesis ? String(a.diagnosis.hypothesis).slice(0, 70) : null;
+              return (
+                <label
+                  key={a.id}
+                  className={`flex items-start gap-3 rounded-lg border p-2.5 cursor-pointer transition-colors ${checked ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/40"}`}
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={() => toggleEvolutionAssessment(a.id)}
+                    className="mt-0.5"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-foreground">{dateLabel}</span>
+                      {typeof a.pain_score === "number" && (
+                        <span className="text-xs text-muted-foreground">
+                          {language === "pt" ? `Dor ${a.pain_score}/10` : `Pain ${a.pain_score}/10`}
+                        </span>
+                      )}
+                      {idx === evolutionAssessments.length - 1 && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                          {language === "pt" ? "mais recente" : language === "es" ? "más reciente" : "latest"}
+                        </Badge>
+                      )}
+                    </div>
+                    {hypothesis && <p className="text-xs text-muted-foreground truncate mt-0.5">{hypothesis}{String(a.diagnosis?.hypothesis || "").length > 70 ? "…" : ""}</p>}
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <p className="text-xs text-muted-foreground mr-auto self-center">
+              {language === "pt"
+                ? `${evolutionSelectedIds.length} de ${evolutionAssessments.length} selecionadas (mín. 2)`
+                : language === "es"
+                  ? `${evolutionSelectedIds.length} de ${evolutionAssessments.length} seleccionadas (mín. 2)`
+                  : `${evolutionSelectedIds.length} of ${evolutionAssessments.length} selected (min. 2)`}
+            </p>
+            <Button
+              disabled={evolutionSelectedIds.length < 2 || evolutionLoading}
+              onClick={() => { setEvolutionPickerOpen(false); runEvolutionReport(); }}
+              className="gap-1.5"
+            >
+              {evolutionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              {language === "pt" ? "Gerar relatório" : language === "es" ? "Generar informe" : "Generate report"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {(() => {
         const summaryTarget = latestWithDiagnosis || latestAssessment;
