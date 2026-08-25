@@ -29,16 +29,15 @@ PATIENT = f"{BASE}/para-pacientes/demo"
 
 # topico -> (url, tab a clicar ou None, texto-âncora do card ou None)
 TARGETS = {
-    "clinical-agent": (PRO, "Agente", "Nova conversa"),
+    "clinical-agent": (PRO, "Agente", "Agente de Raciocínio Clínico"),
     "messaging": (PRO, "Mensagens", "Mensagens"),
     "agenda": (CLINIC, "Agenda", "Todos os profissionais"),
-    "nps": (CLINIC, "Clínica", "satisfação"),
     "white-label": (CLINIC, "Clínica", "Identidade visual"),
     "permissions": (CLINIC, "Clínica", "Equipe"),
     "hep": (PATIENT, None, "Meu programa"),
     "pain-diary-patient": (PATIENT, None, "Registrar hoje"),
-    "marketplace": (f"{BASE}/professionals", None, "Buscar"),
-    "academic-tracks": (f"{BASE}/trilhas", None, "Trilha"),
+    "marketplace": (f"{BASE}/professionals", None, None),
+    "academic-tracks": (f"{BASE}/trilhas", None, None),
 }
 
 
@@ -55,7 +54,7 @@ async def shoot(page, topic, anchor):
               const hit = nodes.reverse().find(e => e.textContent && e.textContent.trim().includes(anchor));
               if (!hit) return false;
               let el = hit;
-              while (el && el.getBoundingClientRect().height < 260 && el.parentElement) el = el.parentElement;
+              while (el && el.parentElement) { const r = el.getBoundingClientRect(); if (r.height >= 260 && r.width >= 700) break; el = el.parentElement; }
               el.setAttribute('data-shot', '1');
               return true;
             }""",
