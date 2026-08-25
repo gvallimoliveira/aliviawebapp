@@ -42,7 +42,21 @@ TARGETS = {
 
 
 
+
+CLEAN_JS = """() => {
+  const junk = ['Modo demo', 'Assinar PRO', 'Iniciar trial', 'Composer desabilitado', 'DEMO'];
+  document.querySelectorAll('div,span,a,button,section').forEach((el) => {
+    const t = (el.textContent || '').trim();
+    if (!t || t.length > 220) return;
+    if (!junk.some((j) => t.includes(j))) return;
+    if (el.getBoundingClientRect().height > 220) return;
+    el.style.display = 'none';
+  });
+}"""
+
+
 async def shoot(page, topic, anchor):
+    await page.evaluate(CLEAN_JS)
     path = os.path.join(OUT_DIR, f"{topic}.jpg")
     if anchor:
         # Sobe a árvore a partir do texto-âncora até achar um container com altura
