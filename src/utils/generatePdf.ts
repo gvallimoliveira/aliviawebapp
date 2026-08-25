@@ -1141,6 +1141,7 @@ function renderRomTableSection(
   rows: Array<{ joint: string; leftValue: string; rightValue: string }> | undefined,
   isPt: boolean,
   language: string,
+  caption?: string,
 ): number {
   if (!rows || rows.length === 0) return y;
   const cleaned = rows
@@ -1164,8 +1165,15 @@ function renderRomTableSection(
   const colRight = language === "es" ? "Derecha" : isPt ? "Direita" : "Right";
 
   // Reserve space for title + header + 2 rows to avoid orphan
-  y = checkPage(doc, y, 14 + 8 + 16);
+  y = checkPage(doc, y, 14 + 8 + 16 + (caption ? 5 : 0));
   y = renderSectionTitle(doc, y, title, COLORS.primary);
+  if (caption) {
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(caption, SECTION_X, y + 1);
+    y += 5;
+  }
 
   // Column widths within SECTION_TEXT_W (158mm)
   const valueColW = 28;
