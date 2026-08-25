@@ -286,6 +286,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         }
       } else {
         const sessionNotes = await fetchSessionNotes();
+        const voiceNotes = await fetchVoiceNotes();
         const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
           body: {
             anamnesisData: assessment.anamnesis_data,
@@ -296,6 +297,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
             language,
             assessmentTimeline: buildTimeline(),
             sessionNotes,
+            voiceNotes,
             forceRefresh,
           },
         });
