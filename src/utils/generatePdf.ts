@@ -2790,8 +2790,8 @@ function renderPainMechanismBlock(
       ? `\n${isPt ? "Critérios marcados na triagem" : "Criteria marked in screening"}:\n${criteriaLabels.join("\n")}`
       : null,
     `\n${isPt
-      ? `Origem: ${parsed.source === "ai" ? "triagem refinada por IA" : "regras clínicas (Kosek 2021 / Finnerup 2016)"}. Complementa a hipótese diagnóstica — não a substitui.`
-      : `Source: ${parsed.source === "ai" ? "AI-refined screening" : "clinical rules (Kosek 2021 / Finnerup 2016)"}. Complements the diagnostic hypothesis — does not replace it.`}`,
+      ? "Classificação por critérios clínicos (Kosek 2021 / Finnerup 2016). Complementa a hipótese diagnóstica — não a substitui."
+      : "Classification based on clinical criteria (Kosek 2021 / Finnerup 2016). Complements the diagnostic hypothesis — does not replace it."}`,
   ].filter(Boolean).join("\n");
 
   const cardOpts: TextCardOptions = {
