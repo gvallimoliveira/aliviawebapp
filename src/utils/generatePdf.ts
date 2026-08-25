@@ -2956,6 +2956,8 @@ export interface EvolutionPdfOptions {
     pain_regions: string[];
     test_results: any;
     hypothesis?: string;
+    /** Joint mobility / ROM table measured at the last assessment. */
+    romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
   };
   totalAssessments: number;
   summary: EvolutionSummary;
@@ -3260,6 +3262,23 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     }
 
     y += 4;
+  }
+
+  // ── Joint Mobility (ROM) — values measured at the LAST assessment ──
+  const lastRom = (options.lastAssessment.romTable || []).filter(
+    (r: any) => (r?.joint || "").trim() || (r?.leftValue || "").trim() || (r?.rightValue || "").trim(),
+  );
+  if (lastRom.length > 0) {
+    const romDate = new Date(options.lastAssessment.date).toLocaleDateString(
+      isPt ? "pt-BR" : isEs ? "es-ES" : "en-US",
+      { day: "2-digit", month: "short", year: "numeric" },
+    );
+    const romCaption = isPt
+      ? `Valores medidos na última avaliação (${romDate})`
+      : isEs
+        ? `Valores medidos en la última evaluación (${romDate})`
+        : `Values measured at the last assessment (${romDate})`;
+    y = renderRomTableSection(doc, y, lastRom, isPt, options.language, romCaption);
   }
 
   // ── AI Narrative Summary ──
