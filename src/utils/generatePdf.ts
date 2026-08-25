@@ -6,6 +6,7 @@ import ptLocale from "@/locales/pt.json";
 import enLocale from "@/locales/en.json";
 import esLocale from "@/locales/es.json";
 import { formatHealthConditions, formatContinuousMedication } from "@/lib/healthHistory";
+import { normalizeMovementKey, pickMovementLabel, parseMeasurementValue } from "@/lib/movementNormalize";
 import { registerInterFonts } from "./fonts/registerInterFonts";
 import {
   MECHANISM_CRITERIA,
@@ -1230,6 +1231,224 @@ function renderRomTableSection(
   });
 
   return y + 4;
+}
+
+// ── Longitudinal evolution charts (ROM / dynamometry) ──
+export interface LongitudinalPoint {
+  dateLabel: string;
+  esq: number | null;
+  dir: number | null;
+}
+export interface LongitudinalSeries {
+  label: string;
+  points: LongitudinalPoint[];
+}
+
+interface LongitudinalAssessmentInput {
+  date: string;
+  romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
+  strengthTable?: Array<{
+    movement: string;
+    leftValue: string;
+    rightValue: string;
+    leftTrials?: Array<{ value: string }>;
+    rightTrials?: Array<{ value: string }>;
+  }>;
+}
+
+/**
+ * Groups ROM or dynamometry rows across assessments into per-movement dated
+ * series. Movement labels are normalized (normalizeMovementKey) so spelling
+ * variants/abbreviations share one series — same rule as the dashboard charts.
+ * Only movements with 2+ points carrying a numeric value are returned.
+ */
+export function buildLongitudinalSeries(
+  assessments: LongitudinalAssessmentInput[],
+  kind: "rom" | "strength",
+  locale: string,
+): LongitudinalSeries[] {
+  const fmt = (d: string) => {
+    const dt = new Date(d);
+    return isNaN(dt.getTime())
+      ? ""
+      : dt.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "2-digit" });
+  };
+  const sideMean = (
+    value: string | undefined,
+    trials: Array<{ value: string }> | undefined,
+  ): number | null => {
+    const nums = (trials || [])
+      .map((t) => parseFloat(String(t?.value ?? "").replace(",", ".")))
+      .filter((n) => isFinite(n) && n > 0);
+    if (nums.length > 0) return Math.round((nums.reduce((s, n) => s + n, 0) / nums.length) * 10) / 10;
+    return parseMeasurementValue(value);
+  };
+
+  const map = new Map<string, { labels: string[]; points: LongitudinalPoint[] }>();
+  assessments
+    .slice()
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .forEach((a) => {
+      const rows =
+        kind === "rom"
+          ? (a.romTable || []).map((r) => ({
+              name: (r?.joint || "").trim(),
+              esq: parseMeasurementValue(r?.leftValue),
+              dir: parseMeasurementValue(r?.rightValue),
+            }))
+          : (a.strengthTable || []).map((r) => ({
+              name: (r?.movement || "").trim(),
+              esq: sideMean(r?.leftValue, r?.leftTrials),
+              dir: sideMean(r?.rightValue, r?.rightTrials),
+            }));
+      rows.forEach((r) => {
+        if (!r.name) return;
+        const key = normalizeMovementKey(r.name) || r.name.toLowerCase();
+        const entry = map.get(key) || { labels: [], points: [] };
+        entry.labels.push(r.name);
+        entry.points.push({ dateLabel: fmt(a.date), esq: r.esq, dir: r.dir });
+        map.set(key, entry);
+      });
+    });
+
+  const out: LongitudinalSeries[] = [];
+  map.forEach((entry) => {
+    const numericCount = entry.points.filter((p) => p.esq != null || p.dir != null).length;
+    if (numericCount >= 2) {
+      out.push({ label: pickMovementLabel(entry.labels), points: entry.points });
+    }
+  });
+  return out;
+}
+
+/**
+ * Draws one longitudinal line-chart card (Esq solid × Dir dashed) with a
+ * caption stating the first/last measurement dates of that movement.
+ */
+function renderLongitudinalChartCard(
+  doc: jsPDF,
+  y: number,
+  series: LongitudinalSeries,
+  unit: string,
+  isPt: boolean,
+  language: string,
+): number {
+  const numericPoints = series.points.filter((p) => p.esq != null || p.dir != null);
+  if (numericPoints.length < 2) return y;
+
+  const esLbl = language === "es" ? "Izq" : isPt ? "Esq" : "Left";
+  const dirLbl = language === "es" ? "Der" : isPt ? "Dir" : "Right";
+
+  const cardH = 56;
+  y = checkPage(doc, y, cardH + 4);
+  const cardTop = y;
+  drawRoundedRect(doc, MARGIN, cardTop, CONTENT_WIDTH, cardH, 2, COLORS.white, COLORS.border);
+
+  // Movement label
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...COLORS.foreground);
+  doc.text(truncateToWidth(doc, series.label, CONTENT_WIDTH - 12), SECTION_X, cardTop + 5.5);
+
+  // Caption: first/last measurement dates of this movement
+  const firstLbl = language === "es" ? "Primera medición" : isPt ? "Primeira medição" : "First measurement";
+  const lastLbl = language === "es" ? "Última" : isPt ? "Última" : "Last";
+  doc.setFont("Inter", "normal");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...COLORS.muted);
+  doc.text(
+    `${firstLbl}: ${numericPoints[0].dateLabel} · ${lastLbl}: ${numericPoints[numericPoints.length - 1].dateLabel}`,
+    SECTION_X,
+    cardTop + 9.5,
+  );
+
+  // Plot geometry
+  const plotX = MARGIN + 18;
+  const plotW = CONTENT_WIDTH - 18 - 8;
+  const plotTop = cardTop + 13;
+  const plotH = 28;
+
+  const values = series.points.flatMap((p) => [p.esq, p.dir]).filter((v): v is number => v != null);
+  const dataMin = Math.min(...values);
+  const dataMax = Math.max(...values);
+  let min = dataMin;
+  let max = dataMax;
+  if (min === max) {
+    min -= 2;
+    max += 2;
+  }
+  const spanPad = (max - min) * 0.12;
+  min -= spanPad;
+  max += spanPad;
+  const xFor = (i: number) =>
+    plotX + (series.points.length === 1 ? plotW / 2 : (i / (series.points.length - 1)) * plotW);
+  const yFor = (v: number) => plotTop + plotH - ((v - min) / (max - min)) * plotH;
+
+  // Gridlines at data min / mid / max, with y-axis labels
+  doc.setFont("Inter", "normal");
+  doc.setFontSize(5.5);
+  [dataMin, (dataMin + dataMax) / 2, dataMax].forEach((gv) => {
+    const gy = yFor(gv);
+    doc.setDrawColor(...COLORS.border);
+    doc.setLineWidth(0.15);
+    doc.line(plotX, gy, plotX + plotW, gy);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(`${Math.round(gv * 10) / 10}${unit}`, plotX - 1.5, gy + 1.5, { align: "right" });
+  });
+
+  // Lines (nulls skipped, segments connect across gaps — mirrors the UI chart)
+  const drawSide = (key: "esq" | "dir", color: [number, number, number], dashed: boolean) => {
+    doc.setDrawColor(...color);
+    doc.setLineWidth(0.7);
+    doc.setLineDashPattern(dashed ? [1.6, 1.1] : [], 0);
+    let prev: { x: number; y: number } | null = null;
+    series.points.forEach((p, i) => {
+      const v = p[key];
+      if (v == null) return;
+      const px = xFor(i);
+      const py = yFor(v);
+      if (prev) doc.line(prev.x, prev.y, px, py);
+      prev = { x: px, y: py };
+    });
+    doc.setLineDashPattern([], 0);
+    doc.setFillColor(...color);
+    series.points.forEach((p, i) => {
+      const v = p[key];
+      if (v == null) return;
+      doc.circle(xFor(i), yFor(v), 0.9, "F");
+    });
+  };
+  drawSide("esq", COLORS.primary, false);
+  drawSide("dir", COLORS.muted, true);
+
+  // X-axis: first and last dates
+  doc.setFontSize(6);
+  doc.setTextColor(...COLORS.muted);
+  doc.text(series.points[0].dateLabel, plotX, plotTop + plotH + 3.5);
+  doc.text(series.points[series.points.length - 1].dateLabel, plotX + plotW, plotTop + plotH + 3.5, {
+    align: "right",
+  });
+
+  // Centered legend
+  const legendY = cardTop + cardH - 2.5;
+  doc.setFontSize(6.5);
+  const esW = doc.getTextWidth(esLbl);
+  const dirW = doc.getTextWidth(dirLbl);
+  const totalW = 8 + 1.5 + esW + 6 + 8 + 1.5 + dirW;
+  let lx = MARGIN + (CONTENT_WIDTH - totalW) / 2;
+  doc.setDrawColor(...COLORS.primary);
+  doc.setLineWidth(0.7);
+  doc.line(lx, legendY - 1.2, lx + 8, legendY - 1.2);
+  doc.setTextColor(...COLORS.foreground);
+  doc.text(esLbl, lx + 9.5, legendY);
+  lx += 8 + 1.5 + esW + 6;
+  doc.setDrawColor(...COLORS.muted);
+  doc.setLineDashPattern([1.6, 1.1], 0);
+  doc.line(lx, legendY - 1.2, lx + 8, legendY - 1.2);
+  doc.setLineDashPattern([], 0);
+  doc.text(dirLbl, lx + 9.5, legendY);
+
+  return cardTop + cardH + 3;
 }
 
 // ── Render Dynamometry / Muscle Strength Table ──
@@ -2959,6 +3178,22 @@ export interface EvolutionPdfOptions {
     /** Joint mobility / ROM table measured at the last assessment. */
     romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
   };
+  /**
+   * Every assessment (any order) carrying objective measures. Feeds the
+   * longitudinal evolution charts (ROM ° / dynamometry kgf) — movements with
+   * 2+ dated numeric measurements get a line chart with first/last captions.
+   */
+  longitudinalAssessments?: Array<{
+    date: string;
+    romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
+    strengthTable?: Array<{
+      movement: string;
+      leftValue: string;
+      rightValue: string;
+      leftTrials?: Array<{ value: string }>;
+      rightTrials?: Array<{ value: string }>;
+    }>;
+  }>;
   totalAssessments: number;
   summary: EvolutionSummary;
   language: string;
@@ -3279,6 +3514,45 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
         ? `Valores medidos en la última evaluación (${romDate})`
         : `Values measured at the last assessment (${romDate})`;
     y = renderRomTableSection(doc, y, lastRom, isPt, options.language, romCaption);
+  }
+
+  // ── Longitudinal evolution charts (ROM ° / dynamometry kgf) ──
+  if (options.longitudinalAssessments && options.longitudinalAssessments.length >= 2) {
+    const chartLocale = isPt ? "pt-BR" : isEs ? "es-ES" : "en-US";
+    const romSeries = buildLongitudinalSeries(options.longitudinalAssessments, "rom", chartLocale);
+    const strengthSeries = buildLongitudinalSeries(options.longitudinalAssessments, "strength", chartLocale);
+
+    if (romSeries.length > 0) {
+      y = checkPage(doc, y, 70);
+      y = renderSectionTitle(
+        doc,
+        y,
+        isPt
+          ? "Evolução da ADM por Movimento"
+          : isEs
+            ? "Evolución de la Movilidad por Movimiento"
+            : "ROM Evolution by Movement",
+        COLORS.primary,
+      );
+      for (const s of romSeries) y = renderLongitudinalChartCard(doc, y, s, "°", isPt, options.language);
+      y += 2;
+    }
+
+    if (strengthSeries.length > 0) {
+      y = checkPage(doc, y, 70);
+      y = renderSectionTitle(
+        doc,
+        y,
+        isPt
+          ? "Dinamometria — Evolução por Movimento"
+          : isEs
+            ? "Dinamometría — Evolución por Movimiento"
+            : "Dynamometry — Evolution by Movement",
+        COLORS.primary,
+      );
+      for (const s of strengthSeries) y = renderLongitudinalChartCard(doc, y, s, "kgf", isPt, options.language);
+      y += 2;
+    }
   }
 
   // ── AI Narrative Summary ──

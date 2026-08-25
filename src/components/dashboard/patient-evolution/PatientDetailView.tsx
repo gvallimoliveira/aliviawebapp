@@ -629,7 +629,15 @@ export default function PatientDetailView(props: any) {
                       }
                       const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
                       const _branding = await resolveAssessmentBranding({ clinicId: clinicId || null, professionalId: professionalId || null, userId: null });
-                      const blob = await generateEvolutionPdfBlob({ patientName: patient.name, firstAssessment: { date: firstA.created_at, pain_score: firstA.pain_score, pain_regions: firstA.pain_regions || [], test_results: firstA.test_results, hypothesis: firstA.diagnosis?.hypothesis }, lastAssessment: { date: lastA.created_at, pain_score: lastA.pain_score, pain_regions: lastA.pain_regions || [], test_results: lastA.test_results, hypothesis: lastA.diagnosis?.hypothesis, romTable: Array.isArray(lastA.anamnesis_data?.romTable) ? lastA.anamnesis_data.romTable : undefined }, totalAssessments: withDiagnosis.length, summary: summary as EvolutionSummary, language, professionalLogoUrl: _branding.professionalLogoUrl ?? professionalLogoUrl, clinicLogoUrl: _branding.clinicLogoUrl ?? clinicLogoUrl, clinicName: _branding.clinicName ?? clinicName, responsibleProfessional: _branding.responsibleProfessional });
+                      const longitudinalAssessments = (patient.assessments || [])
+                        .slice()
+                        .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                        .map((a: any) => ({
+                          date: a.created_at,
+                          romTable: Array.isArray(a.anamnesis_data?.romTable) ? a.anamnesis_data.romTable : undefined,
+                          strengthTable: Array.isArray(a.anamnesis_data?.strengthTable) ? a.anamnesis_data.strengthTable : undefined,
+                        }));
+                      const blob = await generateEvolutionPdfBlob({ patientName: patient.name, firstAssessment: { date: firstA.created_at, pain_score: firstA.pain_score, pain_regions: firstA.pain_regions || [], test_results: firstA.test_results, hypothesis: firstA.diagnosis?.hypothesis }, lastAssessment: { date: lastA.created_at, pain_score: lastA.pain_score, pain_regions: lastA.pain_regions || [], test_results: lastA.test_results, hypothesis: lastA.diagnosis?.hypothesis, romTable: Array.isArray(lastA.anamnesis_data?.romTable) ? lastA.anamnesis_data.romTable : undefined }, longitudinalAssessments, totalAssessments: withDiagnosis.length, summary: summary as EvolutionSummary, language, professionalLogoUrl: _branding.professionalLogoUrl ?? professionalLogoUrl, clinicLogoUrl: _branding.clinicLogoUrl ?? clinicLogoUrl, clinicName: _branding.clinicName ?? clinicName, responsibleProfessional: _branding.responsibleProfessional });
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");
                       a.href = url;
