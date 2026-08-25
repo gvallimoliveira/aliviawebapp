@@ -451,6 +451,178 @@ export default function PatientDetailView(props: any) {
     wa.send(`Olá ${patient?.name || ""}! Segue o link da sua reavaliação: ${reassessDialog.link}`);
   };
 
+  // ===== Relatório de Evolução: escopo (período / avaliações) =====
+  // Todas as avaliações com diagnóstico, em ordem cronológica — universo selecionável.
+  const evolutionAssessments = React.useMemo(
+    () => (patient?.assessments || [])
+      .filter((a: any) => a.diagnosis)
+      .slice()
+      .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
+    [patient?.assessments]
+  );
+
+  const openEvolutionPicker = React.useCallback(() => {
+    setEvolutionPeriod("all");
+    setEvolutionSelectedIds(evolutionAssessments.map((a: any) => a.id));
+    setEvolutionPickerOpen(true);
+  }, [evolutionAssessments]);
+
+  // Filtro rápido por período. A âncora é a avaliação MAIS RECENTE (quadro clínico atual),
+  // não "hoje" — assim "últimos 30 dias" funciona mesmo se a última avaliação for antiga.
+  const applyEvolutionPeriod = React.useCallback((days: number | null) => {
+    const allIds = evolutionAssessments.map((a: any) => a.id);
+    if (days == null) {
+      setEvolutionPeriod("all");
+      setEvolutionSelectedIds(allIds);
+      return;
+    }
+    setEvolutionPeriod(String(days) as any);
+    const last = evolutionAssessments[evolutionAssessments.length - 1];
+    if (!last) { setEvolutionSelectedIds(allIds); return; }
+    const cutoff = new Date(last.created_at).getTime() - days * 24 * 60 * 60 * 1000;
+    let ids = evolutionAssessments
+      .filter((a: any) => new Date(a.created_at).getTime() >= cutoff)
+      .map((a: any) => a.id);
+    // Garante o mínimo de 2 avaliações para o comparativo (as mais recentes).
+    if (ids.length < 2) ids = allIds.slice(-2);
+    setEvolutionSelectedIds(ids);
+  }, [evolutionAssessments]);
+
+  const toggleEvolutionAssessment = React.useCallback((id: string) => {
+    setEvolutionSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+    setEvolutionPeriod("all"); // seleção manual sai do modo "período"
+  }, []);
+
+  const runEvolutionReport = React.useCallback(async () => {
+    setEvolutionLoading(true);
+    try {
+      const withDiagnosis = evolutionAssessments.filter((a: any) => evolutionSelectedIds.includes(a.id));
+      if (withDiagnosis.length < 2) throw new Error(language === "pt" ? "Selecione ao menos 2 avaliações para o comparativo." : "Select at least 2 assessments for the comparison.");
+      const firstA = withDiagnosis[0];
+      const lastA = withDiagnosis[withDiagnosis.length - 1];
+      // Janela clínica selecionada — notas de sessão e séries longitudinais
+      // ficam restritas a ela, para não misturar quadros antigos com o atual.
+      const winStart = new Date(firstA.created_at); winStart.setHours(0, 0, 0, 0);
+      const winEnd = new Date(lastA.created_at); winEnd.setHours(23, 59, 59, 999);
+      const inWindow = (d: any) => { const t = new Date(d).getTime(); return t >= winStart.getTime() && t <= winEnd.getTime(); };
+      let summary: any;
+      if (isDemo) {
+        await new Promise((r) => setTimeout(r, 1500));
+        summary = mockEvolutionSummary;
+      } else {
+        // Deep payload: full timeline (anamnesis, questionnaires with subscales,
+        // dynamometry/ROM tables, functional tests) + therapist session notes.
+        const normalizeTr = (tr: any): any[] => Array.isArray(tr) ? tr : (tr && typeof tr === "object" && Object.keys(tr).length > 0 ? [tr] : []);
+        const normalizeQ = (tr: any) => normalizeTr(tr)
+          .filter((t: any) => t.questionnaireId && t.percentageScore != null)
+          .map((t: any) => ({
+            id: t.questionnaireId,
+            name: t.questionnaireName || t.questionnaireId,
+            score: Math.round(t.percentageScore),
+            interpretation: t.interpretation || undefined,
+            subscales: t.subscaleScores && typeof t.subscaleScores === "object"
+              ? Object.fromEntries(Object.entries(t.subscaleScores).map(([k, v]: [string, any]) => [k, typeof v === "number" ? Math.round(v) : v]))
+              : undefined,
+          }));
+        const normalizeFunctional = (tr: any) => normalizeTr(tr)
+          .filter((t: any) => !t.questionnaireId && (t.name || t.testName))
+          .map((t: any) => ({ name: t.testName || t.name, result: t.result ?? t.value ?? t.outcome ?? undefined }));
+        const ANAMNESIS_KEYS = ["chiefComplaint", "customComplaint", "onset", "evolution", "painTypes", "painPattern", "aggravatingFactors", "relievingFactors", "activityLevel", "previousTreatments", "healthConditions", "healthConditionsOther", "usesContinuousMedication", "continuousMedications", "medications", "comorbidities", "painWeeklyFrequency", "painNightWaking", "hasEdema", "hadTwist", "painRegionRefinements"];
+        const buildAssessmentPayload = (a: any) => {
+          const ad: any = a.anamnesis_data || {};
+          const anamnesis: Record<string, any> = {};
+          for (const k of ANAMNESIS_KEYS) if (ad[k] != null) anamnesis[k] = ad[k];
+          return {
+            date: a.created_at,
+            pain_score: a.pain_score,
+            pain_scores_per_region: ad.painScoresPerRegion || undefined,
+            hypothesis: a.diagnosis?.hypothesis,
+            diagnosis_summary: a.diagnosis?.summary,
+            pain_regions: a.pain_regions || [],
+            anamnesis,
+            questionnaires: normalizeQ(a.test_results),
+            functional_tests: normalizeFunctional(a.test_results),
+            strengthTable: Array.isArray(ad.strengthTable) ? ad.strengthTable : undefined,
+            romTable: Array.isArray(ad.romTable) ? ad.romTable : undefined,
+          };
+        };
+        let sessionNotes: any[] | undefined;
+        try {
+          const email = (firstA as any).patient_email || patient.email;
+          if (email) {
+            const { data: notesData } = await (supabase as any)
+              .from("session_notes")
+              .select("session_date, content, observation")
+              .eq("patient_email", email)
+              .order("session_date", { ascending: true })
+              .limit(20);
+            sessionNotes = (notesData || []).filter((n: any) => (n.content || n.observation || "").trim().length > 0 && (!n.session_date || inWindow(n.session_date)));
+          }
+        } catch (e) { console.warn("[evolution] session notes fetch failed", e); }
+        const payload = {
+          assessments: withDiagnosis.map(buildAssessmentPayload),
+          sessionNotes,
+          language,
+        };
+        const { data: summaryData, error } = await supabase.functions.invoke("generate-evolution-summary", { body: payload });
+
+        if (error) throw new Error(error?.message || "Erro ao conectar com o servidor de IA");
+        if (!summaryData || summaryData?.error) throw new Error(summaryData?.error || "Resposta inválida da IA");
+        if (!summaryData.narrative || !summaryData.conclusion || !summaryData.recommendation) throw new Error("Resumo incompleto gerado pela IA. Tente novamente.");
+        summary = summaryData;
+      }
+      const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
+      const _branding = await resolveAssessmentBranding({ clinicId: clinicId || null, professionalId: professionalId || null, userId: null });
+      const longitudinalAssessments = (patient.assessments || [])
+        .slice()
+        .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .filter((a: any) => inWindow(a.created_at))
+        .map((a: any) => ({
+          date: a.created_at,
+          romTable: Array.isArray(a.anamnesis_data?.romTable) ? a.anamnesis_data.romTable : undefined,
+          strengthTable: Array.isArray(a.anamnesis_data?.strengthTable) ? a.anamnesis_data.strengthTable : undefined,
+        }));
+      const blob = await generateEvolutionPdfBlob({ patientName: patient.name, firstAssessment: { date: firstA.created_at, pain_score: firstA.pain_score, pain_regions: firstA.pain_regions || [], test_results: firstA.test_results, hypothesis: firstA.diagnosis?.hypothesis }, lastAssessment: { date: lastA.created_at, pain_score: lastA.pain_score, pain_regions: lastA.pain_regions || [], test_results: lastA.test_results, hypothesis: lastA.diagnosis?.hypothesis, romTable: Array.isArray(lastA.anamnesis_data?.romTable) ? lastA.anamnesis_data.romTable : undefined }, longitudinalAssessments, totalAssessments: withDiagnosis.length, summary: summary as EvolutionSummary, language, professionalLogoUrl: _branding.professionalLogoUrl ?? professionalLogoUrl, clinicLogoUrl: _branding.clinicLogoUrl ?? clinicLogoUrl, clinicName: _branding.clinicName ?? clinicName, responsibleProfessional: _branding.responsibleProfessional });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `AliviA_Evolucao_${patient.name.replace(/\s/g, "_")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      // Em desktop/tablet o arquivo já fica salvo localmente: não abrir WhatsApp.
+      const isMobileDevice = typeof navigator !== "undefined"
+        && /Android|iPhone|iPod/i.test(navigator.userAgent)
+        && typeof window !== "undefined"
+        && window.matchMedia?.("(pointer: coarse)").matches;
+      if (!isDemo && isMobileDevice) {
+        const { sharePdfFile, shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
+        const nativeShareResult = await sharePdfFile({ blob, fileName: `AliviA_Evolucao_${patient.name.replace(/\s+/g, "_")}.pdf`, title: "Aliv.iA", text: `${t("evolution.title")} - ${patient.name}` });
+        if (nativeShareResult === "shared" || nativeShareResult === "cancelled") { toast({ title: t("evolution.success") }); return; }
+        const { data: { user: _authUser } } = await supabase.auth.getUser();
+        const fileName = _authUser ? `${_authUser.id}/evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf` : `evolution_${patient.name.replace(/\s/g, "_")}_${Date.now()}.pdf`;
+        const { error: uploadError } = _authUser
+          ? await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true })
+          : { error: new Error("anonymous_upload_blocked") } as any;
+        if (!uploadError) {
+          const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
+          if (publicUrl?.publicUrl) await shareTextOrOpenWhatsApp(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`, "Aliv.iA");
+          else toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });
+        } else {
+          toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });
+        }
+      }
+
+      toast({ title: t("evolution.success") });
+    } catch (err: any) {
+      console.error("Evolution report error:", err);
+      toast({ title: t("evolution.error"), description: err?.message, variant: "destructive" });
+    } finally {
+      setEvolutionLoading(false);
+    }
+  }, [evolutionAssessments, evolutionSelectedIds, isDemo, patient, clinicId, professionalId, language, professionalLogoUrl, clinicLogoUrl, clinicName, t, toast, setEvolutionLoading]);
+
   return (
     <div className="space-y-5">
       <PatientSectionRail riskLevel={healthRisk?.level ?? null} />
