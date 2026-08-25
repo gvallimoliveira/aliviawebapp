@@ -278,6 +278,27 @@ Rules:
       );
     }
 
+    const vNotes = (Array.isArray(voiceNotes) ? voiceNotes : [])
+      .filter((v: any) => (v?.transcript || "").trim().length > 0 || (v?.summary && typeof v.summary === "object"))
+      .slice(0, 5);
+    if (vNotes.length > 0) {
+      const blocks = vNotes
+        .map((v: any, i: number) => {
+          const date = v.created_at ? String(v.created_at).slice(0, 10) : "?";
+          const parts: string[] = [`    • [Interview recording ${i + 1} — ${date}]`];
+          if (v.summary && typeof v.summary === "object") {
+            parts.push(`      Structured AI summary of the interview: ${JSON.stringify(v.summary)}`);
+          }
+          const t = String(v.transcript || "").replace(/\s+/g, " ").trim();
+          if (t) parts.push(`      Transcript (excerpt): ${t.slice(0, 2500)}`);
+          return parts.join("\n");
+        })
+        .join("\n");
+      lines.push(
+        `- **ANAMNESIS INTERVIEW VOICE RECORDINGS (transcribed from the actual consultation — a rich first-person source; integrate clinically relevant information, especially anything NOT captured in the structured fields above):**\n${blocks}`,
+      );
+    }
+
 
     lines.push("\nGenerate the clinical impression now.");
     const userPrompt = lines.join("\n");
