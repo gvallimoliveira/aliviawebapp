@@ -125,8 +125,13 @@ describe("generateEvolutionPdfBlob — gráficos longitudinais", () => {
       language: "pt",
     });
     expect(blob.size).toBeGreaterThan(10000);
-    // Dump for visual QA (pdftoppm)
-    const buf = Buffer.from(await blob.arrayBuffer());
+    // Dump for visual QA (pdftoppm) — jsdom Blob has no arrayBuffer()
+    const buf = await new Promise<Buffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(Buffer.from(reader.result as ArrayBuffer));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(blob);
+    });
     writeFileSync("/tmp/evolution-charts-qa.pdf", buf);
   }, 30000);
 });
