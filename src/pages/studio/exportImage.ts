@@ -126,28 +126,30 @@ export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desir
   }
 
   let lastError: unknown;
-  for (const pixelRatio of attempts) {
-    try {
-      const blob = await toBlob(node, {
-        pixelRatio,
-        backgroundColor,
-        skipFonts: fontEmbedCSS === null,
-        fontEmbedCSS: fontEmbedCSS ?? undefined,
-        filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
-      });
-      if (!blob || blob.size < 1024) throw new Error("empty-canvas");
-      const shared = await deliver(blob, fileName);
-      return { blob, ratio: pixelRatio, shared };
-    } catch (error) {
-      lastError = error;
-    } finally {
-      if (pixelRatio === attempts[attempts.length - 1]) restoreImages();
+  try {
+    for (const pixelRatio of attempts) {
+      try {
+        const blob = await toBlob(node, {
+          pixelRatio,
+          backgroundColor,
+          skipFonts: fontEmbedCSS === null,
+          fontEmbedCSS: fontEmbedCSS ?? undefined,
+          filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
+        });
+        if (!blob || blob.size < 1024) throw new Error("empty-canvas");
+        const shared = await deliver(blob, fileName);
+        return { blob, ratio: pixelRatio, shared };
+      } catch (error) {
+        lastError = error;
+      }
     }
+  } finally {
+    restoreImages();
   }
 
-  restoreImages();
   throw lastError instanceof Error ? lastError : new Error("export-failed");
 };
+
 
 /** Compartilha no mobile, baixa no desktop, abre em nova aba como último recurso. */
 export const deliver = async (blob: Blob, fileName: string, mime = "image/png"): Promise<boolean> => {
