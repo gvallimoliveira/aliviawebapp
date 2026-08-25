@@ -81,7 +81,7 @@ const professional: WorldContent = {
 
   kinetic: [
     { kicker: "EM MENOS TEMPO", word: "Com mais resultados", caption: "A avaliação estruturada antes da primeira sessão.", topic: "assessment-link" },
-    { kicker: "O QUE MUDA", word: "Clareza", caption: "Do relato confuso à hipótese defensável.", topic: "hypothesis" },
+    { kicker: "O QUE MUDA", word: "Clareza", caption: "Do relato confuso à hipótese mais provável.", topic: "hypothesis" },
     { kicker: "SEU DIFERENCIAL", word: "Método", caption: "STEPS e D.I.F.I guiando cada decisão.", topic: "steps-method" },
     { kicker: "NA PRÁTICA", word: "Autoridade", caption: "Relatórios que o paciente mostra para o médico.", topic: "report" },
     { kicker: "NO FINANCEIRO", word: "Valor", caption: "Quem documenta melhor, precifica melhor.", topic: "pricing" },
