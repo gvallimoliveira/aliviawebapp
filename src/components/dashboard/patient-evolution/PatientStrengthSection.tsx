@@ -226,7 +226,8 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
                     </table>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </CollapsibleSection>
         )}
