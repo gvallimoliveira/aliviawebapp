@@ -29,6 +29,7 @@ import shotExpressReassessment from "@/assets/studio/express-reassessment.jpg";
 import shotClinicalImpression from "@/assets/studio/clinical-impression.jpg";
 import shotExternalUpload from "@/assets/studio/external-upload.jpg";
 import shotRedFlags from "@/assets/studio/red-flags.jpg";
+import shotVoiceNotes from "@/assets/studio/voice-notes.jpg";
 
 
 /**
@@ -84,7 +85,7 @@ export const TOPICS = {
   "discharge-report": { label: "Relatório de alta / evolução comparativa" },
   "clinical-impression": { label: "Impressão clínica longitudinal", image: shotClinicalImpression },
   "clinical-agent": { label: "Agente de raciocínio clínico", image: shotClinicalAgent },
-  "voice-notes": { label: "Ditado por voz na sessão" },
+  "voice-notes": { label: "Gravação e transcrição da anamnese", image: shotVoiceNotes },
   dynamometry: { label: "Dinamometria e assimetria", image: shotDynamometry },
   "express-reassessment": { label: "Reavaliação expressa", image: shotExpressReassessment },
   "assessment-link": { label: "Avaliação por link", image: shotAssessmentLink },

@@ -68,6 +68,10 @@ const professional: WorldContent = {
       strong: "Laudo de dinamometria não é planilha para você decifrar.",
       rest: "Faça upload, o sistema extrai as medidas, calcula assimetria entre os lados e sinaliza o risco.",
     },
+    {
+      strong: "Fale durante a sessão. O prontuário se escreve sozinho.",
+      rest: "Grave a anamnese em voz, receba o resumo estruturado e ganhe minutos de olho no paciente — não no teclado.",
+    },
   ],
   subs: [
     "Sistema de raciocínio clínico com alma de fisioterapeuta.",
@@ -185,6 +189,20 @@ const professional: WorldContent = {
         "FABQ-Brasil com escore e ponto de corte",
       ],
     },
+    {
+      title: "Duas formas de fazer a anamnese",
+      topics: ["voice-notes", "anamnesis"],
+      before: [
+        "Digitar enquanto o paciente fala",
+        "Perder detalhes por dividir atenção",
+        "Resumo feito depois da sessão",
+      ],
+      after: [
+        "Gravar e receber transcrição estruturada",
+        "Olho no paciente, não no teclado",
+        "Texto pronto no prontuário na hora",
+      ],
+    },
   ],
   journeys: [
     {
@@ -260,6 +278,8 @@ const professional: WorldContent = {
     { text: '"Reavaliar é medir de novo, não lembrar de cor."', topic: "express-reassessment" },
     { text: '"O prontuário conta a história que a memória esquece."', topic: "report" },
     { text: '"Dor que não é classificada é tratada no escuro."', topic: "pain-mechanism" },
+    { text: '"A voz do paciente vira texto do prontuário sem perder a nuance."', topic: "voice-notes" },
+    { text: '"Transcrever não é luxo: é tempo devolvido para o clínico."', topic: "voice-notes" },
   ],
   marquee: [
     ["Raciocínio clínico", "Red flags", "STEPS", "D.I.F.I", "Evidência PEDro ≥ 7"],
