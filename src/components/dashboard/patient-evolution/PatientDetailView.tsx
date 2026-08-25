@@ -313,7 +313,7 @@ export default function PatientDetailView(props: any) {
   // Seleção do escopo do Relatório de Evolução (quais avaliações entram no comparativo)
   const [evolutionPickerOpen, setEvolutionPickerOpen] = React.useState(false);
   const [evolutionSelectedIds, setEvolutionSelectedIds] = React.useState<string[]>([]);
-  const [evolutionPeriod, setEvolutionPeriod] = React.useState<"all" | "30" | "60" | "90">("all");
+  const [evolutionPeriod, setEvolutionPeriod] = React.useState<"all" | "30" | "60" | "90" | "custom">("all");
 
   const fetchPatientRow = React.useCallback(async (id?: string | null) => {
     const sb = supabase as any;
@@ -492,7 +492,7 @@ export default function PatientDetailView(props: any) {
     setEvolutionSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
-    setEvolutionPeriod("all"); // seleção manual sai do modo "período"
+    setEvolutionPeriod("custom"); // seleção manual sai do modo "período"
   }, []);
 
   const runEvolutionReport = React.useCallback(async () => {
