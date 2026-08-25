@@ -17,6 +17,61 @@ const resolveFontCss = async (node: HTMLElement) => {
   return cachedFontCss;
 };
 
+const dataUrlCache = new Map<string, string>();
+
+/**
+ * Converte cada <img> para data URL ANTES da captura. O html-to-image refaz o
+ * fetch das imagens durante a serialização e, no mobile, esse refetch falha ou
+ * estoura o tempo — resultado: arte exportada sem as ilustrações.
+ * Retorna a função que restaura os `src` originais.
+ */
+const inlineImages = async (node: HTMLElement) => {
+  const images = Array.from(node.querySelectorAll("img"));
+  const restores: Array<() => void> = [];
+
+  await Promise.all(
+    images.map(async (img) => {
+      const original = img.getAttribute("src");
+      if (!original || original.startsWith("data:")) return;
+
+      let dataUrl = dataUrlCache.get(original);
+      if (!dataUrl) {
+        try {
+          const res = await fetch(original, { cache: "force-cache" });
+          const blob = await res.blob();
+          dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+          });
+          dataUrlCache.set(original, dataUrl);
+        } catch {
+          return;
+        }
+      }
+
+      const loading = img.getAttribute("loading");
+      img.setAttribute("src", dataUrl);
+      img.removeAttribute("loading");
+      restores.push(() => {
+        img.setAttribute("src", original);
+        if (loading) img.setAttribute("loading", loading);
+      });
+
+      if (!img.complete || img.naturalWidth === 0) {
+        await new Promise<void>((resolve) => {
+          img.addEventListener("load", () => resolve(), { once: true });
+          img.addEventListener("error", () => resolve(), { once: true });
+          window.setTimeout(resolve, 3000);
+        });
+      }
+    }),
+  );
+
+  return () => restores.forEach((fn) => fn());
+};
+
 /** Espera fontes e imagens para a arte não sair com texto/foto faltando. */
 const waitForAssets = async (node: HTMLElement) => {
   try {
@@ -56,6 +111,7 @@ export type ExportResult = { blob: Blob; ratio: number; shared: boolean };
  */
 export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desiredRatio = 3): Promise<ExportResult> => {
   await waitForAssets(node);
+  const restoreImages = await inlineImages(node);
 
   const rect = node.getBoundingClientRect();
   const fontEmbedCSS = await resolveFontCss(node);
@@ -70,26 +126,30 @@ export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desir
   }
 
   let lastError: unknown;
-  for (const pixelRatio of attempts) {
-    try {
-      const blob = await toBlob(node, {
-        pixelRatio,
-        cacheBust: true,
-        backgroundColor,
-        skipFonts: fontEmbedCSS === null,
-        fontEmbedCSS: fontEmbedCSS ?? undefined,
-        filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
-      });
-      if (!blob || blob.size < 1024) throw new Error("empty-canvas");
-      const shared = await deliver(blob, fileName);
-      return { blob, ratio: pixelRatio, shared };
-    } catch (error) {
-      lastError = error;
+  try {
+    for (const pixelRatio of attempts) {
+      try {
+        const blob = await toBlob(node, {
+          pixelRatio,
+          backgroundColor,
+          skipFonts: fontEmbedCSS === null,
+          fontEmbedCSS: fontEmbedCSS ?? undefined,
+          filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
+        });
+        if (!blob || blob.size < 1024) throw new Error("empty-canvas");
+        const shared = await deliver(blob, fileName);
+        return { blob, ratio: pixelRatio, shared };
+      } catch (error) {
+        lastError = error;
+      }
     }
+  } finally {
+    restoreImages();
   }
 
   throw lastError instanceof Error ? lastError : new Error("export-failed");
 };
+
 
 /** Compartilha no mobile, baixa no desktop, abre em nova aba como último recurso. */
 export const deliver = async (blob: Blob, fileName: string, mime = "image/png"): Promise<boolean> => {

@@ -57,7 +57,7 @@ export const captureThumb = async (node: HTMLElement, id: string) => {
     const dataUrl = await toJpeg(node, {
       pixelRatio,
       quality: 0.6,
-      cacheBust: true,
+
       skipFonts: true,
       backgroundColor: getComputedStyle(document.body).backgroundColor || "#ffffff",
       filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
