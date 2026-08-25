@@ -13,6 +13,17 @@ import shotAgenda from "@/assets/studio/agenda.jpg";
 import shotPermissions from "@/assets/studio/permissions.jpg";
 import shotWhiteLabel from "@/assets/studio/white-label.jpg";
 import shotHep from "@/assets/studio/hep.jpg";
+import shotEvidenceLibrary from "@/assets/studio/evidence-library.jpg";
+import shotNps from "@/assets/studio/nps.jpg";
+import shotMarketplace from "@/assets/studio/marketplace.jpg";
+import shotAssessmentLink from "@/assets/studio/assessment-link.jpg";
+import shotAcademicTracks from "@/assets/studio/academic-tracks.jpg";
+import shotSimulatedEnv from "@/assets/studio/simulated-env.jpg";
+import shotPainMechanism from "@/assets/studio/pain-mechanism.jpg";
+import shotDifferential from "@/assets/studio/differential.jpg";
+import shotFinalHypothesis from "@/assets/studio/final-hypothesis.jpg";
+import shotHealthGeneral from "@/assets/studio/health-general.jpg";
+import shotFabq from "@/assets/studio/fabq.jpg";
 
 
 /**
@@ -53,14 +64,14 @@ export const TOPICS = {
   "pain-map": { label: "Mapa de dor", image: stepPainMap },
   anamnesis: { label: "Anamnese estruturada", image: stepAnamnesis },
   "red-flags": { label: "Triagem de red flags" },
-  "health-general": { label: "Saúde geral e comorbidades" },
+  "health-general": { label: "Saúde geral e comorbidades", image: shotHealthGeneral },
   "functional-tests": { label: "Testes funcionais e clusters", image: stepTests },
   questionnaires: { label: "Questionários validados", image: stepQuestionnaires },
-  fabq: { label: "FABQ-Brasil (medo-evitação)" },
+  fabq: { label: "FABQ-Brasil (medo-evitação)", image: shotFabq },
   hypothesis: { label: "Hipótese diagnóstica", image: stepDiagnosis },
-  "final-hypothesis": { label: "Hipótese final do profissional" },
-  "pain-mechanism": { label: "Mecanismo de dor (Kosek/Finnerup)" },
-  differential: { label: "Diagnósticos diferenciais" },
+  "final-hypothesis": { label: "Hipótese final do profissional", image: shotFinalHypothesis },
+  "pain-mechanism": { label: "Mecanismo de dor (Kosek/Finnerup)", image: shotPainMechanism },
+  differential: { label: "Diagnósticos diferenciais", image: shotDifferential },
   "treatment-plan": { label: "Plano de tratamento por fases", image: stepTreatment },
   hep: { label: "HEP — programa domiciliar em vídeo", image: shotHep },
   "pain-diary": { label: "Diário de dor", image: stepDiary },
@@ -71,18 +82,18 @@ export const TOPICS = {
   "voice-notes": { label: "Ditado por voz na sessão" },
   dynamometry: { label: "Dinamometria e assimetria" },
   "express-reassessment": { label: "Reavaliação expressa" },
-  "assessment-link": { label: "Avaliação por link" },
+  "assessment-link": { label: "Avaliação por link", image: shotAssessmentLink },
   "external-upload": { label: "Upload de avaliação externa" },
-  marketplace: { label: "Vitrine de profissionais" },
+  marketplace: { label: "Vitrine de profissionais", image: shotMarketplace },
   "multi-condition": { label: "Múltiplas condições em paralelo" },
-  "evidence-library": { label: "Biblioteca de evidência (PEDro ≥ 7)" },
+  "evidence-library": { label: "Biblioteca de evidência (PEDro ≥ 7)", image: shotEvidenceLibrary },
   "steps-method": { label: "Método STEPS" },
   difi: { label: "Framework D.I.F.I" },
-  "academic-tracks": { label: "Trilhas acadêmicas" },
-  "simulated-env": { label: "Ambiente simulado" },
+  "academic-tracks": { label: "Trilhas acadêmicas", image: shotAcademicTracks },
+  "simulated-env": { label: "Ambiente simulado", image: shotSimulatedEnv },
   "white-label": { label: "White label da clínica", image: shotWhiteLabel },
   agenda: { label: "Agenda da equipe", image: shotAgenda },
-  nps: { label: "NPS e satisfação" },
+  nps: { label: "NPS e satisfação", image: shotNps },
   permissions: { label: "Permissões por função", image: shotPermissions },
   documents: { label: "Documentos do paciente" },
   archive: { label: "Arquivamento de pacientes" },
