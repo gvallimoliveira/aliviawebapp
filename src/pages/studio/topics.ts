@@ -73,7 +73,7 @@ export const TOPICS = {
   "functional-tests": { label: "Testes funcionais e clusters", image: stepTests },
   questionnaires: { label: "Questionários validados", image: stepQuestionnaires },
   fabq: { label: "FABQ-Brasil (medo-evitação)", image: shotFabq },
-  hypothesis: { label: "Hipótese diagnóstica", image: stepDiagnosis },
+  hypothesis: { label: "Hipótese mais provável", image: stepDiagnosis },
   "final-hypothesis": { label: "Hipótese final do profissional", image: shotFinalHypothesis },
   "pain-mechanism": { label: "Mecanismo de dor (Kosek/Finnerup)", image: shotPainMechanism },
   differential: { label: "Diagnósticos diferenciais", image: shotDifferential },
