@@ -12,6 +12,7 @@ import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireDa
 import { functionalTests } from "@/data/functionalTestsData";
 import { getSeverityColor } from "./QuestionnaireResultCard";
 import DismissRedFlagDialog from "./DismissRedFlagDialog";
+import RomTable, { sanitizeRomRows } from "./RomTable";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
