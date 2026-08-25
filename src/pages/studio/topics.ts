@@ -13,6 +13,17 @@ import shotAgenda from "@/assets/studio/agenda.jpg";
 import shotPermissions from "@/assets/studio/permissions.jpg";
 import shotWhiteLabel from "@/assets/studio/white-label.jpg";
 import shotHep from "@/assets/studio/hep.jpg";
+import shotEvidenceLibrary from "@/assets/studio/evidence-library.jpg";
+import shotNps from "@/assets/studio/nps.jpg";
+import shotMarketplace from "@/assets/studio/marketplace.jpg";
+import shotAssessmentLink from "@/assets/studio/assessment-link.jpg";
+import shotAcademicTracks from "@/assets/studio/academic-tracks.jpg";
+import shotSimulatedEnv from "@/assets/studio/simulated-env.jpg";
+import shotPainMechanism from "@/assets/studio/pain-mechanism.jpg";
+import shotDifferential from "@/assets/studio/differential.jpg";
+import shotFinalHypothesis from "@/assets/studio/final-hypothesis.jpg";
+import shotHealthGeneral from "@/assets/studio/health-general.jpg";
+import shotFabq from "@/assets/studio/fabq.jpg";
 
 
 /**
