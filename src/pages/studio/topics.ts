@@ -85,7 +85,7 @@ export const TOPICS = {
   "discharge-report": { label: "Relatório de alta / evolução comparativa" },
   "clinical-impression": { label: "Impressão clínica longitudinal", image: shotClinicalImpression },
   "clinical-agent": { label: "Agente de raciocínio clínico", image: shotClinicalAgent },
-  "voice-notes": { label: "Gravação e transcrição da anamnese", image: shotVoiceNotes.url },
+  "voice-notes": { label: "Gravação e transcrição da anamnese", image: shotVoiceNotes },
   dynamometry: { label: "Dinamometria e assimetria", image: shotDynamometry },
   "express-reassessment": { label: "Reavaliação expressa", image: shotExpressReassessment },
   "assessment-link": { label: "Avaliação por link", image: shotAssessmentLink },
