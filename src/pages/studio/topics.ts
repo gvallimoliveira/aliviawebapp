@@ -24,6 +24,10 @@ import shotDifferential from "@/assets/studio/differential.jpg";
 import shotFinalHypothesis from "@/assets/studio/final-hypothesis.jpg";
 import shotHealthGeneral from "@/assets/studio/health-general.jpg";
 import shotFabq from "@/assets/studio/fabq.jpg";
+import shotDynamometry from "@/assets/studio/dynamometry.jpg";
+import shotExpressReassessment from "@/assets/studio/express-reassessment.jpg";
+import shotClinicalImpression from "@/assets/studio/clinical-impression.jpg";
+import shotExternalUpload from "@/assets/studio/external-upload.jpg";
 
 
 /**
