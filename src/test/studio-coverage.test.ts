@@ -20,8 +20,9 @@ describe("Studio · registro de tópicos", () => {
   });
 
   it("imageForTopic é a ÚNICA fonte de imagem e nunca inventa fallback", () => {
-    // "hep" não tem screenshot da tela exata: não pode devolver imagem de outro assunto.
-    expect(imageForTopic("hep")).toBeUndefined();
+    // "difi" não tem screenshot da tela exata: não pode devolver imagem de outro assunto.
+    expect(imageForTopic("difi")).toBeUndefined();
+
     expect(imageForTopic("pain-map")).toBeTruthy();
     expect(imageForTopic(undefined)).toBeUndefined();
   });
