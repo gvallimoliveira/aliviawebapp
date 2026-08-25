@@ -115,6 +115,7 @@ const patient: WorldContent = {
   ],
   features: [
     { tag: "MAPA DE DOR", title: "Aponte onde dói, no seu corpo", description: "Toque na região e descreva o padrão — sem precisar saber nomes técnicos.", topic: "pain-map" },
+    { tag: "VOZ", title: "Conte sua história por áudio", description: "Grave a anamnese em voz e receba um resumo estruturado — sem digitar nada.", topic: "voice-notes" },
     { tag: "LEITURA DO CASO", title: "Uma síntese de como você está evoluindo", description: "O Aliv.iA compara suas avaliações e resume o que mudou desde o começo.", topic: "clinical-impression" },
 
     { tag: "SEGURANÇA", title: "Sinais de alerta sempre checados", description: "Se algo exigir avaliação médica, o Aliv.iA avisa antes de qualquer exercício.", topic: "red-flags" },
