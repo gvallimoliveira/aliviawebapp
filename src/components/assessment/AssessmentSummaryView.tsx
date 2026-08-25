@@ -472,6 +472,17 @@ const AssessmentSummaryView = ({
         </section>
       )}
 
+      {/* Joint mobility (ADM / ROM) — manual assessments */}
+      {sanitizeRomRows(anamnesis?.romTable).length > 0 && (
+        <section className="space-y-2">
+          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Activity className="h-4 w-4 text-muted-foreground" />
+            {isPt ? "Mobilidade articular (ADM)" : language === "es" ? "Movilidad articular (ADM)" : "Joint mobility (ROM)"}
+          </h4>
+          <RomTable value={anamnesis.romTable} readOnly bare lang={language} />
+        </section>
+      )}
+
       {/* Questionnaires */}
       {qResults.length > 0 && (
         <section className="space-y-2">
