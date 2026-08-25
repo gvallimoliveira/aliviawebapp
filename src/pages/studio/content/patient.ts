@@ -20,6 +20,7 @@ const patient: WorldContent = {
     { strong: "Seu exercício errado pode estar mantendo a dor.", rest: "Programa em vídeo escolhido para o seu quadro, com progressão respeitosa." },
     { strong: "Dói no ombro e na lombar? São dois casos, não um.", rest: "Cada condição com seu próprio histórico, seu próprio plano e sua própria curva." },
     { strong: "Nem toda dor é a mesma dor.", rest: "A triagem identifica se o padrão é nociceptivo, neuropático ou nociplástico — e isso muda o plano." },
+    { strong: "Você pode falar, em vez de digitar.", rest: "Grave sua anamnese em áudio e receba o resumo estruturado — ideal para quem prefere contar a história com naturalidade." },
   ],
   subs: [
     "Avaliação guiada em poucos minutos, direto do celular.",
