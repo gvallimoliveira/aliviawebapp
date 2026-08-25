@@ -3516,6 +3516,45 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     y = renderRomTableSection(doc, y, lastRom, isPt, options.language, romCaption);
   }
 
+  // ── Longitudinal evolution charts (ROM ° / dynamometry kgf) ──
+  if (options.longitudinalAssessments && options.longitudinalAssessments.length >= 2) {
+    const chartLocale = isPt ? "pt-BR" : isEs ? "es-ES" : "en-US";
+    const romSeries = buildLongitudinalSeries(options.longitudinalAssessments, "rom", chartLocale);
+    const strengthSeries = buildLongitudinalSeries(options.longitudinalAssessments, "strength", chartLocale);
+
+    if (romSeries.length > 0) {
+      y = checkPage(doc, y, 70);
+      y = renderSectionTitle(
+        doc,
+        y,
+        isPt
+          ? "Evolução da ADM por Movimento"
+          : isEs
+            ? "Evolución de la Movilidad por Movimiento"
+            : "ROM Evolution by Movement",
+        COLORS.primary,
+      );
+      for (const s of romSeries) y = renderLongitudinalChartCard(doc, y, s, "°", isPt, options.language);
+      y += 2;
+    }
+
+    if (strengthSeries.length > 0) {
+      y = checkPage(doc, y, 70);
+      y = renderSectionTitle(
+        doc,
+        y,
+        isPt
+          ? "Dinamometria — Evolução por Movimento"
+          : isEs
+            ? "Dinamometría — Evolución por Movimiento"
+            : "Dynamometry — Evolution by Movement",
+        COLORS.primary,
+      );
+      for (const s of strengthSeries) y = renderLongitudinalChartCard(doc, y, s, "kgf", isPt, options.language);
+      y += 2;
+    }
+  }
+
   // ── AI Narrative Summary ──
   y = renderSectionTitle(doc, y, isPt ? "Resumo Narrativo (IA)" : "AI Narrative Summary", COLORS.primary);
   y = drawTextCard(doc, y, options.summary.narrative, {
