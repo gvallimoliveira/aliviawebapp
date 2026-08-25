@@ -12,6 +12,7 @@ import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireDa
 import { functionalTests } from "@/data/functionalTestsData";
 import { getSeverityColor } from "./QuestionnaireResultCard";
 import DismissRedFlagDialog from "./DismissRedFlagDialog";
+import RomTable, { sanitizeRomRows } from "./RomTable";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -468,6 +469,17 @@ const AssessmentSummaryView = ({
               );
             })}
           </div>
+        </section>
+      )}
+
+      {/* Joint mobility (ADM / ROM) — manual assessments */}
+      {sanitizeRomRows(anamnesis?.romTable).length > 0 && (
+        <section className="space-y-2">
+          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Activity className="h-4 w-4 text-muted-foreground" />
+            {isPt ? "Mobilidade articular (ADM)" : language === "es" ? "Movilidad articular (ADM)" : "Joint mobility (ROM)"}
+          </h4>
+          <RomTable value={anamnesis.romTable} readOnly bare lang={language} />
         </section>
       )}
 

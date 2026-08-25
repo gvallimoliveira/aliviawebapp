@@ -17,6 +17,7 @@ import AddPatientModal, { type PatientToEdit } from "../AddPatientModal";
 import FinalHypothesisEditor from "../FinalHypothesisEditor";
 import PatientFilesSection from "../PatientFilesSection";
 import PatientStrengthSection from "./PatientStrengthSection";
+import PatientRomSection from "./PatientRomSection";
 import PatientPhotosSection from "../PatientPhotosSection";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import RegionPainComparison from "../RegionPainComparison";
@@ -1282,6 +1283,24 @@ export default function PatientDetailView(props: any) {
         }
       >
         <PatientStrengthSection patient={patient} readOnly={readOnly} isDemo={isDemo} />
+      </div>
+
+      {/* ADM (arco de movimento) — registrada na avaliação manual, visível e editável no prontuário */}
+      <div
+        id="sec-adm"
+        className="scroll-mt-24"
+        data-rail-hide={
+          (patient?.assessments || []).some((a: any) =>
+            Array.isArray(a?.anamnesis_data?.romTable) &&
+            a.anamnesis_data.romTable.some(
+              (r: any) => r?.joint || r?.leftValue || r?.rightValue,
+            ),
+          )
+            ? undefined
+            : "true"
+        }
+      >
+        <PatientRomSection patient={patient} readOnly={readOnly} isDemo={isDemo} />
       </div>
 
 
