@@ -563,24 +563,23 @@ export function AgonistAntagonistPanel({
         {pairs.map((p) => (
           <div
             key={p.key}
-            className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-lg border border-border bg-background/60 px-2 py-1.5"
+            className="flex flex-col gap-1.5 rounded-lg border border-border bg-background/60 px-2 py-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
           >
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-foreground leading-tight">
+            <div className="min-w-0 sm:flex-1">
+              <p className="text-xs font-medium text-foreground leading-tight break-words">
                 {pick(p.title, lang)}
               </p>
-              <p className="text-[10px] text-muted-foreground font-mono">
+              <p className="text-[10px] text-muted-foreground font-mono break-words">
                 {pick(p.aLabel, lang)} · {pick(p.bLabel, lang)}
               </p>
             </div>
 
-            <div className="flex items-center justify-center gap-2 flex-wrap">
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               {sideResult(s(lang, "initialLeft"), p.left.a, p.left.b, p.left.asym)}
               {sideResult(s(lang, "initialRight"), p.right.a, p.right.b, p.right.asym)}
             </div>
-
-            <span />
           </div>
+
         ))}
       </div>
     </div>
