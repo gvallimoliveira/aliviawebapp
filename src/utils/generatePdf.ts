@@ -1141,6 +1141,7 @@ function renderRomTableSection(
   rows: Array<{ joint: string; leftValue: string; rightValue: string }> | undefined,
   isPt: boolean,
   language: string,
+  caption?: string,
 ): number {
   if (!rows || rows.length === 0) return y;
   const cleaned = rows
@@ -1164,8 +1165,15 @@ function renderRomTableSection(
   const colRight = language === "es" ? "Derecha" : isPt ? "Direita" : "Right";
 
   // Reserve space for title + header + 2 rows to avoid orphan
-  y = checkPage(doc, y, 14 + 8 + 16);
+  y = checkPage(doc, y, 14 + 8 + 16 + (caption ? 5 : 0));
   y = renderSectionTitle(doc, y, title, COLORS.primary);
+  if (caption) {
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(7.5);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(caption, SECTION_X, y + 1);
+    y += 5;
+  }
 
   // Column widths within SECTION_TEXT_W (158mm)
   const valueColW = 28;
@@ -2948,6 +2956,8 @@ export interface EvolutionPdfOptions {
     pain_regions: string[];
     test_results: any;
     hypothesis?: string;
+    /** Joint mobility / ROM table measured at the last assessment. */
+    romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
   };
   totalAssessments: number;
   summary: EvolutionSummary;
@@ -3252,6 +3262,23 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
     }
 
     y += 4;
+  }
+
+  // ── Joint Mobility (ROM) — values measured at the LAST assessment ──
+  const lastRom = (options.lastAssessment.romTable || []).filter(
+    (r: any) => (r?.joint || "").trim() || (r?.leftValue || "").trim() || (r?.rightValue || "").trim(),
+  );
+  if (lastRom.length > 0) {
+    const romDate = new Date(options.lastAssessment.date).toLocaleDateString(
+      isPt ? "pt-BR" : isEs ? "es-ES" : "en-US",
+      { day: "2-digit", month: "short", year: "numeric" },
+    );
+    const romCaption = isPt
+      ? `Valores medidos na última avaliação (${romDate})`
+      : isEs
+        ? `Valores medidos en la última evaluación (${romDate})`
+        : `Values measured at the last assessment (${romDate})`;
+    y = renderRomTableSection(doc, y, lastRom, isPt, options.language, romCaption);
   }
 
   // ── AI Narrative Summary ──
