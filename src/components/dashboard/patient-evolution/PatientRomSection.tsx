@@ -205,7 +205,8 @@ export default function PatientRomSection({ patient, readOnly, isDemo }: Props) 
                     </table>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </CollapsibleSection>
         )}
