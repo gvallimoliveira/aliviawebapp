@@ -24,6 +24,10 @@ import shotDifferential from "@/assets/studio/differential.jpg";
 import shotFinalHypothesis from "@/assets/studio/final-hypothesis.jpg";
 import shotHealthGeneral from "@/assets/studio/health-general.jpg";
 import shotFabq from "@/assets/studio/fabq.jpg";
+import shotDynamometry from "@/assets/studio/dynamometry.jpg";
+import shotExpressReassessment from "@/assets/studio/express-reassessment.jpg";
+import shotClinicalImpression from "@/assets/studio/clinical-impression.jpg";
+import shotExternalUpload from "@/assets/studio/external-upload.jpg";
 
 
 /**
@@ -77,13 +81,13 @@ export const TOPICS = {
   "pain-diary": { label: "Diário de dor", image: stepDiary },
   report: { label: "Relatório clínico em PDF", image: stepReport },
   "discharge-report": { label: "Relatório de alta / evolução comparativa" },
-  "clinical-impression": { label: "Impressão clínica longitudinal" },
+  "clinical-impression": { label: "Impressão clínica longitudinal", image: shotClinicalImpression },
   "clinical-agent": { label: "Agente de raciocínio clínico", image: shotClinicalAgent },
   "voice-notes": { label: "Ditado por voz na sessão" },
-  dynamometry: { label: "Dinamometria e assimetria" },
-  "express-reassessment": { label: "Reavaliação expressa" },
+  dynamometry: { label: "Dinamometria e assimetria", image: shotDynamometry },
+  "express-reassessment": { label: "Reavaliação expressa", image: shotExpressReassessment },
   "assessment-link": { label: "Avaliação por link", image: shotAssessmentLink },
-  "external-upload": { label: "Upload de avaliação externa" },
+  "external-upload": { label: "Upload de avaliação externa", image: shotExternalUpload },
   marketplace: { label: "Vitrine de profissionais", image: shotMarketplace },
   "multi-condition": { label: "Múltiplas condições em paralelo" },
   "evidence-library": { label: "Biblioteca de evidência (PEDro ≥ 7)", image: shotEvidenceLibrary },
