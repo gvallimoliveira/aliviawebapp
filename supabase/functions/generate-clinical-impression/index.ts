@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 /** Bump when the prompt/data blocks change so cached impressions are regenerated. */
-const PROMPT_VERSION = "ci-v2-deep-objective-tests";
+const PROMPT_VERSION = "ci-v3-voice-notes";
 
 const num = (v: unknown): number | null => {
   if (v == null) return null;
@@ -117,13 +117,13 @@ serve(async (req) => {
     shadowLogAiUsage(req, { function_name: "generate-clinical-impression" });
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, forceRefresh } = await req.json();
+    const { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, voiceNotes, forceRefresh } = await req.json();
 
     // Cache: identical clinical context → identical impression (7d).
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
-    const cachePayload = { v: PROMPT_VERSION, anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes };
+    const cachePayload = { v: PROMPT_VERSION, anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, voiceNotes };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ clinicalImpression: { overview: string; therapeuticObjectives: string[] } }>(
         admin,
@@ -168,6 +168,7 @@ Rules:
 - If range of motion (ROM) data is provided, likewise discuss it explicitly: which joints/movements are restricted, side comparison, and how the restriction relates to the hypothesis and to the strength findings.
 - Explicitly CORRELATE the objective findings (strength, ROM) with the symptoms, the functional scores and the diagnostic hypothesis — do not list data without interpreting it.
 - If session evolution notes are provided, incorporate the clinically useful observations from them (response to load, pain behavior between sessions, adherence, intercurrences), citing them as reported during follow-up.
+- If anamnesis interview voice transcripts/summaries are provided, treat them as a PRIMARY source: they capture the patient's own words during the consultation. Integrate anything clinically relevant that is NOT already in the structured fields — nuances of onset and mechanism, direct quotes about pain behavior, psychosocial context, beliefs, goals and expectations. Do not quote them verbatim at length; synthesize.
 - Only comment on data actually provided. Never invent values. If dynamometry or ROM was not recorded, do not speculate about them.
 - Do NOT mention specific exercises, treatment techniques, or therapeutic approaches.
 - Select exactly 2 main therapeutic objectives from this list ONLY: controle do quadro álgico, reequilibrar tensões miofasciais, exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar, modulação da dor.
@@ -274,6 +275,27 @@ Rules:
         `- **SESSION EVOLUTION NOTES (follow-up records written by the therapist — extract the clinically useful observations and incorporate them):**\n${notes
           .map((n: any) => `    • ${n.session_date || n.date || "?"}: ${String(n.content).replace(/\s+/g, " ").slice(0, 700)}`)
           .join("\n")}`,
+      );
+    }
+
+    const vNotes = (Array.isArray(voiceNotes) ? voiceNotes : [])
+      .filter((v: any) => (v?.transcript || "").trim().length > 0 || (v?.summary && typeof v.summary === "object"))
+      .slice(0, 5);
+    if (vNotes.length > 0) {
+      const blocks = vNotes
+        .map((v: any, i: number) => {
+          const date = v.created_at ? String(v.created_at).slice(0, 10) : "?";
+          const parts: string[] = [`    • [Interview recording ${i + 1} — ${date}]`];
+          if (v.summary && typeof v.summary === "object") {
+            parts.push(`      Structured AI summary of the interview: ${JSON.stringify(v.summary)}`);
+          }
+          const t = String(v.transcript || "").replace(/\s+/g, " ").trim();
+          if (t) parts.push(`      Transcript (excerpt): ${t.slice(0, 2500)}`);
+          return parts.join("\n");
+        })
+        .join("\n");
+      lines.push(
+        `- **ANAMNESIS INTERVIEW VOICE RECORDINGS (transcribed from the actual consultation — a rich first-person source; integrate clinically relevant information, especially anything NOT captured in the structured fields above):**\n${blocks}`,
       );
     }
 

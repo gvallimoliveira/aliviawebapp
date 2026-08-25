@@ -242,6 +242,34 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
     }
   };
 
+  // Voice notes (anamnesis interview recordings) linked to ANY of this patient's
+  // assessments — the transcripts/summaries are a rich first-person source for
+  // the clinical impression.
+  const fetchVoiceNotes = async () => {
+    try {
+      const ids = Array.from(
+        new Set(
+          [assessment?.id, ...(allAssessments || []).map((a: any) => a?.id)].filter(Boolean),
+        ),
+      ) as string[];
+      if (ids.length === 0) return undefined;
+      const { data } = await supabase
+        .from("assessment_voice_notes")
+        .select("created_at, transcript, summary")
+        .eq("status", "ready")
+        .in("assessment_id", ids)
+        .order("created_at", { ascending: true })
+        .limit(5);
+      const notes = (data || []).filter(
+        (n: any) => (n.transcript || "").trim().length > 0 || (n.summary && Object.keys(n.summary).length > 0),
+      );
+      return notes.length > 0 ? notes : undefined;
+    } catch (e) {
+      console.warn("voice notes fetch failed", e);
+      return undefined;
+    }
+  };
+
   const generate = async (forceRefresh = false) => {
     setLoading(true);
     try {
@@ -258,6 +286,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         }
       } else {
         const sessionNotes = await fetchSessionNotes();
+        const voiceNotes = await fetchVoiceNotes();
         const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
           body: {
             anamnesisData: assessment.anamnesis_data,
@@ -268,6 +297,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
             language,
             assessmentTimeline: buildTimeline(),
             sessionNotes,
+            voiceNotes,
             forceRefresh,
           },
         });
