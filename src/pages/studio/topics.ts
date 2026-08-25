@@ -28,6 +28,7 @@ import shotDynamometry from "@/assets/studio/dynamometry.jpg";
 import shotExpressReassessment from "@/assets/studio/express-reassessment.jpg";
 import shotClinicalImpression from "@/assets/studio/clinical-impression.jpg";
 import shotExternalUpload from "@/assets/studio/external-upload.jpg";
+import shotRedFlags from "@/assets/studio/red-flags.jpg";
 
 
 /**
@@ -67,7 +68,7 @@ export type Topic = {
 export const TOPICS = {
   "pain-map": { label: "Mapa de dor", image: stepPainMap },
   anamnesis: { label: "Anamnese estruturada", image: stepAnamnesis },
-  "red-flags": { label: "Triagem de red flags" },
+  "red-flags": { label: "Triagem de red flags", image: shotRedFlags },
   "health-general": { label: "Saúde geral e comorbidades", image: shotHealthGeneral },
   "functional-tests": { label: "Testes funcionais e clusters", image: stepTests },
   questionnaires: { label: "Questionários validados", image: stepQuestionnaires },
