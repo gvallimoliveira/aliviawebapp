@@ -11,6 +11,8 @@ import StrengthTable, {
   type StrengthRow,
 } from "@/components/assessment/StrengthTable";
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
+import MovementEvolutionChart from "./MovementEvolutionChart";
+import { normalizeMovementKey, pickMovementLabel } from "@/lib/movementNormalize";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
@@ -105,31 +107,41 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
   };
 
   // Build longitudinal evolution (only across assessments that already have data).
+  // Movement names are normalized so spelling variants/abbreviations
+  // ("abd quadril" vs "abdução de quadril") share one series.
   const assessmentsWithStrength = assessments.filter(
     (a: any) => sanitizeStrengthRows(a?.anamnesis_data?.strengthTable).length > 0,
   );
   const hasMultiple = assessmentsWithStrength.length >= 2;
   const movementSeries = new Map<
     string,
-    Array<{ date: string; L: string; R: string; asym: number | null }>
+    {
+      label: string;
+      labels: string[];
+      series: Array<{ date: string; L: string; R: string; asym: number | null; esq: number | null; dir: number | null }>;
+    }
   >();
   assessmentsWithStrength.forEach((a: any) => {
     sanitizeStrengthRows(a.anamnesis_data.strengthTable).forEach((r) => {
-      const arr = movementSeries.get(r.movement) || [];
-      arr.push({
+      const key = normalizeMovementKey(r.movement) || (r.movement || "").trim().toLowerCase();
+      if (!key) return;
+      const entry = movementSeries.get(key) || { label: "", labels: [], series: [] };
+      const leftStats = computeSideStats(r.leftValue, r.leftTrials);
+      const rightStats = computeSideStats(r.rightValue, r.rightTrials);
+      entry.labels.push(r.movement);
+      entry.series.push({
         date: fmtDate(a.created_at),
-        L: (() => {
-          const st = computeSideStats(r.leftValue, r.leftTrials);
-          return st.count > 1 ? `${st.mean} (n=${st.count})` : r.leftValue;
-        })(),
-        R: (() => {
-          const st = computeSideStats(r.rightValue, r.rightTrials);
-          return st.count > 1 ? `${st.mean} (n=${st.count})` : r.rightValue;
-        })(),
+        L: leftStats.count > 1 ? `${leftStats.mean} (n=${leftStats.count})` : r.leftValue,
+        R: rightStats.count > 1 ? `${rightStats.mean} (n=${rightStats.count})` : r.rightValue,
         asym: computeRowAsymmetry(r),
+        esq: leftStats.mean,
+        dir: rightStats.mean,
       });
-      movementSeries.set(r.movement, arr);
+      movementSeries.set(key, entry);
     });
+  });
+  movementSeries.forEach((entry) => {
+    entry.label = pickMovementLabel(entry.labels);
   });
 
   return (
