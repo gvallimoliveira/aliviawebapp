@@ -11,3 +11,5 @@ type: feature
   - **Notas de evolução das sessões** (`session_notes` do paciente, últimas 12): incorporar observações úteis (resposta à carga, comportamento da dor, adesão, intercorrências).
 - Sempre CORRELACIONAR achados objetivos com sintomas, questionários e hipótese — nunca listar números sem interpretar. Nunca inventar valores; se não houver dado, não especular.
 - Cache: chave inclui `PROMPT_VERSION` — bumpar ao mexer no prompt/blocos. Botão "Regenerar" envia `forceRefresh: true`.
+
+- 2026-08-25: Impressão clínica passa a incorporar gravações de anamnese (`assessment_voice_notes` status=ready): resumo estruturado + trecho da transcrição (até 5 notas, 2500 chars cada) entram no prompt como fonte primária. Front envia `voiceNotes` (shared.tsx); PROMPT_VERSION=ci-v3-voice-notes invalida cache antigo.
