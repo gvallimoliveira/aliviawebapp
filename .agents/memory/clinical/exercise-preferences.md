@@ -1,0 +1,2 @@
+
+- 2026-08-25: Gráficos longitudinais por movimento (ADM e dinamometria) no prontuário. Agrupamento via `normalizeMovementKey` (`src/lib/movementNormalize.ts`) — interpreta abreviações/variantes ("rot int quadril" = "rotação interna de quadril"; "ext" = externa em contexto de rotação, extensão caso contrário). Gráfico (`MovementEvolutionChart`, recharts) só renderiza com 2+ medições datadas do mesmo movimento; tabela de histórico mantida abaixo.
