@@ -29,7 +29,7 @@ import shotExpressReassessment from "@/assets/studio/express-reassessment.jpg";
 import shotClinicalImpression from "@/assets/studio/clinical-impression.jpg";
 import shotExternalUpload from "@/assets/studio/external-upload.jpg";
 import shotRedFlags from "@/assets/studio/red-flags.jpg";
-import shotVoiceNotes from "@/assets/studio/voice-notes.jpg.asset.json";
+import shotVoiceNotes from "@/assets/studio/voice-notes.jpg";
 
 
 /**
