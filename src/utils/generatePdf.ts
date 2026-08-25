@@ -6,6 +6,7 @@ import ptLocale from "@/locales/pt.json";
 import enLocale from "@/locales/en.json";
 import esLocale from "@/locales/es.json";
 import { formatHealthConditions, formatContinuousMedication } from "@/lib/healthHistory";
+import { normalizeMovementKey, pickMovementLabel, parseMeasurementValue } from "@/lib/movementNormalize";
 import { registerInterFonts } from "./fonts/registerInterFonts";
 import {
   MECHANISM_CRITERIA,
@@ -2959,6 +2960,22 @@ export interface EvolutionPdfOptions {
     /** Joint mobility / ROM table measured at the last assessment. */
     romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
   };
+  /**
+   * Every assessment (any order) carrying objective measures. Feeds the
+   * longitudinal evolution charts (ROM ° / dynamometry kgf) — movements with
+   * 2+ dated numeric measurements get a line chart with first/last captions.
+   */
+  longitudinalAssessments?: Array<{
+    date: string;
+    romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
+    strengthTable?: Array<{
+      movement: string;
+      leftValue: string;
+      rightValue: string;
+      leftTrials?: Array<{ value: string }>;
+      rightTrials?: Array<{ value: string }>;
+    }>;
+  }>;
   totalAssessments: number;
   summary: EvolutionSummary;
   language: string;
