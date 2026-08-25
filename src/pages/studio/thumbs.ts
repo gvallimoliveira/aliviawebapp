@@ -1,4 +1,4 @@
-import { toJpeg } from "html-to-image";
+import { renderNodeToBlob } from "./exportImage";
 
 /**
  * Miniaturas dos favoritos.
@@ -54,13 +54,12 @@ export const captureThumb = async (node: HTMLElement, id: string) => {
     const rect = node.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const pixelRatio = Math.min(1, TARGET_WIDTH / rect.width);
-    const dataUrl = await toJpeg(node, {
-      pixelRatio,
-      quality: 0.6,
-
-      skipFonts: true,
-      backgroundColor: getComputedStyle(document.body).backgroundColor || "#ffffff",
-      filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
+    const blob = await renderNodeToBlob(node, pixelRatio, "image/jpeg", 0.6);
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
     });
     if (!dataUrl || dataUrl.length < 500) return;
     const store = readThumbs();
