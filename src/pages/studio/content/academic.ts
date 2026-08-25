@@ -136,6 +136,9 @@ const academic: WorldContent = {
     { text: '"Repetição deliberada forma clínico. Véspera de prova forma nota."', topic: "simulated-env" },
     { text: '"Você vai ser lembrado pelas perguntas que soube fazer."', topic: "anamnesis" },
     { text: '"Saber descartar vale tanto quanto saber nomear."', topic: "differential" },
+    { text: '"Protocolo não engessa. Engessa é não saber por que você fez."', topic: "steps-method" },
+    { text: '"O paciente não é um caso de prova — mas a prova cobra o caso do paciente."', topic: "academic-tracks" },
+    { text: '"Estudar dor sem classificar o mecanismo é estudar geografia sem mapa."', topic: "pain-mechanism" },
   ],
   marquee: [
     ["Trilhas clínicas", "Casos comentados", "PEDro ≥ 7", "Ambiente simulado", "Testes validados"],

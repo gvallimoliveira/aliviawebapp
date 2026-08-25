@@ -139,6 +139,10 @@ const patient: WorldContent = {
     { text: '"Dor crônica não se resolve com paciência — se resolve com plano."', topic: "treatment-plan" },
     { text: '"O corpo avisa. O problema é quando ninguém traduz."', topic: "pain-map" },
     { text: '"Registrar a dor todo dia é como fotografar a melhora."', topic: "pain-diary" },
+    { text: '"Sentir dor não é frescura. Ignorar também não é coragem."', topic: "safety" },
+    { text: '"O melhor exercício é o certo, na dose certa, no momento certo."', topic: "hep" },
+    { text: '"Saber o que NÃO é grave também é alívio."', topic: "red-flags" },
+    { text: '"Sua dor tem nome, tem motivo e tem caminho."', topic: "hypothesis" },
   ],
   marquee: [
     ["Dor lombar", "Ombro", "Joelho", "Cervical", "Tendinopatias"],

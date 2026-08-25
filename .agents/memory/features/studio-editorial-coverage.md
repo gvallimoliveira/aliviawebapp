@@ -53,3 +53,19 @@ Os testes falham se: um item de copy não declarar tópico válido, alguém escr
 `imageForTopic` inventar fallback, ou um tópico monitorado do mundo ficar sem nenhuma copy própria
 (só `pricing` e `safety` são isentos, pois vivem nas headlines/ofertas). Rodar sempre que mexer em
 `content/*`.
+
+## 6. Regra anti-ambiguidade da copy ("leitura adversa") — obrigatória antes de qualquer post
+
+Toda headline/título do Studio precisa sobreviver à **leitura adversa**: se a frase admite uma
+segunda interpretação que desvaloriza o recurso (ou o profissional), ela está errada.
+
+- Caso real que originou a regra: "Assimetria calculada para você não precisar" lia-se como "você
+  não precisa DA DINAMOMETRIA", e não "não precisa calcular". Virou "A conta da assimetria é nossa —
+  a decisão é sua".
+- Infinitivo pendurado no fim da frase ("…para você não precisar", "…sem se preocupar") sem
+  completar o objeto é proibido — o teste `leitura adversa` quebra a build nesse padrão.
+- Padrão preferido: automatizar o **esforço**, nunca o **julgamento** ("a conta é nossa, a decisão
+  é sua"). O Aliv.iA nunca dispensa o fisioterapeuta nem a ferramenta — tira trabalho braçal.
+- Formato de quotes de impacto aprovado pelo usuário (foto do card "Medo do movimento também é
+  achado clínico."): frase curta, primeira pessoa do ofício, com virada inteligente. Ampliar esse
+  pool sempre que possível.
