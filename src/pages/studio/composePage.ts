@@ -22,6 +22,9 @@ export type BlockKind =
   | "list"
   | "brand"
   | "carousel"
+  | "photoType"
+  | "photoSplit"
+  | "photoPortrait"
   | "closing";
 
 export type ComposedBlock = {
@@ -55,6 +58,9 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   list: 3,
   brand: 6,
   carousel: 4,
+  photoType: 2,
+  photoSplit: 2,
+  photoPortrait: 2,
   closing: 4,
 };
 
@@ -113,6 +119,8 @@ export const composePage = (
   persona?: StudioPersona,
   inspiration?: ComposedBlock[],
   carousels?: StudioCarousel[],
+  /** Quantas fotos o usuário tem no acervo — 0 desliga os blocos fotográficos. */
+  photoCount = 0,
 ): ComposedBlock[] => {
   /**
    * Pool base do miolo: pesa prova (métricas/stats/compare), demonstração
@@ -171,6 +179,19 @@ export const composePage = (
   if (rng.chance(0.5)) {
     const at = 1 + rng.int(Math.max(1, kinds.length - 2));
     kinds.splice(at, 0, "carousel");
+  }
+
+  /**
+   * Blocos fotográficos: só entram quando existe foto no acervo do usuário.
+   * São peças de destaque — no máximo duas por página, sempre no miolo.
+   */
+  if (photoCount > 0) {
+    const photoKinds: BlockKind[] = rng.shuffle(["photoType", "photoSplit", "photoPortrait"]);
+    const howMany = photoCount > 1 && rng.chance(0.5) ? 2 : 1;
+    for (let i = 0; i < howMany; i += 1) {
+      const at = 1 + rng.int(Math.max(1, kinds.length - 2));
+      kinds.splice(at, 0, photoKinds[i]);
+    }
   }
 
   const fresh: ComposedBlock[] = kinds.map((kind) => ({ kind, treatment: treatmentFor(rng, kind, persona) }));
