@@ -6,11 +6,15 @@ export type BlockKind =
   | "hero"
   | "marquee"
   | "metrics"
+  | "stats"
   | "journey"
   | "feature"
   | "compare"
   | "kinetic"
   | "quote"
+  | "typo"
+  | "triptych"
+  | "pinup"
   | "closing";
 
 export type ComposedBlock = { kind: BlockKind; treatment: number; motion?: MotionKind };
@@ -23,11 +27,15 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   hero: 5,
   marquee: 4,
   metrics: 4,
+  stats: 2,
   compare: 3,
   journey: 4,
   feature: 4,
   kinetic: 3,
   quote: 5,
+  typo: 3,
+  triptych: 2,
+  pinup: 2,
   closing: 4,
 };
 
@@ -59,6 +67,18 @@ const treatmentFor = (rng: Rng, kind: BlockKind, persona?: StudioPersona): numbe
 };
 
 /**
+ * Sorteia `count` tipos a partir de um pool ponderado (peso = repetições),
+ * sem reposição quando o universo permite.
+ */
+const pickKinds = (rng: Rng, weighted: [BlockKind, number][], count: number): BlockKind[] => {
+  const pool: BlockKind[] = [];
+  weighted.forEach(([kind, weight]) => {
+    for (let i = 0; i < weight; i += 1) pool.push(kind);
+  });
+  return spread(rng, pool, count);
+};
+
+/**
  * Builds the section order for a version.
  *
  * Rules that keep the identity stable while the page still changes:
@@ -74,10 +94,26 @@ export const composePage = (
   persona?: StudioPersona,
   inspiration?: ComposedBlock[],
 ): ComposedBlock[] => {
-  const basePool: BlockKind[] = ["metrics", "journey", "feature", "compare", "quote", "feature", "journey", "metrics"];
-  const pool: BlockKind[] = persona ? [...basePool, ...persona.favoriteBlocks] : basePool;
+  /**
+   * Pool base do miolo: pesa prova (métricas/stats/compare), demonstração
+   * (journey/feature/pinup) e voz (quote/typo/triptych). O pin-up é peça rara —
+   * no máximo um por página (a assinatura do cartaz perde força se repetir).
+   */
+  const baseWeighted: [BlockKind, number][] = [
+    ["metrics", 2],
+    ["stats", 2],
+    ["journey", 2],
+    ["feature", 3],
+    ["compare", 1],
+    ["quote", 2],
+    ["typo", 1],
+    ["triptych", 1],
+  ];
+  const favorites: [BlockKind, number][] = persona
+    ? persona.favoriteBlocks.map((kind) => [kind, 2] as [BlockKind, number])
+    : [];
   const count = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
-  const middle = spread(rng, pool, count);
+  const middle = pickKinds(rng, [...baseWeighted, ...favorites], count);
 
   // Momentos kinéticos distribuídos em terços diferentes do miolo.
   const withKinetic: BlockKind[] = [...middle];
@@ -96,6 +132,12 @@ export const composePage = (
   kinds.push(...withKinetic);
   if (rng.chance(persona?.marqueeClose ?? 0.6)) kinds.push("marquee");
   kinds.push("closing");
+
+  // Pin-up: peça rara, posicionada no miolo (nunca colada nas bordas).
+  if (rng.chance(0.4)) {
+    const at = 1 + rng.int(Math.max(1, kinds.length - 2));
+    kinds.splice(at, 0, "pinup");
+  }
 
   const fresh: ComposedBlock[] = kinds.map((kind) => ({ kind, treatment: treatmentFor(rng, kind, persona) }));
 
@@ -133,7 +175,7 @@ export const composePage = (
       });
     } else if (kineticIndexes.length > 2) {
       kineticIndexes.slice(2).forEach((idx) => {
-        const kind = rng.pick(["metrics", "feature", "quote", "compare"] as BlockKind[]);
+        const kind = rng.pick(["metrics", "stats", "feature", "quote", "compare", "typo"] as BlockKind[]);
         cleaned[idx] = { kind, treatment: treatmentFor(rng, kind, persona) };
       });
     }

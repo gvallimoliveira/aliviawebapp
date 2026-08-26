@@ -160,9 +160,9 @@ const StudioLanding = () => {
       if (!from) return undefined;
       const [fromWorld, fromSeed] = from.split(":");
       if (!isWorldId(fromWorld) || !fromSeed) return undefined;
-      return composePage(createRng(`${fromWorld}:${fromSeed}:layout`), undefined, persona);
+      return composePage(createRng(`${fromWorld}:${fromSeed}:layout`), persona);
     })();
-    return composePage(createRng(`${world}:${seed}:layout`), inspiration, persona);
+    return composePage(createRng(`${world}:${seed}:layout`), persona, inspiration);
   }, [world, seed, from, persona]);
 
 
