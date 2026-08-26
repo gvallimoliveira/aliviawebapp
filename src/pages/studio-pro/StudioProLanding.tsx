@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Palette, Sparkles, Wand2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PLANS, PRODUCT } from "./product";
+import { PLANS, PRODUCT, annualMonthlyPrice } from "./product";
 
 /**
  * LANDING DO STUDIO PÚBLICO
@@ -143,9 +143,13 @@ const StudioProLanding = () => {
                   R$ {plan.price}
                   <span className="text-sm font-semibold text-muted-foreground">/mês</span>
                 </p>
+                <p className="mt-1 text-xs font-medium text-primary">
+                  R$ {annualMonthlyPrice(plan.price)}/mês no plano anual (−20%)
+                </p>
                 <p className="mt-1 text-sm font-semibold text-muted-foreground">
                   {plan.brands} · {plan.exports}
                 </p>
+
                 <ul className="mt-4 flex-1 space-y-2">
                   {plan.perks.map((perk) => (
                     <li key={perk} className="flex gap-2 text-sm text-muted-foreground">

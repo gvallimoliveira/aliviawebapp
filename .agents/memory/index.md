@@ -119,3 +119,4 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Notification Preferences by Account](mem://features/notification-preferences-by-account) — Toggles de notificação distintos para conta pessoal (paciente) e profissional; toda push nova precisa de `category`.
 - [FABQ / Psychosocial Questionnaires](mem://features/fabq-psychosocial) — FABQ-Brasil como domínio psicossocial (yellow flags): gatilhos, cortes das subescalas, etapa opcional na reavaliação e uso pela IA.
 - [Pro Dashboard Slim](mem://features/pro-dashboard-slim) — Dashboard PRO enxuto (lista de pacientes no topo, sem card do Agente, backup em Minha Conta) e FAB/botão "Registrar evolução" no prontuário via evento `alivia:open-session-note`.
+- [Studio Public Pricing & Entry](mem://business/studio-public-pricing-and-entry) — Planos 39/99/249 + anual −20%, custo ~0 por arte, e decisão de acesso interno futuro com botão de volta.
