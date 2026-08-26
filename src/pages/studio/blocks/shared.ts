@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { Rng } from "../rng";
 import type { WorldContent } from "../content";
 import type { StudioPicker } from "../picker";
+import type { StudioPersona } from "../personas";
 
 export type StudioFormat = "9x16" | "1x1" | "free";
 
@@ -17,6 +18,12 @@ export type BlockProps = {
    * editorial e desequilibra a divulgação.
    */
   picker: StudioPicker;
+  /**
+   * Membro da equipe criativa que "assina" esta versão. Os blocos consultam a
+   * persona para superfície (`personaSurface`) e gosto tipográfico
+   * (`pickHeadline`) — nunca para quebrar a identidade da marca.
+   */
+  persona: StudioPersona;
 };
 
 
@@ -26,9 +33,19 @@ export const SURFACES = [
   "bg-secondary/40",
   "bg-primary/5",
   "bg-accent/40",
+  "bg-muted/60",
+  "bg-accent/20",
 ] as const;
 
 export const surfaceFor = (index: number) => SURFACES[index % SURFACES.length];
+
+/**
+ * Superfície com a "mão" da persona: cada membro da equipe rotaciona a paleta
+ * de fundos de um jeito diferente, então o mesmo bloco/tratamento nunca cai na
+ * mesma cor de fundo entre personas.
+ */
+export const personaSurface = (persona: StudioPersona, index: number) =>
+  SURFACES[(index + persona.surfaceShift) % SURFACES.length];
 
 export const ALIGNMENTS = ["center", "left", "asym"] as const;
 export type Alignment = (typeof ALIGNMENTS)[number];
@@ -44,6 +61,31 @@ export const MESH_STYLE: CSSProperties = {
   backgroundImage:
     "linear-gradient(to right, hsl(var(--foreground) / 0.05) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--foreground) / 0.05) 1px, transparent 1px)",
   backgroundSize: "38px 38px",
+};
+
+/** Trama de pontos sutil — segunda textura da equipe, igualmente discreta. */
+export const DOTS_STYLE: CSSProperties = {
+  backgroundImage: "radial-gradient(hsl(var(--foreground) / 0.06) 1px, transparent 1px)",
+  backgroundSize: "22px 22px",
+};
+
+/**
+ * Gosto tipográfico da persona aplicado à escolha da headline:
+ * "curta" sorteia entre as mais enxutas (impacto), "longa" entre as mais
+ * desenvolvidas (editorial), "qualquer" é sorteio livre.
+ */
+export const pickHeadline = <T extends { strong: string; rest: string }>(
+  rng: Rng,
+  items: readonly T[],
+  taste: StudioPersona["headlineTaste"],
+): T => {
+  if (taste === "qualquer" || items.length < 3) return rng.pick(items);
+  const sorted = [...items].sort(
+    (a, b) => a.strong.length + a.rest.length - (b.strong.length + b.rest.length),
+  );
+  const half = Math.ceil(sorted.length / 2);
+  const pool = taste === "curta" ? sorted.slice(0, half) : sorted.slice(-half);
+  return rng.pick(pool);
 };
 
 /** Section height contract: blocks must fill the recording frame. */

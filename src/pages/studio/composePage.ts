@@ -1,5 +1,6 @@
 import type { Rng } from "./rng";
 import { MOTION_KINDS, type MotionKind } from "./blocks/StudioMotion";
+import type { StudioPersona } from "./personas";
 
 export type BlockKind =
   | "hero"
@@ -13,6 +14,22 @@ export type BlockKind =
   | "closing";
 
 export type ComposedBlock = { kind: BlockKind; treatment: number; motion?: MotionKind };
+
+/**
+ * Quantidade de tratamentos visuais que cada bloco sabe renderizar.
+ * Manter sincronizado com os componentes em `blocks/`.
+ */
+const TREATMENT_COUNT: Record<BlockKind, number> = {
+  hero: 5,
+  marquee: 4,
+  metrics: 4,
+  compare: 3,
+  journey: 4,
+  feature: 4,
+  kinetic: 3,
+  quote: 5,
+  closing: 4,
+};
 
 /** Sorteia sem repetir a mesma seção duas vezes seguidas. */
 const spread = (rng: Rng, pool: BlockKind[], count: number): BlockKind[] => {
@@ -31,36 +48,56 @@ const spread = (rng: Rng, pool: BlockKind[], count: number): BlockKind[] => {
 };
 
 /**
+ * Escolhe o tratamento visual do bloco. Quando a persona tem preferência
+ * declarada para aquele tipo, sorteia dentro da lista dela (índices repetidos
+ * pesam mais); caso contrário, sorteio livre entre todos os tratamentos.
+ */
+const treatmentFor = (rng: Rng, kind: BlockKind, persona?: StudioPersona): number => {
+  const bias = persona?.treatmentBias[kind];
+  if (bias && bias.length > 0) return bias[rng.int(bias.length)];
+  return rng.int(TREATMENT_COUNT[kind]);
+};
+
+/**
  * Builds the section order for a version.
  *
  * Rules that keep the identity stable while the page still changes:
  * - always opens with the hero and closes with the closing block;
- * - dark kinetic moments punctuate the page (2 for the long format);
- * - the middle is a dense, non-repeating selection of proof/showcase blocks;
- * - roughly half of the blocks carry a scroll animation (never two of the same
- *   effect side by side), the rest stay static so the page keeps breathing.
+ * - dark kinetic moments punctuate the page (a persona decide se são 1 ou 2);
+ * - the middle is a dense, non-repeating selection of proof/showcase blocks,
+ *   com os tipos favoritos da persona aparecendo com mais frequência;
+ * - motion follows the persona's hand: density and effects are her signature,
+ *   nunca dois efeitos iguais em sequência.
  */
-export const composePage = (rng: Rng, inspiration?: ComposedBlock[]): ComposedBlock[] => {
-  const pool: BlockKind[] = ["metrics", "journey", "feature", "compare", "quote", "feature", "journey", "metrics"];
-  const middle = spread(rng, pool, 9 + rng.int(4));
+export const composePage = (
+  rng: Rng,
+  persona?: StudioPersona,
+  inspiration?: ComposedBlock[],
+): ComposedBlock[] => {
+  const basePool: BlockKind[] = ["metrics", "journey", "feature", "compare", "quote", "feature", "journey", "metrics"];
+  const pool: BlockKind[] = persona ? [...basePool, ...persona.favoriteBlocks] : basePool;
+  const count = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
+  const middle = spread(rng, pool, count);
 
-  // Dois momentos kinéticos, distribuídos em terços diferentes do miolo.
+  // Momentos kinéticos distribuídos em terços diferentes do miolo.
   const withKinetic: BlockKind[] = [...middle];
   const firstAt = 1 + rng.int(Math.max(1, Math.floor(withKinetic.length / 3)));
   withKinetic.splice(firstAt, 0, "kinetic");
-  const secondAt = Math.min(
-    withKinetic.length - 1,
-    Math.floor((withKinetic.length * 2) / 3) + rng.int(2),
-  );
-  withKinetic.splice(secondAt, 0, "kinetic");
+  if ((persona?.kinetics ?? 2) > 1) {
+    const secondAt = Math.min(
+      withKinetic.length - 1,
+      Math.floor((withKinetic.length * 2) / 3) + rng.int(2),
+    );
+    withKinetic.splice(secondAt, 0, "kinetic");
+  }
 
   const kinds: BlockKind[] = ["hero"];
-  if (rng.chance(0.7)) kinds.push("marquee");
+  if (rng.chance(persona?.marqueeOpen ?? 0.7)) kinds.push("marquee");
   kinds.push(...withKinetic);
-  if (rng.chance(0.6)) kinds.push("marquee");
+  if (rng.chance(persona?.marqueeClose ?? 0.6)) kinds.push("marquee");
   kinds.push("closing");
 
-  const fresh: ComposedBlock[] = kinds.map((kind) => ({ kind, treatment: rng.int(3) }));
+  const fresh: ComposedBlock[] = kinds.map((kind) => ({ kind, treatment: treatmentFor(rng, kind, persona) }));
 
   const result = (() => {
     if (!inspiration || inspiration.length === 0) return fresh;
@@ -90,30 +127,36 @@ export const composePage = (rng: Rng, inspiration?: ComposedBlock[]): ComposedBl
 
     const kineticIndexes = cleaned.map((b, i) => (b.kind === "kinetic" ? i : -1)).filter((i) => i >= 0);
     if (kineticIndexes.length === 0) {
-      cleaned.splice(Math.max(1, Math.floor(cleaned.length / 2)), 0, { kind: "kinetic", treatment: rng.int(3) });
+      cleaned.splice(Math.max(1, Math.floor(cleaned.length / 2)), 0, {
+        kind: "kinetic",
+        treatment: treatmentFor(rng, "kinetic", persona),
+      });
     } else if (kineticIndexes.length > 2) {
       kineticIndexes.slice(2).forEach((idx) => {
-        cleaned[idx] = {
-          kind: rng.pick(["metrics", "feature", "quote", "compare"] as BlockKind[]),
-          treatment: rng.int(3),
-        };
+        const kind = rng.pick(["metrics", "feature", "quote", "compare"] as BlockKind[]);
+        cleaned[idx] = { kind, treatment: treatmentFor(rng, kind, persona) };
       });
     }
 
     return cleaned;
   })();
 
-  // Animações: ~50% dos blocos, sem repetir o mesmo efeito em sequência.
+  // Animações com a assinatura da persona, sem repetir efeito em sequência.
+  const taste = persona && persona.motionTaste.length > 0 ? persona.motionTaste : MOTION_KINDS;
+  const density = persona?.motionDensity ?? 0.5;
   let previous: MotionKind | undefined;
   return result.map((block, i) => {
     // hero e closing sempre ganham um movimento de abertura/fecho.
-    const animate = i === 0 || i === result.length - 1 || rng.chance(0.5);
+    const animate = i === 0 || i === result.length - 1 || rng.chance(density);
     if (!animate) {
       previous = undefined;
       return { ...block, motion: "none" as MotionKind };
     }
-    let kind = rng.pick(MOTION_KINDS);
-    if (kind === previous) kind = rng.pick(MOTION_KINDS.filter((k) => k !== previous));
+    let kind = rng.pick(taste);
+    if (kind === previous) {
+      const alternatives = taste.filter((k) => k !== previous);
+      kind = alternatives.length > 0 ? rng.pick(alternatives) : rng.pick(MOTION_KINDS.filter((k) => k !== previous));
+    }
     previous = kind;
     return { ...block, motion: kind };
   });
