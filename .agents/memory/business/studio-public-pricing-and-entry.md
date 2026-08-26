@@ -16,6 +16,13 @@ A geração é 100% client-side (composição determinística + html-to-image): 
 Se no futuro entrar legenda por LLM ou imagem gerada por IA, estimar ~1 crédito por imagem gerada e fração
 de crédito por legenda. As 5 artes grátis permanecem viáveis em qualquer cenário.
 
+## Progresso (26/08/2026)
+- Entrada pública própria em `/studio-pro/entrar` (cadastro/login com identidade do Studio, sem links
+  clínicos); CTAs da landing apontam para lá e `/studio-pro/app` redireciona para `/entrar` sem sessão.
+- Backup VIP do Studio interno na conta: tabela `studio_internal_favorites` (favoritos + miniaturas,
+  um registro por usuário, RLS por dono) e botões "Salvar na conta"/"Trazer da conta" no painel de
+  favoritos (merge soma, nunca apaga).
+
 ## Acesso interno (FUTURO — não implementar sem pedido)
 O Studio será vendido também para fisios, estudantes, clínicas, pacientes e empresas.
 Quando implementado:
