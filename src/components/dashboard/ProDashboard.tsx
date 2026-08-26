@@ -958,13 +958,13 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       {/* Link de pré-avaliação — barra compacta de ação rápida (copiar/WhatsApp sempre visíveis) */}
       {!isSimulated && !hideForClinicTabs && (
         <Card data-onboarding="pro-link" className="border-primary/20">
-          <CardContent className="py-3 px-4 flex flex-wrap items-center gap-x-2 gap-y-2">
+          <CardContent className="py-3 px-4 flex flex-wrap items-center gap-x-3 gap-y-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 shrink-0">
                 <Link2 className="h-4 w-4 text-primary" />
               </div>
               <p className="text-sm font-semibold text-foreground truncate">
-                {isClinicMode ? "Link de pré-avaliação da clínica" : t("pro.generate_link_title")}
+                {isClinicMode ? "Link de avaliação da clínica" : t("pro.generate_link_title")}
               </p>
               <Popover>
                 <PopoverTrigger asChild>
@@ -980,20 +980,26 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
               </Popover>
             </div>
             <div className="flex gap-2 shrink-0 ml-auto">
-              <Button size="sm" onClick={() => {
-                const link = isClinicMode && activeClinic
-                  ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
-                  : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
-                navigator.clipboard.writeText(link);
-                setLinkCopied(true);
-                toast({ title: t("referral.copied") });
-                setTimeout(() => setLinkCopied(false), 2000);
-              }} variant="outline" className="gap-1.5 rounded-xl h-8 text-xs border-primary/30 text-primary hover:bg-primary/10">
-                {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                {linkCopied ? t("referral.copied") : t("referral.copy_link")}
+              <Button
+                size="icon"
+                onClick={() => {
+                  const link = isClinicMode && activeClinic
+                    ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
+                    : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
+                  navigator.clipboard.writeText(link);
+                  setLinkCopied(true);
+                  toast({ title: t("referral.copied") });
+                  setTimeout(() => setLinkCopied(false), 2000);
+                }}
+                variant="outline"
+                title={linkCopied ? t("referral.copied") : t("referral.copy_link")}
+                aria-label={linkCopied ? t("referral.copied") : t("referral.copy_link")}
+                className="rounded-xl h-8 w-8 border-primary/30 text-primary hover:bg-primary/10"
+              >
+                {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
               </Button>
               <Button
-                size="sm"
+                size="icon"
                 onClick={async () => {
                   const link = isClinicMode && activeClinic
                     ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
@@ -1009,10 +1015,11 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                   const { shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
                   await shareTextOrOpenWhatsApp(message, "Aliv.iA");
                 }}
-                className="gap-1.5 rounded-xl h-8 text-xs bg-[#25D366] text-white hover:bg-[#1FB855]"
+                title="WhatsApp"
+                aria-label="WhatsApp"
+                className="rounded-xl h-8 w-8 bg-[#25D366] text-white hover:bg-[#1FB855]"
               >
-                <MessageCircle className="h-3.5 w-3.5" />
-                WhatsApp
+                <MessageCircle className="h-4 w-4" />
               </Button>
             </div>
           </CardContent>
