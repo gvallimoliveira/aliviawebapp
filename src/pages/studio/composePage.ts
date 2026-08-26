@@ -15,6 +15,7 @@ export type BlockKind =
   | "quote"
   | "typo"
   | "echo"
+  | "mono"
   | "triptych"
   | "pinup"
   | "story"
@@ -47,6 +48,7 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   quote: 5,
   typo: 6,
   echo: 3,
+  mono: 4,
   triptych: 2,
   pinup: 2,
   story: 3,
@@ -128,6 +130,7 @@ export const composePage = (
     ["quote", 2],
     ["typo", 1],
     ["echo", 2],
+    ["mono", 2],
     ["triptych", 1],
     ["story", 2],
     ["list", 2],
