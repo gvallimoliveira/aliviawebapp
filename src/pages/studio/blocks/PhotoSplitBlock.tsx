@@ -1,23 +1,26 @@
 import { motion } from "framer-motion";
-import { pickPhoto } from "../photos";
+import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
 import { renderAccent } from "./Texture";
-import { personaSurface, pickHeadline, sectionHeight, type BlockProps } from "./shared";
+import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * MEIA-FACE / SPLIT VERTICAL
  *
  * A foto é cortada por um painel vertical: metade imagem, metade cor sólida da
  * marca, com a frase atravessando a divisão. Referência editorial "who are
- * you?" — funciona melhor com retrato. Sem foto, não entra na composição.
+ * you?" — funciona melhor com retrato.
+ *
+ * NEXO: assunto decidido pela copy (picker) e foto escolhida por afinidade
+ * extrapolada. Sem foto com nexo, não entra na composição.
  */
-const PhotoSplitBlock = ({ content, rng, treatment, format, persona, photos }: BlockProps) => {
-  const photo = pickPhoto(photos, treatment + rng.int(5), ["institucional", "atendimento"]);
+const PhotoSplitBlock = ({ content, rng, treatment, format, persona, picker, photos }: BlockProps) => {
+  const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic]);
   if (!photo) return null;
 
-  const headline = pickHeadline(rng, content.headlines, persona.headlineTaste);
-  /** Só o pedaço forte da headline: frase longa atravessando a foto fica ilegível. */
-  const phrase = headline.strong.replace(/[.]$/, "").trim();
+  /** Só o pedaço forte: frase longa atravessando a foto fica ilegível. */
+  const phrase = (item.headline ?? item.title).replace(/[.]$/, "").trim();
   const photoLeft = treatment % 2 === 0;
 
   return (
@@ -38,7 +41,7 @@ const PhotoSplitBlock = ({ content, rng, treatment, format, persona, photos }: B
         className="relative z-10 flex w-full flex-col justify-center px-6 py-16"
       >
         <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.32em] text-background/80">
-          {rng.pick(content.kickers)}
+          {item.tag}
         </p>
         <h2
           className="max-w-[92%] font-black uppercase leading-[0.94] tracking-[-0.02em] text-background drop-shadow-[0_2px_10px_hsl(var(--foreground)/0.6)]"
@@ -47,7 +50,7 @@ const PhotoSplitBlock = ({ content, rng, treatment, format, persona, photos }: B
           {renderAccent(phrase, treatment)}
         </h2>
         <p className="mt-6 max-w-sm self-end text-right text-[11px] leading-relaxed text-background drop-shadow-[0_1px_6px_hsl(var(--foreground)/0.7)] md:text-sm">
-          {headline.rest}
+          {item.description}
         </p>
       </motion.div>
     </section>

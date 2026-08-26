@@ -1,22 +1,27 @@
 import { motion } from "framer-motion";
-import { pickPhoto } from "../photos";
+import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
 import { TextureLayer } from "./Texture";
-import { personaSurface, pickHeadline, sectionHeight, type BlockProps } from "./shared";
+import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * TIPOGRAFIA GIGANTE ATRÁS DO SUJEITO
  *
  * A palavra-chave ocupa a tela inteira e a foto real (fundo removido ou não)
- * entra por cima, recortada, criando profundidade editorial. Sem foto no
- * acervo do usuário o bloco não renderiza — nunca inventa imagem.
+ * entra por cima, recortada, criando profundidade editorial.
+ *
+ * NEXO FOTO × ASSUNTO: a copy vem primeiro (picker/cobertura editorial) e a
+ * foto é escolhida por afinidade extrapolada com aquele assunto
+ * (`pickPhotoForTopics`). Foto sem nexo ⇒ bloco não renderiza. O label da foto
+ * nunca vira título — arte literal ("AGACHAMENTO COM BARRA") é proibida.
  */
-const PhotoTypeBlock = ({ content, rng, treatment, format, persona, photos }: BlockProps) => {
-  const photo = pickPhoto(photos, treatment + rng.int(3), ["institucional", "atendimento"]);
+const PhotoTypeBlock = ({ content, rng, treatment, format, persona, picker, photos }: BlockProps) => {
+  const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(3), [item.topic]);
   if (!photo) return null;
 
-  const headline = pickHeadline(rng, content.headlines, persona.headlineTaste);
-  const word = headline.strong.split(/\s+/)[0]?.toUpperCase() ?? "ALIV.IA";
+  /** Palavra-cartaz: a mais forte do assunto, nunca o nome do que está na foto. */
+  const word = [...item.title.split(/\s+/)].sort((a, b) => b.length - a.length)[0]?.toUpperCase() ?? "ALIV.IA";
   const bottom = treatment % 2 === 0;
 
   return (
@@ -47,9 +52,13 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, photos }: Bl
         />
 
         <div className="w-full px-6 pb-10 pt-5 text-center">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-primary">{item.tag}</p>
           <h2 className="mx-auto max-w-xl text-lg font-bold leading-tight tracking-tight text-foreground md:text-2xl">
-            {headline.strong}
+            {item.headline ?? item.title}
           </h2>
+          <p className="mx-auto mt-3 max-w-md text-[11px] leading-relaxed text-muted-foreground md:text-sm">
+            {item.description}
+          </p>
           {photo.credit && (
             <p className="mt-3 text-[9px] uppercase tracking-[0.3em] text-muted-foreground">{photo.credit}</p>
           )}

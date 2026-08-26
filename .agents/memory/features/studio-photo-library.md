@@ -14,3 +14,6 @@ type: feature
 - Editor de enquadramento (`StudioPhotoEditor.tsx`, botão de recorte em cada foto): ponto focal por clique, zoom 1–3×, rotação −180..180 e área segura (`none` | `top` | `bottom`), com preview em 9:16, 1:1 e meia-face.
 - O enquadramento é persistido em `studio_photos` (`focus_x`, `focus_y`, `zoom`, `rotation`, `safe_area`) e aplicado por **um único** componente: `blocks/PhotoFrame.tsx`. Blocos fotográficos nunca renderizam `<img>` direto — sempre via `PhotoFrame`, para o recorte escolhido uma vez valer em todas as artes e no export PNG.
 - Rotação compensa escala (`|cos|+|sin|`) para não sobrar canto vazio; área segura aplica véu gradiente na faixa onde o texto cai.
+- **Nexo foto × assunto (regra)**: foto nunca vale pela literalidade. `photoMeaning.ts` traduz label/categoria em temas extrapolados (carga e progressão, controle motor, medir antes de decidir, mão no paciente, sistema/tela, anatomia/estudo, voz e marca) e cada tema aponta tópicos compatíveis (hep, dinamometria, STEPS, alta/relatório de evolução, D.I.F.I, etc.).
+- Blocos fotográficos escolhem PRIMEIRO a copy pelo `picker` (dívida editorial) e só depois a foto por afinidade (`pickPhotoForTopics`). Sem foto com nexo, o bloco não renderiza.
+- Proibido usar `photo.label` como título/headline — gerava arte literal ("AGACHAMENTO COM BARRA" em post de preço de estudante).
