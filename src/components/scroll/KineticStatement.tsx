@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { useRef } from "react";
+import { useRef, type CSSProperties } from "react";
 
 type KineticStatementProps = {
   /** Small kicker above the big word */
@@ -8,6 +8,8 @@ type KineticStatementProps = {
   word: string;
   /** Supporting line revealed after the word settles */
   caption?: string;
+  /** Optional geometric texture painted under the content (Studio kit). */
+  textureStyle?: CSSProperties;
 };
 
 /**
@@ -15,7 +17,7 @@ type KineticStatementProps = {
  * brackets close in, inspired by premium product pages. Kept to a single
  * section so the warm/teal identity still dominates the page.
  */
-const KineticStatement = ({ kicker, word, caption }: KineticStatementProps) => {
+const KineticStatement = ({ kicker, word, caption, textureStyle }: KineticStatementProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
@@ -33,6 +35,11 @@ const KineticStatement = ({ kicker, word, caption }: KineticStatementProps) => {
     <section ref={ref} className="relative h-[150vh] bg-foreground text-background">
 
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
+        {/* Geometric texture (Studio kit) — sits under aura and content */}
+        {textureStyle && (
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={textureStyle} />
+        )}
+
         {/* Teal aura keeps the brand present even in the dark moment */}
         <motion.div
           aria-hidden="true"

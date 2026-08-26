@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { imageForTopic } from "../topics";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { ACCENT_STYLES, TextureLayer, renderAccent } from "./Texture";
 
 /**
  * Triptych block — três palavras que resumem a promessa do mundo.
@@ -9,11 +10,13 @@ import { personaSurface, sectionHeight, type BlockProps } from "./shared";
  */
 const TriptychBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   const [triptych] = picker.pick(content.triptychs, 1, rng, (t) => t.panels.map((p) => p.topic));
+  const accentVariant = rng.int(ACCENT_STYLES.length);
   const withImages = treatment === 1 && triptych.panels.every((p) => imageForTopic(p.topic));
 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment + 2)}`}>
-      <div className="container py-16">
+      <TextureLayer persona={persona} index={treatment + 3} />
+      <div className="container relative py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -21,7 +24,7 @@ const TriptychBlock = ({ content, rng, treatment, format, picker, persona }: Blo
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <h2 className="mx-auto mb-12 max-w-2xl text-center text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
-            {triptych.heading}
+            {renderAccent(triptych.heading, accentVariant)}
           </h2>
 
           {withImages ? (

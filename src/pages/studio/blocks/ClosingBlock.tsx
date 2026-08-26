@@ -2,20 +2,29 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { ACCENT_STYLES, DARK_ACCENT_INDEXES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
 
 /**
  * Brand signature + CTA.
  * Treatments: 0 claro centrado, 1 statement escuro, 2 assinatura minimalista
  * (sem pílula de CTA), 3 editorial à esquerda.
+ * O título ganha palavra-destaque contrastante; no statement escuro o sorteio
+ * fica restrito às variantes legíveis sobre fundo tinta.
  */
 const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
   const closing = rng.pick(content.closings);
+  const accentVariant =
+    treatment === 1
+      ? DARK_ACCENT_INDEXES[rng.int(DARK_ACCENT_INDEXES.length)]
+      : rng.int(ACCENT_STYLES.length);
+  const title = renderAccent(closing.title, accentVariant);
 
   if (treatment === 2) {
     // Assinatura minimalista: marca, frase e endereço — nada mais.
     return (
       <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
-        <div className="container py-20 text-center">
+        <TextureLayer persona={persona} index={treatment} />
+        <div className="container relative py-20 text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -25,7 +34,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
           >
             <img src={logoAlivia} alt="Aliv.iA" className="h-14 w-14 md:h-16 md:w-16" />
             <h2 className="text-2xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
-              {closing.title}
+              {title}
             </h2>
             <span aria-hidden className="h-px w-20 bg-primary/40" />
             <p className="text-sm leading-relaxed text-muted-foreground md:text-base">{closing.sub}</p>
@@ -42,6 +51,8 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
     // Editorial à esquerda: fecho com jeito de coluna de revista.
     return (
       <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
+        <TextureLayer persona={persona} index={treatment} />
+        <GeoOrnament index={treatment + persona.textureShift} />
         <div
           aria-hidden
           className="pointer-events-none absolute -left-24 top-1/2 h-[50vh] w-[50vh] -translate-y-1/2 rounded-full bg-primary/10 blur-[110px]"
@@ -56,7 +67,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
           >
             <img src={logoAlivia} alt="Aliv.iA" className="h-12 w-12 md:h-14 md:w-14" />
             <h2 className="text-3xl font-bold leading-tight tracking-tight text-foreground md:text-5xl">
-              {closing.title}
+              {title}
             </h2>
             <p className="max-w-xl text-base text-muted-foreground md:text-lg">{closing.sub}</p>
             <div className="mt-1 inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground md:text-base">
@@ -80,6 +91,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
         dark ? "bg-foreground text-background" : "bg-background"
       }`}
     >
+      <TextureLayer persona={persona} index={treatment} dark={dark} />
       <div
         aria-hidden
         className={`pointer-events-none absolute left-1/2 top-1/2 h-[70vw] w-[70vw] max-h-[560px] max-w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] ${
@@ -97,7 +109,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
         >
           <img src={logoAlivia} alt="Aliv.iA" className="h-16 w-16 md:h-20 md:w-20" />
           <h2 className={`text-3xl font-bold leading-tight tracking-tight md:text-5xl ${dark ? "" : "text-foreground"}`}>
-            {closing.title}
+            {title}
           </h2>
           <p className={`text-base md:text-lg ${dark ? "text-background/70" : "text-muted-foreground"}`}>
             {closing.sub}

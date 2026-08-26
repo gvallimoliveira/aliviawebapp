@@ -33,7 +33,7 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   feature: 4,
   kinetic: 3,
   quote: 5,
-  typo: 3,
+  typo: 6,
   triptych: 2,
   pinup: 2,
   closing: 4,
