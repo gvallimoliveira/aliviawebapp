@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Stethoscope, Link2, Copy, Check, Loader2, Users, Plus,
+  Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users, Plus,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
   MessageCircle, CheckCircle, XCircle, UserCheck, Play, ToggleLeft,
