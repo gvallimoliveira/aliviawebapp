@@ -1,10 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
+  CloudDownload,
+  CloudUpload,
   Download,
   FileText,
   ImageIcon,
   LayoutGrid,
+  Loader2,
   Sparkles,
   Trash2,
   Upload,
@@ -15,7 +18,14 @@ import { Button } from "@/components/ui/button";
 import { WORLDS } from "./content";
 import { buildSchedule } from "./schedule";
 import { useStudioThumbs } from "./useStudioThumbs";
-import { backupFileName, buildBackup, parseBackup, restoreBackup } from "./favoritesBackup";
+import {
+  backupFileName,
+  buildBackup,
+  loadBackupFromAccount,
+  parseBackup,
+  restoreBackup,
+  saveBackupToAccount,
+} from "./favoritesBackup";
 import type { StudioFavorite } from "./useStudioFavorites";
 
 
@@ -51,6 +61,8 @@ const StudioFavorites = ({
   onExportSchedule,
 }: Props) => {
   const [tab, setTab] = useState<"gallery" | "schedule">("gallery");
+  const [syncing, setSyncing] = useState<"save" | "load" | null>(null);
+  const [lastSync, setLastSync] = useState<string | null>(null);
   const thumbs = useStudioThumbs();
   const schedule = useMemo(() => buildSchedule(favorites), [favorites]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -85,6 +97,45 @@ const StudioFavorites = ({
     } catch (error) {
       console.error("[studio] restore failed", error);
       toast.error("Arquivo de backup inválido.");
+    }
+  };
+
+  /** Sobe favoritos + miniaturas para a conta (backup independente de navegador). */
+  const syncToAccount = async () => {
+    setSyncing("save");
+    try {
+      const when = await saveBackupToAccount(favorites);
+      setLastSync(when.toISOString());
+      toast.success(`Acervo salvo na conta (${favorites.length} favoritos).`);
+    } catch (error) {
+      console.error("[studio] account sync failed", error);
+      toast.error("Não foi possível salvar na conta. Confira sua sessão.");
+    } finally {
+      setSyncing(null);
+    }
+  };
+
+  /** Traz o backup da conta somando ao acervo local — nunca apaga o que já existe. */
+  const syncFromAccount = async () => {
+    setSyncing("load");
+    try {
+      const result = await loadBackupFromAccount();
+      if (!result) {
+        toast.info("Nenhum backup salvo na conta ainda.");
+        return;
+      }
+      const added = restoreBackup(result.backup);
+      setLastSync(result.updatedAt);
+      toast.success(
+        added > 0
+          ? `${added} favoritos recuperados da conta. Recarregue a página.`
+          : "Seu acervo local já está completo.",
+      );
+    } catch (error) {
+      console.error("[studio] account restore failed", error);
+      toast.error("Não foi possível ler o backup da conta.");
+    } finally {
+      setSyncing(null);
     }
   };
 
@@ -278,6 +329,43 @@ const StudioFavorites = ({
           className="hidden"
           onChange={handleRestore}
         />
+
+        {/* Backup na conta: acompanha o usuário em qualquer dispositivo. */}
+        <div className="grid grid-cols-2 gap-1.5 border-t border-border pt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 w-full gap-1.5 rounded-xl text-xs"
+            onClick={syncToAccount}
+            disabled={syncing !== null || favorites.length === 0}
+          >
+            {syncing === "save" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CloudUpload className="h-3.5 w-3.5" />
+            )}
+            Salvar na conta
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 w-full gap-1.5 rounded-xl text-xs"
+            onClick={syncFromAccount}
+            disabled={syncing !== null}
+          >
+            {syncing === "load" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CloudDownload className="h-3.5 w-3.5" />
+            )}
+            Trazer da conta
+          </Button>
+        </div>
+        {lastSync && (
+          <p className="text-center text-[10px] text-muted-foreground">
+            Sincronizado em {new Date(lastSync).toLocaleString("pt-BR")}
+          </p>
+        )}
       </div>
     </div>
   );
