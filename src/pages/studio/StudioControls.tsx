@@ -1,4 +1,4 @@
-import { BarChart3, Copy, EyeOff, FileText, Images, Loader2, PenTool, RefreshCw, Shuffle, Sparkles, Star, StarOff } from "lucide-react";
+import { BarChart3, Camera, Copy, EyeOff, FileText, Images, Loader2, PenTool, RefreshCw, Shuffle, Sparkles, Star, StarOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WORLD_IDS, WORLDS, type WorldId } from "./content";
@@ -22,6 +22,9 @@ type StudioControlsProps = {
   onOpenFavorites: () => void;
   /** Abre o estudo de cobertura editorial (o que está muito e pouco divulgado). */
   onOpenCoverage: () => void;
+  /** Abre o acervo privado de fotos da conta. */
+  onOpenPhotos: () => void;
+  photosCount: number;
   /** Nome da funcionalidade que está sendo forçada nesta versão, se houver. */
   forcedTopicLabel?: string;
   onHide: () => void;
@@ -55,6 +58,8 @@ const StudioControls = ({
   onToggleFavorite,
   onOpenFavorites,
   onOpenCoverage,
+  onOpenPhotos,
+  photosCount,
   forcedTopicLabel,
   onHide,
 
@@ -165,6 +170,17 @@ const StudioControls = ({
         >
           <BarChart3 className="h-3.5 w-3.5" />
           <span className="truncate">{forcedTopicLabel ? `Foco: ${forcedTopicLabel}` : "Cobertura"}</span>
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 rounded-xl text-xs"
+          onClick={onOpenPhotos}
+          title="Acervo de fotos da conta: entram nas artes fotográficas"
+        >
+          <Camera className="h-3.5 w-3.5" />
+          Fotos ({photosCount})
         </Button>
 
         <Button size="sm" variant="ghost" className="h-8 gap-1.5 rounded-xl text-xs" onClick={onOpenFavorites}>
