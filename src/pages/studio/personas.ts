@@ -65,7 +65,7 @@ export const PERSONAS: StudioPersona[] = [
     marqueeOpen: 0.35,
     marqueeClose: 0.3,
     motionDensity: 0.35,
-    motionTaste: ["focusPull", "parallaxScrub", "gradientDrift"],
+    motionTaste: ["focusPull", "parallaxScrub", "gradientDrift", "slideDrift"],
     treatmentBias: {
       hero: [1, 1, 2, 4],
       quote: [2, 3, 3, 4],
@@ -76,6 +76,7 @@ export const PERSONAS: StudioPersona[] = [
       closing: [3, 3, 0],
     },
     surfaceShift: 1,
+    textureShift: 0,
     headlineTaste: "longa",
   },
   {
@@ -102,6 +103,7 @@ export const PERSONAS: StudioPersona[] = [
       closing: [1, 0],
     },
     surfaceShift: 2,
+    textureShift: 3,
     headlineTaste: "curta",
   },
   {
@@ -128,6 +130,7 @@ export const PERSONAS: StudioPersona[] = [
       closing: [2, 2, 0],
     },
     surfaceShift: 0,
+    textureShift: 6,
     headlineTaste: "curta",
   },
   {
@@ -143,7 +146,7 @@ export const PERSONAS: StudioPersona[] = [
     marqueeOpen: 0.6,
     marqueeClose: 0.5,
     motionDensity: 0.6,
-    motionTaste: ["maskWipe", "parallaxScrub", "tiltRise"],
+    motionTaste: ["maskWipe", "parallaxScrub", "tiltRise", "slideDrift"],
     treatmentBias: {
       hero: [2, 2, 4],
       quote: [2, 3],
@@ -154,6 +157,7 @@ export const PERSONAS: StudioPersona[] = [
       closing: [1, 3],
     },
     surfaceShift: 3,
+    textureShift: 1,
     headlineTaste: "qualquer",
   },
   {
@@ -169,7 +173,7 @@ export const PERSONAS: StudioPersona[] = [
     marqueeOpen: 0.5,
     marqueeClose: 0.4,
     motionDensity: 0.55,
-    motionTaste: ["parallaxScrub", "focusPull", "zoomOut"],
+    motionTaste: ["parallaxScrub", "focusPull", "zoomOut", "slideDrift"],
     treatmentBias: {
       hero: [1, 4],
       quote: [1, 3, 0],
@@ -180,6 +184,7 @@ export const PERSONAS: StudioPersona[] = [
       closing: [0, 2],
     },
     surfaceShift: 2,
+    textureShift: 4,
     headlineTaste: "longa",
   },
   {
@@ -206,6 +211,7 @@ export const PERSONAS: StudioPersona[] = [
       closing: [0, 3],
     },
     surfaceShift: 1,
+    textureShift: 2,
     headlineTaste: "curta",
   },
 ];
