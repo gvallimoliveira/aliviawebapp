@@ -186,17 +186,20 @@ const StudioProLanding = () => {
           </div>
 
           {/* Trio de artes em leque */}
-          <div className="relative mx-auto grid w-full max-w-md grid-cols-2 gap-4 sm:max-w-lg">
-            <div className="col-span-1 -rotate-2">
+          <div className="relative mx-auto flex w-full max-w-md items-start gap-4 sm:max-w-lg">
+            <div className="w-1/2 -rotate-2">
               <StudioProShowcase item={SHOWCASE[1]} />
             </div>
-            <div className="col-span-1 mt-6 rotate-1">
-              <StudioProShowcase item={SHOWCASE[0]} />
-            </div>
-            <div className="col-span-2 -rotate-1">
-              <StudioProShowcase item={SHOWCASE[4]} />
+            <div className="mt-8 flex w-1/2 flex-col gap-4">
+              <div className="rotate-1">
+                <StudioProShowcase item={SHOWCASE[0]} />
+              </div>
+              <div className="-rotate-1">
+                <StudioProShowcase item={SHOWCASE[6]} />
+              </div>
             </div>
           </div>
+
         </div>
       </section>
 
