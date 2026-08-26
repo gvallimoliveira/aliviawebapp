@@ -45,7 +45,7 @@ const PhotoSplitBlock = ({ content, rng, treatment, format, persona, photos }: B
         >
           {renderAccent(phrase, treatment)}
         </h2>
-        <p className="mt-6 max-w-sm self-end text-right text-[11px] leading-relaxed text-background/85 md:text-sm">
+        <p className="mt-6 max-w-sm self-end text-right text-[11px] leading-relaxed text-background drop-shadow-[0_1px_6px_hsl(var(--foreground)/0.7)] md:text-sm">
           {headline.rest}
         </p>
       </motion.div>
