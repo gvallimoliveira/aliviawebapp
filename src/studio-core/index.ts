@@ -75,9 +75,14 @@ export {
   updatePhoto,
   deletePhoto,
   pickPhoto,
+  DEFAULT_FRAMING,
+  type PhotoFraming,
+  type PhotoPatch,
   type PhotoUsage,
+  type SafeArea,
   type StudioPhoto,
 } from "@/pages/studio/photos";
+export { default as PhotoFrame } from "@/pages/studio/blocks/PhotoFrame";
 
 // Registro de blocos, pronto para renderizar uma composição.
 export { STUDIO_BLOCKS } from "./blocks";
