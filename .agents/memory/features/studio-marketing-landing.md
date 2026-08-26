@@ -53,6 +53,25 @@ Nunca deve ser linkada nas páginas publicadas, nem entrar no sitemap (`public/r
 - Contrato de captura: todo efeito é **neutro** quando o bloco está centralizado
   (progress ~0.5), para o PNG exportado nunca sair borrado/zoomado.
 
+## Kit gráfico (2026-08-26, 2ª leva)
+
+- `src/pages/studio/blocks/Texture.tsx` centraliza o repertório visual:
+  - **TEXTURES** (8 tramas geométricas): quadriculado, pontos, hachura diagonal, colunas
+    editoriais, anéis concêntricos, xadrez, plus (SVG inline), chevron. Todas com alfa baixo
+    sobre tokens da marca; cada uma tem versão clara/escura (`style(dark)`).
+  - **TextureLayer** — camada de fundo pronta, rotacionada por `persona.textureShift`.
+  - **GeoOrnament** — 5 formas em contorno (anel, quadrado rotacionado, cluster de plus,
+    anéis duplos, barras) sempre parcialmente fora do quadro.
+  - **renderAccent(texto, variante)** — destaca a palavra mais longa da frase com 6 estilos
+    contrastantes (cor teal, chip teal, chip tinta, chip areia, sublinhado grosso, contorno
+    vazado). `DARK_ACCENT_INDEXES` restringe o sorteio em fundos escuros (chip tinta sumiria).
+- Personas ganharam `textureShift` (0-7) e o movimento `slideDrift` (deriva horizontal,
+  neutro no centro) entrou em `StudioMotion`/`MOTION_KINDS` e nos gostos de Marina, Otto e Bia.
+- `KineticStatement` aceita `textureStyle?` opcional — o momento escuro do Studio recebe trama
+  sem afetar as landings cinematográficas (que não passam a prop).
+- TypoBlock agora tem 6 tratamentos (3 originais + 3 chips); TREATMENT_COUNT.typo = 6.
+- MarqueeBlock varia o separador geométrico (ponto, losango, plus, quadrado) por persona.
+
 ## Equipe criativa (personas) — 2026-08-26
 - `src/pages/studio/personas.ts`: 6 personas (Marina, Caio, Luma, Otto, Bia, Enzo) derivadas da seed via `personaForSeed`. Cada uma viesa superfícies (rotação), tratamentos, densidade, nº de blocos cinéticos, marquees e motion.
 - `composePage(rng, persona?, inspiration?)` — persona é o 2º argumento (não trocar a ordem; captionFile.kindAt depende dela para reconstruir favoritos).
