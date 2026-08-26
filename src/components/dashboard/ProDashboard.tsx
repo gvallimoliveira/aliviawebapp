@@ -1096,7 +1096,9 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
       {/* Referrals received moved to the Messages tab (see ReceivedReferralsCard). */}
 
-      {/* Discreet backup/export — positioned above patient list to remain reachable with many patients */}
+      {/* Backup/exportação migrado para Minha Conta → Privacidade e dados.
+          No modo demo/simulado permanece aqui apenas para demonstração. */}
+      {(isDemoMode || isSimulated) && (
       <details className="group rounded-xl border border-border/60 bg-muted/20">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground transition">
           <span className="flex items-center gap-2">
