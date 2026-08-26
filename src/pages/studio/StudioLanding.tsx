@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { WORLDS, isWorldId, type WorldId } from "./content";
 import { buildCoverage, readExposureLog, recordExposure, type ExposureLog } from "./coverage";
 import { createPicker } from "./picker";
+import { personaForSeed } from "./personas";
 import { isTopicId, type TopicId } from "./topics";
 import StudioControls from "./StudioControls";
 import StudioFavorites from "./StudioFavorites";
@@ -30,6 +31,10 @@ import FeatureBlock from "./blocks/FeatureBlock";
 import KineticBlock from "./blocks/KineticBlock";
 import QuoteBlock from "./blocks/QuoteBlock";
 import ClosingBlock from "./blocks/ClosingBlock";
+import StatsBlock from "./blocks/StatsBlock";
+import TriptychBlock from "./blocks/TriptychBlock";
+import TypoBlock from "./blocks/TypoBlock";
+import PinupBlock from "./blocks/PinupBlock";
 import StudioMotion from "./blocks/StudioMotion";
 import type { BlockProps, StudioFormat } from "./blocks/shared";
 
@@ -45,6 +50,10 @@ const BLOCKS = {
   kinetic: KineticBlock,
   quote: QuoteBlock,
   closing: ClosingBlock,
+  stats: StatsBlock,
+  triptych: TriptychBlock,
+  typo: TypoBlock,
+  pinup: PinupBlock,
 } satisfies Record<string, (props: BlockProps) => JSX.Element>;
 
 const PREVIEW_MARKERS = ["id-preview--", "localhost", "127.0.0.1", ".lovableproject.com", "sandbox"];
@@ -82,6 +91,9 @@ const StudioLanding = () => {
   const format: StudioFormat =
     formatParam === "9x16" || formatParam === "1x1" || formatParam === "free" ? formatParam : "free";
   const seed = params.get("seed") ?? "a1";
+
+  /** Autor da versão: a persona criativa é derivada da seed (determinística). */
+  const persona = personaForSeed(seed);
 
   useEffect(() => {
     if (!params.get("seed")) {
@@ -148,10 +160,10 @@ const StudioLanding = () => {
       if (!from) return undefined;
       const [fromWorld, fromSeed] = from.split(":");
       if (!isWorldId(fromWorld) || !fromSeed) return undefined;
-      return composePage(createRng(`${fromWorld}:${fromSeed}:layout`));
+      return composePage(createRng(`${fromWorld}:${fromSeed}:layout`), undefined, persona);
     })();
-    return composePage(createRng(`${world}:${seed}:layout`), inspiration);
-  }, [world, seed, from]);
+    return composePage(createRng(`${world}:${seed}:layout`), inspiration, persona);
+  }, [world, seed, from, persona]);
 
 
   const update = (patch: Record<string, string | null>) => {
@@ -297,7 +309,7 @@ const StudioLanding = () => {
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
                   <StudioMotion kind={motion}>
-                    <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} />
+                    <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} />
                   </StudioMotion>
                 </StudioCapture>
               );
@@ -322,6 +334,7 @@ const StudioLanding = () => {
           world={world}
           format={format}
           seed={seed}
+          persona={persona}
           favorited={isFavorite(world, seed)}
           favoritesCount={favorites.length}
           canEvolve={favorites.length > 0}

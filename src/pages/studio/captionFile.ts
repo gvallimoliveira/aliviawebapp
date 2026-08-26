@@ -2,6 +2,7 @@ import { createRng } from "./rng";
 import { composePage } from "./composePage";
 import { buildCaption } from "./caption";
 import { WORLDS, type WorldId } from "./content";
+import { personaForSeed } from "./personas";
 import type { StudioFavorite } from "./useStudioFavorites";
 
 /**
@@ -14,7 +15,7 @@ export const captionFor = (world: WorldId, seed: string, index: number, kind: st
 
 /** Descobre o tipo de bloco de um índice a partir da composição da seed. */
 export const kindAt = (world: WorldId, seed: string, index: number) => {
-  const blocks = composePage(createRng(`${world}:${seed}:layout`));
+  const blocks = composePage(createRng(`${world}:${seed}:layout`), undefined, personaForSeed(seed));
   return blocks[index]?.kind;
 };
 
