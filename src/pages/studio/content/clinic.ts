@@ -1,5 +1,5 @@
 import type { WorldContent } from "./types";
-import { defaultStats, defaultTriptychs, defaultTypos } from "./defaults";
+import { defaultCarousels, defaultLists, defaultStats, defaultStories, defaultTriptychs, defaultTypos } from "./defaults";
 
 /**
  * Copy do mundo Clínica.
@@ -43,6 +43,9 @@ const clinic: WorldContent = {
   stats: defaultStats,
   triptychs: defaultTriptychs,
   typos: defaultTypos,
+  stories: defaultStories,
+  lists: defaultLists,
+  carousels: defaultCarousels,
   metrics: [
     [
       { value: 15, suffix: " dias", label: "de teste sem cartão" },
