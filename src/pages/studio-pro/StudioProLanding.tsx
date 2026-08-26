@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Palette, Sparkles, Wand2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PLANS, PRODUCT } from "./product";
+import { PLANS, PRODUCT, annualMonthlyPrice } from "./product";
 
 /**
  * LANDING DO STUDIO PÚBLICO
