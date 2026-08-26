@@ -18,7 +18,8 @@ import { BRAND_LOGO, BRAND_NAME } from "../brand";
  * usam o mesmo carrossel, independente do índice.
  *
  * Contracto fixo: carrossel = 1 capa + 2-4 slides + 1 CTA.
- * Treatments: 0 moldura editorial clara, 1 revista escura, 2 card emoldurado.
+ * Treatments: 0 moldura editorial clara, 1 revista escura, 2 card emoldurado,
+ * 3 palco central (marca no topo, headline gigante, pill de CTA embaixo).
  */
 
 const pickCarousel = <T,>(items: T[], group: number): T => items[group % items.length];
