@@ -14,6 +14,7 @@ export type BlockKind =
   | "kinetic"
   | "quote"
   | "typo"
+  | "echo"
   | "triptych"
   | "pinup"
   | "story"
@@ -45,12 +46,13 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   kinetic: 3,
   quote: 5,
   typo: 6,
+  echo: 3,
   triptych: 2,
   pinup: 2,
   story: 3,
   list: 3,
-  brand: 4,
-  carousel: 3,
+  brand: 6,
+  carousel: 4,
   closing: 4,
 };
 
@@ -125,6 +127,7 @@ export const composePage = (
     ["compare", 1],
     ["quote", 2],
     ["typo", 1],
+    ["echo", 2],
     ["triptych", 1],
     ["story", 2],
     ["list", 2],
