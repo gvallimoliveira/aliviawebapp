@@ -188,6 +188,64 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
     );
   }
 
+  if (treatment === 3) {
+    // Palco central: marca pequena no topo, headline gigante centrada, pill de CTA.
+    return (
+      <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
+        <TextureLayer persona={persona} index={treatment} />
+        <div className="container relative flex h-full flex-col py-16">
+          <div className="flex items-center justify-center gap-2">
+            <img src={BRAND_LOGO} alt="" aria-hidden className="h-6 w-6" />
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">{BRAND_NAME}</span>
+          </div>
+          <motion.div {...anim} className="flex flex-1 flex-col items-center justify-center text-center">
+            <p className="mb-6 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary">
+              {carousel.kicker} · {counter}
+            </p>
+            {isCover && (
+              <>
+                <h2 className="max-w-3xl text-3xl font-bold leading-[1.1] tracking-tight text-foreground md:text-6xl">
+                  {renderAccent(carousel.title, accentVariant)}
+                </h2>
+                <p className="mt-6 max-w-xl text-lg text-muted-foreground md:text-xl">{carousel.coverSub}</p>
+              </>
+            )}
+            {middle && (
+              <>
+                <h2 className="max-w-3xl text-2xl font-bold leading-tight tracking-tight text-foreground md:text-5xl">
+                  {renderAccent(middle.heading, accentVariant)}
+                </h2>
+                <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">{middle.body}</p>
+                <SlideImage topic={middle.topic} />
+              </>
+            )}
+            {isCta && (
+              <>
+                <h2 className="max-w-3xl text-3xl font-bold leading-[1.1] tracking-tight text-foreground md:text-5xl">
+                  {renderAccent(carousel.cta.title, accentVariant)}
+                </h2>
+                <p className="mt-5 max-w-xl text-lg text-muted-foreground md:text-xl">{carousel.cta.sub}</p>
+                <span className="mt-8 inline-flex items-center rounded-full border-2 border-foreground px-8 py-3 text-sm font-bold uppercase tracking-[0.18em] text-foreground">
+                  link na bio
+                </span>
+              </>
+            )}
+          </motion.div>
+          <div className="flex items-center justify-between">
+            <Dots total={total} active={index} />
+            {!isCta ? (
+              <span className="inline-flex items-center rounded-full border border-border px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                arraste →
+              </span>
+            ) : (
+              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">{BRAND_NAME}</span>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   // Treatment 0 — moldura editorial clara: filete superior, contador, progresso.
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
