@@ -852,21 +852,27 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
             <CardContent className="py-2.5 px-4 flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 min-w-0">
-                <Crown className="h-4 w-4 text-emerald-600 shrink-0" />
+                {academicAccess
+                  ? <GraduationCap className="h-4 w-4 text-emerald-600 shrink-0" />
+                  : <Crown className="h-4 w-4 text-emerald-600 shrink-0" />}
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {clinicCoversAccess ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}` : t("pro.plan_title")}
+                  {clinicCoversAccess
+                    ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}`
+                    : academicAccess ? "Aliv.iA Acadêmico" : t("pro.plan_title")}
                 </p>
                 <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px] shrink-0">
                   {clinicCoversAccess
                     ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
+                    : academicAccess ? "Parceiro acadêmico"
                     : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
                 </Badge>
-                {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
+                {!clinicCoversAccess && !academicAccess && !subscription?.is_partner && subscription?.subscription_end && (
                   <span className="hidden md:inline text-[11px] text-muted-foreground whitespace-nowrap">
                     · {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
                   </span>
                 )}
               </div>
+
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
