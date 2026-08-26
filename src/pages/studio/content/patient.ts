@@ -22,6 +22,12 @@ const patient: WorldContent = {
     { strong: "Dói no ombro e na lombar? São dois casos, não um.", rest: "Cada condição com seu próprio histórico, seu próprio plano e sua própria curva." },
     { strong: "Nem toda dor é a mesma dor.", rest: "A triagem identifica se o padrão é nociceptivo, neuropático ou nociplástico — e isso muda o plano." },
     { strong: "Você pode falar, em vez de digitar.", rest: "Grave sua anamnese em áudio e receba o resumo estruturado — ideal para quem prefere contar a história com naturalidade." },
+    { strong: "Três meses de dor não se resolvem em três minutos de consulta.", rest: "Chegue com o seu caso organizado e ganhe tempo de verdade com o profissional." },
+    { strong: "O exercício que curou o vizinho pode ser o seu pior remédio.", rest: "O que alivia uma dor pode manter outra. O seu plano precisa ser seu." },
+    { strong: "Você sabe onde dói. A gente ajuda a entender por quê.", rest: "Do mapa de dor ao plano de exercícios, em linguagem que você entende." },
+    { strong: "Diário de dor não é diário de reclamação.", rest: "É a prova, dia após dia, de que o plano está funcionando — ou de que precisa mudar." },
+    { strong: "A melhor pergunta não é “o que eu tenho”. É “o que eu faço agora”.", rest: "A avaliação responde as duas, nessa ordem." },
+    { strong: "Sua dor não veio com manual. A avaliação existe para isso.", rest: "Perguntas simples, triagem de segurança e uma direção clara no final." },
   ],
   subs: [
     "Avaliação guiada em poucos minutos, direto do celular.",
@@ -160,6 +166,123 @@ const patient: WorldContent = {
     { title: "Comece pela sua avaliação", sub: "Poucos minutos para entender o que está acontecendo.", cta: "Fazer minha avaliação" },
     { title: "Sua dor merece um plano", sub: "Não um palpite da internet.", cta: "Quero entender minha dor" },
     { title: "Hoje é um bom dia para entender", sub: "Avaliação guiada direto do celular.", cta: "Começar agora" },
+  ],
+  stories: [
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "Ela tinha certeza de que era “a idade”",
+      beats: [
+        "Doze anos convivendo com a dor no joelho.",
+        "Pomada, compressa e paciência.",
+        "Na avaliação, o padrão ficou claro em minutos.",
+      ],
+      turn: "Não era um veredito da idade. Era um caso com caminho.",
+      moral: "Antes de aceitar conviver, entenda.",
+      topic: "hypothesis",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "O corredor que tratava a canelite do jeito errado",
+      beats: [
+        "Ele alongava, gelava e voltava a correr.",
+        "A dor voltava junto, sempre no mesmo ponto.",
+        "A triagem mostrou um padrão de sobrecarga.",
+      ],
+      turn: "O plano certo começou pela dose, não pelo gelo.",
+      moral: "Exercício certo, na dose certa, no momento certo.",
+      topic: "hep",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "Ombro e lombar não são “dor no corpo todo”",
+      beats: [
+        "Ela chegou dizendo que doía tudo.",
+        "Cada região ganhou a própria avaliação.",
+        "Duas condições, dois planos, duas curvas.",
+      ],
+      turn: "O que parecia um caso impossível eram dois casos tratáveis.",
+      moral: "Cada dor merece o próprio histórico.",
+      topic: "multi-condition",
+    },
+    {
+      kicker: "TODA SEMANA, EM ALGUMA CASA",
+      title: "A pergunta que mudou o rumo dela",
+      beats: [
+        "Dor lombar há meses, piorando devagar.",
+        "Na triagem, um sinal de alerta acendeu.",
+        "O sistema não liberou exercício nenhum.",
+      ],
+      turn: "Liberou, sim, uma orientação: procure um médico primeiro.",
+      moral: "Segurança vem antes de qualquer plano.",
+      topic: "red-flags",
+    },
+  ],
+  lists: [
+    {
+      heading: "4 sinais de que a sua dor merece avaliação, não pomada",
+      items: [
+        "Passa de duas semanas sem melhora clara",
+        "Irradia para o braço ou para a perna",
+        "Acorda você durante a noite",
+        "Limita algo que você fazia sem pensar",
+      ],
+      closing: "A avaliação guiada do Aliv.iA começa pelo celular.",
+    },
+    {
+      heading: "3 erros de quem tenta tratar a dor sozinho",
+      items: [
+        "Copiar o exercício que funcionou para outra pessoa",
+        "Parar tudo e esperar a dor passar",
+        "Nunca registrar o que melhora ou piora",
+      ],
+      closing: "Um plano feito para o seu quadro resolve os três.",
+    },
+    {
+      heading: "5 perguntas que um bom profissional vai te fazer",
+      items: [
+        "Quando a dor começou e como",
+        "O que piora e o que alivia",
+        "Como está o seu sono",
+        "Quais remédios você usa todos os dias",
+        "O que você deixou de fazer por causa dela",
+      ],
+      closing: "A avaliação do Aliv.iA já chega com essas respostas organizadas.",
+    },
+  ],
+  carousels: [
+    {
+      kicker: "PARA QUEM SENTE DOR",
+      title: "Entenda a sua dor em três passos",
+      coverSub: "Arraste para ver como funciona.",
+      slides: [
+        { heading: "1. Você aponta onde dói", body: "Um mapa do corpo, sem termo técnico. Toque e pronto.", topic: "pain-map" },
+        { heading: "2. Você conta a sua história", body: "Perguntas simples sobre início, intensidade e o que piora.", topic: "anamnesis" },
+        { heading: "3. Você recebe uma direção", body: "Explicação clara, sinais de alerta checados e plano de exercícios.", topic: "treatment-plan" },
+      ],
+      cta: { title: "Comece pela avaliação gratuita", sub: "Link na bio." },
+    },
+    {
+      kicker: "ANTES DE ACEITAR O DESGASTE",
+      title: "Dor lombar: o que investigar primeiro",
+      coverSub: "Duas frentes que mudam o rumo do caso. Arraste.",
+      slides: [
+        { heading: "O padrão da dor", body: "Piora ao sentar, ao levantar, à noite? O padrão aponta a origem.", topic: "pain-mechanism" },
+        { heading: "Os sinais de alerta", body: "Perda de força, formigamento, dor que não muda: triagem antes de exercício.", topic: "red-flags" },
+      ],
+      cta: { title: "Faça a sua triagem guiada", sub: "Link na bio." },
+    },
+    {
+      kicker: "UMA SEMANA COM PLANO",
+      title: "Como é ter um plano de verdade",
+      coverSub: "A semana de quem trata com método. Arraste.",
+      slides: [
+        { heading: "Segunda: exercícios em vídeo", body: "Você sabe o que fazer, quantas vezes e como — sem adivinhar.", topic: "hep" },
+        { heading: "Quarta: diário de dor", body: "Um registro por dia. A curva começa a aparecer.", topic: "pain-diary" },
+        { heading: "Sexta: dúvida respondida", body: "Mensagem direta com o profissional, dentro do app.", topic: "messaging" },
+        { heading: "Domingo: a semana em gráfico", body: "Você vê a evolução — e o seu fisioterapeuta também.", topic: "report" },
+      ],
+      cta: { title: "Sua dor merece um plano", sub: "Link na bio." },
+    },
   ],
   sales: {
     audience: "quem convive com dor há semanas ou meses",

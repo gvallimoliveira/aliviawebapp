@@ -1,5 +1,5 @@
 import type { WorldContent } from "./types";
-import { defaultStats, defaultTriptychs, defaultTypos } from "./defaults";
+import { defaultCarousels, defaultLists, defaultStats, defaultStories, defaultTriptychs, defaultTypos } from "./defaults";
 
 /**
  * Copy do mundo Acadêmico.
@@ -44,6 +44,9 @@ const academic: WorldContent = {
   stats: defaultStats,
   triptychs: defaultTriptychs,
   typos: defaultTypos,
+  stories: defaultStories,
+  lists: defaultLists,
+  carousels: defaultCarousels,
   metrics: [
     [
       { value: 10, label: "nichos de pesquisa clínica" },

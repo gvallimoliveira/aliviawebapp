@@ -32,6 +32,52 @@ export type WorldSales = {
   hashtags: string[];
 };
 
+/**
+ * Storytelling de caso anonimizado — prova real sem expor ninguém
+ * ("uma fisio do interior", "um recém-formado"). Estrutura de capítulo:
+ * beats constroem a cena, `turn` é a virada, `moral` é o fecho.
+ * Tópico opcional: story institucional não precisa de tela.
+ */
+export type StudioStory = {
+  kicker: string;
+  title: string;
+  /** 3-4 frases curtas que constroem a cena. */
+  beats: string[];
+  /** A virada da narrativa, em destaque. */
+  turn: string;
+  /** Fecho que amarra na marca/produto. */
+  moral: string;
+  topic?: TopicId;
+};
+
+/**
+ * Lista editorial de valor puro — informativo que NÃO depende de tela do
+ * produto ("4 sinais de que...", "3 erros ao..."). O `closing` amarra a lista
+ * de volta para o Aliv.iA. Sem tópico: é conteúdo institucional.
+ */
+export type StudioList = {
+  heading: string;
+  /** 3-5 itens numerados. */
+  items: string[];
+  closing: string;
+};
+
+/**
+ * Carrossel: sequência de artes (capa + miolo + CTA) sobre um mesmo assunto,
+ * para explicar uma funcionalidade, vender ou posicionar a marca.
+ * O miolo pode declarar tópico (alimenta a cobertura editorial), mas o
+ * carrossel é sempre tipográfico — nunca carrega imagem.
+ */
+export type StudioCarousel = {
+  kicker: string;
+  /** Headline da capa. */
+  title: string;
+  coverSub: string;
+  /** 1-4 slides de miolo; o total de artes exportadas é slides + capa + CTA. */
+  slides: { heading: string; body: string; topic?: TopicId }[];
+  cta: { title: string; sub: string };
+};
+
 
 export type WorldContent = {
   id: WorldId;
@@ -63,5 +109,11 @@ export type WorldContent = {
   quotes: { text: string; topic?: TopicId }[];
   marquee: string[][];
   closings: { title: string; sub: string; cta: string }[];
+  /** Mini-casos anonimizados (StoryBlock). */
+  stories: StudioStory[];
+  /** Listas editoriais de valor puro (ListBlock). */
+  lists: StudioList[];
+  /** Sequências de artes para carrossel (CarouselBlock). */
+  carousels: StudioCarousel[];
   sales: WorldSales;
 };

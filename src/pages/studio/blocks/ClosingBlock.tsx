@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import logoAlivia from "@/assets/logo-alivia.png";
+import { BRAND_LOGO as logoAlivia } from "../brand";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { ACCENT_STYLES, DARK_ACCENT_INDEXES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
 

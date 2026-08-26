@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import logoAlivia from "@/assets/logo-alivia.png";
+import { BRAND_LOGO as logoAlivia } from "../brand";
 import {
   ALIGNMENTS,
   alignClasses,

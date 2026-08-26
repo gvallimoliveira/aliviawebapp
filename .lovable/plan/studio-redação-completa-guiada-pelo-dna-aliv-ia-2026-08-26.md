@@ -1,23 +1,24 @@
 # Studio: redação completa guiada pelo DNA Aliv.iA
 
-Transformar o `/studio` de "gerador de variações" em uma redação de verdade: identidade codificada, novos formatos de post (storytelling, listas, marca) e copy alinhada à estratégia definida — **converter fisios Pro + atrair pacientes B2C + autoridade**, tom **equilibrado com provocação leve**, provas **anonimizadas**, CTA sempre apontando para a **landing do mundo** do post.
+Transformar o `/studio` de "gerador de variações" em uma redação de verdade: identidade codificada, novos formatos de post (storytelling, listas, marca) e copy alinhada à estratégia definida — **converter fisios Pro e estudantes/ recém formados + atrair pacientes B2C + autoridade**, tom **equilibrado com provocação leve**, provas **anonimizadas**, CTA sempre apontando para a **landing do mundo** do post.
 
 ## Eixo 1 — DNA de marca codificado
 
 Hoje o posicionamento vive espalhado na copy. Vamos criar `src/pages/studio/content/brandDna.ts`, fonte única consultável:
 
 - **Posicionamento e promessa** por mundo (o que se vende, para quem, contra qual dor).
-- **Dores e desejos do público** (fisio: noites de prontuário, desvalorização, medo de errar conduta; paciente: medo do "é só desgaste", confusão do Google, exercício errado).
-- **Léxico da marca**: palavras preferidas ("raciocínio", "método", "clareza") e proibidas ("curar", "milagre", promessa de resultado).
+- **Dores e desejos do público** (fisio: noites de prontuário, desvalorização, medo de errar conduta; estudante: insegurança, posicionamento no mercado de trabalho; paciente: medo do "é só desgaste", confusão do Google, exercício errado).
+- **Léxico da marca**: palavras preferidas ("raciocínio", "sistema", "clareza","plataforma", ) e proibidas ("curar", "milagre", promessa de resultado).
 - **Limites da provocação leve**: cutuca rotina e burocracia, nunca o colega nem o paciente; automatiza esforço, nunca julgamento (regra da leitura adversa, hoje só em memória, vira teste automatizado sobre as headlines).
 
-## Eixo 2 — Três novos formatos de post
+## Eixo 2 — quatro novos formatos de post
 
 Cada um com 3-4 tratamentos visuais, reaproveitando o kit gráfico (tramas, ornamento, destaque de palavra) e o sistema de motion:
 
 1. **StoryBlock (storytelling)** — mini-casos anonimizados: kicker → 3-4 beats ("Uma fisio do interior, 10 pacientes/dia, prontuário até 22h") → virada → moral + tópico opcional. É onde entram as provas reais anonimizadas aprovadas ("recuperou 5h/semana", sem nome).
 2. **ListBlock (lista editorial)** — valor puro sem tela de produto: "4 sinais de que sua documentação afasta paciente", "3 erros ao prescrever exercício domiciliar". Tipográfico, numerado, com fecho que amarra no produto. Cobre o "informativo" que hoje só existe atrelado a feature.
 3. **BrandBlock (lockups de marca)** — composição abstrata institucional com variantes de presença: logo gigante ao fundo + statement, logo pequena no canto + frase, wordmark "Aliv.iA" tipográfico puro, selo com o slogan oficial. Resolve o pedido de logo grande/pequena/nome.
+4. Carroséis : artes sequenciais (3 a 6 artes) sobre um mesmo assunto ou combinado de assuntos correlatos visando explicar uma funcionalidade, vender, posicionar marca etc ou combinações desses elementos. 
 
 ## Eixo 3 — Expansão de copy por mundo
 
@@ -31,7 +32,7 @@ Cada um com 3-4 tratamentos visuais, reaproveitando o kit gráfico (tramas, orna
 Sem construir o produto agora. Apenas:
 
 - Centralizar logo + slogan em módulo único (`src/pages/studio/brand.ts`), eliminando imports diretos espalhados — primeiro passo para um dia virar "tema do cliente".
-- Registrar no memory o roadmap: onboarding por URL do site → extração automática do DNA (cores, tipografia, tom) → upload de screenshots do produto → mesmo motor de personas/blocos/cobertura gerando posts com a marca do cliente. O design atual já favorece isso: tokens semânticos, conteúdo 100% desacoplado dos blocos, imagem vinculada a tópico (equivalente ao screenshot que o cliente enviaria).
+- Registrar no memory o roadmap: onboarding por URL do site → extração automática do DNA (cores, logo, tipografia, tom) → upload de screenshots do produto → mesmo motor de personas/blocos/cobertura gerando posts com a marca do cliente. O design atual já favorece isso: tokens semânticos, conteúdo 100% desacoplado dos blocos, imagem vinculada a tópico (equivalente ao screenshot que o cliente enviaria).
 
 ## Guardas e validação
 

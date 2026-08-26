@@ -24,6 +24,12 @@ export type BlockProps = {
    * (`pickHeadline`) — nunca para quebrar a identidade da marca.
    */
   persona: StudioPersona;
+  /**
+   * Posição dentro de um carrossel (só existe em blocos `carousel`): qual
+   * arte da sequência este bloco renderiza, o total de artes e o grupo
+   * (posição onde a sequência foi inserida) que ancora a escolha do conteúdo.
+   */
+  slide?: { index: number; total: number; group: number };
 };
 
 

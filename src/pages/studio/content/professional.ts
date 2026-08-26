@@ -76,6 +76,46 @@ const professional: WorldContent = {
       strong: "Fale durante a sessão. O prontuário se escreve sozinho.",
       rest: "Grave a anamnese em voz, receba o resumo estruturado e ganhe minutos de olho no paciente — não no teclado.",
     },
+    {
+      strong: "Nota de evolução às 22h não é dedicação. É retrabalho.",
+      rest: "O Aliv.iA escreve durante a sessão, com pré-preenchimento da evolução anterior.",
+    },
+    {
+      strong: "Sua concorrência não é o colega. É a desorganização.",
+      rest: "Quem entrega avaliação estruturada e relatório com a própria marca não disputa preço.",
+    },
+    {
+      strong: "Recém-formado com o método de quem tem vinte anos de clínica.",
+      rest: "Fluxo padrão-ouro desde o primeiro atendimento, sem improviso e sem achismo.",
+    },
+    {
+      strong: "O paciente entende o plano ou não adere. Não existe meio-termo.",
+      rest: "Exercício em vídeo, fase explicada e relatório que ele mostra para a família.",
+    },
+    {
+      strong: "Você trata melhor quando não está digitando.",
+      rest: "A voz da sessão vira prontuário estruturado, sem tirar o olho do paciente.",
+    },
+    {
+      strong: "A primeira consulta não começa na maca. Começa no link.",
+      rest: "Anamnese, mapa de dor e triagem respondidos antes de o paciente chegar.",
+    },
+    {
+      strong: "Currículo bonito não segura estágio. Raciocínio segura.",
+      rest: "Treine o fluxo completo e chegue com repertório de decisão, não de decoreba.",
+    },
+    {
+      strong: "Quem documenta bem não teme auditoria.",
+      rest: "Cada hipótese com autor, justificativa e trilha de decisão registrada.",
+    },
+    {
+      strong: "Protocolo de prateleira não conhece o seu paciente.",
+      rest: "A conduta nasce do caso: mecanismo de dor, medidas e resposta ao plano.",
+    },
+    {
+      strong: "Seu diferencial não cabe em uma legenda. Cabe em um relatório.",
+      rest: "PDF clínico com a sua marca, que o paciente leva ao médico.",
+    },
   ],
   subs: [
     "Sistema de raciocínio clínico com alma de fisioterapeuta.",
@@ -373,6 +413,156 @@ const professional: WorldContent = {
     { title: "Comece pelo próximo paciente", sub: "Envie um link e veja a avaliação chegar estruturada.", cta: "Quero experimentar" },
     { title: "Menos formulário, mais fisioterapia", sub: "Painel demonstrativo aberto, com dados fictícios.", cta: "Entrar no modo demonstração" },
     { title: "O relatório que fecha o atendimento", sub: "Documento com sua marca em cada alta.", cta: "Assinar o plano Profissional" },
+  ],
+  stories: [
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "A fisio que recuperou as próprias noites",
+      beats: [
+        "Consultório no interior, dez pacientes por dia.",
+        "O atendimento terminava às 19h. O prontuário, às 22h.",
+        "O primeiro link de avaliação foi enviado numa terça.",
+      ],
+      turn: "Na quarta, o caso já chegou estruturado — e o jantar voltou a ser na mesa.",
+      moral: "Doze minutos por avaliação devolvidos ao raciocínio.",
+      topic: "assessment-link",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "Recém-formada, postura de veterana",
+      beats: [
+        "Primeiro emprego, primeiro paciente particular.",
+        "A insegurança era de quem nunca conduziu um caso sozinha.",
+        "O fluxo guiou: triagem, anamnese, testes, hipótese.",
+      ],
+      turn: "O paciente elogiou a “experiência”. Ela tinha três meses de formada.",
+      moral: "Método não substitui vivência — acelera.",
+      topic: "steps-method",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "O laudo que virou decisão",
+      beats: [
+        "Dinamometria do atleta, dezenas de números soltos.",
+        "Antes: uma hora de planilha e conta de cabeça.",
+        "O upload levou segundos.",
+      ],
+      turn: "Assimetria de 18% entre os lados, sinalizada em vermelho.",
+      moral: "A conta é do sistema. A conduta é do fisioterapeuta.",
+      topic: "dynamometry",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "O paciente que voltou por causa de um PDF",
+      beats: [
+        "Ele abandonou o plano na terceira semana, como sempre.",
+        "Na alta parcial, recebeu o relatório da evolução.",
+        "Mostrou para a esposa. Mostrou para o médico.",
+      ],
+      turn: "Voltou no mês seguinte pedindo para continuar — agora com metas.",
+      moral: "Quem vê o próprio progresso não abandona o plano.",
+      topic: "report",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "A discussão de caso às 23h",
+      beats: [
+        "Joelho complicado, conduta duvidosa, ninguém para consultar.",
+        "O caso foi aberto no agente clínico.",
+        "Três hipóteses confrontadas, cada uma com a fonte.",
+      ],
+      turn: "A conduta da manhã seguinte entrou com PMID junto.",
+      moral: "Segunda opinião não deveria depender de horário.",
+      topic: "clinical-agent",
+    },
+  ],
+  lists: [
+    {
+      heading: "4 sinais de que a sua documentação está te custando pacientes",
+      items: [
+        "O paciente some e você não sabe em que fase ele parou",
+        "O relatório só sai quando alguém pede",
+        "A evolução mora na sua memória, não no prontuário",
+        "Você não consegue mostrar o resultado do próprio trabalho",
+      ],
+      closing: "O Aliv.iA resolve os quatro no fluxo da sessão.",
+    },
+    {
+      heading: "3 erros comuns ao prescrever exercício domiciliar",
+      items: [
+        "Mandar o exercício sem o paciente entender o porquê",
+        "Progressão no improviso, sem critério de fase",
+        "Ignorar a posição que provoca dor no quadro dele",
+      ],
+      closing: "O HEP do Aliv.iA vem em vídeo, por fases e com restrições respeitadas.",
+    },
+    {
+      heading: "5 coisas que o paciente entende melhor no papel do que na conversa",
+      items: [
+        "O que ele tem, em uma frase",
+        "Por que o plano é esse e não outro",
+        "Em que fase do tratamento ele está",
+        "O que melhorou desde a primeira sessão",
+        "O que falta para a alta",
+      ],
+      closing: "É exatamente o que o relatório do Aliv.iA entrega.",
+    },
+    {
+      heading: "4 habilidades que separam o recém-formado disputado do comum",
+      items: [
+        "Conduzir anamnese sem roteiro decorado",
+        "Escolher o teste por critério, não por hábito",
+        "Justificar a conduta com evidência",
+        "Documentar como quem responde por aquilo",
+      ],
+      closing: "O Aliv.iA treina as quatro, caso a caso.",
+    },
+  ],
+  carousels: [
+    {
+      kicker: "DO LINK AO RELATÓRIO",
+      title: "Sua próxima avaliação, em três movimentos",
+      coverSub: "Arraste para ver o fluxo completo.",
+      slides: [
+        { heading: "1. O paciente responde antes", body: "Link por WhatsApp: anamnese, mapa de dor e red flags chegam prontos.", topic: "assessment-link" },
+        { heading: "2. Você valida o raciocínio", body: "Hipótese, mecanismo de dor e diferenciais organizados para a sua decisão.", topic: "hypothesis" },
+        { heading: "3. O relatório sai na hora", body: "PDF com a sua marca, a sua hipótese final e o plano por fases.", topic: "report" },
+      ],
+      cta: { title: "Teste no seu próximo paciente", sub: "Painel demonstrativo no link da bio." },
+    },
+    {
+      kicker: "RECÉM-FORMADO",
+      title: "Do diploma ao primeiro atendimento com método",
+      coverSub: "Quatro passos para não improvisar. Arraste.",
+      slides: [
+        { heading: "1. Treine no simulado", body: "Casos fictícios para repetir o fluxo até ele virar natural.", topic: "simulated-env" },
+        { heading: "2. Conduza casos reais", body: "Estágio e familiares no mesmo fluxo padrão-ouro.", topic: "academic-tracks" },
+        { heading: "3. Justifique com evidência", body: "Cada conduta com fonte PEDro ≥ 7 para citar.", topic: "evidence-library" },
+        { heading: "4. Documente como veterano", body: "Relatório estruturado desde o primeiro paciente.", topic: "report" },
+      ],
+      cta: { title: "Comece pelo plano acadêmico", sub: "Link na bio." },
+    },
+    {
+      kicker: "NA ROTINA",
+      title: "O que muda quando a papelada sai na hora",
+      coverSub: "Dois retratos da rotina de quem usa o Aliv.iA.",
+      slides: [
+        { heading: "12 minutos por avaliação", body: "É o tempo devolvido a cada caso que chega respondido por link.", topic: "assessment-link" },
+        { heading: "Fim do prontuário noturno", body: "Evolução escrita durante a sessão, com voz e pré-preenchimento.", topic: "voice-notes" },
+      ],
+      cta: { title: "Recupere as suas noites", sub: "Link na bio." },
+    },
+    {
+      kicker: "DECISÃO COM MEDIDA",
+      title: "Por que medir força muda a conduta",
+      coverSub: "Arraste para ver o que o olho clínico não pega.",
+      slides: [
+        { heading: "Assimetria tem número", body: "Déficit entre os lados calculado pelo sistema, não estimado.", topic: "dynamometry" },
+        { heading: "Risco tem semáforo", body: "O laudo externo vira leitura clínica com sinalização objetiva.", topic: "dynamometry" },
+        { heading: "Progressão tem critério", body: "A fase avança quando a medida avança — não quando a agenda pede.", topic: "treatment-plan" },
+      ],
+      cta: { title: "Meça no seu próximo caso", sub: "Link na bio." },
+    },
   ],
   sales: {
     audience: "fisioterapeutas que atendem no consultório",

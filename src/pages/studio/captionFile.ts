@@ -15,7 +15,12 @@ export const captionFor = (world: WorldId, seed: string, index: number, kind: st
 
 /** Descobre o tipo de bloco de um índice a partir da composição da seed. */
 export const kindAt = (world: WorldId, seed: string, index: number) => {
-  const blocks = composePage(createRng(`${world}:${seed}:layout`), personaForSeed(seed));
+  const blocks = composePage(
+    createRng(`${world}:${seed}:layout`),
+    personaForSeed(seed),
+    undefined,
+    WORLDS[world].carousels,
+  );
   return blocks[index]?.kind;
 };
 

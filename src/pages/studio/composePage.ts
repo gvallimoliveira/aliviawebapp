@@ -1,6 +1,7 @@
 import type { Rng } from "./rng";
 import { MOTION_KINDS, type MotionKind } from "./blocks/StudioMotion";
 import type { StudioPersona } from "./personas";
+import type { StudioCarousel } from "./content/types";
 
 export type BlockKind =
   | "hero"
@@ -15,9 +16,19 @@ export type BlockKind =
   | "typo"
   | "triptych"
   | "pinup"
+  | "story"
+  | "list"
+  | "brand"
+  | "carousel"
   | "closing";
 
-export type ComposedBlock = { kind: BlockKind; treatment: number; motion?: MotionKind };
+export type ComposedBlock = {
+  kind: BlockKind;
+  treatment: number;
+  motion?: MotionKind;
+  /** Posição dentro de uma sequência de carrossel (só em blocos `carousel`). */
+  slide?: { index: number; total: number; group: number };
+};
 
 /**
  * Quantidade de tratamentos visuais que cada bloco sabe renderizar.
@@ -36,6 +47,10 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   typo: 6,
   triptych: 2,
   pinup: 2,
+  story: 3,
+  list: 3,
+  brand: 4,
+  carousel: 3,
   closing: 4,
 };
 
@@ -93,11 +108,14 @@ export const composePage = (
   rng: Rng,
   persona?: StudioPersona,
   inspiration?: ComposedBlock[],
+  carousels?: StudioCarousel[],
 ): ComposedBlock[] => {
   /**
    * Pool base do miolo: pesa prova (métricas/stats/compare), demonstração
-   * (journey/feature/pinup) e voz (quote/typo/triptych). O pin-up é peça rara —
-   * no máximo um por página (a assinatura do cartaz perde força se repetir).
+   * (journey/feature/pinup), voz (quote/typo/triptych) e narrativa
+   * (story/list/brand — storytelling, valor editorial e institucional).
+   * O pin-up é peça rara — no máximo um por página (a assinatura do cartaz
+   * perde força se repetir).
    */
   const baseWeighted: [BlockKind, number][] = [
     ["metrics", 2],
@@ -108,6 +126,9 @@ export const composePage = (
     ["quote", 2],
     ["typo", 1],
     ["triptych", 1],
+    ["story", 2],
+    ["list", 2],
+    ["brand", 1],
   ];
   const favorites: [BlockKind, number][] = persona
     ? persona.favoriteBlocks.map((kind) => [kind, 2] as [BlockKind, number])
@@ -137,6 +158,13 @@ export const composePage = (
   if (rng.chance(0.4)) {
     const at = 1 + rng.int(Math.max(1, kinds.length - 2));
     kinds.splice(at, 0, "pinup");
+  }
+
+  // Carrossel: no máximo um por página, no miolo. Na fase de expansão (fim
+  // da função) ele vira a sequência capa → slides → CTA.
+  if (rng.chance(0.5)) {
+    const at = 1 + rng.int(Math.max(1, kinds.length - 2));
+    kinds.splice(at, 0, "carousel");
   }
 
   const fresh: ComposedBlock[] = kinds.map((kind) => ({ kind, treatment: treatmentFor(rng, kind, persona) }));
@@ -187,7 +215,7 @@ export const composePage = (
   const taste = persona && persona.motionTaste.length > 0 ? persona.motionTaste : MOTION_KINDS;
   const density = persona?.motionDensity ?? 0.5;
   let previous: MotionKind | undefined;
-  return result.map((block, i) => {
+  const withMotion = result.map((block, i) => {
     // hero e closing sempre ganham um movimento de abertura/fecho.
     const animate = i === 0 || i === result.length - 1 || rng.chance(density);
     if (!animate) {
@@ -202,4 +230,33 @@ export const composePage = (
     previous = kind;
     return { ...block, motion: kind };
   });
+
+  /**
+   * Expansão de carrossel: cada bloco `carousel` vira a sequência de artes
+   * (capa + slides do roteiro + CTA final), com `slide` preenchido. O grupo
+   * (posição onde a sequência entra) ancora a escolha do roteiro no bloco,
+   * mantendo a sequência coesa e determinística. Sem roteiros no mundo, o
+   * bloco degrada para `typo` (nunca some uma arte da página).
+   */
+  if (!carousels || carousels.length === 0) {
+    return withMotion.map((block) =>
+      block.kind === "carousel"
+        ? { ...block, kind: "typo" as BlockKind, treatment: block.treatment % TREATMENT_COUNT.typo }
+        : block,
+    );
+  }
+  const expanded: ComposedBlock[] = [];
+  withMotion.forEach((block) => {
+    if (block.kind !== "carousel") {
+      expanded.push(block);
+      return;
+    }
+    const group = expanded.length;
+    const slides = carousels[group % carousels.length].slides.length;
+    const total = Math.min(6, Math.max(4, slides + 2));
+    for (let i = 0; i < total; i += 1) {
+      expanded.push({ ...block, slide: { index: i, total, group } });
+    }
+  });
+  return expanded;
 };
