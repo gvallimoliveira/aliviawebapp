@@ -26,7 +26,7 @@ const VerticalWordmark = ({ stroke }: { stroke?: boolean }) => (
       <span
         key={i}
         data-studio-stroke={stroke ? "1" : undefined}
-        className={`text-7xl font-bold tracking-tight md:text-9xl ${
+        className={`text-5xl font-bold tracking-tight md:text-7xl ${
           stroke
             ? "text-transparent [-webkit-text-stroke:2px_hsl(var(--foreground)/0.35)]"
             : "text-foreground/10"
@@ -137,7 +137,7 @@ const BrandBlock = ({ rng, treatment, format, persona }: BlockProps) => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto max-w-3xl text-center"
+            className="mx-auto max-w-3xl pl-4 pr-20 text-center md:pr-28"
           >
             <p className="mb-6 text-[11px] font-semibold uppercase tracking-[0.32em] text-primary">{BRAND_NAME}</p>
             <p className="text-3xl font-bold leading-[1.15] tracking-tight text-foreground md:text-5xl">
