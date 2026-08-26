@@ -95,6 +95,24 @@ Nunca deve ser linkada nas páginas publicadas, nem entrar no sitemap (`public/r
 - WorldContent ganhou `stories`, `lists`, `carousels` (obrigatórios; acadêmico/clínica
   usam os defaults de `content/defaults.ts`).
 
+## Formatos visuais de referência externa (2026-08-26, 3ª leva)
+
+Referências aprovadas pelo fundador (posts "marun" e "RELOAD" + vídeos de carrossel):
+- **EchoBlock** (`blocks/EchoBlock.tsx`, kind `echo`, 3 tratamentos): palavra-chave do
+  acervo cinético repetida 7× em coluna, todas em contorno fino exceto a central
+  preenchida (teal no claro, claro no escuro). Vem do `picker` de `content.kinetic`,
+  então registra cobertura editorial. Linhas em contorno levam `data-studio-stroke`
+  e são repintadas no canvas pelo exportImage (validado: PNG sai com contornos).
+- **BrandBlock treatments 4 e 5**: wordmark "Aliv.iA" vertical cortado na lateral
+  (estilo "marun"). Letras são spans empilhados (NUNCA writing-mode vertical — o
+  repintador de stroke do export não reproduz writing-mode). Trat. 4 contorno à
+  direita, trat. 5 preenchido baixa opacidade à esquerda; conteúdo central leva
+  padding lateral (pr/pl) para nunca colidir com a coluna.
+- **CarouselBlock treatment 3**: "palco central" — logo+nome pequenos no topo,
+  headline gigante centrada, pill de CTA ("link na bio") e dots no rodapé.
+- `TREATMENT_COUNT`: echo 3, brand 6, carousel 4. Personas com bias: Marina
+  (echo 2, brand 4-5), Caio (echo 1), Enzo (echo 2,1).
+
 ## Equipe criativa (personas) — 2026-08-26
 - `src/pages/studio/personas.ts`: 6 personas (Marina, Caio, Luma, Otto, Bia, Enzo) derivadas da seed via `personaForSeed`. Cada uma viesa superfícies (rotação), tratamentos, densidade, nº de blocos cinéticos, marquees e motion.
 - `composePage(rng, persona?, inspiration?)` — persona é o 2º argumento (não trocar a ordem; captionFile.kindAt depende dela para reconstruir favoritos).
