@@ -21,7 +21,7 @@ const patient: WorldContent = {
     { strong: "Seu exercício errado pode estar mantendo a dor.", rest: "Programa em vídeo escolhido para o seu quadro, com progressão respeitosa." },
     { strong: "Dói no ombro e na lombar? São dois casos, não um.", rest: "Cada condição com seu próprio histórico, seu próprio plano e sua própria curva." },
     { strong: "Nem toda dor é a mesma dor.", rest: "A triagem identifica se o padrão é nociceptivo, neuropático ou nociplástico — e isso muda o plano." },
-    { strong: "Você pode falar, em vez de digitar.", rest: "Grave sua anamnese em áudio e receba o resumo estruturado — ideal para quem prefere contar a história com naturalidade." },
+    { strong: "Responder é simples: você escolhe no toque.", rest: "Perguntas objetivas e mapa de dor no celular — sem termos técnicos, sem formulário infinito." },
     { strong: "Três meses de dor não se resolvem em três minutos de consulta.", rest: "Chegue com o seu caso organizado e ganhe tempo de verdade com o profissional." },
     { strong: "O exercício que curou o vizinho pode ser o seu pior remédio.", rest: "O que alivia uma dor pode manter outra. O seu plano precisa ser seu." },
     { strong: "Você sabe onde dói. A gente ajuda a entender por quê.", rest: "Do mapa de dor ao plano de exercícios, em linguagem que você entende." },
