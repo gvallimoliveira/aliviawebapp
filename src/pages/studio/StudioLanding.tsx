@@ -34,6 +34,7 @@ import ClosingBlock from "./blocks/ClosingBlock";
 import StatsBlock from "./blocks/StatsBlock";
 import TriptychBlock from "./blocks/TriptychBlock";
 import TypoBlock from "./blocks/TypoBlock";
+import EchoBlock from "./blocks/EchoBlock";
 import PinupBlock from "./blocks/PinupBlock";
 import StoryBlock from "./blocks/StoryBlock";
 import ListBlock from "./blocks/ListBlock";
@@ -57,6 +58,7 @@ const BLOCKS = {
   stats: StatsBlock,
   triptych: TriptychBlock,
   typo: TypoBlock,
+  echo: EchoBlock,
   pinup: PinupBlock,
   story: StoryBlock,
   list: ListBlock,
