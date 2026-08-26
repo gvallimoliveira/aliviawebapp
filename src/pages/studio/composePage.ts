@@ -1,6 +1,7 @@
 import type { Rng } from "./rng";
 import { MOTION_KINDS, type MotionKind } from "./blocks/StudioMotion";
 import type { StudioPersona } from "./personas";
+import type { StudioCarousel } from "./content/types";
 
 export type BlockKind =
   | "hero"
@@ -15,9 +16,19 @@ export type BlockKind =
   | "typo"
   | "triptych"
   | "pinup"
+  | "story"
+  | "list"
+  | "brand"
+  | "carousel"
   | "closing";
 
-export type ComposedBlock = { kind: BlockKind; treatment: number; motion?: MotionKind };
+export type ComposedBlock = {
+  kind: BlockKind;
+  treatment: number;
+  motion?: MotionKind;
+  /** Posição dentro de uma sequência de carrossel (só em blocos `carousel`). */
+  slide?: { index: number; total: number; group: number };
+};
 
 /**
  * Quantidade de tratamentos visuais que cada bloco sabe renderizar.
@@ -36,6 +47,10 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   typo: 6,
   triptych: 2,
   pinup: 2,
+  story: 3,
+  list: 3,
+  brand: 4,
+  carousel: 3,
   closing: 4,
 };
 
@@ -93,11 +108,14 @@ export const composePage = (
   rng: Rng,
   persona?: StudioPersona,
   inspiration?: ComposedBlock[],
+  carousels?: StudioCarousel[],
 ): ComposedBlock[] => {
   /**
    * Pool base do miolo: pesa prova (métricas/stats/compare), demonstração
-   * (journey/feature/pinup) e voz (quote/typo/triptych). O pin-up é peça rara —
-   * no máximo um por página (a assinatura do cartaz perde força se repetir).
+   * (journey/feature/pinup), voz (quote/typo/triptych) e narrativa
+   * (story/list/brand — storytelling, valor editorial e institucional).
+   * O pin-up é peça rara — no máximo um por página (a assinatura do cartaz
+   * perde força se repetir).
    */
   const baseWeighted: [BlockKind, number][] = [
     ["metrics", 2],
@@ -108,6 +126,9 @@ export const composePage = (
     ["quote", 2],
     ["typo", 1],
     ["triptych", 1],
+    ["story", 2],
+    ["list", 2],
+    ["brand", 1],
   ];
   const favorites: [BlockKind, number][] = persona
     ? persona.favoriteBlocks.map((kind) => [kind, 2] as [BlockKind, number])
