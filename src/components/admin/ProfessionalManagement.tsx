@@ -141,8 +141,11 @@ const classifyClient = (p: any): ClientType => {
   const status = String(p?.subscription_status || "").toLowerCase();
   const expires = p?.pro_access_expires_at ? new Date(p.pro_access_expires_at).getTime() : null;
   const grace = p?.subscription_grace_until ? new Date(p.subscription_grace_until).getTime() : null;
+  // Acadêmico tem precedência: parceiro apenas acadêmico NUNCA é rotulado PRO.
+  if (p?.active_profile_mode === "student" || (p?.is_student && !p?.is_partner)) return "student";
   if (p?.is_partner || p?.is_partner_account || p?.premium_granted) return "partner";
   if (p?.is_student) return "student";
+
   if (status === "active" || status === "trialing" || (expires != null && expires > now)) return "active";
   if (grace != null && grace > now) return "grace";
   if (status === "canceled" || status === "cancelled" || status === "past_due" || status === "unpaid") return "canceled";
