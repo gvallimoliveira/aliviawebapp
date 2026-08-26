@@ -3,6 +3,7 @@ import type { Rng } from "../rng";
 import type { WorldContent } from "../content";
 import type { StudioPicker } from "../picker";
 import type { StudioPersona } from "../personas";
+import type { StudioPhoto } from "../photos";
 
 export type StudioFormat = "9x16" | "1x1" | "free";
 
@@ -30,6 +31,11 @@ export type BlockProps = {
    * (posição onde a sequência foi inserida) que ancora a escolha do conteúdo.
    */
   slide?: { index: number; total: number; group: number };
+  /**
+   * Acervo privado de fotos da conta. Blocos fotográficos escolhem uma foto
+   * daqui de forma determinística; sem acervo, eles não renderizam.
+   */
+  photos?: StudioPhoto[];
 };
 
 

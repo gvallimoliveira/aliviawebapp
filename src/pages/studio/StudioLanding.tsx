@@ -22,6 +22,11 @@ import StudioFavorites from "./StudioFavorites";
 import StudioCoveragePanel from "./StudioCoveragePanel";
 import StudioCapture from "./StudioCapture";
 import { useStudioFavorites } from "./useStudioFavorites";
+import { useStudioPhotos } from "./useStudioPhotos";
+import StudioPhotos from "./StudioPhotos";
+import PhotoTypeBlock from "./blocks/PhotoTypeBlock";
+import PhotoSplitBlock from "./blocks/PhotoSplitBlock";
+import PhotoPortraitBlock from "./blocks/PhotoPortraitBlock";
 import HeroBlock from "./blocks/HeroBlock";
 import MarqueeBlock from "./blocks/MarqueeBlock";
 import MetricsBlock from "./blocks/MetricsBlock";
@@ -66,6 +71,9 @@ const BLOCKS = {
   list: ListBlock,
   brand: BrandBlock,
   carousel: CarouselBlock,
+  photoType: PhotoTypeBlock,
+  photoSplit: PhotoSplitBlock,
+  photoPortrait: PhotoPortraitBlock,
 } satisfies Record<string, (props: BlockProps) => JSX.Element>;
 
 const PREVIEW_MARKERS = ["id-preview--", "localhost", "127.0.0.1", ".lovableproject.com", "sandbox"];
@@ -94,8 +102,17 @@ const StudioLanding = () => {
   const [hidden, setHidden] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [coverageOpen, setCoverageOpen] = useState(false);
+  const [photosOpen, setPhotosOpen] = useState(false);
   const [batchProgress, setBatchProgress] = useState<string | null>(null);
   const { favorites, isFavorite, toggle, isBlockFavorite, toggleBlock, remove } = useStudioFavorites();
+  /** Acervo privado de fotos da conta (persistido no backend). */
+  const {
+    photos,
+    loading: photosLoading,
+    add: addPhoto,
+    edit: editPhoto,
+    remove: removePhoto,
+  } = useStudioPhotos(true);
 
 
   const world: WorldId = isWorldId(params.get("world")) ? (params.get("world") as WorldId) : "pro";
@@ -174,8 +191,14 @@ const StudioLanding = () => {
       if (!isWorldId(fromWorld) || !fromSeed) return undefined;
       return composePage(createRng(`${fromWorld}:${fromSeed}:layout`), persona, undefined, WORLDS[fromWorld].carousels);
     })();
-    return composePage(createRng(`${world}:${seed}:layout`), persona, inspiration, content.carousels);
-  }, [world, seed, from, persona, content]);
+    return composePage(
+      createRng(`${world}:${seed}:layout`),
+      persona,
+      inspiration,
+      content.carousels,
+      photos.length,
+    );
+  }, [world, seed, from, persona, content, photos.length]);
 
 
   const update = (patch: Record<string, string | null>) => {
@@ -321,7 +344,7 @@ const StudioLanding = () => {
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
                   <StudioMotion kind={motion}>
-                    <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} slide={slide} />
+                    <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} slide={slide} photos={photos} />
                   </StudioMotion>
                 </StudioCapture>
               );
@@ -357,6 +380,8 @@ const StudioLanding = () => {
           onToggleFavorite={() => toggle(world, format, seed)}
           onOpenFavorites={() => setFavoritesOpen(true)}
           onOpenCoverage={() => setCoverageOpen(true)}
+          photosCount={photos.length}
+          onOpenPhotos={() => setPhotosOpen(true)}
           forcedTopicLabel={forced ? coverage.byId[forced]?.label : undefined}
           onHide={() => setHidden(true)}
           onExportAllPng={exportAllPng}
@@ -388,6 +413,17 @@ const StudioLanding = () => {
           onExportCaptions={exportFavoriteCaptions}
           onExportSchedule={exportSchedule}
           onClose={() => setFavoritesOpen(false)}
+        />
+      )}
+
+      {photosOpen && !hidden && (
+        <StudioPhotos
+          photos={photos}
+          loading={photosLoading}
+          onUpload={addPhoto}
+          onEdit={editPhoto}
+          onRemove={removePhoto}
+          onClose={() => setPhotosOpen(false)}
         />
       )}
 

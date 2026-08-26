@@ -57,6 +57,15 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     return [l.heading, [...l.items.map((item) => `• ${item}`), "", l.closing].join("\n")];
   },
   brand: (_c, rng) => [rng.pick(BRAND_DNA.statements), BRAND_SLOGAN],
+  photoType: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
+  },
+  photoSplit: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
+  },
+  photoPortrait: (c, rng) => [rng.pick(c.quotes).text, rng.pick(BRAND_DNA.statements)],
   carousel: (c, rng) => {
     const car = rng.pick(c.carousels);
     return [
