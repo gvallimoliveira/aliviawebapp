@@ -640,6 +640,10 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     && new Date(professional.subscription_grace_until) > new Date();
   const isPartner = professional?.is_partner === true;
   const isAcademicPartner = professional?.is_partner_account === true && professional?.is_student === true;
+  // Identificação acadêmica: acesso liberado como parceiro acadêmico (sem PRO).
+  const academicAccess =
+    (subscription?.is_academic_partner === true || (isAcademicPartner && !isPartner)) && !isPartner;
+
   const isVipAdmin = isFallbackVip(user?.email);
   const hasEffectiveProAccess = isVipAdmin || !!subscription?.subscribed || hasPaidProSubscription || inGracePeriod || isPartner || isAcademicPartner;
 
