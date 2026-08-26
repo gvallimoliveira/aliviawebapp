@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useCountUp } from "@/hooks/useCountUp";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { TextureLayer } from "./Texture";
 import type { StudioMetric } from "../content/types";
 
 /** O título da seção também varia — nunca a mesma arte de números duas vezes. */
@@ -75,8 +76,9 @@ const MetricsBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
   const spotlight = treatment === 3 && metrics.length > 1;
 
   return (
-    <section className={`relative flex ${sectionHeight(format)} items-center ${personaSurface(persona, treatment + 1)}`}>
-      <div className="container py-16">
+    <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment + 1)}`}>
+      {(treatment === 2 || treatment === 3) && <TextureLayer persona={persona} index={treatment + 1} />}
+      <div className="container relative py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
