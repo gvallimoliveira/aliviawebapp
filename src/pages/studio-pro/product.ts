@@ -7,13 +7,15 @@
  */
 
 export const PRODUCT = {
-  name: "Studio",
-  wordmark: "Studio",
+  name: "Aliv.iA Studio",
+  wordmark: "Aliv.iA Studio",
   tagline: "Sua marca postando todo dia, sem designer.",
   claim:
     "Um estúdio de arte que entende o DNA da sua marca e gera posts editoriais prontos para publicar — em segundos, em qualquer nicho.",
   /** Rota base isolada do produto público. */
   base: "/studio-pro",
+  /** Artes gratuitas concedidas no cadastro (saem com marca d'água discreta). */
+  freeCredits: 5,
 } as const;
 
 export type PlanId = "solo" | "marca" | "agencia";
@@ -21,25 +23,35 @@ export type PlanId = "solo" | "marca" | "agencia";
 export const PLANS: {
   id: PlanId;
   label: string;
+  price: number;
   audience: string;
   brands: string;
   exports: string;
+  highlight?: boolean;
   perks: string[];
 }[] = [
   {
     id: "solo",
     label: "Solo",
+    price: 59,
     audience: "Criador ou profissional autônomo",
     brands: "1 marca",
     exports: "60 artes por mês",
-    perks: ["Kit de marca (logo, cores, fontes)", "Galeria de favoritos", "Legendas geradas com a arte"],
+    perks: [
+      "Kit de marca (logo, cores, fontes)",
+      "Galeria de favoritos salva na sua conta",
+      "Legendas geradas junto com a arte",
+      "Download sem marca d'água",
+    ],
   },
   {
     id: "marca",
     label: "Marca",
+    price: 99,
     audience: "Negócio com presença constante",
     brands: "3 marcas",
     exports: "200 artes por mês",
+    highlight: true,
     perks: [
       "Tudo do Solo",
       "Extração de marca pelo site ou Instagram",
@@ -50,9 +62,11 @@ export const PLANS: {
   {
     id: "agencia",
     label: "Agência",
+    price: 199,
     audience: "Quem cuida da marca de outros",
     brands: "15 marcas",
     exports: "800 artes por mês",
     perks: ["Tudo do Marca", "Pastas por cliente", "Créditos extras avulsos", "Suporte prioritário"],
   },
 ];
+
