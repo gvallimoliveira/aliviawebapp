@@ -19,7 +19,10 @@ const ACCENTS = [
 
 const TypoBlock = ({ content, treatment, format, persona }: BlockProps) => {
   const typo = content.typos[treatment % content.typos.length];
-  const accentClass = ACCENTS[treatment % ACCENTS.length];
+  const accentIndex = treatment % ACCENTS.length;
+  const accentClass = ACCENTS[accentIndex];
+  // Contorno vazado (índice 1): marcado para ser repintado no export de imagem.
+  const isStroke = accentIndex === 1;
 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>

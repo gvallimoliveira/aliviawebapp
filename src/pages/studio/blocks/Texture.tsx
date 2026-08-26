@@ -206,7 +206,11 @@ export const renderAccent = (text: string, variant: number): ReactNode => {
     }
   });
 
-  const accentClass = ACCENT_STYLES[variant % ACCENT_STYLES.length];
+  const accentIndex = variant % ACCENT_STYLES.length;
+  const accentClass = ACCENT_STYLES[accentIndex];
+  // O contorno vazado (índice 5) é repintado manualmente no export de imagem
+  // porque o Safari não rasteriza -webkit-text-stroke via foreignObject.
+  const isStroke = accentIndex === 5;
 
   return words.map((word, i) => {
     if (i !== target) {
@@ -222,7 +226,9 @@ export const renderAccent = (text: string, variant: number): ReactNode => {
     return (
       <Fragment key={`${word}-${i}`}>
         {i > 0 ? " " : ""}
-        <span className={accentClass}>{core}</span>
+        <span className={accentClass} data-studio-stroke={isStroke ? "1" : undefined}>
+          {core}
+        </span>
         {tail}
       </Fragment>
     );
