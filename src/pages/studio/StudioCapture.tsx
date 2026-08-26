@@ -70,6 +70,23 @@ const StudioCapture = ({
   const [busy, setBusy] = useState(false);
   const [captionOpen, setCaptionOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [dark, setDark] = useState(false);
+  /** A arte já traz a marca (logo ou wordmark)? Então não duplicamos a assinatura. */
+  const [signed, setSigned] = useState(false);
+  const corner = cornerFor(fileName);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const id = window.setTimeout(() => {
+      setDark(isDarkSurface(node));
+      const hasLogo = !!node.querySelector('img[src*="logo-alivia"]');
+      const hasWordmark = (node.textContent ?? "").includes(BRAND_NAME);
+      setSigned(hasLogo || hasWordmark);
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [fileName]);
+
 
   /** Favorita e captura a miniatura da arte para a galeria de favoritos. */
   const handleFavorite = async () => {
