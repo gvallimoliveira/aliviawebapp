@@ -40,8 +40,8 @@ const Dots = ({ total, active, dark }: { total: number; active: number; dark?: b
   </div>
 );
 
-const SlideImage = ({ topic }: { topic?: string }) => {
-  const src = topic ? imageForTopic(topic as Parameters<typeof imageForTopic>[0]) : undefined;
+const SlideImage = ({ topic }: { topic?: TopicId }) => {
+  const src = topic ? imageForTopic(topic) : undefined;
   if (!src) return null;
   return (
     <img
