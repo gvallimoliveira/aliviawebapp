@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { imageForTopic } from "../topics";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { TextureLayer } from "./Texture";
 
 /**
  * Journey block — ONE screen, no scroll hijack (precisa caber no frame de captura).
@@ -20,8 +21,9 @@ const JourneyBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
   const timeline = treatment === 3;
 
   return (
-    <section className={`relative flex ${sectionHeight(format)} items-center ${personaSurface(persona, treatment + 1)}`}>
-      <div className="container py-14">
+    <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment + 1)}`}>
+      {treatment >= 2 && <TextureLayer persona={persona} index={treatment + 1} />}
+      <div className="container relative py-14">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

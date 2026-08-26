@@ -91,6 +91,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
         dark ? "bg-foreground text-background" : "bg-background"
       }`}
     >
+      <TextureLayer persona={persona} index={treatment} dark={dark} />
       <div
         aria-hidden
         className={`pointer-events-none absolute left-1/2 top-1/2 h-[70vw] w-[70vw] max-h-[560px] max-w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] ${
@@ -108,7 +109,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
         >
           <img src={logoAlivia} alt="Aliv.iA" className="h-16 w-16 md:h-20 md:w-20" />
           <h2 className={`text-3xl font-bold leading-tight tracking-tight md:text-5xl ${dark ? "" : "text-foreground"}`}>
-            {closing.title}
+            {title}
           </h2>
           <p className={`text-base md:text-lg ${dark ? "text-background/70" : "text-muted-foreground"}`}>
             {closing.sub}

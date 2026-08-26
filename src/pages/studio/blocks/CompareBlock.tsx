@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { TextureLayer } from "./Texture";
 
 /**
  * Before / after columns.
@@ -12,8 +13,9 @@ const CompareBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
   const versus = treatment === 2;
 
   return (
-    <section className={`relative flex ${sectionHeight(format)} items-center ${personaSurface(persona, treatment + 2)}`}>
-      <div className="container py-16">
+    <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment + 2)}`}>
+      {versus && <TextureLayer persona={persona} index={treatment + 4} />}
+      <div className="container relative py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
