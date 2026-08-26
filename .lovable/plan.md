@@ -1,70 +1,71 @@
-# Aliv.iA Studio como produto aberto e rentável
+# Aliv.iA Studio público (produto) + Studio interno preservado
 
-Objetivo: transformar o Studio (hoje ferramenta interna, só preview + conta VIP) em um SaaS de criação de posts artísticos para qualquer nicho, morando no mesmo app mas **totalmente desassociado** do Aliv.iA clínico na experiência do usuário.
+Duas coisas passam a coexistir:
 
-Decisões já fechadas: rota isolada dentro deste projeto · nome "Aliv.iA Studio" mantido · marca do cliente por onboarding manual **e** extração por IA de site/Instagram · monetização assinatura + créditos extras.
+- **Studio interno (`/studio`)** — exatamente como está hoje: só preview + sua conta VIP, marca Aliv.iA fixa, conteúdo dos 4 mundos, favoritos e miniaturas no localStorage deste navegador. **Congelado como ferramenta pessoal**: nada de multimarca, cota, login público ou billing entra aqui. Continua sendo o seu laboratório e a fonte de verdade do aprendizado criativo.
+- **Studio público (novo, `/studio-pro/*`)** — o produto SaaS, para qualquer nicho, com marca do cliente, planos e créditos. Nasce por fora, sem tocar no fluxo interno.
 
-## 1. Isolamento do produto (o ponto mais crítico)
+Decisões já fechadas: mesma base de código, rota isolada · nome "Aliv.iA Studio" mantido · brand kit por onboarding manual **e** extração por IA de site/Instagram · assinatura + créditos extras.
 
-O Studio passa a ter shell próprio: layout, header, footer, auth e navegação exclusivos.
+## 0. Preservar o que já funciona (pré-requisito de tudo)
 
-- Nenhum link, CTA, badge ou menu do Aliv.iA clínico dentro de `/studio/*`: sem hambúrguer do app, sem "Meu painel", sem gateway de perfis, sem suporte clínico.
-- Rotas dedicadas: `/studio` (home/marketing), `/studio/entrar`, `/studio/app` (editor), `/studio/marcas`, `/studio/planos`, `/studio/conta`.
-- Home do Studio é uma landing de produto criativo (o que é, exemplos de artes, planos, CTA "Criar minha primeira arte"). Zero vocabulário de fisioterapia.
-- Head/SEO próprios: title, description, OG e favicon do Studio; `index.html` continua do Aliv.iA e o Studio ajusta as metas na rota.
-- Sessão compartilhada tecnicamente (mesmo backend/auth), mas a UI nunca revela o outro produto. Quem entra pelo Studio só vê Studio.
-- Remover o gate atual (preview + VIP) e trocar por acesso público com plano/trial.
+Regras invioláveis do plano:
 
-## 2. Motor criativo multimarca
+- `/studio` mantém rota, gate (preview + VIP), controles, atalho **H**, personas, blocos, exportação e as chaves de localStorage `studio:favorites` e `studio:favorites:thumbs` **intactas**. Nenhum favorito seu se perde.
+- O motor criativo é **extraído para um núcleo compartilhado** (`src/studio-core/`): rng, composePage, personas, picker, coverage, blocos, texturas, motion, caption, exportImage. O interno passa a importar desse núcleo com o tema Aliv.iA; o público importa o mesmo núcleo com o tema do cliente. Uma melhoria feita para o produto aparece nos dois.
+- Refactor sem mudança de comportamento: os testes atuais (`studio-coverage`) mais um teste de "regressão de composição" (mesma seed → mesma sequência de blocos/tratamentos) provam que o interno continua idêntico após a extração.
+- **Backup do seu acervo**: exportar/importar favoritos + miniaturas em arquivo JSON no painel interno, e (opcional) sincronizar seus favoritos na conta VIP no backend, para não depender de um só navegador.
 
-Hoje o motor tem a marca fixa (`brand.ts`, `brandDna.ts`) e conteúdo de fisioterapia (`content/`). Vira genérico:
+## 1. Estrutura do Studio público
 
-- **Brand Kit por conta**: nome, logo, paleta (3-5 cores), par tipográfico, slogan, tom de voz, links (site/@), CTA padrão, assinatura obrigatória nas artes (já implementada — passa a usar o logo do cliente).
-- **Onboarding manual**: formulário guiado de brand kit + escolha de nicho/objetivo.
-- **Extração por IA**: usuário informa site ou @Instagram → função de servidor lê a página, extrai logo, cores dominantes, tipografia aparente e tom, e propõe o brand kit + primeiros temas de conteúdo para o usuário revisar antes de salvar.
-- **Fonte de conteúdo genérica**: substituir o `content/` clínico por "temas do cliente" (produtos, serviços, provas, dúvidas frequentes, frases de marca) — parte preenchida no onboarding, parte gerada por IA a partir do site.
-- Personas criativas, texturas, blocos, carrosséis, legendas e exportação PNG continuam como estão — passam a ler o tema do cliente em vez da marca fixa.
+- Rotas próprias, shell próprio, zero vínculo visual com o Aliv.iA clínico: `/studio-pro` (landing), `/studio-pro/entrar`, `/studio-pro/criar` (editor), `/studio-pro/marcas`, `/studio-pro/artes`, `/studio-pro/planos`, `/studio-pro/conta`.
+- Nada de hambúrguer do app, "Meu painel", gateway de perfis, suporte clínico ou vocabulário de fisioterapia. Head/SEO e OG próprios na rota.
+- Auth compartilhada tecnicamente (mesmo backend), mas quem entra pelo Studio só vê Studio; contas do Studio não ganham nada no produto clínico e vice-versa.
+- O interno **não** aparece em nenhum link do público (e segue fora do sitemap/robots).
 
-## 3. Dados e permissões
+## 2. Multimarca (o que o público ganha e o interno não)
 
-Novas tabelas (todas com RLS por `auth.uid()` e GRANTs):
+- **Brand Kit por conta**: nome, logo, paleta (3-5 cores), par tipográfico (presets seguros do Studio), slogan, tom de voz, site/@, CTA padrão. A assinatura obrigatória nas artes (já implementada) passa a usar o logo/nome do cliente.
+- **Onboarding manual**: formulário guiado de brand kit + nicho + objetivo.
+- **Extração por IA**: usuário informa site (e opcionalmente @) → função de servidor lê a página, propõe logo, cores dominantes, tom de voz e os primeiros temas de conteúdo; o usuário revisa antes de salvar.
+- **Conteúdo genérico**: em vez dos 4 mundos clínicos, "temas do cliente" (produtos, serviços, provas, dúvidas, frases de marca) alimentam o mesmo `picker`/cobertura editorial. Os mundos clínicos ficam só no interno.
 
-- `studio_accounts` — conta/workspace do Studio (dono, plano, status).
-- `studio_brands` — brand kits (logo em storage, cores, fontes, tom, links); limite por plano.
-- `studio_brand_topics` — temas/conteúdos por marca (alimenta o motor e a cobertura editorial).
-- `studio_generations` — histórico de artes geradas/exportadas (para cota, analytics e "minhas artes").
-- `studio_credit_*` — cota mensal e transações de créditos extras (mesmo padrão dos créditos de IA já existentes).
-- Bucket de storage `studio-brand-assets` para logos/imagens do cliente.
+## 3. Dados e permissões (só do produto público)
+
+Novas tabelas, todas com RLS por `auth.uid()` e GRANTs explícitos:
+
+- `studio_accounts` — workspace do Studio (dono, plano, status, trial).
+- `studio_brands` — brand kits; limite por plano.
+- `studio_brand_topics` — temas/conteúdos por marca.
+- `studio_artworks` — artes salvas/exportadas (galeria persistida, analytics, cota).
+- `studio_credit_quotas` / `studio_credit_transactions` — cota mensal + créditos extras (mesmo padrão dos créditos de IA atuais).
+- Storage `studio-brand-assets` (logos/imagens do cliente).
+- Opcional: `studio_internal_favorites` para o backup dos seus favoritos do Studio interno.
 
 ## 4. Monetização
 
-- **Planos (assinatura mensal, Stripe Checkout)**: Solo (1 marca, cota base), Studio (3 marcas, cota maior), Agência (10 marcas, cota alta + exportação em lote). Toggle mensal/anual.
-- **Créditos extras**: pacotes avulsos consumidos quando a cota do mês acaba (gerar versão, extrair marca por IA, gerar legenda/carrossel).
-- **Trial**: X artes grátis sem cartão; exportação em alta resolução e remoção de watermark só no plano pago.
-- Funções de servidor: `studio-create-checkout`, `studio-check-subscription`, `studio-customer-portal` (cancelamento self-service), `studio-consume-credit`.
-- Medidor de cota visível no editor e bloqueio elegante com CTA de upgrade.
+- **Planos Stripe (mensal/anual)**: Solo (1 marca), Studio (3 marcas), Agência (10 marcas + exportação em lote), cada um com cota de gerações/mês.
+- **Créditos extras**: pacotes avulsos para quando a cota acaba (gerar versão, extrair marca por IA, legendas/carrossel).
+- **Trial**: X artes grátis sem cartão; alta resolução e ausência de watermark só no pago.
+- Funções: `studio-create-checkout`, `studio-check-subscription`, `studio-customer-portal`, `studio-consume-credit`. Medidor de cota no editor e bloqueio com CTA de upgrade.
+- Seu acesso VIP: conta interna sem cobrança e sem cota, tanto no interno quanto no público.
 
-## 5. Experiência mínima de produto (além do editor atual)
+## 5. Fases
 
-- Galeria "Minhas artes" persistida na conta (hoje favoritos vivem no localStorage).
-- Seletor de marca ativa no topo do editor.
-- Planejador/calendário simples de publicação com exportação de legendas (já existe base de schedule).
-- Exportação em lote e formatos 9:16, 1:1 e 4:5.
-
-## 6. Fases sugeridas
-
-1. **Isolamento**: shell, rotas, landing, remoção do gate VIP e de qualquer vínculo visual com o Aliv.iA clínico.
-2. **Multimarca**: tabelas, storage, onboarding manual de brand kit, motor lendo o tema do cliente.
-3. **Extração por IA**: site/Instagram → brand kit + temas sugeridos.
-4. **Monetização**: planos Stripe, cota, créditos extras, portal de cancelamento, trial.
-5. **Produto**: galeria persistida, lote, calendário, formatos extras.
-6. **Go-to-market**: SEO da landing, exemplos por nicho, onboarding de 60 segundos.
+1. **Núcleo compartilhado**: extrair `src/studio-core/` + testes de regressão + backup/exportação dos favoritos internos. Zero mudança visível em `/studio`.
+2. **Shell público**: rotas, landing, auth e onboarding de conta do Studio (sem billing ainda).
+3. **Multimarca**: tabelas, storage, brand kit manual, motor lendo o tema do cliente.
+4. **Extração por IA**: site → brand kit + temas propostos.
+5. **Monetização**: planos, cota, créditos, portal de cancelamento, trial.
+6. **Produto**: galeria persistida, exportação em lote, calendário, formatos 9:16/1:1/4:5.
+7. **Go-to-market**: SEO da landing, exemplos por nicho, onboarding de 60 segundos.
 
 ## Riscos e pontos a decidir depois
 
-- Extração de Instagram é instável sem API oficial (login/bloqueios); começar por site e usar o @ apenas como dado declarado.
-- Fontes do cliente: só presets seguros do Studio no início (evita licenciamento e falhas de export).
-- Watermark do plano grátis vs. a assinatura de marca já obrigatória nas artes.
-- Preços exatos e limites de cota por plano.
+- Extração de Instagram é instável sem API oficial: começar por site; o @ entra como dado declarado.
+- Fontes: só presets do Studio no início (licenciamento + estabilidade do export PNG).
+- Watermark do grátis vs. assinatura de marca já obrigatória.
+- Preços e limites exatos de cota por plano.
+- Nome de rota do público (`/studio-pro` é provisório) e futura marca própria, se você quiser separar mais tarde.
 
-Nada de usabilidade muda até você aprovar.
+Nada muda na sua experiência atual do Studio interno; o público nasce por fora.
