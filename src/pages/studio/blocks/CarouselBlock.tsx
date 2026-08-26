@@ -7,9 +7,8 @@ import {
   TextureLayer,
   renderAccent,
 } from "./Texture";
-import { imageForTopic } from "../topics";
+import { imageForTopic, type TopicId } from "../topics";
 import { BRAND_LOGO, BRAND_NAME } from "../brand";
-import type { Rng } from "../rng";
 
 /**
  * Carousel block — sequência de artes numeradas (capa → miolo → CTA final)
@@ -22,8 +21,7 @@ import type { Rng } from "../rng";
  * Treatments: 0 moldura editorial clara, 1 revista escura, 2 card emoldurado.
  */
 
-const pickCarousel = <T extends { kicker: string }>(items: T[], group: number): T =>
-  items[group % items.length];
+const pickCarousel = <T,>(items: T[], group: number): T => items[group % items.length];
 
 /** Número gigante do slide atual, usado como ornamentação em alguns treatments. */
 const bigIndex = (index: number) => String(index + 1).padStart(2, "0");

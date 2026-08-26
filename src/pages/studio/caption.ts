@@ -1,6 +1,8 @@
 import type { Rng } from "./rng";
 import type { WorldContent } from "./content";
 import type { BlockKind } from "./composePage";
+import { BRAND_DNA } from "./content/brandDna";
+import { BRAND_SLOGAN } from "./brand";
 
 /**
  * Gera a legenda de venda pronta para o Instagram a partir do conteúdo já
@@ -45,6 +47,22 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
   pinup: (c, rng) => {
     const f = rng.pick(c.features);
     return [f.headline ?? f.title, f.description];
+  },
+  story: (c, rng) => {
+    const s = rng.pick(c.stories);
+    return [s.title, `${s.beats.join(" ")} ${s.turn} ${s.moral}`];
+  },
+  list: (c, rng) => {
+    const l = rng.pick(c.lists);
+    return [l.heading, [...l.items.map((item) => `• ${item}`), "", l.closing].join("\n")];
+  },
+  brand: (_c, rng) => [rng.pick(BRAND_DNA.statements), BRAND_SLOGAN],
+  carousel: (c, rng) => {
+    const car = rng.pick(c.carousels);
+    return [
+      car.title,
+      [...car.slides.map((s) => `${s.heading} — ${s.body}`), "", `${car.cta.title}. ${car.cta.sub}`].join("\n"),
+    ];
   },
   compare: (c, rng) => {
     const cmp = rng.pick(c.compare);

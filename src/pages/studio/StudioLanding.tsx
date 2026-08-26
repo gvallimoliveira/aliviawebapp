@@ -35,6 +35,10 @@ import StatsBlock from "./blocks/StatsBlock";
 import TriptychBlock from "./blocks/TriptychBlock";
 import TypoBlock from "./blocks/TypoBlock";
 import PinupBlock from "./blocks/PinupBlock";
+import StoryBlock from "./blocks/StoryBlock";
+import ListBlock from "./blocks/ListBlock";
+import BrandBlock from "./blocks/BrandBlock";
+import CarouselBlock from "./blocks/CarouselBlock";
 import StudioMotion from "./blocks/StudioMotion";
 import type { BlockProps, StudioFormat } from "./blocks/shared";
 
@@ -54,6 +58,10 @@ const BLOCKS = {
   triptych: TriptychBlock,
   typo: TypoBlock,
   pinup: PinupBlock,
+  story: StoryBlock,
+  list: ListBlock,
+  brand: BrandBlock,
+  carousel: CarouselBlock,
 } satisfies Record<string, (props: BlockProps) => JSX.Element>;
 
 const PREVIEW_MARKERS = ["id-preview--", "localhost", "127.0.0.1", ".lovableproject.com", "sandbox"];
@@ -160,10 +168,10 @@ const StudioLanding = () => {
       if (!from) return undefined;
       const [fromWorld, fromSeed] = from.split(":");
       if (!isWorldId(fromWorld) || !fromSeed) return undefined;
-      return composePage(createRng(`${fromWorld}:${fromSeed}:layout`), persona);
+      return composePage(createRng(`${fromWorld}:${fromSeed}:layout`), persona, undefined, WORLDS[fromWorld].carousels);
     })();
-    return composePage(createRng(`${world}:${seed}:layout`), persona, inspiration);
-  }, [world, seed, from, persona]);
+    return composePage(createRng(`${world}:${seed}:layout`), persona, inspiration, content.carousels);
+  }, [world, seed, from, persona, content]);
 
 
   const update = (patch: Record<string, string | null>) => {
@@ -294,7 +302,7 @@ const StudioLanding = () => {
             <style>{`.studio-square section { min-height: min(720px, 100vw) !important; }`}</style>
           )}
           <div className={format === "1x1" ? "studio-square" : undefined}>
-            {blocks.map(({ kind, treatment, motion }, i) => {
+            {blocks.map(({ kind, treatment, motion, slide }, i) => {
               const Block = BLOCKS[kind];
               const rng = createRng(`${world}:${seed}:${kind}:${i}`);
               return (
@@ -309,7 +317,7 @@ const StudioLanding = () => {
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
                   <StudioMotion kind={motion}>
-                    <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} />
+                    <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} slide={slide} />
                   </StudioMotion>
                 </StudioCapture>
               );
