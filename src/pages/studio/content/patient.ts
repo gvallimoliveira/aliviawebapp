@@ -1,4 +1,5 @@
 import type { WorldContent } from "./types";
+import { defaultStats, defaultTriptychs, defaultTypos } from "./defaults";
 
 /**
  * Copy do mundo Paciente.
@@ -41,6 +42,9 @@ const patient: WorldContent = {
     { kicker: "COM QUEM CUIDA", word: "Continuidade", caption: "Um fisioterapeuta perto de você para seguir o plano.", topic: "marketplace" },
   ],
 
+  stats: defaultStats,
+  triptychs: defaultTriptychs,
+  typos: defaultTypos,
   metrics: [
     [
       { value: 7, suffix: " min", label: "para concluir a avaliação" },

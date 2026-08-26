@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
 import { imageForTopic } from "../topics";
-import { sectionHeight, surfaceFor, type BlockProps } from "./shared";
+import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * Feature spotlight.
- * Treatments: 0 split (image right), 1 split reversed, 2 stacked bento pair.
+ * Treatments: 0 split (image right), 1 split reversed, 2 stacked bento pair,
+ * 3 close tipográfico (tag em pílula, título gigante, imagem em faixa abaixo).
  *
  * REGRA TAXATIVA DE COERÊNCIA: a imagem NUNCA é escolhida aqui nem escrita no
  * conteúdo — vem exclusivamente do `topic` do item (`imageForTopic`). Se o
@@ -14,12 +15,49 @@ import { sectionHeight, surfaceFor, type BlockProps } from "./shared";
  * A seleção usa o `picker` (dívida editorial), então assuntos pouco divulgados
  * têm prioridade sobre os já saturados.
  */
-const FeatureBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
+const FeatureBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   const items = picker.pick(content.features, treatment === 2 ? 2 : 1, rng, (f) => [f.topic]);
   const reversed = treatment === 1;
 
+  if (treatment === 3) {
+    // Close tipográfico: o título carrega a arte; a tela (se existir) vem em faixa.
+    const item = items[0];
+    const image = imageForTopic(item.topic);
+    return (
+      <section className={`relative flex ${sectionHeight(format)} items-center ${personaSurface(persona, treatment + 3)}`}>
+        <div className="container py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 22 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="flex max-w-3xl flex-col items-start gap-5 text-left md:ml-[4%]"
+          >
+            <p className="rounded-full border border-primary/30 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-primary md:text-[11px]">
+              {item.tag}
+            </p>
+            <h2 className="text-3xl font-bold leading-[1.05] tracking-tight text-foreground md:text-5xl">
+              {item.title}
+            </h2>
+            <p className="max-w-2xl text-base leading-relaxed text-muted-foreground md:text-xl">
+              {item.description}
+            </p>
+            {image && (
+              <img
+                src={image}
+                alt={item.title}
+                loading="lazy"
+                className="mt-6 w-full max-w-4xl rounded-3xl border border-border object-cover shadow-[0_24px_60px_-30px_hsl(var(--foreground)/0.35)]"
+              />
+            )}
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className={`relative flex ${sectionHeight(format)} items-center ${surfaceFor(treatment + 3)}`}>
+    <section className={`relative flex ${sectionHeight(format)} items-center ${personaSurface(persona, treatment + 3)}`}>
       <div className="container py-16">
         <div className={treatment === 2 ? "grid gap-6 md:grid-cols-2" : "grid items-center gap-8 md:grid-cols-2"}>
           {items.map((item, i) => {

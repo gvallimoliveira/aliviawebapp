@@ -1,4 +1,5 @@
 import type { WorldContent } from "./types";
+import { defaultStats, defaultTriptychs, defaultTypos } from "./defaults";
 
 /**
  * Copy do mundo Acadêmico.
@@ -40,6 +41,9 @@ const academic: WorldContent = {
     { kicker: "NA DÚVIDA", word: "Diferenciais", caption: "O que mais explicaria esse quadro?", topic: "differential" },
   ],
 
+  stats: defaultStats,
+  triptychs: defaultTriptychs,
+  typos: defaultTypos,
   metrics: [
     [
       { value: 10, label: "nichos de pesquisa clínica" },

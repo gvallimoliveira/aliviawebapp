@@ -1,13 +1,16 @@
-import { BarChart3, Copy, EyeOff, FileText, Images, Loader2, RefreshCw, Shuffle, Sparkles, Star, StarOff } from "lucide-react";
+import { BarChart3, Copy, EyeOff, FileText, Images, Loader2, PenTool, RefreshCw, Shuffle, Sparkles, Star, StarOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WORLD_IDS, WORLDS, type WorldId } from "./content";
 import type { StudioFormat } from "./blocks/shared";
+import type { StudioPersona } from "./personas";
 
 type StudioControlsProps = {
   world: WorldId;
   format: StudioFormat;
   seed: string;
+  /** Autor criativo desta versão (derivado da seed). */
+  persona: StudioPersona;
   favorited: boolean;
   favoritesCount: number;
   canEvolve: boolean;
@@ -41,6 +44,7 @@ const StudioControls = ({
   world,
   format,
   seed,
+  persona,
   favorited,
   favoritesCount,
   canEvolve,
@@ -172,6 +176,14 @@ const StudioControls = ({
           <Copy className="h-3.5 w-3.5" />
           {seed}
         </Button>
+
+        <span
+          className="hidden items-center gap-1.5 rounded-xl border border-border bg-muted px-2.5 py-1.5 text-xs text-muted-foreground sm:inline-flex"
+          title={`Arte por ${persona.name} — ${persona.role} · ${persona.signature}`}
+        >
+          <PenTool className="h-3.5 w-3.5 text-primary" />
+          {persona.name}
+        </span>
 
         <Button
           size="sm"

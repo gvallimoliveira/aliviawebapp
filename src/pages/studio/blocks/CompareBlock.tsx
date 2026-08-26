@@ -1,15 +1,18 @@
 import { motion } from "framer-motion";
 import { Check, X } from "lucide-react";
-import { sectionHeight, surfaceFor, type BlockProps } from "./shared";
+import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 
-/** Before / after columns. Treatments: 0 side-by-side cards, 1 stacked bands. */
-const CompareBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
+/**
+ * Before / after columns.
+ * Treatments: 0 side-by-side cards, 1 stacked bands, 2 duelo "VS" com selo central.
+ */
+const CompareBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   const [compare] = picker.pick(content.compare, 1, rng, (c) => c.topics ?? []);
-  const stacked = treatment % 2 === 1;
-
+  const stacked = treatment === 1;
+  const versus = treatment === 2;
 
   return (
-    <section className={`relative flex ${sectionHeight(format)} items-center ${surfaceFor(treatment + 2)}`}>
+    <section className={`relative flex ${sectionHeight(format)} items-center ${personaSurface(persona, treatment + 2)}`}>
       <div className="container py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -17,11 +20,15 @@ const CompareBlock = ({ content, rng, treatment, format, picker }: BlockProps) =
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          <h2 className="mb-8 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
+          <h2
+            className={`mb-8 font-bold leading-tight tracking-tight text-foreground ${
+              versus ? "mx-auto max-w-2xl text-center text-2xl md:text-4xl" : "max-w-2xl text-2xl md:text-4xl"
+            }`}
+          >
             {compare.title}
           </h2>
 
-          <div className={stacked ? "flex flex-col gap-4" : "grid gap-4 md:grid-cols-2"}>
+          <div className={stacked ? "flex flex-col gap-4" : "relative grid gap-4 md:grid-cols-2"}>
             <div className="rounded-2xl border border-border bg-muted/60 p-6">
               <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground">Sem Aliv.iA</p>
               <ul className="flex flex-col gap-3">
@@ -45,6 +52,15 @@ const CompareBlock = ({ content, rng, treatment, format, picker }: BlockProps) =
                 ))}
               </ul>
             </div>
+
+            {versus && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute left-1/2 top-1/2 z-10 hidden h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-primary/30 bg-background text-[11px] font-bold tracking-[0.2em] text-primary shadow-md md:flex"
+              >
+                VS
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

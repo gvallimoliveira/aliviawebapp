@@ -1,11 +1,14 @@
 import type { BlockProps } from "./shared";
 
-/** Continuous CSS-only strip. Treatment 1 runs on the dark surface. */
-const MarqueeBlock = ({ content, rng, treatment }: BlockProps) => {
+/**
+ * Continuous CSS-only strip. A paridade escuro/claro é deslocada pela persona,
+ * então a mesma posição de marquee muda de clima entre membros da equipe.
+ */
+const MarqueeBlock = ({ content, rng, treatment, persona }: BlockProps) => {
   const items = rng.pick(content.marquee);
   const loop = [...items, ...items, ...items];
-  const dark = treatment % 2 === 1;
-  const duration = 22 + treatment * 6;
+  const dark = (treatment + persona.surfaceShift) % 2 === 1;
+  const duration = 22 + (treatment % 4) * 6;
 
   return (
     <div

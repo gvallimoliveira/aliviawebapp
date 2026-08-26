@@ -1,4 +1,5 @@
 import type { WorldContent } from "./types";
+import { defaultStats, defaultTriptychs, defaultTypos } from "./defaults";
 
 /**
  * Copy do mundo Clínica.
@@ -39,6 +40,9 @@ const clinic: WorldContent = {
     { kicker: "NO ARQUIVO", word: "Memória", caption: "Nada é apagado do prontuário, só organizado.", topic: "archive" },
   ],
 
+  stats: defaultStats,
+  triptychs: defaultTriptychs,
+  typos: defaultTypos,
   metrics: [
     [
       { value: 15, suffix: " dias", label: "de teste sem cartão" },

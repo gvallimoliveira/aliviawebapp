@@ -31,7 +31,20 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
   },
   feature: (c, rng) => {
     const f = rng.pick(c.features);
-    return [f.title, f.description];
+    return [f.headline ?? f.title, f.description];
+  },
+  stats: (c, rng) => {
+    const s = rng.pick(c.stats);
+    return [s.heading, s.items.map((it) => `${it.value} — ${it.label}`).join(" · ")];
+  },
+  triptych: (c, rng) => {
+    const t = rng.pick(c.triptychs);
+    return [t.heading, t.panels.map((p) => `${p.word}: ${p.line}`).join(" ")];
+  },
+  typo: (c, rng) => [rng.pick(c.typos).big, rng.pick(c.subs)],
+  pinup: (c, rng) => {
+    const f = rng.pick(c.features);
+    return [f.headline ?? f.title, f.description];
   },
   compare: (c, rng) => {
     const cmp = rng.pick(c.compare);

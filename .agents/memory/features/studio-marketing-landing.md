@@ -52,3 +52,11 @@ Nunca deve ser linkada nas páginas publicadas, nem entrar no sitemap (`public/r
   Hero e closing sempre animam; nunca dois efeitos iguais em sequência.
 - Contrato de captura: todo efeito é **neutro** quando o bloco está centralizado
   (progress ~0.5), para o PNG exportado nunca sair borrado/zoomado.
+
+## Equipe criativa (personas) — 2026-08-26
+- `src/pages/studio/personas.ts`: 6 personas (Marina, Caio, Luma, Otto, Bia, Enzo) derivadas da seed via `personaForSeed`. Cada uma viesa superfícies (rotação), tratamentos, densidade, nº de blocos cinéticos, marquees e motion.
+- `composePage(rng, persona?, inspiration?)` — persona é o 2º argumento (não trocar a ordem; captionFile.kindAt depende dela para reconstruir favoritos).
+- Novos blocos: `StatsBlock` (stats com nota de rodapé), `TriptychBlock` (3 palavras), `TypoBlock` (tipografia-herói), `PinupBlock` (cartaz com arte autoral — exceção à regra "imagem só do tópico"; posters vivem em `src/assets/studio/poster-*.jpg` e são declarados na feature como `poster` + `headline`).
+- Novos campos de copy em `WorldContent`: `stats`, `triptychs`, `typos` (mundo pro tem repertório próprio; demais mundos usam `content/defaults.ts`).
+- `shared.ts`: `SURFACES` com 6 variantes, `personaSurface(persona, index)`, `pickHeadline(rng, headlines, taste)`.
+- Badge da persona visível na barra do Studio (ícone PenTool).
