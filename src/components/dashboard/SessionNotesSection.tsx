@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -54,6 +54,22 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   const [formContent, setFormContent] = useState("");
   const [formObservation, setFormObservation] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Abertura externa (botão "Registrar evolução" do prontuário / rail lateral):
+  // abre o formulário de nova nota já focado no campo de texto.
+  const contentRef = useRef<HTMLTextAreaElement | null>(null);
+  useEffect(() => {
+    const handler = () => {
+      setEditingNote(null);
+      setFormContent("");
+      setFormObservation("");
+      setFormDate(new Date());
+      setShowForm(true);
+      window.setTimeout(() => contentRef.current?.focus(), 250);
+    };
+    window.addEventListener("alivia:open-session-note", handler);
+    return () => window.removeEventListener("alivia:open-session-note", handler);
+  }, []);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -294,6 +310,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
             <div className="space-y-1">
               <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Evolução da sessão</p>
               <Textarea
+                ref={contentRef}
                 placeholder={t("session_notes.placeholder")}
                 value={formContent}
                 onChange={(e) => setFormContent(e.target.value)}

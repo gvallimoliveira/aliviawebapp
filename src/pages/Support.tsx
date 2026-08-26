@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SupportContactForm from "@/components/support/SupportContactForm";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, Video, FileEdit, Stamp, Lock, Mic, Archive, Activity, Gauge, FileText, Lightbulb, GraduationCap, Bell } from "lucide-react";
+import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, NotebookPen, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, Video, FileEdit, Stamp, Lock, Mic, Archive, Activity, Gauge, FileText, Lightbulb, GraduationCap, Bell } from "lucide-react";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,6 +46,7 @@ const proTools = [
   { key: "rename_share_assessments", icon: FileEdit },
   { key: "final_hypothesis", icon: Stamp },
   { key: "pro_notes", icon: StickyNote },
+  { key: "session_notes_quick", icon: NotebookPen },
   { key: "pro_subscription", icon: CreditCard },
   { key: "notifications", icon: Bell },
   { key: "edit_profile", icon: UserCog },

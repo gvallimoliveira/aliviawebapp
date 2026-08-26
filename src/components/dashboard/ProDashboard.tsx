@@ -40,8 +40,8 @@ import ExportDataCard from "./ExportDataCard";
 import ImportDataCard from "./ImportDataCard";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
-import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
-import { Brain } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Info } from "lucide-react";
 
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp, FileArchive } from "lucide-react";
@@ -60,14 +60,14 @@ const PendingReviewAlert = ({ assessments, language, navigate, onMarkReviewed }:
     <Card className="border-amber-500/30 bg-amber-500/5 overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 py-3 px-5 hover:bg-amber-500/10 transition-colors"
+        className="w-full flex items-center gap-2 py-2 px-4 hover:bg-amber-500/10 transition-colors"
       >
-        <FileCheck className="h-5 w-5 text-amber-600 shrink-0" />
-        <p className="text-sm text-muted-foreground flex-1 text-left">
+        <FileCheck className="h-4 w-4 text-amber-600 shrink-0" />
+        <p className="text-xs text-muted-foreground flex-1 text-left">
           <span className="font-semibold text-amber-700">
             {assessments.length} {isPt ? "nova(s) avaliação(ões)" : "new assessment(s)"}
           </span>{" "}
-          <span className="text-xs">
+          <span className="text-[11px]">
             {isPt ? "— pendentes de revisão" : "— pending review"}
           </span>
         </p>
@@ -133,7 +133,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { hasAccess: hasAgentAccess, isBetaInternal: agentBetaInternal } = useClinicalAgentAccess();
+  
 
   const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean; is_student?: boolean; is_vip?: boolean } | null>(null);
   const [subLoading, setSubLoading] = useState(true);
@@ -144,7 +144,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [referralActionLoading, setReferralActionLoading] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [lifetimeLoading, setLifetimeLoading] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
+  
   const [isSimulatedInternal, setIsSimulatedInternal] = useState(false);
   const isSimulated = isSimulatedProp !== undefined ? isSimulatedProp : isSimulatedInternal;
   const [addPatientOpen, setAddPatientOpen] = useState(false);
@@ -396,18 +396,6 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     }
   };
 
-  const handleManageSubscription = async () => {
-    setPortalLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
-      if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-    } catch {
-      toast({ title: "Erro", description: "Não foi possível abrir o portal de assinatura.", variant: "destructive" });
-    } finally {
-      setPortalLoading(false);
-    }
-  };
 
   const handleLifetimeCheckout = async () => {
     setLifetimeLoading(true);
@@ -769,30 +757,6 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </div>
       )}
 
-      {/* Clinical Agent card — standalone */}
-      {hasAgentAccess && !isSimulated && (
-        <Card className="border-primary/20 overflow-hidden relative">
-          <button
-            type="button"
-            onClick={() => navigate("/agente")}
-            className="flex items-center gap-3 p-4 text-left hover:bg-primary/[0.03] transition-colors group w-full"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0 group-hover:bg-primary/20 transition-colors">
-              <Brain className="h-5 w-5 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                Agente Clínico
-                <Badge variant="outline" className="text-[10px] border-primary/30 text-primary px-1 py-0">
-                  {agentBetaInternal ? "Beta interno" : "Beta"}
-                </Badge>
-              </p>
-              <p className="text-xs text-muted-foreground truncate">Raciocínio clínico · Anonimização · HEP</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
-          </button>
-        </Card>
-      )}
 
 
       {/* Clinic volume alert — only for owner in clinic mode */}
@@ -884,49 +848,39 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       {!isDemoMode && (
         <>
           {/* Status bar */}
+          {/* Status bar — faixa slim de 1 linha: selo do plano + status + renovação + ações */}
           <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
-            <CardContent className="py-4 px-5 flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
-                  <Crown className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground flex items-center gap-2">
-                    {clinicCoversAccess ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}` : t("pro.plan_title")}
-                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
-                      {clinicCoversAccess
-                        ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
-                        : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
-                    </Badge>
-                  </p>
-                  {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
-                    </p>
-                  )}
-                </div>
+            <CardContent className="py-2.5 px-4 flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
+                <Crown className="h-4 w-4 text-emerald-600 shrink-0" />
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {clinicCoversAccess ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}` : t("pro.plan_title")}
+                </p>
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px] shrink-0">
+                  {clinicCoversAccess
+                    ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
+                    : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
+                </Badge>
+                {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
+                  <span className="hidden md:inline text-[11px] text-muted-foreground whitespace-nowrap">
+                    · {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
+                  </span>
+                )}
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => setInstallDialogOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl h-8 px-3 text-xs font-medium border border-emerald-200/60 bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-700 hover:from-emerald-100 hover:to-teal-100 hover:shadow-sm transition-all shadow-sm"
+                  className="inline-flex items-center gap-1.5 rounded-lg h-7 px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   aria-label="Instalar app"
                 >
                   <Smartphone className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">App</span>
                 </button>
-                <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl h-8">
+                <Button variant="ghost" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-lg h-7 px-2 text-[11px]">
                   <Settings className="h-3.5 w-3.5" />
-                  {t("pro.edit_profile")}
+                  <span className="hidden sm:inline">{t("pro.edit_profile")}</span>
                 </Button>
-                {!clinicCoversAccess && !subscription?.is_partner && !subscription?.is_vip && !isVipAdmin && (
-                  <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl h-8">
-                    {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
-                    {t("pro.manage_subscription")}
-                  </Button>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -1001,62 +955,65 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       ))}
 
 
-      {/* Generate Link — hidden when in clinic tab layout (has own tab) */}
+      {/* Link de pré-avaliação — barra compacta de ação rápida (copiar/WhatsApp sempre visíveis) */}
       {!isSimulated && !hideForClinicTabs && (
         <Card data-onboarding="pro-link" className="border-primary/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Link2 className="h-4 w-4 text-primary" />
-              {isClinicMode ? "Link de pré-avaliação da clínica" : t("pro.generate_link_title")}
-            </CardTitle>
-            <CardDescription className="text-sm">
-              {isClinicMode
-                ? "Compartilhe este link com pacientes da clínica. As avaliações ficarão visíveis para toda a equipe."
-                : t("pro.generate_link_desc")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <code className="flex-1 text-xs bg-muted/60 px-3 py-2.5 rounded-lg text-muted-foreground truncate">
-                {isClinicMode && activeClinic
+          <CardContent className="py-3 px-4 flex flex-wrap items-center gap-x-2 gap-y-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                <Link2 className="h-4 w-4 text-primary" />
+              </div>
+              <p className="text-sm font-semibold text-foreground truncate">
+                {isClinicMode ? "Link de pré-avaliação da clínica" : t("pro.generate_link_title")}
+              </p>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button type="button" aria-label="Sobre o link" className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="start" className="max-w-xs text-xs text-muted-foreground">
+                  {isClinicMode
+                    ? "Compartilhe este link com pacientes da clínica. As avaliações ficarão visíveis para toda a equipe."
+                    : t("pro.generate_link_desc")}
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex gap-2 shrink-0 ml-auto">
+              <Button size="sm" onClick={() => {
+                const link = isClinicMode && activeClinic
                   ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
-                  : `${getPublicOrigin()}/assessment/professional/${professional.id}`}
-              </code>
-              <div className="flex gap-2 shrink-0">
-                <Button onClick={() => {
+                  : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
+                navigator.clipboard.writeText(link);
+                setLinkCopied(true);
+                toast({ title: t("referral.copied") });
+                setTimeout(() => setLinkCopied(false), 2000);
+              }} variant="outline" className="gap-1.5 rounded-xl h-8 text-xs border-primary/30 text-primary hover:bg-primary/10">
+                {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                {linkCopied ? t("referral.copied") : t("referral.copy_link")}
+              </Button>
+              <Button
+                size="sm"
+                onClick={async () => {
                   const link = isClinicMode && activeClinic
                     ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
                     : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
-                  navigator.clipboard.writeText(link);
-                  setLinkCopied(true);
-                  toast({ title: t("referral.copied") });
-                  setTimeout(() => setLinkCopied(false), 2000);
-                }} variant="outline" className="gap-1.5 rounded-xl">
-                  {linkCopied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-                  {linkCopied ? t("referral.copied") : t("referral.copy_link")}
-                </Button>
-                <Button
-                  onClick={async () => {
-                    const link = isClinicMode && activeClinic
-                      ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
-                      : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
-                    const ownerName = isClinicMode && activeClinic
-                      ? (activeClinic as any).clinics?.name || "nossa clínica"
-                      : professional?.full_name || "seu fisioterapeuta";
-                    const message = language === "pt"
-                      ? `Olá! 👋\n\nSou ${ownerName} e gostaria de convidar você para realizar sua *pré-avaliação online* pelo Aliv.iA, nosso sistema de raciocínio clínico.\n\nÉ rápido (cerca de 10 minutos), 100% seguro e me ajuda a entender seu quadro *antes* da nossa consulta — assim ganhamos tempo no atendimento e o seu tratamento começa mais direcionado.\n\n👉 Acesse: ${link}\n\nQualquer dúvida, é só me chamar por aqui.`
-                      : language === "es"
-                        ? `¡Hola! 👋\n\nSoy ${ownerName} y me gustaría invitarte a realizar tu *pre-evaluación online* a través de Aliv.iA, nuestro sistema de razonamiento clínico.\n\nEs rápido (unos 10 minutos), 100% seguro y me ayuda a entender tu caso *antes* de nuestra consulta — así ganamos tiempo y tu tratamiento empieza más enfocado.\n\n👉 Accede: ${link}\n\nCualquier duda, escríbeme por aquí.`
-                        : `Hi! 👋\n\nI'm ${ownerName} and I'd like to invite you to complete your *online pre-assessment* on Aliv.iA, our clinical reasoning system.\n\nIt's quick (about 10 minutes), fully secure and helps me understand your case *before* our appointment — saving time and making your treatment more targeted from day one.\n\n👉 Open: ${link}\n\nAny questions, just message me here.`;
-                    const { shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
-                    await shareTextOrOpenWhatsApp(message, "Aliv.iA");
-                  }}
-                  className="gap-1.5 rounded-xl bg-[#25D366] text-white hover:bg-[#1FB855]"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  WhatsApp
-                </Button>
-              </div>
+                  const ownerName = isClinicMode && activeClinic
+                    ? (activeClinic as any).clinics?.name || "nossa clínica"
+                    : professional?.full_name || "seu fisioterapeuta";
+                  const message = language === "pt"
+                    ? `Olá! 👋\n\nSou ${ownerName} e gostaria de convidar você para realizar sua *pré-avaliação online* pelo Aliv.iA, nosso sistema de raciocínio clínico.\n\nÉ rápido (cerca de 10 minutos), 100% seguro e me ajuda a entender seu quadro *antes* da nossa consulta — assim ganhamos tempo no atendimento e o seu tratamento começa mais direcionado.\n\n👉 Acesse: ${link}\n\nQualquer dúvida, é só me chamar por aqui.`
+                    : language === "es"
+                      ? `¡Hola! 👋\n\nSoy ${ownerName} y me gustaría invitarte a realizar tu *pre-evaluación online* a través de Aliv.iA, nuestro sistema de razonamiento clínico.\n\nEs rápido (unos 10 minutos), 100% seguro y me ayuda a entender tu caso *antes* de nuestra consulta — así ganamos tiempo y tu tratamiento empieza más enfocado.\n\n👉 Accede: ${link}\n\nCualquier duda, escríbeme por aquí.`
+                      : `Hi! 👋\n\nI'm ${ownerName} and I'd like to invite you to complete your *online pre-assessment* on Aliv.iA, our clinical reasoning system.\n\nIt's quick (about 10 minutes), fully secure and helps me understand your case *before* our appointment — saving time and making your treatment more targeted from day one.\n\n👉 Open: ${link}\n\nAny questions, just message me here.`;
+                  const { shareTextOrOpenWhatsApp } = await import("@/lib/whatsappShare");
+                  await shareTextOrOpenWhatsApp(message, "Aliv.iA");
+                }}
+                className="gap-1.5 rounded-xl h-8 text-xs bg-[#25D366] text-white hover:bg-[#1FB855]"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                WhatsApp
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -1139,7 +1096,9 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
       {/* Referrals received moved to the Messages tab (see ReceivedReferralsCard). */}
 
-      {/* Discreet backup/export — positioned above patient list to remain reachable with many patients */}
+      {/* Backup/exportação migrado para Minha Conta → Privacidade e dados.
+          No modo demo/simulado permanece aqui apenas para demonstração. */}
+      {(isDemoMode || isSimulated) && (
       <details className="group rounded-xl border border-border/60 bg-muted/20">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground transition">
           <span className="flex items-center gap-2">
@@ -1166,6 +1125,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           />
         </div>
       </details>
+      )}
 
 
       {/* Patient list grouped by email */}

@@ -78,7 +78,7 @@ const categories: ToolCategory[] = [
         key: "session_notes",
         icon: FileCheck,
         title: "Notas de sessão",
-        desc: "Registre evolução, intervenções e observações clínicas a cada atendimento. Tudo cronologicamente vinculado ao paciente e visível em PDF se você quiser compartilhar.",
+        desc: "Registre evolução, intervenções e observações clínicas a cada atendimento — com acesso rápido pelo botão \"Registrar evolução\" no topo do prontuário (no celular, botão flutuante). Tudo cronologicamente vinculado ao paciente e visível em PDF se você quiser compartilhar.",
       },
       {
         key: "white_label_pdf",

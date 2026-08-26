@@ -623,6 +623,16 @@ export default function PatientDetailView(props: any) {
     }
   }, [evolutionAssessments, evolutionSelectedIds, isDemo, patient, clinicId, professionalId, language, professionalLogoUrl, clinicLogoUrl, clinicName, t, toast, setEvolutionLoading]);
 
+  // Acesso rápido: registrar nota de sessão/evolução em 1 toque.
+  // Rola até a seção e abre o formulário já focado (evento ouvido pelo SessionNotesSection).
+  const handleQuickEvolution = () => {
+    const el = document.getElementById("sec-notas-sessao");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("alivia:open-session-note"));
+    }, 350);
+  };
+
   return (
     <div className="space-y-5">
       <PatientSectionRail riskLevel={healthRisk?.level ?? null} />
@@ -653,6 +663,7 @@ export default function PatientDetailView(props: any) {
           {(latestWithDiagnosis || latestAssessment) && <Button variant="ghost" size="sm" className="gap-1.5 shrink-0 text-primary hover:text-primary hover:bg-primary/10" onClick={() => setSummaryDialogOpen(true)}><Sparkles className="h-4 w-4" /> {language === "pt" ? "Resumo" : language === "es" ? "Resumen" : "Summary"}</Button>}
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0 hidden md:inline-flex border-primary/30 text-primary hover:bg-primary/10" onClick={handleQuickEvolution}><NotebookPen className="h-4 w-4" /> {language === "pt" ? "Registrar evolução" : language === "es" ? "Registrar evolución" : "Log evolution"}</Button>
           {((!readOnly || allowManualAssessment) || isDemo) && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
           {(latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2 || (hasAgentAccess && !isDemo) || !isDemo) && (
             <DropdownMenu modal={false}>
@@ -1508,6 +1519,17 @@ export default function PatientDetailView(props: any) {
       <AlertDialog open={!!deleteConfirmPatient} onOpenChange={(open) => { if (!open) setDeleteConfirmPatient(null); }}><AlertDialogContent onClick={(e) => e.stopPropagation()}><AlertDialogHeader><AlertDialogTitle>Confirmar exclusão permanente</AlertDialogTitle><AlertDialogDescription>Tem certeza que deseja excluir <span className="font-semibold">{deleteConfirmPatient?.name}</span> e todas as suas {deleteConfirmPatient?.assessmentIds.length} avaliação(ões)?<br /><br /><span className="text-destructive font-medium">Esta ação é irreversível. Todos os dados de avaliações, planos de tratamento, exercícios e notas serão permanentemente apagados.</span></AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={!!deletingPatient} onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5" disabled={!!deletingPatient} onClick={(e) => { e.stopPropagation(); if (deleteConfirmPatient) handleDeletePatient(deleteConfirmPatient.groupKey, deleteConfirmPatient.assessmentIds); }}>{deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}Excluir permanentemente</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <AlertDialog open={!!deleteAssessmentTarget} onOpenChange={(open) => !open && setDeleteAssessmentTarget(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{language === "pt" ? "Excluir avaliação?" : "Delete assessment?"}</AlertDialogTitle><AlertDialogDescription>{language === "pt" ? `A avaliação de ${deleteAssessmentTarget?.date} será removida permanentemente, junto com notas e programas de exercícios vinculados. Esta ação não pode ser desfeita.` : `The assessment from ${deleteAssessmentTarget?.date} will be permanently removed, along with linked notes and exercise programs. This cannot be undone.`}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{language === "pt" ? "Cancelar" : "Cancel"}</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2" disabled={!!deletingAssessmentId} onClick={(e) => { e.preventDefault(); if (deleteAssessmentTarget) handleDeleteAssessment(deleteAssessmentTarget.id); }}>{deletingAssessmentId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}{language === "pt" ? "Excluir permanentemente" : "Delete permanently"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <Dialog open={!!treatmentPicker} onOpenChange={(open) => { if (!open) setTreatmentPicker(null); }}><DialogContent className="max-w-lg"><DialogHeader><DialogTitle>{language === "pt" ? "Selecione a avaliação a desbloquear" : language === "es" ? "Seleccione la evaluación a desbloquear" : "Select the assessment to unlock"}</DialogTitle><DialogDescription>{language === "pt" ? `${treatmentPicker?.patientName ?? ""} possui mais de uma avaliação sem plano de tratamento. Escolha de qual avaliação deseja adquirir o plano.` : language === "es" ? `${treatmentPicker?.patientName ?? ""} tiene más de una evaluación sin plan de tratamiento. Elija de cuál desea adquirir el plan.` : `${treatmentPicker?.patientName ?? ""} has more than one assessment without a treatment plan. Choose which one to unlock.`}</DialogDescription></DialogHeader><div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">{treatmentPicker?.assessments.map((a: any) => { const dateStr = new Date(a.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "short", year: "numeric" }); const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—"; const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0 ? a.pain_regions.join(", ") : null; return <div key={a.id} className="rounded-xl border border-border bg-card p-3 space-y-2"><div className="flex items-start justify-between gap-2"><div className="space-y-1 min-w-0"><p className="text-xs font-semibold text-foreground">{dateStr}</p><p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>{region && <p className="text-[10px] text-muted-foreground mt-0.5">{language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}</p>}</div>{a.pain_score != null && <Badge variant="outline" className="text-[10px] shrink-0">{language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10</Badge>}</div><TreatmentUnlockCTA assessmentId={a.id} lifetimeTreatment={lifetimeTreatment} clinicMode={!!clinicId} onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); setTreatmentPicker(null); }} /></div>; })}</div><DialogFooter><Button variant="ghost" onClick={() => setTreatmentPicker(null)}>{language === "pt" ? "Fechar" : language === "es" ? "Cerrar" : "Close"}</Button></DialogFooter></DialogContent></Dialog>
+
+      {/* FAB mobile: registrar evolução em 1 toque, acima da barra de abas inferior */}
+      <button
+        type="button"
+        onClick={handleQuickEvolution}
+        aria-label={language === "pt" ? "Registrar evolução" : language === "es" ? "Registrar evolución" : "Log session evolution"}
+        className="md:hidden fixed right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-4 ring-background active:scale-95 transition-transform"
+        style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}
+      >
+        <NotebookPen className="h-5 w-5" />
+      </button>
     </div>
   );
 }

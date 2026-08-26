@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -20,6 +20,8 @@ import {
   Shield,
   Stethoscope,
   HelpCircle,
+  FileArchive,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AppVersionBadge from "@/components/AppVersionBadge";
@@ -29,6 +31,8 @@ import AcademicPerformanceCard from "@/components/account/AcademicPerformanceCar
 import PasskeyAccountCard from "@/components/account/PasskeyAccountCard";
 import PrivacyRightsCard from "@/components/account/PrivacyRightsCard";
 import SubscriptionCard from "@/components/account/SubscriptionCard";
+import ExportDataCard from "@/components/dashboard/ExportDataCard";
+import ImportDataCard from "@/components/dashboard/ImportDataCard";
 
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useIsProfessionalAccount } from "@/hooks/useIsProfessionalAccount";
@@ -66,6 +70,17 @@ const Account = () => {
   const push = usePushNotifications();
   const isProfessional = useIsProfessionalAccount();
   const personalOnly = isProfessional === false;
+
+  // Perfil profissional (id da tabela professionals) para backup/exportação de dados.
+  const [proBackup, setProBackup] = useState<{ id: string; full_name: string | null } | null>(null);
+  useEffect(() => {
+    if (isProfessional !== true || !user) return;
+    (supabase.from("professionals") as any)
+      .select("id, full_name")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }: any) => setProBackup(data || null));
+  }, [isProfessional, user]);
 
 
   const t = isPt ? {
@@ -421,6 +436,23 @@ const Account = () => {
 
         <SectionTitle icon={Shield}>{t.sec_privacy}</SectionTitle>
         <PrivacyRightsCard />
+
+        {/* Backup/exportação de dados do consultório — migrado do dashboard PRO */}
+        {isProfessional === true && proBackup && (
+          <details className="group mt-4 rounded-xl border border-border/60 bg-muted/20">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground transition">
+              <span className="flex items-center gap-2">
+                <FileArchive className="h-3.5 w-3.5" />
+                {isPt ? "Backup, exportação e importação de dados" : language === "es" ? "Copia de seguridad, exportación e importación de datos" : "Data backup, export & import"}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="px-2 pb-2 space-y-3">
+              <ExportDataCard mode="professional" professionalId={proBackup.id} entityName={proBackup.full_name || user?.email || ""} />
+              <ImportDataCard mode="professional" professionalId={proBackup.id} entityName={proBackup.full_name || ""} />
+            </div>
+          </details>
+        )}
 
         <SectionTitle icon={HelpCircle}>{t.sec_help}</SectionTitle>
 
