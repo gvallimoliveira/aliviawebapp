@@ -21,7 +21,7 @@ const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, photos }
     <section
       className={`relative flex ${sectionHeight(format)} flex-col items-center justify-center overflow-hidden ${personaSurface(persona, treatment)}`}
     >
-      <TextureLayer index={treatment + 5} />
+      <TextureLayer persona={persona} index={treatment + 5} />
 
       <motion.div
         initial={{ opacity: 0, y: 22 }}

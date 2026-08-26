@@ -22,7 +22,7 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, photos }: Bl
     <section
       className={`relative flex ${sectionHeight(format)} items-end overflow-hidden ${personaSurface(persona, treatment)}`}
     >
-      <TextureLayer index={treatment + 2} />
+      <TextureLayer persona={persona} index={treatment + 2} />
 
       {/* Palavra-cartaz: fica atrás do sujeito e sangra nas laterais. */}
       <span
