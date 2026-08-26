@@ -1125,6 +1125,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           />
         </div>
       </details>
+      )}
 
 
       {/* Patient list grouped by email */}
