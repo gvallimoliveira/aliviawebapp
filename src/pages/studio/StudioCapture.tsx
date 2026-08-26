@@ -92,6 +92,10 @@ const StudioCapture = ({
     <div ref={ref} id={anchorId} className="relative scroll-mt-4">
       {children}
 
+      {/* Assinatura da marca: obrigatória em toda arte, discreta e adaptada ao fundo. */}
+      {!signed && <StudioSignature dark={dark} corner={corner} />}
+
+
       {visible && (
         <div data-studio-no-export="1" className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2">
           <div className="flex gap-2">
