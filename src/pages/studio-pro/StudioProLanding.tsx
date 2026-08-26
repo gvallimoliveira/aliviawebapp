@@ -261,7 +261,7 @@ const StudioProLanding = () => {
             </div>
           </div>
 
-          <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-4">
+          <div className="mt-10 columns-2 gap-5 md:columns-4 [&>*]:mb-5 [&>*]:break-inside-avoid">
             {gallery.map((item) => (
               <StudioProShowcase key={item.id} item={item} />
             ))}
