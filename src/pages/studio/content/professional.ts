@@ -1,4 +1,8 @@
 import type { WorldContent } from "./types";
+import posterAgente from "@/assets/studio/poster-hipotese.jpg";
+import posterHep from "@/assets/studio/poster-hep-video.jpg";
+import posterDitado from "@/assets/studio/poster-ditado.jpg";
+import posterTestes from "@/assets/studio/poster-testes.jpg";
 
 /**
  * Copy do mundo Profissional.
@@ -97,6 +101,13 @@ const professional: WorldContent = {
     { kicker: "NA SEGURANÇA", word: "Triagem", caption: "Red flags checadas em 100% das avaliações.", topic: "red-flags" },
     { kicker: "NO LONGO PRAZO", word: "História", caption: "Impressão clínica lendo a evolução inteira do caso.", topic: "clinical-impression" },
   ],
+  typos: [
+    { lead: "A conta é nossa.", big: "A decisão", tail: " é sua." },
+    { lead: "Raciocínio clínico com", big: "alma", tail: " de fisioterapeuta." },
+    { lead: "Menos teclado.", big: "Mais clínica", tail: "." },
+    { lead: "O sistema sugere.", big: "Você", tail: " decide." },
+    { lead: "Documentar bem é", big: "proteger", tail: " quem você atende." },
+  ],
   metrics: [
     [
       { value: 12, suffix: " min", label: "economizados por avaliação" },
@@ -128,6 +139,74 @@ const professional: WorldContent = {
       { value: 4, label: "eixos avaliados pelo D.I.F.I" },
       { value: 1, suffix: " upload", label: "para trazer avaliação externa para dentro" },
     ],
+  ],
+  stats: [
+    {
+      heading: "O consultório, medido",
+      items: [
+        { value: "12 min", label: "economizados por avaliação", note: "é uma sessão a mais no fim do dia" },
+        { value: "40+", label: "testes funcionais mapeados", note: "cada um com critério de positividade descrito" },
+        { value: "100%", label: "dos casos com triagem de red flags", note: "segurança não é opcional" },
+      ],
+    },
+    {
+      heading: "Números que sustentam o discurso",
+      items: [
+        { value: "PEDro ≥ 7", label: "nas fontes que o sistema cita", note: "evidência de verdade, não achismo" },
+        { value: "1 link", label: "e a avaliação chega pronta", note: "o paciente responde de casa" },
+        { value: "2 cliques", label: "entre a sessão e o relatório", note: "menos teclado, mais clínica" },
+      ],
+    },
+    {
+      heading: "O fim do retrabalho",
+      items: [
+        { value: "5 h/mês", label: "de burocracia devolvidas ao clínico", note: "tempo que volta para o raciocínio" },
+        { value: "1 PDF", label: "com a sua marca em cada alta", note: "o paciente leva o seu nome, não o nosso" },
+        { value: "6 fases", label: "do método STEPS em cada caso", note: "a progressão tem trilha" },
+      ],
+    },
+    {
+      heading: "A clínica inteira no mesmo raciocínio",
+      items: [
+        { value: "4 eixos", label: "avaliados pelo D.I.F.I", note: "dor, inibição, fraqueza e incapacidade" },
+        { value: "15+", label: "questionários validados", note: "ODI, HOOS, DASH e outros com ponto de corte" },
+        { value: "24h", label: "de prontuário sempre acessível", note: "a história do caso não morre na memória" },
+      ],
+    },
+  ],
+  triptychs: [
+    {
+      heading: "Três palavras que mudam a rotina clínica",
+      panels: [
+        { word: "Avalie", line: "Com método, do link ao teste funcional.", topic: "anamnesis" },
+        { word: "Decida", line: "Com evidência citada e confiança declarada.", topic: "evidence-library" },
+        { word: "Documente", line: "Sem digitar a mesma coisa duas vezes.", topic: "report" },
+      ],
+    },
+    {
+      heading: "O que separa rotina de excelência",
+      panels: [
+        { word: "Suspeite", line: "Red flags em 100% das avaliações.", topic: "red-flags" },
+        { word: "Teste", line: "O cluster certo aparece pela suspeita.", topic: "functional-tests" },
+        { word: "Comprove", line: "Relatório que o paciente entende.", topic: "report" },
+      ],
+    },
+    {
+      heading: "O ciclo que fecha sozinho",
+      panels: [
+        { word: "Ouça", line: "A voz da sessão vira registro estruturado.", topic: "voice-notes" },
+        { word: "Meça", line: "Dinamometria e amplitude comparadas no tempo.", topic: "dynamometry" },
+        { word: "Progrida", line: "HEP em pirâmide de dificuldade.", topic: "hep" },
+      ],
+    },
+    {
+      heading: "A voz do consultório",
+      panels: [
+        { word: "Menos", line: "Formulário, retrabalho e achismo.", topic: "anamnesis" },
+        { word: "Mais", line: "Clínica, presença e evidência.", topic: "clinical-agent" },
+        { word: "Sempre", line: "A decisão final é do fisioterapeuta.", topic: "final-hypothesis" },
+      ],
+    },
   ],
 
   compare: [
@@ -236,19 +315,19 @@ const professional: WorldContent = {
     },
   ],
   features: [
-    { tag: "AGENTE CLÍNICO", title: "Discussão de caso a qualquer hora", description: "Um agente treinado em evidência que discute conduta, gera HEP e cita a fonte.", topic: "clinical-agent" },
+    { tag: "AGENTE CLÍNICO", title: "Discussão de caso a qualquer hora", description: "Um agente treinado em evidência que discute conduta, gera HEP e cita a fonte.", topic: "clinical-agent", headline: "Discuta o caso com quem cita a fonte.", poster: posterAgente },
     { tag: "MECANISMO DE DOR", title: "Nociceptiva, neuropática ou nociplástica", description: "Triagem baseada em Kosek e Finnerup, com implicação direta na conduta.", topic: "pain-mechanism" },
-    { tag: "HEP", title: "Programa domiciliar com vídeo", description: "Exercícios em pirâmide de dificuldade, respeitando restrições posicionais.", topic: "hep" },
+    { tag: "HEP", title: "Programa domiciliar com vídeo", description: "Exercícios em pirâmide de dificuldade, respeitando restrições posicionais.", topic: "hep", headline: "O exercício sai do papel.", poster: posterHep },
     { tag: "REAVALIAÇÃO EXPRESSA", title: "Comparar sem recomeçar", description: "Pré-preenche o que já sabemos e destaca o que mudou desde a última visita.", topic: "express-reassessment" },
     { tag: "DINAMOMETRIA", title: "A conta da assimetria é nossa — a decisão é sua", description: "Upload do laudo externo, extração dos valores e semáforo de risco, sem cálculo manual.", topic: "dynamometry" },
     { tag: "DIFERENCIAIS", title: "Quando a confiança não é alta, o sistema abre o leque", description: "Diagnósticos diferenciais com critério de inclusão e exclusão por escrito.", topic: "differential" },
     { tag: "FABQ-BRASIL", title: "Medo-evitação medido, não presumido", description: "Escores de atividade e trabalho com pontos de corte validados.", topic: "fabq" },
     { tag: "SAÚDE GERAL", title: "Comorbidade com nível de risco graduado", description: "Hipertensão, diabetes, cardiopatia e medicação contínua na mesma tela.", topic: "health-general" },
     { tag: "RELATÓRIO DE ALTA", title: "Evolução comparativa em um documento", description: "Do primeiro atendimento à alta, com números lado a lado.", topic: "discharge-report" },
-    { tag: "VOZ", title: "Fale, o sistema escreve", description: "Grave a sessão, receba resumo estruturado. O áudio é descartado.", topic: "voice-notes" },
+    { tag: "VOZ", title: "Fale, o sistema escreve", description: "Grave a sessão, receba resumo estruturado. O áudio é descartado.", topic: "voice-notes", headline: "Você atende. O Aliv.iA escreve.", poster: posterDitado },
     { tag: "MAPA DE DOR", title: "Topografia marcada pelo próprio paciente", description: "Região, extensão e padrão da dor chegam prontos para leitura clínica.", topic: "pain-map" },
     { tag: "ANAMNESE", title: "História clínica em campos comparáveis", description: "Queixa, início, fatores de piora e histórico sempre no mesmo formato.", topic: "anamnesis" },
-    { tag: "TESTES FUNCIONAIS", title: "Cluster sugerido pela suspeita", description: "Laslett, neurodinâmica e ombro com critério de positividade descrito.", topic: "functional-tests" },
+    { tag: "TESTES FUNCIONAIS", title: "Cluster sugerido pela suspeita", description: "Laslett, neurodinâmica e ombro com critério de positividade descrito.", topic: "functional-tests", headline: "O teste certo, na hora certa.", poster: posterTestes },
     { tag: "QUESTIONÁRIOS", title: "Escore validado, interpretado na hora", description: "ODI, HOOS, DASH e outros com ponto de corte e significado clínico.", topic: "questionnaires" },
     { tag: "HIPÓTESE FINAL", title: "A palavra final é sua, e fica registrada", description: "Sobrescreva a hipótese da IA: vale no prontuário, no PDF e no WhatsApp.", topic: "final-hypothesis" },
     { tag: "AVALIAÇÃO EXTERNA", title: "Traga o que veio de fora para dentro do método", description: "Upload de PDF ou foto: a IA mapeia para o padrão Aliv.iA e vira avaliação nativa.", topic: "external-upload" },
