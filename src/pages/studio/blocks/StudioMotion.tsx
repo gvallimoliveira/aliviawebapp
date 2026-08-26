@@ -16,7 +16,8 @@ export type MotionKind =
   | "gradientDrift"
   | "parallaxScrub"
   | "maskWipe"
-  | "tiltRise";
+  | "tiltRise"
+  | "slideDrift";
 
 export const MOTION_KINDS: MotionKind[] = [
   "focusPull",
@@ -26,6 +27,7 @@ export const MOTION_KINDS: MotionKind[] = [
   "parallaxScrub",
   "maskWipe",
   "tiltRise",
+  "slideDrift",
 ];
 
 type Props = { kind?: MotionKind; children: ReactNode };
@@ -40,6 +42,7 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
   const zoomIn = useTransform(p, [0, 0.45, 0.55, 1], [0.9, 1, 1, 1.05]);
   const zoomOut = useTransform(p, [0, 0.45, 0.55, 1], [1.12, 1, 1, 0.96]);
   const rise = useTransform(p, [0, 0.45, 0.55, 1], [70, 0, 0, -50]);
+  const drift = useTransform(p, [0, 0.45, 0.55, 1], [80, 0, 0, -60]);
   const tilt = useTransform(p, [0, 0.45, 0.55, 1], [7, 0, 0, -5]);
   const fade = useTransform(p, [0, 0.28, 0.72, 1], [0, 1, 1, 0.35]);
   const hue = useTransform(p, [0, 0.5, 1], [0.55, 1, 0.7]);
@@ -79,6 +82,16 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
     return (
       <div ref={ref} className="overflow-hidden">
         <motion.div style={{ y: rise, opacity: fade }}>{children}</motion.div>
+      </div>
+    );
+  }
+
+  if (kind === "slideDrift") {
+    return (
+      <div ref={ref} className="overflow-hidden">
+        <motion.div style={{ x: drift, opacity: fade }} className="will-change-transform">
+          {children}
+        </motion.div>
       </div>
     );
   }
