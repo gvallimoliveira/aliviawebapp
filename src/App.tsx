@@ -166,6 +166,8 @@ const App = () => {
                   <Route path="/termos" element={<Terms />} />
                   {/* Interno: landing mutável de marketing, só no preview + conta admin */}
                   <Route path="/studio" element={<StudioLanding />} />
+                  <Route path="/studio-pro" element={<StudioProLanding />} />
+
 
                   <Route path="*" element={<NotFound />} />
                 </Routes>
