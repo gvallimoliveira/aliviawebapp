@@ -60,14 +60,14 @@ const PendingReviewAlert = ({ assessments, language, navigate, onMarkReviewed }:
     <Card className="border-amber-500/30 bg-amber-500/5 overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 py-3 px-5 hover:bg-amber-500/10 transition-colors"
+        className="w-full flex items-center gap-2 py-2 px-4 hover:bg-amber-500/10 transition-colors"
       >
-        <FileCheck className="h-5 w-5 text-amber-600 shrink-0" />
-        <p className="text-sm text-muted-foreground flex-1 text-left">
+        <FileCheck className="h-4 w-4 text-amber-600 shrink-0" />
+        <p className="text-xs text-muted-foreground flex-1 text-left">
           <span className="font-semibold text-amber-700">
             {assessments.length} {isPt ? "nova(s) avaliação(ões)" : "new assessment(s)"}
           </span>{" "}
-          <span className="text-xs">
+          <span className="text-[11px]">
             {isPt ? "— pendentes de revisão" : "— pending review"}
           </span>
         </p>
@@ -757,30 +757,6 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         </div>
       )}
 
-      {/* Clinical Agent card — standalone */}
-      {hasAgentAccess && !isSimulated && (
-        <Card className="border-primary/20 overflow-hidden relative">
-          <button
-            type="button"
-            onClick={() => navigate("/agente")}
-            className="flex items-center gap-3 p-4 text-left hover:bg-primary/[0.03] transition-colors group w-full"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0 group-hover:bg-primary/20 transition-colors">
-              <Brain className="h-5 w-5 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                Agente Clínico
-                <Badge variant="outline" className="text-[10px] border-primary/30 text-primary px-1 py-0">
-                  {agentBetaInternal ? "Beta interno" : "Beta"}
-                </Badge>
-              </p>
-              <p className="text-xs text-muted-foreground truncate">Raciocínio clínico · Anonimização · HEP</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-auto" />
-          </button>
-        </Card>
-      )}
 
 
       {/* Clinic volume alert — only for owner in clinic mode */}
