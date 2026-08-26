@@ -71,6 +71,11 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 20 20% 18%;
     --sidebar-border: 30 18% 90%;
     --sidebar-ring: 168 55% 38%;
+
+    /* Escala de cinza neutra — Studio "Edição Mono" (B&W adaptado) */
+    --mono-ink: 0 0% 10%;
+    --mono-paper: 0 0% 92%;
+    --mono-mid: 0 0% 56%;
   }
 
   .dark {
