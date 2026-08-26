@@ -24,7 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Stethoscope, Link2, Copy, Check, Loader2, CreditCard, Users, Plus,
+  Stethoscope, Link2, Copy, Check, Loader2, Users, Plus,
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
   MessageCircle, CheckCircle, XCircle, UserCheck, Play, ToggleLeft,
@@ -40,8 +40,8 @@ import ExportDataCard from "./ExportDataCard";
 import ImportDataCard from "./ImportDataCard";
 import { generateAssessmentPdf, generateAssessmentPdfBlob } from "@/utils/generatePdf";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
-import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
-import { Brain } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Info } from "lucide-react";
 
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp, FileArchive } from "lucide-react";
@@ -133,7 +133,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { hasAccess: hasAgentAccess, isBetaInternal: agentBetaInternal } = useClinicalAgentAccess();
+  
 
   const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean; is_student?: boolean; is_vip?: boolean } | null>(null);
   const [subLoading, setSubLoading] = useState(true);
@@ -144,7 +144,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [referralActionLoading, setReferralActionLoading] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [lifetimeLoading, setLifetimeLoading] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
+  
   const [isSimulatedInternal, setIsSimulatedInternal] = useState(false);
   const isSimulated = isSimulatedProp !== undefined ? isSimulatedProp : isSimulatedInternal;
   const [addPatientOpen, setAddPatientOpen] = useState(false);
@@ -396,18 +396,6 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     }
   };
 
-  const handleManageSubscription = async () => {
-    setPortalLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
-      if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-    } catch {
-      toast({ title: "Erro", description: "Não foi possível abrir o portal de assinatura.", variant: "destructive" });
-    } finally {
-      setPortalLoading(false);
-    }
-  };
 
   const handleLifetimeCheckout = async () => {
     setLifetimeLoading(true);
