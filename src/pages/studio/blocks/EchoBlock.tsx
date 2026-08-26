@@ -18,7 +18,6 @@ import { TextureLayer } from "./Texture";
 const REPETITIONS = 7;
 
 const EchoBlock = ({ content, rng, treatment, format, persona, picker }: BlockProps) => {
-  void rng; // variação vem do treatment/persona; a palavra vem do picker editorial.
   const [item] = picker.pick(content.kinetic, 1, rng, (k) => [k.topic]);
   const word = item.word.toUpperCase();
   const dark = treatment === 1;
