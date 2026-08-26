@@ -1,10 +1,23 @@
-import { useMemo, useState } from "react";
-import { CalendarDays, FileText, ImageIcon, LayoutGrid, Sparkles, Trash2, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import {
+  CalendarDays,
+  Download,
+  FileText,
+  ImageIcon,
+  LayoutGrid,
+  Sparkles,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WORLDS } from "./content";
 import { buildSchedule } from "./schedule";
 import { useStudioThumbs } from "./useStudioThumbs";
+import { backupFileName, buildBackup, parseBackup, restoreBackup } from "./favoritesBackup";
 import type { StudioFavorite } from "./useStudioFavorites";
+
 
 type Props = {
   favorites: StudioFavorite[];
@@ -40,6 +53,42 @@ const StudioFavorites = ({
   const [tab, setTab] = useState<"gallery" | "schedule">("gallery");
   const thumbs = useStudioThumbs();
   const schedule = useMemo(() => buildSchedule(favorites), [favorites]);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  /** Baixa favoritos + miniaturas em um JSON único (à prova de limpeza de cache). */
+  const downloadBackup = () => {
+    try {
+      const blob = new Blob([JSON.stringify(buildBackup(favorites))], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = backupFileName();
+      a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast.success(`Backup com ${favorites.length} favoritos baixado`);
+    } catch (error) {
+      console.error("[studio] backup failed", error);
+      toast.error("Não foi possível gerar o backup.");
+    }
+  };
+
+  /** Restaura somando ao acervo atual — nunca apaga favoritos existentes. */
+  const handleRestore = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const added = restoreBackup(await parseBackup(file));
+      toast.success(
+        added > 0 ? `${added} favoritos restaurados. Recarregue a página.` : "Nada novo para restaurar.",
+      );
+    } catch (error) {
+      console.error("[studio] restore failed", error);
+      toast.error("Arquivo de backup inválido.");
+    }
+  };
+
+
 
   const Thumb = ({ fav, className = "" }: { fav: StudioFavorite; className?: string }) => {
     const src = thumbs[fav.id];
@@ -200,8 +249,39 @@ const StudioFavorites = ({
           </p>
         </>
       )}
+
+      {/* Backup do acervo: favoritos + miniaturas em um único JSON. */}
+      <div className="mt-3 grid gap-1.5 border-t border-border pt-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 w-full gap-1.5 rounded-xl text-xs"
+          onClick={downloadBackup}
+          disabled={favorites.length === 0}
+        >
+          <Download className="h-3.5 w-3.5" />
+          Backup do acervo (.json)
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-full gap-1.5 rounded-xl text-xs"
+          onClick={() => fileRef.current?.click()}
+        >
+          <Upload className="h-3.5 w-3.5" />
+          Restaurar backup
+        </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={handleRestore}
+        />
+      </div>
     </div>
   );
 };
+
 
 export default StudioFavorites;

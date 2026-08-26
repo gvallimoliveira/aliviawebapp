@@ -41,12 +41,16 @@ const write = (store: Store) => {
   window.dispatchEvent(new Event(EVENT));
 };
 
+/** Substitui o mapa completo de miniaturas (usado na restauração de backup). */
+export const replaceThumbs = (store: Store) => write(store);
+
 export const removeThumb = (id: string) => {
   const store = readThumbs();
   if (!(id in store)) return;
   delete store[id];
   write(store);
 };
+
 
 /** Captura uma miniatura leve do bloco e associa ao id do favorito. */
 export const captureThumb = async (node: HTMLElement, id: string) => {
