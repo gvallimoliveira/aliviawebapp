@@ -57,6 +57,11 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        mono: {
+          ink: "hsl(var(--mono-ink))",
+          paper: "hsl(var(--mono-paper))",
+          mid: "hsl(var(--mono-mid))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
