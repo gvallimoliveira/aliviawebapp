@@ -72,6 +72,8 @@ const StudioLanding = lazy(() => import("./pages/studio/StudioLanding"));
 const StudioProLanding = lazy(() => import("./pages/studio-pro/StudioProLanding"));
 const StudioProApp = lazy(() => import("./pages/studio-pro/StudioProApp"));
 const StudioProAuth = lazy(() => import("./pages/studio-pro/StudioProAuth"));
+const StudioProBrand = lazy(() => import("./pages/studio-pro/StudioProBrand"));
+const StudioProVip = lazy(() => import("./pages/studio-pro/StudioProVip"));
 
 
 
