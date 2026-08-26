@@ -123,6 +123,59 @@ const BrandBlock = ({ rng, treatment, format, persona }: BlockProps) => {
     );
   }
 
+  if (treatment === 4) {
+    // Wordmark vertical em contorno, cortado na lateral direita + statement central.
+    return (
+      <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
+        <TextureLayer persona={persona} index={treatment} />
+        <div className="pointer-events-none absolute -right-6 top-1/2 -translate-y-1/2 opacity-90 md:-right-2">
+          <VerticalWordmark stroke />
+        </div>
+        <div className="container relative py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 22 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+            className="mx-auto max-w-3xl text-center"
+          >
+            <p className="mb-6 text-[11px] font-semibold uppercase tracking-[0.32em] text-primary">{BRAND_NAME}</p>
+            <p className="text-3xl font-bold leading-[1.15] tracking-tight text-foreground md:text-5xl">
+              {renderAccent(statement, accentVariant)}
+            </p>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  if (treatment === 5) {
+    // Wordmark vertical preenchido em baixa opacidade na esquerda + frase e logo.
+    return (
+      <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
+        <TextureLayer persona={persona} index={treatment} />
+        <GeoOrnament index={treatment + persona.textureShift} />
+        <div className="pointer-events-none absolute -left-6 top-1/2 -translate-y-1/2 md:-left-2">
+          <VerticalWordmark />
+        </div>
+        <div className="container relative py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 22 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+            className="mx-auto flex max-w-2xl flex-col items-center text-center"
+          >
+            <img src={BRAND_LOGO} alt={BRAND_NAME} className="mb-8 h-12 w-12 md:h-14 md:w-14" />
+            <p className="text-3xl font-bold leading-[1.15] tracking-tight text-foreground md:text-5xl">
+              {renderAccent(statement, accentVariant)}
+            </p>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
   // Treatment 0 — logo gigante ao fundo, statement em primeiro plano.
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
