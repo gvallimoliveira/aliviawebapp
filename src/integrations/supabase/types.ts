@@ -3611,6 +3611,42 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_photos: {
+        Row: {
+          created_at: string
+          credit: string | null
+          id: string
+          label: string
+          owner_id: string
+          sort_order: number
+          storage_path: string
+          updated_at: string
+          usage: string
+        }
+        Insert: {
+          created_at?: string
+          credit?: string | null
+          id?: string
+          label?: string
+          owner_id: string
+          sort_order?: number
+          storage_path: string
+          updated_at?: string
+          usage?: string
+        }
+        Update: {
+          created_at?: string
+          credit?: string | null
+          id?: string
+          label?: string
+          owner_id?: string
+          sort_order?: number
+          storage_path?: string
+          updated_at?: string
+          usage?: string
+        }
+        Relationships: []
+      }
       subscription_admin_actions: {
         Row: {
           action: string
