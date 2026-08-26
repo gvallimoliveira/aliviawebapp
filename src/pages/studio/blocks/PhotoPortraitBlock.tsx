@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { pickPhoto } from "../photos";
+import PhotoFrame from "./PhotoFrame";
 import { renderAccent, TextureLayer } from "./Texture";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 
@@ -41,10 +42,9 @@ const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, photos }
           {title}
         </h2>
 
-        <img
-          src={photo.src}
-          alt={photo.label || "Aliv.iA"}
-          className="max-h-[46svh] w-[58%] rounded-2xl border border-border object-cover shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.5)]"
+        <PhotoFrame
+          photo={photo}
+          className="h-[46svh] w-[58%] rounded-2xl border border-border shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.5)]"
         />
 
         <p className="mt-7 max-w-md text-[12px] leading-relaxed text-muted-foreground md:text-sm">
