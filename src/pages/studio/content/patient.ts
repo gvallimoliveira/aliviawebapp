@@ -21,7 +21,7 @@ const patient: WorldContent = {
     { strong: "Seu exercício errado pode estar mantendo a dor.", rest: "Programa em vídeo escolhido para o seu quadro, com progressão respeitosa." },
     { strong: "Dói no ombro e na lombar? São dois casos, não um.", rest: "Cada condição com seu próprio histórico, seu próprio plano e sua própria curva." },
     { strong: "Nem toda dor é a mesma dor.", rest: "A triagem identifica se o padrão é nociceptivo, neuropático ou nociplástico — e isso muda o plano." },
-    { strong: "Você pode falar, em vez de digitar.", rest: "Grave sua anamnese em áudio e receba o resumo estruturado — ideal para quem prefere contar a história com naturalidade." },
+    { strong: "Responder é simples: você escolhe no toque.", rest: "Perguntas objetivas e mapa de dor no celular — sem termos técnicos, sem formulário infinito." },
     { strong: "Três meses de dor não se resolvem em três minutos de consulta.", rest: "Chegue com o seu caso organizado e ganhe tempo de verdade com o profissional." },
     { strong: "O exercício que curou o vizinho pode ser o seu pior remédio.", rest: "O que alivia uma dor pode manter outra. O seu plano precisa ser seu." },
     { strong: "Você sabe onde dói. A gente ajuda a entender por quê.", rest: "Do mapa de dor ao plano de exercícios, em linguagem que você entende." },
@@ -126,7 +126,7 @@ const patient: WorldContent = {
   ],
   features: [
     { tag: "MAPA DE DOR", title: "Aponte onde dói, no seu corpo", description: "Toque na região e descreva o padrão — sem precisar saber nomes técnicos.", topic: "pain-map" },
-    { tag: "VOZ", title: "Conte sua história por áudio", description: "Grave a anamnese em voz e receba um resumo estruturado — sem digitar nada.", topic: "voice-notes" },
+    { tag: "QUESTIONÁRIOS", title: "Perguntas validadas, respostas em toques", description: "Instrumentos usados na clínica, traduzidos para uma linguagem simples.", topic: "questionnaires" },
     { tag: "LEITURA DO CASO", title: "Uma síntese de como você está evoluindo", description: "O Aliv.iA compara suas avaliações e resume o que mudou desde o começo.", topic: "clinical-impression" },
 
     { tag: "SEGURANÇA", title: "Sinais de alerta sempre checados", description: "Se algo exigir avaliação médica, o Aliv.iA avisa antes de qualquer exercício.", topic: "red-flags" },
