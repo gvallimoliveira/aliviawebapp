@@ -47,7 +47,7 @@ const SlideImage = ({ topic }: { topic?: TopicId }) => {
     <img
       src={src}
       alt="Tela do Aliv.iA"
-      className="mt-6 w-full max-w-md rounded-2xl border border-border object-cover shadow-sm"
+      className="mt-6 max-h-[34vh] w-auto max-w-full rounded-2xl border border-border shadow-sm md:max-w-md"
     />
   );
 };

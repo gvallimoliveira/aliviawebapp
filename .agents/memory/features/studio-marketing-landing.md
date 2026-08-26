@@ -72,6 +72,29 @@ Nunca deve ser linkada nas páginas publicadas, nem entrar no sitemap (`public/r
 - TypoBlock agora tem 6 tratamentos (3 originais + 3 chips); TREATMENT_COUNT.typo = 6.
 - MarqueeBlock varia o separador geométrico (ponto, losango, plus, quadrado) por persona.
 
+## Estratégia de conteúdo (2026-08-27, decisões do fundador)
+
+- Objetivo do perfil: converter fisios (Pro), atrair pacientes (B2C) e branding/autoridade.
+- Tom de voz: equilibrado com provocação leve. Provas reais sempre anonimizadas
+  ("CASO REAL, NOME PROTEGIDO"). CTA aponta para a landing do mundo do post.
+- `content/brandDna.ts` codifica o DNA: posicionamento, léxico (frases proibidas como
+  "a IA diagnostica por você"), pilares de conteúdo e regras de provocação.
+- `src/pages/studio/brand.ts` é o módulo único de lockups (BRAND_LOGO/NAME/SLOGAN) —
+  fundação para o futuro Studio-as-a-product multi-tenant. Todo bloco usa daí.
+- Novos formatos de bloco (todos no `TREATMENT_COUNT` e no `caption.ts`):
+  - **StoryBlock** (3 trat.) — storytelling de caso anonimizado: kicker → beats → virada → moral.
+  - **ListBlock** (3 trat.) — lista editorial de valor ("4 sinais de que..."), fecho amarra na marca.
+  - **BrandBlock** (4 trat.) — lockups institucionais (logo gigante, wordmark, selo) com
+    `BRAND_DNA.statements`; só existe em versões de marca/autoridade.
+  - **CarouselBlock** (3 trat.) — o compositor expande 1 bloco `carousel` em sequência
+    capa → 2-4 slides → CTA (máx. 6 artes), com `slide={index,total,group}` estável:
+    o `group` (posição na página) ancora o roteiro, então toda a sequência usa o mesmo
+    carrossel. `composePage(rng, persona, inspiration, carousels)` recebe o pool como
+    4º argumento; sem roteiros, degrada para `typo`. Slides do miolo podem mostrar a
+    screenshot do `topic` (mesma regra de coerência dos demais blocos).
+- WorldContent ganhou `stories`, `lists`, `carousels` (obrigatórios; acadêmico/clínica
+  usam os defaults de `content/defaults.ts`).
+
 ## Equipe criativa (personas) — 2026-08-26
 - `src/pages/studio/personas.ts`: 6 personas (Marina, Caio, Luma, Otto, Bia, Enzo) derivadas da seed via `personaForSeed`. Cada uma viesa superfícies (rotação), tratamentos, densidade, nº de blocos cinéticos, marquees e motion.
 - `composePage(rng, persona?, inspiration?)` — persona é o 2º argumento (não trocar a ordem; captionFile.kindAt depende dela para reconstruir favoritos).
