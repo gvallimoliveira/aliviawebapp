@@ -215,6 +215,125 @@ const canvasToBlob = (canvas: HTMLCanvasElement, type = "image/png", quality?: n
     );
   });
 
+type StrokeSpec = { element: HTMLElement; color: string; width: number };
+
+const parseCssColor = (value: string): [number, number, number, number] | null => {
+  const match = value.match(/rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:[\s,/]+([\d.]+))?\s*\)/);
+  if (!match) return null;
+  return [Number(match[1]), Number(match[2]), Number(match[3]), match[4] === undefined ? 1 : Number(match[4])];
+};
+
+/**
+ * Neutraliza o `-webkit-text-stroke` dos destaques vazados DURANTE a captura.
+ *
+ * O html-to-image rasteriza o DOM via SVG foreignObject e o WebKit (iPhone)
+ * simplesmente não pinta esse efeito lá dentro — a palavra destacada some do
+ * PNG. Escondemos o contorno CSS e o repintamos no canvas depois, o que torna
+ * o resultado idêntico em todos os navegadores.
+ */
+const hideCssStrokes = (node: HTMLElement) => {
+  const specs: StrokeSpec[] = [];
+  const restores: Array<() => void> = [];
+
+  for (const el of Array.from(node.querySelectorAll<HTMLElement>("[data-studio-stroke]"))) {
+    if (el.closest('[data-studio-no-export="1"]')) continue;
+    const style = getComputedStyle(el);
+    const width = Number.parseFloat(style.getPropertyValue("-webkit-text-stroke-width")) || 0;
+    const color = style.getPropertyValue("-webkit-text-stroke-color");
+    if (!width || !color || !parseCssColor(color)) continue;
+
+    specs.push({ element: el, color, width });
+    const previous = el.style.cssText;
+    el.style.setProperty("-webkit-text-stroke-width", "0px");
+    restores.push(() => {
+      el.style.cssText = previous;
+    });
+  }
+
+  return { specs, restore: () => restores.forEach((fn) => fn()) };
+};
+
+/**
+ * Repinta no canvas as palavras em contorno vazado.
+ *
+ * O traço é desenhado e depois tem a metade INTERNA removida com uma máscara
+ * no formato do glifo (destination-out). Sobra apenas o contorno externo — o
+ * mesmo visual da tela, mas com os miolos das letras (e, a, o) sempre abertos,
+ * sem os traços sobrepostos que o stroke centrado do CSS produz.
+ */
+export const paintStrokeTextOnCanvas = (
+  canvas: HTMLCanvasElement,
+  node: HTMLElement,
+  specs: StrokeSpec[],
+) => {
+  if (!specs.length) return;
+  const context = canvas.getContext("2d");
+  if (!context) return;
+
+  const rootRect = node.getBoundingClientRect();
+  if (!rootRect.width || !rootRect.height) return;
+  const scaleX = canvas.width / rootRect.width;
+  const scaleY = canvas.height / rootRect.height;
+
+  for (const spec of specs) {
+    const el = spec.element;
+    const rect = el.getBoundingClientRect();
+    const style = getComputedStyle(el);
+    if (!rect.width || !rect.height || style.display === "none" || style.visibility === "hidden") continue;
+
+    const fontSize = (Number.parseFloat(style.fontSize) || 16) * scaleY;
+    const font = `${style.fontStyle} ${style.fontWeight} ${fontSize}px ${style.fontFamily}`;
+    let text = el.textContent || "";
+    if (!text.trim()) continue;
+    if (style.textTransform === "uppercase") text = text.toUpperCase();
+    else if (style.textTransform === "capitalize") text = text.replace(/\b\p{L}/gu, (c) => c.toUpperCase());
+
+    const strokeWidth = spec.width * Math.max(scaleX, scaleY);
+    const pad = Math.ceil(strokeWidth + 8);
+
+    const off = document.createElement("canvas");
+    off.width = Math.ceil(rect.width * scaleX) + pad * 2;
+    off.height = Math.ceil(rect.height * scaleY) + pad * 2;
+    const octx = off.getContext("2d");
+    if (!octx) continue;
+
+    octx.font = font;
+    const spacing = style.letterSpacing === "normal" ? 0 : (Number.parseFloat(style.letterSpacing) || 0) * scaleX;
+    if ("letterSpacing" in octx) {
+      (octx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${spacing}px`;
+    }
+    octx.textBaseline = "alphabetic";
+    octx.lineJoin = "round";
+
+    const metrics = octx.measureText(text);
+    const descent = metrics.fontBoundingBoxDescent ?? metrics.actualBoundingBoxDescent ?? fontSize * 0.22;
+    const baselineY = pad + rect.height * scaleY - descent;
+
+    octx.lineWidth = strokeWidth;
+    octx.strokeStyle = spec.color;
+    octx.strokeText(text, pad, baselineY);
+
+    // Corta a metade interna do traço usando o glifo preenchido como máscara.
+    octx.globalCompositeOperation = "destination-out";
+    octx.fillStyle = "#000";
+    octx.fillText(text, pad, baselineY);
+    octx.globalCompositeOperation = "source-over";
+
+    // Se algum dia o destaque tiver preenchimento visível, repinta o miolo.
+    const fill = parseCssColor(style.color);
+    if (fill && fill[3] > 0.02) {
+      octx.fillStyle = style.color;
+      octx.fillText(text, pad, baselineY);
+    }
+
+    context.drawImage(
+      off,
+      (rect.left - rootRect.left) * scaleX - pad,
+      (rect.top - rootRect.top) * scaleY - pad,
+    );
+  }
+};
+
 export const renderNodeToBlob = async (
   node: HTMLElement,
   pixelRatio: number,
@@ -223,14 +342,23 @@ export const renderNodeToBlob = async (
 ) => {
   const fontEmbedCSS = await resolveFontCss(node);
   const backgroundColor = getComputedStyle(document.body).backgroundColor || "#ffffff";
-  const canvas = await toCanvas(node, {
-    pixelRatio,
-    backgroundColor,
-    skipFonts: fontEmbedCSS === null,
-    fontEmbedCSS: fontEmbedCSS ?? undefined,
-    filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
-  });
+  const { specs, restore } = hideCssStrokes(node);
+
+  let canvas: HTMLCanvasElement;
+  try {
+    canvas = await toCanvas(node, {
+      pixelRatio,
+      backgroundColor,
+      skipFonts: fontEmbedCSS === null,
+      fontEmbedCSS: fontEmbedCSS ?? undefined,
+      filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
+    });
+  } finally {
+    restore();
+  }
+
   paintImagesOnCanvas(canvas, node);
+  paintStrokeTextOnCanvas(canvas, node, specs);
   return canvasToBlob(canvas, type, quality);
 };
 
