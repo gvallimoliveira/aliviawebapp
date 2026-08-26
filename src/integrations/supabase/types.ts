@@ -3522,6 +3522,7 @@ export type Database = {
           brand_id: string | null
           caption: string | null
           created_at: string
+          folder: string
           format: string | null
           headline: string | null
           id: string
@@ -3536,6 +3537,7 @@ export type Database = {
           brand_id?: string | null
           caption?: string | null
           created_at?: string
+          folder?: string
           format?: string | null
           headline?: string | null
           id?: string
@@ -3550,6 +3552,7 @@ export type Database = {
           brand_id?: string | null
           caption?: string | null
           created_at?: string
+          folder?: string
           format?: string | null
           headline?: string | null
           id?: string
@@ -3611,6 +3614,39 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_granted_access: {
+        Row: {
+          created_at: string
+          email: string
+          granted_by: string | null
+          id: string
+          note: string | null
+          plan: string
+          revoked_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          granted_by?: string | null
+          id?: string
+          note?: string | null
+          plan?: string
+          revoked_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          granted_by?: string | null
+          id?: string
+          note?: string | null
+          plan?: string
+          revoked_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       studio_internal_favorites: {
         Row: {
           favorites: Json
@@ -3634,6 +3670,7 @@ export type Database = {
       }
       studio_photos: {
         Row: {
+          brand_id: string | null
           created_at: string
           credit: string | null
           focus_x: number
@@ -3650,6 +3687,7 @@ export type Database = {
           zoom: number
         }
         Insert: {
+          brand_id?: string | null
           created_at?: string
           credit?: string | null
           focus_x?: number
@@ -3666,6 +3704,7 @@ export type Database = {
           zoom?: number
         }
         Update: {
+          brand_id?: string | null
           created_at?: string
           credit?: string | null
           focus_x?: number
@@ -3681,7 +3720,15 @@ export type Database = {
           usage?: string
           zoom?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "studio_photos_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "studio_brands"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_admin_actions: {
         Row: {
@@ -4428,6 +4475,7 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_studio_vip: { Args: never; Returns: boolean }
       match_knowledge_articles: {
         Args: {
           match_count?: number
