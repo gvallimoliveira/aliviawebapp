@@ -3,31 +3,35 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import {
   ALIGNMENTS,
   alignClasses,
-  DOTS_STYLE,
-  MESH_STYLE,
   personaSurface,
   pickHeadline,
   sectionHeight,
   type BlockProps,
 } from "./shared";
+import { ACCENT_STYLES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
 
 /**
  * Hero statement — a full-frame manifesto line for the selected world.
- * Treatments: 0 centered + logo halo, 1 editorial left, 2 asymmetric with mesh,
+ * Treatments: 0 centered + logo halo, 1 editorial left, 2 asymmetric,
  * 3 cartaz tipográfico (headline gigante + kicker em pílula),
  * 4 manifesto em coluna dupla (emblema da marca em moldura).
- * A headline respeita o gosto da persona (curta = impacto, longa = editorial).
+ * A headline respeita o gosto da persona (curta = impacto, longa = editorial)
+ * e ganha uma palavra em destaque contrastante (chip/cor/sublinhado da marca).
  */
 const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
   const headline = pickHeadline(rng, content.headlines, persona.headlineTaste);
   const kicker = rng.pick(content.kickers);
   const sub = rng.pick(content.subs);
   const surface = personaSurface(persona, treatment);
+  const accentVariant = rng.int(ACCENT_STYLES.length);
+  const strong = renderAccent(headline.strong, accentVariant);
 
   if (treatment === 3) {
     // Cartaz tipográfico: a headline é a arte; logo e kicker viram selo no topo.
     return (
       <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}>
+        <TextureLayer persona={persona} index={treatment} />
+        <GeoOrnament index={treatment + persona.surfaceShift} />
         <div
           aria-hidden
           className="pointer-events-none absolute -bottom-32 left-[-18%] h-[55vh] w-[55vh] rounded-full bg-accent/30 blur-[110px]"
@@ -46,8 +50,8 @@ const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
                 {kicker}
               </p>
             </div>
-            <h1 className="max-w-5xl text-4xl font-bold leading-[1.02] tracking-tight text-foreground md:text-7xl">
-              {headline.strong}
+            <h1 className="max-w-5xl text-4xl font-bold leading-[1.06] tracking-tight text-foreground md:text-7xl">
+              {strong}
             </h1>
             <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-2xl">{headline.rest}</p>
             <div className="mt-1 flex items-center gap-4">
@@ -64,7 +68,7 @@ const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
     // Manifesto em coluna dupla: texto à esquerda, emblema da marca emoldurado.
     return (
       <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}>
-        <div aria-hidden className="absolute inset-0 opacity-50" style={DOTS_STYLE} />
+        <TextureLayer persona={persona} index={treatment} />
         <div className="container relative grid items-center gap-12 py-16 md:grid-cols-[1.5fr_1fr]">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -74,8 +78,8 @@ const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
             className="flex flex-col items-start gap-6 text-left"
           >
             <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-primary md:text-xs">{kicker}</p>
-            <h1 className="text-3xl font-bold leading-[1.08] tracking-tight text-foreground md:text-5xl">
-              {headline.strong}
+            <h1 className="text-3xl font-bold leading-[1.1] tracking-tight text-foreground md:text-5xl">
+              {strong}
             </h1>
             <p className="max-w-xl text-base leading-relaxed text-muted-foreground md:text-xl">{headline.rest}</p>
             <p className="text-sm font-medium text-primary md:text-base">{sub}</p>
@@ -97,11 +101,11 @@ const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
 
   const align = ALIGNMENTS[treatment % ALIGNMENTS.length];
   const classes = alignClasses(align);
-  const showMesh = treatment === 2;
 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}>
-      {showMesh && <div aria-hidden className="absolute inset-0 opacity-60" style={MESH_STYLE} />}
+      {treatment > 0 && <TextureLayer persona={persona} index={treatment} />}
+      {treatment > 0 && <GeoOrnament index={treatment + persona.textureShift} />}
       <div aria-hidden className="pointer-events-none absolute -top-24 right-[-20%] h-[60vh] w-[60vh] rounded-full bg-primary/10 blur-[110px]" />
 
       <div className="container relative py-16">
@@ -120,8 +124,8 @@ const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
 
           <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-primary md:text-xs">{kicker}</p>
 
-          <h1 className="text-3xl font-bold leading-[1.08] tracking-tight text-foreground md:text-5xl lg:text-6xl">
-            {headline.strong}
+          <h1 className="text-3xl font-bold leading-[1.12] tracking-tight text-foreground md:text-5xl lg:text-6xl">
+            {strong}
           </h1>
 
           <p className="max-w-xl text-base leading-relaxed text-muted-foreground md:text-xl">
