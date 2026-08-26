@@ -1,9 +1,35 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Download, FileText, Loader2, Star, StarOff, Type } from "lucide-react";
 import { exportNodeAsPng } from "./exportImage";
 import { captureThumb, removeThumb } from "./thumbs";
 import { exportTextFile } from "./exportText";
+import StudioSignature, { type SignatureCorner } from "./blocks/StudioSignature";
+import { BRAND_NAME } from "./brand";
 import { toast } from "sonner";
+
+/** Luminância do fundo real da arte — decide a versão mono clara ou escura. */
+const isDarkSurface = (node: HTMLElement): boolean => {
+  const candidates: Element[] = [node, ...Array.from(node.querySelectorAll("section, div"))].slice(0, 8);
+  for (const el of candidates) {
+    const bg = window.getComputedStyle(el as HTMLElement).backgroundColor;
+    const match = bg.match(/rgba?\(([^)]+)\)/);
+    if (!match) continue;
+    const parts = match[1].split(",").map((v) => parseFloat(v));
+    const alpha = parts[3] ?? 1;
+    if (alpha < 0.5) continue;
+    const [r, g, b] = parts;
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b < 128;
+  }
+  return false;
+};
+
+/** Hash estável para variar o canto da assinatura por arte. */
+const cornerFor = (key: string): SignatureCorner => {
+  let h = 0;
+  for (let i = 0; i < key.length; i += 1) h = (h * 31 + key.charCodeAt(i)) % 9973;
+  return (["br", "bl", "tl"] as const)[h % 3];
+};
+
 
 type Props = {
   /** Nome do arquivo, ex. "pro-4f2a-03-quote" */
@@ -44,6 +70,23 @@ const StudioCapture = ({
   const [busy, setBusy] = useState(false);
   const [captionOpen, setCaptionOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [dark, setDark] = useState(false);
+  /** A arte já traz a marca (logo ou wordmark)? Então não duplicamos a assinatura. */
+  const [signed, setSigned] = useState(false);
+  const corner = cornerFor(fileName);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const id = window.setTimeout(() => {
+      setDark(isDarkSurface(node));
+      const hasLogo = !!node.querySelector('img[src*="logo-alivia"]');
+      const hasWordmark = (node.textContent ?? "").includes(BRAND_NAME);
+      setSigned(hasLogo || hasWordmark);
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [fileName]);
+
 
   /** Favorita e captura a miniatura da arte para a galeria de favoritos. */
   const handleFavorite = async () => {
@@ -91,6 +134,10 @@ const StudioCapture = ({
   return (
     <div ref={ref} id={anchorId} className="relative scroll-mt-4">
       {children}
+
+      {/* Assinatura da marca: obrigatória em toda arte, discreta e adaptada ao fundo. */}
+      {!signed && <StudioSignature dark={dark} corner={corner} />}
+
 
       {visible && (
         <div data-studio-no-export="1" className="absolute right-3 top-3 z-30 flex flex-col items-end gap-2">
