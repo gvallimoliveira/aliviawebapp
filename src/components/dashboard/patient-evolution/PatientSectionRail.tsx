@@ -104,6 +104,13 @@ const PatientSectionRail = ({ riskLevel }: Props) => {
     setActiveId(id);
     setMobileOpen(false);
     setExpanded(false);
+    // Notas de sessão: além de rolar, abre o formulário de nova nota (mesmo
+    // comportamento do botão "Registrar evolução" do cabeçalho do prontuário).
+    if (id === "sec-notas-sessao") {
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("alivia:open-session-note"));
+      }, 400);
+    }
   }, []);
 
   if (presentIds.length < 3) return null;
