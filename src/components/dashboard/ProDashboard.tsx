@@ -28,7 +28,7 @@ import {
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
   MessageCircle, CheckCircle, XCircle, UserCheck, Play, ToggleLeft,
-  Smartphone,
+  Smartphone, GraduationCap,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
