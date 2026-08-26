@@ -36,6 +36,9 @@ const HIDDEN_PATH_PREFIXES = [
   "/feedback/clinic",
   // Studio interno: tela limpa para captura de conteúdo
   "/studio",
+  // Studio público: produto separado, sem nenhuma navegação do app clínico
+  "/studio-pro",
+
 ];
 
 const PAGES_WITH_HEADER = [

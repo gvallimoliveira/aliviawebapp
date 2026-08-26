@@ -3465,6 +3465,152 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_brands: {
+        Row: {
+          colors: Json
+          created_at: string
+          fonts: Json
+          id: string
+          instagram_handle: string | null
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          niche: string | null
+          source_url: string | null
+          tone: string | null
+          topics: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          colors?: Json
+          created_at?: string
+          fonts?: Json
+          id?: string
+          instagram_handle?: string | null
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          niche?: string | null
+          source_url?: string | null
+          tone?: string | null
+          topics?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          colors?: Json
+          created_at?: string
+          fonts?: Json
+          id?: string
+          instagram_handle?: string | null
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          niche?: string | null
+          source_url?: string | null
+          tone?: string | null
+          topics?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      studio_creations: {
+        Row: {
+          block_kind: string | null
+          brand_id: string | null
+          caption: string | null
+          created_at: string
+          format: string | null
+          headline: string | null
+          id: string
+          is_favorite: boolean
+          seed: string
+          thumb: string | null
+          user_id: string
+          watermarked: boolean
+        }
+        Insert: {
+          block_kind?: string | null
+          brand_id?: string | null
+          caption?: string | null
+          created_at?: string
+          format?: string | null
+          headline?: string | null
+          id?: string
+          is_favorite?: boolean
+          seed: string
+          thumb?: string | null
+          user_id: string
+          watermarked?: boolean
+        }
+        Update: {
+          block_kind?: string | null
+          brand_id?: string | null
+          caption?: string | null
+          created_at?: string
+          format?: string | null
+          headline?: string | null
+          id?: string
+          is_favorite?: boolean
+          seed?: string
+          thumb?: string | null
+          user_id?: string
+          watermarked?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_creations_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "studio_brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studio_credits: {
+        Row: {
+          created_at: string
+          extra_credits: number
+          free_credits: number
+          period_start: string
+          plan: string
+          plan_credits: number
+          stripe_customer_id: string | null
+          subscription_status: string | null
+          updated_at: string
+          used_this_period: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          extra_credits?: number
+          free_credits?: number
+          period_start?: string
+          plan?: string
+          plan_credits?: number
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+          used_this_period?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          extra_credits?: number
+          free_credits?: number
+          period_start?: string
+          plan?: string
+          plan_credits?: number
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+          used_this_period?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_admin_actions: {
         Row: {
           action: string
@@ -3869,6 +4015,28 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "ai_credit_quotas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      ensure_studio_credits: {
+        Args: never
+        Returns: {
+          created_at: string
+          extra_credits: number
+          free_credits: number
+          period_start: string
+          plan: string
+          plan_credits: number
+          stripe_customer_id: string | null
+          subscription_status: string | null
+          updated_at: string
+          used_this_period: number
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "studio_credits"
           isOneToOne: true
           isSetofReturn: false
         }

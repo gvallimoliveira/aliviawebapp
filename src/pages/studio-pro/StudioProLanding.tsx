@@ -87,7 +87,7 @@ const StudioProLanding = () => {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button asChild size="lg" className="w-full rounded-full sm:w-auto">
               <Link to={`${PRODUCT.base}/app`}>
-                Criar meus primeiros posts
+                Criar {PRODUCT.freeCredits} posts grátis
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -126,19 +126,24 @@ const StudioProLanding = () => {
         <div className="mx-auto max-w-6xl">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Planos</h2>
           <p className="mt-3 max-w-xl text-sm text-muted-foreground">
-            Assinatura mensal por marca, com créditos extras avulsos quando o mês pede mais volume.
+            Comece com {PRODUCT.freeCredits} artes gratuitas (com marca d'água discreta). Ao assinar, o
+            download sai limpo — e há créditos extras avulsos quando o mês pede mais volume.
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {PLANS.map((plan) => (
               <article
                 key={plan.id}
-                className="flex flex-col rounded-3xl border border-border bg-card p-6"
+                className={`flex flex-col rounded-3xl border bg-card p-6 ${plan.highlight ? "border-primary shadow-[0_18px_50px_-30px_hsl(var(--primary))]" : "border-border"}`}
               >
                 <h3 className="text-lg font-bold">{plan.label}</h3>
                 <p className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   {plan.audience}
                 </p>
-                <p className="mt-4 text-sm font-semibold">
+                <p className="mt-4 text-3xl font-black tracking-tight">
+                  R$ {plan.price}
+                  <span className="text-sm font-semibold text-muted-foreground">/mês</span>
+                </p>
+                <p className="mt-1 text-sm font-semibold text-muted-foreground">
                   {plan.brands} · {plan.exports}
                 </p>
                 <ul className="mt-4 flex-1 space-y-2">
