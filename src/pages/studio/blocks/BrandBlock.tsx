@@ -164,7 +164,7 @@ const BrandBlock = ({ rng, treatment, format, persona }: BlockProps) => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto flex max-w-2xl flex-col items-center text-center"
+            className="mx-auto flex max-w-2xl flex-col items-center pl-20 pr-4 text-center md:pl-28"
           >
             <img src={BRAND_LOGO} alt={BRAND_NAME} className="mb-8 h-12 w-12 md:h-14 md:w-14" />
             <p className="text-3xl font-bold leading-[1.15] tracking-tight text-foreground md:text-5xl">
