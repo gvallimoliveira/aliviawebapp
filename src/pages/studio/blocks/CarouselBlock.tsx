@@ -96,7 +96,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
             {isCover && (
               <>
                 <h2 className="mb-6 text-3xl font-bold leading-[1.12] tracking-tight md:text-6xl">
-                  {renderAccent(carousel.title, accentVariant, true)}
+                  {renderAccent(carousel.title, accentVariant)}
                 </h2>
                 <p className="text-lg text-background/70 md:text-xl">{carousel.coverSub}</p>
               </>
@@ -104,7 +104,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
             {middle && (
               <>
                 <h2 className="mb-5 text-2xl font-bold leading-tight tracking-tight md:text-5xl">
-                  {renderAccent(middle.heading, accentVariant, true)}
+                  {renderAccent(middle.heading, accentVariant)}
                 </h2>
                 <p className="max-w-xl text-base leading-relaxed text-background/75 md:text-lg">{middle.body}</p>
                 <div className="[&_img]:border-background/20">
@@ -116,7 +116,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
               <>
                 <img src={BRAND_LOGO} alt={BRAND_NAME} className="mb-6 h-12 w-12 md:h-14 md:w-14" />
                 <h2 className="mb-4 text-3xl font-bold leading-[1.12] tracking-tight md:text-5xl">
-                  {renderAccent(carousel.cta.title, accentVariant, true)}
+                  {renderAccent(carousel.cta.title, accentVariant)}
                 </h2>
                 <p className="text-lg text-background/70 md:text-xl">{carousel.cta.sub}</p>
               </>
