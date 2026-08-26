@@ -1,10 +1,23 @@
-import { useMemo, useState } from "react";
-import { CalendarDays, FileText, ImageIcon, LayoutGrid, Sparkles, Trash2, X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import {
+  CalendarDays,
+  Download,
+  FileText,
+  ImageIcon,
+  LayoutGrid,
+  Sparkles,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { WORLDS } from "./content";
 import { buildSchedule } from "./schedule";
 import { useStudioThumbs } from "./useStudioThumbs";
+import { backupFileName, buildBackup, parseBackup, restoreBackup } from "./favoritesBackup";
 import type { StudioFavorite } from "./useStudioFavorites";
+
 
 type Props = {
   favorites: StudioFavorite[];
