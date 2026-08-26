@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { pickPhoto } from "../photos";
+import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
 import { renderAccent, TextureLayer } from "./Texture";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
@@ -10,13 +10,18 @@ import { personaSurface, sectionHeight, type BlockProps } from "./shared";
  * Foto vertical estreita ao centro, título grande acima e um parágrafo com
  * palavras-chave destacadas. É o formato de "capa de revista" — bom para
  * institucional (quem está por trás) e para registro real de atendimento.
+ *
+ * NEXO: o assunto vem da frase de impacto escolhida pelo picker; a foto entra
+ * por afinidade extrapolada com esse assunto. O label da foto NUNCA é título.
  */
-const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, photos }: BlockProps) => {
-  const photo = pickPhoto(photos, treatment + rng.int(7));
+const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, picker, photos }: BlockProps) => {
+  const [item] = picker.pick(content.quotes, 1, rng, (q) => [q.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(7), [item.topic]);
   if (!photo) return null;
 
-  const quote = rng.pick(content.quotes).text;
-  const title = (photo.label || rng.pick(content.headlines).strong).toUpperCase();
+  const quote = item.text;
+  const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
+  const title = (feature.headline ?? feature.title).toUpperCase();
 
   return (
     <section
