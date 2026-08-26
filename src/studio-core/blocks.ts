@@ -17,6 +17,9 @@ import StoryBlock from "@/pages/studio/blocks/StoryBlock";
 import ListBlock from "@/pages/studio/blocks/ListBlock";
 import BrandBlock from "@/pages/studio/blocks/BrandBlock";
 import CarouselBlock from "@/pages/studio/blocks/CarouselBlock";
+import PhotoTypeBlock from "@/pages/studio/blocks/PhotoTypeBlock";
+import PhotoSplitBlock from "@/pages/studio/blocks/PhotoSplitBlock";
+import PhotoPortraitBlock from "@/pages/studio/blocks/PhotoPortraitBlock";
 import type { BlockProps } from "@/pages/studio/blocks/shared";
 import type { BlockKind } from "@/pages/studio/composePage";
 
@@ -45,4 +48,7 @@ export const STUDIO_BLOCKS = {
   list: ListBlock,
   brand: BrandBlock,
   carousel: CarouselBlock,
+  photoType: PhotoTypeBlock,
+  photoSplit: PhotoSplitBlock,
+  photoPortrait: PhotoPortraitBlock,
 } satisfies Record<BlockKind, (props: BlockProps) => JSX.Element>;

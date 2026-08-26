@@ -67,5 +67,17 @@ export { default as StudioSignature } from "@/pages/studio/blocks/StudioSignatur
 // Tema de marca (no público, será substituído pelo brand kit do cliente).
 export { BRAND_LOGO, BRAND_NAME, BRAND_SLOGAN } from "@/pages/studio/brand";
 
+// Acervo privado de fotos da conta (usado pelos blocos fotográficos).
+export {
+  PHOTO_USAGES,
+  listPhotos,
+  uploadPhoto,
+  updatePhoto,
+  deletePhoto,
+  pickPhoto,
+  type PhotoUsage,
+  type StudioPhoto,
+} from "@/pages/studio/photos";
+
 // Registro de blocos, pronto para renderizar uma composição.
 export { STUDIO_BLOCKS } from "./blocks";
