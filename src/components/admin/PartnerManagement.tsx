@@ -311,7 +311,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
 
       if (accessType === "clinic") return { ...p, clinic_active: enabled, has_clinic: enabled ? true : p.has_clinic };
       if (accessType === "premium") return { ...p, premium_granted: enabled };
-      if (accessType === "academic") return { ...p, is_student: enabled, active_profile_mode: enabled ? "student" : "professional" };
+      if (accessType === "academic") return { ...p, is_student: enabled, is_partner: enabled ? false : p.is_partner, active_profile_mode: enabled ? "student" : "professional" };
       return p;
     }));
 
