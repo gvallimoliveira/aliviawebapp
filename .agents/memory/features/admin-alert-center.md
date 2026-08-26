@@ -9,6 +9,7 @@ Todo alerta ao admin passa pela edge function `notify-admin` (canais: Telegram �
 - Auth: `SUPABASE_SERVICE_ROLE_KEY`, header `x-internal-secret` (= secret `INTERNAL_ALERT_SECRET`) ou JWT de usuário logado. Anon NÃO é aceito.
 - Disparos server-side (nunca no browser):
   - Trigger `trg_notify_admin_new_support_ticket` em `support_tickets` (action `ticket`).
+  - Trigger `trg_notify_admin_new_assessment` em `assessments`: alerta SOMENTE autoavaliações (`professional_id IS NULL AND clinic_id IS NULL`) e sem nome/e-mail do paciente. Avaliação de link de profissional/clínica notifica apenas o profissional responsável — privacidade/LGPD.
   - Cron `notify-admin-sweep` a cada 5 min (action `sweep`) reenvia tickets com `notified_at IS NULL`.
   - `stripe-webhook`: `checkout.session.completed`, `async_payment_succeeded` e `charge.refunded` chamam action `alert`.
 - Auditoria em `public.admin_alert_log` (canal, status, detalhe).
