@@ -72,6 +72,10 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const k = rng.pick(c.kinetic);
     return [`${k.word}.`, k.caption];
   },
+  echo: (c, rng) => {
+    const k = rng.pick(c.kinetic);
+    return [`${k.word}. ${k.word}. ${k.word}.`, `${k.kicker} — ${k.caption}`];
+  },
   quote: (c, rng) => [rng.pick(c.quotes).text, rng.pick(c.subs)],
   closing: (c, rng) => {
     const cl = rng.pick(c.closings);
