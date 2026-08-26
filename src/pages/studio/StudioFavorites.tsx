@@ -53,6 +53,42 @@ const StudioFavorites = ({
   const [tab, setTab] = useState<"gallery" | "schedule">("gallery");
   const thumbs = useStudioThumbs();
   const schedule = useMemo(() => buildSchedule(favorites), [favorites]);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  /** Baixa favoritos + miniaturas em um JSON único (à prova de limpeza de cache). */
+  const downloadBackup = () => {
+    try {
+      const blob = new Blob([JSON.stringify(buildBackup(favorites))], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = backupFileName();
+      a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast.success(`Backup com ${favorites.length} favoritos baixado`);
+    } catch (error) {
+      console.error("[studio] backup failed", error);
+      toast.error("Não foi possível gerar o backup.");
+    }
+  };
+
+  /** Restaura somando ao acervo atual — nunca apaga favoritos existentes. */
+  const handleRestore = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const added = restoreBackup(await parseBackup(file));
+      toast.success(
+        added > 0 ? `${added} favoritos restaurados. Recarregue a página.` : "Nada novo para restaurar.",
+      );
+    } catch (error) {
+      console.error("[studio] restore failed", error);
+      toast.error("Arquivo de backup inválido.");
+    }
+  };
+
+
 
   const Thumb = ({ fav, className = "" }: { fav: StudioFavorite; className?: string }) => {
     const src = thumbs[fav.id];
