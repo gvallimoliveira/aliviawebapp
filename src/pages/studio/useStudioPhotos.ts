@@ -4,6 +4,7 @@ import {
   listPhotos,
   updatePhoto,
   uploadPhoto,
+  type PhotoPatch,
   type PhotoUsage,
   type StudioPhoto,
 } from "./photos";
@@ -39,7 +40,7 @@ export const useStudioPhotos = (enabled: boolean) => {
   }, []);
 
   const edit = useCallback(
-    async (id: string, patch: { label?: string; usage?: PhotoUsage; credit?: string | null }) => {
+    async (id: string, patch: PhotoPatch) => {
       await updatePhoto(id, patch);
       setPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } as StudioPhoto : p)));
     },

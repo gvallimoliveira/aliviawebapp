@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { pickPhoto } from "../photos";
+import PhotoFrame from "./PhotoFrame";
 import { TextureLayer } from "./Texture";
 import { personaSurface, pickHeadline, sectionHeight, type BlockProps } from "./shared";
 
@@ -40,10 +41,9 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, photos }: Bl
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 flex w-full flex-col items-center"
       >
-        <img
-          src={photo.src}
-          alt={photo.label || "Aliv.iA"}
-          className={`w-full max-w-[86%] object-cover ${bottom ? "max-h-[62svh] rounded-t-[2rem]" : "max-h-[56svh] rounded-[2rem]"}`}
+        <PhotoFrame
+          photo={photo}
+          className={`w-full max-w-[86%] ${bottom ? "h-[62svh] rounded-t-[2rem]" : "h-[56svh] rounded-[2rem]"}`}
         />
 
         <div className="w-full px-6 pb-10 pt-5 text-center">

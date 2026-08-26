@@ -24,7 +24,33 @@ export const PHOTO_USAGES: { id: PhotoUsage; label: string; hint: string }[] = [
   { id: "livre", label: "Livre", hint: "Uso geral nas artes" },
 ];
 
-export type StudioPhoto = {
+/** Onde o texto da arte costuma cair — o recorte preserva essa faixa. */
+export type SafeArea = "none" | "top" | "bottom";
+
+/**
+ * Enquadramento escolhido no editor de fotos. É guardado na conta e aplicado
+ * automaticamente por todos os blocos fotográficos (`PhotoFrame`).
+ */
+export type PhotoFraming = {
+  /** Ponto focal em % da imagem (o que nunca deve ser cortado). */
+  focusX: number;
+  focusY: number;
+  /** Aproximação (1 = imagem inteira). */
+  zoom: number;
+  /** Rotação em graus (-180..180), para endireitar a foto. */
+  rotation: number;
+  safeArea: SafeArea;
+};
+
+export const DEFAULT_FRAMING: PhotoFraming = {
+  focusX: 50,
+  focusY: 50,
+  zoom: 1,
+  rotation: 0,
+  safeArea: "none",
+};
+
+export type StudioPhoto = PhotoFraming & {
   id: string;
   storagePath: string;
   label: string;
@@ -37,6 +63,23 @@ export type StudioPhoto = {
 
 const asUsage = (value: string): PhotoUsage =>
   (PHOTO_USAGES.some((u) => u.id === value) ? value : "livre") as PhotoUsage;
+
+const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+
+/** Normaliza o enquadramento vindo do banco (linha antiga = valores padrão). */
+const asFraming = (row: {
+  focus_x?: number | null;
+  focus_y?: number | null;
+  zoom?: number | null;
+  rotation?: number | null;
+  safe_area?: string | null;
+}): PhotoFraming => ({
+  focusX: clamp(Number(row.focus_x ?? 50), 0, 100),
+  focusY: clamp(Number(row.focus_y ?? 50), 0, 100),
+  zoom: clamp(Number(row.zoom ?? 1), 1, 3),
+  rotation: clamp(Math.round(Number(row.rotation ?? 0)), -180, 180),
+  safeArea: (["none", "top", "bottom"].includes(row.safe_area ?? "") ? row.safe_area : "none") as SafeArea,
+});
 
 const toDataUrl = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {
@@ -63,7 +106,7 @@ const loadSrc = async (storagePath: string): Promise<string> => {
 export const listPhotos = async (): Promise<StudioPhoto[]> => {
   const { data, error } = await supabase
     .from("studio_photos")
-    .select("id, storage_path, label, usage, credit, sort_order")
+    .select("id, storage_path, label, usage, credit, sort_order, focus_x, focus_y, zoom, rotation, safe_area")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
   if (error) throw error;
@@ -80,6 +123,7 @@ export const listPhotos = async (): Promise<StudioPhoto[]> => {
           usage: asUsage(row.usage ?? "livre"),
           credit: row.credit ?? null,
           sortOrder: row.sort_order ?? 0,
+          ...asFraming(row),
           src,
         } satisfies StudioPhoto;
       } catch (err) {
@@ -117,7 +161,7 @@ export const uploadPhoto = async (
       usage: meta.usage,
       credit: meta.credit?.trim() || null,
     })
-    .select("id, storage_path, label, usage, credit, sort_order")
+    .select("id, storage_path, label, usage, credit, sort_order, focus_x, focus_y, zoom, rotation, safe_area")
     .single();
   if (error) throw error;
 
@@ -130,15 +174,29 @@ export const uploadPhoto = async (
     usage: asUsage(data.usage ?? "livre"),
     credit: data.credit ?? null,
     sortOrder: data.sort_order ?? 0,
+    ...asFraming(data),
     src,
   };
 };
 
-export const updatePhoto = async (
-  id: string,
-  patch: { label?: string; usage?: PhotoUsage; credit?: string | null },
-) => {
-  const { error } = await supabase.from("studio_photos").update(patch).eq("id", id);
+export type PhotoPatch = {
+  label?: string;
+  usage?: PhotoUsage;
+  credit?: string | null;
+} & Partial<PhotoFraming>;
+
+export const updatePhoto = async (id: string, patch: PhotoPatch) => {
+  const row: Record<string, unknown> = {};
+  if (patch.label !== undefined) row.label = patch.label;
+  if (patch.usage !== undefined) row.usage = patch.usage;
+  if (patch.credit !== undefined) row.credit = patch.credit;
+  if (patch.focusX !== undefined) row.focus_x = clamp(patch.focusX, 0, 100);
+  if (patch.focusY !== undefined) row.focus_y = clamp(patch.focusY, 0, 100);
+  if (patch.zoom !== undefined) row.zoom = clamp(patch.zoom, 1, 3);
+  if (patch.rotation !== undefined) row.rotation = clamp(Math.round(patch.rotation), -180, 180);
+  if (patch.safeArea !== undefined) row.safe_area = patch.safeArea;
+
+  const { error } = await supabase.from("studio_photos").update(row).eq("id", id);
   if (error) throw error;
 };
 

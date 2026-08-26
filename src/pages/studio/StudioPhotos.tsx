@@ -1,13 +1,15 @@
 import { useRef, useState } from "react";
-import { Loader2, Trash2, Upload, X } from "lucide-react";
+import { Crop, Loader2, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
-import { PHOTO_USAGES, type PhotoUsage, type StudioPhoto } from "./photos";
+import StudioPhotoEditor from "./StudioPhotoEditor";
+import PhotoFrame from "./blocks/PhotoFrame";
+import { PHOTO_USAGES, type PhotoFraming, type PhotoPatch, type PhotoUsage, type StudioPhoto } from "./photos";
 
 type Props = {
   photos: StudioPhoto[];
   loading: boolean;
   onUpload: (file: File, meta: { label: string; usage: PhotoUsage; credit?: string }) => Promise<unknown>;
-  onEdit: (id: string, patch: { label?: string; usage?: PhotoUsage }) => Promise<void>;
+  onEdit: (id: string, patch: PhotoPatch) => Promise<void>;
   onRemove: (photo: StudioPhoto) => Promise<void>;
   onClose: () => void;
 };
@@ -21,6 +23,8 @@ const StudioPhotos = ({ photos, loading, onUpload, onEdit, onRemove, onClose }: 
   const [usage, setUsage] = useState<PhotoUsage>("livre");
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
+  /** Foto aberta no editor de enquadramento (recorte, rotação, área segura). */
+  const [editing, setEditing] = useState<StudioPhoto | null>(null);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -107,7 +111,7 @@ const StudioPhotos = ({ photos, loading, onUpload, onEdit, onRemove, onClose }: 
           <ul className="grid grid-cols-2 gap-2.5">
             {photos.map((photo) => (
               <li key={photo.id} className="overflow-hidden rounded-2xl border border-border bg-background">
-                <img src={photo.src} alt={photo.label} className="h-32 w-full object-cover" />
+                <PhotoFrame photo={photo} className="h-32 w-full" />
                 <div className="p-2">
                   <input
                     defaultValue={photo.label}
@@ -131,6 +135,14 @@ const StudioPhotos = ({ photos, loading, onUpload, onEdit, onRemove, onClose }: 
                     </select>
                     <button
                       type="button"
+                      onClick={() => setEditing(photo)}
+                      title="Enquadrar (recorte, rotação, área segura)"
+                      className="ml-auto mr-1 rounded-full border border-border p-1.5 text-muted-foreground"
+                    >
+                      <Crop className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => void onRemove(photo)}
                       title="Remover foto"
                       className="rounded-full border border-border p-1.5 text-muted-foreground"
@@ -144,6 +156,14 @@ const StudioPhotos = ({ photos, loading, onUpload, onEdit, onRemove, onClose }: 
           </ul>
         )}
       </div>
+
+      {editing && (
+        <StudioPhotoEditor
+          photo={editing}
+          onSave={(id, framing: PhotoFraming) => onEdit(id, framing)}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { pickPhoto } from "../photos";
+import PhotoFrame from "./PhotoFrame";
 import { renderAccent } from "./Texture";
 import { personaSurface, pickHeadline, sectionHeight, type BlockProps } from "./shared";
 
@@ -23,7 +24,7 @@ const PhotoSplitBlock = ({ content, rng, treatment, format, persona, photos }: B
     <section className={`relative flex ${sectionHeight(format)} overflow-hidden ${personaSurface(persona, treatment)}`}>
       <div className={`absolute inset-0 flex ${photoLeft ? "" : "flex-row-reverse"}`}>
         <div className="relative w-1/2 overflow-hidden">
-          <img src={photo.src} alt={photo.label || "Aliv.iA"} className="h-full w-full object-cover" />
+          <PhotoFrame photo={photo} className="h-full w-full" />
           <div className="absolute inset-0 bg-foreground/10" />
         </div>
         <div className="w-1/2 bg-foreground/95" />

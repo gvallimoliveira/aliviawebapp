@@ -3615,35 +3615,50 @@ export type Database = {
         Row: {
           created_at: string
           credit: string | null
+          focus_x: number
+          focus_y: number
           id: string
           label: string
           owner_id: string
+          rotation: number
+          safe_area: string
           sort_order: number
           storage_path: string
           updated_at: string
           usage: string
+          zoom: number
         }
         Insert: {
           created_at?: string
           credit?: string | null
+          focus_x?: number
+          focus_y?: number
           id?: string
           label?: string
           owner_id: string
+          rotation?: number
+          safe_area?: string
           sort_order?: number
           storage_path: string
           updated_at?: string
           usage?: string
+          zoom?: number
         }
         Update: {
           created_at?: string
           credit?: string | null
+          focus_x?: number
+          focus_y?: number
           id?: string
           label?: string
           owner_id?: string
+          rotation?: number
+          safe_area?: string
           sort_order?: number
           storage_path?: string
           updated_at?: string
           usage?: string
+          zoom?: number
         }
         Relationships: []
       }
