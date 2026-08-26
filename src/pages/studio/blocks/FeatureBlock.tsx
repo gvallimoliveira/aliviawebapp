@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { imageForTopic } from "../topics";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { ACCENT_STYLES, TextureLayer, renderAccent } from "./Texture";
 
 /**
  * Feature spotlight.
@@ -24,8 +25,9 @@ const FeatureBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
     const item = items[0];
     const image = imageForTopic(item.topic);
     return (
-      <section className={`relative flex ${sectionHeight(format)} items-center ${personaSurface(persona, treatment + 3)}`}>
-        <div className="container py-16">
+      <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment + 3)}`}>
+        <TextureLayer persona={persona} index={treatment} />
+        <div className="container relative py-16">
           <motion.div
             initial={{ opacity: 0, y: 22 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -36,8 +38,8 @@ const FeatureBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
             <p className="rounded-full border border-primary/30 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-primary md:text-[11px]">
               {item.tag}
             </p>
-            <h2 className="text-3xl font-bold leading-[1.05] tracking-tight text-foreground md:text-5xl">
-              {item.title}
+            <h2 className="text-3xl font-bold leading-[1.1] tracking-tight text-foreground md:text-5xl">
+              {renderAccent(item.title, rng.int(ACCENT_STYLES.length))}
             </h2>
             <p className="max-w-2xl text-base leading-relaxed text-muted-foreground md:text-xl">
               {item.description}
