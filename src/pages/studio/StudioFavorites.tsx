@@ -200,8 +200,39 @@ const StudioFavorites = ({
           </p>
         </>
       )}
+
+      {/* Backup do acervo: favoritos + miniaturas em um único JSON. */}
+      <div className="mt-3 grid gap-1.5 border-t border-border pt-2">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 w-full gap-1.5 rounded-xl text-xs"
+          onClick={downloadBackup}
+          disabled={favorites.length === 0}
+        >
+          <Download className="h-3.5 w-3.5" />
+          Backup do acervo (.json)
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-full gap-1.5 rounded-xl text-xs"
+          onClick={() => fileRef.current?.click()}
+        >
+          <Upload className="h-3.5 w-3.5" />
+          Restaurar backup
+        </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={handleRestore}
+        />
+      </div>
     </div>
   );
 };
+
 
 export default StudioFavorites;
