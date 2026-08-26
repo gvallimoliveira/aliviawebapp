@@ -417,6 +417,18 @@ serve(async (req) => {
         if (enabled) {
           updates.approved = true;
           updates.is_partner_account = true; // garante que está marcado como parceiro
+          // EXCLUSIVIDADE: PRO e Acadêmico nunca ficam ligados juntos.
+          updates.is_student = false;
+          updates.active_profile_mode = "professional";
+          updates.student_institution = null;
+          updates.student_period = null;
+          // Profissional formado precisa de CREFITO para o trigger de validação.
+          // Contas de parceiro que estavam como acadêmicas ficam sem CREFITO,
+          // então recriamos o placeholder temporário (`NNNNNN-X`).
+          if (!pro.crefito || !String(pro.crefito).trim()) {
+            const temp = await getAvailableTemporaryCrefito(supabaseClient, `${professional_id}:pro`);
+            if (temp) updates.crefito = temp;
+          }
         } else if (isAcademicOnlyPartner) {
           // Se só o Acadêmico ficar ligado, o parceiro continua com acesso
           // liberado e deve operar/ser exibido como Acadêmico.
@@ -425,6 +437,7 @@ serve(async (req) => {
           // Remove o CREFITO temporário criado na abertura da conta de parceiro.
           if (pro.crefito && /^\d{1,6}-X$/i.test(String(pro.crefito).trim())) updates.crefito = null;
         }
+
 
         const { error } = await supabaseClient
           .from("professionals")
