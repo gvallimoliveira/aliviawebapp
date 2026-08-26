@@ -16,7 +16,13 @@ export const PRODUCT = {
   base: "/studio-pro",
   /** Artes gratuitas concedidas no cadastro (saem com marca d'água discreta). */
   freeCredits: 5,
+  /** Desconto aplicado no plano anual (20%). */
+  annualDiscount: 0.2,
 } as const;
+
+/** Preço mensal equivalente quando o cliente paga o ano inteiro. */
+export const annualMonthlyPrice = (monthly: number) =>
+  Math.round(monthly * (1 - PRODUCT.annualDiscount));
 
 export type PlanId = "solo" | "marca" | "agencia";
 
@@ -33,7 +39,7 @@ export const PLANS: {
   {
     id: "solo",
     label: "Solo",
-    price: 59,
+    price: 39,
     audience: "Criador ou profissional autônomo",
     brands: "1 marca",
     exports: "60 artes por mês",
@@ -62,7 +68,7 @@ export const PLANS: {
   {
     id: "agencia",
     label: "Agência",
-    price: 199,
+    price: 249,
     audience: "Quem cuida da marca de outros",
     brands: "15 marcas",
     exports: "800 artes por mês",
