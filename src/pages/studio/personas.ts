@@ -20,6 +20,9 @@ import { createRng } from "./rng";
  *                        (índices repetidos = mais peso no sorteio);
  * - `surfaceShift`     → rotaciona a paleta de superfícies (a mesma seção
  *                        nunca cai no mesmo fundo para personas diferentes);
+ * - `textureShift`     → rotaciona as tramas geométricas do kit (Texture.tsx):
+ *                        quadriculado, hachura, anéis, xadrez, plus etc. caem
+ *                        em posições diferentes conforme a "mão" da versão;
  * - `headlineTaste`    → prefere headlines curtas (impacto) ou longas (editorial).
  *
  * A persona é derivada deterministicamente da seed (`personaForSeed`), então o
@@ -43,6 +46,8 @@ export type StudioPersona = {
   motionTaste: MotionKind[];
   treatmentBias: Partial<Record<BlockKind, number[]>>;
   surfaceShift: number;
+  /** Desloca a rotação das tramas geométricas (ver blocks/Texture.tsx). */
+  textureShift: number;
   headlineTaste: HeadlineTaste;
 };
 
