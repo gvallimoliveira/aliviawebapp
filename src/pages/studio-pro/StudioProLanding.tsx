@@ -133,7 +133,7 @@ const StudioProLanding = () => {
               Planos
             </a>
             <Button asChild size="sm" className="rounded-full">
-              <Link to={`${PRODUCT.base}/app`}>
+              <Link to={`${PRODUCT.base}/entrar`}>
                 Começar grátis
                 <ArrowRight className="ml-1.5 h-4 w-4" />
               </Link>
@@ -168,7 +168,7 @@ const StudioProLanding = () => {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
               <Button asChild size="lg" className="w-full rounded-full sm:w-auto">
-                <Link to={`${PRODUCT.base}/app`}>
+                <Link to={`${PRODUCT.base}/entrar`}>
                   Criar {PRODUCT.freeCredits} posts grátis
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -359,7 +359,7 @@ const StudioProLanding = () => {
                   ))}
                 </ul>
                 <Button asChild variant="outline" className="mt-6 w-full rounded-full">
-                  <Link to={`${PRODUCT.base}/app`}>Testar</Link>
+                  <Link to={`${PRODUCT.base}/entrar`}>Testar</Link>
                 </Button>
               </article>
             ))}
@@ -384,7 +384,7 @@ const StudioProLanding = () => {
               Comece com {PRODUCT.freeCredits} artes por conta da casa.
             </h3>
             <Button asChild size="lg" className="rounded-full">
-              <Link to={`${PRODUCT.base}/app`}>
+              <Link to={`${PRODUCT.base}/entrar`}>
                 Abrir meu estúdio
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

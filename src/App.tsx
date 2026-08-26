@@ -71,6 +71,7 @@ const StudioLanding = lazy(() => import("./pages/studio/StudioLanding"));
 // Produto público de criação de posts (shell isolado, sem vínculo com o app clínico).
 const StudioProLanding = lazy(() => import("./pages/studio-pro/StudioProLanding"));
 const StudioProApp = lazy(() => import("./pages/studio-pro/StudioProApp"));
+const StudioProAuth = lazy(() => import("./pages/studio-pro/StudioProAuth"));
 
 
 
@@ -168,6 +169,7 @@ const App = () => {
                   {/* Interno: landing mutável de marketing, só no preview + conta admin */}
                   <Route path="/studio" element={<StudioLanding />} />
                   <Route path="/studio-pro" element={<StudioProLanding />} />
+                  <Route path="/studio-pro/entrar" element={<StudioProAuth />} />
                   <Route path="/studio-pro/app" element={<StudioProApp />} />
 
 

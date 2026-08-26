@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import type { StudioFavorite } from "./useStudioFavorites";
 import { readThumbs, replaceThumbs } from "./thumbs";
 
@@ -5,9 +6,11 @@ import { readThumbs, replaceThumbs } from "./thumbs";
  * BACKUP DO ACERVO INTERNO
  *
  * Os favoritos e as miniaturas do Studio interno vivem em localStorage — ou seja,
- * presos a um navegador. Este módulo exporta/importa tudo em um único arquivo
- * JSON para que o acervo aprovado nunca se perca (limpeza de cache, troca de
- * dispositivo, evolução do produto público).
+ * presos a um navegador. Este módulo oferece duas proteções:
+ *
+ * 1. Exportar/importar tudo em um único arquivo JSON (à prova de limpeza de cache).
+ * 2. Sincronizar na conta (tabela `studio_internal_favorites`), para que o acervo
+ *    aprovado acompanhe o usuário em qualquer dispositivo.
  */
 
 const FAVORITES_KEY = "studio:favorites";
@@ -68,4 +71,72 @@ export const restoreBackup = (backup: StudioBackup): number => {
   }
 
   return incoming.length;
+};
+
+// ---------------------------------------------------------------------------
+// Sincronização na conta (backend) — um registro por usuário, visível só para
+// ele (RLS por auth.uid). A tabela ainda não consta nos tipos gerados, então o
+// acesso é feito via cast, mantendo o payload validado aqui.
+// ---------------------------------------------------------------------------
+
+type AccountRow = {
+  favorites: unknown;
+  thumbs: unknown;
+  updated_at: string;
+};
+
+export type AccountBackup = {
+  backup: StudioBackup;
+  updatedAt: string;
+};
+
+/** Grava o acervo atual (favoritos + miniaturas) na conta do usuário. */
+export const saveBackupToAccount = async (favorites: StudioFavorite[]): Promise<Date> => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sessão necessária para sincronizar.");
+
+  const now = new Date();
+  const { error } = await (supabase as any)
+    .from("studio_internal_favorites")
+    .upsert(
+      {
+        user_id: user.id,
+        favorites,
+        thumbs: readThumbs(),
+        updated_at: now.toISOString(),
+      },
+      { onConflict: "user_id" },
+    );
+  if (error) throw error;
+  return now;
+};
+
+/** Lê o backup salvo na conta. Retorna null quando ainda não existe nenhum. */
+export const loadBackupFromAccount = async (): Promise<AccountBackup | null> => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sessão necessária para sincronizar.");
+
+  const { data, error } = await (supabase as any)
+    .from("studio_internal_favorites")
+    .select("favorites, thumbs, updated_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  const row = data as AccountRow;
+  if (!Array.isArray(row.favorites)) throw new Error("Backup da conta em formato inválido.");
+  return {
+    backup: {
+      version: 1,
+      exportedAt: row.updated_at,
+      favorites: row.favorites as StudioFavorite[],
+      thumbs: (row.thumbs ?? {}) as Record<string, string>,
+    },
+    updatedAt: row.updated_at,
+  };
 };

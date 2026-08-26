@@ -50,10 +50,10 @@ const StudioProApp = () => {
     document.title = `${PRODUCT.name} — meu estúdio`;
   }, []);
 
-  // Sem sessão, manda para o login e volta para cá depois.
+  // Sem sessão, manda para a entrada própria do Studio (não para o auth clínico).
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate(`/auth?redirect=${encodeURIComponent(`${PRODUCT.base}/app`)}`, { replace: true });
+      navigate(`${PRODUCT.base}/entrar`, { replace: true });
     }
   }, [authLoading, user, navigate]);
 

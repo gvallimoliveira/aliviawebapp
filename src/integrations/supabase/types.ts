@@ -3611,6 +3611,27 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_internal_favorites: {
+        Row: {
+          favorites: Json
+          thumbs: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          favorites?: Json
+          thumbs?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          favorites?: Json
+          thumbs?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       studio_photos: {
         Row: {
           created_at: string
