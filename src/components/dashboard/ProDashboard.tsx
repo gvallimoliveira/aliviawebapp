@@ -135,7 +135,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [searchParams, setSearchParams] = useSearchParams();
   
 
-  const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean; is_student?: boolean; is_vip?: boolean } | null>(null);
+  const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean; is_academic_partner?: boolean; is_student?: boolean; is_vip?: boolean } | null>(null);
   const [subLoading, setSubLoading] = useState(true);
   const [linkCopied, setLinkCopied] = useState(false);
   const [patientAssessments, setPatientAssessments] = useState<any[]>([]);
