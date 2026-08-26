@@ -113,6 +113,26 @@ Referências aprovadas pelo fundador (posts "marun" e "RELOAD" + vídeos de carr
 - `TREATMENT_COUNT`: echo 3, brand 6, carousel 4. Personas com bias: Marina
   (echo 2, brand 4-5), Caio (echo 1), Enzo (echo 2,1).
 
+## Edição Mono — greyscale adaptado (2026-08-26, pedido do fundador)
+
+- **MonoBlock** (`blocks/MonoBlock.tsx`, kind `mono`, 4 tratamentos): o "black &
+  white adaptado" do Aliv.iA. Paleta em cinza neutro PURO — tokens dedicados
+  `--mono-ink` (0 0% 10%), `--mono-paper` (0 0% 92%), `--mono-mid` (0 0% 56%) em
+  index.css + tailwind (`bg-mono-ink`, `text-mono-paper` etc.), porque a tinta da
+  marca é quente (20 30% 12%) e quebraria o efeito B&W.
+- A ÚNICA cor da arte é o verde Aliv.iA (`text-primary`): palavra-chave da frase,
+  o "iA" do wordmark e a logo, que entra SEMPRE colorida (nunca dessaturada).
+- Tratamentos: 0 declaração no grafite (typo com `big` verde) · 1 declaração no
+  papel (inverso: fundo claro, tinta escura) · 2 eco mono (palavra do acervo
+  cinético via picker — cobertura editorial vale — repetida 7× em contorno
+  `mono-paper/30`, centro em verde; `data-studio-stroke` para o repintador) ·
+  3 lockup institucional (logo colorida grande + wordmark + moldura hairline,
+  claro/escuro sorteado pelo rng do bloco).
+- Tramas locais em cinza neutro (mesh/dots/diagonal via rgba) — NÃO usar
+  TextureLayer (tramas da marca usam tinta quente).
+- Bias por persona: Marina [1,3], Caio [0,2,2], Luma [1,1,3] (+mono nos
+  favoriteBlocks), Otto [0,2], Bia [1,0], Enzo [2,0].
+
 ## Equipe criativa (personas) — 2026-08-26
 - `src/pages/studio/personas.ts`: 6 personas (Marina, Caio, Luma, Otto, Bia, Enzo) derivadas da seed via `personaForSeed`. Cada uma viesa superfícies (rotação), tratamentos, densidade, nº de blocos cinéticos, marquees e motion.
 - `composePage(rng, persona?, inspiration?)` — persona é o 2º argumento (não trocar a ordem; captionFile.kindAt depende dela para reconstruir favoritos).
