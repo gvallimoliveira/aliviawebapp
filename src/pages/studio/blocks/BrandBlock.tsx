@@ -7,9 +7,37 @@ import { BRAND_DNA } from "../content/brandDna";
 /**
  * Brand block — lockups institucionais: a marca como assunto da arte.
  * Treatments: 0 logo gigante ao fundo + statement, 1 logo pequena no canto +
- * frase central, 2 wordmark tipográfico puro, 3 selo com slogan oficial.
+ * frase central, 2 wordmark tipográfico puro, 3 selo com slogan oficial,
+ * 4 wordmark vertical em contorno cortado na lateral direita + statement
+ * central, 5 wordmark vertical preenchido (baixa opacidade) na lateral
+ * esquerda + statement central com logo.
  * Todo lockup vem do módulo único `brand.ts` (fundação do Studio-as-product).
  */
+
+/**
+ * Wordmark vertical cortado na borda (inspiração: cartaz "marun"). As letras
+ * são spans empilhados (não writing-mode), para que o repintador de contorno
+ * do exportImage.ts consiga repintar cada glifo no canvas — writing-mode
+ * vertical não é reproduzido pelo repaint.
+ */
+const VerticalWordmark = ({ stroke }: { stroke?: boolean }) => (
+  <div aria-hidden className="flex select-none flex-col items-center leading-[0.82]">
+    {["A", "l", "i", "v", ".", "i", "A"].map((ch, i) => (
+      <span
+        key={i}
+        data-studio-stroke={stroke ? "1" : undefined}
+        className={`text-7xl font-bold tracking-tight md:text-9xl ${
+          stroke
+            ? "text-transparent [-webkit-text-stroke:2px_hsl(var(--foreground)/0.35)]"
+            : "text-foreground/10"
+        }`}
+      >
+        {ch}
+      </span>
+    ))}
+  </div>
+);
+
 const BrandBlock = ({ rng, treatment, format, persona }: BlockProps) => {
   const statement = rng.pick(BRAND_DNA.statements);
   const accentVariant = rng.int(ACCENT_STYLES.length);
