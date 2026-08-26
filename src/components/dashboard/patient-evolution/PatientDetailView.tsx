@@ -623,6 +623,16 @@ export default function PatientDetailView(props: any) {
     }
   }, [evolutionAssessments, evolutionSelectedIds, isDemo, patient, clinicId, professionalId, language, professionalLogoUrl, clinicLogoUrl, clinicName, t, toast, setEvolutionLoading]);
 
+  // Acesso rápido: registrar nota de sessão/evolução em 1 toque.
+  // Rola até a seção e abre o formulário já focado (evento ouvido pelo SessionNotesSection).
+  const handleQuickEvolution = () => {
+    const el = document.getElementById("sec-notas-sessao");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("alivia:open-session-note"));
+    }, 350);
+  };
+
   return (
     <div className="space-y-5">
       <PatientSectionRail riskLevel={healthRisk?.level ?? null} />
@@ -653,6 +663,7 @@ export default function PatientDetailView(props: any) {
           {(latestWithDiagnosis || latestAssessment) && <Button variant="ghost" size="sm" className="gap-1.5 shrink-0 text-primary hover:text-primary hover:bg-primary/10" onClick={() => setSummaryDialogOpen(true)}><Sparkles className="h-4 w-4" /> {language === "pt" ? "Resumo" : language === "es" ? "Resumen" : "Summary"}</Button>}
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0 hidden md:inline-flex border-primary/30 text-primary hover:bg-primary/10" onClick={handleQuickEvolution}><NotebookPen className="h-4 w-4" /> {language === "pt" ? "Registrar evolução" : language === "es" ? "Registrar evolución" : "Log evolution"}</Button>
           {((!readOnly || allowManualAssessment) || isDemo) && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
           {(latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2 || (hasAgentAccess && !isDemo) || !isDemo) && (
             <DropdownMenu modal={false}>
