@@ -298,15 +298,20 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     setPartners(prev => prev.map(p => {
       if (p.id !== partnerId) return p;
       if (accessType === "pro") {
+        // EXCLUSIVIDADE: ligar PRO desliga Acadêmico e vice-versa.
         return {
           ...p,
           is_partner: enabled,
-          active_profile_mode: !enabled && p.is_student ? "student" : p.active_profile_mode,
+          is_student: enabled ? false : p.is_student,
+          active_profile_mode: enabled
+            ? "professional"
+            : (p.is_student ? "student" : p.active_profile_mode),
         };
       }
+
       if (accessType === "clinic") return { ...p, clinic_active: enabled, has_clinic: enabled ? true : p.has_clinic };
       if (accessType === "premium") return { ...p, premium_granted: enabled };
-      if (accessType === "academic") return { ...p, is_student: enabled, active_profile_mode: enabled ? "student" : "professional" };
+      if (accessType === "academic") return { ...p, is_student: enabled, is_partner: enabled ? false : p.is_partner, active_profile_mode: enabled ? "student" : "professional" };
       return p;
     }));
 

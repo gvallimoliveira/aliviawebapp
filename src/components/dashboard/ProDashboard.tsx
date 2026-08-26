@@ -28,7 +28,7 @@ import {
   Calendar, MapPin, ChevronRight, Crown, Sparkles, Target, Clock, Settings,
   AlertTriangle, FileCheck, Lock, Activity, FileText, Zap, Gift, Share2,
   MessageCircle, CheckCircle, XCircle, UserCheck, Play, ToggleLeft,
-  Smartphone,
+  Smartphone, GraduationCap,
 } from "lucide-react";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
@@ -135,7 +135,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const [searchParams, setSearchParams] = useSearchParams();
   
 
-  const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean; is_student?: boolean; is_vip?: boolean } | null>(null);
+  const [subscription, setSubscription] = useState<{ subscribed: boolean; subscription_end?: string; is_partner?: boolean; is_academic_partner?: boolean; is_student?: boolean; is_vip?: boolean } | null>(null);
   const [subLoading, setSubLoading] = useState(true);
   const [linkCopied, setLinkCopied] = useState(false);
   const [patientAssessments, setPatientAssessments] = useState<any[]>([]);
@@ -640,6 +640,10 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     && new Date(professional.subscription_grace_until) > new Date();
   const isPartner = professional?.is_partner === true;
   const isAcademicPartner = professional?.is_partner_account === true && professional?.is_student === true;
+  // Identificação acadêmica: acesso liberado como parceiro acadêmico (sem PRO).
+  const academicAccess =
+    (subscription?.is_academic_partner === true || (isAcademicPartner && !isPartner)) && !isPartner;
+
   const isVipAdmin = isFallbackVip(user?.email);
   const hasEffectiveProAccess = isVipAdmin || !!subscription?.subscribed || hasPaidProSubscription || inGracePeriod || isPartner || isAcademicPartner;
 
@@ -852,21 +856,27 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
           <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
             <CardContent className="py-2.5 px-4 flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 min-w-0">
-                <Crown className="h-4 w-4 text-emerald-600 shrink-0" />
+                {academicAccess
+                  ? <GraduationCap className="h-4 w-4 text-emerald-600 shrink-0" />
+                  : <Crown className="h-4 w-4 text-emerald-600 shrink-0" />}
                 <p className="text-sm font-semibold text-foreground truncate">
-                  {clinicCoversAccess ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}` : t("pro.plan_title")}
+                  {clinicCoversAccess
+                    ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}`
+                    : academicAccess ? "Aliv.iA Acadêmico" : t("pro.plan_title")}
                 </p>
                 <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px] shrink-0">
                   {clinicCoversAccess
                     ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
+                    : academicAccess ? "Parceiro acadêmico"
                     : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
                 </Badge>
-                {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
+                {!clinicCoversAccess && !academicAccess && !subscription?.is_partner && subscription?.subscription_end && (
                   <span className="hidden md:inline text-[11px] text-muted-foreground whitespace-nowrap">
                     · {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
                   </span>
                 )}
               </div>
+
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"

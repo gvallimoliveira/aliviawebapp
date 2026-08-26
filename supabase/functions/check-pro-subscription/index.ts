@@ -80,9 +80,12 @@ serve(async (req) => {
       }
       return new Response(JSON.stringify({
         subscribed: true,
-        is_partner: true,
-        is_academic_partner: isAcademicPartner,
+        // Parceiro APENAS acadêmico não é PRO: o acesso é o mesmo, mas a
+        // identificação precisa ser acadêmica em toda a UI.
+        is_partner: isPartner && !(isAcademicPartner && !isPartner),
+        is_academic_partner: isAcademicPartner && !isPartner,
         is_student: !!proData?.is_student,
+
         premium_granted: proData?.premium_granted,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
