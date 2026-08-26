@@ -848,49 +848,39 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       {!isDemoMode && (
         <>
           {/* Status bar */}
+          {/* Status bar — faixa slim de 1 linha: selo do plano + status + renovação + ações */}
           <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
-            <CardContent className="py-4 px-5 flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
-                  <Crown className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground flex items-center gap-2">
-                    {clinicCoversAccess ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}` : t("pro.plan_title")}
-                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px]">
-                      {clinicCoversAccess
-                        ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
-                        : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
-                    </Badge>
-                  </p>
-                  {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
-                    </p>
-                  )}
-                </div>
+            <CardContent className="py-2.5 px-4 flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
+                <Crown className="h-4 w-4 text-emerald-600 shrink-0" />
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {clinicCoversAccess ? `Aliv.iA Clinic — ${activeClinic?.clinic_name}` : t("pro.plan_title")}
+                </p>
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 text-[10px] shrink-0">
+                  {clinicCoversAccess
+                    ? (activeClinic?.subscription_status === "trialing" ? "Trial" : t("dashboard.active"))
+                    : subscription?.is_partner ? t("pro.badge_partner") : t("dashboard.active")}
+                </Badge>
+                {!clinicCoversAccess && !subscription?.is_partner && subscription?.subscription_end && (
+                  <span className="hidden md:inline text-[11px] text-muted-foreground whitespace-nowrap">
+                    · {t("pro.renews")} {new Date(subscription.subscription_end).toLocaleDateString("pt-BR")}
+                  </span>
+                )}
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => setInstallDialogOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl h-8 px-3 text-xs font-medium border border-emerald-200/60 bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-700 hover:from-emerald-100 hover:to-teal-100 hover:shadow-sm transition-all shadow-sm"
+                  className="inline-flex items-center gap-1.5 rounded-lg h-7 px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   aria-label="Instalar app"
                 >
                   <Smartphone className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">App</span>
                 </button>
-                <Button variant="outline" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-xl h-8">
+                <Button variant="ghost" size="sm" onClick={() => navigate("/professional/register")} className="gap-1.5 rounded-lg h-7 px-2 text-[11px]">
                   <Settings className="h-3.5 w-3.5" />
-                  {t("pro.edit_profile")}
+                  <span className="hidden sm:inline">{t("pro.edit_profile")}</span>
                 </Button>
-                {!clinicCoversAccess && !subscription?.is_partner && !subscription?.is_vip && !isVipAdmin && (
-                  <Button variant="outline" size="sm" onClick={handleManageSubscription} disabled={portalLoading} className="gap-1.5 rounded-xl h-8">
-                    {portalLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CreditCard className="h-3.5 w-3.5" />}
-                    {t("pro.manage_subscription")}
-                  </Button>
-                )}
               </div>
             </CardContent>
           </Card>
