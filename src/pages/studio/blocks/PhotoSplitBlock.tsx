@@ -15,7 +15,8 @@ const PhotoSplitBlock = ({ content, rng, treatment, format, persona, photos }: B
   if (!photo) return null;
 
   const headline = pickHeadline(rng, content.headlines, persona.headlineTaste);
-  const phrase = `${headline.strong} ${headline.rest}`.trim();
+  /** Só o pedaço forte da headline: frase longa atravessando a foto fica ilegível. */
+  const phrase = headline.strong.replace(/[.]$/, "").trim();
   const photoLeft = treatment % 2 === 0;
 
   return (
@@ -39,13 +40,13 @@ const PhotoSplitBlock = ({ content, rng, treatment, format, persona, photos }: B
           {rng.pick(content.kickers)}
         </p>
         <h2
-          className="font-black uppercase leading-[0.92] tracking-[-0.02em] text-background mix-blend-difference"
-          style={{ fontSize: "clamp(2rem, 9vw, 4.5rem)" }}
+          className="max-w-[92%] font-black uppercase leading-[0.94] tracking-[-0.02em] text-background drop-shadow-[0_2px_10px_hsl(var(--foreground)/0.6)]"
+          style={{ fontSize: "clamp(1.6rem, 7vw, 3.4rem)" }}
         >
           {renderAccent(phrase, treatment)}
         </h2>
         <p className="mt-6 max-w-sm self-end text-right text-[11px] leading-relaxed text-background/85 md:text-sm">
-          {rng.pick(content.subs)}
+          {headline.rest}
         </p>
       </motion.div>
     </section>

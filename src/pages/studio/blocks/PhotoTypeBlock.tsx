@@ -48,7 +48,7 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, photos }: Bl
 
         <div className="w-full px-6 pb-10 pt-5 text-center">
           <h2 className="mx-auto max-w-xl text-lg font-bold leading-tight tracking-tight text-foreground md:text-2xl">
-            {headline.strong} {headline.rest}
+            {headline.strong}
           </h2>
           {photo.credit && (
             <p className="mt-3 text-[9px] uppercase tracking-[0.3em] text-muted-foreground">{photo.credit}</p>
