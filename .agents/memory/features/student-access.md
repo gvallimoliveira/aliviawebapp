@@ -45,3 +45,13 @@ Dashboard PRO:
 A partir da migração `active_profile_mode`, `is_student` virou **capacidade** ("acesso acadêmico liberado") e `active_profile_mode` (`'professional' | 'student'`) define qual identidade está em uso. Quando o parceiro tem CREFITO **e** `is_student=true`, ele escolhe o modo ativo via RadioGroup em `StudentAccessCard` (/minha-conta). Toggle do admin (PartnerManagement) liga/desliga apenas a capacidade; nunca força o modo. Trigger `validate_active_profile_mode` garante coerência: `mode='student'` exige `is_student=true`; ao desligar `is_student`, o modo volta automaticamente para `'professional'`.
 
 Consumidores que decidem identidade visível (PDF, links públicos, marketplace `ProfessionalSearch`, banner em `ProDashboard`, `getResponsibleProfessional`, banners em `ProfessionalAssessment` e `ExerciseProgram`) leem `active_profile_mode` com fallback para `is_student`. RPCs `get_public_professional_assessment_link` e `get_clinic_members_with_details` retornam `active_profile_mode`. Admin (`get_partner_details`) também devolve `active_profile_mode` para exibir "operando como..." no card do parceiro.
+
+---
+
+## Exclusividade PRO × Acadêmico (parceiros)
+
+Os toggles PRO e Acadêmico do painel de parceiros são **mutuamente exclusivos** (backend `manage-vip-users → toggle_partner_access` + estado otimista em `PartnerManagement.tsx`):
+- Ligar Acadêmico: `is_student=true`, `active_profile_mode='student'`, `is_partner=false`.
+- Ligar PRO: `is_partner=true`, `active_profile_mode='professional'`, `is_student=false`, limpa instituição/período e recria CREFITO placeholder `NNNNNN-X` se a linha estiver sem CREFITO (trigger exige para formado).
+
+Rótulos: `check-pro-subscription` devolve `is_partner:false` + `is_academic_partner:true` para parceiro **apenas** acadêmico (acesso continua `subscribed:true`). `ProDashboard` mostra "Aliv.iA Acadêmico · Parceiro acadêmico" nesse caso, e `ProfessionalManagement.classifyClient` classifica como `student` antes de qualquer flag de parceiro.
