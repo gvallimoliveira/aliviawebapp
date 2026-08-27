@@ -393,8 +393,10 @@ const StudioProCreate = ({
     let pngPath: string | null = null;
     if (node) {
       const rect = node.getBoundingClientRect();
+      // Miniatura da galeria em retina: 900px de largura, qualidade alta.
       try {
-        const blob = await renderNodeToBlob(node, Math.min(1, 300 / (rect.width || 300)), "image/jpeg", 0.6);
+        const thumbRatio = Math.max(1, Math.min(3, 900 / (rect.width || 900)));
+        const blob = await renderNodeToBlob(node, thumbRatio, "image/jpeg", 0.9);
         thumb = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(String(reader.result));
@@ -404,9 +406,9 @@ const StudioProCreate = ({
       } catch (error) {
         console.warn("[studio-pro] thumb", error);
       }
-      // PNG em alta resolução guardado na conta: a galeria baixa depois.
+      // PNG de publicação guardado na conta: 1440px de largura (nitidez de feed/story).
       try {
-        const ratio = Math.max(1, Math.min(3, 1080 / (rect.width || 1080)));
+        const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
         const png = await renderNodeToBlob(node, ratio, "image/png");
         const path = `${auth.user.id}/${brand.id}/${seed}-${String(index + 1).padStart(2, "0")}-${kind}.png`;
         const { error: upErr } = await supabase.storage
