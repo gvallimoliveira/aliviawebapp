@@ -41,6 +41,9 @@ type Brand = {
   instagram_handle: string | null;
   topics: string[] | null;
   content_source: string | null;
+  audiences: unknown;
+  positioning: string | null;
+  strategy_notes: string | null;
 };
 
 type Creation = {
