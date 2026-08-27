@@ -166,10 +166,11 @@ const StudioProApp = () => {
   }, [loading, accessLoading, user, access.isVip, brands.length, load]);
 
   /**
-   * Reparo dos mundos oficiais: a interpretação por IA podia sobrescrever os
-   * públicos da marca Aliv.iA e derrubar mundos inteiros (foi o que aconteceu
-   * com o mundo do paciente/pessoa com dor). Aqui garantimos que os quatro
-   * mundos oficiais existam sempre — os públicos extras da IA são preservados.
+   * Reparo dos mundos oficiais: a interpretação por IA podia sobrescrever ou
+   * duplicar os públicos da marca Aliv.iA (surgiram "Fisioterapeutas Autônomos",
+   * "Clínicas de Fisioterapia" etc., virando 7 abas onde só existem 4 nichos).
+   * Aqui a marca oficial volta a ter exatamente os 4 nichos + o sub-nicho do
+   * recém-formado, preservando o texto refinado de cada um.
    */
   const repaired = useRef(false);
   useEffect(() => {
@@ -177,18 +178,19 @@ const StudioProApp = () => {
     const official = brands.find((b) => b.content_source === "alivia");
     if (!official) return;
     const current = readAudiences(official.audiences);
-    const missing = ALIVIA_AUDIENCES.filter((a) => !current.some((c) => c.id === a.id));
-    if (!missing.length) return;
+    const canonical = ALIVIA_AUDIENCES.map((a) => {
+      const found = current.find((c) => c.id === a.id);
+      return found ? { ...a, ...found, label: a.label } : a;
+    });
+    const same =
+      current.length === canonical.length &&
+      current.every((c, i) => c.id === canonical[i].id && c.label === canonical[i].label);
+    if (same) return;
     repaired.current = true;
     void (async () => {
-      // Mundos oficiais primeiro, na ordem canônica; depois os nichos extras.
-      const merged = [
-        ...ALIVIA_AUDIENCES.map((a) => current.find((c) => c.id === a.id) ?? a),
-        ...current.filter((c) => !ALIVIA_AUDIENCES.some((a) => a.id === c.id)),
-      ];
       const { error } = await supabase
         .from("studio_brands")
-        .update({ audiences: writeAudiences(merged) })
+        .update({ audiences: writeAudiences(canonical) })
         .eq("id", official.id);
       if (error) {
         console.error("[studio-pro] repair alivia audiences", error);

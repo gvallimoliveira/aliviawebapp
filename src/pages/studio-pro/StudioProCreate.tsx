@@ -203,16 +203,20 @@ const StudioProCreate = ({
   );
 
   /**
-   * Mundo Aliv.iA correspondente ao público ativo. No 360° a marca Aliv.iA não
-   * cai mais no acervo neutro (era de onde saíam as artes de "entrega no prazo",
-   * que não têm nada a ver com o produto): cada versão gira entre os mundos
-   * oficiais, mantendo copy real e tópicos reais para os blocos fotográficos.
+   * Mundo Aliv.iA correspondente ao público ativo. Estruturalmente a marca tem
+   * 4 nichos (paciente, pro, clínica, acadêmico); sub-nichos como o recém-formado
+   * herdam o acervo do mundo de origem e recebem por cima as próprias dores,
+   * desejos e provas. No 360° cada versão gira entre os mundos oficiais.
    */
+  const SUB_NICHE_WORLD: Record<string, WorldId> = { "recem-formado": "academico" };
+  const subWorld = SUB_NICHE_WORLD[activeSegment];
   const aliviaWorld: WorldId | null = !isAlivia
     ? null
     : activeSegment !== GLOBAL_SEGMENT && isWorldId(activeSegment)
       ? activeSegment
-      : WORLD_IDS[createRng(`${brand.id}:${seed}:world`).int(WORLD_IDS.length)];
+      : subWorld
+        ? subWorld
+        : WORLD_IDS[createRng(`${brand.id}:${seed}:world`).int(WORLD_IDS.length)];
 
 
   const content = useMemo(
@@ -221,12 +225,12 @@ const StudioProCreate = ({
         kit: contentKit,
         base: aliviaWorld ? WORLDS[aliviaWorld] : undefined,
         audiences,
-        // Com acervo oficial do mundo, o público já está embutido no base.
-        segment: aliviaWorld ? GLOBAL_SEGMENT : activeSegment,
+        // Mundo oficial já embute o público; sub-nicho mantém o overlay próprio.
+        segment: aliviaWorld && !subWorld ? GLOBAL_SEGMENT : activeSegment,
         angle,
         positioning: aliviaWorld ? null : brand.positioning,
       }),
-    [contentKit, aliviaWorld, audiences, activeSegment, angle, brand.positioning],
+    [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning],
   );
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
