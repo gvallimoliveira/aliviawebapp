@@ -498,8 +498,15 @@ const StudioProCreate = ({
           <p className="text-xs text-muted-foreground">
             Versão <span className="font-mono">{seed}</span> · direção criativa {persona.name} · destino:{" "}
             {folder === "Todas" ? "Geral" : folder}
-            {Number.isFinite(maxArts) && ` · lote de ${maxArts} artes por geração`}
+            {!unlimited && ` · lote de ${batchSize} artes por geração`}
           </p>
+          {!unlimited && quota && (
+            <p className="mt-1 text-xs font-semibold text-foreground">
+              {quota.generationsLeft > 0
+                ? `${quota.generationsLeft} ${quota.generationsLeft === 1 ? "geração" : "gerações"} restantes neste período · ${quota.remaining} de ${quota.allowance} artes`
+                : "Cota do período encerrada — faça upgrade para continuar gerando."}
+            </p>
+          )}
           {/* Nichos da marca + visão 360° que interpola todos eles. */}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {segments.map((s) => (
