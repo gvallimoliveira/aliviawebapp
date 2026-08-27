@@ -18,9 +18,10 @@ import {
   type StudioFormat,
 } from "@/studio-core";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
-import { WORLDS, type WorldId } from "@/pages/studio/content";
-import { buildBrandContent, brandSlogan } from "./brandContent";
+import { WORLDS, isWorldId, type WorldId } from "@/pages/studio/content";
+import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
+import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
 
 /**
  * EDITOR "CRIAR" DO STUDIO PÚBLICO
