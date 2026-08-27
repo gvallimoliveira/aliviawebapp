@@ -49,8 +49,8 @@ const academic: WorldContent = {
   carousels: defaultCarousels,
   metrics: [
     [
-      { value: 10, label: "nichos de pesquisa clínica" },
-      { value: 7, suffix: "+", label: "escore PEDro mínimo das fontes" },
+      { value: 6, label: "fases do método STEPS" },
+      { value: 4, label: "eixos do D.I.F.I em cada caso" },
       { value: 100, suffix: "%", label: "das trilhas com caso real" },
     ],
     [
