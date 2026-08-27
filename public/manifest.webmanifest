@@ -2,7 +2,9 @@
   "name": "Aliv.iA Webapp",
   "short_name": "Aliv.iA",
   "description": "Avaliação musculoesquelética com inteligência artificial.",
+  "id": "/",
   "start_url": "/?source=pwa",
+
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
