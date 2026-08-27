@@ -14,6 +14,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { PLANS, PRODUCT, annualMonthlyPrice } from "./product";
 import StudioProShowcase from "./StudioProShowcase";
 import { SHOWCASE, type ShowcaseFormat } from "./showcase";
