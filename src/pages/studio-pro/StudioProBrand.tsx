@@ -766,7 +766,7 @@ const StudioProBrand = () => {
                       {([
                         ["pains", "Dores (uma por linha)"],
                         ["desires", "Desejos (uma por linha)"],
-                        ["proof", "Provas (uma por linha)"],
+                        ["proof", "Soluções que ofereço (uma por linha)"],
                       ] as const).map(([field, label]) => (
                         <div key={field}>
                           <Label className="text-[11px]">{label}</Label>
@@ -785,12 +785,17 @@ const StudioProBrand = () => {
                         </div>
                       ))}
                     </div>
-                    <Input
-                      className="mt-2"
-                      placeholder="Chamada para ação deste público"
-                      value={a.cta ?? ""}
-                      onChange={(e) => updateAudience(i, { cta: e.target.value })}
-                    />
+                    <div className="mt-2">
+                      <Label htmlFor={`edit-cta-${a.id}`} className="text-[11px]">
+                        Objetivo / CTA deste público
+                      </Label>
+                      <Input
+                        id={`edit-cta-${a.id}`}
+                        placeholder="Ex.: Fazer minha avaliação, Testar o painel profissional"
+                        value={a.cta ?? ""}
+                        onChange={(e) => updateAudience(i, { cta: e.target.value })}
+                      />
+                    </div>
                   </div>
                 ))}
                 <Button variant="outline" size="sm" className="rounded-full" onClick={addAudience}>
