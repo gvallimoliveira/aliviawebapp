@@ -182,6 +182,7 @@ const StudioProBrand = () => {
       });
       setAudiences(readAudiences(brand.audiences));
       setColorKit(readColorKit(brand.colors));
+      setSignatureEnabled(brand.signature_enabled !== false);
     }
   }, [brand?.id]);
 
