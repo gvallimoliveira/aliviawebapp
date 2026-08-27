@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
+import { useStudioQuota } from "./useStudioQuota";
 import BrandColorFields from "./BrandColorFields";
 import { ALIVIA_AUDIENCES, readAudiences, writeAudiences } from "./audiences";
 import { DEFAULT_COLOR_KIT, writeColorKit, type BrandColorKit } from "./brandColors";
@@ -69,6 +70,7 @@ const ALIVIA_KIT: BrandColorKit = {
 const StudioProApp = () => {
   const { user, loading: authLoading } = useAuth();
   const { access, loading: accessLoading } = useStudioAccess();
+  const { quota } = useStudioQuota();
   const navigate = useNavigate();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
