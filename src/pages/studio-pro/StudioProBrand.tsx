@@ -771,7 +771,7 @@ const StudioProBrand = () => {
                         <div key={field}>
                           <Label className="text-[11px]">{label}</Label>
                           <Textarea
-                            rows={3}
+                            rows={8}
                             value={(a[field] ?? []).join("\n")}
                             onChange={(e) =>
                               updateAudience(i, {
