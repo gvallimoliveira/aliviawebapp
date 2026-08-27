@@ -108,13 +108,55 @@ const hexToHslTriplet = (hex: string): string | null => {
   return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
+/**
+ * PERSISTÊNCIA DO EDITOR (por marca).
+ *
+ * Trocar de aba do navegador / voltar para o site remonta o componente. Antes
+ * isso sorteava uma nova `seed` e as artes mudavam sozinhas. Agora seed,
+ * formato, público e ângulo ficam em sessionStorage por marca: as artes só
+ * mudam quando o usuário mexe num seletor ou clica em "Nova versão".
+ */
+const stateKey = (brandId: string) => `studio-pro:create:${brandId}`;
+
+type PersistedCreateState = {
+  seed?: string;
+  format?: StudioFormat;
+  segment?: string;
+  angle?: ContentAngle;
+};
+
+const readPersisted = (brandId: string): PersistedCreateState => {
+  try {
+    const raw = sessionStorage.getItem(stateKey(brandId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as PersistedCreateState;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const writePersisted = (brandId: string, patch: PersistedCreateState) => {
+  try {
+    const next = { ...readPersisted(brandId), ...patch };
+    sessionStorage.setItem(stateKey(brandId), JSON.stringify(next));
+  } catch {
+    /* quota / modo privado — ignora */
+  }
+};
+
 const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved }: Props) => {
-  const [format, setFormat] = useState<StudioFormat>("1x1");
-  const [seed, setSeed] = useState(() => randomSeed());
+  const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
+  const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "1x1");
+  const [seed, setSeed] = useState(() => restored.current.seed ?? randomSeed());
   const [busy, setBusy] = useState<string | null>(null);
   const wrapper = useRef<HTMLDivElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const { photos } = useStudioPhotos(true);
+
+  useEffect(() => {
+    writePersisted(brand.id, { seed, format });
+  }, [brand.id, seed, format]);
 
 
   /**
