@@ -22,7 +22,7 @@ import {
 } from "@/studio-core";
 import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
-import { WORLDS, isWorldId, type WorldId } from "@/pages/studio/content";
+import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
 import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
