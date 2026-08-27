@@ -164,6 +164,8 @@ const StudioProCreate = ({
   onSaved,
 }: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
+  /** Assinatura da marca nas artes: ajuste global da marca (ligado por padrão). */
+  const signatureOn = brand.signature_enabled !== false;
   const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "1x1");
   const [seed, setSeed] = useState(() => restored.current.seed ?? randomSeed());
   const [busy, setBusy] = useState<string | null>(null);
