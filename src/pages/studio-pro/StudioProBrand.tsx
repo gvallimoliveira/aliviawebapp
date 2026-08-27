@@ -458,9 +458,12 @@ const StudioProBrand = () => {
             brand={brand}
             folder={folder}
             watermark={access.watermark}
-            onSaved={() => void load()}
+            inspirations={inspirations}
+            // Só a lista de artes é recarregada: a versão em tela não muda.
+            onSaved={() => void loadCreations()}
           />
         )}
+
 
         {tab === "artes" && (
           <section
