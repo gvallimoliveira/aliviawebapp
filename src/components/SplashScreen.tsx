@@ -61,20 +61,24 @@ const SplashScreen = () => {
       <div
         className="absolute inset-0"
         style={{
-          background:
-            "radial-gradient(circle at 50% 50%, hsl(var(--primary) / 0.18), transparent 60%)",
+          background: studio
+            ? "radial-gradient(circle at 50% 50%, rgba(29,107,92,0.22), transparent 60%)"
+            : "radial-gradient(circle at 50% 50%, hsl(var(--primary) / 0.18), transparent 60%)",
         }}
       />
       <div className="relative flex flex-col items-center">
         <img
-          src={logoAlivia}
+          src={studio ? STUDIO_LOGO : logoAlivia}
           alt=""
           className="splash-logo w-40 h-40 object-contain drop-shadow-xl"
         />
         <p className="splash-slogan mt-6 max-w-[18rem] text-center text-sm md:text-base italic text-muted-foreground px-4">
-          ...sistema de raciocínio clínico com alma de fisioterapeuta
+          {studio
+            ? "...seu estúdio de conteúdo, com alma de marca"
+            : "...sistema de raciocínio clínico com alma de fisioterapeuta"}
         </p>
       </div>
+
       <style>{`
         @keyframes splash-zoom {
           0%   { transform: scale(0.35); opacity: 0; }
