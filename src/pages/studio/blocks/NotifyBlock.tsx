@@ -31,12 +31,13 @@ const NotifyBlock = ({ content, rng, picker, treatment, format }: BlockProps) =>
 
   /**
    * Eventos do app: o "título" é o gatilho do nicho (tag da funcionalidade) e o
-   * corpo é a linha curta que aquela funcionalidade entrega.
+   * corpo é a linha curta que aquela funcionalidade entrega. Passa pelo picker
+   * para respeitar a cobertura editorial.
    */
-  const events = Array.from({ length: tall ? 5 : 4 }, () => picker.feature()).map((f) => ({
-    title: f.tag,
-    body: short(f.description || f.title),
-  }));
+  const events = picker
+    .pick(content.features, tall ? 5 : 4, rng, (f) => [f.topic])
+    .map((f) => ({ title: f.tag, body: short(f.description || f.title) }));
+
 
   return (
     <section
