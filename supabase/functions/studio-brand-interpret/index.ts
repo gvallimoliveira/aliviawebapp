@@ -181,13 +181,30 @@ Responda SOMENTE com JSON válido neste formato:
         };
       })
       .filter(Boolean)
-      .slice(0, 5);
+      .slice(0, 6) as Array<Record<string, unknown>>;
+
+    /**
+     * Nunca perder um público já cadastrado (ex.: o mundo do paciente do
+     * Aliv.iA). A IA pode refinar os existentes, mas não excluí-los.
+     */
+    const byId = new Map<string, Record<string, unknown>>();
+    for (const a of existingAudiences) {
+      const label = String(a?.label ?? "").trim();
+      if (!label) continue;
+      byId.set(String(a?.id ?? slugify(label)), a);
+    }
+    for (const a of audiences) {
+      const id = String(a.id);
+      const prev = byId.get(id);
+      byId.set(id, prev ? { ...prev, ...a } : a);
+    }
+    const mergedAudiences = Array.from(byId.values()).slice(0, 8);
 
     const result = {
       positioning: String(parsed.positioning ?? "").trim().slice(0, 800),
       keywords: strList(parsed.keywords, 10),
       strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 900),
-      audiences,
+      audiences: mergedAudiences,
     };
 
     // Persiste como briefing da marca — o usuário revisa e edita depois.
