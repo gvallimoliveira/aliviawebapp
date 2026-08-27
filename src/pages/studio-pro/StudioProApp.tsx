@@ -248,11 +248,6 @@ const StudioProApp = () => {
     setBrands((prev) => prev.filter((b) => b.id !== id));
   };
 
-  const available = access.unlimited
-    ? Infinity
-    : credits
-      ? credits.free_credits + credits.plan_credits + credits.extra_credits - credits.used_this_period
-      : 0;
 
   const visible = brands.filter((b) =>
     (b.name + " " + (b.niche ?? "")).toLowerCase().includes(query.trim().toLowerCase()),
