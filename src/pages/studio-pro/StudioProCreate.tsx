@@ -18,6 +18,7 @@ import {
   type StudioFormat,
 } from "@/studio-core";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
+import { WORLDS, type WorldId } from "@/pages/studio/content";
 import { buildBrandContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 
@@ -39,6 +40,9 @@ type BrandInput = {
   tone: string | null;
   logo_url: string | null;
   colors: Record<string, string> | null;
+  description?: string | null;
+  topics?: string[] | null;
+  content_source?: string | null;
 };
 
 type Props = {
@@ -60,6 +64,14 @@ const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "9x16", label: "Story 9:16" },
   { id: "1x1", label: "Post 1:1" },
   { id: "free", label: "Livre" },
+];
+
+/** Mundos oficiais Aliv.iA: o acervo das próprias landings do produto. */
+const WORLD_TABS: { id: WorldId; label: string }[] = [
+  { id: "paciente", label: "Paciente" },
+  { id: "pro", label: "Profissional" },
+  { id: "clinica", label: "Clínica" },
+  { id: "academico", label: "Estudante" },
 ];
 
 /** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
@@ -92,9 +104,26 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
   const [busy, setBusy] = useState<string | null>(null);
   const wrapper = useRef<HTMLDivElement>(null);
 
+  /**
+   * Marcas com `content_source = "alivia"` usam o acervo editorial oficial do
+   * produto (paciente, profissional, clínica, acadêmico) — o mesmo do Studio
+   * interno. Qualquer outra marca usa o acervo neutro gerado do kit.
+   */
+  const isAlivia = brand.content_source === "alivia";
+  const [world, setWorld] = useState<WorldId>("paciente");
+
   const content = useMemo(
-    () => buildBrandContent({ name: brand.name, niche: brand.niche, tone: brand.tone }),
-    [brand.name, brand.niche, brand.tone],
+    () =>
+      isAlivia
+        ? WORLDS[world]
+        : buildBrandContent({
+            name: brand.name,
+            niche: brand.niche,
+            tone: brand.tone,
+            description: brand.description,
+            keywords: brand.topics,
+          }),
+    [isAlivia, world, brand.name, brand.niche, brand.tone, brand.description, brand.topics],
   );
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
@@ -110,13 +139,13 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
   }, [brand.id, brand.name, brand.niche, brand.tone, brand.logo_url]);
 
   const picker = useMemo(
-    () => createPicker(buildCoverage("pro", content, {}), () => {}),
-    [content],
+    () => createPicker(buildCoverage(isAlivia ? world : "pro", content, {}), () => {}),
+    [content, isAlivia, world],
   );
 
   const blocks = useMemo(
-    () => composePage(createRng(`${brand.id}:${seed}:layout`), persona, undefined, content.carousels, 0),
-    [brand.id, seed, persona, content],
+    () => composePage(createRng(`${brand.id}:${seed}:${world}:layout`), persona, undefined, content.carousels, 0),
+    [brand.id, seed, world, persona, content],
   );
 
   useEffect(() => {
@@ -230,6 +259,21 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
             Versão <span className="font-mono">{seed}</span> · direção criativa {persona.name} · destino:{" "}
             {folder === "Todas" ? "Geral" : folder}
           </p>
+          {isAlivia && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {WORLD_TABS.map((w) => (
+                <Button
+                  key={w.id}
+                  size="sm"
+                  variant={world === w.id ? "secondary" : "ghost"}
+                  className="h-7 rounded-full text-[11px]"
+                  onClick={() => setWorld(w.id)}
+                >
+                  {w.label}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           {FORMATS.map((f) => (

@@ -36,6 +36,11 @@ type Brand = {
   tone: string | null;
   logo_url: string | null;
   colors: Record<string, string> | null;
+  description: string | null;
+  source_url: string | null;
+  instagram_handle: string | null;
+  topics: string[] | null;
+  content_source: string | null;
 };
 
 type Creation = {
@@ -63,7 +68,16 @@ const StudioProBrand = () => {
   const [creations, setCreations] = useState<Creation[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", niche: "", tone: "", logo_url: "" });
+  const [form, setForm] = useState({
+    name: "",
+    niche: "",
+    tone: "",
+    logo_url: "",
+    description: "",
+    source_url: "",
+    instagram_handle: "",
+    keywords: "",
+  });
   const [colorKit, setColorKit] = useState<BrandColorKit>(DEFAULT_COLOR_KIT);
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
@@ -106,6 +120,10 @@ const StudioProBrand = () => {
         niche: brand.niche ?? "",
         tone: brand.tone ?? "",
         logo_url: brand.logo_url ?? "",
+        description: brand.description ?? "",
+        source_url: brand.source_url ?? "",
+        instagram_handle: brand.instagram_handle ?? "",
+        keywords: (brand.topics ?? []).join(", "),
       });
       setColorKit(readColorKit(brand.colors));
     }
@@ -146,6 +164,13 @@ const StudioProBrand = () => {
         niche: form.niche.trim() || null,
         tone: form.tone.trim() || null,
         logo_url: form.logo_url.trim() || null,
+        description: form.description.trim() || null,
+        source_url: form.source_url.trim() || null,
+        instagram_handle: form.instagram_handle.trim() || null,
+        topics: form.keywords
+          .split(",")
+          .map((k) => k.trim())
+          .filter(Boolean),
         colors: writeColorKit(colorKit),
       })
       .eq("id", brandId);
@@ -362,7 +387,51 @@ const StudioProBrand = () => {
               <Label htmlFor="edit-niche">Nicho</Label>
               <Input id="edit-niche" value={form.niche} onChange={(e) => setForm({ ...form, niche: e.target.value })} />
             </div>
+            <div>
+              <Label htmlFor="edit-site">Site</Label>
+              <Input
+                id="edit-site"
+                placeholder="https://aliviawebapp.com.br"
+                value={form.source_url}
+                onChange={(e) => setForm({ ...form, source_url: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-instagram">Instagram</Label>
+              <Input
+                id="edit-instagram"
+                placeholder="@aliviawebapp"
+                value={form.instagram_handle}
+                onChange={(e) => setForm({ ...form, instagram_handle: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-keywords">Palavras-chave</Label>
+              <Input
+                id="edit-keywords"
+                placeholder="separe por vírgula"
+                value={form.keywords}
+                onChange={(e) => setForm({ ...form, keywords: e.target.value })}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="edit-description">Descrição da marca</Label>
+              <Textarea
+                id="edit-description"
+                rows={3}
+                placeholder="O que a marca faz, para quem e o que a diferencia."
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+            </div>
             <BrandColorFields idPrefix="edit" kit={colorKit} onChange={setColorKit} />
+            {brand.content_source === "alivia" && (
+              <p className="rounded-2xl border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground sm:col-span-2">
+                Esta marca usa o acervo editorial oficial do Aliv.iA. Na aba <strong>Criar</strong> você
+                escolhe o mundo (Paciente, Profissional, Clínica ou Estudante) e as artes saem com a
+                mensagem real de cada landing.
+              </p>
+            )}
             <div className="sm:col-span-2">
               <Label htmlFor="edit-tone">Tom de voz</Label>
               <Textarea

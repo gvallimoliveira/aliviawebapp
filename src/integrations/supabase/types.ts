@@ -3468,7 +3468,9 @@ export type Database = {
       studio_brands: {
         Row: {
           colors: Json
+          content_source: string
           created_at: string
+          description: string | null
           fonts: Json
           id: string
           instagram_handle: string | null
@@ -3484,7 +3486,9 @@ export type Database = {
         }
         Insert: {
           colors?: Json
+          content_source?: string
           created_at?: string
+          description?: string | null
           fonts?: Json
           id?: string
           instagram_handle?: string | null
@@ -3500,7 +3504,9 @@ export type Database = {
         }
         Update: {
           colors?: Json
+          content_source?: string
           created_at?: string
+          description?: string | null
           fonts?: Json
           id?: string
           instagram_handle?: string | null
