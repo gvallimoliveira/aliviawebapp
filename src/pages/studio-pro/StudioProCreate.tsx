@@ -27,6 +27,7 @@ import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
 import { STUDIO_BATCH_SIZE, useStudioQuota } from "./useStudioQuota";
+import StudioProSignature from "./StudioProSignature";
 
 
 /**
@@ -54,6 +55,8 @@ type BrandInput = {
   audiences?: unknown;
   /** Leitura global do produto, base do conteúdo 360°. */
   positioning?: string | null;
+  /** Ajuste global: assinar todas as artes com logo/nome da marca. */
+  signature_enabled?: boolean | null;
 };
 
 type Props = {
@@ -161,6 +164,8 @@ const StudioProCreate = ({
   onSaved,
 }: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
+  /** Assinatura da marca nas artes: ajuste global da marca (ligado por padrão). */
+  const signatureOn = brand.signature_enabled !== false;
   const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "1x1");
   const [seed, setSeed] = useState(() => restored.current.seed ?? randomSeed());
   const [busy, setBusy] = useState<string | null>(null);
@@ -617,18 +622,20 @@ const StudioProCreate = ({
                 style={{ width: FRAME_WIDTH[format] }}
               >
                 <div id={`studio-pro-block-${i}`}>
-                  <StudioMotion kind={motion}>
-                    <Block
-                      content={content}
-                      rng={rng}
-                      treatment={treatment}
-                      format={format}
-                      picker={picker}
-                      persona={persona}
-                      slide={slide}
-                      photos={photos}
-                    />
-                  </StudioMotion>
+                  <StudioProSignature artKey={`${brand.id}:${seed}:${kind}:${i}`} enabled={signatureOn}>
+                    <StudioMotion kind={motion}>
+                      <Block
+                        content={content}
+                        rng={rng}
+                        treatment={treatment}
+                        format={format}
+                        picker={picker}
+                        persona={persona}
+                        slide={slide}
+                        photos={photos}
+                      />
+                    </StudioMotion>
+                  </StudioProSignature>
                 </div>
               </div>
 

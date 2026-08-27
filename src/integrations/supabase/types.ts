@@ -3480,6 +3480,7 @@ export type Database = {
           name: string
           niche: string | null
           positioning: string | null
+          signature_enabled: boolean
           source_url: string | null
           strategy_notes: string | null
           tone: string | null
@@ -3501,6 +3502,7 @@ export type Database = {
           name: string
           niche?: string | null
           positioning?: string | null
+          signature_enabled?: boolean
           source_url?: string | null
           strategy_notes?: string | null
           tone?: string | null
@@ -3522,6 +3524,7 @@ export type Database = {
           name?: string
           niche?: string | null
           positioning?: string | null
+          signature_enabled?: boolean
           source_url?: string | null
           strategy_notes?: string | null
           tone?: string | null

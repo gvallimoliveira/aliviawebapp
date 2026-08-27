@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +60,8 @@ type Brand = {
   audiences: unknown;
   positioning: string | null;
   strategy_notes: string | null;
+  /** Assinatura (logo + nome) em todas as artes desta marca. */
+  signature_enabled: boolean | null;
 };
 
 type Creation = {
@@ -106,6 +109,8 @@ const StudioProBrand = () => {
   const [audiences, setAudiences] = useState<BrandAudience[]>([]);
   const [interpreting, setInterpreting] = useState(false);
   const [colorKit, setColorKit] = useState<BrandColorKit>(DEFAULT_COLOR_KIT);
+  /** Assinatura da marca nas artes — ajuste global desta marca. */
+  const [signatureEnabled, setSignatureEnabled] = useState(true);
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
 
@@ -178,6 +183,7 @@ const StudioProBrand = () => {
       });
       setAudiences(readAudiences(brand.audiences));
       setColorKit(readColorKit(brand.colors));
+      setSignatureEnabled(brand.signature_enabled !== false);
     }
   }, [brand?.id]);
 
@@ -227,6 +233,7 @@ const StudioProBrand = () => {
         positioning: form.positioning.trim() || null,
         strategy_notes: form.strategy_notes.trim() || null,
         audiences: writeAudiences(audiences),
+        signature_enabled: signatureEnabled,
       })
       .eq("id", brandId);
     setSaving(false);
@@ -773,6 +780,20 @@ const StudioProBrand = () => {
                 value={form.logo_url}
                 onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
               />
+            </div>
+
+            {/* Proteção do material: toda arte sai assinada com a marca. */}
+            <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-background p-4 sm:col-span-2">
+              <div>
+                <Label htmlFor="edit-signature" className="text-sm font-semibold">
+                  Assinatura da marca nos conteúdos
+                </Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Aplica o logo e o nome desta marca discretamente no canto de todas as artes geradas — evita
+                  print e cópia sem crédito. Desligue só se você for assinar manualmente.
+                </p>
+              </div>
+              <Switch id="edit-signature" checked={signatureEnabled} onCheckedChange={setSignatureEnabled} />
             </div>
             <Button onClick={saveBrand} disabled={saving} className="rounded-full sm:col-span-2">
               {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
