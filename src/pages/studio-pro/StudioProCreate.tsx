@@ -117,7 +117,7 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
   // Se o público ativo deixa de existir (edição do kit), volta para o 360°.
   const activeSegment = segments.some((s) => s.id === segment) ? segment : GLOBAL_SEGMENT;
 
-  const kit = useMemo(
+  const contentKit = useMemo(
     () => ({
       name: brand.name,
       niche: brand.niche,
@@ -135,7 +135,7 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
   const content = useMemo(
     () =>
       buildSegmentContent({
-        kit,
+        kit: contentKit,
         base: aliviaWorld ? WORLDS[aliviaWorld] : undefined,
         audiences,
         // Com acervo oficial do mundo, o público já está embutido no base.
@@ -143,7 +143,7 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
         angle,
         positioning: aliviaWorld ? null : brand.positioning,
       }),
-    [kit, aliviaWorld, audiences, activeSegment, angle, brand.positioning],
+    [contentKit, aliviaWorld, audiences, activeSegment, angle, brand.positioning],
   );
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
