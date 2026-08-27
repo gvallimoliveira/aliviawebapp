@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Loader2, RefreshCw, Save, Type } from "lucide-react";
+import { Download, FileText, Images, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,17 +11,22 @@ import {
   composePage,
   createPicker,
   createRng,
+  deliver,
   exportNodeAsPng,
+  exportTextFile,
   personaForSeed,
   randomSeed,
   renderNodeToBlob,
+  type ComposedBlock,
   type StudioFormat,
 } from "@/studio-core";
+import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { WORLDS, isWorldId, type WorldId } from "@/pages/studio/content";
 import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
+
 
 /**
  * EDITOR "CRIAR" DO STUDIO PÚBLICO
@@ -56,8 +61,15 @@ type Props = {
   folder: string;
   /** Downloads saem com assinatura discreta do plano gratuito. */
   watermark: boolean;
+  /**
+   * Receitas das artes que o usuário favoritou nesta marca. Servem de linhagem:
+   * parte das novas versões herda a estrutura aprovada, o resto nasce livre
+   * para continuar inovando.
+   */
+  inspirations?: ComposedBlock[][];
   onSaved?: () => void;
 };
+
 
 const FRAME_WIDTH: Record<StudioFormat, string> = {
   "9x16": "min(400px, 100%)",
@@ -96,11 +108,14 @@ const hexToHslTriplet = (hex: string): string | null => {
   return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
-const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
+const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved }: Props) => {
   const [format, setFormat] = useState<StudioFormat>("1x1");
   const [seed, setSeed] = useState(() => randomSeed());
   const [busy, setBusy] = useState<string | null>(null);
   const wrapper = useRef<HTMLDivElement>(null);
+  /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
+  const { photos } = useStudioPhotos(true);
+
 
   /**
    * Marcas com `content_source = "alivia"` têm acervo editorial próprio por
@@ -163,17 +178,34 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
     [content, aliviaWorld],
   );
 
+  /**
+   * LINHAGEM DOS FAVORITOS.
+   *
+   * Quando a marca já tem artes favoritadas, ~65% das versões herdam a receita
+   * de uma delas (mesmas seções/tratamentos em boa parte das posições) e o
+   * restante nasce do zero. Assim o repertório aprovado guia o Studio sem
+   * congelar a criação de novidades.
+   */
+  const lineage = useMemo(() => {
+    if (inspirations.length === 0) return { blocks: undefined as ComposedBlock[] | undefined, used: false };
+    const rng = createRng(`${brand.id}:${seed}:lineage`);
+    if (!rng.chance(0.65)) return { blocks: undefined, used: false };
+    return { blocks: inspirations[rng.int(inspirations.length)], used: true };
+  }, [inspirations, brand.id, seed]);
+
   const blocks = useMemo(
     () =>
       composePage(
         createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
         persona,
-        undefined,
+        lineage.blocks,
         content.carousels,
-        0,
+        photos.length,
       ),
-    [brand.id, seed, activeSegment, angle, persona, content],
+    [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length],
   );
+
+
 
 
   useEffect(() => {
@@ -233,9 +265,10 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
     setBusy(`save-${index}`);
     const node = document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
     let thumb: string | null = null;
+    let pngPath: string | null = null;
     if (node) {
+      const rect = node.getBoundingClientRect();
       try {
-        const rect = node.getBoundingClientRect();
         const blob = await renderNodeToBlob(node, Math.min(1, 300 / (rect.width || 300)), "image/jpeg", 0.6);
         thumb = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -245,6 +278,19 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
         });
       } catch (error) {
         console.warn("[studio-pro] thumb", error);
+      }
+      // PNG em alta resolução guardado na conta: a galeria baixa depois.
+      try {
+        const ratio = Math.max(1, Math.min(3, 1080 / (rect.width || 1080)));
+        const png = await renderNodeToBlob(node, ratio, "image/png");
+        const path = `${auth.user.id}/${brand.id}/${seed}-${String(index + 1).padStart(2, "0")}-${kind}.png`;
+        const { error: upErr } = await supabase.storage
+          .from("studio-art")
+          .upload(path, png, { contentType: "image/png", upsert: true });
+        if (upErr) throw upErr;
+        pngPath = path;
+      } catch (error) {
+        console.warn("[studio-pro] png upload", error);
       }
     }
     const { error } = await supabase.from("studio_creations").insert({
@@ -256,6 +302,12 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
       headline: headlineOf(index) || null,
       caption,
       thumb,
+      png_path: pngPath,
+      // Receita da arte: permite reusar a composição aprovada nas próximas versões.
+      composition: JSON.parse(JSON.stringify(blocks)),
+
+      segment: activeSegment,
+      angle,
       folder: folder === "Todas" ? "Geral" : folder,
       watermarked: watermark,
     });
@@ -265,7 +317,11 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
       toast.error("Não foi possível salvar na marca.");
       return;
     }
-    toast.success(`Arte salva em ${folder === "Todas" ? "Geral" : folder}`);
+    toast.success(
+      pngPath
+        ? `Arte salva em ${folder === "Todas" ? "Geral" : folder} com PNG e legenda`
+        : `Arte salva em ${folder === "Todas" ? "Geral" : folder} (PNG não pôde ser guardado)`,
+    );
     onSaved?.();
   };
 
@@ -277,6 +333,42 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
       toast.error("Não foi possível copiar a legenda.");
     }
   };
+
+  /** Baixa todas as artes desta versão, uma a uma. */
+  const downloadAll = async () => {
+    setBusy("all-png");
+    try {
+      for (let i = 0; i < blocks.length; i += 1) {
+        const node = document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null;
+        if (!node) continue;
+        const rect = node.getBoundingClientRect();
+        const ratio = Math.max(1, Math.min(3, 1440 / (rect.width || 1440)));
+        const blob = await renderNodeToBlob(node, ratio, "image/png");
+        await deliver(
+          blob,
+          `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}-${String(i + 1).padStart(2, "0")}-${blocks[i].kind}.png`,
+        );
+      }
+      toast.success("Todas as artes desta versão foram exportadas");
+    } catch (error) {
+      console.error("[studio-pro] export all", error);
+      toast.error("Não foi possível exportar todas as artes.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** Baixa as legendas da versão inteira em um .txt. */
+  const downloadCaptions = () => {
+    const text = blocks
+      .map(({ kind }, i) => {
+        const caption = buildCaption(content, kind, createRng(`${brand.id}:${seed}:caption:${kind}:${i}`));
+        return `# ${String(i + 1).padStart(2, "0")} · ${kind}\n${caption}`;
+      })
+      .join("\n\n---\n\n");
+    void exportTextFile(text, `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}-legendas.txt`);
+  };
+
 
   return (
     <section className="mt-5 rounded-3xl border border-border bg-card p-5">
@@ -321,6 +413,16 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
               Cadastre os públicos da marca em Ajustes para gerar conteúdo por nicho.
             </p>
           )}
+          {/* Transparência da linhagem: o usuário vê quando a versão herdou favorito. */}
+          <p className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Sparkles className="h-3 w-3" />
+            {inspirations.length === 0
+              ? "Favorite artes na aba Artes para o Studio aprender seu estilo."
+              : lineage.used
+                ? `Esta versão herda a estrutura de um favorito (${inspirations.length} referências no acervo).`
+                : `Versão livre — inovando fora do padrão dos ${inspirations.length} favoritos.`}
+            {photos.length > 0 && ` · ${photos.length} fotos do acervo em uso`}
+          </p>
 
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
@@ -335,11 +437,30 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
               {f.label}
             </Button>
           ))}
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 rounded-full text-xs"
+            disabled={busy === "all-png"}
+            onClick={downloadAll}
+          >
+            {busy === "all-png" ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Images className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            Todas em PNG
+          </Button>
+          <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={downloadCaptions}>
+            <FileText className="mr-1.5 h-3.5 w-3.5" />
+            Legendas (.txt)
+          </Button>
           <Button size="sm" className="rounded-full" onClick={() => setSeed(randomSeed())}>
             <RefreshCw className="mr-1.5 h-4 w-4" />
             Nova versão
           </Button>
         </div>
+
       </div>
 
       <div ref={wrapper} className="mt-5 flex flex-col items-center gap-6" style={themeStyle}>
@@ -368,7 +489,7 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
                       picker={picker}
                       persona={persona}
                       slide={slide}
-                      photos={[]}
+                      photos={photos}
                     />
                   </StudioMotion>
                 </div>

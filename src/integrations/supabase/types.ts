@@ -3533,46 +3533,58 @@ export type Database = {
       }
       studio_creations: {
         Row: {
+          angle: string | null
           block_kind: string | null
           brand_id: string | null
           caption: string | null
+          composition: Json | null
           created_at: string
           folder: string
           format: string | null
           headline: string | null
           id: string
           is_favorite: boolean
+          png_path: string | null
           seed: string
+          segment: string | null
           thumb: string | null
           user_id: string
           watermarked: boolean
         }
         Insert: {
+          angle?: string | null
           block_kind?: string | null
           brand_id?: string | null
           caption?: string | null
+          composition?: Json | null
           created_at?: string
           folder?: string
           format?: string | null
           headline?: string | null
           id?: string
           is_favorite?: boolean
+          png_path?: string | null
           seed: string
+          segment?: string | null
           thumb?: string | null
           user_id: string
           watermarked?: boolean
         }
         Update: {
+          angle?: string | null
           block_kind?: string | null
           brand_id?: string | null
           caption?: string | null
+          composition?: Json | null
           created_at?: string
           folder?: string
           format?: string | null
           headline?: string | null
           id?: string
           is_favorite?: boolean
+          png_path?: string | null
           seed?: string
+          segment?: string | null
           thumb?: string | null
           user_id?: string
           watermarked?: boolean

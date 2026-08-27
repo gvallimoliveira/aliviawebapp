@@ -1,6 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ChevronDown, FolderPlus, Images, Loader2, Save, Settings2, Sparkles, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  Download,
+  FileText,
+  FolderPlus,
+  Images,
+  Loader2,
+  Save,
+  Settings2,
+  Sparkles,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +30,7 @@ import {
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
 import StudioProCreate from "./StudioProCreate";
+import type { ComposedBlock } from "@/studio-core";
 import BrandColorFields from "./BrandColorFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
 import { readAudiences, writeAudiences, type BrandAudience } from "./audiences";
@@ -55,7 +69,11 @@ type Creation = {
   format: string | null;
   folder: string;
   created_at: string;
+  is_favorite: boolean;
+  png_path: string | null;
+  composition: unknown;
 };
+
 
 type Tab = "criar" | "artes" | "ajustes";
 
@@ -99,6 +117,27 @@ const StudioProBrand = () => {
     document.title = brand ? `${brand.name} — ${PRODUCT.name}` : `${PRODUCT.name}`;
   }, [brand]);
 
+  const ART_FIELDS = "id, headline, caption, thumb, format, folder, created_at, is_favorite, png_path, composition";
+
+  /**
+   * Atualiza somente a lista de artes — sem tocar em `loading`. Isso é o que
+   * roda depois de salvar uma arte: o editor continua montado e a versão em
+   * tela não é sorteada de novo.
+   */
+  const loadCreations = useCallback(async () => {
+    if (!user || !brandId) return;
+    const { data, error } = await supabase
+      .from("studio_creations")
+      .select(ART_FIELDS)
+      .eq("brand_id", brandId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("[studio-pro] creations", error);
+      return;
+    }
+    setCreations((data as unknown as Creation[]) ?? []);
+  }, [user, brandId]);
+
   const load = useCallback(async () => {
     if (!user || !brandId) return;
     setLoading(true);
@@ -107,16 +146,17 @@ const StudioProBrand = () => {
       // Isolamento: só artes desta marca.
       supabase
         .from("studio_creations")
-        .select("id, headline, caption, thumb, format, folder, created_at")
+        .select(ART_FIELDS)
         .eq("brand_id", brandId)
         .order("created_at", { ascending: false }),
     ]);
     if (brandError) console.error("[studio-pro] brands", brandError);
     if (artError) console.error("[studio-pro] creations", artError);
     setBrands((brandRows as Brand[]) ?? []);
-    setCreations((artRows as Creation[]) ?? []);
+    setCreations((artRows as unknown as Creation[]) ?? []);
     setLoading(false);
   }, [user, brandId]);
+
 
   useEffect(() => {
     void load();
@@ -259,6 +299,72 @@ const StudioProBrand = () => {
     setCreations((prev) => prev.filter((c) => c.id !== id));
   };
 
+  /** Favorito = referência de estilo para as próximas artes desta marca. */
+  const toggleFavorite = async (art: Creation) => {
+    const next = !art.is_favorite;
+    const { error } = await supabase.from("studio_creations").update({ is_favorite: next }).eq("id", art.id);
+    if (error) {
+      toast.error("Não foi possível favoritar.");
+      return;
+    }
+    setCreations((prev) => prev.map((c) => (c.id === art.id ? { ...c, is_favorite: next } : c)));
+    toast.success(next ? "Favoritada — vira referência das próximas artes." : "Removida das referências.");
+  };
+
+  /** Baixa o PNG guardado no momento em que a arte foi salva. */
+  const downloadArt = async (art: Creation) => {
+    if (!art.png_path) {
+      toast.error("Esta arte foi salva antes do PNG guardado. Gere e salve novamente.");
+      return;
+    }
+    const { data, error } = await supabase.storage.from("studio-art").download(art.png_path);
+    if (error || !data) {
+      toast.error("Não foi possível baixar o PNG.");
+      return;
+    }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = art.png_path.split("/").pop() ?? "arte.png";
+    a.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+
+  const downloadCaption = (art: Creation) => {
+    if (!art.caption) {
+      toast.error("Esta arte não tem legenda salva.");
+      return;
+    }
+    const blob = new Blob([art.caption], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(art.headline ?? "legenda").slice(0, 40).replace(/\s+/g, "-").toLowerCase()}.txt`;
+    a.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+
+  const copyCaption = async (art: Creation) => {
+    if (!art.caption) return;
+    try {
+      await navigator.clipboard.writeText(art.caption);
+      toast.success("Legenda copiada");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
+
+  /** Receitas dos favoritos desta marca, usadas como linhagem no editor. */
+  const inspirations = useMemo(
+    () =>
+      creations
+        .filter((c) => c.is_favorite && Array.isArray(c.composition) && (c.composition as unknown[]).length > 0)
+        .slice(0, 12)
+        .map((c) => c.composition as ComposedBlock[]),
+    [creations],
+  );
+
+
   const newFolder = async () => {
     const name = window.prompt("Nome da nova pasta");
     if (!name?.trim()) return;
@@ -352,9 +458,12 @@ const StudioProBrand = () => {
             brand={brand}
             folder={folder}
             watermark={access.watermark}
-            onSaved={() => void load()}
+            inspirations={inspirations}
+            // Só a lista de artes é recarregada: a versão em tela não muda.
+            onSaved={() => void loadCreations()}
           />
         )}
+
 
         {tab === "artes" && (
           <section
@@ -401,8 +510,49 @@ const StudioProBrand = () => {
                       <p className="line-clamp-2 text-xs font-semibold">{art.headline ?? "Sem título"}</p>
                       <p className="mt-1 text-[11px] text-muted-foreground">
                         {art.folder || "Geral"} · {art.format ?? "post"}
+                        {art.is_favorite && " · referência"}
                       </p>
-                      <div className="mt-2 flex items-center gap-1">
+                      {/* PNG e legenda ficam guardados na arte salva. */}
+                      <div className="mt-2 flex flex-wrap items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 rounded-full px-2 text-[11px]"
+                          onClick={() => downloadArt(art)}
+                          title="Baixar PNG em alta"
+                        >
+                          <Download className="mr-1 h-3.5 w-3.5" />
+                          PNG
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 rounded-full px-2 text-[11px]"
+                          onClick={() => downloadCaption(art)}
+                          title="Baixar legenda (.txt)"
+                        >
+                          <FileText className="mr-1 h-3.5 w-3.5" />
+                          Legenda
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 rounded-full px-2 text-[11px]"
+                          onClick={() => copyCaption(art)}
+                        >
+                          Copiar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={art.is_favorite ? "secondary" : "ghost"}
+                          className="h-7 w-7 p-0"
+                          onClick={() => toggleFavorite(art)}
+                          title={art.is_favorite ? "Remover das referências" : "Usar como referência criativa"}
+                        >
+                          <Star className={`h-3.5 w-3.5 ${art.is_favorite ? "fill-current" : ""}`} />
+                        </Button>
+                      </div>
+                      <div className="mt-1 flex items-center gap-1">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]">
@@ -428,6 +578,7 @@ const StudioProBrand = () => {
                         </Button>
                       </div>
                     </div>
+
                   </li>
                 ))}
               </ul>
