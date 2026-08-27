@@ -71,13 +71,6 @@ const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "free", label: "Livre" },
 ];
 
-/** Mundos oficiais Aliv.iA: o acervo das próprias landings do produto. */
-const WORLD_TABS: { id: WorldId; label: string }[] = [
-  { id: "paciente", label: "Paciente" },
-  { id: "pro", label: "Profissional" },
-  { id: "clinica", label: "Clínica" },
-  { id: "academico", label: "Estudante" },
-];
 
 /** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
 const hexToHslTriplet = (hex: string): string | null => {
