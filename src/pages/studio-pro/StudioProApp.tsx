@@ -293,8 +293,15 @@ const StudioProApp = () => {
                 Artes disponíveis
               </p>
               <p className="mt-1 text-3xl font-black tracking-tight">
-                {access.unlimited ? "∞" : Math.max(available as number, 0)}
+                {access.unlimited || quota?.unlimited ? "∞" : Math.max(quota?.remaining ?? 0, 0)}
               </p>
+              {!access.unlimited && !quota?.unlimited && quota && (
+                <p className="mt-1 text-xs font-semibold text-foreground">
+                  {quota.generationsLeft > 0
+                    ? `${quota.generationsLeft} ${quota.generationsLeft === 1 ? "geração" : "gerações"} de ${quota.batchSize} artes neste período (${quota.used} de ${quota.allowance} usadas)`
+                    : `Cota encerrada: ${quota.used} de ${quota.allowance} artes usadas neste período.`}
+                </p>
+              )}
               <p className="mt-1 text-xs text-muted-foreground">
                 {access.isVip
                   ? "Acesso VIP — nível agência, 15 marcas, sem cota e sem cobrança."
