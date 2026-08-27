@@ -6,6 +6,7 @@ import {
   Crown,
   Gift,
   Loader2,
+  LogOut,
   Palette,
   Plus,
   Search,
@@ -70,7 +71,7 @@ const ALIVIA_KIT: BrandColorKit = {
 
 const StudioProApp = () => {
   useStudioPwaMeta();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { access, loading: accessLoading } = useStudioAccess();
   const { quota } = useStudioQuota();
   const navigate = useNavigate();
@@ -274,14 +275,33 @@ const StudioProApp = () => {
             <ArrowLeft className="h-4 w-4" />
             {PRODUCT.wordmark}
           </Link>
-          {access.isVip && (
-            <Button asChild variant="outline" size="sm" className="rounded-full">
-              <Link to={`${PRODUCT.base}/app/vip`}>
-                <Crown className="mr-1.5 h-4 w-4" />
-                Acessos cortesia
-              </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {user?.email && (
+              <span className="max-w-[180px] truncate text-xs text-muted-foreground">
+                {user.email}
+              </span>
+            )}
+            {access.isVip && (
+              <Button asChild variant="outline" size="sm" className="rounded-full">
+                <Link to={`${PRODUCT.base}/app/vip`}>
+                  <Crown className="mr-1.5 h-4 w-4" />
+                  Acessos cortesia
+                </Link>
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+              onClick={async () => {
+                await signOut();
+                navigate(`${PRODUCT.base}/entrar`, { replace: true });
+              }}
+            >
+              <LogOut className="mr-1.5 h-4 w-4" />
+              Sair
             </Button>
-          )}
+          </div>
         </div>
 
         {/* Plano + saldo */}

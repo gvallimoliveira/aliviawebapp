@@ -56,7 +56,14 @@ const ResetPassword = () => {
       // Clear force_password_reset flag if it was set
       await supabase.auth.updateUser({ data: { force_password_reset: null } });
       toast({ title: t("auth.reset_success"), description: t("auth.reset_success_desc") });
-      navigate("/dashboard");
+      let studioOrigin = false;
+      try {
+        studioOrigin = localStorage.getItem("studio-pro:reset-origin") === "1";
+        if (studioOrigin) localStorage.removeItem("studio-pro:reset-origin");
+      } catch {
+        /* ignore */
+      }
+      navigate(studioOrigin ? "/studio-pro/app" : "/dashboard");
     }
     setLoading(false);
   };
