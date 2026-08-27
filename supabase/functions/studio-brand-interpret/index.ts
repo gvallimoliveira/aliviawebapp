@@ -85,6 +85,13 @@ Deno.serve(async (req) => {
     if (brandError) return json({ error: "Não foi possível ler a marca" }, 500);
     if (!brand || brand.user_id !== user.id) return json({ error: "Marca não encontrada" }, 404);
 
+    const existingAudiences = (Array.isArray(brand.audiences) ? brand.audiences : []) as Array<
+      Record<string, unknown>
+    >;
+    const existingLabels = existingAudiences
+      .map((a) => String(a?.label ?? "").trim())
+      .filter(Boolean);
+
     const brief = [
       `Nome da marca: ${brand.name}`,
       brand.niche ? `Nicho/setor: ${brand.niche}` : null,
@@ -93,6 +100,7 @@ Deno.serve(async (req) => {
       brand.source_url ? `Site: ${brand.source_url}` : null,
       brand.instagram_handle ? `Instagram: ${brand.instagram_handle}` : null,
       Array.isArray(brand.topics) && brand.topics.length ? `Palavras-chave atuais: ${brand.topics.join(", ")}` : null,
+      existingLabels.length ? `Públicos já cadastrados (manter todos): ${existingLabels.join(", ")}` : null,
       typeof body?.extra === "string" && body.extra.trim() ? `Contexto extra do cliente: ${body.extra.trim()}` : null,
     ].filter(Boolean).join("\n");
 
