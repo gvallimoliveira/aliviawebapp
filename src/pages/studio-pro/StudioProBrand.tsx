@@ -19,6 +19,7 @@ import { useStudioAccess } from "./useStudioAccess";
 import StudioProCreate from "./StudioProCreate";
 import BrandColorFields from "./BrandColorFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
+import { readAudiences, writeAudiences, type BrandAudience } from "./audiences";
 
 /**
  * ESPAÇO DE UMA MARCA
