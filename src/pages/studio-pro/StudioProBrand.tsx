@@ -164,6 +164,13 @@ const StudioProBrand = () => {
         niche: form.niche.trim() || null,
         tone: form.tone.trim() || null,
         logo_url: form.logo_url.trim() || null,
+        description: form.description.trim() || null,
+        source_url: form.source_url.trim() || null,
+        instagram_handle: form.instagram_handle.trim() || null,
+        topics: form.keywords
+          .split(",")
+          .map((k) => k.trim())
+          .filter(Boolean),
         colors: writeColorKit(colorKit),
       })
       .eq("id", brandId);
