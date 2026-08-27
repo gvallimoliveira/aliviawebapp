@@ -32,6 +32,12 @@ export type BlockKind =
   | "constellation"
   | "signpost"
   | "billboard"
+  | "notify"
+  | "toggle"
+  | "trend"
+  | "focus"
+  | "diverge"
+  | "outbox"
   | "steps"
   | "difi"
   | "closing";
@@ -77,6 +83,12 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   constellation: 4,
   signpost: 4,
   billboard: 4,
+  notify: 4,
+  toggle: 4,
+  trend: 4,
+  focus: 4,
+  diverge: 4,
+  outbox: 4,
   steps: 4,
   difi: 4,
   closing: 4,
@@ -193,6 +205,12 @@ export const composePage = (
     ["constellation", 1],
     ["signpost", 2],
     ["billboard", 1],
+    ["notify", 2],
+    ["toggle", 2],
+    ["trend", 2],
+    ["focus", 2],
+    ["diverge", 1],
+    ["outbox", 1],
     // Artes autorais do método — presentes só na marca dona (Aliv.iA).
     ...(exclusive ? ([["steps", 2], ["difi", 2]] as [BlockKind, number][]) : []),
   ];

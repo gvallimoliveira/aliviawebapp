@@ -27,6 +27,12 @@ import StageBlock from "@/pages/studio/blocks/StageBlock";
 import ConstellationBlock from "@/pages/studio/blocks/ConstellationBlock";
 import SignpostBlock from "@/pages/studio/blocks/SignpostBlock";
 import BillboardBlock from "@/pages/studio/blocks/BillboardBlock";
+import NotifyBlock from "@/pages/studio/blocks/NotifyBlock";
+import ToggleBlock from "@/pages/studio/blocks/ToggleBlock";
+import TrendBlock from "@/pages/studio/blocks/TrendBlock";
+import FocusBlock from "@/pages/studio/blocks/FocusBlock";
+import DivergeBlock from "@/pages/studio/blocks/DivergeBlock";
+import OutboxBlock from "@/pages/studio/blocks/OutboxBlock";
 import StepsBlock from "@/pages/studio/blocks/StepsBlock";
 import DifiBlock from "@/pages/studio/blocks/DifiBlock";
 import type { BlockProps } from "@/pages/studio/blocks/shared";
@@ -67,6 +73,12 @@ export const STUDIO_BLOCKS = {
   constellation: ConstellationBlock,
   signpost: SignpostBlock,
   billboard: BillboardBlock,
+  notify: NotifyBlock,
+  toggle: ToggleBlock,
+  trend: TrendBlock,
+  focus: FocusBlock,
+  diverge: DivergeBlock,
+  outbox: OutboxBlock,
   steps: StepsBlock,
   difi: DifiBlock,
 } satisfies Record<BlockKind, (props: BlockProps) => JSX.Element>;
