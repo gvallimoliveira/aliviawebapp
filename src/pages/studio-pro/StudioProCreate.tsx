@@ -123,10 +123,25 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
     void themeReady;
   }, [themeReady]);
 
-  const accentHsl = hexToHslTriplet(brand.colors?.primary ?? "");
-  const themeStyle = accentHsl
-    ? ({ ["--primary" as string]: accentHsl, ["--ring" as string]: accentHsl } as React.CSSProperties)
-    : undefined;
+  /** Kit da marca aplicado como tokens: 2 principais + 2 secundárias opcionais. */
+  const kit = readColorKit(brand.colors);
+  const themeStyle = (() => {
+    const style: Record<string, string> = {};
+    const primary = hexToHslTriplet(kit.primary);
+    const primary2 = hexToHslTriplet(kit.primary2);
+    if (primary) {
+      style["--primary"] = primary;
+      style["--ring"] = primary;
+    }
+    if (primary2) style["--background"] = primary2;
+    if (kit.useSecondary) {
+      const secondary = hexToHslTriplet(kit.secondary);
+      const secondary2 = hexToHslTriplet(kit.secondary2);
+      if (secondary) style["--accent"] = secondary;
+      if (secondary2) style["--secondary"] = secondary2;
+    }
+    return Object.keys(style).length ? (style as React.CSSProperties) : undefined;
+  })();
 
   const headlineOf = (index: number) =>
     (document.getElementById(`studio-pro-block-${index}`)?.querySelector("h1, h2, h3")?.textContent ?? "")
