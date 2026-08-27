@@ -510,8 +510,49 @@ const StudioProBrand = () => {
                       <p className="line-clamp-2 text-xs font-semibold">{art.headline ?? "Sem título"}</p>
                       <p className="mt-1 text-[11px] text-muted-foreground">
                         {art.folder || "Geral"} · {art.format ?? "post"}
+                        {art.is_favorite && " · referência"}
                       </p>
-                      <div className="mt-2 flex items-center gap-1">
+                      {/* PNG e legenda ficam guardados na arte salva. */}
+                      <div className="mt-2 flex flex-wrap items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 rounded-full px-2 text-[11px]"
+                          onClick={() => downloadArt(art)}
+                          title="Baixar PNG em alta"
+                        >
+                          <Download className="mr-1 h-3.5 w-3.5" />
+                          PNG
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 rounded-full px-2 text-[11px]"
+                          onClick={() => downloadCaption(art)}
+                          title="Baixar legenda (.txt)"
+                        >
+                          <FileText className="mr-1 h-3.5 w-3.5" />
+                          Legenda
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 rounded-full px-2 text-[11px]"
+                          onClick={() => copyCaption(art)}
+                        >
+                          Copiar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={art.is_favorite ? "secondary" : "ghost"}
+                          className="h-7 w-7 p-0"
+                          onClick={() => toggleFavorite(art)}
+                          title={art.is_favorite ? "Remover das referências" : "Usar como referência criativa"}
+                        >
+                          <Star className={`h-3.5 w-3.5 ${art.is_favorite ? "fill-current" : ""}`} />
+                        </Button>
+                      </div>
+                      <div className="mt-1 flex items-center gap-1">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]">
@@ -537,6 +578,7 @@ const StudioProBrand = () => {
                         </Button>
                       </div>
                     </div>
+
                   </li>
                 ))}
               </ul>
