@@ -91,6 +91,8 @@ const StudioProBrand = () => {
 
   const [brands, setBrands] = useState<Brand[]>([]);
   const [creations, setCreations] = useState<Creation[]>([]);
+  /** URLs assinadas dos PNGs salvos (prévia nítida na galeria). */
+  const [previews, setPreviews] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -142,6 +144,28 @@ const StudioProBrand = () => {
     }
     setCreations((data as unknown as Creation[]) ?? []);
   }, [user, brandId]);
+
+  /**
+   * Prévia em alta resolução: a galeria mostra o PNG de publicação guardado no
+   * bucket privado (URL assinada), e só cai na miniatura quando ele não existe.
+   */
+  useEffect(() => {
+    const paths = creations.map((c) => c.png_path).filter((p): p is string => !!p);
+    if (paths.length === 0) return;
+    let alive = true;
+    (async () => {
+      const { data, error } = await supabase.storage.from("studio-art").createSignedUrls(paths, 3600);
+      if (error || !data || !alive) return;
+      const next: Record<string, string> = {};
+      data.forEach((row, i) => {
+        if (row.signedUrl) next[paths[i]] = row.signedUrl;
+      });
+      setPreviews((prev) => ({ ...prev, ...next }));
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [creations]);
 
   const load = useCallback(async () => {
     if (!user || !brandId) return;
@@ -509,13 +533,25 @@ const StudioProBrand = () => {
               <ul className="mt-4 grid gap-3 sm:grid-cols-3">
                 {shown.map((art) => (
                   <li key={art.id} className="overflow-hidden rounded-2xl border border-border bg-muted/40">
-                    {art.thumb ? (
-                      <img src={art.thumb} alt={art.headline ?? "arte"} className="aspect-[4/5] w-full object-cover" />
-                    ) : (
-                      <div className="flex aspect-[4/5] w-full items-center justify-center text-xs text-muted-foreground">
-                        sem miniatura
-                      </div>
-                    )}
+                    {(() => {
+                      // Prefere o PNG de publicação; a miniatura é só fallback.
+                      const src = (art.png_path && previews[art.png_path]) || art.thumb;
+                      const ratio = art.format === "9x16" ? "aspect-[9/16]" : "aspect-square";
+                      if (!src)
+                        return (
+                          <div className="flex aspect-[4/5] w-full items-center justify-center text-xs text-muted-foreground">
+                            sem miniatura
+                          </div>
+                        );
+                      return (
+                        <img
+                          src={src}
+                          alt={art.headline ?? "arte"}
+                          loading="lazy"
+                          className={`${ratio} w-full bg-background object-contain`}
+                        />
+                      );
+                    })()}
                     <div className="p-3">
                       <p className="line-clamp-2 text-xs font-semibold">{art.headline ?? "Sem título"}</p>
                       <p className="mt-1 text-[11px] text-muted-foreground">
