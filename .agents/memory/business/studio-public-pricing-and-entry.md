@@ -29,3 +29,12 @@ Quando implementado:
 - Item no menu lateral do Aliv.iA (fisio) levando ao Studio público com marcador de origem (`?from=alivia`, persistido na sessão).
 - Nesse caminho interno, exibir botão "Voltar ao Aliv.iA".
 - Quem entra pela home do Studio (`/studio-pro`) **nunca** vê esse botão nem qualquer link clínico.
+
+## Acesso VIP e multimarca (27/08/2026)
+- Plano efetivo SEMPRE via `resolveStudioPlan` (`src/pages/studio-pro/plan.ts`): VIP → agência ilimitada
+  (15 marcas, sem cota, sem watermark); e-mail em `studio_granted_access` ativo → Solo cortesia grátis;
+  assinante → plano de `studio_credits`; resto → free. Nunca ler `studio_credits.plan` direto na UI.
+- Marcas são espaços isolados: `/studio-pro/app` é o hub; `/studio-pro/app/marca/:brandId?aba=&pasta=`
+  é o espaço da marca. Toda consulta de artes filtra `brand_id`; pastas via `studio_creations.folder`.
+- VIP concede acesso cortesia (Solo) por e-mail em `/studio-pro/app/vip` (tabela `studio_granted_access`,
+  RLS via `is_studio_vip()`); funciona antes do cadastro do convidado e pode ser revogado/reativado.
