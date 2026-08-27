@@ -35,7 +35,7 @@ const SplashScreen = () => {
   useEffect(() => {
     if (!visible) return;
     try {
-      localStorage.setItem(STORAGE_KEY, String(Date.now()));
+      localStorage.setItem(storageKey, String(Date.now()));
     } catch {
       /* noop */
     }
