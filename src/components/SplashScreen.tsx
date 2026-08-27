@@ -2,8 +2,14 @@ import { useEffect, useState } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 const STORAGE_KEY = "alivia:splash-last-shown";
+const STUDIO_STORAGE_KEY = "alivia:studio-splash-last-shown";
+const STUDIO_LOGO = "/icons/studio-icon-512.png";
 const DURATION_MS = 2600;
 const TTL_MS = 24 * 60 * 60 * 1000; // 24h — robust for PWA standalone (sessionStorage dies on cold start in iOS)
+
+/** Rotas do Aliv.iA Studio têm abertura própria (marca/conteúdo), não clínica. */
+const isStudioRoute = () =>
+  typeof window !== "undefined" && window.location.pathname.startsWith("/studio-pro");
 
 /**
  * Opening splash screen — Aliv.iA logo zooms in from small to fill,
@@ -11,16 +17,19 @@ const TTL_MS = 24 * 60 * 60 * 1000; // 24h — robust for PWA standalone (sessio
  * (uses localStorage so PWA cold starts don't replay on every reopen).
  */
 const SplashScreen = () => {
+  const [studio] = useState(isStudioRoute);
+  const storageKey = studio ? STUDIO_STORAGE_KEY : STORAGE_KEY;
   const [visible, setVisible] = useState(() => {
     if (typeof window === "undefined") return false;
     if (window.location.pathname === "/profissionais") return false;
     try {
-      const last = Number(localStorage.getItem(STORAGE_KEY) || "0");
+      const last = Number(localStorage.getItem(storageKey) || "0");
       return !last || Date.now() - last > TTL_MS;
     } catch {
       return true;
     }
   });
+
   const [fadingOut, setFadingOut] = useState(false);
 
   useEffect(() => {
