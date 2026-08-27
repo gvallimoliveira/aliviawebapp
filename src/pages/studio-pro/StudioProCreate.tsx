@@ -168,8 +168,12 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
 
   const audiences = useMemo(() => readAudiences(brand.audiences), [brand.audiences]);
   const segments = useMemo(() => buildSegments(audiences), [audiences]);
-  const [segment, setSegment] = useState<string>(GLOBAL_SEGMENT);
-  const [angle, setAngle] = useState<ContentAngle>("informar");
+  const [segment, setSegment] = useState<string>(restored.current.segment ?? GLOBAL_SEGMENT);
+  const [angle, setAngle] = useState<ContentAngle>(restored.current.angle ?? "informar");
+
+  useEffect(() => {
+    writePersisted(brand.id, { segment, angle });
+  }, [brand.id, segment, angle]);
 
   // Se o público ativo deixa de existir (edição do kit), volta para o 360°.
   const activeSegment = segments.some((s) => s.id === segment) ? segment : GLOBAL_SEGMENT;
