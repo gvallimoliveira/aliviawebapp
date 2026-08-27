@@ -3467,6 +3467,7 @@ export type Database = {
       }
       studio_brands: {
         Row: {
+          audiences: Json
           colors: Json
           content_source: string
           created_at: string
@@ -3478,13 +3479,16 @@ export type Database = {
           logo_url: string | null
           name: string
           niche: string | null
+          positioning: string | null
           source_url: string | null
+          strategy_notes: string | null
           tone: string | null
           topics: string[]
           updated_at: string
           user_id: string
         }
         Insert: {
+          audiences?: Json
           colors?: Json
           content_source?: string
           created_at?: string
@@ -3496,13 +3500,16 @@ export type Database = {
           logo_url?: string | null
           name: string
           niche?: string | null
+          positioning?: string | null
           source_url?: string | null
+          strategy_notes?: string | null
           tone?: string | null
           topics?: string[]
           updated_at?: string
           user_id: string
         }
         Update: {
+          audiences?: Json
           colors?: Json
           content_source?: string
           created_at?: string
@@ -3514,7 +3521,9 @@ export type Database = {
           logo_url?: string | null
           name?: string
           niche?: string | null
+          positioning?: string | null
           source_url?: string | null
+          strategy_notes?: string | null
           tone?: string | null
           topics?: string[]
           updated_at?: string
