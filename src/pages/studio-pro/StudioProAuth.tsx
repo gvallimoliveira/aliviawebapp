@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Mail, User, KeyRound, Sparkles } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2, Mail, User, KeyRound, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -12,20 +12,24 @@ import { useStudioPwaMeta } from "./useStudioPwaMeta";
 /**
  * ENTRADA DO STUDIO PÚBLICO
  *
- * Tela de acesso com identidade própria do produto (sem vocabulário clínico e
- * sem links para o app de fisioterapia). Reutiliza a mesma sessão do backend,
- * mas quem entra por aqui só vê o Studio. Após entrar/cadastrar, vai direto
- * para a área logada (`/studio-pro/app`).
+ * Mesmo fluxo do app principal: criar conta (com confirmação de senha e
+ * olhinho), entrar e recuperar senha por e-mail. Quem já tem conta (por
+ * exemplo, quem recebeu acesso cortesia e nunca definiu senha) usa
+ * "Esqueci minha senha" para criar uma senha e entrar.
  */
 const StudioProAuth = () => {
   useStudioPwaMeta();
-  const { user, loading: authLoading, signIn, signUp } = useAuth();
+  const { user, loading: authLoading, signIn, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signup");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signup");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const appPath = `${PRODUCT.base}/app`;
 
@@ -40,16 +44,49 @@ const StudioProAuth = () => {
     }
   }, [authLoading, user, navigate, appPath]);
 
+  const sendReset = async (target: string) => {
+    const { error } = await resetPassword(target);
+    if (error) {
+      toast.error(error.message || "Não foi possível enviar o e-mail de recuperação.");
+      return false;
+    }
+    setSent(true);
+    toast.success("Enviamos um link por e-mail para você definir sua senha.");
+    return true;
+  };
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const normalizedEmail = email.trim().toLowerCase();
+
+    if (mode === "forgot") {
+      if (!normalizedEmail) {
+        toast.error("Informe seu e-mail.");
+        return;
+      }
+      setSubmitting(true);
+      await sendReset(normalizedEmail);
+      setSubmitting(false);
+      return;
+    }
+
     if (!normalizedEmail || !password) {
       toast.error("Preencha email e senha.");
       return;
     }
-    if (mode === "signup" && !fullName.trim()) {
-      toast.error("Diga seu nome para criarmos sua conta.");
-      return;
+    if (mode === "signup") {
+      if (!fullName.trim()) {
+        toast.error("Diga seu nome para criarmos sua conta.");
+        return;
+      }
+      if (password.length < 6) {
+        toast.error("A senha precisa ter no mínimo 6 caracteres.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        toast.error("As senhas não conferem. Confira a digitação.");
+        return;
+      }
     }
     setSubmitting(true);
 
@@ -68,8 +105,25 @@ const StudioProAuth = () => {
     // Email auto-confirm está ativo: signUp já retorna sessão na maioria dos casos.
     const { error, session } = await signUp(normalizedEmail, password, fullName.trim());
     if (error) {
+      const msg = String(error.message || "");
+      const exists = /already|registered|exist/i.test(msg);
+      if (exists) {
+        // Conta já existe (ex.: acesso cortesia concedido) — tenta entrar com a
+        // senha digitada; se não for a senha certa, oferece recuperação.
+        const { error: signInErr } = await signIn(normalizedEmail, password);
+        if (!signInErr) {
+          setSubmitting(false);
+          navigate(appPath, { replace: true });
+          return;
+        }
+        await sendReset(normalizedEmail);
+        setSubmitting(false);
+        setMode("forgot");
+        toast.info("Este e-mail já tem conta. Use o link enviado para definir sua senha.");
+        return;
+      }
       setSubmitting(false);
-      toast.error(error.message || "Não foi possível criar a conta.");
+      toast.error(msg || "Não foi possível criar a conta.");
       return;
     }
     if (session) {
@@ -89,6 +143,15 @@ const StudioProAuth = () => {
     navigate(appPath, { replace: true });
   };
 
+  const title =
+    mode === "signup" ? "Crie seu estúdio" : mode === "signin" ? "Entre no seu estúdio" : "Recuperar acesso";
+  const subtitle =
+    mode === "signup"
+      ? "Cadastre sua marca e comece a gerar posts no seu DNA visual."
+      : mode === "signin"
+        ? "Acesse suas marcas e continue criando."
+        : "Enviamos um link por e-mail para você definir uma nova senha.";
+
   return (
     <main className="flex min-h-screen flex-col bg-background">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 py-5">
@@ -106,14 +169,8 @@ const StudioProAuth = () => {
               <Sparkles className="h-3 w-3" />
               {PRODUCT.freeCredits} artes grátis no cadastro
             </span>
-            <h1 className="mt-4 text-2xl font-black tracking-tight">
-              {mode === "signup" ? "Crie seu estúdio" : "Entre no seu estúdio"}
-            </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              {mode === "signup"
-                ? "Cadastre sua marca e comece a gerar posts no seu DNA visual."
-                : "Acesse suas marcas e continue criando."}
-            </p>
+            <h1 className="mt-4 text-2xl font-black tracking-tight">{title}</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
           </div>
 
           <form onSubmit={submit} className="grid gap-4">
@@ -148,29 +205,92 @@ const StudioProAuth = () => {
                 />
               </div>
             </div>
-            <div>
-              <Label htmlFor="sp-password">Senha</Label>
-              <div className="relative mt-1">
-                <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="sp-password"
-                  type="password"
-                  className="pl-9"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === "signup" ? "Mínimo 6 caracteres" : "Sua senha"}
-                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                />
+
+            {mode !== "forgot" && (
+              <div>
+                <Label htmlFor="sp-password">Senha</Label>
+                <div className="relative mt-1">
+                  <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="sp-password"
+                    type={showPassword ? "text" : "password"}
+                    className="pl-9 pr-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={mode === "signup" ? "Mínimo 6 caracteres" : "Sua senha"}
+                    autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {mode === "signup" && (
+              <div>
+                <Label htmlFor="sp-password2">Repetir senha</Label>
+                <div className="relative mt-1">
+                  <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="sp-password2"
+                    type={showConfirm ? "text" : "password"}
+                    className="pl-9 pr-10"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Digite a senha novamente"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowConfirm((v) => !v)}
+                    aria-label={showConfirm ? "Ocultar senha" : "Mostrar senha"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {confirmPassword && confirmPassword !== password && (
+                  <p className="mt-1 text-xs text-destructive">As senhas não conferem.</p>
+                )}
+              </div>
+            )}
 
             <Button type="submit" className="mt-1 h-11 rounded-full" disabled={submitting}>
               {submitting && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-              {mode === "signup" ? "Criar conta grátis" : "Entrar"}
+              {mode === "signup" ? "Criar conta grátis" : mode === "signin" ? "Entrar" : "Enviar link de senha"}
             </Button>
+
+            {mode === "forgot" && sent && (
+              <p className="text-center text-xs text-muted-foreground">
+                Verifique sua caixa de entrada (e o spam). O link abre a página para criar a nova senha.
+              </p>
+            )}
           </form>
 
-          <p className="mt-5 text-center text-sm text-muted-foreground">
+          {mode !== "forgot" && (
+            <p className="mt-4 text-center text-sm">
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground hover:underline"
+                onClick={() => {
+                  setMode("forgot");
+                  setSent(false);
+                }}
+              >
+                Esqueci minha senha / nunca criei uma
+              </button>
+            </p>
+          )}
+
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             {mode === "signup" ? "Já tem conta?" : "Ainda não tem conta?"}{" "}
             <button
               type="button"
