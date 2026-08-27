@@ -273,9 +273,11 @@ const StudioProCreate = ({
       name: brand.name,
       slogan: brandSlogan({ name: brand.name, niche: brand.niche, tone: brand.tone }),
       logo: brand.logo_url,
+      handle: brand.instagram_handle,
+      site: brand.source_url,
     });
     return `${brand.id}:${brand.name}:${brand.logo_url ?? ""}`;
-  }, [brand.id, brand.name, brand.niche, brand.tone, brand.logo_url]);
+  }, [brand.id, brand.name, brand.niche, brand.tone, brand.logo_url, brand.instagram_handle, brand.source_url]);
 
   const picker = useMemo(
     () => createPicker(buildCoverage(aliviaWorld ?? "pro", content, {}), () => {}),
