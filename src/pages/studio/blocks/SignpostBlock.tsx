@@ -75,14 +75,21 @@ const SignpostBlock = ({ content, rng, treatment, format }: BlockProps) => {
         {/* Poste entre as placas. */}
         <div className="h-6 w-4 bg-[hsl(0_0%_72%)]" />
 
-        {/* Placa 2 — para onde a marca leva (desejo), com a ponta de seta. */}
+        {/* Placa 2 — para onde a marca leva (desejo), com a ponta de seta.
+            O clip-path corta bordas comuns, então o contorno branco é feito com
+            uma camada externa levemente maior recortada no mesmo formato. */}
         <div
-          className={`relative w-full border-2 border-background/90 px-6 py-6 text-center shadow-[0_20px_40px_-28px_hsl(var(--foreground)/0.8)] ${skin.plate} ${skin.ink}`}
+          className="relative w-full bg-background/90 p-[3px] shadow-[0_20px_40px_-28px_hsl(var(--foreground)/0.8)]"
           style={{ clipPath: "polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%)", borderRadius: 12 }}
         >
-          <Bolt />
-          <p className="my-2 pr-8 text-lg font-bold leading-tight md:text-2xl">{desire}</p>
-          <Bolt />
+          <div
+            className={`px-6 py-6 text-center ${skin.plate} ${skin.ink}`}
+            style={{ clipPath: "polygon(0 0, 88% 0, 100% 50%, 88% 100%, 0 100%)", borderRadius: 10 }}
+          >
+            <Bolt />
+            <p className="my-2 pr-8 text-lg font-bold leading-tight md:text-2xl">{desire}</p>
+            <Bolt />
+          </div>
         </div>
 
         {/* Poste até a base da arte. */}
