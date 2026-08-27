@@ -66,6 +66,19 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
   },
   photoPortrait: (c, rng) => [rng.pick(c.quotes).text, rng.pick(BRAND_DNA.statements)],
+  search: (c, rng) => [
+    `${rng.pick(c.kickers)}: ${rng.pick(c.headlines).strong}`,
+    rng.pick(c.subs),
+  ],
+  device: (c, rng) => {
+    const f = rng.pick(c.features);
+    return [f.headline ?? f.title, f.description];
+  },
+  door: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
+  },
+  stage: (c, rng) => [rng.pick(c.headlines).strong, rng.pick(c.subs)],
   carousel: (c, rng) => {
     const car = rng.pick(c.carousels);
     return [
