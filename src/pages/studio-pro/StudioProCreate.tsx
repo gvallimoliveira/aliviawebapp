@@ -61,8 +61,15 @@ type Props = {
   folder: string;
   /** Downloads saem com assinatura discreta do plano gratuito. */
   watermark: boolean;
+  /**
+   * Receitas das artes que o usuário favoritou nesta marca. Servem de linhagem:
+   * parte das novas versões herda a estrutura aprovada, o resto nasce livre
+   * para continuar inovando.
+   */
+  inspirations?: ComposedBlock[][];
   onSaved?: () => void;
 };
+
 
 const FRAME_WIDTH: Record<StudioFormat, string> = {
   "9x16": "min(400px, 100%)",
