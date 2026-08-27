@@ -151,7 +151,14 @@ const writePersisted = (brandId: string, patch: PersistedCreateState) => {
   }
 };
 
-const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved }: Props) => {
+const StudioProCreate = ({
+  brand,
+  folder,
+  watermark,
+  inspirations = [],
+  maxArts = 2,
+  onSaved,
+}: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
   const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "1x1");
   const [seed, setSeed] = useState(() => restored.current.seed ?? randomSeed());
