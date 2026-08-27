@@ -1,5 +1,6 @@
 import type { WorldContent } from "@/pages/studio/content";
 import type { TopicId } from "@/pages/studio/topics";
+import { GLOBAL_SEGMENT, type BrandAudience, type ContentAngle } from "./audiences";
 
 /**
  * CONTEÚDO EDITORIAL GENÉRICO DE UMA MARCA DO CLIENTE
