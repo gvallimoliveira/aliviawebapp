@@ -36,6 +36,11 @@ type Brand = {
   tone: string | null;
   logo_url: string | null;
   colors: Record<string, string> | null;
+  description: string | null;
+  source_url: string | null;
+  instagram_handle: string | null;
+  topics: string[] | null;
+  content_source: string | null;
 };
 
 type Creation = {
