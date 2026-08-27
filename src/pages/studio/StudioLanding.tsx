@@ -197,6 +197,9 @@ const StudioLanding = () => {
       inspiration,
       content.carousels,
       photos.length,
+      undefined,
+      // Studio interno = marca Aliv.iA: libera as artes autorais do método.
+      true,
     );
   }, [world, seed, from, persona, content, photos.length]);
 

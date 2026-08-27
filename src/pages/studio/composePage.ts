@@ -145,10 +145,20 @@ export const composePage = (
    * (a linhagem de favoritos é ignorada para respeitar a escolha).
    */
   only?: BlockKind[],
+  /**
+   * Artes autorais da marca Aliv.iA (STEPS e ciclo D.I.F.I.). Só a marca dona
+   * do método pode gerá-las — qualquer outra marca do Studio público nunca as
+   * recebe, nem pelo sorteio nem pela seleção de modelos.
+   */
+  exclusive = false,
 ): ComposedBlock[] => {
+  const allowed = (kinds: BlockKind[]) =>
+    exclusive ? kinds : kinds.filter((k) => k !== "steps" && k !== "difi");
   if (only && only.length > 0) {
+    const pool = allowed(only);
+    if (pool.length === 0) return finish(rng, [{ kind: "hero", treatment: treatmentFor(rng, "hero", persona) }], persona, carousels);
     const count = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
-    const picked = spread(rng, only, Math.max(2, count));
+    const picked = spread(rng, pool, Math.max(2, count));
     const chosen: ComposedBlock[] = picked.map((kind) => ({
       kind,
       treatment: treatmentFor(rng, kind, persona),
@@ -183,6 +193,8 @@ export const composePage = (
     ["constellation", 1],
     ["signpost", 2],
     ["billboard", 1],
+    // Artes autorais do método — presentes só na marca dona (Aliv.iA).
+    ...(exclusive ? ([["steps", 2], ["difi", 2]] as [BlockKind, number][]) : []),
   ];
   const favorites: [BlockKind, number][] = persona
     ? persona.favoriteBlocks.map((kind) => [kind, 2] as [BlockKind, number])

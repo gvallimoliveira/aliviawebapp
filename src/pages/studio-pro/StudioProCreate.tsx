@@ -334,7 +334,8 @@ const StudioProCreate = ({
       models.length > 0 ? undefined : lineage.blocks,
       content.carousels,
       photos.length,
-      kindsForModels(models, photos.length),
+      kindsForModels(models, photos.length, isAlivia),
+      isAlivia,
     );
     if (!Number.isFinite(maxArts) || page.length <= maxArts) return page;
     // Amostra determinística e variada: evita repetir o mesmo tipo no lote.
@@ -350,7 +351,7 @@ const StudioProCreate = ({
       picked.push(candidate);
     }
     return picked;
-  }, [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, maxArts, models]);
+  }, [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, maxArts, models, isAlivia]);
 
 
 
@@ -587,7 +588,9 @@ const StudioProCreate = ({
                     Aleatório
                   </Button>
                   {STUDIO_MODELS.map((m) => {
-                    const disabled = !!m.needsPhoto && photos.length === 0;
+                    const disabled =
+                      (!!m.needsPhoto && photos.length === 0) || (!!m.needsBrand && !isAlivia);
+                    if (m.needsBrand && !isAlivia) return null;
                     return (
                       <Button
                         key={m.id}
