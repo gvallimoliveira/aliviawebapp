@@ -32,6 +32,8 @@ export type BlockKind =
   | "constellation"
   | "signpost"
   | "billboard"
+  | "steps"
+  | "difi"
   | "closing";
 
 export type ComposedBlock = {
@@ -75,6 +77,8 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   constellation: 4,
   signpost: 4,
   billboard: 4,
+  steps: 4,
+  difi: 4,
   closing: 4,
 };
 

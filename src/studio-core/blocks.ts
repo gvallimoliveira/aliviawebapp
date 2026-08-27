@@ -27,6 +27,8 @@ import StageBlock from "@/pages/studio/blocks/StageBlock";
 import ConstellationBlock from "@/pages/studio/blocks/ConstellationBlock";
 import SignpostBlock from "@/pages/studio/blocks/SignpostBlock";
 import BillboardBlock from "@/pages/studio/blocks/BillboardBlock";
+import StepsBlock from "@/pages/studio/blocks/StepsBlock";
+import DifiBlock from "@/pages/studio/blocks/DifiBlock";
 import type { BlockProps } from "@/pages/studio/blocks/shared";
 import type { BlockKind } from "@/pages/studio/composePage";
 
@@ -65,4 +67,6 @@ export const STUDIO_BLOCKS = {
   constellation: ConstellationBlock,
   signpost: SignpostBlock,
   billboard: BillboardBlock,
+  steps: StepsBlock,
+  difi: DifiBlock,
 } satisfies Record<BlockKind, (props: BlockProps) => JSX.Element>;
