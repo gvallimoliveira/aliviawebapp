@@ -143,6 +143,28 @@ const StudioProBrand = () => {
     setCreations((data as unknown as Creation[]) ?? []);
   }, [user, brandId]);
 
+  /**
+   * Prévia em alta resolução: a galeria mostra o PNG de publicação guardado no
+   * bucket privado (URL assinada), e só cai na miniatura quando ele não existe.
+   */
+  useEffect(() => {
+    const paths = creations.map((c) => c.png_path).filter((p): p is string => !!p);
+    if (paths.length === 0) return;
+    let alive = true;
+    (async () => {
+      const { data, error } = await supabase.storage.from("studio-art").createSignedUrls(paths, 3600);
+      if (error || !data || !alive) return;
+      const next: Record<string, string> = {};
+      data.forEach((row, i) => {
+        if (row.signedUrl) next[paths[i]] = row.signedUrl;
+      });
+      setPreviews((prev) => ({ ...prev, ...next }));
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [creations]);
+
   const load = useCallback(async () => {
     if (!user || !brandId) return;
     setLoading(true);
