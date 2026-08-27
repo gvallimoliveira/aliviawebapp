@@ -27,6 +27,7 @@ import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
 import { STUDIO_BATCH_SIZE, useStudioQuota } from "./useStudioQuota";
+import StudioProSignature from "./StudioProSignature";
 
 
 /**
