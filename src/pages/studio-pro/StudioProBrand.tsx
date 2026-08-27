@@ -387,7 +387,51 @@ const StudioProBrand = () => {
               <Label htmlFor="edit-niche">Nicho</Label>
               <Input id="edit-niche" value={form.niche} onChange={(e) => setForm({ ...form, niche: e.target.value })} />
             </div>
+            <div>
+              <Label htmlFor="edit-site">Site</Label>
+              <Input
+                id="edit-site"
+                placeholder="https://aliviawebapp.com.br"
+                value={form.source_url}
+                onChange={(e) => setForm({ ...form, source_url: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-instagram">Instagram</Label>
+              <Input
+                id="edit-instagram"
+                placeholder="@aliviawebapp"
+                value={form.instagram_handle}
+                onChange={(e) => setForm({ ...form, instagram_handle: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-keywords">Palavras-chave</Label>
+              <Input
+                id="edit-keywords"
+                placeholder="separe por vírgula"
+                value={form.keywords}
+                onChange={(e) => setForm({ ...form, keywords: e.target.value })}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="edit-description">Descrição da marca</Label>
+              <Textarea
+                id="edit-description"
+                rows={3}
+                placeholder="O que a marca faz, para quem e o que a diferencia."
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+            </div>
             <BrandColorFields idPrefix="edit" kit={colorKit} onChange={setColorKit} />
+            {brand.content_source === "alivia" && (
+              <p className="rounded-2xl border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground sm:col-span-2">
+                Esta marca usa o acervo editorial oficial do Aliv.iA. Na aba <strong>Criar</strong> você
+                escolhe o mundo (Paciente, Profissional, Clínica ou Estudante) e as artes saem com a
+                mensagem real de cada landing.
+              </p>
+            )}
             <div className="sm:col-span-2">
               <Label htmlFor="edit-tone">Tom de voz</Label>
               <Textarea
