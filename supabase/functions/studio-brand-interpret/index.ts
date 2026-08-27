@@ -79,11 +79,18 @@ Deno.serve(async (req) => {
     // A marca precisa ser do próprio usuário (RLS reforçada em código).
     const { data: brand, error: brandError } = await supabase
       .from("studio_brands")
-      .select("id, user_id, name, niche, tone, description, source_url, instagram_handle, topics")
+      .select("id, user_id, name, niche, tone, description, source_url, instagram_handle, topics, audiences")
       .eq("id", brandId)
       .maybeSingle();
     if (brandError) return json({ error: "Não foi possível ler a marca" }, 500);
     if (!brand || brand.user_id !== user.id) return json({ error: "Marca não encontrada" }, 404);
+
+    const existingAudiences = (Array.isArray(brand.audiences) ? brand.audiences : []) as Array<
+      Record<string, unknown>
+    >;
+    const existingLabels = existingAudiences
+      .map((a) => String(a?.label ?? "").trim())
+      .filter(Boolean);
 
     const brief = [
       `Nome da marca: ${brand.name}`,
@@ -93,6 +100,7 @@ Deno.serve(async (req) => {
       brand.source_url ? `Site: ${brand.source_url}` : null,
       brand.instagram_handle ? `Instagram: ${brand.instagram_handle}` : null,
       Array.isArray(brand.topics) && brand.topics.length ? `Palavras-chave atuais: ${brand.topics.join(", ")}` : null,
+      existingLabels.length ? `Públicos já cadastrados (manter todos): ${existingLabels.join(", ")}` : null,
       typeof body?.extra === "string" && body.extra.trim() ? `Contexto extra do cliente: ${body.extra.trim()}` : null,
     ].filter(Boolean).join("\n");
 
@@ -101,6 +109,8 @@ Deno.serve(async (req) => {
 Regras:
 - Escreva em português do Brasil, linguagem concreta, sem jargão de marketing e sem clichê ("soluções inovadoras", "excelência", "transformar vidas").
 - Segmente o produto em 2 a 5 públicos (nichos) REAIS e distintos, cada um com dores, desejos e provas próprias.
+- IMPORTANTE: se o produto também é usado pelo consumidor final (paciente, cliente, aluno, usuário leigo), esse público NUNCA pode ficar de fora — inclua-o junto dos públicos profissionais/B2B.
+- Se a marca já tem públicos cadastrados no briefing, mantenha-os (pode refinar o texto), não os substitua por outros.
 - Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o que o produto é como um todo.
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
@@ -171,13 +181,30 @@ Responda SOMENTE com JSON válido neste formato:
         };
       })
       .filter(Boolean)
-      .slice(0, 5);
+      .slice(0, 6) as Array<Record<string, unknown>>;
+
+    /**
+     * Nunca perder um público já cadastrado (ex.: o mundo do paciente do
+     * Aliv.iA). A IA pode refinar os existentes, mas não excluí-los.
+     */
+    const byId = new Map<string, Record<string, unknown>>();
+    for (const a of existingAudiences) {
+      const label = String(a?.label ?? "").trim();
+      if (!label) continue;
+      byId.set(String(a?.id ?? slugify(label)), a);
+    }
+    for (const a of audiences) {
+      const id = String(a.id);
+      const prev = byId.get(id);
+      byId.set(id, prev ? { ...prev, ...a } : a);
+    }
+    const mergedAudiences = Array.from(byId.values()).slice(0, 8);
 
     const result = {
       positioning: String(parsed.positioning ?? "").trim().slice(0, 800),
       keywords: strList(parsed.keywords, 10),
       strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 900),
-      audiences,
+      audiences: mergedAudiences,
     };
 
     // Persiste como briefing da marca — o usuário revisa e edita depois.
