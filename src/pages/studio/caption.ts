@@ -79,6 +79,17 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
   },
   stage: (c, rng) => [rng.pick(c.headlines).strong, rng.pick(c.subs)],
+  constellation: (c, rng) => [rng.pick(c.kickers), rng.pick(c.subs)],
+  signpost: (c, rng) => {
+    const cmp = c.compare.length > 0 ? rng.pick(c.compare) : undefined;
+    const pain = cmp && cmp.before.length > 0 ? rng.pick(cmp.before) : rng.pick(c.sales.objections);
+    const want = cmp && cmp.after.length > 0 ? rng.pick(cmp.after) : rng.pick(c.subs);
+    return [`De "${pain}" para "${want}"`, rng.pick(c.subs)];
+  },
+  billboard: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [`${h.strong} ${h.rest}`, rng.pick(c.closings).sub];
+  },
   carousel: (c, rng) => {
     const car = rng.pick(c.carousels);
     return [
