@@ -172,7 +172,8 @@ const App = () => {
                   <Route path="/studio" element={<StudioLanding />} />
                   <Route path="/studio-pro" element={<StudioProLanding />} />
                   <Route path="/studio-pro/entrar" element={<StudioProAuth />} />
-                  <Route path="/studio-pro/app" element={<StudioProApp />} />
+                  <Route path="/studio-pro/app/vip" element={<StudioProVip />} />
+                  <Route path="/studio-pro/app/marca/:brandId" element={<StudioProBrand />} />
 
 
                   <Route path="*" element={<NotFound />} />
