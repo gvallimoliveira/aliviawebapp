@@ -488,7 +488,7 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
                       picker={picker}
                       persona={persona}
                       slide={slide}
-                      photos={[]}
+                      photos={photos}
                     />
                   </StudioMotion>
                 </div>
