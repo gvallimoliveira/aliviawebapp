@@ -40,6 +40,9 @@ type BrandInput = {
   tone: string | null;
   logo_url: string | null;
   colors: Record<string, string> | null;
+  description?: string | null;
+  topics?: string[] | null;
+  content_source?: string | null;
 };
 
 type Props = {
