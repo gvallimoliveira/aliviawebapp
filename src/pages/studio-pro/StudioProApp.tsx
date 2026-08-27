@@ -42,6 +42,8 @@ type Brand = {
   tone: string | null;
   logo_url: string | null;
   colors: Record<string, string> | null;
+  content_source?: string | null;
+  audiences?: unknown;
   created_at: string;
 };
 
