@@ -304,7 +304,8 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
       thumb,
       png_path: pngPath,
       // Receita da arte: permite reusar a composição aprovada nas próximas versões.
-      composition: blocks as unknown as Record<string, unknown>[],
+      composition: JSON.parse(JSON.stringify(blocks)),
+
       segment: activeSegment,
       angle,
       folder: folder === "Todas" ? "Geral" : folder,
