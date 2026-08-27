@@ -103,6 +103,27 @@ const StudioProBrand = () => {
     document.title = brand ? `${brand.name} — ${PRODUCT.name}` : `${PRODUCT.name}`;
   }, [brand]);
 
+  const ART_FIELDS = "id, headline, caption, thumb, format, folder, created_at, is_favorite, png_path, composition";
+
+  /**
+   * Atualiza somente a lista de artes — sem tocar em `loading`. Isso é o que
+   * roda depois de salvar uma arte: o editor continua montado e a versão em
+   * tela não é sorteada de novo.
+   */
+  const loadCreations = useCallback(async () => {
+    if (!user || !brandId) return;
+    const { data, error } = await supabase
+      .from("studio_creations")
+      .select(ART_FIELDS)
+      .eq("brand_id", brandId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("[studio-pro] creations", error);
+      return;
+    }
+    setCreations((data as unknown as Creation[]) ?? []);
+  }, [user, brandId]);
+
   const load = useCallback(async () => {
     if (!user || !brandId) return;
     setLoading(true);
@@ -111,16 +132,17 @@ const StudioProBrand = () => {
       // Isolamento: só artes desta marca.
       supabase
         .from("studio_creations")
-        .select("id, headline, caption, thumb, format, folder, created_at")
+        .select(ART_FIELDS)
         .eq("brand_id", brandId)
         .order("created_at", { ascending: false }),
     ]);
     if (brandError) console.error("[studio-pro] brands", brandError);
     if (artError) console.error("[studio-pro] creations", artError);
     setBrands((brandRows as Brand[]) ?? []);
-    setCreations((artRows as Creation[]) ?? []);
+    setCreations((artRows as unknown as Creation[]) ?? []);
     setLoading(false);
   }, [user, brandId]);
+
 
   useEffect(() => {
     void load();
