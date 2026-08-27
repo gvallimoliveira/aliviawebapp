@@ -18,9 +18,10 @@ import {
   type StudioFormat,
 } from "@/studio-core";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
-import { WORLDS, type WorldId } from "@/pages/studio/content";
-import { buildBrandContent, brandSlogan } from "./brandContent";
+import { WORLDS, isWorldId, type WorldId } from "@/pages/studio/content";
+import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
+import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
 
 /**
  * EDITOR "CRIAR" DO STUDIO PÚBLICO
@@ -43,6 +44,10 @@ type BrandInput = {
   description?: string | null;
   topics?: string[] | null;
   content_source?: string | null;
+  /** Nichos da marca (jsonb) — cada um vira uma aba de segmento. */
+  audiences?: unknown;
+  /** Leitura global do produto, base do conteúdo 360°. */
+  positioning?: string | null;
 };
 
 type Props = {
@@ -66,13 +71,6 @@ const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "free", label: "Livre" },
 ];
 
-/** Mundos oficiais Aliv.iA: o acervo das próprias landings do produto. */
-const WORLD_TABS: { id: WorldId; label: string }[] = [
-  { id: "paciente", label: "Paciente" },
-  { id: "pro", label: "Profissional" },
-  { id: "clinica", label: "Clínica" },
-  { id: "academico", label: "Estudante" },
-];
 
 /** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
 const hexToHslTriplet = (hex: string): string | null => {
@@ -105,25 +103,47 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
   const wrapper = useRef<HTMLDivElement>(null);
 
   /**
-   * Marcas com `content_source = "alivia"` usam o acervo editorial oficial do
-   * produto (paciente, profissional, clínica, acadêmico) — o mesmo do Studio
-   * interno. Qualquer outra marca usa o acervo neutro gerado do kit.
+   * Marcas com `content_source = "alivia"` têm acervo editorial próprio por
+   * mundo (o mesmo do Studio interno). Qualquer outra marca usa o acervo neutro
+   * gerado do kit — a segmentação em si é idêntica para todo cliente.
    */
   const isAlivia = brand.content_source === "alivia";
-  const [world, setWorld] = useState<WorldId>("paciente");
+
+  const audiences = useMemo(() => readAudiences(brand.audiences), [brand.audiences]);
+  const segments = useMemo(() => buildSegments(audiences), [audiences]);
+  const [segment, setSegment] = useState<string>(GLOBAL_SEGMENT);
+  const [angle, setAngle] = useState<ContentAngle>("informar");
+
+  // Se o público ativo deixa de existir (edição do kit), volta para o 360°.
+  const activeSegment = segments.some((s) => s.id === segment) ? segment : GLOBAL_SEGMENT;
+
+  const contentKit = useMemo(
+    () => ({
+      name: brand.name,
+      niche: brand.niche,
+      tone: brand.tone,
+      description: brand.description,
+      keywords: brand.topics,
+    }),
+    [brand.name, brand.niche, brand.tone, brand.description, brand.topics],
+  );
+
+  /** Mundo Aliv.iA correspondente ao público ativo, quando existir. */
+  const aliviaWorld: WorldId | null =
+    isAlivia && activeSegment !== GLOBAL_SEGMENT && isWorldId(activeSegment) ? activeSegment : null;
 
   const content = useMemo(
     () =>
-      isAlivia
-        ? WORLDS[world]
-        : buildBrandContent({
-            name: brand.name,
-            niche: brand.niche,
-            tone: brand.tone,
-            description: brand.description,
-            keywords: brand.topics,
-          }),
-    [isAlivia, world, brand.name, brand.niche, brand.tone, brand.description, brand.topics],
+      buildSegmentContent({
+        kit: contentKit,
+        base: aliviaWorld ? WORLDS[aliviaWorld] : undefined,
+        audiences,
+        // Com acervo oficial do mundo, o público já está embutido no base.
+        segment: aliviaWorld ? GLOBAL_SEGMENT : activeSegment,
+        angle,
+        positioning: aliviaWorld ? null : brand.positioning,
+      }),
+    [contentKit, aliviaWorld, audiences, activeSegment, angle, brand.positioning],
   );
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
@@ -139,14 +159,22 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
   }, [brand.id, brand.name, brand.niche, brand.tone, brand.logo_url]);
 
   const picker = useMemo(
-    () => createPicker(buildCoverage(isAlivia ? world : "pro", content, {}), () => {}),
-    [content, isAlivia, world],
+    () => createPicker(buildCoverage(aliviaWorld ?? "pro", content, {}), () => {}),
+    [content, aliviaWorld],
   );
 
   const blocks = useMemo(
-    () => composePage(createRng(`${brand.id}:${seed}:${world}:layout`), persona, undefined, content.carousels, 0),
-    [brand.id, seed, world, persona, content],
+    () =>
+      composePage(
+        createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
+        persona,
+        undefined,
+        content.carousels,
+        0,
+      ),
+    [brand.id, seed, activeSegment, angle, persona, content],
   );
+
 
   useEffect(() => {
     // Reaplica o tema quando a marca muda de aba/rota.
@@ -259,21 +287,41 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
             Versão <span className="font-mono">{seed}</span> · direção criativa {persona.name} · destino:{" "}
             {folder === "Todas" ? "Geral" : folder}
           </p>
-          {isAlivia && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {WORLD_TABS.map((w) => (
-                <Button
-                  key={w.id}
-                  size="sm"
-                  variant={world === w.id ? "secondary" : "ghost"}
-                  className="h-7 rounded-full text-[11px]"
-                  onClick={() => setWorld(w.id)}
-                >
-                  {w.label}
-                </Button>
-              ))}
-            </div>
+          {/* Nichos da marca + visão 360° que interpola todos eles. */}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {segments.map((s) => (
+              <Button
+                key={s.id}
+                size="sm"
+                variant={activeSegment === s.id ? "secondary" : "ghost"}
+                className="h-7 rounded-full text-[11px]"
+                onClick={() => setSegment(s.id)}
+              >
+                {s.label}
+              </Button>
+            ))}
+          </div>
+          {/* Ângulo estratégico: informar, dor, desejo ou venda. */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {ANGLES.map((a) => (
+              <Button
+                key={a.id}
+                size="sm"
+                variant={angle === a.id ? "outline" : "ghost"}
+                className="h-7 rounded-full text-[11px]"
+                title={a.hint}
+                onClick={() => setAngle(a.id)}
+              >
+                {a.label}
+              </Button>
+            ))}
+          </div>
+          {segments.length === 1 && (
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Cadastre os públicos da marca em Ajustes para gerar conteúdo por nicho.
+            </p>
           )}
+
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           {FORMATS.map((f) => (

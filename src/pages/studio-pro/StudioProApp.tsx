@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
 import BrandColorFields from "./BrandColorFields";
+import { ALIVIA_AUDIENCES } from "./audiences";
 import { DEFAULT_COLOR_KIT, writeColorKit, type BrandColorKit } from "./brandColors";
 import logoAlivia from "@/assets/logo-alivia.png";
 
@@ -148,6 +149,11 @@ const StudioProApp = () => {
         ],
         // Marca oficial: usa o acervo editorial real das landings (paciente, pro, clínica, estudante).
         content_source: "alivia",
+        positioning:
+          "O Aliv.iA transforma a queixa de dor em raciocínio clínico: o paciente entende o que está acontecendo, o profissional recebe avaliação e prontuário prontos, a clínica padroniza a equipe e o estudante treina o raciocínio com casos reais.",
+        strategy_notes:
+          "Informar antes de vender: mostrar o método (STEPS, D.I.F.I, triagem de sinais de alerta) e só então o convite. Nomear a dor concreta de cada público, provar com processo e nunca prometer cura.",
+        audiences: ALIVIA_AUDIENCES,
       });
       if (error) {
         console.error("[studio-pro] seed alivia brand", error);

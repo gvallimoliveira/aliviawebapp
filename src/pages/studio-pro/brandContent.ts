@@ -1,5 +1,6 @@
 import type { WorldContent } from "@/pages/studio/content";
 import type { TopicId } from "@/pages/studio/topics";
+import { GLOBAL_SEGMENT, type BrandAudience, type ContentAngle } from "./audiences";
 
 /**
  * CONTEÚDO EDITORIAL GENÉRICO DE UMA MARCA DO CLIENTE
@@ -300,4 +301,201 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
       hashtags: [brand.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), niche.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()],
     },
   };
+};
+
+/* ------------------------------------------------------------------------- */
+/* SEGMENTAÇÃO: nicho específico x visão global 360°                          */
+/* ------------------------------------------------------------------------- */
+
+/**
+ * Aplica um público (nicho) sobre o acervo base: dores, desejos, provas e CTA
+ * daquele segmento entram na frente, mantendo todos os outros blocos vivos.
+ */
+const applyAudience = (base: WorldContent, brand: string, audience: BrandAudience): WorldContent => {
+  const who = audience.label.trim();
+  const pains = audience.pains ?? [];
+  const desires = audience.desires ?? [];
+  const proof = audience.proof ?? [];
+  const cta = audience.cta?.trim() || "Falar com a gente";
+  const desc = audience.description?.trim();
+
+  return {
+    ...base,
+    label: `${brand} · ${who}`,
+    kickers: [`PARA ${who.toUpperCase()}`, who.toUpperCase(), ...base.kickers],
+    headlines: [
+      ...(pains[0] ? [{ strong: pains[0], rest: " não precisa ser a sua rotina." }] : []),
+      ...(desires[0] ? [{ strong: desires[0], rest: " começa com uma decisão." }] : []),
+      { strong: `Feito para ${who.toLowerCase()}`, rest: ", não para todo mundo." },
+      ...base.headlines,
+    ],
+    subs: [...(desc ? [desc] : []), ...proof.slice(0, 2), ...base.subs],
+    kinetic: [
+      ...(pains[0] ? [{ kicker: `A DOR DE ${who.toUpperCase()}`, word: "Hoje", caption: pains[0] }] : []),
+      ...(desires[0] ? [{ kicker: "O QUE MUDA", word: "Depois", caption: desires[0] }] : []),
+      ...base.kinetic,
+    ],
+    compare: [
+      ...(pains.length && desires.length
+        ? [{ title: `${who}: antes e depois`, before: pains, after: desires }]
+        : []),
+      ...base.compare,
+    ],
+    lists: [
+      ...(pains.length >= 3
+        ? [{
+            heading: `${pains.length} coisas que ${who.toLowerCase()} não deveria aceitar`,
+            items: pains,
+            closing: `${brand} resolve isso com processo, não com promessa.`,
+          }]
+        : []),
+      ...base.lists,
+    ],
+    quotes: [...(desires[0] ? [{ text: `“${desires[0]}.”` }] : []), ...base.quotes],
+    marquee: [[who, ...pains.slice(0, 2), ...desires.slice(0, 2)].filter(Boolean), ...base.marquee],
+    closings: [
+      { title: `${who}: o próximo passo é seu`, sub: desires[0] ?? `Fale com ${brand} hoje.`, cta },
+      ...base.closings,
+    ],
+    sales: {
+      ...base.sales,
+      audience: who,
+      proofs: proof.length ? proof : base.sales.proofs,
+      objections: pains.length ? [`Você já tentou e não deu certo? O problema era ${pains[0].toLowerCase()}.`, ...base.sales.objections] : base.sales.objections,
+      ctas: [cta, ...base.sales.ctas],
+    },
+  };
+};
+
+/**
+ * Visão 360°: interpola todos os nichos numa leitura única do produto — um
+ * painel por público, para mostrar amplitude sem perder concretude.
+ */
+const applyGlobal = (
+  base: WorldContent,
+  brand: string,
+  audiences: BrandAudience[],
+  positioning?: string | null,
+): WorldContent => {
+  if (!audiences.length) {
+    return positioning?.trim() ? { ...base, subs: [positioning.trim(), ...base.subs] } : base;
+  }
+  const labels = audiences.map((a) => a.label);
+  const panels = audiences.slice(0, 3).map((a, i) => ({
+    word: a.label,
+    line: a.desires?.[0] ?? a.description ?? "Um caminho claro para esse perfil.",
+    topic: topicAt(i),
+  }));
+
+  return {
+    ...base,
+    kickers: ["VISÃO 360°", `UM PRODUTO, ${labels.length} PÚBLICOS`, ...base.kickers],
+    headlines: [
+      { strong: `${labels.length} públicos`, rest: ", um só padrão de qualidade." },
+      { strong: brand, rest: ` atende ${labels.slice(0, 3).join(", ").toLowerCase()} no mesmo lugar.` },
+      ...base.headlines,
+    ],
+    subs: [...(positioning?.trim() ? [positioning.trim()] : []), ...base.subs],
+    triptychs: [
+      ...(panels.length === 3 ? [{ heading: "Para quem é", panels }] : []),
+      ...base.triptychs,
+    ],
+    lists: [
+      {
+        heading: "Para quem o produto foi feito",
+        items: audiences.map((a) => `${a.label} — ${a.desires?.[0] ?? a.description ?? "resultado claro"}`),
+        closing: "Cada perfil entra por uma porta diferente e chega ao mesmo padrão.",
+      },
+      ...base.lists,
+    ],
+    marquee: [labels, ...base.marquee],
+    carousels: [
+      {
+        kicker: "VISÃO GERAL",
+        title: `${brand} por dentro`,
+        coverSub: `Um produto, ${labels.length} públicos.`,
+        slides: audiences.slice(0, 5).map((a, i) => ({
+          heading: a.label,
+          body: a.pains?.[0] ? `${a.pains[0]} → ${a.desires?.[0] ?? "caminho claro"}.` : a.description ?? "",
+          topic: topicAt(i),
+        })),
+        cta: { title: "Em qual desses você se encaixa?", sub: "Responde aqui que eu te mostro o caminho." },
+      },
+      ...base.carousels,
+    ],
+    sales: {
+      ...base.sales,
+      audience: labels.join(", "),
+      proofs: audiences.flatMap((a) => a.proof?.slice(0, 1) ?? []).concat(base.sales.proofs).slice(0, 6),
+    },
+  };
+};
+
+/**
+ * Ângulo estratégico: reordena o acervo para privilegiar a intenção do post
+ * (informar, nomear a dor, gerar desejo ou vender).
+ */
+const applyAngle = (content: WorldContent, angle: ContentAngle): WorldContent => {
+  const rotate = <T,>(list: T[], n: number): T[] =>
+    list.length > 1 ? [...list.slice(n % list.length), ...list.slice(0, n % list.length)] : list;
+
+  switch (angle) {
+    case "dor":
+      return { ...content, kickers: ["ISSO É COM VOCÊ", ...content.kickers] };
+    case "desejo":
+      return {
+        ...content,
+        kickers: ["IMAGINA ASSIM", ...content.kickers],
+        headlines: rotate(content.headlines, 1),
+        kinetic: rotate(content.kinetic, 1),
+      };
+    case "venda":
+      return {
+        ...content,
+        kickers: ["AGENDA ABERTA", ...content.kickers],
+        headlines: rotate(content.headlines, 2),
+        closings: rotate(content.closings, 0),
+        sales: { ...content.sales, ctas: content.sales.ctas },
+      };
+    case "informar":
+    default:
+      return {
+        ...content,
+        kickers: ["ENTENDA EM 1 MINUTO", ...content.kickers],
+        headlines: rotate(content.headlines, 3),
+      };
+  }
+};
+
+export type SegmentContentInput = {
+  kit: BrandKit;
+  /** Acervo base — genérico do kit, ou o oficial de um mundo Aliv.iA. */
+  base?: WorldContent;
+  audiences: BrandAudience[];
+  /** Segmento ativo: `GLOBAL_SEGMENT` ou o id de um público. */
+  segment: string;
+  angle: ContentAngle;
+  positioning?: string | null;
+};
+
+/**
+ * Ponto de entrada único do motor: resolve marca + segmento + ângulo em um
+ * `WorldContent`. Serve para qualquer cliente, com ou sem nichos cadastrados.
+ */
+export const buildSegmentContent = ({
+  kit,
+  base,
+  audiences,
+  segment,
+  angle,
+  positioning,
+}: SegmentContentInput): WorldContent => {
+  const brand = kit.name.trim() || "Sua marca";
+  const root = base ?? buildBrandContent(kit);
+  if (segment === GLOBAL_SEGMENT) {
+    return applyAngle(applyGlobal(root, brand, audiences, positioning), angle);
+  }
+  const audience = audiences.find((a) => a.id === segment);
+  if (!audience) return applyAngle(root, angle);
+  return applyAngle(applyAudience(root, brand, audience), angle);
 };
