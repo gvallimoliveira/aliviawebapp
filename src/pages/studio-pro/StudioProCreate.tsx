@@ -108,11 +108,14 @@ const hexToHslTriplet = (hex: string): string | null => {
   return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
-const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
+const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved }: Props) => {
   const [format, setFormat] = useState<StudioFormat>("1x1");
   const [seed, setSeed] = useState(() => randomSeed());
   const [busy, setBusy] = useState<string | null>(null);
   const wrapper = useRef<HTMLDivElement>(null);
+  /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
+  const { photos } = useStudioPhotos(true);
+
 
   /**
    * Marcas com `content_source = "alivia"` têm acervo editorial próprio por
