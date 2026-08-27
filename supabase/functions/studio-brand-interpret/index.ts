@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     // A marca precisa ser do próprio usuário (RLS reforçada em código).
     const { data: brand, error: brandError } = await supabase
       .from("studio_brands")
-      .select("id, user_id, name, niche, tone, description, source_url, instagram_handle, topics")
+      .select("id, user_id, name, niche, tone, description, source_url, instagram_handle, topics, audiences")
       .eq("id", brandId)
       .maybeSingle();
     if (brandError) return json({ error: "Não foi possível ler a marca" }, 500);
