@@ -72,6 +72,9 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   device: 3,
   door: 4,
   stage: 2,
+  constellation: 4,
+  signpost: 4,
+  billboard: 4,
   closing: 4,
 };
 
