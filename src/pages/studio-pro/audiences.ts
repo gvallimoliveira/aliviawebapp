@@ -101,7 +101,11 @@ export const buildSegments = (audiences: BrandAudience[]): Segment[] => [
   ...audiences.map((a) => ({ id: a.id, label: a.label })),
 ];
 
-/** Públicos padrão da própria Aliv.iA — espelham os mundos do motor interno. */
+/**
+ * Públicos oficiais da própria Aliv.iA. Estruturalmente são 4 nichos
+ * (paciente, profissional, clínica, acadêmico) + 1 sub-nicho do acadêmico:
+ * o recém-formado, que tem dor, desejo e argumento de venda próprios.
+ */
 export const ALIVIA_AUDIENCES: BrandAudience[] = [
   {
     id: "paciente",
@@ -139,4 +143,24 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     proof: ["Trilhas com quizzes", "Casos clínicos comentados", "Progresso com XP e selos"],
     cta: "Começar minha trilha",
   },
+  {
+    id: "recem-formado",
+    label: "Recém-formado",
+    description: "Sub-nicho do acadêmico: já tem registro, atende os primeiros pacientes e teme errar a conduta.",
+    pains: [
+      "Insegurança para fechar a hipótese sozinho",
+      "Medo de perder o paciente na primeira consulta",
+      "Sem prontuário nem relatório que passe credibilidade",
+    ],
+    desires: ["Chegar seguro na conduta", "Parecer profissional desde o primeiro atendimento"],
+    proof: [
+      "Raciocínio clínico passo a passo com STEPS e D.I.F.I",
+      "Relatório e HEP prontos para entregar ao paciente",
+      "Prontuário organizado desde o primeiro caso",
+    ],
+    cta: "Começar com segurança",
+  },
 ];
+
+/** IDs oficiais — usados para impedir que a IA crie nichos duplicados. */
+export const ALIVIA_AUDIENCE_IDS = ALIVIA_AUDIENCES.map((a) => a.id);
