@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PLANS, PRODUCT, annualMonthlyPrice } from "./product";
 import StudioProShowcase from "./StudioProShowcase";
 import { SHOWCASE, type ShowcaseFormat } from "./showcase";
+import { useStudioPwaMeta } from "./useStudioPwaMeta";
 
 /**
  * LANDING DO STUDIO PÚBLICO
@@ -102,6 +103,7 @@ const FILTERS: { id: ShowcaseFormat | "todos"; label: string }[] = [
 ];
 
 const StudioProLanding = () => {
+  useStudioPwaMeta();
   const [filter, setFilter] = useState<ShowcaseFormat | "todos">("todos");
   const { user, loading: authLoading } = useAuth();
   const isLoggedIn = !authLoading && !!user;

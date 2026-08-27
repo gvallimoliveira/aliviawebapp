@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PRODUCT } from "./product";
+import { useStudioPwaMeta } from "./useStudioPwaMeta";
 
 /**
  * ENTRADA DO STUDIO PÚBLICO
@@ -17,6 +18,7 @@ import { PRODUCT } from "./product";
  * para a área logada (`/studio-pro/app`).
  */
 const StudioProAuth = () => {
+  useStudioPwaMeta();
   const { user, loading: authLoading, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signup");

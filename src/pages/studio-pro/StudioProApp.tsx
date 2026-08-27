@@ -25,6 +25,7 @@ import { useStudioQuota } from "./useStudioQuota";
 import BrandColorFields from "./BrandColorFields";
 import { ALIVIA_AUDIENCES, readAudiences, writeAudiences } from "./audiences";
 import { DEFAULT_COLOR_KIT, writeColorKit, type BrandColorKit } from "./brandColors";
+import { useStudioPwaMeta } from "./useStudioPwaMeta";
 import logoAlivia from "@/assets/logo-alivia.png";
 
 /**
@@ -68,6 +69,7 @@ const ALIVIA_KIT: BrandColorKit = {
 };
 
 const StudioProApp = () => {
+  useStudioPwaMeta();
   const { user, loading: authLoading } = useAuth();
   const { access, loading: accessLoading } = useStudioAccess();
   const { quota } = useStudioQuota();
