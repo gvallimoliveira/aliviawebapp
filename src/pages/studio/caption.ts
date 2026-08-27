@@ -90,6 +90,35 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const h = rng.pick(c.headlines);
     return [`${h.strong} ${h.rest}`, rng.pick(c.closings).sub];
   },
+  notify: (c, rng) => [
+    `${rng.pick(c.headlines).strong} — o dia a dia acontecendo dentro do app.`,
+    rng.pick(c.sales.proofs),
+    rng.pick(c.sales.ctas),
+  ],
+  toggle: (c, rng) => {
+    const pair = c.compare.length > 0 ? rng.pick(c.compare) : undefined;
+    const off = pair && pair.before.length > 0 ? rng.pick(pair.before) : rng.pick(c.sales.objections);
+    const on = pair && pair.after.length > 0 ? rng.pick(pair.after) : rng.pick(c.sales.proofs);
+    return [`Desligue: ${off}`, `Ligue: ${on}`, rng.pick(c.sales.ctas)];
+  },
+  trend: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [`${h.strong} ${h.rest}`, "A evolução não é uma linha reta — mas atravessa o platô.", rng.pick(c.sales.ctas)];
+  },
+  focus: (c, rng) => {
+    const pair = c.compare.length > 0 ? rng.pick(c.compare) : undefined;
+    const here = pair && pair.after.length > 0 ? rng.pick(pair.after) : rng.pick(c.sales.proofs);
+    return ["Não olhe o caminho inteiro. Olhe a próxima pedra.", here, rng.pick(c.sales.ctas)];
+  },
+  diverge: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [`${h.strong} ${h.rest}`, rng.pick(c.sales.proofs), rng.pick(c.sales.ctas)];
+  },
+  outbox: (c, rng) => {
+    const t = c.typos.length > 0 ? rng.pick(c.typos) : undefined;
+    const line = t ? `${t.lead} ${t.big} ${t.tail}` : `${rng.pick(c.headlines).strong}`;
+    return [line, rng.pick(c.subs)];
+  },
   steps: (c, rng) => [
     "STEPS — os 6 degraus da reabilitação: controle da dor, reparo tecidual, mobilidade, força, controle motor e alta.",
     "Cada fase do plano é mapeada a um degrau: você sabe onde está e para onde precisa ir.",
