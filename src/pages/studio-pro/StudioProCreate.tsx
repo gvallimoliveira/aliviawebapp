@@ -18,6 +18,7 @@ import {
   type StudioFormat,
 } from "@/studio-core";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
+import { WORLDS, type WorldId } from "@/pages/studio/content";
 import { buildBrandContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 
