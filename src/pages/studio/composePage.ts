@@ -160,6 +160,9 @@ export const composePage = (
     ["search", 2],
     ["device", 2],
     ["door", 1],
+    ["constellation", 1],
+    ["signpost", 2],
+    ["billboard", 1],
   ];
   const favorites: [BlockKind, number][] = persona
     ? persona.favoriteBlocks.map((kind) => [kind, 2] as [BlockKind, number])
