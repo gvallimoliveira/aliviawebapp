@@ -22,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
 import BrandColorFields from "./BrandColorFields";
-import { ALIVIA_AUDIENCES } from "./audiences";
+import { ALIVIA_AUDIENCES, readAudiences, writeAudiences } from "./audiences";
 import { DEFAULT_COLOR_KIT, writeColorKit, type BrandColorKit } from "./brandColors";
 import logoAlivia from "@/assets/logo-alivia.png";
 
