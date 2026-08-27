@@ -232,6 +232,7 @@ const StudioProBrand = () => {
         positioning: form.positioning.trim() || null,
         strategy_notes: form.strategy_notes.trim() || null,
         audiences: writeAudiences(audiences),
+        signature_enabled: signatureEnabled,
       })
       .eq("id", brandId);
     setSaving(false);
