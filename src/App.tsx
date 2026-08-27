@@ -72,6 +72,8 @@ const StudioLanding = lazy(() => import("./pages/studio/StudioLanding"));
 const StudioProLanding = lazy(() => import("./pages/studio-pro/StudioProLanding"));
 const StudioProApp = lazy(() => import("./pages/studio-pro/StudioProApp"));
 const StudioProAuth = lazy(() => import("./pages/studio-pro/StudioProAuth"));
+const StudioProBrand = lazy(() => import("./pages/studio-pro/StudioProBrand"));
+const StudioProVip = lazy(() => import("./pages/studio-pro/StudioProVip"));
 
 
 
@@ -171,6 +173,8 @@ const App = () => {
                   <Route path="/studio-pro" element={<StudioProLanding />} />
                   <Route path="/studio-pro/entrar" element={<StudioProAuth />} />
                   <Route path="/studio-pro/app" element={<StudioProApp />} />
+                  <Route path="/studio-pro/app/vip" element={<StudioProVip />} />
+                  <Route path="/studio-pro/app/marca/:brandId" element={<StudioProBrand />} />
 
 
                   <Route path="*" element={<NotFound />} />
