@@ -767,39 +767,17 @@ const StudioProBrand = () => {
                         ["pains", "Dores (uma por linha)"],
                         ["desires", "Desejos (uma por linha)"],
                         ["proof", "Soluções que ofereço (uma por linha)"],
-                      ] as const).map(([field, label]) => {
-                        const rawValue = (a[field] ?? []).join("\n");
-                        return (
-                          <div key={field}>
-                            <Label className="text-[11px]">{label}</Label>
-                            <Textarea
-                              rows={8}
-                              value={rawValue}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                const lines = value
-                                  .split("\n")
-                                  .map((t) => t.trim());
-                                const hasTrailingNewline = value.endsWith("\n");
-                                const parsed = lines.filter(Boolean);
-                                if (hasTrailingNewline) parsed.push("");
-                                updateAudience(i, {
-                                  [field]: parsed,
-                                } as Partial<BrandAudience>);
-                              }}
-                              onBlur={(e) => {
-                                const trimmed = e.target.value
-                                  .split("\n")
-                                  .map((t) => t.trim())
-                                  .filter(Boolean);
-                                updateAudience(i, {
-                                  [field]: trimmed,
-                                } as Partial<BrandAudience>);
-                              }}
-                            />
-                          </div>
-                        );
-                      })}
+                      ] as const).map(([field, label]) => (
+                        <AudienceListField
+                          key={field}
+                          label={label}
+                          value={a[field] ?? []}
+                          onCommit={(lines) =>
+                            updateAudience(i, { [field]: lines } as Partial<BrandAudience>)
+                          }
+                        />
+                      ))}
+
                     </div>
                     <div className="mt-2">
                       <Label htmlFor={`edit-cta-${a.id}`} className="text-[11px]">
