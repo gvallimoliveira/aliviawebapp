@@ -165,7 +165,7 @@ const professional: WorldContent = {
       { value: 24, suffix: "h", label: "de prontuário sempre acessível" },
     ],
     [
-      { value: 7, suffix: "+", label: "escore PEDro mínimo das fontes citadas" },
+      { value: 40, suffix: "+", label: "testes funcionais com critério de positividade" },
       { value: 10, label: "nichos de pesquisa clínica acompanhados" },
       { value: 0, suffix: " papel", label: "para arquivar depois da consulta" },
     ],
@@ -192,7 +192,7 @@ const professional: WorldContent = {
     {
       heading: "Números que sustentam o discurso",
       items: [
-        { value: "PEDro ≥ 7", label: "nas fontes que o sistema cita", note: "evidência de verdade, não achismo" },
+        { value: "100%", label: "dos casos com triagem de red flags", note: "segurança não é opcional" },
         { value: "1 link", label: "e a avaliação chega pronta", note: "o paciente responde de casa" },
         { value: "2 cliques", label: "entre a sessão e o relatório", note: "menos teclado, mais clínica" },
       ],

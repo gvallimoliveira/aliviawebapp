@@ -19,7 +19,7 @@ export const defaultStats: WorldContent["stats"] = [
     heading: "Números que sustentam o discurso",
     items: [
       { value: "100%", label: "dos casos com triagem de red flags", note: "segurança não é opcional" },
-      { value: "PEDro ≥ 7", label: "nas fontes que o sistema cita", note: "evidência de verdade, não achismo" },
+      { value: "4 eixos", label: "avaliados pelo D.I.F.I", note: "dor, inibição, fraqueza e incapacidade" },
       { value: "1 PDF", label: "resume o caso inteiro", note: "a história clínica não morre na memória" },
     ],
   },
