@@ -132,6 +132,22 @@ const StudioProApp = () => {
         tone: "clínico, direto e humano — explica sem infantilizar",
         logo_url: logoAlivia,
         colors: writeColorKit(ALIVIA_KIT),
+        source_url: "https://aliviawebapp.com.br",
+        instagram_handle: "@aliviawebapp",
+        description:
+          "Sistema de raciocínio clínico com alma de fisioterapeuta: autoavaliação guiada, hipótese mais provável, plano de tratamento e prontuário para profissionais e clínicas.",
+        topics: [
+          "raciocínio clínico",
+          "avaliação",
+          "mapa de dor",
+          "HEP",
+          "STEPS",
+          "prontuário",
+          "reabilitação",
+          "evidência",
+        ],
+        // Marca oficial: usa o acervo editorial real das landings (paciente, pro, clínica, estudante).
+        content_source: "alivia",
       });
       if (error) {
         console.error("[studio-pro] seed alivia brand", error);
