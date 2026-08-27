@@ -67,6 +67,12 @@ type Props = {
    * para continuar inovando.
    */
   inspirations?: ComposedBlock[][];
+  /**
+   * Quantas artes cada geração entrega. `Infinity` = página inteira (VIP /
+   * acesso ilimitado). Planos pagos e acessos concedidos recebem lotes curtos
+   * para não queimar a cota de uma vez.
+   */
+  maxArts?: number;
   onSaved?: () => void;
 };
 
@@ -145,7 +151,14 @@ const writePersisted = (brandId: string, patch: PersistedCreateState) => {
   }
 };
 
-const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved }: Props) => {
+const StudioProCreate = ({
+  brand,
+  folder,
+  watermark,
+  inspirations = [],
+  maxArts = 2,
+  onSaved,
+}: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
   const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "1x1");
   const [seed, setSeed] = useState(() => restored.current.seed ?? randomSeed());
@@ -248,17 +261,38 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
     return { blocks: inspirations[rng.int(inspirations.length)], used: true };
   }, [inspirations, brand.id, seed]);
 
-  const blocks = useMemo(
-    () =>
-      composePage(
-        createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
-        persona,
-        lineage.blocks,
-        content.carousels,
-        photos.length,
-      ),
-    [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length],
-  );
+  /**
+   * ENTREGA POR GERAÇÃO.
+   *
+   * VIP (acesso ilimitado) recebe a página inteira — variedade grande de uma vez
+   * para filtrar. Assinantes e acessos concedidos recebem um lote curto
+   * (`maxArts`, padrão 2): assim cada geração custa pouco da cota e o usuário
+   * refina os seletores (público, ângulo, formato) entre os lotes, construindo
+   * variedade temática dentro dos créditos.
+   */
+  const blocks = useMemo(() => {
+    const page = composePage(
+      createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
+      persona,
+      lineage.blocks,
+      content.carousels,
+      photos.length,
+    );
+    if (!Number.isFinite(maxArts) || page.length <= maxArts) return page;
+    // Amostra determinística e variada: evita repetir o mesmo tipo no lote.
+    const rng = createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:batch`);
+    const pool = [...page];
+    const picked: ComposedBlock[] = [];
+    const usedKinds = new Set<string>();
+    while (picked.length < maxArts && pool.length > 0) {
+      const idx = rng.int(pool.length);
+      const [candidate] = pool.splice(idx, 1);
+      if (usedKinds.has(candidate.kind) && pool.some((b) => !usedKinds.has(b.kind))) continue;
+      usedKinds.add(candidate.kind);
+      picked.push(candidate);
+    }
+    return picked;
+  }, [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, maxArts]);
 
 
 
@@ -433,6 +467,7 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
           <p className="text-xs text-muted-foreground">
             Versão <span className="font-mono">{seed}</span> · direção criativa {persona.name} · destino:{" "}
             {folder === "Todas" ? "Geral" : folder}
+            {Number.isFinite(maxArts) && ` · lote de ${maxArts} artes por geração`}
           </p>
           {/* Nichos da marca + visão 360° que interpola todos eles. */}
           <div className="mt-2 flex flex-wrap gap-1.5">

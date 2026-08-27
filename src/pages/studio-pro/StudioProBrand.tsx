@@ -459,6 +459,9 @@ const StudioProBrand = () => {
             folder={folder}
             watermark={access.watermark}
             inspirations={inspirations}
+            // VIP recebe a página inteira; planos e acessos concedidos recebem
+            // lotes de 2 artes por geração, para render a cota em variedade.
+            maxArts={access.unlimited ? Infinity : 2}
             // Só a lista de artes é recarregada: a versão em tela não muda.
             onSaved={() => void loadCreations()}
           />
