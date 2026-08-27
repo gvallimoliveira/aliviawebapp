@@ -36,27 +36,47 @@
     <meta name="robots" content="index, follow" />
 
     <!-- PWA -->
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#3a9e8e" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Aliv.iA" />
-    <link rel="apple-touch-icon" href="/pwa-icon-192.png" />
-    <!-- Studio: troca manifest/ícone antes do React, para o atalho da tela de início abrir /studio-pro -->
+    <!--
+      O manifest NÃO é declarado estaticamente: no iOS ele é lido assim que a tag
+      é encontrada, então trocar o href depois (React) já vinha tarde e o atalho
+      do Studio era salvo como o app principal. Este script síncrono cria a tag
+      já com o manifest correto para a rota. O caminho do Aliv.iA principal
+      recebe exatamente o que recebia antes.
+    -->
     <script>
       (function () {
-        if (!location.pathname.startsWith("/studio-pro")) return;
-        var m = document.querySelector('link[rel="manifest"]');
-        if (m) m.setAttribute("href", "/studio-manifest.webmanifest");
-        var a = document.querySelector('link[rel="apple-touch-icon"]');
-        if (a) a.setAttribute("href", "/icons/studio-icon-180.png");
-        var t = document.querySelector('meta[name="theme-color"]');
-        if (t) t.setAttribute("content", "#1D6B5C");
-        var ti = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-        if (ti) ti.setAttribute("content", "Studio");
-        document.title = "Aliv.iA Studio";
+        var studio = location.pathname.indexOf("/studio-pro") === 0;
+        // Trava: se o atalho do Studio cair em outra rota, volta para o Studio.
+        if (!studio && location.search.indexOf("source=studio-pwa") !== -1) {
+          location.replace("/studio-pro?source=studio-pwa");
+          return;
+        }
+        var head = document.head;
+
+        function set(tag, attrs) {
+          var el = document.createElement(tag);
+          for (var k in attrs) el.setAttribute(k, attrs[k]);
+          head.appendChild(el);
+        }
+        set("link", {
+          rel: "manifest",
+          href: studio ? "/studio-manifest.webmanifest" : "/manifest.webmanifest",
+        });
+        set("link", {
+          rel: "apple-touch-icon",
+          href: studio ? "/icons/studio-icon-180.png" : "/pwa-icon-192.png",
+        });
+        set("meta", { name: "theme-color", content: studio ? "#1D6B5C" : "#3a9e8e" });
+        set("meta", {
+          name: "apple-mobile-web-app-title",
+          content: studio ? "Studio" : "Aliv.iA",
+        });
+        if (studio) document.title = "Aliv.iA Studio";
       })();
     </script>
+
 
 
     <meta property="og:title" content="Aliv.iA Webapp">

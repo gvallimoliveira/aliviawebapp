@@ -2,8 +2,10 @@
   "name": "Aliv.iA Studio",
   "short_name": "Studio",
   "description": "Crie artes de marketing da sua marca com o Aliv.iA Studio.",
-  "start_url": "/studio-pro",
+  "id": "/studio-pro",
+  "start_url": "/studio-pro?source=studio-pwa",
   "scope": "/studio-pro",
+
   "display": "standalone",
   "background_color": "#1D6B5C",
   "theme_color": "#1D6B5C",
