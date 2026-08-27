@@ -14,6 +14,7 @@ import {
   exportNodeAsPng,
   personaForSeed,
   randomSeed,
+  renderNodeToBlob,
   type StudioFormat,
 } from "@/studio-core";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
