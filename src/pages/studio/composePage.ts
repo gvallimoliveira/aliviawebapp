@@ -29,6 +29,9 @@ export type BlockKind =
   | "device"
   | "door"
   | "stage"
+  | "constellation"
+  | "signpost"
+  | "billboard"
   | "closing";
 
 export type ComposedBlock = {
