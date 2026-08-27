@@ -157,7 +157,7 @@ const StudioProCreate = ({
   folder,
   watermark,
   inspirations = [],
-  maxArts = 2,
+  maxArts = STUDIO_BATCH_SIZE,
   onSaved,
 }: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
@@ -167,6 +167,32 @@ const StudioProCreate = ({
   const wrapper = useRef<HTMLDivElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const { photos } = useStudioPhotos(true);
+  /** Cota do período: cada geração desconta um lote inteiro da cota do plano. */
+  const { quota, consume } = useStudioQuota();
+
+  const batchSize = Number.isFinite(maxArts) ? (maxArts as number) : STUDIO_BATCH_SIZE;
+  const unlimited = !Number.isFinite(maxArts) || !!quota?.unlimited;
+  const blocked = !unlimited && !!quota && quota.remaining < batchSize;
+
+  /**
+   * "Nova versão" é o que custa cota: trocar público, ângulo ou formato refina o
+   * mesmo lote sem cobrar nada. O desconto acontece no banco antes de sortear a
+   * nova seed — se a cota do mês acabou, a geração é bloqueada com aviso claro.
+   */
+  const newVersion = async () => {
+    if (unlimited) {
+      setSeed(randomSeed());
+      return;
+    }
+    setBusy("quota");
+    const ok = await consume(batchSize);
+    setBusy(null);
+    if (!ok) {
+      toast.error(`Sua cota deste período acabou. Faça upgrade para gerar mais artes.`);
+      return;
+    }
+    setSeed(randomSeed());
+  };
 
   useEffect(() => {
     writePersisted(brand.id, { seed, format });
