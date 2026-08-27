@@ -103,6 +103,8 @@ const FILTERS: { id: ShowcaseFormat | "todos"; label: string }[] = [
 
 const StudioProLanding = () => {
   const [filter, setFilter] = useState<ShowcaseFormat | "todos">("todos");
+  const { user, loading: authLoading } = useAuth();
+  const isLoggedIn = !authLoading && !!user;
 
   useEffect(() => {
     const previousTitle = document.title;
