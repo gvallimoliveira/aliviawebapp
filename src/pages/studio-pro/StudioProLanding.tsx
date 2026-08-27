@@ -14,6 +14,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { PLANS, PRODUCT, annualMonthlyPrice } from "./product";
 import StudioProShowcase from "./StudioProShowcase";
 import { SHOWCASE, type ShowcaseFormat } from "./showcase";
@@ -102,6 +103,8 @@ const FILTERS: { id: ShowcaseFormat | "todos"; label: string }[] = [
 
 const StudioProLanding = () => {
   const [filter, setFilter] = useState<ShowcaseFormat | "todos">("todos");
+  const { user, loading: authLoading } = useAuth();
+  const isLoggedIn = !authLoading && !!user;
 
   useEffect(() => {
     const previousTitle = document.title;
@@ -132,12 +135,26 @@ const StudioProLanding = () => {
             >
               Planos
             </a>
-            <Button asChild size="sm" className="rounded-full">
-              <Link to={`${PRODUCT.base}/entrar`}>
-                Começar grátis
-                <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Link>
-            </Button>
+            {isLoggedIn ? (
+              <Button asChild size="sm" className="rounded-full">
+                <Link to={`${PRODUCT.base}/app`}>
+                  Meu studio
+                  <ArrowRight className="ml-1.5 h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="ghost" size="sm" className="rounded-full">
+                  <Link to={`${PRODUCT.base}/entrar`}>Entrar</Link>
+                </Button>
+                <Button asChild size="sm" className="rounded-full">
+                  <Link to={`${PRODUCT.base}/entrar`}>
+                    Começar grátis
+                    <ArrowRight className="ml-1.5 h-4 w-4" />
+                  </Link>
+                </Button>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -168,9 +185,18 @@ const StudioProLanding = () => {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
               <Button asChild size="lg" className="w-full rounded-full sm:w-auto">
-                <Link to={`${PRODUCT.base}/entrar`}>
-                  Criar {PRODUCT.freeCredits} posts grátis
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                <Link to={isLoggedIn ? `${PRODUCT.base}/app` : `${PRODUCT.base}/entrar`}>
+                  {isLoggedIn ? (
+                    <>
+                      Meu studio
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      Criar {PRODUCT.freeCredits} posts grátis
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Link>
               </Button>
               <a
