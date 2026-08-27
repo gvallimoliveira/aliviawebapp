@@ -55,7 +55,11 @@ type Creation = {
   format: string | null;
   folder: string;
   created_at: string;
+  is_favorite: boolean;
+  png_path: string | null;
+  composition: unknown;
 };
+
 
 type Tab = "criar" | "artes" | "ajustes";
 
