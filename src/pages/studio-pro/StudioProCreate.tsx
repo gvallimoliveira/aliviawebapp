@@ -248,17 +248,38 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
     return { blocks: inspirations[rng.int(inspirations.length)], used: true };
   }, [inspirations, brand.id, seed]);
 
-  const blocks = useMemo(
-    () =>
-      composePage(
-        createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
-        persona,
-        lineage.blocks,
-        content.carousels,
-        photos.length,
-      ),
-    [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length],
-  );
+  /**
+   * ENTREGA POR GERAÇÃO.
+   *
+   * VIP (acesso ilimitado) recebe a página inteira — variedade grande de uma vez
+   * para filtrar. Assinantes e acessos concedidos recebem um lote curto
+   * (`maxArts`, padrão 2): assim cada geração custa pouco da cota e o usuário
+   * refina os seletores (público, ângulo, formato) entre os lotes, construindo
+   * variedade temática dentro dos créditos.
+   */
+  const blocks = useMemo(() => {
+    const page = composePage(
+      createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
+      persona,
+      lineage.blocks,
+      content.carousels,
+      photos.length,
+    );
+    if (!Number.isFinite(maxArts) || page.length <= maxArts) return page;
+    // Amostra determinística e variada: evita repetir o mesmo tipo no lote.
+    const rng = createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:batch`);
+    const pool = [...page];
+    const picked: ComposedBlock[] = [];
+    const usedKinds = new Set<string>();
+    while (picked.length < maxArts && pool.length > 0) {
+      const idx = rng.int(pool.length);
+      const [candidate] = pool.splice(idx, 1);
+      if (usedKinds.has(candidate.kind) && pool.some((b) => !usedKinds.has(b.kind))) continue;
+      usedKinds.add(candidate.kind);
+      picked.push(candidate);
+    }
+    return picked;
+  }, [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, maxArts]);
 
 
 
