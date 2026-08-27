@@ -214,7 +214,7 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
     ],
     marquee: [
       [brand, niche, "processo", "entrega", "constância"],
-      ["clareza", "prazo", "revisão", "resultado"],
+      words.length >= 3 ? words.slice(0, 6) : ["clareza", "prazo", "revisão", "resultado"],
       ["escuta", "método", "cuidado", brand],
     ],
     closings: [
