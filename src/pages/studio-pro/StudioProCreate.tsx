@@ -105,25 +105,47 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
   const wrapper = useRef<HTMLDivElement>(null);
 
   /**
-   * Marcas com `content_source = "alivia"` usam o acervo editorial oficial do
-   * produto (paciente, profissional, clínica, acadêmico) — o mesmo do Studio
-   * interno. Qualquer outra marca usa o acervo neutro gerado do kit.
+   * Marcas com `content_source = "alivia"` têm acervo editorial próprio por
+   * mundo (o mesmo do Studio interno). Qualquer outra marca usa o acervo neutro
+   * gerado do kit — a segmentação em si é idêntica para todo cliente.
    */
   const isAlivia = brand.content_source === "alivia";
-  const [world, setWorld] = useState<WorldId>("paciente");
+
+  const audiences = useMemo(() => readAudiences(brand.audiences), [brand.audiences]);
+  const segments = useMemo(() => buildSegments(audiences), [audiences]);
+  const [segment, setSegment] = useState<string>(GLOBAL_SEGMENT);
+  const [angle, setAngle] = useState<ContentAngle>("informar");
+
+  // Se o público ativo deixa de existir (edição do kit), volta para o 360°.
+  const activeSegment = segments.some((s) => s.id === segment) ? segment : GLOBAL_SEGMENT;
+
+  const kit = useMemo(
+    () => ({
+      name: brand.name,
+      niche: brand.niche,
+      tone: brand.tone,
+      description: brand.description,
+      keywords: brand.topics,
+    }),
+    [brand.name, brand.niche, brand.tone, brand.description, brand.topics],
+  );
+
+  /** Mundo Aliv.iA correspondente ao público ativo, quando existir. */
+  const aliviaWorld: WorldId | null =
+    isAlivia && activeSegment !== GLOBAL_SEGMENT && isWorldId(activeSegment) ? activeSegment : null;
 
   const content = useMemo(
     () =>
-      isAlivia
-        ? WORLDS[world]
-        : buildBrandContent({
-            name: brand.name,
-            niche: brand.niche,
-            tone: brand.tone,
-            description: brand.description,
-            keywords: brand.topics,
-          }),
-    [isAlivia, world, brand.name, brand.niche, brand.tone, brand.description, brand.topics],
+      buildSegmentContent({
+        kit,
+        base: aliviaWorld ? WORLDS[aliviaWorld] : undefined,
+        audiences,
+        // Com acervo oficial do mundo, o público já está embutido no base.
+        segment: aliviaWorld ? GLOBAL_SEGMENT : activeSegment,
+        angle,
+        positioning: aliviaWorld ? null : brand.positioning,
+      }),
+    [kit, aliviaWorld, audiences, activeSegment, angle, brand.positioning],
   );
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
@@ -139,14 +161,22 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
   }, [brand.id, brand.name, brand.niche, brand.tone, brand.logo_url]);
 
   const picker = useMemo(
-    () => createPicker(buildCoverage(isAlivia ? world : "pro", content, {}), () => {}),
-    [content, isAlivia, world],
+    () => createPicker(buildCoverage(aliviaWorld ?? "pro", content, {}), () => {}),
+    [content, aliviaWorld],
   );
 
   const blocks = useMemo(
-    () => composePage(createRng(`${brand.id}:${seed}:${world}:layout`), persona, undefined, content.carousels, 0),
-    [brand.id, seed, world, persona, content],
+    () =>
+      composePage(
+        createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
+        persona,
+        undefined,
+        content.carousels,
+        0,
+      ),
+    [brand.id, seed, activeSegment, angle, persona, content],
   );
+
 
   useEffect(() => {
     // Reaplica o tema quando a marca muda de aba/rota.
