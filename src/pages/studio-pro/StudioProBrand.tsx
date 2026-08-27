@@ -80,7 +80,12 @@ const StudioProBrand = () => {
     source_url: "",
     instagram_handle: "",
     keywords: "",
+    positioning: "",
+    strategy_notes: "",
   });
+  /** Nichos da marca — cada um alimenta uma aba de conteúdo no editor. */
+  const [audiences, setAudiences] = useState<BrandAudience[]>([]);
+  const [interpreting, setInterpreting] = useState(false);
   const [colorKit, setColorKit] = useState<BrandColorKit>(DEFAULT_COLOR_KIT);
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
