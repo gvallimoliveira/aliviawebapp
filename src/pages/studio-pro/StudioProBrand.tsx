@@ -61,7 +61,8 @@ const StudioProBrand = () => {
   const [creations, setCreations] = useState<Creation[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", niche: "", tone: "", primary: "#0F766E", logo_url: "" });
+  const [form, setForm] = useState({ name: "", niche: "", tone: "", logo_url: "" });
+  const [colorKit, setColorKit] = useState<BrandColorKit>(DEFAULT_COLOR_KIT);
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
 
