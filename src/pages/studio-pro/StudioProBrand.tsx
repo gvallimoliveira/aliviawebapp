@@ -183,6 +183,9 @@ const StudioProBrand = () => {
           .map((k) => k.trim())
           .filter(Boolean),
         colors: writeColorKit(colorKit),
+        positioning: form.positioning.trim() || null,
+        strategy_notes: form.strategy_notes.trim() || null,
+        audiences: writeAudiences(audiences),
       })
       .eq("id", brandId);
     setSaving(false);
@@ -193,6 +196,49 @@ const StudioProBrand = () => {
     toast.success("Kit de marca atualizado.");
     void load();
   };
+
+  /**
+   * Interpretação por IA: lê o kit (nome, nicho, descrição, palavras-chave) e
+   * devolve posicionamento, nichos com dores/desejos/provas e estratégia.
+   * Salva no banco e recarrega — o usuário revisa e ajusta depois.
+   */
+  const interpretBrand = async () => {
+    if (!brandId) return;
+    if (!form.description.trim() && !form.niche.trim()) {
+      toast.error("Descreva a marca ou informe o nicho antes de interpretar.");
+      return;
+    }
+    setInterpreting(true);
+    try {
+      // Salva o kit atual primeiro para a IA ler o texto mais recente.
+      await saveBrand();
+      const { data, error } = await supabase.functions.invoke("studio-brand-interpret", {
+        body: { brandId },
+      });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) {
+        toast.error((data as { error: string }).error);
+        return;
+      }
+      toast.success("Marca interpretada. Revise os públicos abaixo.");
+      void load();
+    } catch (err) {
+      console.error("[studio-pro] interpret", err);
+      toast.error("Não foi possível interpretar a marca agora.");
+    } finally {
+      setInterpreting(false);
+    }
+  };
+
+  const updateAudience = (index: number, patch: Partial<BrandAudience>) =>
+    setAudiences((prev) => prev.map((a, i) => (i === index ? { ...a, ...patch } : a)));
+
+  const addAudience = () =>
+    setAudiences((prev) => [...prev, { id: `publico-${prev.length + 1}`, label: "" }]);
+
+  const removeAudience = (index: number) =>
+    setAudiences((prev) => prev.filter((_, i) => i !== index));
+
 
   const moveArt = async (id: string, target: string) => {
     const { error } = await supabase.from("studio_creations").update({ folder: target }).eq("id", id);
