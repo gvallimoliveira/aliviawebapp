@@ -47,7 +47,7 @@ const SearchBlock = ({ content, rng, treatment, format, persona, picker }: Block
 
   return (
     <section
-      className={`relative flex ${sectionHeight(format)} items-center justify-center overflow-hidden ${
+      className={`relative flex ${sectionHeight(format)} items-center justify-center overflow-hidden pb-24 ${
         dark ? "bg-foreground" : personaSurface(persona, treatment)
       }`}
     >
