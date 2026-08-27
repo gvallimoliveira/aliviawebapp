@@ -412,6 +412,16 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
               Cadastre os públicos da marca em Ajustes para gerar conteúdo por nicho.
             </p>
           )}
+          {/* Transparência da linhagem: o usuário vê quando a versão herdou favorito. */}
+          <p className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Sparkles className="h-3 w-3" />
+            {inspirations.length === 0
+              ? "Favorite artes na aba Artes para o Studio aprender seu estilo."
+              : lineage.used
+                ? `Esta versão herda a estrutura de um favorito (${inspirations.length} referências no acervo).`
+                : `Versão livre — inovando fora do padrão dos ${inspirations.length} favoritos.`}
+            {photos.length > 0 && ` · ${photos.length} fotos do acervo em uso`}
+          </p>
 
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
@@ -426,11 +436,30 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
               {f.label}
             </Button>
           ))}
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 rounded-full text-xs"
+            disabled={busy === "all-png"}
+            onClick={downloadAll}
+          >
+            {busy === "all-png" ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Images className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            Todas em PNG
+          </Button>
+          <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={downloadCaptions}>
+            <FileText className="mr-1.5 h-3.5 w-3.5" />
+            Legendas (.txt)
+          </Button>
           <Button size="sm" className="rounded-full" onClick={() => setSeed(randomSeed())}>
             <RefreshCw className="mr-1.5 h-4 w-4" />
             Nova versão
           </Button>
         </div>
+
       </div>
 
       <div ref={wrapper} className="mt-5 flex flex-col items-center gap-6" style={themeStyle}>
