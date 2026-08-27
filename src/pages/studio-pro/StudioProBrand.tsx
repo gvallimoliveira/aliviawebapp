@@ -91,6 +91,8 @@ const StudioProBrand = () => {
 
   const [brands, setBrands] = useState<Brand[]>([]);
   const [creations, setCreations] = useState<Creation[]>([]);
+  /** URLs assinadas dos PNGs salvos (prévia nítida na galeria). */
+  const [previews, setPreviews] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
