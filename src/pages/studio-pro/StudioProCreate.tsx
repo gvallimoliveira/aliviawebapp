@@ -265,9 +265,10 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
     setBusy(`save-${index}`);
     const node = document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
     let thumb: string | null = null;
+    let pngPath: string | null = null;
     if (node) {
+      const rect = node.getBoundingClientRect();
       try {
-        const rect = node.getBoundingClientRect();
         const blob = await renderNodeToBlob(node, Math.min(1, 300 / (rect.width || 300)), "image/jpeg", 0.6);
         thumb = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -277,6 +278,19 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
         });
       } catch (error) {
         console.warn("[studio-pro] thumb", error);
+      }
+      // PNG em alta resolução guardado na conta: a galeria baixa depois.
+      try {
+        const ratio = Math.max(1, Math.min(3, 1080 / (rect.width || 1080)));
+        const png = await renderNodeToBlob(node, ratio, "image/png");
+        const path = `${auth.user.id}/${brand.id}/${seed}-${String(index + 1).padStart(2, "0")}-${kind}.png`;
+        const { error: upErr } = await supabase.storage
+          .from("studio-art")
+          .upload(path, png, { contentType: "image/png", upsert: true });
+        if (upErr) throw upErr;
+        pngPath = path;
+      } catch (error) {
+        console.warn("[studio-pro] png upload", error);
       }
     }
     const { error } = await supabase.from("studio_creations").insert({
@@ -288,6 +302,11 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
       headline: headlineOf(index) || null,
       caption,
       thumb,
+      png_path: pngPath,
+      // Receita da arte: permite reusar a composição aprovada nas próximas versões.
+      composition: blocks as unknown as Record<string, unknown>[],
+      segment: activeSegment,
+      angle,
       folder: folder === "Todas" ? "Geral" : folder,
       watermarked: watermark,
     });
@@ -297,7 +316,11 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
       toast.error("Não foi possível salvar na marca.");
       return;
     }
-    toast.success(`Arte salva em ${folder === "Todas" ? "Geral" : folder}`);
+    toast.success(
+      pngPath
+        ? `Arte salva em ${folder === "Todas" ? "Geral" : folder} com PNG e legenda`
+        : `Arte salva em ${folder === "Todas" ? "Geral" : folder} (PNG não pôde ser guardado)`,
+    );
     onSaved?.();
   };
 
@@ -309,6 +332,42 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
       toast.error("Não foi possível copiar a legenda.");
     }
   };
+
+  /** Baixa todas as artes desta versão, uma a uma. */
+  const downloadAll = async () => {
+    setBusy("all-png");
+    try {
+      for (let i = 0; i < blocks.length; i += 1) {
+        const node = document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null;
+        if (!node) continue;
+        const rect = node.getBoundingClientRect();
+        const ratio = Math.max(1, Math.min(3, 1440 / (rect.width || 1440)));
+        const blob = await renderNodeToBlob(node, ratio, "image/png");
+        await deliver(
+          blob,
+          `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}-${String(i + 1).padStart(2, "0")}-${blocks[i].kind}.png`,
+        );
+      }
+      toast.success("Todas as artes desta versão foram exportadas");
+    } catch (error) {
+      console.error("[studio-pro] export all", error);
+      toast.error("Não foi possível exportar todas as artes.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** Baixa as legendas da versão inteira em um .txt. */
+  const downloadCaptions = () => {
+    const text = blocks
+      .map(({ kind }, i) => {
+        const caption = buildCaption(content, kind, createRng(`${brand.id}:${seed}:caption:${kind}:${i}`));
+        return `# ${String(i + 1).padStart(2, "0")} · ${kind}\n${caption}`;
+      })
+      .join("\n\n---\n\n");
+    void exportTextFile(text, `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}-legendas.txt`);
+  };
+
 
   return (
     <section className="mt-5 rounded-3xl border border-border bg-card p-5">
