@@ -59,6 +59,8 @@ type Brand = {
   audiences: unknown;
   positioning: string | null;
   strategy_notes: string | null;
+  /** Assinatura (logo + nome) em todas as artes desta marca. */
+  signature_enabled: boolean | null;
 };
 
 type Creation = {
