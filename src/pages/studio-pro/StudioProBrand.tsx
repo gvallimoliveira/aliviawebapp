@@ -485,10 +485,123 @@ const StudioProBrand = () => {
             {brand.content_source === "alivia" && (
               <p className="rounded-2xl border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground sm:col-span-2">
                 Esta marca usa o acervo editorial oficial do Aliv.iA. Na aba <strong>Criar</strong> você
-                escolhe o mundo (Paciente, Profissional, Clínica ou Estudante) e as artes saem com a
+                escolhe o público (Paciente, Profissional, Clínica ou Estudante) e as artes saem com a
                 mensagem real de cada landing.
               </p>
             )}
+
+            {/* ---------- Interpretação do produto: 360° + nichos ---------- */}
+            <div className="sm:col-span-2 rounded-2xl border border-border bg-background/60 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Interpretação do produto</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Os públicos viram abas na aba Criar. A visão 360° interpola todos eles.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={interpretBrand}
+                  disabled={interpreting || saving}
+                >
+                  {interpreting ? (
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-1.5 h-4 w-4" />
+                  )}
+                  Interpretar com IA
+                </Button>
+              </div>
+
+              <div className="mt-3 space-y-3">
+                <div>
+                  <Label htmlFor="edit-positioning">Posicionamento 360°</Label>
+                  <Textarea
+                    id="edit-positioning"
+                    rows={3}
+                    placeholder="O que o produto é como um todo, atravessando todos os públicos."
+                    value={form.positioning}
+                    onChange={(e) => setForm({ ...form, positioning: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-strategy">Notas de estratégia</Label>
+                  <Textarea
+                    id="edit-strategy"
+                    rows={3}
+                    placeholder="Como informar, gerar desejo e vender para esta marca."
+                    value={form.strategy_notes}
+                    onChange={(e) => setForm({ ...form, strategy_notes: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {audiences.map((a, i) => (
+                  <div key={`${a.id}-${i}`} className="rounded-xl border border-border p-3">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        aria-label={`Nome do público ${i + 1}`}
+                        placeholder="Nome do público (ex.: Clínica)"
+                        value={a.label}
+                        onChange={(e) => updateAudience(i, { label: e.target.value })}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Remover público"
+                        onClick={() => removeAudience(i)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Textarea
+                      className="mt-2"
+                      rows={2}
+                      placeholder="Quem é e em que momento chega"
+                      value={a.description ?? ""}
+                      onChange={(e) => updateAudience(i, { description: e.target.value })}
+                    />
+                    <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                      {([
+                        ["pains", "Dores (uma por linha)"],
+                        ["desires", "Desejos (uma por linha)"],
+                        ["proof", "Provas (uma por linha)"],
+                      ] as const).map(([field, label]) => (
+                        <div key={field}>
+                          <Label className="text-[11px]">{label}</Label>
+                          <Textarea
+                            rows={3}
+                            value={(a[field] ?? []).join("\n")}
+                            onChange={(e) =>
+                              updateAudience(i, {
+                                [field]: e.target.value
+                                  .split("\n")
+                                  .map((t) => t.trim())
+                                  .filter(Boolean),
+                              } as Partial<BrandAudience>)
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <Input
+                      className="mt-2"
+                      placeholder="Chamada para ação deste público"
+                      value={a.cta ?? ""}
+                      onChange={(e) => updateAudience(i, { cta: e.target.value })}
+                    />
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" className="rounded-full" onClick={addAudience}>
+                  <FolderPlus className="mr-1.5 h-4 w-4" />
+                  Adicionar público
+                </Button>
+              </div>
+            </div>
+
             <div className="sm:col-span-2">
               <Label htmlFor="edit-tone">Tom de voz</Label>
               <Textarea
