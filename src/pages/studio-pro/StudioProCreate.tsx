@@ -251,6 +251,21 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
             Versão <span className="font-mono">{seed}</span> · direção criativa {persona.name} · destino:{" "}
             {folder === "Todas" ? "Geral" : folder}
           </p>
+          {isAlivia && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {WORLD_TABS.map((w) => (
+                <Button
+                  key={w.id}
+                  size="sm"
+                  variant={world === w.id ? "secondary" : "ghost"}
+                  className="h-7 rounded-full text-[11px]"
+                  onClick={() => setWorld(w.id)}
+                >
+                  {w.label}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           {FORMATS.map((f) => (
