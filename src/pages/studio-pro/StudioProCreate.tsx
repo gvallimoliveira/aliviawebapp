@@ -576,8 +576,17 @@ const StudioProCreate = ({
             <FileText className="mr-1.5 h-3.5 w-3.5" />
             Legendas (.txt)
           </Button>
-          <Button size="sm" className="rounded-full" onClick={() => setSeed(randomSeed())}>
-            <RefreshCw className="mr-1.5 h-4 w-4" />
+          <Button
+            size="sm"
+            className="rounded-full"
+            disabled={busy === "quota" || blocked}
+            onClick={() => void newVersion()}
+          >
+            {busy === "quota" ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-1.5 h-4 w-4" />
+            )}
             Nova versão
           </Button>
         </div>
