@@ -31,6 +31,10 @@ export type BrandKit = {
   name: string;
   niche?: string | null;
   tone?: string | null;
+  /** Descrição livre do que a marca faz (alimenta subtítulos e legendas). */
+  description?: string | null;
+  /** Palavras-chave da marca (alimentam kickers e marquee). */
+  keywords?: string[] | null;
 };
 
 /** Slogan padrão quando a marca ainda não escreveu o dela. */
