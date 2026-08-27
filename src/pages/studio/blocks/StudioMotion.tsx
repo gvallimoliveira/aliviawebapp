@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 
 /**
@@ -75,7 +75,7 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
   const wipe = useTransform(p, [0.05, 0.45], ["78%", "0%"]);
   const wipeClip = useTransform(wipe, (v) => `inset(0% 0% ${v} 0%)`);
 
-  if (kind === "none") return <>{children}</>;
+  if (kind === "none" || !heavy) return <>{children}</>;
 
   if (kind === "gradientDrift") {
     return (

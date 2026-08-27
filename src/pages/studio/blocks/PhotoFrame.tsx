@@ -35,6 +35,8 @@ const PhotoFrame = ({
       <img
         src={photo.src}
         alt={photo.label || "Aliv.iA"}
+        loading="lazy"
+        decoding="async"
         className={`h-full w-full object-cover ${imgClassName}`}
         style={{
           objectPosition: `${photo.focusX}% ${photo.focusY}%`,
