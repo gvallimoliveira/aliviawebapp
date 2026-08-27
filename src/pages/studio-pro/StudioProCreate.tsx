@@ -22,7 +22,7 @@ import {
 } from "@/studio-core";
 import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
-import { WORLDS, isWorldId, type WorldId } from "@/pages/studio/content";
+import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
 import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
@@ -143,9 +143,18 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
     [brand.name, brand.niche, brand.tone, brand.description, brand.topics],
   );
 
-  /** Mundo Aliv.iA correspondente ao público ativo, quando existir. */
-  const aliviaWorld: WorldId | null =
-    isAlivia && activeSegment !== GLOBAL_SEGMENT && isWorldId(activeSegment) ? activeSegment : null;
+  /**
+   * Mundo Aliv.iA correspondente ao público ativo. No 360° a marca Aliv.iA não
+   * cai mais no acervo neutro (era de onde saíam as artes de "entrega no prazo",
+   * que não têm nada a ver com o produto): cada versão gira entre os mundos
+   * oficiais, mantendo copy real e tópicos reais para os blocos fotográficos.
+   */
+  const aliviaWorld: WorldId | null = !isAlivia
+    ? null
+    : activeSegment !== GLOBAL_SEGMENT && isWorldId(activeSegment)
+      ? activeSegment
+      : WORLD_IDS[createRng(`${brand.id}:${seed}:world`).int(WORLD_IDS.length)];
+
 
   const content = useMemo(
     () =>

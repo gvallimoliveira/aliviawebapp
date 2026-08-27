@@ -9,24 +9,14 @@ import { GLOBAL_SEGMENT, type BrandAudience, type ContentAngle } from "./audienc
  * neutro: nasce do kit de marca (nome, nicho, tom) e nunca fala de fisioterapia
  * nem cita o Aliv.iA.
  *
- * REGRA DE IMAGEM: só usamos `topic` sem screenshot cadastrado — nenhuma tela do
- * app clínico pode vazar para a arte de um cliente. Os tópicos abaixo existem
- * apenas para alimentar o estudo de cobertura do motor.
+ * REGRA DE IMAGEM: a copy neutra NÃO carrega `topic` clínico. Antes ela reusava
+ * tópicos reais do Aliv.iA só para alimentar a cobertura, e isso fazia o bloco
+ * fotográfico casar uma foto de avaliação (termografia, dinamometria) com um
+ * texto genérico de "entrega no prazo" — nexo falso. Sem tópico, o bloco
+ * fotográfico simplesmente não renderiza para conteúdo neutro.
  */
-const NEUTRAL_TOPICS: TopicId[] = [
-  "pricing",
-  "documents",
-  "archive",
-  "governance",
-  "multi-condition",
-  "steps-method",
-  "difi",
-  "shared-record",
-  "institutional-link",
-  "discharge-report",
-];
+const topicAt = (_i: number): TopicId | undefined => undefined;
 
-const topicAt = (i: number) => NEUTRAL_TOPICS[i % NEUTRAL_TOPICS.length];
 
 export type BrandKit = {
   name: string;

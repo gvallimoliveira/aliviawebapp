@@ -159,14 +159,20 @@ export const photoTopics = (photo: StudioPhoto): TopicId[] => {
 export const photoReading = (photo: StudioPhoto): string =>
   themesOf(photo)[0]?.reading ?? "registro real do cuidado";
 
-/** 0 = sem nexo; quanto maior, mais a foto conversa com o assunto da copy. */
+/**
+ * 0 = sem nexo; quanto maior, mais a foto conversa com o assunto da copy.
+ * Copy sem tópico algum (ex.: conteúdo neutro de marca de cliente) vale 0: é
+ * melhor não ter bloco fotográfico do que casar uma foto de avaliação real com
+ * um texto que não fala de avaliação.
+ */
 export const photoAffinity = (photo: StudioPhoto, topics: (TopicId | undefined)[]): number => {
   const wanted = topics.filter(Boolean) as TopicId[];
-  if (wanted.length === 0) return 0.5;
+  if (wanted.length === 0) return 0;
   const mine = photoTopics(photo);
   const hits = wanted.filter((t) => mine.includes(t)).length;
   return hits / wanted.length;
 };
+
 
 /**
  * Escolhe a foto que sustenta o assunto já decidido pela copy. Determinístico
