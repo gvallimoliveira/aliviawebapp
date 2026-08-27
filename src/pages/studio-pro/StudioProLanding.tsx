@@ -185,9 +185,18 @@ const StudioProLanding = () => {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
               <Button asChild size="lg" className="w-full rounded-full sm:w-auto">
-                <Link to={`${PRODUCT.base}/entrar`}>
-                  Criar {PRODUCT.freeCredits} posts grátis
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                <Link to={isLoggedIn ? `${PRODUCT.base}/app` : `${PRODUCT.base}/entrar`}>
+                  {isLoggedIn ? (
+                    <>
+                      Meu studio
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      Criar {PRODUCT.freeCredits} posts grátis
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Link>
               </Button>
               <a
