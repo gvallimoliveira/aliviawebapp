@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileText, Images, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
+import { Download, FileText, Images, LayoutGrid, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
 import { STUDIO_BATCH_SIZE, useStudioQuota } from "./useStudioQuota";
+import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
 
 
@@ -136,6 +137,8 @@ type PersistedCreateState = {
   format?: StudioFormat;
   segment?: string;
   angle?: ContentAngle;
+  /** Modelos escolhidos; vazio = aleatório. */
+  models?: string[];
 };
 
 const readPersisted = (brandId: string): PersistedCreateState => {
@@ -218,10 +221,22 @@ const StudioProCreate = ({
   const segments = useMemo(() => buildSegments(audiences), [audiences]);
   const [segment, setSegment] = useState<string>(restored.current.segment ?? GLOBAL_SEGMENT);
   const [angle, setAngle] = useState<ContentAngle>(restored.current.angle ?? "informar");
+  /**
+   * PREFERÊNCIA DE MODELOS.
+   *
+   * Vazio = "Aleatório" (padrão): o motor sorteia todo o repertório. Ao marcar
+   * modelos, as artes da versão saem só desses tipos — trocar a seleção refina o
+   * mesmo lote sem gastar cota.
+   */
+  const [models, setModels] = useState<string[]>(restored.current.models ?? []);
+  const [modelsOpen, setModelsOpen] = useState(false);
+
+  const toggleModel = (id: string) =>
+    setModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]));
 
   useEffect(() => {
-    writePersisted(brand.id, { segment, angle });
-  }, [brand.id, segment, angle]);
+    writePersisted(brand.id, { segment, angle, models });
+  }, [brand.id, segment, angle, models]);
 
   // Se o público ativo deixa de existir (edição do kit), volta para o 360°.
   const activeSegment = segments.some((s) => s.id === segment) ? segment : GLOBAL_SEGMENT;
@@ -315,9 +330,11 @@ const StudioProCreate = ({
     const page = composePage(
       createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
       persona,
-      lineage.blocks,
+      // Com modelos escolhidos, a linhagem de favoritos cede lugar à escolha.
+      models.length > 0 ? undefined : lineage.blocks,
       content.carousels,
       photos.length,
+      kindsForModels(models, photos.length),
     );
     if (!Number.isFinite(maxArts) || page.length <= maxArts) return page;
     // Amostra determinística e variada: evita repetir o mesmo tipo no lote.
@@ -333,7 +350,7 @@ const StudioProCreate = ({
       picked.push(candidate);
     }
     return picked;
-  }, [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, maxArts]);
+  }, [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, maxArts, models]);
 
 
 
@@ -547,6 +564,50 @@ const StudioProCreate = ({
                 {a.label}
               </Button>
             ))}
+          </div>
+          {/* Modelos de arte: aleatório por padrão, ou seleção manual de tipos. */}
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => setModelsOpen((v) => !v)}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground underline-offset-2 hover:underline"
+            >
+              <LayoutGrid className="h-3 w-3" />
+              Modelos: {models.length === 0 ? "Aleatório" : `${models.length} selecionado${models.length > 1 ? "s" : ""}`}
+            </button>
+            {modelsOpen && (
+              <div className="mt-2 rounded-2xl border border-border bg-muted/30 p-2.5">
+                <div className="flex flex-wrap gap-1.5">
+                  <Button
+                    size="sm"
+                    variant={models.length === 0 ? "secondary" : "ghost"}
+                    className="h-7 rounded-full text-[11px]"
+                    onClick={() => setModels([])}
+                  >
+                    Aleatório
+                  </Button>
+                  {STUDIO_MODELS.map((m) => {
+                    const disabled = !!m.needsPhoto && photos.length === 0;
+                    return (
+                      <Button
+                        key={m.id}
+                        size="sm"
+                        variant={models.includes(m.id) ? "secondary" : "ghost"}
+                        className="h-7 rounded-full text-[11px]"
+                        title={disabled ? "Envie fotos ao acervo para usar este modelo" : m.hint}
+                        disabled={disabled}
+                        onClick={() => toggleModel(m.id)}
+                      >
+                        {m.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Trocar modelos não consome cota — só "Nova versão" gera um lote novo.
+                </p>
+              </div>
+            )}
           </div>
           {segments.length === 1 && (
             <p className="mt-1.5 text-[11px] text-muted-foreground">

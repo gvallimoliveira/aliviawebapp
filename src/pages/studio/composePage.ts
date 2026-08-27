@@ -135,7 +135,22 @@ export const composePage = (
   carousels?: StudioCarousel[],
   /** Quantas fotos o usuário tem no acervo — 0 desliga os blocos fotográficos. */
   photoCount = 0,
+  /**
+   * Modelos escolhidos pelo usuário. Vazio/indefinido = aleatório (padrão):
+   * o motor sorteia todo o repertório. Com lista, a página só usa esses blocos
+   * (a linhagem de favoritos é ignorada para respeitar a escolha).
+   */
+  only?: BlockKind[],
 ): ComposedBlock[] => {
+  if (only && only.length > 0) {
+    const count = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
+    const picked = spread(rng, only, Math.max(2, count));
+    const chosen: ComposedBlock[] = picked.map((kind) => ({
+      kind,
+      treatment: treatmentFor(rng, kind, persona),
+    }));
+    return finish(rng, chosen, persona, carousels);
+  }
   /**
    * Pool base do miolo: pesa prova (métricas/stats/compare), demonstração
    * (journey/feature/pinup), voz (quote/typo/triptych) e narrativa
@@ -143,6 +158,7 @@ export const composePage = (
    * O pin-up é peça rara — no máximo um por página (a assinatura do cartaz
    * perde força se repetir).
    */
+
   const baseWeighted: [BlockKind, number][] = [
     ["metrics", 2],
     ["stats", 2],
@@ -258,6 +274,19 @@ export const composePage = (
     return cleaned;
   })();
 
+  return finish(rng, result, persona, carousels);
+};
+
+/**
+ * Etapa final comum às duas rotas de composição (aleatória e por modelos):
+ * aplica as animações da persona e expande os blocos de carrossel.
+ */
+const finish = (
+  rng: Rng,
+  result: ComposedBlock[],
+  persona?: StudioPersona,
+  carousels?: StudioCarousel[],
+): ComposedBlock[] => {
   // Animações com a assinatura da persona, sem repetir efeito em sequência.
   const taste = persona && persona.motionTaste.length > 0 ? persona.motionTaste : MOTION_KINDS;
   const density = persona?.motionDensity ?? 0.5;
@@ -307,3 +336,4 @@ export const composePage = (
   });
   return expanded;
 };
+
