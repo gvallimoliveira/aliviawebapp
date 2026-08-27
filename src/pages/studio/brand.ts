@@ -12,17 +12,26 @@ import logoAlivia from "@/assets/logo-alivia.png";
 
 export const ALIVIA_LOGO = logoAlivia;
 export const ALIVIA_NAME = "Aliv.iA";
+export const ALIVIA_HANDLE = "@aliviafisioapp";
+export const ALIVIA_SITE = "aliviawebapp.com.br";
+
 export const ALIVIA_SLOGAN = "Sistema de raciocínio clínico com alma de fisioterapeuta.";
 
 export let BRAND_LOGO: string = ALIVIA_LOGO;
 export let BRAND_NAME: string = ALIVIA_NAME;
 export let BRAND_SLOGAN: string = ALIVIA_SLOGAN;
+/** Perfil social e site da marca — usados pelos blocos de mockup/palco. */
+export let BRAND_HANDLE: string = ALIVIA_HANDLE;
+export let BRAND_SITE: string = ALIVIA_SITE;
 
 export type StudioBrandTheme = {
   name: string;
   slogan: string;
   /** Sem logo o lockup usa apenas o wordmark. */
   logo?: string | null;
+  /** Perfil social (ex.: @marca) e site — opcionais. */
+  handle?: string | null;
+  site?: string | null;
 };
 
 /** Placeholder transparente: marca sem logo mantém o layout do lockup intacto. */
@@ -34,6 +43,10 @@ export const applyStudioBrandTheme = (theme: StudioBrandTheme) => {
   BRAND_NAME = theme.name || ALIVIA_NAME;
   BRAND_SLOGAN = theme.slogan || "";
   BRAND_LOGO = theme.logo || BLANK_LOGO;
+  BRAND_HANDLE = theme.handle?.trim()
+    ? (theme.handle.trim().startsWith("@") ? theme.handle.trim() : `@${theme.handle.trim()}`)
+    : theme.name || ALIVIA_NAME;
+  BRAND_SITE = (theme.site || "").replace(/^https?:\/\//, "").replace(/\/$/, "") || theme.name || ALIVIA_NAME;
 };
 
 /** Volta para a marca Aliv.iA (Studio interno). */
@@ -41,4 +54,6 @@ export const resetStudioBrandTheme = () => {
   BRAND_NAME = ALIVIA_NAME;
   BRAND_SLOGAN = ALIVIA_SLOGAN;
   BRAND_LOGO = ALIVIA_LOGO;
+  BRAND_HANDLE = ALIVIA_HANDLE;
+  BRAND_SITE = ALIVIA_SITE;
 };

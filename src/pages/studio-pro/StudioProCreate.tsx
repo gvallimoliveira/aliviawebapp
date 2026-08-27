@@ -51,6 +51,9 @@ type BrandInput = {
   description?: string | null;
   topics?: string[] | null;
   content_source?: string | null;
+  /** Perfil social e site — aparecem nas artes de mockup/palco. */
+  instagram_handle?: string | null;
+  source_url?: string | null;
   /** Nichos da marca (jsonb) — cada um vira uma aba de segmento. */
   audiences?: unknown;
   /** Leitura global do produto, base do conteúdo 360°. */
@@ -273,9 +276,11 @@ const StudioProCreate = ({
       name: brand.name,
       slogan: brandSlogan({ name: brand.name, niche: brand.niche, tone: brand.tone }),
       logo: brand.logo_url,
+      handle: brand.instagram_handle ?? null,
+      site: brand.source_url ?? null,
     });
     return `${brand.id}:${brand.name}:${brand.logo_url ?? ""}`;
-  }, [brand.id, brand.name, brand.niche, brand.tone, brand.logo_url]);
+  }, [brand.id, brand.name, brand.niche, brand.tone, brand.logo_url, brand.instagram_handle, brand.source_url]);
 
   const picker = useMemo(
     () => createPicker(buildCoverage(aliviaWorld ?? "pro", content, {}), () => {}),

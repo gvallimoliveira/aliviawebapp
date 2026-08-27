@@ -25,6 +25,10 @@ export type BlockKind =
   | "photoType"
   | "photoSplit"
   | "photoPortrait"
+  | "search"
+  | "device"
+  | "door"
+  | "stage"
   | "closing";
 
 export type ComposedBlock = {
@@ -61,6 +65,10 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   photoType: 2,
   photoSplit: 2,
   photoPortrait: 2,
+  search: 4,
+  device: 3,
+  door: 4,
+  stage: 2,
   closing: 4,
 };
 
@@ -143,6 +151,9 @@ export const composePage = (
     ["story", 2],
     ["list", 2],
     ["brand", 1],
+    ["search", 2],
+    ["device", 2],
+    ["door", 1],
   ];
   const favorites: [BlockKind, number][] = persona
     ? persona.favoriteBlocks.map((kind) => [kind, 2] as [BlockKind, number])
@@ -186,7 +197,7 @@ export const composePage = (
    * São peças de destaque — no máximo duas por página, sempre no miolo.
    */
   if (photoCount > 0) {
-    const photoKinds: BlockKind[] = rng.shuffle(["photoType", "photoSplit", "photoPortrait"]);
+    const photoKinds: BlockKind[] = rng.shuffle(["photoType", "photoSplit", "photoPortrait", "stage"]);
     const howMany = photoCount > 1 && rng.chance(0.5) ? 2 : 1;
     for (let i = 0; i < howMany; i += 1) {
       const at = 1 + rng.int(Math.max(1, kinds.length - 2));

@@ -65,7 +65,7 @@ export { default as StudioMotion, MOTION_KINDS, type MotionKind } from "@/pages/
 export { default as StudioSignature } from "@/pages/studio/blocks/StudioSignature";
 
 // Tema de marca (no público, será substituído pelo brand kit do cliente).
-export { BRAND_LOGO, BRAND_NAME, BRAND_SLOGAN } from "@/pages/studio/brand";
+export { BRAND_LOGO, BRAND_NAME, BRAND_SLOGAN, BRAND_HANDLE, BRAND_SITE } from "@/pages/studio/brand";
 
 // Acervo privado de fotos da conta (usado pelos blocos fotográficos).
 export {
