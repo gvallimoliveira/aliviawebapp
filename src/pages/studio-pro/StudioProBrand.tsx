@@ -120,6 +120,10 @@ const StudioProBrand = () => {
         niche: brand.niche ?? "",
         tone: brand.tone ?? "",
         logo_url: brand.logo_url ?? "",
+        description: brand.description ?? "",
+        source_url: brand.source_url ?? "",
+        instagram_handle: brand.instagram_handle ?? "",
+        keywords: (brand.topics ?? []).join(", "),
       });
       setColorKit(readColorKit(brand.colors));
     }
