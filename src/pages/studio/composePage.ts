@@ -29,6 +29,9 @@ export type BlockKind =
   | "device"
   | "door"
   | "stage"
+  | "constellation"
+  | "signpost"
+  | "billboard"
   | "closing";
 
 export type ComposedBlock = {
@@ -69,6 +72,9 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   device: 3,
   door: 4,
   stage: 2,
+  constellation: 4,
+  signpost: 4,
+  billboard: 4,
   closing: 4,
 };
 
@@ -154,6 +160,9 @@ export const composePage = (
     ["search", 2],
     ["device", 2],
     ["door", 1],
+    ["constellation", 1],
+    ["signpost", 2],
+    ["billboard", 1],
   ];
   const favorites: [BlockKind, number][] = persona
     ? persona.favoriteBlocks.map((kind) => [kind, 2] as [BlockKind, number])

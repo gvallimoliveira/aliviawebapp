@@ -24,6 +24,9 @@ import SearchBlock from "@/pages/studio/blocks/SearchBlock";
 import DeviceBlock from "@/pages/studio/blocks/DeviceBlock";
 import DoorBlock from "@/pages/studio/blocks/DoorBlock";
 import StageBlock from "@/pages/studio/blocks/StageBlock";
+import ConstellationBlock from "@/pages/studio/blocks/ConstellationBlock";
+import SignpostBlock from "@/pages/studio/blocks/SignpostBlock";
+import BillboardBlock from "@/pages/studio/blocks/BillboardBlock";
 import type { BlockProps } from "@/pages/studio/blocks/shared";
 import type { BlockKind } from "@/pages/studio/composePage";
 
@@ -59,4 +62,7 @@ export const STUDIO_BLOCKS = {
   device: DeviceBlock,
   door: DoorBlock,
   stage: StageBlock,
+  constellation: ConstellationBlock,
+  signpost: SignpostBlock,
+  billboard: BillboardBlock,
 } satisfies Record<BlockKind, (props: BlockProps) => JSX.Element>;
