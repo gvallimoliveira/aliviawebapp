@@ -467,6 +467,7 @@ const StudioProCreate = ({
           <p className="text-xs text-muted-foreground">
             Versão <span className="font-mono">{seed}</span> · direção criativa {persona.name} · destino:{" "}
             {folder === "Todas" ? "Geral" : folder}
+            {Number.isFinite(maxArts) && ` · lote de ${maxArts} artes por geração`}
           </p>
           {/* Nichos da marca + visão 360° que interpola todos eles. */}
           <div className="mt-2 flex flex-wrap gap-1.5">
