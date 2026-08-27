@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Loader2, RefreshCw, Save, Type } from "lucide-react";
+import { Download, FileText, Images, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,17 +11,22 @@ import {
   composePage,
   createPicker,
   createRng,
+  deliver,
   exportNodeAsPng,
+  exportTextFile,
   personaForSeed,
   randomSeed,
   renderNodeToBlob,
+  type ComposedBlock,
   type StudioFormat,
 } from "@/studio-core";
+import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { WORLDS, isWorldId, type WorldId } from "@/pages/studio/content";
 import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
+
 
 /**
  * EDITOR "CRIAR" DO STUDIO PÚBLICO
