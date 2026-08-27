@@ -48,7 +48,13 @@
     <script>
       (function () {
         var studio = location.pathname.indexOf("/studio-pro") === 0;
+        // Trava: se o atalho do Studio cair em outra rota, volta para o Studio.
+        if (!studio && location.search.indexOf("source=studio-pwa") !== -1) {
+          location.replace("/studio-pro?source=studio-pwa");
+          return;
+        }
         var head = document.head;
+
         function set(tag, attrs) {
           var el = document.createElement(tag);
           for (var k in attrs) el.setAttribute(k, attrs[k]);
