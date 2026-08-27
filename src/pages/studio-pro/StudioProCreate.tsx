@@ -92,9 +92,26 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
   const [busy, setBusy] = useState<string | null>(null);
   const wrapper = useRef<HTMLDivElement>(null);
 
+  /**
+   * Marcas com `content_source = "alivia"` usam o acervo editorial oficial do
+   * produto (paciente, profissional, clínica, acadêmico) — o mesmo do Studio
+   * interno. Qualquer outra marca usa o acervo neutro gerado do kit.
+   */
+  const isAlivia = brand.content_source === "alivia";
+  const [world, setWorld] = useState<WorldId>("paciente");
+
   const content = useMemo(
-    () => buildBrandContent({ name: brand.name, niche: brand.niche, tone: brand.tone }),
-    [brand.name, brand.niche, brand.tone],
+    () =>
+      isAlivia
+        ? WORLDS[world]
+        : buildBrandContent({
+            name: brand.name,
+            niche: brand.niche,
+            tone: brand.tone,
+            description: brand.description,
+            keywords: brand.topics,
+          }),
+    [isAlivia, world, brand.name, brand.niche, brand.tone, brand.description, brand.topics],
   );
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
@@ -110,13 +127,13 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
   }, [brand.id, brand.name, brand.niche, brand.tone, brand.logo_url]);
 
   const picker = useMemo(
-    () => createPicker(buildCoverage("pro", content, {}), () => {}),
-    [content],
+    () => createPicker(buildCoverage(isAlivia ? world : "pro", content, {}), () => {}),
+    [content, isAlivia, world],
   );
 
   const blocks = useMemo(
-    () => composePage(createRng(`${brand.id}:${seed}:layout`), persona, undefined, content.carousels, 0),
-    [brand.id, seed, persona, content],
+    () => composePage(createRng(`${brand.id}:${seed}:${world}:layout`), persona, undefined, content.carousels, 0),
+    [brand.id, seed, world, persona, content],
   );
 
   useEffect(() => {
