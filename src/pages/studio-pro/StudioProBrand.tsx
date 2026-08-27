@@ -1,6 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ChevronDown, FolderPlus, Images, Loader2, Save, Settings2, Sparkles, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  Download,
+  FileText,
+  FolderPlus,
+  Images,
+  Loader2,
+  Save,
+  Settings2,
+  Sparkles,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +30,7 @@ import {
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
 import StudioProCreate from "./StudioProCreate";
+import type { ComposedBlock } from "@/studio-core";
 import BrandColorFields from "./BrandColorFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
 import { readAudiences, writeAudiences, type BrandAudience } from "./audiences";
