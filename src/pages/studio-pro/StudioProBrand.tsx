@@ -780,6 +780,20 @@ const StudioProBrand = () => {
                 onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
               />
             </div>
+
+            {/* Proteção do material: toda arte sai assinada com a marca. */}
+            <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-background p-4 sm:col-span-2">
+              <div>
+                <Label htmlFor="edit-signature" className="text-sm font-semibold">
+                  Assinatura da marca nos conteúdos
+                </Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Aplica o logo e o nome desta marca discretamente no canto de todas as artes geradas — evita
+                  print e cópia sem crédito. Desligue só se você for assinar manualmente.
+                </p>
+              </div>
+              <Switch id="edit-signature" checked={signatureEnabled} onCheckedChange={setSignatureEnabled} />
+            </div>
             <Button onClick={saveBrand} disabled={saving} className="rounded-full sm:col-span-2">
               {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
               Salvar alterações
