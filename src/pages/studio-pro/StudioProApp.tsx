@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -21,6 +21,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
+import BrandColorFields from "./BrandColorFields";
+import { DEFAULT_COLOR_KIT, writeColorKit, type BrandColorKit } from "./brandColors";
+import logoAlivia from "@/assets/logo-alivia.png";
 
 /**
  * HUB DE MARCAS DO STUDIO PÚBLICO
@@ -49,7 +52,16 @@ type Credits = {
   used_this_period: number;
 };
 
-const emptyForm = { name: "", niche: "", tone: "", primary: "#0F766E", logo_url: "" };
+const emptyForm = { name: "", niche: "", tone: "", logo_url: "" };
+
+/** Kit da própria Aliv.iA: verde + branco como principais. */
+const ALIVIA_KIT: BrandColorKit = {
+  primary: "#0F766E",
+  primary2: "#FFFFFF",
+  secondary: "#0B3B36",
+  secondary2: "#E7F5F1",
+  useSecondary: true,
+};
 
 const StudioProApp = () => {
   const { user, loading: authLoading } = useAuth();
@@ -59,6 +71,8 @@ const StudioProApp = () => {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [credits, setCredits] = useState<Credits | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [colorKit, setColorKit] = useState<BrandColorKit>(DEFAULT_COLOR_KIT);
+  const seeded = useRef(false);
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
@@ -102,6 +116,31 @@ const StudioProApp = () => {
     void load();
   }, [load]);
 
+  /**
+   * Conta VIP (nível agência) entra com o kit da própria Aliv.iA já cadastrado:
+   * sem isso o hub aparece com 0 marcas e o VIP precisa redigitar o próprio DNA.
+   */
+  useEffect(() => {
+    if (loading || accessLoading || !user || !access.isVip || seeded.current) return;
+    if (brands.length > 0) return;
+    seeded.current = true;
+    void (async () => {
+      const { error } = await supabase.from("studio_brands").insert({
+        user_id: user.id,
+        name: "Aliv.iA",
+        niche: "fisioterapia e saúde digital",
+        tone: "clínico, direto e humano — explica sem infantilizar",
+        logo_url: logoAlivia,
+        colors: writeColorKit(ALIVIA_KIT),
+      });
+      if (error) {
+        console.error("[studio-pro] seed alivia brand", error);
+        return;
+      }
+      await load();
+    })();
+  }, [loading, accessLoading, user, access.isVip, brands.length, load]);
+
   const createBrand = async () => {
     if (!user) return;
     if (!form.name.trim()) {
@@ -121,7 +160,7 @@ const StudioProApp = () => {
         niche: form.niche.trim() || null,
         tone: form.tone.trim() || null,
         logo_url: form.logo_url.trim() || null,
-        colors: { primary: form.primary },
+        colors: writeColorKit(colorKit),
       })
       .select("id")
       .maybeSingle();
@@ -323,16 +362,7 @@ const StudioProApp = () => {
                   placeholder="Ex.: cafeteria, moda, advocacia"
                 />
               </div>
-              <div>
-                <Label htmlFor="brand-color">Cor principal</Label>
-                <Input
-                  id="brand-color"
-                  type="color"
-                  value={form.primary}
-                  onChange={(e) => setForm({ ...form, primary: e.target.value })}
-                  className="h-10 p-1"
-                />
-              </div>
+              <BrandColorFields idPrefix="brand" kit={colorKit} onChange={setColorKit} />
               <div className="sm:col-span-2">
                 <Label htmlFor="brand-tone">Tom de voz</Label>
                 <Textarea
