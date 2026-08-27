@@ -274,6 +274,19 @@ export const composePage = (
     return cleaned;
   })();
 
+  return finish(rng, result, persona, carousels);
+};
+
+/**
+ * Etapa final comum às duas rotas de composição (aleatória e por modelos):
+ * aplica as animações da persona e expande os blocos de carrossel.
+ */
+const finish = (
+  rng: Rng,
+  result: ComposedBlock[],
+  persona?: StudioPersona,
+  carousels?: StudioCarousel[],
+): ComposedBlock[] => {
   // Animações com a assinatura da persona, sem repetir efeito em sequência.
   const taste = persona && persona.motionTaste.length > 0 ? persona.motionTaste : MOTION_KINDS;
   const density = persona?.motionDensity ?? 0.5;
@@ -323,3 +336,4 @@ export const composePage = (
   });
   return expanded;
 };
+
