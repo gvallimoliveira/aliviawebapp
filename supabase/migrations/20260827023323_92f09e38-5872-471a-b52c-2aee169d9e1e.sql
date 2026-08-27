@@ -1,0 +1,1 @@
+ALTER TABLE public.studio_brands ADD COLUMN IF NOT EXISTS signature_enabled boolean NOT NULL DEFAULT true;
