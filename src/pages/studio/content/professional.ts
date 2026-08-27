@@ -165,7 +165,7 @@ const professional: WorldContent = {
       { value: 24, suffix: "h", label: "de prontuário sempre acessível" },
     ],
     [
-      { value: 7, suffix: "+", label: "escore PEDro mínimo das fontes citadas" },
+      { value: 40, suffix: "+", label: "testes funcionais com critério de positividade" },
       { value: 10, label: "nichos de pesquisa clínica acompanhados" },
       { value: 0, suffix: " papel", label: "para arquivar depois da consulta" },
     ],
