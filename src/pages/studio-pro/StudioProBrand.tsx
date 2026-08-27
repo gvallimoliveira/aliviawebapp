@@ -80,6 +80,46 @@ type Creation = {
 
 type Tab = "criar" | "artes" | "ajustes";
 
+/** Campo de lista (uma por linha) com digitação livre: só normaliza ao sair. */
+const AudienceListField = ({
+  label,
+  value,
+  onCommit,
+}: {
+  label: string;
+  value: string[];
+  onCommit: (lines: string[]) => void;
+}) => {
+  const joined = value.join("\n");
+  const [text, setText] = useState(joined);
+  const [focused, setFocused] = useState(false);
+
+  useEffect(() => {
+    if (!focused) setText(joined);
+  }, [joined, focused]);
+
+  return (
+    <div>
+      <Label className="text-[11px]">{label}</Label>
+      <Textarea
+        rows={8}
+        value={text}
+        onFocus={() => setFocused(true)}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => {
+          setFocused(false);
+          const lines = text
+            .split("\n")
+            .map((t) => t.trim())
+            .filter(Boolean);
+          setText(lines.join("\n"));
+          onCommit(lines);
+        }}
+      />
+    </div>
+  );
+};
+
 const StudioProBrand = () => {
   const { brandId } = useParams<{ brandId: string }>();
   const { user, loading: authLoading } = useAuth();
