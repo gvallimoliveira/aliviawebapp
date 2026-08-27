@@ -104,6 +104,7 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 
 - [Studio Photo Library](mem://features/studio-photo-library) — Fotos privadas no backend + 3 blocos fotográficos do Studio (tipografia gigante, split, retrato).
 - [Studio Reference Blocks](mem://features/studio-reference-blocks) — Blocos busca/mockup de dispositivo/porta/palco vindos das referências enviadas + BRAND_HANDLE e BRAND_SITE.
+- [Studio Model Preferences](mem://features/studio-model-preferences) — Seletor de modelos de arte no Studio (Aleatório padrão) restringindo os blocos gerados.
 - [Credits Sufficiency Table on Landings](mem://features/credits-sufficiency-table-landings) — Tabela de "quantas vezes cabem no plano" para landings Pro/Clínica/Acadêmico, tranquilizando sobre suficiência dos créditos.
 - [Continuidade básica → premium](mem://features/basic-to-premium-continuity) — Red flags reaproveitadas (sem repetir a etapa) e hipótese diagnóstica contínua com explicação de mudança no upgrade.
 - [LGPD Compliance](mem://features/lgpd-compliance) — Controlador/DPO, páginas /privacidade e /termos, consentimento versionado, direitos do titular e proibição de session replay.
