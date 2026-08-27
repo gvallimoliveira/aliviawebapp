@@ -163,6 +163,40 @@ const StudioProApp = () => {
     })();
   }, [loading, accessLoading, user, access.isVip, brands.length, load]);
 
+  /**
+   * Reparo dos mundos oficiais: a interpretação por IA podia sobrescrever os
+   * públicos da marca Aliv.iA e derrubar mundos inteiros (foi o que aconteceu
+   * com o mundo do paciente/pessoa com dor). Aqui garantimos que os quatro
+   * mundos oficiais existam sempre — os públicos extras da IA são preservados.
+   */
+  const repaired = useRef(false);
+  useEffect(() => {
+    if (loading || !user || repaired.current) return;
+    const official = brands.find((b) => b.content_source === "alivia");
+    if (!official) return;
+    const current = readAudiences(official.audiences);
+    const missing = ALIVIA_AUDIENCES.filter((a) => !current.some((c) => c.id === a.id));
+    if (!missing.length) return;
+    repaired.current = true;
+    void (async () => {
+      // Mundos oficiais primeiro, na ordem canônica; depois os nichos extras.
+      const merged = [
+        ...ALIVIA_AUDIENCES.map((a) => current.find((c) => c.id === a.id) ?? a),
+        ...current.filter((c) => !ALIVIA_AUDIENCES.some((a) => a.id === c.id)),
+      ];
+      const { error } = await supabase
+        .from("studio_brands")
+        .update({ audiences: writeAudiences(merged) })
+        .eq("id", official.id);
+      if (error) {
+        console.error("[studio-pro] repair alivia audiences", error);
+        return;
+      }
+      await load();
+    })();
+  }, [loading, user, brands, load]);
+
+
   const createBrand = async () => {
     if (!user) return;
     if (!form.name.trim()) {
