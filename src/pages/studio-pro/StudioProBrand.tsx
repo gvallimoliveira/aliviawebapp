@@ -108,6 +108,8 @@ const StudioProBrand = () => {
   const [audiences, setAudiences] = useState<BrandAudience[]>([]);
   const [interpreting, setInterpreting] = useState(false);
   const [colorKit, setColorKit] = useState<BrandColorKit>(DEFAULT_COLOR_KIT);
+  /** Assinatura da marca nas artes — ajuste global desta marca. */
+  const [signatureEnabled, setSignatureEnabled] = useState(true);
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
 
