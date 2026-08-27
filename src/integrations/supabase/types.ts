@@ -4106,6 +4106,19 @@ export type Database = {
         Args: { _scope_key: string }
         Returns: undefined
       }
+      consume_studio_generation: {
+        Args: { p_amount?: number }
+        Returns: {
+          allowance: number
+          allowed: boolean
+          generations_left: number
+          period_start: string
+          plan: string
+          remaining: number
+          unlimited: boolean
+          used_this_period: number
+        }[]
+      }
       create_conversation_for_clinic_patient: {
         Args: {
           _clinic_id: string
@@ -4559,6 +4572,20 @@ export type Database = {
           state: string
         }[]
       }
+      studio_credit_status: {
+        Args: never
+        Returns: {
+          allowance: number
+          batch_size: number
+          generations_left: number
+          period_start: string
+          plan: string
+          remaining: number
+          unlimited: boolean
+          used_this_period: number
+        }[]
+      }
+      studio_plan_allowance: { Args: { p_plan: string }; Returns: number }
       try_direct_clinic_add: {
         Args: {
           _clinic_id: string

@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
+import { useStudioQuota } from "./useStudioQuota";
 import BrandColorFields from "./BrandColorFields";
 import { ALIVIA_AUDIENCES, readAudiences, writeAudiences } from "./audiences";
 import { DEFAULT_COLOR_KIT, writeColorKit, type BrandColorKit } from "./brandColors";
@@ -69,6 +70,7 @@ const ALIVIA_KIT: BrandColorKit = {
 const StudioProApp = () => {
   const { user, loading: authLoading } = useAuth();
   const { access, loading: accessLoading } = useStudioAccess();
+  const { quota } = useStudioQuota();
   const navigate = useNavigate();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -246,11 +248,6 @@ const StudioProApp = () => {
     setBrands((prev) => prev.filter((b) => b.id !== id));
   };
 
-  const available = access.unlimited
-    ? Infinity
-    : credits
-      ? credits.free_credits + credits.plan_credits + credits.extra_credits - credits.used_this_period
-      : 0;
 
   const visible = brands.filter((b) =>
     (b.name + " " + (b.niche ?? "")).toLowerCase().includes(query.trim().toLowerCase()),
@@ -293,8 +290,15 @@ const StudioProApp = () => {
                 Artes disponíveis
               </p>
               <p className="mt-1 text-3xl font-black tracking-tight">
-                {access.unlimited ? "∞" : Math.max(available as number, 0)}
+                {access.unlimited || quota?.unlimited ? "∞" : Math.max(quota?.remaining ?? 0, 0)}
               </p>
+              {!access.unlimited && !quota?.unlimited && quota && (
+                <p className="mt-1 text-xs font-semibold text-foreground">
+                  {quota.generationsLeft > 0
+                    ? `${quota.generationsLeft} ${quota.generationsLeft === 1 ? "geração" : "gerações"} de ${quota.batchSize} artes neste período (${quota.used} de ${quota.allowance} usadas)`
+                    : `Cota encerrada: ${quota.used} de ${quota.allowance} artes usadas neste período.`}
+                </p>
+              )}
               <p className="mt-1 text-xs text-muted-foreground">
                 {access.isVip
                   ? "Acesso VIP — nível agência, 15 marcas, sem cota e sem cobrança."

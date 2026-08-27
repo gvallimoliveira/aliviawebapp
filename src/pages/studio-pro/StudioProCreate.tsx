@@ -26,6 +26,7 @@ import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/conte
 import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
+import { STUDIO_BATCH_SIZE, useStudioQuota } from "./useStudioQuota";
 
 
 /**
@@ -156,7 +157,7 @@ const StudioProCreate = ({
   folder,
   watermark,
   inspirations = [],
-  maxArts = 2,
+  maxArts = STUDIO_BATCH_SIZE,
   onSaved,
 }: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
@@ -166,6 +167,32 @@ const StudioProCreate = ({
   const wrapper = useRef<HTMLDivElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const { photos } = useStudioPhotos(true);
+  /** Cota do período: cada geração desconta um lote inteiro da cota do plano. */
+  const { quota, consume } = useStudioQuota();
+
+  const batchSize = Number.isFinite(maxArts) ? (maxArts as number) : STUDIO_BATCH_SIZE;
+  const unlimited = !Number.isFinite(maxArts) || !!quota?.unlimited;
+  const blocked = !unlimited && !!quota && quota.remaining < batchSize;
+
+  /**
+   * "Nova versão" é o que custa cota: trocar público, ângulo ou formato refina o
+   * mesmo lote sem cobrar nada. O desconto acontece no banco antes de sortear a
+   * nova seed — se a cota do mês acabou, a geração é bloqueada com aviso claro.
+   */
+  const newVersion = async () => {
+    if (unlimited) {
+      setSeed(randomSeed());
+      return;
+    }
+    setBusy("quota");
+    const ok = await consume(batchSize);
+    setBusy(null);
+    if (!ok) {
+      toast.error(`Sua cota deste período acabou. Faça upgrade para gerar mais artes.`);
+      return;
+    }
+    setSeed(randomSeed());
+  };
 
   useEffect(() => {
     writePersisted(brand.id, { seed, format });
@@ -471,8 +498,15 @@ const StudioProCreate = ({
           <p className="text-xs text-muted-foreground">
             Versão <span className="font-mono">{seed}</span> · direção criativa {persona.name} · destino:{" "}
             {folder === "Todas" ? "Geral" : folder}
-            {Number.isFinite(maxArts) && ` · lote de ${maxArts} artes por geração`}
+            {!unlimited && ` · lote de ${batchSize} artes por geração`}
           </p>
+          {!unlimited && quota && (
+            <p className="mt-1 text-xs font-semibold text-foreground">
+              {quota.generationsLeft > 0
+                ? `${quota.generationsLeft} ${quota.generationsLeft === 1 ? "geração" : "gerações"} restantes neste período · ${quota.remaining} de ${quota.allowance} artes`
+                : "Cota do período encerrada — faça upgrade para continuar gerando."}
+            </p>
+          )}
           {/* Nichos da marca + visão 360° que interpola todos eles. */}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {segments.map((s) => (
@@ -549,8 +583,17 @@ const StudioProCreate = ({
             <FileText className="mr-1.5 h-3.5 w-3.5" />
             Legendas (.txt)
           </Button>
-          <Button size="sm" className="rounded-full" onClick={() => setSeed(randomSeed())}>
-            <RefreshCw className="mr-1.5 h-4 w-4" />
+          <Button
+            size="sm"
+            className="rounded-full"
+            disabled={busy === "quota" || blocked}
+            onClick={() => void newVersion()}
+          >
+            {busy === "quota" ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-1.5 h-4 w-4" />
+            )}
             Nova versão
           </Button>
         </div>
