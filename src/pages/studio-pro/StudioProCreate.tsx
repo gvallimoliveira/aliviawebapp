@@ -19,6 +19,7 @@ import {
 } from "@/studio-core";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { buildBrandContent, brandSlogan } from "./brandContent";
+import { readColorKit } from "./brandColors";
 
 /**
  * EDITOR "CRIAR" DO STUDIO PÚBLICO
