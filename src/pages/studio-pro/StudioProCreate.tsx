@@ -619,18 +619,20 @@ const StudioProCreate = ({
                 style={{ width: FRAME_WIDTH[format] }}
               >
                 <div id={`studio-pro-block-${i}`}>
-                  <StudioMotion kind={motion}>
-                    <Block
-                      content={content}
-                      rng={rng}
-                      treatment={treatment}
-                      format={format}
-                      picker={picker}
-                      persona={persona}
-                      slide={slide}
-                      photos={photos}
-                    />
-                  </StudioMotion>
+                  <StudioProSignature artKey={`${brand.id}:${seed}:${kind}:${i}`} enabled={signatureOn}>
+                    <StudioMotion kind={motion}>
+                      <Block
+                        content={content}
+                        rng={rng}
+                        treatment={treatment}
+                        format={format}
+                        picker={picker}
+                        persona={persona}
+                        slide={slide}
+                        photos={photos}
+                      />
+                    </StudioMotion>
+                  </StudioProSignature>
                 </div>
               </div>
 
