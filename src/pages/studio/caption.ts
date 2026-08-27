@@ -90,6 +90,17 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const h = rng.pick(c.headlines);
     return [`${h.strong} ${h.rest}`, rng.pick(c.closings).sub];
   },
+  steps: (c, rng) => [
+    "STEPS — os 6 degraus da reabilitação: controle da dor, reparo tecidual, mobilidade, força, controle motor e alta.",
+    "Cada fase do plano é mapeada a um degrau: você sabe onde está e para onde precisa ir.",
+    rng.pick(c.closings).sub,
+  ],
+  difi: (c, rng) => [
+    "Ciclo D.I.F.I.: dor → inibição → fraqueza → incapacidade — e de volta à dor.",
+    "É por isso que a dor não melhora sozinha. O plano rompe o ciclo no ponto certo.",
+    rng.pick(c.closings).sub,
+  ],
+
   carousel: (c, rng) => {
     const car = rng.pick(c.carousels);
     return [

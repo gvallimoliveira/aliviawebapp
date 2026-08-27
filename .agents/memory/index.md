@@ -124,3 +124,4 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Pro Dashboard Slim](mem://features/pro-dashboard-slim) — Dashboard PRO enxuto (lista de pacientes no topo, sem card do Agente, backup em Minha Conta) e FAB/botão "Registrar evolução" no prontuário via evento `alivia:open-session-note`.
 - [Studio Public Pricing & Entry](mem://business/studio-public-pricing-and-entry) — Planos 39/99/249 + anual −20%, custo ~0 por arte, e decisão de acesso interno futuro com botão de volta.
 - [Studio Brand Signature](mem://features/studio-brand-signature) — Assinatura obrigatória da marca em todas as artes; toggle global por marca.
+- [Studio Method Blocks](mem://features/studio-method-blocks) — STEPS e D.I.F.I. como artes do Studio, exclusivas da marca Aliv.iA.

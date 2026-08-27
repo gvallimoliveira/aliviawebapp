@@ -14,6 +14,8 @@ export type StudioModel = {
   kinds: BlockKind[];
   /** Só funciona com fotos no acervo. */
   needsPhoto?: boolean;
+  /** Arte autoral da marca Aliv.iA — indisponível para outras marcas. */
+  needsBrand?: boolean;
 };
 
 export const STUDIO_MODELS: StudioModel[] = [
@@ -32,14 +34,16 @@ export const STUDIO_MODELS: StudioModel[] = [
   { id: "busca", label: "Barra de busca", hint: "Pergunta digitada com sugestões", kinds: ["search"] },
   { id: "mockup", label: "Mockup de tela", hint: "Notebook, tablet ou celular", kinds: ["device"] },
   { id: "conceitual", label: "Conceitual", hint: "Porta, placas e outdoor", kinds: ["door", "signpost", "billboard"] },
+  { id: "metodo", label: "Método (STEPS / D.I.F.I.)", hint: "Artes autorais do método Aliv.iA", kinds: ["steps", "difi"], needsBrand: true },
   { id: "cartaz", label: "Cartaz / faixa", hint: "Pin-up e faixa de termos", kinds: ["pinup", "marquee"] },
 ];
 
 /** Converte a seleção de modelos nos blocos permitidos do motor. */
-export const kindsForModels = (ids: string[], photoCount = 0): BlockKind[] => {
+export const kindsForModels = (ids: string[], photoCount = 0, exclusive = false): BlockKind[] => {
   const set = new Set<BlockKind>();
   STUDIO_MODELS.filter((m) => ids.includes(m.id))
     .filter((m) => !m.needsPhoto || photoCount > 0)
+    .filter((m) => !m.needsBrand || exclusive)
     .forEach((m) => m.kinds.forEach((k) => set.add(k)));
   return [...set];
 };
