@@ -17,6 +17,8 @@ import {
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
 import StudioProCreate from "./StudioProCreate";
+import BrandColorFields from "./BrandColorFields";
+import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
 
 /**
  * ESPAÇO DE UMA MARCA
@@ -103,9 +105,9 @@ const StudioProBrand = () => {
         name: brand.name,
         niche: brand.niche ?? "",
         tone: brand.tone ?? "",
-        primary: brand.colors?.primary ?? "#0F766E",
         logo_url: brand.logo_url ?? "",
       });
+      setColorKit(readColorKit(brand.colors));
     }
   }, [brand?.id]);
 
@@ -144,7 +146,7 @@ const StudioProBrand = () => {
         niche: form.niche.trim() || null,
         tone: form.tone.trim() || null,
         logo_url: form.logo_url.trim() || null,
-        colors: { primary: form.primary },
+        colors: writeColorKit(colorKit),
       })
       .eq("id", brandId);
     setSaving(false);
@@ -360,16 +362,7 @@ const StudioProBrand = () => {
               <Label htmlFor="edit-niche">Nicho</Label>
               <Input id="edit-niche" value={form.niche} onChange={(e) => setForm({ ...form, niche: e.target.value })} />
             </div>
-            <div>
-              <Label htmlFor="edit-color">Cor principal</Label>
-              <Input
-                id="edit-color"
-                type="color"
-                value={form.primary}
-                onChange={(e) => setForm({ ...form, primary: e.target.value })}
-                className="h-10 p-1"
-              />
-            </div>
+            <BrandColorFields idPrefix="edit" kit={colorKit} onChange={setColorKit} />
             <div className="sm:col-span-2">
               <Label htmlFor="edit-tone">Tom de voz</Label>
               <Textarea
