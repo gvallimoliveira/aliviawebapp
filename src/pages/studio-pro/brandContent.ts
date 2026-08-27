@@ -49,6 +49,8 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
   const niche = (kit.niche ?? "").trim() || "o seu mercado";
   const tone = brandSlogan(kit);
+  const words = (kit.keywords ?? []).map((w) => w.trim()).filter(Boolean);
+  const description = (kit.description ?? "").trim();
 
   return {
     id: "pro",
@@ -56,6 +58,7 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
     kickers: [
       brand.toUpperCase(),
       `${niche.toUpperCase()}`,
+      ...words.slice(0, 4).map((w) => w.toUpperCase()),
       "NOVIDADE",
       "POR DENTRO DA MARCA",
       "PARA QUEM ACOMPANHA",
@@ -69,6 +72,7 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
     ],
     subs: [
       tone,
+      ...(description ? [description] : []),
       `${brand} trabalha com processo claro, do primeiro contato à entrega.`,
       `Em ${niche}, detalhe não é enfeite — é resultado.`,
       "Uma decisão bem tomada economiza meses.",
