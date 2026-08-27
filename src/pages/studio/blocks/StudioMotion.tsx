@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 
 /**
@@ -32,10 +32,35 @@ export const MOTION_KINDS: MotionKind[] = [
 
 type Props = { kind?: MotionKind; children: ReactNode };
 
+/**
+ * Em telas pequenas (ou com "reduzir movimento") os efeitos de scroll são
+ * desligados: no celular eles deixavam a arte borrada/recortada enquanto não
+ * estava centralizada — parecia que a arte "não terminava de carregar" — e
+ * ainda pesavam no scroll. Ali a arte é entregue direto, no estado final.
+ */
+const useHeavyMotion = () => {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px) and (pointer: fine)");
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setOk(mq.matches && !reduced.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    reduced.addEventListener("change", sync);
+    return () => {
+      mq.removeEventListener("change", sync);
+      reduced.removeEventListener("change", sync);
+    };
+  }, []);
+  return ok;
+};
+
 const StudioMotion = ({ kind = "none", children }: Props) => {
   const ref = useRef<HTMLDivElement>(null);
+  const heavy = useHeavyMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const p = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.4 });
+
 
   // In → settled (0.5) → out. Neutral at the middle for faithful capture.
   const blur = useTransform(p, [0, 0.42, 0.58, 1], ["8px", "0px", "0px", "6px"]);
@@ -50,7 +75,7 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
   const wipe = useTransform(p, [0.05, 0.45], ["78%", "0%"]);
   const wipeClip = useTransform(wipe, (v) => `inset(0% 0% ${v} 0%)`);
 
-  if (kind === "none") return <>{children}</>;
+  if (kind === "none" || !heavy) return <>{children}</>;
 
   if (kind === "gradientDrift") {
     return (
