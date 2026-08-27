@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ChevronDown, FolderPlus, Images, Loader2, Save, Settings2, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, FolderPlus, Images, Loader2, Save, Settings2, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
+import StudioProCreate from "./StudioProCreate";
 
 /**
  * ESPAÇO DE UMA MARCA
@@ -45,7 +46,7 @@ type Creation = {
   created_at: string;
 };
 
-type Tab = "artes" | "ajustes";
+type Tab = "criar" | "artes" | "ajustes";
 
 const StudioProBrand = () => {
   const { brandId } = useParams<{ brandId: string }>();
@@ -53,7 +54,7 @@ const StudioProBrand = () => {
   const { access, loading: accessLoading } = useStudioAccess();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const tab = (params.get("aba") as Tab) || "artes";
+  const tab = (params.get("aba") as Tab) || "criar";
   const folder = params.get("pasta") || "Todas";
 
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -237,12 +238,13 @@ const StudioProBrand = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <span>›</span>
-          <span>{tab === "artes" ? "Artes" : "Ajustes"}</span>
+          <span>{tab === "criar" ? "Criar" : tab === "artes" ? "Artes" : "Ajustes"}</span>
         </div>
 
         {/* Abas */}
         <div className="mt-4 flex gap-2">
           {([
+            { id: "criar" as Tab, label: "Criar", icon: Sparkles },
             { id: "artes" as Tab, label: "Artes", icon: Images },
             { id: "ajustes" as Tab, label: "Ajustes da marca", icon: Settings2 },
           ]).map(({ id, label, icon: Icon }) => (
@@ -258,6 +260,15 @@ const StudioProBrand = () => {
             </Button>
           ))}
         </div>
+
+        {tab === "criar" && (
+          <StudioProCreate
+            brand={brand}
+            folder={folder}
+            watermark={access.watermark}
+            onSaved={() => void load()}
+          />
+        )}
 
         {tab === "artes" && (
           <section
