@@ -135,12 +135,26 @@ const StudioProLanding = () => {
             >
               Planos
             </a>
-            <Button asChild size="sm" className="rounded-full">
-              <Link to={`${PRODUCT.base}/entrar`}>
-                Começar grátis
-                <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Link>
-            </Button>
+            {isLoggedIn ? (
+              <Button asChild size="sm" className="rounded-full">
+                <Link to={`${PRODUCT.base}/app`}>
+                  Meu studio
+                  <ArrowRight className="ml-1.5 h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="ghost" size="sm" className="rounded-full">
+                  <Link to={`${PRODUCT.base}/entrar`}>Entrar</Link>
+                </Button>
+                <Button asChild size="sm" className="rounded-full">
+                  <Link to={`${PRODUCT.base}/entrar`}>
+                    Começar grátis
+                    <ArrowRight className="ml-1.5 h-4 w-4" />
+                  </Link>
+                </Button>
+              </>
+            )}
           </nav>
         </div>
       </header>
