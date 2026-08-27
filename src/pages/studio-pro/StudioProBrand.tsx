@@ -285,6 +285,72 @@ const StudioProBrand = () => {
     setCreations((prev) => prev.filter((c) => c.id !== id));
   };
 
+  /** Favorito = referência de estilo para as próximas artes desta marca. */
+  const toggleFavorite = async (art: Creation) => {
+    const next = !art.is_favorite;
+    const { error } = await supabase.from("studio_creations").update({ is_favorite: next }).eq("id", art.id);
+    if (error) {
+      toast.error("Não foi possível favoritar.");
+      return;
+    }
+    setCreations((prev) => prev.map((c) => (c.id === art.id ? { ...c, is_favorite: next } : c)));
+    toast.success(next ? "Favoritada — vira referência das próximas artes." : "Removida das referências.");
+  };
+
+  /** Baixa o PNG guardado no momento em que a arte foi salva. */
+  const downloadArt = async (art: Creation) => {
+    if (!art.png_path) {
+      toast.error("Esta arte foi salva antes do PNG guardado. Gere e salve novamente.");
+      return;
+    }
+    const { data, error } = await supabase.storage.from("studio-art").download(art.png_path);
+    if (error || !data) {
+      toast.error("Não foi possível baixar o PNG.");
+      return;
+    }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = art.png_path.split("/").pop() ?? "arte.png";
+    a.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+
+  const downloadCaption = (art: Creation) => {
+    if (!art.caption) {
+      toast.error("Esta arte não tem legenda salva.");
+      return;
+    }
+    const blob = new Blob([art.caption], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(art.headline ?? "legenda").slice(0, 40).replace(/\s+/g, "-").toLowerCase()}.txt`;
+    a.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+
+  const copyCaption = async (art: Creation) => {
+    if (!art.caption) return;
+    try {
+      await navigator.clipboard.writeText(art.caption);
+      toast.success("Legenda copiada");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
+
+  /** Receitas dos favoritos desta marca, usadas como linhagem no editor. */
+  const inspirations = useMemo(
+    () =>
+      creations
+        .filter((c) => c.is_favorite && Array.isArray(c.composition) && (c.composition as unknown[]).length > 0)
+        .slice(0, 12)
+        .map((c) => c.composition as ComposedBlock[]),
+    [creations],
+  );
+
+
   const newFolder = async () => {
     const name = window.prompt("Nome da nova pasta");
     if (!name?.trim()) return;
