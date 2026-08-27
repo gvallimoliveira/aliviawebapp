@@ -132,7 +132,10 @@ const StudioProBrand = () => {
         source_url: brand.source_url ?? "",
         instagram_handle: brand.instagram_handle ?? "",
         keywords: (brand.topics ?? []).join(", "),
+        positioning: brand.positioning ?? "",
+        strategy_notes: brand.strategy_notes ?? "",
       });
+      setAudiences(readAudiences(brand.audiences));
       setColorKit(readColorKit(brand.colors));
     }
   }, [brand?.id]);
