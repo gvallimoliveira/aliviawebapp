@@ -294,21 +294,41 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
             Versão <span className="font-mono">{seed}</span> · direção criativa {persona.name} · destino:{" "}
             {folder === "Todas" ? "Geral" : folder}
           </p>
-          {isAlivia && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {WORLD_TABS.map((w) => (
-                <Button
-                  key={w.id}
-                  size="sm"
-                  variant={world === w.id ? "secondary" : "ghost"}
-                  className="h-7 rounded-full text-[11px]"
-                  onClick={() => setWorld(w.id)}
-                >
-                  {w.label}
-                </Button>
-              ))}
-            </div>
+          {/* Nichos da marca + visão 360° que interpola todos eles. */}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {segments.map((s) => (
+              <Button
+                key={s.id}
+                size="sm"
+                variant={activeSegment === s.id ? "secondary" : "ghost"}
+                className="h-7 rounded-full text-[11px]"
+                onClick={() => setSegment(s.id)}
+              >
+                {s.label}
+              </Button>
+            ))}
+          </div>
+          {/* Ângulo estratégico: informar, dor, desejo ou venda. */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {ANGLES.map((a) => (
+              <Button
+                key={a.id}
+                size="sm"
+                variant={angle === a.id ? "outline" : "ghost"}
+                className="h-7 rounded-full text-[11px]"
+                title={a.hint}
+                onClick={() => setAngle(a.id)}
+              >
+                {a.label}
+              </Button>
+            ))}
+          </div>
+          {segments.length === 1 && (
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Cadastre os públicos da marca em Ajustes para gerar conteúdo por nicho.
+            </p>
           )}
+
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           {FORMATS.map((f) => (
