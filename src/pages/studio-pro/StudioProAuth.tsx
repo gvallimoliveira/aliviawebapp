@@ -45,6 +45,12 @@ const StudioProAuth = () => {
   }, [authLoading, user, navigate, appPath]);
 
   const sendReset = async (target: string) => {
+    // Marca a origem para o /reset-password devolver a pessoa ao Studio.
+    try {
+      localStorage.setItem("studio-pro:reset-origin", "1");
+    } catch {
+      /* storage bloqueado: segue o fluxo normal */
+    }
     const { error } = await resetPassword(target);
     if (error) {
       toast.error(error.message || "Não foi possível enviar o e-mail de recuperação.");
