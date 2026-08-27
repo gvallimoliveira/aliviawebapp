@@ -25,11 +25,15 @@ export type StudioBrandTheme = {
   logo?: string | null;
 };
 
+/** Placeholder transparente: marca sem logo mantém o layout do lockup intacto. */
+const BLANK_LOGO =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
 /** Troca a marca das artes (Studio público, multimarca). */
 export const applyStudioBrandTheme = (theme: StudioBrandTheme) => {
   BRAND_NAME = theme.name || ALIVIA_NAME;
   BRAND_SLOGAN = theme.slogan || "";
-  BRAND_LOGO = theme.logo || "";
+  BRAND_LOGO = theme.logo || BLANK_LOGO;
 };
 
 /** Volta para a marca Aliv.iA (Studio interno). */
