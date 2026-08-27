@@ -178,17 +178,34 @@ const StudioProCreate = ({ brand, folder, watermark, inspirations = [], onSaved 
     [content, aliviaWorld],
   );
 
+  /**
+   * LINHAGEM DOS FAVORITOS.
+   *
+   * Quando a marca já tem artes favoritadas, ~65% das versões herdam a receita
+   * de uma delas (mesmas seções/tratamentos em boa parte das posições) e o
+   * restante nasce do zero. Assim o repertório aprovado guia o Studio sem
+   * congelar a criação de novidades.
+   */
+  const lineage = useMemo(() => {
+    if (inspirations.length === 0) return { blocks: undefined as ComposedBlock[] | undefined, used: false };
+    const rng = createRng(`${brand.id}:${seed}:lineage`);
+    if (!rng.chance(0.65)) return { blocks: undefined, used: false };
+    return { blocks: inspirations[rng.int(inspirations.length)], used: true };
+  }, [inspirations, brand.id, seed]);
+
   const blocks = useMemo(
     () =>
       composePage(
         createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
         persona,
-        undefined,
+        lineage.blocks,
         content.carousels,
-        0,
+        photos.length,
       ),
-    [brand.id, seed, activeSegment, angle, persona, content],
+    [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length],
   );
+
+
 
 
   useEffect(() => {
