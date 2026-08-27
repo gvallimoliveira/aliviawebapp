@@ -54,6 +54,8 @@ type BrandInput = {
   audiences?: unknown;
   /** Leitura global do produto, base do conteúdo 360°. */
   positioning?: string | null;
+  /** Ajuste global: assinar todas as artes com logo/nome da marca. */
+  signature_enabled?: boolean | null;
 };
 
 type Props = {
