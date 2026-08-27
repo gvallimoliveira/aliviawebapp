@@ -44,6 +44,10 @@ type BrandInput = {
   description?: string | null;
   topics?: string[] | null;
   content_source?: string | null;
+  /** Nichos da marca (jsonb) — cada um vira uma aba de segmento. */
+  audiences?: unknown;
+  /** Leitura global do produto, base do conteúdo 360°. */
+  positioning?: string | null;
 };
 
 type Props = {
