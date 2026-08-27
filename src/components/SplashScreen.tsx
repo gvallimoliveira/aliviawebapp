@@ -45,7 +45,7 @@ const SplashScreen = () => {
       window.clearTimeout(fade);
       window.clearTimeout(hide);
     };
-  }, [visible]);
+  }, [visible, storageKey]);
 
   if (!visible) return null;
 
