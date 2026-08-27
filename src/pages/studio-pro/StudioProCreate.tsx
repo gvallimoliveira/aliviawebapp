@@ -157,6 +157,22 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
       return;
     }
     setBusy(`save-${index}`);
+    const node = document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
+    let thumb: string | null = null;
+    if (node) {
+      try {
+        const rect = node.getBoundingClientRect();
+        const blob = await renderNodeToBlob(node, Math.min(1, 300 / (rect.width || 300)), "image/jpeg", 0.6);
+        thumb = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        });
+      } catch (error) {
+        console.warn("[studio-pro] thumb", error);
+      }
+    }
     const { error } = await supabase.from("studio_creations").insert({
       user_id: auth.user.id,
       brand_id: brand.id,
@@ -165,6 +181,7 @@ const StudioProCreate = ({ brand, folder, watermark, onSaved }: Props) => {
       format,
       headline: headlineOf(index) || null,
       caption,
+      thumb,
       folder: folder === "Todas" ? "Geral" : folder,
       watermarked: watermark,
     });
