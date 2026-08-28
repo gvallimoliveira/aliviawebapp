@@ -563,6 +563,11 @@ export type SegmentContentInput = {
   segment: string;
   angle: ContentAngle;
   positioning?: string | null;
+  /**
+   * Semente do lote. Presente ⇒ motor de variedade linguística ligado (frames
+   * retóricos + léxico do registro de voz). Ausente ⇒ acervo fixo (testes).
+   */
+  variationSeed?: string;
 };
 
 /**
@@ -576,9 +581,11 @@ export const buildSegmentContent = ({
   segment,
   angle,
   positioning,
+  variationSeed,
 }: SegmentContentInput): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
-  const root = base ?? buildBrandContent(kit);
+  const variation: CopyVariation | undefined = variationSeed ? { seed: variationSeed } : undefined;
+  const root = base ?? buildBrandContent(kit, variation, audiences);
   if (segment === GLOBAL_SEGMENT) {
     return applyAngle(applyGlobal(root, brand, audiences, positioning), angle);
   }
@@ -586,3 +593,4 @@ export const buildSegmentContent = ({
   if (!audience) return applyAngle(root, angle);
   return applyAngle(applyAudience(root, brand, audience), angle);
 };
+
