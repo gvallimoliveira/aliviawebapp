@@ -178,9 +178,9 @@ export const GeoOrnament = ({ index, dark = false }: { index: number; dark?: boo
  */
 export const ACCENT_STYLES = [
   "text-primary",
-  "rounded-lg bg-primary px-[0.28em] py-[0.02em] text-primary-foreground box-decoration-clone",
-  "rounded-lg bg-foreground px-[0.28em] py-[0.02em] text-background box-decoration-clone",
-  "rounded-lg bg-accent px-[0.28em] py-[0.02em] text-accent-foreground box-decoration-clone",
+  "rounded-lg bg-primary px-[0.28em] py-[0.02em] leading-[0.92] text-primary-foreground box-decoration-clone",
+  "rounded-lg bg-foreground px-[0.28em] py-[0.02em] leading-[0.92] text-background box-decoration-clone",
+  "rounded-lg bg-accent px-[0.28em] py-[0.02em] leading-[0.92] text-accent-foreground box-decoration-clone",
   "underline decoration-primary decoration-[0.14em] underline-offset-[0.25em]",
   "text-transparent [-webkit-text-stroke:0.035em_hsl(var(--foreground))]",
 ] as const;
