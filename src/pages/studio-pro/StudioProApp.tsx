@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Crown,
+  FileUp,
   Gift,
   Loader2,
   LogOut,
@@ -24,6 +25,7 @@ import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
 import { useStudioQuota } from "./useStudioQuota";
 import BrandColorFields from "./BrandColorFields";
+import type { BrandDoc } from "./BrandAssetsFields";
 import { ALIVIA_AUDIENCES, readAudiences, writeAudiences } from "./audiences";
 import { DEFAULT_COLOR_KIT, writeColorKit, type BrandColorKit } from "./brandColors";
 import { useStudioPwaMeta } from "./useStudioPwaMeta";
@@ -100,6 +102,39 @@ const StudioProApp = () => {
   /** Ao criar a marca, já roda a leitura do site + montagem dos públicos. */
   const [autoInterpret, setAutoInterpret] = useState(true);
   const [loading, setLoading] = useState(true);
+  /** Manual da marca anexado já na criação — fonte principal da interpretação. */
+  const [doc, setDoc] = useState<BrandDoc | null>(null);
+  const [docBusy, setDocBusy] = useState(false);
+  const docInput = useRef<HTMLInputElement>(null);
+
+  const pickDoc = async (file?: File | null) => {
+    if (!file) return;
+    const ok = file.type === "application/pdf" || file.type.startsWith("image/");
+    if (!ok) {
+      toast.error("Envie o manual da marca em PDF (ou uma imagem dele).");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      toast.error("Documento muito grande (máx. 6MB).");
+      return;
+    }
+    setDocBusy(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      setDoc({ name: file.name, mime: file.type, base64: dataUrl.split(",")[1] ?? "" });
+      toast.success("Manual anexado. Ele será a fonte principal da interpretação.");
+    } catch {
+      toast.error("Não foi possível ler o documento.");
+    } finally {
+      setDocBusy(false);
+      if (docInput.current) docInput.current.value = "";
+    }
+  };
 
 
   useEffect(() => {
@@ -257,13 +292,19 @@ const StudioProApp = () => {
     }
     const newId = data?.id;
     const shouldInterpret =
-      autoInterpret && !!newId && !!(site || form.description.trim() || form.niche.trim());
+      autoInterpret && !!newId && !!(doc || site || form.description.trim() || form.niche.trim());
     if (shouldInterpret) {
-      toast.info("Analisando a marca e o site…");
+      toast.info(doc ? "Lendo o manual da marca…" : "Analisando a marca e o site…");
       try {
         const { data: result, error: fnError } = await supabase.functions.invoke(
           "studio-brand-interpret",
-          { body: { brandId: newId, applyColors: true } },
+          {
+            body: {
+              brandId: newId,
+              applyColors: true,
+              doc: doc ? { name: doc.name, mime: doc.mime, base64: doc.base64 } : undefined,
+            },
+          },
         );
         if (fnError) throw fnError;
         if ((result as { error?: string })?.error) toast.error((result as { error: string }).error);
@@ -277,6 +318,7 @@ const StudioProApp = () => {
     }
     setSaving(false);
     setForm(emptyForm);
+    setDoc(null);
     setShowForm(false);
     await load();
     if (newId) navigate(`${PRODUCT.base}/app/marca/${newId}?aba=ajustes`);
@@ -551,7 +593,52 @@ const StudioProApp = () => {
                   placeholder="https://..."
                 />
               </div>
-              {(form.source_url.trim() || form.description.trim() || form.niche.trim()) && (
+              <div className="sm:col-span-2">
+                <Label>Manual da marca (PDF, opcional)</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Já tem o descritivo da marca? Anexe aqui: ele vira a <strong>fonte principal</strong>{" "}
+                  da interpretação — posicionamento, públicos, cores e tipografia saem dele.
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <input
+                    ref={docInput}
+                    type="file"
+                    accept="application/pdf,image/*"
+                    className="hidden"
+                    onChange={(e) => void pickDoc(e.target.files?.[0])}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    disabled={docBusy}
+                    onClick={() => docInput.current?.click()}
+                  >
+                    {docBusy ? (
+                      <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileUp className="mr-1.5 h-4 w-4" />
+                    )}
+                    {doc ? "Trocar documento" : "Enviar PDF da marca"}
+                  </Button>
+                  {doc && (
+                    <>
+                      <span className="max-w-[220px] truncate text-xs text-muted-foreground">{doc.name}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Remover documento"
+                        onClick={() => setDoc(null)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+              {(doc || form.source_url.trim() || form.description.trim() || form.niche.trim()) && (
                 <label className="flex items-start gap-2 rounded-2xl border border-border bg-muted/30 p-3 text-xs sm:col-span-2">
                   <input
                     type="checkbox"
