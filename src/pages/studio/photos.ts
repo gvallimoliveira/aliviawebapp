@@ -108,11 +108,18 @@ const loadSrc = async (storagePath: string): Promise<string> => {
   return src;
 };
 
-/** Lê as fotos do usuário logado e resolve o conteúdo binário de cada uma. */
-export const listPhotos = async (): Promise<StudioPhoto[]> => {
-  const { data, error } = await supabase
+/**
+ * Lê as fotos do usuário logado e resolve o conteúdo binário de cada uma.
+ *
+ * Cada marca tem acervo próprio: com `brandId`, só as fotos daquela marca
+ * entram. Sem `brandId` (Studio interno) o acervo inteiro da conta é lido.
+ */
+export const listPhotos = async (brandId?: string): Promise<StudioPhoto[]> => {
+  let query = supabase
     .from("studio_photos")
-    .select("id, storage_path, label, description, usage, credit, sort_order, focus_x, focus_y, zoom, rotation, safe_area")
+    .select("id, storage_path, label, description, usage, credit, sort_order, focus_x, focus_y, zoom, rotation, safe_area");
+  if (brandId) query = query.eq("brand_id", brandId);
+  const { data, error } = await query
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
   if (error) throw error;
@@ -187,7 +194,7 @@ const downscale = async (file: File): Promise<Blob> => {
 /** Envia uma foto para a pasta do usuário e registra os metadados. */
 export const uploadPhoto = async (
   file: File,
-  meta: { label: string; usage: PhotoUsage; credit?: string; description?: string },
+  meta: { label: string; usage: PhotoUsage; credit?: string; description?: string; brandId?: string },
 ): Promise<StudioPhoto> => {
   if (file.size > MAX_PHOTO_BYTES) {
     throw new Error("Esta foto passa de 15 MB. Exporte em qualidade um pouco menor e envie de novo.");
@@ -217,6 +224,8 @@ export const uploadPhoto = async (
     .from("studio_photos")
     .insert({
       owner_id: uid,
+      // Acervo é por marca no Studio público; no interno fica sem marca.
+      brand_id: meta.brandId ?? null,
       storage_path: storagePath,
       label: meta.label.trim(),
       description: meta.description?.trim() || null,
