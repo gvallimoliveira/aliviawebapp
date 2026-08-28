@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { FORMAT_LABEL, type ShowcaseItem, type ShowcaseSlide } from "./showcase";
 
@@ -368,7 +368,7 @@ const CarouselBody = ({ item }: { item: ShowcaseItem & { slides: ShowcaseSlide[]
 };
 
 /** Converte a paleta do exemplo em override local de tokens semânticos. */
-const paletteVars = (item: ShowcaseItem): React.CSSProperties | undefined => {
+const paletteVars = (item: ShowcaseItem): CSSProperties | undefined => {
   const p = item.palette;
   if (!p) return undefined;
   return {
@@ -381,7 +381,7 @@ const paletteVars = (item: ShowcaseItem): React.CSSProperties | undefined => {
     "--mono-ink": p.ink,
     "--mono-paper": p.paper,
     "--mono-mid": p.mid,
-  } as React.CSSProperties;
+  } as CSSProperties;
 };
 
 /** Cartão de exemplo com etiqueta de nicho e formato. */
