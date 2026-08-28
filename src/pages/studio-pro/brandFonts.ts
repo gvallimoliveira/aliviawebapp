@@ -20,7 +20,9 @@ export type StudioFont = {
 
 export const STUDIO_FONTS: StudioFont[] = [
   { key: "default", label: "Padrão do Studio", stack: "" },
+  { key: "outfit", label: "Outfit", stack: "'Outfit', system-ui, sans-serif", google: "Outfit:wght@400;500;600;700;800;900" },
   { key: "inter", label: "Inter", stack: "'Inter', system-ui, sans-serif", google: "Inter:wght@400;500;600;700;800;900" },
+
   { key: "poppins", label: "Poppins", stack: "'Poppins', system-ui, sans-serif", google: "Poppins:wght@400;500;600;700;800;900" },
   { key: "montserrat", label: "Montserrat", stack: "'Montserrat', system-ui, sans-serif", google: "Montserrat:wght@400;500;600;700;800;900" },
   { key: "dm-sans", label: "DM Sans", stack: "'DM Sans', system-ui, sans-serif", google: "DM+Sans:wght@400;500;700;900", aliases: ["dm sans"] },
