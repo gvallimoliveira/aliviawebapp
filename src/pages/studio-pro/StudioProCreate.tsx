@@ -76,12 +76,8 @@ type Props = {
    * para continuar inovando.
    */
   inspirations?: ComposedBlock[][];
-  /**
-   * Quantas artes cada geração entrega. `Infinity` = página inteira (VIP /
-   * acesso ilimitado). Planos pagos e acessos concedidos recebem lotes curtos
-   * para não queimar a cota de uma vez.
-   */
-  maxArts?: number;
+  /** Acesso sem cota (VIP): "Nova versão" nunca debita nada. */
+  unlimited?: boolean;
   onSaved?: () => void;
 };
 
