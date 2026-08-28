@@ -17,6 +17,8 @@ const JourneyBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
   const shotStep = steps.find((s) => imageForTopic(s.topic));
   const shot = imageForTopic(shotStep?.topic);
   const reversed = treatment === 1;
+  /** Quadro estreito não comporta duas colunas (breakpoint olha a janela). */
+  const wide = format === "free";
   const withImage = Boolean(shot) && treatment < 2;
   const timeline = treatment === 3;
 
@@ -63,9 +65,9 @@ const JourneyBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
               ))}
             </ol>
           ) : (
-            <div className={withImage ? "grid items-center gap-8 md:grid-cols-2" : ""}>
+            <div className={withImage ? `grid items-center gap-8 ${wide ? "md:grid-cols-2" : ""}` : ""}>
               {withImage && shot && (
-                <div className={reversed ? "md:order-2" : ""}>
+                <div className={wide && reversed ? "md:order-2" : ""}>
                   <img
                     src={shot}
                     alt={shotStep?.title ?? journey.heading}
@@ -75,7 +77,7 @@ const JourneyBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
                 </div>
               )}
 
-              <ol className={`space-y-4 ${withImage && reversed ? "md:order-1" : ""}`}>
+              <ol className={`space-y-4 ${withImage && wide && reversed ? "md:order-1" : ""}`}>
                 {steps.map((step, i) => (
                   <motion.li
                     key={step.title}
