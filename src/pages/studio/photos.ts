@@ -224,6 +224,8 @@ export const uploadPhoto = async (
     .from("studio_photos")
     .insert({
       owner_id: uid,
+      // Acervo é por marca no Studio público; no interno fica sem marca.
+      brand_id: meta.brandId ?? null,
       storage_path: storagePath,
       label: meta.label.trim(),
       description: meta.description?.trim() || null,
