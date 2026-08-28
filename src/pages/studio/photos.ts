@@ -54,6 +54,12 @@ export type StudioPhoto = PhotoFraming & {
   id: string;
   storagePath: string;
   label: string;
+  /**
+   * Descrição breve escrita pelo usuário: o que a imagem mostra e/ou onde ela
+   * deve ser usada. É o insumo mais forte do nexo foto × assunto — nunca vira
+   * título/headline da arte.
+   */
+  description: string;
   usage: PhotoUsage;
   credit: string | null;
   sortOrder: number;
@@ -106,7 +112,7 @@ const loadSrc = async (storagePath: string): Promise<string> => {
 export const listPhotos = async (): Promise<StudioPhoto[]> => {
   const { data, error } = await supabase
     .from("studio_photos")
-    .select("id, storage_path, label, usage, credit, sort_order, focus_x, focus_y, zoom, rotation, safe_area")
+    .select("id, storage_path, label, description, usage, credit, sort_order, focus_x, focus_y, zoom, rotation, safe_area")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
   if (error) throw error;
@@ -120,6 +126,7 @@ export const listPhotos = async (): Promise<StudioPhoto[]> => {
           id: row.id,
           storagePath: row.storage_path,
           label: row.label ?? "",
+          description: row.description ?? "",
           usage: asUsage(row.usage ?? "livre"),
           credit: row.credit ?? null,
           sortOrder: row.sort_order ?? 0,
@@ -180,7 +187,7 @@ const downscale = async (file: File): Promise<Blob> => {
 /** Envia uma foto para a pasta do usuário e registra os metadados. */
 export const uploadPhoto = async (
   file: File,
-  meta: { label: string; usage: PhotoUsage; credit?: string },
+  meta: { label: string; usage: PhotoUsage; credit?: string; description?: string },
 ): Promise<StudioPhoto> => {
   if (file.size > MAX_PHOTO_BYTES) {
     throw new Error("Esta foto passa de 15 MB. Exporte em qualidade um pouco menor e envie de novo.");
@@ -212,10 +219,11 @@ export const uploadPhoto = async (
       owner_id: uid,
       storage_path: storagePath,
       label: meta.label.trim(),
+      description: meta.description?.trim() || null,
       usage: meta.usage,
       credit: meta.credit?.trim() || null,
     })
-    .select("id, storage_path, label, usage, credit, sort_order, focus_x, focus_y, zoom, rotation, safe_area")
+    .select("id, storage_path, label, description, usage, credit, sort_order, focus_x, focus_y, zoom, rotation, safe_area")
     .single();
   if (error) {
     // Limite do plano (ou qualquer recusa do banco): não deixa arquivo órfão.
@@ -230,6 +238,7 @@ export const uploadPhoto = async (
     id: data.id,
     storagePath,
     label: data.label ?? "",
+    description: data.description ?? "",
     usage: asUsage(data.usage ?? "livre"),
     credit: data.credit ?? null,
     sortOrder: data.sort_order ?? 0,
@@ -240,6 +249,7 @@ export const uploadPhoto = async (
 
 export type PhotoPatch = {
   label?: string;
+  description?: string;
   usage?: PhotoUsage;
   credit?: string | null;
 } & Partial<PhotoFraming>;
@@ -247,6 +257,7 @@ export type PhotoPatch = {
 export const updatePhoto = async (id: string, patch: PhotoPatch) => {
   const row: Record<string, unknown> = {};
   if (patch.label !== undefined) row.label = patch.label;
+  if (patch.description !== undefined) row.description = patch.description;
   if (patch.usage !== undefined) row.usage = patch.usage;
   if (patch.credit !== undefined) row.credit = patch.credit;
   if (patch.focusX !== undefined) row.focus_x = clamp(patch.focusX, 0, 100);
