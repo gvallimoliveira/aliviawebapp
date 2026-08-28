@@ -172,8 +172,29 @@ const StudioPhotos = ({
         ) : (
           <ul className="grid grid-cols-2 gap-2.5">
             {photos.map((photo) => (
-              <li key={photo.id} className="overflow-hidden rounded-2xl border border-border bg-background">
-                <PhotoFrame photo={photo} className="h-32 w-full" />
+              <li
+                key={photo.id}
+                className={`overflow-hidden rounded-2xl border bg-background ${
+                  pinned.has(photo.id) ? "border-primary ring-1 ring-primary" : "border-border"
+                }`}
+              >
+                <div className="relative">
+                  <PhotoFrame photo={photo} className="h-32 w-full" />
+                  {onTogglePin && (
+                    <button
+                      type="button"
+                      onClick={() => onTogglePin(photo.id)}
+                      title={pinned.has(photo.id) ? "Desfixar desta geração" : "Usar esta foto nesta geração"}
+                      className={`absolute right-1.5 top-1.5 rounded-full border p-1.5 shadow-sm ${
+                        pinned.has(photo.id)
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-muted-foreground"
+                      }`}
+                    >
+                      <Pin className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
                 <div className="p-2">
                   <input
                     defaultValue={photo.label}
@@ -195,6 +216,7 @@ const StudioPhotos = ({
                         </option>
                       ))}
                     </select>
+
                     <button
                       type="button"
                       onClick={() => setEditing(photo)}
