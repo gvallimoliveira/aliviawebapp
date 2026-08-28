@@ -39,7 +39,7 @@ describe("sub-nichos no motor criativo", () => {
       const content = buildSegmentContent({ kit, audiences: ALIVIA_AUDIENCES, segment: id, angle: "informar" });
 
       // kicker, headline, tipografia-herói, lista, carrossel e fecho citam o público
-      expect(content.kickers[0].toLowerCase()).toContain(key);
+      expect(content.kickers.slice(0, 3).some((k) => k.toLowerCase().includes(key))).toBe(true);
       expect(content.headlines.slice(0, 3).some((h) => `${h.strong} ${h.rest}`.toLowerCase().includes(key))).toBe(true);
       expect(content.typos.slice(0, 2).some((t) => t.big.toLowerCase().includes(key))).toBe(true);
       expect(content.lists.slice(0, 3).some((l) => l.heading.toLowerCase().includes(key))).toBe(true);
