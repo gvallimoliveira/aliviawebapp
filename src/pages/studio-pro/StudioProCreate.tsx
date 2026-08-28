@@ -874,8 +874,27 @@ const StudioProCreate = ({
                 ? `Esta versão se inspira nos seus favoritos (${inspirations.length} referências no acervo, sem virar padrão fixo).`
                 : `Versão livre — explorando fora do que já agradou nos ${inspirations.length} favoritos.`}
 
-            {photos.length > 0 && ` · ${photos.length} fotos do acervo em uso`}
+            {photos.length > 0 &&
+              (pinnedPhotos.length > 0
+                ? ` · ${activePhotos.length} foto(s) fixada(s) em uso`
+                : ` · ${photos.length} fotos do acervo em uso`)}
           </p>
+
+          {/* Acervo privado de fotos: envio, enquadramento e fixação. */}
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => setPhotosOpen(true)}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground underline-offset-2 hover:underline"
+            >
+              <Camera className="h-3 w-3" />
+              Fotos do acervo: {photos.length}
+              {photoLimit > 0 ? ` de ${photoLimit}` : ""}
+              {pinnedPhotos.length > 0 ? ` · ${pinnedPhotos.length} fixada(s)` : ""}
+            </button>
+          </div>
+
+
 
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
