@@ -839,8 +839,9 @@ const StudioProCreate = ({
             {inspirations.length === 0
               ? "Favorite artes na aba Artes para o Studio aprender seu estilo."
               : lineage.used
-                ? `Esta versão herda a estrutura de um favorito (${inspirations.length} referências no acervo).`
-                : `Versão livre — inovando fora do padrão dos ${inspirations.length} favoritos.`}
+                ? `Esta versão se inspira nos seus favoritos (${inspirations.length} referências no acervo, sem virar padrão fixo).`
+                : `Versão livre — explorando fora do que já agradou nos ${inspirations.length} favoritos.`}
+
             {photos.length > 0 && ` · ${photos.length} fotos do acervo em uso`}
           </p>
 

@@ -464,15 +464,15 @@ const StudioProBrand = () => {
     }
   };
 
-  /** Receitas dos favoritos desta marca, usadas como linhagem no editor. */
+/** Receitas dos favoritos desta marca, usadas como influência (não como padrão fixo) no editor. */
   const inspirations = useMemo(
     () =>
       creations
         .filter((c) => c.is_favorite && Array.isArray(c.composition) && (c.composition as unknown[]).length > 0)
-        .slice(0, 12)
         .map((c) => c.composition as ComposedBlock[]),
     [creations],
   );
+
 
 
   const newFolder = async () => {
