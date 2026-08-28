@@ -229,6 +229,7 @@ const StudioProApp = () => {
       return;
     }
     setSaving(true);
+    const site = form.source_url.trim();
     const { data, error } = await supabase
       .from("studio_brands")
       .insert({
@@ -237,22 +238,46 @@ const StudioProApp = () => {
         niche: form.niche.trim() || null,
         tone: form.tone.trim() || null,
         logo_url: form.logo_url.trim() || null,
+        source_url: site ? (/^https?:\/\//i.test(site) ? site : `https://${site}`) : null,
+        instagram_handle: form.instagram_handle.trim() || null,
+        description: form.description.trim() || null,
         colors: writeColorKit(colorKit),
       })
       .select("id")
       .maybeSingle();
-    setSaving(false);
     if (error) {
+      setSaving(false);
       console.error("[studio-pro] insert brand", error);
       toast.error("Não foi possível salvar a marca.");
       return;
     }
+    const newId = data?.id;
+    const shouldInterpret =
+      autoInterpret && !!newId && !!(site || form.description.trim() || form.niche.trim());
+    if (shouldInterpret) {
+      toast.info("Analisando a marca e o site…");
+      try {
+        const { data: result, error: fnError } = await supabase.functions.invoke(
+          "studio-brand-interpret",
+          { body: { brandId: newId, applyColors: true } },
+        );
+        if (fnError) throw fnError;
+        if ((result as { error?: string })?.error) toast.error((result as { error: string }).error);
+        else toast.success("Marca interpretada. Revise os públicos e as cores.");
+      } catch (err) {
+        console.error("[studio-pro] interpret on create", err);
+        toast.info("Marca salva. A análise por IA pode ser feita na aba Marca.");
+      }
+    } else {
+      toast.success("Kit de marca salvo.");
+    }
+    setSaving(false);
     setForm(emptyForm);
     setShowForm(false);
-    toast.success("Kit de marca salvo.");
     await load();
-    if (data?.id) navigate(`${PRODUCT.base}/app/marca/${data.id}`);
+    if (newId) navigate(`${PRODUCT.base}/app/marca/${newId}?aba=marca`);
   };
+
 
   const removeBrand = async (id: string) => {
     const { error } = await supabase.from("studio_brands").delete().eq("id", id);
