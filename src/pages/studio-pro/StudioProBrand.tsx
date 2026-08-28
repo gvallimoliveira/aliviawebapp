@@ -319,8 +319,8 @@ const StudioProBrand = () => {
    */
   const interpretBrand = async () => {
     if (!brandId) return;
-    if (!form.description.trim() && !form.niche.trim()) {
-      toast.error("Descreva a marca ou informe o nicho antes de interpretar.");
+    if (!doc && !form.description.trim() && !form.niche.trim()) {
+      toast.error("Descreva a marca, informe o nicho ou anexe o manual em PDF antes de interpretar.");
       return;
     }
     setInterpreting(true);
@@ -332,7 +332,12 @@ const StudioProBrand = () => {
         colorKit.primary.toUpperCase() === DEFAULT_COLOR_KIT.primary.toUpperCase() &&
         colorKit.primary2.toUpperCase() === DEFAULT_COLOR_KIT.primary2.toUpperCase();
       const { data, error } = await supabase.functions.invoke("studio-brand-interpret", {
-        body: { brandId, applyColors: !!form.source_url.trim() && kitIsDefault },
+        // Com manual anexado, ele manda no kit: cores e tipografia vêm do documento.
+        body: {
+          brandId,
+          applyColors: !!doc || (!!form.source_url.trim() && kitIsDefault),
+          doc: doc ? { name: doc.name, mime: doc.mime, base64: doc.base64 } : undefined,
+        },
       });
 
       if (error) throw error;
@@ -340,7 +345,12 @@ const StudioProBrand = () => {
         toast.error((data as { error: string }).error);
         return;
       }
-      toast.success("Marca interpretada. Revise os públicos abaixo.");
+      toast.success(
+        doc
+          ? "Manual interpretado: kit, cores e tipografia preenchidos. Revise abaixo."
+          : "Marca interpretada. Revise os públicos abaixo.",
+      );
+
       void load();
     } catch (err) {
       console.error("[studio-pro] interpret", err);
