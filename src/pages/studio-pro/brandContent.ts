@@ -64,10 +64,43 @@ export const brandSlogan = (kit: BrandKit) => {
 };
 
 /**
+ * VARIAÇÃO DO LOTE: semente + registro de voz. Quando presente, headlines,
+ * subs, tipográficos, cinéticos e fechamentos são COMPOSTOS (frames retóricos ×
+ * ingredientes do kit × léxico do registro) em vez de saírem de listas fixas.
+ */
+export type CopyVariation = { seed: string; register?: VoiceRegister };
+
+const ingredientsOf = (
+  kit: BrandKit,
+  brand: string,
+  niche: string,
+  audiences: BrandAudience[] = [],
+  audience?: BrandAudience,
+): CopyIngredients => {
+  const pool = audience ? [audience] : audiences;
+  const collect = (get: (a: BrandAudience) => string[] | undefined) =>
+    pool.flatMap((a) => (get(a) ?? []).map((v) => v.trim()).filter(Boolean));
+  return {
+    brand,
+    niche,
+    audience: audience?.label.trim(),
+    pains: collect((a) => a.pains),
+    desires: collect((a) => a.desires),
+    solutions: collect((a) => a.proof),
+    keywords: (kit.keywords ?? []).map((w) => w.trim()).filter(Boolean),
+    cta: audience?.cta?.trim(),
+  };
+};
+
+/**
  * Monta o acervo de copy da marca no contrato `WorldContent`, para que todos os
  * blocos (hero, stats, carrossel, storytelling…) funcionem sem alteração.
  */
-export const buildBrandContent = (kit: BrandKit): WorldContent => {
+export const buildBrandContent = (
+  kit: BrandKit,
+  variation?: CopyVariation,
+  audiences: BrandAudience[] = [],
+): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
   /** Nicho entra em headlines: precisa ser rótulo curto, não frase inteira. */
   const niche = firstSentence((kit.niche ?? "").trim(), 30) || "o seu mercado";
@@ -77,6 +110,17 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
   /** Descrição também entra clampada: bloco de arte não é campo de texto longo. */
   const description = firstSentence((kit.description ?? "").trim(), 160);
 
+  /** Motor de variedade linguística (determinístico pela seed do lote). */
+  const register: VoiceRegister = variation?.register ?? voiceRegister(kit.tone, brand);
+  const varyRng: Rng | null = variation ? createRng(`copy:${variation.seed}:${brand}`) : null;
+  const phrasing = { register, seed: `${variation?.seed ?? "static"}:${brand}`, forbidden: [] as string[] };
+  const ing = ingredientsOf(kit, brand, niche, audiences);
+
+  const composedHeadlines = varyRng ? composeHeadlines(ing, phrasing, varyRng) : [];
+  const composedSubs = varyRng ? composeSubs(ing, phrasing, varyRng) : [];
+  const composedTypos = varyRng ? composeTypos(ing, phrasing, varyRng) : [];
+  const composedKinetic = varyRng ? composeKinetic(ing, phrasing, varyRng) : [];
+  const composedClosings = varyRng ? composeClosings(ing, phrasing, varyRng) : [];
 
   return {
     id: "pro",
@@ -89,25 +133,34 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
       "POR DENTRO DA MARCA",
       "PARA QUEM ACOMPANHA",
     ],
-    headlines: [
-      { strong: brand, rest: " existe para resolver o que ninguém resolveu." },
-      { strong: "Feito com método", rest: `, não com sorte.` },
-      { strong: "Quem escolhe bem", rest: " volta." },
-      { strong: `A referência em ${niche}`, rest: " começa aqui." },
-      { strong: "Simples de entender.", rest: " Difícil de esquecer." },
-    ],
+    headlines: composedHeadlines.length
+      ? composedHeadlines
+      : [
+          { strong: brand, rest: " existe para resolver o que ninguém resolveu." },
+          { strong: "Feito com método", rest: `, não com sorte.` },
+          { strong: "Quem escolhe bem", rest: " volta." },
+          { strong: `A referência em ${niche}`, rest: " começa aqui." },
+          { strong: "Simples de entender.", rest: " Difícil de esquecer." },
+        ],
     subs: [
       tone,
       ...(description ? [description] : []),
-      `${brand} transforma conhecimento em uma experiência clara e relevante.`,
-      `Em ${niche}, detalhe não é enfeite — é resultado.`,
-      "Uma decisão bem tomada economiza meses.",
+      ...(composedSubs.length
+        ? composedSubs
+        : [
+            `${brand} transforma conhecimento em uma experiência clara e relevante.`,
+            `Em ${niche}, detalhe não é enfeite — é resultado.`,
+            "Uma decisão bem tomada economiza meses.",
+          ]),
     ],
-    kinetic: [
-      { kicker: "O QUE MOVE A MARCA", word: "Cuidado", caption: "Cada detalhe expressa uma escolha consciente." },
-      { kicker: "NOSSA APOSTA", word: "Constância", caption: "Presença consistente cria reconhecimento." },
-      { kicker: "PROMESSA", word: "Clareza", caption: "Uma proposta fácil de entender e reconhecer." },
-    ],
+    kinetic: composedKinetic.length
+      ? composedKinetic
+      : [
+          { kicker: "O QUE MOVE A MARCA", word: "Cuidado", caption: "Cada detalhe expressa uma escolha consciente." },
+          { kicker: "NOSSA APOSTA", word: "Constância", caption: "Presença consistente cria reconhecimento." },
+          { kicker: "PROMESSA", word: "Clareza", caption: "Uma proposta fácil de entender e reconhecer." },
+        ],
+
     metrics: [
       [
         { value: 3, label: "pilares que orientam a marca" },
