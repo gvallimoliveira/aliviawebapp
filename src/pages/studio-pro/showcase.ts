@@ -18,6 +18,21 @@ export type ShowcaseKind =
   | "brand"
   | "quote";
 
+/**
+ * Slide de um carrossel de verdade: capa, desenvolvimento e fechamento com
+ * CTA. Mesma marca, mesmo tema — o encadeamento é o produto.
+ */
+export type ShowcaseSlide = {
+  /** Papel narrativo do slide, usado para variar a composição. */
+  role: "cover" | "point" | "stat" | "cta";
+  kicker?: string;
+  headline: string;
+  accent?: string;
+  support?: string;
+  value?: string;
+  lines?: string[];
+};
+
 export type ShowcaseItem = {
   id: string;
   kind: ShowcaseKind;
@@ -33,6 +48,8 @@ export type ShowcaseItem = {
   lines?: string[];
   value?: string;
   caption?: string;
+  /** Presente apenas em formato carrossel: 4 a 5 slides amarrados. */
+  slides?: ShowcaseSlide[];
 };
 
 export const FORMAT_LABEL: Record<ShowcaseFormat, string> = {
