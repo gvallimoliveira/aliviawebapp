@@ -1,7 +1,11 @@
+import { Wand2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { BrandColorKit } from "./brandColors";
+import { deepen, judgeContrast, lighten, readableOn } from "./contrast";
+
 
 /**
  * Campos de cores do kit de marca: duas principais sempre, duas secundárias
@@ -50,28 +54,71 @@ const Swatch = ({
   </div>
 );
 
-const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => (
+const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => {
+  const verdict = judgeContrast(kit.primary, kit.primary2);
+  const suggest = () => {
+    /** Marca fica no fundo; a segunda cor passa a ser a de texto legível. */
+    const surface = deepen(kit.primary);
+    onChange({
+      ...kit,
+      primary: surface,
+      primary2: readableOn(surface),
+      secondary: kit.useSecondary ? lighten(kit.secondary) : kit.secondary,
+      secondary2: kit.useSecondary ? readableOn(lighten(kit.secondary)) : kit.secondary2,
+    });
+  };
+
+  return (
   <div className="sm:col-span-2 space-y-4 rounded-2xl border border-border bg-muted/30 p-4">
     <div>
       <p className="text-sm font-semibold">Cores principais</p>
       <p className="text-xs text-muted-foreground">
-        Duas cores que definem a marca (ex.: Aliv.iA usa verde e branco).
+        A primeira é a cor de marca (fundos, formas, destaques). A segunda é a cor que fica{" "}
+        <strong>por cima</strong> dela — texto e ícones.
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <Swatch
           id={`${idPrefix}-primary`}
-          label="Principal 1"
+          label="Cor de marca (fundo)"
           value={kit.primary}
           onChange={(primary) => onChange({ ...kit, primary })}
         />
         <Swatch
           id={`${idPrefix}-primary2`}
-          label="Principal 2"
+          label="Cor do texto sobre ela"
           value={kit.primary2}
           onChange={(primary2) => onChange({ ...kit, primary2 })}
         />
       </div>
+
+      {/* Prova visual + veredito de contraste: evita arte ilegível antes de gerar. */}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <span
+          className="rounded-xl px-3 py-2 text-sm font-bold"
+          style={{ background: kit.primary, color: kit.primary2 }}
+        >
+          Texto de exemplo
+        </span>
+        <span
+          className={`text-xs font-semibold ${
+            verdict.level === "ok"
+              ? "text-emerald-600"
+              : verdict.level === "aviso"
+                ? "text-amber-600"
+                : "text-destructive"
+          }`}
+        >
+          Contraste {verdict.ratio.toFixed(1)}:1 — {verdict.message}
+        </span>
+        {verdict.level !== "ok" && (
+          <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={suggest}>
+            <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+            Sugerir cores legíveis
+          </Button>
+        )}
+      </div>
     </div>
+
 
     <div className="border-t border-border pt-4">
       <div className="flex items-center justify-between gap-3">
@@ -91,13 +138,13 @@ const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <Swatch
             id={`${idPrefix}-secondary`}
-            label="Secundária 1"
+            label="Apoio (destaque)"
             value={kit.secondary}
             onChange={(secondary) => onChange({ ...kit, secondary })}
           />
           <Swatch
             id={`${idPrefix}-secondary2`}
-            label="Secundária 2"
+            label="Fundo claro / neutro"
             value={kit.secondary2}
             onChange={(secondary2) => onChange({ ...kit, secondary2 })}
           />
@@ -105,6 +152,8 @@ const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => (
       )}
     </div>
   </div>
-);
+  );
+};
+
 
 export default BrandColorFields;

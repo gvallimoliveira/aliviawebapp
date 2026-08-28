@@ -28,9 +28,29 @@ export type BrandKit = {
   keywords?: string[] | null;
 };
 
-/** Slogan padrão quando a marca ainda não escreveu o dela. */
-export const brandSlogan = (kit: BrandKit) =>
-  kit.tone?.trim() || (kit.niche?.trim() ? `${kit.niche.trim()} com presença todo dia.` : "Presença digital todo dia.");
+/**
+ * FRASE DE APOIO DA MARCA (slogan do lockup).
+ *
+ * REGRA DURA: o campo "tom de voz" é DIRETRIZ de comunicação (como falar), não
+ * copy. Antes ele era usado como slogan/subtítulo/depoimento — quando o cliente
+ * colava um manual de marca inteiro ali, o manual aparecia dentro da arte.
+ * Agora o slogan sai da descrição (primeira frase curta) ou do nicho, e o tom de
+ * voz nunca é renderizado.
+ */
+const firstSentence = (text: string, max = 90) => {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (!clean) return "";
+  const cut = clean.split(/(?<=[.!?])\s/)[0] ?? clean;
+  const phrase = cut.length <= max ? cut : `${cut.slice(0, max).replace(/[\s,;:-]+\S*$/, "")}…`;
+  return phrase.replace(/\s*[.]\s*$/, "");
+};
+
+export const brandSlogan = (kit: BrandKit) => {
+  const fromDescription = firstSentence(kit.description ?? "");
+  if (fromDescription) return fromDescription;
+  const niche = (kit.niche ?? "").trim();
+  return niche ? `${firstSentence(niche, 48)} com presença todo dia.` : "Presença digital todo dia.";
+};
 
 /**
  * Monta o acervo de copy da marca no contrato `WorldContent`, para que todos os
@@ -38,10 +58,12 @@ export const brandSlogan = (kit: BrandKit) =>
  */
 export const buildBrandContent = (kit: BrandKit): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
-  const niche = (kit.niche ?? "").trim() || "o seu mercado";
+  const niche = firstSentence((kit.niche ?? "").trim(), 48) || "o seu mercado";
   const tone = brandSlogan(kit);
   const words = (kit.keywords ?? []).map((w) => w.trim()).filter(Boolean);
-  const description = (kit.description ?? "").trim();
+  /** Descrição também entra clampada: bloco de arte não é campo de texto longo. */
+  const description = firstSentence((kit.description ?? "").trim(), 160);
+
 
   return {
     id: "pro",
