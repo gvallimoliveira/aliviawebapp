@@ -73,34 +73,88 @@ const absolutize = (candidate: string, base: string): string | null => {
 
 const IMG_EXT = /\.(png|jpe?g|svg|webp|avif|gif)(\?|#|$)/i;
 
+/** Imagens que nunca são logo (banner, foto de capa, avatar de depoimento…). */
+const NOT_LOGO = /banner|hero|slide|carousel|cover|capa|foto|photo|avatar|depoiment|testimonial|thumb|sprite|placeholder|pixel|tracking/i;
+
+/** Pega o primeiro src útil de um <img>, considerando lazy-load e srcset. */
+const imgSource = (tag: string): string | null => {
+  const direct =
+    tag.match(/\ssrc\s*=\s*["']([^"']+)["']/i)?.[1] ??
+    tag.match(/\sdata-src\s*=\s*["']([^"']+)["']/i)?.[1] ??
+    tag.match(/\sdata-lazy-src\s*=\s*["']([^"']+)["']/i)?.[1];
+  if (direct && !direct.startsWith("data:")) return direct;
+  const srcset = tag.match(/\s(?:srcset|data-srcset)\s*=\s*["']([^"']+)["']/i)?.[1];
+  if (srcset) {
+    const first = srcset.split(",").map((s) => s.trim().split(/\s+/)[0]).find(Boolean);
+    if (first && !first.startsWith("data:")) return first;
+  }
+  return null;
+};
+
 /**
  * LOGO DA MARCA A PARTIR DO SITE.
  *
- * Antes o cliente colava o site e o campo de logo ficava vazio (ou com a URL do
- * próprio site, que não é imagem). Aqui procuramos, em ordem de confiança:
- * 1. <img> cujo src/alt/class fale "logo" (a marca de verdade no header);
- * 2. og:image / twitter:image (arte social, quase sempre com a marca);
- * 3. apple-touch-icon / link rel icon (fallback quadrado).
+ * Ordem de confiança (a falha recorrente era voltar sem logo, ou voltar com um
+ * banner/ícone genérico):
+ * 1. <img> dentro do header/nav cujo src/alt/class fale "logo";
+ * 2. o mesmo <img> em qualquer lugar da página;
+ * 3. <img> cujo alt contenha o nome da marca;
+ * 4. link rel="apple-touch-icon" / "mask-icon" / "icon" de tamanho grande;
+ * 5. og:image / twitter:image (arte social, quase sempre com a marca).
  */
-const findLogo = (html: string, base: string): string | null => {
-  const imgs = [...html.matchAll(/<img\b[^>]*>/gi)].map((m) => m[0]);
-  for (const tag of imgs) {
-    const src = tag.match(/\ssrc\s*=\s*["']([^"']+)["']/i)?.[1];
-    if (!src) continue;
-    const haystack = `${src} ${tag.match(/\salt\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""} ${
-      tag.match(/\sclass\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""
-    }`.toLowerCase();
-    if (!/logo|brand|marca|wordmark/.test(haystack)) continue;
-    const url = absolutize(src, base);
-    if (url) return url;
+const findLogo = (html: string, base: string, brandName = ""): string | null => {
+  const headerZone = [...html.matchAll(/<(header|nav)\b[\s\S]{0,20000}?<\/\1>/gi)]
+    .map((m) => m[0])
+    .join(" ");
+
+  const scan = (scope: string, test: (haystack: string) => boolean): string | null => {
+    for (const [tag] of scope.matchAll(/<img\b[^>]*>/gi)) {
+      const src = imgSource(tag);
+      if (!src) continue;
+      const haystack = `${src} ${tag.match(/\salt\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""} ${
+        tag.match(/\sclass\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""
+      } ${tag.match(/\sid\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""}`.toLowerCase();
+      if (NOT_LOGO.test(haystack)) continue;
+      if (!test(haystack)) continue;
+      const url = absolutize(src, base);
+      if (url) return url;
+    }
+    return null;
+  };
+
+  const byKeyword = (h: string) => /logo|brand|marca|wordmark|logotipo|símbolo|simbolo/.test(h);
+  const nameTokens = brandName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 4);
+  const byName = (h: string) => nameTokens.length > 0 && nameTokens.some((t) => h.includes(t));
+
+  const found =
+    (headerZone ? scan(headerZone, byKeyword) : null) ??
+    scan(html, byKeyword) ??
+    (nameTokens.length ? scan(headerZone || html, byName) : null);
+  if (found) return found;
+
+  const links = [
+    /<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]*>/gi,
+    /<link[^>]+rel=["'][^"']*mask-icon[^"']*["'][^>]*>/gi,
+    /<link[^>]+rel=["'][^"']*\bicon\b[^"']*["'][^>]*>/gi,
+  ];
+  for (const re of links) {
+    for (const [tag] of html.matchAll(re)) {
+      const href = tag.match(/\shref\s*=\s*["']([^"']+)["']/i)?.[1];
+      const url = href ? absolutize(href, base) : null;
+      if (url && IMG_EXT.test(url) && !/favicon\.ico/i.test(url)) return url;
+    }
   }
 
   const metas = [
+    /<meta[^>]+property=["']og:logo["'][^>]+content=["']([^"']+)["']/i,
     /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
     /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
     /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
-    /<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i,
-    /<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']/i,
   ];
   for (const re of metas) {
     const hit = html.match(re)?.[1];
@@ -110,56 +164,179 @@ const findLogo = (html: string, base: string): string | null => {
   return null;
 };
 
-/**
- * Leitura da landing page do cliente: texto visível (para a IA entender a
- * proposta), as cores mais frequentes e o logo da marca.
- * Falha silenciosa — site fora do ar não pode travar a interpretação.
- */
-const readSite = async (
-  rawUrl: string,
-): Promise<{ text: string; colors: string[]; logo: string | null }> => {
-  const url = normalizeUrl(rawUrl);
-  const empty = { text: "", colors: [], logo: null };
-  if (!url) return empty;
+/** Tipografia declarada no HTML/CSS inline ou via Google Fonts. */
+const findFonts = (html: string): string[] => {
+  const out: string[] = [];
+  for (const [, families] of html.matchAll(
+    /fonts\.googleapis\.com\/css2?\?([^"'\s>]+)/gi,
+  )) {
+    for (const [, fam] of families.matchAll(/family=([^&:]+)/gi)) {
+      out.push(decodeURIComponent(fam).replace(/\+/g, " "));
+    }
+  }
+  const counts = new Map<string, number>();
+  for (const [, decl] of html.matchAll(/font-family\s*:\s*([^;}"']+)/gi)) {
+    const first = decl.split(",")[0].replace(/["']/g, "").trim();
+    if (!first || /^(inherit|initial|unset|var\(|sans-serif|serif|monospace|system-ui|-apple-system)/i.test(first)) continue;
+    counts.set(first, (counts.get(first) ?? 0) + 1);
+  }
+  out.push(
+    ...Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([f]) => f),
+  );
+  return [...new Set(out)].slice(0, 6);
+};
+
+const stripToText = (html: string, limit: number) =>
+  html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, limit);
+
+const fetchHtml = async (url: string, timeoutMs = 12000): Promise<string | null> => {
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12000);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     const resp = await fetch(url, {
       signal: controller.signal,
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; AliviaStudioBot/1.0)" },
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 AliviaStudioBot/1.1",
+        "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+        Accept: "text/html,application/xhtml+xml",
+      },
     });
     clearTimeout(timer);
-    if (!resp.ok) return empty;
-    const html = (await resp.text()).slice(0, 400_000);
-
-    const counts = new Map<string, number>();
-    for (const match of html.matchAll(/#[0-9a-fA-F]{6}\b/g)) {
-      const hex = match[0].toLowerCase();
-      // Ignora branco/preto puros: quase sempre são texto e fundo padrão.
-      if (hex === "#ffffff" || hex === "#000000") continue;
-      counts.set(hex, (counts.get(hex) ?? 0) + 1);
-    }
-    const colors = Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([hex]) => hex);
-
-    const text = html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 9000);
-
-    return { text, colors, logo: findLogo(html, url) };
+    if (!resp.ok) return null;
+    const type = resp.headers.get("content-type") ?? "";
+    if (type && !/html|text/i.test(type)) return null;
+    return (await resp.text()).slice(0, 500_000);
   } catch (err) {
-    console.error("[studio-brand-interpret] site fetch", String(err).slice(0, 200));
-    return empty;
+    console.error("[studio-brand-interpret] fetch", url, String(err).slice(0, 160));
+    return null;
   }
 };
+
+/** Páginas internas que costumam guardar a proposta real da marca. */
+const INNER_PAGE = /(sobre|about|quem-somos|empresa|servic|service|solucao|solucoes|solution|produto|product|planos|precos|pricing|para-quem|clientes|portfolio|metodo|como-funciona)/i;
+
+const collectInnerLinks = (html: string, base: string, max: number): string[] => {
+  const origin = new URL(base).origin;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const [, href] of html.matchAll(/<a\b[^>]*\shref\s*=\s*["']([^"'#]+)["']/gi)) {
+    if (!INNER_PAGE.test(href)) continue;
+    const url = absolutize(href, base);
+    if (!url || !url.startsWith(origin)) continue;
+    const clean = url.split("#")[0].replace(/\/$/, "");
+    if (clean === base.replace(/\/$/, "") || seen.has(clean)) continue;
+    if (/\.(pdf|jpg|jpeg|png|zip|docx?)$/i.test(clean)) continue;
+    seen.add(clean);
+    out.push(clean);
+    if (out.length >= max) break;
+  }
+  return out;
+};
+
+type SiteRead = {
+  text: string;
+  colors: string[];
+  logo: string | null;
+  fonts: string[];
+  meta: string;
+  headings: string[];
+  pages: string[];
+};
+
+/**
+ * LEITURA RICA DO SITE DO CLIENTE.
+ *
+ * A versão anterior lia só a home e um punhado de texto — kits saíam rasos e
+ * sem logo. Agora: metadados (title/description/og), títulos (h1-h3) separados,
+ * cores (hex + rgb + variáveis CSS), tipografia declarada, logo com heurística
+ * de header, e até 3 páginas internas (sobre / serviços / planos).
+ * Falha silenciosa: site fora do ar não pode travar a interpretação.
+ */
+const readSite = async (rawUrl: string, brandName = ""): Promise<SiteRead> => {
+  const url = normalizeUrl(rawUrl);
+  const empty: SiteRead = { text: "", colors: [], logo: null, fonts: [], meta: "", headings: [], pages: [] };
+  if (!url) return empty;
+
+  const html = await fetchHtml(url);
+  if (!html) return empty;
+
+  /* Cores: hex, rgb() e variáveis CSS — sites modernos quase não usam hex cru. */
+  const counts = new Map<string, number>();
+  const bump = (hex: string) => {
+    const h = hex.toLowerCase();
+    if (h === "#ffffff" || h === "#000000") return;
+    counts.set(h, (counts.get(h) ?? 0) + 1);
+  };
+  for (const [full] of html.matchAll(/#[0-9a-fA-F]{6}\b/g)) bump(full);
+  for (const [, hx] of html.matchAll(/#([0-9a-fA-F]{3})\b/g)) {
+    bump(`#${hx[0]}${hx[0]}${hx[1]}${hx[1]}${hx[2]}${hx[2]}`);
+  }
+  for (const [, r, g, b] of html.matchAll(/rgba?\(\s*(\d{1,3})\s*[, ]\s*(\d{1,3})\s*[, ]\s*(\d{1,3})/gi)) {
+    bump(
+      `#${[r, g, b]
+        .map((v) => Math.min(255, parseInt(v, 10)).toString(16).padStart(2, "0"))
+        .join("")}`,
+    );
+  }
+  const colors = Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([hex]) => hex.toUpperCase());
+
+  const metaBits = [
+    html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1],
+    html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)?.[1],
+    html.match(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i)?.[1],
+    html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)?.[1],
+    html.match(/<meta[^>]+name=["']keywords["'][^>]+content=["']([^"']+)["']/i)?.[1],
+  ]
+    .filter(Boolean)
+    .map((s) => stripToText(String(s), 300));
+  const meta = [...new Set(metaBits)].join(" · ").slice(0, 900);
+
+  const headings = [...html.matchAll(/<h([1-3])\b[^>]*>([\s\S]*?)<\/h\1>/gi)]
+    .map((m) => stripToText(m[2], 160))
+    .filter((t) => t.length > 2);
+  const uniqueHeadings = [...new Set(headings)].slice(0, 40);
+
+  const homeText = stripToText(html, 12000);
+  const pages = collectInnerLinks(html, url, 3);
+  const innerTexts: string[] = [];
+  for (const page of pages) {
+    const inner = await fetchHtml(page, 9000);
+    if (!inner) continue;
+    const t = stripToText(inner, 5000);
+    if (t.length > 200) innerTexts.push(`[${page}]\n${t}`);
+  }
+
+  return {
+    text: [homeText, ...innerTexts].join("\n\n").slice(0, 26000),
+    colors,
+    logo: findLogo(html, url, brandName),
+    fonts: findFonts(html),
+    meta,
+    headings: uniqueHeadings,
+    pages,
+  };
+};
+
 
 /* ---------- Contraste: nenhuma arte pode sair ilegível ---------- */
 
@@ -239,10 +416,12 @@ Deno.serve(async (req) => {
       .map((a) => String(a?.label ?? "").trim())
       .filter(Boolean);
 
-    // Lê a landing page do cliente (texto + cores + logo) quando há site cadastrado.
-    const site = brand.source_url
-      ? await readSite(String(brand.source_url))
-      : { text: "", colors: [], logo: null };
+    // Lê o site do cliente (metadados + títulos + texto de páginas internas +
+    // cores + tipografia + logo) quando há site cadastrado.
+    const site: SiteRead = brand.source_url
+      ? await readSite(String(brand.source_url), String(brand.name ?? ""))
+      : { text: "", colors: [], logo: null, fonts: [], meta: "", headings: [], pages: [] };
+
 
     /**
      * Logo: só grava quando a marca não tem um logo de imagem válido. Um valor
@@ -281,49 +460,60 @@ Deno.serve(async (req) => {
       Array.isArray(brand.topics) && brand.topics.length ? `Palavras-chave atuais: ${brand.topics.join(", ")}` : null,
       existingLabels.length ? `Públicos já cadastrados (manter todos): ${existingLabels.join(", ")}` : null,
       typeof body?.extra === "string" && body.extra.trim() ? `Contexto extra do cliente: ${body.extra.trim()}` : null,
+      site.meta ? `Metadados do site (title/description/og): ${site.meta}` : null,
+      site.headings.length
+        ? `Títulos e chamadas do site (h1-h3, ordem de leitura):\n- ${site.headings.join("\n- ")}`
+        : null,
       site.colors.length ? `Cores mais usadas no site (ordem de frequência): ${site.colors.join(", ")}` : null,
-      site.text ? `\nTexto extraído da landing page (fonte primária da proposta):\n"""\n${site.text}\n"""` : null,
+      site.fonts.length ? `Tipografia declarada no site (ordem de confiança): ${site.fonts.join(", ")}` : null,
+      site.pages.length ? `Páginas internas lidas além da home: ${site.pages.join(", ")}` : null,
+      site.text ? `\nTexto extraído do site (fonte primária da proposta):\n"""\n${site.text}\n"""` : null,
       docOk
         ? `\nO cliente anexou o MANUAL DA MARCA (${doc?.name ?? "documento"}). Ele é a FONTE PRINCIPAL: cores, tipografia, posicionamento, públicos e tom saem dele e prevalecem sobre o site e sobre os campos atuais.`
         : null,
     ].filter(Boolean).join("\n");
 
 
-    const systemPrompt = `Você é estrategista de conteúdo. A partir do briefing de uma marca, você produz o mapa editorial que alimentará um gerador de artes para redes sociais.
+    const systemPrompt = `Você é estrategista de conteúdo sênior. A partir do briefing de uma marca, você produz o mapa editorial que alimentará um gerador de artes para redes sociais. O resultado precisa ter densidade de kit de agência: específico, concreto, com vocabulário da própria marca.
 
 Regras:
-- Escreva em português do Brasil, linguagem concreta, sem jargão de marketing e sem clichê ("soluções inovadoras", "excelência", "transformar vidas").
-- Se houver texto da landing page no briefing, ele é a fonte primária: a proposta, os produtos e os públicos devem sair de lá, não de suposições.
+- Escreva em português do Brasil, linguagem concreta, sem jargão de marketing e sem clichê ("soluções inovadoras", "excelência", "transformar vidas", "referência no mercado").
+- Se houver texto, títulos ou metadados do site no briefing, eles são a fonte primária: proposta, produtos, preços, nomes de serviços e públicos saem de lá, não de suposições. Use as palavras que a própria marca usa.
 - O "tom de voz" do briefing é diretriz de ESTILO: guia como escrever, mas o texto dele nunca é reaproveitado como frase da marca.
-- Segmente o produto em 2 a 5 públicos (nichos) REAIS e distintos, cada um com dores, desejos e provas próprias.
+- Segmente o produto em 4 a 8 públicos (nichos) REAIS e distintos — pessoas diferentes, em momentos diferentes, não variações do mesmo perfil. Cada um com dores, desejos e soluções próprias, sem repetir frases entre públicos.
+- Cada público precisa de 5 a 8 dores, 5 a 8 desejos e 5 a 8 soluções/diferenciais. Frases curtas (até ~70 caracteres), concretas, uma ideia por linha.
 - IMPORTANTE: se o produto também é usado pelo consumidor final (paciente, cliente, aluno, usuário leigo), esse público NUNCA pode ficar de fora — inclua-o junto dos públicos profissionais/B2B.
 - Se a marca já tem públicos cadastrados no briefing, mantenha-os (pode refinar o texto), não os substitua por outros.
-- Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o que o produto é como um todo.
+- Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o problema estrutural do mercado, a tese da marca, a amplitude de uso e o que a separa das alternativas.
+- "description": 2 a 3 frases densas — o que é, para quem, o que entrega de concreto.
 - Escreva também um "tagline": UMA frase curta (até 80 caracteres) que resume a marca e pode aparecer dentro das artes.
+- "voice": diretriz de tom em 4 a 8 linhas — como falar, o que nunca dizer, como tratar preço, prova e objeção. É diretriz interna, nunca vai impressa na arte.
+- "keywords": vocabulário de marca utilizável como palavra em destaque na arte (não termos de SEO genéricos).
 - Cores (papéis, não decoração): "primary" é a cor de MARCA usada em fundos e formas; "primary2" é a cor de TEXTO que fica sobre ela e precisa de contraste alto (≥ 4.5:1); "secondary" é o destaque e "secondary2" um neutro claro de fundo. Escolha entre as cores do site quando houver; nunca devolva um par de baixo contraste (ex.: verde neon com branco). Sem cores no briefing, omita o campo.
-
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
-Tipografia: se o briefing (especialmente o manual da marca anexado) indicar a fonte usada pela marca, devolva o nome dela em "font_family" (ex.: "Montserrat", "DM Sans", "Playfair Display"). Se não houver indicação, devolva "".
+Tipografia: se o briefing (manual anexado ou tipografia declarada no site) indicar a fonte da marca, devolva o nome dela em "font_family" (ex.: "Montserrat", "DM Sans", "Playfair Display"). Se não houver indicação, devolva "".
 
 Responda SOMENTE com JSON válido neste formato:
 {
-  "positioning": "2 a 3 frases sobre o produto inteiro, servindo de base do conteúdo 360°",
+  "description": "2 a 3 frases densas sobre o que é, para quem e o que entrega",
+  "positioning": "3 a 5 frases sobre o produto inteiro, servindo de base do conteúdo 360°",
   "tagline": "uma frase curta (até 80 caracteres) que pode aparecer na arte",
-
-  "keywords": ["6 a 10 palavras-chave curtas"],
-  "strategy_notes": "3 a 5 linhas sobre como informar, gerar desejo e vender para esta marca",
+  "voice": "diretriz de tom em 4 a 8 linhas",
+  "keywords": ["8 a 12 palavras-chave curtas do vocabulário da marca"],
+  "strategy_notes": "5 a 8 linhas sobre como girar informar / dor / desejo / venda nesta marca, incluindo temas a evitar",
   "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB" },
   "font_family": "nome da fonte da marca, ou vazio",
   "audiences": [
     {
       "label": "Nome curto do público",
       "description": "Quem é e em que momento chega",
-      "pains": ["2 a 4 dores concretas"],
-      "desires": ["2 a 3 desejos"],
-      "proof": ["2 a 4 provas/diferenciais que convencem esse público"],
+      "pains": ["5 a 8 dores concretas"],
+      "desires": ["5 a 8 desejos"],
+      "proof": ["5 a 8 soluções/diferenciais que convencem esse público"],
       "cta": "Chamada para ação curta"
+
     }
   ]
 }`;
@@ -391,14 +581,15 @@ Responda SOMENTE com JSON válido neste formato:
           id: slugify(label),
           label: label.slice(0, 40),
           description: String(row.description ?? "").trim().slice(0, 300) || undefined,
-          pains: strList(row.pains, 4),
-          desires: strList(row.desires, 3),
-          proof: strList(row.proof, 4),
+          pains: strList(row.pains, 8),
+          desires: strList(row.desires, 8),
+          proof: strList(row.proof, 8),
           cta: String(row.cta ?? "").trim().slice(0, 60) || undefined,
         };
       })
       .filter(Boolean)
-      .slice(0, 6) as Array<Record<string, unknown>>;
+      .slice(0, 10) as Array<Record<string, unknown>>;
+
 
     /**
      * Nunca perder um público já cadastrado (ex.: o mundo do paciente do
@@ -415,7 +606,7 @@ Responda SOMENTE com JSON válido neste formato:
       const prev = byId.get(id);
       byId.set(id, prev ? { ...prev, ...a } : a);
     }
-    const mergedAudiences = Array.from(byId.values()).slice(0, 8);
+    const mergedAudiences = Array.from(byId.values()).slice(0, 12);
 
     /**
      * Cores do site: só aplicadas quando o cliente pediu (`applyColors`) e a IA
@@ -477,11 +668,16 @@ Responda SOMENTE com JSON válido neste formato:
       ["lora", ["lora"]],
       ["merriweather", ["merriweather"]],
     ];
-    const fontRaw = String(parsed.font_family ?? "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
-    const fontKey = FONT_KEYS.find(([, names]) => names.some((n) => fontRaw.includes(n)))?.[0] ?? null;
+    const normalizeFont = (value: string) =>
+      value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const matchFont = (value: string) =>
+      FONT_KEYS.find(([, names]) => names.some((n) => normalizeFont(value).includes(n)))?.[0] ?? null;
+    /** Fonte da IA primeiro; se ela não souber, a tipografia declarada no site. */
+    const fontKey =
+      matchFont(String(parsed.font_family ?? "")) ??
+      site.fonts.map(matchFont).find(Boolean) ??
+      null;
+
 
     const currentColors = (brand.colors ?? {}) as Record<string, string>;
     const currentFont = typeof currentColors.font === "string" ? currentColors.font : "default";
@@ -496,16 +692,31 @@ Responda SOMENTE com JSON válido neste formato:
 
     const tagline = String(parsed.tagline ?? "").trim().replace(/\s+/g, " ").slice(0, 90);
 
+    /**
+     * Descrição e tom só são gravados quando o campo do cliente está vazio (ou
+     * raso, < 60 caracteres): texto escrito à mão nunca é sobrescrito pela IA.
+     */
+    const aiDescription = String(parsed.description ?? "").trim().slice(0, 700);
+    const aiVoice = String(parsed.voice ?? "").trim().slice(0, 2500);
+    const currentDescription = String(brand.description ?? "").trim();
+    const currentTone = String(brand.tone ?? "").trim();
+    const fillDescription = aiDescription.length > 40 && currentDescription.length < 60;
+    const fillTone = aiVoice.length > 60 && currentTone.length < 60;
+
     const result = {
-      positioning: String(parsed.positioning ?? "").trim().slice(0, 800),
+      description: aiDescription,
+      positioning: String(parsed.positioning ?? "").trim().slice(0, 1400),
       tagline,
-      keywords: strList(parsed.keywords, 10),
-      strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 900),
+      voice: aiVoice,
+      keywords: strList(parsed.keywords, 12),
+      strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 1600),
       audiences: mergedAudiences,
       colors: colorKit,
       font: fontKey,
       logo_url: logoUrl,
       site_read: !!site.text,
+      site_pages: site.pages,
+      site_fonts: site.fonts,
       doc_read: docOk,
     };
 
@@ -517,6 +728,8 @@ Responda SOMENTE com JSON válido neste formato:
         positioning: result.positioning || null,
         strategy_notes: result.strategy_notes || null,
         audiences: result.audiences,
+        ...(fillDescription ? { description: aiDescription } : {}),
+        ...(fillTone ? { tone: aiVoice } : {}),
         ...(result.keywords.length ? { topics: result.keywords } : {}),
         ...(colorKit ? { colors: colorKit } : {}),
         ...(logoUrl && !currentLogoIsImage ? { logo_url: logoUrl } : {}),
@@ -527,6 +740,7 @@ Responda SOMENTE com JSON válido neste formato:
       console.error("[studio-brand-interpret] update", updateError);
       return json({ error: "Interpretação feita, mas não foi possível salvar." }, 500);
     }
+
 
 
     return json({ ok: true, ...result });
