@@ -88,11 +88,24 @@ const StudioPhotos = ({
             <p className="text-[11px] text-muted-foreground">
               Privadas da sua conta. Entram nas artes de retrato, split e tipografia.
             </p>
+            {hasLimit && (
+              <p className="mt-0.5 text-[11px] font-semibold text-foreground">
+                {photos.length} de {limit} fotos do seu plano
+              </p>
+            )}
           </div>
           <button type="button" onClick={onClose} className="rounded-full border border-border p-1.5 text-muted-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {onTogglePin && (
+          <p className="mb-3 rounded-2xl border border-border bg-muted/40 p-2.5 text-[11px] text-muted-foreground">
+            {pinned.size === 0
+              ? "Fixe fotos no alfinete para forçar o motor a usar só elas nesta geração."
+              : `${pinned.size} foto(s) fixada(s): só elas entram nas artes, cada uma no assunto com o qual combina.`}
+          </p>
+        )}
 
         <div className="mb-4 rounded-2xl border border-border bg-background p-3">
           <input
@@ -127,14 +140,28 @@ const StudioPhotos = ({
           />
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || full || limit === 0}
             onClick={() => fileRef.current?.click()}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[12px] font-semibold text-primary-foreground disabled:opacity-60"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {busy ? "Enviando…" : "Enviar foto"}
+            {busy ? "Enviando…" : full ? "Acervo cheio" : "Enviar foto"}
           </button>
+          <p className="mt-2 text-[10px] text-muted-foreground">
+            Até 15 MB por arquivo (JPG ou PNG). Fotos muito grandes são otimizadas no envio.
+          </p>
+          {limit === 0 && (
+            <p className="mt-1 text-[11px] font-semibold text-foreground">
+              O acervo de fotos faz parte dos planos assinados. Assine para enviar as suas.
+            </p>
+          )}
+          {full && limit !== 0 && (
+            <p className="mt-1 text-[11px] font-semibold text-foreground">
+              Você atingiu o limite do plano. Remova uma foto ou faça upgrade para ampliar o acervo.
+            </p>
+          )}
         </div>
+
 
         {loading ? (
           <p className="py-6 text-center text-[12px] text-muted-foreground">Carregando acervo…</p>
