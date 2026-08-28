@@ -138,7 +138,16 @@ export const PHOTO_THEMES: PhotoTheme[] = [
   },
 ];
 
+/** Temas padrão por categoria, quando o label não diz nada. */
+const USAGE_THEMES: Record<StudioPhoto["usage"], TopicId[]> = {
+  institucional: BRAND_TOPICS,
+  atendimento: ASSESS_TOPICS,
+  produto: PRODUCT_TOPICS,
+  livre: LOAD_TOPICS,
+};
+
 /**
+
  * FOTOS DE PROCEDIMENTO ESPECÍFICO — LISTA FECHADA.
  *
  * Algumas fotos mostram um recurso com significado clínico próprio e não podem
