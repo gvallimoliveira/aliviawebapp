@@ -31,12 +31,22 @@ const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
             {feature.tag}
           </p>
 
-          <img
-            src={feature.poster}
-            alt={feature.headline ?? feature.title}
-            loading="lazy"
-            className="max-h-[52vh] w-auto max-w-full rounded-3xl border border-border object-contain shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.45)]"
-          />
+          {feature.poster ? (
+            <img
+              src={feature.poster}
+              alt={feature.headline ?? feature.title}
+              loading="lazy"
+              className="max-h-[52vh] w-auto max-w-full rounded-3xl border border-border object-contain shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.45)]"
+            />
+          ) : (
+            /* Sem imagem: moldura tipográfica com a inicial da funcionalidade. */
+            <div className="flex h-40 w-40 items-center justify-center rounded-3xl border border-border bg-card md:h-56 md:w-56">
+              <span className="text-6xl font-bold text-primary/70 md:text-7xl">
+                {(feature.title || "•").trim().charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+
 
           <h2 className="max-w-2xl text-2xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
             {feature.headline ?? feature.title}
