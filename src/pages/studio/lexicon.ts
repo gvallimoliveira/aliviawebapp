@@ -460,6 +460,14 @@ export const lexicalCandidates = (text: string, register: VoiceRegister): string
   return found;
 };
 
+/** Gênero gramatical aproximado (última palavra do termo). */
+const genderOf = (term: string) => {
+  const last = term.trim().split(/\s+/).pop()?.toLowerCase() ?? "";
+  return /a$|ção$|dade$|agem$/.test(last) ? "f" : "m";
+};
+
+const DETERMINERS = /\b(o|a|os|as|um|uma|uns|umas|do|da|no|na|ao|à|este|esta|esse|essa|aquele|aquela|seu|sua|meu|minha|nosso|nossa|todo|toda|cada|outro|outra)$/i;
+
 /**
  * Reescreve um texto trocando palavras recorrentes por sinônimos do registro.
  * Determinístico: mesma seed + mesmo texto ⇒ mesmo resultado.
@@ -476,8 +484,15 @@ export const applyLexicon = (text: string, options: LexiconOptions): string => {
   const hits: Hit[] = [];
   for (const match of text.matchAll(ALL_PATTERN)) {
     const word = match[1];
-    const variants = synonymsOf(word, register).filter((v) => v.toLowerCase() !== word.toLowerCase());
+    const start = match.index ?? 0;
+    // Concordância: depois de artigo/determinante o sinônimo precisa ter o mesmo gênero.
+    const before = text.slice(Math.max(0, start - 24), start).replace(/\s+$/, "");
+    const needsGender = DETERMINERS.test(before);
+    const variants = synonymsOf(word, register).filter(
+      (v) => v.toLowerCase() !== word.toLowerCase() && (!needsGender || genderOf(v) === genderOf(word)),
+    );
     if (!variants.length) continue;
+
     hits.push({ start: match.index ?? 0, end: (match.index ?? 0) + word.length, word, variants });
   }
   if (!hits.length) return text;
