@@ -136,8 +136,16 @@ export const composeHeadlines = (
   perFrame = 3,
 ): Headline[] => {
   const eligible = HEADLINE_FRAMES.filter((f) => hasIngredient(ing, f.needs));
+  const persuasionIds = new Set(PERSUASION_FRAMES.map((f) => f.id));
   const share = opts.intensity !== undefined && opts.intensity < 0.35 ? 0.45 : opts.intensity !== undefined && opts.intensity < 0.75 ? 0.72 : 1;
-  const frames = rng.shuffle(eligible).slice(0, Math.max(6, Math.ceil(eligible.length * share)));
+  const pool = rng.shuffle(eligible).slice(0, Math.max(6, Math.ceil(eligible.length * share)));
+  const impact = rng.shuffle(eligible.filter((f) => persuasionIds.has(f.id)));
+  /**
+   * O ponto zero da arte precisa ser de alto impacto: os frames de persuasão
+   * (curiosidade, custo da inação, objeção) entram sempre e vêm PRIMEIRO, então
+   * são eles que alimentam o slot de headline principal dos blocos.
+   */
+  const frames = Array.from(new Set([...impact.slice(0, 6), ...pool]));
   const out: Headline[] = [];
   /** Deslocamento do lote: gira os ingredientes de cada frame a cada seed. */
   const offset = rng.int(101);
