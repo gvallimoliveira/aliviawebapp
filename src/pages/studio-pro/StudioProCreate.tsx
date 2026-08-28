@@ -208,6 +208,7 @@ const StudioProCreate = ({
   const newVersion = async () => {
     if (unlimited) {
       setSeed(randomSeed());
+      setSaved(new Set());
       return;
     }
     setBusy("quota");
@@ -221,10 +222,12 @@ const StudioProCreate = ({
       // Falha de leitura não é cota estourada: libera o lote e avisa sem falar de upgrade.
       toast.warning("Não conseguimos confirmar sua cota agora — gerando de qualquer forma.");
       setSeed(randomSeed());
+      setSaved(new Set());
       return;
     }
 
     setSeed(randomSeed());
+    setSaved(new Set());
   };
 
 
