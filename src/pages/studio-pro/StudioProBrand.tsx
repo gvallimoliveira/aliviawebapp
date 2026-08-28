@@ -360,7 +360,10 @@ const StudioProBrand = () => {
           : "Marca interpretada. Revise os públicos abaixo.",
       );
 
-      void load();
+      // Espera a recarga e força a re-hidratação: sem isso os campos só
+      // apareciam após F5.
+      await load();
+      setHydrateNonce((n) => n + 1);
     } catch (err) {
       console.error("[studio-pro] interpret", err);
       toast.error("Não foi possível interpretar a marca agora.");
