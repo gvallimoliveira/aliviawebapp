@@ -670,6 +670,11 @@ const StudioProCreate = ({
       toast.error("Não foi possível salvar o carrossel.");
       return;
     }
+    setSaved((prev) => {
+      const next = new Set(prev);
+      for (const i of indexes) next.add(i);
+      return next;
+    });
     toast.success(`Carrossel salvo em ${folder === "Todas" ? "Geral" : folder} (${indexes.length} slides)`);
     onSaved?.();
   };
