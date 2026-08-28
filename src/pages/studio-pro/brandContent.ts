@@ -10,7 +10,7 @@ import {
   composeTypos,
   type CopyIngredients,
 } from "@/pages/studio/phrasing";
-import { GLOBAL_SEGMENT, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
+import { GLOBAL_SEGMENT, audienceHook, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 
@@ -397,65 +397,135 @@ export const buildBrandContent = (
 /* SEGMENTAÇÃO: nicho específico x visão global 360°                          */
 /* ------------------------------------------------------------------------- */
 
+/** Minúscula só na primeira letra, preservando siglas e números (60+). */
+const lower1 = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text);
+const strip = (text: string) => text.trim().replace(/\s*[.!?]+$/, "");
+
 /**
- * Aplica um público (nicho) sobre o acervo base: dores, desejos, provas e CTA
- * daquele segmento entram na frente, mantendo todos os outros blocos vivos.
+ * Aplica um público (nicho ou sub-nicho) sobre o acervo base.
+ *
+ * REGRA DURA DE DIRECIONAMENTO: a arte precisa CHAMAR o público pela
+ * palavra-chave dele ("Dor crônica", "Esportista", "Geração 60+"). Por isso o
+ * overlay não é decorativo: ele gera headline, tipografia-herói, listas de
+ * medos, listas de valor, carrossel e fechos, todos citando a palavra-chave —
+ * e, quando o público é um SUB-NICHO, o acervo base entra apenas como cauda
+ * curta para não diluir a comunicação dirigida.
  */
 const applyAudience = (base: WorldContent, brand: string, audience: BrandAudience): WorldContent => {
   const who = audience.label.trim();
-  const pains = audience.pains ?? [];
-  const desires = audience.desires ?? [];
-  const proof = audience.proof ?? [];
+  const key = audienceKeyword(audience);
+  const KEY = key.toUpperCase();
+  const hook = audienceHook(audience);
+  const pains = (audience.pains ?? []).map(strip);
+  const desires = (audience.desires ?? []).map(strip);
+  const proof = (audience.proof ?? []).map(strip);
   const cta = audience.cta?.trim() || "Falar com a gente";
   const desc = audience.description?.trim();
+  // Sub-nicho = comunicação dirigida: o acervo genérico vira só cauda.
+  const focused = Boolean(audience.parentId?.trim());
+  const tail = <T,>(list: T[]) => (focused ? list.slice(0, 3) : list);
+
+  const headlines = [
+    ...pains.slice(0, 3).map((p) => ({ strong: key, rest: `: ${lower1(p)} não precisa ser a sua rotina.` })),
+    ...desires.slice(0, 2).map((d) => ({ strong: key, rest: `: ${lower1(d)} começa com uma decisão.` })),
+    ...proof.slice(0, 2).map((p) => ({ strong: `${key} pede método`, rest: `. ${p}.` })),
+    { strong: `${hook}`, rest: `: isso foi feito para o seu caso.` },
+    { strong: `Feito para ${lower1(key)}`, rest: ", não para todo mundo." },
+  ];
+
+  const typos = [
+    { lead: "Se o assunto é", big: key, tail: pains[0] ? `${pains[0]}.` : `a conversa muda de nível.` },
+    { lead: hook.replace(/^Você/, "Você") + ":", big: key, tail: desires[0] ? `${desires[0]}.` : `tem caminho.` },
+    ...proof.slice(0, 1).map((p) => ({ lead: `${key} com`, big: "critério", tail: `${p}.` })),
+  ];
+
+  const lists = [
+    ...(pains.length >= 3
+      ? [{
+          heading: `${pains.length} medos de quem convive com ${lower1(key)}`,
+          items: pains,
+          closing: `${brand} trata cada um desses pontos com processo, não com promessa.`,
+        }]
+      : []),
+    ...(proof.length >= 3
+      ? [{
+          heading: `${key}: ${proof.length} coisas que fazem diferença de verdade`,
+          items: proof,
+          closing: `É isso que ${brand} entrega para quem está nessa situação.`,
+        }]
+      : []),
+    ...(desires.length >= 2
+      ? [{
+          heading: `O que muda quando ${lower1(key)} é levado a sério`,
+          items: desires,
+          closing: `${hook}, o próximo passo existe e é claro.`,
+        }]
+      : []),
+  ];
+
+  const carousels = [
+    ...(pains.length && desires.length
+      ? [{
+          kicker: KEY,
+          title: `${key}: do medo ao plano`,
+          coverSub: `${hook}, este carrossel é para você.`,
+          slides: [
+            ...pains.slice(0, 2).map((p) => ({ heading: "O que você sente hoje", body: `${p}.` })),
+            ...desires.slice(0, 1).map((d) => ({ heading: "O que passa a ser possível", body: `${d}.` })),
+            ...proof.slice(0, 1).map((p) => ({ heading: "Como a gente chega lá", body: `${p}.` })),
+          ],
+          cta: { title: `${key}: quer começar?`, sub: cta },
+        }]
+      : []),
+  ];
 
   return {
     ...base,
     label: `${brand} · ${who}`,
-    kickers: [`PARA ${who.toUpperCase()}`, who.toUpperCase(), ...base.kickers],
-    headlines: [
-      ...(pains[0] ? [{ strong: pains[0], rest: " não precisa ser a sua rotina." }] : []),
-      ...(desires[0] ? [{ strong: desires[0], rest: " começa com uma decisão." }] : []),
-      { strong: `Feito para ${who.toLowerCase()}`, rest: ", não para todo mundo." },
-      ...base.headlines,
+    kickers: [KEY, `PARA ${KEY}`, `${KEY} · ${brand.toUpperCase()}`, ...tail(base.kickers)],
+    headlines: [...headlines, ...tail(base.headlines)],
+    subs: [
+      ...(desc ? [desc] : []),
+      ...proof.slice(0, 3).map((p) => `${key}: ${lower1(p)}.`),
+      ...(pains[0] ? [`${hook}: ${lower1(pains[0])} tem explicação — e conduta.`] : []),
+      ...tail(base.subs),
     ],
-    subs: [...(desc ? [desc] : []), ...proof.slice(0, 2), ...base.subs],
+    typos: [...typos, ...tail(base.typos)],
     kinetic: [
-      ...(pains[0] ? [{ kicker: `A DOR DE ${who.toUpperCase()}`, word: "Hoje", caption: pains[0] }] : []),
-      ...(desires[0] ? [{ kicker: "O QUE MUDA", word: "Depois", caption: desires[0] }] : []),
-      ...base.kinetic,
+      ...(pains[0] ? [{ kicker: `${KEY} HOJE`, word: "Hoje", caption: pains[0] }] : []),
+      ...(desires[0] ? [{ kicker: `${KEY} DEPOIS`, word: "Depois", caption: desires[0] }] : []),
+      ...tail(base.kinetic),
     ],
     compare: [
-      ...(pains.length && desires.length
-        ? [{ title: `${who}: antes e depois`, before: pains, after: desires }]
-        : []),
-      ...base.compare,
+      ...(pains.length && desires.length ? [{ title: `${key}: antes e depois`, before: pains, after: desires }] : []),
+      ...tail(base.compare),
     ],
-    lists: [
-      ...(pains.length >= 3
-        ? [{
-            heading: `${pains.length} coisas que ${who.toLowerCase()} não deveria aceitar`,
-            items: pains,
-            closing: `${brand} resolve isso com processo, não com promessa.`,
-          }]
-        : []),
-      ...base.lists,
+    lists: [...lists, ...tail(base.lists)],
+    quotes: [
+      ...desires.slice(0, 2).map((d) => ({ text: `“${d}.”` })),
+      ...(pains[0] ? [{ text: `“Achei que ${lower1(pains[0])} fosse para sempre.”` }] : []),
+      ...tail(base.quotes),
     ],
-    quotes: [...(desires[0] ? [{ text: `“${desires[0]}.”` }] : []), ...base.quotes],
-    marquee: [[who, ...pains.slice(0, 2), ...desires.slice(0, 2)].filter(Boolean), ...base.marquee],
+    marquee: [[key, ...pains.slice(0, 2), ...desires.slice(0, 2)].filter(Boolean), ...tail(base.marquee)],
+    carousels: [...carousels, ...tail(base.carousels)],
     closings: [
-      { title: `${who}: o próximo passo é seu`, sub: desires[0] ?? `Fale com ${brand} hoje.`, cta },
-      ...base.closings,
+      { title: `${key}: o próximo passo é seu`, sub: desires[0] ?? `Fale com ${brand} hoje.`, cta },
+      { title: hook, sub: proof[0] ?? `${brand} tem um caminho para o seu caso.`, cta },
+      ...tail(base.closings),
     ],
     sales: {
       ...base.sales,
-      audience: who,
+      audience: `${who} (${key})`,
       proofs: proof.length ? proof : base.sales.proofs,
-      objections: pains.length ? [`Você já tentou e não deu certo? O problema era ${pains[0].toLowerCase()}.`, ...base.sales.objections] : base.sales.objections,
+      objections: pains.length
+        ? [`Você já tentou e não deu certo? O problema era ${lower1(pains[0])}.`, ...base.sales.objections]
+        : base.sales.objections,
       ctas: [cta, ...base.sales.ctas],
+      hashtags: [...new Set([key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), ...base.sales.hashtags])],
     },
   };
 };
+
 
 /**
  * Visão 360°: interpola todos os nichos numa leitura única do produto — um

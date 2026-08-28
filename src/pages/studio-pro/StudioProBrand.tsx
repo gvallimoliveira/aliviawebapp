@@ -904,6 +904,30 @@ const StudioProBrand = () => {
                       ))}
 
                     </div>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <div>
+                        <Label htmlFor={`edit-keyword-${a.id}`} className="text-[11px]">
+                          Palavra-chave na arte
+                        </Label>
+                        <Input
+                          id={`edit-keyword-${a.id}`}
+                          placeholder="Ex.: Dor crônica, Esportista, Geração 60+"
+                          value={a.keyword ?? ""}
+                          onChange={(e) => updateAudience(i, { keyword: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-hook-${a.id}`} className="text-[11px]">
+                          Chamada direta (você...)
+                        </Label>
+                        <Input
+                          id={`edit-hook-${a.id}`}
+                          placeholder="Ex.: Você que convive com dor crônica há meses"
+                          value={a.hook ?? ""}
+                          onChange={(e) => updateAudience(i, { hook: e.target.value })}
+                        />
+                      </div>
+                    </div>
                     <div className="mt-2">
                       <Label htmlFor={`edit-cta-${a.id}`} className="text-[11px]">
                         Objetivo / CTA deste público
@@ -915,6 +939,7 @@ const StudioProBrand = () => {
                         onChange={(e) => updateAudience(i, { cta: e.target.value })}
                       />
                     </div>
+
                   </div>
                 ))}
                 <div className="flex flex-wrap items-center gap-3">

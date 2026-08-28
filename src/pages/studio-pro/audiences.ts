@@ -38,6 +38,17 @@ export type BrandAudience = {
   /** Chamada para ação preferida desse nicho. */
   cta?: string;
   /**
+   * PALAVRA-CHAVE do público — o termo que a arte precisa dizer na cara
+   * ("Dor crônica", "Esportista", "Geração 60+"). Sem isso o texto sai
+   * genérico e o público não se reconhece. Fallback: o próprio label.
+   */
+  keyword?: string;
+  /**
+   * GANCHO direto, em 2ª pessoa, que abre a frase ("Você que convive com dor
+   * há meses"). Fallback derivado do label.
+   */
+  hook?: string;
+  /**
    * REGRA DO SISTEMA — públicos matriz x derivados.
    * Vazio/ausente = público MATRIZ (conta na métrica oficial da marca).
    * Preenchido com o id de outro público = SUB-NICHO derivado dele: tem
@@ -45,6 +56,24 @@ export type BrandAudience = {
    */
   parentId?: string;
 };
+
+/** Termo que a arte deve gritar para o público se reconhecer. */
+export const audienceKeyword = (a: BrandAudience): string => {
+  const own = a.keyword?.trim();
+  if (own) return own;
+  return (
+    a.label
+      .trim()
+      .replace(/^pacientes?\s+(com|em|no|na|de)\s+/i, "")
+      .replace(/^praticante de\s+/i, "")
+      .trim() || a.label.trim()
+  );
+};
+
+/** Abertura em 2ª pessoa, para chamar o público diretamente na arte. */
+export const audienceHook = (a: BrandAudience): string =>
+  a.hook?.trim() || `Você, ${audienceKeyword(a).toLowerCase()}`;
+
 
 export const slugifySegment = (label: string) =>
   label
@@ -78,6 +107,8 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
         desires: asStringArray(row.desires),
         proof: asStringArray(row.proof),
         cta: String(row.cta ?? "").trim() || undefined,
+        keyword: String(row.keyword ?? "").trim() || undefined,
+        hook: String(row.hook ?? "").trim() || undefined,
         parentId: String(row.parentId ?? row.parent_id ?? "").trim() || undefined,
       };
     })
@@ -96,6 +127,8 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
       ...(a.desires?.length ? { desires: a.desires } : {}),
       ...(a.proof?.length ? { proof: a.proof } : {}),
       ...(a.cta?.trim() ? { cta: a.cta.trim() } : {}),
+      ...(a.keyword?.trim() ? { keyword: a.keyword.trim() } : {}),
+      ...(a.hook?.trim() ? { hook: a.hook.trim() } : {}),
       ...(a.parentId?.trim() ? { parentId: a.parentId.trim() } : {}),
     }));
 
@@ -211,6 +244,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
   },
   {
     id: "recem-formado",
+    keyword: "Recém-formado",
+    hook: "Você, recém-formado, atendendo os primeiros pacientes",
     label: "Recém-formado",
     description: "Sub-nicho do acadêmico: já tem registro, atende os primeiros pacientes e teme errar a conduta.",
     pains: [
@@ -229,6 +264,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
   },
   {
     id: "paciente-dor-cronica",
+    keyword: "Dor crônica",
+    hook: "Você que convive com dor crônica há meses",
     label: "Paciente com dor crônica",
     description:
       "Sub-nicho de Paciente: convive com dor há meses ou anos, já passou por vários profissionais e desconfia de promessa fácil.",
@@ -250,6 +287,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
   },
   {
     id: "paciente-pos-operatorio",
+    keyword: "Pós-operatório",
+    hook: "Você que acabou de operar",
     label: "Paciente pós-operatório",
     description: "Sub-nicho de Paciente: acabou de operar e precisa de condução segura fase a fase.",
     pains: ["Insegurança sobre o que pode ou não fazer", "Orientação genérica na alta hospitalar", "Medo de forçar e perder a cirurgia"],
@@ -264,6 +303,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
   },
   {
     id: "paciente-atleta-amador",
+    keyword: "Esportista",
+    hook: "Você que treina e não quer parar",
     label: "Praticante de esporte",
     description: "Sub-nicho de Paciente: corre, pedala ou treina força e quer voltar ao esporte sem recair na lesão.",
     pains: ["Parar de treinar por causa da lesão", "Voltar cedo demais e recair", "Alta sem critério objetivo"],
@@ -274,6 +315,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
   },
   {
     id: "paciente-60-mais",
+    keyword: "Geração 60+",
+    hook: "Você da geração 60+",
     label: "Paciente 60+",
     description: "Sub-nicho de Paciente: sente perda de força e equilíbrio e teme depender de alguém.",
     pains: ["Medo de cair", "Aceitar que dor é coisa da idade", "Exercício que parece arriscado demais"],
