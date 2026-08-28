@@ -123,10 +123,43 @@ export const SHOWCASE: ShowcaseItem[] = [
     kicker: "3 erros que custam caro",
     headline: "O que trava o caixa de um negócio pequeno.",
     accent: "trava",
-    lines: [
-      "Misturar conta pessoal e conta da empresa.",
-      "Deixar o regime tributário no automático.",
-      "Fechar o mês sem olhar a margem por produto.",
+    slides: [
+      {
+        role: "cover",
+        kicker: "3 erros que custam caro",
+        headline: "O que trava o caixa de um negócio pequeno.",
+        accent: "trava",
+        support: "Arrasta para ver os três — e o que fazer em cada um.",
+      },
+      {
+        role: "point",
+        kicker: "Erro 1",
+        headline: "Conta pessoal e conta da empresa no mesmo lugar.",
+        accent: "mesmo lugar",
+        support: "Sem separação, ninguém sabe quanto o negócio realmente lucra.",
+      },
+      {
+        role: "point",
+        kicker: "Erro 2",
+        headline: "Regime tributário escolhido uma vez e nunca revisto.",
+        accent: "nunca revisto",
+        support: "A cada faturamento novo, a conta muda. Revisar é economia.",
+      },
+      {
+        role: "stat",
+        kicker: "Erro 3",
+        value: "1 em 3",
+        headline: "negócios fecham o mês sem olhar a margem por produto.",
+        accent: "margem",
+        support: "Vender mais com margem errada só acelera o prejuízo.",
+      },
+      {
+        role: "cta",
+        kicker: "Próximo passo",
+        headline: "Comece separando as contas esta semana.",
+        accent: "esta semana",
+        support: "Chame no direct: a gente monta o mapa do seu caixa.",
+      },
     ],
   },
   {
