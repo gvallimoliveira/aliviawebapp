@@ -343,6 +343,7 @@ const StudioProApp = () => {
       return;
     }
     setBrands((prev) => prev.filter((b) => b.id !== id));
+    toast.success("Marca removida.");
   };
 
 
