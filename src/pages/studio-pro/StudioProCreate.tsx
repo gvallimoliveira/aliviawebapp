@@ -291,13 +291,13 @@ const StudioProCreate = ({
       name: brand.name,
       // Tom de voz é diretriz, não copy: o slogan sai da descrição/nicho.
       slogan: brandSlogan({ name: brand.name, niche: brand.niche, description: brand.description }),
-
       logo: brand.logo_url,
       handle: brand.instagram_handle ?? null,
       site: brand.source_url ?? null,
     });
     return `${brand.id}:${brand.name}:${brand.logo_url ?? ""}`;
-  }, [brand.id, brand.name, brand.niche, brand.tone, brand.logo_url, brand.instagram_handle, brand.source_url]);
+  }, [brand.id, brand.name, brand.niche, brand.description, brand.logo_url, brand.instagram_handle, brand.source_url]);
+
 
   const picker = useMemo(
     () => createPicker(buildCoverage(aliviaWorld ?? "pro", content, {}), () => {}),
