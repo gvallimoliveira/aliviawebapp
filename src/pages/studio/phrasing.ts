@@ -111,7 +111,8 @@ const hasIngredient = (ing: CopyIngredients, needs?: HeadlineFrame["needs"]) => 
 };
 
 const dress = (text: string, opts: PhrasingOptions) =>
-  applyLexicon(text, { register: opts.register, seed: opts.seed, forbidden: opts.forbidden, intensity: opts.intensity });
+  rephrase(text, { register: opts.register, seed: opts.seed, forbidden: opts.forbidden, intensity: opts.intensity });
+
 
 /**
  * Gera um acervo grande de headlines: cada frame elegível rende variações
