@@ -550,7 +550,7 @@ const StudioProBrand = () => {
             inspirations={inspirations}
             // VIP recebe a página inteira; planos e acessos concedidos recebem
             // lotes de 6 artes por geração, para render a cota em variedade.
-            maxArts={access.unlimited ? Infinity : 6}
+            unlimited={access.unlimited}
             // Só a lista de artes é recarregada: a versão em tela não muda.
             onSaved={() => void loadCreations()}
           />

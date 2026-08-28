@@ -14,8 +14,8 @@ export const PRODUCT = {
     "Um estúdio de arte que entende o DNA da sua marca e gera posts editoriais prontos para publicar — em segundos, em qualquer nicho.",
   /** Rota base isolada do produto público. */
   base: "/studio-pro",
-  /** Artes gratuitas concedidas no cadastro (saem com marca d'água discreta). */
-  freeCredits: 5,
+  /** Gerações gratuitas concedidas no cadastro (saem com marca d'água discreta). */
+  freeCredits: 2,
   /** Desconto aplicado no plano anual (20%). */
   annualDiscount: 0.2,
 } as const;
@@ -42,7 +42,7 @@ export const PLANS: {
     price: 39,
     audience: "Criador ou profissional autônomo",
     brands: "1 marca",
-    exports: "60 artes por mês",
+    exports: "10 gerações por mês",
     perks: [
       "Kit de marca (logo, cores, fontes)",
       "Galeria de favoritos salva na sua conta",
@@ -56,7 +56,7 @@ export const PLANS: {
     price: 99,
     audience: "Negócio com presença constante",
     brands: "3 marcas",
-    exports: "200 artes por mês",
+    exports: "40 gerações por mês",
     highlight: true,
     perks: [
       "Tudo do Solo",
@@ -71,7 +71,7 @@ export const PLANS: {
     price: 249,
     audience: "Quem cuida da marca de outros",
     brands: "15 marcas",
-    exports: "800 artes por mês",
+    exports: "120 gerações por mês",
     perks: ["Tudo do Marca", "Pastas por cliente", "Créditos extras avulsos", "Suporte prioritário"],
   },
 ];

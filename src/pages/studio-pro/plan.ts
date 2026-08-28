@@ -22,17 +22,17 @@ export type StudioAccess = {
   granted: boolean;
   /** Limite de marcas do plano efetivo. */
   brandLimit: number;
-  /** Artes por período (Infinity para VIP). */
+  /** Gerações por período (Infinity para VIP). Cada geração rende dezenas de artes. */
   creditsPerPeriod: number;
   /** Downloads saem com marca d'água discreta. */
   watermark: boolean;
 };
 
 export const PLAN_LIMITS: Record<StudioPlan, { brands: number; credits: number }> = {
-  free: { brands: 1, credits: 5 },
-  solo: { brands: 1, credits: 60 },
-  marca: { brands: 3, credits: 200 },
-  agencia: { brands: 15, credits: 800 },
+  free: { brands: 1, credits: 2 },
+  solo: { brands: 1, credits: 10 },
+  marca: { brands: 3, credits: 40 },
+  agencia: { brands: 15, credits: 120 },
 };
 
 const buildAccess = (

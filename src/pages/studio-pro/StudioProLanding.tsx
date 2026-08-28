@@ -354,7 +354,7 @@ const StudioProLanding = () => {
         <div className="mx-auto max-w-6xl">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Planos</h2>
           <p className="mt-3 max-w-xl text-sm text-muted-foreground">
-            Comece com {PRODUCT.freeCredits} artes gratuitas (com marca d'água discreta). Ao assinar, o
+            Comece com {PRODUCT.freeCredits} gerações gratuitas (com marca d'água discreta). Ao assinar, o
             download sai limpo — e há créditos extras avulsos quando o mês pede mais volume.
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -409,7 +409,7 @@ const StudioProLanding = () => {
           </dl>
           <div className="mt-10 flex flex-col items-center gap-3 rounded-3xl border border-primary/40 bg-primary/5 p-8 text-center">
             <h3 className="text-2xl font-black tracking-tight">
-              Comece com {PRODUCT.freeCredits} artes por conta da casa.
+              Comece com {PRODUCT.freeCredits} gerações por conta da casa.
             </h3>
             <Button asChild size="lg" className="rounded-full">
               <Link to={`${PRODUCT.base}/entrar`}>

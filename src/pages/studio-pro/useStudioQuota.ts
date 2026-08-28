@@ -5,14 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 /**
  * COTA DE GERAÇÕES DO STUDIO PÚBLICO
  *
- * A cota do plano é contada em artes, mas o usuário compra "gerações": cada
- * clique em "Nova versão" entrega um lote fixo (6 artes) e desconta 6 da cota.
- * Assim o plano Solo (60 artes/mês) vale 10 gerações, Marca 33 e Agência 133.
+ * A cota do plano é contada em GERAÇÕES por período, não em artes: cada clique
+ * em "Nova versão" custa 1 geração e entrega a versão inteira — que o usuário
+ * navega de graça por público, visão 360°, objetivo, modelo e formato (dezenas
+ * de artes por geração). Solo 10, Marca 40, Agência 120, grátis 2.
  *
  * O desconto é feito no banco (`consume_studio_generation`), nunca no cliente:
  * é a única fonte de verdade e o que garante o bloqueio.
  */
-export const STUDIO_BATCH_SIZE = 6;
+export const STUDIO_GENERATION_COST = 1;
 
 export type StudioQuota = {
   plan: string;
@@ -40,7 +41,7 @@ type Row = {
 const toQuota = (row: Row): StudioQuota => ({
   plan: row.plan,
   unlimited: !!row.unlimited,
-  batchSize: row.batch_size ?? STUDIO_BATCH_SIZE,
+  batchSize: row.batch_size ?? STUDIO_GENERATION_COST,
   allowance: row.allowance ?? 0,
   used: row.used_this_period ?? 0,
   remaining: row.remaining ?? 0,
@@ -96,7 +97,7 @@ export const useStudioQuota = () => {
    * `error` = a chamada falhou (a UI deve avisar e permitir tentar de novo).
    */
   const consume = useCallback(
-    async (amount = STUDIO_BATCH_SIZE): Promise<ConsumeResult> => {
+    async (amount = STUDIO_GENERATION_COST): Promise<ConsumeResult> => {
       const { data, error } = await supabase.rpc("consume_studio_generation", { p_amount: amount });
       if (error) {
         console.error("[studio-pro] consume_studio_generation", error);

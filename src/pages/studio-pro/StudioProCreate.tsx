@@ -27,7 +27,7 @@ import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { ensureFontLoaded, findFont } from "./brandFonts";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
-import { STUDIO_BATCH_SIZE, useStudioQuota } from "./useStudioQuota";
+import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
 
@@ -76,12 +76,8 @@ type Props = {
    * para continuar inovando.
    */
   inspirations?: ComposedBlock[][];
-  /**
-   * Quantas artes cada geração entrega. `Infinity` = página inteira (VIP /
-   * acesso ilimitado). Planos pagos e acessos concedidos recebem lotes curtos
-   * para não queimar a cota de uma vez.
-   */
-  maxArts?: number;
+  /** Acesso sem cota (VIP): "Nova versão" nunca debita nada. */
+  unlimited?: boolean;
   onSaved?: () => void;
 };
 
@@ -167,7 +163,7 @@ const StudioProCreate = ({
   folder,
   watermark,
   inspirations = [],
-  maxArts = STUDIO_BATCH_SIZE,
+  unlimited: unlimitedAccess = false,
   onSaved,
 }: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
@@ -179,18 +175,18 @@ const StudioProCreate = ({
   const wrapper = useRef<HTMLDivElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const { photos } = useStudioPhotos(true);
-  /** Cota do período: cada geração desconta um lote inteiro da cota do plano. */
+  /** Cota do período: contada em gerações — 1 por clique em "Nova versão". */
   const { quota, error: quotaError, consume } = useStudioQuota();
 
-  const batchSize = Number.isFinite(maxArts) ? (maxArts as number) : STUDIO_BATCH_SIZE;
-  const unlimited = !Number.isFinite(maxArts) || !!quota?.unlimited;
+  const unlimited = unlimitedAccess || !!quota?.unlimited;
   /** Só bloqueia com dado confirmado: cota desconhecida nunca trava o botão. */
-  const blocked = !unlimited && !!quota && !quotaError && quota.remaining < batchSize;
+  const blocked = !unlimited && !!quota && !quotaError && quota.remaining < STUDIO_GENERATION_COST;
 
   /**
-   * "Nova versão" é o que custa cota: trocar público, ângulo ou formato refina o
-   * mesmo lote sem cobrar nada. O desconto acontece no banco antes de sortear a
-   * nova seed — se a cota do mês acabou, a geração é bloqueada com aviso claro.
+   * "Nova versão" é o único clique que custa cota (1 geração). Trocar público,
+   * objetivo, modelo ou formato navega a MESMA geração de graça — é ali que a
+   * versão rende dezenas de artes. O desconto acontece no banco antes da nova
+   * seed; se a cota do período acabou, a geração é bloqueada com aviso claro.
    */
   const newVersion = async () => {
     if (unlimited) {
@@ -198,10 +194,10 @@ const StudioProCreate = ({
       return;
     }
     setBusy("quota");
-    const result = await consume(batchSize);
+    const result = await consume(STUDIO_GENERATION_COST);
     setBusy(null);
     if (result === "exhausted") {
-      toast.error("Sua cota deste período acabou. Faça upgrade para gerar mais artes.");
+      toast.error("Suas gerações deste período acabaram. Faça upgrade para gerar mais.");
       return;
     }
     if (result === "error") {
@@ -332,38 +328,50 @@ const StudioProCreate = ({
   /**
    * ENTREGA POR GERAÇÃO.
    *
-   * VIP (acesso ilimitado) recebe a página inteira — variedade grande de uma vez
-   * para filtrar. Assinantes e acessos concedidos recebem um lote curto
-   * (`maxArts`, padrão 2): assim cada geração custa pouco da cota e o usuário
-   * refina os seletores (público, ângulo, formato) entre os lotes, construindo
-   * variedade temática dentro dos créditos.
+   * A cota é contada em gerações, então cada geração entrega a VERSÃO INTEIRA —
+   * nada de amostrar artes soltas (era isso que quebrava a sequência do
+   * carrossel, entregando um slide isolado). Trocar público, objetivo, modelo ou
+   * formato navega a mesma geração sem custo.
    */
-  const blocks = useMemo(() => {
-    const page = composePage(
-      createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
-      persona,
-      // Com modelos escolhidos, a linhagem de favoritos cede lugar à escolha.
-      models.length > 0 ? undefined : lineage.blocks,
-      content.carousels,
-      photos.length,
-      kindsForModels(models, photos.length, isAlivia),
-      isAlivia,
-    );
-    if (!Number.isFinite(maxArts) || page.length <= maxArts) return page;
-    // Amostra determinística e variada: evita repetir o mesmo tipo no lote.
-    const rng = createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:batch`);
-    const pool = [...page];
-    const picked: ComposedBlock[] = [];
-    const usedKinds = new Set<string>();
-    while (picked.length < maxArts && pool.length > 0) {
-      const idx = rng.int(pool.length);
-      const [candidate] = pool.splice(idx, 1);
-      if (usedKinds.has(candidate.kind) && pool.some((b) => !usedKinds.has(b.kind))) continue;
-      usedKinds.add(candidate.kind);
-      picked.push(candidate);
-    }
-    return picked;
-  }, [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, maxArts, models, isAlivia]);
+  const blocks = useMemo(
+    () =>
+      composePage(
+        createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
+        persona,
+        // Com modelos escolhidos, a linhagem de favoritos cede lugar à escolha.
+        models.length > 0 ? undefined : lineage.blocks,
+        content.carousels,
+        photos.length,
+        kindsForModels(models, photos.length, isAlivia),
+        isAlivia,
+      ),
+    [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, models, isAlivia],
+  );
+
+  /**
+   * AGRUPAMENTO DE ENTREGA.
+   *
+   * Slides do mesmo carrossel viram UM item (faixa com scroll lateral, como no
+   * Instagram); qualquer outra arte é um item avulso.
+   */
+  const groups = useMemo(() => {
+    type Item = { block: ComposedBlock; index: number };
+    const out: { key: string; carousel: boolean; items: Item[] }[] = [];
+    blocks.forEach((block, index) => {
+      const group = block.kind === "carousel" && block.slide ? block.slide.group : null;
+      const last = out[out.length - 1];
+      if (group !== null && last?.carousel && last.key === `carousel-${group}`) {
+        last.items.push({ block, index });
+        return;
+      }
+      out.push({
+        key: group !== null ? `carousel-${group}` : `${block.kind}-${index}`,
+        carousel: group !== null,
+        items: [{ block, index }],
+      });
+    });
+    return out;
+  }, [blocks]);
 
 
 
@@ -496,6 +504,97 @@ const StudioProCreate = ({
     onSaved?.();
   };
 
+  /** Exporta a sequência inteira do carrossel, um PNG numerado por slide. */
+  const downloadCarousel = async (indexes: number[]) => {
+    setBusy(`png-${indexes[0]}`);
+    try {
+      for (let i = 0; i < indexes.length; i += 1) {
+        const node = document.getElementById(`studio-pro-block-${indexes[i]}`) as HTMLElement | null;
+        if (!node) continue;
+        const rect = node.getBoundingClientRect();
+        const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
+        const blob = await renderNodeToBlob(node, ratio, "image/png");
+        await deliver(
+          blob,
+          `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}-carrossel-${String(i + 1).padStart(2, "0")}.png`,
+        );
+      }
+      toast.success(`Carrossel exportado (${indexes.length} slides)`);
+    } catch (error) {
+      console.error("[studio-pro] export carousel", error);
+      toast.error("Não foi possível exportar o carrossel.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** Salva o carrossel como UM item da galeria: capa é a miniatura. */
+  const saveCarousel = async (indexes: number[], caption: string) => {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) {
+      toast.error("Faça login novamente para salvar.");
+      return;
+    }
+    setBusy(`save-${indexes[0]}`);
+    let thumb: string | null = null;
+    let coverPath: string | null = null;
+    for (let i = 0; i < indexes.length; i += 1) {
+      const node = document.getElementById(`studio-pro-block-${indexes[i]}`) as HTMLElement | null;
+      if (!node) continue;
+      const rect = node.getBoundingClientRect();
+      if (i === 0) {
+        try {
+          const thumbRatio = Math.max(1, Math.min(3, 900 / (rect.width || 900)));
+          const blob = await renderNodeToBlob(node, thumbRatio, "image/jpeg", 0.9);
+          thumb = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.warn("[studio-pro] carousel thumb", error);
+        }
+      }
+      try {
+        const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
+        const png = await renderNodeToBlob(node, ratio, "image/png");
+        const path = `${auth.user.id}/${brand.id}/${seed}-carrossel-${String(i + 1).padStart(2, "0")}.png`;
+        const { error: upErr } = await supabase.storage
+          .from("studio-art")
+          .upload(path, png, { contentType: "image/png", upsert: true });
+        if (upErr) throw upErr;
+        if (i === 0) coverPath = path;
+      } catch (error) {
+        console.warn("[studio-pro] carousel png upload", error);
+      }
+    }
+    const { error } = await supabase.from("studio_creations").insert({
+      user_id: auth.user.id,
+      brand_id: brand.id,
+      seed: `${seed}:carrossel:${indexes[0]}`,
+      block_kind: "carousel",
+      format,
+      headline: headlineOf(indexes[0]) || null,
+      caption,
+      thumb,
+      png_path: coverPath,
+      composition: JSON.parse(JSON.stringify(indexes.map((i) => blocks[i]))),
+      segment: activeSegment,
+      angle,
+      folder: folder === "Todas" ? "Geral" : folder,
+      watermarked: watermark,
+    });
+    setBusy(null);
+    if (error) {
+      console.error("[studio-pro] save carousel", error);
+      toast.error("Não foi possível salvar o carrossel.");
+      return;
+    }
+    toast.success(`Carrossel salvo em ${folder === "Todas" ? "Geral" : folder} (${indexes.length} slides)`);
+    onSaved?.();
+  };
+
   const copyCaption = async (caption: string) => {
     try {
       await navigator.clipboard.writeText(caption);
@@ -549,7 +648,7 @@ const StudioProCreate = ({
           <p className="text-xs text-muted-foreground">
             Versão <span className="font-mono">{seed}</span> · direção criativa {persona.name} · destino:{" "}
             {folder === "Todas" ? "Geral" : folder}
-            {!unlimited && ` · lote de ${batchSize} artes por geração`}
+            {!unlimited && " · 1 geração por versão (artes ilimitadas dentro dela)"}
           </p>
           {!unlimited && quotaError && (
             <p className="mt-1 text-xs font-semibold text-destructive">
@@ -559,8 +658,8 @@ const StudioProCreate = ({
           {!unlimited && quota && !quotaError && (
             <p className="mt-1 text-xs font-semibold text-foreground">
               {quota.generationsLeft > 0
-                ? `${quota.generationsLeft} ${quota.generationsLeft === 1 ? "geração" : "gerações"} restantes neste período · ${quota.remaining} de ${quota.allowance} artes`
-                : "Cota do período encerrada — faça upgrade para continuar gerando."}
+                ? `${quota.generationsLeft} de ${quota.allowance} ${quota.allowance === 1 ? "geração" : "gerações"} restantes neste período`
+                : "Gerações do período encerradas — faça upgrade para continuar gerando."}
             </p>
           )}
 
@@ -704,28 +803,34 @@ const StudioProCreate = ({
       </div>
 
       <div ref={wrapper} className="mt-5 flex flex-col items-center gap-6" style={themeStyle}>
-        {blocks.map(({ kind, treatment, motion, slide }, i) => {
-          const Block = STUDIO_BLOCKS[kind];
-          const rng = createRng(`${brand.id}:${seed}:${kind}:${i}`);
-          const caption = buildCaption(content, kind, createRng(`${brand.id}:${seed}:caption:${kind}:${i}`));
-          return (
-            <div key={`${kind}-${i}`} className="w-full">
+        {groups.map((group) => {
+          const first = group.items[0];
+          const indexes = group.items.map((item) => item.index);
+          const caption = buildCaption(
+            content,
+            first.block.kind,
+            createRng(`${brand.id}:${seed}:caption:${first.block.kind}:${first.index}`),
+          );
+          const art = (item: { block: ComposedBlock; index: number }) => {
+            const { kind, treatment, motion, slide } = item.block;
+            const Block = STUDIO_BLOCKS[kind];
+            return (
               <div
-                className={`mx-auto overflow-hidden rounded-2xl border border-border bg-background ${
+                className={`overflow-hidden rounded-2xl border border-border bg-background ${
                   format === "1x1" ? "studio-pro-square" : ""
-                }`}
+                } ${group.carousel ? "shrink-0 snap-center" : "mx-auto"}`}
                 style={FRAME_STYLE[format]}
               >
-                <div id={`studio-pro-block-${i}`} className="h-full w-full">
+                <div id={`studio-pro-block-${item.index}`} className="h-full w-full">
                   <StudioProSignature
-                    artKey={`${brand.id}:${seed}:${kind}:${i}`}
+                    artKey={`${brand.id}:${seed}:${kind}:${item.index}`}
                     enabled={signatureOn}
                     brandName={brand.name}
                   >
                     <StudioMotion kind={motion}>
                       <Block
                         content={content}
-                        rng={rng}
+                        rng={createRng(`${brand.id}:${seed}:${kind}:${item.index}`)}
                         treatment={treatment}
                         format={format}
                         picker={picker}
@@ -737,21 +842,47 @@ const StudioProCreate = ({
                   </StudioProSignature>
                 </div>
               </div>
+            );
+          };
+
+          return (
+            <div key={group.key} className="w-full">
+              {group.carousel ? (
+                <>
+                  <p className="mb-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Carrossel completo · {group.items.length} slides · arraste para o lado →
+                  </p>
+                  {/* Faixa com scroll lateral e snap: a sequência é vista como no Instagram. */}
+                  <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+                    {group.items.map((item) => (
+                      <div key={item.index} className="shrink-0">
+                        {art(item)}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                art(first)
+              )}
 
               <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-8 rounded-full text-xs"
-                  disabled={busy === `png-${i}`}
-                  onClick={() => download(i, kind)}
+                  disabled={busy === `png-${first.index}`}
+                  onClick={() =>
+                    group.carousel
+                      ? void downloadCarousel(indexes)
+                      : void download(first.index, first.block.kind)
+                  }
                 >
-                  {busy === `png-${i}` ? (
+                  {busy === `png-${first.index}` ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Download className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  PNG
+                  {group.carousel ? `PNG (${group.items.length})` : "PNG"}
                 </Button>
                 <Button
                   size="sm"
@@ -765,15 +896,19 @@ const StudioProCreate = ({
                 <Button
                   size="sm"
                   className="h-8 rounded-full text-xs"
-                  disabled={busy === `save-${i}`}
-                  onClick={() => save(i, kind, caption)}
+                  disabled={busy === `save-${first.index}`}
+                  onClick={() =>
+                    group.carousel
+                      ? void saveCarousel(indexes, caption)
+                      : void save(first.index, first.block.kind, caption)
+                  }
                 >
-                  {busy === `save-${i}` ? (
+                  {busy === `save-${first.index}` ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Save className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  Salvar na marca
+                  {group.carousel ? "Salvar carrossel" : "Salvar na marca"}
                 </Button>
               </div>
             </div>

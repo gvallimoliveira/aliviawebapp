@@ -364,7 +364,7 @@ const StudioProApp = () => {
               {!access.unlimited && !quota?.unlimited && quota && !quotaError && (
                 <p className="mt-1 text-xs font-semibold text-foreground">
                   {quota.generationsLeft > 0
-                    ? `${quota.generationsLeft} ${quota.generationsLeft === 1 ? "geração" : "gerações"} de ${quota.batchSize} artes neste período (${quota.used} de ${quota.allowance} usadas)`
+                    ? `${quota.generationsLeft} de ${quota.allowance} ${quota.allowance === 1 ? "geração" : "gerações"} restantes neste período`
                     : `Cota encerrada: ${quota.used} de ${quota.allowance} artes usadas neste período.`}
 
                 </p>
