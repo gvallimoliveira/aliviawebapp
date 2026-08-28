@@ -993,8 +993,9 @@ const StudioProCreate = ({
                 </Button>
                 <Button
                   size="sm"
+                  variant={isSaved ? "secondary" : "default"}
                   className="h-8 rounded-full text-xs"
-                  disabled={busy === `save-${first.index}`}
+                  disabled={isSaved || busy === `save-${first.index}`}
                   onClick={() =>
                     group.carousel
                       ? void saveCarousel(indexes, caption)
@@ -1006,7 +1007,11 @@ const StudioProCreate = ({
                   ) : (
                     <Save className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  {group.carousel ? "Salvar carrossel" : "Salvar na marca"}
+                  {isSaved
+                    ? "Salvo"
+                    : group.carousel
+                      ? "Salvar carrossel"
+                      : "Salvar na marca"}
                 </Button>
               </div>
             </div>
