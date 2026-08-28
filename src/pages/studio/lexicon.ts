@@ -289,7 +289,128 @@ const SYNONYMS: Record<string, SynonymRow> = {
     inspirador: ["próximo", "seguinte"],
     sobrio: ["próximo", "seguinte"],
   },
+
+  // ---- Vocabulário de chamada / CTA (o acervo de legendas vive aqui) ----
+  comece: {
+    all: ["comece", "dê o primeiro passo", "inicie"],
+    tecnico: ["comece", "inicie", "dê início"],
+    proximo: ["comece", "vamos começar", "dá o primeiro passo"],
+    direto: ["comece", "vai agora", "inicie"],
+    inspirador: ["comece", "dê o primeiro passo", "abra esse caminho"],
+    sobrio: ["comece", "inicie", "dê início"],
+  },
+  agora: {
+    all: ["agora", "hoje", "já"],
+    tecnico: ["agora", "desde já", "hoje"],
+    proximo: ["agora", "hoje mesmo", "já"],
+    direto: ["agora", "já", "hoje"],
+    inspirador: ["agora", "hoje mesmo", "neste momento"],
+    sobrio: ["agora", "desde já", "hoje"],
+  },
+  descubra: {
+    all: ["descubra", "conheça", "veja"],
+    tecnico: ["descubra", "conheça", "verifique"],
+    proximo: ["descubra", "veja", "dá uma olhada em"],
+    direto: ["descubra", "veja", "conheça"],
+    inspirador: ["descubra", "encontre", "revele"],
+    sobrio: ["descubra", "conheça", "avalie"],
+  },
+  caminho: {
+    all: ["caminho", "percurso", "rota"],
+    tecnico: ["caminho", "percurso", "trajeto"],
+    proximo: ["caminho", "jeito", "rumo"],
+    direto: ["caminho", "rota", "atalho certo"],
+    inspirador: ["caminho", "jornada", "rumo"],
+    sobrio: ["caminho", "percurso", "trajetória"],
+  },
+  melhor: {
+    all: ["melhor", "mais sólido", "mais consistente"],
+    tecnico: ["melhor", "mais preciso", "mais confiável"],
+    proximo: ["melhor", "mais tranquilo", "mais leve"],
+    direto: ["melhor", "mais certo", "mais eficiente"],
+    inspirador: ["melhor", "mais possível", "mais inspirador"],
+    sobrio: ["melhor", "mais sólido", "mais criterioso"],
+  },
+  ajuda: {
+    all: ["ajuda", "apoio", "suporte"],
+    tecnico: ["ajuda", "suporte", "assistência"],
+    proximo: ["ajuda", "apoio", "uma mão"],
+    direto: ["ajuda", "apoio"],
+    inspirador: ["ajuda", "apoio", "impulso"],
+    sobrio: ["ajuda", "suporte", "acompanhamento"],
+  },
+  fale: {
+    all: ["fale", "converse", "chame"],
+    tecnico: ["fale", "converse", "entre em contato"],
+    proximo: ["fale", "chama", "manda mensagem"],
+    direto: ["fale", "chame", "chama no direct"],
+    inspirador: ["fale", "converse", "abra a conversa"],
+    sobrio: ["fale", "converse", "entre em contato"],
+  },
+  saiba: {
+    all: ["saiba", "entenda", "veja"],
+    tecnico: ["saiba", "entenda", "confira"],
+    proximo: ["saiba", "entenda", "veja"],
+    direto: ["saiba", "veja", "confira"],
+    inspirador: ["saiba", "descubra", "entenda"],
+    sobrio: ["saiba", "entenda", "confira"],
+  },
+  garanta: {
+    all: ["garanta", "assegure", "reserve"],
+  },
+  transforme: {
+    all: ["transforme", "mude", "converta"],
+    inspirador: ["transforme", "reinvente", "mude"],
+    tecnico: ["transforme", "converta", "reorganize"],
+  },
+  aprenda: {
+    all: ["aprenda", "domine", "entenda"],
+  },
+  evite: {
+    all: ["evite", "fuja de", "elimine"],
+  },
+  ganhe: {
+    all: ["ganhe", "conquiste", "acumule"],
+  },
+  tempo: {
+    all: ["tempo", "prazo", "horas"],
+    proximo: ["tempo", "horas do seu dia"],
+    tecnico: ["tempo", "prazo", "ciclo"],
+  },
+  jeito: {
+    all: ["jeito", "forma", "maneira"],
+  },
+  mudança: {
+    all: ["mudança", "virada", "transformação"],
+  },
+  passo: {
+    all: ["passo", "etapa", "movimento"],
+  },
+  história: {
+    all: ["história", "narrativa", "trajetória"],
+  },
+  trabalho: {
+    all: ["trabalho", "atuação", "ofício"],
+    tecnico: ["trabalho", "atuação", "prática"],
+    proximo: ["trabalho", "o que eu faço", "atuação"],
+  },
+  crescer: {
+    all: ["crescer", "evoluir", "avançar"],
+  },
+  agende: {
+    all: ["agende", "marque", "reserve"],
+  },
+  siga: {
+    all: ["siga", "acompanhe", "fique por aqui"],
+  },
+  novo: {
+    all: ["novo", "inédito", "recém-chegado"],
+  },
+  verdade: {
+    all: ["verdade", "fato", "realidade"],
+  },
 };
+
 
 const SYNONYM_KEYS = Object.keys(SYNONYMS);
 
@@ -322,31 +443,84 @@ export type LexiconOptions = {
   forbidden?: string[];
 };
 
+const ALL_PATTERN = new RegExp(
+  `\\b(${SYNONYM_KEYS.slice()
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegex)
+    .join("|")})\\b`,
+  "gi",
+);
+
+/** Palavras do texto que têm sinônimo disponível no registro. */
+export const lexicalCandidates = (text: string, register: VoiceRegister): string[] => {
+  const found: string[] = [];
+  for (const match of text.matchAll(ALL_PATTERN)) {
+    if (synonymsOf(match[1], register).length >= 2) found.push(match[1]);
+  }
+  return found;
+};
+
+/** Gênero gramatical aproximado (última palavra do termo). */
+const genderOf = (term: string) => {
+  const last = term.trim().split(/\s+/).pop()?.toLowerCase() ?? "";
+  return /a$|ção$|dade$|agem$/.test(last) ? "f" : "m";
+};
+
+const DETERMINERS = /\b(o|a|os|as|um|uma|uns|umas|do|da|no|na|ao|à|este|esta|esse|essa|aquele|aquela|seu|sua|meu|minha|nosso|nossa|todo|toda|cada|outro|outra)$/i;
+
 /**
  * Reescreve um texto trocando palavras recorrentes por sinônimos do registro.
  * Determinístico: mesma seed + mesmo texto ⇒ mesmo resultado.
+ *
+ * A quantidade de trocas é proporcional à intensidade, mas SEMPRE há pelo menos
+ * uma troca quando o texto tem alguma palavra elegível — variação "baixa" nunca
+ * devolve a frase idêntica.
  */
 export const applyLexicon = (text: string, options: LexiconOptions): string => {
   if (!text) return text;
   const { register, seed, intensity = 0.65, forbidden = [] } = options;
-  let out = text;
 
-  SYNONYM_KEYS.forEach((key) => {
-    const variants = synonymsOf(key, register);
-    if (variants.length < 2) return;
-    const pattern = new RegExp(`\\b${escapeRegex(key)}\\b`, "gi");
-    let occurrence = 0;
-    out = out.replace(pattern, (match) => {
-      const rng = createRng(`lex:${seed}:${key}:${occurrence}:${text.length}`);
-      occurrence += 1;
-      if (!rng.chance(intensity)) return match;
-      const choice = variants[rng.int(variants.length)];
-      if (!choice || choice.toLowerCase() === match.toLowerCase()) return match;
-      const replacement = matchCase(match, choice);
-      if (forbidden.some((bad) => bad && replacement.toLowerCase().includes(bad.toLowerCase()))) return match;
-      return replacement;
-    });
+  type Hit = { start: number; end: number; word: string; variants: string[] };
+  const hits: Hit[] = [];
+  for (const match of text.matchAll(ALL_PATTERN)) {
+    const word = match[1];
+    const start = match.index ?? 0;
+    // Concordância: depois de artigo/determinante o sinônimo precisa ter o mesmo gênero.
+    const before = text.slice(Math.max(0, start - 24), start).replace(/\s+$/, "");
+    const needsGender = DETERMINERS.test(before);
+    const variants = synonymsOf(word, register).filter(
+      (v) => v.toLowerCase() !== word.toLowerCase() && (!needsGender || genderOf(v) === genderOf(word)),
+    );
+    if (!variants.length) continue;
+
+    hits.push({ start: match.index ?? 0, end: (match.index ?? 0) + word.length, word, variants });
+  }
+  if (!hits.length) return text;
+
+  // Quantas trocas: proporcional à intensidade, mínimo 1.
+  const quota = Math.max(1, Math.round(intensity * hits.length));
+  // Ordem de prioridade determinística (muda com a seed ⇒ palavras diferentes por lote).
+  const ordered = hits
+    .map((hit, index) => ({ hit, rank: createRng(`lexpick:${seed}:${index}:${hit.word}`).int(10_000) }))
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, quota)
+    .map((item) => item.hit);
+  const chosen = new Set(ordered.map((hit) => hit.start));
+
+  let out = "";
+  let cursor = 0;
+  hits.forEach((hit) => {
+    if (!chosen.has(hit.start)) return;
+    const rng = createRng(`lex:${seed}:${hit.word}:${hit.start}:${text.length}`);
+    const choice = hit.variants[rng.int(hit.variants.length)];
+    if (!choice) return;
+    const replacement = matchCase(hit.word, choice);
+    if (forbidden.some((bad) => bad && replacement.toLowerCase().includes(bad.toLowerCase()))) return;
+    out += text.slice(cursor, hit.start) + replacement;
+    cursor = hit.end;
   });
+  out += text.slice(cursor);
 
   return out;
 };
+
