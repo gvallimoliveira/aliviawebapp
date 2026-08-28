@@ -86,9 +86,18 @@ const VariationControl = ({ value, onChange, register, previewSeed, compact = fa
                     </Button>
                   ))}
                 </div>
-                <p className="mt-1.5 rounded-md bg-background px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                  Exemplo: “{examples[row.key]}”
-                </p>
+                <p className="mt-1.5 text-[10px] text-muted-foreground">{HINTS[value[row.key]]}</p>
+                <ul className="mt-1 grid gap-1">
+                  {examples[row.key].map((example, i) => (
+                    <li
+                      key={i}
+                      className="rounded-md bg-background px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground"
+                    >
+                      “{example}”
+                    </li>
+                  ))}
+                </ul>
+
               </div>
             </div>
           ))}
