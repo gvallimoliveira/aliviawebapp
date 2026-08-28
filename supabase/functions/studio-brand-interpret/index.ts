@@ -489,7 +489,7 @@ Regras:
 - Escreva também um "tagline": UMA frase curta (até 80 caracteres) que resume a marca e pode aparecer dentro das artes.
 - "voice": diretriz de tom em 4 a 8 linhas — como falar, o que nunca dizer, como tratar preço, prova e objeção. É diretriz interna, nunca vai impressa na arte.
 - "keywords": vocabulário de marca utilizável como palavra em destaque na arte (não termos de SEO genéricos).
-- Cores (papéis, não decoração): "primary" é a cor de MARCA usada em fundos e formas; "primary2" é a cor de TEXTO que fica sobre ela e precisa de contraste alto (≥ 4.5:1); "secondary" é o destaque e "secondary2" um neutro claro de fundo. Escolha entre as cores do site quando houver; nunca devolva um par de baixo contraste (ex.: verde neon com branco). Sem cores no briefing, omita o campo.
+- Cores (papéis, não decoração): "primary" é a cor de MARCA usada em fundos e formas; "primary2" é a cor de TEXTO que fica sobre ela e precisa de contraste alto (≥ 4.5:1); "secondary" é o destaque e "secondary2" um neutro claro de fundo. Em "extra" devolva até 4 outras cores reais da marca (paleta ampliada), sem repetir as quatro anteriores. Escolha entre as cores do site quando houver; nunca devolva um par de baixo contraste (ex.: verde neon com branco). Sem cores no briefing, omita o campo.
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
@@ -503,7 +503,7 @@ Responda SOMENTE com JSON válido neste formato:
   "voice": "diretriz de tom em 4 a 8 linhas",
   "keywords": ["8 a 12 palavras-chave curtas do vocabulário da marca"],
   "strategy_notes": "5 a 8 linhas sobre como girar informar / dor / desejo / venda nesta marca, incluindo temas a evitar",
-  "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB" },
+  "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB", "extra": ["#RRGGBB"] },
   "font_family": "nome da fonte da marca, ou vazio",
   "audiences": [
     {
@@ -642,7 +642,25 @@ Responda SOMENTE com JSON válido neste formato:
         secondary2: neutral,
         useSecondary: secondary ? "true" : "false",
       };
+      /**
+       * Paleta ampliada: marcas raramente cabem em 4 cores. As demais cores
+       * lidas do site (ou devolvidas pela IA em `extra`) entram como cores
+       * adicionais da categoria principal — o usuário edita/remove no kit.
+       */
+      const used = new Set([surface, onSurface, accent, neutral].map((c) => c.toUpperCase()));
+      const extras = [
+        ...(Array.isArray(rawColors.extra) ? (rawColors.extra as unknown[]) : []),
+        ...site.colors,
+      ]
+        .map(pickHex)
+        .filter((c): c is string => !!c)
+        .filter((c) => !used.has(c) && (used.add(c) || true))
+        .slice(0, 4);
+      extras.forEach((color, i) => {
+        colorKit![`primary${i + 3}`] = color;
+      });
     }
+
 
     /**
      * TIPOGRAFIA: casa o nome lido no manual com a lista curada do editor
@@ -650,6 +668,7 @@ Responda SOMENTE com JSON válido neste formato:
      * fonte atual da marca é preservada.
      */
     const FONT_KEYS: Array<[string, string[]]> = [
+      ["outfit", ["outfit"]],
       ["inter", ["inter"]],
       ["poppins", ["poppins"]],
       ["montserrat", ["montserrat"]],

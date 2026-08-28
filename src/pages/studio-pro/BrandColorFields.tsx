@@ -1,15 +1,15 @@
-import { Wand2 } from "lucide-react";
+import { Plus, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import type { BrandColorKit } from "./brandColors";
+import { MAX_EXTRA_COLORS, type BrandColorKit } from "./brandColors";
 import { deepen, judgeContrast, lighten, readableOn } from "./contrast";
 
 
 /**
  * Campos de cores do kit de marca: duas principais sempre, duas secundárias
- * opcionais (desativáveis para marcas que não têm paleta secundária).
+ * opcionais e quantas cores extras o usuário quiser em cada categoria.
  */
 
 type Props = {
@@ -17,6 +17,7 @@ type Props = {
   kit: BrandColorKit;
   onChange: (next: BrandColorKit) => void;
 };
+
 
 const Swatch = ({
   id,
@@ -53,6 +54,69 @@ const Swatch = ({
     </div>
   </div>
 );
+
+/**
+ * Cores extras de uma categoria: lista aberta (até MAX_EXTRA_COLORS), com
+ * adicionar e remover. Entram na rotação de acento das artes.
+ */
+const ExtraColors = ({
+  idPrefix,
+  label,
+  colors,
+  seed,
+  onChange,
+}: {
+  idPrefix: string;
+  label: string;
+  colors: string[];
+  seed: string;
+  onChange: (next: string[]) => void;
+}) => (
+  <div className="mt-3">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="rounded-full"
+        disabled={colors.length >= MAX_EXTRA_COLORS}
+        onClick={() => onChange([...colors, seed])}
+      >
+        <Plus className="mr-1.5 h-3.5 w-3.5" />
+        Adicionar cor
+      </Button>
+    </div>
+    {colors.length > 0 && (
+      <div className="mt-2 grid gap-3 sm:grid-cols-2">
+        {colors.map((color, index) => (
+          <div key={`${idPrefix}-extra-${index}`} className="flex items-end gap-2">
+            <div className="flex-1">
+              <Swatch
+                id={`${idPrefix}-extra-${index}`}
+                label={`Cor extra ${index + 1}`}
+                value={color}
+                onChange={(value) => onChange(colors.map((c, i) => (i === index ? value : c)))}
+              />
+            </div>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-10 w-10 shrink-0 text-muted-foreground hover:text-destructive"
+              aria-label={`Remover cor extra ${index + 1}`}
+              onClick={() => onChange(colors.filter((_, i) => i !== index))}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+
 
 const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => {
   const verdict = judgeContrast(kit.primary, kit.primary2);
@@ -117,6 +181,14 @@ const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => {
           </Button>
         )}
       </div>
+
+      <ExtraColors
+        idPrefix={`${idPrefix}-primary`}
+        label="Cores principais adicionais (opcional)"
+        colors={kit.extraPrimary}
+        seed={deepen(kit.primary)}
+        onChange={(extraPrimary) => onChange({ ...kit, extraPrimary })}
+      />
     </div>
 
 
@@ -135,22 +207,32 @@ const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => {
         />
       </div>
       {kit.useSecondary && (
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Swatch
-            id={`${idPrefix}-secondary`}
-            label="Apoio (destaque)"
-            value={kit.secondary}
-            onChange={(secondary) => onChange({ ...kit, secondary })}
+        <>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Swatch
+              id={`${idPrefix}-secondary`}
+              label="Apoio (destaque)"
+              value={kit.secondary}
+              onChange={(secondary) => onChange({ ...kit, secondary })}
+            />
+            <Swatch
+              id={`${idPrefix}-secondary2`}
+              label="Fundo claro / neutro"
+              value={kit.secondary2}
+              onChange={(secondary2) => onChange({ ...kit, secondary2 })}
+            />
+          </div>
+          <ExtraColors
+            idPrefix={`${idPrefix}-secondary`}
+            label="Cores secundárias adicionais (opcional)"
+            colors={kit.extraSecondary}
+            seed={lighten(kit.secondary)}
+            onChange={(extraSecondary) => onChange({ ...kit, extraSecondary })}
           />
-          <Swatch
-            id={`${idPrefix}-secondary2`}
-            label="Fundo claro / neutro"
-            value={kit.secondary2}
-            onChange={(secondary2) => onChange({ ...kit, secondary2 })}
-          />
-        </div>
+        </>
       )}
     </div>
+
   </div>
   );
 };

@@ -388,7 +388,7 @@ const StudioProCreate = ({
     void themeReady;
   }, [themeReady]);
 
-  /** Kit da marca aplicado como tokens: 2 principais + 2 secundárias opcionais. */
+  /** Kit da marca aplicado como tokens: 2 principais + 2 secundárias + extras. */
   const kit = readColorKit(brand.colors);
   const themeStyle = (() => {
     const style: Record<string, string> = {};
@@ -405,11 +405,30 @@ const StudioProCreate = ({
       if (secondary) style["--accent"] = secondary;
       if (secondary2) style["--secondary"] = secondary2;
     }
+    /**
+     * Cores extras da marca entram na rotação: cada lote de artes (seed) escolhe
+     * um acento diferente da paleta, sem sair do kit aprovado pelo cliente.
+     */
+    const accents = [
+      ...(kit.useSecondary ? [kit.secondary] : []),
+      ...kit.extraPrimary,
+      ...(kit.useSecondary ? kit.extraSecondary : []),
+    ].filter(Boolean);
+    if (accents.length > 1) {
+      const pick = [...String(seed)].reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % accents.length;
+      const accent = hexToHslTriplet(accents[pick]);
+      if (accent) style["--accent"] = accent;
+    }
+    accents.forEach((color, i) => {
+      const triplet = hexToHslTriplet(color);
+      if (triplet) style[`--brand-extra-${i + 1}`] = triplet;
+    });
     // Tipografia da marca: herdada por todos os blocos da versão.
     const brandFont = findFont(kit.font);
     if (brandFont.stack) style.fontFamily = brandFont.stack;
     return Object.keys(style).length ? (style as React.CSSProperties) : undefined;
   })();
+
 
   /** Garante a fonte da marca carregada antes de renderizar/exportar as artes. */
   useEffect(() => {

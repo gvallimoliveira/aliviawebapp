@@ -76,7 +76,10 @@ const ALIVIA_KIT: BrandColorKit = {
   secondary: "#0B3B36",
   secondary2: "#E7F5F1",
   useSecondary: true,
+  extraPrimary: [],
+  extraSecondary: [],
   font: "default",
+
 };
 
 const StudioProApp = () => {
