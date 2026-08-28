@@ -11,7 +11,7 @@
  * Classificação 100% determinística (`classifyMechanism`), sem IA.
  * Referências: Kosek et al. 2021 (nociplástica), Finnerup et al. 2016 (neuropática).
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
