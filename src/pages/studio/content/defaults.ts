@@ -8,7 +8,7 @@ import type { WorldContent } from "./types";
  * na dívida editorial.
  */
 export const defaultTypos: WorldContent["typos"] = [
-  { lead: "A conta é nossa.", big: "A decisão", tail: " é sua." },
+  { lead: "A organização dos dados é nossa.", big: "A decisão", tail: " é sua." },
   { lead: "Raciocínio clínico com", big: "alma", tail: " de fisioterapeuta." },
   { lead: "Menos teclado.", big: "Mais clínica", tail: "." },
   { lead: "O sistema sugere.", big: "Você", tail: " decide." },
