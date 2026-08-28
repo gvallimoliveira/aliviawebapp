@@ -1,4 +1,4 @@
-import { Children, type ReactNode } from "react";
+import { Children, isValidElement, type ReactNode } from "react";
 
 /**
  * Última barreira contra arte vazia.
@@ -7,15 +7,22 @@ import { Children, type ReactNode } from "react";
  * renderizável. Ele nunca pode ficar atrás da arte real — blocos com fundo
  * translúcido deixavam o texto "Conteúdo da marca" e o nome da marca vazarem
  * por baixo da peça.
+ *
+ * ATENÇÃO: nunca recursar em `Children.toArray(elemento)`. Para um único
+ * elemento React, `toArray` devolve o próprio elemento e a recursão nunca
+ * termina (estouro de pilha = tela branca no Studio).
  */
 const isEmpty = (node: ReactNode): boolean => {
   if (node === null || node === undefined || node === false || node === true) return true;
   if (typeof node === "string") return node.trim().length === 0;
   if (typeof node === "number") return false;
+  // Qualquer elemento/componente conta como composição renderizável.
+  if (isValidElement(node)) return false;
   const list = Children.toArray(node);
   if (!list.length) return true;
   return list.every((child) => isEmpty(child as ReactNode));
 };
+
 
 const ArtworkGuard = ({ brand, children }: { brand: string; children: ReactNode }) => {
   if (isEmpty(children)) {
