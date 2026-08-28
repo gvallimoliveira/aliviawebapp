@@ -53,7 +53,7 @@ export const isLight = (hex: string) => luminance(hex) > 0.45;
 /** Texto legível (preto suave ou branco) sobre a cor informada. */
 export const readableOn = (hex: string) => (isLight(hex) ? "#111111" : "#FFFFFF");
 
-const mix = (hex: string, target: [number, number, number], amount: number) => {
+export const mix = (hex: string, target: [number, number, number], amount: number) => {
   const rgb = parseHex(hex);
   if (!rgb) return hex;
   return toHex([
@@ -62,6 +62,7 @@ const mix = (hex: string, target: [number, number, number], amount: number) => {
     rgb[2] + (target[2] - rgb[2]) * amount,
   ]);
 };
+
 
 /** Escurece a cor até ter contraste suficiente com branco (fundo escuro de marca). */
 export const deepen = (hex: string, minRatio = 4.5) => {
@@ -99,4 +100,60 @@ export const judgeContrast = (surface: string, onSurface: string): ContrastVerdi
       message: "Só funciona em texto grande (título). Frases pequenas ficam difíceis de ler.",
     };
   return { ratio, level: "ruim", message: "Texto fica ilegível nas artes. Ajuste uma das duas cores." };
+};
+
+/**
+ * TOKENS COM CONTRASTE GARANTIDO (verificação antes de aprovar a arte)
+ *
+ * Antes, o tema da marca só sobrescrevia `--primary`, `--background` e
+ * `--accent`; os pares de texto (`*-foreground`) continuavam vindo do tema
+ * Aliv.iA. Resultado: chip escuro com texto escuro, título ilegível sobre fundo
+ * de marca, etc.
+ *
+ * Aqui cada superfície recebe o seu texto CALCULADO: se o par não atinge 4,5:1
+ * (WCAG AA), a cor do texto é trocada por preto suave ou branco — a cor de marca
+ * do FUNDO nunca é alterada, só o texto que fica por cima.
+ */
+export const ensureReadable = (surface: string, candidate: string, minRatio = 4.5) =>
+  contrastRatio(surface, candidate) >= minRatio ? candidate : readableOn(surface);
+
+/** Texto secundário: mais suave que o principal, mas ainda legível (4,5:1). */
+const softInk = (surface: string, ink: string) => {
+  let out = mix(ink, parseHex(surface) ?? [255, 255, 255], 0.42);
+  for (let i = 0; i < 8; i += 1) {
+    if (contrastRatio(surface, out) >= 4.5) break;
+    out = mix(out, parseHex(ink) ?? [0, 0, 0], 0.2);
+  }
+  return out;
+};
+
+export type ThemeSurfaces = {
+  background: string;
+  primary: string;
+  accent: string;
+  secondary: string;
+};
+
+/** Mapa token → hex, com todos os pares superfície/texto já validados. */
+export const readableThemeTokens = (surfaces: ThemeSurfaces): Record<string, string> => {
+  const bg = surfaces.background;
+  const ink = readableOn(bg);
+  return {
+    "--background": bg,
+    "--foreground": ink,
+    "--card": bg,
+    "--card-foreground": ink,
+    "--popover": bg,
+    "--popover-foreground": ink,
+    "--muted": mix(bg, parseHex(ink) ?? [0, 0, 0], 0.06),
+    "--muted-foreground": softInk(bg, ink),
+    "--border": mix(bg, parseHex(ink) ?? [0, 0, 0], 0.16),
+    "--input": mix(bg, parseHex(ink) ?? [0, 0, 0], 0.16),
+    "--primary": surfaces.primary,
+    "--primary-foreground": readableOn(surfaces.primary),
+    "--accent": surfaces.accent,
+    "--accent-foreground": readableOn(surfaces.accent),
+    "--secondary": surfaces.secondary,
+    "--secondary-foreground": readableOn(surfaces.secondary),
+  };
 };
