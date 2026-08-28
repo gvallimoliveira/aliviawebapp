@@ -696,7 +696,7 @@ Responda SOMENTE com JSON válido neste formato:
       ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"],
       {
         functionName: "studio-brand-interpret",
-        maxTokens: 2600,
+        maxTokens: 8000,
         metadata: { brand_id: brandId, has_doc: docOk },
       },
     );
@@ -718,7 +718,11 @@ Responda SOMENTE com JSON válido neste formato:
     const raw = data?.choices?.[0]?.message?.content ?? "";
     const parsed = extractJson(String(raw));
     if (!parsed) {
-      console.error("[studio-brand-interpret] parse fail", String(raw).slice(0, 400));
+      console.error(
+        "[studio-brand-interpret] parse fail",
+        "finish=", data?.choices?.[0]?.finish_reason ?? "?",
+        String(raw).slice(0, 400),
+      );
       return json({ error: "Não foi possível interpretar a resposta da IA." }, 502);
     }
 
