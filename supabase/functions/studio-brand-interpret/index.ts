@@ -255,6 +255,20 @@ Deno.serve(async (req) => {
     const logoUrl = currentLogoIsImage ? currentLogo : site.logo;
 
 
+    /**
+     * MANUAL DA MARCA (PDF/imagem) — fonte principal quando enviado.
+     * O arquivo não é guardado: vai como anexo multimodal nesta chamada e só o
+     * briefing interpretado fica salvo na marca.
+     */
+    const doc = (body?.doc ?? null) as { name?: string; mime?: string; base64?: string } | null;
+    const docMime = String(doc?.mime ?? "");
+    const docBase64 = String(doc?.base64 ?? "");
+    const docOk =
+      !!docBase64 &&
+      (docMime === "application/pdf" || docMime.startsWith("image/")) &&
+      docBase64.length < 9_000_000;
+    if (doc && !docOk) return json({ error: "Documento inválido ou grande demais (máx. 6MB)." }, 400);
+
     const brief = [
       `Nome da marca: ${brand.name}`,
       brand.niche ? `Nicho/setor: ${brand.niche}` : null,
@@ -269,7 +283,11 @@ Deno.serve(async (req) => {
       typeof body?.extra === "string" && body.extra.trim() ? `Contexto extra do cliente: ${body.extra.trim()}` : null,
       site.colors.length ? `Cores mais usadas no site (ordem de frequência): ${site.colors.join(", ")}` : null,
       site.text ? `\nTexto extraído da landing page (fonte primária da proposta):\n"""\n${site.text}\n"""` : null,
+      docOk
+        ? `\nO cliente anexou o MANUAL DA MARCA (${doc?.name ?? "documento"}). Ele é a FONTE PRINCIPAL: cores, tipografia, posicionamento, públicos e tom saem dele e prevalecem sobre o site e sobre os campos atuais.`
+        : null,
     ].filter(Boolean).join("\n");
+
 
     const systemPrompt = `Você é estrategista de conteúdo. A partir do briefing de uma marca, você produz o mapa editorial que alimentará um gerador de artes para redes sociais.
 
