@@ -9,7 +9,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2, Trash2, ChevronRight, User, Pencil, Brain, MoreVertical } from "lucide-react";
+import { ArrowLeft, Globe, Calendar, MapPin, Activity, Loader2, FileText, Stethoscope, TrendingUp, Clock, Dumbbell, Heart, ClipboardCheck, Lock, Sparkles, Download, Share2, Trash2, ChevronRight, User, Pencil, Brain, MoreVertical, Target, AlertCircle, CheckCircle2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import ManualAssessmentModal from "@/components/dashboard/ManualAssessmentModal";
@@ -25,6 +25,7 @@ import { getDisplayHypothesis, useCanEditFinalHypothesis } from "@/lib/finalHypo
 import PainMapView from "@/components/assessment/PainMapView";
 import { regionsByView } from "@/components/assessment/painMapData";
 import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireData";
+import { functionalTests } from "@/data/functionalTestsData";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
@@ -1088,6 +1089,52 @@ const AssessmentView = () => {
                   {(assessment.test_results as any[]).filter((r: any) => r.questionnaireId).map((r: QuestionnaireResult) => (
                     <QuestionnaireResultCard key={r.questionnaireId} result={r} language={language} />
                   ))}
+                </div>
+              </CollapsibleSection>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Functional Tests — resultados assinalados pelo paciente (testId + painful) */}
+        {assessment.test_results && Array.isArray(assessment.test_results) && (assessment.test_results as any[]).filter((r: any) => r.testId && !r.questionnaireId).length > 0 && (
+          <Card>
+            <CardContent className="py-3">
+              <CollapsibleSection
+                storageKey={`assessment:${assessment.id}:testes-funcionais`}
+                defaultOpen
+                header={
+                  <div className="text-base font-semibold flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" />
+                    {isPt ? "Testes Funcionais" : language === "es" ? "Pruebas Funcionales" : "Functional Tests"}
+                    <Badge variant="outline" className="text-[10px] font-normal">
+                      {(assessment.test_results as any[]).filter((r: any) => r.testId && !r.questionnaireId).length}
+                    </Badge>
+                  </div>
+                }
+              >
+                <div className="py-2">
+                  <div className="rounded-xl border divide-y overflow-hidden">
+                    {(assessment.test_results as any[])
+                      .filter((r: any) => r.testId && !r.questionnaireId)
+                      .map((r: any, i: number) => {
+                        const def = functionalTests.find((ft) => ft.id === r.testId);
+                        const name = def ? t(def.nameKey) : r.testId;
+                        const positive = !!r.painful;
+                        const Icon = positive ? AlertCircle : CheckCircle2;
+                        const color = positive ? "text-destructive" : "text-emerald-600";
+                        return (
+                          <div key={`${r.testId}-${i}`} className="px-3 py-2 flex items-center gap-2">
+                            <Icon className={`h-4 w-4 ${color} shrink-0`} />
+                            <span className="text-xs text-foreground flex-1">{name}</span>
+                            <span className={`text-xs font-medium ${color}`}>
+                              {positive
+                                ? (isPt ? "Positivo / com dor" : language === "es" ? "Positivo / con dolor" : "Positive / painful")
+                                : (isPt ? "Negativo / sem dor" : language === "es" ? "Negativo / sin dolor" : "Negative / no pain")}
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
                 </div>
               </CollapsibleSection>
             </CardContent>
