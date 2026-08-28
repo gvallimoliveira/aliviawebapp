@@ -118,6 +118,9 @@ interface AnamnesisFormProps {
 const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialChiefComplaints, initialOnset, initialHasPriorSurgery, initialSurgeryDetails, initialActivityLevel, initialHasGymAccess, initialExtras, draftScopeKey, autoRestoreDraft, enabledSubs, previousPainScore }: AnamnesisFormProps) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState(0);
+  // Etapa interna do wizard de mecanismo de dor (0..2). Enquanto < 2, o botão
+  // externo "Próximo" fica discreto para não competir com o "Avançar" interno.
+  const [mechanismStage, setMechanismStage] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [activeDragRegion, setActiveDragRegion] = useState<string | null>(null);
   const vasBarRef = useRef<HTMLDivElement>(null);
@@ -1008,6 +1011,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
               language={language}
               regionCount={data.painRegions?.length ?? 0}
               suggestedDistribution={suggestDistribution(data.painRegions ?? [])}
+              onStageChange={setMechanismStage}
             />
           </div>
         ) : (
