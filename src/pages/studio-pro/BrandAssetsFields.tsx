@@ -74,6 +74,11 @@ const BrandAssetsFields = ({ logoUrl, onLogoChange, fontKey, onFontChange, doc, 
   const [busy, setBusy] = useState<"logo" | "doc" | null>(null);
   const font = findFont(fontKey);
 
+  /** A prévia precisa da fonte real carregada. */
+  useEffect(() => {
+    ensureFontLoaded(fontKey);
+  }, [fontKey]);
+
   const pickLogo = async (file?: File | null) => {
     if (!file) return;
     if (!LOGO_MIME.includes(file.type)) {
