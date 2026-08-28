@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { WORLDS, isWorldId, type WorldId } from "./content";
 import { buildCoverage, readExposureLog, recordExposure, type ExposureLog } from "./coverage";
 import { createPicker } from "./picker";
+import { varyContent } from "./vary";
+
 import { personaForSeed } from "./personas";
 import { isTopicId, type TopicId } from "./topics";
 import StudioControls from "./StudioControls";
