@@ -511,6 +511,9 @@ const ClinicAssessment = () => {
     }
     if (reassessHasQuestionnaire) {
       setStep("questionnaire");
+    } else if (hasFunctionalTests) {
+      setQuestionnaireResults((originalAssessment?.test_results as any) || []);
+      setStep("functional_tests");
     } else if (reassessHasPsychosocial) {
       setQuestionnaireResults((originalAssessment?.test_results as any) || []);
       setStep("psychosocial");
@@ -520,26 +523,48 @@ const ClinicAssessment = () => {
     }
   };
 
+  /** Continua o fluxo depois dos questionários: testes funcionais (se
+   *  habilitados) → perfil psicossocial (se habilitado) → hipótese. */
+  const continueAfterQuestionnaire = (results: QuestionnaireResult[]) => {
+    if (hasFunctionalTests) {
+      setStep("functional_tests");
+      return;
+    }
+    if (reassessHasPsychosocial) {
+      setStep("psychosocial");
+      return;
+    }
+    generateDiagnosis(anamnesisData!, results, assessmentId, []);
+  };
+
   const handleQuestionnaireComplete = async (results: QuestionnaireResult[]) => {
     setQuestionnaireResults(results);
     if (assessmentId && results.length > 0) {
       await updateAssessment(assessmentId, { test_results: results as any });
     }
-    if (reassessHasPsychosocial) {
-      setStep("psychosocial");
-      return;
-    }
-    generateDiagnosis(anamnesisData!, results, assessmentId);
+    continueAfterQuestionnaire(results);
   };
 
   const handleQuestionnaireSkip = () => {
     const fallback = reassessmentId ? ((originalAssessment?.test_results as any) || []) : [];
     setQuestionnaireResults(fallback);
+    continueAfterQuestionnaire(fallback);
+  };
+
+  /** Testes funcionais autoaplicados (opcionais). Os resultados são salvos
+   *  junto dos questionários em `test_results` e enviados à IA. */
+  const handleFunctionalTestsDone = async (results: TestResult[]) => {
+    setTestResults(results);
+    if (assessmentId && (results.length > 0 || questionnaireResults.length > 0)) {
+      await updateAssessment(assessmentId, {
+        test_results: [...questionnaireResults, ...results] as any,
+      });
+    }
     if (reassessHasPsychosocial) {
       setStep("psychosocial");
       return;
     }
-    generateDiagnosis(anamnesisData!, fallback, assessmentId);
+    generateDiagnosis(anamnesisData!, questionnaireResults, assessmentId, results);
   };
 
   // ── Optional psychosocial step (FABQ / yellow flags) ──
@@ -557,7 +582,7 @@ const ClinicAssessment = () => {
         await updateAssessment(assessmentId, { anamnesis_data: data as any });
       }
     }
-    generateDiagnosis(data, questionnaireResults, assessmentId);
+    generateDiagnosis(data, questionnaireResults, assessmentId, testResults);
   };
 
   const invokeDiagnosisWithRetry = async (bodyData: any, attempts = 3): Promise<any> => {
@@ -579,10 +604,15 @@ const ClinicAssessment = () => {
     throw lastErr;
   };
 
-  const generateDiagnosis = async (data: AnamnesisData, qResults: QuestionnaireResult[], currentId?: string | null) => {
+  const generateDiagnosis = async (
+    data: AnamnesisData,
+    qResults: QuestionnaireResult[],
+    currentId?: string | null,
+    fnTests?: TestResult[],
+  ) => {
     setStep("loading");
     try {
-      const bodyData: any = { anamnesisData: data, testResults: [], questionnaireResults: qResults, mode: "professional", language, assessmentId: currentId || assessmentId };
+      const bodyData: any = { anamnesisData: data, testResults: fnTests ?? testResults, questionnaireResults: qResults, mode: "professional", language, assessmentId: currentId || assessmentId };
       // Passo D1 — mecanismo/extensão de dor como contexto clínico para a IA.
       const mechPayload = buildMechanismPayload(data as any);
       if (mechPayload.pain_mechanism) bodyData.painMechanism = mechPayload.pain_mechanism;
@@ -659,7 +689,7 @@ const ClinicAssessment = () => {
 
   const retryDiagnosis = () => {
     if (anamnesisData) {
-      generateDiagnosis(anamnesisData, questionnaireResults, assessmentId);
+      generateDiagnosis(anamnesisData, questionnaireResults, assessmentId, testResults);
     }
   };
 
@@ -772,6 +802,7 @@ const ClinicAssessment = () => {
               ...(reassessHasRedflags ? ["redflags"] : []),
               ...(reassessHasAnamnesis ? ["anamnesis"] : []),
               ...(reassessHasQuestionnaire ? ["questionnaire"] : []),
+              ...(hasFunctionalTests ? ["functional_tests"] : []),
               ...(reassessHasPsychosocial ? ["psychosocial"] : []),
               "result",
             ] : undefined}
@@ -978,6 +1009,19 @@ const ClinicAssessment = () => {
             onBack={() => reassessHasAnamnesis ? setStep("anamnesis") : setStep("patient_info")}
             onSkip={handleQuestionnaireSkip}
             previousAnswers={previousQuestionnaireAnswers}
+            painScoresPerRegion={(anamnesisData as any).painScoresPerRegion}
+            generalPainScore={anamnesisData.painScore}
+          />
+        )}
+
+        {step === "functional_tests" && anamnesisData && (
+          <FunctionalTests
+            painRegions={anamnesisData.painRegions}
+            onComplete={handleFunctionalTestsDone}
+            onBack={() => setStep(reassessHasQuestionnaire ? "questionnaire" : "anamnesis")}
+            hasQuestionnaires={questionnaireResults.length > 0}
+            optional
+            onSkip={() => handleFunctionalTestsDone([])}
           />
         )}
 
@@ -985,7 +1029,7 @@ const ClinicAssessment = () => {
           <PsychosocialStep
             onComplete={(r) => finishAfterPsychosocial(r)}
             onSkip={() => finishAfterPsychosocial()}
-            onBack={() => (reassessHasQuestionnaire ? setStep("questionnaire") : setStep("anamnesis"))}
+            onBack={() => setStep(hasFunctionalTests ? "functional_tests" : reassessHasQuestionnaire ? "questionnaire" : "anamnesis")}
           />
         )}
 
