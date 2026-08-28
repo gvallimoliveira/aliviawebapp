@@ -1095,6 +1095,52 @@ const AssessmentView = () => {
           </Card>
         )}
 
+        {/* Functional Tests — resultados assinalados pelo paciente (testId + painful) */}
+        {assessment.test_results && Array.isArray(assessment.test_results) && (assessment.test_results as any[]).filter((r: any) => r.testId && !r.questionnaireId).length > 0 && (
+          <Card>
+            <CardContent className="py-3">
+              <CollapsibleSection
+                storageKey={`assessment:${assessment.id}:testes-funcionais`}
+                defaultOpen
+                header={
+                  <div className="text-base font-semibold flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" />
+                    {isPt ? "Testes Funcionais" : language === "es" ? "Pruebas Funcionales" : "Functional Tests"}
+                    <Badge variant="outline" className="text-[10px] font-normal">
+                      {(assessment.test_results as any[]).filter((r: any) => r.testId && !r.questionnaireId).length}
+                    </Badge>
+                  </div>
+                }
+              >
+                <div className="py-2">
+                  <div className="rounded-xl border divide-y overflow-hidden">
+                    {(assessment.test_results as any[])
+                      .filter((r: any) => r.testId && !r.questionnaireId)
+                      .map((r: any, i: number) => {
+                        const def = functionalTests.find((ft) => ft.id === r.testId);
+                        const name = def ? t(def.nameKey) : r.testId;
+                        const positive = !!r.painful;
+                        const Icon = positive ? AlertCircle : CheckCircle2;
+                        const color = positive ? "text-destructive" : "text-emerald-600";
+                        return (
+                          <div key={`${r.testId}-${i}`} className="px-3 py-2 flex items-center gap-2">
+                            <Icon className={`h-4 w-4 ${color} shrink-0`} />
+                            <span className="text-xs text-foreground flex-1">{name}</span>
+                            <span className={`text-xs font-medium ${color}`}>
+                              {positive
+                                ? (isPt ? "Positivo / com dor" : language === "es" ? "Positivo / con dolor" : "Positive / painful")
+                                : (isPt ? "Negativo / sem dor" : language === "es" ? "Negativo / sin dolor" : "Negative / no pain")}
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              </CollapsibleSection>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Specialty / pending questionnaires (cardio/geri) */}
         {!String(assessment.id).startsWith("demo-") && (
           <PendingQuestionnairesCard assessmentId={assessment.id} canManage={viewerIsProOwner} />
