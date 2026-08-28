@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { imageForTopic } from "../topics";
-import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { bigTypeClass, blockPadding, personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { ACCENT_STYLES, TextureLayer, renderAccent } from "./Texture";
 
 /**
@@ -16,14 +16,14 @@ const TriptychBlock = ({ content, rng, treatment, format, picker, persona }: Blo
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment + 2)}`}>
       <TextureLayer persona={persona} index={treatment + 3} />
-      <div className="container relative py-16">
+      <div className={`relative w-full ${blockPadding(format)}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.25 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          <h2 className="mx-auto mb-12 max-w-2xl text-center text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
+          <h2 className="mx-auto mb-10 max-w-2xl text-center text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
             {renderAccent(triptych.heading, accentVariant)}
           </h2>
 
@@ -52,7 +52,7 @@ const TriptychBlock = ({ content, rng, treatment, format, picker, persona }: Blo
               ))}
             </div>
           ) : (
-            <div className="grid gap-10 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-border">
+            <div className="grid gap-8 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-border">
               {triptych.panels.map((panel, i) => (
                 <motion.div
                   key={panel.word}
@@ -60,9 +60,11 @@ const TriptychBlock = ({ content, rng, treatment, format, picker, persona }: Blo
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.6, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
-                  className={`flex flex-col items-center gap-2 text-center sm:px-8 ${i === 0 ? "sm:pl-0" : ""}`}
+                  className={`flex min-w-0 flex-col items-center gap-2 text-center sm:px-5 ${i === 0 ? "sm:pl-0" : ""}`}
                 >
-                  <span className="text-4xl font-bold tracking-tight text-primary md:text-5xl">{panel.word}.</span>
+                  <span className={`font-bold tracking-tight text-primary ${bigTypeClass(panel.word)}`}>
+                    {panel.word}.
+                  </span>
                   <span className="max-w-[16rem] text-sm leading-snug text-muted-foreground md:text-base">
                     {panel.line}
                   </span>

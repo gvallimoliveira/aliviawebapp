@@ -35,7 +35,7 @@ import type { ComposedBlock } from "@/studio-core";
 import BrandColorFields from "./BrandColorFields";
 import BrandAssetsFields, { type BrandDoc } from "./BrandAssetsFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
-import { readAudiences, writeAudiences, type BrandAudience } from "./audiences";
+import { matrixAudiences, readAudiences, writeAudiences, type BrandAudience } from "./audiences";
 import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 
 /**
@@ -860,6 +860,26 @@ const StudioProBrand = () => {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <Label htmlFor={`edit-parent-${a.id}`} className="text-[11px] text-muted-foreground">
+                        Tipo de público
+                      </Label>
+                      <select
+                        id={`edit-parent-${a.id}`}
+                        className="h-9 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+                        value={a.parentId ?? ""}
+                        onChange={(e) => updateAudience(i, { parentId: e.target.value || undefined })}
+                      >
+                        <option value="">Público matriz (conta na métrica oficial)</option>
+                        {audiences
+                          .filter((p, pi) => pi !== i && !p.parentId && p.label.trim())
+                          .map((p) => (
+                            <option key={p.id} value={p.id}>
+                              Sub-nicho de {p.label}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
                     <Textarea
                       className="mt-2"
                       rows={2}
@@ -897,10 +917,19 @@ const StudioProBrand = () => {
                     </div>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" className="rounded-full" onClick={addAudience}>
-                  <FolderPlus className="mr-1.5 h-4 w-4" />
-                  Adicionar público
-                </Button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button variant="outline" size="sm" className="rounded-full" onClick={addAudience}>
+                    <FolderPlus className="mr-1.5 h-4 w-4" />
+                    Adicionar público
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Métrica oficial: <strong>{matrixAudiences(audiences).length} públicos matriz</strong>
+                    {audiences.length - matrixAudiences(audiences).length > 0
+                      ? ` + ${audiences.length - matrixAudiences(audiences).length} sub-nichos (não entram na contagem das artes)`
+                      : ""}
+                    .
+                  </p>
+                </div>
               </div>
             </div>
 

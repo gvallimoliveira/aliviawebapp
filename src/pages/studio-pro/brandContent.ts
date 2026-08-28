@@ -1,6 +1,6 @@
 import type { WorldContent } from "@/pages/studio/content";
 import type { TopicId } from "@/pages/studio/topics";
-import { GLOBAL_SEGMENT, type BrandAudience, type ContentAngle } from "./audiences";
+import { GLOBAL_SEGMENT, matrixAudiences, type BrandAudience, type ContentAngle } from "./audiences";
 import { condensePhrase } from "./textFit";
 
 
@@ -394,8 +394,11 @@ const applyGlobal = (
   if (!audiences.length) {
     return positioning?.trim() ? { ...base, subs: [positioning.trim(), ...base.subs] } : base;
   }
-  const labels = audiences.map((a) => a.label);
-  const panels = audiences.slice(0, 3).map((a, i) => ({
+  // Métrica oficial: só públicos matriz. Sub-nichos existem para comunicação
+  // dirigida, mas contá-los produz números errados ("9 públicos").
+  const matrix = matrixAudiences(audiences);
+  const labels = matrix.map((a) => a.label);
+  const panels = matrix.slice(0, 3).map((a, i) => ({
     word: a.label,
     line: a.desires?.[0] ?? a.description ?? "Um caminho claro para esse perfil.",
     topic: topicAt(i),
@@ -417,7 +420,7 @@ const applyGlobal = (
     lists: [
       {
         heading: "Para quem o produto foi feito",
-        items: audiences.map((a) => `${a.label} — ${a.desires?.[0] ?? a.description ?? "resultado claro"}`),
+        items: matrix.map((a) => `${a.label} — ${a.desires?.[0] ?? a.description ?? "resultado claro"}`),
         closing: "Cada perfil entra por uma porta diferente e chega ao mesmo padrão.",
       },
       ...base.lists,
@@ -428,7 +431,7 @@ const applyGlobal = (
         kicker: "VISÃO GERAL",
         title: `${brand} por dentro`,
         coverSub: `Um produto, ${labels.length} públicos.`,
-        slides: audiences.slice(0, 5).map((a, i) => ({
+        slides: matrix.slice(0, 5).map((a, i) => ({
           heading: a.label,
           body: a.pains?.[0] ? `${a.pains[0]} → ${a.desires?.[0] ?? "caminho claro"}.` : a.description ?? "",
           topic: topicAt(i),
@@ -440,7 +443,7 @@ const applyGlobal = (
     sales: {
       ...base.sales,
       audience: labels.join(", "),
-      proofs: audiences.flatMap((a) => a.proof?.slice(0, 1) ?? []).concat(base.sales.proofs).slice(0, 6),
+      proofs: matrix.flatMap((a) => a.proof?.slice(0, 1) ?? []).concat(base.sales.proofs).slice(0, 6),
     },
   };
 };

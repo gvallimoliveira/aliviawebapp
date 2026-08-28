@@ -37,6 +37,13 @@ export type BrandAudience = {
   proof?: string[];
   /** Chamada para ação preferida desse nicho. */
   cta?: string;
+  /**
+   * REGRA DO SISTEMA — públicos matriz x derivados.
+   * Vazio/ausente = público MATRIZ (conta na métrica oficial da marca).
+   * Preenchido com o id de outro público = SUB-NICHO derivado dele: tem
+   * comunicação própria, mas NUNCA entra na contagem oficial de públicos.
+   */
+  parentId?: string;
 };
 
 export const slugifySegment = (label: string) =>
@@ -71,6 +78,7 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
         desires: asStringArray(row.desires),
         proof: asStringArray(row.proof),
         cta: String(row.cta ?? "").trim() || undefined,
+        parentId: String(row.parentId ?? row.parent_id ?? "").trim() || undefined,
       };
     })
     .filter((a): a is BrandAudience => a !== null);
@@ -88,7 +96,25 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
       ...(a.desires?.length ? { desires: a.desires } : {}),
       ...(a.proof?.length ? { proof: a.proof } : {}),
       ...(a.cta?.trim() ? { cta: a.cta.trim() } : {}),
+      ...(a.parentId?.trim() ? { parentId: a.parentId.trim() } : {}),
     }));
+
+/**
+ * Públicos MATRIZ: os que definem o produto e são a única base da métrica
+ * oficial ("4 públicos"). Sub-nichos são recortes de comunicação e ficam fora.
+ */
+export const matrixAudiences = (list: BrandAudience[]): BrandAudience[] =>
+  list.filter((a) => {
+    const parent = a.parentId?.trim();
+    return !parent || parent === a.id || !list.some((p) => p.id === parent);
+  });
+
+/** Sub-nichos derivados de um público matriz. */
+export const derivedAudiences = (list: BrandAudience[], parentId: string): BrandAudience[] =>
+  list.filter((a) => a.parentId?.trim() === parentId && a.id !== parentId);
+
+/** Número oficial de públicos da marca — sempre só os matriz. */
+export const officialAudienceCount = (list: BrandAudience[]): number => matrixAudiences(list).length;
 
 export type Segment = { id: string; label: string };
 
@@ -159,6 +185,7 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Prontuário organizado desde o primeiro caso",
     ],
     cta: "Começar com segurança",
+    parentId: "academico",
   },
   {
     id: "paciente-dor-cronica",
@@ -179,6 +206,7 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Diário de dor para ver a evolução dia a dia",
     ],
     cta: "Fazer minha avaliação",
+    parentId: "paciente",
   },
   {
     id: "paciente-pos-operatorio",
@@ -192,6 +220,7 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Relatório em PDF para levar ao cirurgião",
     ],
     cta: "Quero um plano seguro",
+    parentId: "paciente",
   },
   {
     id: "paciente-atleta-amador",
@@ -201,6 +230,7 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     desires: ["Voltar ao esporte com segurança", "Treinar sem dor e sem medo"],
     proof: ["Leitura de dor, inibição, fraqueza e incapacidade (D.I.F.I)", "Plano com progressão de carga documentada", "Reavaliação com critério de retorno"],
     cta: "Quero voltar a treinar",
+    parentId: "paciente",
   },
   {
     id: "paciente-60-mais",
@@ -214,6 +244,7 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Acompanhamento simples entre as sessões",
     ],
     cta: "Cuidar do meu movimento",
+    parentId: "paciente",
   },
 ];
 

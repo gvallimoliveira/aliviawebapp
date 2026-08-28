@@ -117,3 +117,23 @@ export const blockPadding = (format: StudioFormat) => {
   if (format === "1x1") return "py-[10%] px-[8%]";
   return "py-20 px-6";
 };
+
+/**
+ * TIPO GRANDE SEM ATROPELO
+ *
+ * Números e palavras-protagonistas vivem em colunas estreitas (grid de 3 em
+ * formato 1x1 / 9x16). Tamanho fixo fazia "6 fases" e "Suspeita" vazarem da
+ * coluna e sobrepor a vizinha. Aqui o tamanho cai conforme o comprimento do
+ * texto e a quebra é sempre permitida.
+ */
+export const bigTypeClass = (text: string, columns = 3) => {
+  const longest = text
+    .split(/\s+/)
+    .reduce((max, word) => Math.max(max, word.length), 0);
+  const budget = columns >= 3 ? 7 : 10;
+  const base = "block break-words [overflow-wrap:anywhere] leading-[0.95]";
+  if (longest <= budget - 3) return `${base} text-5xl md:text-6xl`;
+  if (longest <= budget) return `${base} text-4xl md:text-5xl`;
+  if (longest <= budget + 4) return `${base} text-3xl md:text-4xl`;
+  return `${base} text-2xl md:text-3xl`;
+};
