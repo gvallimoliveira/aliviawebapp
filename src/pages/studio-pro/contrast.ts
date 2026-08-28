@@ -53,7 +53,7 @@ export const isLight = (hex: string) => luminance(hex) > 0.45;
 /** Texto legível (preto suave ou branco) sobre a cor informada. */
 export const readableOn = (hex: string) => (isLight(hex) ? "#111111" : "#FFFFFF");
 
-const mix = (hex: string, target: [number, number, number], amount: number) => {
+export const mix = (hex: string, target: [number, number, number], amount: number) => {
   const rgb = parseHex(hex);
   if (!rgb) return hex;
   return toHex([
@@ -62,6 +62,7 @@ const mix = (hex: string, target: [number, number, number], amount: number) => {
     rgb[2] + (target[2] - rgb[2]) * amount,
   ]);
 };
+
 
 /** Escurece a cor até ter contraste suficiente com branco (fundo escuro de marca). */
 export const deepen = (hex: string, minRatio = 4.5) => {
