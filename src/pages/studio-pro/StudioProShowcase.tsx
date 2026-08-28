@@ -1,4 +1,6 @@
-import { FORMAT_LABEL, type ShowcaseItem } from "./showcase";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { FORMAT_LABEL, type ShowcaseItem, type ShowcaseSlide } from "./showcase";
 
 /**
  * MINIATURAS DE DEMONSTRAÇÃO
@@ -236,6 +238,135 @@ const Body = ({ item }: { item: ShowcaseItem }) => {
   }
 };
 
+/** Um slide do carrossel: composição muda conforme o papel narrativo. */
+const Slide = ({
+  slide,
+  brand,
+  index,
+  total,
+}: {
+  slide: ShowcaseSlide;
+  brand: string;
+  index: number;
+  total: number;
+}) => {
+  const dark = slide.role === "cover" || slide.role === "cta";
+  return (
+    <div
+      className={`relative flex h-full w-full shrink-0 flex-col justify-between p-5 ${
+        dark ? "bg-mono-ink" : "bg-card"
+      }`}
+    >
+      {slide.role === "point" && (
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{ backgroundImage: grid, backgroundSize: "22px 22px" }}
+        />
+      )}
+      <span
+        className={`relative text-[9px] font-bold uppercase tracking-[0.22em] ${
+          dark ? "text-mono-mid" : "text-primary"
+        }`}
+      >
+        {slide.kicker ?? brand}
+      </span>
+
+      <div className="relative">
+        {slide.value && (
+          <p className="text-[clamp(2rem,6vw,3.6rem)] font-black leading-none tracking-tighter text-primary">
+            {slide.value}
+          </p>
+        )}
+        <p
+          className={`text-[clamp(0.95rem,2.1vw,1.6rem)] font-black leading-[1.04] tracking-tight ${
+            dark ? "text-mono-paper" : "text-foreground"
+          } ${slide.value ? "mt-1 text-[clamp(0.8rem,1.6vw,1.1rem)]" : ""}`}
+        >
+          <Accent text={slide.headline} accent={slide.accent} />
+        </p>
+        {slide.support && (
+          <p
+            className={`mt-2 text-[10px] leading-snug ${
+              dark ? "text-mono-mid" : "text-muted-foreground"
+            }`}
+          >
+            {slide.support}
+          </p>
+        )}
+      </div>
+
+      <div className="relative flex items-end justify-between gap-3">
+        <span
+          className={`text-[9px] font-semibold tabular-nums ${
+            dark ? "text-mono-mid" : "text-muted-foreground"
+          }`}
+        >
+          {index + 1}/{total}
+        </span>
+        <Signature tone={dark ? "paper" : "muted"} />
+      </div>
+    </div>
+  );
+};
+
+/** Carrossel navegável com slides amarrados pelo mesmo tema. */
+const CarouselBody = ({ item }: { item: ShowcaseItem & { slides: ShowcaseSlide[] } }) => {
+  const [active, setActive] = useState(0);
+  const total = item.slides.length;
+  const go = (dir: -1 | 1) => setActive((i) => (i + dir + total) % total);
+
+  return (
+    <div className="relative h-full overflow-hidden">
+      <div
+        className="flex h-full transition-transform duration-500 ease-out"
+        style={{ transform: `translateX(-${active * 100}%)` }}
+      >
+        {item.slides.map((slide, i) => (
+          <Slide
+            key={`${item.id}-${i}`}
+            slide={slide}
+            brand={item.brand}
+            index={i}
+            total={total}
+          />
+        ))}
+      </div>
+
+      <button
+        type="button"
+        aria-label="Slide anterior"
+        onClick={() => go(-1)}
+        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/85 p-1.5 text-foreground shadow-sm backdrop-blur transition-opacity hover:bg-background"
+      >
+        <ChevronLeft className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        aria-label="Próximo slide"
+        onClick={() => go(1)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/85 p-1.5 text-foreground shadow-sm backdrop-blur transition-opacity hover:bg-background"
+      >
+        <ChevronRight className="h-3.5 w-3.5" />
+      </button>
+
+      <div className="absolute inset-x-0 bottom-2 flex justify-center gap-1.5">
+        {item.slides.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            aria-label={`Ir para o slide ${i + 1}`}
+            onClick={() => setActive(i)}
+            className={`h-1.5 rounded-full transition-all ${
+              i === active ? "w-4 bg-primary" : "w-1.5 bg-foreground/25"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 /** Cartão de exemplo com etiqueta de nicho e formato. */
 const StudioProShowcase = ({ item }: { item: ShowcaseItem }) => (
   <figure className="group">
@@ -243,11 +374,18 @@ const StudioProShowcase = ({ item }: { item: ShowcaseItem }) => (
       className="overflow-hidden rounded-2xl border border-border shadow-[0_20px_50px_-35px_hsl(var(--foreground)/0.6)] transition-transform duration-300 group-hover:-translate-y-1"
       style={{ aspectRatio: ratio[item.format] }}
     >
-      <Body item={item} />
+      {item.slides && item.slides.length > 1 ? (
+        <CarouselBody item={{ ...item, slides: item.slides }} />
+      ) : (
+        <Body item={item} />
+      )}
     </div>
     <figcaption className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
       <span className="font-semibold text-foreground">{item.niche}</span>
-      <span className="rounded-full border border-border px-2 py-0.5">{FORMAT_LABEL[item.format]}</span>
+      <span className="rounded-full border border-border px-2 py-0.5">
+        {FORMAT_LABEL[item.format]}
+        {item.slides ? ` · ${item.slides.length} artes` : ""}
+      </span>
     </figcaption>
   </figure>
 );
