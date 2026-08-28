@@ -149,6 +149,9 @@ Deno.serve(async (req) => {
       .map((a) => String(a?.label ?? "").trim())
       .filter(Boolean);
 
+    // Lê a landing page do cliente (texto + cores) quando há site cadastrado.
+    const site = brand.source_url ? await readSite(String(brand.source_url)) : { text: "", colors: [] };
+
     const brief = [
       `Nome da marca: ${brand.name}`,
       brand.niche ? `Nicho/setor: ${brand.niche}` : null,
@@ -159,16 +162,20 @@ Deno.serve(async (req) => {
       Array.isArray(brand.topics) && brand.topics.length ? `Palavras-chave atuais: ${brand.topics.join(", ")}` : null,
       existingLabels.length ? `Públicos já cadastrados (manter todos): ${existingLabels.join(", ")}` : null,
       typeof body?.extra === "string" && body.extra.trim() ? `Contexto extra do cliente: ${body.extra.trim()}` : null,
+      site.colors.length ? `Cores mais usadas no site (ordem de frequência): ${site.colors.join(", ")}` : null,
+      site.text ? `\nTexto extraído da landing page (fonte primária da proposta):\n"""\n${site.text}\n"""` : null,
     ].filter(Boolean).join("\n");
 
     const systemPrompt = `Você é estrategista de conteúdo. A partir do briefing de uma marca, você produz o mapa editorial que alimentará um gerador de artes para redes sociais.
 
 Regras:
 - Escreva em português do Brasil, linguagem concreta, sem jargão de marketing e sem clichê ("soluções inovadoras", "excelência", "transformar vidas").
+- Se houver texto da landing page no briefing, ele é a fonte primária: a proposta, os produtos e os públicos devem sair de lá, não de suposições.
 - Segmente o produto em 2 a 5 públicos (nichos) REAIS e distintos, cada um com dores, desejos e provas próprias.
 - IMPORTANTE: se o produto também é usado pelo consumidor final (paciente, cliente, aluno, usuário leigo), esse público NUNCA pode ficar de fora — inclua-o junto dos públicos profissionais/B2B.
 - Se a marca já tem públicos cadastrados no briefing, mantenha-os (pode refinar o texto), não os substitua por outros.
 - Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o que o produto é como um todo.
+- Cores: se houver cores do site, escolha entre elas as duas principais e duas secundárias da marca (hex #RRGGBB). Sem cores no briefing, omita o campo.
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
@@ -177,6 +184,7 @@ Responda SOMENTE com JSON válido neste formato:
   "positioning": "2 a 3 frases sobre o produto inteiro, servindo de base do conteúdo 360°",
   "keywords": ["6 a 10 palavras-chave curtas"],
   "strategy_notes": "3 a 5 linhas sobre como informar, gerar desejo e vender para esta marca",
+  "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB" },
   "audiences": [
     {
       "label": "Nome curto do público",
@@ -188,6 +196,7 @@ Responda SOMENTE com JSON válido neste formato:
     }
   ]
 }`;
+
 
     const resp = await callAiWithFallback(
       LOVABLE_API_KEY,
