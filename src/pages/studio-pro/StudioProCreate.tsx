@@ -163,7 +163,7 @@ const StudioProCreate = ({
   folder,
   watermark,
   inspirations = [],
-  maxArts = STUDIO_BATCH_SIZE,
+  unlimited: unlimitedAccess = false,
   onSaved,
 }: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
