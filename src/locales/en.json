@@ -313,6 +313,7 @@
   "ftest.watch_video": "Watch demonstration video",
   "ftest.finish_tests": "Finish Tests",
   "ftest.continue": "Continue",
+  "ftest.skip_optional": "Skip this step (optional)",
   "ftest.no_tests_title": "No tests available",
   "ftest.no_tests_desc": "No specific tests found for the selected regions.",
   "ftest.category.mobility": "Mobility",

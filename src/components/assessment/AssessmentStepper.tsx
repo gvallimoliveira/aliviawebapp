@@ -26,8 +26,10 @@ const PROFESSIONAL_STEPS: Step[] = [
   { id: "redflags", label_pt: "Triagem", label_en: "Screening" },
   { id: "anamnesis", label_pt: "Anamnese", label_en: "Anamnesis" },
   { id: "questionnaire", label_pt: "Questionários", label_en: "Questionnaires" },
+  { id: "functional_tests", label_pt: "Testes", label_en: "Tests" },
   { id: "result", label_pt: "Hipótese", label_en: "Hypothesis" },
 ];
+
 
 const PSYCHOSOCIAL_STEP: Step = { id: "psychosocial", label_pt: "Perfil", label_en: "Profile" };
 

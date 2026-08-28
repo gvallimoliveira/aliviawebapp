@@ -86,13 +86,17 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 text-center py-10">
         <ClipboardCheck className="h-12 w-12 text-muted-foreground mx-auto" />
         <h3 className="text-lg font-semibold">{tl("Questionários Funcionais", "Functional Questionnaires")}</h3>
-        <p className="text-muted-foreground">
-          {tl("Não há questionários específicos para as regiões selecionadas.", "No specific questionnaires for the selected regions.")}
+        <p className="text-muted-foreground max-w-md mx-auto">
+          {tl(
+            "Os questionários funcionais são validados por região do corpo. Não existe um questionário específico para as regiões que você marcou no mapa de dor, então esta etapa não se aplica ao seu caso.",
+            "Functional questionnaires are validated per body region. There is no specific questionnaire for the regions you marked on the pain map, so this step does not apply to your case.",
+          )}
         </p>
         <Button onClick={onSkip} className="rounded-xl">{tl("Continuar", "Continue")}</Button>
       </motion.div>
     );
   }
+
 
   if (!currentQ) return null;
 

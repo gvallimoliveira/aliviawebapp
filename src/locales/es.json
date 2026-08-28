@@ -314,6 +314,7 @@
   "ftest.watch_video": "Ver video demostrativo",
   "ftest.finish_tests": "Finalizar Pruebas",
   "ftest.continue": "Continuar",
+  "ftest.skip_optional": "Omitir este paso (opcional)",
   "ftest.no_tests_title": "No hay pruebas disponibles",
   "ftest.no_tests_desc": "No se encontraron pruebas específicas para las regiones seleccionadas.",
   "ftest.category.mobility": "Movilidad",
