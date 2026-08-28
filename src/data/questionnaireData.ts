@@ -725,7 +725,7 @@ export const questionnaires: QuestionnaireDefinition[] = [
     regionMapping: [
       "right_shoulder", "left_shoulder",
       "right_shoulder_back", "left_shoulder_back",
-      "shoulder_side",
+      "shoulder_side", "shoulder_left", "shoulder_right",
     ],
     scoringDirection: "higher_worse",
     subscaleLabels: {
@@ -752,7 +752,7 @@ export const questionnaires: QuestionnaireDefinition[] = [
     regionMapping: [
       "right_knee", "left_knee",
       "right_knee_back", "left_knee_back",
-      "knee_side",
+      "knee_side", "knee_left", "knee_right",
       "right_shin", "left_shin",
       "right_thigh", "left_thigh",
     ],
@@ -813,7 +813,9 @@ export const questionnaires: QuestionnaireDefinition[] = [
     regionMapping: [
       "right_ankle", "left_ankle",
       "right_foot", "left_foot",
-      "foot_side",
+      "right_ankle_back", "left_ankle_back",
+      "right_foot_back", "left_foot_back",
+      "foot_side", "ankle_left", "ankle_right", "foot_left", "foot_right",
     ],
     scoringDirection: "higher_better",
     subscaleLabels: {
@@ -900,6 +902,7 @@ export const questionnaires: QuestionnaireDefinition[] = [
     reference: "Vernon H, Mior S. J Manipulative Physiol Ther. 1991;14(7):409-15.",
     regionMapping: [
       "cervical", "cervical_front", "cervical_left", "cervical_right",
+      "cervical_back",
       "head", "head_back", "head_left", "head_right",
     ],
     scoringDirection: "higher_worse",
