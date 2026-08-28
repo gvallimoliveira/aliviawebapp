@@ -107,6 +107,8 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
         desires: asStringArray(row.desires),
         proof: asStringArray(row.proof),
         cta: String(row.cta ?? "").trim() || undefined,
+        keyword: String(row.keyword ?? "").trim() || undefined,
+        hook: String(row.hook ?? "").trim() || undefined,
         parentId: String(row.parentId ?? row.parent_id ?? "").trim() || undefined,
       };
     })
@@ -125,6 +127,8 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
       ...(a.desires?.length ? { desires: a.desires } : {}),
       ...(a.proof?.length ? { proof: a.proof } : {}),
       ...(a.cta?.trim() ? { cta: a.cta.trim() } : {}),
+      ...(a.keyword?.trim() ? { keyword: a.keyword.trim() } : {}),
+      ...(a.hook?.trim() ? { hook: a.hook.trim() } : {}),
       ...(a.parentId?.trim() ? { parentId: a.parentId.trim() } : {}),
     }));
 
