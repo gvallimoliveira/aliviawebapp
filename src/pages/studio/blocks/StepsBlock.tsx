@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Flame, Wrench, StretchHorizontal, Dumbbell, Target, Trophy } from "lucide-react";
 import { sectionHeight, type BlockProps } from "./shared";
+import { BRAND_NAME } from "../brand";
 
 /**
  * STEPS — OS 6 DEGRAUS DA REABILITAÇÃO (arte exclusiva da marca Aliv.iA)
