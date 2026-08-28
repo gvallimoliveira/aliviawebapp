@@ -1,7 +1,18 @@
 import type { WorldContent } from "@/pages/studio/content";
 import type { TopicId } from "@/pages/studio/topics";
+import { createRng, type Rng } from "@/pages/studio/rng";
+import { voiceRegister, type VoiceRegister } from "@/pages/studio/lexicon";
+import {
+  composeClosings,
+  composeHeadlines,
+  composeKinetic,
+  composeSubs,
+  composeTypos,
+  type CopyIngredients,
+} from "@/pages/studio/phrasing";
 import { GLOBAL_SEGMENT, matrixAudiences, type BrandAudience, type ContentAngle } from "./audiences";
 import { condensePhrase } from "./textFit";
+
 
 
 /**
