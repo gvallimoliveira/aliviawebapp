@@ -244,6 +244,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
   },
   {
     id: "recem-formado",
+    keyword: "Recém-formado",
+    hook: "Você, recém-formado, atendendo os primeiros pacientes",
     label: "Recém-formado",
     description: "Sub-nicho do acadêmico: já tem registro, atende os primeiros pacientes e teme errar a conduta.",
     pains: [
@@ -262,6 +264,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
   },
   {
     id: "paciente-dor-cronica",
+    keyword: "Dor crônica",
+    hook: "Você que convive com dor crônica há meses",
     label: "Paciente com dor crônica",
     description:
       "Sub-nicho de Paciente: convive com dor há meses ou anos, já passou por vários profissionais e desconfia de promessa fácil.",
@@ -283,6 +287,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
   },
   {
     id: "paciente-pos-operatorio",
+    keyword: "Pós-operatório",
+    hook: "Você que acabou de operar",
     label: "Paciente pós-operatório",
     description: "Sub-nicho de Paciente: acabou de operar e precisa de condução segura fase a fase.",
     pains: ["Insegurança sobre o que pode ou não fazer", "Orientação genérica na alta hospitalar", "Medo de forçar e perder a cirurgia"],
@@ -297,6 +303,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
   },
   {
     id: "paciente-atleta-amador",
+    keyword: "Esportista",
+    hook: "Você que treina e não quer parar",
     label: "Praticante de esporte",
     description: "Sub-nicho de Paciente: corre, pedala ou treina força e quer voltar ao esporte sem recair na lesão.",
     pains: ["Parar de treinar por causa da lesão", "Voltar cedo demais e recair", "Alta sem critério objetivo"],
@@ -307,6 +315,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
   },
   {
     id: "paciente-60-mais",
+    keyword: "Geração 60+",
+    hook: "Você da geração 60+",
     label: "Paciente 60+",
     description: "Sub-nicho de Paciente: sente perda de força e equilíbrio e teme depender de alguém.",
     pains: ["Medo de cair", "Aceitar que dor é coisa da idade", "Exercício que parece arriscado demais"],
