@@ -684,9 +684,14 @@ export const questionnaires: QuestionnaireDefinition[] = [
     description_en: "Evaluates how back pain affects your ability to manage everyday activities.",
     reference: "Fairbank JCT, Pynsent PB. The Oswestry Disability Index. Spine. 2000;25(22):2940-2953.",
     regionMapping: [
+      // Ids reais do mapa de dor (frente/costas/laterais) + aliases legados.
       "lower_back", "upper_back", "sacral",
+      "lumbar_left", "lumbar_right",
+      "thoracic", "thoracic_left", "thoracic_right",
+      "sacrum", "left_sij", "right_sij",
       "right_gluteal", "left_gluteal",
     ],
+
     scoringDirection: "higher_worse",
     subscaleLabels: {
       pain_intensity: { pt: "Intensidade da Dor", en: "Pain Intensity" },
