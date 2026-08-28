@@ -390,22 +390,38 @@ Responda SOMENTE com JSON válido neste formato:
     const secondary = pickHex(rawColors.secondary);
     const secondary2 = pickHex(rawColors.secondary2);
     const applyColors = body?.applyColors === true && !!primary;
-    const colorKit = applyColors
-      ? {
-          primary: primary!,
-          primary2: primary2 ?? "#FFFFFF",
-          secondary: secondary ?? primary!,
-          secondary2: secondary2 ?? "#FFFFFF",
-          useSecondary: secondary && secondary2 ? "true" : "false",
-        }
-      : null;
+    /**
+     * Papéis + contraste garantido: a cor de marca é escurecida até suportar
+     * texto claro e a cor de texto é recalculada quando o par ficaria ilegível
+     * (era daí que vinham posts com verde neon e branco por cima).
+     */
+    let colorKit: Record<string, string> | null = null;
+    if (applyColors) {
+      const surface = ratio(primary!, "#FFFFFF") >= 4.5 ? primary! : brandSurface(primary!);
+      const onSurface =
+        primary2 && ratio(surface, primary2) >= 4.5 ? primary2 : readableOn(surface);
+      const accent = secondary ?? surface;
+      const neutral =
+        secondary2 && lum(secondary2) > 0.75 ? secondary2 : "#F5F7F6";
+      colorKit = {
+        primary: surface,
+        primary2: onSurface,
+        secondary: accent,
+        secondary2: neutral,
+        useSecondary: secondary ? "true" : "false",
+      };
+    }
+
+    const tagline = String(parsed.tagline ?? "").trim().replace(/\s+/g, " ").slice(0, 90);
 
     const result = {
       positioning: String(parsed.positioning ?? "").trim().slice(0, 800),
+      tagline,
       keywords: strList(parsed.keywords, 10),
       strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 900),
       audiences: mergedAudiences,
       colors: colorKit,
+      logo_url: logoUrl,
       site_read: !!site.text,
     };
 
@@ -418,8 +434,10 @@ Responda SOMENTE com JSON válido neste formato:
         audiences: result.audiences,
         ...(result.keywords.length ? { topics: result.keywords } : {}),
         ...(colorKit ? { colors: colorKit } : {}),
+        ...(logoUrl && !currentLogoIsImage ? { logo_url: logoUrl } : {}),
       })
       .eq("id", brandId);
+
     if (updateError) {
       console.error("[studio-brand-interpret] update", updateError);
       return json({ error: "Interpretação feita, mas não foi possível salvar." }, 500);
