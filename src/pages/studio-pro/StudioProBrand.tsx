@@ -815,6 +815,32 @@ const StudioProBrand = () => {
                 </div>
               </div>
 
+              {/* Kits de conteúdo prontos por nicho — ponto de partida editável */}
+              <div className="mt-4 rounded-xl border border-dashed border-border p-3">
+                <p className="text-xs font-medium text-foreground">Começar com um kit de nicho</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Preenche posicionamento, tom e públicos com um modelo pronto. É só um ponto de
+                  partida: tudo continua editável e as artes saem do seu kit de marca.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {NICHE_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.id}
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="rounded-full"
+                      title={preset.hint}
+                      onClick={() => applyNichePreset(preset)}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+
+
               <div className="mt-4 space-y-3">
                 {audiences.map((a, i) => (
                   <div key={`${a.id}-${i}`} className="rounded-xl border border-border p-3">
