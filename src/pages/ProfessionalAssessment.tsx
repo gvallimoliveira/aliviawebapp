@@ -15,6 +15,7 @@ import RedFlagAlert from "@/components/assessment/RedFlagAlert";
 import RedFlagContinueScreen from "@/components/assessment/RedFlagContinueScreen";
 import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/AnamnesisForm";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
+import FunctionalTests, { type TestResult } from "@/components/assessment/FunctionalTests";
 import PsychosocialStep, { type PsychosocialStepResult } from "@/components/assessment/PsychosocialStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import ClinicalThinkingSkeleton from "@/components/assessment/ClinicalThinkingSkeleton";
@@ -53,7 +54,7 @@ import {
 
 
 
-type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "psychosocial" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
+type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "psychosocial" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
 const ProfessionalAssessment = () => {
   const { professionalId } = useParams<{ professionalId: string }>();
@@ -75,11 +76,15 @@ const ProfessionalAssessment = () => {
   // Psychosocial (FABQ) is opt-in only: never part of the default full flow.
   const reassessHasPsychosocial = enabledSteps ? enabledSteps.has("psychosocial") : false;
   const reassessHasRedflags = isStepEnabled(enabledSteps, "redflags");
+  // Testes funcionais autoaplicados: fazem parte do fluxo completo do link
+  // (opcionais/puláveis) e são opt-in nos links de reavaliação.
+  const hasFunctionalTests = enabledSteps ? enabledSteps.has("functionaltests") : true;
 
   const [step, setStep] = useState<ProfStep>("loading_check");
   const [professional, setProfessional] = useState<any>(null);
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [resumeNextStep, setResumeNextStep] = useState<ProfStep | null>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [patientName, setPatientName] = useState("");
@@ -125,6 +130,7 @@ const ProfessionalAssessment = () => {
       setAnamnesisData(null);
     }
     setQuestionnaireResults(snap.questionnaireResults || []);
+    setTestResults((snap.testResults as TestResult[]) || []);
     setResumeNextStep(snap.step as ProfStep);
   };
 
@@ -197,11 +203,12 @@ const ProfessionalAssessment = () => {
       patientEmail,
       anamnesisData,
       questionnaireResults,
+      testResults,
       redFlagData,
     };
     saveAssessmentProgress(progressScopeKey, snapshot);
     void saveAssessmentProgressRemote(progressScopeKey, snapshot);
-  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, redFlagData, professionalId, progressScopeKey, canPersistProgress]);
+  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, testResults, redFlagData, professionalId, progressScopeKey, canPersistProgress]);
 
   // Limpa o backup quando a avaliação chega ao fim
   useEffect(() => {

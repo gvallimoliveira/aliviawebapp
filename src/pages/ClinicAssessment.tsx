@@ -15,6 +15,7 @@ import RedFlagAlert from "@/components/assessment/RedFlagAlert";
 import RedFlagContinueScreen from "@/components/assessment/RedFlagContinueScreen";
 import AnamnesisForm, { type AnamnesisData } from "@/components/assessment/AnamnesisForm";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
+import FunctionalTests, { type TestResult } from "@/components/assessment/FunctionalTests";
 import PsychosocialStep, { type PsychosocialStepResult } from "@/components/assessment/PsychosocialStep";
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import ClinicalThinkingSkeleton from "@/components/assessment/ClinicalThinkingSkeleton";
@@ -52,7 +53,7 @@ import {
 
 
 
-type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "psychosocial" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
+type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "psychosocial" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
 const ClinicAssessment = () => {
   const { clinicId } = useParams<{ clinicId: string }>();
@@ -74,11 +75,15 @@ const ClinicAssessment = () => {
   // Psychosocial (FABQ) is opt-in only: never part of the default full flow.
   const reassessHasPsychosocial = enabledSteps ? enabledSteps.has("psychosocial") : false;
   const reassessHasRedflags = isStepEnabled(enabledSteps, "redflags");
+  // Testes funcionais autoaplicados: fazem parte do fluxo completo do link
+  // (opcionais/puláveis) e são opt-in nos links de reavaliação.
+  const hasFunctionalTests = enabledSteps ? enabledSteps.has("functionaltests") : true;
 
   const [step, setStep] = useState<ClinicStep>("loading_check");
   const [clinic, setClinic] = useState<{ id: string; name: string; logo_url: string | null; brand_color: string | null } | null>(null);
   const [anamnesisData, setAnamnesisData] = useState<AnamnesisData | null>(null);
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [resumeNextStep, setResumeNextStep] = useState<ClinicStep | null>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [patientName, setPatientName] = useState("");
@@ -123,6 +128,7 @@ const ClinicAssessment = () => {
       setAnamnesisData(null);
     }
     setQuestionnaireResults(snap.questionnaireResults || []);
+    setTestResults((snap.testResults as TestResult[]) || []);
     setResumeNextStep(snap.step as ClinicStep);
   };
 
@@ -189,11 +195,12 @@ const ClinicAssessment = () => {
       patientEmail,
       anamnesisData,
       questionnaireResults,
+      testResults,
       redFlagData,
     };
     saveAssessmentProgress(progressScopeKey, snapshot);
     void saveAssessmentProgressRemote(progressScopeKey, snapshot);
-  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, redFlagData, clinicId, progressScopeKey, canPersistProgress]);
+  }, [step, assessmentId, patientName, patientEmail, anamnesisData, questionnaireResults, testResults, redFlagData, clinicId, progressScopeKey, canPersistProgress]);
 
   useEffect(() => {
     if (step === "thank_you" || step === "redflag_alert") {
