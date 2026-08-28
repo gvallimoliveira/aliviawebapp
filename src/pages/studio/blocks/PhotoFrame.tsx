@@ -32,8 +32,16 @@ const PhotoFrame = ({
   const cover = Math.abs(Math.cos(rad)) + Math.abs(Math.sin(rad));
   const scale = photo.zoom * cover;
 
+  /** Bordas arredondadas por padrão nas fotos de acervo; blocos que precisam
+   *  de formato próprio (meia-face, palco, topo arredondado) passam classe
+   *  `rounded-*` ou `rounded-none` e o padrão cede. */
+  const hasRounded = /\brounded-/.test(className);
+
   return (
-    <div className={`relative overflow-hidden ${className}`} style={style}>
+    <div
+      className={`relative overflow-hidden ${hasRounded ? "" : "rounded-2xl"} ${className}`}
+      style={style}
+    >
       {failed ? (
         <div className="flex h-full w-full items-center justify-center bg-muted px-6 text-center text-xs font-medium text-muted-foreground">
           Imagem indisponível
