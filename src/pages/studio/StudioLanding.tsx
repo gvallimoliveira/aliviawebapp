@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { WORLDS, isWorldId, type WorldId } from "./content";
 import { buildCoverage, readExposureLog, recordExposure, type ExposureLog } from "./coverage";
 import { createPicker } from "./picker";
+import { varyContent } from "./vary";
+
 import { personaForSeed } from "./personas";
 import { isTopicId, type TopicId } from "./topics";
 import StudioControls from "./StudioControls";
@@ -147,7 +149,16 @@ const StudioLanding = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const content = WORLDS[world];
+  /**
+   * VARIEDADE LINGUÍSTICA (motor global): o acervo curado de cada mundo é a
+   * semente da ideia; a roupagem das frases muda a cada seed pelo léxico do
+   * registro de voz da marca Aliv.iA (técnico/próximo).
+   */
+  const content = useMemo(
+    () => varyContent(WORLDS[world], { register: "tecnico", seed: `${world}:${seed}` }),
+    [world, seed],
+  );
+
 
   /** Linhagem: `from=<mundo>:<seed>` faz a composição herdar parte de um favorito. */
   const from = params.get("from");

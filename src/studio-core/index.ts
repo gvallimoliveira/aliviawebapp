@@ -26,7 +26,21 @@ export { composePage, type BlockKind, type ComposedBlock } from "@/pages/studio/
 export { PERSONAS, personaForSeed, type StudioPersona } from "@/pages/studio/personas";
 
 // Seleção de conteúdo com consciência de cobertura editorial.
-export { createPicker, type StudioPicker } from "@/pages/studio/picker";
+export { createPicker, phraseSignature, type StudioPicker, type PhraseMemory } from "@/pages/studio/picker";
+
+// Variedade linguística global: léxico por registro de voz + frames retóricos.
+export { applyLexicon, voiceRegister, synonymsOf, VOICE_REGISTERS, type VoiceRegister } from "@/pages/studio/lexicon";
+export { varyContent, type VaryOptions } from "@/pages/studio/vary";
+export {
+  composeHeadlines,
+  composeSubs,
+  composeTypos,
+  composeKinetic,
+  composeClosings,
+  headlineFrameCount,
+  type CopyIngredients,
+} from "@/pages/studio/phrasing";
+
 export {
   buildCoverage,
   readExposureLog,
