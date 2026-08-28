@@ -21,6 +21,7 @@ import {
   type StudioFormat,
 } from "@/studio-core";
 import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
+import { countPhotos } from "@/pages/studio/photos";
 import StudioPhotos from "@/pages/studio/StudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { voiceRegister } from "@/pages/studio/lexicon";
@@ -901,8 +902,8 @@ const StudioProCreate = ({
               className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground underline-offset-2 hover:underline"
             >
               <Camera className="h-3 w-3" />
-              Fotos do acervo: {photos.length}
-              {photoLimit > 0 ? ` de ${photoLimit}` : ""}
+              Fotos desta marca: {photos.length}
+              {photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}
               {pinnedPhotos.length > 0 ? ` · ${pinnedPhotos.length} fixada(s)` : ""}
             </button>
           </div>
@@ -1092,6 +1093,7 @@ const StudioProCreate = ({
           onEdit={editPhoto}
           onRemove={removePhoto}
           limit={photoLimit}
+          usedTotal={photosTotal}
           pinnedIds={pinnedPhotos}
           onTogglePin={togglePin}
           onClose={() => setPhotosOpen(false)}
