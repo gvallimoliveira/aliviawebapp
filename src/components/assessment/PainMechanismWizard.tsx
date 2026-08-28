@@ -241,10 +241,15 @@ const PainMechanismWizard = ({
   suggestedDistribution,
   disabled = false,
   previous = null,
+  onStageChange,
 }: PainMechanismWizardProps) => {
   const lang: Lang = language === "pt" ? "pt" : language === "es" ? "es" : "en";
   const isPro = variant === "pro";
   const [stage, setStage] = useState(0);
+
+  useEffect(() => {
+    onStageChange?.(stage);
+  }, [stage, onStageChange]);
 
   const includeExam = isPro;
 
@@ -661,26 +666,32 @@ const PainMechanismWizard = ({
           <ChevronLeft className="mr-1 h-3.5 w-3.5" />
           {COPY.back[lang]}
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="h-8 text-[11px]"
-          disabled={disabled || stage === 2}
-          onClick={() =>
-            setStage((s) => {
-              const next = Math.min(2, s + 1);
-              // Ao sair da etapa 2 sem escolha manual, congela a sugestão automática.
-              if (s === 1 && !value.subtype && autoSubtype) {
-                onChange({ ...value, subtype: autoSubtype });
-              }
-              return next;
-            })
-          }
-        >
-          {COPY.next[lang]}
-          <ChevronRight className="ml-1 h-3.5 w-3.5" />
-        </Button>
+        {stage < 2 ? (
+          <Button
+            type="button"
+            variant="default"
+            className="h-9 px-4 text-xs font-semibold rounded-xl shadow-sm"
+            disabled={disabled}
+            onClick={() =>
+              setStage((s) => {
+                const next = Math.min(2, s + 1);
+                // Ao sair da etapa 2 sem escolha manual, congela a sugestão automática.
+                if (s === 1 && !value.subtype && autoSubtype) {
+                  onChange({ ...value, subtype: autoSubtype });
+                }
+                return next;
+              })
+            }
+          >
+            {COPY.next[lang]}
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary">
+            <Check className="h-3.5 w-3.5" />
+            {lang === "pt" ? "Triagem concluída" : lang === "es" ? "Triaje completado" : "Screening complete"}
+          </span>
+        )}
       </div>
     </div>
   );
