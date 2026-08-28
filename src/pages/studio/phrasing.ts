@@ -115,8 +115,14 @@ const hasIngredient = (ing: CopyIngredients, needs?: HeadlineFrame["needs"]) => 
   return ing.solutions.filter(Boolean).length > 0;
 };
 
+/** Nenhuma reescrita pode introduzir jargão de consultoria ou promessa irreal. */
 const dress = (text: string, opts: PhrasingOptions) =>
-  rephrase(text, { register: opts.register, seed: opts.seed, forbidden: opts.forbidden, intensity: opts.intensity });
+  rephrase(text, {
+    register: opts.register,
+    seed: opts.seed,
+    forbidden: [...(opts.forbidden ?? []), ...BANNED_JARGON],
+    intensity: opts.intensity,
+  });
 
 
 /**
