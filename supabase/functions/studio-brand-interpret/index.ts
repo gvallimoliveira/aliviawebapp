@@ -536,7 +536,9 @@ Deno.serve(async (req) => {
       brand.tone
         ? `Tom de voz (DIRETRIZ de escrita, nunca copiar para dentro das artes): ${String(brand.tone).slice(0, 1500)}`
         : null,
-      brand.source_url ? `Site: ${brand.source_url}` : null,
+      brand.source_url
+        ? `Site informado (ESCOPO EXCLUSIVO da análise — se este endereço tiver um caminho, ex. /studio-pro, interprete APENAS esse produto/sub-site e NUNCA o produto principal hospedado na raiz do domínio): ${brand.source_url}`
+        : null,
       brand.instagram_handle ? `Instagram: ${brand.instagram_handle}` : null,
       Array.isArray(brand.topics) && brand.topics.length ? `Palavras-chave atuais: ${brand.topics.join(", ")}` : null,
       existingLabels.length ? `Públicos já cadastrados (manter todos): ${existingLabels.join(", ")}` : null,
