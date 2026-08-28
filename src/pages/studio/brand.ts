@@ -34,19 +34,35 @@ export type StudioBrandTheme = {
   site?: string | null;
 };
 
+/** Nome neutro de fallback: nenhuma conta de cliente pode herdar a marca dona. */
+export const NEUTRAL_NAME = "Sua marca";
+
+/**
+ * Wordmark em duas partes para os lockups tipográficos: nomes com ponto
+ * ("Aliv.iA") mantêm o sufixo na cor de destaque; nomes simples ("PerformaPro")
+ * saem inteiros, sem quebra artificial.
+ */
+export const brandWordmarkParts = (): [string, string] => {
+  const dot = BRAND_NAME.indexOf(".");
+  if (dot > 0 && dot < BRAND_NAME.length - 1) {
+    return [BRAND_NAME.slice(0, dot + 1), BRAND_NAME.slice(dot + 1)];
+  }
+  return [BRAND_NAME, ""];
+};
+
 /** Placeholder transparente: marca sem logo mantém o layout do lockup intacto. */
 const BLANK_LOGO =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
 /** Troca a marca das artes (Studio público, multimarca). */
 export const applyStudioBrandTheme = (theme: StudioBrandTheme) => {
-  BRAND_NAME = theme.name || ALIVIA_NAME;
+  BRAND_NAME = theme.name || NEUTRAL_NAME;
   BRAND_SLOGAN = theme.slogan || "";
   BRAND_LOGO = theme.logo || BLANK_LOGO;
   BRAND_HANDLE = theme.handle?.trim()
     ? (theme.handle.trim().startsWith("@") ? theme.handle.trim() : `@${theme.handle.trim()}`)
-    : theme.name || ALIVIA_NAME;
-  BRAND_SITE = (theme.site || "").replace(/^https?:\/\//, "").replace(/\/$/, "") || theme.name || ALIVIA_NAME;
+    : theme.name || NEUTRAL_NAME;
+  BRAND_SITE = (theme.site || "").replace(/^https?:\/\//, "").replace(/\/$/, "") || theme.name || NEUTRAL_NAME;
 };
 
 /** Volta para a marca Aliv.iA (Studio interno). */

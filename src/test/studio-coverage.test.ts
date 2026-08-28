@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { WORLDS, WORLD_IDS } from "@/pages/studio/content";
 import { TOPICS, isTopicId, imageForTopic, topicsOfWorld } from "@/pages/studio/topics";
@@ -106,6 +108,33 @@ describe("Studio · coerência do conteúdo", () => {
         [world]: { [ranked[0].id]: 20 },
       });
       expect(saturated.debtOf(ranked[0].id)).toBeLessThan(coverage.debtOf(ranked[0].id));
+    });
+  });
+});
+
+/**
+ * ISOLAMENTO DE MARCA NOS BLOCOS.
+ *
+ * Nenhum bloco pode escrever o nome/site/handle da marca dona em texto fixo: as
+ * mesmas artes rodam para marcas de clientes no Studio público, e um literal
+ * planta "Aliv.iA" no criativo de outra empresa. Todo lockup lê `brand.ts`.
+ */
+describe("isolamento de marca nos blocos do Studio", () => {
+  const dir = path.resolve(__dirname, "../pages/studio/blocks");
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".tsx") || f.endsWith(".ts"));
+
+  /** Remove comentários de bloco e de linha — documentação pode citar a marca. */
+  const stripComments = (src: string) =>
+    src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+  it("nenhum bloco contém o nome, site ou handle da marca em código", () => {
+    expect(files.length).toBeGreaterThan(10);
+    const forbidden = [/Aliv\.?iA/i, /aliviawebapp/i, /@?aliviafisio/i];
+    files.forEach((file) => {
+      const code = stripComments(fs.readFileSync(path.join(dir, file), "utf8"));
+      forbidden.forEach((pattern) => {
+        expect(pattern.test(code), `${file} cita a marca em texto fixo (${pattern})`).toBe(false);
+      });
     });
   });
 });

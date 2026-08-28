@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import type { CSSProperties } from "react";
 import { sectionHeight, type BlockProps } from "./shared";
-import { BRAND_LOGO, BRAND_NAME, BRAND_SLOGAN } from "../brand";
+import { BRAND_LOGO, BRAND_NAME, BRAND_SLOGAN, brandWordmarkParts } from "../brand";
 
 /**
  * Mono block — "Edição Mono": o black & white adaptado do Aliv.iA.
@@ -44,15 +44,19 @@ const monoTexture = (dark: boolean, index: number): CSSProperties => {
   }
 };
 
-/** Assinatura discreta: a logo é sempre colorida — ponto de cor ao lado do verde. */
-const MonoSignature = ({ dark, className = "" }: { dark: boolean; className?: string }) => (
-  <div className={`flex items-center gap-2.5 ${className}`}>
-    <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-8 w-8 object-contain" />
-    <span className={`text-sm font-semibold tracking-tight ${dark ? "text-mono-paper" : "text-mono-ink"}`}>
-      Aliv.<span className="text-primary">iA</span>
-    </span>
-  </div>
-);
+/** Assinatura discreta: a logo é sempre colorida — ponto de cor ao lado do mono. */
+const MonoSignature = ({ dark, className = "" }: { dark: boolean; className?: string }) => {
+  const [head, tail] = brandWordmarkParts();
+  return (
+    <div className={`flex items-center gap-2.5 ${className}`}>
+      <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-8 w-8 object-contain" />
+      <span className={`text-sm font-semibold tracking-tight ${dark ? "text-mono-paper" : "text-mono-ink"}`}>
+        {head}
+        {tail && <span className="text-primary">{tail}</span>}
+      </span>
+    </div>
+  );
+};
 
 type MonoProps = BlockProps & { textureIndex: number };
 
@@ -139,6 +143,7 @@ const MonoEcho = ({ content, rng, picker, format, textureIndex }: MonoProps) => 
 /** 3 — Lockup institucional: logo colorida grande + wordmark com "iA" verde. */
 const MonoLockup = ({ rng, format, textureIndex }: MonoProps) => {
   const dark = rng.chance(0.6);
+  const [head, tail] = brandWordmarkParts();
   return (
     <section
       className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${
@@ -169,8 +174,8 @@ const MonoLockup = ({ rng, format, textureIndex }: MonoProps) => {
           transition={{ duration: 0.85, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           className="mt-8 text-6xl font-bold tracking-tight md:text-8xl"
         >
-          <span className={dark ? "text-mono-paper" : "text-mono-ink"}>Aliv.</span>
-          <span className="text-primary">iA</span>
+          <span className={dark ? "text-mono-paper" : "text-mono-ink"}>{head}</span>
+          {tail && <span className="text-primary">{tail}</span>}
         </motion.p>
         <motion.p
           initial={{ opacity: 0, y: 18 }}

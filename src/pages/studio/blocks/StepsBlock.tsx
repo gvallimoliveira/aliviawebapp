@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Flame, Wrench, StretchHorizontal, Dumbbell, Target, Trophy } from "lucide-react";
 import { sectionHeight, type BlockProps } from "./shared";
+import { BRAND_NAME } from "../brand";
 
 /**
  * STEPS — OS 6 DEGRAUS DA REABILITAÇÃO (arte exclusiva da marca Aliv.iA)
@@ -43,7 +44,7 @@ const StepsBlock = ({ treatment, format }: BlockProps) => {
         className="relative z-10 w-full max-w-2xl pb-16"
       >
         <p className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.28em] ${skin.accent}`}>
-          Método Aliv.iA
+          Método {BRAND_NAME}
         </p>
         <h2 className={`mb-8 text-3xl font-bold leading-[1.05] md:text-5xl ${skin.ink}`}>
           STEPS — os 6 degraus da reabilitação
