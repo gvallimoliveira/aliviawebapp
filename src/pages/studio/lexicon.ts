@@ -31,11 +31,17 @@ const REGISTER_HINTS: Record<VoiceRegister, string[]> = {
 };
 
 /**
- * Classifica o tom de voz livre do kit em um registro. Sem tom declarado, o
- * registro sai da própria marca (hash do nome) para que marcas diferentes não
- * soem iguais por padrão.
+ * Postura padrão do motor (diretrizes ago/2026): sócio mais experiente — direto,
+ * adulto, prático. Só vale quando o kit NÃO declara tom de voz; se o kit declara,
+ * o kit sempre ganha.
  */
-export const voiceRegister = (tone?: string | null, fallbackSeed = "marca"): VoiceRegister => {
+export const DEFAULT_REGISTER: VoiceRegister = "direto";
+
+/**
+ * Classifica o tom de voz livre do kit em um registro. Sem tom declarado, cai na
+ * postura padrão (`DEFAULT_REGISTER`) em vez de sortear pelo nome da marca.
+ */
+export const voiceRegister = (tone?: string | null, _fallbackSeed = "marca"): VoiceRegister => {
   const text = (tone ?? "").toLowerCase();
   if (text.trim()) {
     let best: { register: VoiceRegister; score: number } = { register: "proximo", score: 0 };
