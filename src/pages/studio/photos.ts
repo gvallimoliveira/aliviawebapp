@@ -194,7 +194,7 @@ const downscale = async (file: File): Promise<Blob> => {
 /** Envia uma foto para a pasta do usuário e registra os metadados. */
 export const uploadPhoto = async (
   file: File,
-  meta: { label: string; usage: PhotoUsage; credit?: string; description?: string },
+  meta: { label: string; usage: PhotoUsage; credit?: string; description?: string; brandId?: string },
 ): Promise<StudioPhoto> => {
   if (file.size > MAX_PHOTO_BYTES) {
     throw new Error("Esta foto passa de 15 MB. Exporte em qualidade um pouco menor e envie de novo.");
