@@ -58,7 +58,16 @@ type Credits = {
   used_this_period: number;
 };
 
-const emptyForm = { name: "", niche: "", tone: "", logo_url: "" };
+const emptyForm = {
+  name: "",
+  niche: "",
+  tone: "",
+  logo_url: "",
+  source_url: "",
+  instagram_handle: "",
+  description: "",
+};
+
 
 /** Kit da própria Aliv.iA: verde + branco como principais. */
 const ALIVIA_KIT: BrandColorKit = {
@@ -84,7 +93,10 @@ const StudioProApp = () => {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
+  /** Ao criar a marca, já roda a leitura do site + montagem dos públicos. */
+  const [autoInterpret, setAutoInterpret] = useState(true);
   const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
     document.title = `${PRODUCT.name} — minhas marcas`;
@@ -217,6 +229,7 @@ const StudioProApp = () => {
       return;
     }
     setSaving(true);
+    const site = form.source_url.trim();
     const { data, error } = await supabase
       .from("studio_brands")
       .insert({
@@ -225,22 +238,46 @@ const StudioProApp = () => {
         niche: form.niche.trim() || null,
         tone: form.tone.trim() || null,
         logo_url: form.logo_url.trim() || null,
+        source_url: site ? (/^https?:\/\//i.test(site) ? site : `https://${site}`) : null,
+        instagram_handle: form.instagram_handle.trim() || null,
+        description: form.description.trim() || null,
         colors: writeColorKit(colorKit),
       })
       .select("id")
       .maybeSingle();
-    setSaving(false);
     if (error) {
+      setSaving(false);
       console.error("[studio-pro] insert brand", error);
       toast.error("Não foi possível salvar a marca.");
       return;
     }
+    const newId = data?.id;
+    const shouldInterpret =
+      autoInterpret && !!newId && !!(site || form.description.trim() || form.niche.trim());
+    if (shouldInterpret) {
+      toast.info("Analisando a marca e o site…");
+      try {
+        const { data: result, error: fnError } = await supabase.functions.invoke(
+          "studio-brand-interpret",
+          { body: { brandId: newId, applyColors: true } },
+        );
+        if (fnError) throw fnError;
+        if ((result as { error?: string })?.error) toast.error((result as { error: string }).error);
+        else toast.success("Marca interpretada. Revise os públicos e as cores.");
+      } catch (err) {
+        console.error("[studio-pro] interpret on create", err);
+        toast.info("Marca salva. A análise por IA pode ser feita na aba Marca.");
+      }
+    } else {
+      toast.success("Kit de marca salvo.");
+    }
+    setSaving(false);
     setForm(emptyForm);
     setShowForm(false);
-    toast.success("Kit de marca salvo.");
     await load();
-    if (data?.id) navigate(`${PRODUCT.base}/app/marca/${data.id}`);
+    if (newId) navigate(`${PRODUCT.base}/app/marca/${newId}?aba=ajustes`);
   };
+
 
   const removeBrand = async (id: string) => {
     const { error } = await supabase.from("studio_brands").delete().eq("id", id);
@@ -448,6 +485,38 @@ const StudioProApp = () => {
                   placeholder="Ex.: cafeteria, moda, advocacia"
                 />
               </div>
+              <div>
+                <Label htmlFor="brand-instagram">Instagram (opcional)</Label>
+                <Input
+                  id="brand-instagram"
+                  value={form.instagram_handle}
+                  onChange={(e) => setForm({ ...form, instagram_handle: e.target.value })}
+                  placeholder="@suamarca"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="brand-site">Site / landing page (opcional)</Label>
+                <Input
+                  id="brand-site"
+                  value={form.source_url}
+                  onChange={(e) => setForm({ ...form, source_url: e.target.value })}
+                  placeholder="https://suamarca.com.br"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Com o site, a IA lê a sua página, entende a proposta, sugere as cores da marca e já
+                  monta os públicos-alvo com dores, desejos e soluções.
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="brand-description">O que a marca faz (opcional)</Label>
+                <Textarea
+                  id="brand-description"
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Em poucas linhas: o que você vende, para quem e qual problema resolve."
+                />
+              </div>
               <BrandColorFields idPrefix="brand" kit={colorKit} onChange={setColorKit} />
               <div className="sm:col-span-2">
                 <Label htmlFor="brand-tone">Tom de voz</Label>
@@ -468,6 +537,20 @@ const StudioProApp = () => {
                   placeholder="https://..."
                 />
               </div>
+              {(form.source_url.trim() || form.description.trim() || form.niche.trim()) && (
+                <label className="flex items-start gap-2 rounded-2xl border border-border bg-muted/30 p-3 text-xs sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={autoInterpret}
+                    onChange={(e) => setAutoInterpret(e.target.checked)}
+                  />
+                  <span>
+                    Analisar a marca com IA agora: puxa a proposta e as cores do site e cria os
+                    públicos-alvo automaticamente (você revisa e edita depois).
+                  </span>
+                </label>
+              )}
               <Button onClick={createBrand} disabled={saving} className="rounded-full sm:col-span-2">
                 {saving ? (
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
@@ -478,6 +561,7 @@ const StudioProApp = () => {
               </Button>
             </div>
           )}
+
         </section>
       </div>
     </main>

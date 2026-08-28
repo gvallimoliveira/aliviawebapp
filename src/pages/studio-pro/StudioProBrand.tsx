@@ -324,9 +324,14 @@ const StudioProBrand = () => {
     try {
       // Salva o kit atual primeiro para a IA ler o texto mais recente.
       await saveBrand();
+      // Cores só são sobrescritas se o usuário ainda está no kit padrão.
+      const kitIsDefault =
+        colorKit.primary.toUpperCase() === DEFAULT_COLOR_KIT.primary.toUpperCase() &&
+        colorKit.primary2.toUpperCase() === DEFAULT_COLOR_KIT.primary2.toUpperCase();
       const { data, error } = await supabase.functions.invoke("studio-brand-interpret", {
-        body: { brandId },
+        body: { brandId, applyColors: !!form.source_url.trim() && kitIsDefault },
       });
+
       if (error) throw error;
       if ((data as { error?: string })?.error) {
         toast.error((data as { error: string }).error);

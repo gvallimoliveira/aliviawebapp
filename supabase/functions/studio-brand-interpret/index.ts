@@ -52,6 +52,63 @@ const slugify = (label: string) =>
     .replace(/(^-|-$)/g, "")
     .slice(0, 32) || "publico";
 
+const HEX = /^#[0-9a-fA-F]{6}$/;
+
+const normalizeUrl = (raw: string) => {
+  const value = raw.trim();
+  if (!value) return "";
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+};
+
+/**
+ * Leitura da landing page do cliente: texto visível (para a IA entender a
+ * proposta) e as cores mais frequentes do CSS inline/tags (para sugerir o kit).
+ * Falha silenciosa — site fora do ar não pode travar a interpretação.
+ */
+const readSite = async (rawUrl: string): Promise<{ text: string; colors: string[] }> => {
+  const url = normalizeUrl(rawUrl);
+  if (!url) return { text: "", colors: [] };
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    const resp = await fetch(url, {
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; AliviaStudioBot/1.0)" },
+    });
+    clearTimeout(timer);
+    if (!resp.ok) return { text: "", colors: [] };
+    const html = (await resp.text()).slice(0, 400_000);
+
+    const counts = new Map<string, number>();
+    for (const match of html.matchAll(/#[0-9a-fA-F]{6}\b/g)) {
+      const hex = match[0].toLowerCase();
+      // Ignora branco/preto puros: quase sempre são texto e fundo padrão.
+      if (hex === "#ffffff" || hex === "#000000") continue;
+      counts.set(hex, (counts.get(hex) ?? 0) + 1);
+    }
+    const colors = Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([hex]) => hex);
+
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 9000);
+
+    return { text, colors };
+  } catch (err) {
+    console.error("[studio-brand-interpret] site fetch", String(err).slice(0, 200));
+    return { text: "", colors: [] };
+  }
+};
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -79,7 +136,7 @@ Deno.serve(async (req) => {
     // A marca precisa ser do próprio usuário (RLS reforçada em código).
     const { data: brand, error: brandError } = await supabase
       .from("studio_brands")
-      .select("id, user_id, name, niche, tone, description, source_url, instagram_handle, topics, audiences")
+      .select("id, user_id, name, niche, tone, description, source_url, instagram_handle, topics, audiences, colors")
       .eq("id", brandId)
       .maybeSingle();
     if (brandError) return json({ error: "Não foi possível ler a marca" }, 500);
@@ -92,6 +149,9 @@ Deno.serve(async (req) => {
       .map((a) => String(a?.label ?? "").trim())
       .filter(Boolean);
 
+    // Lê a landing page do cliente (texto + cores) quando há site cadastrado.
+    const site = brand.source_url ? await readSite(String(brand.source_url)) : { text: "", colors: [] };
+
     const brief = [
       `Nome da marca: ${brand.name}`,
       brand.niche ? `Nicho/setor: ${brand.niche}` : null,
@@ -102,16 +162,20 @@ Deno.serve(async (req) => {
       Array.isArray(brand.topics) && brand.topics.length ? `Palavras-chave atuais: ${brand.topics.join(", ")}` : null,
       existingLabels.length ? `Públicos já cadastrados (manter todos): ${existingLabels.join(", ")}` : null,
       typeof body?.extra === "string" && body.extra.trim() ? `Contexto extra do cliente: ${body.extra.trim()}` : null,
+      site.colors.length ? `Cores mais usadas no site (ordem de frequência): ${site.colors.join(", ")}` : null,
+      site.text ? `\nTexto extraído da landing page (fonte primária da proposta):\n"""\n${site.text}\n"""` : null,
     ].filter(Boolean).join("\n");
 
     const systemPrompt = `Você é estrategista de conteúdo. A partir do briefing de uma marca, você produz o mapa editorial que alimentará um gerador de artes para redes sociais.
 
 Regras:
 - Escreva em português do Brasil, linguagem concreta, sem jargão de marketing e sem clichê ("soluções inovadoras", "excelência", "transformar vidas").
+- Se houver texto da landing page no briefing, ele é a fonte primária: a proposta, os produtos e os públicos devem sair de lá, não de suposições.
 - Segmente o produto em 2 a 5 públicos (nichos) REAIS e distintos, cada um com dores, desejos e provas próprias.
 - IMPORTANTE: se o produto também é usado pelo consumidor final (paciente, cliente, aluno, usuário leigo), esse público NUNCA pode ficar de fora — inclua-o junto dos públicos profissionais/B2B.
 - Se a marca já tem públicos cadastrados no briefing, mantenha-os (pode refinar o texto), não os substitua por outros.
 - Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o que o produto é como um todo.
+- Cores: se houver cores do site, escolha entre elas as duas principais e duas secundárias da marca (hex #RRGGBB). Sem cores no briefing, omita o campo.
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
@@ -120,6 +184,7 @@ Responda SOMENTE com JSON válido neste formato:
   "positioning": "2 a 3 frases sobre o produto inteiro, servindo de base do conteúdo 360°",
   "keywords": ["6 a 10 palavras-chave curtas"],
   "strategy_notes": "3 a 5 linhas sobre como informar, gerar desejo e vender para esta marca",
+  "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB" },
   "audiences": [
     {
       "label": "Nome curto do público",
@@ -131,6 +196,7 @@ Responda SOMENTE com JSON válido neste formato:
     }
   ]
 }`;
+
 
     const resp = await callAiWithFallback(
       LOVABLE_API_KEY,
@@ -200,11 +266,37 @@ Responda SOMENTE com JSON válido neste formato:
     }
     const mergedAudiences = Array.from(byId.values()).slice(0, 8);
 
+    /**
+     * Cores do site: só aplicadas quando o cliente pediu (`applyColors`) e a IA
+     * devolveu hex válidos. O kit manual do usuário nunca é sobrescrito à força.
+     */
+    const rawColors = (parsed.colors ?? {}) as Record<string, unknown>;
+    const pickHex = (value: unknown) => {
+      const hex = String(value ?? "").trim();
+      return HEX.test(hex) ? hex.toUpperCase() : null;
+    };
+    const primary = pickHex(rawColors.primary);
+    const primary2 = pickHex(rawColors.primary2);
+    const secondary = pickHex(rawColors.secondary);
+    const secondary2 = pickHex(rawColors.secondary2);
+    const applyColors = body?.applyColors === true && !!primary;
+    const colorKit = applyColors
+      ? {
+          primary: primary!,
+          primary2: primary2 ?? "#FFFFFF",
+          secondary: secondary ?? primary!,
+          secondary2: secondary2 ?? "#FFFFFF",
+          useSecondary: secondary && secondary2 ? "true" : "false",
+        }
+      : null;
+
     const result = {
       positioning: String(parsed.positioning ?? "").trim().slice(0, 800),
       keywords: strList(parsed.keywords, 10),
       strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 900),
       audiences: mergedAudiences,
+      colors: colorKit,
+      site_read: !!site.text,
     };
 
     // Persiste como briefing da marca — o usuário revisa e edita depois.
@@ -215,12 +307,14 @@ Responda SOMENTE com JSON válido neste formato:
         strategy_notes: result.strategy_notes || null,
         audiences: result.audiences,
         ...(result.keywords.length ? { topics: result.keywords } : {}),
+        ...(colorKit ? { colors: colorKit } : {}),
       })
       .eq("id", brandId);
     if (updateError) {
       console.error("[studio-brand-interpret] update", updateError);
       return json({ error: "Interpretação feita, mas não foi possível salvar." }, 500);
     }
+
 
     return json({ ok: true, ...result });
   } catch (error) {
