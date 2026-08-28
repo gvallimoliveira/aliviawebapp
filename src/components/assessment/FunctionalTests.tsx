@@ -18,6 +18,9 @@ interface FunctionalTestsProps {
   onComplete: (results: TestResult[]) => void;
   onBack: () => void;
   hasQuestionnaires?: boolean;
+  /** Etapa opcional (fluxos por link): mostra botão de pular. */
+  optional?: boolean;
+  onSkip?: () => void;
 }
 
 const categoryIcons: Record<string, string> = {
@@ -29,7 +32,7 @@ const categoryIcons: Record<string, string> = {
   trigger_points: "📍",
 };
 
-const FunctionalTests = ({ painRegions, onComplete, onBack, hasQuestionnaires = false }: FunctionalTestsProps) => {
+const FunctionalTests = ({ painRegions, onComplete, onBack, hasQuestionnaires = false, optional = false, onSkip }: FunctionalTestsProps) => {
   const { t } = useLanguage();
   const tests = useMemo(() => getTestsForRegions(painRegions), [painRegions]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -76,7 +79,7 @@ const FunctionalTests = ({ painRegions, onComplete, onBack, hasQuestionnaires = 
         <Activity className="h-16 w-16 text-muted-foreground mx-auto" />
         <h2 className="text-xl font-bold text-foreground">{t("ftest.no_tests_title")}</h2>
         <p className="text-muted-foreground">{t("ftest.no_tests_desc")}</p>
-        <Button onClick={() => onComplete([])} className="rounded-xl">{t("ftest.continue")}</Button>
+        <Button onClick={() => (onSkip ? onSkip() : onComplete([]))} className="rounded-xl">{t("ftest.continue")}</Button>
       </motion.div>
     );
   }
@@ -90,6 +93,15 @@ const FunctionalTests = ({ painRegions, onComplete, onBack, hasQuestionnaires = 
           <h2 className="text-lg font-bold text-foreground">{t("ftest.title")}</h2>
         </div>
         <p className="text-sm text-muted-foreground">{t("ftest.subtitle")}</p>
+        {optional && onSkip && (
+          <button
+            type="button"
+            onClick={onSkip}
+            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            {t("ftest.skip_optional")}
+          </button>
+        )}
         {hasQuestionnaires && (
           <Alert className="mt-3 rounded-xl border-primary/20 bg-primary/5">
             <Info className="h-4 w-4 text-primary" />
