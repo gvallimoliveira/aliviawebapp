@@ -574,6 +574,7 @@ const StudioProCreate = ({
       toast.error("Não foi possível salvar na marca.");
       return;
     }
+    setSaved((prev) => new Set(prev).add(index));
     toast.success(
       pngPath
         ? `Arte salva em ${folder === "Todas" ? "Geral" : folder} com PNG e legenda`
