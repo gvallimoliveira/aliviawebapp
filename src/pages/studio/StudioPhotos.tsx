@@ -46,16 +46,32 @@ const StudioPhotos = ({
   const [busy, setBusy] = useState(false);
   /** Foto aberta no editor de enquadramento (recorte, rotação, área segura). */
   const [editing, setEditing] = useState<StudioPhoto | null>(null);
+  /** Arquivos escolhidos e ainda não enviados (miniatura + informações). */
+  const [staged, setStaged] = useState<{ file: File; preview: string }[]>([]);
+  /** IDs das fotos enviadas nesta sessão — sobem para o topo da lista. */
+  const [recentIds, setRecentIds] = useState<string[]>([]);
 
   const hasLimit = typeof limit === "number";
   const remaining = hasLimit ? Math.max(0, (limit as number) - photos.length) : Infinity;
   const full = hasLimit && remaining === 0;
   const pinned = new Set(pinnedIds ?? []);
 
-  const handleFiles = async (files: FileList | null) => {
+  /**
+   * Ordem do acervo: fixadas primeiro, depois as recém-enviadas (mais nova
+   * primeiro) e por fim o restante, do mais recente para o mais antigo.
+   */
+  const ordered = [...photos].reverse().sort((a, b) => {
+    const rank = (p: StudioPhoto) => (pinned.has(p.id) ? 0 : recentIds.includes(p.id) ? 1 : 2);
+    const diff = rank(a) - rank(b);
+    if (diff !== 0) return diff;
+    if (rank(a) === 1) return recentIds.indexOf(a.id) - recentIds.indexOf(b.id);
+    return 0;
+  });
+
+  const pickFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const list = Array.from(files);
-    if (hasLimit && list.length > remaining) {
+    if (hasLimit && staged.length + list.length > remaining) {
       toast.error(
         remaining === 0
           ? `Seu plano permite ${limit} fotos no acervo. Remova alguma ou faça upgrade.`
@@ -64,26 +80,46 @@ const StudioPhotos = ({
       if (fileRef.current) fileRef.current.value = "";
       return;
     }
+    setStaged((prev) => [...prev, ...list.map((file) => ({ file, preview: URL.createObjectURL(file) }))]);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const dropStaged = (index: number) => {
+    setStaged((prev) => {
+      const next = [...prev];
+      const [removed] = next.splice(index, 1);
+      if (removed) URL.revokeObjectURL(removed.preview);
+      return next;
+    });
+  };
+
+  const handleUpload = async () => {
+    if (staged.length === 0) return;
     setBusy(true);
     try {
-      for (const file of list) {
-        await onUpload(file, {
-          label: label.trim() || file.name.replace(/\.[^.]+$/, ""),
+      const created: string[] = [];
+      for (const item of staged) {
+        const saved = (await onUpload(item.file, {
+          label: label.trim() || item.file.name.replace(/\.[^.]+$/, ""),
           usage,
           description: description.trim() || undefined,
-        });
+        })) as StudioPhoto | undefined;
+        if (saved && typeof saved === "object" && "id" in saved) created.push(saved.id);
+        URL.revokeObjectURL(item.preview);
       }
+      setRecentIds((prev) => [...created.reverse(), ...prev]);
+      setStaged([]);
       setLabel("");
       setDescription("");
-      toast.success(list.length > 1 ? `${list.length} fotos enviadas` : "Foto enviada");
+      toast.success(staged.length > 1 ? `${staged.length} fotos enviadas` : "Foto enviada");
     } catch (error) {
       console.error("[studio] upload falhou", error);
       toast.error(error instanceof Error ? error.message : "Não foi possível enviar a foto.");
     } finally {
       setBusy(false);
-      if (fileRef.current) fileRef.current.value = "";
     }
   };
+
 
 
   return (
