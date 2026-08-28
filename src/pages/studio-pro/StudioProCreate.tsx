@@ -154,6 +154,8 @@ type PersistedCreateState = {
   /** Modelos escolhidos; vazio = aleatório. */
   models?: string[];
   variation?: VariationProfile;
+  /** Fotos fixadas pelo usuário para forçar o acervo da geração. */
+  pinnedPhotos?: string[];
 };
 
 const readPersisted = (brandId: string): PersistedCreateState => {
@@ -423,11 +425,11 @@ const StudioProCreate = ({
         // Com modelos escolhidos, a linhagem de favoritos cede lugar à escolha.
         models.length > 0 ? undefined : lineage.blocks,
         content.carousels,
-        photos.length,
-        kindsForModels(models, photos.length, isAlivia),
+        activePhotos.length,
+        kindsForModels(models, activePhotos.length, isAlivia),
         isAlivia,
       ),
-    [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, models, isAlivia],
+    [brand.id, seed, activeSegment, angle, persona, content, lineage, activePhotos.length, models, isAlivia],
   );
 
   /**
@@ -829,7 +831,7 @@ const StudioProCreate = ({
                   </Button>
                   {STUDIO_MODELS.map((m) => {
                     const disabled =
-                      (!!m.needsPhoto && photos.length === 0) || (!!m.needsBrand && !isAlivia);
+                      (!!m.needsPhoto && activePhotos.length === 0) || (!!m.needsBrand && !isAlivia);
                     if (m.needsBrand && !isAlivia) return null;
                     return (
                       <Button
@@ -963,7 +965,7 @@ const StudioProCreate = ({
                         picker={picker}
                         persona={persona}
                         slide={slide}
-                        photos={photos}
+                        photos={activePhotos}
                       />
                     </StudioMotion>
                   </StudioProSignature>
