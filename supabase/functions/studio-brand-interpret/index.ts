@@ -18,7 +18,68 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-/** Extração tolerante: JSON puro, cercado por ```json, ou embutido em texto. */
+/**
+ * Reconstrói um JSON cortado no meio (resposta truncada pelo limite de tokens):
+ * fecha string aberta, descarta o último par incompleto e balanceia chaves.
+ */
+const repairTruncatedJson = (input: string): string | null => {
+  const start = input.indexOf("{");
+  if (start < 0) return null;
+  let text = input.slice(start);
+  // Remove cerca de código final, se houver.
+  text = text.replace(/```[\s\S]*$/, "");
+
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  let lastSafe = -1; // índice após o último valor completo em nível de objeto/array
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') {
+        inString = false;
+        lastSafe = i;
+      }
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === "{" || ch === "[") stack.push(ch === "{" ? "}" : "]");
+    else if (ch === "}" || ch === "]") {
+      stack.pop();
+      lastSafe = i;
+    } else if (ch === "," ) lastSafe = i - 1 >= 0 ? i - 1 : lastSafe;
+    else if (/[0-9truefalsn]/.test(ch)) lastSafe = i;
+  }
+
+  let body = inString || lastSafe < 0 ? text : text.slice(0, lastSafe + 1);
+  if (inString) {
+    // corta a string incompleta inteira: volta até a última vírgula segura
+    const cut = body.lastIndexOf(",");
+    body = cut > 0 ? body.slice(0, cut) : body;
+  }
+  body = body.replace(/[,:]\s*$/, "");
+  // Recalcula o fechamento necessário para o corpo final.
+  const closers: string[] = [];
+  let s = false, esc = false;
+  for (const ch of body) {
+    if (s) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') s = false;
+      continue;
+    }
+    if (ch === '"') s = true;
+    else if (ch === "{") closers.push("}");
+    else if (ch === "[") closers.push("]");
+    else if (ch === "}" || ch === "]") closers.pop();
+  }
+  if (s) body += '"';
+  return body + closers.reverse().join("");
+};
+
+/** Extração tolerante: JSON puro, cercado por ```json, embutido ou truncado. */
 const extractJson = (raw: string): Record<string, unknown> | null => {
   const attempts: string[] = [raw.trim()];
   const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -27,6 +88,11 @@ const extractJson = (raw: string): Record<string, unknown> | null => {
   const last = raw.lastIndexOf("}");
   if (first >= 0 && last > first) attempts.push(raw.slice(first, last + 1));
   attempts.push(raw.replace(/,\s*([}\]])/g, "$1"));
+  const repaired = repairTruncatedJson(raw);
+  if (repaired) {
+    attempts.push(repaired);
+    attempts.push(repaired.replace(/,\s*([}\]])/g, "$1"));
+  }
   for (const candidate of attempts) {
     try {
       const parsed = JSON.parse(candidate);
@@ -37,6 +103,7 @@ const extractJson = (raw: string): Record<string, unknown> | null => {
   }
   return null;
 };
+
 
 const strList = (value: unknown, max: number): string[] =>
   Array.isArray(value)
