@@ -33,6 +33,7 @@ import { useStudioAccess } from "./useStudioAccess";
 import StudioProCreate from "./StudioProCreate";
 import type { ComposedBlock } from "@/studio-core";
 import BrandColorFields from "./BrandColorFields";
+import BrandAssetsFields, { type BrandDoc } from "./BrandAssetsFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
 import { readAudiences, writeAudiences, type BrandAudience } from "./audiences";
 
@@ -153,6 +154,8 @@ const StudioProBrand = () => {
   const [colorKit, setColorKit] = useState<BrandColorKit>(DEFAULT_COLOR_KIT);
   /** Assinatura da marca nas artes — ajuste global desta marca. */
   const [signatureEnabled, setSignatureEnabled] = useState(true);
+  /** Manual da marca anexado nesta sessão — fonte principal da interpretação. */
+  const [doc, setDoc] = useState<BrandDoc | null>(null);
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
 
@@ -316,8 +319,8 @@ const StudioProBrand = () => {
    */
   const interpretBrand = async () => {
     if (!brandId) return;
-    if (!form.description.trim() && !form.niche.trim()) {
-      toast.error("Descreva a marca ou informe o nicho antes de interpretar.");
+    if (!doc && !form.description.trim() && !form.niche.trim()) {
+      toast.error("Descreva a marca, informe o nicho ou anexe o manual em PDF antes de interpretar.");
       return;
     }
     setInterpreting(true);
@@ -329,7 +332,12 @@ const StudioProBrand = () => {
         colorKit.primary.toUpperCase() === DEFAULT_COLOR_KIT.primary.toUpperCase() &&
         colorKit.primary2.toUpperCase() === DEFAULT_COLOR_KIT.primary2.toUpperCase();
       const { data, error } = await supabase.functions.invoke("studio-brand-interpret", {
-        body: { brandId, applyColors: !!form.source_url.trim() && kitIsDefault },
+        // Com manual anexado, ele manda no kit: cores e tipografia vêm do documento.
+        body: {
+          brandId,
+          applyColors: !!doc || (!!form.source_url.trim() && kitIsDefault),
+          doc: doc ? { name: doc.name, mime: doc.mime, base64: doc.base64 } : undefined,
+        },
       });
 
       if (error) throw error;
@@ -337,7 +345,12 @@ const StudioProBrand = () => {
         toast.error((data as { error: string }).error);
         return;
       }
-      toast.success("Marca interpretada. Revise os públicos abaixo.");
+      toast.success(
+        doc
+          ? "Manual interpretado: kit, cores e tipografia preenchidos. Revise abaixo."
+          : "Marca interpretada. Revise os públicos abaixo.",
+      );
+
       void load();
     } catch (err) {
       console.error("[studio-pro] interpret", err);
@@ -858,14 +871,16 @@ const StudioProBrand = () => {
               </p>
             </div>
 
-            <div className="sm:col-span-2">
-              <Label htmlFor="edit-logo">URL do logo</Label>
-              <Input
-                id="edit-logo"
-                value={form.logo_url}
-                onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
-              />
-            </div>
+            {/* Manual da marca (PDF), logo por upload e tipografia. */}
+            <BrandAssetsFields
+              logoUrl={form.logo_url}
+              onLogoChange={(logo_url) => setForm({ ...form, logo_url })}
+              fontKey={colorKit.font}
+              onFontChange={(font) => setColorKit({ ...colorKit, font })}
+              doc={doc}
+              onDocChange={setDoc}
+            />
+
 
             {/* Proteção do material: toda arte sai assinada com a marca. */}
             <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-background p-4 sm:col-span-2">

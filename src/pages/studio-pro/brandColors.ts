@@ -15,6 +15,8 @@ export type BrandColorKit = {
   secondary: string;
   secondary2: string;
   useSecondary: boolean;
+  /** Chave da tipografia da marca (ver `brandFonts.ts`). */
+  font: string;
 };
 
 export const DEFAULT_COLOR_KIT: BrandColorKit = {
@@ -23,6 +25,7 @@ export const DEFAULT_COLOR_KIT: BrandColorKit = {
   secondary: "#0B3B36",
   secondary2: "#E7F5F1",
   useSecondary: false,
+  font: "default",
 };
 
 const hex = (value: unknown, fallback: string) =>
@@ -34,6 +37,7 @@ export const readColorKit = (colors?: Record<string, string> | null): BrandColor
   secondary: hex(colors?.secondary, DEFAULT_COLOR_KIT.secondary),
   secondary2: hex(colors?.secondary2, DEFAULT_COLOR_KIT.secondary2),
   useSecondary: colors?.useSecondary === "true",
+  font: typeof colors?.font === "string" && colors.font.trim() ? colors.font.trim() : "default",
 });
 
 export const writeColorKit = (kit: BrandColorKit): Record<string, string> => ({
@@ -42,4 +46,6 @@ export const writeColorKit = (kit: BrandColorKit): Record<string, string> => ({
   secondary: kit.secondary,
   secondary2: kit.secondary2,
   useSecondary: kit.useSecondary ? "true" : "false",
+  font: kit.font || "default",
 });
+

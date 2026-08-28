@@ -25,6 +25,7 @@ import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
 import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
+import { ensureFontLoaded, findFont } from "./brandFonts";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
 import { STUDIO_BATCH_SIZE, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
@@ -380,8 +381,17 @@ const StudioProCreate = ({
       if (secondary) style["--accent"] = secondary;
       if (secondary2) style["--secondary"] = secondary2;
     }
+    // Tipografia da marca: herdada por todos os blocos da versão.
+    const brandFont = findFont(kit.font);
+    if (brandFont.stack) style.fontFamily = brandFont.stack;
     return Object.keys(style).length ? (style as React.CSSProperties) : undefined;
   })();
+
+  /** Garante a fonte da marca carregada antes de renderizar/exportar as artes. */
+  useEffect(() => {
+    ensureFontLoaded(kit.font);
+  }, [kit.font]);
+
 
   const headlineOf = (index: number) =>
     (document.getElementById(`studio-pro-block-${index}`)?.querySelector("h1, h2, h3")?.textContent ?? "")

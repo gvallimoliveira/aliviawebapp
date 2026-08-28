@@ -255,6 +255,20 @@ Deno.serve(async (req) => {
     const logoUrl = currentLogoIsImage ? currentLogo : site.logo;
 
 
+    /**
+     * MANUAL DA MARCA (PDF/imagem) — fonte principal quando enviado.
+     * O arquivo não é guardado: vai como anexo multimodal nesta chamada e só o
+     * briefing interpretado fica salvo na marca.
+     */
+    const doc = (body?.doc ?? null) as { name?: string; mime?: string; base64?: string } | null;
+    const docMime = String(doc?.mime ?? "");
+    const docBase64 = String(doc?.base64 ?? "");
+    const docOk =
+      !!docBase64 &&
+      (docMime === "application/pdf" || docMime.startsWith("image/")) &&
+      docBase64.length < 9_000_000;
+    if (doc && !docOk) return json({ error: "Documento inválido ou grande demais (máx. 6MB)." }, 400);
+
     const brief = [
       `Nome da marca: ${brand.name}`,
       brand.niche ? `Nicho/setor: ${brand.niche}` : null,
@@ -269,7 +283,11 @@ Deno.serve(async (req) => {
       typeof body?.extra === "string" && body.extra.trim() ? `Contexto extra do cliente: ${body.extra.trim()}` : null,
       site.colors.length ? `Cores mais usadas no site (ordem de frequência): ${site.colors.join(", ")}` : null,
       site.text ? `\nTexto extraído da landing page (fonte primária da proposta):\n"""\n${site.text}\n"""` : null,
+      docOk
+        ? `\nO cliente anexou o MANUAL DA MARCA (${doc?.name ?? "documento"}). Ele é a FONTE PRINCIPAL: cores, tipografia, posicionamento, públicos e tom saem dele e prevalecem sobre o site e sobre os campos atuais.`
+        : null,
     ].filter(Boolean).join("\n");
+
 
     const systemPrompt = `Você é estrategista de conteúdo. A partir do briefing de uma marca, você produz o mapa editorial que alimentará um gerador de artes para redes sociais.
 
@@ -287,6 +305,8 @@ Regras:
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
+Tipografia: se o briefing (especialmente o manual da marca anexado) indicar a fonte usada pela marca, devolva o nome dela em "font_family" (ex.: "Montserrat", "DM Sans", "Playfair Display"). Se não houver indicação, devolva "".
+
 Responda SOMENTE com JSON válido neste formato:
 {
   "positioning": "2 a 3 frases sobre o produto inteiro, servindo de base do conteúdo 360°",
@@ -295,6 +315,7 @@ Responda SOMENTE com JSON válido neste formato:
   "keywords": ["6 a 10 palavras-chave curtas"],
   "strategy_notes": "3 a 5 linhas sobre como informar, gerar desejo e vender para esta marca",
   "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB" },
+  "font_family": "nome da fonte da marca, ou vazio",
   "audiences": [
     {
       "label": "Nome curto do público",
@@ -307,6 +328,21 @@ Responda SOMENTE com JSON válido neste formato:
   ]
 }`;
 
+    /** Com manual anexado, a mensagem vira multimodal (texto + arquivo). */
+    const userContent = docOk
+      ? [
+          { type: "text", text: brief },
+          docMime === "application/pdf"
+            ? {
+                type: "file",
+                file: {
+                  filename: doc?.name || "manual-da-marca.pdf",
+                  file_data: `data:${docMime};base64,${docBase64}`,
+                },
+              }
+            : { type: "image_url", image_url: { url: `data:${docMime};base64,${docBase64}` } },
+        ]
+      : brief;
 
     const resp = await callAiWithFallback(
       LOVABLE_API_KEY,
@@ -314,12 +350,17 @@ Responda SOMENTE com JSON válido neste formato:
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: brief },
+          { role: "user", content: userContent },
         ],
       },
       ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"],
-      { functionName: "studio-brand-interpret", maxTokens: 2200, metadata: { brand_id: brandId } },
+      {
+        functionName: "studio-brand-interpret",
+        maxTokens: 2600,
+        metadata: { brand_id: brandId, has_doc: docOk },
+      },
     );
+
 
     if (!resp.ok) {
       const detail = await resp.text().catch(() => "");
@@ -412,6 +453,47 @@ Responda SOMENTE com JSON válido neste formato:
       };
     }
 
+    /**
+     * TIPOGRAFIA: casa o nome lido no manual com a lista curada do editor
+     * (mesmas chaves de `src/pages/studio-pro/brandFonts.ts`). Sem match, a
+     * fonte atual da marca é preservada.
+     */
+    const FONT_KEYS: Array<[string, string[]]> = [
+      ["inter", ["inter"]],
+      ["poppins", ["poppins"]],
+      ["montserrat", ["montserrat"]],
+      ["dm-sans", ["dm sans"]],
+      ["work-sans", ["work sans"]],
+      ["manrope", ["manrope"]],
+      ["space-grotesk", ["space grotesk", "grotesk"]],
+      ["jakarta", ["plus jakarta", "jakarta"]],
+      ["sora", ["sora"]],
+      ["raleway", ["raleway"]],
+      ["nunito", ["nunito"]],
+      ["archivo", ["archivo"]],
+      ["oswald", ["oswald"]],
+      ["bebas", ["bebas"]],
+      ["playfair", ["playfair"]],
+      ["lora", ["lora"]],
+      ["merriweather", ["merriweather"]],
+    ];
+    const fontRaw = String(parsed.font_family ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    const fontKey = FONT_KEYS.find(([, names]) => names.some((n) => fontRaw.includes(n)))?.[0] ?? null;
+
+    const currentColors = (brand.colors ?? {}) as Record<string, string>;
+    const currentFont = typeof currentColors.font === "string" ? currentColors.font : "default";
+    // Cores e fonte convivem no mesmo mapa `colors`: nada é perdido no update.
+    if (colorKit || fontKey) {
+      colorKit = {
+        ...currentColors,
+        ...(colorKit ?? {}),
+        font: fontKey ?? currentFont ?? "default",
+      };
+    }
+
     const tagline = String(parsed.tagline ?? "").trim().replace(/\s+/g, " ").slice(0, 90);
 
     const result = {
@@ -421,9 +503,12 @@ Responda SOMENTE com JSON válido neste formato:
       strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 900),
       audiences: mergedAudiences,
       colors: colorKit,
+      font: fontKey,
       logo_url: logoUrl,
       site_read: !!site.text,
+      doc_read: docOk,
     };
+
 
     // Persiste como briefing da marca — o usuário revisa e edita depois.
     const { error: updateError } = await supabase

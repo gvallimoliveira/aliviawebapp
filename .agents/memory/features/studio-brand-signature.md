@@ -13,3 +13,8 @@ type: feature
 - Cores têm papéis: `primary` = fundo/marca, `primary2` = texto sobre ela (contraste ≥ 4.5:1), `secondary` = destaque, `secondary2` = neutro claro. A interpretação por IA corrige o par automaticamente.
 - `studio-brand-interpret` extrai o logo real do site (img com "logo", og:image, apple-touch-icon) — nunca grava a URL do site como logo.
 - Cota: o e-mail vem do JWT ou de `auth.users`; acesso cortesia = plano Solo (60 artes). Saldo parcial gera o que resta em vez de bloquear.
+
+## Ativos da marca (2026-08-28)
+- Aba Ajustes tem upload de **manual da marca em PDF/imagem**: vai como anexo multimodal para `studio-brand-interpret` e, quando presente, é a FONTE PRINCIPAL do kit (prevalece sobre site e campos atuais). O arquivo não é guardado — só o briefing interpretado.
+- **Logo por upload** (PNG/JPG/WEBP/SVG) é reduzido a 640px e salvo como data URL em `logo_url` — evita CORS no PNG exportado. Campo de URL continua disponível.
+- **Tipografia**: chave curada em `colors.font` (lista em `src/pages/studio-pro/brandFonts.ts`, Google Fonts). Aplicada como `fontFamily` no wrapper das artes; a IA devolve `font_family` e o back casa com a mesma lista de chaves.
