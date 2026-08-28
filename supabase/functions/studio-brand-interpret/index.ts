@@ -60,14 +60,67 @@ const normalizeUrl = (raw: string) => {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 };
 
+/** Resolve caminho relativo do HTML para URL absoluta. */
+const absolutize = (candidate: string, base: string): string | null => {
+  const value = candidate.trim().replace(/^['"]|['"]$/g, "");
+  if (!value || value.startsWith("data:")) return null;
+  try {
+    return new URL(value, base).toString();
+  } catch {
+    return null;
+  }
+};
+
+const IMG_EXT = /\.(png|jpe?g|svg|webp|avif|gif)(\?|#|$)/i;
+
+/**
+ * LOGO DA MARCA A PARTIR DO SITE.
+ *
+ * Antes o cliente colava o site e o campo de logo ficava vazio (ou com a URL do
+ * próprio site, que não é imagem). Aqui procuramos, em ordem de confiança:
+ * 1. <img> cujo src/alt/class fale "logo" (a marca de verdade no header);
+ * 2. og:image / twitter:image (arte social, quase sempre com a marca);
+ * 3. apple-touch-icon / link rel icon (fallback quadrado).
+ */
+const findLogo = (html: string, base: string): string | null => {
+  const imgs = [...html.matchAll(/<img\b[^>]*>/gi)].map((m) => m[0]);
+  for (const tag of imgs) {
+    const src = tag.match(/\ssrc\s*=\s*["']([^"']+)["']/i)?.[1];
+    if (!src) continue;
+    const haystack = `${src} ${tag.match(/\salt\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""} ${
+      tag.match(/\sclass\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""
+    }`.toLowerCase();
+    if (!/logo|brand|marca|wordmark/.test(haystack)) continue;
+    const url = absolutize(src, base);
+    if (url) return url;
+  }
+
+  const metas = [
+    /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+    /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
+    /<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i,
+    /<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']/i,
+  ];
+  for (const re of metas) {
+    const hit = html.match(re)?.[1];
+    const url = hit ? absolutize(hit, base) : null;
+    if (url && (IMG_EXT.test(url) || url.includes("image"))) return url;
+  }
+  return null;
+};
+
 /**
  * Leitura da landing page do cliente: texto visível (para a IA entender a
- * proposta) e as cores mais frequentes do CSS inline/tags (para sugerir o kit).
+ * proposta), as cores mais frequentes e o logo da marca.
  * Falha silenciosa — site fora do ar não pode travar a interpretação.
  */
-const readSite = async (rawUrl: string): Promise<{ text: string; colors: string[] }> => {
+const readSite = async (
+  rawUrl: string,
+): Promise<{ text: string; colors: string[]; logo: string | null }> => {
   const url = normalizeUrl(rawUrl);
-  if (!url) return { text: "", colors: [] };
+  const empty = { text: "", colors: [], logo: null };
+  if (!url) return empty;
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 12000);
@@ -76,7 +129,7 @@ const readSite = async (rawUrl: string): Promise<{ text: string; colors: string[
       headers: { "User-Agent": "Mozilla/5.0 (compatible; AliviaStudioBot/1.0)" },
     });
     clearTimeout(timer);
-    if (!resp.ok) return { text: "", colors: [] };
+    if (!resp.ok) return empty;
     const html = (await resp.text()).slice(0, 400_000);
 
     const counts = new Map<string, number>();
@@ -101,12 +154,47 @@ const readSite = async (rawUrl: string): Promise<{ text: string; colors: string[
       .trim()
       .slice(0, 9000);
 
-    return { text, colors };
+    return { text, colors, logo: findLogo(html, url) };
   } catch (err) {
     console.error("[studio-brand-interpret] site fetch", String(err).slice(0, 200));
-    return { text: "", colors: [] };
+    return empty;
   }
 };
+
+/* ---------- Contraste: nenhuma arte pode sair ilegível ---------- */
+
+const rgb = (hex: string): [number, number, number] => [
+  parseInt(hex.slice(1, 3), 16),
+  parseInt(hex.slice(3, 5), 16),
+  parseInt(hex.slice(5, 7), 16),
+];
+const chan = (v: number) => {
+  const c = v / 255;
+  return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+};
+const lum = (hex: string) => {
+  const [r, g, b] = rgb(hex).map(chan);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const ratio = (a: string, b: string) => {
+  const hi = Math.max(lum(a), lum(b));
+  const lo = Math.min(lum(a), lum(b));
+  return (hi + 0.05) / (lo + 0.05);
+};
+const toHex = (c: [number, number, number]) =>
+  `#${c.map((v) => Math.min(255, Math.max(0, Math.round(v))).toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+const darken = (hex: string, amount: number) => {
+  const c = rgb(hex);
+  return toHex([c[0] * (1 - amount), c[1] * (1 - amount), c[2] * (1 - amount)]);
+};
+/** Cor de marca escura o suficiente para receber texto branco. */
+const brandSurface = (hex: string) => {
+  let out = hex;
+  for (let i = 0; i < 12 && ratio(out, "#FFFFFF") < 4.5; i += 1) out = darken(out, 0.12);
+  return out;
+};
+const readableOn = (hex: string) => (lum(hex) > 0.45 ? "#111111" : "#FFFFFF");
+
 
 
 Deno.serve(async (req) => {
