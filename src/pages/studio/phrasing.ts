@@ -9,7 +9,9 @@
  */
 
 import type { Rng } from "./rng";
-import { applyLexicon, type VoiceRegister } from "./lexicon";
+import type { VoiceRegister } from "./lexicon";
+import { rephrase } from "./rewrite";
+
 
 /** Insumos vindos do kit da marca (nunca do campo "tom de voz"). */
 export type CopyIngredients = {
@@ -111,7 +113,8 @@ const hasIngredient = (ing: CopyIngredients, needs?: HeadlineFrame["needs"]) => 
 };
 
 const dress = (text: string, opts: PhrasingOptions) =>
-  applyLexicon(text, { register: opts.register, seed: opts.seed, forbidden: opts.forbidden, intensity: opts.intensity });
+  rephrase(text, { register: opts.register, seed: opts.seed, forbidden: opts.forbidden, intensity: opts.intensity });
+
 
 /**
  * Gera um acervo grande de headlines: cada frame elegível rende variações

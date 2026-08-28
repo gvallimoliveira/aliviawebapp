@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { applyLexicon, type VoiceRegister } from "./lexicon";
+import type { VoiceRegister } from "./lexicon";
+import { rephrase } from "./rewrite";
 import {
   VARIATION_LEVELS,
   intensityFor,
@@ -12,10 +13,16 @@ import {
 type VariationKey = keyof VariationProfile;
 
 const ROWS: { key: VariationKey; label: string; sample: string }[] = [
-  { key: "headlines", label: "Títulos", sample: "Clareza gera resultado" },
-  { key: "support", label: "Textos de apoio", sample: "Um processo claro transforma cuidado em resultado" },
-  { key: "actions", label: "Chamadas e legendas", sample: "Comece agora e descubra um caminho melhor" },
+  { key: "headlines", label: "Títulos", sample: "Clareza gera resultado de verdade." },
+  { key: "support", label: "Textos de apoio", sample: "Um processo claro transforma cuidado em resultado." },
+  { key: "actions", label: "Chamadas e legendas", sample: "Comece agora e descubra um caminho melhor." },
 ];
+
+const HINTS: Record<VariationLevel, string> = {
+  low: "Só sinônimos: a frase original é preservada.",
+  medium: "Releitura parcial: conectivos e construção mudam.",
+  high: "Releitura completa: nova construção e enquadramento.",
+};
 
 type Props = {
   value: VariationProfile;
@@ -32,15 +39,18 @@ const VariationControl = ({ value, onChange, register, previewSeed, compact = fa
       Object.fromEntries(
         ROWS.map((row) => [
           row.key,
-          applyLexicon(row.sample, {
-            register,
-            seed: `${previewSeed}:preview:${row.key}:${value[row.key]}`,
-            intensity: intensityFor(value[row.key]),
-          }),
+          Array.from({ length: 3 }, (_, i) =>
+            rephrase(row.sample, {
+              register,
+              seed: `${previewSeed}:preview:${row.key}:${value[row.key]}:${i}`,
+              intensity: intensityFor(value[row.key]),
+            }),
+          ),
         ]),
-      ) as Record<VariationKey, string>,
+      ) as Record<VariationKey, string[]>,
     [previewSeed, register, value],
   );
+
 
   return (
     <div className={compact ? "" : "mt-2"}>
@@ -76,9 +86,18 @@ const VariationControl = ({ value, onChange, register, previewSeed, compact = fa
                     </Button>
                   ))}
                 </div>
-                <p className="mt-1.5 rounded-md bg-background px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                  Exemplo: “{examples[row.key]}”
-                </p>
+                <p className="mt-1.5 text-[10px] text-muted-foreground">{HINTS[value[row.key]]}</p>
+                <ul className="mt-1 grid gap-1">
+                  {examples[row.key].map((example, i) => (
+                    <li
+                      key={i}
+                      className="rounded-md bg-background px-2 py-1.5 text-[11px] leading-relaxed text-muted-foreground"
+                    >
+                      “{example}”
+                    </li>
+                  ))}
+                </ul>
+
               </div>
             </div>
           ))}

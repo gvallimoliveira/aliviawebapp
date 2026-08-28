@@ -18,6 +18,8 @@ Final Hypothesis: PRO/Clinic owner+therapist podem sobrescrever hipótese da IA;
 Support page: ao lançar/mudar feature relevante, atualizar Support.tsx + ClinicSupport.tsx + pt/en/es na MESMA loop.
 Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário entra direto, sem etapa /verificar-email. NÃO criar gates de email_confirmed_at em checkout/reset.
 LGPD: proibido script de rastreamento/session replay (Clarity removido). Controlador/DPO: Guilherme Vallim de Oliveira (aliviawebapp@gmail.com). Consentimento versionado via `POLICY_VERSION` em src/lib/consentLog.ts.
+Studio copy: variação linguística = RELEITURA da frase (src/pages/studio/rewrite.ts), nunca troca de 1-2 palavras; 100% local, sem créditos de IA.
+
 
 
 ## Memories
@@ -126,3 +128,4 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Studio Brand Signature](mem://features/studio-brand-signature) — Assinatura obrigatória da marca em todas as artes; toggle global por marca.
 - [Studio Method Blocks](mem://features/studio-method-blocks) — STEPS e D.I.F.I. como artes do Studio, exclusivas da marca Aliv.iA.
 - [Studio Matrix Audiences](mem://features/studio-matrix-audiences) — Públicos matriz contam na métrica oficial das artes; sub-nichos (parentId) nunca contam.
+- [Studio Copy Engine](mem://features/studio-copy-engine) — Motor textual local: léxico + releitura de frase (rewrite.ts), níveis Baixa/Média/Alta, sem créditos de IA.

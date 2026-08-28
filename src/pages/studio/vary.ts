@@ -10,7 +10,9 @@
  */
 
 import type { WorldContent } from "./content/types";
-import { applyLexicon, type VoiceRegister } from "./lexicon";
+import type { VoiceRegister } from "./lexicon";
+import { rephrase } from "./rewrite";
+
 import { DEFAULT_VARIATION_PROFILE, intensityFor, type VariationProfile } from "./variation";
 
 const SKIP_KEYS = new Set(["id", "label", "topic", "topics", "poster", "image", "hashtags", "value", "prefix", "suffix", "tag"]);
@@ -36,13 +38,14 @@ const intensityForPath = (key: string, path: string, options: VaryOptions) => {
 const varyValue = (value: unknown, key: string, options: VaryOptions, path: string): unknown => {
   if (typeof value === "string") {
     if (SKIP_KEYS.has(key)) return value;
-    return applyLexicon(value, {
+    return rephrase(value, {
       register: options.register,
       seed: `${options.seed}:${path}`,
       intensity: intensityForPath(key, path, options),
       forbidden: options.forbidden,
     });
   }
+
   if (Array.isArray(value)) {
     return value.map((item, i) => varyValue(item, key, options, `${path}.${i}`));
   }
