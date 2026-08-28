@@ -41,7 +41,7 @@ type Row = {
 const toQuota = (row: Row): StudioQuota => ({
   plan: row.plan,
   unlimited: !!row.unlimited,
-  batchSize: row.batch_size ?? STUDIO_BATCH_SIZE,
+  batchSize: row.batch_size ?? STUDIO_GENERATION_COST,
   allowance: row.allowance ?? 0,
   used: row.used_this_period ?? 0,
   remaining: row.remaining ?? 0,
@@ -97,7 +97,7 @@ export const useStudioQuota = () => {
    * `error` = a chamada falhou (a UI deve avisar e permitir tentar de novo).
    */
   const consume = useCallback(
-    async (amount = STUDIO_BATCH_SIZE): Promise<ConsumeResult> => {
+    async (amount = STUDIO_GENERATION_COST): Promise<ConsumeResult> => {
       const { data, error } = await supabase.rpc("consume_studio_generation", { p_amount: amount });
       if (error) {
         console.error("[studio-pro] consume_studio_generation", error);
