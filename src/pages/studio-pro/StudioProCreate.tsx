@@ -289,7 +289,9 @@ const StudioProCreate = ({
   const themeReady = useMemo(() => {
     applyStudioBrandTheme({
       name: brand.name,
-      slogan: brandSlogan({ name: brand.name, niche: brand.niche, tone: brand.tone }),
+      // Tom de voz é diretriz, não copy: o slogan sai da descrição/nicho.
+      slogan: brandSlogan({ name: brand.name, niche: brand.niche, description: brand.description }),
+
       logo: brand.logo_url,
       handle: brand.instagram_handle ?? null,
       site: brand.source_url ?? null,
