@@ -648,7 +648,7 @@ const StudioProCreate = ({
           <p className="text-xs text-muted-foreground">
             Versão <span className="font-mono">{seed}</span> · direção criativa {persona.name} · destino:{" "}
             {folder === "Todas" ? "Geral" : folder}
-            {!unlimited && ` · lote de ${batchSize} artes por geração`}
+            {!unlimited && " · 1 geração por versão (artes ilimitadas dentro dela)"}
           </p>
           {!unlimited && quotaError && (
             <p className="mt-1 text-xs font-semibold text-destructive">
@@ -658,8 +658,8 @@ const StudioProCreate = ({
           {!unlimited && quota && !quotaError && (
             <p className="mt-1 text-xs font-semibold text-foreground">
               {quota.generationsLeft > 0
-                ? `${quota.generationsLeft} ${quota.generationsLeft === 1 ? "geração" : "gerações"} restantes neste período · ${quota.remaining} de ${quota.allowance} artes`
-                : "Cota do período encerrada — faça upgrade para continuar gerando."}
+                ? `${quota.generationsLeft} de ${quota.allowance} ${quota.allowance === 1 ? "geração" : "gerações"} restantes neste período`
+                : "Gerações do período encerradas — faça upgrade para continuar gerando."}
             </p>
           )}
 
