@@ -102,7 +102,7 @@ export const pickHeadline = <T extends { strong: string; rest: string }>(
 
 /** Section height contract: blocks must fill the recording frame. */
 export const sectionHeight = (format: StudioFormat) =>
-  format === "free" ? "min-h-[80svh]" : "h-full min-h-full w-full";
+  format === "free" ? "min-h-[80svh]" : "h-full w-full overflow-hidden";
 
 /**
  * PADDING DINÂMICO POR FORMATO
@@ -113,7 +113,7 @@ export const sectionHeight = (format: StudioFormat) =>
  * - free: padding padrão.
  */
 export const blockPadding = (format: StudioFormat) => {
-  if (format === "9x16") return "pt-[14%] pb-[18%] px-[9%]";
+  if (format === "9x16") return "pt-[16%] pb-[22%] px-[10%]";
   if (format === "1x1") return "py-[10%] px-[8%]";
   return "py-20 px-6";
 };

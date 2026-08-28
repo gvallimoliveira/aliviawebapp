@@ -48,6 +48,7 @@ import BrandBlock from "./blocks/BrandBlock";
 import CarouselBlock from "./blocks/CarouselBlock";
 import StudioMotion from "./blocks/StudioMotion";
 import type { BlockProps, StudioFormat } from "./blocks/shared";
+import { resetStudioBrandTheme } from "./brand";
 
 
 

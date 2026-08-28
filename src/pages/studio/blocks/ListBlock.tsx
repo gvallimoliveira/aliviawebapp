@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { ACCENT_STYLES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
 import { BRAND_NAME } from "../brand";
 
@@ -19,7 +19,7 @@ const ListBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
       <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
         <TextureLayer persona={persona} index={treatment} />
         <GeoOrnament index={treatment + persona.textureShift} />
-        <div className="container relative py-20">
+        <div className={`container relative ${blockPadding(format)}`}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -56,7 +56,7 @@ const ListBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
     return (
       <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
         <TextureLayer persona={persona} index={treatment} />
-        <div className="container relative py-20">
+        <div className={`container relative ${blockPadding(format)}`}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -98,7 +98,7 @@ const ListBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
       <TextureLayer persona={persona} index={treatment} />
-      <div className="container relative py-20">
+      <div className={`container relative ${blockPadding(format)}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { ACCENT_STYLES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
 import { BRAND_LOGO, BRAND_NAME, BRAND_SLOGAN } from "../brand";
-import { BRAND_DNA } from "../content/brandDna";
 
 /**
  * Brand block — lockups institucionais: a marca como assunto da arte.
@@ -22,7 +21,7 @@ import { BRAND_DNA } from "../content/brandDna";
  */
 const VerticalWordmark = ({ stroke }: { stroke?: boolean }) => (
   <div aria-hidden className="flex select-none flex-col items-center leading-[0.82]">
-    {["A", "l", "i", "v", ".", "i", "A"].map((ch, i) => (
+    {Array.from(BRAND_NAME).map((ch, i) => (
       <span
         key={i}
         data-studio-stroke={stroke ? "1" : undefined}
@@ -39,7 +38,12 @@ const VerticalWordmark = ({ stroke }: { stroke?: boolean }) => (
 );
 
 const BrandBlock = ({ rng, treatment, format, persona }: BlockProps) => {
-  const statement = rng.pick(BRAND_DNA.statements);
+  const statementPool = [
+    ...content.closings.map((item) => item.title),
+    ...content.subs,
+    ...content.headlines.map((item) => `${item.strong}${item.rest}`),
+  ].filter(Boolean);
+  const statement = rng.pick(statementPool);
   const accentVariant = rng.int(ACCENT_STYLES.length);
 
   if (treatment === 1) {
@@ -87,7 +91,7 @@ const BrandBlock = ({ rng, treatment, format, persona }: BlockProps) => {
             className="mx-auto max-w-4xl text-center"
           >
             <p className="text-6xl font-bold leading-none tracking-tight text-foreground md:text-9xl">
-              Aliv<span className="text-primary">.</span>iA
+              {BRAND_NAME}
             </p>
             <p className="mx-auto mt-8 max-w-xl text-lg font-medium leading-snug text-muted-foreground md:text-2xl">
               {BRAND_SLOGAN}
