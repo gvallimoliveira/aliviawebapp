@@ -58,7 +58,16 @@ type Credits = {
   used_this_period: number;
 };
 
-const emptyForm = { name: "", niche: "", tone: "", logo_url: "" };
+const emptyForm = {
+  name: "",
+  niche: "",
+  tone: "",
+  logo_url: "",
+  source_url: "",
+  instagram_handle: "",
+  description: "",
+};
+
 
 /** Kit da própria Aliv.iA: verde + branco como principais. */
 const ALIVIA_KIT: BrandColorKit = {
