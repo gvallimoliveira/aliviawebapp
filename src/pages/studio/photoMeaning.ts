@@ -176,11 +176,19 @@ export const PHOTO_RESTRICTIONS: PhotoRestriction[] = [
   },
 ];
 
+/**
+ * Texto de leitura da foto: rótulo + DESCRIÇÃO escrita pelo usuário + crédito.
+ * A descrição é o que permite dizer "use em contexto de avaliação" sem depender
+ * do nome do arquivo. Continua sendo insumo de curadoria, nunca título de arte.
+ */
+const readingText = (photo: StudioPhoto): string =>
+  `${photo.label} ${photo.description ?? ""} ${photo.credit ?? ""}`;
+
 const restrictionOf = (photo: StudioPhoto): PhotoRestriction | undefined =>
-  PHOTO_RESTRICTIONS.find((r) => r.match.test(`${photo.label} ${photo.credit ?? ""}`));
+  PHOTO_RESTRICTIONS.find((r) => r.match.test(readingText(photo)));
 
 const themesOf = (photo: StudioPhoto): PhotoTheme[] =>
-  PHOTO_THEMES.filter((theme) => theme.match.test(`${photo.label} ${photo.credit ?? ""}`));
+  PHOTO_THEMES.filter((theme) => theme.match.test(readingText(photo)));
 
 /** Tópicos que a foto consegue sustentar (extrapolação, não literalidade). */
 export const photoTopics = (photo: StudioPhoto): TopicId[] => {

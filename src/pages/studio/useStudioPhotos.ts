@@ -33,7 +33,7 @@ export const useStudioPhotos = (enabled: boolean) => {
     void reload();
   }, [enabled, reload]);
 
-  const add = useCallback(async (file: File, meta: { label: string; usage: PhotoUsage; credit?: string }) => {
+  const add = useCallback(async (file: File, meta: { label: string; usage: PhotoUsage; credit?: string; description?: string }) => {
     const photo = await uploadPhoto(file, meta);
     setPhotos((prev) => [...prev, photo]);
     return photo;

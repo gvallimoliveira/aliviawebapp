@@ -19,4 +19,5 @@ type: feature
 - Proibido usar `photo.label` como título/headline — gerava arte literal ("AGACHAMENTO COM BARRA" em post de preço de estudante).
 - **Studio público (planos)**: teto de fotos por plano — grátis 0 (acervo bloqueado), Solo 20, Marca 60, Agência/VIP 120. Fonte da verdade no banco: trigger `studio_photos_limit` + `studio_photo_limit_for` (VIP e cortesia via `studio_granted_access` incluídos); `plan.ts` só reflete o teto na UI.
 - Upload: máximo 15 MB por arquivo (bucket `studio-photos` também limitado a 15MB); acima de ~2.5 MB a imagem é reduzida no cliente para 2400px antes do envio. Se o insert falhar (limite), o arquivo é removido do storage.
+- Cada foto tem **descrição breve** (`description` em `studio_photos`) escrita pelo usuário — o insumo mais forte do nexo (`readingText` em `photoMeaning.ts` usa label + descrição + crédito). Continua proibido usar como headline.
 - **Fotos fixadas (controle criativo)**: alfinete em cada card; com fotos fixadas só elas alimentam os blocos fotográficos, mas o nexo foto × assunto continua valendo (foto fixada sem nexo simplesmente não gera bloco). Estado persistido por marca em `pinnedPhotos`.

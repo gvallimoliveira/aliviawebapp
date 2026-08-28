@@ -8,7 +8,7 @@ import { PHOTO_USAGES, type PhotoFraming, type PhotoPatch, type PhotoUsage, type
 type Props = {
   photos: StudioPhoto[];
   loading: boolean;
-  onUpload: (file: File, meta: { label: string; usage: PhotoUsage; credit?: string }) => Promise<unknown>;
+  onUpload: (file: File, meta: { label: string; usage: PhotoUsage; credit?: string; description?: string }) => Promise<unknown>;
   onEdit: (id: string, patch: PhotoPatch) => Promise<void>;
   onRemove: (photo: StudioPhoto) => Promise<void>;
   onClose: () => void;
@@ -41,6 +41,8 @@ const StudioPhotos = ({
   const fileRef = useRef<HTMLInputElement>(null);
   const [usage, setUsage] = useState<PhotoUsage>("livre");
   const [label, setLabel] = useState("");
+  /** Descrição breve: o que a imagem mostra e onde deve ser usada. */
+  const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
   /** Foto aberta no editor de enquadramento (recorte, rotação, área segura). */
   const [editing, setEditing] = useState<StudioPhoto | null>(null);
@@ -65,9 +67,14 @@ const StudioPhotos = ({
     setBusy(true);
     try {
       for (const file of list) {
-        await onUpload(file, { label: label.trim() || file.name.replace(/\.[^.]+$/, ""), usage });
+        await onUpload(file, {
+          label: label.trim() || file.name.replace(/\.[^.]+$/, ""),
+          usage,
+          description: description.trim() || undefined,
+        });
       }
       setLabel("");
+      setDescription("");
       toast.success(list.length > 1 ? `${list.length} fotos enviadas` : "Foto enviada");
     } catch (error) {
       console.error("[studio] upload falhou", error);
@@ -113,6 +120,13 @@ const StudioPhotos = ({
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Rótulo (ex. Guilherme, fundador)"
             className="mb-2 w-full rounded-lg border border-border bg-card px-2.5 py-2 text-[12px] text-foreground"
+          />
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+            placeholder="Descrição breve: o que aparece e onde usar (ex. avaliação de força com dinamômetro — usar em posts de avaliação e evolução)"
+            className="mb-2 w-full resize-none rounded-lg border border-border bg-card px-2.5 py-2 text-[12px] text-foreground"
           />
           <div className="mb-2 flex flex-wrap gap-1.5">
             {PHOTO_USAGES.map((u) => (
@@ -203,6 +217,16 @@ const StudioPhotos = ({
                       if (value !== photo.label) void onEdit(photo.id, { label: value });
                     }}
                     className="mb-1.5 w-full rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground"
+                  />
+                  <textarea
+                    defaultValue={photo.description}
+                    rows={2}
+                    onBlur={(e) => {
+                      const value = e.target.value.trim();
+                      if (value !== photo.description) void onEdit(photo.id, { description: value });
+                    }}
+                    placeholder="Descrição / uso desejado"
+                    className="mb-1.5 w-full resize-none rounded-md border border-border bg-card px-2 py-1 text-[10px] leading-snug text-foreground"
                   />
                   <div className="flex items-center justify-between">
                     <select
