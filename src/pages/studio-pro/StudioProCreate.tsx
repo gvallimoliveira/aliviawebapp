@@ -187,6 +187,8 @@ const StudioProCreate = ({
   const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "1x1");
   const [seed, setSeed] = useState(() => restored.current.seed ?? randomSeed());
   const [busy, setBusy] = useState<string | null>(null);
+  /** Índices das artes já salvas nesta versão — evita cliques duplicados. */
+  const [saved, setSaved] = useState<Set<number>>(() => new Set());
   const wrapper = useRef<HTMLDivElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const { photos } = useStudioPhotos(true);
@@ -206,6 +208,7 @@ const StudioProCreate = ({
   const newVersion = async () => {
     if (unlimited) {
       setSeed(randomSeed());
+      setSaved(new Set());
       return;
     }
     setBusy("quota");
@@ -219,10 +222,12 @@ const StudioProCreate = ({
       // Falha de leitura não é cota estourada: libera o lote e avisa sem falar de upgrade.
       toast.warning("Não conseguimos confirmar sua cota agora — gerando de qualquer forma.");
       setSeed(randomSeed());
+      setSaved(new Set());
       return;
     }
 
     setSeed(randomSeed());
+    setSaved(new Set());
   };
 
 
@@ -569,6 +574,7 @@ const StudioProCreate = ({
       toast.error("Não foi possível salvar na marca.");
       return;
     }
+    setSaved((prev) => new Set(prev).add(index));
     toast.success(
       pngPath
         ? `Arte salva em ${folder === "Todas" ? "Geral" : folder} com PNG e legenda`
@@ -664,6 +670,11 @@ const StudioProCreate = ({
       toast.error("Não foi possível salvar o carrossel.");
       return;
     }
+    setSaved((prev) => {
+      const next = new Set(prev);
+      for (const i of indexes) next.add(i);
+      return next;
+    });
     toast.success(`Carrossel salvo em ${folder === "Todas" ? "Geral" : folder} (${indexes.length} slides)`);
     onSaved?.();
   };
@@ -890,6 +901,9 @@ const StudioProCreate = ({
             first.block.kind,
             createRng(`${brand.id}:${seed}:caption:${first.block.kind}:${first.index}`),
           );
+          const isSaved = group.carousel
+            ? indexes.every((i) => saved.has(i))
+            : saved.has(first.index);
           const art = (item: { block: ComposedBlock; index: number }) => {
             const { kind, treatment, motion, slide } = item.block;
             const Block = STUDIO_BLOCKS[kind];
@@ -979,8 +993,9 @@ const StudioProCreate = ({
                 </Button>
                 <Button
                   size="sm"
+                  variant={isSaved ? "secondary" : "default"}
                   className="h-8 rounded-full text-xs"
-                  disabled={busy === `save-${first.index}`}
+                  disabled={isSaved || busy === `save-${first.index}`}
                   onClick={() =>
                     group.carousel
                       ? void saveCarousel(indexes, caption)
@@ -992,7 +1007,11 @@ const StudioProCreate = ({
                   ) : (
                     <Save className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  {group.carousel ? "Salvar carrossel" : "Salvar na marca"}
+                  {isSaved
+                    ? "Salvo"
+                    : group.carousel
+                      ? "Salvar carrossel"
+                      : "Salvar na marca"}
                 </Button>
               </div>
             </div>
