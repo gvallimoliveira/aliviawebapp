@@ -593,7 +593,52 @@ const StudioProApp = () => {
                   placeholder="https://..."
                 />
               </div>
-              {(form.source_url.trim() || form.description.trim() || form.niche.trim()) && (
+              <div className="sm:col-span-2">
+                <Label>Manual da marca (PDF, opcional)</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Já tem o descritivo da marca? Anexe aqui: ele vira a <strong>fonte principal</strong>{" "}
+                  da interpretação — posicionamento, públicos, cores e tipografia saem dele.
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <input
+                    ref={docInput}
+                    type="file"
+                    accept="application/pdf,image/*"
+                    className="hidden"
+                    onChange={(e) => void pickDoc(e.target.files?.[0])}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    disabled={docBusy}
+                    onClick={() => docInput.current?.click()}
+                  >
+                    {docBusy ? (
+                      <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileUp className="mr-1.5 h-4 w-4" />
+                    )}
+                    {doc ? "Trocar documento" : "Enviar PDF da marca"}
+                  </Button>
+                  {doc && (
+                    <>
+                      <span className="max-w-[220px] truncate text-xs text-muted-foreground">{doc.name}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Remover documento"
+                        onClick={() => setDoc(null)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+              {(doc || form.source_url.trim() || form.description.trim() || form.niche.trim()) && (
                 <label className="flex items-start gap-2 rounded-2xl border border-border bg-muted/30 p-3 text-xs sm:col-span-2">
                   <input
                     type="checkbox"
