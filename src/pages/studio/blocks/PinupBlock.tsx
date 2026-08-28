@@ -5,13 +5,17 @@ import { BRAND_NAME, BRAND_SITE } from "../brand";
 /**
  * Pin-up block — cartaz de funcionalidade com a arte gerada (personagem/ação).
  * O Aliv.iA aparece como parceiro de palco; a assinatura da marca fica na base.
- * Só entra em composição quando o mundo tem features com `poster`.
+ *
+ * Sem poster no acervo da marca o cartaz vira TIPOGRÁFICO (nunca em branco):
+ * antes o bloco devolvia `null` e o usuário recebia uma arte vazia.
  */
 const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   const posters = content.features.filter((f) => f.poster);
-  if (posters.length === 0) return null;
+  const pool = posters.length > 0 ? posters : content.features;
+  if (pool.length === 0) return null;
 
-  const [feature] = picker.pick(posters, 1, rng, (f) => [f.topic]);
+  const [feature] = picker.pick(pool, 1, rng, (f) => [f.topic]);
+
 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
@@ -27,12 +31,22 @@ const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
             {feature.tag}
           </p>
 
-          <img
-            src={feature.poster}
-            alt={feature.headline ?? feature.title}
-            loading="lazy"
-            className="max-h-[52vh] w-auto max-w-full rounded-3xl border border-border object-contain shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.45)]"
-          />
+          {feature.poster ? (
+            <img
+              src={feature.poster}
+              alt={feature.headline ?? feature.title}
+              loading="lazy"
+              className="max-h-[52vh] w-auto max-w-full rounded-3xl border border-border object-contain shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.45)]"
+            />
+          ) : (
+            /* Sem imagem: moldura tipográfica com a inicial da funcionalidade. */
+            <div className="flex h-40 w-40 items-center justify-center rounded-3xl border border-border bg-card md:h-56 md:w-56">
+              <span className="text-6xl font-bold text-primary/70 md:text-7xl">
+                {(feature.title || "•").trim().charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+
 
           <h2 className="max-w-2xl text-2xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
             {feature.headline ?? feature.title}
