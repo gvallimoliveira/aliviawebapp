@@ -69,10 +69,12 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
   const rise = useTransform(p, [0, 0.45, 0.55, 1], [70, 0, 0, -50]);
   const drift = useTransform(p, [0, 0.45, 0.55, 1], [80, 0, 0, -60]);
   const tilt = useTransform(p, [0, 0.45, 0.55, 1], [7, 0, 0, -5]);
-  const fade = useTransform(p, [0, 0.28, 0.72, 1], [0, 1, 1, 0.35]);
+  // Nunca zera a opacidade: em carrosséis altos, um card fora do centro podia
+  // parecer uma arte branca enquanto o observador rolava a página.
+  const fade = useTransform(p, [0, 0.28, 0.72, 1], [0.72, 1, 1, 0.72]);
   const hue = useTransform(p, [0, 0.5, 1], [0.55, 1, 0.7]);
   const gradientY = useTransform(p, [0, 1], ["-18%", "18%"]);
-  const wipe = useTransform(p, [0.05, 0.45], ["78%", "0%"]);
+  const wipe = useTransform(p, [0.05, 0.45], ["12%", "0%"]);
   const wipeClip = useTransform(wipe, (v) => `inset(0% 0% ${v} 0%)`);
 
   if (kind === "none" || !heavy) return <>{children}</>;

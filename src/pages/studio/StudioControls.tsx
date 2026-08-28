@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { WORLD_IDS, WORLDS, type WorldId } from "./content";
 import type { StudioFormat } from "./blocks/shared";
 import type { StudioPersona } from "./personas";
+import VariationControl from "./VariationControl";
+import type { VariationProfile } from "./variation";
 
 type StudioControlsProps = {
   world: WorldId;
@@ -34,6 +36,8 @@ type StudioControlsProps = {
   onExportAllCaptions: () => void;
   /** Indica progresso do lote de PNGs ("3/8") ou null quando parado. */
   batchProgress: string | null;
+  variation: VariationProfile;
+  onVariation: (value: VariationProfile) => void;
 };
 
 
@@ -66,6 +70,8 @@ const StudioControls = ({
   onExportAllPng,
   onExportAllCaptions,
   batchProgress,
+  variation,
+  onVariation,
 }: StudioControlsProps) => {
   const copyLink = async () => {
     try {
@@ -113,6 +119,14 @@ const StudioControls = ({
           <Shuffle className="h-3.5 w-3.5" />
           Nova landing preview
         </Button>
+
+        <VariationControl
+          value={variation}
+          onChange={onVariation}
+          register="tecnico"
+          previewSeed={`internal:${seed}`}
+          compact
+        />
 
         {canEvolve && (
           <Button

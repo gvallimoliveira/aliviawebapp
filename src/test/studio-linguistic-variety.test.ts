@@ -4,6 +4,7 @@ import { applyLexicon, voiceRegister, VOICE_REGISTERS } from "@/pages/studio/lex
 import { varyContent } from "@/pages/studio/vary";
 import { phraseSignature } from "@/pages/studio/picker";
 import { GLOBAL_SEGMENT } from "@/pages/studio-pro/audiences";
+import { intensityFor, normalizeVariationProfile } from "@/pages/studio/variation";
 
 const KIT = {
   name: "PerformaPro",
@@ -88,6 +89,25 @@ describe("variedade linguística do motor criativo", () => {
 
   it("mantém o acervo fixo quando não há semente de variação (compatibilidade)", () => {
     expect(buildBrandContent(KIT).headlines).toHaveLength(5);
+  });
+
+  it("normaliza o perfil e mantém a ordem baixa, média e alta", () => {
+    const profile = normalizeVariationProfile({ headlines: "high", support: "invalid", actions: "low" });
+    expect(profile).toEqual({ headlines: "high", support: "medium", actions: "low" });
+    expect(intensityFor("low")).toBeLessThan(intensityFor("medium"));
+    expect(intensityFor("medium")).toBeLessThan(intensityFor("high"));
+  });
+
+  it("aplica intensidades diferentes por categoria de conteúdo", () => {
+    const base = buildBrandContent(KIT);
+    const varied = varyContent(base, {
+      register: "tecnico",
+      seed: "perfil",
+      profile: { headlines: "high", support: "low", actions: "medium" },
+    });
+    expect(varied.id).toBe(base.id);
+    expect(varied.headlines).toHaveLength(base.headlines.length);
+    expect(varied.closings).toHaveLength(base.closings.length);
   });
 
   it("assinatura de frase é estável e sensível ao texto", () => {
