@@ -205,9 +205,12 @@ const StudioProCreate = ({
       return;
     }
     if (result === "error") {
-      toast.error("Não foi possível confirmar sua cota agora. Tente novamente.");
+      // Falha de leitura não é cota estourada: libera o lote e avisa sem falar de upgrade.
+      toast.warning("Não conseguimos confirmar sua cota agora — gerando de qualquer forma.");
+      setSeed(randomSeed());
       return;
     }
+
     setSeed(randomSeed());
   };
 
