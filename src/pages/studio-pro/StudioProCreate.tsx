@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileText, Images, LayoutGrid, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
+import { Camera, Download, FileText, Images, LayoutGrid, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
   type StudioFormat,
 } from "@/studio-core";
 import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
+import StudioPhotos from "@/pages/studio/StudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { voiceRegister } from "@/pages/studio/lexicon";
 import { varyContent } from "@/pages/studio/vary";
@@ -92,7 +93,10 @@ type Props = {
   inspirations?: ComposedBlock[][];
   /** Acesso sem cota (VIP): "Nova versão" nunca debita nada. */
   unlimited?: boolean;
+  /** Fotos que o plano permite no acervo privado (0 = acervo bloqueado). */
+  photoLimit?: number;
   onSaved?: () => void;
+
 };
 
 
@@ -151,6 +155,8 @@ type PersistedCreateState = {
   /** Modelos escolhidos; vazio = aleatório. */
   models?: string[];
   variation?: VariationProfile;
+  /** Fotos fixadas pelo usuário para forçar o acervo da geração. */
+  pinnedPhotos?: string[];
 };
 
 const readPersisted = (brandId: string): PersistedCreateState => {
@@ -179,6 +185,7 @@ const StudioProCreate = ({
   watermark,
   inspirations = [],
   unlimited: unlimitedAccess = false,
+  photoLimit = 0,
   onSaved,
 }: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
@@ -191,9 +198,35 @@ const StudioProCreate = ({
   const [saved, setSaved] = useState<Set<number>>(() => new Set());
   const wrapper = useRef<HTMLDivElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
-  const { photos } = useStudioPhotos(true);
+  const {
+    photos,
+    loading: photosLoading,
+    add: addPhoto,
+    edit: editPhoto,
+    remove: removePhoto,
+  } = useStudioPhotos(true);
+  const [photosOpen, setPhotosOpen] = useState(false);
+  /**
+   * CONTROLE CRIATIVO: fotos fixadas.
+   *
+   * Com fotos fixadas, só elas alimentam os blocos fotográficos — mas cada uma
+   * continua indo para o assunto com o qual tem nexo (`pickPhotoForTopics`).
+   * Foto fixada sem nexo no tema simplesmente não gera bloco.
+   */
+  const [pinnedPhotos, setPinnedPhotos] = useState<string[]>(restored.current.pinnedPhotos ?? []);
+  const activePhotos = useMemo(() => {
+    if (pinnedPhotos.length === 0) return photos;
+    const only = photos.filter((p) => pinnedPhotos.includes(p.id));
+    return only.length > 0 ? only : photos;
+  }, [photos, pinnedPhotos]);
+  const togglePin = (id: string) =>
+    setPinnedPhotos((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+  useEffect(() => {
+    writePersisted(brand.id, { pinnedPhotos });
+  }, [brand.id, pinnedPhotos]);
   /** Cota do período: contada em gerações — 1 por clique em "Nova versão". */
   const { quota, error: quotaError, consume } = useStudioQuota();
+
 
   const unlimited = unlimitedAccess || !!quota?.unlimited;
   /** Só bloqueia com dado confirmado: cota desconhecida nunca trava o botão. */
@@ -393,11 +426,11 @@ const StudioProCreate = ({
         // Com modelos escolhidos, a linhagem de favoritos cede lugar à escolha.
         models.length > 0 ? undefined : lineage.blocks,
         content.carousels,
-        photos.length,
-        kindsForModels(models, photos.length, isAlivia),
+        activePhotos.length,
+        kindsForModels(models, activePhotos.length, isAlivia),
         isAlivia,
       ),
-    [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, models, isAlivia],
+    [brand.id, seed, activeSegment, angle, persona, content, lineage, activePhotos.length, models, isAlivia],
   );
 
   /**
@@ -799,7 +832,7 @@ const StudioProCreate = ({
                   </Button>
                   {STUDIO_MODELS.map((m) => {
                     const disabled =
-                      (!!m.needsPhoto && photos.length === 0) || (!!m.needsBrand && !isAlivia);
+                      (!!m.needsPhoto && activePhotos.length === 0) || (!!m.needsBrand && !isAlivia);
                     if (m.needsBrand && !isAlivia) return null;
                     return (
                       <Button
@@ -842,8 +875,27 @@ const StudioProCreate = ({
                 ? `Esta versão se inspira nos seus favoritos (${inspirations.length} referências no acervo, sem virar padrão fixo).`
                 : `Versão livre — explorando fora do que já agradou nos ${inspirations.length} favoritos.`}
 
-            {photos.length > 0 && ` · ${photos.length} fotos do acervo em uso`}
+            {photos.length > 0 &&
+              (pinnedPhotos.length > 0
+                ? ` · ${activePhotos.length} foto(s) fixada(s) em uso`
+                : ` · ${photos.length} fotos do acervo em uso`)}
           </p>
+
+          {/* Acervo privado de fotos: envio, enquadramento e fixação. */}
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => setPhotosOpen(true)}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground underline-offset-2 hover:underline"
+            >
+              <Camera className="h-3 w-3" />
+              Fotos do acervo: {photos.length}
+              {photoLimit > 0 ? ` de ${photoLimit}` : ""}
+              {pinnedPhotos.length > 0 ? ` · ${pinnedPhotos.length} fixada(s)` : ""}
+            </button>
+          </div>
+
+
 
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
@@ -933,7 +985,7 @@ const StudioProCreate = ({
                         picker={picker}
                         persona={persona}
                         slide={slide}
-                        photos={photos}
+                        photos={activePhotos}
                       />
                     </StudioMotion>
                   </StudioProSignature>
@@ -1019,6 +1071,20 @@ const StudioProCreate = ({
           );
         })}
       </div>
+
+      {photosOpen && (
+        <StudioPhotos
+          photos={photos}
+          loading={photosLoading}
+          onUpload={addPhoto}
+          onEdit={editPhoto}
+          onRemove={removePhoto}
+          limit={photoLimit}
+          pinnedIds={pinnedPhotos}
+          onTogglePin={togglePin}
+          onClose={() => setPhotosOpen(false)}
+        />
+      )}
     </section>
   );
 };

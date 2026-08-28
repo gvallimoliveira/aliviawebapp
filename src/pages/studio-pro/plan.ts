@@ -24,15 +24,17 @@ export type StudioAccess = {
   brandLimit: number;
   /** Gerações por período (Infinity para VIP). Cada geração rende dezenas de artes. */
   creditsPerPeriod: number;
+  /** Fotos no acervo privado do plano (0 no grátis). */
+  photoLimit: number;
   /** Downloads saem com marca d'água discreta. */
   watermark: boolean;
 };
 
-export const PLAN_LIMITS: Record<StudioPlan, { brands: number; credits: number }> = {
-  free: { brands: 1, credits: 2 },
-  solo: { brands: 1, credits: 10 },
-  marca: { brands: 3, credits: 40 },
-  agencia: { brands: 15, credits: 120 },
+export const PLAN_LIMITS: Record<StudioPlan, { brands: number; credits: number; photos: number }> = {
+  free: { brands: 1, credits: 2, photos: 0 },
+  solo: { brands: 1, credits: 10, photos: 20 },
+  marca: { brands: 3, credits: 40, photos: 60 },
+  agencia: { brands: 15, credits: 120, photos: 120 },
 };
 
 const buildAccess = (
@@ -48,9 +50,11 @@ const buildAccess = (
     granted: !!opts.granted,
     brandLimit: isVip ? PLAN_LIMITS.agencia.brands : limits.brands,
     creditsPerPeriod: isVip ? Infinity : limits.credits,
+    photoLimit: isVip ? PLAN_LIMITS.agencia.photos : limits.photos,
     watermark: !isVip && plan === "free",
   };
 };
+
 
 export const FREE_ACCESS = buildAccess("free");
 

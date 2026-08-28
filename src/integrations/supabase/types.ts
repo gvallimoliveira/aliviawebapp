@@ -4629,6 +4629,7 @@ export type Database = {
           used_this_period: number
         }[]
       }
+      studio_photo_limit_for: { Args: { _user: string }; Returns: number }
       studio_plan_allowance: { Args: { p_plan: string }; Returns: number }
       try_direct_clinic_add: {
         Args: {
