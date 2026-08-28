@@ -104,6 +104,8 @@ const HEADLINE_FRAMES: HeadlineFrame[] = [
   { id: "promessa-dupla", needs: "solution", build: (ing, i) => ({ strong: upperFirst(at(ing.solutions, i, "Um caminho claro")), rest: `, com a assinatura de ${ing.brand}.` }) },
   { id: "promessa-posicionamento", build: (ing) => ({ strong: ing.positioning ? noDot(ing.positioning) : `${ing.brand} entrega o que promete`, rest: ". Sem letra miúda." }) },
   { id: "promessa-publico", build: (ing) => ({ strong: `Para ${lower(ing.audience ?? ing.niche)}`, rest: ` que não quer só mais uma opção — quer a escolha certa.` }) },
+  // Ponto zero: curiosidade, custo da inação, quebra de objeção (persuasion.ts).
+  ...PERSUASION_FRAMES,
 ];
 
 const hasIngredient = (ing: CopyIngredients, needs?: HeadlineFrame["needs"]) => {
