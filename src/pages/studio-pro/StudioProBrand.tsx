@@ -33,6 +33,7 @@ import { useStudioAccess } from "./useStudioAccess";
 import StudioProCreate from "./StudioProCreate";
 import type { ComposedBlock } from "@/studio-core";
 import BrandColorFields from "./BrandColorFields";
+import BrandAssetsFields, { type BrandDoc } from "./BrandAssetsFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
 import { readAudiences, writeAudiences, type BrandAudience } from "./audiences";
 
