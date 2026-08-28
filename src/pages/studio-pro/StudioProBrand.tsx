@@ -36,6 +36,7 @@ import BrandColorFields from "./BrandColorFields";
 import BrandAssetsFields, { type BrandDoc } from "./BrandAssetsFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
 import { readAudiences, writeAudiences, type BrandAudience } from "./audiences";
+import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 
 /**
  * ESPAÇO DE UMA MARCA
