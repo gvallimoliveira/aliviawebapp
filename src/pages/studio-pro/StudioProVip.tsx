@@ -135,7 +135,7 @@ const StudioProVip = () => {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Cada acesso concedido libera o equivalente ao <strong>plano Solo</strong> gratuitamente: 1
-            marca, 60 artes por mês e download sem marca d'água. {active} ativo(s).
+            marca, 10 gerações por mês e download sem marca d'água. {active} ativo(s).
           </p>
 
           <div className="mt-5 grid gap-3 border-t border-border pt-5 sm:grid-cols-2">
