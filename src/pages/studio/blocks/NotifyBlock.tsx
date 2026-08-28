@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { sectionHeight, type BlockProps } from "./shared";
 import { BRAND_NAME } from "../brand";
+import { condensePhrase } from "@/pages/studio-pro/textFit";
+
 
 /**
  * PILHA DE NOTIFICAÇÕES (referência: cards de "New Client" flutuando sobre o
