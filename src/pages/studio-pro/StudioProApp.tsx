@@ -275,7 +275,7 @@ const StudioProApp = () => {
     setForm(emptyForm);
     setShowForm(false);
     await load();
-    if (newId) navigate(`${PRODUCT.base}/app/marca/${newId}?aba=marca`);
+    if (newId) navigate(`${PRODUCT.base}/app/marca/${newId}?aba=ajustes`);
   };
 
 
