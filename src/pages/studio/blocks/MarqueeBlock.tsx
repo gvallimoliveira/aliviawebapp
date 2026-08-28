@@ -1,52 +1,78 @@
-import type { BlockProps } from "./shared";
+import { motion } from "framer-motion";
+import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { TextureLayer } from "./Texture";
 
 /**
- * Continuous CSS-only strip. A paridade escuro/claro é deslocada pela persona,
- * então a mesma posição de marquee muda de clima entre membros da equipe.
+ * ÍNDICE (antigo marquee).
+ *
+ * Era uma faixa animada de uma linha: no feed virava uma tarja fina com o
+ * resto do quadro vazio — arte impublicável. Agora é uma composição ESTÁTICA
+ * que ocupa o quadro inteiro: os mesmos termos viram um índice editorial
+ * numerado, uma linha por termo, sem animação e sem sobra de branco.
  */
-const MarqueeBlock = ({ content, rng, treatment, persona }: BlockProps) => {
+const MarqueeBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
   const items = rng.pick(content.marquee);
-  const loop = [...items, ...items, ...items];
+  const kicker = rng.pick(content.kickers);
   const dark = (treatment + persona.surfaceShift) % 2 === 1;
-  const duration = 22 + (treatment % 4) * 6;
-  // Separador geométrico também muda de mão em mão: ponto, losango, plus, quadrado.
-  const separator = (treatment + persona.surfaceShift + persona.textureShift) % 4;
+  const rows = items.slice(0, 6);
+  const bullet = (treatment + persona.textureShift) % 3;
 
   return (
-    <div
-      className={`relative overflow-hidden border-y py-5 ${
-        dark ? "border-foreground/20 bg-foreground text-background" : "border-border bg-background"
+    <section
+      className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${
+        dark ? "bg-foreground" : personaSurface(persona, treatment)
       }`}
     >
-      <style>{`
-        @keyframes studioMarquee { from { transform: translateX(0) } to { transform: translateX(-33.333%) } }
-        @media (prefers-reduced-motion: reduce) { .studio-marquee { animation: none !important } }
-      `}</style>
-      <div
-        className="studio-marquee flex w-max items-center gap-10"
-        style={{ animation: `studioMarquee ${duration}s linear infinite`, willChange: "transform" }}
-      >
-        {loop.map((label, i) => (
-          <span
-            key={`${label}-${i}`}
-            className={`flex items-center gap-10 text-sm font-medium uppercase tracking-[0.18em] md:text-base ${
-              dark ? "text-background/80" : "text-muted-foreground"
+      {!dark && <TextureLayer persona={persona} index={treatment + 1} />}
+      <div className={`relative w-full ${blockPadding(format)}`}>
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <p
+            className={`mb-6 text-[11px] font-medium uppercase tracking-[0.32em] md:text-xs ${
+              dark ? "text-background/60" : "text-primary"
             }`}
           >
-            {separator === 1 ? (
-              <span className="h-2 w-2 rotate-45 bg-primary" aria-hidden />
-            ) : separator === 2 ? (
-              <span className="text-base font-light leading-none text-primary" aria-hidden>+</span>
-            ) : separator === 3 ? (
-              <span className="h-1.5 w-1.5 rounded-[2px] bg-primary" aria-hidden />
-            ) : (
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-            )}
-            {label}
-          </span>
-        ))}
+            {kicker}
+          </p>
+
+          <ul
+            className={`divide-y ${
+              dark ? "divide-background/15 border-y border-background/15" : "divide-border border-y border-border"
+            }`}
+          >
+            {rows.map((label, i) => (
+              <li key={`${label}-${i}`} className="flex min-w-0 items-baseline gap-4 py-4">
+                <span
+                  className={`shrink-0 text-[11px] font-medium tabular-nums tracking-[0.18em] ${
+                    dark ? "text-background/45" : "text-muted-foreground"
+                  }`}
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                {bullet === 1 ? (
+                  <span className="mb-1 h-2 w-2 shrink-0 rotate-45 bg-primary" aria-hidden />
+                ) : bullet === 2 ? (
+                  <span className="mb-1 h-1.5 w-1.5 shrink-0 rounded-[2px] bg-primary" aria-hidden />
+                ) : (
+                  <span className="mb-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
+                )}
+                <span
+                  className={`min-w-0 break-words text-xl font-semibold leading-tight tracking-tight md:text-3xl ${
+                    dark ? "text-background" : "text-foreground"
+                  }`}
+                >
+                  {label}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </motion.div>
       </div>
-    </div>
+    </section>
   );
 };
 
