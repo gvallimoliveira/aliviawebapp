@@ -19,6 +19,14 @@ import { ACCENT_STYLES, TextureLayer, renderAccent } from "./Texture";
 const FeatureBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   const items = picker.pick(content.features, treatment === 2 ? 2 : 1, rng, (f) => [f.topic]);
   const reversed = treatment === 1;
+  /**
+   * Quadro estreito (9x16 / 1x1) NÃO comporta duas colunas: os breakpoints do
+   * Tailwind olham a janela, não o quadro, então no desktop a arte vertical
+   * abria grid de 2 colunas e a headline atropelava a imagem. Só o formato
+   * livre (landing) usa lado a lado.
+   */
+  const wide = format === "free";
+
 
   if (treatment === 3) {
     // Close tipográfico: o título carrega a arte; a tela (se existir) vem em faixa.
