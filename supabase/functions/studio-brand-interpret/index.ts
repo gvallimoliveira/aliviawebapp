@@ -266,11 +266,37 @@ Responda SOMENTE com JSON válido neste formato:
     }
     const mergedAudiences = Array.from(byId.values()).slice(0, 8);
 
+    /**
+     * Cores do site: só aplicadas quando o cliente pediu (`applyColors`) e a IA
+     * devolveu hex válidos. O kit manual do usuário nunca é sobrescrito à força.
+     */
+    const rawColors = (parsed.colors ?? {}) as Record<string, unknown>;
+    const pickHex = (value: unknown) => {
+      const hex = String(value ?? "").trim();
+      return HEX.test(hex) ? hex.toUpperCase() : null;
+    };
+    const primary = pickHex(rawColors.primary);
+    const primary2 = pickHex(rawColors.primary2);
+    const secondary = pickHex(rawColors.secondary);
+    const secondary2 = pickHex(rawColors.secondary2);
+    const applyColors = body?.applyColors === true && !!primary;
+    const colorKit = applyColors
+      ? {
+          primary: primary!,
+          primary2: primary2 ?? "#FFFFFF",
+          secondary: secondary ?? primary!,
+          secondary2: secondary2 ?? "#FFFFFF",
+          useSecondary: secondary && secondary2 ? "true" : "false",
+        }
+      : null;
+
     const result = {
       positioning: String(parsed.positioning ?? "").trim().slice(0, 800),
       keywords: strList(parsed.keywords, 10),
       strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 900),
       audiences: mergedAudiences,
+      colors: colorKit,
+      site_read: !!site.text,
     };
 
     // Persiste como briefing da marca — o usuário revisa e edita depois.
@@ -281,12 +307,14 @@ Responda SOMENTE com JSON válido neste formato:
         strategy_notes: result.strategy_notes || null,
         audiences: result.audiences,
         ...(result.keywords.length ? { topics: result.keywords } : {}),
+        ...(colorKit ? { colors: colorKit } : {}),
       })
       .eq("id", brandId);
     if (updateError) {
       console.error("[studio-brand-interpret] update", updateError);
       return json({ error: "Interpretação feita, mas não foi possível salvar." }, 500);
     }
+
 
     return json({ ok: true, ...result });
   } catch (error) {
