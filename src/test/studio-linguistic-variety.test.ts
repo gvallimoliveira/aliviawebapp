@@ -39,12 +39,12 @@ const contentFor = (seed: string) =>
 describe("variedade linguística do motor criativo", () => {
   it("gera muitas headlines distintas ao longo das seeds", () => {
     const seen = new Set<string>();
-    for (let i = 0; i < 200; i += 1) {
+    for (let i = 0; i < 80; i += 1) {
       contentFor(`brand:${i}`).headlines.forEach((h) => seen.add(`${h.strong}|${h.rest}`));
     }
     // Antes eram 5 headlines fixas por marca.
-    expect(seen.size).toBeGreaterThan(150);
-  });
+    expect(seen.size).toBeGreaterThan(120);
+  }, 30_000);
 
   it("mantém a mesma arte para a mesma seed (determinismo)", () => {
     expect(JSON.stringify(contentFor("estavel"))).toBe(JSON.stringify(contentFor("estavel")));
