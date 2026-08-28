@@ -10,6 +10,7 @@ import {
   composeTypos,
   type CopyIngredients,
 } from "@/pages/studio/phrasing";
+import { isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { GLOBAL_SEGMENT, audienceHook, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
@@ -88,7 +89,15 @@ const ingredientsOf = (
     pains: collect((a) => a.pains),
     desires: collect((a) => a.desires),
     solutions: collect((a) => a.proof),
-    keywords: (kit.keywords ?? []).map((w) => w.trim()).filter(Boolean),
+    /**
+     * O vocabulário da ferramenta ("kit de marca", "sua paleta", "lote"…) é
+     * EXCLUSIVO do Aliv.iA Studio vendendo a si mesmo. Em marca de cliente ele
+     * soaria como se o cliente vendesse a ferramenta (isolamento de marca).
+     */
+    keywords: [
+      ...(kit.keywords ?? []).map((w) => w.trim()).filter(Boolean),
+      ...(isStudioSelfBrand(brand) ? STUDIO_SELF_KEYWORDS : []),
+    ],
     cta: audience?.cta?.trim(),
   };
 };

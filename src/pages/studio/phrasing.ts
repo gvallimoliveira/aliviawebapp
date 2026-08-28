@@ -11,6 +11,7 @@
 import type { Rng } from "./rng";
 import type { VoiceRegister } from "./lexicon";
 import { rephrase } from "./rewrite";
+import { BANNED_JARGON, PERSUASION_FRAMES, persuasionSubs } from "./persuasion";
 
 
 /** Insumos vindos do kit da marca (nunca do campo "tom de voz"). */
@@ -103,6 +104,8 @@ const HEADLINE_FRAMES: HeadlineFrame[] = [
   { id: "promessa-dupla", needs: "solution", build: (ing, i) => ({ strong: upperFirst(at(ing.solutions, i, "Um caminho claro")), rest: `, com a assinatura de ${ing.brand}.` }) },
   { id: "promessa-posicionamento", build: (ing) => ({ strong: ing.positioning ? noDot(ing.positioning) : `${ing.brand} entrega o que promete`, rest: ". Sem letra miúda." }) },
   { id: "promessa-publico", build: (ing) => ({ strong: `Para ${lower(ing.audience ?? ing.niche)}`, rest: ` que não quer só mais uma opção — quer a escolha certa.` }) },
+  // Ponto zero: curiosidade, custo da inação, quebra de objeção (persuasion.ts).
+  ...PERSUASION_FRAMES,
 ];
 
 const hasIngredient = (ing: CopyIngredients, needs?: HeadlineFrame["needs"]) => {
@@ -112,8 +115,14 @@ const hasIngredient = (ing: CopyIngredients, needs?: HeadlineFrame["needs"]) => 
   return ing.solutions.filter(Boolean).length > 0;
 };
 
+/** Nenhuma reescrita pode introduzir jargão de consultoria ou promessa irreal. */
 const dress = (text: string, opts: PhrasingOptions) =>
-  rephrase(text, { register: opts.register, seed: opts.seed, forbidden: opts.forbidden, intensity: opts.intensity });
+  rephrase(text, {
+    register: opts.register,
+    seed: opts.seed,
+    forbidden: [...(opts.forbidden ?? []), ...BANNED_JARGON],
+    intensity: opts.intensity,
+  });
 
 
 /**
@@ -127,8 +136,16 @@ export const composeHeadlines = (
   perFrame = 3,
 ): Headline[] => {
   const eligible = HEADLINE_FRAMES.filter((f) => hasIngredient(ing, f.needs));
+  const persuasionIds = new Set(PERSUASION_FRAMES.map((f) => f.id));
   const share = opts.intensity !== undefined && opts.intensity < 0.35 ? 0.45 : opts.intensity !== undefined && opts.intensity < 0.75 ? 0.72 : 1;
-  const frames = rng.shuffle(eligible).slice(0, Math.max(6, Math.ceil(eligible.length * share)));
+  const pool = rng.shuffle(eligible).slice(0, Math.max(6, Math.ceil(eligible.length * share)));
+  const impact = rng.shuffle(eligible.filter((f) => persuasionIds.has(f.id)));
+  /**
+   * O ponto zero da arte precisa ser de alto impacto: os frames de persuasão
+   * (curiosidade, custo da inação, objeção) entram sempre e vêm PRIMEIRO, então
+   * são eles que alimentam o slot de headline principal dos blocos.
+   */
+  const frames = Array.from(new Set([...impact.slice(0, 6), ...pool]));
   const out: Headline[] = [];
   /** Deslocamento do lote: gira os ingredientes de cada frame a cada seed. */
   const offset = rng.int(101);
@@ -163,6 +180,7 @@ export const composeSubs = (ing: CopyIngredients, opts: PhrasingOptions, rng: Rn
     (i) => `Para ${lower(ing.audience ?? ing.niche)}: ${lower(at(ing.solutions, i, "um caminho claro"))}.`,
     () => `${ing.brand} comunica valor sem ruído e sem letra miúda.`,
     (i) => `${upperFirst(at(ing.keywords, i, "Consistência"))} é o que separa presença de tentativa.`,
+    ...persuasionSubs(ing),
   ];
   const out = rng.shuffle(templates).flatMap((make, i) => [dress(make(i), { ...opts, seed: `${opts.seed}:sub:${i}` })]);
   return Array.from(new Set(out.map(clean)));
