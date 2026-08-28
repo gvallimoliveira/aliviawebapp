@@ -453,6 +453,47 @@ Responda SOMENTE com JSON válido neste formato:
       };
     }
 
+    /**
+     * TIPOGRAFIA: casa o nome lido no manual com a lista curada do editor
+     * (mesmas chaves de `src/pages/studio-pro/brandFonts.ts`). Sem match, a
+     * fonte atual da marca é preservada.
+     */
+    const FONT_KEYS: Array<[string, string[]]> = [
+      ["inter", ["inter"]],
+      ["poppins", ["poppins"]],
+      ["montserrat", ["montserrat"]],
+      ["dm-sans", ["dm sans"]],
+      ["work-sans", ["work sans"]],
+      ["manrope", ["manrope"]],
+      ["space-grotesk", ["space grotesk", "grotesk"]],
+      ["jakarta", ["plus jakarta", "jakarta"]],
+      ["sora", ["sora"]],
+      ["raleway", ["raleway"]],
+      ["nunito", ["nunito"]],
+      ["archivo", ["archivo"]],
+      ["oswald", ["oswald"]],
+      ["bebas", ["bebas"]],
+      ["playfair", ["playfair"]],
+      ["lora", ["lora"]],
+      ["merriweather", ["merriweather"]],
+    ];
+    const fontRaw = String(parsed.font_family ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    const fontKey = FONT_KEYS.find(([, names]) => names.some((n) => fontRaw.includes(n)))?.[0] ?? null;
+
+    const currentColors = (brand.colors ?? {}) as Record<string, string>;
+    const currentFont = typeof currentColors.font === "string" ? currentColors.font : "default";
+    // Cores e fonte convivem no mesmo mapa `colors`: nada é perdido no update.
+    if (colorKit || fontKey) {
+      colorKit = {
+        ...currentColors,
+        ...(colorKit ?? {}),
+        font: fontKey ?? currentFont ?? "default",
+      };
+    }
+
     const tagline = String(parsed.tagline ?? "").trim().replace(/\s+/g, " ").slice(0, 90);
 
     const result = {
@@ -462,9 +503,12 @@ Responda SOMENTE com JSON válido neste formato:
       strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 900),
       audiences: mergedAudiences,
       colors: colorKit,
+      font: fontKey,
       logo_url: logoUrl,
       site_read: !!site.text,
+      doc_read: docOk,
     };
+
 
     // Persiste como briefing da marca — o usuário revisa e edita depois.
     const { error: updateError } = await supabase
