@@ -20,6 +20,9 @@ const clinic: WorldContent = {
     { strong: "Você não escala uma clínica sem padronizar a avaliação.", rest: "Link institucional, triagem obrigatória e prontuário compartilhado por toda a equipe." },
     { strong: "Satisfação medida, não sentida.", rest: "Pesquisa pública com painel de NPS e retorno chegando direto no chat da equipe." },
     { strong: "Exame do paciente não deveria morar no WhatsApp.", rest: "Documentos anexados ao prontuário, com permissão por função e limite por paciente." },
+    { strong: "Duas unidades, duas réguas: é assim que a qualidade se dilui.", rest: "O mesmo método, os mesmos indicadores e a mesma documentação em toda a rede." },
+    { strong: "Você não compara unidades por relato.", rest: "Adesão, evolução e alta lado a lado, por unidade e por terapeuta." },
+    { strong: "Paciente que muda de unidade não deveria recomeçar.", rest: "O prontuário viaja com ele: hipótese, testes, plano e histórico completo." },
   ],
   subs: [
     "O sistema de raciocínio clínico da sua equipe.",
