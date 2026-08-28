@@ -51,7 +51,7 @@ export const voiceRegister = (tone?: string | null, _fallbackSeed = "marca"): Vo
     });
     if (best.score > 0) return best.register;
   }
-  return VOICE_REGISTERS[createRng(`register:${fallbackSeed}`).int(VOICE_REGISTERS.length)];
+  return DEFAULT_REGISTER;
 };
 
 /**
