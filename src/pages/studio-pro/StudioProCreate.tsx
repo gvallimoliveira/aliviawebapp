@@ -207,6 +207,18 @@ const StudioProCreate = ({
   } = useStudioPhotos(true, brand.id);
   const [photosOpen, setPhotosOpen] = useState(false);
   /**
+   * O acervo é separado por marca, mas o TETO do plano é da conta: soma as
+   * fotos de todas as marcas. Recontado sempre que o acervo da marca muda.
+   */
+  const [photosTotal, setPhotosTotal] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    countPhotos()
+      .then((n) => { if (alive) setPhotosTotal(n); })
+      .catch(() => undefined);
+    return () => { alive = false; };
+  }, [photos.length]);
+  /**
    * CONTROLE CRIATIVO: fotos fixadas.
    *
    * Com fotos fixadas, só elas alimentam os blocos fotográficos — mas cada uma
