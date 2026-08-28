@@ -261,7 +261,7 @@ const StudioPhotos = ({
           </p>
         ) : (
           <ul className="grid grid-cols-2 gap-2.5">
-            {photos.map((photo) => (
+            {ordered.map((photo) => (
               <li
                 key={photo.id}
                 className={`overflow-hidden rounded-2xl border bg-background ${
