@@ -289,7 +289,128 @@ const SYNONYMS: Record<string, SynonymRow> = {
     inspirador: ["próximo", "seguinte"],
     sobrio: ["próximo", "seguinte"],
   },
+
+  // ---- Vocabulário de chamada / CTA (o acervo de legendas vive aqui) ----
+  comece: {
+    all: ["comece", "dê o primeiro passo", "inicie"],
+    tecnico: ["comece", "inicie", "dê início"],
+    proximo: ["comece", "vamos começar", "dá o primeiro passo"],
+    direto: ["comece", "vai agora", "inicie"],
+    inspirador: ["comece", "dê o primeiro passo", "abra esse caminho"],
+    sobrio: ["comece", "inicie", "dê início"],
+  },
+  agora: {
+    all: ["agora", "hoje", "já"],
+    tecnico: ["agora", "desde já", "hoje"],
+    proximo: ["agora", "hoje mesmo", "já"],
+    direto: ["agora", "já", "hoje"],
+    inspirador: ["agora", "hoje mesmo", "neste momento"],
+    sobrio: ["agora", "desde já", "hoje"],
+  },
+  descubra: {
+    all: ["descubra", "conheça", "veja"],
+    tecnico: ["descubra", "conheça", "verifique"],
+    proximo: ["descubra", "veja", "dá uma olhada em"],
+    direto: ["descubra", "veja", "conheça"],
+    inspirador: ["descubra", "encontre", "revele"],
+    sobrio: ["descubra", "conheça", "avalie"],
+  },
+  caminho: {
+    all: ["caminho", "percurso", "rota"],
+    tecnico: ["caminho", "percurso", "trajeto"],
+    proximo: ["caminho", "jeito", "rumo"],
+    direto: ["caminho", "rota", "atalho certo"],
+    inspirador: ["caminho", "jornada", "rumo"],
+    sobrio: ["caminho", "percurso", "trajetória"],
+  },
+  melhor: {
+    all: ["melhor", "mais sólido", "mais consistente"],
+    tecnico: ["melhor", "mais preciso", "mais confiável"],
+    proximo: ["melhor", "mais tranquilo", "mais leve"],
+    direto: ["melhor", "mais certo", "mais eficiente"],
+    inspirador: ["melhor", "mais possível", "mais inspirador"],
+    sobrio: ["melhor", "mais sólido", "mais criterioso"],
+  },
+  ajuda: {
+    all: ["ajuda", "apoio", "suporte"],
+    tecnico: ["ajuda", "suporte", "assistência"],
+    proximo: ["ajuda", "apoio", "uma mão"],
+    direto: ["ajuda", "apoio"],
+    inspirador: ["ajuda", "apoio", "impulso"],
+    sobrio: ["ajuda", "suporte", "acompanhamento"],
+  },
+  fale: {
+    all: ["fale", "converse", "chame"],
+    tecnico: ["fale", "converse", "entre em contato"],
+    proximo: ["fale", "chama", "manda mensagem"],
+    direto: ["fale", "chame", "chama no direct"],
+    inspirador: ["fale", "converse", "abra a conversa"],
+    sobrio: ["fale", "converse", "entre em contato"],
+  },
+  saiba: {
+    all: ["saiba", "entenda", "veja"],
+    tecnico: ["saiba", "entenda", "confira"],
+    proximo: ["saiba", "entenda", "veja"],
+    direto: ["saiba", "veja", "confira"],
+    inspirador: ["saiba", "descubra", "entenda"],
+    sobrio: ["saiba", "entenda", "confira"],
+  },
+  garanta: {
+    all: ["garanta", "assegure", "reserve"],
+  },
+  transforme: {
+    all: ["transforme", "mude", "converta"],
+    inspirador: ["transforme", "reinvente", "mude"],
+    tecnico: ["transforme", "converta", "reorganize"],
+  },
+  aprenda: {
+    all: ["aprenda", "domine", "entenda"],
+  },
+  evite: {
+    all: ["evite", "fuja de", "elimine"],
+  },
+  ganhe: {
+    all: ["ganhe", "conquiste", "acumule"],
+  },
+  tempo: {
+    all: ["tempo", "prazo", "horas"],
+    proximo: ["tempo", "horas do seu dia"],
+    tecnico: ["tempo", "prazo", "ciclo"],
+  },
+  jeito: {
+    all: ["jeito", "forma", "maneira"],
+  },
+  mudança: {
+    all: ["mudança", "virada", "transformação"],
+  },
+  passo: {
+    all: ["passo", "etapa", "movimento"],
+  },
+  história: {
+    all: ["história", "narrativa", "trajetória"],
+  },
+  trabalho: {
+    all: ["trabalho", "atuação", "ofício"],
+    tecnico: ["trabalho", "atuação", "prática"],
+    proximo: ["trabalho", "o que eu faço", "atuação"],
+  },
+  crescer: {
+    all: ["crescer", "evoluir", "avançar"],
+  },
+  agende: {
+    all: ["agende", "marque", "reserve"],
+  },
+  siga: {
+    all: ["siga", "acompanhe", "fique por aqui"],
+  },
+  novo: {
+    all: ["novo", "inédito", "recém-chegado"],
+  },
+  verdade: {
+    all: ["verdade", "fato", "realidade"],
+  },
 };
+
 
 const SYNONYM_KEYS = Object.keys(SYNONYMS);
 
