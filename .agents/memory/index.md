@@ -126,3 +126,4 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Studio Brand Signature](mem://features/studio-brand-signature) — Assinatura obrigatória da marca em todas as artes; toggle global por marca.
 - [Studio Method Blocks](mem://features/studio-method-blocks) — STEPS e D.I.F.I. como artes do Studio, exclusivas da marca Aliv.iA.
 - [Studio Matrix Audiences](mem://features/studio-matrix-audiences) — Públicos matriz contam na métrica oficial das artes; sub-nichos (parentId) nunca contam.
+- [Studio Copy Engine](mem://features/studio-copy-engine) — Motor textual local: léxico + releitura de frase (rewrite.ts), níveis Baixa/Média/Alta, sem créditos de IA.
