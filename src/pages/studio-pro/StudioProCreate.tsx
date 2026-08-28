@@ -180,11 +180,12 @@ const StudioProCreate = ({
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const { photos } = useStudioPhotos(true);
   /** Cota do período: cada geração desconta um lote inteiro da cota do plano. */
-  const { quota, consume } = useStudioQuota();
+  const { quota, error: quotaError, consume } = useStudioQuota();
 
   const batchSize = Number.isFinite(maxArts) ? (maxArts as number) : STUDIO_BATCH_SIZE;
   const unlimited = !Number.isFinite(maxArts) || !!quota?.unlimited;
-  const blocked = !unlimited && !!quota && quota.remaining < batchSize;
+  /** Só bloqueia com dado confirmado: cota desconhecida nunca trava o botão. */
+  const blocked = !unlimited && !!quota && !quotaError && quota.remaining < batchSize;
 
   /**
    * "Nova versão" é o que custa cota: trocar público, ângulo ou formato refina o
@@ -197,14 +198,19 @@ const StudioProCreate = ({
       return;
     }
     setBusy("quota");
-    const ok = await consume(batchSize);
+    const result = await consume(batchSize);
     setBusy(null);
-    if (!ok) {
-      toast.error(`Sua cota deste período acabou. Faça upgrade para gerar mais artes.`);
+    if (result === "exhausted") {
+      toast.error("Sua cota deste período acabou. Faça upgrade para gerar mais artes.");
+      return;
+    }
+    if (result === "error") {
+      toast.error("Não foi possível confirmar sua cota agora. Tente novamente.");
       return;
     }
     setSeed(randomSeed());
   };
+
 
   useEffect(() => {
     writePersisted(brand.id, { seed, format });
