@@ -187,6 +187,8 @@ const StudioProCreate = ({
   const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "1x1");
   const [seed, setSeed] = useState(() => restored.current.seed ?? randomSeed());
   const [busy, setBusy] = useState<string | null>(null);
+  /** Índices das artes já salvas nesta versão — evita cliques duplicados. */
+  const [saved, setSaved] = useState<Set<number>>(() => new Set());
   const wrapper = useRef<HTMLDivElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const { photos } = useStudioPhotos(true);
