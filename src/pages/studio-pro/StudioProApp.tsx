@@ -448,6 +448,38 @@ const StudioProApp = () => {
                   placeholder="Ex.: cafeteria, moda, advocacia"
                 />
               </div>
+              <div>
+                <Label htmlFor="brand-instagram">Instagram (opcional)</Label>
+                <Input
+                  id="brand-instagram"
+                  value={form.instagram_handle}
+                  onChange={(e) => setForm({ ...form, instagram_handle: e.target.value })}
+                  placeholder="@suamarca"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="brand-site">Site / landing page (opcional)</Label>
+                <Input
+                  id="brand-site"
+                  value={form.source_url}
+                  onChange={(e) => setForm({ ...form, source_url: e.target.value })}
+                  placeholder="https://suamarca.com.br"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Com o site, a IA lê a sua página, entende a proposta, sugere as cores da marca e já
+                  monta os públicos-alvo com dores, desejos e soluções.
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="brand-description">O que a marca faz (opcional)</Label>
+                <Textarea
+                  id="brand-description"
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Em poucas linhas: o que você vende, para quem e qual problema resolve."
+                />
+              </div>
               <BrandColorFields idPrefix="brand" kit={colorKit} onChange={setColorKit} />
               <div className="sm:col-span-2">
                 <Label htmlFor="brand-tone">Tom de voz</Label>
@@ -468,6 +500,20 @@ const StudioProApp = () => {
                   placeholder="https://..."
                 />
               </div>
+              {(form.source_url.trim() || form.description.trim() || form.niche.trim()) && (
+                <label className="flex items-start gap-2 rounded-2xl border border-border bg-muted/30 p-3 text-xs sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={autoInterpret}
+                    onChange={(e) => setAutoInterpret(e.target.checked)}
+                  />
+                  <span>
+                    Analisar a marca com IA agora: puxa a proposta e as cores do site e cria os
+                    públicos-alvo automaticamente (você revisa e edita depois).
+                  </span>
+                </label>
+              )}
               <Button onClick={createBrand} disabled={saving} className="rounded-full sm:col-span-2">
                 {saving ? (
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
@@ -478,6 +524,7 @@ const StudioProApp = () => {
               </Button>
             </div>
           )}
+
         </section>
       </div>
     </main>
