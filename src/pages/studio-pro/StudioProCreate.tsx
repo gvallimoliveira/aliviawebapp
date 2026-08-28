@@ -803,28 +803,34 @@ const StudioProCreate = ({
       </div>
 
       <div ref={wrapper} className="mt-5 flex flex-col items-center gap-6" style={themeStyle}>
-        {blocks.map(({ kind, treatment, motion, slide }, i) => {
-          const Block = STUDIO_BLOCKS[kind];
-          const rng = createRng(`${brand.id}:${seed}:${kind}:${i}`);
-          const caption = buildCaption(content, kind, createRng(`${brand.id}:${seed}:caption:${kind}:${i}`));
-          return (
-            <div key={`${kind}-${i}`} className="w-full">
+        {groups.map((group) => {
+          const first = group.items[0];
+          const indexes = group.items.map((item) => item.index);
+          const caption = buildCaption(
+            content,
+            first.block.kind,
+            createRng(`${brand.id}:${seed}:caption:${first.block.kind}:${first.index}`),
+          );
+          const art = (item: { block: ComposedBlock; index: number }) => {
+            const { kind, treatment, motion, slide } = item.block;
+            const Block = STUDIO_BLOCKS[kind];
+            return (
               <div
-                className={`mx-auto overflow-hidden rounded-2xl border border-border bg-background ${
+                className={`overflow-hidden rounded-2xl border border-border bg-background ${
                   format === "1x1" ? "studio-pro-square" : ""
-                }`}
+                } ${group.carousel ? "shrink-0 snap-center" : "mx-auto"}`}
                 style={FRAME_STYLE[format]}
               >
-                <div id={`studio-pro-block-${i}`} className="h-full w-full">
+                <div id={`studio-pro-block-${item.index}`} className="h-full w-full">
                   <StudioProSignature
-                    artKey={`${brand.id}:${seed}:${kind}:${i}`}
+                    artKey={`${brand.id}:${seed}:${kind}:${item.index}`}
                     enabled={signatureOn}
                     brandName={brand.name}
                   >
                     <StudioMotion kind={motion}>
                       <Block
                         content={content}
-                        rng={rng}
+                        rng={createRng(`${brand.id}:${seed}:${kind}:${item.index}`)}
                         treatment={treatment}
                         format={format}
                         picker={picker}
@@ -836,21 +842,47 @@ const StudioProCreate = ({
                   </StudioProSignature>
                 </div>
               </div>
+            );
+          };
+
+          return (
+            <div key={group.key} className="w-full">
+              {group.carousel ? (
+                <>
+                  <p className="mb-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Carrossel completo · {group.items.length} slides · arraste para o lado →
+                  </p>
+                  {/* Faixa com scroll lateral e snap: a sequência é vista como no Instagram. */}
+                  <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+                    {group.items.map((item) => (
+                      <div key={item.index} className="shrink-0">
+                        {art(item)}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                art(first)
+              )}
 
               <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-8 rounded-full text-xs"
-                  disabled={busy === `png-${i}`}
-                  onClick={() => download(i, kind)}
+                  disabled={busy === `png-${first.index}`}
+                  onClick={() =>
+                    group.carousel
+                      ? void downloadCarousel(indexes)
+                      : void download(first.index, first.block.kind)
+                  }
                 >
-                  {busy === `png-${i}` ? (
+                  {busy === `png-${first.index}` ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Download className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  PNG
+                  {group.carousel ? `PNG (${group.items.length})` : "PNG"}
                 </Button>
                 <Button
                   size="sm"
@@ -864,15 +896,19 @@ const StudioProCreate = ({
                 <Button
                   size="sm"
                   className="h-8 rounded-full text-xs"
-                  disabled={busy === `save-${i}`}
-                  onClick={() => save(i, kind, caption)}
+                  disabled={busy === `save-${first.index}`}
+                  onClick={() =>
+                    group.carousel
+                      ? void saveCarousel(indexes, caption)
+                      : void save(first.index, first.block.kind, caption)
+                  }
                 >
-                  {busy === `save-${i}` ? (
+                  {busy === `save-${first.index}` ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Save className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  Salvar na marca
+                  {group.carousel ? "Salvar carrossel" : "Salvar na marca"}
                 </Button>
               </div>
             </div>
