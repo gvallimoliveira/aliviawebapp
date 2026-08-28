@@ -642,7 +642,25 @@ Responda SOMENTE com JSON válido neste formato:
         secondary2: neutral,
         useSecondary: secondary ? "true" : "false",
       };
+      /**
+       * Paleta ampliada: marcas raramente cabem em 4 cores. As demais cores
+       * lidas do site (ou devolvidas pela IA em `extra`) entram como cores
+       * adicionais da categoria principal — o usuário edita/remove no kit.
+       */
+      const used = new Set([surface, onSurface, accent, neutral].map((c) => c.toUpperCase()));
+      const extras = [
+        ...(Array.isArray(rawColors.extra) ? (rawColors.extra as unknown[]) : []),
+        ...site.colors,
+      ]
+        .map(pickHex)
+        .filter((c): c is string => !!c)
+        .filter((c) => !used.has(c) && (used.add(c) || true))
+        .slice(0, 4);
+      extras.forEach((color, i) => {
+        colorKit![`primary${i + 3}`] = color;
+      });
     }
+
 
     /**
      * TIPOGRAFIA: casa o nome lido no manual com a lista curada do editor
