@@ -20,17 +20,20 @@ Modelo proposto:
 - **1 geração = 1 clique em "Nova versão"** (nova seed). Trocar público, objetivo, modelo, formato, exportar e salvar continua **de graça** e ilimitado.
 - Limites por período:
 
-| Plano | Gerações / mês | Equivalente hoje |
-|---|---|---|
-| Grátis | 2 | 5 artes |
-| Solo | 12 | 10 |
-| Marca (intermediário) | 40 | 33 |
-| Agência | 150 | 133 |
-| VIP | ilimitado | ilimitado |
+
+| Plano                 | Gerações / mês | Equivalente hoje |
+| --------------------- | -------------- | ---------------- |
+| Grátis                | 2              | 5 artes          |
+| Solo                  | 10             | 10               |
+| Marca (intermediário) | 40             | 33               |
+| Agência               | 120            | 133              |
+| VIP                   | ilimitado      | ilimitado        |
+
 
 Ou seja: ninguém perde volume, todos ganham clareza — e o número já bate com o que a interface mostra hoje ("gerações restantes").
 
 - **Sugestão complementar**: em vez de só bloquear ao fim da cota, o painel mostra "12 de 12 gerações neste período" com barra e aviso a partir de 80%. Se um dia fizer sentido, gerações extras podem ser vendidas em pacotes avulsos (ex.: +10) sem mexer no plano.
+- Educar e informar na landing page do alivia studio publico sobre esse funcionamento e modo de operação 
 
 ## Detalhes técnicos
 
