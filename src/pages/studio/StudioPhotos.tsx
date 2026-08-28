@@ -58,7 +58,9 @@ const StudioPhotos = ({
   const [recentIds, setRecentIds] = useState<string[]>([]);
 
   const hasLimit = typeof limit === "number";
-  const remaining = hasLimit ? Math.max(0, (limit as number) - photos.length) : Infinity;
+  /** O teto do plano é da CONTA: soma as fotos de todas as marcas. */
+  const used = typeof usedTotal === "number" ? Math.max(usedTotal, photos.length) : photos.length;
+  const remaining = hasLimit ? Math.max(0, (limit as number) - used) : Infinity;
   const full = hasLimit && remaining === 0;
   const pinned = new Set(pinnedIds ?? []);
 
