@@ -21,6 +21,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
 import { useStudioQuota } from "./useStudioQuota";
@@ -99,6 +109,7 @@ const StudioProApp = () => {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
+  const [brandToDelete, setBrandToDelete] = useState<Brand | null>(null);
   /** Ao criar a marca, já roda a leitura do site + montagem dos públicos. */
   const [autoInterpret, setAutoInterpret] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -332,6 +343,7 @@ const StudioProApp = () => {
       return;
     }
     setBrands((prev) => prev.filter((b) => b.id !== id));
+    toast.success("Marca removida.");
   };
 
 
@@ -511,7 +523,7 @@ const StudioProApp = () => {
                     size="sm"
                     variant="ghost"
                     className="absolute right-2 top-2 h-7 w-7 p-0 opacity-0 transition group-hover:opacity-100"
-                    onClick={() => removeBrand(brand.id)}
+                    onClick={() => setBrandToDelete(brand)}
                     title="Remover marca"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -665,6 +677,30 @@ const StudioProApp = () => {
 
         </section>
       </div>
+
+      <AlertDialog open={!!brandToDelete} onOpenChange={(open) => !open && setBrandToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir marca?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A marca <strong>{brandToDelete?.name}</strong> e todas as artes, fotos e configurações
+              vinculadas a ela serão removidas permanentemente. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBrandToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (brandToDelete) removeBrand(brandToDelete.id);
+                setBrandToDelete(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sim, excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 };
