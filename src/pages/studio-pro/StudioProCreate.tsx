@@ -30,6 +30,7 @@ import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
+import AutoFit from "@/pages/studio/AutoFit";
 
 
 /**
@@ -848,6 +849,8 @@ const StudioProCreate = ({
                 style={FRAME_STYLE[format]}
               >
                 <div id={`studio-pro-block-${item.index}`} className="h-full w-full">
+                  {/* AutoFit: copy longa encolhe para caber; nunca sai cortada. */}
+                  <AutoFit resetKey={`${brand.id}:${seed}:${format}:${kind}:${item.index}`}>
                   <StudioProSignature
                     artKey={`${brand.id}:${seed}:${kind}:${item.index}`}
                     enabled={signatureOn}
@@ -866,6 +869,7 @@ const StudioProCreate = ({
                       />
                     </StudioMotion>
                   </StudioProSignature>
+                  </AutoFit>
                 </div>
               </div>
             );
