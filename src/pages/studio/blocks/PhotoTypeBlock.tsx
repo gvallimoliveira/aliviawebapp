@@ -21,7 +21,7 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, picker, phot
   if (!photo) return null;
 
   /** Palavra-cartaz: a mais forte do assunto, nunca o nome do que está na foto. */
-  const word = [...item.title.split(/\s+/)].sort((a, b) => b.length - a.length)[0]?.toUpperCase() ?? "ALIV.IA";
+  const word = [...item.title.split(/\s+/)].sort((a, b) => b.length - a.length)[0]?.toUpperCase() ?? "MARCA";
   const bottom = treatment % 2 === 0;
 
   return (

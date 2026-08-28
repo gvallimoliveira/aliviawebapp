@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { StudioPhoto } from "../photos";
+import { BRAND_NAME } from "../brand";
 
 /**
  * MOLDURA DE FOTO DO STUDIO
@@ -34,7 +35,7 @@ const PhotoFrame = ({
     <div className={`relative overflow-hidden ${className}`} style={style}>
       <img
         src={photo.src}
-        alt={photo.label || "Aliv.iA"}
+        alt={photo.label || BRAND_NAME}
         loading="lazy"
         decoding="async"
         className={`h-full w-full object-cover ${imgClassName}`}

@@ -47,7 +47,7 @@ const SlideImage = ({ topic }: { topic?: TopicId }) => {
   return (
     <img
       src={src}
-      alt="Tela do Aliv.iA"
+      alt={`Tela de ${BRAND_NAME}`}
       className="mt-6 max-h-[34vh] w-auto max-w-full rounded-2xl border border-border shadow-sm md:max-w-md"
     />
   );

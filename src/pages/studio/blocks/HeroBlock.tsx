@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BRAND_LOGO as logoAlivia } from "../brand";
+import { BRAND_LOGO, BRAND_NAME } from "../brand";
 import {
   ALIGNMENTS,
   alignClasses,
@@ -45,7 +45,7 @@ const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
             className="flex flex-col items-start gap-7 text-left"
           >
             <div className="flex items-center gap-3">
-              <img src={logoAlivia} alt="Aliv.iA" className="h-10 w-10 md:h-12 md:w-12" />
+              <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-10 w-10 md:h-12 md:w-12" />
               <p className="rounded-full border border-primary/30 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-primary md:text-[11px]">
                 {kicker}
               </p>
@@ -92,7 +92,7 @@ const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
             className="relative mx-auto flex h-48 w-48 items-center justify-center rounded-[2.5rem] border border-primary/20 bg-card shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.4)] md:h-64 md:w-64"
           >
             <div aria-hidden className="pointer-events-none absolute -inset-8 rounded-full bg-primary/10 blur-3xl" />
-            <img src={logoAlivia} alt="Aliv.iA" className="relative h-24 w-24 md:h-32 md:w-32" />
+             <img src={BRAND_LOGO} alt={BRAND_NAME} className="relative h-24 w-24 md:h-32 md:w-32" />
           </motion.div>
         </div>
       </section>
@@ -117,8 +117,8 @@ const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
           className={`flex flex-col gap-6 ${classes.wrapper}`}
         >
           <img
-            src={logoAlivia}
-            alt="Aliv.iA"
+            src={BRAND_LOGO}
+            alt={BRAND_NAME}
             className={`h-20 w-20 md:h-24 md:w-24 ${treatment === 0 ? "drop-shadow-[0_0_30px_hsl(var(--primary)/0.35)]" : ""}`}
           />
 

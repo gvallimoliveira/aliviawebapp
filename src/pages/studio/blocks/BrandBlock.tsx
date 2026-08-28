@@ -37,7 +37,7 @@ const VerticalWordmark = ({ stroke }: { stroke?: boolean }) => (
   </div>
 );
 
-const BrandBlock = ({ rng, treatment, format, persona }: BlockProps) => {
+const BrandBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
   const statementPool = [
     ...content.closings.map((item) => item.title),
     ...content.subs,
