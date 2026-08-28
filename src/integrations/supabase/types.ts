@@ -3760,6 +3760,47 @@ export type Database = {
           },
         ]
       }
+      studio_phrase_memory: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          kind: string
+          last_used_at: string
+          signature: string
+          user_id: string
+          uses: number
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          kind?: string
+          last_used_at?: string
+          signature: string
+          user_id: string
+          uses?: number
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          last_used_at?: string
+          signature?: string
+          user_id?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_phrase_memory_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "studio_brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_admin_actions: {
         Row: {
           action: string
