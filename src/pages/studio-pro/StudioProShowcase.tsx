@@ -367,12 +367,29 @@ const CarouselBody = ({ item }: { item: ShowcaseItem & { slides: ShowcaseSlide[]
   );
 };
 
+/** Converte a paleta do exemplo em override local de tokens semânticos. */
+const paletteVars = (item: ShowcaseItem): React.CSSProperties | undefined => {
+  const p = item.palette;
+  if (!p) return undefined;
+  return {
+    "--primary": p.primary,
+    "--background": p.background,
+    "--card": p.card,
+    "--foreground": p.foreground,
+    "--muted-foreground": p.mutedForeground,
+    "--border": p.border,
+    "--mono-ink": p.ink,
+    "--mono-paper": p.paper,
+    "--mono-mid": p.mid,
+  } as React.CSSProperties;
+};
+
 /** Cartão de exemplo com etiqueta de nicho e formato. */
 const StudioProShowcase = ({ item }: { item: ShowcaseItem }) => (
   <figure className="group">
     <div
       className="overflow-hidden rounded-2xl border border-border shadow-[0_20px_50px_-35px_hsl(var(--foreground)/0.6)] transition-transform duration-300 group-hover:-translate-y-1"
-      style={{ aspectRatio: ratio[item.format] }}
+      style={{ aspectRatio: ratio[item.format], ...paletteVars(item) }}
     >
       {item.slides && item.slides.length > 1 ? (
         <CarouselBody item={{ ...item, slides: item.slides }} />
@@ -380,6 +397,7 @@ const StudioProShowcase = ({ item }: { item: ShowcaseItem }) => (
         <Body item={item} />
       )}
     </div>
+
     <figcaption className="mt-2 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
       <span className="font-semibold text-foreground">{item.niche}</span>
       <span className="rounded-full border border-border px-2 py-0.5">
