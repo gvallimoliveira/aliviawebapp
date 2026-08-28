@@ -232,14 +232,31 @@ const fetchHtml = async (url: string, timeoutMs = 12000): Promise<string | null>
 /** Páginas internas que costumam guardar a proposta real da marca. */
 const INNER_PAGE = /(sobre|about|quem-somos|empresa|servic|service|solucao|solucoes|solution|produto|product|planos|precos|pricing|para-quem|clientes|portfolio|metodo|como-funciona)/i;
 
+/**
+ * ESCOPO DE CAMINHO. Quando o usuário informa um sub-site
+ * (ex.: dominio.com/studio-pro), a leitura NÃO pode vazar para o resto do
+ * domínio — era assim que o kit de uma marca vinha preenchido com o conteúdo
+ * do produto principal hospedado na raiz.
+ */
+const pathScope = (url: string): string => {
+  const { pathname } = new URL(url);
+  const clean = pathname.replace(/\/+$/, "");
+  if (!clean || clean === "") return "";
+  // Sub-site = primeiro segmento do caminho.
+  return `/${clean.split("/").filter(Boolean)[0]}`;
+};
+
 const collectInnerLinks = (html: string, base: string, max: number): string[] => {
   const origin = new URL(base).origin;
+  const scope = pathScope(base);
   const seen = new Set<string>();
   const out: string[] = [];
   for (const [, href] of html.matchAll(/<a\b[^>]*\shref\s*=\s*["']([^"'#]+)["']/gi)) {
     if (!INNER_PAGE.test(href)) continue;
     const url = absolutize(href, base);
     if (!url || !url.startsWith(origin)) continue;
+    // Sub-site: só páginas dentro do mesmo caminho.
+    if (scope && !new URL(url).pathname.startsWith(scope)) continue;
     const clean = url.split("#")[0].replace(/\/$/, "");
     if (clean === base.replace(/\/$/, "") || seen.has(clean)) continue;
     if (/\.(pdf|jpg|jpeg|png|zip|docx?)$/i.test(clean)) continue;
@@ -248,6 +265,35 @@ const collectInnerLinks = (html: string, base: string, max: number): string[] =>
     if (out.length >= max) break;
   }
   return out;
+};
+
+/**
+ * SPA (React/Vite) devolve sempre o mesmo index.html: título, descrição e texto
+ * são os do app inteiro, não da rota pedida. Detectamos essa casca para não
+ * confiar nos metadados do shell e para buscar o conteúdo já renderizado.
+ */
+const isAppShell = (html: string, text: string): boolean => {
+  if (/<div[^>]+id=["'](root|app|__next)["']/i.test(html) && text.length < 1200) return true;
+  return text.length < 600;
+};
+
+/** Renderiza a rota com JS executado (leitor público) e devolve texto/markdown. */
+const renderPage = async (url: string, timeoutMs = 20000): Promise<string | null> => {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const resp = await fetch(`https://r.jina.ai/${url}`, {
+      signal: controller.signal,
+      headers: { Accept: "text/plain", "X-Return-Format": "markdown" },
+    });
+    clearTimeout(timer);
+    if (!resp.ok) return null;
+    const text = (await resp.text()).slice(0, 30000);
+    return text.trim().length > 300 ? text : null;
+  } catch (err) {
+    console.error("[studio-brand-interpret] render", url, String(err).slice(0, 160));
+    return null;
+  }
 };
 
 type SiteRead = {
@@ -263,11 +309,11 @@ type SiteRead = {
 /**
  * LEITURA RICA DO SITE DO CLIENTE.
  *
- * A versão anterior lia só a home e um punhado de texto — kits saíam rasos e
- * sem logo. Agora: metadados (title/description/og), títulos (h1-h3) separados,
- * cores (hex + rgb + variáveis CSS), tipografia declarada, logo com heurística
- * de header, e até 3 páginas internas (sobre / serviços / planos).
- * Falha silenciosa: site fora do ar não pode travar a interpretação.
+ * Metadados (title/description/og), títulos (h1-h3), cores (hex + rgb + vars),
+ * tipografia declarada, logo com heurística de header e até 3 páginas internas
+ * — sempre dentro do caminho informado. Se o HTML for casca de SPA, o conteúdo
+ * real vem do render com JS. Falha silenciosa: site fora do ar não trava a
+ * interpretação.
  */
 const readSite = async (rawUrl: string, brandName = ""): Promise<SiteRead> => {
   const url = normalizeUrl(rawUrl);
@@ -275,7 +321,12 @@ const readSite = async (rawUrl: string, brandName = ""): Promise<SiteRead> => {
   if (!url) return empty;
 
   const html = await fetchHtml(url);
-  if (!html) return empty;
+  if (!html) {
+    // Sem HTML (bloqueio/JS puro): tenta o render mesmo assim.
+    const rendered = await renderPage(url);
+    if (!rendered) return empty;
+    return { ...empty, text: rendered.slice(0, 26000), pages: [url] };
+  }
 
   /* Cores: hex, rgb() e variáveis CSS — sites modernos quase não usam hex cru. */
   const counts = new Map<string, number>();
@@ -309,33 +360,63 @@ const readSite = async (rawUrl: string, brandName = ""): Promise<SiteRead> => {
   ]
     .filter(Boolean)
     .map((s) => stripToText(String(s), 300));
-  const meta = [...new Set(metaBits)].join(" · ").slice(0, 900);
+  const shellMeta = [...new Set(metaBits)].join(" · ").slice(0, 900);
 
   const headings = [...html.matchAll(/<h([1-3])\b[^>]*>([\s\S]*?)<\/h\1>/gi)]
     .map((m) => stripToText(m[2], 160))
     .filter((t) => t.length > 2);
-  const uniqueHeadings = [...new Set(headings)].slice(0, 40);
+  let uniqueHeadings = [...new Set(headings)].slice(0, 40);
 
   const homeText = stripToText(html, 12000);
-  const pages = collectInnerLinks(html, url, 3);
+  const shell = isAppShell(html, homeText);
+  const scope = pathScope(url);
+
+  let meta = shellMeta;
+  let mainText = homeText;
+  let renderedPages: string[] = [];
+
+  if (shell) {
+    const rendered = await renderPage(url);
+    if (rendered) {
+      mainText = rendered;
+      renderedPages = [url];
+      // Títulos reais saem do markdown renderizado.
+      const mdHeads = [...rendered.matchAll(/^#{1,3}\s+(.+)$/gm)]
+        .map((m) => m[1].trim().slice(0, 160))
+        .filter((t) => t.length > 2);
+      if (mdHeads.length) uniqueHeadings = [...new Set(mdHeads)].slice(0, 40);
+      // Em sub-site, os metadados do shell descrevem outro produto: descartar.
+      if (scope) meta = "";
+    } else if (scope) {
+      // Não conseguimos ler a rota: melhor nada do que o conteúdo da raiz.
+      meta = "";
+      mainText = "";
+      uniqueHeadings = [];
+    }
+  }
+
+  const pages = shell ? renderedPages : collectInnerLinks(html, url, 3);
   const innerTexts: string[] = [];
-  for (const page of pages) {
-    const inner = await fetchHtml(page, 9000);
-    if (!inner) continue;
-    const t = stripToText(inner, 5000);
-    if (t.length > 200) innerTexts.push(`[${page}]\n${t}`);
+  if (!shell) {
+    for (const page of pages) {
+      const inner = await fetchHtml(page, 9000);
+      if (!inner) continue;
+      const t = stripToText(inner, 5000);
+      if (t.length > 200) innerTexts.push(`[${page}]\n${t}`);
+    }
   }
 
   return {
-    text: [homeText, ...innerTexts].join("\n\n").slice(0, 26000),
+    text: [mainText, ...innerTexts].filter(Boolean).join("\n\n").slice(0, 26000),
     colors,
     logo: findLogo(html, url, brandName),
     fonts: findFonts(html),
     meta,
     headings: uniqueHeadings,
-    pages,
+    pages: pages.length ? pages : [url],
   };
 };
+
 
 
 /* ---------- Contraste: nenhuma arte pode sair ilegível ---------- */
