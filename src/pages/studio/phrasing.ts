@@ -120,16 +120,18 @@ export const composeHeadlines = (
   ing: CopyIngredients,
   opts: PhrasingOptions,
   rng: Rng,
-  perFrame = 2,
+  perFrame = 3,
 ): Headline[] => {
   const frames = HEADLINE_FRAMES.filter((f) => hasIngredient(ing, f.needs));
   const out: Headline[] = [];
+  /** Deslocamento do lote: gira os ingredientes de cada frame a cada seed. */
+  const offset = rng.int(101);
   rng.shuffle(frames).forEach((frame, fi) => {
     for (let i = 0; i < perFrame; i += 1) {
-      const built = frame.build(ing, fi + i);
+      const built = frame.build(ing, fi + i + offset);
       out.push({
-        strong: dress(built.strong, { ...opts, seed: `${opts.seed}:${frame.id}:${i}:s` }),
-        rest: dress(built.rest, { ...opts, seed: `${opts.seed}:${frame.id}:${i}:r` }),
+        strong: dress(built.strong, { ...opts, seed: `${opts.seed}:${frame.id}:${offset}:${i}:s` }),
+        rest: dress(built.rest, { ...opts, seed: `${opts.seed}:${frame.id}:${offset}:${i}:r` }),
       });
     }
   });
