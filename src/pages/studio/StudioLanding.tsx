@@ -48,6 +48,7 @@ import BrandBlock from "./blocks/BrandBlock";
 import CarouselBlock from "./blocks/CarouselBlock";
 import StudioMotion from "./blocks/StudioMotion";
 import type { BlockProps, StudioFormat } from "./blocks/shared";
+import { resetStudioBrandTheme } from "./brand";
 
 
 
@@ -113,6 +114,12 @@ const StudioLanding = () => {
     edit: editPhoto,
     remove: removePhoto,
   } = useStudioPhotos(true);
+
+  // O Studio interno sempre começa com a identidade Aliv.iA, mesmo após
+  // navegar pelo editor multimarca na mesma sessão.
+  useEffect(() => {
+    resetStudioBrandTheme();
+  }, []);
 
 
   const world: WorldId = isWorldId(params.get("world")) ? (params.get("world") as WorldId) : "pro";

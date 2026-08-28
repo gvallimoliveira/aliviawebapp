@@ -86,10 +86,10 @@ type Props = {
 };
 
 
-const FRAME_WIDTH: Record<StudioFormat, string> = {
-  "9x16": "min(400px, 100%)",
-  "1x1": "min(560px, 100%)",
-  free: "100%",
+const FRAME_STYLE: Record<StudioFormat, React.CSSProperties> = {
+  "9x16": { width: "min(400px, 100%)", aspectRatio: "9/16" },
+  "1x1": { width: "min(560px, 100%)", aspectRatio: "1/1" },
+  free: { width: "100%" },
 };
 
 const FORMATS: { id: StudioFormat; label: string }[] = [
@@ -689,9 +689,6 @@ const StudioProCreate = ({
       </div>
 
       <div ref={wrapper} className="mt-5 flex flex-col items-center gap-6" style={themeStyle}>
-        {format === "1x1" && (
-          <style>{`.studio-pro-square section { min-height: min(560px, 100%) !important; }`}</style>
-        )}
         {blocks.map(({ kind, treatment, motion, slide }, i) => {
           const Block = STUDIO_BLOCKS[kind];
           const rng = createRng(`${brand.id}:${seed}:${kind}:${i}`);
@@ -702,9 +699,9 @@ const StudioProCreate = ({
                 className={`mx-auto overflow-hidden rounded-2xl border border-border bg-background ${
                   format === "1x1" ? "studio-pro-square" : ""
                 }`}
-                style={{ width: FRAME_WIDTH[format] }}
+                style={FRAME_STYLE[format]}
               >
-                <div id={`studio-pro-block-${i}`}>
+                <div id={`studio-pro-block-${i}`} className="h-full w-full">
                   <StudioProSignature
                     artKey={`${brand.id}:${seed}:${kind}:${i}`}
                     enabled={signatureOn}

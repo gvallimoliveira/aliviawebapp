@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
+import { BRAND_NAME } from "../brand";
 
 /**
  * Before / after columns.
@@ -32,7 +33,7 @@ const CompareBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
 
           <div className={stacked ? "flex flex-col gap-4" : "relative grid gap-4 md:grid-cols-2"}>
             <div className="rounded-2xl border border-border bg-muted/60 p-6">
-              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground">Sem Aliv.iA</p>
+              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground">Antes</p>
               <ul className="flex flex-col gap-3">
                 {compare.before.map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground md:text-base">
@@ -44,7 +45,7 @@ const CompareBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
             </div>
 
             <div className="rounded-2xl border border-primary/25 bg-primary/5 p-6">
-              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-primary">Com Aliv.iA</p>
+              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-primary">Com {BRAND_NAME}</p>
               <ul className="flex flex-col gap-3">
                 {compare.after.map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm font-medium text-foreground md:text-base">

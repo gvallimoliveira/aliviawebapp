@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { ACCENT_STYLES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
+import { BRAND_NAME } from "../brand";
 
 /**
  * Typographic manifesto moment — the format that performs best as a still post.
@@ -38,7 +39,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
             <footer className="mt-10 flex items-center gap-4">
               <span aria-hidden className="h-px w-14 bg-primary/60" />
               <span className="text-[11px] font-medium uppercase tracking-[0.32em] text-muted-foreground">
-                Aliv.iA · {content.label}
+                {BRAND_NAME} · {content.label}
               </span>
             </footer>
           </motion.blockquote>
@@ -65,7 +66,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
               {renderAccent(quote.text, accentVariant)}
             </p>
             <footer className="mt-8 text-[11px] font-medium uppercase tracking-[0.32em] text-muted-foreground">
-              Aliv.iA · {content.label}
+              {BRAND_NAME} · {content.label}
             </footer>
           </motion.blockquote>
         </div>
@@ -92,7 +93,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
           </p>
 
           <footer className="mt-8 text-[11px] font-medium uppercase tracking-[0.32em] text-muted-foreground">
-            Aliv.iA · {content.label}
+            {BRAND_NAME} · {content.label}
           </footer>
         </motion.blockquote>
       </div>

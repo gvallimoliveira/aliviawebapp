@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { BRAND_LOGO as logoAlivia } from "../brand";
+import { BRAND_LOGO, BRAND_NAME, BRAND_SITE } from "../brand";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { ACCENT_STYLES, DARK_ACCENT_INDEXES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
 
@@ -32,14 +32,14 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto flex max-w-xl flex-col items-center gap-5"
           >
-            <img src={logoAlivia} alt="Aliv.iA" className="h-14 w-14 md:h-16 md:w-16" />
+            <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-14 w-14 md:h-16 md:w-16" />
             <h2 className="text-2xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
               {title}
             </h2>
             <span aria-hidden className="h-px w-20 bg-primary/40" />
             <p className="text-sm leading-relaxed text-muted-foreground md:text-base">{closing.sub}</p>
             <p className="mt-3 text-[11px] uppercase tracking-[0.32em] text-muted-foreground">
-              aliviawebapp.com.br
+              {BRAND_SITE}
             </p>
           </motion.div>
         </div>
@@ -65,7 +65,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="flex max-w-3xl flex-col items-start gap-6 text-left md:ml-[6%]"
           >
-            <img src={logoAlivia} alt="Aliv.iA" className="h-12 w-12 md:h-14 md:w-14" />
+            <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-12 w-12 md:h-14 md:w-14" />
             <h2 className="text-3xl font-bold leading-tight tracking-tight text-foreground md:text-5xl">
               {title}
             </h2>
@@ -75,7 +75,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
               <ArrowRight className="h-4 w-4" />
             </div>
             <p className="mt-4 text-[11px] uppercase tracking-[0.32em] text-muted-foreground">
-              aliviawebapp.com.br
+              {BRAND_SITE}
             </p>
           </motion.div>
         </div>
@@ -107,7 +107,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="mx-auto flex max-w-2xl flex-col items-center gap-6"
         >
-          <img src={logoAlivia} alt="Aliv.iA" className="h-16 w-16 md:h-20 md:w-20" />
+          <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-16 w-16 md:h-20 md:w-20" />
           <h2 className={`text-3xl font-bold leading-tight tracking-tight md:text-5xl ${dark ? "" : "text-foreground"}`}>
             {title}
           </h2>
@@ -121,7 +121,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
           </div>
 
           <p className={`mt-6 text-[11px] uppercase tracking-[0.32em] ${dark ? "text-background/50" : "text-muted-foreground"}`}>
-            aliviawebapp.com.br
+            {BRAND_SITE}
           </p>
         </motion.div>
       </div>

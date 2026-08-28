@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { BRAND_NAME, BRAND_SITE } from "../brand";
 
 /**
  * Pin-up block — cartaz de funcionalidade com a arte gerada (personagem/ação).
@@ -41,7 +42,7 @@ const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
           </p>
 
           <p className="mt-1 text-[10px] uppercase tracking-[0.32em] text-muted-foreground">
-            Aliv.iA · aliviawebapp.com.br
+            {BRAND_NAME} · {BRAND_SITE}
           </p>
         </motion.div>
       </div>

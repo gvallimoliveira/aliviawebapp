@@ -1,7 +1,6 @@
 import type { Rng } from "./rng";
 import type { WorldContent } from "./content";
 import type { BlockKind } from "./composePage";
-import { BRAND_DNA } from "./content/brandDna";
 import { BRAND_SLOGAN } from "./brand";
 
 /**
@@ -18,7 +17,7 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
   },
   marquee: (c, rng) => [
     `${rng.pick(c.marquee).slice(0, 3).join(" • ")}`,
-    "Tudo isso dentro de um só fluxo de raciocínio clínico.",
+    rng.pick(c.subs),
   ],
   metrics: (c, rng) => {
     const set = rng.pick(c.metrics);
@@ -56,7 +55,7 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const l = rng.pick(c.lists);
     return [l.heading, [...l.items.map((item) => `• ${item}`), "", l.closing].join("\n")];
   },
-  brand: (_c, rng) => [rng.pick(BRAND_DNA.statements), BRAND_SLOGAN],
+  brand: (c, rng) => [rng.pick(c.closings).title, BRAND_SLOGAN || rng.pick(c.subs)],
   photoType: (c, rng) => {
     const h = rng.pick(c.headlines);
     return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
@@ -65,7 +64,7 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const h = rng.pick(c.headlines);
     return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
   },
-  photoPortrait: (c, rng) => [rng.pick(c.quotes).text, rng.pick(BRAND_DNA.statements)],
+  photoPortrait: (c, rng) => [rng.pick(c.quotes).text, rng.pick(c.subs)],
   search: (c, rng) => [
     `${rng.pick(c.kickers)}: ${rng.pick(c.headlines).strong}`,
     rng.pick(c.subs),
