@@ -25,7 +25,7 @@ export const VOICE_REGISTERS: VoiceRegister[] = ["tecnico", "proximo", "direto",
 const REGISTER_HINTS: Record<VoiceRegister, string[]> = {
   tecnico: ["técnic", "cientí", "clínic", "preciso", "rigor", "dados", "evidênc", "formal", "profissional", "especialista"],
   proximo: ["próxim", "acolhed", "human", "amig", "leve", "empát", "carinho", "conversa", "informal", "descontra"],
-  direto: ["direto", "objetiv", "sem rodeio", "prátic", "seco", "claro", "simples", "assertiv"],
+  direto: ["direto", "objetiv", "sem enrolação", "prátic", "seco", "claro", "simples", "assertiv"],
   inspirador: ["inspirad", "motivac", "emocion", "transform", "sonho", "propósit", "energ", "aspiracion"],
   sobrio: ["sóbri", "elegan", "premium", "discret", "minimal", "sofistic", "sério", "institucional"],
 };
@@ -67,7 +67,7 @@ const SYNONYMS: Record<string, SynonymRow> = {
     all: ["claro", "nítido", "compreensível"],
     tecnico: ["claro", "preciso", "inequívoco"],
     proximo: ["claro", "fácil de entender", "tranquilo de acompanhar"],
-    direto: ["claro", "direto", "sem rodeio"],
+    direto: ["claro", "direto", "sem enrolação"],
     inspirador: ["claro", "luminoso", "revelador"],
     sobrio: ["claro", "preciso", "límpido"],
   },
