@@ -36,6 +36,7 @@ import BrandColorFields from "./BrandColorFields";
 import BrandAssetsFields, { type BrandDoc } from "./BrandAssetsFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
 import { readAudiences, writeAudiences, type BrandAudience } from "./audiences";
+import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 
 /**
  * ESPAÇO DE UMA MARCA
@@ -368,6 +369,26 @@ const StudioProBrand = () => {
 
   const removeAudience = (index: number) =>
     setAudiences((prev) => prev.filter((_, i) => i !== index));
+
+  /**
+   * Aplica um kit de conteúdo de nicho: preenche os campos vazios da marca e
+   * substitui a lista de públicos pelos do modelo. Nada é enviado ao servidor
+   * até o usuário salvar.
+   */
+  const applyNichePreset = (preset: NichePreset) => {
+    setForm((prev) => ({
+      ...prev,
+      niche: prev.niche.trim() || preset.niche,
+      tone: prev.tone.trim() || preset.tone,
+      keywords: prev.keywords.trim() || preset.keywords,
+      positioning: prev.positioning.trim() || preset.positioning,
+      strategy_notes: prev.strategy_notes.trim() || preset.strategy_notes,
+    }));
+    setAudiences(preset.audiences.map((a) => ({ ...a })));
+    toast.success(`Kit "${preset.label}" aplicado. Ajuste os textos e salve.`);
+  };
+
+
 
 
   const moveArt = async (id: string, target: string) => {
@@ -793,6 +814,32 @@ const StudioProBrand = () => {
                   />
                 </div>
               </div>
+
+              {/* Kits de conteúdo prontos por nicho — ponto de partida editável */}
+              <div className="mt-4 rounded-xl border border-dashed border-border p-3">
+                <p className="text-xs font-medium text-foreground">Começar com um kit de nicho</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Preenche posicionamento, tom e públicos com um modelo pronto. É só um ponto de
+                  partida: tudo continua editável e as artes saem do seu kit de marca.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {NICHE_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.id}
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="rounded-full"
+                      title={preset.hint}
+                      onClick={() => applyNichePreset(preset)}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+
 
               <div className="mt-4 space-y-3">
                 {audiences.map((a, i) => (
