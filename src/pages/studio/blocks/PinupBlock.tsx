@@ -5,13 +5,17 @@ import { BRAND_NAME, BRAND_SITE } from "../brand";
 /**
  * Pin-up block — cartaz de funcionalidade com a arte gerada (personagem/ação).
  * O Aliv.iA aparece como parceiro de palco; a assinatura da marca fica na base.
- * Só entra em composição quando o mundo tem features com `poster`.
+ *
+ * Sem poster no acervo da marca o cartaz vira TIPOGRÁFICO (nunca em branco):
+ * antes o bloco devolvia `null` e o usuário recebia uma arte vazia.
  */
 const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   const posters = content.features.filter((f) => f.poster);
-  if (posters.length === 0) return null;
+  const pool = posters.length > 0 ? posters : content.features;
+  if (pool.length === 0) return null;
 
-  const [feature] = picker.pick(posters, 1, rng, (f) => [f.topic]);
+  const [feature] = picker.pick(pool, 1, rng, (f) => [f.topic]);
+
 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
