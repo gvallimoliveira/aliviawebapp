@@ -152,6 +152,8 @@ const StudioProBrand = () => {
   /** Nichos da marca — cada um alimenta uma aba de conteúdo no editor. */
   const [audiences, setAudiences] = useState<BrandAudience[]>([]);
   const [interpreting, setInterpreting] = useState(false);
+  /** Bump força repovoar os campos após uma recarga do banco (ex.: pós-IA). */
+  const [hydrateNonce, setHydrateNonce] = useState(0);
   const [colorKit, setColorKit] = useState<BrandColorKit>(DEFAULT_COLOR_KIT);
   /** Assinatura da marca nas artes — ajuste global desta marca. */
   const [signatureEnabled, setSignatureEnabled] = useState(true);
@@ -235,6 +237,11 @@ const StudioProBrand = () => {
     void load();
   }, [load]);
 
+  /**
+   * Re-hidratação do formulário. Antes dependia só de `brand?.id`: depois da
+   * interpretação por IA o id não muda, então os campos novos só apareciam com
+   * F5. Agora qualquer recarga marcada (`hydrateNonce`) repovoa os campos.
+   */
   useEffect(() => {
     if (brand) {
       setForm({
@@ -253,7 +260,8 @@ const StudioProBrand = () => {
       setColorKit(readColorKit(brand.colors));
       setSignatureEnabled(brand.signature_enabled !== false);
     }
-  }, [brand?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand?.id, hydrateNonce]);
 
   const folders = useMemo(() => {
     const set = new Set<string>(["Geral"]);
@@ -352,7 +360,10 @@ const StudioProBrand = () => {
           : "Marca interpretada. Revise os públicos abaixo.",
       );
 
-      void load();
+      // Espera a recarga e força a re-hidratação: sem isso os campos só
+      // apareciam após F5.
+      await load();
+      setHydrateNonce((n) => n + 1);
     } catch (err) {
       console.error("[studio-pro] interpret", err);
       toast.error("Não foi possível interpretar a marca agora.");
