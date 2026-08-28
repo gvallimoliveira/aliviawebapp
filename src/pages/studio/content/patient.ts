@@ -28,6 +28,11 @@ const patient: WorldContent = {
     { strong: "Diário de dor não é diário de reclamação.", rest: "É a prova, dia após dia, de que o plano está funcionando — ou de que precisa mudar." },
     { strong: "A melhor pergunta não é “o que eu tenho”. É “o que eu faço agora”.", rest: "A avaliação responde as duas, nessa ordem." },
     { strong: "Sua dor não veio com manual. A avaliação existe para isso.", rest: "Perguntas simples, triagem de segurança e uma direção clara no final." },
+    { strong: "Voltar a treinar não é questão de coragem. É de critério.", rest: "Força comparada entre os lados, dose progressiva e liberação com prova, não com palpite." },
+    { strong: "Recaída quase nunca é azar.", rest: "Costuma ser volta precoce sem critério — e isso dá para medir antes de acontecer." },
+    { strong: "Anos de dor não significam anos de tratamento perdido.", rest: "Significa que faltou uma linha de raciocínio acompanhando o seu caso do começo ao fim." },
+    { strong: "Dia bom que não se repete não é melhora.", rest: "O diário mostra padrão, não sorte: é assim que o plano é ajustado." },
+    { strong: "Movimento é remédio — e remédio tem dose.", rest: "Nem parar tudo, nem forçar tudo: a progressão respeita o que o seu corpo respondeu." },
   ],
   subs: [
     "Avaliação guiada em poucos minutos, direto do celular.",
