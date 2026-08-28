@@ -901,6 +901,9 @@ const StudioProCreate = ({
             first.block.kind,
             createRng(`${brand.id}:${seed}:caption:${first.block.kind}:${first.index}`),
           );
+          const isSaved = group.carousel
+            ? indexes.every((i) => saved.has(i))
+            : saved.has(first.index);
           const art = (item: { block: ComposedBlock; index: number }) => {
             const { kind, treatment, motion, slide } = item.block;
             const Block = STUDIO_BLOCKS[kind];
