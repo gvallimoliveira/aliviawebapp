@@ -223,6 +223,12 @@ export interface PainMechanismWizardProps {
     subtypeLabel?: string | null;
     date?: string | null;
   } | null;
+  /**
+   * Notifica a etapa interna atual (0..2). Permite ao fluxo externo destacar o
+   * botão "Avançar" interno enquanto o wizard não terminou e só dar destaque ao
+   * "Próximo" da etapa quando o wizard chegar ao fim.
+   */
+  onStageChange?: (stage: number) => void;
 }
 
 const PainMechanismWizard = ({
