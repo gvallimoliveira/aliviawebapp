@@ -86,42 +86,42 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
     subs: [
       tone,
       ...(description ? [description] : []),
-      `${brand} trabalha com processo claro, do primeiro contato à entrega.`,
+      `${brand} transforma conhecimento em uma experiência clara e relevante.`,
       `Em ${niche}, detalhe não é enfeite — é resultado.`,
       "Uma decisão bem tomada economiza meses.",
     ],
     kinetic: [
-      { kicker: "O QUE MOVE A MARCA", word: "Cuidado", caption: "Cada entrega passa por revisão." },
-      { kicker: "NOSSA APOSTA", word: "Constância", caption: "Aparecer sempre vence aparecer muito." },
-      { kicker: "PROMESSA", word: "Clareza", caption: "Você sabe o que vai receber antes de fechar." },
+      { kicker: "O QUE MOVE A MARCA", word: "Cuidado", caption: "Cada detalhe expressa uma escolha consciente." },
+      { kicker: "NOSSA APOSTA", word: "Constância", caption: "Presença consistente cria reconhecimento." },
+      { kicker: "PROMESSA", word: "Clareza", caption: "Uma proposta fácil de entender e reconhecer." },
     ],
     metrics: [
       [
-        { value: 100, suffix: "%", label: "das entregas com revisão final" },
-        { value: 48, suffix: "h", label: "para o primeiro retorno" },
-        { value: 9, suffix: "/10", label: "clientes indicariam" },
+        { value: 3, label: "pilares que orientam a marca" },
+        { value: 1, label: "proposta central fácil de lembrar" },
+        { value: 360, suffix: "°", label: "de visão sobre o público" },
       ],
       [
-        { value: 12, label: "meses de acompanhamento" },
-        { value: 3, label: "etapas até o resultado" },
-        { value: 0, label: "surpresa no orçamento" },
+        { value: 4, label: "ângulos de conteúdo" },
+        { value: 3, label: "motivos para escolher" },
+        { value: 1, label: "identidade reconhecível" },
       ],
     ],
     stats: [
       {
-        heading: "Números que a gente assume",
+        heading: "Números que traduzem a proposta",
         items: [
-          { value: "48h", label: "para responder", note: "sem cliente esperando no vácuo" },
-          { value: "3 etapas", label: "do briefing à entrega", note: "processo simples de acompanhar" },
-          { value: "1 responsável", label: "por projeto", note: "você sempre sabe com quem falar" },
+          { value: "3", label: "pilares centrais", note: "uma identidade fácil de reconhecer" },
+          { value: "4", label: "formas de comunicar", note: "informar, conectar, inspirar e convidar" },
+          { value: "1", label: "ideia principal", note: "clareza em cada conteúdo" },
         ],
       },
       {
-        heading: "O que muda com processo",
+        heading: "O que fortalece uma marca",
         items: [
-          { value: "-40%", label: "de retrabalho", note: "o combinado fica escrito" },
-          { value: "2x", label: "mais previsibilidade", note: "prazo é compromisso" },
-          { value: "100%", label: "do escopo revisado", note: "nada entra sem aprovação" },
+          { value: "+clareza", label: "na mensagem", note: "o público entende o valor" },
+          { value: "+presença", label: "na memória", note: "consistência gera reconhecimento" },
+          { value: "+conexão", label: "com o público", note: "a comunicação parte de necessidades reais" },
         ],
       },
     ],
@@ -131,21 +131,21 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
         panels: [
           { word: "Escuta", line: "Entender antes de propor.", topic: topicAt(0) },
           { word: "Método", line: "Cada etapa com começo e fim.", topic: topicAt(1) },
-          { word: "Entrega", line: "No prazo combinado.", topic: topicAt(2) },
+          { word: "Valor", line: "Uma proposta que faz sentido.", topic: topicAt(2) },
         ],
       },
       {
         heading: "Como a gente trabalha",
         panels: [
           { word: "Simples", line: "Sem jargão, sem letra miúda.", topic: topicAt(3) },
-          { word: "Direto", line: "Um responsável, um canal.", topic: topicAt(4) },
+          { word: "Direto", line: "Uma mensagem, sem ruído.", topic: topicAt(4) },
           { word: "Honesto", line: "O que não cabe, a gente avisa.", topic: topicAt(5) },
         ],
       },
     ],
     typos: [
       { lead: "A gente cuida do processo.", big: "Você", tail: " colhe o resultado." },
-      { lead: "Menos promessa.", big: "Mais entrega", tail: "." },
+      { lead: "Menos ruído.", big: "Mais valor", tail: "." },
       { lead: `Em ${niche},`, big: " consistência", tail: " vale mais que sorte." },
       { lead: "O barato sai caro.", big: "O certo", tail: " sai uma vez." },
       { lead: "Detalhe não é enfeite.", big: "É resultado", tail: "." },
@@ -153,9 +153,9 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
     ],
     compare: [
       {
-        title: "Antes e depois de trabalhar com processo",
-        before: ["Prazo aberto", "Escopo confuso", "Retrabalho constante", "Cliente perdido no meio"],
-        after: ["Prazo escrito", "Escopo aprovado", "Revisão a cada etapa", "Um responsável do início ao fim"],
+        title: "Antes e depois de comunicar com clareza",
+        before: ["Mensagem genérica", "Valor difícil de perceber", "Conteúdo sem identidade", "Público indiferente"],
+        after: ["Mensagem específica", "Valor fácil de entender", "Identidade reconhecível", "Público conectado"],
       },
       {
         title: `Como ${brand} encara ${niche}`,
@@ -174,18 +174,18 @@ export const buildBrandContent = (kit: BrandKit): WorldContent => {
         heading: "Três etapas até o resultado",
         steps: [
           { title: "Conversa inicial", description: "Entendemos o cenário e o que você quer alcançar.", topic: topicAt(0) },
-          { title: "Plano combinado", description: "Escopo, prazo e valor no papel, sem letra miúda.", topic: topicAt(1) },
-          { title: "Execução e entrega", description: "Você acompanha cada etapa até a entrega final.", topic: topicAt(2) },
+          { title: "Direção", description: "Uma mensagem alinhada ao que o público realmente busca.", topic: topicAt(1) },
+          { title: "Experiência", description: "A proposta ganha forma com identidade e consistência.", topic: topicAt(2) },
         ],
       },
       {
-        kicker: "DO PRIMEIRO CONTATO À ENTREGA",
+        kicker: "DA DESCOBERTA À ESCOLHA",
         heading: "Nada acontece sem o seu aval",
         steps: [
           { title: "Diagnóstico", description: "O que está travando hoje.", topic: topicAt(3) },
           { title: "Proposta", description: "O caminho mais curto até o resultado.", topic: topicAt(4) },
           { title: "Acompanhamento", description: "Ajustes com você, não depois de você.", topic: topicAt(5) },
-          { title: "Fechamento", description: "Entrega revisada e documentada.", topic: topicAt(6) },
+          { title: "Escolha", description: "O público reconhece valor e sabe qual é o próximo passo.", topic: topicAt(6) },
         ],
       },
     ],
