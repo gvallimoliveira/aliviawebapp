@@ -235,6 +235,11 @@ const StudioProBrand = () => {
     void load();
   }, [load]);
 
+  /**
+   * Re-hidratação do formulário. Antes dependia só de `brand?.id`: depois da
+   * interpretação por IA o id não muda, então os campos novos só apareciam com
+   * F5. Agora qualquer recarga marcada (`hydrateNonce`) repovoa os campos.
+   */
   useEffect(() => {
     if (brand) {
       setForm({
@@ -253,7 +258,8 @@ const StudioProBrand = () => {
       setColorKit(readColorKit(brand.colors));
       setSignatureEnabled(brand.signature_enabled !== false);
     }
-  }, [brand?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand?.id, hydrateNonce]);
 
   const folders = useMemo(() => {
     const set = new Set<string>(["Geral"]);
