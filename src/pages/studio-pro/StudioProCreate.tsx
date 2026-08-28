@@ -278,19 +278,16 @@ const StudioProCreate = ({
 
   /**
    * Mundo Aliv.iA correspondente ao público ativo. Estruturalmente a marca tem
-   * 4 nichos (paciente, pro, clínica, acadêmico); sub-nichos como o recém-formado
-   * herdam o acervo do mundo de origem e recebem por cima as próprias dores,
-   * desejos e provas. No 360° cada versão gira entre os mundos oficiais.
+   * 4 nichos matriz (paciente, pro, clínica, acadêmico); sub-nichos herdam o
+   * acervo do mundo de origem — descoberto pela cadeia `parentId` do kit, nunca
+   * por lista fixa — e recebem por cima as próprias dores, desejos e soluções.
+   * No 360° cada versão gira entre os mundos oficiais.
    */
-  const SUB_NICHE_WORLD: Record<string, WorldId> = {
-    "recem-formado": "academico",
-    "paciente-cronico": "paciente",
-    "atleta": "paciente",
-    "fisio-domiciliar": "pro",
-    "clinica-multiunidade": "clinica",
-    "coordenacao-curso": "academico",
-  };
-  const subWorld = SUB_NICHE_WORLD[activeSegment];
+  const subWorld = useMemo<WorldId | undefined>(() => {
+    if (activeSegment === GLOBAL_SEGMENT || isWorldId(activeSegment)) return undefined;
+    const parent = audienceAncestors(audiences, activeSegment).find((a) => isWorldId(a.id));
+    return parent ? (parent.id as WorldId) : undefined;
+  }, [audiences, activeSegment]);
   const aliviaWorld: WorldId | null = !isAlivia
     ? null
     : activeSegment !== GLOBAL_SEGMENT && isWorldId(activeSegment)
@@ -298,6 +295,7 @@ const StudioProCreate = ({
       : subWorld
         ? subWorld
         : WORLD_IDS[createRng(`${brand.id}:${seed}:world`).int(WORLD_IDS.length)];
+
 
 
   /**
