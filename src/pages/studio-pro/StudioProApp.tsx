@@ -292,13 +292,19 @@ const StudioProApp = () => {
     }
     const newId = data?.id;
     const shouldInterpret =
-      autoInterpret && !!newId && !!(site || form.description.trim() || form.niche.trim());
+      autoInterpret && !!newId && !!(doc || site || form.description.trim() || form.niche.trim());
     if (shouldInterpret) {
-      toast.info("Analisando a marca e o site…");
+      toast.info(doc ? "Lendo o manual da marca…" : "Analisando a marca e o site…");
       try {
         const { data: result, error: fnError } = await supabase.functions.invoke(
           "studio-brand-interpret",
-          { body: { brandId: newId, applyColors: true } },
+          {
+            body: {
+              brandId: newId,
+              applyColors: true,
+              doc: doc ? { name: doc.name, mime: doc.mime, base64: doc.base64 } : undefined,
+            },
+          },
         );
         if (fnError) throw fnError;
         if ((result as { error?: string })?.error) toast.error((result as { error: string }).error);
@@ -312,6 +318,7 @@ const StudioProApp = () => {
     }
     setSaving(false);
     setForm(emptyForm);
+    setDoc(null);
     setShowForm(false);
     await load();
     if (newId) navigate(`${PRODUCT.base}/app/marca/${newId}?aba=ajustes`);
