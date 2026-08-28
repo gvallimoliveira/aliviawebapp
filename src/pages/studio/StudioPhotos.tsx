@@ -40,6 +40,7 @@ const StudioPhotos = ({
   onRemove,
   onClose,
   limit,
+  usedTotal,
   pinnedIds,
   onTogglePin,
 }: Props) => {
