@@ -523,7 +523,7 @@ const StudioProApp = () => {
                     size="sm"
                     variant="ghost"
                     className="absolute right-2 top-2 h-7 w-7 p-0 opacity-0 transition group-hover:opacity-100"
-                    onClick={() => removeBrand(brand.id)}
+                    onClick={() => setBrandToDelete(brand)}
                     title="Remover marca"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
