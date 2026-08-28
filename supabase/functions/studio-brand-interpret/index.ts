@@ -259,7 +259,9 @@ Deno.serve(async (req) => {
       `Nome da marca: ${brand.name}`,
       brand.niche ? `Nicho/setor: ${brand.niche}` : null,
       brand.description ? `Descrição do produto: ${brand.description}` : null,
-      brand.tone ? `Tom de voz: ${brand.tone}` : null,
+      brand.tone
+        ? `Tom de voz (DIRETRIZ de escrita, nunca copiar para dentro das artes): ${String(brand.tone).slice(0, 1500)}`
+        : null,
       brand.source_url ? `Site: ${brand.source_url}` : null,
       brand.instagram_handle ? `Instagram: ${brand.instagram_handle}` : null,
       Array.isArray(brand.topics) && brand.topics.length ? `Palavras-chave atuais: ${brand.topics.join(", ")}` : null,
@@ -274,11 +276,14 @@ Deno.serve(async (req) => {
 Regras:
 - Escreva em português do Brasil, linguagem concreta, sem jargão de marketing e sem clichê ("soluções inovadoras", "excelência", "transformar vidas").
 - Se houver texto da landing page no briefing, ele é a fonte primária: a proposta, os produtos e os públicos devem sair de lá, não de suposições.
+- O "tom de voz" do briefing é diretriz de ESTILO: guia como escrever, mas o texto dele nunca é reaproveitado como frase da marca.
 - Segmente o produto em 2 a 5 públicos (nichos) REAIS e distintos, cada um com dores, desejos e provas próprias.
 - IMPORTANTE: se o produto também é usado pelo consumidor final (paciente, cliente, aluno, usuário leigo), esse público NUNCA pode ficar de fora — inclua-o junto dos públicos profissionais/B2B.
 - Se a marca já tem públicos cadastrados no briefing, mantenha-os (pode refinar o texto), não os substitua por outros.
 - Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o que o produto é como um todo.
-- Cores: se houver cores do site, escolha entre elas as duas principais e duas secundárias da marca (hex #RRGGBB). Sem cores no briefing, omita o campo.
+- Escreva também um "tagline": UMA frase curta (até 80 caracteres) que resume a marca e pode aparecer dentro das artes.
+- Cores (papéis, não decoração): "primary" é a cor de MARCA usada em fundos e formas; "primary2" é a cor de TEXTO que fica sobre ela e precisa de contraste alto (≥ 4.5:1); "secondary" é o destaque e "secondary2" um neutro claro de fundo. Escolha entre as cores do site quando houver; nunca devolva um par de baixo contraste (ex.: verde neon com branco). Sem cores no briefing, omita o campo.
+
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
