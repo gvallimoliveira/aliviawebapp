@@ -12,9 +12,9 @@ const ACCENTS = [
   "text-primary",
   "text-transparent [-webkit-text-stroke:2px_hsl(var(--primary))]",
   "text-foreground underline decoration-primary decoration-[6px] underline-offset-8",
-  "rounded-2xl bg-primary px-[0.25em] py-[0.04em] text-primary-foreground box-decoration-clone",
-  "rounded-2xl bg-foreground px-[0.25em] py-[0.04em] text-background box-decoration-clone",
-  "rounded-2xl bg-accent px-[0.25em] py-[0.04em] text-accent-foreground box-decoration-clone",
+  "relative inline-block rounded-2xl bg-primary px-[0.25em] py-[0.08em] leading-[1.05] text-primary-foreground box-decoration-clone",
+  "relative inline-block rounded-2xl bg-foreground px-[0.25em] py-[0.08em] leading-[1.05] text-background box-decoration-clone",
+  "relative inline-block rounded-2xl bg-accent px-[0.25em] py-[0.08em] leading-[1.05] text-accent-foreground box-decoration-clone",
 ] as const;
 
 const TypoBlock = ({ content, treatment, format, persona }: BlockProps) => {
@@ -34,7 +34,7 @@ const TypoBlock = ({ content, treatment, format, persona }: BlockProps) => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.35 }}
           transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-5xl text-4xl font-bold leading-[1.08] tracking-tight text-foreground md:text-7xl"
+          className="max-w-5xl text-4xl font-bold leading-[1.2] tracking-tight text-foreground md:text-7xl"
         >
           {typo.lead && <span>{typo.lead} </span>}
           <span className={accentClass} data-studio-stroke={isStroke ? "1" : undefined}>

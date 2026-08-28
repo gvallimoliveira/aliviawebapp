@@ -12,6 +12,7 @@ import {
 } from "@/pages/studio/phrasing";
 import { GLOBAL_SEGMENT, matrixAudiences, type BrandAudience, type ContentAngle } from "./audiences";
 import { condensePhrase } from "./textFit";
+import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 
 
 
@@ -68,7 +69,7 @@ export const brandSlogan = (kit: BrandKit) => {
  * subs, tipográficos, cinéticos e fechamentos são COMPOSTOS (frames retóricos ×
  * ingredientes do kit × léxico do registro) em vez de saírem de listas fixas.
  */
-export type CopyVariation = { seed: string; register?: VoiceRegister };
+export type CopyVariation = { seed: string; register?: VoiceRegister; profile?: VariationProfile };
 
 const ingredientsOf = (
   kit: BrandKit,
@@ -113,7 +114,12 @@ export const buildBrandContent = (
   /** Motor de variedade linguística (determinístico pela seed do lote). */
   const register: VoiceRegister = variation?.register ?? voiceRegister(kit.tone, brand);
   const varyRng: Rng | null = variation ? createRng(`copy:${variation.seed}:${brand}`) : null;
-  const phrasing = { register, seed: `${variation?.seed ?? "static"}:${brand}`, forbidden: [] as string[] };
+  const phrasing = {
+    register,
+    seed: `${variation?.seed ?? "static"}:${brand}`,
+    forbidden: [] as string[],
+    intensity: variation?.profile ? intensityFor(variation.profile.headlines) : undefined,
+  };
   const ing = ingredientsOf(kit, brand, niche, audiences);
 
   const composedHeadlines = varyRng ? composeHeadlines(ing, phrasing, varyRng) : [];
@@ -568,6 +574,7 @@ export type SegmentContentInput = {
    * retóricos + léxico do registro de voz). Ausente ⇒ acervo fixo (testes).
    */
   variationSeed?: string;
+  variationProfile?: VariationProfile;
 };
 
 /**
@@ -582,9 +589,10 @@ export const buildSegmentContent = ({
   angle,
   positioning,
   variationSeed,
+  variationProfile,
 }: SegmentContentInput): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
-  const variation: CopyVariation | undefined = variationSeed ? { seed: variationSeed } : undefined;
+  const variation: CopyVariation | undefined = variationSeed ? { seed: variationSeed, profile: variationProfile } : undefined;
   const root = base ?? buildBrandContent(kit, variation, audiences);
   if (segment === GLOBAL_SEGMENT) {
     return applyAngle(applyGlobal(root, brand, audiences, positioning), angle);

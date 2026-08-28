@@ -40,7 +40,7 @@ const EchoBlock = ({ content, rng, treatment, format, persona, picker }: BlockPr
             key={i}
             aria-hidden={!filled}
             data-studio-stroke={filled ? undefined : "1"}
-            className={`whitespace-nowrap text-5xl font-bold leading-[0.86] tracking-tight md:text-8xl ${
+            className={`whitespace-nowrap text-5xl font-bold leading-[1.02] tracking-tight md:text-8xl ${
               filled ? filledClass : outlineClass
             }`}
           >
