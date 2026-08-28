@@ -668,11 +668,16 @@ Responda SOMENTE com JSON válido neste formato:
       ["lora", ["lora"]],
       ["merriweather", ["merriweather"]],
     ];
-    const fontRaw = String(parsed.font_family ?? "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
-    const fontKey = FONT_KEYS.find(([, names]) => names.some((n) => fontRaw.includes(n)))?.[0] ?? null;
+    const normalizeFont = (value: string) =>
+      value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const matchFont = (value: string) =>
+      FONT_KEYS.find(([, names]) => names.some((n) => normalizeFont(value).includes(n)))?.[0] ?? null;
+    /** Fonte da IA primeiro; se ela não souber, a tipografia declarada no site. */
+    const fontKey =
+      matchFont(String(parsed.font_family ?? "")) ??
+      site.fonts.map(matchFont).find(Boolean) ??
+      null;
+
 
     const currentColors = (brand.colors ?? {}) as Record<string, string>;
     const currentFont = typeof currentColors.font === "string" ? currentColors.font : "default";
