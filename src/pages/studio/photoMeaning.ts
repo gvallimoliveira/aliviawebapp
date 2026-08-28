@@ -232,7 +232,18 @@ export const pickPhotoForTopics = (
     .filter((s) => s.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  if (scored.length === 0) return photos[Math.abs(index) % photos.length];
+  if (scored.length === 0) {
+    /**
+     * Sem nexo, só fotos LIVRES de restrição podem entrar como respiro visual.
+     * Foto de procedimento específico (termografia, laserterapia) nunca cai em
+     * assunto alheio — antes o fallback cego colocava termografia em arte de
+     * questionários.
+     */
+    const neutral = photos.filter((p) => !restrictionOf(p));
+    if (neutral.length === 0) return undefined;
+    return neutral[Math.abs(index) % neutral.length];
+  }
+
 
   /** Roda entre as fotos empatadas no topo para não repetir sempre a mesma. */
   const best = scored[0].score;
