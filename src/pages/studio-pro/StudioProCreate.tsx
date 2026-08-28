@@ -180,11 +180,12 @@ const StudioProCreate = ({
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const { photos } = useStudioPhotos(true);
   /** Cota do período: cada geração desconta um lote inteiro da cota do plano. */
-  const { quota, consume } = useStudioQuota();
+  const { quota, error: quotaError, consume } = useStudioQuota();
 
   const batchSize = Number.isFinite(maxArts) ? (maxArts as number) : STUDIO_BATCH_SIZE;
   const unlimited = !Number.isFinite(maxArts) || !!quota?.unlimited;
-  const blocked = !unlimited && !!quota && quota.remaining < batchSize;
+  /** Só bloqueia com dado confirmado: cota desconhecida nunca trava o botão. */
+  const blocked = !unlimited && !!quota && !quotaError && quota.remaining < batchSize;
 
   /**
    * "Nova versão" é o que custa cota: trocar público, ângulo ou formato refina o
@@ -197,14 +198,22 @@ const StudioProCreate = ({
       return;
     }
     setBusy("quota");
-    const ok = await consume(batchSize);
+    const result = await consume(batchSize);
     setBusy(null);
-    if (!ok) {
-      toast.error(`Sua cota deste período acabou. Faça upgrade para gerar mais artes.`);
+    if (result === "exhausted") {
+      toast.error("Sua cota deste período acabou. Faça upgrade para gerar mais artes.");
       return;
     }
+    if (result === "error") {
+      // Falha de leitura não é cota estourada: libera o lote e avisa sem falar de upgrade.
+      toast.warning("Não conseguimos confirmar sua cota agora — gerando de qualquer forma.");
+      setSeed(randomSeed());
+      return;
+    }
+
     setSeed(randomSeed());
   };
+
 
   useEffect(() => {
     writePersisted(brand.id, { seed, format });
@@ -542,13 +551,19 @@ const StudioProCreate = ({
             {folder === "Todas" ? "Geral" : folder}
             {!unlimited && ` · lote de ${batchSize} artes por geração`}
           </p>
-          {!unlimited && quota && (
+          {!unlimited && quotaError && (
+            <p className="mt-1 text-xs font-semibold text-destructive">
+              Não conseguimos ler sua cota agora — a geração segue liberada e o desconto é feito no servidor.
+            </p>
+          )}
+          {!unlimited && quota && !quotaError && (
             <p className="mt-1 text-xs font-semibold text-foreground">
               {quota.generationsLeft > 0
                 ? `${quota.generationsLeft} ${quota.generationsLeft === 1 ? "geração" : "gerações"} restantes neste período · ${quota.remaining} de ${quota.allowance} artes`
                 : "Cota do período encerrada — faça upgrade para continuar gerando."}
             </p>
           )}
+
           {/* Nichos da marca + visão 360° que interpola todos eles. */}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {segments.map((s) => (

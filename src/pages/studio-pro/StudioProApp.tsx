@@ -83,7 +83,7 @@ const StudioProApp = () => {
   useStudioPwaMeta();
   const { user, loading: authLoading, signOut } = useAuth();
   const { access, loading: accessLoading } = useStudioAccess();
-  const { quota } = useStudioQuota();
+  const { quota, error: quotaError } = useStudioQuota();
   const navigate = useNavigate();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -350,13 +350,23 @@ const StudioProApp = () => {
                 Artes disponíveis
               </p>
               <p className="mt-1 text-3xl font-black tracking-tight">
-                {access.unlimited || quota?.unlimited ? "∞" : Math.max(quota?.remaining ?? 0, 0)}
+                {access.unlimited || quota?.unlimited
+                  ? "∞"
+                  : quota && !quotaError
+                    ? Math.max(quota.remaining, 0)
+                    : "—"}
               </p>
-              {!access.unlimited && !quota?.unlimited && quota && (
+              {!access.unlimited && !quota?.unlimited && quotaError && (
+                <p className="mt-1 text-xs font-semibold text-destructive">
+                  Não conseguimos ler sua cota agora — a geração segue liberada.
+                </p>
+              )}
+              {!access.unlimited && !quota?.unlimited && quota && !quotaError && (
                 <p className="mt-1 text-xs font-semibold text-foreground">
                   {quota.generationsLeft > 0
                     ? `${quota.generationsLeft} ${quota.generationsLeft === 1 ? "geração" : "gerações"} de ${quota.batchSize} artes neste período (${quota.used} de ${quota.allowance} usadas)`
                     : `Cota encerrada: ${quota.used} de ${quota.allowance} artes usadas neste período.`}
+
                 </p>
               )}
               <p className="mt-1 text-xs text-muted-foreground">
