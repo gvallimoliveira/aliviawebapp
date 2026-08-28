@@ -5,6 +5,7 @@ type: feature
 ---
 
 - Fotos ficam no backend (bucket privado `studio-photos`, pasta por usuário + tabela `studio_photos`), nunca no localStorage: precisam persistir entre dispositivos e servir o Studio público depois.
+- **Acervo é por marca**: `studio_photos.brand_id` (cascade ao excluir a marca). No Studio público `listPhotos(brandId)`/`uploadPhoto({brandId})` isolam o acervo — marca nova nasce vazia e nunca puxa fotos de outra marca do mesmo dono. Studio interno (`/studio`) segue sem marca (`brand_id` null) e lê o acervo da conta.
 - RLS por `auth.uid()` no banco e no storage: cada foto é visível apenas para quem enviou. A foto de atendimento real é material sensível — nunca tornar bucket público nem expor a outra conta.
 - Metadados: `label`, `usage` (`institucional` | `atendimento` | `produto` | `livre`), `credit`, `sort_order`.
 - As fotos são carregadas como **data URL** (`photos.ts`), porque html-to-image não clona imagem remota sem CORS — requisito para o export PNG.
