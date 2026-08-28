@@ -128,4 +128,5 @@ Studio copy: variação linguística = RELEITURA da frase (src/pages/studio/rewr
 - [Studio Brand Signature](mem://features/studio-brand-signature) — Assinatura obrigatória da marca em todas as artes; toggle global por marca.
 - [Studio Method Blocks](mem://features/studio-method-blocks) — STEPS e D.I.F.I. como artes do Studio, exclusivas da marca Aliv.iA.
 - [Studio Matrix Audiences](mem://features/studio-matrix-audiences) — Públicos matriz contam na métrica oficial das artes; sub-nichos (parentId) nunca contam.
+- [Studio Persuasion Layer](mem://features/studio-persuasion-layer) — Diretrizes ago/2026: ponto zero de impacto, jargão proibido, postura padrão, léxico exclusivo do Studio; regras rejeitadas (limite de palavras, mix 4/2/2/2, séries).
 - [Studio Copy Engine](mem://features/studio-copy-engine) — Motor textual local: léxico + releitura de frase (rewrite.ts), níveis Baixa/Média/Alta, sem créditos de IA.
