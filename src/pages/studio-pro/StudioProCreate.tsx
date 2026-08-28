@@ -182,6 +182,7 @@ const StudioProCreate = ({
   watermark,
   inspirations = [],
   unlimited: unlimitedAccess = false,
+  photoLimit = 0,
   onSaved,
 }: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
@@ -194,9 +195,35 @@ const StudioProCreate = ({
   const [saved, setSaved] = useState<Set<number>>(() => new Set());
   const wrapper = useRef<HTMLDivElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
-  const { photos } = useStudioPhotos(true);
+  const {
+    photos,
+    loading: photosLoading,
+    add: addPhoto,
+    edit: editPhoto,
+    remove: removePhoto,
+  } = useStudioPhotos(true);
+  const [photosOpen, setPhotosOpen] = useState(false);
+  /**
+   * CONTROLE CRIATIVO: fotos fixadas.
+   *
+   * Com fotos fixadas, só elas alimentam os blocos fotográficos — mas cada uma
+   * continua indo para o assunto com o qual tem nexo (`pickPhotoForTopics`).
+   * Foto fixada sem nexo no tema simplesmente não gera bloco.
+   */
+  const [pinnedPhotos, setPinnedPhotos] = useState<string[]>(restored.current.pinnedPhotos ?? []);
+  const activePhotos = useMemo(() => {
+    if (pinnedPhotos.length === 0) return photos;
+    const only = photos.filter((p) => pinnedPhotos.includes(p.id));
+    return only.length > 0 ? only : photos;
+  }, [photos, pinnedPhotos]);
+  const togglePin = (id: string) =>
+    setPinnedPhotos((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+  useEffect(() => {
+    writePersisted(brand.id, { pinnedPhotos });
+  }, [brand.id, pinnedPhotos]);
   /** Cota do período: contada em gerações — 1 por clique em "Nova versão". */
   const { quota, error: quotaError, consume } = useStudioQuota();
+
 
   const unlimited = unlimitedAccess || !!quota?.unlimited;
   /** Só bloqueia com dado confirmado: cota desconhecida nunca trava o botão. */
