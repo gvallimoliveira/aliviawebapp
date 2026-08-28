@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { STUDIO_FONTS, findFont } from "./brandFonts";
+import { STUDIO_FONTS, ensureFontLoaded, findFont } from "./brandFonts";
 
 /**
  * ATIVOS DA MARCA: manual (PDF), logo e tipografia.
