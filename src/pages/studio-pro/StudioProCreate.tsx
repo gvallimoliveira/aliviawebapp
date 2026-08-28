@@ -504,6 +504,97 @@ const StudioProCreate = ({
     onSaved?.();
   };
 
+  /** Exporta a sequência inteira do carrossel, um PNG numerado por slide. */
+  const downloadCarousel = async (indexes: number[]) => {
+    setBusy(`png-${indexes[0]}`);
+    try {
+      for (let i = 0; i < indexes.length; i += 1) {
+        const node = document.getElementById(`studio-pro-block-${indexes[i]}`) as HTMLElement | null;
+        if (!node) continue;
+        const rect = node.getBoundingClientRect();
+        const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
+        const blob = await renderNodeToBlob(node, ratio, "image/png");
+        await deliver(
+          blob,
+          `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}-carrossel-${String(i + 1).padStart(2, "0")}.png`,
+        );
+      }
+      toast.success(`Carrossel exportado (${indexes.length} slides)`);
+    } catch (error) {
+      console.error("[studio-pro] export carousel", error);
+      toast.error("Não foi possível exportar o carrossel.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** Salva o carrossel como UM item da galeria: capa é a miniatura. */
+  const saveCarousel = async (indexes: number[], caption: string) => {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) {
+      toast.error("Faça login novamente para salvar.");
+      return;
+    }
+    setBusy(`save-${indexes[0]}`);
+    let thumb: string | null = null;
+    let coverPath: string | null = null;
+    for (let i = 0; i < indexes.length; i += 1) {
+      const node = document.getElementById(`studio-pro-block-${indexes[i]}`) as HTMLElement | null;
+      if (!node) continue;
+      const rect = node.getBoundingClientRect();
+      if (i === 0) {
+        try {
+          const thumbRatio = Math.max(1, Math.min(3, 900 / (rect.width || 900)));
+          const blob = await renderNodeToBlob(node, thumbRatio, "image/jpeg", 0.9);
+          thumb = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+          });
+        } catch (error) {
+          console.warn("[studio-pro] carousel thumb", error);
+        }
+      }
+      try {
+        const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
+        const png = await renderNodeToBlob(node, ratio, "image/png");
+        const path = `${auth.user.id}/${brand.id}/${seed}-carrossel-${String(i + 1).padStart(2, "0")}.png`;
+        const { error: upErr } = await supabase.storage
+          .from("studio-art")
+          .upload(path, png, { contentType: "image/png", upsert: true });
+        if (upErr) throw upErr;
+        if (i === 0) coverPath = path;
+      } catch (error) {
+        console.warn("[studio-pro] carousel png upload", error);
+      }
+    }
+    const { error } = await supabase.from("studio_creations").insert({
+      user_id: auth.user.id,
+      brand_id: brand.id,
+      seed: `${seed}:carrossel:${indexes[0]}`,
+      block_kind: "carousel",
+      format,
+      headline: headlineOf(indexes[0]) || null,
+      caption,
+      thumb,
+      png_path: coverPath,
+      composition: JSON.parse(JSON.stringify(indexes.map((i) => blocks[i]))),
+      segment: activeSegment,
+      angle,
+      folder: folder === "Todas" ? "Geral" : folder,
+      watermarked: watermark,
+    });
+    setBusy(null);
+    if (error) {
+      console.error("[studio-pro] save carousel", error);
+      toast.error("Não foi possível salvar o carrossel.");
+      return;
+    }
+    toast.success(`Carrossel salvo em ${folder === "Todas" ? "Geral" : folder} (${indexes.length} slides)`);
+    onSaved?.();
+  };
+
   const copyCaption = async (caption: string) => {
     try {
       await navigator.clipboard.writeText(caption);
