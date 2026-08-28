@@ -9,7 +9,9 @@
  */
 
 import type { Rng } from "./rng";
-import { applyLexicon, type VoiceRegister } from "./lexicon";
+import type { VoiceRegister } from "./lexicon";
+import { rephrase } from "./rewrite";
+
 
 /** Insumos vindos do kit da marca (nunca do campo "tom de voz"). */
 export type CopyIngredients = {
