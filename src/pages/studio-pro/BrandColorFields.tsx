@@ -1,7 +1,11 @@
+import { Wand2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { BrandColorKit } from "./brandColors";
+import { deepen, judgeContrast, lighten, readableOn } from "./contrast";
+
 
 /**
  * Campos de cores do kit de marca: duas principais sempre, duas secundárias
