@@ -38,12 +38,10 @@ export type BrandKit = {
  * voz nunca é renderizado.
  */
 const firstSentence = (text: string, max = 90) => {
-  const clean = text.replace(/\s+/g, " ").trim();
-  if (!clean) return "";
-  const cut = clean.split(/(?<=[.!?])\s/)[0] ?? clean;
-  const phrase = cut.length <= max ? cut : `${cut.slice(0, max).replace(/[\s,;:-]+\S*$/, "")}…`;
+  const phrase = condensePhrase(text, max);
   return phrase.replace(/\s*[.]\s*$/, "");
 };
+
 
 export const brandSlogan = (kit: BrandKit) => {
   const fromDescription = firstSentence(kit.description ?? "");
