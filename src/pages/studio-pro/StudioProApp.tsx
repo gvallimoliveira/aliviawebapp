@@ -109,6 +109,7 @@ const StudioProApp = () => {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
+  const [brandToDelete, setBrandToDelete] = useState<Brand | null>(null);
   /** Ao criar a marca, já roda a leitura do site + montagem dos públicos. */
   const [autoInterpret, setAutoInterpret] = useState(true);
   const [loading, setLoading] = useState(true);
