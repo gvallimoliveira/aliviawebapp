@@ -305,6 +305,8 @@ Regras:
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
+Tipografia: se o briefing (especialmente o manual da marca anexado) indicar a fonte usada pela marca, devolva o nome dela em "font_family" (ex.: "Montserrat", "DM Sans", "Playfair Display"). Se não houver indicação, devolva "".
+
 Responda SOMENTE com JSON válido neste formato:
 {
   "positioning": "2 a 3 frases sobre o produto inteiro, servindo de base do conteúdo 360°",
@@ -313,6 +315,7 @@ Responda SOMENTE com JSON válido neste formato:
   "keywords": ["6 a 10 palavras-chave curtas"],
   "strategy_notes": "3 a 5 linhas sobre como informar, gerar desejo e vender para esta marca",
   "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB" },
+  "font_family": "nome da fonte da marca, ou vazio",
   "audiences": [
     {
       "label": "Nome curto do público",
@@ -325,6 +328,21 @@ Responda SOMENTE com JSON válido neste formato:
   ]
 }`;
 
+    /** Com manual anexado, a mensagem vira multimodal (texto + arquivo). */
+    const userContent = docOk
+      ? [
+          { type: "text", text: brief },
+          docMime === "application/pdf"
+            ? {
+                type: "file",
+                file: {
+                  filename: doc?.name || "manual-da-marca.pdf",
+                  file_data: `data:${docMime};base64,${docBase64}`,
+                },
+              }
+            : { type: "image_url", image_url: { url: `data:${docMime};base64,${docBase64}` } },
+        ]
+      : brief;
 
     const resp = await callAiWithFallback(
       LOVABLE_API_KEY,
@@ -332,12 +350,17 @@ Responda SOMENTE com JSON válido neste formato:
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: brief },
+          { role: "user", content: userContent },
         ],
       },
       ["google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"],
-      { functionName: "studio-brand-interpret", maxTokens: 2200, metadata: { brand_id: brandId } },
+      {
+        functionName: "studio-brand-interpret",
+        maxTokens: 2600,
+        metadata: { brand_id: brandId, has_doc: docOk },
+      },
     );
+
 
     if (!resp.ok) {
       const detail = await resp.text().catch(() => "");
