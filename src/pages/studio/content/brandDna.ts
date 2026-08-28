@@ -110,7 +110,7 @@ export const BRAND_DNA = {
   /**
    * Limites da provocação leve (tom aprovado). O alvo é sempre a rotina, a
    * burocracia ou o achismo — jamais pessoas. E a automação é do esforço,
-   * nunca do julgamento clínico ("a conta é nossa, a decisão é sua").
+   * nunca do julgamento clínico ("a organização dos dados é nossa, a decisão é sua").
    */
   provocation: {
     targets: ["burocracia", "prontuário de madrugada", "protocolo de prateleira", "achismo", "palpite de internet"],
@@ -122,7 +122,7 @@ export const BRAND_DNA = {
   statements: [
     "Sistema de raciocínio clínico com alma de fisioterapeuta.",
     "Feito por fisioterapeuta, para a rotina real de quem trata.",
-    "A conta é nossa. A decisão é sua.",
+    "A organização dos dados é nossa. A decisão é sua.",
     "Menos teclado. Mais clínica.",
     "Evidência aplicada ao caso — não ao slide de congresso.",
     "Entender é o primeiro passo do tratamento.",

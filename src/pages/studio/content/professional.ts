@@ -142,7 +142,7 @@ const professional: WorldContent = {
     { kicker: "NO LONGO PRAZO", word: "História", caption: "Impressão clínica lendo a evolução inteira do caso.", topic: "clinical-impression" },
   ],
   typos: [
-    { lead: "A conta é nossa.", big: "A decisão", tail: " é sua." },
+    { lead: "A organização dos dados é nossa.", big: "A decisão", tail: " é sua." },
     { lead: "Raciocínio clínico com", big: "alma", tail: " de fisioterapeuta." },
     { lead: "Menos teclado.", big: "Mais clínica", tail: "." },
     { lead: "O sistema sugere.", big: "Você", tail: " decide." },
@@ -359,7 +359,7 @@ const professional: WorldContent = {
     { tag: "MECANISMO DE DOR", title: "Nociceptiva, neuropática ou nociplástica", description: "Triagem baseada em Kosek e Finnerup, com implicação direta na conduta.", topic: "pain-mechanism" },
     { tag: "HEP", title: "Programa domiciliar com vídeo", description: "Exercícios em pirâmide de dificuldade, respeitando restrições posicionais.", topic: "hep", headline: "O exercício sai do papel.", poster: posterHep },
     { tag: "REAVALIAÇÃO EXPRESSA", title: "Comparar sem recomeçar", description: "Pré-preenche o que já sabemos e destaca o que mudou desde a última visita.", topic: "express-reassessment" },
-    { tag: "DINAMOMETRIA", title: "A conta da assimetria é nossa — a decisão é sua", description: "Upload do laudo externo, extração dos valores e semáforo de risco, sem cálculo manual.", topic: "dynamometry" },
+    { tag: "DINAMOMETRIA", title: "A organização da assimetria é nossa — a decisão é sua", description: "Upload do laudo externo, extração dos valores e semáforo de risco, sem cálculo manual.", topic: "dynamometry" },
     { tag: "DIFERENCIAIS", title: "Quando a confiança não é alta, o sistema abre o leque", description: "Diagnósticos diferenciais com critério de inclusão e exclusão por escrito.", topic: "differential" },
     { tag: "FABQ-BRASIL", title: "Medo-evitação medido, não presumido", description: "Escores de atividade e trabalho com pontos de corte validados.", topic: "fabq" },
     { tag: "SAÚDE GERAL", title: "Comorbidade com nível de risco graduado", description: "Hipertensão, diabetes, cardiopatia e medicação contínua na mesma tela.", topic: "health-general" },
