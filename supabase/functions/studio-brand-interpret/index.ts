@@ -290,6 +290,8 @@ Regras:
 Responda SOMENTE com JSON válido neste formato:
 {
   "positioning": "2 a 3 frases sobre o produto inteiro, servindo de base do conteúdo 360°",
+  "tagline": "uma frase curta (até 80 caracteres) que pode aparecer na arte",
+
   "keywords": ["6 a 10 palavras-chave curtas"],
   "strategy_notes": "3 a 5 linhas sobre como informar, gerar desejo e vender para esta marca",
   "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB" },
