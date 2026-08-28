@@ -264,7 +264,14 @@ const StudioProCreate = ({
    * herdam o acervo do mundo de origem e recebem por cima as próprias dores,
    * desejos e provas. No 360° cada versão gira entre os mundos oficiais.
    */
-  const SUB_NICHE_WORLD: Record<string, WorldId> = { "recem-formado": "academico" };
+  const SUB_NICHE_WORLD: Record<string, WorldId> = {
+    "recem-formado": "academico",
+    "paciente-cronico": "paciente",
+    "atleta": "paciente",
+    "fisio-domiciliar": "pro",
+    "clinica-multiunidade": "clinica",
+    "coordenacao-curso": "academico",
+  };
   const subWorld = SUB_NICHE_WORLD[activeSegment];
   const aliviaWorld: WorldId | null = !isAlivia
     ? null
