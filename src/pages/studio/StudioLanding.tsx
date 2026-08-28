@@ -56,6 +56,7 @@ import CarouselBlock from "./blocks/CarouselBlock";
 import StudioMotion from "./blocks/StudioMotion";
 import type { BlockProps, StudioFormat } from "./blocks/shared";
 import { resetStudioBrandTheme } from "./brand";
+import ArtworkGuard from "./ArtworkGuard";
 
 
 
@@ -374,9 +375,11 @@ const StudioLanding = () => {
                   caption={buildCaption(content, kind, createRng(`${world}:${seed}:caption:${kind}:${i}`))}
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
-                  <StudioMotion kind={motion}>
-                    <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} slide={slide} photos={photos} />
-                  </StudioMotion>
+                  <ArtworkGuard brand="Aliv.iA">
+                    <StudioMotion kind={motion}>
+                      <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} slide={slide} photos={photos} />
+                    </StudioMotion>
+                  </ArtworkGuard>
                 </StudioCapture>
               );
             })}

@@ -37,6 +37,7 @@ import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
 import AutoFit from "@/pages/studio/AutoFit";
+import ArtworkGuard from "@/pages/studio/ArtworkGuard";
 import VariationControl from "@/pages/studio/VariationControl";
 import {
   DEFAULT_VARIATION_PROFILE,
@@ -900,6 +901,7 @@ const StudioProCreate = ({
                 style={FRAME_STYLE[format]}
               >
                 <div id={`studio-pro-block-${item.index}`} className="h-full w-full">
+                  <ArtworkGuard brand={brand.name}>
                   {/* AutoFit: copy longa encolhe para caber; nunca sai cortada. */}
                   <AutoFit resetKey={`${brand.id}:${seed}:${format}:${kind}:${item.index}`}>
                   <StudioProSignature
@@ -921,6 +923,7 @@ const StudioProCreate = ({
                     </StudioMotion>
                   </StudioProSignature>
                   </AutoFit>
+                  </ArtworkGuard>
                 </div>
               </div>
             );
