@@ -677,6 +677,30 @@ const StudioProApp = () => {
 
         </section>
       </div>
+
+      <AlertDialog open={!!brandToDelete} onOpenChange={(open) => !open && setBrandToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir marca?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A marca <strong>{brandToDelete?.name}</strong> e todas as artes, fotos e configurações
+              vinculadas a ela serão removidas permanentemente. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBrandToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (brandToDelete) removeBrand(brandToDelete.id);
+                setBrandToDelete(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sim, excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 };
