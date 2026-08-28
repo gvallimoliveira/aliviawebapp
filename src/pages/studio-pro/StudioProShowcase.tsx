@@ -1,4 +1,6 @@
-import { FORMAT_LABEL, type ShowcaseItem } from "./showcase";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { FORMAT_LABEL, type ShowcaseItem, type ShowcaseSlide } from "./showcase";
 
 /**
  * MINIATURAS DE DEMONSTRAÇÃO
