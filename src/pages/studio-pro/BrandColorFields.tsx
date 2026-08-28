@@ -1,15 +1,15 @@
-import { Wand2 } from "lucide-react";
+import { Plus, Trash2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import type { BrandColorKit } from "./brandColors";
+import { MAX_EXTRA_COLORS, type BrandColorKit } from "./brandColors";
 import { deepen, judgeContrast, lighten, readableOn } from "./contrast";
 
 
 /**
  * Campos de cores do kit de marca: duas principais sempre, duas secundárias
- * opcionais (desativáveis para marcas que não têm paleta secundária).
+ * opcionais e quantas cores extras o usuário quiser em cada categoria.
  */
 
 type Props = {
@@ -17,6 +17,7 @@ type Props = {
   kit: BrandColorKit;
   onChange: (next: BrandColorKit) => void;
 };
+
 
 const Swatch = ({
   id,
