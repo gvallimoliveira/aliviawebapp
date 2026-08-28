@@ -845,14 +845,19 @@ const StudioProBrand = () => {
             </div>
 
             <div className="sm:col-span-2">
-              <Label htmlFor="edit-tone">Tom de voz</Label>
+              <Label htmlFor="edit-tone">Tom de voz (diretriz)</Label>
               <Textarea
                 id="edit-tone"
-                rows={2}
+                rows={4}
                 value={form.tone}
                 onChange={(e) => setForm({ ...form, tone: e.target.value })}
               />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Como a marca fala (pode colar o manual inteiro). É orientação para a IA escrever —{" "}
+                <strong>nunca aparece como texto dentro das artes</strong>.
+              </p>
             </div>
+
             <div className="sm:col-span-2">
               <Label htmlFor="edit-logo">URL do logo</Label>
               <Input
