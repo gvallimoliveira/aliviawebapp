@@ -10,7 +10,9 @@
  */
 
 import type { WorldContent } from "./content/types";
-import { applyLexicon, type VoiceRegister } from "./lexicon";
+import type { VoiceRegister } from "./lexicon";
+import { rephrase } from "./rewrite";
+
 import { DEFAULT_VARIATION_PROFILE, intensityFor, type VariationProfile } from "./variation";
 
 const SKIP_KEYS = new Set(["id", "label", "topic", "topics", "poster", "image", "hashtags", "value", "prefix", "suffix", "tag"]);
