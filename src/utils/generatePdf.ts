@@ -2174,6 +2174,12 @@ interface BasicReportOptions {
   redFlagAnswers?: Array<{ key?: string; question: string; answer: "yes" | "no" }>;
   /** ISO timestamp when the red-flag screening was completed. */
   redFlagsAnsweredAt?: string;
+  /** Solo professional logo (used when there is no clinic branding). */
+  professionalLogoUrl?: string;
+  /** Clinic logo — takes precedence over the professional logo. */
+  clinicLogoUrl?: string;
+  /** Clinic name, shown as the report header title when clinic-branded. */
+  clinicName?: string;
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
@@ -2181,12 +2187,20 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   const isPt = options.language === "pt";
   let y = MARGIN;
 
-  const logoBase64 = await loadLogoBase64();
+  // Branding: clinic logo wins; otherwise the solo professional logo shows on
+  // the right of the Aliv.iA lockup, exactly like the premium report.
+  const isClinicBranded = !!options.clinicLogoUrl;
+  const logoBase64 = isClinicBranded
+    ? await loadExternalImageAsBase64(options.clinicLogoUrl!)
+    : await loadLogoBase64();
+  const proLogoBase64 = !isClinicBranded && options.professionalLogoUrl
+    ? await loadExternalImageAsBase64(options.professionalLogoUrl)
+    : null;
 
   // Header band
   drawRoundedRect(doc, 0, 0, PAGE_WIDTH, 38, 0, COLORS.primary);
   const logoMaxH = 14;
-  const logoMaxW = 28;
+  const logoMaxW = isClinicBranded ? 40 : 28;
   const logoY = (38 - logoMaxH) / 2;
   let textStartX = MARGIN;
   if (logoBase64) {
@@ -2194,17 +2208,33 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
     textStartX = MARGIN + drawnW + 3;
   }
   const logoH = logoMaxH; // kept for downstream y math
+  let titleMaxW = PAGE_WIDTH - MARGIN - textStartX;
+  if (proLogoBase64) {
+    const proMaxW = 22;
+    drawBrandLogo(doc, proLogoBase64, PAGE_WIDTH - MARGIN - proMaxW, logoY, proMaxW, logoH, "right");
+    titleMaxW -= proMaxW + 4;
+  }
   doc.setFont("Inter", "bold");
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
   const titleY = logoY + logoH / 2 + 2;
-  doc.text("Aliv.iA", textStartX, titleY);
+  const headerTitle = isClinicBranded && options.clinicName ? options.clinicName : "Aliv.iA";
+  doc.text(truncateToWidth(doc, headerTitle, Math.max(titleMaxW, 20)), textStartX, titleY);
   doc.setFontSize(11);
   doc.setFont("Inter", "normal");
-  doc.text(isPt ? "Resultado da Autoavaliação Básica" : "Basic Self-Assessment Result", textStartX, titleY + 9);
+  doc.text(
+    truncateToWidth(
+      doc,
+      isPt ? "Resultado da Autoavaliação Básica" : "Basic Self-Assessment Result",
+      Math.max(titleMaxW, 20),
+    ),
+    textStartX,
+    titleY + 9,
+  );
   doc.setFontSize(8);
   const dateStr = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", { year: "numeric", month: "long", day: "numeric" });
   doc.text(dateStr, PAGE_WIDTH - MARGIN - doc.getTextWidth(dateStr), 33);
+
   y = 48;
 
   // Patient name — always rendered so the report is never anonymous
