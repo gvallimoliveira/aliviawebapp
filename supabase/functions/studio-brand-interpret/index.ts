@@ -73,34 +73,88 @@ const absolutize = (candidate: string, base: string): string | null => {
 
 const IMG_EXT = /\.(png|jpe?g|svg|webp|avif|gif)(\?|#|$)/i;
 
+/** Imagens que nunca são logo (banner, foto de capa, avatar de depoimento…). */
+const NOT_LOGO = /banner|hero|slide|carousel|cover|capa|foto|photo|avatar|depoiment|testimonial|thumb|sprite|placeholder|pixel|tracking/i;
+
+/** Pega o primeiro src útil de um <img>, considerando lazy-load e srcset. */
+const imgSource = (tag: string): string | null => {
+  const direct =
+    tag.match(/\ssrc\s*=\s*["']([^"']+)["']/i)?.[1] ??
+    tag.match(/\sdata-src\s*=\s*["']([^"']+)["']/i)?.[1] ??
+    tag.match(/\sdata-lazy-src\s*=\s*["']([^"']+)["']/i)?.[1];
+  if (direct && !direct.startsWith("data:")) return direct;
+  const srcset = tag.match(/\s(?:srcset|data-srcset)\s*=\s*["']([^"']+)["']/i)?.[1];
+  if (srcset) {
+    const first = srcset.split(",").map((s) => s.trim().split(/\s+/)[0]).find(Boolean);
+    if (first && !first.startsWith("data:")) return first;
+  }
+  return null;
+};
+
 /**
  * LOGO DA MARCA A PARTIR DO SITE.
  *
- * Antes o cliente colava o site e o campo de logo ficava vazio (ou com a URL do
- * próprio site, que não é imagem). Aqui procuramos, em ordem de confiança:
- * 1. <img> cujo src/alt/class fale "logo" (a marca de verdade no header);
- * 2. og:image / twitter:image (arte social, quase sempre com a marca);
- * 3. apple-touch-icon / link rel icon (fallback quadrado).
+ * Ordem de confiança (a falha recorrente era voltar sem logo, ou voltar com um
+ * banner/ícone genérico):
+ * 1. <img> dentro do header/nav cujo src/alt/class fale "logo";
+ * 2. o mesmo <img> em qualquer lugar da página;
+ * 3. <img> cujo alt contenha o nome da marca;
+ * 4. link rel="apple-touch-icon" / "mask-icon" / "icon" de tamanho grande;
+ * 5. og:image / twitter:image (arte social, quase sempre com a marca).
  */
-const findLogo = (html: string, base: string): string | null => {
-  const imgs = [...html.matchAll(/<img\b[^>]*>/gi)].map((m) => m[0]);
-  for (const tag of imgs) {
-    const src = tag.match(/\ssrc\s*=\s*["']([^"']+)["']/i)?.[1];
-    if (!src) continue;
-    const haystack = `${src} ${tag.match(/\salt\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""} ${
-      tag.match(/\sclass\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""
-    }`.toLowerCase();
-    if (!/logo|brand|marca|wordmark/.test(haystack)) continue;
-    const url = absolutize(src, base);
-    if (url) return url;
+const findLogo = (html: string, base: string, brandName = ""): string | null => {
+  const headerZone = [...html.matchAll(/<(header|nav)\b[\s\S]{0,20000}?<\/\1>/gi)]
+    .map((m) => m[0])
+    .join(" ");
+
+  const scan = (scope: string, test: (haystack: string) => boolean): string | null => {
+    for (const [tag] of scope.matchAll(/<img\b[^>]*>/gi)) {
+      const src = imgSource(tag);
+      if (!src) continue;
+      const haystack = `${src} ${tag.match(/\salt\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""} ${
+        tag.match(/\sclass\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""
+      } ${tag.match(/\sid\s*=\s*["']([^"']*)["']/i)?.[1] ?? ""}`.toLowerCase();
+      if (NOT_LOGO.test(haystack)) continue;
+      if (!test(haystack)) continue;
+      const url = absolutize(src, base);
+      if (url) return url;
+    }
+    return null;
+  };
+
+  const byKeyword = (h: string) => /logo|brand|marca|wordmark|logotipo|símbolo|simbolo/.test(h);
+  const nameTokens = brandName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 4);
+  const byName = (h: string) => nameTokens.length > 0 && nameTokens.some((t) => h.includes(t));
+
+  const found =
+    (headerZone ? scan(headerZone, byKeyword) : null) ??
+    scan(html, byKeyword) ??
+    (nameTokens.length ? scan(headerZone || html, byName) : null);
+  if (found) return found;
+
+  const links = [
+    /<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]*>/gi,
+    /<link[^>]+rel=["'][^"']*mask-icon[^"']*["'][^>]*>/gi,
+    /<link[^>]+rel=["'][^"']*\bicon\b[^"']*["'][^>]*>/gi,
+  ];
+  for (const re of links) {
+    for (const [tag] of html.matchAll(re)) {
+      const href = tag.match(/\shref\s*=\s*["']([^"']+)["']/i)?.[1];
+      const url = href ? absolutize(href, base) : null;
+      if (url && IMG_EXT.test(url) && !/favicon\.ico/i.test(url)) return url;
+    }
   }
 
   const metas = [
+    /<meta[^>]+property=["']og:logo["'][^>]+content=["']([^"']+)["']/i,
     /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
     /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
     /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
-    /<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/i,
-    /<link[^>]+rel=["'][^"']*icon[^"']*["'][^>]+href=["']([^"']+)["']/i,
   ];
   for (const re of metas) {
     const hit = html.match(re)?.[1];
@@ -110,56 +164,179 @@ const findLogo = (html: string, base: string): string | null => {
   return null;
 };
 
-/**
- * Leitura da landing page do cliente: texto visível (para a IA entender a
- * proposta), as cores mais frequentes e o logo da marca.
- * Falha silenciosa — site fora do ar não pode travar a interpretação.
- */
-const readSite = async (
-  rawUrl: string,
-): Promise<{ text: string; colors: string[]; logo: string | null }> => {
-  const url = normalizeUrl(rawUrl);
-  const empty = { text: "", colors: [], logo: null };
-  if (!url) return empty;
+/** Tipografia declarada no HTML/CSS inline ou via Google Fonts. */
+const findFonts = (html: string): string[] => {
+  const out: string[] = [];
+  for (const [, families] of html.matchAll(
+    /fonts\.googleapis\.com\/css2?\?([^"'\s>]+)/gi,
+  )) {
+    for (const [, fam] of families.matchAll(/family=([^&:]+)/gi)) {
+      out.push(decodeURIComponent(fam).replace(/\+/g, " "));
+    }
+  }
+  const counts = new Map<string, number>();
+  for (const [, decl] of html.matchAll(/font-family\s*:\s*([^;}"']+)/gi)) {
+    const first = decl.split(",")[0].replace(/["']/g, "").trim();
+    if (!first || /^(inherit|initial|unset|var\(|sans-serif|serif|monospace|system-ui|-apple-system)/i.test(first)) continue;
+    counts.set(first, (counts.get(first) ?? 0) + 1);
+  }
+  out.push(
+    ...Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([f]) => f),
+  );
+  return [...new Set(out)].slice(0, 6);
+};
+
+const stripToText = (html: string, limit: number) =>
+  html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, limit);
+
+const fetchHtml = async (url: string, timeoutMs = 12000): Promise<string | null> => {
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12000);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     const resp = await fetch(url, {
       signal: controller.signal,
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; AliviaStudioBot/1.0)" },
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 AliviaStudioBot/1.1",
+        "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+        Accept: "text/html,application/xhtml+xml",
+      },
     });
     clearTimeout(timer);
-    if (!resp.ok) return empty;
-    const html = (await resp.text()).slice(0, 400_000);
-
-    const counts = new Map<string, number>();
-    for (const match of html.matchAll(/#[0-9a-fA-F]{6}\b/g)) {
-      const hex = match[0].toLowerCase();
-      // Ignora branco/preto puros: quase sempre são texto e fundo padrão.
-      if (hex === "#ffffff" || hex === "#000000") continue;
-      counts.set(hex, (counts.get(hex) ?? 0) + 1);
-    }
-    const colors = Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([hex]) => hex);
-
-    const text = html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 9000);
-
-    return { text, colors, logo: findLogo(html, url) };
+    if (!resp.ok) return null;
+    const type = resp.headers.get("content-type") ?? "";
+    if (type && !/html|text/i.test(type)) return null;
+    return (await resp.text()).slice(0, 500_000);
   } catch (err) {
-    console.error("[studio-brand-interpret] site fetch", String(err).slice(0, 200));
-    return empty;
+    console.error("[studio-brand-interpret] fetch", url, String(err).slice(0, 160));
+    return null;
   }
 };
+
+/** Páginas internas que costumam guardar a proposta real da marca. */
+const INNER_PAGE = /(sobre|about|quem-somos|empresa|servic|service|solucao|solucoes|solution|produto|product|planos|precos|pricing|para-quem|clientes|portfolio|metodo|como-funciona)/i;
+
+const collectInnerLinks = (html: string, base: string, max: number): string[] => {
+  const origin = new URL(base).origin;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const [, href] of html.matchAll(/<a\b[^>]*\shref\s*=\s*["']([^"'#]+)["']/gi)) {
+    if (!INNER_PAGE.test(href)) continue;
+    const url = absolutize(href, base);
+    if (!url || !url.startsWith(origin)) continue;
+    const clean = url.split("#")[0].replace(/\/$/, "");
+    if (clean === base.replace(/\/$/, "") || seen.has(clean)) continue;
+    if (/\.(pdf|jpg|jpeg|png|zip|docx?)$/i.test(clean)) continue;
+    seen.add(clean);
+    out.push(clean);
+    if (out.length >= max) break;
+  }
+  return out;
+};
+
+type SiteRead = {
+  text: string;
+  colors: string[];
+  logo: string | null;
+  fonts: string[];
+  meta: string;
+  headings: string[];
+  pages: string[];
+};
+
+/**
+ * LEITURA RICA DO SITE DO CLIENTE.
+ *
+ * A versão anterior lia só a home e um punhado de texto — kits saíam rasos e
+ * sem logo. Agora: metadados (title/description/og), títulos (h1-h3) separados,
+ * cores (hex + rgb + variáveis CSS), tipografia declarada, logo com heurística
+ * de header, e até 3 páginas internas (sobre / serviços / planos).
+ * Falha silenciosa: site fora do ar não pode travar a interpretação.
+ */
+const readSite = async (rawUrl: string, brandName = ""): Promise<SiteRead> => {
+  const url = normalizeUrl(rawUrl);
+  const empty: SiteRead = { text: "", colors: [], logo: null, fonts: [], meta: "", headings: [], pages: [] };
+  if (!url) return empty;
+
+  const html = await fetchHtml(url);
+  if (!html) return empty;
+
+  /* Cores: hex, rgb() e variáveis CSS — sites modernos quase não usam hex cru. */
+  const counts = new Map<string, number>();
+  const bump = (hex: string) => {
+    const h = hex.toLowerCase();
+    if (h === "#ffffff" || h === "#000000") return;
+    counts.set(h, (counts.get(h) ?? 0) + 1);
+  };
+  for (const [full] of html.matchAll(/#[0-9a-fA-F]{6}\b/g)) bump(full);
+  for (const [, hx] of html.matchAll(/#([0-9a-fA-F]{3})\b/g)) {
+    bump(`#${hx[0]}${hx[0]}${hx[1]}${hx[1]}${hx[2]}${hx[2]}`);
+  }
+  for (const [, r, g, b] of html.matchAll(/rgba?\(\s*(\d{1,3})\s*[, ]\s*(\d{1,3})\s*[, ]\s*(\d{1,3})/gi)) {
+    bump(
+      `#${[r, g, b]
+        .map((v) => Math.min(255, parseInt(v, 10)).toString(16).padStart(2, "0"))
+        .join("")}`,
+    );
+  }
+  const colors = Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([hex]) => hex.toUpperCase());
+
+  const metaBits = [
+    html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1],
+    html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)?.[1],
+    html.match(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i)?.[1],
+    html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)?.[1],
+    html.match(/<meta[^>]+name=["']keywords["'][^>]+content=["']([^"']+)["']/i)?.[1],
+  ]
+    .filter(Boolean)
+    .map((s) => stripToText(String(s), 300));
+  const meta = [...new Set(metaBits)].join(" · ").slice(0, 900);
+
+  const headings = [...html.matchAll(/<h([1-3])\b[^>]*>([\s\S]*?)<\/h\1>/gi)]
+    .map((m) => stripToText(m[2], 160))
+    .filter((t) => t.length > 2);
+  const uniqueHeadings = [...new Set(headings)].slice(0, 40);
+
+  const homeText = stripToText(html, 12000);
+  const pages = collectInnerLinks(html, url, 3);
+  const innerTexts: string[] = [];
+  for (const page of pages) {
+    const inner = await fetchHtml(page, 9000);
+    if (!inner) continue;
+    const t = stripToText(inner, 5000);
+    if (t.length > 200) innerTexts.push(`[${page}]\n${t}`);
+  }
+
+  return {
+    text: [homeText, ...innerTexts].join("\n\n").slice(0, 26000),
+    colors,
+    logo: findLogo(html, url, brandName),
+    fonts: findFonts(html),
+    meta,
+    headings: uniqueHeadings,
+    pages,
+  };
+};
+
 
 /* ---------- Contraste: nenhuma arte pode sair ilegível ---------- */
 
