@@ -460,49 +460,60 @@ Deno.serve(async (req) => {
       Array.isArray(brand.topics) && brand.topics.length ? `Palavras-chave atuais: ${brand.topics.join(", ")}` : null,
       existingLabels.length ? `Públicos já cadastrados (manter todos): ${existingLabels.join(", ")}` : null,
       typeof body?.extra === "string" && body.extra.trim() ? `Contexto extra do cliente: ${body.extra.trim()}` : null,
+      site.meta ? `Metadados do site (title/description/og): ${site.meta}` : null,
+      site.headings.length
+        ? `Títulos e chamadas do site (h1-h3, ordem de leitura):\n- ${site.headings.join("\n- ")}`
+        : null,
       site.colors.length ? `Cores mais usadas no site (ordem de frequência): ${site.colors.join(", ")}` : null,
-      site.text ? `\nTexto extraído da landing page (fonte primária da proposta):\n"""\n${site.text}\n"""` : null,
+      site.fonts.length ? `Tipografia declarada no site (ordem de confiança): ${site.fonts.join(", ")}` : null,
+      site.pages.length ? `Páginas internas lidas além da home: ${site.pages.join(", ")}` : null,
+      site.text ? `\nTexto extraído do site (fonte primária da proposta):\n"""\n${site.text}\n"""` : null,
       docOk
         ? `\nO cliente anexou o MANUAL DA MARCA (${doc?.name ?? "documento"}). Ele é a FONTE PRINCIPAL: cores, tipografia, posicionamento, públicos e tom saem dele e prevalecem sobre o site e sobre os campos atuais.`
         : null,
     ].filter(Boolean).join("\n");
 
 
-    const systemPrompt = `Você é estrategista de conteúdo. A partir do briefing de uma marca, você produz o mapa editorial que alimentará um gerador de artes para redes sociais.
+    const systemPrompt = `Você é estrategista de conteúdo sênior. A partir do briefing de uma marca, você produz o mapa editorial que alimentará um gerador de artes para redes sociais. O resultado precisa ter densidade de kit de agência: específico, concreto, com vocabulário da própria marca.
 
 Regras:
-- Escreva em português do Brasil, linguagem concreta, sem jargão de marketing e sem clichê ("soluções inovadoras", "excelência", "transformar vidas").
-- Se houver texto da landing page no briefing, ele é a fonte primária: a proposta, os produtos e os públicos devem sair de lá, não de suposições.
+- Escreva em português do Brasil, linguagem concreta, sem jargão de marketing e sem clichê ("soluções inovadoras", "excelência", "transformar vidas", "referência no mercado").
+- Se houver texto, títulos ou metadados do site no briefing, eles são a fonte primária: proposta, produtos, preços, nomes de serviços e públicos saem de lá, não de suposições. Use as palavras que a própria marca usa.
 - O "tom de voz" do briefing é diretriz de ESTILO: guia como escrever, mas o texto dele nunca é reaproveitado como frase da marca.
-- Segmente o produto em 2 a 5 públicos (nichos) REAIS e distintos, cada um com dores, desejos e provas próprias.
+- Segmente o produto em 4 a 8 públicos (nichos) REAIS e distintos — pessoas diferentes, em momentos diferentes, não variações do mesmo perfil. Cada um com dores, desejos e soluções próprias, sem repetir frases entre públicos.
+- Cada público precisa de 5 a 8 dores, 5 a 8 desejos e 5 a 8 soluções/diferenciais. Frases curtas (até ~70 caracteres), concretas, uma ideia por linha.
 - IMPORTANTE: se o produto também é usado pelo consumidor final (paciente, cliente, aluno, usuário leigo), esse público NUNCA pode ficar de fora — inclua-o junto dos públicos profissionais/B2B.
 - Se a marca já tem públicos cadastrados no briefing, mantenha-os (pode refinar o texto), não os substitua por outros.
-- Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o que o produto é como um todo.
+- Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o problema estrutural do mercado, a tese da marca, a amplitude de uso e o que a separa das alternativas.
+- "description": 2 a 3 frases densas — o que é, para quem, o que entrega de concreto.
 - Escreva também um "tagline": UMA frase curta (até 80 caracteres) que resume a marca e pode aparecer dentro das artes.
+- "voice": diretriz de tom em 4 a 8 linhas — como falar, o que nunca dizer, como tratar preço, prova e objeção. É diretriz interna, nunca vai impressa na arte.
+- "keywords": vocabulário de marca utilizável como palavra em destaque na arte (não termos de SEO genéricos).
 - Cores (papéis, não decoração): "primary" é a cor de MARCA usada em fundos e formas; "primary2" é a cor de TEXTO que fica sobre ela e precisa de contraste alto (≥ 4.5:1); "secondary" é o destaque e "secondary2" um neutro claro de fundo. Escolha entre as cores do site quando houver; nunca devolva um par de baixo contraste (ex.: verde neon com branco). Sem cores no briefing, omita o campo.
-
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
-Tipografia: se o briefing (especialmente o manual da marca anexado) indicar a fonte usada pela marca, devolva o nome dela em "font_family" (ex.: "Montserrat", "DM Sans", "Playfair Display"). Se não houver indicação, devolva "".
+Tipografia: se o briefing (manual anexado ou tipografia declarada no site) indicar a fonte da marca, devolva o nome dela em "font_family" (ex.: "Montserrat", "DM Sans", "Playfair Display"). Se não houver indicação, devolva "".
 
 Responda SOMENTE com JSON válido neste formato:
 {
-  "positioning": "2 a 3 frases sobre o produto inteiro, servindo de base do conteúdo 360°",
+  "description": "2 a 3 frases densas sobre o que é, para quem e o que entrega",
+  "positioning": "3 a 5 frases sobre o produto inteiro, servindo de base do conteúdo 360°",
   "tagline": "uma frase curta (até 80 caracteres) que pode aparecer na arte",
-
-  "keywords": ["6 a 10 palavras-chave curtas"],
-  "strategy_notes": "3 a 5 linhas sobre como informar, gerar desejo e vender para esta marca",
+  "voice": "diretriz de tom em 4 a 8 linhas",
+  "keywords": ["8 a 12 palavras-chave curtas do vocabulário da marca"],
+  "strategy_notes": "5 a 8 linhas sobre como girar informar / dor / desejo / venda nesta marca, incluindo temas a evitar",
   "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB" },
   "font_family": "nome da fonte da marca, ou vazio",
   "audiences": [
     {
       "label": "Nome curto do público",
       "description": "Quem é e em que momento chega",
-      "pains": ["2 a 4 dores concretas"],
-      "desires": ["2 a 3 desejos"],
-      "proof": ["2 a 4 provas/diferenciais que convencem esse público"],
+      "pains": ["5 a 8 dores concretas"],
+      "desires": ["5 a 8 desejos"],
+      "proof": ["5 a 8 soluções/diferenciais que convencem esse público"],
       "cta": "Chamada para ação curta"
+
     }
   ]
 }`;
