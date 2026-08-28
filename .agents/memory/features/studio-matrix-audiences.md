@@ -14,3 +14,10 @@ Helpers: `matrixAudiences`, `derivedAudiences`, `officialAudienceCount`.
 No editor de marca há seletor "Tipo de público" + resumo da métrica oficial. Aliv.iA no banco já tem os sub-nichos marcados (recem-formado → academico; paciente-* → paciente).
 
 Ao criar bloco/copy que cite quantidade de públicos, sempre derivar da contagem matriz.
+
+**Sub-nicho no motor criativo (global, toda marca):** o mundo/acervo base de um
+sub-nicho é descoberto pela cadeia `parentId` (`audienceAncestors`) — nunca por
+lista fixa de ids. `resolveAudience` faz o sub-nicho herdar dores/desejos/
+soluções/CTA do matriz quando o campo próprio está vazio, e `buildSegmentContent`
+só cai no 360° quando o segmento ativo é um público matriz. Coberto por
+`src/test/studio-subniche-content.test.ts`.

@@ -116,6 +116,46 @@ export const derivedAudiences = (list: BrandAudience[], parentId: string): Brand
 /** Número oficial de públicos da marca — sempre só os matriz. */
 export const officialAudienceCount = (list: BrandAudience[]): number => matrixAudiences(list).length;
 
+/** Cadeia de ancestrais de um público (do pai direto até o matriz). */
+export const audienceAncestors = (list: BrandAudience[], id: string): BrandAudience[] => {
+  const chain: BrandAudience[] = [];
+  const seen = new Set<string>([id]);
+  let current = list.find((a) => a.id === id);
+  while (current?.parentId && !seen.has(current.parentId)) {
+    const parent = list.find((a) => a.id === current!.parentId);
+    if (!parent) break;
+    seen.add(parent.id);
+    chain.push(parent);
+    current = parent;
+  }
+  return chain;
+};
+
+/**
+ * Resolve um público para uso no motor criativo: sub-nichos herdam dores,
+ * desejos, soluções e CTA do público matriz quando o próprio campo está vazio.
+ * Assim ativar "Pós-operatório" nunca produz arte genérica por falta de campo.
+ */
+export const resolveAudience = (list: BrandAudience[], id: string): BrandAudience | null => {
+  const own = list.find((a) => a.id === id);
+  if (!own) return null;
+  const chain = audienceAncestors(list, id);
+  if (!chain.length) return own;
+  const inherit = (key: "pains" | "desires" | "proof") => {
+    const merged = [...(own[key] ?? [])];
+    for (const parent of chain) for (const item of parent[key] ?? []) if (!merged.includes(item)) merged.push(item);
+    return merged.length ? merged : undefined;
+  };
+  return {
+    ...own,
+    pains: inherit("pains"),
+    desires: inherit("desires"),
+    proof: inherit("proof"),
+    cta: own.cta?.trim() || chain.find((p) => p.cta?.trim())?.cta,
+    description: own.description?.trim() || chain.find((p) => p.description?.trim())?.description,
+  };
+};
+
 export type Segment = { id: string; label: string };
 
 /**

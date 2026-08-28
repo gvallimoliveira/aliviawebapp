@@ -10,7 +10,7 @@ import {
   composeTypos,
   type CopyIngredients,
 } from "@/pages/studio/phrasing";
-import { GLOBAL_SEGMENT, matrixAudiences, type BrandAudience, type ContentAngle } from "./audiences";
+import { GLOBAL_SEGMENT, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 
@@ -597,7 +597,8 @@ export const buildSegmentContent = ({
   if (segment === GLOBAL_SEGMENT) {
     return applyAngle(applyGlobal(root, brand, audiences, positioning), angle);
   }
-  const audience = audiences.find((a) => a.id === segment);
+  // Sub-nichos herdam o kit do público matriz e sobrepõem o próprio recorte.
+  const audience = resolveAudience(audiences, segment);
   if (!audience) return applyAngle(root, angle);
   return applyAngle(applyAudience(root, brand, audience), angle);
 };
