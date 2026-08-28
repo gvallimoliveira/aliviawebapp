@@ -858,14 +858,16 @@ const StudioProBrand = () => {
               </p>
             </div>
 
-            <div className="sm:col-span-2">
-              <Label htmlFor="edit-logo">URL do logo</Label>
-              <Input
-                id="edit-logo"
-                value={form.logo_url}
-                onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
-              />
-            </div>
+            {/* Manual da marca (PDF), logo por upload e tipografia. */}
+            <BrandAssetsFields
+              logoUrl={form.logo_url}
+              onLogoChange={(logo_url) => setForm({ ...form, logo_url })}
+              fontKey={colorKit.font}
+              onFontChange={(font) => setColorKit({ ...colorKit, font })}
+              doc={doc}
+              onDocChange={setDoc}
+            />
+
 
             {/* Proteção do material: toda arte sai assinada com a marca. */}
             <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-background p-4 sm:col-span-2">
