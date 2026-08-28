@@ -152,6 +152,8 @@ const StudioProBrand = () => {
   /** Nichos da marca — cada um alimenta uma aba de conteúdo no editor. */
   const [audiences, setAudiences] = useState<BrandAudience[]>([]);
   const [interpreting, setInterpreting] = useState(false);
+  /** Bump força repovoar os campos após uma recarga do banco (ex.: pós-IA). */
+  const [hydrateNonce, setHydrateNonce] = useState(0);
   const [colorKit, setColorKit] = useState<BrandColorKit>(DEFAULT_COLOR_KIT);
   /** Assinatura da marca nas artes — ajuste global desta marca. */
   const [signatureEnabled, setSignatureEnabled] = useState(true);
