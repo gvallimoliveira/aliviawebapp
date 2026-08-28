@@ -14,6 +14,11 @@ type Props = {
   onClose: () => void;
   /** Teto de fotos do plano (Studio público). Sem valor = sem limite (interno). */
   limit?: number;
+  /**
+   * Fotos usadas na CONTA INTEIRA (soma de todas as marcas) — é isso que o teto
+   * do plano compara. Sem valor, cai para o acervo visível da marca.
+   */
+  usedTotal?: number;
   /** Fotos fixadas para a geração atual (controle criativo). */
   pinnedIds?: string[];
   onTogglePin?: (id: string) => void;
