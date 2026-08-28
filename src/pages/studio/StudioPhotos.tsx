@@ -141,7 +141,8 @@ const StudioPhotos = ({
             </p>
             {hasLimit && (
               <p className="mt-0.5 text-[11px] font-semibold text-foreground">
-                {photos.length} de {limit} fotos do seu plano
+                {used} de {limit} fotos do seu plano
+                {typeof usedTotal === "number" ? ` · ${photos.length} nesta marca` : ""}
               </p>
             )}
           </div>
