@@ -285,19 +285,34 @@ const StudioProCreate = ({
         : WORLD_IDS[createRng(`${brand.id}:${seed}:world`).int(WORLD_IDS.length)];
 
 
-  const content = useMemo(
-    () =>
-      buildSegmentContent({
-        kit: contentKit,
-        base: aliviaWorld ? WORLDS[aliviaWorld] : undefined,
-        audiences,
-        // Mundo oficial já embute o público; sub-nicho mantém o overlay próprio.
-        segment: aliviaWorld && !subWorld ? GLOBAL_SEGMENT : activeSegment,
-        angle,
-        positioning: aliviaWorld ? null : brand.positioning,
-      }),
-    [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning],
-  );
+  /**
+   * REGISTRO DE VOZ: o campo "tom de voz" do kit não é renderizado — ele apenas
+   * classifica que vocabulário o motor pode usar nesta marca.
+   */
+  const register = useMemo(() => voiceRegister(brand.tone, brand.name), [brand.tone, brand.name]);
+
+  const content = useMemo(() => {
+    const built = buildSegmentContent({
+      kit: contentKit,
+      base: aliviaWorld ? WORLDS[aliviaWorld] : undefined,
+      audiences,
+      // Mundo oficial já embute o público; sub-nicho mantém o overlay próprio.
+      segment: aliviaWorld && !subWorld ? GLOBAL_SEGMENT : activeSegment,
+      angle,
+      positioning: aliviaWorld ? null : brand.positioning,
+      // Variedade linguística: cada lote reescreve a roupagem das frases.
+      variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+    });
+    /**
+     * Passagem final pelo léxico: vale também para o acervo curado dos mundos
+     * internos, então nenhuma marca fica presa às mesmas palavras.
+     */
+    return varyContent(built, {
+      register,
+      seed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+      forbidden: isAlivia ? [] : ["aliv.ia", "alivia", "fisioterap"],
+    });
+  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning, brand.id, seed, register, isAlivia]);
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
 
@@ -315,10 +330,15 @@ const StudioProCreate = ({
   }, [brand.id, brand.name, brand.niche, brand.description, brand.logo_url, brand.instagram_handle, brand.source_url]);
 
 
+  /** Memória de frases da marca (na conta): frase recente perde vez no sorteio. */
+  const phraseMemory = usePhraseMemory(brand.id);
+
   const picker = useMemo(
-    () => createPicker(buildCoverage(aliviaWorld ?? "pro", content, {}), () => {}),
-    [content, aliviaWorld],
+    () => createPicker(buildCoverage(aliviaWorld ?? "pro", content, {}), () => {}, undefined, phraseMemory),
+    [content, aliviaWorld, phraseMemory],
   );
+
+
 
   /**
    * LINHAGEM DOS FAVORITOS.
