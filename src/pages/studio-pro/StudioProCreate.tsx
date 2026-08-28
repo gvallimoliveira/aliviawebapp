@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileText, Images, LayoutGrid, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
+import { Camera, Download, FileText, Images, LayoutGrid, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
   type StudioFormat,
 } from "@/studio-core";
 import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
+import StudioPhotos from "@/pages/studio/StudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { voiceRegister } from "@/pages/studio/lexicon";
 import { varyContent } from "@/pages/studio/vary";
@@ -1070,6 +1071,20 @@ const StudioProCreate = ({
           );
         })}
       </div>
+
+      {photosOpen && (
+        <StudioPhotos
+          photos={photos}
+          loading={photosLoading}
+          onUpload={addPhoto}
+          onEdit={editPhoto}
+          onRemove={removePhoto}
+          limit={photoLimit}
+          pinnedIds={pinnedPhotos}
+          onTogglePin={togglePin}
+          onClose={() => setPhotosOpen(false)}
+        />
+      )}
     </section>
   );
 };
