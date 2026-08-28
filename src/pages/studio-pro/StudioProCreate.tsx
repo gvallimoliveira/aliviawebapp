@@ -25,6 +25,8 @@ import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
 import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
+import { readableThemeTokens } from "./contrast";
+
 import { ensureFontLoaded, findFont } from "./brandFonts";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
