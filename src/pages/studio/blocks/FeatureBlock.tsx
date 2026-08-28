@@ -142,13 +142,6 @@ const FeatureBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
             );
           })}
         </div>
-
-                  </>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
       </div>
     </section>
   );
