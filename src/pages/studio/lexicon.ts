@@ -223,6 +223,64 @@ const SYNONYMS: Record<string, SynonymRow> = {
     inspirador: ["experiência", "jornada", "vivência"],
     sobrio: ["experiência", "trajetória", "percurso"],
   },
+  sorte: {
+    all: ["sorte", "acaso", "improviso"],
+    tecnico: ["sorte", "acaso", "aleatoriedade"],
+    proximo: ["sorte", "acaso", "chute"],
+    direto: ["sorte", "chute"],
+    inspirador: ["sorte", "acaso", "destino"],
+    sobrio: ["sorte", "acaso", "contingência"],
+  },
+  rotina: {
+    all: ["rotina", "dia a dia", "normalidade"],
+    tecnico: ["rotina", "operação", "dia a dia"],
+    proximo: ["rotina", "dia a dia", "correria de sempre"],
+    direto: ["rotina", "dia a dia"],
+    inspirador: ["rotina", "dia a dia", "roteiro de sempre"],
+    sobrio: ["rotina", "operação", "cotidiano"],
+  },
+  promessa: {
+    all: ["promessa", "discurso", "propaganda"],
+    tecnico: ["promessa", "alegação", "discurso"],
+    proximo: ["promessa", "conversa bonita", "discurso"],
+    direto: ["promessa", "papo"],
+    inspirador: ["promessa", "juramento", "compromisso"],
+    sobrio: ["promessa", "compromisso", "declaração"],
+  },
+  retrabalho: {
+    all: ["retrabalho", "refação", "trabalho dobrado"],
+  },
+  previsibilidade: {
+    all: ["previsibilidade", "segurança", "controle"],
+  },
+  lembrança: {
+    all: ["lembrança", "memória", "recall"],
+    proximo: ["lembrança", "memória"],
+    tecnico: ["lembrança", "recall", "memória"],
+  },
+  burocracia: {
+    all: ["burocracia", "papelada", "engessamento"],
+  },
+  opção: {
+    all: ["opção", "alternativa", "caminho"],
+  },
+  ruído: {
+    all: ["ruído", "distração", "excesso"],
+  },
+  processo: {
+    all: ["processo", "percurso", "método"],
+    tecnico: ["processo", "protocolo", "fluxo"],
+    proximo: ["processo", "caminho", "passo a passo"],
+    direto: ["processo", "roteiro"],
+    inspirador: ["processo", "jornada", "caminho"],
+    sobrio: ["processo", "fluxo", "percurso"],
+  },
+  decisão: {
+    all: ["decisão", "escolha", "definição"],
+  },
+  padrão: {
+    all: ["padrão", "nível", "critério"],
+  },
   próximo: {
     all: ["próximo", "seguinte"],
     tecnico: ["próximo", "seguinte"],
@@ -270,7 +328,7 @@ export type LexiconOptions = {
  */
 export const applyLexicon = (text: string, options: LexiconOptions): string => {
   if (!text) return text;
-  const { register, seed, intensity = 0.55, forbidden = [] } = options;
+  const { register, seed, intensity = 0.65, forbidden = [] } = options;
   let out = text;
 
   SYNONYM_KEYS.forEach((key) => {
