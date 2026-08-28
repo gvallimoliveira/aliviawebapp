@@ -175,18 +175,18 @@ const StudioProCreate = ({
   const wrapper = useRef<HTMLDivElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const { photos } = useStudioPhotos(true);
-  /** Cota do período: cada geração desconta um lote inteiro da cota do plano. */
+  /** Cota do período: contada em gerações — 1 por clique em "Nova versão". */
   const { quota, error: quotaError, consume } = useStudioQuota();
 
-  const batchSize = Number.isFinite(maxArts) ? (maxArts as number) : STUDIO_BATCH_SIZE;
-  const unlimited = !Number.isFinite(maxArts) || !!quota?.unlimited;
+  const unlimited = unlimitedAccess || !!quota?.unlimited;
   /** Só bloqueia com dado confirmado: cota desconhecida nunca trava o botão. */
-  const blocked = !unlimited && !!quota && !quotaError && quota.remaining < batchSize;
+  const blocked = !unlimited && !!quota && !quotaError && quota.remaining < STUDIO_GENERATION_COST;
 
   /**
-   * "Nova versão" é o que custa cota: trocar público, ângulo ou formato refina o
-   * mesmo lote sem cobrar nada. O desconto acontece no banco antes de sortear a
-   * nova seed — se a cota do mês acabou, a geração é bloqueada com aviso claro.
+   * "Nova versão" é o único clique que custa cota (1 geração). Trocar público,
+   * objetivo, modelo ou formato navega a MESMA geração de graça — é ali que a
+   * versão rende dezenas de artes. O desconto acontece no banco antes da nova
+   * seed; se a cota do período acabou, a geração é bloqueada com aviso claro.
    */
   const newVersion = async () => {
     if (unlimited) {
@@ -194,10 +194,10 @@ const StudioProCreate = ({
       return;
     }
     setBusy("quota");
-    const result = await consume(batchSize);
+    const result = await consume(STUDIO_GENERATION_COST);
     setBusy(null);
     if (result === "exhausted") {
-      toast.error("Sua cota deste período acabou. Faça upgrade para gerar mais artes.");
+      toast.error("Suas gerações deste período acabaram. Faça upgrade para gerar mais.");
       return;
     }
     if (result === "error") {
