@@ -32,7 +32,7 @@ import { readColorKit } from "./brandColors";
 import { readableThemeTokens } from "./contrast";
 
 import { ensureFontLoaded, findFont } from "./brandFonts";
-import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
+import { ANGLES, GLOBAL_SEGMENT, audienceAncestors, buildSegments, readAudiences, type ContentAngle } from "./audiences";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
