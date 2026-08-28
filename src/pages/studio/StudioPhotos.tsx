@@ -8,7 +8,7 @@ import { PHOTO_USAGES, type PhotoFraming, type PhotoPatch, type PhotoUsage, type
 type Props = {
   photos: StudioPhoto[];
   loading: boolean;
-  onUpload: (file: File, meta: { label: string; usage: PhotoUsage; credit?: string }) => Promise<unknown>;
+  onUpload: (file: File, meta: { label: string; usage: PhotoUsage; credit?: string; description?: string }) => Promise<unknown>;
   onEdit: (id: string, patch: PhotoPatch) => Promise<void>;
   onRemove: (photo: StudioPhoto) => Promise<void>;
   onClose: () => void;
