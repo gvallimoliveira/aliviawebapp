@@ -59,7 +59,7 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
         <div className="relative mt-6 w-full">
           <PhotoFrame
             photo={photo}
-            className="relative z-20 mx-auto h-[34svh] w-[46%] rounded-t-2xl"
+            className="relative z-20 mx-auto h-[34svh] w-[46%] rounded-2xl"
           />
 
           {/* Celular deitado em perspectiva, com o perfil da marca. */}
