@@ -83,7 +83,7 @@ const StudioProApp = () => {
   useStudioPwaMeta();
   const { user, loading: authLoading, signOut } = useAuth();
   const { access, loading: accessLoading } = useStudioAccess();
-  const { quota } = useStudioQuota();
+  const { quota, error: quotaError } = useStudioQuota();
   const navigate = useNavigate();
   const [brands, setBrands] = useState<Brand[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
