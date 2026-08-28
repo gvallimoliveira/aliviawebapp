@@ -209,14 +209,17 @@ export const buildBrandContent = (
         ],
       },
     ],
-    typos: [
-      { lead: "A gente cuida do processo.", big: "Você", tail: " colhe o resultado." },
-      { lead: "Menos ruído.", big: "Mais valor", tail: "." },
-      { lead: `Em ${niche},`, big: " consistência", tail: " vale mais que sorte." },
-      { lead: "O barato sai caro.", big: "O certo", tail: " sai uma vez." },
-      { lead: "Detalhe não é enfeite.", big: "É resultado", tail: "." },
-      { lead: brand, big: " existe", tail: " para resolver." },
-    ],
+    typos: composedTypos.length
+      ? composedTypos
+      : [
+          { lead: "A gente cuida do processo.", big: "Você", tail: " colhe o resultado." },
+          { lead: "Menos ruído.", big: "Mais valor", tail: "." },
+          { lead: `Em ${niche},`, big: " consistência", tail: " vale mais que sorte." },
+          { lead: "O barato sai caro.", big: "O certo", tail: " sai uma vez." },
+          { lead: "Detalhe não é enfeite.", big: "É resultado", tail: "." },
+          { lead: brand, big: " existe", tail: " para resolver." },
+        ],
+
     compare: [
       {
         title: "Antes e depois de comunicar com clareza",
