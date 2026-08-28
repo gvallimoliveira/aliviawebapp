@@ -125,3 +125,4 @@ LGPD: proibido script de rastreamento/session replay (Clarity removido). Control
 - [Studio Public Pricing & Entry](mem://business/studio-public-pricing-and-entry) — Planos 39/99/249 + anual −20%, custo ~0 por arte, e decisão de acesso interno futuro com botão de volta.
 - [Studio Brand Signature](mem://features/studio-brand-signature) — Assinatura obrigatória da marca em todas as artes; toggle global por marca.
 - [Studio Method Blocks](mem://features/studio-method-blocks) — STEPS e D.I.F.I. como artes do Studio, exclusivas da marca Aliv.iA.
+- [Studio Matrix Audiences](mem://features/studio-matrix-audiences) — Públicos matriz contam na métrica oficial das artes; sub-nichos (parentId) nunca contam.
