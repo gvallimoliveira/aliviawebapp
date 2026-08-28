@@ -92,7 +92,10 @@ type Props = {
   inspirations?: ComposedBlock[][];
   /** Acesso sem cota (VIP): "Nova versão" nunca debita nada. */
   unlimited?: boolean;
+  /** Fotos que o plano permite no acervo privado (0 = acervo bloqueado). */
+  photoLimit?: number;
   onSaved?: () => void;
+
 };
 
 
