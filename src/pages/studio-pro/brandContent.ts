@@ -296,12 +296,15 @@ export const buildBrandContent = (
       words.length >= 3 ? words.slice(0, 6) : ["clareza", "relevância", "conexão", "resultado"],
       ["escuta", "método", "cuidado", brand],
     ],
-    closings: [
-      { title: "Vamos conversar?", sub: `Conte o seu cenário e ${brand} responde com um caminho.`, cta: "Chamar no direct" },
-      { title: "Sua próxima escolha pode ser diferente", sub: "Conheça uma proposta pensada para você.", cta: "Falar com a gente" },
-      { title: `${brand} está com agenda aberta`, sub: "Poucas vagas por mês para manter o padrão.", cta: "Garantir a minha vaga" },
-      { title: "Compartilhe com quem precisa", sub: "Alguém do seu contato está procurando isso hoje.", cta: "Enviar agora" },
-    ],
+    closings: composedClosings.length
+      ? composedClosings
+      : [
+          { title: "Vamos conversar?", sub: `Conte o seu cenário e ${brand} responde com um caminho.`, cta: "Chamar no direct" },
+          { title: "Sua próxima escolha pode ser diferente", sub: "Conheça uma proposta pensada para você.", cta: "Falar com a gente" },
+          { title: `${brand} está com agenda aberta`, sub: "Poucas vagas por mês para manter o padrão.", cta: "Garantir a minha vaga" },
+          { title: "Compartilhe com quem precisa", sub: "Alguém do seu contato está procurando isso hoje.", cta: "Enviar agora" },
+        ],
+
     stories: [
       {
         kicker: "CLIENTE REAL, NOME PROTEGIDO",
