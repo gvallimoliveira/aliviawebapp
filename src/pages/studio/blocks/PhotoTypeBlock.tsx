@@ -48,7 +48,7 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, picker, phot
       >
         <PhotoFrame
           photo={photo}
-          className={`w-full max-w-[86%] ${bottom ? "h-[62svh] rounded-t-[2rem]" : "h-[56svh] rounded-[2rem]"}`}
+          className={`w-full max-w-[86%] ${bottom ? "h-[62svh] rounded-[2rem]" : "h-[56svh] rounded-[2rem]"}`}
         />
 
         <div className="w-full px-6 pb-10 pt-5 text-center">
