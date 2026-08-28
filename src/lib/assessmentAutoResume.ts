@@ -20,7 +20,8 @@ export type ResumableStep =
   | "redflags"
   | "redflag_continue"
   | "anamnesis"
-  | "questionnaire";
+  | "questionnaire"
+  | "functional_tests";
 
 export const RESUMABLE_STEPS: ResumableStep[] = [
   "patient_info",
@@ -28,6 +29,7 @@ export const RESUMABLE_STEPS: ResumableStep[] = [
   "redflag_continue",
   "anamnesis",
   "questionnaire",
+  "functional_tests",
 ];
 
 export interface AssessmentProgressSnapshot {
@@ -37,11 +39,14 @@ export interface AssessmentProgressSnapshot {
   patientEmail: string;
   anamnesisData: any | null;
   questionnaireResults: any[];
+  /** Testes funcionais autoaplicados já respondidos (opcional). */
+  testResults?: any[];
   redFlagData: Record<string, boolean> | null;
   savedAt: number;
   /** Identidade normalizada (e-mail, ou nome quando não houver e-mail). */
   identity?: string | null;
 }
+
 
 const key = (scopeKey: string) => `${PREFIX}${scopeKey}`;
 
