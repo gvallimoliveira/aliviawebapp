@@ -19,6 +19,14 @@ import { ACCENT_STYLES, TextureLayer, renderAccent } from "./Texture";
 const FeatureBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   const items = picker.pick(content.features, treatment === 2 ? 2 : 1, rng, (f) => [f.topic]);
   const reversed = treatment === 1;
+  /**
+   * Quadro estreito (9x16 / 1x1) NÃO comporta duas colunas: os breakpoints do
+   * Tailwind olham a janela, não o quadro, então no desktop a arte vertical
+   * abria grid de 2 colunas e a headline atropelava a imagem. Só o formato
+   * livre (landing) usa lado a lado.
+   */
+  const wide = format === "free";
+
 
   if (treatment === 3) {
     // Close tipográfico: o título carrega a arte; a tela (se existir) vem em faixa.
@@ -61,7 +69,13 @@ const FeatureBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center ${personaSurface(persona, treatment + 3)}`}>
       <div className="container py-16">
-        <div className={treatment === 2 ? "grid gap-6 md:grid-cols-2" : "grid items-center gap-8 md:grid-cols-2"}>
+        <div
+          className={
+            treatment === 2
+              ? `grid gap-6 ${wide ? "md:grid-cols-2" : ""}`
+              : `grid items-center gap-8 ${wide ? "md:grid-cols-2" : ""}`
+          }
+        >
           {items.map((item, i) => {
             const image = imageForTopic(item.topic);
             return (
@@ -84,17 +98,21 @@ const FeatureBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
                       />
                     )}
                     <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.28em] text-primary">{item.tag}</p>
-                    <h3 className="mb-2 text-xl font-bold leading-tight tracking-tight text-foreground">{item.title}</h3>
+                    <h3 className="mb-2 break-words text-xl font-bold leading-tight tracking-tight text-foreground">{item.title}</h3>
                     <p className="text-sm text-muted-foreground">{item.description}</p>
                   </>
                 ) : (
                   <>
-                    <div className={`${reversed ? "md:order-2" : ""} ${image ? "" : "md:col-span-2 mx-auto max-w-3xl text-center"}`}>
+                    <div
+                      className={`${wide && reversed ? "md:order-2" : ""} ${
+                        image ? "" : `mx-auto max-w-3xl text-center ${wide ? "md:col-span-2" : ""}`
+                      }`}
+                    >
                       <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.28em] text-primary md:text-xs">
                         {item.tag}
                       </p>
                       <h2
-                        className={`mb-4 font-bold leading-tight tracking-tight text-foreground ${
+                        className={`mb-4 break-words [overflow-wrap:anywhere] font-bold leading-tight tracking-tight text-foreground ${
                           image ? "text-2xl md:text-4xl" : "text-3xl md:text-6xl"
                         }`}
                       >
@@ -109,7 +127,7 @@ const FeatureBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
                       </p>
                     </div>
                     {image && (
-                      <div className={reversed ? "md:order-1" : ""}>
+                      <div className={wide && reversed ? "md:order-1" : ""}>
                         <img
                           src={image}
                           alt={item.title}
