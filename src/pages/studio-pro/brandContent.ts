@@ -1,6 +1,8 @@
 import type { WorldContent } from "@/pages/studio/content";
 import type { TopicId } from "@/pages/studio/topics";
 import { GLOBAL_SEGMENT, type BrandAudience, type ContentAngle } from "./audiences";
+import { condensePhrase } from "./textFit";
+
 
 /**
  * CONTEÚDO EDITORIAL GENÉRICO DE UMA MARCA DO CLIENTE
@@ -38,12 +40,10 @@ export type BrandKit = {
  * voz nunca é renderizado.
  */
 const firstSentence = (text: string, max = 90) => {
-  const clean = text.replace(/\s+/g, " ").trim();
-  if (!clean) return "";
-  const cut = clean.split(/(?<=[.!?])\s/)[0] ?? clean;
-  const phrase = cut.length <= max ? cut : `${cut.slice(0, max).replace(/[\s,;:-]+\S*$/, "")}…`;
+  const phrase = condensePhrase(text, max);
   return phrase.replace(/\s*[.]\s*$/, "");
 };
+
 
 export const brandSlogan = (kit: BrandKit) => {
   const fromDescription = firstSentence(kit.description ?? "");
@@ -58,7 +58,9 @@ export const brandSlogan = (kit: BrandKit) => {
  */
 export const buildBrandContent = (kit: BrandKit): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
-  const niche = firstSentence((kit.niche ?? "").trim(), 48) || "o seu mercado";
+  /** Nicho entra em headlines: precisa ser rótulo curto, não frase inteira. */
+  const niche = firstSentence((kit.niche ?? "").trim(), 30) || "o seu mercado";
+
   const tone = brandSlogan(kit);
   const words = (kit.keywords ?? []).map((w) => w.trim()).filter(Boolean);
   /** Descrição também entra clampada: bloco de arte não é campo de texto longo. */

@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { sectionHeight, type BlockProps } from "./shared";
 import { BRAND_NAME } from "../brand";
+import { condensePhrase } from "@/pages/studio-pro/textFit";
+
 
 /**
  * PILHA DE NOTIFICAÇÕES (referência: cards de "New Client" flutuando sobre o
@@ -21,9 +23,9 @@ const SKINS = [
   { bg: "bg-accent/50", card: "bg-card", ink: "text-foreground", sub: "text-muted-foreground", desk: "bg-foreground/10" },
 ] as const;
 
-/** Corta a linha para caber no card sem estourar duas linhas. */
-const short = (text: string, max = 58) =>
-  text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
+/** Condensa a linha para caber no card sem reticências e sem perder o sentido. */
+const short = (text: string, max = 58) => condensePhrase(text, max) || text;
+
 
 const NotifyBlock = ({ content, rng, picker, treatment, format }: BlockProps) => {
   const skin = SKINS[treatment % SKINS.length];
