@@ -138,19 +138,45 @@ export const PHOTO_THEMES: PhotoTheme[] = [
   },
 ];
 
-/** Temas padrão por categoria, quando o label não diz nada. */
-const USAGE_THEMES: Record<StudioPhoto["usage"], TopicId[]> = {
-  institucional: BRAND_TOPICS,
-  atendimento: ASSESS_TOPICS,
-  produto: PRODUCT_TOPICS,
-  livre: LOAD_TOPICS,
-};
+/**
+ * FOTOS DE PROCEDIMENTO ESPECÍFICO — LISTA FECHADA.
+ *
+ * Algumas fotos mostram um recurso com significado clínico próprio e não podem
+ * ilustrar outra etapa da avaliação nem outra abordagem terapêutica. Aqui a
+ * leitura por tema é SUBSTITUÍDA por uma lista fechada de assuntos permitidos:
+ *
+ * - termografia: exame COMPLEMENTAR de calor superficial (sobrecarga /
+ *   redução metabólica local). Só entra em contexto de avaliação como um todo,
+ *   cuidado com o paciente, tecnologia na fisioterapia e pós-operatório —
+ *   jamais em questionários, testes funcionais, dinamometria, mapa de dor etc.
+ * - laserterapia: recurso de TRATAMENTO (dor, inflamação, reabilitação,
+ *   pós-operatório) — nunca em contexto de avaliação/coleta de dados.
+ */
+export type PhotoRestriction = { id: string; match: RegExp; allow: TopicId[] };
+
+export const PHOTO_RESTRICTIONS: PhotoRestriction[] = [
+  {
+    id: "termografia",
+    match: /termograf|termic|térmic|infraverm/i,
+    allow: ["external-upload", "clinical-impression", "safety", "privacy"],
+  },
+  {
+    id: "laserterapia",
+    match: /laser|fotobiomodul|led\b|ultrassom|tecar|eletroterap/i,
+    allow: ["treatment-plan", "steps-method", "hep", "pain-diary", "difi", "messaging"],
+  },
+];
+
+const restrictionOf = (photo: StudioPhoto): PhotoRestriction | undefined =>
+  PHOTO_RESTRICTIONS.find((r) => r.match.test(`${photo.label} ${photo.credit ?? ""}`));
 
 const themesOf = (photo: StudioPhoto): PhotoTheme[] =>
   PHOTO_THEMES.filter((theme) => theme.match.test(`${photo.label} ${photo.credit ?? ""}`));
 
 /** Tópicos que a foto consegue sustentar (extrapolação, não literalidade). */
 export const photoTopics = (photo: StudioPhoto): TopicId[] => {
+  const restriction = restrictionOf(photo);
+  if (restriction) return restriction.allow;
   const matched = themesOf(photo).flatMap((t) => t.topics);
   return matched.length > 0 ? Array.from(new Set(matched)) : USAGE_THEMES[photo.usage];
 };
@@ -158,6 +184,7 @@ export const photoTopics = (photo: StudioPhoto): TopicId[] => {
 /** Leitura em texto — usada como legenda/curadoria interna, nunca como título. */
 export const photoReading = (photo: StudioPhoto): string =>
   themesOf(photo)[0]?.reading ?? "registro real do cuidado";
+
 
 /**
  * 0 = sem nexo; quanto maior, mais a foto conversa com o assunto da copy.
