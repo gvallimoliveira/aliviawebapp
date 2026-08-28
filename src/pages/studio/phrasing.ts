@@ -180,6 +180,7 @@ export const composeSubs = (ing: CopyIngredients, opts: PhrasingOptions, rng: Rn
     (i) => `Para ${lower(ing.audience ?? ing.niche)}: ${lower(at(ing.solutions, i, "um caminho claro"))}.`,
     () => `${ing.brand} comunica valor sem ruído e sem letra miúda.`,
     (i) => `${upperFirst(at(ing.keywords, i, "Consistência"))} é o que separa presença de tentativa.`,
+    ...persuasionSubs(ing),
   ];
   const out = rng.shuffle(templates).flatMap((make, i) => [dress(make(i), { ...opts, seed: `${opts.seed}:sub:${i}` })]);
   return Array.from(new Set(out.map(clean)));
