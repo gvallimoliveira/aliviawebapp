@@ -21,3 +21,11 @@ lista fixa de ids. `resolveAudience` faz o sub-nicho herdar dores/desejos/
 soluções/CTA do matriz quando o campo próprio está vazio, e `buildSegmentContent`
 só cai no 360° quando o segmento ativo é um público matriz. Coberto por
 `src/test/studio-subniche-content.test.ts`.
+
+**Palavra-chave obrigatória (comunicação dirigida):** cada público tem
+`keyword` (termo que a arte grita: "Dor crônica", "Esportista", "Geração 60+") e
+`hook` (chamada em 2ª pessoa), editáveis no kit e com fallback derivado do label
+(`audienceKeyword` / `audienceHook`). Em `applyAudience`, sub-nicho (`parentId`
+preenchido) é FOCADO: headlines, typos, kickers, listas de medos, lista de
+valor, carrossel, quotes e fechos citam a palavra-chave, e o acervo genérico
+entra só como cauda de 3 itens. Coberto por `src/test/studio-subniche-content.test.ts`.
