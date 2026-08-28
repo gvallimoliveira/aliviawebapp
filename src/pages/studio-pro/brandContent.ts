@@ -58,7 +58,9 @@ export const brandSlogan = (kit: BrandKit) => {
  */
 export const buildBrandContent = (kit: BrandKit): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
-  const niche = firstSentence((kit.niche ?? "").trim(), 48) || "o seu mercado";
+  /** Nicho entra em headlines: precisa ser rótulo curto, não frase inteira. */
+  const niche = firstSentence((kit.niche ?? "").trim(), 30) || "o seu mercado";
+
   const tone = brandSlogan(kit);
   const words = (kit.keywords ?? []).map((w) => w.trim()).filter(Boolean);
   /** Descrição também entra clampada: bloco de arte não é campo de texto longo. */
