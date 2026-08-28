@@ -160,7 +160,63 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     ],
     cta: "Começar com segurança",
   },
+  {
+    id: "paciente-dor-cronica",
+    label: "Paciente com dor crônica",
+    description:
+      "Sub-nicho de Paciente: convive com dor há meses ou anos, já passou por vários profissionais e desconfia de promessa fácil.",
+    pains: [
+      "A dor sempre volta no mesmo lugar",
+      "Exame de imagem que não explica o sintoma",
+      "Ouviu que é só desgaste e que vai conviver com isso",
+      "Medo de piorar se se mexer",
+    ],
+    desires: ["Entender a causa em linguagem simples", "Voltar à rotina sem depender de remédio", "Ver a melhora em números"],
+    proof: [
+      "Avaliação guiada com mapa e mecanismo de dor",
+      "Hipótese explicada passo a passo, sem nome difícil",
+      "Plano de exercícios com progressão e vídeo",
+      "Diário de dor para ver a evolução dia a dia",
+    ],
+    cta: "Fazer minha avaliação",
+  },
+  {
+    id: "paciente-pos-operatorio",
+    label: "Paciente pós-operatório",
+    description: "Sub-nicho de Paciente: acabou de operar e precisa de condução segura fase a fase.",
+    pains: ["Insegurança sobre o que pode ou não fazer", "Orientação genérica na alta hospitalar", "Medo de forçar e perder a cirurgia"],
+    desires: ["Recuperar movimento no tempo certo", "Saber exatamente o que fazer em casa hoje"],
+    proof: [
+      "Plano por fases, com critério para avançar",
+      "Triagem de sinais de alerta em cada etapa",
+      "Relatório em PDF para levar ao cirurgião",
+    ],
+    cta: "Quero um plano seguro",
+  },
+  {
+    id: "paciente-atleta-amador",
+    label: "Praticante de esporte",
+    description: "Sub-nicho de Paciente: corre, pedala ou treina força e quer voltar ao esporte sem recair na lesão.",
+    pains: ["Parar de treinar por causa da lesão", "Voltar cedo demais e recair", "Alta sem critério objetivo"],
+    desires: ["Voltar ao esporte com segurança", "Treinar sem dor e sem medo"],
+    proof: ["Leitura de dor, inibição, fraqueza e incapacidade (D.I.F.I)", "Plano com progressão de carga documentada", "Reavaliação com critério de retorno"],
+    cta: "Quero voltar a treinar",
+  },
+  {
+    id: "paciente-60-mais",
+    label: "Paciente 60+",
+    description: "Sub-nicho de Paciente: sente perda de força e equilíbrio e teme depender de alguém.",
+    pains: ["Medo de cair", "Aceitar que dor é coisa da idade", "Exercício que parece arriscado demais"],
+    desires: ["Manter autonomia em casa", "Andar e subir escada com confiança"],
+    proof: [
+      "Triagem de segurança e saúde geral antes de qualquer plano",
+      "Exercícios de estabilidade com pé no solo firme, sem superfície instável",
+      "Acompanhamento simples entre as sessões",
+    ],
+    cta: "Cuidar do meu movimento",
+  },
 ];
+
 
 /** IDs oficiais — usados para impedir que a IA crie nichos duplicados. */
 export const ALIVIA_AUDIENCE_IDS = ALIVIA_AUDIENCES.map((a) => a.id);
