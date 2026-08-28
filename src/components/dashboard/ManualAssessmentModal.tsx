@@ -1416,23 +1416,19 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           ? "Resumo gerado a partir da avaliação manual registrada pelo profissional."
           : "Summary generated from the professional manual assessment."),
       };
-      let proLogoUrl: string | undefined;
-      let clinicLogoUrl: string | undefined;
-      let clinicName: string | undefined;
-      if (clinicId) {
-        const { data: c } = await supabase.from("clinics").select("logo_url, name").eq("id", clinicId).maybeSingle();
-        clinicLogoUrl = (c as any)?.logo_url || undefined;
-        clinicName = (c as any)?.name || undefined;
-      } else if (professionalId) {
-        const { data: p } = await supabase.from("professionals").select("logo_url").eq("id", professionalId).maybeSingle();
-        proLogoUrl = (p as any)?.logo_url || undefined;
-      }
-      const { resolveResponsibleProfessional } = await import("@/lib/getResponsibleProfessional");
-      const responsibleProfessional = await resolveResponsibleProfessional({
-        userId: (await supabase.auth.getUser()).data.user?.id || null,
-        ownProfessional: null,
+      // Single source of truth for logos + technical responsible: clinic logo
+      // wins, and the solo professional logo is used whenever there is none.
+      const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
+      const branding = await resolveAssessmentBranding({
         clinicId: clinicId || null,
+        professionalId: professionalId || null,
+        userId: (await supabase.auth.getUser()).data.user?.id || null,
       });
+      const proLogoUrl = branding.professionalLogoUrl;
+      const clinicLogoUrl = branding.clinicLogoUrl;
+      const clinicName = branding.clinicName;
+      const responsibleProfessional = branding.responsibleProfessional;
+
       const { generateAssessmentPdfBlob } = await import("@/utils/generatePdf");
       const blob = await generateAssessmentPdfBlob({
         diagnosis: diagnosisForPdf,

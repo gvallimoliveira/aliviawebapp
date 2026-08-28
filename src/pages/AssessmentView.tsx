@@ -181,6 +181,14 @@ const AssessmentView = () => {
     try {
       const { generateAssessmentPdf, generateBasicReportPdfBlob } = await import("@/utils/generatePdf");
       const finalHypothesis = assessment.final_hypothesis?.trim() || undefined;
+      // Branding (clinic / solo professional logo) applies to EVERY report,
+      // including the basic self-assessment made through a pro or clinic link.
+      const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
+      const branding = await resolveAssessmentBranding({
+        clinicId: (assessment as any).clinic_id || null,
+        professionalId: (assessment as any).professional_id || null,
+        userId: user?.id || null,
+      });
       if (assessment.type === "basic") {
         const pdfBlob = await generateBasicReportPdfBlob({
           diagnosis: assessment.diagnosis,
@@ -197,6 +205,9 @@ const AssessmentView = () => {
           redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
           redFlagAnswers: (assessment.red_flags as any)?.answers,
           redFlagsAnsweredAt: (assessment.red_flags as any)?.answered_at,
+          clinicLogoUrl: branding.clinicLogoUrl,
+          clinicName: branding.clinicName,
+          professionalLogoUrl: branding.professionalLogoUrl,
         });
         const url = URL.createObjectURL(pdfBlob);
         const a = document.createElement("a");
@@ -205,12 +216,7 @@ const AssessmentView = () => {
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
-        const branding = await resolveAssessmentBranding({
-          clinicId: (assessment as any).clinic_id || null,
-          professionalId: (assessment as any).professional_id || null,
-          userId: user?.id || null,
-        });
+
         await generateAssessmentPdf({
           diagnosis: assessment.diagnosis,
           // Passo E2 — mecanismo de dor + extensão vão para o relatório
@@ -245,6 +251,12 @@ const AssessmentView = () => {
       const { generateAssessmentPdfBlob, generateBasicReportPdfBlob } = await import("@/utils/generatePdf");
       const { getPublicOrigin } = await import("@/lib/getPublicOrigin");
       const finalHypothesis = assessment.final_hypothesis?.trim() || undefined;
+      const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
+      const branding = await resolveAssessmentBranding({
+        clinicId: (assessment as any).clinic_id || null,
+        professionalId: (assessment as any).professional_id || null,
+        userId: user?.id || null,
+      });
       let pdfBlob: Blob;
       if (assessment.type === "basic") {
         pdfBlob = await generateBasicReportPdfBlob({
@@ -262,15 +274,13 @@ const AssessmentView = () => {
           redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
           redFlagAnswers: (assessment.red_flags as any)?.answers,
           redFlagsAnsweredAt: (assessment.red_flags as any)?.answered_at,
+          clinicLogoUrl: branding.clinicLogoUrl,
+          clinicName: branding.clinicName,
+          professionalLogoUrl: branding.professionalLogoUrl,
         });
       } else {
-        const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
-        const branding = await resolveAssessmentBranding({
-          clinicId: (assessment as any).clinic_id || null,
-          professionalId: (assessment as any).professional_id || null,
-          userId: user?.id || null,
-        });
         pdfBlob = await generateAssessmentPdfBlob({
+
           diagnosis: assessment.diagnosis,
           // Passo E2 — mecanismo de dor + extensão vão para o relatório
           painMechanism: (assessment.diagnosis as any)?.pain_mechanism ?? (assessment as any).pain_mechanism,

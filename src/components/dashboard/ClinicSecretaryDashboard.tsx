@@ -137,6 +137,13 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
           : null,
         clinicId: activeClinic?.clinic_id,
       });
+      // Clinic logo when the clinic has one; otherwise the assigned
+      // professional's own logo, so no report ships unbranded.
+      const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
+      const logos = await resolveAssessmentBranding({
+        clinicId: activeClinic?.clinic_id || null,
+        professionalId: assessment.professional_id || null,
+      });
       await generateAssessmentPdf({
         diagnosis: assessment.diagnosis,
         treatmentPlan: assessment.treatment_plan,
@@ -147,9 +154,11 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
         testResults: assessment.test_results,
         redFlags: (assessment.red_flags as any)?.detected,
           redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
-        clinicLogoUrl: activeClinic?.logo_url || undefined,
-        clinicName: activeClinic?.clinic_name || undefined,
+        clinicLogoUrl: logos.clinicLogoUrl || activeClinic?.logo_url || undefined,
+        clinicName: logos.clinicName || activeClinic?.clinic_name || undefined,
+        professionalLogoUrl: logos.professionalLogoUrl,
         responsibleProfessional,
+
       });
       toast({ title: pdfLang === "pt" ? "PDF gerado!" : "PDF generated!" });
     } catch {
