@@ -102,4 +102,18 @@ export const pickHeadline = <T extends { strong: string; rest: string }>(
 
 /** Section height contract: blocks must fill the recording frame. */
 export const sectionHeight = (format: StudioFormat) =>
-  format === "free" ? "min-h-[80svh]" : "min-h-[100svh]";
+  format === "free" ? "min-h-[80svh]" : "h-full min-h-full w-full";
+
+/**
+ * PADDING DINÂMICO POR FORMATO
+ * 
+ * Garante áreas de segurança (Safe Zones) para redes sociais:
+ * - 9x16: buffers verticais generosos para evitar UI de Stories (logo topo, barra baixo).
+ * - 1x1: margens equilibradas para feed.
+ * - free: padding padrão.
+ */
+export const blockPadding = (format: StudioFormat) => {
+  if (format === "9x16") return "pt-[14%] pb-[18%] px-[9%]";
+  if (format === "1x1") return "py-[10%] px-[8%]";
+  return "py-20 px-6";
+};
