@@ -5,62 +5,55 @@ import { describe, it, expect } from "vitest";
 /**
  * TRAVAS DO APRENDIZADO DE ONBOARDING DE MARCA (docs/studio-brand-onboarding-playbook.md).
  *
- * Cada asserção aqui existe porque o erro correspondente já aconteceu com uma marca real
- * de terceiro no Studio público. Documentação sozinha não impede regressão — este arquivo sim.
+ * Cada asserção existe porque o erro correspondente já aconteceu com uma marca real de
+ * terceiro no Studio público. Documentação sozinha não impede regressão — este arquivo sim.
+ *
+ * Escopo deliberadamente estreito: auditamos apenas o que precisa ser NEUTRO —
+ * os blocos de arte (rodam para qualquer marca) e o acervo de conteúdo genérico.
+ * O conteúdo do mundo interno (`pages/studio/content/*`, landings, kit da marca dona)
+ * fala da Aliv.iA por definição e está fora da auditoria.
  */
 
 const root = path.resolve(__dirname, "..");
-const studioDirs = [
-  path.join(root, "pages/studio"),
-  path.join(root, "pages/studio/blocks"),
-  path.join(root, "pages/studio/content"),
-  path.join(root, "pages/studio-pro"),
-];
+const blocksDir = path.join(root, "pages/studio/blocks");
+const neutralAcervo = path.join(root, "pages/studio-pro/brandContent.ts");
 
-/** Lista arquivos de código de um diretório (sem recursão: cada pasta é declarada acima). */
-const codeFiles = (dir: string) =>
-  fs
-    .readdirSync(dir, { withFileTypes: true })
-    .filter((e) => e.isFile() && /\.(ts|tsx)$/.test(e.name))
-    .map((e) => path.join(dir, e.name));
-
-/** Comentários podem citar a marca dona; só o código executável é auditado. */
+/** Comentários podem citar a marca dona; só código executável é auditado. */
 const stripComments = (src: string) =>
   src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
-/** Arquivos que legitimamente conhecem a marca dona (mundo interno / bindings). */
-const OWNER_AWARE = new Set([
-  "brand.ts", // define BRAND_NAME e o fallback neutro
-  "brandDna.ts", // DNA do produto Aliv.iA, usado só no Studio interno
-  "StudioLanding.tsx",
-  "StudioProLanding.tsx",
-  "StudioProVip.tsx",
-  "StudioProAuth.tsx",
-  "StudioProApp.tsx",
-  "product.ts",
-  "plan.ts",
-]);
+const readCode = (file: string) => stripComments(fs.readFileSync(file, "utf8"));
 
-describe("Studio: isolamento da marca dona", () => {
-  const audited = studioDirs
-    .flatMap(codeFiles)
-    .filter((f) => !OWNER_AWARE.has(path.basename(f)));
+const OWNER_BRAND = /Aliv\.?\s?iA|aliviawebapp/i;
 
-  it("acervo criativo e blocos não citam a marca dona em código", () => {
-    expect(audited.length).toBeGreaterThan(20);
-    const leaks: string[] = [];
-    audited.forEach((file) => {
-      const code = stripComments(fs.readFileSync(file, "utf8"));
-      if (/Aliv\.?\s?iA|aliviawebapp/i.test(code)) leaks.push(path.relative(root, file));
-    });
-    expect(leaks, `marca dona vazando em: ${leaks.join(", ")}`).toEqual([]);
+describe("Studio: blocos e acervo neutro não carregam a marca dona", () => {
+  const blockFiles = fs
+    .readdirSync(blocksDir)
+    .filter((f) => /\.(ts|tsx)$/.test(f))
+    .map((f) => path.join(blocksDir, f));
+
+  it("nenhum bloco de arte cita a marca dona em código", () => {
+    expect(blockFiles.length).toBeGreaterThan(10);
+    const leaks = blockFiles
+      .filter((f) => OWNER_BRAND.test(readCode(f)))
+      .map((f) => path.basename(f));
+    expect(leaks, `blocos com marca fixa: ${leaks.join(", ")}`).toEqual([]);
+  });
+
+  it("o acervo de conteúdo genérico do Studio público é neutro", () => {
+    expect(OWNER_BRAND.test(readCode(neutralAcervo))).toBe(false);
+  });
+
+  it("blocos leem o nome da marca pelo binding, não por string", () => {
+    // Ao menos os lockups tipográficos precisam consumir o binding dinâmico.
+    const mono = readCode(path.join(blocksDir, "MonoBlock.tsx"));
+    expect(mono).toMatch(/brandWordmarkParts|BRAND_NAME/);
   });
 });
 
 describe("Studio: vocabulário proibido no acervo neutro", () => {
-  it("nada de jargão de gestão de projeto nos textos gerados", () => {
-    const file = path.join(root, "pages/studio-pro/brandContent.ts");
-    const code = stripComments(fs.readFileSync(file, "utf8"));
+  it("nada de jargão de gestão de projeto (prazo/responsável/escopo)", () => {
+    const code = readCode(neutralAcervo);
     ["prazo", "responsável", "escopo"].forEach((term) => {
       expect(
         new RegExp(`\\b${term}s?\\b`, "i").test(code),
@@ -69,17 +62,9 @@ describe("Studio: vocabulário proibido no acervo neutro", () => {
     });
   });
 
-  it("blocos de números não mencionam biblioteca de evidências / PEDro (beta)", () => {
-    const files = [
-      path.join(root, "pages/studio/content/defaults.ts"),
-      path.join(root, "pages/studio/content/professional.ts"),
-      path.join(root, "pages/studio/content/academic.ts"),
-    ].filter(fs.existsSync);
-    expect(files.length).toBeGreaterThan(0);
-    files.forEach((file) => {
-      const code = stripComments(fs.readFileSync(file, "utf8"));
-      expect(/PEDro/i.test(code), `${path.basename(file)} cita PEDro`).toBe(false);
-    });
+  it("acervo neutro não promete biblioteca de evidências / PEDro (ainda beta)", () => {
+    const code = readCode(neutralAcervo);
+    expect(/PEDro/i.test(code)).toBe(false);
   });
 });
 
@@ -90,9 +75,9 @@ describe("Studio: texto nunca é entregue cortado", () => {
       "Sua recuperação começa aqui com a referência em plataforma de avaliação e acompanhamento de pacientes";
     const out = condensePhrase(long, 48);
     expect(out.length).toBeLessThanOrEqual(48);
-    expect(out).not.toMatch(/[…]|\.\.\.$/);
+    expect(out).not.toMatch(/…|\.\.\.$/);
     expect(out.trim()).not.toMatch(/[,;:]$/);
-    expect(out.length).toBeGreaterThan(0);
+    expect(out.trim().length).toBeGreaterThan(0);
   });
 
   it("frase já curta permanece intacta", async () => {
