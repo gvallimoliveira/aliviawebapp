@@ -204,7 +204,7 @@ const StudioProCreate = ({
     add: addPhoto,
     edit: editPhoto,
     remove: removePhoto,
-  } = useStudioPhotos(true);
+  } = useStudioPhotos(true, brand.id);
   const [photosOpen, setPhotosOpen] = useState(false);
   /**
    * CONTROLE CRIATIVO: fotos fixadas.
