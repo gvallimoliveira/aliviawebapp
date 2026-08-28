@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useCountUp } from "@/hooks/useCountUp";
-import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { bigTypeClass, blockPadding, personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
 import type { StudioMetric } from "../content/types";
 
@@ -17,11 +17,11 @@ const Metric = ({ metric, stacked }: { metric: StudioMetric; stacked: boolean })
   return (
     <div
       ref={ref}
-      className={`flex flex-col gap-2 ${
-        stacked ? "border-b border-border pb-6 last:border-0 last:pb-0" : "rounded-2xl border border-border bg-card p-6"
+      className={`flex min-w-0 flex-col gap-2 ${
+        stacked ? "border-b border-border pb-6 last:border-0 last:pb-0" : "rounded-2xl border border-border bg-card p-5"
       }`}
     >
-      <span className="text-4xl font-bold tracking-tight text-primary md:text-6xl">
+      <span className="block break-words text-4xl font-bold leading-[0.95] tracking-tight text-primary md:text-5xl">
         {metric.prefix}
         {count}
         {metric.suffix}
@@ -36,8 +36,8 @@ const GiantMetric = ({ metric }: { metric: StudioMetric }) => {
   const { count, ref } = useCountUp(metric.value, 1600);
 
   return (
-    <div ref={ref} className="flex flex-col gap-2">
-      <span className="text-5xl font-bold tracking-tight text-primary md:text-7xl">
+    <div ref={ref} className="flex min-w-0 flex-col gap-2">
+      <span className="block break-words text-4xl font-bold leading-[0.95] tracking-tight text-primary md:text-6xl">
         {metric.prefix}
         {count}
         {metric.suffix}
@@ -53,7 +53,7 @@ const SpotMetric = ({ metric }: { metric: StudioMetric }) => {
 
   return (
     <div ref={ref} className="flex flex-col gap-3">
-      <span className="text-6xl font-bold tracking-tight text-primary md:text-8xl">
+      <span className="block break-words text-5xl font-bold leading-[0.95] tracking-tight text-primary md:text-7xl">
         {metric.prefix}
         {count}
         {metric.suffix}
@@ -78,7 +78,7 @@ const MetricsBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment + 1)}`}>
       {(treatment === 2 || treatment === 3) && <TextureLayer persona={persona} index={treatment + 1} />}
-      <div className="container relative py-16">
+      <div className={`relative w-full ${blockPadding(format)}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -102,13 +102,13 @@ const MetricsBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
               </div>
             </div>
           ) : giantRow ? (
-            <div className="grid gap-10 border-t border-border pt-10 sm:grid-cols-3">
+            <div className="grid gap-8 border-t border-border pt-8 sm:grid-cols-3">
               {metrics.map((metric) => (
                 <GiantMetric key={metric.label} metric={metric} />
               ))}
             </div>
           ) : (
-            <div className={stacked ? "flex flex-col gap-6" : "grid gap-4 sm:grid-cols-3"}>
+            <div className={stacked ? "flex flex-col gap-6" : "grid gap-3 sm:grid-cols-3"}>
               {metrics.map((metric) => (
                 <Metric key={metric.label} metric={metric} stacked={stacked} />
               ))}
