@@ -217,10 +217,15 @@ export const uploadPhoto = async (
     })
     .select("id, storage_path, label, usage, credit, sort_order, focus_x, focus_y, zoom, rotation, safe_area")
     .single();
-  if (error) throw error;
+  if (error) {
+    // Limite do plano (ou qualquer recusa do banco): não deixa arquivo órfão.
+    await supabase.storage.from(PHOTO_BUCKET).remove([storagePath]);
+    throw error;
+  }
 
-  const src = await toDataUrl(file);
+  const src = await toDataUrl(payload);
   srcCache.set(storagePath, src);
+
   return {
     id: data.id,
     storagePath,
