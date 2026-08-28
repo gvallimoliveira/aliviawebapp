@@ -154,6 +154,8 @@ const StudioProBrand = () => {
   const [colorKit, setColorKit] = useState<BrandColorKit>(DEFAULT_COLOR_KIT);
   /** Assinatura da marca nas artes — ajuste global desta marca. */
   const [signatureEnabled, setSignatureEnabled] = useState(true);
+  /** Manual da marca anexado nesta sessão — fonte principal da interpretação. */
+  const [doc, setDoc] = useState<BrandDoc | null>(null);
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
 
