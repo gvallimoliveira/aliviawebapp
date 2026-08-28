@@ -53,9 +53,16 @@ const first = (data: unknown): Row | null => {
   return (row as Row) ?? null;
 };
 
+/**
+ * Resultado do consumo. Falha de rede/permissão NÃO é cota esgotada: o app
+ * precisa distinguir os dois casos para não acusar upgrade sem motivo.
+ */
+export type ConsumeResult = "allowed" | "exhausted" | "error";
+
 export const useStudioQuota = () => {
   const { user, loading: authLoading } = useAuth();
   const [quota, setQuota] = useState<StudioQuota | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -65,9 +72,17 @@ export const useStudioQuota = () => {
       return;
     }
     const { data, error } = await supabase.rpc("studio_credit_status");
-    if (error) console.error("[studio-pro] studio_credit_status", error);
+    if (error) {
+      console.error("[studio-pro] studio_credit_status", error);
+      setError(error.message ?? "falha ao ler a cota");
+      setLoading(false);
+      return;
+    }
     const row = first(data);
-    if (row) setQuota(toQuota(row));
+    if (row) {
+      setQuota(toQuota(row));
+      setError(null);
+    }
     setLoading(false);
   }, [user]);
 
@@ -77,22 +92,26 @@ export const useStudioQuota = () => {
   }, [authLoading, refresh]);
 
   /**
-   * Tenta consumir uma geração. Retorna `false` quando a cota do período acabou
-   * — a UI então mostra o bloqueio amigável em vez de gerar as artes.
+   * Tenta consumir uma geração. `exhausted` = cota do período acabou;
+   * `error` = a chamada falhou (a UI deve avisar e permitir tentar de novo).
    */
   const consume = useCallback(
-    async (amount = STUDIO_BATCH_SIZE): Promise<boolean> => {
+    async (amount = STUDIO_BATCH_SIZE): Promise<ConsumeResult> => {
       const { data, error } = await supabase.rpc("consume_studio_generation", { p_amount: amount });
       if (error) {
         console.error("[studio-pro] consume_studio_generation", error);
-        return false;
+        setError(error.message ?? "falha ao confirmar a cota");
+        return "error";
       }
       const row = first(data);
-      if (row) setQuota(toQuota(row));
-      return !!row?.allowed;
+      if (!row) return "error";
+      setQuota(toQuota(row));
+      setError(null);
+      return row.allowed ? "allowed" : "exhausted";
     },
     [],
   );
 
-  return { quota, loading: loading || authLoading, refresh, consume };
+  return { quota, error, loading: loading || authLoading, refresh, consume };
 };
+
