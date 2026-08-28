@@ -597,7 +597,8 @@ export const buildSegmentContent = ({
   if (segment === GLOBAL_SEGMENT) {
     return applyAngle(applyGlobal(root, brand, audiences, positioning), angle);
   }
-  const audience = audiences.find((a) => a.id === segment);
+  // Sub-nichos herdam o kit do público matriz e sobrepõem o próprio recorte.
+  const audience = resolveAudience(audiences, segment);
   if (!audience) return applyAngle(root, angle);
   return applyAngle(applyAudience(root, brand, audience), angle);
 };
