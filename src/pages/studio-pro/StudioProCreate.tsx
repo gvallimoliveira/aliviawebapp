@@ -393,19 +393,6 @@ const StudioProCreate = ({
   const kit = readColorKit(brand.colors);
   const themeStyle = (() => {
     const style: Record<string, string> = {};
-    const primary = hexToHslTriplet(kit.primary);
-    const primary2 = hexToHslTriplet(kit.primary2);
-    if (primary) {
-      style["--primary"] = primary;
-      style["--ring"] = primary;
-    }
-    if (primary2) style["--background"] = primary2;
-    if (kit.useSecondary) {
-      const secondary = hexToHslTriplet(kit.secondary);
-      const secondary2 = hexToHslTriplet(kit.secondary2);
-      if (secondary) style["--accent"] = secondary;
-      if (secondary2) style["--secondary"] = secondary2;
-    }
     /**
      * Cores extras da marca entram na rotação: cada lote de artes (seed) escolhe
      * um acento diferente da paleta, sem sair do kit aprovado pelo cliente.
@@ -415,11 +402,30 @@ const StudioProCreate = ({
       ...kit.extraPrimary,
       ...(kit.useSecondary ? kit.extraSecondary : []),
     ].filter(Boolean);
+    let accent = kit.useSecondary ? kit.secondary : kit.primary;
     if (accents.length > 1) {
       const pick = [...String(seed)].reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % accents.length;
-      const accent = hexToHslTriplet(accents[pick]);
-      if (accent) style["--accent"] = accent;
+      accent = accents[pick];
     }
+
+    /**
+     * CONTRASTE VERIFICADO ANTES DE APROVAR A ARTE: cada superfície do tema
+     * recebe o texto calculado (WCAG 4,5:1). Se o par reprovar, o TEXTO muda —
+     * a cor de marca do fundo é preservada.
+     */
+    const tokens = readableThemeTokens({
+      background: kit.primary2,
+      primary: kit.primary,
+      accent,
+      secondary: kit.useSecondary ? kit.secondary2 : kit.primary2,
+    });
+    Object.entries(tokens).forEach(([token, hex]) => {
+      const triplet = hexToHslTriplet(hex);
+      if (triplet) style[token] = triplet;
+    });
+    const ring = hexToHslTriplet(kit.primary);
+    if (ring) style["--ring"] = ring;
+
     accents.forEach((color, i) => {
       const triplet = hexToHslTriplet(color);
       if (triplet) style[`--brand-extra-${i + 1}`] = triplet;
@@ -429,6 +435,7 @@ const StudioProCreate = ({
     if (brandFont.stack) style.fontFamily = brandFont.stack;
     return Object.keys(style).length ? (style as React.CSSProperties) : undefined;
   })();
+
 
 
   /** Garante a fonte da marca carregada antes de renderizar/exportar as artes. */
