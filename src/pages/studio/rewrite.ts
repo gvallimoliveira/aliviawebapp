@@ -165,7 +165,7 @@ const frame = (sentence: string, register: VoiceRegister, rng: Rng): string => {
   const roll = rng.int(10);
   if (roll < 3) return `${PREFIXES[register][rng.int(PREFIXES[register].length)]} ${lower(core)}.`;
   if (roll < 5 && core.length <= 80) return `${core}.${SUFFIXES[register][rng.int(SUFFIXES[register].length)]}`;
-  if (roll < 6 && core.length <= 70) return QUESTIONS[rng.int(QUESTIONS.length)](core);
+  if (roll < 6 && core.length <= 70 && !/[—:–]/.test(core)) return QUESTIONS[rng.int(QUESTIONS.length)](core);
   return sentence;
 };
 
