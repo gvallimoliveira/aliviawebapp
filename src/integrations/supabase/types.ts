@@ -3703,6 +3703,7 @@ export type Database = {
           brand_id: string | null
           created_at: string
           credit: string | null
+          description: string | null
           focus_x: number
           focus_y: number
           id: string
@@ -3720,6 +3721,7 @@ export type Database = {
           brand_id?: string | null
           created_at?: string
           credit?: string | null
+          description?: string | null
           focus_x?: number
           focus_y?: number
           id?: string
@@ -3737,6 +3739,7 @@ export type Database = {
           brand_id?: string | null
           created_at?: string
           credit?: string | null
+          description?: string | null
           focus_x?: number
           focus_y?: number
           id?: string

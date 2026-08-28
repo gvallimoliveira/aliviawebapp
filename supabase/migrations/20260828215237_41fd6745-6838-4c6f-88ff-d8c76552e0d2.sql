@@ -1,0 +1,1 @@
+alter table public.studio_photos add column if not exists description text;
