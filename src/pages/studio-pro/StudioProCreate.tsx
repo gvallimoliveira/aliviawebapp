@@ -548,13 +548,19 @@ const StudioProCreate = ({
             {folder === "Todas" ? "Geral" : folder}
             {!unlimited && ` · lote de ${batchSize} artes por geração`}
           </p>
-          {!unlimited && quota && (
+          {!unlimited && quotaError && (
+            <p className="mt-1 text-xs font-semibold text-destructive">
+              Não conseguimos ler sua cota agora — a geração segue liberada e o desconto é feito no servidor.
+            </p>
+          )}
+          {!unlimited && quota && !quotaError && (
             <p className="mt-1 text-xs font-semibold text-foreground">
               {quota.generationsLeft > 0
                 ? `${quota.generationsLeft} ${quota.generationsLeft === 1 ? "geração" : "gerações"} restantes neste período · ${quota.remaining} de ${quota.allowance} artes`
                 : "Cota do período encerrada — faça upgrade para continuar gerando."}
             </p>
           )}
+
           {/* Nichos da marca + visão 360° que interpola todos eles. */}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {segments.map((s) => (
