@@ -692,16 +692,31 @@ Responda SOMENTE com JSON válido neste formato:
 
     const tagline = String(parsed.tagline ?? "").trim().replace(/\s+/g, " ").slice(0, 90);
 
+    /**
+     * Descrição e tom só são gravados quando o campo do cliente está vazio (ou
+     * raso, < 60 caracteres): texto escrito à mão nunca é sobrescrito pela IA.
+     */
+    const aiDescription = String(parsed.description ?? "").trim().slice(0, 700);
+    const aiVoice = String(parsed.voice ?? "").trim().slice(0, 2500);
+    const currentDescription = String(brand.description ?? "").trim();
+    const currentTone = String(brand.tone ?? "").trim();
+    const fillDescription = aiDescription.length > 40 && currentDescription.length < 60;
+    const fillTone = aiVoice.length > 60 && currentTone.length < 60;
+
     const result = {
-      positioning: String(parsed.positioning ?? "").trim().slice(0, 800),
+      description: aiDescription,
+      positioning: String(parsed.positioning ?? "").trim().slice(0, 1400),
       tagline,
-      keywords: strList(parsed.keywords, 10),
-      strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 900),
+      voice: aiVoice,
+      keywords: strList(parsed.keywords, 12),
+      strategy_notes: String(parsed.strategy_notes ?? "").trim().slice(0, 1600),
       audiences: mergedAudiences,
       colors: colorKit,
       font: fontKey,
       logo_url: logoUrl,
       site_read: !!site.text,
+      site_pages: site.pages,
+      site_fonts: site.fonts,
       doc_read: docOk,
     };
 
@@ -713,6 +728,8 @@ Responda SOMENTE com JSON válido neste formato:
         positioning: result.positioning || null,
         strategy_notes: result.strategy_notes || null,
         audiences: result.audiences,
+        ...(fillDescription ? { description: aiDescription } : {}),
+        ...(fillTone ? { tone: aiVoice } : {}),
         ...(result.keywords.length ? { topics: result.keywords } : {}),
         ...(colorKit ? { colors: colorKit } : {}),
         ...(logoUrl && !currentLogoIsImage ? { logo_url: logoUrl } : {}),
@@ -723,6 +740,7 @@ Responda SOMENTE com JSON válido neste formato:
       console.error("[studio-brand-interpret] update", updateError);
       return json({ error: "Interpretação feita, mas não foi possível salvar." }, 500);
     }
+
 
 
     return json({ ok: true, ...result });
