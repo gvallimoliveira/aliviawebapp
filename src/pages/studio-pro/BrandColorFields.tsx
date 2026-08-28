@@ -134,13 +134,13 @@ const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => {
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <Swatch
             id={`${idPrefix}-secondary`}
-            label="Secundária 1"
+            label="Apoio (destaque)"
             value={kit.secondary}
             onChange={(secondary) => onChange({ ...kit, secondary })}
           />
           <Swatch
             id={`${idPrefix}-secondary2`}
-            label="Secundária 2"
+            label="Fundo claro / neutro"
             value={kit.secondary2}
             onChange={(secondary2) => onChange({ ...kit, secondary2 })}
           />
@@ -148,6 +148,8 @@ const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => {
       )}
     </div>
   </div>
-);
+  );
+};
+
 
 export default BrandColorFields;
