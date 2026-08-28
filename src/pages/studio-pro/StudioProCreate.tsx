@@ -27,7 +27,7 @@ import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { ensureFontLoaded, findFont } from "./brandFonts";
 import { ANGLES, GLOBAL_SEGMENT, buildSegments, readAudiences, type ContentAngle } from "./audiences";
-import { STUDIO_BATCH_SIZE, useStudioQuota } from "./useStudioQuota";
+import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
 
@@ -328,38 +328,50 @@ const StudioProCreate = ({
   /**
    * ENTREGA POR GERAÇÃO.
    *
-   * VIP (acesso ilimitado) recebe a página inteira — variedade grande de uma vez
-   * para filtrar. Assinantes e acessos concedidos recebem um lote curto
-   * (`maxArts`, padrão 2): assim cada geração custa pouco da cota e o usuário
-   * refina os seletores (público, ângulo, formato) entre os lotes, construindo
-   * variedade temática dentro dos créditos.
+   * A cota é contada em gerações, então cada geração entrega a VERSÃO INTEIRA —
+   * nada de amostrar artes soltas (era isso que quebrava a sequência do
+   * carrossel, entregando um slide isolado). Trocar público, objetivo, modelo ou
+   * formato navega a mesma geração sem custo.
    */
-  const blocks = useMemo(() => {
-    const page = composePage(
-      createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
-      persona,
-      // Com modelos escolhidos, a linhagem de favoritos cede lugar à escolha.
-      models.length > 0 ? undefined : lineage.blocks,
-      content.carousels,
-      photos.length,
-      kindsForModels(models, photos.length, isAlivia),
-      isAlivia,
-    );
-    if (!Number.isFinite(maxArts) || page.length <= maxArts) return page;
-    // Amostra determinística e variada: evita repetir o mesmo tipo no lote.
-    const rng = createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:batch`);
-    const pool = [...page];
-    const picked: ComposedBlock[] = [];
-    const usedKinds = new Set<string>();
-    while (picked.length < maxArts && pool.length > 0) {
-      const idx = rng.int(pool.length);
-      const [candidate] = pool.splice(idx, 1);
-      if (usedKinds.has(candidate.kind) && pool.some((b) => !usedKinds.has(b.kind))) continue;
-      usedKinds.add(candidate.kind);
-      picked.push(candidate);
-    }
-    return picked;
-  }, [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, maxArts, models, isAlivia]);
+  const blocks = useMemo(
+    () =>
+      composePage(
+        createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
+        persona,
+        // Com modelos escolhidos, a linhagem de favoritos cede lugar à escolha.
+        models.length > 0 ? undefined : lineage.blocks,
+        content.carousels,
+        photos.length,
+        kindsForModels(models, photos.length, isAlivia),
+        isAlivia,
+      ),
+    [brand.id, seed, activeSegment, angle, persona, content, lineage, photos.length, models, isAlivia],
+  );
+
+  /**
+   * AGRUPAMENTO DE ENTREGA.
+   *
+   * Slides do mesmo carrossel viram UM item (faixa com scroll lateral, como no
+   * Instagram); qualquer outra arte é um item avulso.
+   */
+  const groups = useMemo(() => {
+    type Item = { block: ComposedBlock; index: number };
+    const out: { key: string; carousel: boolean; items: Item[] }[] = [];
+    blocks.forEach((block, index) => {
+      const group = block.kind === "carousel" && block.slide ? block.slide.group : null;
+      const last = out[out.length - 1];
+      if (group !== null && last?.carousel && last.key === `carousel-${group}`) {
+        last.items.push({ block, index });
+        return;
+      }
+      out.push({
+        key: group !== null ? `carousel-${group}` : `${block.kind}-${index}`,
+        carousel: group !== null,
+        items: [{ block, index }],
+      });
+    });
+    return out;
+  }, [blocks]);
 
 
 
