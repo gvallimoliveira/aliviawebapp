@@ -369,6 +369,26 @@ const StudioProBrand = () => {
   const removeAudience = (index: number) =>
     setAudiences((prev) => prev.filter((_, i) => i !== index));
 
+  /**
+   * Aplica um kit de conteúdo de nicho: preenche os campos vazios da marca e
+   * substitui a lista de públicos pelos do modelo. Nada é enviado ao servidor
+   * até o usuário salvar.
+   */
+  const applyNichePreset = (preset: NichePreset) => {
+    setForm((prev) => ({
+      ...prev,
+      niche: prev.niche.trim() || preset.niche,
+      tone: prev.tone.trim() || preset.tone,
+      keywords: prev.keywords.trim() || preset.keywords,
+      positioning: prev.positioning.trim() || preset.positioning,
+      strategy_notes: prev.strategy_notes.trim() || preset.strategy_notes,
+    }));
+    setAudiences(preset.audiences.map((a) => ({ ...a })));
+    toast.success(`Kit "${preset.label}" aplicado. Ajuste os textos e salve.`);
+  };
+
+
+
 
   const moveArt = async (id: string, target: string) => {
     const { error } = await supabase.from("studio_creations").update({ folder: target }).eq("id", id);
