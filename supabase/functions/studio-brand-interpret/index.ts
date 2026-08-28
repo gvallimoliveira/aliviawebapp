@@ -581,14 +581,15 @@ Responda SOMENTE com JSON válido neste formato:
           id: slugify(label),
           label: label.slice(0, 40),
           description: String(row.description ?? "").trim().slice(0, 300) || undefined,
-          pains: strList(row.pains, 4),
-          desires: strList(row.desires, 3),
-          proof: strList(row.proof, 4),
+          pains: strList(row.pains, 8),
+          desires: strList(row.desires, 8),
+          proof: strList(row.proof, 8),
           cta: String(row.cta ?? "").trim().slice(0, 60) || undefined,
         };
       })
       .filter(Boolean)
-      .slice(0, 6) as Array<Record<string, unknown>>;
+      .slice(0, 10) as Array<Record<string, unknown>>;
+
 
     /**
      * Nunca perder um público já cadastrado (ex.: o mundo do paciente do
