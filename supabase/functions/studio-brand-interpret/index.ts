@@ -224,7 +224,9 @@ Deno.serve(async (req) => {
     // A marca precisa ser do próprio usuário (RLS reforçada em código).
     const { data: brand, error: brandError } = await supabase
       .from("studio_brands")
-      .select("id, user_id, name, niche, tone, description, source_url, instagram_handle, topics, audiences, colors")
+      .select(
+        "id, user_id, name, niche, tone, description, source_url, instagram_handle, topics, audiences, colors, logo_url",
+      )
       .eq("id", brandId)
       .maybeSingle();
     if (brandError) return json({ error: "Não foi possível ler a marca" }, 500);
@@ -237,8 +239,21 @@ Deno.serve(async (req) => {
       .map((a) => String(a?.label ?? "").trim())
       .filter(Boolean);
 
-    // Lê a landing page do cliente (texto + cores) quando há site cadastrado.
-    const site = brand.source_url ? await readSite(String(brand.source_url)) : { text: "", colors: [] };
+    // Lê a landing page do cliente (texto + cores + logo) quando há site cadastrado.
+    const site = brand.source_url
+      ? await readSite(String(brand.source_url))
+      : { text: "", colors: [], logo: null };
+
+    /**
+     * Logo: só grava quando a marca não tem um logo de imagem válido. Um valor
+     * como "https://minhamarca.com.br" (o próprio site) não é logo e era usado
+     * como imagem, deixando a assinatura das artes quebrada.
+     */
+    const currentLogo = String(brand.logo_url ?? "").trim();
+    const currentLogoIsImage =
+      !!currentLogo && (IMG_EXT.test(currentLogo) || currentLogo.startsWith("data:image"));
+    const logoUrl = currentLogoIsImage ? currentLogo : site.logo;
+
 
     const brief = [
       `Nome da marca: ${brand.name}`,
