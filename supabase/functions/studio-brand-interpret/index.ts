@@ -52,6 +52,63 @@ const slugify = (label: string) =>
     .replace(/(^-|-$)/g, "")
     .slice(0, 32) || "publico";
 
+const HEX = /^#[0-9a-fA-F]{6}$/;
+
+const normalizeUrl = (raw: string) => {
+  const value = raw.trim();
+  if (!value) return "";
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+};
+
+/**
+ * Leitura da landing page do cliente: texto visível (para a IA entender a
+ * proposta) e as cores mais frequentes do CSS inline/tags (para sugerir o kit).
+ * Falha silenciosa — site fora do ar não pode travar a interpretação.
+ */
+const readSite = async (rawUrl: string): Promise<{ text: string; colors: string[] }> => {
+  const url = normalizeUrl(rawUrl);
+  if (!url) return { text: "", colors: [] };
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    const resp = await fetch(url, {
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; AliviaStudioBot/1.0)" },
+    });
+    clearTimeout(timer);
+    if (!resp.ok) return { text: "", colors: [] };
+    const html = (await resp.text()).slice(0, 400_000);
+
+    const counts = new Map<string, number>();
+    for (const match of html.matchAll(/#[0-9a-fA-F]{6}\b/g)) {
+      const hex = match[0].toLowerCase();
+      // Ignora branco/preto puros: quase sempre são texto e fundo padrão.
+      if (hex === "#ffffff" || hex === "#000000") continue;
+      counts.set(hex, (counts.get(hex) ?? 0) + 1);
+    }
+    const colors = Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([hex]) => hex);
+
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 9000);
+
+    return { text, colors };
+  } catch (err) {
+    console.error("[studio-brand-interpret] site fetch", String(err).slice(0, 200));
+    return { text: "", colors: [] };
+  }
+};
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
