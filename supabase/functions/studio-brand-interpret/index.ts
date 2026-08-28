@@ -416,10 +416,12 @@ Deno.serve(async (req) => {
       .map((a) => String(a?.label ?? "").trim())
       .filter(Boolean);
 
-    // Lê a landing page do cliente (texto + cores + logo) quando há site cadastrado.
-    const site = brand.source_url
-      ? await readSite(String(brand.source_url))
-      : { text: "", colors: [], logo: null };
+    // Lê o site do cliente (metadados + títulos + texto de páginas internas +
+    // cores + tipografia + logo) quando há site cadastrado.
+    const site: SiteRead = brand.source_url
+      ? await readSite(String(brand.source_url), String(brand.name ?? ""))
+      : { text: "", colors: [], logo: null, fonts: [], meta: "", headings: [], pages: [] };
+
 
     /**
      * Logo: só grava quando a marca não tem um logo de imagem válido. Um valor
