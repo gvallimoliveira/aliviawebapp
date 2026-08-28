@@ -11,6 +11,7 @@
 import type { Rng } from "./rng";
 import type { VoiceRegister } from "./lexicon";
 import { rephrase } from "./rewrite";
+import { BANNED_JARGON, PERSUASION_FRAMES, persuasionSubs } from "./persuasion";
 
 
 /** Insumos vindos do kit da marca (nunca do campo "tom de voz"). */
