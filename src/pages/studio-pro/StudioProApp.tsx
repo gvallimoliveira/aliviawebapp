@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Crown,
+  FileUp,
   Gift,
   Loader2,
   LogOut,
@@ -24,6 +25,7 @@ import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
 import { useStudioQuota } from "./useStudioQuota";
 import BrandColorFields from "./BrandColorFields";
+import type { BrandDoc } from "./BrandAssetsFields";
 import { ALIVIA_AUDIENCES, readAudiences, writeAudiences } from "./audiences";
 import { DEFAULT_COLOR_KIT, writeColorKit, type BrandColorKit } from "./brandColors";
 import { useStudioPwaMeta } from "./useStudioPwaMeta";
@@ -100,6 +102,39 @@ const StudioProApp = () => {
   /** Ao criar a marca, já roda a leitura do site + montagem dos públicos. */
   const [autoInterpret, setAutoInterpret] = useState(true);
   const [loading, setLoading] = useState(true);
+  /** Manual da marca anexado já na criação — fonte principal da interpretação. */
+  const [doc, setDoc] = useState<BrandDoc | null>(null);
+  const [docBusy, setDocBusy] = useState(false);
+  const docInput = useRef<HTMLInputElement>(null);
+
+  const pickDoc = async (file?: File | null) => {
+    if (!file) return;
+    const ok = file.type === "application/pdf" || file.type.startsWith("image/");
+    if (!ok) {
+      toast.error("Envie o manual da marca em PDF (ou uma imagem dele).");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      toast.error("Documento muito grande (máx. 6MB).");
+      return;
+    }
+    setDocBusy(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      setDoc({ name: file.name, mime: file.type, base64: dataUrl.split(",")[1] ?? "" });
+      toast.success("Manual anexado. Ele será a fonte principal da interpretação.");
+    } catch {
+      toast.error("Não foi possível ler o documento.");
+    } finally {
+      setDocBusy(false);
+      if (docInput.current) docInput.current.value = "";
+    }
+  };
 
 
   useEffect(() => {
