@@ -1433,7 +1433,20 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         <Button
           onClick={handleNext}
           disabled={!canGoNext()}
-          className="gap-2 rounded-xl"
+          variant={
+            stepSequence[step] === "pain_mechanism" &&
+            mode !== "basic" &&
+            mechanismStage < 2
+              ? "outline"
+              : "default"
+          }
+          className={`gap-2 rounded-xl ${
+            stepSequence[step] === "pain_mechanism" &&
+            mode !== "basic" &&
+            mechanismStage < 2
+              ? "text-muted-foreground"
+              : ""
+          }`}
         >
           {step === totalSteps - 1 ? t("anamnesis.finish") : t("anamnesis.next")}
           <ChevronRight className="h-4 w-4" />
