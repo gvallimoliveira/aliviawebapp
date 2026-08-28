@@ -12,7 +12,18 @@ import { BRAND_NAME, BRAND_SITE } from "../brand";
 const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   const posters = content.features.filter((f) => f.poster);
   const pool = posters.length > 0 ? posters : content.features;
-  if (pool.length === 0) return null;
+  if (pool.length === 0) {
+    const headline = rng.pick(content.headlines);
+    return (
+      <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
+        <div className="container px-8 py-16 text-center">
+          <p className="text-4xl font-bold leading-[1.16] text-foreground md:text-6xl">
+            {headline.strong}{headline.rest}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const [feature] = picker.pick(pool, 1, rng, (f) => [f.topic]);
 
@@ -35,7 +46,7 @@ const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
             <img
               src={feature.poster}
               alt={feature.headline ?? feature.title}
-              loading="lazy"
+              loading="eager"
               className="max-h-[52vh] w-auto max-w-full rounded-3xl border border-border object-contain shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.45)]"
             />
           ) : (

@@ -37,6 +37,13 @@ import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
 import AutoFit from "@/pages/studio/AutoFit";
+import ArtworkGuard from "@/pages/studio/ArtworkGuard";
+import VariationControl from "@/pages/studio/VariationControl";
+import {
+  DEFAULT_VARIATION_PROFILE,
+  normalizeVariationProfile,
+  type VariationProfile,
+} from "@/pages/studio/variation";
 
 
 /**
@@ -143,6 +150,7 @@ type PersistedCreateState = {
   angle?: ContentAngle;
   /** Modelos escolhidos; vazio = aleatório. */
   models?: string[];
+  variation?: VariationProfile;
 };
 
 const readPersisted = (brandId: string): PersistedCreateState => {
@@ -243,13 +251,16 @@ const StudioProCreate = ({
    */
   const [models, setModels] = useState<string[]>(restored.current.models ?? []);
   const [modelsOpen, setModelsOpen] = useState(false);
+  const [variation, setVariation] = useState<VariationProfile>(() =>
+    normalizeVariationProfile(restored.current.variation ?? DEFAULT_VARIATION_PROFILE),
+  );
 
   const toggleModel = (id: string) =>
     setModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]));
 
   useEffect(() => {
-    writePersisted(brand.id, { segment, angle, models });
-  }, [brand.id, segment, angle, models]);
+    writePersisted(brand.id, { segment, angle, models, variation });
+  }, [brand.id, segment, angle, models, variation]);
 
   // Se o público ativo deixa de existir (edição do kit), volta para o 360°.
   const activeSegment = segments.some((s) => s.id === segment) ? segment : GLOBAL_SEGMENT;
@@ -306,6 +317,7 @@ const StudioProCreate = ({
       positioning: aliviaWorld ? null : brand.positioning,
       // Variedade linguística: cada lote reescreve a roupagem das frases.
       variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+      variationProfile: variation,
     });
     /**
      * Passagem final pelo léxico: vale também para o acervo curado dos mundos
@@ -315,8 +327,9 @@ const StudioProCreate = ({
       register,
       seed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
       forbidden: isAlivia ? [] : ["aliv.ia", "alivia", "fisioterap"],
+      profile: variation,
     });
-  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning, brand.id, seed, register, isAlivia]);
+  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning, brand.id, seed, register, isAlivia, variation]);
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
 
@@ -798,6 +811,12 @@ const StudioProCreate = ({
               </div>
             )}
           </div>
+          <VariationControl
+            value={variation}
+            onChange={setVariation}
+            register={register}
+            previewSeed={`${brand.id}:${seed}`}
+          />
           {segments.length === 1 && (
             <p className="mt-1.5 text-[11px] text-muted-foreground">
               Cadastre os públicos da marca em Ajustes para gerar conteúdo por nicho.
@@ -882,6 +901,7 @@ const StudioProCreate = ({
                 style={FRAME_STYLE[format]}
               >
                 <div id={`studio-pro-block-${item.index}`} className="h-full w-full">
+                  <ArtworkGuard brand={brand.name}>
                   {/* AutoFit: copy longa encolhe para caber; nunca sai cortada. */}
                   <AutoFit resetKey={`${brand.id}:${seed}:${format}:${kind}:${item.index}`}>
                   <StudioProSignature
@@ -903,6 +923,7 @@ const StudioProCreate = ({
                     </StudioMotion>
                   </StudioProSignature>
                   </AutoFit>
+                  </ArtworkGuard>
                 </div>
               </div>
             );

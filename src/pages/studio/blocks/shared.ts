@@ -131,7 +131,7 @@ export const bigTypeClass = (text: string, columns = 3) => {
     .split(/\s+/)
     .reduce((max, word) => Math.max(max, word.length), 0);
   const budget = columns >= 3 ? 7 : 10;
-  const base = "block break-words [overflow-wrap:anywhere] leading-[0.95]";
+  const base = "block break-words [overflow-wrap:anywhere] leading-[1.08]";
   if (longest <= budget - 3) return `${base} text-5xl md:text-6xl`;
   if (longest <= budget) return `${base} text-4xl md:text-5xl`;
   if (longest <= budget + 4) return `${base} text-3xl md:text-4xl`;

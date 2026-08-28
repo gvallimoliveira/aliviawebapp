@@ -120,7 +120,7 @@ const MonoEcho = ({ content, rng, picker, format, textureIndex }: MonoProps) => 
                   key={i}
                   aria-hidden={!filled}
                   data-studio-stroke={filled ? undefined : "1"}
-                  className={`whitespace-nowrap text-5xl font-bold leading-[0.86] tracking-tight md:text-8xl ${
+                  className={`whitespace-nowrap text-5xl font-bold leading-[1.02] tracking-tight md:text-8xl ${
                     filled
                       ? "text-primary"
                       : "text-transparent [-webkit-text-stroke:1.5px_hsl(var(--mono-paper)/0.3)]"

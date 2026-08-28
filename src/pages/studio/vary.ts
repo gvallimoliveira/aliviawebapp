@@ -11,8 +11,9 @@
 
 import type { WorldContent } from "./content/types";
 import { applyLexicon, type VoiceRegister } from "./lexicon";
+import { DEFAULT_VARIATION_PROFILE, intensityFor, type VariationProfile } from "./variation";
 
-const SKIP_KEYS = new Set(["id", "label", "topic", "topics", "poster", "image", "hashtags", "value", "prefix", "suffix", "cta", "tag"]);
+const SKIP_KEYS = new Set(["id", "label", "topic", "topics", "poster", "image", "hashtags", "value", "prefix", "suffix", "tag"]);
 
 export type VaryOptions = {
   register: VoiceRegister;
@@ -21,6 +22,15 @@ export type VaryOptions = {
   /** Literais que a variação não pode introduzir (nome de outras marcas). */
   forbidden?: string[];
   intensity?: number;
+  profile?: VariationProfile;
+};
+
+const intensityForPath = (key: string, path: string, options: VaryOptions) => {
+  if (typeof options.intensity === "number") return options.intensity;
+  const profile = options.profile ?? DEFAULT_VARIATION_PROFILE;
+  if (/cta|caption|closing|moral|offer/i.test(`${path}.${key}`)) return intensityFor(profile.actions);
+  if (/headline|heading|title|strong|lead|big|word/i.test(`${path}.${key}`)) return intensityFor(profile.headlines);
+  return intensityFor(profile.support);
 };
 
 const varyValue = (value: unknown, key: string, options: VaryOptions, path: string): unknown => {
@@ -29,7 +39,7 @@ const varyValue = (value: unknown, key: string, options: VaryOptions, path: stri
     return applyLexicon(value, {
       register: options.register,
       seed: `${options.seed}:${path}`,
-      intensity: options.intensity,
+      intensity: intensityForPath(key, path, options),
       forbidden: options.forbidden,
     });
   }

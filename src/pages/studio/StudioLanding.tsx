@@ -16,6 +16,11 @@ import { WORLDS, isWorldId, type WorldId } from "./content";
 import { buildCoverage, readExposureLog, recordExposure, type ExposureLog } from "./coverage";
 import { createPicker } from "./picker";
 import { varyContent } from "./vary";
+import {
+  DEFAULT_VARIATION_PROFILE,
+  isVariationLevel,
+  type VariationProfile,
+} from "./variation";
 
 import { personaForSeed } from "./personas";
 import { isTopicId, type TopicId } from "./topics";
@@ -51,6 +56,7 @@ import CarouselBlock from "./blocks/CarouselBlock";
 import StudioMotion from "./blocks/StudioMotion";
 import type { BlockProps, StudioFormat } from "./blocks/shared";
 import { resetStudioBrandTheme } from "./brand";
+import ArtworkGuard from "./ArtworkGuard";
 
 
 
@@ -129,6 +135,11 @@ const StudioLanding = () => {
   const format: StudioFormat =
     formatParam === "9x16" || formatParam === "1x1" || formatParam === "free" ? formatParam : "free";
   const seed = params.get("seed") ?? "a1";
+  const variation: VariationProfile = {
+    headlines: isVariationLevel(params.get("vh")) ? (params.get("vh") as VariationProfile["headlines"]) : DEFAULT_VARIATION_PROFILE.headlines,
+    support: isVariationLevel(params.get("vs")) ? (params.get("vs") as VariationProfile["support"]) : DEFAULT_VARIATION_PROFILE.support,
+    actions: isVariationLevel(params.get("va")) ? (params.get("va") as VariationProfile["actions"]) : DEFAULT_VARIATION_PROFILE.actions,
+  };
 
   /** Autor da versão: a persona criativa é derivada da seed (determinística). */
   const persona = personaForSeed(seed);
@@ -155,8 +166,8 @@ const StudioLanding = () => {
    * registro de voz da marca Aliv.iA (técnico/próximo).
    */
   const content = useMemo(
-    () => varyContent(WORLDS[world], { register: "tecnico", seed: `${world}:${seed}` }),
-    [world, seed],
+    () => varyContent(WORLDS[world], { register: "tecnico", seed: `${world}:${seed}`, profile: variation }),
+    [world, seed, variation.headlines, variation.support, variation.actions],
   );
 
 
@@ -364,9 +375,11 @@ const StudioLanding = () => {
                   caption={buildCaption(content, kind, createRng(`${world}:${seed}:caption:${kind}:${i}`))}
                   fileName={`${world}-${seed}-${String(i + 1).padStart(2, "0")}-${kind}`}
                 >
-                  <StudioMotion kind={motion}>
-                    <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} slide={slide} photos={photos} />
-                  </StudioMotion>
+                  <ArtworkGuard brand="Aliv.iA">
+                    <StudioMotion kind={motion}>
+                      <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} slide={slide} photos={photos} />
+                    </StudioMotion>
+                  </ArtworkGuard>
                 </StudioCapture>
               );
             })}
@@ -408,6 +421,10 @@ const StudioLanding = () => {
           onExportAllPng={exportAllPng}
           onExportAllCaptions={exportAllCaptions}
           batchProgress={batchProgress}
+          variation={variation}
+          onVariation={(next) =>
+            update({ vh: next.headlines, vs: next.support, va: next.actions })
+          }
 
         />
       )}

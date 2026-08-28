@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import type { StudioPhoto } from "../photos";
 import { BRAND_NAME } from "../brand";
 
@@ -26,6 +26,7 @@ const PhotoFrame = ({
   imgClassName?: string;
   style?: CSSProperties;
 }) => {
+  const [failed, setFailed] = useState(false);
   const rad = (photo.rotation * Math.PI) / 180;
   /** Rotacionar encolhe a área útil: amplia o bastante para não sobrar canto. */
   const cover = Math.abs(Math.cos(rad)) + Math.abs(Math.sin(rad));
@@ -33,18 +34,25 @@ const PhotoFrame = ({
 
   return (
     <div className={`relative overflow-hidden ${className}`} style={style}>
-      <img
-        src={photo.src}
-        alt={photo.label || BRAND_NAME}
-        loading="lazy"
-        decoding="async"
-        className={`h-full w-full object-cover ${imgClassName}`}
-        style={{
-          objectPosition: `${photo.focusX}% ${photo.focusY}%`,
-          transform: `rotate(${photo.rotation}deg) scale(${scale})`,
-          transformOrigin: `${photo.focusX}% ${photo.focusY}%`,
-        }}
-      />
+      {failed ? (
+        <div className="flex h-full w-full items-center justify-center bg-muted px-6 text-center text-xs font-medium text-muted-foreground">
+          Imagem indisponível
+        </div>
+      ) : (
+        <img
+          src={photo.src}
+          alt={photo.label || BRAND_NAME}
+          loading="eager"
+          decoding="async"
+          onError={() => setFailed(true)}
+          className={`h-full w-full object-cover ${imgClassName}`}
+          style={{
+            objectPosition: `${photo.focusX}% ${photo.focusY}%`,
+            transform: `rotate(${photo.rotation}deg) scale(${scale})`,
+            transformOrigin: `${photo.focusX}% ${photo.focusY}%`,
+          }}
+        />
+      )}
 
       {photo.safeArea !== "none" && (
         <div

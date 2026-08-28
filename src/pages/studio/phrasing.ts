@@ -30,6 +30,7 @@ export type PhrasingOptions = {
   register: VoiceRegister;
   seed: string;
   forbidden?: string[];
+  intensity?: number;
 };
 
 const clean = (text: string) => text.trim().replace(/\s+/g, " ");
@@ -110,7 +111,7 @@ const hasIngredient = (ing: CopyIngredients, needs?: HeadlineFrame["needs"]) => 
 };
 
 const dress = (text: string, opts: PhrasingOptions) =>
-  applyLexicon(text, { register: opts.register, seed: opts.seed, forbidden: opts.forbidden });
+  applyLexicon(text, { register: opts.register, seed: opts.seed, forbidden: opts.forbidden, intensity: opts.intensity });
 
 /**
  * Gera um acervo grande de headlines: cada frame elegível rende variações
@@ -122,11 +123,13 @@ export const composeHeadlines = (
   rng: Rng,
   perFrame = 3,
 ): Headline[] => {
-  const frames = HEADLINE_FRAMES.filter((f) => hasIngredient(ing, f.needs));
+  const eligible = HEADLINE_FRAMES.filter((f) => hasIngredient(ing, f.needs));
+  const share = opts.intensity !== undefined && opts.intensity < 0.35 ? 0.45 : opts.intensity !== undefined && opts.intensity < 0.75 ? 0.72 : 1;
+  const frames = rng.shuffle(eligible).slice(0, Math.max(6, Math.ceil(eligible.length * share)));
   const out: Headline[] = [];
   /** Deslocamento do lote: gira os ingredientes de cada frame a cada seed. */
   const offset = rng.int(101);
-  rng.shuffle(frames).forEach((frame, fi) => {
+  frames.forEach((frame, fi) => {
     for (let i = 0; i < perFrame; i += 1) {
       const built = frame.build(ing, fi + i + offset);
       out.push({

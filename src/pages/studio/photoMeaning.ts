@@ -196,7 +196,7 @@ export const pickPhotoForTopics = (
     .filter((s) => s.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  if (scored.length === 0) return undefined;
+  if (scored.length === 0) return photos[Math.abs(index) % photos.length];
 
   /** Roda entre as fotos empatadas no topo para não repetir sempre a mesma. */
   const best = scored[0].score;
