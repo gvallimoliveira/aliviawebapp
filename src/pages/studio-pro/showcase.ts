@@ -174,6 +174,7 @@ export const PALETTES: Record<string, ShowcasePalette> = {
 export const SHOWCASE: ShowcaseItem[] = [
   {
     id: "cafe-mono",
+    palette: PALETTES.cafe,
     kind: "mono",
     format: "post",
     niche: "Cafeteria",
@@ -185,6 +186,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "studio-echo",
+    palette: PALETTES.tattoo,
     kind: "echo",
     format: "story",
     niche: "Estúdio de tatuagem",
@@ -195,6 +197,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "arq-typo",
+    palette: PALETTES.arch,
     kind: "typo",
     format: "post",
     niche: "Arquitetura",
@@ -206,6 +209,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "moda-split",
+    palette: PALETTES.fashion,
     kind: "split",
     format: "story",
     niche: "Moda autoral",
@@ -217,6 +221,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "academia-stats",
+    palette: PALETTES.gym,
     kind: "stats",
     format: "post",
     niche: "Box de treino",
@@ -229,6 +234,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "contabil-list",
+    palette: PALETTES.finance,
     kind: "list",
     format: "carousel",
     niche: "Contabilidade",
@@ -277,6 +283,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "imob-quote",
+    palette: PALETTES.realestate,
     kind: "quote",
     format: "post",
     niche: "Imobiliária",
@@ -288,6 +295,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "brand-lockup",
+    palette: PALETTES.brandkit,
     kind: "brand",
     format: "story",
     niche: "Marca própria",
@@ -298,6 +306,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "moda-carousel",
+    palette: PALETTES.fashion,
     kind: "list",
     format: "carousel",
     niche: "Moda autoral",
