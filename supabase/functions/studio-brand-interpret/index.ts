@@ -606,7 +606,7 @@ Responda SOMENTE com JSON válido neste formato:
       const prev = byId.get(id);
       byId.set(id, prev ? { ...prev, ...a } : a);
     }
-    const mergedAudiences = Array.from(byId.values()).slice(0, 8);
+    const mergedAudiences = Array.from(byId.values()).slice(0, 12);
 
     /**
      * Cores do site: só aplicadas quando o cliente pediu (`applyColors`) e a IA
