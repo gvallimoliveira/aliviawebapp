@@ -43,7 +43,7 @@ const StepsBlock = ({ treatment, format }: BlockProps) => {
         className="relative z-10 w-full max-w-2xl pb-16"
       >
         <p className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.28em] ${skin.accent}`}>
-          Método Aliv.iA
+          Método {BRAND_NAME}
         </p>
         <h2 className={`mb-8 text-3xl font-bold leading-[1.05] md:text-5xl ${skin.ink}`}>
           STEPS — os 6 degraus da reabilitação
