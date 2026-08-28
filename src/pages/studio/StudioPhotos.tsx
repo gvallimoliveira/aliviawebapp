@@ -14,6 +14,11 @@ type Props = {
   onClose: () => void;
   /** Teto de fotos do plano (Studio público). Sem valor = sem limite (interno). */
   limit?: number;
+  /**
+   * Fotos usadas na CONTA INTEIRA (soma de todas as marcas) — é isso que o teto
+   * do plano compara. Sem valor, cai para o acervo visível da marca.
+   */
+  usedTotal?: number;
   /** Fotos fixadas para a geração atual (controle criativo). */
   pinnedIds?: string[];
   onTogglePin?: (id: string) => void;
@@ -35,6 +40,7 @@ const StudioPhotos = ({
   onRemove,
   onClose,
   limit,
+  usedTotal,
   pinnedIds,
   onTogglePin,
 }: Props) => {
@@ -52,7 +58,9 @@ const StudioPhotos = ({
   const [recentIds, setRecentIds] = useState<string[]>([]);
 
   const hasLimit = typeof limit === "number";
-  const remaining = hasLimit ? Math.max(0, (limit as number) - photos.length) : Infinity;
+  /** O teto do plano é da CONTA: soma as fotos de todas as marcas. */
+  const used = typeof usedTotal === "number" ? Math.max(usedTotal, photos.length) : photos.length;
+  const remaining = hasLimit ? Math.max(0, (limit as number) - used) : Infinity;
   const full = hasLimit && remaining === 0;
   const pinned = new Set(pinnedIds ?? []);
 
@@ -133,7 +141,8 @@ const StudioPhotos = ({
             </p>
             {hasLimit && (
               <p className="mt-0.5 text-[11px] font-semibold text-foreground">
-                {photos.length} de {limit} fotos do seu plano
+                {used} de {limit} fotos do seu plano
+                {typeof usedTotal === "number" ? ` · ${photos.length} nesta marca` : ""}
               </p>
             )}
           </div>
