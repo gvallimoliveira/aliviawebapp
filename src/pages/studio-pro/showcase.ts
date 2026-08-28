@@ -33,6 +33,24 @@ export type ShowcaseSlide = {
   lines?: string[];
 };
 
+/**
+ * Paleta local do exemplo. Só valores HSL crus, aplicados como override de
+ * tokens semânticos no card — nenhuma cor solta em componentes. Serve para
+ * mostrar que o Studio não está preso a uma única combinação de cores.
+ */
+export type ShowcasePalette = {
+  /** hsl cru: "24 30% 12%" */
+  primary: string;
+  background: string;
+  card: string;
+  foreground: string;
+  mutedForeground: string;
+  border: string;
+  ink: string;
+  paper: string;
+  mid: string;
+};
+
 export type ShowcaseItem = {
   id: string;
   kind: ShowcaseKind;
@@ -48,6 +66,8 @@ export type ShowcaseItem = {
   lines?: string[];
   value?: string;
   caption?: string;
+  /** Paleta própria do exemplo (opcional: sem ela, usa o tema do site). */
+  palette?: ShowcasePalette;
   /** Presente apenas em formato carrossel: 4 a 5 slides amarrados. */
   slides?: ShowcaseSlide[];
 };
@@ -58,9 +78,103 @@ export const FORMAT_LABEL: Record<ShowcaseFormat, string> = {
   carousel: "Carrossel",
 };
 
+/** Paletas de nichos distintos — cada exemplo puxa a sua. */
+export const PALETTES: Record<string, ShowcasePalette> = {
+  cafe: {
+    primary: "28 88% 54%",
+    background: "34 44% 96%",
+    card: "34 44% 96%",
+    foreground: "24 34% 13%",
+    mutedForeground: "24 14% 40%",
+    border: "30 24% 84%",
+    ink: "24 34% 13%",
+    paper: "34 44% 96%",
+    mid: "30 14% 66%",
+  },
+  tattoo: {
+    primary: "352 82% 56%",
+    background: "0 0% 7%",
+    card: "0 0% 11%",
+    foreground: "0 0% 96%",
+    mutedForeground: "0 0% 62%",
+    border: "0 0% 22%",
+    ink: "0 0% 7%",
+    paper: "0 0% 96%",
+    mid: "0 0% 58%",
+  },
+  arch: {
+    primary: "221 74% 46%",
+    background: "210 22% 97%",
+    card: "210 22% 97%",
+    foreground: "218 32% 14%",
+    mutedForeground: "216 14% 42%",
+    border: "215 20% 86%",
+    ink: "218 32% 14%",
+    paper: "210 22% 97%",
+    mid: "215 12% 64%",
+  },
+  fashion: {
+    primary: "338 62% 52%",
+    background: "20 30% 96%",
+    card: "20 30% 96%",
+    foreground: "330 18% 15%",
+    mutedForeground: "330 8% 42%",
+    border: "20 18% 86%",
+    ink: "330 22% 12%",
+    paper: "20 30% 96%",
+    mid: "330 8% 62%",
+  },
+  gym: {
+    primary: "84 74% 44%",
+    background: "220 16% 11%",
+    card: "220 16% 14%",
+    foreground: "80 12% 96%",
+    mutedForeground: "220 8% 66%",
+    border: "220 12% 24%",
+    ink: "220 18% 9%",
+    paper: "80 12% 96%",
+    mid: "220 8% 60%",
+  },
+  finance: {
+    primary: "192 82% 42%",
+    background: "205 30% 97%",
+    card: "205 30% 97%",
+    foreground: "210 40% 12%",
+    mutedForeground: "208 16% 40%",
+    border: "205 22% 85%",
+    ink: "210 44% 10%",
+    paper: "205 30% 97%",
+    mid: "208 14% 62%",
+  },
+  realestate: {
+    primary: "42 88% 48%",
+    background: "40 26% 96%",
+    card: "40 26% 96%",
+    foreground: "215 28% 14%",
+    mutedForeground: "215 12% 40%",
+    border: "40 18% 84%",
+    ink: "215 30% 12%",
+    paper: "40 26% 96%",
+    mid: "215 10% 62%",
+  },
+  brandkit: {
+    primary: "268 72% 62%",
+    background: "265 30% 97%",
+    card: "265 30% 97%",
+    foreground: "265 34% 13%",
+    mutedForeground: "265 12% 42%",
+    border: "265 20% 86%",
+    ink: "265 40% 11%",
+    paper: "265 30% 97%",
+    mid: "265 10% 64%",
+  },
+};
+
+
 export const SHOWCASE: ShowcaseItem[] = [
   {
     id: "cafe-mono",
+    palette: PALETTES.cafe,
     kind: "mono",
     format: "post",
     niche: "Cafeteria",
@@ -72,6 +186,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "studio-echo",
+    palette: PALETTES.tattoo,
     kind: "echo",
     format: "story",
     niche: "Estúdio de tatuagem",
@@ -82,6 +197,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "arq-typo",
+    palette: PALETTES.arch,
     kind: "typo",
     format: "post",
     niche: "Arquitetura",
@@ -93,6 +209,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "moda-split",
+    palette: PALETTES.fashion,
     kind: "split",
     format: "story",
     niche: "Moda autoral",
@@ -104,6 +221,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "academia-stats",
+    palette: PALETTES.gym,
     kind: "stats",
     format: "post",
     niche: "Box de treino",
@@ -116,6 +234,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "contabil-list",
+    palette: PALETTES.finance,
     kind: "list",
     format: "carousel",
     niche: "Contabilidade",
@@ -164,6 +283,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "imob-quote",
+    palette: PALETTES.realestate,
     kind: "quote",
     format: "post",
     niche: "Imobiliária",
@@ -175,6 +295,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "brand-lockup",
+    palette: PALETTES.brandkit,
     kind: "brand",
     format: "story",
     niche: "Marca própria",
@@ -185,6 +306,7 @@ export const SHOWCASE: ShowcaseItem[] = [
   },
   {
     id: "moda-carousel",
+    palette: PALETTES.fashion,
     kind: "list",
     format: "carousel",
     niche: "Moda autoral",
