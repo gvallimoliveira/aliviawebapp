@@ -95,6 +95,8 @@ type Creation = {
   angle: string | null;
   block_kind: string | null;
   text_edits: unknown;
+  /** Instantâneo da arte pronta; ausente nas artes salvas antes do editor. */
+  snapshot: unknown;
 };
 
 
