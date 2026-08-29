@@ -559,7 +559,44 @@ export const buildBrandContent = (
       hashtags: [brand.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), niche.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()],
     },
   };
+
+  /**
+   * INVERSÃO DE HIERARQUIA: onde o briefing tem material, ele SUBSTITUI o
+   * acervo neutro (o genérico só completa quando sobraria menos de 2 opções).
+   * É essa troca que tira do ar os vícios herdados do Aliv.iA Fisio.
+   */
+  const prefer = <T,>(fromDna: T[] | undefined, fallback: T[]): T[] => {
+    const dnaItems = (fromDna ?? []).filter(Boolean);
+    if (dnaItems.length >= 2) return dnaItems;
+    return [...dnaItems, ...fallback];
+  };
+
+  const merged: WorldContent = {
+    ...generic,
+    kickers: prefer(dnaPools.kickers, generic.kickers),
+    headlines: prefer(dnaPools.headlines, generic.headlines),
+    subs: prefer(dnaPools.subs, generic.subs),
+    typos: prefer(dnaPools.typos, generic.typos),
+    kinetic: prefer(dnaPools.kinetic, generic.kinetic),
+    quotes: prefer(dnaPools.quotes, generic.quotes),
+    lists: prefer(dnaPools.lists, generic.lists),
+    closings: prefer(dnaPools.closings, generic.closings),
+    marquee: prefer(dnaPools.marquee, generic.marquee),
+    sales: dnaPools.sales
+      ? {
+          ...generic.sales,
+          ...dnaPools.sales,
+          proofs: prefer(dnaPools.sales.proofs, generic.sales.proofs),
+          ctas: prefer(dnaPools.sales.ctas, generic.sales.ctas),
+          objections: prefer(dnaPools.sales.objections, generic.sales.objections),
+          offers: prefer(dnaPools.sales.offers, generic.sales.offers),
+        }
+      : generic.sales,
+  };
+
+  return sanitizeContent(merged, dna.forbidden);
 };
+
 
 /* ------------------------------------------------------------------------- */
 /* SEGMENTAÇÃO: nicho específico x visão global 360°                          */
