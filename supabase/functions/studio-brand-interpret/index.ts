@@ -830,7 +830,7 @@ Responda SOMENTE com JSON válido neste formato:
         .map(pickHex)
         .filter((c): c is string => !!c)
         .filter((c) => !used.has(c) && (used.add(c) || true))
-        .slice(0, 4);
+        .slice(0, 8);
       extras.forEach((color, i) => {
         colorKit![`primary${i + 3}`] = color;
       });
@@ -859,6 +859,11 @@ Responda SOMENTE com JSON válido neste formato:
       ["oswald", ["oswald"]],
       ["bebas", ["bebas"]],
       ["playfair", ["playfair"]],
+      ["figtree", ["figtree"]],
+      ["urbanist", ["urbanist"]],
+      ["rubik", ["rubik"]],
+      ["barlow", ["barlow"]],
+      ["karla", ["karla"]],
       ["lora", ["lora"]],
       ["merriweather", ["merriweather"]],
     ];
@@ -869,6 +874,7 @@ Responda SOMENTE com JSON válido neste formato:
     /** Fonte da IA primeiro; se ela não souber, a tipografia declarada no site. */
     const fontKey =
       matchFont(String(parsed.font_family ?? "")) ??
+      matchFont(String((parsed as Record<string, unknown>).font_body ?? "")) ??
       site.fonts.map(matchFont).find(Boolean) ??
       null;
 
