@@ -116,4 +116,10 @@ export type WorldContent = {
   /** Sequências de artes para carrossel (CarouselBlock). */
   carousels: StudioCarousel[];
   sales: WorldSales;
+  /**
+   * Termos que o público digitaria numa busca real (queixa, diagnóstico,
+   * desejo). Usado pelo SearchBlock — sem isso o bloco não é gerado, para não
+   * cair em frase institucional dentro da barra de busca.
+   */
+  searchQueries?: string[];
 };

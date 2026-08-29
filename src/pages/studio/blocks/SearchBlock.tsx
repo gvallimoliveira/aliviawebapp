@@ -29,15 +29,11 @@ const asQuery = (raw: string) =>
 const SearchBlock = ({ content, rng, treatment, format, persona, picker }: BlockProps) => {
   const prefix = PREFIXES[treatment % PREFIXES.length];
 
-  const features = picker.pick(content.features, 2, rng, (f) => [f.topic]);
-  const pool = [
-    ...features.map((f) => f.title),
-    ...content.marquee.flat(),
-    ...content.typos.map((t) => t.big),
-    ...content.quotes.map((q) => q.text),
-  ]
+  /* Só entram termos de busca reais (dores, diagnósticos, desejos do nicho).
+     Nada de headline/frase institucional: ninguém digita isso no Google. */
+  const pool = (content.searchQueries ?? [])
     .map(asQuery)
-    .filter((q) => q.length > 6 && q.split(" ").length <= 6);
+    .filter((q) => q.length > 4 && q.split(" ").length <= 6);
 
   const suggestions = rng.shuffle(Array.from(new Set(pool))).slice(0, 4);
   if (suggestions.length < 3) return null;

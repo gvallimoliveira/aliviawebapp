@@ -430,7 +430,7 @@ export const buildBrandContent = (
       },
       {
         kicker: "DA DESCOBERTA À ESCOLHA",
-        heading: "Na reabilitação, a decisão é a quatro mãos",
+        heading: "Aqui é parceria: somos um time",
         steps: [
           { title: "Diagnóstico", description: "O que está travando hoje.", topic: topicAt(3) },
           { title: "Proposta", description: "O caminho mais curto até o resultado.", topic: topicAt(4) },
@@ -747,6 +747,11 @@ const applyAudience = (
       ...tail(base.quotes),
     ],
     marquee: [[key, ...painNoms.slice(0, 2), ...desireNoms.slice(0, 2)].filter(Boolean), ...tail(base.marquee)],
+    /* Buscas simuladas: o que ESTE público realmente digitaria — queixa,
+       diagnóstico ou desejo — nunca frase institucional da marca. */
+    searchQueries: [key, ...pains, ...desires, ...(base.searchQueries ?? [])]
+      .map((q) => strip(q))
+      .filter(Boolean),
     carousels: [...carousels, ...tail(base.carousels)],
     closings: [
       { title: `${key}: o próximo passo é seu`, sub: desires[0] ? sentence(desires[0]) : `Fale com ${brand} hoje.`, cta },
@@ -842,6 +847,7 @@ const applyGlobal = (
       ...base.triptychs,
 
     ],
+    searchQueries: matrix.flatMap((a) => [a.label, ...(a.pains ?? []), ...(a.desires ?? [])]),
     lists: [
       {
         heading: "Para quem esse atendimento foi feito",
