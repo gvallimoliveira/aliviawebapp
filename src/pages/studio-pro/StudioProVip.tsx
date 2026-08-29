@@ -145,9 +145,12 @@ const StudioProVip = () => {
             Acessos cortesia
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Cada acesso concedido libera o equivalente ao <strong>plano Solo</strong> gratuitamente: 1
-            marca, 10 gerações por mês e download sem marca d'água. {active} ativo(s).
+            Cada acesso libera gratuitamente o plano escolhido — hoje{" "}
+            <strong>plano {PLAN_LABELS[plan]}</strong>: {PLAN_LIMITS[plan].brands}{" "}
+            {PLAN_LIMITS[plan].brands === 1 ? "marca" : "marcas"}, {PLAN_LIMITS[plan].credits} gerações
+            por período e download sem marca d'água. {active} ativo(s).
           </p>
+
 
           <div className="mt-5 grid gap-3 border-t border-border pt-5 sm:grid-cols-2">
             <div>
