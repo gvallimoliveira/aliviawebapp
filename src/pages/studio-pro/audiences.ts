@@ -49,6 +49,12 @@ export type BrandAudience = {
    */
   hook?: string;
   /**
+   * VARIAÇÕES de gancho para o mesmo público — o motor criativo alterna entre
+   * elas para não repetir a mesma abertura em todas as artes. `hook` continua
+   * sendo o gancho principal; `hooks` são alternativas equivalentes.
+   */
+  hooks?: string[];
+  /**
    * REGRA DO SISTEMA — públicos matriz x derivados.
    * Vazio/ausente = público MATRIZ (conta na métrica oficial da marca).
    * Preenchido com o id de outro público = SUB-NICHO derivado dele: tem
