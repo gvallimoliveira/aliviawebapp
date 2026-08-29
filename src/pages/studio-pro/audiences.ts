@@ -49,6 +49,12 @@ export type BrandAudience = {
    */
   hook?: string;
   /**
+   * VARIAÇÕES de gancho para o mesmo público — o motor criativo alterna entre
+   * elas para não repetir a mesma abertura em todas as artes. `hook` continua
+   * sendo o gancho principal; `hooks` são alternativas equivalentes.
+   */
+  hooks?: string[];
+  /**
    * REGRA DO SISTEMA — públicos matriz x derivados.
    * Vazio/ausente = público MATRIZ (conta na métrica oficial da marca).
    * Preenchido com o id de outro público = SUB-NICHO derivado dele: tem
@@ -71,8 +77,30 @@ export const audienceKeyword = (a: BrandAudience): string => {
 };
 
 /** Abertura em 2ª pessoa, para chamar o público diretamente na arte. */
-export const audienceHook = (a: BrandAudience): string =>
-  a.hook?.trim() || `Você, ${audienceKeyword(a).toLowerCase()}`;
+export const audienceHook = (a: BrandAudience): string => audienceHooks(a)[0];
+
+/**
+ * TODAS as aberturas disponíveis para o público, sem repetição: o gancho
+ * principal primeiro, depois as variações. O motor criativo usa a lista para
+ * alternar a chamada entre headlines, tipografias, listas e fechos.
+ */
+export const audienceHooks = (a: BrandAudience): string[] => {
+  const list: string[] = [];
+  const push = (value?: string) => {
+    const clean = value?.trim().replace(/\s*[.!?]+$/, "");
+    if (clean && !list.some((h) => h.toLowerCase() === clean.toLowerCase())) list.push(clean);
+  };
+  push(a.hook);
+  for (const extra of a.hooks ?? []) push(extra);
+  if (!list.length) push(`Você, ${audienceKeyword(a).toLowerCase()}`);
+  return list;
+};
+
+/** Escolhe uma variação de gancho de forma estável (mesmo índice = mesmo texto). */
+export const pickHook = (a: BrandAudience, index: number): string => {
+  const list = audienceHooks(a);
+  return list[((index % list.length) + list.length) % list.length];
+};
 
 
 export const slugifySegment = (label: string) =>
@@ -109,6 +137,7 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
         cta: String(row.cta ?? "").trim() || undefined,
         keyword: String(row.keyword ?? "").trim() || undefined,
         hook: String(row.hook ?? "").trim() || undefined,
+        hooks: asStringArray(row.hooks),
         parentId: String(row.parentId ?? row.parent_id ?? "").trim() || undefined,
       };
     })
@@ -129,6 +158,7 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
       ...(a.cta?.trim() ? { cta: a.cta.trim() } : {}),
       ...(a.keyword?.trim() ? { keyword: a.keyword.trim() } : {}),
       ...(a.hook?.trim() ? { hook: a.hook.trim() } : {}),
+      ...(a.hooks?.length ? { hooks: a.hooks.map((h) => h.trim()).filter(Boolean) } : {}),
       ...(a.parentId?.trim() ? { parentId: a.parentId.trim() } : {}),
     }));
 
@@ -179,11 +209,17 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
     for (const parent of chain) for (const item of parent[key] ?? []) if (!merged.includes(item)) merged.push(item);
     return merged.length ? merged : undefined;
   };
+  // Ganchos do pai só entram quando o sub-nicho não tem nenhum próprio —
+  // comunicação dirigida nunca deve virar a chamada genérica do público matriz.
+  const ownHooks = [own.hook?.trim(), ...(own.hooks ?? [])].filter(Boolean) as string[];
+  const inheritedHooks = ownHooks.length ? undefined : chain.flatMap((p) => [p.hook?.trim(), ...(p.hooks ?? [])].filter(Boolean) as string[]);
   return {
     ...own,
     pains: inherit("pains"),
     desires: inherit("desires"),
     proof: inherit("proof"),
+    hook: own.hook?.trim() || inheritedHooks?.[0],
+    hooks: ownHooks.length ? own.hooks : inheritedHooks?.slice(1),
     cta: own.cta?.trim() || chain.find((p) => p.cta?.trim())?.cta,
     description: own.description?.trim() || chain.find((p) => p.description?.trim())?.description,
   };

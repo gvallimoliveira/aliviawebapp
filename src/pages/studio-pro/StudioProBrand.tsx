@@ -945,16 +945,26 @@ const StudioProBrand = () => {
                         />
                       </div>
                     </div>
-                    <div className="mt-2">
-                      <Label htmlFor={`edit-cta-${a.id}`} className="text-[11px]">
-                        Objetivo / CTA deste público
-                      </Label>
-                      <Input
-                        id={`edit-cta-${a.id}`}
-                        placeholder="Ex.: Fazer minha avaliação, Testar o painel profissional"
-                        value={a.cta ?? ""}
-                        onChange={(e) => updateAudience(i, { cta: e.target.value })}
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <AudienceListField
+                        label="Outras chamadas (uma por linha)"
+                        value={a.hooks ?? []}
+                        onCommit={(lines) => updateAudience(i, { hooks: lines })}
                       />
+                      <div>
+                        <Label htmlFor={`edit-cta-${a.id}`} className="text-[11px]">
+                          Objetivo / CTA deste público
+                        </Label>
+                        <Input
+                          id={`edit-cta-${a.id}`}
+                          placeholder="Ex.: Fazer minha avaliação, Testar o painel profissional"
+                          value={a.cta ?? ""}
+                          onChange={(e) => updateAudience(i, { cta: e.target.value })}
+                        />
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          O motor alterna entre a chamada principal e as outras para não repetir abertura.
+                        </p>
+                      </div>
                     </div>
 
                   </div>
