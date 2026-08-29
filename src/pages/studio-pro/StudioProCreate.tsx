@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Download, FileText, Images, LayoutGrid, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
+import { Camera, Download, FileText, Images, LayoutGrid, Lightbulb, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,18 @@ import { readColorKit } from "./brandColors";
 import { readableThemeTokens } from "./contrast";
 
 import { ensureFontLoaded, findFont } from "./brandFonts";
-import { ANGLES, GLOBAL_SEGMENT, audienceAncestors, buildSegments, readAudiences, type ContentAngle } from "./audiences";
+import {
+  ANGLES,
+  GLOBAL_SEGMENT,
+  audienceAncestors,
+  audienceHook,
+  audienceKeyword,
+  buildSegments,
+  readAudiences,
+  resolveAudience,
+  type ContentAngle,
+} from "./audiences";
+import { enforceRationale, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
@@ -433,7 +444,7 @@ const StudioProCreate = ({
    * carrossel, entregando um slide isolado). Trocar público, objetivo, modelo ou
    * formato navega a mesma geração sem custo.
    */
-  const blocks = useMemo(
+  const composedBlocks = useMemo(
     () =>
       composePage(
         createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
@@ -447,6 +458,51 @@ const StudioProCreate = ({
       ),
     [brand.id, seed, activeSegment, angle, persona, content, lineage, activePhotos.length, models, isAlivia],
   );
+
+  /**
+   * FILTRO INTERNO DE NEXO.
+   *
+   * Antes de mostrar qualquer arte, o motor precisa conseguir explicar — em
+   * linguagem de leigo — o que a arte mostra, o que ela diz para o público real
+   * da marca e o que quer despertar em quem lê. Arte cuja explicação não fecha
+   * não é intuitiva: é trocada por um formato que fecha o raciocínio. O filtro é
+   * local e determinístico (mesma seed → mesma arte, zero crédito de IA).
+   */
+  const rationaleCtx = useMemo<RationaleContext>(() => {
+    const audience = activeSegment === GLOBAL_SEGMENT ? null : resolveAudience(audiences, activeSegment);
+    const matrix = audiences.find((a) => !a.parentId && (a.keyword || a.hook || (a.hooks ?? []).length > 0));
+    const keyword =
+      (audience ? audienceKeyword(audience) : "") ||
+      (matrix ? audienceKeyword(matrix) : "") ||
+      brand.niche ||
+      brand.name;
+    const hook =
+      (audience ? audienceHook(audience) : "") ||
+      (matrix ? audienceHook(matrix) : "") ||
+      (brand.positioning ?? "").split(/[.;]/)[0] ||
+      "";
+    const cta =
+      (audience?.cta ?? "").trim() ||
+      (matrix?.cta ?? "").trim() ||
+      content.closings[0]?.cta ||
+      content.sales?.ctas?.[0] ||
+      "";
+    return {
+      content,
+      audienceLabel: audience?.label ?? (activeSegment === GLOBAL_SEGMENT ? "todos os públicos (360°)" : activeSegment),
+      keyword,
+      hook,
+      cta,
+      angle,
+      photoCount: activePhotos.length,
+      brandName: brand.name,
+    };
+  }, [audiences, activeSegment, angle, content, activePhotos.length, brand.name, brand.niche, brand.positioning]);
+
+  const audit = useMemo(() => enforceRationale(composedBlocks, rationaleCtx), [composedBlocks, rationaleCtx]);
+  const blocks = audit.blocks;
+  /** Índice da arte com a leitura de sentido aberta. */
+  const [whyOpen, setWhyOpen] = useState<number | null>(null);
 
   /**
    * AGRUPAMENTO DE ENTREGA.
@@ -960,6 +1016,28 @@ const StudioProCreate = ({
 
       </div>
 
+      {/* Resultado do filtro interno de nexo, quando ele precisou agir. */}
+      {(audit.fixed > 0 || audit.gaps.length > 0) && (
+        <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
+          <p className="font-semibold text-foreground">
+            <Lightbulb className="mr-1 inline h-3.5 w-3.5" />
+            Filtro de sentido
+            {audit.fixed > 0
+              ? `: ${audit.fixed} ${audit.fixed === 1 ? "arte foi trocada" : "artes foram trocadas"} por um formato que se explica sozinho.`
+              : ": revise os pontos abaixo para as artes ficarem mais claras."}
+          </p>
+          <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
+            {audit.gaps.slice(0, 5).map((gap) => (
+              <li key={gap}>{gap}</li>
+            ))}
+          </ul>
+          <p className="mt-1.5">
+            Toda arte precisa ser explicável para um leigo: o que mostra, o que diz e o que quer despertar.
+            Complete o kit da marca e o motor deixa de recorrer a formatos de reserva.
+          </p>
+        </div>
+      )}
+
       <div ref={wrapper} className="mt-5 flex flex-col items-center gap-6" style={themeStyle}>
         {groups.map((group) => {
           const first = group.items[0];
@@ -1061,6 +1139,15 @@ const StudioProCreate = ({
                 </Button>
                 <Button
                   size="sm"
+                  variant="ghost"
+                  className="h-8 rounded-full text-xs"
+                  onClick={() => setWhyOpen(whyOpen === first.index ? null : first.index)}
+                >
+                  <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
+                  Por que esta arte
+                </Button>
+                <Button
+                  size="sm"
                   variant={isSaved ? "secondary" : "default"}
                   className="h-8 rounded-full text-xs"
                   disabled={isSaved || busy === `save-${first.index}`}
@@ -1082,6 +1169,43 @@ const StudioProCreate = ({
                       : "Salvar na marca"}
                 </Button>
               </div>
+
+              {/* Leitura de sentido: a explicação que o motor consegue dar da arte. */}
+              {whyOpen === first.index && (() => {
+                const why = audit.rationales[first.index];
+                if (!why) return null;
+                return (
+                  <div className="mx-auto mt-2 max-w-xl rounded-2xl border border-border bg-card p-4 text-left">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Formato: {why.format}
+                    </p>
+                    <ul className="mt-2 space-y-1.5 text-xs text-foreground">
+                      <li>
+                        <strong>O que se vê:</strong> {why.elements}
+                      </li>
+                      <li>
+                        <strong>O que diz:</strong> {why.message}
+                      </li>
+                      <li>
+                        <strong>O que quer despertar:</strong> {why.effect}
+                      </li>
+                    </ul>
+                    {why.gaps.length > 0 && (
+                      <p className="mt-2 rounded-xl bg-muted/60 p-2 text-[11px] text-muted-foreground">
+                        Ainda falta para esta arte ficar 100%: {why.gaps.join("; ")}.
+                      </p>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="mt-2 h-7 rounded-full px-2 text-[11px]"
+                      onClick={() => void copyCaption(rationaleText(why))}
+                    >
+                      Copiar explicação
+                    </Button>
+                  </div>
+                );
+              })()}
             </div>
           );
         })}
