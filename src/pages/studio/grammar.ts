@@ -176,6 +176,10 @@ export const sentence = (text: string): string => {
  * sequência ou pontuação órfã.
  */
 export const readsWell = (text: string): boolean => {
+  // Textos montados por partes chegam com espaço antes da pontuação
+  // ("Geração 60+ : medo…"); isso é diagramação, não erro de português.
+  text = text.replace(/\s+([,.;:!?])/g, "$1").replace(/\s+/g, " ").trim();
+
   const core = clean(text);
   if (!core) return false;
 

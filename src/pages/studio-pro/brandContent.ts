@@ -147,9 +147,7 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
     const t = raw.toLowerCase();
     if (isStale(t) || hasBannedJargon(t) || banned.some((f) => t.includes(f))) return true;
     // Portão de português: frase quebrada ("com precisam postar") nunca vai ao ar.
-    const broken = raw.trim().split(/\s+/).length >= 4 && !readsWell(raw);
-    if (broken && process.env.STUDIO_DEBUG) console.log("[grammar drop]", raw);
-    return broken;
+    return raw.trim().split(/\s+/).length >= 4 && !readsWell(raw);
   };
   const purge = <T,>(list: T[]): T[] => {
     const kept = list.filter((item) => !bad(textOf(item)));
@@ -664,8 +662,8 @@ const applyAudience = (
 
 
   const headlines = [
-    ...painNoms.slice(0, 3).map((p) => ({ strong: key, rest: `: ${lower1(p)} não precisa ser a sua rotina.` })),
-    ...desireNoms.slice(0, 2).map((d) => ({ strong: key, rest: `: ${lower1(d)} começa com uma decisão.` })),
+    ...painNoms.slice(0, 3).map((p) => ({ strong: key, rest: `— ${lower1(p)} não precisa ser a sua rotina.` })),
+    ...desireNoms.slice(0, 2).map((d) => ({ strong: key, rest: `— ${lower1(d)} começa com uma decisão.` })),
     ...proof.slice(0, 2).map((p) => ({ strong: `${key} pede método`, rest: `. ${p}.` })),
     { strong: `${hk(1)}`, rest: `: isso foi feito para o seu caso.` },
     { strong: `Feito para ${lower1(key)}`, rest: ", não para todo mundo." },
