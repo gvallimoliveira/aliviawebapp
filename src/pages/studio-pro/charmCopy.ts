@@ -26,6 +26,7 @@ import { isStudioSelfBrand } from "@/pages/studio/persuasion";
 import type { ContentAngle } from "./audiences";
 import type { Relation } from "./relational";
 import { findStudioSelfCharm, type StudioSelfCharmRow } from "./studioSelfCharm";
+import { findAliviaCoreCharm, isAliviaCoreBrand, type AliviaCoreCharmRow } from "./aliviaCoreCharm";
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const noDot = (text?: string) => clean(text).replace(/\s*[.!?…]+$/, "");
@@ -203,21 +204,30 @@ export const applyCharm = (
    * Marca do próprio produto: o guia de copy do manual do Aliv.iA Studio tem
    * precedência sobre a tabela de sub-nichos clínicos (que fala de paciente).
    */
+  const probe = [
+    relation?.keyword,
+    relation?.who,
+    relation?.audience?.label,
+    relation?.audience?.description,
+    relation?.hook,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const selfRow: StudioSelfCharmRow | undefined = isStudioSelfBrand(brand ?? "")
-    ? findStudioSelfCharm(
-        [
-          relation?.keyword,
-          relation?.who,
-          relation?.audience?.label,
-          relation?.audience?.description,
-          relation?.hook,
-        ]
-          .filter(Boolean)
-          .join(" · "),
-      )
+    ? findStudioSelfCharm(probe)
     : undefined;
 
-  const row: SubNicheCharm | StudioSelfCharmRow | undefined = selfRow ?? findSubNicheCharm(relation);
+  /**
+   * Marca Aliv.iA (app clínico): acervo próprio dos 6 públicos do guia
+   * (paciente, autônomo, clínica, estudante, recém-formado, institucional).
+   * Nunca vale para o Studio nem para marcas de cliente.
+   */
+  const coreRow: AliviaCoreCharmRow | undefined =
+    !selfRow && isAliviaCoreBrand(brand ?? "") ? findAliviaCoreCharm(probe) : undefined;
+
+  const row: SubNicheCharm | StudioSelfCharmRow | AliviaCoreCharmRow | undefined =
+    selfRow ?? coreRow ?? findSubNicheCharm(relation);
   const frames = relation ? charmFrames(relation, angle) : { headlines: [], subs: [], closings: [] };
   const cta = charmCta(relation?.cta ?? "");
 
