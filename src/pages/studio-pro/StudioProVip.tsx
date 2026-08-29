@@ -9,6 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
+import { PLAN_LABELS, PLAN_LIMITS, type StudioPlan } from "./plan";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const GRANTABLE_PLANS: Exclude<StudioPlan, "free">[] = ["solo", "marca", "agencia"];
 
 /**
  * PAINEL VIP — ACESSOS CORTESIA
@@ -35,6 +45,7 @@ const StudioProVip = () => {
   const [grants, setGrants] = useState<Grant[]>([]);
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
+  const [plan, setPlan] = useState<Exclude<StudioPlan, "free">>("solo");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -75,7 +86,7 @@ const StudioProVip = () => {
     const { error } = await supabase.from("studio_granted_access").upsert(
       {
         email: mail,
-        plan: "solo",
+        plan,
         granted_by: user?.id ?? null,
         note: note.trim() || null,
         revoked_at: null,
@@ -91,7 +102,7 @@ const StudioProVip = () => {
     }
     setEmail("");
     setNote("");
-    toast.success("Acesso cortesia concedido (plano Solo).");
+    toast.success(`Acesso cortesia concedido (plano ${PLAN_LABELS[plan]}).`);
     void load();
   };
 
@@ -134,9 +145,12 @@ const StudioProVip = () => {
             Acessos cortesia
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Cada acesso concedido libera o equivalente ao <strong>plano Solo</strong> gratuitamente: 1
-            marca, 10 gerações por mês e download sem marca d'água. {active} ativo(s).
+            Cada acesso libera gratuitamente o plano escolhido — hoje{" "}
+            <strong>plano {PLAN_LABELS[plan]}</strong>: {PLAN_LIMITS[plan].brands}{" "}
+            {PLAN_LIMITS[plan].brands === 1 ? "marca" : "marcas"}, {PLAN_LIMITS[plan].credits} gerações
+            por período e download sem marca d'água. {active} ativo(s).
           </p>
+
 
           <div className="mt-5 grid gap-3 border-t border-border pt-5 sm:grid-cols-2">
             <div>
@@ -158,9 +172,25 @@ const StudioProVip = () => {
                 placeholder="Ex.: parceria, teste"
               />
             </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="grant-plan">Plano concedido</Label>
+              <Select value={plan} onValueChange={(v) => setPlan(v as Exclude<StudioPlan, "free">)}>
+                <SelectTrigger id="grant-plan">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GRANTABLE_PLANS.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {PLAN_LABELS[p]} · {PLAN_LIMITS[p].brands}{" "}
+                      {PLAN_LIMITS[p].brands === 1 ? "marca" : "marcas"} · {PLAN_LIMITS[p].credits} gerações
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button onClick={grant} disabled={saving} className="rounded-full sm:col-span-2">
               {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Plus className="mr-1.5 h-4 w-4" />}
-              Conceder acesso Solo
+              Conceder acesso {PLAN_LABELS[plan]}
             </Button>
           </div>
         </section>
@@ -182,7 +212,9 @@ const StudioProVip = () => {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{row.email}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {row.revoked_at ? "Revogado" : `Ativo · plano ${row.plan}`}
+                      {row.revoked_at
+                        ? "Revogado"
+                        : `Ativo · plano ${PLAN_LABELS[row.plan as StudioPlan] ?? row.plan}`}
                       {row.note ? ` · ${row.note}` : ""} ·{" "}
                       {new Date(row.created_at).toLocaleDateString("pt-BR")}
                     </p>

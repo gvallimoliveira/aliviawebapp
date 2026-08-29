@@ -30,6 +30,14 @@ export type StudioAccess = {
   watermark: boolean;
 };
 
+/** Nome comercial de cada plano (usado em selos e textos de cortesia). */
+export const PLAN_LABELS: Record<StudioPlan, string> = {
+  free: "Grátis",
+  solo: "Solo",
+  marca: "Marca",
+  agencia: "Agência",
+};
+
 export const PLAN_LIMITS: Record<StudioPlan, { brands: number; credits: number; photos: number }> = {
   free: { brands: 1, credits: 2, photos: 0 },
   solo: { brands: 1, credits: 10, photos: 20 },
