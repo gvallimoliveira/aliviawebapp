@@ -552,12 +552,20 @@ export const buildBrandContent = (
         moral: `Entender o contexto vem antes de propor qualquer ${op.planWord}.`,
       },
       {
+        /* Este item já foi uma história de MARKETING ("a marca que falava com
+           todo mundo"), tema do próprio Studio, que vazava para marcas de
+           serviço/clínica. Agora nasce do vocabulário de operação da marca. */
         kicker: "ACONTECE TODA SEMANA",
-        title: "A marca que falava com todo mundo",
-        beats: ["A mensagem era ampla demais.", "O público não percebia o diferencial.", "Cada conteúdo parecia vir de uma empresa diferente."],
-        turn: "Quando definiu seu público, a comunicação ganhou direção.",
-        moral: "Falar para alguém específico é o que faz o recado chegar.",
+        title: `${cap(op.who)} que já tinha tentado de tudo`,
+        beats: [
+          "Cada tentativa começava do zero.",
+          `Ninguém explicou por que aquele ${op.planWord} e não outro.`,
+          `A ${op.reviewWord} nunca chegava.`,
+        ],
+        turn: `Com o cenário lido na ${op.firstStep}, o caminho ficou por escrito.`,
+        moral: `Entender antes de propor é o que faz o ${op.planWord} funcionar.`,
       },
+
     ],
     lists: [
       {
