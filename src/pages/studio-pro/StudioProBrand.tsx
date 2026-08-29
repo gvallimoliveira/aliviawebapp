@@ -248,7 +248,7 @@ const StudioProBrand = () => {
   }, [brand]);
 
   const ART_FIELDS =
-    "id, headline, caption, thumb, format, folder, created_at, is_favorite, png_path, composition, seed, segment, angle, block_kind, text_edits";
+    "id, headline, caption, thumb, format, folder, created_at, is_favorite, png_path, composition, seed, segment, angle, block_kind, text_edits, snapshot";
 
   /**
    * Atualiza somente a lista de artes — sem tocar em `loading`. Isso é o que
