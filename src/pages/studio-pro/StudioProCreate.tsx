@@ -1345,8 +1345,9 @@ const StudioProCreate = ({
 
               {/* Leitura de sentido: a explicação que o motor consegue dar da arte. */}
               {whyOpen === first.index && (() => {
-                const why = audit.rationales[first.index];
+                const why = explainWhy(first.index, first.block);
                 if (!why) return null;
+
                 return (
                   <div className="mx-auto mt-2 max-w-xl rounded-2xl border border-border bg-card p-4 text-left">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
