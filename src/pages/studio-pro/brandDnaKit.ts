@@ -139,3 +139,95 @@ export const dnaVocabulary = (dna: BrandDna): string[] => {
     .toLowerCase();
   return [...new Set(text.split(/[^a-zà-ú0-9]+/i).filter((w) => w.length >= 5))];
 };
+
+/**
+ * VOCABULÁRIO DE OFERTA (global, sensível ao tipo de marca)
+ *
+ * "Produto" só aparece quando a marca de fato vende um produto (digital ou
+ * físico). Marca de serviço clínico/consultoria fala "atendimento"; curso e
+ * mentoria falam "programa". Isso evita tanto o "produto" desumano numa marca
+ * de fisioterapia quanto o "atendimento" errado num SaaS como o Aliv.iA Studio.
+ */
+export type OfferKind = "produto" | "atendimento" | "programa" | "serviço";
+
+export type OfferWords = {
+  kind: OfferKind;
+  /** Núcleo nominal: "produto", "atendimento", "programa", "serviço". */
+  noun: string;
+  /** Com possessivo em 1ª pessoa quando a marca é pessoal: "meu atendimento". */
+  possessive: string;
+  /** Rótulo de etapas: "etapas do atendimento" / "etapas do onboarding". */
+  stepsLabel: string;
+  /** Fim do ciclo: "alta" (clínico), "renovação" (produto), "conclusão". */
+  closingLabel: string;
+};
+
+const hasAny = (text: string, terms: string[]) => terms.some((t) => text.includes(t));
+
+const PRODUCT_TERMS = [
+  "produto",
+  "software",
+  "aplicativo",
+  " app",
+  "plataforma",
+  "assinatura",
+  "saas",
+  "sistema",
+  "digital",
+  "loja",
+  "e-commerce",
+  "ecommerce",
+  "ferramenta",
+  "licença",
+  "peça",
+];
+const SERVICE_TERMS = [
+  "atendimento",
+  "consulta",
+  "sessão",
+  "sessões",
+  "clínica",
+  "clinica",
+  "fisioterapia",
+  "terapia",
+  "paciente",
+  "consultório",
+  "reabilitação",
+  "tratamento",
+];
+const PROGRAM_TERMS = ["curso", "mentoria", "aula", "treinamento", "formação", "workshop", "imersão"];
+
+/** Marca pessoal: nome de pessoa ou apresentação em 1ª pessoa. */
+const isPersonalBrand = (brandName: string, dna: BrandDna) => {
+  const words = brandName.trim().split(/\s+/);
+  const looksLikeName = words.length >= 2 && /^[A-ZÀ-Ú][a-zà-ú]+$/.test(words[0]);
+  const firstPerson = /\b(eu|meu|minha|atendo|trabalho)\b/i.test(
+    [dna.presentation, dna.offer, dna.belief].filter(Boolean).join(" "),
+  );
+  return looksLikeName || firstPerson;
+};
+
+export const offerWords = (dna: BrandDna, brandName = ""): OfferWords => {
+  const text = [dna.offer, dna.presentation, dna.description, dna.positioning, dna.niche, brandName]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  let kind: OfferKind = "serviço";
+  if (hasAny(text, PRODUCT_TERMS)) kind = "produto";
+  if (hasAny(text, SERVICE_TERMS)) kind = "atendimento";
+  else if (hasAny(text, PROGRAM_TERMS) && kind !== "produto") kind = "programa";
+
+  const personal = kind !== "produto" && isPersonalBrand(brandName, dna);
+  const noun = kind === "serviço" ? "serviço" : kind;
+
+  return {
+    kind,
+    noun,
+    possessive: personal ? `meu ${noun}` : `o ${noun}`,
+    stepsLabel:
+      kind === "produto" ? "etapas até o primeiro resultado" : `etapas do ${noun}`,
+    closingLabel:
+      kind === "atendimento" ? "alta" : kind === "programa" ? "conclusão" : "entrega",
+  };
+};

@@ -13,7 +13,7 @@ import {
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
 import { GLOBAL_SEGMENT, audienceHooks, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
-import { buildBrandDna, isDnaEmpty, type BrandDna } from "./brandDnaKit";
+import { buildBrandDna, isDnaEmpty, offerWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
@@ -194,6 +194,8 @@ const buildFromDna = (
   const pain = briefPhrases(dna.pain, 2);
   const desire = briefPhrases(dna.desire, 2);
   const who = dna.primaryAudience?.trim() || niche;
+  /** Vocabulário de oferta: "produto" só quando a marca vende produto. */
+  const offerVoice = offerWords(dna, brand);
   const cta = dna.cta?.trim() || "Chamar no direct";
 
   const headlines = [
@@ -233,7 +235,7 @@ const buildFromDna = (
         ? [{ heading: `O que ${brand} entrega`, items: offer, closing: cta }]
         : []),
       ...(belief.length >= 2
-        ? [{ heading: "No que eu acredito", items: belief, closing: `É assim que ${brand} atende.` }]
+        ? [{ heading: "No que eu acredito", items: belief, closing: offerVoice.kind === "produto" ? `É assim que ${brand} funciona.` : `É assim que ${brand} atende.` }]
         : []),
     ],
     closings: [
@@ -280,6 +282,8 @@ export const buildBrandContent = (
     briefAnswers: kit.briefAnswers,
   });
   const dnaPools = isDnaEmpty(dna) ? {} : buildFromDna(dna, brand, niche);
+  /** Como esta marca chama o que vende (produto / atendimento / programa). */
+  const offer = offerWords(dna, brand);
 
   /** Motor de variedade linguística (determinístico pela seed do lote). */
   const register: VoiceRegister = variation?.register ?? voiceRegister(kit.tone, brand);
@@ -346,7 +350,7 @@ export const buildBrandContent = (
       [
         { value: 1, label: "conversa antes de qualquer proposta" },
         { value: 4, label: "semanas até a primeira revisão" },
-        { value: 3, label: "etapas do atendimento" },
+        { value: 3, label: offer.stepsLabel },
       ],
       [
         { value: 4, label: "assuntos que a marca comunica" },
@@ -356,11 +360,11 @@ export const buildBrandContent = (
     ],
     stats: [
       {
-        heading: "Como o atendimento se organiza",
+        heading: `Como ${offer.possessive} se organiza`,
         items: [
           { value: "1", label: "primeira conversa", note: "para entender o caso antes de propor" },
           { value: "4", label: "semanas por ciclo", note: "revisão marcada desde o início" },
-          { value: "3", label: "etapas até a alta", note: "cada uma com objetivo declarado" },
+          { value: "3", label: `etapas até a ${offer.closingLabel}`, note: "cada uma com objetivo declarado" },
         ],
       },
       {
@@ -477,7 +481,7 @@ export const buildBrandContent = (
     ],
     marquee: [
       [brand, niche, "escuta", "plano", "revisão"],
-      words.length >= 3 ? words.slice(0, 6) : ["escuta", "plano", "revisão", "alta"],
+      words.length >= 3 ? words.slice(0, 6) : ["escuta", "plano", "revisão", offer.closingLabel],
       ["conversa", "plano", "revisão", brand],
     ],
 
@@ -786,6 +790,7 @@ const applyGlobal = (
   positioning?: string | null,
   dna?: BrandDna,
 ): WorldContent => {
+  const offer = dna ? offerWords(dna, brand) : offerWords({ forbidden: [] }, brand);
   const axes = [
     { kicker: "QUEM SOU", text: dna?.presentation },
     { kicker: "COMO EU TRABALHO", text: dna?.offer },
@@ -850,7 +855,7 @@ const applyGlobal = (
     searchQueries: matrix.flatMap((a) => [a.label, ...(a.pains ?? []), ...(a.desires ?? [])]),
     lists: [
       {
-        heading: "Para quem esse atendimento foi feito",
+        heading: `Para quem ${offer.possessive} foi feito`,
         items: matrix.map((a) => `${a.label} — ${a.desires?.[0] ?? a.description ?? "resultado claro"}`),
         closing: "Cada perfil entra por uma porta diferente e chega ao mesmo padrão.",
       },
