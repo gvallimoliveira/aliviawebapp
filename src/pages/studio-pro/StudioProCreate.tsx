@@ -1364,15 +1364,17 @@ const StudioProCreate = ({
                   <Type className="mr-1.5 h-3.5 w-3.5" />
                   Legenda
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 rounded-full text-xs"
-                  onClick={() => openWhy(first.index)}
-                >
-                  <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
-                  Por que esta arte
-                </Button>
+                {SHOW_WHY && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => openWhy(first.index)}
+                  >
+                    <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
+                    Por que esta arte
+                  </Button>
+                )}
 
                 {editing === first.index ? (
                   <>
