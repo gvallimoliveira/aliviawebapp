@@ -913,6 +913,8 @@ export type SegmentContentInput = {
 /**
  * Ponto de entrada único do motor: resolve marca + segmento + ângulo em um
  * `WorldContent`. Serve para qualquer cliente, com ou sem nichos cadastrados.
+ *
+ * O par relacional é decidido AQUI e vale para a arte inteira.
  */
 export const buildSegmentContent = ({
   kit,
@@ -926,7 +928,19 @@ export const buildSegmentContent = ({
 }: SegmentContentInput): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
   const variation: CopyVariation | undefined = variationSeed ? { seed: variationSeed, profile: variationProfile } : undefined;
+  const dna = buildBrandDna({
+    niche: kit.niche,
+    tone: kit.tone,
+    description: kit.description,
+    positioning: positioning ?? kit.positioning,
+    briefAnswers: kit.briefAnswers,
+  });
   const root = base ?? buildBrandContent(kit, variation, audiences);
+  const relationFor = (audience?: BrandAudience) =>
+    pickRelation({ audience, dna, brand, angle, seed: variationSeed });
+
+  const finish = (content: WorldContent) => sanitizeContent(applyAngle(content, angle), dna.forbidden);
+
   if (segment === GLOBAL_SEGMENT) {
     // 360° = modo livre, quase aleatório: qualquer assunto relevante à marca.
     // A seed do lote sorteia — metade fala da marca como um todo (applyGlobal),
@@ -937,14 +951,36 @@ export const buildSegmentContent = ({
       const dice = createRng(`360:${variationSeed}`);
       if (dice.int(100) < 50) {
         const picked = resolveAudience(audiences, matrix[dice.int(matrix.length)].id);
-        if (picked) return applyAngle(applyAudience(root, brand, picked), angle);
+        if (picked) return finish(applyAudience(root, brand, picked, relationFor(picked)));
       }
     }
-    return applyAngle(applyGlobal(root, brand, audiences, positioning), angle);
+    return finish(applyGlobal(root, brand, audiences, positioning, dna));
   }
   // Sub-nichos herdam o kit do público matriz e sobrepõem o próprio recorte.
   const audience = resolveAudience(audiences, segment);
-  if (!audience) return applyAngle(root, angle);
-  return applyAngle(applyAudience(root, brand, audience), angle);
+  if (!audience) return finish(applyGlobal(root, brand, audiences, positioning, dna));
+  return finish(applyAudience(root, brand, audience, relationFor(audience)));
 };
+
+/** Relação usada por uma arte — exposta para o filtro de nexo e a legenda. */
+export const relationForSegment = ({
+  kit,
+  audiences,
+  segment,
+  angle,
+  positioning,
+  variationSeed,
+}: Omit<SegmentContentInput, "base" | "variationProfile">): Relation => {
+  const brand = kit.name.trim() || "Sua marca";
+  const dna = buildBrandDna({
+    niche: kit.niche,
+    tone: kit.tone,
+    description: kit.description,
+    positioning: positioning ?? kit.positioning,
+    briefAnswers: kit.briefAnswers,
+  });
+  const audience = segment === GLOBAL_SEGMENT ? undefined : resolveAudience(audiences, segment);
+  return pickRelation({ audience, dna, brand, angle, seed: variationSeed });
+};
+
 
