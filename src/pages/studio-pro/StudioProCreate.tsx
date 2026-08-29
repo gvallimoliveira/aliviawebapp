@@ -152,6 +152,15 @@ const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "free", label: "Livre" },
 ];
 
+/** Nome do formato em linguagem comum, usado na explicação de cada arte. */
+const FORMAT_LABEL: Record<StudioFormat, string> = {
+  "9x16": "story vertical 9:16",
+  "4x5": "post de feed 4:5",
+  "1x1": "post quadrado 1:1",
+  free: "altura livre",
+};
+
+
 
 /** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
 const hexToHslTriplet = (hex: string): string | null => {
