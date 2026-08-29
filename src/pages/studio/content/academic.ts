@@ -26,6 +26,7 @@ const academic: WorldContent = {
   ],
   subs: [
     "O treino de raciocínio clínico que falta na graduação.",
+    "Você treina com IA especializada em fisioterapia, não com IA genérica.",
     "Plano acadêmico com preço de estudante.",
     "Você aprende a decidir, não a decorar.",
     "Do primeiro semestre ao primeiro estágio.",

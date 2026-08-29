@@ -26,6 +26,7 @@ const clinic: WorldContent = {
   ],
   subs: [
     "O sistema de raciocínio clínico da sua equipe.",
+    "IA especializada em fisioterapia, treinada no método da profissão.",
     "15 dias de teste, sem cartão de crédito.",
     "Padronize a avaliação sem engessar o clínico.",
     "Agenda, prontuário e evidência no mesmo fluxo.",

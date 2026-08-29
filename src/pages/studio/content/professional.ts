@@ -119,6 +119,8 @@ const professional: WorldContent = {
   ],
   subs: [
     "Sistema de raciocínio clínico com alma de fisioterapeuta.",
+    "IA especializada em fisioterapia. Não é IA genérica.",
+    "Uma IA treinada com as competências de quem trata.",
     "Menos digitação, mais decisão clínica.",
     "O tempo que você gasta transcrevendo volta para o atendimento.",
     "Documentação de nível pericial, sem esforço de secretaria.",
@@ -383,6 +385,7 @@ const professional: WorldContent = {
   quotes: [
     { text: '"O Aliv.iA não compete com o fisioterapeuta — nós o complementamos."' },
     { text: '"A tecnologia devolve o tempo. O raciocínio continua sendo humano."', topic: "voice-notes" },
+    { text: '"Não é chatbot com jaleco: é IA treinada no raciocínio do fisioterapeuta."' },
     { text: '"Documentar bem é proteger o paciente e proteger você."', topic: "report" },
     { text: '"Sistema de raciocínio clínico com alma de fisioterapeuta."' },
     { text: '"Diagnóstico não é chute com nome bonito."', topic: "hypothesis" },
