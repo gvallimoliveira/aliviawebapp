@@ -147,7 +147,9 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
     const t = raw.toLowerCase();
     if (isStale(t) || hasBannedJargon(t) || banned.some((f) => t.includes(f))) return true;
     // Portão de português: frase quebrada ("com precisam postar") nunca vai ao ar.
-    return raw.trim().split(/\s+/).length >= 4 && !readsWell(raw);
+    const broken = raw.trim().split(/\s+/).length >= 4 && !readsWell(raw);
+    if (broken && process.env.STUDIO_DEBUG) console.log("[grammar drop]", raw);
+    return broken;
   };
   const purge = <T,>(list: T[]): T[] => {
     const kept = list.filter((item) => !bad(textOf(item)));
