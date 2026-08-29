@@ -15,7 +15,43 @@ import { TextureLayer } from "./Texture";
  * O conteúdo nunca é inventado aqui: o prefixo vem dos kickers/headlines e as
  * sugestões vêm do acervo editorial da marca (features, quotes, marquee).
  */
-const PREFIXES = ["como tratar", "por que sinto", "o que fazer com", "vale a pena"] as const;
+/**
+ * Prefixos possíveis da barra. Cada um declara com o que ele COMBINA: o texto
+ * digitado tem de fazer sentido lido junto com as sugestões abaixo. O motor
+ * escolhe o prefixo que dá match com mais sugestões; sem match claro, cai nos
+ * prefixos abrangentes, que servem para qualquer termo.
+ */
+type Prefix = {
+  text: string;
+  /** Casa com sugestões que são um problema/diagnóstico ("dor lombar", "tendinite"). */
+  fits: (suggestion: string) => boolean;
+  /** Abrangente: lê bem com qualquer sugestão (fallback seguro). */
+  broad?: boolean;
+};
+
+/** Sugestão que nomeia um sintoma/diagnóstico ("dor no ombro", "capsulite"). */
+const isCondition = (s: string) =>
+  /\b(dor|dores|lesão|lesões|tendinite|capsulite|hérnia|artrose|bursite|entorse|ruptura|inflamação|contratura|fascite|luxação|fratura|instabilidade)\b/.test(
+    s,
+  );
+
+/** Sugestão escrita como falta/dificuldade ("falta de acompanhamento"). */
+const isGap = (s: string) => /^(falta|ausência|dificuldade|medo|risco|garantia|excesso)\b/.test(s);
+
+/** Sugestão escrita como ação/objetivo ("minimizar o ciclo", "voltar a correr"). */
+const isGoal = (s: string) => /^(?:[a-zà-ÿ]+(?:ar|er|ir))\b/.test(s);
+
+const PREFIXES: Prefix[] = [
+  { text: "como tratar", fits: isCondition },
+  { text: "por que sinto", fits: isCondition },
+  { text: "o que fazer com", fits: (s) => isCondition(s) || isGap(s) },
+  { text: "como resolver", fits: (s) => isGap(s) || isGoal(s) },
+  { text: "vale a pena", fits: isGoal },
+  { text: "saber mais sobre", fits: () => true, broad: true },
+  { text: "quero entender", fits: () => true, broad: true },
+  { text: "pesquisando sobre", fits: () => true, broad: true },
+];
+
 
 /** Normaliza um trecho de copy em algo que caberia numa busca real. */
 const asQuery = (raw: string) =>
