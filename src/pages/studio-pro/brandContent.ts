@@ -344,7 +344,7 @@ export const buildBrandContent = (
       [
         { value: 4, label: "assuntos que a marca comunica" },
         { value: 3, label: "motivos para escolher" },
-        { value: 1, label: "responsável pelo seu caso" },
+        { value: 1, label: "profissional acompanha do início ao fim" },
       ],
     ],
     stats: [
@@ -442,7 +442,7 @@ export const buildBrandContent = (
       },
       {
         tag: "ATENDIMENTO",
-        title: "Um responsável pelo seu caso",
+        title: "Quem começa é quem termina",
         description: "Quem atende conhece o histórico e responde por ele do começo ao fim.",
         topic: topicAt(1),
         headline: "Sempre a mesma pessoa",
@@ -548,7 +548,7 @@ export const buildBrandContent = (
       audience: niche,
       proofs: [
         "O plano é montado depois da primeira conversa",
-        "Um responsável acompanha o caso do início ao fim",
+        "Quem atende acompanha o caso do início ao fim",
         "Proposta por escrito, com data de revisão",
       ],
       objections: [
