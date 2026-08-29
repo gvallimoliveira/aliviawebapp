@@ -5,7 +5,7 @@ import type { StudioPicker } from "../picker";
 import type { StudioPersona } from "../personas";
 import type { StudioPhoto } from "../photos";
 
-export type StudioFormat = "9x16" | "1x1" | "free";
+export type StudioFormat = "9x16" | "4x5" | "1x1" | "free";
 
 export type BlockProps = {
   content: WorldContent;
