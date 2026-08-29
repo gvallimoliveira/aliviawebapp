@@ -212,7 +212,9 @@ const StudioProVip = () => {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{row.email}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {row.revoked_at ? "Revogado" : `Ativo · plano ${row.plan}`}
+                      {row.revoked_at
+                        ? "Revogado"
+                        : `Ativo · plano ${PLAN_LABELS[row.plan as StudioPlan] ?? row.plan}`}
                       {row.note ? ` · ${row.note}` : ""} ·{" "}
                       {new Date(row.created_at).toLocaleDateString("pt-BR")}
                     </p>
