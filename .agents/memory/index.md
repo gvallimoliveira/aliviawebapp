@@ -28,7 +28,10 @@ Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lot
 
 
 
+Studio autoral: marca com `content_source = 'authorial'` NUNCA gera texto — só diagrama textos do autor (`studio_texts`) e slogans; jamais mistura obras nem fragmentos fora de ordem.
+
 ## Memories
+- [Studio Authorial Mode](mem://features/studio-authorial-mode) — Marcas autorais: Studio só diagrama textos do autor, regras de coerência e fragmentação.
 - [Studio Gallery Edit](mem://features/studio-gallery-edit) — Edição de arte salva usa instantâneo (snapshot) da arte pronta; nunca reconstruir pela receita.
 - [Studio Proofreading](mem://features/studio-proofreading) — Revisor de concordância global e escolha do texto digitado na barra de busca.
 - [Studio Grammar Guard](mem://features/studio-grammar-guard) — Nominalização, portão readsWell, léxico proibido e fim dos tapa-buracos visuais.
