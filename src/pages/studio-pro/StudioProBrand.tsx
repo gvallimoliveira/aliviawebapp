@@ -73,6 +73,8 @@ type Brand = {
   audiences: unknown;
   positioning: string | null;
   strategy_notes: string | null;
+  /** Slogan declarado — assina as artes e habilita o sub-nicho "Slogan em destaque". */
+  slogan: string | null;
   /** Assinatura (logo + nome) em todas as artes desta marca. */
   signature_enabled: boolean | null;
   /** Respostas do questionário de marca (caminho de quem não tem manual). */
@@ -223,6 +225,7 @@ const StudioProBrand = () => {
     keywords: "",
     positioning: "",
     strategy_notes: "",
+    slogan: "",
   });
   /** Nichos da marca — cada um alimenta uma aba de conteúdo no editor. */
   const [audiences, setAudiences] = useState<BrandAudience[]>([]);
@@ -334,6 +337,7 @@ const StudioProBrand = () => {
         keywords: (brand.topics ?? []).join(", "),
         positioning: brand.positioning ?? "",
         strategy_notes: brand.strategy_notes ?? "",
+        slogan: brand.slogan ?? "",
       });
       setAudiences(readAudiences(brand.audiences));
       setColorKit(readColorKit(brand.colors));
@@ -388,6 +392,7 @@ const StudioProBrand = () => {
         colors: writeColorKit(colorKit),
         positioning: form.positioning.trim() || null,
         strategy_notes: form.strategy_notes.trim() || null,
+        slogan: form.slogan.trim() || null,
         audiences: writeAudiences(audiences),
         signature_enabled: signatureEnabled,
         brief_answers: briefAnswers,
