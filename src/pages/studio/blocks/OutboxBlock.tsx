@@ -22,23 +22,38 @@ const SKINS = [
 const OutboxBlock = ({ content, rng, treatment, format }: BlockProps) => {
   const skin = SKINS[treatment % SKINS.length];
 
-  const typo = content.typos.length > 0 ? rng.pick(content.typos) : undefined;
-  const phrase = typo
-    ? `${typo.lead} ${typo.big} ${typo.tail}`
-    : (() => {
-        const h = rng.pick(content.headlines);
-        return `${h.strong} ${h.rest}`;
-      })();
+  /**
+   * REGRA DURA: nunca cortar frase. A arte tem 5 linhas curtas de espaço, então
+   * a frase é ESCOLHIDA por caber — não truncada no meio (era isso que gerava
+   * "…DIARIAMENTE. HOJE. TER").
+   */
+  const wrap = (phrase: string): string[] => {
+    const parts = phrase.replace(/\s+/g, " ").trim().split(" ");
+    const out: string[] = [];
+    parts.forEach((word) => {
+      const last = out[out.length - 1];
+      if (last && `${last} ${word}`.length <= 11) out[out.length - 1] = `${last} ${word}`;
+      else out.push(word);
+    });
+    return out;
+  };
 
-  /** Máximo de 5 linhas curtas: a arte vive do silêncio ao redor. */
-  const words = phrase.replace(/\s+/g, " ").trim().split(" ");
-  const lines: string[] = [];
-  words.forEach((word) => {
-    const last = lines[lines.length - 1];
-    if (last && `${last} ${word}`.length <= 11 && lines.length >= 1) lines[lines.length - 1] = `${last} ${word}`;
-    else lines.push(word);
-  });
-  const shown = lines.slice(0, 5);
+  const candidates = [
+    ...content.typos.map((t) => `${t.big} ${t.tail}`),
+    ...content.typos.map((t) => `${t.lead} ${t.big}`),
+    ...content.headlines.map((h) => h.strong),
+    ...content.typos.map((t) => t.big),
+    ...content.marquee.flat(),
+  ]
+    .map((text) => (text ?? "").replace(/\s+/g, " ").trim())
+    .filter((text) => text.length >= 3);
+
+  const fitting = candidates.filter((text) => wrap(text).length <= 5);
+  const phrase = fitting.length ? rng.pick(fitting) : candidates[0];
+  if (!phrase) return null;
+
+  const shown = wrap(phrase);
+  if (shown.length > 5) return null;
 
   return (
     <section

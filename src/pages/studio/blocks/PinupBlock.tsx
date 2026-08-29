@@ -8,6 +8,10 @@ import { BRAND_NAME, BRAND_SITE } from "../brand";
  *
  * Sem poster no acervo da marca o cartaz vira TIPOGRÁFICO (nunca em branco):
  * antes o bloco devolvia `null` e o usuário recebia uma arte vazia.
+ *
+ * REGRA DURA: nada de "tapa-buraco". A moldura com a INICIAL da funcionalidade
+ * (uma letra solta no meio da arte) foi removida — sem imagem, o cartaz é
+ * tipográfico de verdade: selo, frase grande e a explicação embaixo.
  */
 const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   const posters = content.features.filter((f) => f.poster);
@@ -42,24 +46,21 @@ const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
             {feature.tag}
           </p>
 
-          {feature.poster ? (
+          {feature.poster && (
             <img
               src={feature.poster}
               alt={feature.headline ?? feature.title}
               loading="eager"
               className="max-h-[52vh] w-auto max-w-full rounded-3xl border border-border object-contain shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.45)]"
             />
-          ) : (
-            /* Sem imagem: moldura tipográfica com a inicial da funcionalidade. */
-            <div className="flex h-40 w-40 items-center justify-center rounded-3xl border border-border bg-card md:h-56 md:w-56">
-              <span className="text-6xl font-bold text-primary/70 md:text-7xl">
-                {(feature.title || "•").trim().charAt(0).toUpperCase()}
-              </span>
-            </div>
           )}
 
 
-          <h2 className="max-w-2xl text-2xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
+          <h2
+            className={`max-w-2xl font-bold leading-tight tracking-tight text-foreground ${
+              feature.poster ? "text-2xl md:text-4xl" : "text-3xl md:text-5xl"
+            }`}
+          >
             {feature.headline ?? feature.title}
           </h2>
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
