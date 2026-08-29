@@ -492,27 +492,27 @@ export const buildBrandContent = (
           "Nenhuma conversava com o que ela realmente precisava.",
           "Na terceira tentativa, encontrou uma proposta feita para seu contexto.",
         ],
-        turn: "Foi a primeira vez que ela se reconheceu na mensagem.",
-        moral: "Conexão começa quando a marca entende antes de falar.",
+        turn: "Foi a primeira vez que alguém explicou o porquê.",
+        moral: "Entender o caso vem antes de propor conduta.",
       },
       {
         kicker: "ACONTECE TODA SEMANA",
         title: "A marca que falava com todo mundo",
         beats: ["A mensagem era ampla demais.", "O público não percebia o diferencial.", "Cada conteúdo parecia vir de uma empresa diferente."],
         turn: "Quando definiu seu público, a comunicação ganhou direção.",
-        moral: "Relevância nasce da coragem de ser específico.",
+        moral: "Falar para alguém específico é o que faz o recado chegar.",
       },
     ],
     lists: [
       {
         heading: "4 sinais de que uma marca ainda não se conecta",
         items: [
-          "A mensagem poderia ser de qualquer concorrente",
-          "O público não entende o diferencial",
-          "Cada conteúdo tem uma personalidade diferente",
+          "A orientação poderia servir para qualquer pessoa",
+          "Ninguém explicou por que esse caminho e não outro",
+          "Cada consulta recomeça do zero",
           "A chamada não deixa claro o próximo passo",
         ],
-        closing: `${brand} resolve os quatro no primeiro encontro.`,
+        closing: `${brand} trata os quatro na primeira conversa.`,
       },
       {
         heading: "3 perguntas antes de escolher uma solução",
@@ -523,12 +523,12 @@ export const buildBrandContent = (
     carousels: [
       {
         kicker: "PASSO A PASSO",
-        title: "Como a gente trabalha",
-        coverSub: `${brand}, sem mistério.`,
+        title: `Como ${brand} conduz um caso`,
+        coverSub: `Como ${brand} conduz um caso.`,
         slides: [
           { heading: "1. Conversa", body: "Entendemos o cenário antes de propor qualquer coisa.", topic: topicAt(0) },
-          { heading: "2. Direção", body: "Conectamos a proposta ao que o público busca.", topic: topicAt(1) },
-          { heading: "3. Experiência", body: "Transformamos valor em uma presença reconhecível.", topic: topicAt(2) },
+          { heading: "2. Plano", body: "O caminho do seu caso fica por escrito.", topic: topicAt(1) },
+          { heading: "3. Revisão", body: "O que avançou fica; o que não avançou muda.", topic: topicAt(2) },
         ],
         cta: { title: "Quer começar?", sub: "Manda uma mensagem — a primeira conversa é sem compromisso." },
       },
@@ -547,9 +547,9 @@ export const buildBrandContent = (
     sales: {
       audience: niche,
       proofs: [
-        "Proposta alinhada às necessidades do público",
-        "Identidade consistente em cada ponto de contato",
-        "Mensagem clara sobre valor e diferencial",
+        "O plano é montado depois da primeira conversa",
+        "Um responsável acompanha o caso do início ao fim",
+        "Proposta por escrito, com data de revisão",
       ],
       objections: [
         "Não é mais caro: é previsível.",
