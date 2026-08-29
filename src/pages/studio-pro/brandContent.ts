@@ -90,17 +90,27 @@ const ingredientsOf = (
   niche: string,
   audiences: BrandAudience[] = [],
   audience?: BrandAudience,
+  dna?: BrandDna,
 ): CopyIngredients => {
   const pool = audience ? [audience] : audiences;
   const collect = (get: (a: BrandAudience) => string[] | undefined) =>
     pool.flatMap((a) => (get(a) ?? []).map((v) => v.trim()).filter(Boolean));
+  /**
+   * HIERARQUIA: o que o cliente declarou (manual/briefing) vem PRIMEIRO. O
+   * acervo de público entra depois. Nada genérico entra aqui — quando falta
+   * insumo, o slot simplesmente tem menos opções.
+   */
+  const briefPains = dna?.pain ? [dna.pain] : [];
+  const briefDesires = dna?.desire ? [dna.desire] : [];
+  const briefSolutions = [dna?.belief, dna?.offer].filter(Boolean) as string[];
   return {
     brand,
     niche,
-    audience: audience?.label.trim(),
-    pains: collect((a) => a.pains),
-    desires: collect((a) => a.desires),
-    solutions: collect((a) => a.proof),
+    audience: audience?.label.trim() || dna?.primaryAudience,
+    pains: [...briefPains, ...collect((a) => a.pains)],
+    desires: [...briefDesires, ...collect((a) => a.desires)],
+    solutions: [...briefSolutions, ...collect((a) => a.proof)],
+    positioning: dna?.presentation || dna?.positioning || undefined,
     /**
      * O vocabulário da ferramenta ("kit de marca", "sua paleta", "lote"…) é
      * EXCLUSIVO do Aliv.iA Studio vendendo a si mesmo. Em marca de cliente ele
@@ -110,9 +120,131 @@ const ingredientsOf = (
       ...(kit.keywords ?? []).map((w) => w.trim()).filter(Boolean),
       ...(isStudioSelfBrand(brand) ? STUDIO_SELF_KEYWORDS : []),
     ],
-    cta: audience?.cta?.trim(),
+    cta: audience?.cta?.trim() || dna?.cta,
   };
 };
+
+/* ------------------------------------------------------------------------- */
+/* FILTRO DE VÍCIOS: nenhuma frase clichê sai do motor                        */
+/* ------------------------------------------------------------------------- */
+
+const textOf = (value: unknown): string => {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.map(textOf).join(" ");
+  if (value && typeof value === "object") return Object.values(value).map(textOf).join(" ");
+  return "";
+};
+
+/**
+ * Remove do acervo tudo que caia em vício de linguagem, jargão proibido ou
+ * palavra vetada pela marca. Se um slot ficaria vazio, mantém o primeiro item
+ * (o bloco precisa renderizar), mas a arte vai reprovar no filtro de nexo.
+ */
+export const sanitizeContent = (content: WorldContent, forbidden: string[] = []): WorldContent => {
+  const banned = forbidden.map((f) => f.toLowerCase().trim()).filter((f) => f.length >= 3);
+  const bad = (raw: string) => {
+    const t = raw.toLowerCase();
+    return isStale(t) || hasBannedJargon(t) || banned.some((f) => t.includes(f));
+  };
+  const purge = <T,>(list: T[]): T[] => {
+    const kept = list.filter((item) => !bad(textOf(item)));
+    return kept.length ? kept : list.slice(0, 1);
+  };
+  const out = { ...content } as Record<string, unknown>;
+  for (const [key, value] of Object.entries(content)) {
+    if (Array.isArray(value)) out[key] = purge(value as unknown[]);
+  }
+  const sales = { ...content.sales } as Record<string, unknown>;
+  for (const [key, value] of Object.entries(content.sales)) {
+    if (Array.isArray(value)) sales[key] = purge(value as unknown[]);
+  }
+  out.sales = sales;
+  return out as unknown as WorldContent;
+};
+
+/** Quebra um campo longo do briefing em frases utilizáveis dentro da arte. */
+const briefPhrases = (text?: string, max = 3): string[] =>
+  (text ?? "")
+    .split(/[.;\n•·]+/)
+    .map((s) => s.trim().replace(/^[-–]\s*/, ""))
+    .filter((s) => s.length >= 12)
+    .slice(0, max)
+    .map((s) => firstSentence(s, 110));
+
+/**
+ * ACERVO DA MARCA (fonte primária): escrito com o que o cliente declarou no
+ * manual/briefing. Cada slot só existe quando há insumo real — é o que impede o
+ * motor de voltar a falar "clareza, método, pilares" para qualquer marca.
+ */
+const buildFromDna = (
+  dna: BrandDna,
+  brand: string,
+  niche: string,
+): Partial<WorldContent> => {
+  const presentation = dna.presentation ? firstSentence(dna.presentation, 110) : "";
+  const belief = briefPhrases(dna.belief, 3);
+  const offer = briefPhrases(dna.offer, 3);
+  const pain = briefPhrases(dna.pain, 2);
+  const desire = briefPhrases(dna.desire, 2);
+  const who = dna.primaryAudience?.trim() || niche;
+  const cta = dna.cta?.trim() || "Chamar no direct";
+
+  const headlines = [
+    ...pain.map((p) => ({ strong: lower1(p).replace(/^./, (c) => c.toUpperCase()), rest: " tem explicação — e conduta." })),
+    ...desire.map((d) => ({ strong: firstSentence(d, 60), rest: " começa com uma decisão." })),
+    ...(presentation ? [{ strong: firstSentence(presentation, 60), rest: "" }] : []),
+    ...belief.slice(0, 2).map((b) => ({ strong: firstSentence(b, 58), rest: "" })),
+  ].filter((h) => h.strong.length >= 8);
+
+  const subs = [
+    ...(presentation ? [presentation] : []),
+    ...offer,
+    ...belief,
+    ...(pain[0] ? [`Se ${lower1(pain[0])}, o problema não é força de vontade.`] : []),
+  ];
+
+  return {
+    kickers: [brand.toUpperCase(), ...(who ? [who.toUpperCase()] : []), "COMO EU TRABALHO", "NO QUE EU ACREDITO"],
+    headlines,
+    subs,
+    typos: [
+      ...(pain[0] ? [{ lead: "Você convive com", big: firstSentence(pain[0], 34), tail: " há quanto tempo?" }] : []),
+      ...(desire[0] ? [{ lead: "O objetivo é", big: firstSentence(desire[0], 34), tail: "." }] : []),
+      ...(belief[0] ? [{ lead: "Aqui,", big: firstSentence(belief[0], 34), tail: "." }] : []),
+    ],
+    kinetic: [
+      ...(pain[0] ? [{ kicker: "O PONTO DE PARTIDA", word: "Hoje", caption: pain[0] }] : []),
+      ...(desire[0] ? [{ kicker: "O QUE PASSA A SER POSSÍVEL", word: "Depois", caption: desire[0] }] : []),
+      ...(belief[0] ? [{ kicker: "COMO EU TRABALHO", word: "Critério", caption: belief[0] }] : []),
+    ],
+    quotes: [
+      ...(presentation ? [{ text: `“${presentation}.”` }] : []),
+      ...belief.slice(0, 2).map((b) => ({ text: `“${b}.”` })),
+    ],
+    lists: [
+      ...(offer.length >= 2
+        ? [{ heading: `O que ${brand} entrega`, items: offer, closing: cta }]
+        : []),
+      ...(belief.length >= 2
+        ? [{ heading: "No que eu acredito", items: belief, closing: `É assim que ${brand} atende.` }]
+        : []),
+    ],
+    closings: [
+      { title: desire[0] ? firstSentence(desire[0], 60) : `Falar com ${brand}`, sub: presentation || offer[0] || "", cta },
+      ...(pain[0] ? [{ title: "Isso te soa familiar?", sub: pain[0], cta }] : []),
+    ],
+    marquee: [[brand, ...(who ? [who] : []), ...belief.slice(0, 2)].filter(Boolean)],
+    sales: {
+      audience: who,
+      proofs: [...offer, ...belief].slice(0, 5),
+      objections: pain.map((p) => `Já tentou antes? O ponto era ${lower1(p)}.`),
+      offers: offer.slice(0, 2),
+      ctas: [cta],
+      hashtags: [brand.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), who.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()].filter(Boolean),
+    },
+  };
+};
+
 
 /**
  * Monta o acervo de copy da marca no contrato `WorldContent`, para que todos os
