@@ -75,7 +75,14 @@ export type RationaleContext = {
   brandName: string;
   /** Manual/formulário da marca. Sem isso nenhuma arte fecha a leitura. */
   brand?: BrandContext;
+  /**
+   * Par relacional desta arte (medo/desejo eleito). Quando presente, a arte só
+   * passa na dimensão de público se o texto tocar o vocabulário desse medo ou
+   * desejo — é o que impede copy dirigida no rótulo e genérica no conteúdo.
+   */
+  relation?: { pain?: string; desire?: string; axis?: "pain" | "desire" };
 };
+
 
 
 type Sense = {
