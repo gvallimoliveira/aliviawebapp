@@ -80,12 +80,14 @@ const SENSE: Record<BlockKind, Sense> = {
     job: "apresentar o tema em dois segundos e prender a atenção antes do resto",
   },
   marquee: {
-    format: "faixa de palavras",
-    sees: "uma faixa com palavras do assunto passando em sequência",
-    job: "fixar o vocabulário do tema por repetição, sem exigir leitura atenta",
-    needs: (c) => some(c.marquee),
-    needsLabel: "palavras-chave do assunto",
+    format: "índice numerado",
+    sees:
+      "uma afirmação em cima, abaixo dela uma lista numerada com os pontos do assunto e, no pé, uma linha de fecho",
+    job: "organizar o assunto em tópicos: quem passa o olho entende o escopo sem ler tudo",
+    needs: (c) => some(c.marquee) && some(c.headlines),
+    needsLabel: "tópicos do assunto e uma frase que diga o que a lista significa",
   },
+
   metrics: {
     format: "números",
     sees: "números grandes com o que cada um representa",
@@ -371,11 +373,22 @@ const hash = (s: string): number => {
   return Math.abs(h);
 };
 
-/** Frases reais da arte, limpas e sem repetição. */
+/**
+ * Frases reais da arte, limpas e sem repetição.
+ *
+ * Blocos numerados (índice, lista, método) colam o número do item no texto ao
+ * serem lidos do DOM ("01Guilherme Vallim"). O número é enfeite de layout, não
+ * mensagem: sai antes de citar a frase.
+ */
 const cleanCopy = (copy?: string[]): string[] => {
   const seen = new Set<string>();
   return (copy ?? [])
-    .map((t) => trim(t).replace(/\s+/g, " "))
+    .map((t) =>
+      trim(t)
+        .replace(/\s+/g, " ")
+        .replace(/^(?:\d{1,2}[.)°º]?\s*)(?=\D)/, "")
+        .trim(),
+    )
     .filter((t) => {
       if (t.length < 3 || t.length > 220) return false;
       const key = t.toLowerCase();
@@ -384,6 +397,10 @@ const cleanCopy = (copy?: string[]): string[] => {
       return true;
     });
 };
+
+/** Uma frase de verdade (tem sujeito e ideia) ou só um rótulo solto? */
+const isSentence = (t: string) => t.split(/\s+/).filter(Boolean).length >= 4;
+
 
 const quote = (t: string) => `“${t}”`;
 
@@ -431,9 +448,21 @@ export const explainArt = (
 
   // ---------- personalização desta arte ----------
   const copy = cleanCopy(detail?.copy);
-  const headline = copy.slice().sort((a, b) => b.length - a.length)[0] ?? "";
-  const lead = copy[0] && copy[0] !== headline ? copy[0] : copy.find((t) => t !== headline) ?? "";
-  const tail = copy.length > 2 ? copy[copy.length - 1] : "";
+  // A frase-âncora é a maior FRASE; rótulo solto ("visibilidade") não conta.
+  const sentences = copy.filter(isSentence);
+  const headline = sentences.slice().sort((a, b) => b.length - a.length)[0] ?? "";
+  const labels = copy.filter((t) => !isSentence(t));
+  const lead = sentences.find((t) => t !== headline) ?? "";
+  const tail = sentences.length > 2 ? sentences[sentences.length - 1] : "";
+
+  // 5) Rótulo solto não é mensagem: se a arte não tem nenhuma frase inteira,
+  // ela pode ser bonita, mas não diz nada a quem não conhece a marca.
+  if (copy.length && !sentences.length) {
+    gaps.push(
+      "a arte só mostra palavras soltas, sem nenhuma frase que diga o que elas significam para quem lê",
+    );
+  }
+
   const layout = LAYOUT_NOTES[block.treatment % LAYOUT_NOTES.length];
   const motion = block.motion ? MOTION_NOTES[block.motion] : "";
   const slide = block.slide
@@ -456,19 +485,26 @@ export const explainArt = (
     : "";
   const motionSeen = motion ? ` No movimento, ${motion}.` : "";
 
+  const labelsSeen = labels.slice(0, 4).map(quote).join(", ");
+  /** Quando a arte não tem frase, a explicação assume o problema em vez de enfeitar. */
+  const noSentence = () =>
+    `Sem frase inteira, esta arte não diz nada por si: ela mostra ${
+      labelsSeen || "apenas rótulos"
+    } e espera que a pessoa deduza a ligação. Para ${audience}, falta uma linha dizendo o que esses termos resolvem — do jeito que está, o valor só existe para quem já conhece ${ctx.brandName}.`;
+
   const messageFrames = [
     () =>
       headline
         ? `A frase que carrega a arte é ${quote(headline)} — escolhida porque ${audiencePart} sobre ${subject}.${
             lead ? ` A linha ${quote(lead)} sustenta o argumento sem exigir esforço de leitura.` : ""
-          } O formato entra para ${sense.job}.`
-        : `A arte ${audiencePart} sobre ${subject}: ${sense.job}.`,
+          }${labelsSeen ? ` Os itens ${labelsSeen} entram como apoio, não como mensagem.` : ""} O formato entra para ${sense.job}.`
+        : noSentence(),
     () =>
       headline
         ? `Pensando em ${audience}, o motor colocou ${quote(headline)} como centro da arte: é a leitura de dois segundos sobre ${subject}. Escolhi ${sense.format} porque o trabalho aqui é ${sense.job}.${
             tail ? ` O fecho ${quote(tail)} amarra a ideia.` : ""
           }`
-        : `A arte ${audiencePart} sobre ${subject}: ${sense.job}.`,
+        : noSentence(),
     () =>
       headline
         ? `O assunto é ${subject} e o recorte é ${quote(headline)}. ${
@@ -476,8 +512,9 @@ export const explainArt = (
           }, e por isso o formato ${sense.format} — ele serve para ${sense.job}.${
             lead && lead !== headline ? ` ${quote(lead)} entra como apoio.` : ""
           }`
-        : `A arte ${audiencePart} sobre ${subject}: ${sense.job}.`,
+        : noSentence(),
   ];
+
 
   const effect = [
     role ? `${role}. ` : "",

@@ -9,13 +9,32 @@ import { TextureLayer } from "./Texture";
  * resto do quadro vazio — arte impublicável. Agora é uma composição ESTÁTICA
  * que ocupa o quadro inteiro: os mesmos termos viram um índice editorial
  * numerado, uma linha por termo, sem animação e sem sobra de branco.
+ *
+ * REGRA DE SENTIDO: uma lista de palavras soltas não comunica nada. Por isso o
+ * índice SEMPRE vem com uma afirmação em cima (o que essa lista é) e um fecho
+ * embaixo (o que fazer com ela). Sem essas duas linhas a arte não se explica.
  */
 const MarqueeBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
   const items = rng.pick(content.marquee);
   const kicker = rng.pick(content.kickers);
   const dark = (treatment + persona.surfaceShift) % 2 === 1;
-  const rows = items.slice(0, 6);
+  // O nome da marca já está na assinatura: repetido como item do índice, vira
+  // ruído ("01 Nome da Marca") e rouba a linha de um tópico de verdade.
+  const label = content.label.toLowerCase();
+  const rows = [...new Set(items.map((t) => t.trim()).filter(Boolean))]
+    .filter((t) => t.length > 2 && !label.includes(t.toLowerCase()))
+    .slice(0, 5);
+
   const bullet = (treatment + persona.textureShift) % 3;
+
+  const head = rng.pick(content.headlines);
+  const statement = `${head.strong}${head.rest}`.trim();
+  const closing =
+    content.lists.find((l) => !!l.closing)?.closing ??
+    content.closings[0]?.sub ??
+    content.subs[0] ??
+    "";
+
 
   return (
     <section
@@ -38,6 +57,18 @@ const MarqueeBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
           >
             {kicker}
           </p>
+
+          {statement && (
+            <h2
+              className={`mb-5 max-w-[22ch] text-2xl font-semibold leading-[1.1] tracking-tight md:text-4xl ${
+                dark ? "text-background" : "text-foreground"
+              }`}
+            >
+              {statement}
+            </h2>
+          )}
+
+
 
           <ul
             className={`divide-y ${
@@ -70,7 +101,18 @@ const MarqueeBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
               </li>
             ))}
           </ul>
+
+          {closing && (
+            <p
+              className={`mt-5 max-w-[38ch] text-sm leading-snug md:text-base ${
+                dark ? "text-background/70" : "text-muted-foreground"
+              }`}
+            >
+              {closing}
+            </p>
+          )}
         </motion.div>
+
       </div>
     </section>
   );
