@@ -3,13 +3,16 @@ import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Check,
+  ClipboardList,
   Download,
   Images,
   Layers,
   Palette,
+  PenLine,
   Quote,
   Sparkles,
   Type,
+  Users,
   Wand2,
   Zap,
 } from "lucide-react";
