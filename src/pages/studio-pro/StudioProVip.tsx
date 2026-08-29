@@ -45,6 +45,7 @@ const StudioProVip = () => {
   const [grants, setGrants] = useState<Grant[]>([]);
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
+  const [plan, setPlan] = useState<Exclude<StudioPlan, "free">>("solo");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
