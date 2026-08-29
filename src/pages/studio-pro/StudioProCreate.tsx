@@ -860,7 +860,7 @@ const StudioProCreate = ({
       try {
         const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
         const png = await renderNodeToBlob(node, ratio, "image/png");
-        const path = `${auth.user.id}/${brand.id}/${seed}-${String(index + 1).padStart(2, "0")}-${kind}.png`;
+        const path = `${auth.user.id}/${brand.id}/${seed}-${String(index + 1).padStart(2, "0")}-${kind}${side}.png`;
         const { error: upErr } = await supabase.storage
           .from("studio-art")
           .upload(path, png, { contentType: "image/png", upsert: true });
@@ -879,7 +879,7 @@ const StudioProCreate = ({
       ? await captureArtSnapshot({
           userId: auth.user.id,
           brandId: brand.id,
-          key: `${seed}-${String(index + 1).padStart(2, "0")}-${kind}`,
+          key: `${seed}-${String(index + 1).padStart(2, "0")}-${kind}${side}`,
           format,
           nodes: [node],
         })
@@ -887,7 +887,7 @@ const StudioProCreate = ({
     const { error } = await supabase.from("studio_creations").insert({
       user_id: auth.user.id,
       brand_id: brand.id,
-      seed: `${seed}:${index}`,
+      seed: `${seed}${side}:${index}`,
       block_kind: kind,
       format,
       headline: headlineOf(index) || null,
