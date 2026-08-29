@@ -73,6 +73,8 @@ type Brand = {
   audiences: unknown;
   positioning: string | null;
   strategy_notes: string | null;
+  /** Slogan declarado — assina as artes e habilita o sub-nicho "Slogan em destaque". */
+  slogan: string | null;
   /** Assinatura (logo + nome) em todas as artes desta marca. */
   signature_enabled: boolean | null;
   /** Respostas do questionário de marca (caminho de quem não tem manual). */
@@ -223,6 +225,7 @@ const StudioProBrand = () => {
     keywords: "",
     positioning: "",
     strategy_notes: "",
+    slogan: "",
   });
   /** Nichos da marca — cada um alimenta uma aba de conteúdo no editor. */
   const [audiences, setAudiences] = useState<BrandAudience[]>([]);
@@ -334,6 +337,7 @@ const StudioProBrand = () => {
         keywords: (brand.topics ?? []).join(", "),
         positioning: brand.positioning ?? "",
         strategy_notes: brand.strategy_notes ?? "",
+        slogan: brand.slogan ?? "",
       });
       setAudiences(readAudiences(brand.audiences));
       setColorKit(readColorKit(brand.colors));
@@ -388,6 +392,7 @@ const StudioProBrand = () => {
         colors: writeColorKit(colorKit),
         positioning: form.positioning.trim() || null,
         strategy_notes: form.strategy_notes.trim() || null,
+        slogan: form.slogan.trim() || null,
         audiences: writeAudiences(audiences),
         signature_enabled: signatureEnabled,
         brief_answers: briefAnswers,
@@ -1003,6 +1008,19 @@ const StudioProBrand = () => {
             >
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
+                  <Label htmlFor="edit-slogan">Slogan da marca</Label>
+                  <Input
+                    id="edit-slogan"
+                    placeholder='ex.: "Movimento é liberdade."'
+                    value={form.slogan}
+                    onChange={(e) => setForm({ ...form, slogan: e.target.value })}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Aparece na assinatura das artes e libera o sub-nicho{" "}
+                    <strong>Slogan em destaque</strong> no editor. Sem slogan, esse sub-nicho fica inativo.
+                  </p>
+                </div>
+                <div className="sm:col-span-2">
                   <Label htmlFor="edit-description">Descrição da marca</Label>
                   <Textarea
                     id="edit-description"
@@ -1012,6 +1030,7 @@ const StudioProBrand = () => {
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                   />
                 </div>
+
                 <div className="sm:col-span-2">
                   <Label htmlFor="edit-keywords">Palavras-chave</Label>
                   <Input

@@ -12,7 +12,7 @@ import {
 } from "@/pages/studio/phrasing";
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
-import { GLOBAL_SEGMENT, audienceHooks, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
+import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlogan, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
 import { applyCharm } from "./charmCopy";
@@ -57,6 +57,12 @@ export type BrandKit = {
    * acervo neutro só entra como emergência para marca sem manual e sem briefing.
    */
   briefAnswers?: unknown;
+  /**
+   * SLOGAN DECLARADO no kit de marca (`studio_brands.slogan`). Quando existe, é
+   * ele o slogan do lockup e é ele que habilita o sub-nicho "Slogan em
+   * destaque". Vazio ⇒ o slogan segue derivado da descrição/nicho.
+   */
+  slogan?: string | null;
 };
 
 
@@ -66,8 +72,8 @@ export type BrandKit = {
  * REGRA DURA: o campo "tom de voz" é DIRETRIZ de comunicação (como falar), não
  * copy. Antes ele era usado como slogan/subtítulo/depoimento — quando o cliente
  * colava um manual de marca inteiro ali, o manual aparecia dentro da arte.
- * Agora o slogan sai da descrição (primeira frase curta) ou do nicho, e o tom de
- * voz nunca é renderizado.
+ * Agora o slogan sai do campo próprio do kit e, na falta dele, da descrição ou
+ * do nicho. O tom de voz nunca é renderizado.
  */
 const firstSentence = (text: string, max = 90) => {
   const phrase = condensePhrase(text, max);
@@ -76,11 +82,37 @@ const firstSentence = (text: string, max = 90) => {
 
 
 export const brandSlogan = (kit: BrandKit) => {
+  const declared = firstSentence(kit.slogan ?? "");
+  if (declared) return declared;
   const fromDescription = firstSentence(kit.description ?? "");
   if (fromDescription) return fromDescription;
   const niche = (kit.niche ?? "").trim();
   return niche ? `${firstSentence(niche, 48)} com presença todo dia.` : "Presença digital todo dia.";
 };
+
+/**
+ * SUB-NICHO "SLOGAN EM DESTAQUE": a peça é a assinatura da marca. O slogan
+ * declarado assume o topo de headlines, tipográficos, kickers e marquee, com o
+ * resto do acervo intacto (variedade de formatos continua valendo).
+ */
+const applySloganFocus = (content: WorldContent, slogan: string, brand: string): WorldContent => {
+  const phrase = slogan.trim().replace(/\s*[.;]+$/, "");
+  if (phrase.length < 3) return content;
+  const words = phrase.split(/\s+/);
+  const cut = words.length <= 3 ? 1 : Math.ceil(words.length / 2);
+  const strong = words.slice(0, cut).join(" ");
+  const rest = words.slice(cut).join(" ");
+  return {
+    ...content,
+    kickers: [brand.toUpperCase(), ...content.kickers],
+    headlines: [{ strong, rest }, ...content.headlines],
+    typos: [{ lead: brand, big: strong, tail: rest }, ...content.typos],
+    quotes: [{ text: phrase }, ...content.quotes],
+    marquee: [[phrase, brand], ...content.marquee],
+    subs: [phrase, ...content.subs],
+  };
+};
+
 
 /**
  * VARIAÇÃO DO LOTE: semente + registro de voz. Quando presente, headlines,
@@ -1343,7 +1375,17 @@ export const buildSegmentContent = ({
   const audience = resolveAudience(audiences, segment);
   if (!audience) return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
   const relation = relationFor(audience);
-  return finish(applyAudience(root, brand, audience, relation), relation);
+  const built = finish(applyAudience(root, brand, audience, relation), relation);
+  /**
+   * O sub-nicho de slogan é o único caso em que uma frase entra JÁ PRONTA na
+   * arte: ela é a assinatura declarada da marca, então passa depois dos filtros
+   * para não ser reescrita nem descartada.
+   */
+  if (segment === SLOGAN_SEGMENT && hasSlogan(kit.slogan)) {
+    return applySloganFocus(built, kit.slogan as string, brand);
+  }
+  return built;
+
 };
 
 /** Relação usada por uma arte — exposta para o filtro de nexo e a legenda. */

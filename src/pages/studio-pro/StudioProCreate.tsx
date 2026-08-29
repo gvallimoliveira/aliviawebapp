@@ -56,6 +56,7 @@ import {
   audienceAncestors,
   audienceHook,
   audienceKeyword,
+  audiencesWithSlogan,
   buildSegments,
   readAudiences,
   resolveAudience,
@@ -116,6 +117,8 @@ type BrandInput = {
   signature_enabled?: boolean | null;
   /** Respostas do formulário de marca — base do contexto interpretativo. */
   brief_answers?: unknown;
+  /** Slogan declarado — habilita o sub-nicho "Slogan em destaque". */
+  slogan?: string | null;
 
 };
 
@@ -350,7 +353,14 @@ const StudioProCreate = ({
    */
   const isAlivia = brand.content_source === "alivia";
 
-  const audiences = useMemo(() => readAudiences(brand.audiences), [brand.audiences]);
+  /**
+   * Públicos do kit + o sub-nicho automático "Slogan em destaque" (só existe
+   * quando a marca tem slogan preenchido; sem slogan ele fica inativo).
+   */
+  const audiences = useMemo(
+    () => audiencesWithSlogan(readAudiences(brand.audiences), brand.slogan),
+    [brand.audiences, brand.slogan],
+  );
   const segments = useMemo(() => buildSegments(audiences), [audiences]);
   const [segment, setSegment] = useState<string>(restored.current.segment ?? GLOBAL_SEGMENT);
   const [angle, setAngle] = useState<ContentAngle>(restored.current.angle ?? "informar");
@@ -387,8 +397,9 @@ const StudioProCreate = ({
       positioning: brand.positioning,
       /** Briefing declarado pelo cliente: fonte primária do texto das artes. */
       briefAnswers: brand.brief_answers,
+      slogan: brand.slogan,
     }),
-    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers],
+    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers, brand.slogan],
   );
 
 
@@ -454,13 +465,13 @@ const StudioProCreate = ({
     applyStudioBrandTheme({
       name: brand.name,
       // Tom de voz é diretriz, não copy: o slogan sai da descrição/nicho.
-      slogan: brandSlogan({ name: brand.name, niche: brand.niche, description: brand.description }),
+      slogan: brandSlogan({ name: brand.name, niche: brand.niche, description: brand.description, slogan: brand.slogan }),
       logo: brand.logo_url,
       handle: brand.instagram_handle ?? null,
       site: brand.source_url ?? null,
     });
     return `${brand.id}:${brand.name}:${brand.logo_url ?? ""}`;
-  }, [brand.id, brand.name, brand.niche, brand.description, brand.logo_url, brand.instagram_handle, brand.source_url]);
+  }, [brand.id, brand.name, brand.niche, brand.description, brand.slogan, brand.logo_url, brand.instagram_handle, brand.source_url]);
 
 
   /** Memória de frases da marca (na conta): frase recente perde vez no sorteio. */
