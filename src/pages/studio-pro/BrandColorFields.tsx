@@ -1,10 +1,19 @@
-import { Plus, Trash2, Wand2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { ImageUp, Pipette, Plus, Trash2, Wand2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { MAX_EXTRA_COLORS, type BrandColorKit } from "./brandColors";
 import { deepen, judgeContrast, lighten, readableOn } from "./contrast";
+import {
+  extractPalette,
+  pickPixelHex,
+  pickWithEyeDropper,
+  supportsEyeDropper,
+  type PaletteSwatch,
+} from "./paletteExtract";
 
 
 /**
@@ -51,6 +60,24 @@ const Swatch = ({
         onChange={(e) => onChange(e.target.value)}
         className="h-10 font-mono text-xs uppercase"
       />
+      {/* Conta-gotas: pega o tom exato de qualquer ponto da tela (manual aberto ao lado). */}
+      {supportsEyeDropper() && (
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          disabled={disabled}
+          aria-label={`Conta-gotas para ${label}`}
+          title="Conta-gotas: clicar e capturar a cor de qualquer ponto da tela"
+          className="h-10 w-10 shrink-0"
+          onClick={async () => {
+            const picked = await pickWithEyeDropper();
+            if (picked) onChange(picked);
+          }}
+        >
+          <Pipette className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   </div>
 );
