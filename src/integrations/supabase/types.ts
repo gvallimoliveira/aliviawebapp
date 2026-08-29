@@ -3553,6 +3553,7 @@ export type Database = {
           png_path: string | null
           seed: string
           segment: string | null
+          text_edits: Json | null
           thumb: string | null
           user_id: string
           watermarked: boolean
@@ -3572,6 +3573,7 @@ export type Database = {
           png_path?: string | null
           seed: string
           segment?: string | null
+          text_edits?: Json | null
           thumb?: string | null
           user_id: string
           watermarked?: boolean
@@ -3591,6 +3593,7 @@ export type Database = {
           png_path?: string | null
           seed?: string
           segment?: string | null
+          text_edits?: Json | null
           thumb?: string | null
           user_id?: string
           watermarked?: boolean
