@@ -146,7 +146,7 @@ const BrandAssetsFields = ({
   return (
     <div className="sm:col-span-2 space-y-4 rounded-2xl border border-border bg-muted/30 p-4">
       {/* ---------- Manual da marca (fonte principal) ---------- */}
-      <div>
+      <div className={shows("doc") ? divider("doc") : "hidden"}>
         <p className="text-sm font-semibold">Manual da marca (PDF)</p>
         <p className="text-xs text-muted-foreground">
           Envie o descritivo completo da marca. Ao interpretar, ele passa a ser a{" "}
