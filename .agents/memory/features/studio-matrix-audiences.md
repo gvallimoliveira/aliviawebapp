@@ -11,6 +11,17 @@ type: feature
 
 Helpers: `matrixAudiences`, `derivedAudiences`, `officialAudienceCount`.
 `brandContent.ts` (visão 360°) usa só `matrixAudiences` para números, headlines, tríptico, lista e carrossel — nunca `audiences.length`.
+
+**Visão 360° = modo livre, não "todos juntos":** cada lote em 360° sorteia pela
+seed (determinístico) entre a visão ampla da marca (`applyGlobal`) e o mundo de
+UM público matriz isolado (`applyAudience`). Qualquer assunto relevante à marca
+vale — dela mesma ou de qualquer público. Nunca forçar todos os públicos na
+mesma geração.
+
+**"Informar" ≠ educacional:** o ângulo informativo comunica algo que a marca
+faz, resolve ou considera relevante — sem estrutura de aula/ensino. O probe do
+rationale aceita afirmações concretas (método, atendimento, crença), não só
+explicações.
 No editor de marca há seletor "Tipo de público" + resumo da métrica oficial. Aliv.iA no banco já tem os sub-nichos marcados (recem-formado → academico; paciente-* → paciente).
 
 Ao criar bloco/copy que cite quantidade de públicos, sempre derivar da contagem matriz.
