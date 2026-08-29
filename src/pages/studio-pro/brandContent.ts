@@ -897,6 +897,14 @@ const applyAudience = (
       : []),
   ];
 
+  /**
+   * REPERTÓRIO DE CARROSSEL POR PÚBLICO
+   *
+   * Antes existia UM roteiro só ("do medo ao plano"): como o bloco de carrossel
+   * escolhe o roteiro pelo índice do grupo, toda geração devolvia a MESMA
+   * sequência. Aqui o mesmo material (medos, desejos, provas, gancho) rende
+   * arquétipos temáticos diferentes — a seed do lote decide qual entra.
+   */
   const carousels = [
     ...(pains.length && desires.length
       ? [{
@@ -911,7 +919,73 @@ const applyAudience = (
           cta: { title: `${key}: quer começar?`, sub: cta },
         }]
       : []),
+    ...(painNoms.length >= 3
+      ? [{
+          kicker: `${KEY} · SINAIS`,
+          title: `3 sinais de que ${lower1(key)} precisa de atenção`,
+          coverSub: "Se você reconhecer dois, vale conversar.",
+          slides: painNoms.slice(0, 3).map((p, i) => ({
+            heading: `Sinal ${i + 1}`,
+            body: `${sentence(p)} E isso costuma piorar quando fica sem resposta.`,
+            topic: topicAt(i),
+          })),
+          cta: { title: "Reconheceu algum?", sub: cta },
+        }]
+      : []),
+    ...(painNoms.length >= 2 && desireNoms.length >= 2
+      ? [{
+          kicker: `${KEY} · MITO E VERDADE`,
+          title: `O que se diz sobre ${lower1(key)} — e o que é verdade`,
+          coverSub: "Três frases que atrapalham mais do que ajudam.",
+          slides: [
+            { heading: "Dizem que é normal", body: `${sentence(painNoms[0])} Normal não é o mesmo que aceitável.`, topic: topicAt(1) },
+            { heading: "Dizem que passa sozinho", body: `${sentence(painNoms[1])} Sem mudar nada, tende a voltar.`, topic: topicAt(2) },
+            { heading: "A verdade", body: `${sentence(desireNoms[0])} — com um caminho definido.`, topic: topicAt(3) },
+          ],
+          cta: { title: "Quer o caminho certo?", sub: cta },
+        }]
+      : []),
+    ...(proof.length >= 2
+      ? [{
+          kicker: `${KEY} · POR DENTRO`,
+          title: `Como ${brand} trabalha com ${lower1(key)}`,
+          coverSub: "O que acontece do primeiro contato ao resultado.",
+          slides: proof.slice(0, 3).map((p, i) => ({
+            heading: `Etapa ${i + 1}`,
+            body: `${p}.`,
+            topic: topicAt(i + 2),
+          })),
+          cta: { title: "Faz sentido para você?", sub: cta },
+        }]
+      : []),
+    ...(desireNoms.length >= 2
+      ? [{
+          kicker: `${KEY} · O DEPOIS`,
+          title: `O que muda quando ${lower1(key)} é levado a sério`,
+          coverSub: "Não é promessa: é o que passa a ser possível.",
+          slides: [
+            ...(painNoms[0] ? [{ heading: "Ponto de partida", body: sentence(painNoms[0]), topic: topicAt(0) }] : []),
+            { heading: "Primeira mudança", body: sentence(desireNoms[0]), topic: topicAt(4) },
+            { heading: "O que se sustenta", body: `${sentence(desireNoms[1])} E isso continua depois que a gente termina.`, topic: topicAt(5) },
+          ],
+          cta: { title: "Começa com uma conversa", sub: cta },
+        }]
+      : []),
+    ...(pains.length
+      ? [{
+          kicker: `${KEY} · PERGUNTAS`,
+          title: `3 perguntas de quem convive com ${lower1(key)}`,
+          coverSub: "As respostas que quase ninguém dá com clareza.",
+          slides: [
+            { heading: "Isso tem solução?", body: `${desires[0] ? sentence(desires[0]) : "Tem — quando o plano é feito para o seu caso."}`, topic: topicAt(2) },
+            { heading: "Por que voltou?", body: `${sentence(nomPain(0, "o improviso"))} costuma voltar quando nada muda na rotina.`, topic: topicAt(3) },
+            { heading: "Quanto tempo leva?", body: proof[0] ? `${proof[0]}.` : "Depende do ponto de partida — e a gente diz isso na primeira conversa.", topic: topicAt(4) },
+          ],
+          cta: { title: "Pergunte o que quiser", sub: cta },
+        }]
+      : []),
   ];
+
 
   return {
     ...base,
