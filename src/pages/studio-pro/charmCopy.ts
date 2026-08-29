@@ -203,7 +203,7 @@ export const applyCharm = (
    * Marca do próprio produto: o guia de copy do manual do Aliv.iA Studio tem
    * precedência sobre a tabela de sub-nichos clínicos (que fala de paciente).
    */
-  const selfRow: StudioSelfCharmRow | undefined = isStudioSelfBrand(brand ?? content.brand ?? "")
+  const selfRow: StudioSelfCharmRow | undefined = isStudioSelfBrand(brand ?? "")
     ? findStudioSelfCharm(
         [
           relation?.keyword,
@@ -211,7 +211,6 @@ export const applyCharm = (
           relation?.audience?.label,
           relation?.audience?.description,
           relation?.hook,
-          content.niche,
         ]
           .filter(Boolean)
           .join(" · "),
