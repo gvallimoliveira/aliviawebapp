@@ -48,8 +48,10 @@ const DivergeBlock = ({ content, rng, treatment, format }: BlockProps) => {
           className={`mb-4 leading-[1.02] ${skin.ink}`}
           style={{ fontSize: big ? "clamp(2.4rem, 12vw, 4.8rem)" : "clamp(1.7rem, 8vw, 3rem)" }}
         >
-          <span className="font-light opacity-70">{headline.rest} </span>
+          {/* A ordem da frase NUNCA é invertida: inverter quebra a interpretação. */}
           <span className="font-black uppercase tracking-tight">{headline.strong}</span>
+          <span className="font-light opacity-70">{headline.rest}</span>
+
         </h2>
 
         <svg viewBox="0 0 360 340" className="w-full" role="img" aria-label={headline.strong}>
