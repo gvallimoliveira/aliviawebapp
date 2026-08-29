@@ -310,11 +310,11 @@ export const buildBrandContent = (
     headlines: composedHeadlines.length
       ? composedHeadlines
       : [
-          { strong: brand, rest: " existe para resolver o que ninguém resolveu." },
-          { strong: "Feito com método", rest: `, não com sorte.` },
-          { strong: "Quem escolhe bem", rest: " volta." },
-          { strong: `A referência em ${niche}`, rest: " começa aqui." },
-          { strong: "Simples de entender.", rest: " Difícil de esquecer." },
+          { strong: `Quem procura ${niche}`, rest: " chega aqui com uma pergunta na cabeça." },
+          { strong: "A primeira conversa", rest: " já mostra o que dá e o que não dá." },
+          { strong: `${brand} atende poucos casos`, rest: " por mês, e é de propósito." },
+          { strong: `Antes de contratar ${niche}`, rest: ", peça para ver o plano." },
+          { strong: "Você sai da conversa", rest: " sabendo o próximo passo." },
         ],
     subs: [
       tone,
@@ -322,63 +322,63 @@ export const buildBrandContent = (
       ...(composedSubs.length
         ? composedSubs
         : [
-            `${brand} transforma conhecimento em uma experiência clara e relevante.`,
-            `Em ${niche}, detalhe não é enfeite — é resultado.`,
+            `${brand} escuta o caso antes de propor qualquer coisa.`,
+            `O que muda em ${niche} é o quanto se mede antes de decidir.`,
             "Uma decisão bem tomada economiza meses.",
           ]),
     ],
     kinetic: composedKinetic.length
       ? composedKinetic
       : [
-          { kicker: "O QUE MOVE A MARCA", word: "Cuidado", caption: "Cada detalhe expressa uma escolha consciente." },
-          { kicker: "NOSSA APOSTA", word: "Constância", caption: "Presença consistente cria reconhecimento." },
-          { kicker: "PROMESSA", word: "Clareza", caption: "Uma proposta fácil de entender e reconhecer." },
+          { kicker: "COMO COMEÇA", word: "Escuta", caption: "A primeira conversa serve para entender o caso." },
+          { kicker: "COMO SEGUE", word: "Plano", caption: "Cada etapa tem começo, fim e revisão." },
+          { kicker: "COMO TERMINA", word: "Alta", caption: "Você sabe quando o trabalho cumpriu o objetivo." },
         ],
 
     metrics: [
       [
-        { value: 3, label: "pilares que orientam a marca" },
-        { value: 1, label: "proposta central fácil de lembrar" },
-        { value: 360, suffix: "°", label: "de visão sobre o público" },
+        { value: 1, label: "conversa antes de qualquer proposta" },
+        { value: 4, label: "semanas até a primeira revisão" },
+        { value: 3, label: "etapas do atendimento" },
       ],
       [
-        { value: 4, label: "ângulos de conteúdo" },
+        { value: 4, label: "assuntos que a marca comunica" },
         { value: 3, label: "motivos para escolher" },
-        { value: 1, label: "identidade reconhecível" },
+        { value: 1, label: "responsável pelo seu caso" },
       ],
     ],
     stats: [
       {
-        heading: "Números que traduzem a proposta",
+        heading: "Como o atendimento se organiza",
         items: [
-          { value: "3", label: "pilares centrais", note: "uma identidade fácil de reconhecer" },
-          { value: "4", label: "formas de comunicar", note: "informar, conectar, inspirar e convidar" },
-          { value: "1", label: "ideia principal", note: "clareza em cada conteúdo" },
+          { value: "1", label: "primeira conversa", note: "para entender o caso antes de propor" },
+          { value: "4", label: "semanas por ciclo", note: "revisão marcada desde o início" },
+          { value: "3", label: "etapas até a alta", note: "cada uma com objetivo declarado" },
         ],
       },
       {
-        heading: "O que fortalece uma marca",
+        heading: "O que muda no dia a dia",
         items: [
-          { value: "+clareza", label: "na mensagem", note: "o público entende o valor" },
-          { value: "+presença", label: "na memória", note: "consistência gera reconhecimento" },
-          { value: "+conexão", label: "com o público", note: "a comunicação parte de necessidades reais" },
+          { value: "-1", label: "consulta perdida", note: "o plano fica registrado por escrito" },
+          { value: "+1", label: "revisão marcada", note: "ninguém segue no automático" },
+          { value: "0", label: "promessa vazia", note: "o que não dá, a gente diz na hora" },
         ],
       },
     ],
     triptychs: [
       {
-        heading: "Três palavras que resumem a marca",
+        heading: `Como ${brand} conduz um caso`,
         panels: [
           { word: "Escuta", line: "Entender antes de propor.", topic: topicAt(0) },
-          { word: "Método", line: "Cada etapa com começo e fim.", topic: topicAt(1) },
-          { word: "Valor", line: "Uma proposta que faz sentido.", topic: topicAt(2) },
+          { word: "Plano", line: "Cada etapa com começo e fim.", topic: topicAt(1) },
+          { word: "Revisão", line: "O que não avança, muda.", topic: topicAt(2) },
         ],
       },
       {
-        heading: "Como a gente trabalha",
+        heading: "O que você pode cobrar da gente",
         panels: [
-          { word: "Simples", line: "Sem jargão, sem letra miúda.", topic: topicAt(3) },
-          { word: "Direto", line: "Uma mensagem, sem ruído.", topic: topicAt(4) },
+          { word: "Simples", line: "Explicado na sua língua.", topic: topicAt(3) },
+          { word: "Direto", line: "Uma orientação por vez.", topic: topicAt(4) },
           { word: "Honesto", line: "O que não cabe, a gente avisa.", topic: topicAt(5) },
         ],
       },
@@ -386,19 +386,19 @@ export const buildBrandContent = (
     typos: composedTypos.length
       ? composedTypos
       : [
-          { lead: "A gente cuida do processo.", big: "Você", tail: " colhe o resultado." },
-          { lead: "Menos ruído.", big: "Mais valor", tail: "." },
-          { lead: `Em ${niche},`, big: " consistência", tail: " vale mais que sorte." },
-          { lead: "O barato sai caro.", big: "O certo", tail: " sai uma vez." },
-          { lead: "Detalhe não é enfeite.", big: "É resultado", tail: "." },
-          { lead: brand, big: " existe", tail: " para resolver." },
+          { lead: "A gente conduz o processo.", big: "Você", tail: " sabe onde está." },
+          { lead: "Menos improviso.", big: "Mais plano", tail: "." },
+          { lead: `Em ${niche},`, big: " medir",tail: " vale mais que opinar." },
+          { lead: "Refazer custa duas vezes.", big: "Decidir bem", tail: " custa uma." },
+          { lead: "O que não avança", big: " muda", tail: " na revisão." },
+          { lead: brand, big: " atende", tail: " poucos casos por mês." },
         ],
 
     compare: [
       {
-        title: "Antes e depois de comunicar com clareza",
-        before: ["Mensagem genérica", "Valor difícil de perceber", "Conteúdo sem identidade", "Público indiferente"],
-        after: ["Mensagem específica", "Valor fácil de entender", "Identidade reconhecível", "Público conectado"],
+        title: "Antes e depois de ter um plano por escrito",
+        before: ["Orientação solta", "Sem data de revisão", "Você sem saber onde está", "Cada consulta recomeça"],
+        after: ["Plano registrado", "Revisão marcada", "Etapa declarada", "Continuidade entre consultas"],
       },
       {
         title: `Como ${brand} encara ${niche}`,
@@ -408,7 +408,7 @@ export const buildBrandContent = (
       {
         title: "Escolher por preço x escolher por resultado",
         before: ["Mais barato agora", "Refazer depois"],
-        after: ["Investimento claro", "Uma vez, bem feito"],
+        after: ["Investimento declarado", "Uma vez, bem feito"],
       },
     ],
     journeys: [
@@ -417,8 +417,8 @@ export const buildBrandContent = (
         heading: "Três etapas até o resultado",
         steps: [
           { title: "Conversa inicial", description: "Entendemos o cenário e o que você quer alcançar.", topic: topicAt(0) },
-          { title: "Direção", description: "Uma mensagem alinhada ao que o público realmente busca.", topic: topicAt(1) },
-          { title: "Experiência", description: "A proposta ganha forma com identidade e consistência.", topic: topicAt(2) },
+          { title: "Plano", description: "O caminho que faz sentido para o seu caso, por escrito.", topic: topicAt(1) },
+          { title: "Revisão", description: "O que avançou fica, o que não avançou muda.", topic: topicAt(2) },
         ],
       },
       {
@@ -428,31 +428,31 @@ export const buildBrandContent = (
           { title: "Diagnóstico", description: "O que está travando hoje.", topic: topicAt(3) },
           { title: "Proposta", description: "O caminho mais curto até o resultado.", topic: topicAt(4) },
           { title: "Acompanhamento", description: "Ajustes com você, não depois de você.", topic: topicAt(5) },
-          { title: "Escolha", description: "O público reconhece valor e sabe qual é o próximo passo.", topic: topicAt(6) },
+          { title: "Escolha", description: "Você decide com o plano na mão.", topic: topicAt(6) },
         ],
       },
     ],
     features: [
       {
         tag: "PROPOSTA",
-        title: "Valor fácil de entender",
-        description: "A mensagem mostra com clareza o que torna a marca relevante para seu público.",
+        title: "Você entende o que vai acontecer",
+        description: "A proposta diz o que será feito, em quanto tempo e como será revisto.",
         topic: topicAt(0),
-        headline: "Clareza que aproxima",
+        headline: "Explicado antes de começar",
       },
       {
-        tag: "EXPERIÊNCIA",
-        title: "Uma jornada coerente",
-        description: "Cada contato reforça a mesma identidade e facilita a escolha.",
+        tag: "ATENDIMENTO",
+        title: "Um responsável pelo seu caso",
+        description: "Quem atende conhece o histórico e responde por ele do começo ao fim.",
         topic: topicAt(1),
-        headline: "A marca sem ruído",
+        headline: "Sempre a mesma pessoa",
       },
       {
         tag: "DIFERENCIAL",
-        title: "Personalidade reconhecível",
-        description: "Texto, estética e intenção trabalham juntos para destacar a marca.",
+        title: "Revisão com data marcada",
+        description: "A cada ciclo o plano é reavaliado com o que foi medido, não com impressão.",
         topic: topicAt(2),
-        headline: "Difícil de confundir",
+        headline: "Nada roda no automático",
       },
       {
         tag: "CONEXÃO",
@@ -463,16 +463,17 @@ export const buildBrandContent = (
       },
     ],
     quotes: [
-      { text: `“${description || `${brand} traduz valor em experiências que fazem sentido.`}”` },
+      { text: `“${description || `${brand} explica o plano antes de começar.`}”` },
       { text: "“Finalmente encontrei uma proposta feita para o que eu precisava.”" },
-      { text: "“A diferença ficou clara logo no primeiro contato.”" },
-      { text: "“Foi fácil entender por que essa marca era a escolha certa.”" },
+      { text: "“Saí da primeira conversa sabendo o que ia acontecer.”" },
+      { text: "“Foi a primeira vez que alguém me disse o que não dava para prometer.”" },
     ],
     marquee: [
-      [brand, niche, "presença", "identidade", "constância"],
-      words.length >= 3 ? words.slice(0, 6) : ["clareza", "relevância", "conexão", "resultado"],
-      ["escuta", "método", "cuidado", brand],
+      [brand, niche, "escuta", "plano", "revisão"],
+      words.length >= 3 ? words.slice(0, 6) : ["escuta", "plano", "revisão", "alta"],
+      ["conversa", "plano", "revisão", brand],
     ],
+
     closings: composedClosings.length
       ? composedClosings
       : [
