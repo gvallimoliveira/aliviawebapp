@@ -193,7 +193,7 @@ const BrandAssetsFields = ({
       </div>
 
       {/* ---------- Logo ---------- */}
-      <div className="border-t border-border pt-4">
+      <div className={shows("logo") ? divider("logo") : "hidden"}>
         <p className="text-sm font-semibold">Logo da marca</p>
         <p className="text-xs text-muted-foreground">
           PNG, JPG, WEBP ou SVG. Aparece na assinatura e nos blocos que usam o lockup.
