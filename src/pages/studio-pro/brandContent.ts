@@ -145,7 +145,9 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
   const banned = forbidden.map((f) => f.toLowerCase().trim()).filter((f) => f.length >= 3);
   const bad = (raw: string) => {
     const t = raw.toLowerCase();
-    return isStale(t) || hasBannedJargon(t) || banned.some((f) => t.includes(f));
+    if (isStale(t) || hasBannedJargon(t) || banned.some((f) => t.includes(f))) return true;
+    // Portão de português: frase quebrada ("com precisam postar") nunca vai ao ar.
+    return raw.trim().split(/\s+/).length >= 4 && !readsWell(raw);
   };
   const purge = <T,>(list: T[]): T[] => {
     const kept = list.filter((item) => !bad(textOf(item)));
@@ -648,7 +650,6 @@ const applyAudience = (
   const painNoms = nominalList(pains);
   const desireNoms = nominalList(desires);
   const nomPain = (i: number, fallback: string) => painNoms[i] ?? nominal(pains[i], fallback);
-  const nomDesire = (i: number, fallback: string) => desireNoms[i] ?? nominal(desires[i], fallback);
   const proof = lead(audience.proof ?? [], relation?.proof);
   const cta = relation?.cta || audience.cta?.trim() || "Falar com a gente";
   const desc = audience.description?.trim();
