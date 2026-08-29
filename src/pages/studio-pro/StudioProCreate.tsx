@@ -993,6 +993,13 @@ const StudioProCreate = ({
       thumb,
       png_path: coverPath,
       composition: JSON.parse(JSON.stringify(indexes.map((i) => blocks[i]))),
+      /** Texto exato de cada slide: é o que a edição pela galeria reabre. */
+      text_edits: Object.fromEntries(
+        indexes.map((i, pos) => {
+          const node = document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null;
+          return [pos, node ? readArtText(node) : {}];
+        }),
+      ),
       segment: activeSegment,
       angle,
       folder: folder === "Todas" ? "Geral" : folder,
