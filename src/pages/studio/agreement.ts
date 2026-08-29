@@ -155,6 +155,10 @@ export const fixAgreement = (text: string): string => {
     const target = agreementOf(head);
     if (!target) continue;
 
+    // Locuções fixas do tipo "dia a dia", "fase a fase", "passo a passo": ali o
+    // "a" é preposição da expressão, não artigo — não se flexiona.
+    if (wordAt(i - 2).toLowerCase() === head.toLowerCase()) continue;
+
     chain.forEach((pos) => {
       const original = tokens[pos];
       const word = wordAt(pos);
