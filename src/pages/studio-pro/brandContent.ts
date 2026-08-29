@@ -361,30 +361,30 @@ export const buildBrandContent = (
 
     metrics: [
       [
-        { value: 1, label: "conversa antes de qualquer proposta" },
-        { value: 4, label: "semanas até a primeira revisão" },
+        { value: 1, label: `${op.firstStep} antes de qualquer proposta` },
+        { value: 4, label: `semanas até a primeira ${op.reviewWord}` },
         { value: 3, label: offer.stepsLabel },
       ],
       [
         { value: 4, label: "assuntos que a marca comunica" },
         { value: 3, label: "motivos para escolher" },
-        { value: 1, label: "profissional acompanha do início ao fim" },
+        { value: 1, label: "responsável acompanha do início ao fim" },
       ],
     ],
     stats: [
       {
         heading: `Como ${offer.possessive} se organiza`,
         items: [
-          { value: "1", label: "primeira conversa", note: `para entender ${offer.yourCase} antes de propor` },
-          { value: "4", label: "semanas por ciclo", note: "revisão marcada desde o início" },
+          { value: "1", label: op.firstStep, note: `para entender ${offer.yourCase} antes de propor` },
+          { value: "4", label: `semanas ${op.cycleLabel}`, note: `${cap(op.reviewWord)} marcada desde o início` },
           { value: "3", label: `etapas até a ${offer.closingLabel}`, note: "cada uma com objetivo declarado" },
         ],
       },
       {
         heading: "O que muda no dia a dia",
         items: [
-          { value: "-1", label: "consulta perdida", note: "o plano fica registrado por escrito" },
-          { value: "+1", label: "revisão marcada", note: "ninguém segue no automático" },
+          { value: "-1", label: "combinado esquecido", note: `o ${op.planWord} fica registrado por escrito` },
+          { value: "+1", label: `${op.reviewWord} marcada`, note: "ninguém segue no automático" },
           { value: "0", label: "promessa vazia", note: "o que não dá, a gente diz na hora" },
         ],
       },
@@ -394,8 +394,8 @@ export const buildBrandContent = (
         heading: `Como ${brand} ${offer.conductPhrase}`,
         panels: [
           { word: "Escuta", line: "Entender antes de propor.", topic: topicAt(0) },
-          { word: "Plano", line: "Cada etapa com começo e fim.", topic: topicAt(1) },
-          { word: "Revisão", line: "O que não avança, muda.", topic: topicAt(2) },
+          { word: cap(op.planWord), line: "Cada etapa com começo e fim.", topic: topicAt(1) },
+          { word: cap(op.reviewWord), line: "O que não avança, muda.", topic: topicAt(2) },
         ],
       },
       {
@@ -411,11 +411,11 @@ export const buildBrandContent = (
       ? composedTypos
       : [
           { lead: "A gente conduz o processo.", big: "Você", tail: " sabe onde está." },
-          { lead: "Menos improviso.", big: "Mais plano", tail: "." },
+          { lead: "Menos improviso.", big: `Mais ${op.planWord}`, tail: "." },
           { lead: `Em ${niche},`, big: " medir",tail: " vale mais que opinar." },
           { lead: "Refazer custa duas vezes.", big: "Decidir bem", tail: " custa uma." },
-          { lead: "O que não avança", big: " muda", tail: " na revisão." },
-          { lead: brand, big: " atende", tail: " poucos clientes por mês." },
+          { lead: "O que não avança", big: " muda", tail: ` na ${op.reviewWord}.` },
+          { lead: brand, big: " trabalha", tail: ` com poucos ${op.whoPlural} por mês.` },
         ],
 
     compare: [
