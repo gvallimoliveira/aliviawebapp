@@ -599,6 +599,26 @@ const StudioProCreate = ({
   const [approved, setApproved] = useState<Set<number>>(() => new Set());
   /** Remonta os blocos para recompor o texto original do motor após um "desfazer". */
   const [resetTick, setResetTick] = useState(0);
+  /**
+   * LADO A x LADO B: artes com as cores principais invertidas. O clique é
+   * instantâneo (só troca tokens CSS) e vale para o PNG e para o que é salvo.
+   */
+  const [flipped, setFlipped] = useState<Set<number>>(() => new Set());
+  const toggleFlip = (indexes: number[]) => {
+    setFlipped((prev) => {
+      const copy = new Set(prev);
+      const turnOn = !indexes.every((i) => copy.has(i));
+      indexes.forEach((i) => (turnOn ? copy.add(i) : copy.delete(i)));
+      return copy;
+    });
+    // A arte mudou de versão: um salvamento anterior não representa mais a tela.
+    setSaved((prev) => {
+      const copy = new Set(prev);
+      indexes.forEach((i) => copy.delete(i));
+      return copy;
+    });
+  };
+
 
   const artNode = (index: number) =>
     document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
