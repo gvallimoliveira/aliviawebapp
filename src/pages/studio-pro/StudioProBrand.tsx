@@ -706,14 +706,26 @@ const StudioProBrand = () => {
               </p>
             ) : (
               <ul className="mt-4 grid gap-3 sm:grid-cols-3">
-                {shown.map((art) => (
+                {shown.map((art) => {
+                  /**
+                   * Só edita quem tem instantâneo (arte pronta guardada). Artes
+                   * anteriores ao editor só têm a receita, e reabrir por receita
+                   * devolvia OUTRA arte — por isso a edição fica bloqueada nelas.
+                   */
+                  const editable = isArtSnapshot(art.snapshot);
+                  return (
                   <li key={art.id} className="overflow-hidden rounded-2xl border border-border bg-muted/40">
                     {/* A própria miniatura abre o editor da arte salva (texto + formato). */}
                     <button
                       type="button"
                       className="relative block w-full text-left"
+                      disabled={!editable}
                       onClick={() => setEditingArt(art)}
-                      title="Editar texto e formato desta arte"
+                      title={
+                        editable
+                          ? "Editar texto e formato desta arte"
+                          : "Arte salva antes do editor: gere uma nova versão para poder editar"
+                      }
                     >
                       {(() => {
                         // Prefere o PNG de publicação; a miniatura é só fallback.
@@ -739,10 +751,12 @@ const StudioProBrand = () => {
                           />
                         );
                       })()}
-                      <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-[10px] font-semibold shadow">
-                        <PencilLine className="h-3 w-3" />
-                        Editar
-                      </span>
+                      {editable && (
+                        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-[10px] font-semibold shadow">
+                          <PencilLine className="h-3 w-3" />
+                          Editar
+                        </span>
+                      )}
                     </button>
                     <div className="p-3">
                       <p className="line-clamp-2 text-xs font-semibold">{art.headline ?? "Sem título"}</p>
@@ -751,15 +765,22 @@ const StudioProBrand = () => {
                         {art.is_favorite && " · referência"}
                       </p>
                       {/* Ação principal: reabrir a arte salva para reescrever texto e trocar o formato. */}
-                      <Button
-                        size="sm"
-                        className="mt-2 h-8 w-full rounded-full text-[11px]"
-                        onClick={() => setEditingArt(art)}
-                        title="Editar texto e formato desta arte"
-                      >
-                        <PencilLine className="mr-1.5 h-3.5 w-3.5" />
-                        Editar texto e formato
-                      </Button>
+                      {editable ? (
+                        <Button
+                          size="sm"
+                          className="mt-2 h-8 w-full rounded-full text-[11px]"
+                          onClick={() => setEditingArt(art)}
+                          title="Editar texto e formato desta arte"
+                        >
+                          <PencilLine className="mr-1.5 h-3.5 w-3.5" />
+                          Editar texto e formato
+                        </Button>
+                      ) : (
+                        <p className="mt-2 rounded-full bg-muted px-3 py-1.5 text-center text-[10px] text-muted-foreground">
+                          Salva antes do editor — gere uma nova versão para editar
+                        </p>
+                      )}
+
                       {/* PNG e legenda ficam guardados na arte salva. */}
                       <div className="mt-2 flex flex-wrap items-center gap-1">
                         <Button
