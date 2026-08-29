@@ -232,6 +232,14 @@ export const offerWords = (dna: BrandDna, brandName = ""): OfferWords => {
   const personal = kind !== "produto" && isPersonalBrand(brandName, dna);
   const noun = kind === "serviço" ? "serviço" : kind;
 
+  /**
+   * "Caso" pertence ao vocabulário clínico. Marca de produto/SaaS conduz
+   * PROJETO; curso e mentoria conduzem JORNADA; serviço genérico, TRABALHO.
+   */
+  const caseWord =
+    kind === "atendimento" ? "caso" : kind === "produto" ? "projeto" : kind === "programa" ? "jornada" : "trabalho";
+  const article = caseWord === "jornada" ? "a sua" : "o seu";
+
   return {
     kind,
     noun,
@@ -240,5 +248,15 @@ export const offerWords = (dna: BrandDna, brandName = ""): OfferWords => {
       kind === "produto" ? "etapas até o primeiro resultado" : `etapas do ${noun}`,
     closingLabel:
       kind === "atendimento" ? "alta" : kind === "programa" ? "conclusão" : "entrega",
+    caseWord,
+    yourCase: `${article} ${caseWord}`,
+    conductPhrase:
+      kind === "atendimento"
+        ? "conduz um caso"
+        : kind === "produto"
+          ? "trabalha a sua marca"
+          : kind === "programa"
+            ? "conduz a sua jornada"
+            : "conduz o trabalho",
   };
 };
