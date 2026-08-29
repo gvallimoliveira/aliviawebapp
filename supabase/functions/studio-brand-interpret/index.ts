@@ -655,7 +655,8 @@ Responda SOMENTE com JSON válido neste formato:
   "keywords": ["8 a 12 palavras-chave curtas do vocabulário da marca"],
   "strategy_notes": "5 a 8 linhas sobre como girar informar / dor / desejo / venda nesta marca, incluindo temas a evitar",
   "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB", "extra": ["#RRGGBB"] },
-  "font_family": "nome da fonte da marca, ou vazio",
+  "font_family": "fonte de títulos da marca, ou vazio",
+  "font_body": "fonte de texto corrido da marca, ou vazio",
   "audiences": [
     {
       "label": "Nome curto do público",
