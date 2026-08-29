@@ -37,6 +37,9 @@ import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
  */
 const topicAt = (_i: number): TopicId | undefined => undefined;
 
+/** Primeira letra maiúscula (rótulos curtos dentro da arte). */
+const cap = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
+
 
 export type BrandKit = {
   name: string;
@@ -351,8 +354,8 @@ export const buildBrandContent = (
       ? composedKinetic
       : [
           { kicker: "COMO COMEÇA", word: "Escuta", caption: `A ${op.firstStep} serve para entender ${offer.yourCase}.` },
-          { kicker: "COMO SEGUE", word: nominal(op.planWord), caption: `Cada etapa tem começo, fim e ${op.reviewWord}.` },
-          { kicker: "COMO TERMINA", word: nominal(offer.closingLabel), caption: "Você sabe quando o trabalho cumpriu o objetivo." },
+          { kicker: "COMO SEGUE", word: cap(op.planWord), caption: `Cada etapa tem começo, fim e ${op.reviewWord}.` },
+          { kicker: "COMO TERMINA", word: cap(offer.closingLabel), caption: "Você sabe quando o trabalho cumpriu o objetivo." },
         ],
 
 
