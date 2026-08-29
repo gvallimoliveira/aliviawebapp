@@ -3482,6 +3482,7 @@ export type Database = {
           niche: string | null
           positioning: string | null
           signature_enabled: boolean
+          slogan: string | null
           source_url: string | null
           strategy_notes: string | null
           tone: string | null
@@ -3505,6 +3506,7 @@ export type Database = {
           niche?: string | null
           positioning?: string | null
           signature_enabled?: boolean
+          slogan?: string | null
           source_url?: string | null
           strategy_notes?: string | null
           tone?: string | null
@@ -3528,6 +3530,7 @@ export type Database = {
           niche?: string | null
           positioning?: string | null
           signature_enabled?: boolean
+          slogan?: string | null
           source_url?: string | null
           strategy_notes?: string | null
           tone?: string | null
