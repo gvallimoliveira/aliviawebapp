@@ -728,7 +728,8 @@ const applyAudience = (
     ...base,
     label: `${brand} · ${who}`,
     kickers: [KEY, `PARA ${KEY}`, `${KEY} · ${brand.toUpperCase()}`, ...tail(base.kickers)],
-    headlines: [...headlines, ...tail(base.headlines)],
+    // Cauda genérica limitada: comunicação dirigida não pode ser diluída.
+    headlines: [...headlines, ...tail(base.headlines)].slice(0, 12),
     subs: [
       ...(desc ? [desc] : []),
       ...proof.slice(0, 3).map((p) => `${key}: ${lower1(p)}.`),
