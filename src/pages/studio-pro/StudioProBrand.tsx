@@ -1115,6 +1115,13 @@ const StudioProBrand = () => {
                     mensagem real de cada landing.
                   </p>
                 )}
+
+                {/* Marca autoral: o acervo de texto é o próprio conteúdo das artes. */}
+                {brand.content_source === "authorial" && (
+                  <div className="sm:col-span-2">
+                    <BrandTextsCard brandId={brand.id} />
+                  </div>
+                )}
               </div>
             </BrandSection>
 
