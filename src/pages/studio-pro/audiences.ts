@@ -209,11 +209,17 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
     for (const parent of chain) for (const item of parent[key] ?? []) if (!merged.includes(item)) merged.push(item);
     return merged.length ? merged : undefined;
   };
+  // Ganchos do pai só entram quando o sub-nicho não tem nenhum próprio —
+  // comunicação dirigida nunca deve virar a chamada genérica do público matriz.
+  const ownHooks = [own.hook?.trim(), ...(own.hooks ?? [])].filter(Boolean) as string[];
+  const inheritedHooks = ownHooks.length ? undefined : chain.flatMap((p) => [p.hook?.trim(), ...(p.hooks ?? [])].filter(Boolean) as string[]);
   return {
     ...own,
     pains: inherit("pains"),
     desires: inherit("desires"),
     proof: inherit("proof"),
+    hook: own.hook?.trim() || inheritedHooks?.[0],
+    hooks: ownHooks.length ? own.hooks : inheritedHooks?.slice(1),
     cta: own.cta?.trim() || chain.find((p) => p.cta?.trim())?.cta,
     description: own.description?.trim() || chain.find((p) => p.description?.trim())?.description,
   };
