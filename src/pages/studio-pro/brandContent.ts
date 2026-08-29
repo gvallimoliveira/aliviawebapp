@@ -264,16 +264,26 @@ export const buildBrandContent = (
   /** Descrição também entra clampada: bloco de arte não é campo de texto longo. */
   const description = firstSentence((kit.description ?? "").trim(), 160);
 
+  /** DNA declarado pelo cliente: manda no texto. */
+  const dna = buildBrandDna({
+    niche: kit.niche,
+    tone: kit.tone,
+    description: kit.description,
+    positioning: kit.positioning,
+    briefAnswers: kit.briefAnswers,
+  });
+  const dnaPools = isDnaEmpty(dna) ? {} : buildFromDna(dna, brand, niche);
+
   /** Motor de variedade linguística (determinístico pela seed do lote). */
   const register: VoiceRegister = variation?.register ?? voiceRegister(kit.tone, brand);
   const varyRng: Rng | null = variation ? createRng(`copy:${variation.seed}:${brand}`) : null;
   const phrasing = {
     register,
     seed: `${variation?.seed ?? "static"}:${brand}`,
-    forbidden: [] as string[],
+    forbidden: dna.forbidden,
     intensity: variation?.profile ? intensityFor(variation.profile.headlines) : undefined,
   };
-  const ing = ingredientsOf(kit, brand, niche, audiences);
+  const ing = ingredientsOf(kit, brand, niche, audiences, undefined, dna);
 
   const composedHeadlines = varyRng ? composeHeadlines(ing, phrasing, varyRng) : [];
   const composedSubs = varyRng ? composeSubs(ing, phrasing, varyRng) : [];
@@ -281,7 +291,12 @@ export const buildBrandContent = (
   const composedKinetic = varyRng ? composeKinetic(ing, phrasing, varyRng) : [];
   const composedClosings = varyRng ? composeClosings(ing, phrasing, varyRng) : [];
 
-  return {
+  /**
+   * ACERVO DE EMERGÊNCIA (neutro). Só sobrevive quando a marca não declarou
+   * nada: qualquer slot com insumo do briefing é substituído logo abaixo.
+   */
+  const generic: WorldContent = {
+
     id: "pro",
     label: brand,
     kickers: [
