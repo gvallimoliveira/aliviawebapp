@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
+  Check,
   ChevronDown,
   Download,
   FileText,
@@ -37,6 +38,13 @@ import BrandAssetsFields, { type BrandDoc } from "./BrandAssetsFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
 import { matrixAudiences, readAudiences, writeAudiences, type BrandAudience } from "./audiences";
 import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
+import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
+import {
+  answeredCount,
+  formatBriefAnswers,
+  readBriefAnswers,
+  type BriefAnswers,
+} from "./brandQuestionnaire";
 
 /**
  * ESPAÇO DE UMA MARCA
@@ -64,6 +72,8 @@ type Brand = {
   strategy_notes: string | null;
   /** Assinatura (logo + nome) em todas as artes desta marca. */
   signature_enabled: boolean | null;
+  /** Respostas do questionário de marca (caminho de quem não tem manual). */
+  brief_answers?: unknown;
 };
 
 type Creation = {
@@ -211,6 +221,8 @@ const StudioProBrand = () => {
   const [signatureEnabled, setSignatureEnabled] = useState(true);
   /** Manual da marca anexado nesta sessão — fonte principal da interpretação. */
   const [doc, setDoc] = useState<BrandDoc | null>(null);
+  /** Respostas do questionário de marca — briefing declarado pelo cliente. */
+  const [briefAnswers, setBriefAnswers] = useState<BriefAnswers>({});
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
 
@@ -311,6 +323,7 @@ const StudioProBrand = () => {
       setAudiences(readAudiences(brand.audiences));
       setColorKit(readColorKit(brand.colors));
       setSignatureEnabled(brand.signature_enabled !== false);
+      setBriefAnswers(readBriefAnswers(brand.brief_answers));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brand?.id, hydrateNonce]);
@@ -362,6 +375,7 @@ const StudioProBrand = () => {
         strategy_notes: form.strategy_notes.trim() || null,
         audiences: writeAudiences(audiences),
         signature_enabled: signatureEnabled,
+        brief_answers: briefAnswers,
       })
       .eq("id", brandId);
     setSaving(false);
@@ -380,8 +394,9 @@ const StudioProBrand = () => {
    */
   const interpretBrand = async () => {
     if (!brandId) return;
-    if (!doc && !form.description.trim() && !form.niche.trim()) {
-      toast.error("Descreva a marca, informe o nicho ou anexe o manual em PDF antes de interpretar.");
+    const brief = formatBriefAnswers(briefAnswers);
+    if (!doc && !brief && !form.description.trim() && !form.niche.trim()) {
+      toast.error("Responda o questionário, descreva a marca ou anexe o manual em PDF antes de interpretar.");
       return;
     }
     setInterpreting(true);
@@ -398,6 +413,7 @@ const StudioProBrand = () => {
           brandId,
           applyColors: !!doc || (!!form.source_url.trim() && kitIsDefault),
           doc: doc ? { name: doc.name, mime: doc.mime, base64: doc.base64 } : undefined,
+          extra: brief || undefined,
         },
       });
 
