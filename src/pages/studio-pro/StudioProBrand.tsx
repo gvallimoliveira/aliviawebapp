@@ -803,7 +803,7 @@ const StudioProBrand = () => {
                           size="sm"
                           variant="outline"
                           className="h-7 rounded-full px-2 text-[11px]"
-                          onClick={() => downloadArt(art)}
+                          onClick={() => void downloadArt(art)}
                           title="Baixar PNG em alta"
                         >
                           <Download className="mr-1 h-3.5 w-3.5" />
