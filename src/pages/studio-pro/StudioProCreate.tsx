@@ -535,8 +535,35 @@ const StudioProCreate = ({
       angle,
       photoCount: activePhotos.length,
       brandName: brand.name,
+      brand: {
+        niche: brand.niche,
+        tone: brand.tone,
+        description: brand.description,
+        positioning: brand.positioning,
+        topics: brand.topics,
+        briefAnswered:
+          brand.brief_answers && typeof brand.brief_answers === "object"
+            ? Object.values(brand.brief_answers as Record<string, unknown>).filter(
+                (v) => typeof v === "string" && v.trim().length > 0,
+              ).length
+            : 0,
+      },
     };
-  }, [audiences, activeSegment, angle, content, activePhotos.length, brand.name, brand.niche, brand.positioning]);
+  }, [
+    audiences,
+    activeSegment,
+    angle,
+    content,
+    activePhotos.length,
+    brand.name,
+    brand.niche,
+    brand.tone,
+    brand.description,
+    brand.positioning,
+    brand.topics,
+    brand.brief_answers,
+  ]);
+
 
   const audit = useMemo(() => enforceRationale(composedBlocks, rationaleCtx), [composedBlocks, rationaleCtx]);
   const blocks = audit.blocks;
