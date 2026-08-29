@@ -424,7 +424,10 @@ const applyAudience = (base: WorldContent, brand: string, audience: BrandAudienc
   const who = audience.label.trim();
   const key = audienceKeyword(audience);
   const KEY = key.toUpperCase();
-  const hook = audienceHook(audience);
+  const hookList = audienceHooks(audience);
+  const hook = hookList[0];
+  /** Alterna entre as variações de gancho para não repetir a mesma abertura. */
+  const hk = (i: number) => hookList[i % hookList.length];
   const pains = (audience.pains ?? []).map(strip);
   const desires = (audience.desires ?? []).map(strip);
   const proof = (audience.proof ?? []).map(strip);
