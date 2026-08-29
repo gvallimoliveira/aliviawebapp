@@ -788,17 +788,6 @@ const StudioProBrand = () => {
                         >
                           Copiar
                         </Button>
-                        {/* Reabre a arte salva para reescrever texto e trocar o formato. */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 rounded-full px-2 text-[11px]"
-                          onClick={() => setEditingArt(art)}
-                          title="Editar texto e formato desta arte"
-                        >
-                          <PencilLine className="mr-1 h-3.5 w-3.5" />
-                          Editar
-                        </Button>
                         <Button
                           size="sm"
                           variant={art.is_favorite ? "secondary" : "ghost"}
