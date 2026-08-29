@@ -781,7 +781,12 @@ const StudioProCreate = ({
 
   /** Kit da marca aplicado como tokens: 2 principais + 2 secundárias + extras. */
   const kit = readColorKit(brand.colors);
-  const themeStyle = useMemo(() => buildBrandThemeStyle({ kit, seed }), [JSON.stringify(kit), seed]);
+  const themeStyle = useMemo(
+    () => buildBrandThemeStyle({ kit, seed }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(kit), seed],
+  );
+
   /** Lado B: mesmo kit, papéis das duas cores principais trocados. */
   const invertedStyle = useMemo(
     () => buildBrandThemeStyle({ kit, seed, invert: true }),
