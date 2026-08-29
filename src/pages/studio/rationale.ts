@@ -367,11 +367,6 @@ const positionRole = (index?: number, total?: number): string => {
   return `É a ${index + 1}ª arte da leva, no meio do raciocínio, onde entra o argumento`;
 };
 
-const hash = (s: string): number => {
-  let h = 0;
-  for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-};
 
 /**
  * Frases reais da arte, limpas e sem repetição.
