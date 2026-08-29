@@ -655,6 +655,8 @@ const StudioProBrand = () => {
             photoLimit={access.photoLimit}
             // Só a lista de artes é recarregada: a versão em tela não muda.
             onSaved={() => void loadCreations()}
+            // O editor do card manda para cá quando falta público, CTA ou kit.
+            onOpenBrandSettings={() => setTab("ajustes")}
           />
         )}
 
