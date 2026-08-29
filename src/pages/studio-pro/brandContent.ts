@@ -15,6 +15,7 @@ import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/gramma
 import { GLOBAL_SEGMENT, audienceHooks, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { buildBrandDna, isDnaEmpty, offerWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
+import { applyCharm } from "./charmCopy";
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 
@@ -979,7 +980,8 @@ export const buildSegmentContent = ({
   const relationFor = (audience?: BrandAudience) =>
     pickRelation({ audience, dna, brand, angle, seed: variationSeed });
 
-  const finish = (content: WorldContent) => sanitizeContent(applyAngle(content, angle), dna.forbidden);
+  const finish = (content: WorldContent, relation?: Relation) =>
+    sanitizeContent(applyAngle(content, angle, relation), dna.forbidden);
 
   if (segment === GLOBAL_SEGMENT) {
     // 360° = modo livre, quase aleatório: qualquer assunto relevante à marca.
@@ -991,15 +993,19 @@ export const buildSegmentContent = ({
       const dice = createRng(`360:${variationSeed}`);
       if (dice.int(100) < 50) {
         const picked = resolveAudience(audiences, matrix[dice.int(matrix.length)].id);
-        if (picked) return finish(applyAudience(root, brand, picked, relationFor(picked)));
+        if (picked) {
+          const relation = relationFor(picked);
+          return finish(applyAudience(root, brand, picked, relation), relation);
+        }
       }
     }
-    return finish(applyGlobal(root, brand, audiences, positioning, dna));
+    return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
   }
   // Sub-nichos herdam o kit do público matriz e sobrepõem o próprio recorte.
   const audience = resolveAudience(audiences, segment);
-  if (!audience) return finish(applyGlobal(root, brand, audiences, positioning, dna));
-  return finish(applyAudience(root, brand, audience, relationFor(audience)));
+  if (!audience) return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
+  const relation = relationFor(audience);
+  return finish(applyAudience(root, brand, audience, relation), relation);
 };
 
 /** Relação usada por uma arte — exposta para o filtro de nexo e a legenda. */
