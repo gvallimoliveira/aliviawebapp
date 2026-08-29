@@ -896,6 +896,8 @@ const StudioProCreate = ({
       png_path: pngPath,
       // Receita da arte: permite reusar a composição aprovada nas próximas versões.
       composition: JSON.parse(JSON.stringify(blocks)),
+      /** Texto exato exibido na arte: é o que a edição pela galeria reabre. */
+      text_edits: { 0: node ? readArtText(node) : {} },
 
       segment: activeSegment,
       angle,
