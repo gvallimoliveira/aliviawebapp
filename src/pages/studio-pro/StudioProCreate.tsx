@@ -47,9 +47,10 @@ import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/conte
 import { buildSegmentContent, brandSlogan, relationForSegment } from "./brandContent";
 
 import { readColorKit } from "./brandColors";
-import { readableThemeTokens } from "./contrast";
+import { buildBrandThemeStyle } from "./brandTheme";
 
-import { ensureFontLoaded, findFont } from "./brandFonts";
+import { ensureFontLoaded } from "./brandFonts";
+
 import {
   ANGLES,
   GLOBAL_SEGMENT,
