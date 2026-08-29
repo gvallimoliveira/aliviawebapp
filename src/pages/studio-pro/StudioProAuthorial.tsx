@@ -621,15 +621,14 @@ const StudioProAuthorial = ({
 
       {photosOpen && (
         <StudioPhotos
-          open={photosOpen}
-          onClose={() => setPhotosOpen(false)}
           photos={photos}
           loading={photosLoading}
-          onAdd={addPhoto}
+          onUpload={addPhoto}
           onEdit={editPhoto}
           onRemove={removePhoto}
           limit={photoLimit}
-          total={photosTotal}
+          usedTotal={photosTotal}
+          onClose={() => setPhotosOpen(false)}
         />
       )}
     </section>
