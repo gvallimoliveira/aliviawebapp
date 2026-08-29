@@ -1302,7 +1302,23 @@ export const buildSegmentContent = ({
     const rest = done.headlines.slice(8);
     const dice = createRng(`hl:${variationSeed ?? "base"}:${segment}:${angle}`);
     const picked = dice.shuffle(rest).slice(0, Math.max(0, 12 - head.length));
-    return { ...done, headlines: [...head, ...picked] };
+    /**
+     * VARIAÇÃO TEMÁTICA DO CARROSSEL
+     *
+     * O bloco de carrossel escolhe o roteiro por índice de grupo (quase sempre
+     * 0), então sem rotação o lote inteiro repetia o primeiro roteiro. A seed
+     * do lote rotaciona o repertório: mesma seed = mesmo carrossel (edição
+     * continua determinística), seed nova = tema novo.
+     */
+    const scripts = done.carousels ?? [];
+    const spin = scripts.length > 1
+      ? createRng(`carousel:${variationSeed ?? "base"}:${segment}:${angle}`).int(scripts.length)
+      : 0;
+    const carousels = scripts.length > 1
+      ? [...scripts.slice(spin), ...scripts.slice(0, spin)]
+      : scripts;
+    return { ...done, headlines: [...head, ...picked], carousels };
+
   };
 
   if (segment === GLOBAL_SEGMENT) {
