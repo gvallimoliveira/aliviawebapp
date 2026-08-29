@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Camera,
   Check,
+  Contrast,
+
   Download,
   FileText,
   Images,
@@ -47,9 +49,10 @@ import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/conte
 import { buildSegmentContent, brandSlogan, relationForSegment } from "./brandContent";
 
 import { readColorKit } from "./brandColors";
-import { readableThemeTokens } from "./contrast";
+import { buildBrandThemeStyle } from "./brandTheme";
 
-import { ensureFontLoaded, findFont } from "./brandFonts";
+import { ensureFontLoaded } from "./brandFonts";
+
 import {
   ANGLES,
   GLOBAL_SEGMENT,
@@ -177,29 +180,8 @@ const FORMAT_LABEL: Record<StudioFormat, string> = {
 
 
 
-/** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
-const hexToHslTriplet = (hex: string): string | null => {
-  const clean = hex.replace("#", "").trim();
-  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return null;
-  const r = parseInt(clean.slice(0, 2), 16) / 255;
-  const g = parseInt(clean.slice(2, 4), 16) / 255;
-  const b = parseInt(clean.slice(4, 6), 16) / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  const d = max - min;
-  let h = 0;
-  let s = 0;
-  if (d !== 0) {
-    s = d / (1 - Math.abs(2 * l - 1));
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h *= 60;
-    if (h < 0) h += 360;
-  }
-  return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
-};
+/* Tokens de tema (inclui o lado B com cores invertidas) vivem em brandTheme.ts. */
+
 
 /**
  * PERSISTÊNCIA DO EDITOR (por marca).
@@ -619,6 +601,26 @@ const StudioProCreate = ({
   const [approved, setApproved] = useState<Set<number>>(() => new Set());
   /** Remonta os blocos para recompor o texto original do motor após um "desfazer". */
   const [resetTick, setResetTick] = useState(0);
+  /**
+   * LADO A x LADO B: artes com as cores principais invertidas. O clique é
+   * instantâneo (só troca tokens CSS) e vale para o PNG e para o que é salvo.
+   */
+  const [flipped, setFlipped] = useState<Set<number>>(() => new Set());
+  const toggleFlip = (indexes: number[]) => {
+    setFlipped((prev) => {
+      const copy = new Set(prev);
+      const turnOn = !indexes.every((i) => copy.has(i));
+      indexes.forEach((i) => (turnOn ? copy.add(i) : copy.delete(i)));
+      return copy;
+    });
+    // A arte mudou de versão: um salvamento anterior não representa mais a tela.
+    setSaved((prev) => {
+      const copy = new Set(prev);
+      indexes.forEach((i) => copy.delete(i));
+      return copy;
+    });
+  };
+
 
   const artNode = (index: number) =>
     document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
@@ -781,50 +783,19 @@ const StudioProCreate = ({
 
   /** Kit da marca aplicado como tokens: 2 principais + 2 secundárias + extras. */
   const kit = readColorKit(brand.colors);
-  const themeStyle = (() => {
-    const style: Record<string, string> = {};
-    /**
-     * Cores extras da marca entram na rotação: cada lote de artes (seed) escolhe
-     * um acento diferente da paleta, sem sair do kit aprovado pelo cliente.
-     */
-    const accents = [
-      ...(kit.useSecondary ? [kit.secondary] : []),
-      ...kit.extraPrimary,
-      ...(kit.useSecondary ? kit.extraSecondary : []),
-    ].filter(Boolean);
-    let accent = kit.useSecondary ? kit.secondary : kit.primary;
-    if (accents.length > 1) {
-      const pick = [...String(seed)].reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % accents.length;
-      accent = accents[pick];
-    }
+  const themeStyle = useMemo(
+    () => buildBrandThemeStyle({ kit, seed }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(kit), seed],
+  );
 
-    /**
-     * CONTRASTE VERIFICADO ANTES DE APROVAR A ARTE: cada superfície do tema
-     * recebe o texto calculado (WCAG 4,5:1). Se o par reprovar, o TEXTO muda —
-     * a cor de marca do fundo é preservada.
-     */
-    const tokens = readableThemeTokens({
-      background: kit.primary2,
-      primary: kit.primary,
-      accent,
-      secondary: kit.useSecondary ? kit.secondary2 : kit.primary2,
-    });
-    Object.entries(tokens).forEach(([token, hex]) => {
-      const triplet = hexToHslTriplet(hex);
-      if (triplet) style[token] = triplet;
-    });
-    const ring = hexToHslTriplet(kit.primary);
-    if (ring) style["--ring"] = ring;
+  /** Lado B: mesmo kit, papéis das duas cores principais trocados. */
+  const invertedStyle = useMemo(
+    () => buildBrandThemeStyle({ kit, seed, invert: true }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(kit), seed],
+  );
 
-    accents.forEach((color, i) => {
-      const triplet = hexToHslTriplet(color);
-      if (triplet) style[`--brand-extra-${i + 1}`] = triplet;
-    });
-    // Tipografia da marca: herdada por todos os blocos da versão.
-    const brandFont = findFont(kit.font);
-    if (brandFont.stack) style.fontFamily = brandFont.stack;
-    return Object.keys(style).length ? (style as React.CSSProperties) : undefined;
-  })();
 
 
 
@@ -864,7 +835,10 @@ const StudioProCreate = ({
       return;
     }
     setBusy(`save-${index}`);
+    // Lado B é outra peça: ganha sufixo próprio para não sobrescrever o lado A.
+    const side = flipped.has(index) ? "-b" : "";
     const node = document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
+
     let thumb: string | null = null;
     let pngPath: string | null = null;
     if (node) {
@@ -886,7 +860,7 @@ const StudioProCreate = ({
       try {
         const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
         const png = await renderNodeToBlob(node, ratio, "image/png");
-        const path = `${auth.user.id}/${brand.id}/${seed}-${String(index + 1).padStart(2, "0")}-${kind}.png`;
+        const path = `${auth.user.id}/${brand.id}/${seed}-${String(index + 1).padStart(2, "0")}-${kind}${side}.png`;
         const { error: upErr } = await supabase.storage
           .from("studio-art")
           .upload(path, png, { contentType: "image/png", upsert: true });
@@ -905,7 +879,7 @@ const StudioProCreate = ({
       ? await captureArtSnapshot({
           userId: auth.user.id,
           brandId: brand.id,
-          key: `${seed}-${String(index + 1).padStart(2, "0")}-${kind}`,
+          key: `${seed}-${String(index + 1).padStart(2, "0")}-${kind}${side}`,
           format,
           nodes: [node],
         })
@@ -913,7 +887,7 @@ const StudioProCreate = ({
     const { error } = await supabase.from("studio_creations").insert({
       user_id: auth.user.id,
       brand_id: brand.id,
-      seed: `${seed}:${index}`,
+      seed: `${seed}${side}:${index}`,
       block_kind: kind,
       format,
       headline: headlineOf(index) || null,
@@ -1345,7 +1319,13 @@ const StudioProCreate = ({
                 } ${group.carousel ? "shrink-0 snap-center" : "mx-auto"}`}
                 style={FRAME_STYLE[format]}
               >
-                <div id={`studio-pro-block-${item.index}`} className="h-full w-full">
+                {/* Lado B aplica os tokens invertidos só nesta arte. */}
+                <div
+                  id={`studio-pro-block-${item.index}`}
+                  className="h-full w-full bg-background"
+                  style={flipped.has(item.index) ? invertedStyle : undefined}
+                >
+
                   <ArtworkGuard key={`${item.index}:${resetTick}`} brand={brand.name}>
                   {/* AutoFit: copy longa encolhe para caber; nunca sai cortada. */}
                   <AutoFit resetKey={`${brand.id}:${seed}:${format}:${kind}:${item.index}`}>
@@ -1422,6 +1402,17 @@ const StudioProCreate = ({
                   <Type className="mr-1.5 h-3.5 w-3.5" />
                   Legenda
                 </Button>
+                {/* Lado A / Lado B: mesma arte com as cores principais trocadas. */}
+                <Button
+                  size="sm"
+                  variant={indexes.every((i) => flipped.has(i)) ? "secondary" : "outline"}
+                  className="h-8 rounded-full text-xs"
+                  onClick={() => toggleFlip(indexes)}
+                >
+                  <Contrast className="mr-1.5 h-3.5 w-3.5" />
+                  {indexes.every((i) => flipped.has(i)) ? "Lado B" : "Inverter cores"}
+                </Button>
+
                 {SHOW_WHY && (
                   <Button
                     size="sm"
