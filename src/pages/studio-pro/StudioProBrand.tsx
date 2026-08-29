@@ -821,6 +821,16 @@ const StudioProBrand = () => {
           </section>
         )}
 
+        {/* Editor de arte salva: texto na própria arte + troca de formato. */}
+        {editingArt && brand && (
+          <StudioArtEditor
+            brand={brand}
+            art={editingArt}
+            onClose={() => setEditingArt(null)}
+            onSaved={() => void loadCreations()}
+          />
+        )}
+
         {tab === "ajustes" && (
           <div className="mt-5 space-y-4 pb-24">
             {/* ================= 1. COMECE POR AQUI ================= */}
