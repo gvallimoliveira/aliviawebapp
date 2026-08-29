@@ -140,5 +140,6 @@ Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lot
 - [Studio Relational Copy](mem://features/studio-relational-copy) — Hierarquia DNA-first (manual/briefing), par relacional obrigatório por arte e vícios de linguagem banidos.
 - [Studio Self Charm Copy](mem://features/studio-self-charm-copy) — Copy charmosa exclusiva da marca Aliv.iA Studio (10 públicos do manual v1.0), nunca aplicada a marca de cliente.
 - [Aliv.iA Core Charm Copy](mem://features/alivia-core-charm-copy) — Copy charmosa exclusiva do Aliv.iA app clínico (6 públicos: paciente, autônomo, clínica, estudante, recém-formado, institucional).
+- [Studio Neutral Operation](mem://features/studio-neutral-operation) — Acervo neutro escreve com o vocabulário da operação real da marca (operationWords), sem temática de consultório.
 - [Studio Copy Engine](mem://features/studio-copy-engine) — Motor textual local: léxico + releitura de frase (rewrite.ts), níveis Baixa/Média/Alta, sem créditos de IA.
 - [Studio Charm Writing](mem://features/studio-charm-writing) — Pilares da Escrita Charmosa nos ângulos venda/dor/desejo + tabela de copy charmosa por sub-nicho (dor crônica, esportista, pós-op, 60+, vestibular, feridas).
