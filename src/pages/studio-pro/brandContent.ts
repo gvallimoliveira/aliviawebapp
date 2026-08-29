@@ -194,6 +194,8 @@ const buildFromDna = (
   const pain = briefPhrases(dna.pain, 2);
   const desire = briefPhrases(dna.desire, 2);
   const who = dna.primaryAudience?.trim() || niche;
+  /** Vocabulário de oferta: "produto" só quando a marca vende produto. */
+  const offerVoice = offerWords(dna, brand);
   const cta = dna.cta?.trim() || "Chamar no direct";
 
   const headlines = [
@@ -233,7 +235,7 @@ const buildFromDna = (
         ? [{ heading: `O que ${brand} entrega`, items: offer, closing: cta }]
         : []),
       ...(belief.length >= 2
-        ? [{ heading: "No que eu acredito", items: belief, closing: `É assim que ${brand} atende.` }]
+        ? [{ heading: "No que eu acredito", items: belief, closing: offerVoice.kind === "produto" ? `É assim que ${brand} funciona.` : `É assim que ${brand} atende.` }]
         : []),
     ],
     closings: [
