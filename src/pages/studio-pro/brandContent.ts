@@ -10,10 +10,13 @@ import {
   composeTypos,
   type CopyIngredients,
 } from "@/pages/studio/phrasing";
-import { isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
+import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { GLOBAL_SEGMENT, audienceHooks, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
+import { buildBrandDna, isDnaEmpty, type BrandDna } from "./brandDnaKit";
+import { pickRelation, type Relation } from "./relational";
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
+
 
 
 
