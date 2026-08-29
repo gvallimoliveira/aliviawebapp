@@ -748,6 +748,16 @@ const StudioProBrand = () => {
                         {art.folder || "Geral"} · {art.format ?? "post"}
                         {art.is_favorite && " · referência"}
                       </p>
+                      {/* Ação principal: reabrir a arte salva para reescrever texto e trocar o formato. */}
+                      <Button
+                        size="sm"
+                        className="mt-2 h-8 w-full rounded-full text-[11px]"
+                        onClick={() => setEditingArt(art)}
+                        title="Editar texto e formato desta arte"
+                      >
+                        <PencilLine className="mr-1.5 h-3.5 w-3.5" />
+                        Editar texto e formato
+                      </Button>
                       {/* PNG e legenda ficam guardados na arte salva. */}
                       <div className="mt-2 flex flex-wrap items-center gap-1">
                         <Button
