@@ -1001,6 +1001,17 @@ const StudioProCreate = ({
         console.warn("[studio-pro] carousel png upload", error);
       }
     }
+    /** Instantâneo de cada slide: a edição pela galeria reabre exatamente estes. */
+    const slideNodes = indexes
+      .map((i) => document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null)
+      .filter((n): n is HTMLElement => !!n);
+    const snapshot = await captureArtSnapshot({
+      userId: auth.user.id,
+      brandId: brand.id,
+      key: `${seed}-carrossel-${indexes[0]}`,
+      format,
+      nodes: slideNodes,
+    });
     const { error } = await supabase.from("studio_creations").insert({
       user_id: auth.user.id,
       brand_id: brand.id,
@@ -1019,6 +1030,8 @@ const StudioProCreate = ({
           return [pos, node ? readArtText(node) : {}];
         }),
       ),
+      snapshot,
+
       segment: activeSegment,
       angle,
       folder: folder === "Todas" ? "Geral" : folder,
