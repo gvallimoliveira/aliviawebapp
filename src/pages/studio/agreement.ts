@@ -27,7 +27,7 @@ const FEM_EXCEPTIONS = new Set([
   "razão","razões","decisão","sessão","lesão","pressão","tensão","condição","evolução","reabilitação",
   "função","atenção","intenção","opção","solução","questão","gestão","conclusão","precisão",
   "mão","nação","paixão","estação","rotina","meta","tarde","chance","ordem","paz","dose","face",
-  "carne","fome","sorte","morte","corte?","frente","ponte","dúvida","pele","tarefa",
+  "carne","fome","sorte","morte","frente","ponte","dúvida","pele","tarefa",
 ]);
 
 const PLURAL_EXCEPTIONS = new Set(["mês","país","gás","atrás","através","depois","pois","mais","menos","vez","luz","cruz","paz","após","ninguém"]);
@@ -40,7 +40,7 @@ const isPlural = (word: string) => {
   const w = word.toLowerCase();
   if (PLURAL_EXCEPTIONS.has(w)) return false;
   if (!w.endsWith("s")) return false;
-  return w.length > 3 && !/[aáeéiíoóuú]s$/.test(stripAccents(w)) === false;
+  return w.length > 3;
 };
 
 const singularOf = (word: string) => {
@@ -108,6 +108,8 @@ const MODIFIERS = new Set([
   "próprio","própria","próprios","próprias","mesmo","mesma","mesmos","mesmas",
   "novo","nova","novos","novas","outro","outra","outros","outras","certo","certa","certos","certas",
   "bom","boa","bons","boas","muito","muita","muitos","muitas","pouco","pouca","poucos","poucas",
+  // Possessivos entram na cadeia ("o seu dia", "a sua fase"): flexionam junto com o núcleo.
+  "seu","sua","seus","suas","meu","minha","meus","minhas","nosso","nossa","nossos","nossas",
 ]);
 
 const inflect = (form: string, target: Agreement): string => {
@@ -141,7 +143,6 @@ export const fixAgreement = (text: string): string => {
     const raw = wordAt(i);
     if (!raw) continue;
     const key = raw.toLowerCase();
-    if (!INDEX.has(key) || MODIFIERS.has(key) === false && !INDEX.has(key)) continue;
     if (!INDEX.has(key)) continue;
 
     // Encontra o núcleo: pula modificadores flexionáveis.
