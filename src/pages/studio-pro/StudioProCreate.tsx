@@ -61,7 +61,7 @@ import {
   resolveAudience,
   type ContentAngle,
 } from "./audiences";
-import { enforceRationale, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
+import { enforceRationale, explainArt, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
 import { hasBannedJargon } from "@/pages/studio/persuasion";
 import {
   applyArtText,
