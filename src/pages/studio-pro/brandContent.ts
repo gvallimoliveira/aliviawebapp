@@ -324,7 +324,7 @@ export const buildBrandContent = (
       : [
           { strong: `Quem procura ${niche}`, rest: " chega aqui com uma pergunta na cabeça." },
           { strong: "A primeira conversa", rest: " já mostra o que dá e o que não dá." },
-          { strong: `${brand} atende poucos casos`, rest: " por mês, e é de propósito." },
+          { strong: `${brand} atende poucos clientes`, rest: " por mês, e é de propósito." },
           { strong: `Antes de contratar ${niche}`, rest: ", peça para ver o plano." },
           { strong: "Você sai da conversa", rest: " sabendo o próximo passo." },
         ],
@@ -334,7 +334,7 @@ export const buildBrandContent = (
       ...(composedSubs.length
         ? composedSubs
         : [
-            `${brand} escuta o caso antes de propor qualquer coisa.`,
+            `${brand} escuta ${offer.yourCase} antes de propor qualquer coisa.`,
             `O que muda em ${niche} é o quanto se mede antes de decidir.`,
             "Uma decisão bem tomada economiza meses.",
           ]),
@@ -342,7 +342,7 @@ export const buildBrandContent = (
     kinetic: composedKinetic.length
       ? composedKinetic
       : [
-          { kicker: "COMO COMEÇA", word: "Escuta", caption: "A primeira conversa serve para entender o caso." },
+          { kicker: "COMO COMEÇA", word: "Escuta", caption: `A primeira conversa serve para entender ${offer.yourCase}.` },
           { kicker: "COMO SEGUE", word: "Plano", caption: "Cada etapa tem começo, fim e revisão." },
           { kicker: "COMO TERMINA", word: "Alta", caption: "Você sabe quando o trabalho cumpriu o objetivo." },
         ],
@@ -363,7 +363,7 @@ export const buildBrandContent = (
       {
         heading: `Como ${offer.possessive} se organiza`,
         items: [
-          { value: "1", label: "primeira conversa", note: "para entender o caso antes de propor" },
+          { value: "1", label: "primeira conversa", note: `para entender ${offer.yourCase} antes de propor` },
           { value: "4", label: "semanas por ciclo", note: "revisão marcada desde o início" },
           { value: "3", label: `etapas até a ${offer.closingLabel}`, note: "cada uma com objetivo declarado" },
         ],
@@ -379,7 +379,7 @@ export const buildBrandContent = (
     ],
     triptychs: [
       {
-        heading: `Como ${brand} conduz um caso`,
+        heading: `Como ${brand} ${offer.conductPhrase}`,
         panels: [
           { word: "Escuta", line: "Entender antes de propor.", topic: topicAt(0) },
           { word: "Plano", line: "Cada etapa com começo e fim.", topic: topicAt(1) },
@@ -403,7 +403,7 @@ export const buildBrandContent = (
           { lead: `Em ${niche},`, big: " medir",tail: " vale mais que opinar." },
           { lead: "Refazer custa duas vezes.", big: "Decidir bem", tail: " custa uma." },
           { lead: "O que não avança", big: " muda", tail: " na revisão." },
-          { lead: brand, big: " atende", tail: " poucos casos por mês." },
+          { lead: brand, big: " atende", tail: " poucos clientes por mês." },
         ],
 
     compare: [
@@ -429,7 +429,7 @@ export const buildBrandContent = (
         heading: "Três etapas até o resultado",
         steps: [
           { title: "Conversa inicial", description: "Entendemos o cenário e o que você quer alcançar.", topic: topicAt(0) },
-          { title: "Plano", description: "O caminho que faz sentido para o seu caso, por escrito.", topic: topicAt(1) },
+          { title: "Plano", description: `O caminho que faz sentido para ${offer.yourCase}, por escrito.`, topic: topicAt(1) },
           { title: "Revisão", description: "O que avançou fica, o que não avançou muda.", topic: topicAt(2) },
         ],
       },
@@ -505,7 +505,7 @@ export const buildBrandContent = (
           "Na terceira tentativa, encontrou uma proposta feita para seu contexto.",
         ],
         turn: "Foi a primeira vez que alguém explicou o porquê.",
-        moral: "Entender o caso vem antes de propor conduta.",
+        moral: "Entender o contexto vem antes de propor qualquer conduta.",
       },
       {
         kicker: "ACONTECE TODA SEMANA",
@@ -535,11 +535,11 @@ export const buildBrandContent = (
     carousels: [
       {
         kicker: "PASSO A PASSO",
-        title: `Como ${brand} conduz um caso`,
-        coverSub: `Como ${brand} conduz um caso.`,
+        title: `Como ${brand} ${offer.conductPhrase}`,
+        coverSub: `Como ${brand} ${offer.conductPhrase}, passo a passo.`,
         slides: [
           { heading: "1. Conversa", body: "Entendemos o cenário antes de propor qualquer coisa.", topic: topicAt(0) },
-          { heading: "2. Plano", body: "O caminho do seu caso fica por escrito.", topic: topicAt(1) },
+          { heading: "2. Plano", body: `O caminho de ${offer.yourCase} fica por escrito.`, topic: topicAt(1) },
           { heading: "3. Revisão", body: "O que avançou fica; o que não avançou muda.", topic: topicAt(2) },
         ],
         cta: { title: "Quer começar?", sub: "Manda uma mensagem — a primeira conversa é sem compromisso." },
@@ -560,7 +560,7 @@ export const buildBrandContent = (
       audience: niche,
       proofs: [
         "O plano é montado depois da primeira conversa",
-        "Quem atende acompanha o caso do início ao fim",
+        `Quem atende acompanha ${offer.yourCase} do início ao fim`,
         "Proposta por escrito, com data de revisão",
       ],
       objections: [
@@ -674,7 +674,7 @@ const applyAudience = (
     ...painNoms.slice(0, 3).map((p) => ({ strong: key, rest: `— ${lower1(p)} não precisa ser a sua rotina.` })),
     ...desireNoms.slice(0, 2).map((d) => ({ strong: key, rest: `— ${lower1(d)} começa com uma decisão.` })),
     ...proof.slice(0, 2).map((p) => ({ strong: `${key} pede método`, rest: `. ${p}.` })),
-    { strong: `${hk(1)}`, rest: `: isso foi feito para o seu caso.` },
+    { strong: `${hk(1)}`, rest: `: isso foi pensado para a sua realidade.` },
     { strong: `Feito para ${lower1(key)}`, rest: ", não para todo mundo." },
   ];
 
@@ -761,7 +761,7 @@ const applyAudience = (
     carousels: [...carousels, ...tail(base.carousels)],
     closings: [
       { title: `${key}: o próximo passo é seu`, sub: desires[0] ? sentence(desires[0]) : `Fale com ${brand} hoje.`, cta },
-      { title: hk(6), sub: proof[0] ?? `${brand} tem um caminho para o seu caso.`, cta },
+      { title: hk(6), sub: proof[0] ?? `${brand} tem um caminho claro para quem está nessa situação.`, cta },
       ...tail(base.closings),
     ],
     sales: {
