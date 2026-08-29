@@ -11,6 +11,7 @@ import {
   type CopyIngredients,
 } from "@/pages/studio/phrasing";
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
+import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
 import { GLOBAL_SEGMENT, audienceHooks, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { buildBrandDna, isDnaEmpty, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
@@ -639,6 +640,15 @@ const applyAudience = (
   };
   const pains = lead(audience.pains ?? [], relation?.pain);
   const desires = lead(audience.desires ?? [], relation?.desire);
+  /**
+   * Forma NOMINAL do medo/desejo. Toda moldura que encaixa o ingrediente DENTRO
+   * de uma frase usa esta lista; a forma original (oração) só aparece em slots
+   * que a exibem como frase inteira (lista, comparativo, legenda).
+   */
+  const painNoms = nominalList(pains);
+  const desireNoms = nominalList(desires);
+  const nomPain = (i: number, fallback: string) => painNoms[i] ?? nominal(pains[i], fallback);
+  const nomDesire = (i: number, fallback: string) => desireNoms[i] ?? nominal(desires[i], fallback);
   const proof = lead(audience.proof ?? [], relation?.proof);
   const cta = relation?.cta || audience.cta?.trim() || "Falar com a gente";
   const desc = audience.description?.trim();
@@ -651,16 +661,16 @@ const applyAudience = (
 
 
   const headlines = [
-    ...pains.slice(0, 3).map((p) => ({ strong: key, rest: `: ${lower1(p)} não precisa ser a sua rotina.` })),
-    ...desires.slice(0, 2).map((d) => ({ strong: key, rest: `: ${lower1(d)} começa com uma decisão.` })),
+    ...painNoms.slice(0, 3).map((p) => ({ strong: key, rest: `: ${lower1(p)} não precisa ser a sua rotina.` })),
+    ...desireNoms.slice(0, 2).map((d) => ({ strong: key, rest: `: ${lower1(d)} começa com uma decisão.` })),
     ...proof.slice(0, 2).map((p) => ({ strong: `${key} pede método`, rest: `. ${p}.` })),
     { strong: `${hk(1)}`, rest: `: isso foi feito para o seu caso.` },
     { strong: `Feito para ${lower1(key)}`, rest: ", não para todo mundo." },
   ];
 
   const typos = [
-    { lead: "Se o assunto é", big: key, tail: pains[0] ? `${pains[0]}.` : `a conversa muda de nível.` },
-    { lead: hk(2) + ":", big: key, tail: desires[0] ? `${desires[0]}.` : `tem caminho.` },
+    { lead: "Se o assunto é", big: key, tail: pains[0] ? sentence(pains[0]) : `a conversa muda de nível.` },
+    { lead: hk(2) + ":", big: key, tail: desires[0] ? sentence(desires[0]) : `tem caminho.` },
     ...proof.slice(0, 1).map((p) => ({ lead: `${key} com`, big: "critério", tail: `${p}.` })),
   ];
 
@@ -668,7 +678,7 @@ const applyAudience = (
     ...(pains.length >= 3
       ? [{
           heading: `${pains.length} medos de quem convive com ${lower1(key)}`,
-          items: pains,
+          items: pains.map(sentence),
           closing: `${brand} trata cada um desses pontos com processo, não com promessa.`,
         }]
       : []),
@@ -682,7 +692,7 @@ const applyAudience = (
     ...(desires.length >= 2
       ? [{
           heading: `O que muda quando ${lower1(key)} é levado a sério`,
-          items: desires,
+          items: desires.map(sentence),
           closing: `${hk(3)}, o próximo passo existe e é claro.`,
         }]
       : []),
@@ -695,8 +705,8 @@ const applyAudience = (
           title: `${key}: do medo ao plano`,
           coverSub: `${hk(4)}, este carrossel é para você.`,
           slides: [
-            ...pains.slice(0, 2).map((p) => ({ heading: "O que você sente hoje", body: `${p}.` })),
-            ...desires.slice(0, 1).map((d) => ({ heading: "O que passa a ser possível", body: `${d}.` })),
+            ...pains.slice(0, 2).map((p) => ({ heading: "O que você sente hoje", body: sentence(p) })),
+            ...desires.slice(0, 1).map((d) => ({ heading: "O que passa a ser possível", body: sentence(d) })),
             ...proof.slice(0, 1).map((p) => ({ heading: "Como a gente chega lá", body: `${p}.` })),
           ],
           cta: { title: `${key}: quer começar?`, sub: cta },
@@ -712,13 +722,13 @@ const applyAudience = (
     subs: [
       ...(desc ? [desc] : []),
       ...proof.slice(0, 3).map((p) => `${key}: ${lower1(p)}.`),
-      ...(pains[0] ? [`${hk(5)}: ${lower1(pains[0])} tem explicação — e conduta.`] : []),
+      ...(painNoms[0] ? [`${hk(5)}: ${lower1(painNoms[0])} tem explicação — e conduta.`] : []),
       ...tail(base.subs),
     ],
     typos: [...typos, ...tail(base.typos)],
     kinetic: [
-      ...(pains[0] ? [{ kicker: `${KEY} HOJE`, word: "Hoje", caption: pains[0] }] : []),
-      ...(desires[0] ? [{ kicker: `${KEY} DEPOIS`, word: "Depois", caption: desires[0] }] : []),
+      ...(pains[0] ? [{ kicker: `${KEY} HOJE`, word: "Hoje", caption: sentence(pains[0]) }] : []),
+      ...(desires[0] ? [{ kicker: `${KEY} DEPOIS`, word: "Depois", caption: sentence(desires[0]) }] : []),
       ...tail(base.kinetic),
     ],
     compare: [
@@ -727,14 +737,14 @@ const applyAudience = (
     ],
     lists: [...lists, ...tail(base.lists)],
     quotes: [
-      ...desires.slice(0, 2).map((d) => ({ text: `“${d}.”` })),
-      ...(pains[0] ? [{ text: `“Achei que ${lower1(pains[0])} fosse para sempre.”` }] : []),
+      ...desires.slice(0, 2).map((d) => ({ text: `“${sentence(d)}”` })),
+      ...(painNoms[0] ? [{ text: `“Achei que ${lower1(painNoms[0])} fosse para sempre.”` }] : []),
       ...tail(base.quotes),
     ],
-    marquee: [[key, ...pains.slice(0, 2), ...desires.slice(0, 2)].filter(Boolean), ...tail(base.marquee)],
+    marquee: [[key, ...painNoms.slice(0, 2), ...desireNoms.slice(0, 2)].filter(Boolean), ...tail(base.marquee)],
     carousels: [...carousels, ...tail(base.carousels)],
     closings: [
-      { title: `${key}: o próximo passo é seu`, sub: desires[0] ?? `Fale com ${brand} hoje.`, cta },
+      { title: `${key}: o próximo passo é seu`, sub: desires[0] ? sentence(desires[0]) : `Fale com ${brand} hoje.`, cta },
       { title: hk(6), sub: proof[0] ?? `${brand} tem um caminho para o seu caso.`, cta },
       ...tail(base.closings),
     ],
@@ -743,7 +753,7 @@ const applyAudience = (
       audience: `${who} (${key})`,
       proofs: proof.length ? proof : base.sales.proofs,
       objections: pains.length
-        ? [`Você já tentou e não deu certo? O problema era ${lower1(pains[0])}.`, ...base.sales.objections]
+        ? [`Você já tentou e não deu certo? O problema era ${lower1(nomPain(0, "o improviso"))}.`, ...base.sales.objections]
         : base.sales.objections,
       ctas: [cta, ...base.sales.ctas],
       hashtags: [...new Set([key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), ...base.sales.hashtags])],
@@ -843,7 +853,7 @@ const applyGlobal = (
         coverSub: `Um produto, ${labels.length} públicos.`,
         slides: matrix.slice(0, 5).map((a, i) => ({
           heading: a.label,
-          body: a.pains?.[0] ? `${a.pains[0]} → ${a.desires?.[0] ?? "caminho claro"}.` : a.description ?? "",
+          body: a.pains?.[0] ? `${sentence(a.pains[0])} → ${sentence(a.desires?.[0] ?? "caminho claro")}` : a.description ?? "",
           topic: topicAt(i),
         })),
         cta: { title: "Em qual desses você se encaixa?", sub: "Responde aqui que eu te mostro o caminho." },
