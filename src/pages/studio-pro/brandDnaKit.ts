@@ -277,7 +277,7 @@ export type OperationWords = {
   whoPlural: string;
   /** Primeiro contato real: primeira avaliação / primeira conversa / teste. */
   firstStep: string;
-  /** Documento-guia do trabalho: plano / escopo / trilha. */
+  /** Documento-guia do trabalho: plano / roteiro / trilha. */
   planWord: string;
   /** Momento de conferir o rumo: revisão / checkpoint / ajuste. */
   reviewWord: string;
@@ -307,7 +307,7 @@ export const operationWords = (dna: BrandDna, brandName = ""): OperationWords =>
       who: "cliente",
       whoPlural: "clientes",
       firstStep: "primeiro teste",
-      planWord: "escopo",
+      planWord: "roteiro",
       reviewWord: "ajuste",
       encounterWord: "uso",
       deliverable: "entrega",

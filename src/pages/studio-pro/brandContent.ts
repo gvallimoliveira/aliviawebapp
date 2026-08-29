@@ -368,7 +368,7 @@ export const buildBrandContent = (
       [
         { value: 4, label: "assuntos que a marca comunica" },
         { value: 3, label: "motivos para escolher" },
-        { value: 1, label: "responsável acompanha do início ao fim" },
+        { value: 1, label: "pessoa acompanha do início ao fim" },
       ],
     ],
     stats: [
@@ -465,7 +465,7 @@ export const buildBrandContent = (
         headline: "Explicado antes de começar",
       },
       {
-        tag: "RESPONSÁVEL",
+        tag: "QUEM CONDUZ",
         title: "Quem começa é quem termina",
         description: `Quem conduz ${offer.yourCase} conhece o histórico e responde por ele do começo ao fim.`,
         topic: topicAt(1),
