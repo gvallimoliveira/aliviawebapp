@@ -69,6 +69,14 @@ const FINITE_VERBS = [
 
 const FINITE_SET = new Set<string>(FINITE_VERBS);
 
+/**
+ * Formas que também são substantivo ("a falta de tempo", "a volta da dor",
+ * "o gasto com anúncio"). Depois de artigo elas são nome, não verbo.
+ */
+const NOUN_OR_VERB = new Set([
+  "falta","volta","trava","some","piora","posto","posta","gasto","uso","acho","custa","cansa","dói","conta","adia",
+]);
+
 const PREPOSITIONS = [
   "com","de","da","do","das","dos","em","na","no","nas","nos","para","por","pelo","pela",
   "sobre","sem","até","entre","após","desde","ante","contra","perante",
@@ -182,7 +190,7 @@ export const readsWell = (text: string): boolean => {
   // artigo + verbo conjugado ("o precisam")
   const ARTICLES = ["o", "a", "os", "as", "um", "uma"];
   for (let i = 0; i < list.length - 1; i += 1) {
-    if (ARTICLES.includes(list[i]) && FINITE_SET.has(list[i + 1])) return false;
+    if (ARTICLES.includes(list[i]) && FINITE_SET.has(list[i + 1]) && !NOUN_OR_VERB.has(list[i + 1])) return false;
   }
 
   // dois verbos conjugados colados ("manter a frequência volta sempre" é ok,
@@ -199,6 +207,20 @@ export const readsWell = (text: string): boolean => {
   // orações empilhadas sem conector ("...não conseguem manter a frequência volta sempre?")
   const finiteCount = list.filter((word) => FINITE_SET.has(word)).length;
   if (finiteCount >= 3) return false;
+
+  // trecho cortado no meio ("… Hoje. Ter"): segmento de uma palavra que é verbo,
+  // infinitivo ou conectivo não é frase — é sobra de corte.
+  const segments = core.split(/[.!?]+/).map((seg) => seg.trim()).filter(Boolean);
+  if (
+    segments.some((seg) => {
+      const parts = wordsOf(seg);
+      if (parts.length !== 1) return false;
+      const only = parts[0];
+      return only.endsWith("r") || FINITE_SET.has(only) || DANGLING.includes(only);
+    })
+  ) {
+    return false;
+  }
 
   // ponta solta
   if (DANGLING.includes(list[list.length - 1])) return false;
