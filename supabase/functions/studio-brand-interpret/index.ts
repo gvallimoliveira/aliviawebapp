@@ -730,19 +730,48 @@ Responda SOMENTE com JSON válido neste formato:
       return json({ error: "Não foi possível interpretar a resposta da IA." }, 502);
     }
 
+    /**
+     * REGRA GLOBAL: palavra-chave, gancho e CTA nunca ficam vazios. A IA às
+     * vezes devolve só o CTA (ou nada) e a arte sai genérica — então o servidor
+     * deriva os campos que faltam a partir do label/descrição do público.
+     */
+    const cleanKeyword = (value: unknown, label: string) => {
+      const own = String(value ?? "").trim().replace(/[."]+$/g, "");
+      if (own && own.length <= 32 && own.split(/\s+/).length <= 4) return own;
+      return (
+        label
+          .trim()
+          .replace(/^(pacientes?|clientes?|alunos?|praticantes?)\s+(com|em|no|na|de|do|da)\s+/i, "")
+          .trim() || label.trim()
+      ).slice(0, 32);
+    };
+    const cleanHook = (value: unknown, keyword: string) => {
+      const own = String(value ?? "").trim();
+      if (own.length >= 12) return own.slice(0, 110);
+      return `Você que convive com ${keyword.toLowerCase()}`.slice(0, 110);
+    };
+    const cleanCta = (value: unknown, keyword: string) => {
+      const own = String(value ?? "").trim();
+      if (own.length >= 4) return own.slice(0, 60);
+      return `Fale sobre ${keyword.toLowerCase()}`.slice(0, 60);
+    };
+
     const audiences = (Array.isArray(parsed.audiences) ? parsed.audiences : [])
       .map((item: unknown) => {
         const row = (item ?? {}) as Record<string, unknown>;
         const label = String(row.label ?? "").trim();
         if (!label) return null;
+        const keyword = cleanKeyword(row.keyword, label);
         return {
           id: slugify(label),
           label: label.slice(0, 40),
           description: String(row.description ?? "").trim().slice(0, 300) || undefined,
+          keyword,
+          hook: cleanHook(row.hook, keyword),
           pains: strList(row.pains, 8),
           desires: strList(row.desires, 8),
           proof: strList(row.proof, 8),
-          cta: String(row.cta ?? "").trim().slice(0, 60) || undefined,
+          cta: cleanCta(row.cta, keyword),
         };
       })
       .filter(Boolean)
@@ -764,7 +793,19 @@ Responda SOMENTE com JSON válido neste formato:
       const prev = byId.get(id);
       byId.set(id, prev ? { ...prev, ...a } : a);
     }
-    const mergedAudiences = Array.from(byId.values()).slice(0, 12);
+    /** Público antigo sem keyword/hook/cta também é completado aqui. */
+    const mergedAudiences = Array.from(byId.values())
+      .slice(0, 12)
+      .map((a) => {
+        const label = String((a as Record<string, unknown>).label ?? "").trim();
+        const keyword = cleanKeyword((a as Record<string, unknown>).keyword, label);
+        return {
+          ...a,
+          keyword,
+          hook: cleanHook((a as Record<string, unknown>).hook, keyword),
+          cta: cleanCta((a as Record<string, unknown>).cta, keyword),
+        };
+      });
 
     /**
      * Cores do site: só aplicadas quando o cliente pediu (`applyColors`) e a IA
