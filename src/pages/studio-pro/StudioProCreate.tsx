@@ -103,12 +103,14 @@ type Props = {
 
 const FRAME_STYLE: Record<StudioFormat, React.CSSProperties> = {
   "9x16": { width: "min(400px, 100%)", aspectRatio: "9/16" },
+  "4x5": { width: "min(480px, 100%)", aspectRatio: "4/5" },
   "1x1": { width: "min(560px, 100%)", aspectRatio: "1/1" },
   free: { width: "100%" },
 };
 
 const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "9x16", label: "Story 9:16" },
+  { id: "4x5", label: "Post 4:5" },
   { id: "1x1", label: "Post 1:1" },
   { id: "free", label: "Livre" },
 ];

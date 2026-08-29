@@ -28,7 +28,7 @@ export type BrandColorKit = {
   font: string;
 };
 
-export const MAX_EXTRA_COLORS = 8;
+export const MAX_EXTRA_COLORS = 14;
 
 export const DEFAULT_COLOR_KIT: BrandColorKit = {
   primary: "#0F766E",

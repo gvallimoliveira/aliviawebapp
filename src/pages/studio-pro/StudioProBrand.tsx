@@ -627,7 +627,12 @@ const StudioProBrand = () => {
                     {(() => {
                       // Prefere o PNG de publicação; a miniatura é só fallback.
                       const src = (art.png_path && previews[art.png_path]) || art.thumb;
-                      const ratio = art.format === "9x16" ? "aspect-[9/16]" : "aspect-square";
+                      const ratio =
+                        art.format === "9x16"
+                          ? "aspect-[9/16]"
+                          : art.format === "4x5"
+                            ? "aspect-[4/5]"
+                            : "aspect-square";
                       if (!src)
                         return (
                           <div className="flex aspect-[4/5] w-full items-center justify-center text-xs text-muted-foreground">
