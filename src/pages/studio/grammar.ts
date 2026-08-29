@@ -131,7 +131,9 @@ export const toNominal = (text: string): string | null => {
     const match = core.match(re);
     if (match) {
       const result = clean(out(match));
-      if (result && isNominal(result)) return result;
+      // O núcleo nominalizado ("a falta de…") herda a palavra do verbo, então a
+      // validação aqui é de LEITURA, não de classe gramatical.
+      if (result && /^(?:o|a|os|as|um|uma)\s/i.test(result) && readsWell(result)) return result;
     }
   }
   return null;
@@ -193,6 +195,10 @@ export const readsWell = (text: string): boolean => {
   for (let i = 0; i < list.length - 1; i += 1) {
     if (list[i] === list[i + 1] && list[i].length > 2) return false;
   }
+
+  // orações empilhadas sem conector ("...não conseguem manter a frequência volta sempre?")
+  const finiteCount = list.filter((word) => FINITE_SET.has(word)).length;
+  if (finiteCount >= 3) return false;
 
   // ponta solta
   if (DANGLING.includes(list[list.length - 1])) return false;
