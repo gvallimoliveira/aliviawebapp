@@ -195,10 +195,30 @@ export const applyCharm = (
   content: WorldContent,
   angle: ContentAngle,
   relation?: Relation,
+  brand?: string,
 ): WorldContent => {
   if (angle === "informar") return content;
 
-  const row = findSubNicheCharm(relation);
+  /**
+   * Marca do próprio produto: o guia de copy do manual do Aliv.iA Studio tem
+   * precedência sobre a tabela de sub-nichos clínicos (que fala de paciente).
+   */
+  const selfRow: StudioSelfCharmRow | undefined = isStudioSelfBrand(brand ?? content.brand ?? "")
+    ? findStudioSelfCharm(
+        [
+          relation?.keyword,
+          relation?.who,
+          relation?.audience?.label,
+          relation?.audience?.description,
+          relation?.hook,
+          content.niche,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      )
+    : undefined;
+
+  const row: SubNicheCharm | StudioSelfCharmRow | undefined = selfRow ?? findSubNicheCharm(relation);
   const frames = relation ? charmFrames(relation, angle) : { headlines: [], subs: [], closings: [] };
   const cta = charmCta(relation?.cta ?? "");
 
