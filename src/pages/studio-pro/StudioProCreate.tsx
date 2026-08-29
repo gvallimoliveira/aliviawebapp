@@ -530,6 +530,15 @@ const StudioProCreate = ({
       content.closings[0]?.cta ||
       content.sales?.ctas?.[0] ||
       "";
+    /** Par relacional do lote: é ele que o filtro cobra dentro do texto. */
+    const relation = relationForSegment({
+      kit: contentKit,
+      audiences,
+      segment: activeSegment,
+      angle,
+      positioning: brand.positioning,
+      variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+    });
     return {
       content,
       audienceLabel: audience?.label ?? (activeSegment === GLOBAL_SEGMENT ? "assunto livre da marca (360°)" : activeSegment),
@@ -539,6 +548,7 @@ const StudioProCreate = ({
       angle,
       photoCount: activePhotos.length,
       brandName: brand.name,
+      relation: { pain: relation.pain, desire: relation.desire, axis: relation.axis },
       brand: {
         niche: brand.niche,
         tone: brand.tone,
@@ -558,7 +568,10 @@ const StudioProCreate = ({
     activeSegment,
     angle,
     content,
+    contentKit,
+    seed,
     activePhotos.length,
+    brand.id,
     brand.name,
     brand.niche,
     brand.tone,
@@ -567,6 +580,7 @@ const StudioProCreate = ({
     brand.topics,
     brand.brief_answers,
   ]);
+
 
 
   const audit = useMemo(() => enforceRationale(composedBlocks, rationaleCtx), [composedBlocks, rationaleCtx]);
