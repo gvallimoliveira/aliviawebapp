@@ -1004,6 +1004,9 @@ Responda SOMENTE com JSON válido neste formato:
         positioning: result.positioning || null,
         strategy_notes: result.strategy_notes || null,
         audiences: result.audiences,
+        // Slogan: só preenche quando a marca ainda não declarou o dela — é ele
+        // que habilita o sub-nicho "Slogan em destaque".
+        ...(tagline && !String((brand as Record<string, unknown>).slogan ?? "").trim() ? { slogan: tagline } : {}),
         ...(fillDescription ? { description: aiDescription } : {}),
         ...(fillTone ? { tone: aiVoice } : {}),
         ...(result.keywords.length ? { topics: result.keywords } : {}),
