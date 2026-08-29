@@ -145,6 +145,182 @@ const ExtraColors = ({
 
 
 
+
+type SampleRole = "primary" | "primary2" | "secondary" | "secondary2" | "extraPrimary" | "extraSecondary";
+
+const ROLE_LABEL: Record<SampleRole, string> = {
+  primary: "Cor de marca (fundo)",
+  primary2: "Cor do texto sobre ela",
+  secondary: "Apoio (destaque)",
+  secondary2: "Fundo claro / neutro",
+  extraPrimary: "Cor principal adicional",
+  extraSecondary: "Cor secundária adicional",
+};
+
+/**
+ * LEITURA DE COR NO PIXEL
+ *
+ * O manual da marca nem sempre escreve o hexadecimal — às vezes só imprime a
+ * amostra. Aqui o dono da marca sobe a página do manual (ou o logo) e o sistema
+ * lê os tons EXATOS pixel por pixel. Também é possível clicar num ponto da
+ * imagem para capturar aquele tom específico. Nada disso consome crédito de IA.
+ */
+const ColorSampler = ({
+  idPrefix,
+  kit,
+  onChange,
+}: {
+  idPrefix: string;
+  kit: BrandColorKit;
+  onChange: (next: BrandColorKit) => void;
+}) => {
+  const input = useRef<HTMLInputElement>(null);
+  const [src, setSrc] = useState<string | null>(null);
+  const [palette, setPalette] = useState<PaletteSwatch[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [role, setRole] = useState<SampleRole>("primary");
+
+  const apply = (hex: string) => {
+    if (role === "extraPrimary") {
+      if (kit.extraPrimary.length >= MAX_EXTRA_COLORS) {
+        toast.error("Limite de cores principais adicionais atingido.");
+        return;
+      }
+      onChange({ ...kit, extraPrimary: [...kit.extraPrimary, hex] });
+    } else if (role === "extraSecondary") {
+      if (kit.extraSecondary.length >= MAX_EXTRA_COLORS) {
+        toast.error("Limite de cores secundárias adicionais atingido.");
+        return;
+      }
+      onChange({ ...kit, useSecondary: true, extraSecondary: [...kit.extraSecondary, hex] });
+    } else if (role === "secondary" || role === "secondary2") {
+      onChange({ ...kit, useSecondary: true, [role]: hex } as BrandColorKit);
+    } else {
+      onChange({ ...kit, [role]: hex } as BrandColorKit);
+    }
+    toast.success(`${hex} aplicado em “${ROLE_LABEL[role]}”.`);
+  };
+
+  const load = async (file?: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Envie uma imagem (print do manual, página exportada ou logo).");
+      return;
+    }
+    setBusy(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      setSrc(dataUrl);
+      const found = await extractPalette(dataUrl, 10);
+      setPalette(found);
+      if (!found.length) toast.error("Não foi possível ler cores nesta imagem.");
+    } catch {
+      toast.error("Não foi possível ler esta imagem.");
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = "";
+    }
+  };
+
+  const pickFromImage = async (event: React.MouseEvent<HTMLImageElement>) => {
+    if (!src) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const hex = await pickPixelHex(
+      src,
+      (event.clientX - rect.left) / rect.width,
+      (event.clientY - rect.top) / rect.height,
+    );
+    if (hex) apply(hex);
+  };
+
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-background/60 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold">Capturar o tom exato do manual</p>
+          <p className="text-xs text-muted-foreground">
+            Suba a página do manual (ou o logo). O sistema lê os tons pixel por pixel — clique numa
+            cor da lista ou direto na imagem para aplicar.
+          </p>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="rounded-full"
+          disabled={busy}
+          onClick={() => input.current?.click()}
+        >
+          <ImageUp className="mr-1.5 h-3.5 w-3.5" />
+          {busy ? "Lendo…" : "Enviar imagem"}
+        </Button>
+        <input
+          ref={input}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => void load(e.target.files?.[0])}
+        />
+      </div>
+
+      {src && (
+        <>
+          <div className="mt-3">
+            <Label htmlFor={`${idPrefix}-sample-role`} className="text-xs">
+              Aplicar a cor capturada em
+            </Label>
+            <select
+              id={`${idPrefix}-sample-role`}
+              value={role}
+              onChange={(e) => setRole(e.target.value as SampleRole)}
+              className="mt-1 h-10 w-full rounded-md border border-input bg-background px-2 text-xs"
+            >
+              {(Object.keys(ROLE_LABEL) as SampleRole[]).map((key) => (
+                <option key={key} value={key}>
+                  {ROLE_LABEL[key]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <img
+            src={src}
+            alt="Amostra do manual da marca para captura de cores"
+            onClick={(e) => void pickFromImage(e)}
+            className="mt-3 max-h-56 w-full cursor-crosshair rounded-xl border border-border object-contain"
+          />
+
+          {palette.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {palette.map((swatch) => (
+                <button
+                  key={swatch.hex}
+                  type="button"
+                  onClick={() => apply(swatch.hex)}
+                  className="flex items-center gap-2 rounded-full border border-border bg-card px-2 py-1 text-[11px] font-mono uppercase hover:border-primary"
+                  title={`${swatch.hex} — ${(swatch.share * 100).toFixed(1)}% da imagem${swatch.neutral ? " (neutro)" : ""}`}
+                >
+                  <span
+                    className="h-4 w-4 rounded-full border border-border"
+                    style={{ background: swatch.hex }}
+                  />
+                  {swatch.hex}
+                  <span className="text-muted-foreground">{(swatch.share * 100).toFixed(0)}%</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
 const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => {
   const verdict = judgeContrast(kit.primary, kit.primary2);
   const suggest = () => {
@@ -161,6 +337,8 @@ const BrandColorFields = ({ idPrefix, kit, onChange }: Props) => {
 
   return (
   <div className="sm:col-span-2 space-y-4 rounded-2xl border border-border bg-muted/30 p-4">
+    <ColorSampler idPrefix={idPrefix} kit={kit} onChange={onChange} />
+
     <div>
       <p className="text-sm font-semibold">Cores principais</p>
       <p className="text-xs text-muted-foreground">
