@@ -444,78 +444,105 @@ export const explainArt = (
   }
 
   const subject = keyword || ctx.content.label || ctx.brandName;
-  const audiencePart = hook ? `fala direto com quem se reconhece em "${hook}"` : `fala com ${audience}`;
 
-  // ---------- personalização desta arte ----------
+  // ---------- CONTRATO DE SENTIDO (global, igual para todo formato) ----------
+  // A leitura não depende do bloco: ela é feita sobre o texto que a arte de fato
+  // mostra. Toda arte precisa cumprir quatro coisas, em qualquer formato:
+  //   1. dizer uma frase inteira (não só rótulos),
+  //   2. tocar o assunto do público (palavra-chave / chamada),
+  //   3. entregar algo a quem lê (situação, consequência ou caminho),
+  //   4. terminar com um passo ou uma assinatura.
   const copy = cleanCopy(detail?.copy);
-  // A frase-âncora é a maior FRASE; rótulo solto ("visibilidade") não conta.
   const sentences = copy.filter(isSentence);
   const headline = sentences.slice().sort((a, b) => b.length - a.length)[0] ?? "";
   const labels = copy.filter((t) => !isSentence(t));
-  const lead = sentences.find((t) => t !== headline) ?? "";
-  const tail = sentences.length > 2 ? sentences[sentences.length - 1] : "";
+  const support = sentences.filter((t) => t !== headline);
+  const lead = support[0] ?? "";
+  const tail = support.length > 1 ? support[support.length - 1] : "";
+  const read = copy.length > 0;
 
-  // 5) Rótulo solto não é mensagem: se a arte não tem nenhuma frase inteira,
-  // ela pode ser bonita, mas não diz nada a quem não conhece a marca.
-  if (copy.length && !sentences.length) {
+  if (read && !sentences.length) {
     gaps.push(
       "a arte só mostra palavras soltas, sem nenhuma frase que diga o que elas significam para quem lê",
     );
   }
 
-  const layout = LAYOUT_NOTES[block.treatment % LAYOUT_NOTES.length];
+  /** Palavras que ancoram o assunto do público (usadas para medir se a arte fala dele). */
+  const words = (t: string) =>
+    t
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length > 3);
+  const subjectWords = new Set([...words(keyword), ...words(hook), ...words(audience)]);
+  const artWords = new Set(copy.flatMap(words));
+  const brandWords = new Set(words(ctx.brandName));
+  const shared = [...subjectWords].filter((w) => artWords.has(w) && !brandWords.has(w));
+  if (read && subjectWords.size > 0 && shared.length === 0) {
+    gaps.push(
+      `nada do que está escrito na arte toca o assunto de "${audience}" — do jeito que está, ela é decoração bonita e não comunicação`,
+    );
+  }
+
+  /** A arte entrega algo? (situação vivida, consequência ou caminho) */
+  const DELIVERY = /(dor|dói|semana|mes|mês|ano|noite|manh|trabalh|treino|carregar|levantar|sentar|dormir|voltar|melhor|piora|risco|evita|resolve|trata|fortalec|recuper|consegu|deixa|começa|prova|avalia|exame|diagn|consulta|plano)/i;
+  const delivers = copy.some((t) => DELIVERY.test(t));
+  if (read && sentences.length > 0 && !delivers) {
+    gaps.push(
+      "a arte afirma algo, mas não mostra situação vivida, consequência nem caminho: quem lê não leva nada para casa",
+    );
+  }
+
+  const layoutBase = LAYOUT_NOTES[block.treatment % LAYOUT_NOTES.length];
   const motion = block.motion ? MOTION_NOTES[block.motion] : "";
   const slide = block.slide
     ? ` Este é o slide ${block.slide.index + 1} de ${block.slide.total} do carrossel, então ele não vive sozinho: prepara o slide seguinte.`
     : "";
   const role = positionRole(detail?.index, detail?.total);
-  const seedKey = `${block.kind}:${block.treatment}:${detail?.index ?? 0}:${headline}`;
-  const frame = hash(seedKey) % 3;
 
-  const seenParts = [
-    `A pessoa vê ${sense.sees}`,
-    `, com ${layout}`,
+  // ---------- 1. O QUE SE VÊ: hierarquia real do texto lido ----------
+  const hierarchy: string[] = [];
+  if (headline) hierarchy.push(`em maior destaque, ${quote(headline)}`);
+  if (lead) hierarchy.push(`abaixo, em corpo menor, ${quote(lead)}`);
+  if (tail && tail !== lead) hierarchy.push(`fechando, ${quote(tail)}`);
+  if (labels.length)
+    hierarchy.push(
+      `e ${labels.length === 1 ? "o rótulo" : "os rótulos"} ${labels.slice(0, 4).map(quote).join(", ")} como apoio visual`,
+    );
+
+  const elements = [
+    read
+      ? `Nesta arte a pessoa lê, nesta ordem: ${hierarchy.join("; ")}.`
+      : `A pessoa vê ${sense.sees}.`,
+    ` O arranjo é ${layoutBase}`,
     detail?.styleLabel ? `, no estilo ${detail.styleLabel}` : "",
-    detail?.formatLabel ? ` e no formato ${detail.formatLabel}` : "",
+    detail?.formatLabel ? `, em ${detail.formatLabel}` : "",
     ".",
-  ];
-  const elementsBase = seenParts.join("");
-  const copySeen = copy.length
-    ? ` O que está escrito nela: ${copy.slice(0, 4).map(quote).join(", ")}${copy.length > 4 ? " (e o restante do texto de apoio)" : ""}.`
-    : "";
-  const motionSeen = motion ? ` No movimento, ${motion}.` : "";
+    motion ? ` No movimento, ${motion}.` : "",
+  ].join("");
 
-  const labelsSeen = labels.slice(0, 4).map(quote).join(", ");
-  /** Quando a arte não tem frase, a explicação assume o problema em vez de enfeitar. */
-  const noSentence = () =>
-    `Sem frase inteira, esta arte não diz nada por si: ela mostra ${
-      labelsSeen || "apenas rótulos"
-    } e espera que a pessoa deduza a ligação. Para ${audience}, falta uma linha dizendo o que esses termos resolvem — do jeito que está, o valor só existe para quem já conhece ${ctx.brandName}.`;
+  // ---------- 2. O QUE ELA DIZ: leitura literal, sem enfeite ----------
+  let message: string;
+  if (!read) {
+    message = `Abra a leitura com a arte na tela para eu citar as frases exatas. Pelo formato, o trabalho dela é ${sense.job}, sobre ${subject}.`;
+  } else if (!headline) {
+    message = `Do jeito que está, a arte não afirma nada: ela mostra ${
+      labels.slice(0, 4).map(quote).join(", ") || "apenas rótulos"
+    } e deixa a ligação por conta de quem lê. Para ${audience}, falta uma frase dizendo o que esses termos resolvem — hoje o sentido só existe para quem já conhece ${ctx.brandName}.`;
+  } else {
+    const link = shared.length
+      ? `Ela conversa com ${audience} porque fala de ${shared.slice(0, 3).join(", ")} — o mesmo terreno de "${hook || keyword}".`
+      : `Ela ainda não amarra em ${audience}: nenhuma palavra da arte cruza com "${hook || keyword}".`;
+    const value = delivers
+      ? `O que quem lê leva daqui: reconhece a situação descrita e vê que existe caminho.`
+      : `O que falta: a frase afirma, mas não mostra a situação vivida nem o caminho — sem isso a pessoa concorda e segue rolando.`;
+    message = `A arte diz, em uma linha: ${quote(headline)}.${
+      lead ? ` E completa com ${quote(lead)}.` : ""
+    } ${link} ${value}`;
+  }
 
-  const messageFrames = [
-    () =>
-      headline
-        ? `A frase que carrega a arte é ${quote(headline)} — escolhida porque ${audiencePart} sobre ${subject}.${
-            lead ? ` A linha ${quote(lead)} sustenta o argumento sem exigir esforço de leitura.` : ""
-          }${labelsSeen ? ` Os itens ${labelsSeen} entram como apoio, não como mensagem.` : ""} O formato entra para ${sense.job}.`
-        : noSentence(),
-    () =>
-      headline
-        ? `Pensando em ${audience}, o motor colocou ${quote(headline)} como centro da arte: é a leitura de dois segundos sobre ${subject}. Escolhi ${sense.format} porque o trabalho aqui é ${sense.job}.${
-            tail ? ` O fecho ${quote(tail)} amarra a ideia.` : ""
-          }`
-        : noSentence(),
-    () =>
-      headline
-        ? `O assunto é ${subject} e o recorte é ${quote(headline)}. ${
-            hook ? `Falo com quem se reconhece em "${hook}"` : `Falo com ${audience}`
-          }, e por isso o formato ${sense.format} — ele serve para ${sense.job}.${
-            lead && lead !== headline ? ` ${quote(lead)} entra como apoio.` : ""
-          }`
-        : noSentence(),
-  ];
-
-
+  // ---------- 3. O QUE ELA DESPERTA ----------
   const effect = [
     role ? `${role}. ` : "",
     `O objetivo é que quem lê ${ANGLE_EFFECT[ctx.angle]}`,
@@ -528,13 +555,14 @@ export const explainArt = (
   return {
     kind: block.kind,
     format: sense.format,
-    elements: `${elementsBase}${copySeen}${motionSeen}`,
-    message: messageFrames[frame](),
+    elements,
+    message,
     effect,
     gaps,
     ok: gaps.length === 0,
   };
 };
+
 
 
 /** Explicação em texto corrido, para legenda, exportação e leitura rápida. */
