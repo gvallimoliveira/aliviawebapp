@@ -546,6 +546,40 @@ const StudioProCreate = ({
   const artNode = (index: number) =>
     document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
 
+  /**
+   * EXPLICAÇÃO PERSONALIZADA DE CADA ARTE.
+   *
+   * O filtro (`enforceRationale`) julga o formato, mas a explicação mostrada ao
+   * cliente precisa citar ESTA arte: as frases que foram realmente renderizadas
+   * (lidas do próprio nó), o arranjo sorteado, o movimento, o formato de saída e
+   * a posição dela na leva. Sem isso a leitura sairia igual para toda arte do
+   * mesmo tipo.
+   */
+  const [whyCopy, setWhyCopy] = useState<Record<number, string[]>>({});
+
+  const openWhy = (index: number) => {
+    if (whyOpen === index) {
+      setWhyOpen(null);
+      return;
+    }
+    const node = artNode(index);
+    if (node) {
+      const texts = Object.values(readArtText(node));
+      setWhyCopy((prev) => ({ ...prev, [index]: texts }));
+    }
+    setWhyOpen(index);
+  };
+
+  const explainWhy = (index: number, block: ComposedBlock) =>
+    explainArt(block, rationaleCtx, {
+      index,
+      total: blocks.length,
+      copy: whyCopy[index],
+      formatLabel: FORMAT_LABEL[format],
+      personaLabel: persona.name,
+    });
+
+
   /** Reaplica as edições depois de qualquer re-render das artes. */
   useEffect(() => {
     Object.entries(edits).forEach(([key, value]) => {
