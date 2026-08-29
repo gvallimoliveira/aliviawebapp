@@ -287,14 +287,6 @@ const SYNONYMS: Record<string, SynonymRow> = {
   padrão: {
     all: ["padrão", "nível", "critério"],
   },
-  próximo: {
-    all: ["próximo", "seguinte"],
-    tecnico: ["próximo", "seguinte"],
-    proximo: ["próximo", "seguinte"],
-    direto: ["próximo", "seguinte"],
-    inspirador: ["próximo", "seguinte"],
-    sobrio: ["próximo", "seguinte"],
-  },
 
   // ---- Vocabulário de chamada / CTA (o acervo de legendas vive aqui) ----
   comece: {
@@ -379,8 +371,10 @@ const SYNONYMS: Record<string, SynonymRow> = {
     all: ["ganhe", "conquiste", "acumule"],
   },
   tempo: {
-    all: ["tempo", "prazo", "horas"],
-    proximo: ["tempo", "horas do seu dia"],
+    /* "horas" quebra a concordância de "falta tempo" — sinônimo precisa ser
+       singular e do mesmo gênero da palavra original. */
+    all: ["tempo", "prazo"],
+    proximo: ["tempo", "prazo"],
     tecnico: ["tempo", "prazo", "ciclo"],
   },
   jeito: {

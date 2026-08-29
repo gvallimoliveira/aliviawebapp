@@ -15,6 +15,7 @@
 
 import { createRng, type Rng } from "./rng";
 import { applyLexicon, type VoiceRegister } from "./lexicon";
+import { readsWell } from "./grammar";
 
 export type RewriteMode = "light" | "partial" | "full";
 
@@ -41,7 +42,7 @@ const words = (t: string) => noDot(t).split(" ").filter(Boolean);
 const CONNECTORS: [RegExp, string[]][] = [
   [/\bporque\b/gi, ["porque", "já que", "pois", "uma vez que"]],
   [/\bmas\b/gi, ["mas", "porém", "só que", "e ainda assim"]],
-  [/\bpara\b/gi, ["para", "a fim de", "de modo a"]],
+  [/\bpara\b/gi, ["para", "a fim de"]],
   [/\bentão\b/gi, ["então", "por isso", "logo"]],
   [/\btambém\b/gi, ["também", "igualmente", "do mesmo jeito"]],
   [/\bsempre\b/gi, ["sempre", "toda vez", "invariavelmente"]],
@@ -185,7 +186,9 @@ export const rephrase = (text: string, options: RewriteOptions): string => {
   const { register, seed, intensity = 0.58, forbidden = [] } = options;
   const mode = modeForIntensity(intensity);
 
-  const lexed = applyLexicon(text, { register, seed, intensity: LEX_INTENSITY[mode], forbidden });
+  const lexedRaw = applyLexicon(text, { register, seed, intensity: LEX_INTENSITY[mode], forbidden });
+  // Troca de palavra que estraga a concordância é descartada na origem.
+  const lexed = readsWell(lexedRaw) || !readsWell(text) ? lexedRaw : text;
   if (mode === "light" || !isSentence(lexed)) return lexed;
 
   const sentences = lexed.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [lexed];
@@ -203,6 +206,8 @@ export const rephrase = (text: string, options: RewriteOptions): string => {
     .join(" ");
 
   const final = clean(rebuilt) || lexed;
+  // Portão de leitura: reescrita que quebra o português volta para a origem.
+  if (!readsWell(final) && readsWell(lexed)) return lexed;
   if (forbidden.some((bad) => bad && final.toLowerCase().includes(bad.toLowerCase()))) return lexed;
   // Segurança: reescrita não pode inflar demais o texto (quadro tem limite).
   if (final.length > lexed.length * 1.45 + 12) return lexed;

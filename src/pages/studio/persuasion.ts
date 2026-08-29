@@ -227,14 +227,14 @@ export const PERSUASION_FRAMES: PersuasionFrame[] = [
   {
     id: "especifico-para-quem",
     needs: "solution",
-    build: (ing, i) => ({ strong: `Se ${lower(nom(ing.pains, i, "o assunto"))} te soa familiar`, rest: `, ${lower(nom(ing.solutions, i, "existe um caminho pronto"))} já resolve isso.` }),
+    build: (ing, i) => ({ strong: `Se ${lower(nom(ing.pains, i, "o assunto"))} te soa familiar`, rest: `, ${lower(nom(ing.solutions, i, "um caminho pronto"))} já resolve isso.` }),
   },
 ];
 
 /** Subtítulos de apoio com a mesma postura — usados junto do ponto zero. */
 export const persuasionSubs = (ing: CopyIngredients): ((i: number) => string)[] => [
-  (i) => `Ninguém para em ${lower(ing.niche)} por acaso: para quando reconhece ${lower(at(ing.pains, i, "o próprio problema"))}.`,
-  (i) => `${upperFirst(at(ing.solutions, i, "Um caminho definido"))} — sem prometer o que não se entrega.`,
-  (i) => `O custo de não resolver ${lower(at(ing.pains, i, "isso"))} aparece antes do próximo trimestre.`,
-  (i) => `Reconhecer o problema já é meia decisão. A outra metade é ${lower(at(ing.solutions, i, "escolher o método"))}.`,
+  (i) => `Ninguém para em ${lower(ing.niche)} por acaso: para quando reconhece ${lower(nom(ing.pains, i, "o próprio problema"))}.`,
+  (i) => `${upperFirst(nom(ing.solutions, i, "um caminho definido"))} — sem prometer o que não se entrega.`,
+  (i) => `O custo de não resolver ${lower(nom(ing.pains, i, "isso"))} aparece antes do próximo trimestre.`,
+  (i) => `Reconhecer o problema já é meia decisão. A outra metade é ${lower(nom(ing.solutions, i, "escolher o método"))}.`,
 ];
