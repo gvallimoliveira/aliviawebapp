@@ -260,3 +260,78 @@ export const offerWords = (dna: BrandDna, brandName = ""): OfferWords => {
             : "conduz o trabalho",
   };
 };
+
+/**
+ * VOCABULÁRIO DE OPERAÇÃO (acervo neutro sem temática de consultório)
+ *
+ * O acervo de emergência falava "consulta", "alta", "primeira conversa",
+ * "conduta" para QUALQUER marca — herança do Aliv.iA Fisio. Aqui o mesmo
+ * esqueleto de frase recebe as palavras da operação REAL da marca, derivadas do
+ * kit (nicho, oferta, descrição). Nenhuma marca fala de consultório sem ser de
+ * atendimento clínico.
+ */
+export type OperationWords = {
+  /** Quem é atendido/servido: paciente / cliente / aluno / assinante. */
+  who: string;
+  /** Plural de `who`. */
+  whoPlural: string;
+  /** Primeiro contato real: primeira avaliação / primeira conversa / teste. */
+  firstStep: string;
+  /** Documento-guia do trabalho: plano / roteiro / trilha. */
+  planWord: string;
+  /** Momento de conferir o rumo: revisão / checkpoint / ajuste. */
+  reviewWord: string;
+  /** Unidade de encontro/uso: sessão / reunião / aula / uso. */
+  encounterWord: string;
+  /** O que fica de registro: relatório / entrega / material. */
+  deliverable: string;
+  /** Ciclo declarado: "por ciclo" / "por sprint" / "por módulo". */
+  cycleLabel: string;
+};
+
+export const operationWords = (dna: BrandDna, brandName = ""): OperationWords => {
+  const { kind } = offerWords(dna, brandName);
+  if (kind === "atendimento")
+    return {
+      who: "paciente",
+      whoPlural: "pacientes",
+      firstStep: "primeira avaliação",
+      planWord: "plano",
+      reviewWord: "reavaliação",
+      encounterWord: "sessão",
+      deliverable: "relatório",
+      cycleLabel: "por ciclo de tratamento",
+    };
+  if (kind === "produto")
+    return {
+      who: "cliente",
+      whoPlural: "clientes",
+      firstStep: "primeiro teste",
+      planWord: "roteiro",
+      reviewWord: "ajuste",
+      encounterWord: "uso",
+      deliverable: "entrega",
+      cycleLabel: "por ciclo de uso",
+    };
+  if (kind === "programa")
+    return {
+      who: "aluno",
+      whoPlural: "alunos",
+      firstStep: "primeira aula",
+      planWord: "trilha",
+      reviewWord: "checkpoint",
+      encounterWord: "encontro",
+      deliverable: "material",
+      cycleLabel: "por módulo",
+    };
+  return {
+    who: "cliente",
+    whoPlural: "clientes",
+    firstStep: "primeira conversa",
+    planWord: "plano",
+    reviewWord: "revisão",
+    encounterWord: "reunião",
+    deliverable: "entrega",
+    cycleLabel: "por ciclo",
+  };
+};

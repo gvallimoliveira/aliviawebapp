@@ -13,7 +13,7 @@ import {
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
 import { GLOBAL_SEGMENT, audienceHooks, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
-import { buildBrandDna, isDnaEmpty, offerWords, type BrandDna } from "./brandDnaKit";
+import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
 import { applyCharm } from "./charmCopy";
 import { condensePhrase } from "./textFit";
@@ -36,6 +36,9 @@ import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
  * fotográfico simplesmente não renderiza para conteúdo neutro.
  */
 const topicAt = (_i: number): TopicId | undefined => undefined;
+
+/** Primeira letra maiúscula (rótulos curtos dentro da arte). */
+const cap = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 
 
 export type BrandKit = {
@@ -285,6 +288,14 @@ export const buildBrandContent = (
   const dnaPools = isDnaEmpty(dna) ? {} : buildFromDna(dna, brand, niche);
   /** Como esta marca chama o que vende (produto / atendimento / programa). */
   const offer = offerWords(dna, brand);
+  /**
+   * VOCABULÁRIO DA OPERAÇÃO: quem é atendido, como começa, o que se revisa.
+   * É o que impede o acervo neutro de falar "consulta/alta/conduta" para uma
+   * marca de software, curso ou serviço que não é clínico.
+   */
+  const op = operationWords(dna, brand);
+  /** Assunto de referência: nicho declarado ou 1ª palavra-chave da marca. */
+  const subject = firstSentence(words[0] ?? niche, 30);
 
   /** Motor de variedade linguística (determinístico pela seed do lote). */
   const register: VoiceRegister = variation?.register ?? voiceRegister(kit.tone, brand);
@@ -322,11 +333,11 @@ export const buildBrandContent = (
     headlines: composedHeadlines.length
       ? composedHeadlines
       : [
-          { strong: `Quem procura ${niche}`, rest: " chega aqui com uma pergunta na cabeça." },
-          { strong: "A primeira conversa", rest: " já mostra o que dá e o que não dá." },
-          { strong: `${brand} atende poucos clientes`, rest: " por mês, e é de propósito." },
-          { strong: `Antes de contratar ${niche}`, rest: ", peça para ver o plano." },
-          { strong: "Você sai da conversa", rest: " sabendo o próximo passo." },
+          { strong: `Quem procura ${niche}`, rest: " chega com uma pergunta na cabeça." },
+          { strong: `A ${op.firstStep}`, rest: " já mostra o que dá e o que não dá." },
+          { strong: `${brand} trabalha com poucos ${op.whoPlural}`, rest: " por mês, e é de propósito." },
+          { strong: `Antes de fechar ${niche}`, rest: `, peça para ver o ${op.planWord}.` },
+          { strong: "Você sai do primeiro contato", rest: " sabendo o próximo passo." },
         ],
     subs: [
       tone,
@@ -334,45 +345,46 @@ export const buildBrandContent = (
       ...(composedSubs.length
         ? composedSubs
         : [
-            `${brand} escuta ${offer.yourCase} antes de propor qualquer coisa.`,
-            `O que muda em ${niche} é o quanto se mede antes de decidir.`,
+            `${brand} entende ${offer.yourCase} antes de propor qualquer coisa.`,
+            `O que muda em ${subject} é o quanto se mede antes de decidir.`,
             "Uma decisão bem tomada economiza meses.",
           ]),
     ],
     kinetic: composedKinetic.length
       ? composedKinetic
       : [
-          { kicker: "COMO COMEÇA", word: "Escuta", caption: `A primeira conversa serve para entender ${offer.yourCase}.` },
-          { kicker: "COMO SEGUE", word: "Plano", caption: "Cada etapa tem começo, fim e revisão." },
-          { kicker: "COMO TERMINA", word: "Alta", caption: "Você sabe quando o trabalho cumpriu o objetivo." },
+          { kicker: "COMO COMEÇA", word: "Escuta", caption: `A ${op.firstStep} serve para entender ${offer.yourCase}.` },
+          { kicker: "COMO SEGUE", word: cap(op.planWord), caption: `Cada etapa tem começo, fim e ${op.reviewWord}.` },
+          { kicker: "COMO TERMINA", word: cap(offer.closingLabel), caption: "Você sabe quando o trabalho cumpriu o objetivo." },
         ],
+
 
     metrics: [
       [
-        { value: 1, label: "conversa antes de qualquer proposta" },
-        { value: 4, label: "semanas até a primeira revisão" },
+        { value: 1, label: `${op.firstStep} antes de qualquer proposta` },
+        { value: 4, label: `semanas até a primeira ${op.reviewWord}` },
         { value: 3, label: offer.stepsLabel },
       ],
       [
         { value: 4, label: "assuntos que a marca comunica" },
         { value: 3, label: "motivos para escolher" },
-        { value: 1, label: "profissional acompanha do início ao fim" },
+        { value: 1, label: "pessoa acompanha do início ao fim" },
       ],
     ],
     stats: [
       {
         heading: `Como ${offer.possessive} se organiza`,
         items: [
-          { value: "1", label: "primeira conversa", note: `para entender ${offer.yourCase} antes de propor` },
-          { value: "4", label: "semanas por ciclo", note: "revisão marcada desde o início" },
+          { value: "1", label: op.firstStep, note: `para entender ${offer.yourCase} antes de propor` },
+          { value: "4", label: `semanas ${op.cycleLabel}`, note: `${cap(op.reviewWord)} marcada desde o início` },
           { value: "3", label: `etapas até a ${offer.closingLabel}`, note: "cada uma com objetivo declarado" },
         ],
       },
       {
         heading: "O que muda no dia a dia",
         items: [
-          { value: "-1", label: "consulta perdida", note: "o plano fica registrado por escrito" },
-          { value: "+1", label: "revisão marcada", note: "ninguém segue no automático" },
+          { value: "-1", label: "combinado esquecido", note: `o ${op.planWord} fica registrado por escrito` },
+          { value: "+1", label: `${op.reviewWord} marcada`, note: "ninguém segue no automático" },
           { value: "0", label: "promessa vazia", note: "o que não dá, a gente diz na hora" },
         ],
       },
@@ -382,8 +394,8 @@ export const buildBrandContent = (
         heading: `Como ${brand} ${offer.conductPhrase}`,
         panels: [
           { word: "Escuta", line: "Entender antes de propor.", topic: topicAt(0) },
-          { word: "Plano", line: "Cada etapa com começo e fim.", topic: topicAt(1) },
-          { word: "Revisão", line: "O que não avança, muda.", topic: topicAt(2) },
+          { word: cap(op.planWord), line: "Cada etapa com começo e fim.", topic: topicAt(1) },
+          { word: cap(op.reviewWord), line: "O que não avança, muda.", topic: topicAt(2) },
         ],
       },
       {
@@ -399,23 +411,23 @@ export const buildBrandContent = (
       ? composedTypos
       : [
           { lead: "A gente conduz o processo.", big: "Você", tail: " sabe onde está." },
-          { lead: "Menos improviso.", big: "Mais plano", tail: "." },
+          { lead: "Menos improviso.", big: `Mais ${op.planWord}`, tail: "." },
           { lead: `Em ${niche},`, big: " medir",tail: " vale mais que opinar." },
           { lead: "Refazer custa duas vezes.", big: "Decidir bem", tail: " custa uma." },
-          { lead: "O que não avança", big: " muda", tail: " na revisão." },
-          { lead: brand, big: " atende", tail: " poucos clientes por mês." },
+          { lead: "O que não avança", big: " muda", tail: ` na ${op.reviewWord}.` },
+          { lead: brand, big: " trabalha", tail: ` com poucos ${op.whoPlural} por mês.` },
         ],
 
     compare: [
       {
-        title: "Antes e depois de ter um plano por escrito",
-        before: ["Orientação solta", "Sem data de revisão", "Você sem saber onde está", "Cada consulta recomeça"],
-        after: ["Plano registrado", "Revisão marcada", "Etapa declarada", "Continuidade entre consultas"],
+        title: `Antes e depois de ter um ${op.planWord} por escrito`,
+        before: ["Orientação solta", `Sem data de ${op.reviewWord}`, "Você sem saber onde está", `Cada ${op.encounterWord} recomeça do zero`],
+        after: [`${cap(op.planWord)} registrado`, `${cap(op.reviewWord)} marcada`, "Etapa declarada", `Continuidade entre cada ${op.encounterWord}`],
       },
       {
         title: `Como ${brand} encara ${niche}`,
         before: ["Achismo", "Correria", "Improviso"],
-        after: ["Diagnóstico", "Planejamento", "Execução medida"],
+        after: ["Leitura do cenário", "Planejamento", "Execução medida"],
       },
       {
         title: "Escolher por preço x escolher por resultado",
@@ -428,19 +440,19 @@ export const buildBrandContent = (
         kicker: "COMO FUNCIONA",
         heading: "Três etapas até o resultado",
         steps: [
-          { title: "Conversa inicial", description: "Entendemos o cenário e o que você quer alcançar.", topic: topicAt(0) },
-          { title: "Plano", description: `O caminho que faz sentido para ${offer.yourCase}, por escrito.`, topic: topicAt(1) },
-          { title: "Revisão", description: "O que avançou fica, o que não avançou muda.", topic: topicAt(2) },
+          { title: cap(op.firstStep), description: "Entendemos o cenário e o que você quer alcançar.", topic: topicAt(0) },
+          { title: cap(op.planWord), description: `O caminho que faz sentido para ${offer.yourCase}, por escrito.`, topic: topicAt(1) },
+          { title: cap(op.reviewWord), description: "O que avançou fica, o que não avançou muda.", topic: topicAt(2) },
         ],
       },
       {
         kicker: "DA DESCOBERTA À ESCOLHA",
         heading: "Aqui é parceria: somos um time",
         steps: [
-          { title: "Diagnóstico", description: "O que está travando hoje.", topic: topicAt(3) },
+          { title: "Ponto de partida", description: "O que está travando hoje.", topic: topicAt(3) },
           { title: "Proposta", description: "O caminho mais curto até o resultado.", topic: topicAt(4) },
           { title: "Acompanhamento", description: "Ajustes com você, não depois de você.", topic: topicAt(5) },
-          { title: "Escolha", description: "Você decide com o plano na mão.", topic: topicAt(6) },
+          { title: "Escolha", description: `Você decide com o ${op.planWord} na mão.`, topic: topicAt(6) },
         ],
       },
     ],
@@ -453,16 +465,16 @@ export const buildBrandContent = (
         headline: "Explicado antes de começar",
       },
       {
-        tag: "ATENDIMENTO",
+        tag: "QUEM CONDUZ",
         title: "Quem começa é quem termina",
-        description: "Quem atende conhece o histórico e responde por ele do começo ao fim.",
+        description: `Quem conduz ${offer.yourCase} conhece o histórico e responde por ele do começo ao fim.`,
         topic: topicAt(1),
         headline: "Sempre a mesma pessoa",
       },
       {
         tag: "DIFERENCIAL",
-        title: "Revisão com data marcada",
-        description: "A cada ciclo o plano é reavaliado com o que foi medido, não com impressão.",
+        title: `${cap(op.reviewWord)} com data marcada`,
+        description: `A cada ciclo o ${op.planWord} é revisto com o que foi medido, não com impressão.`,
         topic: topicAt(2),
         headline: "Nada roda no automático",
       },
@@ -475,15 +487,15 @@ export const buildBrandContent = (
       },
     ],
     quotes: [
-      { text: `“${description || `${brand} explica o plano antes de começar.`}”` },
+      { text: `“${description || `${brand} explica o ${op.planWord} antes de começar.`}”` },
       { text: "“Finalmente encontrei uma proposta feita para o que eu precisava.”" },
-      { text: "“Saí da primeira conversa sabendo o que ia acontecer.”" },
+      { text: `“Saí da ${op.firstStep} sabendo o que ia acontecer.”` },
       { text: "“Foi a primeira vez que alguém me disse o que não dava para prometer.”" },
     ],
     marquee: [
-      [brand, niche, "escuta", "plano", "revisão"],
-      words.length >= 3 ? words.slice(0, 6) : ["escuta", "plano", "revisão", offer.closingLabel],
-      ["conversa", "plano", "revisão", brand],
+      [brand, niche, "escuta", op.planWord, op.reviewWord],
+      words.length >= 3 ? words.slice(0, 6) : ["escuta", op.planWord, op.reviewWord, offer.closingLabel],
+      [subject, op.planWord, op.reviewWord, brand],
     ],
 
     closings: composedClosings.length
@@ -497,7 +509,7 @@ export const buildBrandContent = (
 
     stories: [
       {
-        kicker: "CLIENTE REAL, NOME PROTEGIDO",
+        kicker: `${op.who.toUpperCase()} REAL, NOME PROTEGIDO`,
         title: "Ela chegou depois de tentar soluções genéricas",
         beats: [
           "As opções pareciam iguais.",
@@ -505,7 +517,7 @@ export const buildBrandContent = (
           "Na terceira tentativa, encontrou uma proposta feita para seu contexto.",
         ],
         turn: "Foi a primeira vez que alguém explicou o porquê.",
-        moral: "Entender o contexto vem antes de propor qualquer conduta.",
+        moral: `Entender o contexto vem antes de propor qualquer ${op.planWord}.`,
       },
       {
         kicker: "ACONTECE TODA SEMANA",
@@ -521,10 +533,10 @@ export const buildBrandContent = (
         items: [
           "A orientação poderia servir para qualquer pessoa",
           "Ninguém explicou por que esse caminho e não outro",
-          "Cada consulta recomeça do zero",
+          `Cada ${op.encounterWord} recomeça do zero`,
           "A chamada não deixa claro o próximo passo",
         ],
-        closing: `${brand} trata os quatro na primeira conversa.`,
+        closing: `${brand} trata os quatro na ${op.firstStep}.`,
       },
       {
         heading: "3 perguntas antes de escolher uma solução",
@@ -538,15 +550,15 @@ export const buildBrandContent = (
         title: `Como ${brand} ${offer.conductPhrase}`,
         coverSub: `Como ${brand} ${offer.conductPhrase}, passo a passo.`,
         slides: [
-          { heading: "1. Conversa", body: "Entendemos o cenário antes de propor qualquer coisa.", topic: topicAt(0) },
-          { heading: "2. Plano", body: `O caminho de ${offer.yourCase} fica por escrito.`, topic: topicAt(1) },
-          { heading: "3. Revisão", body: "O que avançou fica; o que não avançou muda.", topic: topicAt(2) },
+          { heading: `1. ${cap(op.firstStep)}`, body: "Entendemos o cenário antes de propor qualquer coisa.", topic: topicAt(0) },
+          { heading: `2. ${cap(op.planWord)}`, body: `O caminho de ${offer.yourCase} fica por escrito.`, topic: topicAt(1) },
+          { heading: `3. ${cap(op.reviewWord)}`, body: "O que avançou fica; o que não avançou muda.", topic: topicAt(2) },
         ],
-        cta: { title: "Quer começar?", sub: "Manda uma mensagem — a primeira conversa é sem compromisso." },
+        cta: { title: "Quer começar?", sub: `Manda uma mensagem — a ${op.firstStep} é sem compromisso.` },
       },
       {
         kicker: "GUIA RÁPIDO",
-        title: `3 erros comuns em ${niche}`,
+        title: `3 erros comuns em ${subject}`,
         coverSub: "E como evitar cada um.",
         slides: [
           { heading: "Escolher só pelo preço", body: "O barato costuma cobrar duas vezes.", topic: topicAt(3) },
@@ -559,15 +571,15 @@ export const buildBrandContent = (
     sales: {
       audience: niche,
       proofs: [
-        "O plano é montado depois da primeira conversa",
-        `Quem atende acompanha ${offer.yourCase} do início ao fim`,
-        "Proposta por escrito, com data de revisão",
+        `O ${op.planWord} é montado depois da ${op.firstStep}`,
+        `Quem conduz acompanha ${offer.yourCase} do início ao fim`,
+        `Proposta por escrito, com data de ${op.reviewWord}`,
       ],
       objections: [
         "Não é mais caro: é previsível.",
-        "Não precisa decidir hoje — a primeira conversa é sem compromisso.",
+        `Não precisa decidir hoje — a ${op.firstStep} é sem compromisso.`,
       ],
-      offers: ["Primeira conversa gratuita", "Agenda limitada por mês para manter o padrão"],
+      offers: [`${cap(op.firstStep)} sem custo`, "Agenda limitada por mês para manter o padrão"],
       ctas: ["Chama no direct", "Manda mensagem", "Comenta aqui que eu te chamo"],
       hashtags: [brand.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), niche.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()],
     },
