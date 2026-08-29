@@ -76,13 +76,11 @@ const isFormat = (value: string | null): value is StudioFormat =>
 /** Recupera a seed da geração e os índices originais da arte na leva. */
 const readRecipe = (art: EditableArt) => {
   const comp = Array.isArray(art.composition) ? (art.composition as ComposedBlock[]) : [];
-  const carousel = art.seed.includes(":carrossel:");
-  if (carousel) {
-    const [base, , start] = art.seed.split(":carrossel:").length
-      ? [art.seed.split(":carrossel:")[0], "carrossel", art.seed.split(":carrossel:")[1]]
-      : [art.seed, "", "0"];
-    const first = Number(start);
-    const items = comp.map((block, pos) => ({ block, index: (Number.isFinite(first) ? first : 0) + pos }));
+  if (art.seed.includes(":carrossel:")) {
+    const [base, tail] = art.seed.split(":carrossel:");
+    const first = Number(tail);
+    const start = Number.isFinite(first) ? first : 0;
+    const items = comp.map((block, pos) => ({ block, index: start + pos }));
     return { seed: base, items, carousel: true };
   }
   const cut = art.seed.lastIndexOf(":");
