@@ -42,6 +42,16 @@ Fontes aceitas: site/landing, PDF de manual de marca, upload de logo nos formato
 `studio-brand-interpret` extrai proposta, cores, logo e tipografia (16 fontes curadas em
 `brandFonts.ts`, aplicadas nas artes). Cores passam por `contrast.ts` para garantir legibilidade.
 
+Falhas reais da interpretação por PDF (marca própria, 2026-08-29) — corrigidas na função:
+- Neutro clonado: o manual tinha um único claro e a IA repetiu a cor de texto em `secondary2`,
+  deixando a marca com 3 cores úteis. Agora o neutro precisa ser distinto de texto e destaque;
+  senão é derivado como tom intermediário entre cor de marca e claro.
+- Paleta ampliada ignorada: `extra` voltava vazio mesmo com o manual listando hexadecimais.
+  O prompt agora exige transcrever literalmente TODAS as cores declaradas (até 8) e o kit aceita 14 extras.
+- Tipografia perdida: manual com Outfit/Figtree caía em "Padrão do Studio". `font_family` (títulos) +
+  `font_body` (corpo) passaram a ser obrigatórios com manual anexado, e a lista curada ganhou
+  Figtree, Urbanist, Rubik, Barlow e Karla.
+
 Erros a não repetir:
 - Tom de voz é diretriz estratégica; jamais imprimir esse texto na arte.
 - Logo mal captada precisa de fallback manual por upload, não de arte sem logo.

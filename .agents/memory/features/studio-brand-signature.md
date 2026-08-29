@@ -18,3 +18,10 @@ type: feature
 - Aba Ajustes tem upload de **manual da marca em PDF/imagem**: vai como anexo multimodal para `studio-brand-interpret` e, quando presente, é a FONTE PRINCIPAL do kit (prevalece sobre site e campos atuais). O arquivo não é guardado — só o briefing interpretado.
 - **Logo por upload** (PNG/JPG/WEBP/SVG) é reduzido a 640px e salvo como data URL em `logo_url` — evita CORS no PNG exportado. Campo de URL continua disponível.
 - **Tipografia**: chave curada em `colors.font` (lista em `src/pages/studio-pro/brandFonts.ts`, Google Fonts). Aplicada como `fontFamily` no wrapper das artes; a IA devolve `font_family` e o back casa com a mesma lista de chaves.
+
+## Interpretação de manual em PDF: precisão exigida (2026-08-29)
+- Onboarding real é "nome + PDF do manual": o que a IA não extrair, o usuário não vai corrigir. Precisão do parse é requisito, não conveniência.
+- `secondary2` (neutro) precisa ser cor DISTINTA de `primary2` e de `secondary`; se colidir, derivar tom intermediário entre marca e claro.
+- `extra` deve transcrever literalmente todos os hexadecimais do manual (até 8); kit aceita até 14 extras por categoria.
+- Tipografia: `font_family` (títulos) + `font_body` (corpo) obrigatórios quando há manual; lista curada inclui Figtree, Urbanist, Rubik, Barlow, Karla.
+- Formatos de arte: 9:16, 4:5 (post vertical do feed), 1:1 e livre.
