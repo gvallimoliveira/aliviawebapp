@@ -540,8 +540,10 @@ const applyAudience = (base: WorldContent, brand: string, audience: BrandAudienc
 
 
 /**
- * Visão 360°: interpola todos os nichos numa leitura única do produto — um
- * painel por público, para mostrar amplitude sem perder concretude.
+ * Visão 360° — ramo MARCA: leitura ampla do que a marca é e faz (um painel
+ * por público para mostrar amplitude). É só uma das duas faces do 360°: o
+ * sorteio em `buildSegmentContent` decide entre esta visão de marca e o mundo
+ * de um público matriz isolado — o 360° é modo livre, não "todos juntos".
  */
 const applyGlobal = (
   base: WorldContent,
@@ -636,7 +638,7 @@ const applyAngle = (content: WorldContent, angle: ContentAngle): WorldContent =>
     default:
       return {
         ...content,
-        kickers: ["ENTENDA EM 1 MINUTO", ...content.kickers],
+        kickers: ["BOM SABER", ...content.kickers],
         headlines: rotate(content.headlines, 3),
       };
   }
@@ -677,6 +679,18 @@ export const buildSegmentContent = ({
   const variation: CopyVariation | undefined = variationSeed ? { seed: variationSeed, profile: variationProfile } : undefined;
   const root = base ?? buildBrandContent(kit, variation, audiences);
   if (segment === GLOBAL_SEGMENT) {
+    // 360° = modo livre, quase aleatório: qualquer assunto relevante à marca.
+    // A seed do lote sorteia — metade fala da marca como um todo (applyGlobal),
+    // metade veste o mundo de UM público matriz. Determinístico: mesma seed =
+    // mesma arte, então "Nova versão" é que muda o assunto.
+    const matrix = matrixAudiences(audiences);
+    if (variationSeed && matrix.length) {
+      const dice = createRng(`360:${variationSeed}`);
+      if (dice.int(100) < 50) {
+        const picked = resolveAudience(audiences, matrix[dice.int(matrix.length)].id);
+        if (picked) return applyAngle(applyAudience(root, brand, picked), angle);
+      }
+    }
     return applyAngle(applyGlobal(root, brand, audiences, positioning), angle);
   }
   // Sub-nichos herdam o kit do público matriz e sobrepõem o próprio recorte.
