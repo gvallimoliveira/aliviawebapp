@@ -567,7 +567,54 @@ export const buildBrandContent = (
         ],
         cta: { title: "Evite os três", sub: `Fale com ${brand} antes de fechar qualquer coisa.` },
       },
+      /* Repertório temático extra: sem estes, toda geração devolvia o mesmo
+         "passo a passo" — o bloco de carrossel escolhe pelo índice do grupo. */
+      {
+        kicker: "PERGUNTAS ANTES DE DECIDIR",
+        title: `3 perguntas antes de escolher em ${subject}`,
+        coverSub: "Se a resposta não vier clara, desconfie.",
+        slides: [
+          { heading: "Isso serve para o meu caso?", body: `Sem ${op.firstStep}, ninguém pode responder isso com honestidade.`, topic: topicAt(1) },
+          { heading: "O que está incluído?", body: `Um ${op.planWord} por escrito evita surpresa no meio do caminho.`, topic: topicAt(2) },
+          { heading: "Como sei que está funcionando?", body: `Com ${op.reviewWord} marcada, o resultado deixa de ser opinião.`, topic: topicAt(3) },
+        ],
+        cta: { title: "Pode perguntar tudo", sub: `${brand} responde antes de você decidir.` },
+      },
+      {
+        kicker: "MITO E VERDADE",
+        title: `O que se repete sobre ${subject} — e o que se sustenta`,
+        coverSub: "Três frases prontas que custam tempo e dinheiro.",
+        slides: [
+          { heading: "“Depois eu resolvo”", body: "Postergar quase sempre encarece a solução.", topic: topicAt(4) },
+          { heading: "“Todo mundo faz igual”", body: `Faz parecido. O que muda é o ${op.planWord} e quem conduz.`, topic: topicAt(5) },
+          { heading: "“É só seguir um modelo”", body: `Modelo ajuda a começar; ${offer.yourCase} pede ajuste.`, topic: topicAt(0) },
+        ],
+        cta: { title: "Vamos pelo caminho real", sub: `Chama ${brand} e a gente ajusta ao seu contexto.` },
+      },
+      {
+        kicker: "POR DENTRO",
+        title: `O que acontece em cada ${op.encounterWord}`,
+        coverSub: "Nada de mistério: o processo é visível do começo ao fim.",
+        slides: [
+          { heading: "Antes", body: `Você chega com o problema; a gente escuta antes de propor.`, topic: topicAt(2) },
+          { heading: "Durante", body: `O ${op.planWord} é executado e registrado — dá para acompanhar.`, topic: topicAt(3) },
+          { heading: "Depois", body: `Na ${op.reviewWord} a gente decide o que continua e o que muda.`, topic: topicAt(4) },
+        ],
+        cta: { title: "Quer ver de perto?", sub: `A ${op.firstStep} já mostra como trabalhamos.` },
+      },
+      {
+        kicker: "ANTES E DEPOIS",
+        title: `O que muda quando ${subject} tem método`,
+        coverSub: "Três diferenças que aparecem rápido.",
+        slides: [
+          { heading: "Sai o improviso", body: `Entra um ${op.planWord} com começo, meio e critério.`, topic: topicAt(5) },
+          { heading: "Sai a dúvida", body: "Você passa a saber o próximo passo antes de perguntar.", topic: topicAt(1) },
+          { heading: "Fica o resultado", body: `O que funciona é registrado e repetido na ${op.reviewWord}.`, topic: topicAt(2) },
+        ],
+        cta: { title: "Prefere método ou sorte?", sub: `Fale com ${brand} e comece pelo simples.` },
+      },
     ],
+
     sales: {
       audience: niche,
       proofs: [
@@ -897,6 +944,14 @@ const applyAudience = (
       : []),
   ];
 
+  /**
+   * REPERTÓRIO DE CARROSSEL POR PÚBLICO
+   *
+   * Antes existia UM roteiro só ("do medo ao plano"): como o bloco de carrossel
+   * escolhe o roteiro pelo índice do grupo, toda geração devolvia a MESMA
+   * sequência. Aqui o mesmo material (medos, desejos, provas, gancho) rende
+   * arquétipos temáticos diferentes — a seed do lote decide qual entra.
+   */
   const carousels = [
     ...(pains.length && desires.length
       ? [{
@@ -911,7 +966,73 @@ const applyAudience = (
           cta: { title: `${key}: quer começar?`, sub: cta },
         }]
       : []),
+    ...(painNoms.length >= 3
+      ? [{
+          kicker: `${KEY} · SINAIS`,
+          title: `3 sinais de que ${lower1(key)} precisa de atenção`,
+          coverSub: "Se você reconhecer dois, vale conversar.",
+          slides: painNoms.slice(0, 3).map((p, i) => ({
+            heading: `Sinal ${i + 1}`,
+            body: `${sentence(p)} E isso costuma piorar quando fica sem resposta.`,
+            topic: topicAt(i),
+          })),
+          cta: { title: "Reconheceu algum?", sub: cta },
+        }]
+      : []),
+    ...(painNoms.length >= 2 && desireNoms.length >= 2
+      ? [{
+          kicker: `${KEY} · MITO E VERDADE`,
+          title: `O que se diz sobre ${lower1(key)} — e o que é verdade`,
+          coverSub: "Três frases que atrapalham mais do que ajudam.",
+          slides: [
+            { heading: "Dizem que é normal", body: `${sentence(painNoms[0])} Normal não é o mesmo que aceitável.`, topic: topicAt(1) },
+            { heading: "Dizem que passa sozinho", body: `${sentence(painNoms[1])} Sem mudar nada, tende a voltar.`, topic: topicAt(2) },
+            { heading: "A verdade", body: `${sentence(desireNoms[0])} — com um caminho definido.`, topic: topicAt(3) },
+          ],
+          cta: { title: "Quer o caminho certo?", sub: cta },
+        }]
+      : []),
+    ...(proof.length >= 2
+      ? [{
+          kicker: `${KEY} · POR DENTRO`,
+          title: `Como ${brand} trabalha com ${lower1(key)}`,
+          coverSub: "O que acontece do primeiro contato ao resultado.",
+          slides: proof.slice(0, 3).map((p, i) => ({
+            heading: `Etapa ${i + 1}`,
+            body: `${p}.`,
+            topic: topicAt(i + 2),
+          })),
+          cta: { title: "Faz sentido para você?", sub: cta },
+        }]
+      : []),
+    ...(desireNoms.length >= 2
+      ? [{
+          kicker: `${KEY} · O DEPOIS`,
+          title: `O que muda quando ${lower1(key)} é levado a sério`,
+          coverSub: "Não é promessa: é o que passa a ser possível.",
+          slides: [
+            ...(painNoms[0] ? [{ heading: "Ponto de partida", body: sentence(painNoms[0]), topic: topicAt(0) }] : []),
+            { heading: "Primeira mudança", body: sentence(desireNoms[0]), topic: topicAt(4) },
+            { heading: "O que se sustenta", body: `${sentence(desireNoms[1])} E isso continua depois que a gente termina.`, topic: topicAt(5) },
+          ],
+          cta: { title: "Começa com uma conversa", sub: cta },
+        }]
+      : []),
+    ...(pains.length
+      ? [{
+          kicker: `${KEY} · PERGUNTAS`,
+          title: `3 perguntas de quem convive com ${lower1(key)}`,
+          coverSub: "As respostas que quase ninguém dá com clareza.",
+          slides: [
+            { heading: "Isso tem solução?", body: `${desires[0] ? sentence(desires[0]) : "Tem — quando o plano é feito para o seu caso."}`, topic: topicAt(2) },
+            { heading: "Por que voltou?", body: `${sentence(nomPain(0, "o improviso"))} costuma voltar quando nada muda na rotina.`, topic: topicAt(3) },
+            { heading: "Quanto tempo leva?", body: proof[0] ? `${proof[0]}.` : "Depende do ponto de partida — e a gente diz isso na primeira conversa.", topic: topicAt(4) },
+          ],
+          cta: { title: "Pergunte o que quiser", sub: cta },
+        }]
+      : []),
   ];
+
 
   return {
     ...base,
@@ -1181,7 +1302,23 @@ export const buildSegmentContent = ({
     const rest = done.headlines.slice(8);
     const dice = createRng(`hl:${variationSeed ?? "base"}:${segment}:${angle}`);
     const picked = dice.shuffle(rest).slice(0, Math.max(0, 12 - head.length));
-    return { ...done, headlines: [...head, ...picked] };
+    /**
+     * VARIAÇÃO TEMÁTICA DO CARROSSEL
+     *
+     * O bloco de carrossel escolhe o roteiro por índice de grupo (quase sempre
+     * 0), então sem rotação o lote inteiro repetia o primeiro roteiro. A seed
+     * do lote rotaciona o repertório: mesma seed = mesmo carrossel (edição
+     * continua determinística), seed nova = tema novo.
+     */
+    const scripts = done.carousels ?? [];
+    const spin = scripts.length > 1
+      ? createRng(`carousel:${variationSeed ?? "base"}:${segment}:${angle}`).int(scripts.length)
+      : 0;
+    const carousels = scripts.length > 1
+      ? [...scripts.slice(spin), ...scripts.slice(0, spin)]
+      : scripts;
+    return { ...done, headlines: [...head, ...picked], carousels };
+
   };
 
   if (segment === GLOBAL_SEGMENT) {
