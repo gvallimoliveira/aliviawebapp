@@ -122,6 +122,58 @@ const AudienceListField = ({
   );
 };
 
+/**
+ * Etapa recolhível dos ajustes. O fluxo passa a ser numerado (matéria-prima →
+ * visual → mensagem → públicos), e cada etapa mostra se já está preenchida.
+ */
+const BrandSection = ({
+  step,
+  title,
+  hint,
+  filled,
+  defaultOpen,
+  children,
+}: {
+  step: number;
+  title: string;
+  hint: string;
+  filled?: boolean;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) => {
+  const [open, setOpen] = useState(!!defaultOpen);
+  return (
+    <section className="overflow-hidden rounded-3xl border border-border bg-card">
+      <button
+        type="button"
+        className="flex w-full items-start gap-3 p-5 text-left"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+          {step}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold text-foreground">{title}</span>
+            {filled && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                <Check className="h-3 w-3" />
+                preenchido
+              </span>
+            )}
+          </span>
+          <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>
+        </span>
+        <ChevronDown
+          className={`mt-1 h-4 w-4 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && <div className="border-t border-border p-5">{children}</div>}
+    </section>
+  );
+};
+
 const StudioProBrand = () => {
   const { brandId } = useParams<{ brandId: string }>();
   const { user, loading: authLoading } = useAuth();
