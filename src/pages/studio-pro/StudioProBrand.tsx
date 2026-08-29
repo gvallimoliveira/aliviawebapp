@@ -223,6 +223,7 @@ const StudioProBrand = () => {
   const [doc, setDoc] = useState<BrandDoc | null>(null);
   /** Respostas do questionário de marca — briefing declarado pelo cliente. */
   const [briefAnswers, setBriefAnswers] = useState<BriefAnswers>({});
+  const briefFilled = useMemo(() => answeredCount(briefAnswers), [briefAnswers]);
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
 
@@ -853,6 +854,7 @@ const StudioProBrand = () => {
                   onDocChange={setDoc}
                 />
 
+                <div className="sm:col-span-2">
                 <BrandQuestionnaireCard
                   answers={briefAnswers}
                   onChange={setBriefAnswers}
@@ -862,6 +864,7 @@ const StudioProBrand = () => {
                   saving={saving}
                   interpreting={interpreting}
                 />
+                </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-background p-4 sm:col-span-2">
                   <p className="max-w-md text-xs text-muted-foreground">
