@@ -983,8 +983,12 @@ export const buildSegmentContent = ({
   const relationFor = (audience?: BrandAudience) =>
     pickRelation({ audience, dna, brand, angle, seed: variationSeed });
 
-  const finish = (content: WorldContent, relation?: Relation) =>
-    sanitizeContent(applyAngle(content, angle, relation, brand), dna.forbidden);
+  const finish = (content: WorldContent, relation?: Relation) => {
+    const done = sanitizeContent(applyAngle(content, angle, relation, brand), dna.forbidden);
+    // Cauda genérica limitada: comunicação dirigida vem primeiro e não pode ser
+    // diluída por um acervo neutro comprido.
+    return { ...done, headlines: done.headlines.slice(0, 12) };
+  };
 
   if (segment === GLOBAL_SEGMENT) {
     // 360° = modo livre, quase aleatório: qualquer assunto relevante à marca.
