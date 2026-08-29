@@ -18,20 +18,43 @@ import type { BlockKind, ComposedBlock } from "./composePage";
 import type { WorldContent } from "./content/types";
 import { hasBannedJargon } from "./persuasion";
 
-/** Explicação de uma arte, do jeito que se contaria para um leigo. */
+/**
+ * Leitura interpretativa de uma arte, em quatro dimensões:
+ *   1. contexto da marca (INEGOCIÁVEL — vem do manual ou do formulário de marca),
+ *   2. público-alvo,
+ *   3. objetivo do lote (venda / desejo / dor / visão 360),
+ *   4. a arte em si (estética e texto).
+ *
+ * A arte só passa quando a dimensão 1 fecha E pelo menos 2 das outras 3 fecham.
+ */
 export type ArtRationale = {
   kind: BlockKind;
   /** Nome do formato em linguagem comum ("cartaz de frase", "lista numerada"). */
   format: string;
-  /** O que a pessoa vê na arte. */
-  elements: string;
-  /** O que a arte diz, com o público e a palavra-chave reais da marca. */
-  message: string;
-  /** O que a arte quer despertar em quem lê. */
-  effect: string;
-  /** Motivos que impedem a explicação de fechar. Vazio = arte aprovada. */
+  /** Como esta arte se apoia no contexto da marca (obrigatório). */
+  brandRead: string;
+  /** Como esta arte conversa com o público ativo. */
+  audienceRead: string;
+  /** Como esta arte serve ao objetivo do lote. */
+  objectiveRead: string;
+  /** Leitura estética e textual da arte concreta. */
+  artRead: string;
+  /** Veredito em uma linha: o que fecha e o que não fecha. */
+  verdict: string;
+  /** Motivos que impedem a leitura de fechar. Vazio = arte aprovada. */
   gaps: string[];
   ok: boolean;
+};
+
+/** Material do manual/formulário da marca — base inegociável da interpretação. */
+export type BrandContext = {
+  niche?: string | null;
+  tone?: string | null;
+  description?: string | null;
+  positioning?: string | null;
+  topics?: string[] | null;
+  /** Quantas perguntas do formulário de marca estão respondidas. */
+  briefAnswered?: number;
 };
 
 /** Contexto que o filtro precisa para julgar a arte. */
@@ -50,7 +73,10 @@ export type RationaleContext = {
   /** Quantidade de fotos do acervo disponíveis para esta marca. */
   photoCount: number;
   brandName: string;
+  /** Manual/formulário da marca. Sem isso nenhuma arte fecha a leitura. */
+  brand?: BrandContext;
 };
+
 
 type Sense = {
   /** Nome do formato para leigo. */
@@ -415,8 +441,10 @@ export const explainArt = (
   const hook = trim(ctx.hook);
   const cta = trim(ctx.cta);
   const audience = trim(ctx.audienceLabel) || "público da marca";
+  const ctaSource = cta || ctx.content.closings[0]?.cta || ctx.content.sales?.ctas?.[0] || "";
+  const subject = keyword || ctx.content.label || ctx.brandName;
 
-  // 1) Matéria-prima do formato.
+  // Matéria-prima do formato (o bloco renderiza vazio sem ela).
   if (sense.needs && !sense.needs(ctx.content)) {
     gaps.push(`o formato "${sense.format}" precisa de ${sense.needsLabel ?? "conteúdo próprio"} e o kit não tem isso preenchido`);
   }
@@ -424,29 +452,7 @@ export const explainArt = (
     gaps.push("o formato depende de foto do acervo e a marca ainda não enviou fotos");
   }
 
-  // 2) A quem a arte fala e com que assunto.
-  if (!keyword) gaps.push(`o público "${audience}" está sem palavra-chave, então a arte não anuncia o assunto`);
-  if (!hook) gaps.push(`o público "${audience}" está sem chamada direta, então a arte não diz com quem fala`);
-
-  // 3) Para onde a arte leva.
-  const ctaSource = cta || ctx.content.closings[0]?.cta || ctx.content.sales?.ctas?.[0] || "";
-  if (!trim(ctaSource)) gaps.push("não há próximo passo definido (CTA) para fechar o raciocínio");
-
-  // 4) Higiene de linguagem: jargão quebra a compreensão do leigo.
-  const jargonSample = [keyword, hook, ctaSource].filter(Boolean).join(" ");
-  if (jargonSample && hasBannedJargon(jargonSample)) {
-    gaps.push("a mensagem usa jargão de marketing, que afasta em vez de explicar");
-  }
-
-  const subject = keyword || ctx.content.label || ctx.brandName;
-
-  // ---------- CONTRATO DE SENTIDO (global, igual para todo formato) ----------
-  // A leitura não depende do bloco: ela é feita sobre o texto que a arte de fato
-  // mostra. Toda arte precisa cumprir quatro coisas, em qualquer formato:
-  //   1. dizer uma frase inteira (não só rótulos),
-  //   2. tocar o assunto do público (palavra-chave / chamada),
-  //   3. entregar algo a quem lê (situação, consequência ou caminho),
-  //   4. terminar com um passo ou uma assinatura.
+  // ---------- texto real da arte ----------
   const copy = cleanCopy(detail?.copy);
   const sentences = copy.filter(isSentence);
   const headline = sentences.slice().sort((a, b) => b.length - a.length)[0] ?? "";
@@ -456,13 +462,6 @@ export const explainArt = (
   const tail = support.length > 1 ? support[support.length - 1] : "";
   const read = copy.length > 0;
 
-  if (read && !sentences.length) {
-    gaps.push(
-      "a arte só mostra palavras soltas, sem nenhuma frase que diga o que elas significam para quem lê",
-    );
-  }
-
-  /** Palavras que ancoram o assunto do público (usadas para medir se a arte fala dele). */
   const words = (t: string) =>
     t
       .toLowerCase()
@@ -470,91 +469,152 @@ export const explainArt = (
       .replace(/[\u0300-\u036f]/g, "")
       .split(/[^a-z0-9]+/)
       .filter((w) => w.length > 3);
-  const subjectWords = new Set([...words(keyword), ...words(hook), ...words(audience)]);
   const artWords = new Set(copy.flatMap(words));
   const brandWords = new Set(words(ctx.brandName));
-  const shared = [...subjectWords].filter((w) => artWords.has(w) && !brandWords.has(w));
-  if (read && subjectWords.size > 0 && shared.length === 0) {
+
+  // ============ 1. CONTEXTO DA MARCA (inegociável) ============
+  const b = ctx.brand ?? {};
+  const manual = [b.positioning, b.description, b.niche, b.tone, ...(b.topics ?? [])]
+    .map((v) => trim(v))
+    .filter(Boolean);
+  const briefAnswered = b.briefAnswered ?? 0;
+  const hasManual = manual.length > 0 || briefAnswered > 0;
+  const manualWords = new Set(manual.flatMap(words));
+  const manualShared = [...manualWords].filter((w) => artWords.has(w) && !brandWords.has(w));
+  let brandOk = hasManual;
+  let brandRead: string;
+  if (!hasManual) {
+    brandRead = `Não consigo interpretar esta arte: o contexto de ${ctx.brandName} está vazio. Preencha o manual da marca (ou o formulário nos Ajustes da marca) — sem isso qualquer arte é chute bonito.`;
     gaps.push(
-      `nada do que está escrito na arte toca o assunto de "${audience}" — do jeito que está, ela é decoração bonita e não comunicação`,
+      "o contexto da marca não está preenchido (manual da marca ou formulário nos Ajustes) — é o item inegociável da leitura",
     );
+  } else if (read && manualShared.length === 0) {
+    brandOk = false;
+    brandRead = `A arte não repete nada do que o manual de ${ctx.brandName} diz sobre ${
+      trim(b.niche) || "o negócio"
+    }. Ela poderia ser de qualquer marca do mesmo nicho: falta trazer o vocabulário do posicionamento para o texto.`;
+    gaps.push("o texto da arte não conversa com o posicionamento do manual/formulário da marca");
+  } else {
+    brandRead = `Está apoiada no manual de ${ctx.brandName}: ${
+      trim(b.positioning) || trim(b.description) || trim(b.niche) || "o posicionamento registrado"
+    }.${
+      manualShared.length
+        ? ` O elo aparece no próprio texto (${manualShared.slice(0, 3).join(", ")}).`
+        : ` O tom pedido${trim(b.tone) ? ` — ${trim(b.tone)} — ` : " "}é o que define o acabamento desta arte.`
+    }`;
   }
 
-  /** A arte entrega algo? (situação vivida, consequência ou caminho) */
-  const DELIVERY = /(dor|dói|semana|mes|mês|ano|noite|manh|trabalh|treino|carregar|levantar|sentar|dormir|voltar|melhor|piora|risco|evita|resolve|trata|fortalec|recuper|consegu|deixa|começa|prova|avalia|exame|diagn|consulta|plano)/i;
-  const delivers = copy.some((t) => DELIVERY.test(t));
-  if (read && sentences.length > 0 && !delivers) {
-    gaps.push(
-      "a arte afirma algo, mas não mostra situação vivida, consequência nem caminho: quem lê não leva nada para casa",
-    );
+  // ============ 2. PÚBLICO-ALVO ============
+  const audienceWords = new Set([...words(keyword), ...words(hook), ...words(audience)]);
+  const audienceShared = [...audienceWords].filter((w) => artWords.has(w) && !brandWords.has(w));
+  const audienceOk = !!keyword && !!hook && (!read || audienceShared.length > 0);
+  const audienceRead = !keyword || !hook
+    ? `Este público está incompleto (${!keyword ? "sem palavra-chave" : "sem chamada direta"}), então a arte fala para o vazio: eu não sei quem deveria se reconhecer nela.`
+    : audienceShared.length > 0 || !read
+      ? `Fala com ${audience}: quem se reconhece em "${hook}". O terreno em comum entre a arte e esse público está em ${
+          audienceShared.slice(0, 3).join(", ") || `“${keyword}”`
+        }.`
+      : `Nada do que está escrito cruza com ${audience} ("${hook}"). Do jeito que está, o público certo passa reto — a arte não avisa que é sobre ele.`;
+  if (!audienceOk && keyword && hook) {
+    gaps.push(`a arte não menciona o assunto de "${audience}" — o público não se reconhece nela`);
   }
+  if (!keyword) gaps.push(`o público "${audience}" está sem palavra-chave`);
+  if (!hook) gaps.push(`o público "${audience}" está sem chamada direta`);
 
+  // ============ 3. OBJETIVO DO LOTE ============
+  const OBJECTIVE: Record<RationaleContext["angle"], { probe: RegExp; ask: string }> = {
+    venda: {
+      probe: /(agend|marque|chame|whats|clique|link|vaga|consulta|avalia|comece|garanta|fale)/i,
+      ask: "um pedido explícito de ação (agendar, chamar, clicar)",
+    },
+    dor: {
+      probe: /(dor|dói|noite|manh|semana|mes|mês|ano|carregar|levantar|sentar|dormir|piora|trava|limita|deixa de)/i,
+      ask: "uma cena concreta do problema (quando dói, o que deixou de fazer)",
+    },
+    desejo: {
+      probe: /(volta|voltar|conseg|de novo|sem medo|livre|forte|melhor|rotina|viag|treino|brincar|carreg)/i,
+      ask: "a imagem do depois (o que a pessoa volta a fazer)",
+    },
+    informar: {
+      probe: /(porque|por que|como|sinal|erro|motivo|quando|evita|entenda|significa|passo|etapa|\d)/i,
+      ask: "uma explicação ou lista que ensine algo em 5 segundos",
+    },
+  };
+  const objective = OBJECTIVE[ctx.angle];
+  const objectiveHit = copy.some((t) => objective.probe.test(t)) || (ctx.angle === "venda" && !!trim(ctaSource) && !read);
+  const objectiveOk = objectiveHit || !read;
+  const objectiveRead = objectiveOk
+    ? `O lote está no objetivo "${ctx.angle}" e esta arte serve a ele: ${sense.job}. A intenção é que quem lê ${ANGLE_EFFECT[ctx.angle]}${
+        trim(ctaSource) ? `, com o convite "${trim(ctaSource)}"` : ""
+      }.`
+    : `O lote está no objetivo "${ctx.angle}", mas esta arte não entrega isso: falta ${objective.ask}. Como está, ela informa a existência da marca e para aí.`;
+  if (!objectiveOk) gaps.push(`a arte não cumpre o objetivo "${ctx.angle}": falta ${objective.ask}`);
+  if (!trim(ctaSource)) gaps.push("não há próximo passo definido (CTA) para fechar o raciocínio");
+
+  // ============ 4. A ARTE EM SI (estética + texto) ============
   const layoutBase = LAYOUT_NOTES[block.treatment % LAYOUT_NOTES.length];
   const motion = block.motion ? MOTION_NOTES[block.motion] : "";
   const slide = block.slide
-    ? ` Este é o slide ${block.slide.index + 1} de ${block.slide.total} do carrossel, então ele não vive sozinho: prepara o slide seguinte.`
+    ? ` Como slide ${block.slide.index + 1} de ${block.slide.total}, ela não vive sozinha: prepara o slide seguinte.`
     : "";
   const role = positionRole(detail?.index, detail?.total);
-
-  // ---------- 1. O QUE SE VÊ: hierarquia real do texto lido ----------
-  const hierarchy: string[] = [];
-  if (headline) hierarchy.push(`em maior destaque, ${quote(headline)}`);
-  if (lead) hierarchy.push(`abaixo, em corpo menor, ${quote(lead)}`);
-  if (tail && tail !== lead) hierarchy.push(`fechando, ${quote(tail)}`);
-  if (labels.length)
-    hierarchy.push(
-      `e ${labels.length === 1 ? "o rótulo" : "os rótulos"} ${labels.slice(0, 4).map(quote).join(", ")} como apoio visual`,
-    );
-
-  const elements = [
-    read
-      ? `Nesta arte a pessoa lê, nesta ordem: ${hierarchy.join("; ")}.`
-      : `A pessoa vê ${sense.sees}.`,
-    ` O arranjo é ${layoutBase}`,
-    detail?.styleLabel ? `, no estilo ${detail.styleLabel}` : "",
-    detail?.formatLabel ? `, em ${detail.formatLabel}` : "",
-    ".",
-    motion ? ` No movimento, ${motion}.` : "",
-  ].join("");
-
-  // ---------- 2. O QUE ELA DIZ: leitura literal, sem enfeite ----------
-  let message: string;
+  const jargonInArt = copy.find((t) => hasBannedJargon(t)) ?? "";
+  const artOk = read ? !!headline && !jargonInArt : true;
+  const craft = [
+    `Composição: ${layoutBase}`,
+    detail?.styleLabel ? `no estilo ${detail.styleLabel}` : "",
+    detail?.formatLabel ? `em ${detail.formatLabel}` : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
+  let artRead: string;
   if (!read) {
-    message = `Abra a leitura com a arte na tela para eu citar as frases exatas. Pelo formato, o trabalho dela é ${sense.job}, sobre ${subject}.`;
+    artRead = `${craft}.${motion ? ` No movimento, ${motion}.` : ""} Pelo formato, o trabalho é ${sense.job}, sobre ${subject}.`;
   } else if (!headline) {
-    message = `Do jeito que está, a arte não afirma nada: ela mostra ${
+    artRead = `A arte não afirma nada: mostra ${
       labels.slice(0, 4).map(quote).join(", ") || "apenas rótulos"
-    } e deixa a ligação por conta de quem lê. Para ${audience}, falta uma frase dizendo o que esses termos resolvem — hoje o sentido só existe para quem já conhece ${ctx.brandName}.`;
+    } e deixa a ligação por conta de quem lê. Esteticamente resolve (${craft}), mas texto sem frase inteira só faz sentido para quem já conhece ${ctx.brandName}.`;
   } else {
-    const link = shared.length
-      ? `Ela conversa com ${audience} porque fala de ${shared.slice(0, 3).join(", ")} — o mesmo terreno de "${hook || keyword}".`
-      : `Ela ainda não amarra em ${audience}: nenhuma palavra da arte cruza com "${hook || keyword}".`;
-    const value = delivers
-      ? `O que quem lê leva daqui: reconhece a situação descrita e vê que existe caminho.`
-      : `O que falta: a frase afirma, mas não mostra a situação vivida nem o caminho — sem isso a pessoa concorda e segue rolando.`;
-    message = `A arte diz, em uma linha: ${quote(headline)}.${
-      lead ? ` E completa com ${quote(lead)}.` : ""
-    } ${link} ${value}`;
+    artRead = `A frase que carrega é ${quote(headline)}${lead ? `, apoiada por ${quote(lead)}` : ""}${
+      tail && tail !== lead ? ` e fechada com ${quote(tail)}` : ""
+    }. ${craft}${motion ? `, com ${motion}` : ""}. A hierarquia funciona: o olho cai na frase, o resto é apoio.${
+      jargonInArt ? ` Problema: ${quote(jargonInArt)} usa jargão e trava a leitura de quem é leigo.` : ""
+    }`;
   }
+  if (read && !headline) {
+    gaps.push("a arte só mostra palavras soltas, sem nenhuma frase que diga o que elas significam");
+  }
+  if (jargonInArt) gaps.push("o texto da arte usa jargão de marketing, que afasta em vez de explicar");
 
-  // ---------- 3. O QUE ELA DESPERTA ----------
-  const effect = [
-    role ? `${role}. ` : "",
-    `O objetivo é que quem lê ${ANGLE_EFFECT[ctx.angle]}`,
-    trim(ctaSource) ? ` — e o convite é "${trim(ctaSource)}"` : "",
-    ".",
-    slide,
-    detail?.personaLabel ? ` Composição assinada pelo modelo criativo ${detail.personaLabel}.` : "",
-  ].join("");
+  // ============ VEREDITO: marca + 2 de 3 ============
+  const hits = [audienceOk, objectiveOk, artOk].filter(Boolean).length;
+  const passed = brandOk && hits >= 2;
+  const named = [
+    audienceOk ? "público" : "",
+    objectiveOk ? "objetivo" : "",
+    artOk ? "arte" : "",
+  ].filter(Boolean);
+  const verdict = passed
+    ? `Fecha: contexto da marca + ${named.join(" e ")}.${role ? ` ${role}.` : ""}${slide}${
+        detail?.personaLabel ? ` Composição do modelo criativo ${detail.personaLabel}.` : ""
+      }`
+    : brandOk
+      ? `Não fecha: além do contexto da marca, preciso de 2 das 3 frentes (público, objetivo, arte) e só ${
+          hits === 0 ? "nenhuma" : `${hits}`
+        } fecha${hits === 1 ? "" : "m"}.`
+      : "Não fecha: o contexto da marca é inegociável e está faltando.";
+  if (!passed && gaps.length === 0) gaps.push("a leitura não fecha nas 4 dimensões");
 
   return {
     kind: block.kind,
     format: sense.format,
-    elements,
-    message,
-    effect,
+    brandRead,
+    audienceRead,
+    objectiveRead,
+    artRead,
+    verdict,
     gaps,
-    ok: gaps.length === 0,
+    ok: passed,
   };
 };
 
@@ -562,7 +622,8 @@ export const explainArt = (
 
 /** Explicação em texto corrido, para legenda, exportação e leitura rápida. */
 export const rationaleText = (r: ArtRationale): string =>
-  [r.elements, r.message, r.effect].join(" ");
+  [r.brandRead, r.audienceRead, r.objectiveRead, r.artRead, r.verdict].join(" ");
+
 
 /**
  * Formatos de reserva: só dependem de frase e assinatura, então fecham o

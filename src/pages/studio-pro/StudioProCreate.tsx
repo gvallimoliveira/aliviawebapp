@@ -113,6 +113,9 @@ type BrandInput = {
   positioning?: string | null;
   /** Ajuste global: assinar todas as artes com logo/nome da marca. */
   signature_enabled?: boolean | null;
+  /** Respostas do formulário de marca — base do contexto interpretativo. */
+  brief_answers?: unknown;
+
 };
 
 type Props = {
@@ -532,8 +535,35 @@ const StudioProCreate = ({
       angle,
       photoCount: activePhotos.length,
       brandName: brand.name,
+      brand: {
+        niche: brand.niche,
+        tone: brand.tone,
+        description: brand.description,
+        positioning: brand.positioning,
+        topics: brand.topics,
+        briefAnswered:
+          brand.brief_answers && typeof brand.brief_answers === "object"
+            ? Object.values(brand.brief_answers as Record<string, unknown>).filter(
+                (v) => typeof v === "string" && v.trim().length > 0,
+              ).length
+            : 0,
+      },
     };
-  }, [audiences, activeSegment, angle, content, activePhotos.length, brand.name, brand.niche, brand.positioning]);
+  }, [
+    audiences,
+    activeSegment,
+    angle,
+    content,
+    activePhotos.length,
+    brand.name,
+    brand.niche,
+    brand.tone,
+    brand.description,
+    brand.positioning,
+    brand.topics,
+    brand.brief_answers,
+  ]);
+
 
   const audit = useMemo(() => enforceRationale(composedBlocks, rationaleCtx), [composedBlocks, rationaleCtx]);
   const blocks = audit.blocks;
@@ -1398,15 +1428,20 @@ const StudioProCreate = ({
                     </p>
                     <ul className="mt-2 space-y-1.5 text-xs text-foreground">
                       <li>
-                        <strong>O que se vê:</strong> {why.elements}
+                        <strong>Contexto da marca:</strong> {why.brandRead}
                       </li>
                       <li>
-                        <strong>O que diz:</strong> {why.message}
+                        <strong>Público-alvo:</strong> {why.audienceRead}
                       </li>
                       <li>
-                        <strong>O que quer despertar:</strong> {why.effect}
+                        <strong>Objetivo da arte:</strong> {why.objectiveRead}
                       </li>
+                      <li>
+                        <strong>A arte em si:</strong> {why.artRead}
+                      </li>
+                      <li className="text-muted-foreground">{why.verdict}</li>
                     </ul>
+
                     {why.gaps.length > 0 && (
                       <p className="mt-2 rounded-xl bg-muted/60 p-2 text-[11px] text-muted-foreground">
                         Ainda falta para esta arte ficar 100%: {why.gaps.join("; ")}.
