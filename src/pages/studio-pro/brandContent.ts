@@ -10,10 +10,13 @@ import {
   composeTypos,
   type CopyIngredients,
 } from "@/pages/studio/phrasing";
-import { isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
+import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { GLOBAL_SEGMENT, audienceHooks, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
+import { buildBrandDna, isDnaEmpty, type BrandDna } from "./brandDnaKit";
+import { pickRelation, type Relation } from "./relational";
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
+
 
 
 
@@ -41,7 +44,16 @@ export type BrandKit = {
   description?: string | null;
   /** Palavras-chave da marca (alimentam kickers e marquee). */
   keywords?: string[] | null;
+  /** Posicionamento declarado (manual/IA). */
+  positioning?: string | null;
+  /**
+   * Respostas do questionário de marca (`studio_brands.brief_answers`).
+   * FONTE PRIMÁRIA do texto: quando existe, é ela que escreve as artes — o
+   * acervo neutro só entra como emergência para marca sem manual e sem briefing.
+   */
+  briefAnswers?: unknown;
 };
+
 
 /**
  * FRASE DE APOIO DA MARCA (slogan do lockup).
@@ -78,17 +90,27 @@ const ingredientsOf = (
   niche: string,
   audiences: BrandAudience[] = [],
   audience?: BrandAudience,
+  dna?: BrandDna,
 ): CopyIngredients => {
   const pool = audience ? [audience] : audiences;
   const collect = (get: (a: BrandAudience) => string[] | undefined) =>
     pool.flatMap((a) => (get(a) ?? []).map((v) => v.trim()).filter(Boolean));
+  /**
+   * HIERARQUIA: o que o cliente declarou (manual/briefing) vem PRIMEIRO. O
+   * acervo de público entra depois. Nada genérico entra aqui — quando falta
+   * insumo, o slot simplesmente tem menos opções.
+   */
+  const briefPains = dna?.pain ? [dna.pain] : [];
+  const briefDesires = dna?.desire ? [dna.desire] : [];
+  const briefSolutions = [dna?.belief, dna?.offer].filter(Boolean) as string[];
   return {
     brand,
     niche,
-    audience: audience?.label.trim(),
-    pains: collect((a) => a.pains),
-    desires: collect((a) => a.desires),
-    solutions: collect((a) => a.proof),
+    audience: audience?.label.trim() || dna?.primaryAudience,
+    pains: [...briefPains, ...collect((a) => a.pains)],
+    desires: [...briefDesires, ...collect((a) => a.desires)],
+    solutions: [...briefSolutions, ...collect((a) => a.proof)],
+    positioning: dna?.presentation || dna?.positioning || undefined,
     /**
      * O vocabulário da ferramenta ("kit de marca", "sua paleta", "lote"…) é
      * EXCLUSIVO do Aliv.iA Studio vendendo a si mesmo. Em marca de cliente ele
@@ -98,9 +120,131 @@ const ingredientsOf = (
       ...(kit.keywords ?? []).map((w) => w.trim()).filter(Boolean),
       ...(isStudioSelfBrand(brand) ? STUDIO_SELF_KEYWORDS : []),
     ],
-    cta: audience?.cta?.trim(),
+    cta: audience?.cta?.trim() || dna?.cta,
   };
 };
+
+/* ------------------------------------------------------------------------- */
+/* FILTRO DE VÍCIOS: nenhuma frase clichê sai do motor                        */
+/* ------------------------------------------------------------------------- */
+
+const textOf = (value: unknown): string => {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.map(textOf).join(" ");
+  if (value && typeof value === "object") return Object.values(value).map(textOf).join(" ");
+  return "";
+};
+
+/**
+ * Remove do acervo tudo que caia em vício de linguagem, jargão proibido ou
+ * palavra vetada pela marca. Se um slot ficaria vazio, mantém o primeiro item
+ * (o bloco precisa renderizar), mas a arte vai reprovar no filtro de nexo.
+ */
+export const sanitizeContent = (content: WorldContent, forbidden: string[] = []): WorldContent => {
+  const banned = forbidden.map((f) => f.toLowerCase().trim()).filter((f) => f.length >= 3);
+  const bad = (raw: string) => {
+    const t = raw.toLowerCase();
+    return isStale(t) || hasBannedJargon(t) || banned.some((f) => t.includes(f));
+  };
+  const purge = <T,>(list: T[]): T[] => {
+    const kept = list.filter((item) => !bad(textOf(item)));
+    return kept.length ? kept : list.slice(0, 1);
+  };
+  const out = { ...content } as Record<string, unknown>;
+  for (const [key, value] of Object.entries(content)) {
+    if (Array.isArray(value)) out[key] = purge(value as unknown[]);
+  }
+  const sales = { ...content.sales } as Record<string, unknown>;
+  for (const [key, value] of Object.entries(content.sales)) {
+    if (Array.isArray(value)) sales[key] = purge(value as unknown[]);
+  }
+  out.sales = sales;
+  return out as unknown as WorldContent;
+};
+
+/** Quebra um campo longo do briefing em frases utilizáveis dentro da arte. */
+const briefPhrases = (text?: string, max = 3): string[] =>
+  (text ?? "")
+    .split(/[.;\n•·]+/)
+    .map((s) => s.trim().replace(/^[-–]\s*/, ""))
+    .filter((s) => s.length >= 12)
+    .slice(0, max)
+    .map((s) => firstSentence(s, 110));
+
+/**
+ * ACERVO DA MARCA (fonte primária): escrito com o que o cliente declarou no
+ * manual/briefing. Cada slot só existe quando há insumo real — é o que impede o
+ * motor de voltar a falar "clareza, método, pilares" para qualquer marca.
+ */
+const buildFromDna = (
+  dna: BrandDna,
+  brand: string,
+  niche: string,
+): Partial<WorldContent> => {
+  const presentation = dna.presentation ? firstSentence(dna.presentation, 110) : "";
+  const belief = briefPhrases(dna.belief, 3);
+  const offer = briefPhrases(dna.offer, 3);
+  const pain = briefPhrases(dna.pain, 2);
+  const desire = briefPhrases(dna.desire, 2);
+  const who = dna.primaryAudience?.trim() || niche;
+  const cta = dna.cta?.trim() || "Chamar no direct";
+
+  const headlines = [
+    ...pain.map((p) => ({ strong: lower1(p).replace(/^./, (c) => c.toUpperCase()), rest: " tem explicação — e conduta." })),
+    ...desire.map((d) => ({ strong: firstSentence(d, 60), rest: " começa com uma decisão." })),
+    ...(presentation ? [{ strong: firstSentence(presentation, 60), rest: "" }] : []),
+    ...belief.slice(0, 2).map((b) => ({ strong: firstSentence(b, 58), rest: "" })),
+  ].filter((h) => h.strong.length >= 8);
+
+  const subs = [
+    ...(presentation ? [presentation] : []),
+    ...offer,
+    ...belief,
+    ...(pain[0] ? [`Se ${lower1(pain[0])}, o problema não é força de vontade.`] : []),
+  ];
+
+  return {
+    kickers: [brand.toUpperCase(), ...(who ? [who.toUpperCase()] : []), "COMO EU TRABALHO", "NO QUE EU ACREDITO"],
+    headlines,
+    subs,
+    typos: [
+      ...(pain[0] ? [{ lead: "Você convive com", big: firstSentence(pain[0], 34), tail: " há quanto tempo?" }] : []),
+      ...(desire[0] ? [{ lead: "O objetivo é", big: firstSentence(desire[0], 34), tail: "." }] : []),
+      ...(belief[0] ? [{ lead: "Aqui,", big: firstSentence(belief[0], 34), tail: "." }] : []),
+    ],
+    kinetic: [
+      ...(pain[0] ? [{ kicker: "O PONTO DE PARTIDA", word: "Hoje", caption: pain[0] }] : []),
+      ...(desire[0] ? [{ kicker: "O QUE PASSA A SER POSSÍVEL", word: "Depois", caption: desire[0] }] : []),
+      ...(belief[0] ? [{ kicker: "COMO EU TRABALHO", word: "Critério", caption: belief[0] }] : []),
+    ],
+    quotes: [
+      ...(presentation ? [{ text: `“${presentation}.”` }] : []),
+      ...belief.slice(0, 2).map((b) => ({ text: `“${b}.”` })),
+    ],
+    lists: [
+      ...(offer.length >= 2
+        ? [{ heading: `O que ${brand} entrega`, items: offer, closing: cta }]
+        : []),
+      ...(belief.length >= 2
+        ? [{ heading: "No que eu acredito", items: belief, closing: `É assim que ${brand} atende.` }]
+        : []),
+    ],
+    closings: [
+      { title: desire[0] ? firstSentence(desire[0], 60) : `Falar com ${brand}`, sub: presentation || offer[0] || "", cta },
+      ...(pain[0] ? [{ title: "Isso te soa familiar?", sub: pain[0], cta }] : []),
+    ],
+    marquee: [[brand, ...(who ? [who] : []), ...belief.slice(0, 2)].filter(Boolean)],
+    sales: {
+      audience: who,
+      proofs: [...offer, ...belief].slice(0, 5),
+      objections: pain.map((p) => `Já tentou antes? O ponto era ${lower1(p)}.`),
+      offers: offer.slice(0, 2),
+      ctas: [cta],
+      hashtags: [brand.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), who.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()].filter(Boolean),
+    },
+  };
+};
+
 
 /**
  * Monta o acervo de copy da marca no contrato `WorldContent`, para que todos os
@@ -120,16 +264,26 @@ export const buildBrandContent = (
   /** Descrição também entra clampada: bloco de arte não é campo de texto longo. */
   const description = firstSentence((kit.description ?? "").trim(), 160);
 
+  /** DNA declarado pelo cliente: manda no texto. */
+  const dna = buildBrandDna({
+    niche: kit.niche,
+    tone: kit.tone,
+    description: kit.description,
+    positioning: kit.positioning,
+    briefAnswers: kit.briefAnswers,
+  });
+  const dnaPools = isDnaEmpty(dna) ? {} : buildFromDna(dna, brand, niche);
+
   /** Motor de variedade linguística (determinístico pela seed do lote). */
   const register: VoiceRegister = variation?.register ?? voiceRegister(kit.tone, brand);
   const varyRng: Rng | null = variation ? createRng(`copy:${variation.seed}:${brand}`) : null;
   const phrasing = {
     register,
     seed: `${variation?.seed ?? "static"}:${brand}`,
-    forbidden: [] as string[],
+    forbidden: dna.forbidden,
     intensity: variation?.profile ? intensityFor(variation.profile.headlines) : undefined,
   };
-  const ing = ingredientsOf(kit, brand, niche, audiences);
+  const ing = ingredientsOf(kit, brand, niche, audiences, undefined, dna);
 
   const composedHeadlines = varyRng ? composeHeadlines(ing, phrasing, varyRng) : [];
   const composedSubs = varyRng ? composeSubs(ing, phrasing, varyRng) : [];
@@ -137,7 +291,12 @@ export const buildBrandContent = (
   const composedKinetic = varyRng ? composeKinetic(ing, phrasing, varyRng) : [];
   const composedClosings = varyRng ? composeClosings(ing, phrasing, varyRng) : [];
 
-  return {
+  /**
+   * ACERVO DE EMERGÊNCIA (neutro). Só sobrevive quando a marca não declarou
+   * nada: qualquer slot com insumo do briefing é substituído logo abaixo.
+   */
+  const generic: WorldContent = {
+
     id: "pro",
     label: brand,
     kickers: [
@@ -151,11 +310,11 @@ export const buildBrandContent = (
     headlines: composedHeadlines.length
       ? composedHeadlines
       : [
-          { strong: brand, rest: " existe para resolver o que ninguém resolveu." },
-          { strong: "Feito com método", rest: `, não com sorte.` },
-          { strong: "Quem escolhe bem", rest: " volta." },
-          { strong: `A referência em ${niche}`, rest: " começa aqui." },
-          { strong: "Simples de entender.", rest: " Difícil de esquecer." },
+          { strong: `Quem procura ${niche}`, rest: " chega aqui com uma pergunta na cabeça." },
+          { strong: "A primeira conversa", rest: " já mostra o que dá e o que não dá." },
+          { strong: `${brand} atende poucos casos`, rest: " por mês, e é de propósito." },
+          { strong: `Antes de contratar ${niche}`, rest: ", peça para ver o plano." },
+          { strong: "Você sai da conversa", rest: " sabendo o próximo passo." },
         ],
     subs: [
       tone,
@@ -163,63 +322,63 @@ export const buildBrandContent = (
       ...(composedSubs.length
         ? composedSubs
         : [
-            `${brand} transforma conhecimento em uma experiência clara e relevante.`,
-            `Em ${niche}, detalhe não é enfeite — é resultado.`,
+            `${brand} escuta o caso antes de propor qualquer coisa.`,
+            `O que muda em ${niche} é o quanto se mede antes de decidir.`,
             "Uma decisão bem tomada economiza meses.",
           ]),
     ],
     kinetic: composedKinetic.length
       ? composedKinetic
       : [
-          { kicker: "O QUE MOVE A MARCA", word: "Cuidado", caption: "Cada detalhe expressa uma escolha consciente." },
-          { kicker: "NOSSA APOSTA", word: "Constância", caption: "Presença consistente cria reconhecimento." },
-          { kicker: "PROMESSA", word: "Clareza", caption: "Uma proposta fácil de entender e reconhecer." },
+          { kicker: "COMO COMEÇA", word: "Escuta", caption: "A primeira conversa serve para entender o caso." },
+          { kicker: "COMO SEGUE", word: "Plano", caption: "Cada etapa tem começo, fim e revisão." },
+          { kicker: "COMO TERMINA", word: "Alta", caption: "Você sabe quando o trabalho cumpriu o objetivo." },
         ],
 
     metrics: [
       [
-        { value: 3, label: "pilares que orientam a marca" },
-        { value: 1, label: "proposta central fácil de lembrar" },
-        { value: 360, suffix: "°", label: "de visão sobre o público" },
+        { value: 1, label: "conversa antes de qualquer proposta" },
+        { value: 4, label: "semanas até a primeira revisão" },
+        { value: 3, label: "etapas do atendimento" },
       ],
       [
-        { value: 4, label: "ângulos de conteúdo" },
+        { value: 4, label: "assuntos que a marca comunica" },
         { value: 3, label: "motivos para escolher" },
-        { value: 1, label: "identidade reconhecível" },
+        { value: 1, label: "profissional acompanha do início ao fim" },
       ],
     ],
     stats: [
       {
-        heading: "Números que traduzem a proposta",
+        heading: "Como o atendimento se organiza",
         items: [
-          { value: "3", label: "pilares centrais", note: "uma identidade fácil de reconhecer" },
-          { value: "4", label: "formas de comunicar", note: "informar, conectar, inspirar e convidar" },
-          { value: "1", label: "ideia principal", note: "clareza em cada conteúdo" },
+          { value: "1", label: "primeira conversa", note: "para entender o caso antes de propor" },
+          { value: "4", label: "semanas por ciclo", note: "revisão marcada desde o início" },
+          { value: "3", label: "etapas até a alta", note: "cada uma com objetivo declarado" },
         ],
       },
       {
-        heading: "O que fortalece uma marca",
+        heading: "O que muda no dia a dia",
         items: [
-          { value: "+clareza", label: "na mensagem", note: "o público entende o valor" },
-          { value: "+presença", label: "na memória", note: "consistência gera reconhecimento" },
-          { value: "+conexão", label: "com o público", note: "a comunicação parte de necessidades reais" },
+          { value: "-1", label: "consulta perdida", note: "o plano fica registrado por escrito" },
+          { value: "+1", label: "revisão marcada", note: "ninguém segue no automático" },
+          { value: "0", label: "promessa vazia", note: "o que não dá, a gente diz na hora" },
         ],
       },
     ],
     triptychs: [
       {
-        heading: "Três palavras que resumem a marca",
+        heading: `Como ${brand} conduz um caso`,
         panels: [
           { word: "Escuta", line: "Entender antes de propor.", topic: topicAt(0) },
-          { word: "Método", line: "Cada etapa com começo e fim.", topic: topicAt(1) },
-          { word: "Valor", line: "Uma proposta que faz sentido.", topic: topicAt(2) },
+          { word: "Plano", line: "Cada etapa com começo e fim.", topic: topicAt(1) },
+          { word: "Revisão", line: "O que não avança, muda.", topic: topicAt(2) },
         ],
       },
       {
-        heading: "Como a gente trabalha",
+        heading: "O que você pode cobrar da gente",
         panels: [
-          { word: "Simples", line: "Sem jargão, sem letra miúda.", topic: topicAt(3) },
-          { word: "Direto", line: "Uma mensagem, sem ruído.", topic: topicAt(4) },
+          { word: "Simples", line: "Explicado na sua língua.", topic: topicAt(3) },
+          { word: "Direto", line: "Uma orientação por vez.", topic: topicAt(4) },
           { word: "Honesto", line: "O que não cabe, a gente avisa.", topic: topicAt(5) },
         ],
       },
@@ -227,19 +386,19 @@ export const buildBrandContent = (
     typos: composedTypos.length
       ? composedTypos
       : [
-          { lead: "A gente cuida do processo.", big: "Você", tail: " colhe o resultado." },
-          { lead: "Menos ruído.", big: "Mais valor", tail: "." },
-          { lead: `Em ${niche},`, big: " consistência", tail: " vale mais que sorte." },
-          { lead: "O barato sai caro.", big: "O certo", tail: " sai uma vez." },
-          { lead: "Detalhe não é enfeite.", big: "É resultado", tail: "." },
-          { lead: brand, big: " existe", tail: " para resolver." },
+          { lead: "A gente conduz o processo.", big: "Você", tail: " sabe onde está." },
+          { lead: "Menos improviso.", big: "Mais plano", tail: "." },
+          { lead: `Em ${niche},`, big: " medir",tail: " vale mais que opinar." },
+          { lead: "Refazer custa duas vezes.", big: "Decidir bem", tail: " custa uma." },
+          { lead: "O que não avança", big: " muda", tail: " na revisão." },
+          { lead: brand, big: " atende", tail: " poucos casos por mês." },
         ],
 
     compare: [
       {
-        title: "Antes e depois de comunicar com clareza",
-        before: ["Mensagem genérica", "Valor difícil de perceber", "Conteúdo sem identidade", "Público indiferente"],
-        after: ["Mensagem específica", "Valor fácil de entender", "Identidade reconhecível", "Público conectado"],
+        title: "Antes e depois de ter um plano por escrito",
+        before: ["Orientação solta", "Sem data de revisão", "Você sem saber onde está", "Cada consulta recomeça"],
+        after: ["Plano registrado", "Revisão marcada", "Etapa declarada", "Continuidade entre consultas"],
       },
       {
         title: `Como ${brand} encara ${niche}`,
@@ -249,7 +408,7 @@ export const buildBrandContent = (
       {
         title: "Escolher por preço x escolher por resultado",
         before: ["Mais barato agora", "Refazer depois"],
-        after: ["Investimento claro", "Uma vez, bem feito"],
+        after: ["Investimento declarado", "Uma vez, bem feito"],
       },
     ],
     journeys: [
@@ -258,8 +417,8 @@ export const buildBrandContent = (
         heading: "Três etapas até o resultado",
         steps: [
           { title: "Conversa inicial", description: "Entendemos o cenário e o que você quer alcançar.", topic: topicAt(0) },
-          { title: "Direção", description: "Uma mensagem alinhada ao que o público realmente busca.", topic: topicAt(1) },
-          { title: "Experiência", description: "A proposta ganha forma com identidade e consistência.", topic: topicAt(2) },
+          { title: "Plano", description: "O caminho que faz sentido para o seu caso, por escrito.", topic: topicAt(1) },
+          { title: "Revisão", description: "O que avançou fica, o que não avançou muda.", topic: topicAt(2) },
         ],
       },
       {
@@ -269,31 +428,31 @@ export const buildBrandContent = (
           { title: "Diagnóstico", description: "O que está travando hoje.", topic: topicAt(3) },
           { title: "Proposta", description: "O caminho mais curto até o resultado.", topic: topicAt(4) },
           { title: "Acompanhamento", description: "Ajustes com você, não depois de você.", topic: topicAt(5) },
-          { title: "Escolha", description: "O público reconhece valor e sabe qual é o próximo passo.", topic: topicAt(6) },
+          { title: "Escolha", description: "Você decide com o plano na mão.", topic: topicAt(6) },
         ],
       },
     ],
     features: [
       {
         tag: "PROPOSTA",
-        title: "Valor fácil de entender",
-        description: "A mensagem mostra com clareza o que torna a marca relevante para seu público.",
+        title: "Você entende o que vai acontecer",
+        description: "A proposta diz o que será feito, em quanto tempo e como será revisto.",
         topic: topicAt(0),
-        headline: "Clareza que aproxima",
+        headline: "Explicado antes de começar",
       },
       {
-        tag: "EXPERIÊNCIA",
-        title: "Uma jornada coerente",
-        description: "Cada contato reforça a mesma identidade e facilita a escolha.",
+        tag: "ATENDIMENTO",
+        title: "Quem começa é quem termina",
+        description: "Quem atende conhece o histórico e responde por ele do começo ao fim.",
         topic: topicAt(1),
-        headline: "A marca sem ruído",
+        headline: "Sempre a mesma pessoa",
       },
       {
         tag: "DIFERENCIAL",
-        title: "Personalidade reconhecível",
-        description: "Texto, estética e intenção trabalham juntos para destacar a marca.",
+        title: "Revisão com data marcada",
+        description: "A cada ciclo o plano é reavaliado com o que foi medido, não com impressão.",
         topic: topicAt(2),
-        headline: "Difícil de confundir",
+        headline: "Nada roda no automático",
       },
       {
         tag: "CONEXÃO",
@@ -304,16 +463,17 @@ export const buildBrandContent = (
       },
     ],
     quotes: [
-      { text: `“${description || `${brand} traduz valor em experiências que fazem sentido.`}”` },
+      { text: `“${description || `${brand} explica o plano antes de começar.`}”` },
       { text: "“Finalmente encontrei uma proposta feita para o que eu precisava.”" },
-      { text: "“A diferença ficou clara logo no primeiro contato.”" },
-      { text: "“Foi fácil entender por que essa marca era a escolha certa.”" },
+      { text: "“Saí da primeira conversa sabendo o que ia acontecer.”" },
+      { text: "“Foi a primeira vez que alguém me disse o que não dava para prometer.”" },
     ],
     marquee: [
-      [brand, niche, "presença", "identidade", "constância"],
-      words.length >= 3 ? words.slice(0, 6) : ["clareza", "relevância", "conexão", "resultado"],
-      ["escuta", "método", "cuidado", brand],
+      [brand, niche, "escuta", "plano", "revisão"],
+      words.length >= 3 ? words.slice(0, 6) : ["escuta", "plano", "revisão", "alta"],
+      ["conversa", "plano", "revisão", brand],
     ],
+
     closings: composedClosings.length
       ? composedClosings
       : [
@@ -332,27 +492,27 @@ export const buildBrandContent = (
           "Nenhuma conversava com o que ela realmente precisava.",
           "Na terceira tentativa, encontrou uma proposta feita para seu contexto.",
         ],
-        turn: "Foi a primeira vez que ela se reconheceu na mensagem.",
-        moral: "Conexão começa quando a marca entende antes de falar.",
+        turn: "Foi a primeira vez que alguém explicou o porquê.",
+        moral: "Entender o caso vem antes de propor conduta.",
       },
       {
         kicker: "ACONTECE TODA SEMANA",
         title: "A marca que falava com todo mundo",
         beats: ["A mensagem era ampla demais.", "O público não percebia o diferencial.", "Cada conteúdo parecia vir de uma empresa diferente."],
         turn: "Quando definiu seu público, a comunicação ganhou direção.",
-        moral: "Relevância nasce da coragem de ser específico.",
+        moral: "Falar para alguém específico é o que faz o recado chegar.",
       },
     ],
     lists: [
       {
         heading: "4 sinais de que uma marca ainda não se conecta",
         items: [
-          "A mensagem poderia ser de qualquer concorrente",
-          "O público não entende o diferencial",
-          "Cada conteúdo tem uma personalidade diferente",
+          "A orientação poderia servir para qualquer pessoa",
+          "Ninguém explicou por que esse caminho e não outro",
+          "Cada consulta recomeça do zero",
           "A chamada não deixa claro o próximo passo",
         ],
-        closing: `${brand} resolve os quatro no primeiro encontro.`,
+        closing: `${brand} trata os quatro na primeira conversa.`,
       },
       {
         heading: "3 perguntas antes de escolher uma solução",
@@ -363,12 +523,12 @@ export const buildBrandContent = (
     carousels: [
       {
         kicker: "PASSO A PASSO",
-        title: "Como a gente trabalha",
-        coverSub: `${brand}, sem mistério.`,
+        title: `Como ${brand} conduz um caso`,
+        coverSub: `Como ${brand} conduz um caso.`,
         slides: [
           { heading: "1. Conversa", body: "Entendemos o cenário antes de propor qualquer coisa.", topic: topicAt(0) },
-          { heading: "2. Direção", body: "Conectamos a proposta ao que o público busca.", topic: topicAt(1) },
-          { heading: "3. Experiência", body: "Transformamos valor em uma presença reconhecível.", topic: topicAt(2) },
+          { heading: "2. Plano", body: "O caminho do seu caso fica por escrito.", topic: topicAt(1) },
+          { heading: "3. Revisão", body: "O que avançou fica; o que não avançou muda.", topic: topicAt(2) },
         ],
         cta: { title: "Quer começar?", sub: "Manda uma mensagem — a primeira conversa é sem compromisso." },
       },
@@ -387,9 +547,9 @@ export const buildBrandContent = (
     sales: {
       audience: niche,
       proofs: [
-        "Proposta alinhada às necessidades do público",
-        "Identidade consistente em cada ponto de contato",
-        "Mensagem clara sobre valor e diferencial",
+        "O plano é montado depois da primeira conversa",
+        "Quem atende acompanha o caso do início ao fim",
+        "Proposta por escrito, com data de revisão",
       ],
       objections: [
         "Não é mais caro: é previsível.",
@@ -400,7 +560,44 @@ export const buildBrandContent = (
       hashtags: [brand.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), niche.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()],
     },
   };
+
+  /**
+   * INVERSÃO DE HIERARQUIA: onde o briefing tem material, ele SUBSTITUI o
+   * acervo neutro (o genérico só completa quando sobraria menos de 2 opções).
+   * É essa troca que tira do ar os vícios herdados do Aliv.iA Fisio.
+   */
+  const prefer = <T,>(fromDna: T[] | undefined, fallback: T[]): T[] => {
+    const dnaItems = (fromDna ?? []).filter(Boolean);
+    if (dnaItems.length >= 2) return dnaItems;
+    return [...dnaItems, ...fallback];
+  };
+
+  const merged: WorldContent = {
+    ...generic,
+    kickers: prefer(dnaPools.kickers, generic.kickers),
+    headlines: prefer(dnaPools.headlines, generic.headlines),
+    subs: prefer(dnaPools.subs, generic.subs),
+    typos: prefer(dnaPools.typos, generic.typos),
+    kinetic: prefer(dnaPools.kinetic, generic.kinetic),
+    quotes: prefer(dnaPools.quotes, generic.quotes),
+    lists: prefer(dnaPools.lists, generic.lists),
+    closings: prefer(dnaPools.closings, generic.closings),
+    marquee: prefer(dnaPools.marquee, generic.marquee),
+    sales: dnaPools.sales
+      ? {
+          ...generic.sales,
+          ...dnaPools.sales,
+          proofs: prefer(dnaPools.sales.proofs, generic.sales.proofs),
+          ctas: prefer(dnaPools.sales.ctas, generic.sales.ctas),
+          objections: prefer(dnaPools.sales.objections, generic.sales.objections),
+          offers: prefer(dnaPools.sales.offers, generic.sales.offers),
+        }
+      : generic.sales,
+  };
+
+  return sanitizeContent(merged, dna.forbidden);
 };
+
 
 /* ------------------------------------------------------------------------- */
 /* SEGMENTAÇÃO: nicho específico x visão global 360°                          */
@@ -414,28 +611,44 @@ const strip = (text: string) => text.trim().replace(/\s*[.!?]+$/, "");
  * Aplica um público (nicho ou sub-nicho) sobre o acervo base.
  *
  * REGRA DURA DE DIRECIONAMENTO: a arte precisa CHAMAR o público pela
- * palavra-chave dele ("Dor crônica", "Esportista", "Geração 60+"). Por isso o
- * overlay não é decorativo: ele gera headline, tipografia-herói, listas de
- * medos, listas de valor, carrossel e fechos, todos citando a palavra-chave —
- * e, quando o público é um SUB-NICHO, o acervo base entra apenas como cauda
- * curta para não diluir a comunicação dirigida.
+ * palavra-chave dele ("Dor crônica", "Esportista", "Geração 60+").
+ *
+ * REGRA DE COPY RELACIONAL: quando o lote traz uma `relation`, TODOS os slots
+ * giram em volta do MESMO par (público × medo/desejo × gancho × CTA). Antes cada
+ * slot puxava um medo diferente do acervo e a arte saía desconexa.
  */
-const applyAudience = (base: WorldContent, brand: string, audience: BrandAudience): WorldContent => {
+const applyAudience = (
+  base: WorldContent,
+  brand: string,
+  audience: BrandAudience,
+  relation?: Relation,
+): WorldContent => {
   const who = audience.label.trim();
   const key = audienceKeyword(audience);
   const KEY = key.toUpperCase();
-  const hookList = audienceHooks(audience);
+  const hookList = relation?.hooks?.length ? relation.hooks : audienceHooks(audience);
   const hook = hookList[0];
   /** Alterna entre as variações de gancho para não repetir a mesma abertura. */
   const hk = (i: number) => hookList[i % hookList.length];
-  const pains = (audience.pains ?? []).map(strip);
-  const desires = (audience.desires ?? []).map(strip);
-  const proof = (audience.proof ?? []).map(strip);
-  const cta = audience.cta?.trim() || "Falar com a gente";
+  /** O medo/desejo eleito pela relação vem primeiro em todos os slots. */
+  const lead = (list: string[], chosen?: string) => {
+    const clean = list.map(strip).filter(Boolean);
+    if (!chosen) return clean;
+    const rest = clean.filter((v) => strip(chosen) !== v);
+    return [strip(chosen), ...rest];
+  };
+  const pains = lead(audience.pains ?? [], relation?.pain);
+  const desires = lead(audience.desires ?? [], relation?.desire);
+  const proof = lead(audience.proof ?? [], relation?.proof);
+  const cta = relation?.cta || audience.cta?.trim() || "Falar com a gente";
   const desc = audience.description?.trim();
-  // Sub-nicho = comunicação dirigida: o acervo genérico vira só cauda.
-  const focused = Boolean(audience.parentId?.trim());
-  const tail = <T,>(list: T[]) => (focused ? list.slice(0, 3) : list);
+  /**
+   * Comunicação dirigida: sub-nicho — ou qualquer público com acervo próprio —
+   * reduz o acervo neutro a uma cauda curta, para não diluir a mensagem.
+   */
+  const focused = Boolean(audience.parentId?.trim()) || pains.length + desires.length >= 2;
+  const tail = <T,>(list: T[]) => (focused ? list.slice(0, 2) : list);
+
 
   const headlines = [
     ...pains.slice(0, 3).map((p) => ({ strong: key, rest: `: ${lower1(p)} não precisa ser a sua rotina.` })),
@@ -540,19 +753,54 @@ const applyAudience = (base: WorldContent, brand: string, audience: BrandAudienc
 
 
 /**
- * Visão 360° — ramo MARCA: leitura ampla do que a marca é e faz (um painel
- * por público para mostrar amplitude). É só uma das duas faces do 360°: o
- * sorteio em `buildSegmentContent` decide entre esta visão de marca e o mundo
- * de um público matriz isolado — o 360° é modo livre, não "todos juntos".
+ * Visão 360° — ramo MARCA: leitura ampla do que a marca é e faz.
+ *
+ * O material vem dos três eixos do briefing — QUEM SOU (`apresentacao`), COMO
+ * TRABALHO (`oferta`) e NO QUE ACREDITO (`diferencial`). Só quando esses eixos
+ * estão vazios o 360° recai na leitura por públicos.
  */
 const applyGlobal = (
   base: WorldContent,
   brand: string,
   audiences: BrandAudience[],
   positioning?: string | null,
+  dna?: BrandDna,
 ): WorldContent => {
+  const axes = [
+    { kicker: "QUEM SOU", text: dna?.presentation },
+    { kicker: "COMO EU TRABALHO", text: dna?.offer },
+    { kicker: "NO QUE EU ACREDITO", text: dna?.belief },
+  ]
+    .map((a) => ({ ...a, text: a.text ? firstSentence(a.text, 110) : "" }))
+    .filter((a) => a.text);
+
+  const brandAxes: Partial<WorldContent> = axes.length
+    ? {
+        kickers: [...axes.map((a) => a.kicker), "VISÃO 360°", ...base.kickers],
+        headlines: [
+          ...axes.map((a) => ({ strong: firstSentence(a.text, 58), rest: "" })),
+          ...base.headlines,
+        ],
+        subs: [...axes.map((a) => a.text), ...base.subs],
+        typos: [
+          ...axes.slice(0, 2).map((a) => ({ lead: `${lower1(a.kicker)}:`, big: firstSentence(a.text, 32), tail: "." })),
+          ...base.typos,
+        ],
+        quotes: [...axes.map((a) => ({ text: `“${a.text}.”` })), ...base.quotes],
+        lists: [
+          {
+            heading: `${brand} em três frases`,
+            items: axes.map((a) => a.text),
+            closing: dna?.cta || base.sales.ctas[0] || "Chamar no direct",
+          },
+          ...base.lists,
+        ],
+      }
+    : {};
+
   if (!audiences.length) {
-    return positioning?.trim() ? { ...base, subs: [positioning.trim(), ...base.subs] } : base;
+    const withAxes = { ...base, ...brandAxes };
+    return positioning?.trim() ? { ...withAxes, subs: [positioning.trim(), ...withAxes.subs] } : withAxes;
   }
   // Métrica oficial: só públicos matriz. Sub-nichos existem para comunicação
   // dirigida, mas contá-los produz números errados ("9 públicos").
@@ -566,16 +814,18 @@ const applyGlobal = (
 
   return {
     ...base,
-    kickers: ["VISÃO 360°", `UM PRODUTO, ${labels.length} PÚBLICOS`, ...base.kickers],
+    ...brandAxes,
+    kickers: brandAxes.kickers ?? ["VISÃO 360°", `PARA ${labels.length} PÚBLICOS`, ...base.kickers],
     headlines: [
-      { strong: `${labels.length} públicos`, rest: ", um só padrão de qualidade." },
+      ...(brandAxes.headlines ?? []),
       { strong: brand, rest: ` atende ${labels.slice(0, 3).join(", ").toLowerCase()} no mesmo lugar.` },
       ...base.headlines,
     ],
-    subs: [...(positioning?.trim() ? [positioning.trim()] : []), ...base.subs],
+    subs: [...(positioning?.trim() ? [positioning.trim()] : []), ...(brandAxes.subs ?? base.subs)],
     triptychs: [
       ...(panels.length === 3 ? [{ heading: "Para quem é", panels }] : []),
       ...base.triptychs,
+
     ],
     lists: [
       {
@@ -664,6 +914,8 @@ export type SegmentContentInput = {
 /**
  * Ponto de entrada único do motor: resolve marca + segmento + ângulo em um
  * `WorldContent`. Serve para qualquer cliente, com ou sem nichos cadastrados.
+ *
+ * O par relacional é decidido AQUI e vale para a arte inteira.
  */
 export const buildSegmentContent = ({
   kit,
@@ -677,7 +929,19 @@ export const buildSegmentContent = ({
 }: SegmentContentInput): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
   const variation: CopyVariation | undefined = variationSeed ? { seed: variationSeed, profile: variationProfile } : undefined;
+  const dna = buildBrandDna({
+    niche: kit.niche,
+    tone: kit.tone,
+    description: kit.description,
+    positioning: positioning ?? kit.positioning,
+    briefAnswers: kit.briefAnswers,
+  });
   const root = base ?? buildBrandContent(kit, variation, audiences);
+  const relationFor = (audience?: BrandAudience) =>
+    pickRelation({ audience, dna, brand, angle, seed: variationSeed });
+
+  const finish = (content: WorldContent) => sanitizeContent(applyAngle(content, angle), dna.forbidden);
+
   if (segment === GLOBAL_SEGMENT) {
     // 360° = modo livre, quase aleatório: qualquer assunto relevante à marca.
     // A seed do lote sorteia — metade fala da marca como um todo (applyGlobal),
@@ -688,14 +952,36 @@ export const buildSegmentContent = ({
       const dice = createRng(`360:${variationSeed}`);
       if (dice.int(100) < 50) {
         const picked = resolveAudience(audiences, matrix[dice.int(matrix.length)].id);
-        if (picked) return applyAngle(applyAudience(root, brand, picked), angle);
+        if (picked) return finish(applyAudience(root, brand, picked, relationFor(picked)));
       }
     }
-    return applyAngle(applyGlobal(root, brand, audiences, positioning), angle);
+    return finish(applyGlobal(root, brand, audiences, positioning, dna));
   }
   // Sub-nichos herdam o kit do público matriz e sobrepõem o próprio recorte.
   const audience = resolveAudience(audiences, segment);
-  if (!audience) return applyAngle(root, angle);
-  return applyAngle(applyAudience(root, brand, audience), angle);
+  if (!audience) return finish(applyGlobal(root, brand, audiences, positioning, dna));
+  return finish(applyAudience(root, brand, audience, relationFor(audience)));
 };
+
+/** Relação usada por uma arte — exposta para o filtro de nexo e a legenda. */
+export const relationForSegment = ({
+  kit,
+  audiences,
+  segment,
+  angle,
+  positioning,
+  variationSeed,
+}: Omit<SegmentContentInput, "base" | "variationProfile">): Relation => {
+  const brand = kit.name.trim() || "Sua marca";
+  const dna = buildBrandDna({
+    niche: kit.niche,
+    tone: kit.tone,
+    description: kit.description,
+    positioning: positioning ?? kit.positioning,
+    briefAnswers: kit.briefAnswers,
+  });
+  const audience = segment === GLOBAL_SEGMENT ? undefined : resolveAudience(audiences, segment);
+  return pickRelation({ audience, dna, brand, angle, seed: variationSeed });
+};
+
 

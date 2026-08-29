@@ -75,7 +75,14 @@ export type RationaleContext = {
   brandName: string;
   /** Manual/formulário da marca. Sem isso nenhuma arte fecha a leitura. */
   brand?: BrandContext;
+  /**
+   * Par relacional desta arte (medo/desejo eleito). Quando presente, a arte só
+   * passa na dimensão de público se o texto tocar o vocabulário desse medo ou
+   * desejo — é o que impede copy dirigida no rótulo e genérica no conteúdo.
+   */
+  relation?: { pain?: string; desire?: string; axis?: "pain" | "desire" };
 };
+
 
 
 type Sense = {
@@ -508,19 +515,37 @@ export const explainArt = (
   // ============ 2. PÚBLICO-ALVO ============
   const audienceWords = new Set([...words(keyword), ...words(hook), ...words(audience)]);
   const audienceShared = [...audienceWords].filter((w) => artWords.has(w) && !brandWords.has(w));
-  const audienceOk = !!keyword && !!hook && (!read || audienceShared.length > 0);
+  /**
+   * COPY RELACIONAL: o par eleito para esta arte (medo ou desejo) precisa
+   * aparecer no texto. Sem isso a arte diz o nome do público e fala de nada.
+   */
+  const rel = ctx.relation ?? {};
+  const relText = rel.axis === "desire" ? rel.desire : rel.pain || rel.desire;
+  const relWords = new Set(words(relText ?? ""));
+  const relShared = [...relWords].filter((w) => artWords.has(w));
+  const relDeclared = Boolean(trim(relText ?? ""));
+  const relOk = !relDeclared || !read || relShared.length > 0;
+  const audienceOk = !!keyword && !!hook && (!read || audienceShared.length > 0) && relOk;
   const audienceRead = !keyword || !hook
     ? `Este público está incompleto (${!keyword ? "sem palavra-chave" : "sem chamada direta"}), então a arte fala para o vazio: eu não sei quem deveria se reconhecer nela.`
-    : audienceShared.length > 0 || !read
-      ? `Fala com ${audience}: quem se reconhece em "${hook}". O terreno em comum entre a arte e esse público está em ${
-          audienceShared.slice(0, 3).join(", ") || `“${keyword}”`
-        }.`
-      : `Nada do que está escrito cruza com ${audience} ("${hook}"). Do jeito que está, o público certo passa reto — a arte não avisa que é sobre ele.`;
-  if (!audienceOk && keyword && hook) {
+    : !relOk
+      ? `Diz "${keyword}" no rótulo, mas não toca no que move ${audience} agora (${trim(relText ?? "")}). O público lê o nome dele e não encontra o próprio problema no texto.`
+      : audienceShared.length > 0 || !read
+        ? `Fala com ${audience}: quem se reconhece em "${hook}"${
+            relDeclared ? `, especificamente em ${trim(relText ?? "")}` : ""
+          }. O terreno em comum entre a arte e esse público está em ${
+            audienceShared.slice(0, 3).join(", ") || `“${keyword}”`
+          }.`
+        : `Nada do que está escrito cruza com ${audience} ("${hook}"). Do jeito que está, o público certo passa reto — a arte não avisa que é sobre ele.`;
+  if (!audienceOk && keyword && hook && relOk) {
     gaps.push(`a arte não menciona o assunto de "${audience}" — o público não se reconhece nela`);
+  }
+  if (!relOk) {
+    gaps.push(`o texto não fala do ${rel.axis === "desire" ? "desejo" : "medo"} escolhido para este público (${trim(relText ?? "")})`);
   }
   if (!keyword) gaps.push(`o público "${audience}" está sem palavra-chave`);
   if (!hook) gaps.push(`o público "${audience}" está sem chamada direta`);
+
 
   // ============ 3. OBJETIVO DO LOTE ============
   const OBJECTIVE: Record<RationaleContext["angle"], { probe: RegExp; ask: string }> = {

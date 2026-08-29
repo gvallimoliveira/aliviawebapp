@@ -19,6 +19,7 @@ Support page: ao lançar/mudar feature relevante, atualizar Support.tsx + Clinic
 Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário entra direto, sem etapa /verificar-email. NÃO criar gates de email_confirmed_at em checkout/reset.
 LGPD: proibido script de rastreamento/session replay (Clarity removido). Controlador/DPO: Guilherme Vallim de Oliveira (aliviawebapp@gmail.com). Consentimento versionado via `POLICY_VERSION` em src/lib/consentLog.ts.
 Studio copy: variação linguística = RELEITURA da frase (src/pages/studio/rewrite.ts), nunca troca de 1-2 palavras; 100% local, sem créditos de IA.
+Studio copy: manual/briefing (brief_answers) é fonte primária do texto; acervo genérico só emergência; toda arte nasce de um par público × medo/desejo × gancho × CTA; vícios do Aliv.iA Fisio banidos (STALE_PHRASES).
 Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lote), nunca todos juntos; ângulo "Informar" ≠ educacional.
 
 
@@ -130,4 +131,5 @@ Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lot
 - [Studio Method Blocks](mem://features/studio-method-blocks) — STEPS e D.I.F.I. como artes do Studio, exclusivas da marca Aliv.iA.
 - [Studio Matrix Audiences](mem://features/studio-matrix-audiences) — Públicos matriz contam na métrica oficial das artes; sub-nichos (parentId) nunca contam.
 - [Studio Persuasion Layer](mem://features/studio-persuasion-layer) — Diretrizes ago/2026: ponto zero de impacto, jargão proibido, postura padrão, léxico exclusivo do Studio; regras rejeitadas (limite de palavras, mix 4/2/2/2, séries).
+- [Studio Relational Copy](mem://features/studio-relational-copy) — Hierarquia DNA-first (manual/briefing), par relacional obrigatório por arte e vícios de linguagem banidos.
 - [Studio Copy Engine](mem://features/studio-copy-engine) — Motor textual local: léxico + releitura de frase (rewrite.ts), níveis Baixa/Média/Alta, sem créditos de IA.
