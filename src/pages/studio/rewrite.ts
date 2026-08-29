@@ -46,7 +46,6 @@ const CONNECTORS: [RegExp, string[]][] = [
   [/\bentão\b/gi, ["então", "por isso", "logo"]],
   [/\btambém\b/gi, ["também", "igualmente", "do mesmo jeito"]],
   [/\bsempre\b/gi, ["sempre", "toda vez", "invariavelmente"]],
-  [/\bmuito\b/gi, ["muito", "bastante", "de sobra"]],
   [/\bcada\b/gi, ["cada", "todo"]],
   [/\bquando\b/gi, ["quando", "no momento em que", "assim que"]],
 ];
