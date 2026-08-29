@@ -90,7 +90,7 @@ const HEADLINE_FRAMES: HeadlineFrame[] = [
   { id: "imperativo-pare", needs: "pain", build: (ing, i) => ({ strong: `Pare de aceitar ${lower(at(ing.pains, i, "achismo"))}`, rest: ". Existe caminho melhor." }) },
   { id: "imperativo-escolha", build: (ing) => ({ strong: "Escolha por resultado", rest: `, não por hábito — é isso que ${ing.brand} entrega.` }) },
   // Dado + consequência
-  { id: "dado-decisao", build: () => ({ strong: "Uma decisão bem tomada", rest: " economiza meses de retrabalho." }) },
+  { id: "dado-decisao", build: () => ({ strong: "Uma decisão bem tomada", rest: " economiza meses de tentativa e erro." }) },
   { id: "dado-clareza", build: () => ({ strong: "Quem entende o processo", rest: " segue até o fim. Quem não entende, desiste." }) },
   { id: "dado-consistencia", build: () => ({ strong: "Consistência vira lembrança", rest: ". Lembrança vira escolha." }) },
   // Antes / depois

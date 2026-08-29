@@ -430,7 +430,7 @@ export const buildBrandContent = (
       },
       {
         kicker: "DA DESCOBERTA À ESCOLHA",
-        heading: "Nada acontece sem o seu aval",
+        heading: "Aqui é parceria: somos um time",
         steps: [
           { title: "Diagnóstico", description: "O que está travando hoje.", topic: topicAt(3) },
           { title: "Proposta", description: "O caminho mais curto até o resultado.", topic: topicAt(4) },
@@ -462,11 +462,11 @@ export const buildBrandContent = (
         headline: "Nada roda no automático",
       },
       {
-        tag: "CONEXÃO",
-        title: "Conteúdo que parte do público",
-        description: "Dores, desejos e objetivos reais orientam cada mensagem.",
+        tag: "CONTINUIDADE",
+        title: "Você sai sabendo o próximo passo",
+        description: "Cada encontro termina com o que fazer até o próximo — nada fica no ar.",
         topic: topicAt(3),
-        headline: "A conversa certa",
+        headline: "Sem dúvida no caminho",
       },
     ],
     quotes: [
@@ -747,6 +747,11 @@ const applyAudience = (
       ...tail(base.quotes),
     ],
     marquee: [[key, ...painNoms.slice(0, 2), ...desireNoms.slice(0, 2)].filter(Boolean), ...tail(base.marquee)],
+    /* Buscas simuladas: o que ESTE público realmente digitaria — queixa,
+       diagnóstico ou desejo — nunca frase institucional da marca. */
+    searchQueries: [key, ...pains, ...desires, ...(base.searchQueries ?? [])]
+      .map((q) => strip(q))
+      .filter(Boolean),
     carousels: [...carousels, ...tail(base.carousels)],
     closings: [
       { title: `${key}: o próximo passo é seu`, sub: desires[0] ? sentence(desires[0]) : `Fale com ${brand} hoje.`, cta },
@@ -842,9 +847,10 @@ const applyGlobal = (
       ...base.triptychs,
 
     ],
+    searchQueries: matrix.flatMap((a) => [a.label, ...(a.pains ?? []), ...(a.desires ?? [])]),
     lists: [
       {
-        heading: "Para quem o produto foi feito",
+        heading: "Para quem esse atendimento foi feito",
         items: matrix.map((a) => `${a.label} — ${a.desires?.[0] ?? a.description ?? "resultado claro"}`),
         closing: "Cada perfil entra por uma porta diferente e chega ao mesmo padrão.",
       },
@@ -855,7 +861,7 @@ const applyGlobal = (
       {
         kicker: "VISÃO GERAL",
         title: `${brand} por dentro`,
-        coverSub: `Um produto, ${labels.length} públicos.`,
+        coverSub: `Um só padrão de cuidado, ${labels.length} públicos.`,
         slides: matrix.slice(0, 5).map((a, i) => ({
           heading: a.label,
           body: a.pains?.[0] ? `${sentence(a.pains[0])} → ${sentence(a.desires?.[0] ?? "caminho claro")}` : a.description ?? "",
