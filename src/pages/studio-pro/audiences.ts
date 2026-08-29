@@ -77,8 +77,30 @@ export const audienceKeyword = (a: BrandAudience): string => {
 };
 
 /** Abertura em 2ª pessoa, para chamar o público diretamente na arte. */
-export const audienceHook = (a: BrandAudience): string =>
-  a.hook?.trim() || `Você, ${audienceKeyword(a).toLowerCase()}`;
+export const audienceHook = (a: BrandAudience): string => audienceHooks(a)[0];
+
+/**
+ * TODAS as aberturas disponíveis para o público, sem repetição: o gancho
+ * principal primeiro, depois as variações. O motor criativo usa a lista para
+ * alternar a chamada entre headlines, tipografias, listas e fechos.
+ */
+export const audienceHooks = (a: BrandAudience): string[] => {
+  const list: string[] = [];
+  const push = (value?: string) => {
+    const clean = value?.trim().replace(/\s*[.!?]+$/, "");
+    if (clean && !list.some((h) => h.toLowerCase() === clean.toLowerCase())) list.push(clean);
+  };
+  push(a.hook);
+  for (const extra of a.hooks ?? []) push(extra);
+  if (!list.length) push(`Você, ${audienceKeyword(a).toLowerCase()}`);
+  return list;
+};
+
+/** Escolhe uma variação de gancho de forma estável (mesmo índice = mesmo texto). */
+export const pickHook = (a: BrandAudience, index: number): string => {
+  const list = audienceHooks(a);
+  return list[((index % list.length) + list.length) % list.length];
+};
 
 
 export const slugifySegment = (label: string) =>
