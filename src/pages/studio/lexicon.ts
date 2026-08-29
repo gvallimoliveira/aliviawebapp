@@ -173,14 +173,6 @@ const SYNONYMS: Record<string, SynonymRow> = {
     inspirador: ["entender", "enxergar", "compreender"],
     sobrio: ["entender", "compreender", "assimilar"],
   },
-  começa: {
-    all: ["começa", "nasce", "parte"],
-    tecnico: ["começa", "inicia", "parte"],
-    proximo: ["começa", "nasce", "parte"],
-    direto: ["começa", "sai"],
-    inspirador: ["começa", "nasce", "floresce"],
-    sobrio: ["começa", "inicia", "origina"],
-  },
   simples: {
     all: ["simples", "descomplicado", "direto"],
     tecnico: ["simples", "enxuto", "objetivo"],
@@ -254,7 +246,7 @@ const SYNONYMS: Record<string, SynonymRow> = {
     sobrio: ["promessa", "compromisso", "declaração"],
   },
   retrabalho: {
-    all: ["retrabalho", "refação", "trabalho dobrado"],
+    all: ["retrabalho", "trabalho dobrado", "tentativa e erro"],
   },
   previsibilidade: {
     all: ["previsibilidade", "segurança", "controle"],
@@ -389,11 +381,6 @@ const SYNONYMS: Record<string, SynonymRow> = {
   história: {
     all: ["história", "narrativa", "trajetória"],
   },
-  trabalho: {
-    all: ["trabalho", "atuação", "ofício"],
-    tecnico: ["trabalho", "atuação", "prática"],
-    proximo: ["trabalho", "o que eu faço", "atuação"],
-  },
   crescer: {
     all: ["crescer", "evoluir", "avançar"],
   },
@@ -462,8 +449,11 @@ export const lexicalCandidates = (text: string, register: VoiceRegister): string
 
 /** Gênero gramatical aproximado (última palavra do termo). */
 const genderOf = (term: string) => {
-  const last = term.trim().split(/\s+/).pop()?.toLowerCase() ?? "";
-  return /a$|ção$|dade$|agem$/.test(last) ? "f" : "m";
+  /* Concordância olha o NÚCLEO do grupo nominal (primeira palavra), não a
+     última: "resposta mensurável" é feminino ("a resposta"), e usar o adjetivo
+     final gerava erro como "o resposta mensurável". */
+  const head = term.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+  return /a$|ção$|dade$|agem$/.test(head) ? "f" : "m";
 };
 
 const DETERMINERS = /\b(o|a|os|as|um|uma|uns|umas|do|da|no|na|ao|à|este|esta|esse|essa|aquele|aquela|seu|sua|meu|minha|nosso|nossa|todo|toda|cada|outro|outra)$/i;

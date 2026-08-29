@@ -171,7 +171,7 @@ export const PERSUASION_FRAMES: PersuasionFrame[] = [
   {
     id: "curiosidade-contraintuitivo",
     needs: "desire",
-    build: (ing, i) => ({ strong: `${upperFirst(nom(ing.desires, i, "Resultado"))} não vem de fazer mais`, rest: ". Vem de parar de fazer o que atrapalha." }),
+    build: (ing, i) => ({ strong: `${upperFirst(nom(ing.desires, i, "Resultado"))} não vem de fazer mais`, rest: ". Vem de entender a causa e executar o plano certo." }),
   },
   {
     id: "curiosidade-erro-comum",

@@ -430,7 +430,7 @@ export const buildBrandContent = (
       },
       {
         kicker: "DA DESCOBERTA À ESCOLHA",
-        heading: "Nada acontece sem o seu aval",
+        heading: "Na reabilitação, a decisão é a quatro mãos",
         steps: [
           { title: "Diagnóstico", description: "O que está travando hoje.", topic: topicAt(3) },
           { title: "Proposta", description: "O caminho mais curto até o resultado.", topic: topicAt(4) },
@@ -462,11 +462,11 @@ export const buildBrandContent = (
         headline: "Nada roda no automático",
       },
       {
-        tag: "CONEXÃO",
-        title: "Conteúdo que parte do público",
-        description: "Dores, desejos e objetivos reais orientam cada mensagem.",
+        tag: "CONTINUIDADE",
+        title: "Você sai sabendo o próximo passo",
+        description: "Cada encontro termina com o que fazer até o próximo — nada fica no ar.",
         topic: topicAt(3),
-        headline: "A conversa certa",
+        headline: "Sem dúvida no caminho",
       },
     ],
     quotes: [
@@ -844,7 +844,7 @@ const applyGlobal = (
     ],
     lists: [
       {
-        heading: "Para quem o produto foi feito",
+        heading: "Para quem esse atendimento foi feito",
         items: matrix.map((a) => `${a.label} — ${a.desires?.[0] ?? a.description ?? "resultado claro"}`),
         closing: "Cada perfil entra por uma porta diferente e chega ao mesmo padrão.",
       },
@@ -855,7 +855,7 @@ const applyGlobal = (
       {
         kicker: "VISÃO GERAL",
         title: `${brand} por dentro`,
-        coverSub: `Um produto, ${labels.length} públicos.`,
+        coverSub: `Um só padrão de cuidado, ${labels.length} públicos.`,
         slides: matrix.slice(0, 5).map((a, i) => ({
           heading: a.label,
           body: a.pains?.[0] ? `${sentence(a.pains[0])} → ${sentence(a.desires?.[0] ?? "caminho claro")}` : a.description ?? "",
