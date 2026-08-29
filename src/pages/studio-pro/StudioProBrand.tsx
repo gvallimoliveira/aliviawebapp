@@ -849,7 +849,8 @@ const StudioProBrand = () => {
                     </div>
 
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </section>
