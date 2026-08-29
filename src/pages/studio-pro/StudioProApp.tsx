@@ -430,16 +430,16 @@ const StudioProApp = () => {
                 {access.isVip
                   ? "Acesso VIP — nível agência, 15 marcas, sem cota e sem cobrança."
                   : access.granted
-                    ? "Acesso cortesia — plano Solo liberado por convite, sem cobrança."
+                    ? `Acesso cortesia — plano ${PLAN_LABELS[access.plan]} liberado por convite, sem cobrança: ${access.brandLimit} ${access.brandLimit === 1 ? "marca" : "marcas"} e ${access.creditsPerPeriod} gerações por período.`
                     : access.plan === "free"
                       ? `Cortesia de boas-vindas: ${PRODUCT.freeCredits} artes com marca d'água discreta.`
-                      : `Plano ${access.plan} ativo.`}
+                      : `Plano ${PLAN_LABELS[access.plan]} ativo.`}
               </p>
             </div>
             {access.granted && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                 <Gift className="h-3.5 w-3.5" />
-                Acesso cortesia — plano Solo
+                Acesso cortesia — plano {PLAN_LABELS[access.plan]}
               </span>
             )}
             {!access.unlimited && !access.granted && access.plan === "free" && (
