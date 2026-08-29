@@ -138,6 +138,14 @@ const FAQ = [
     q: "Posso usar minhas fotos?",
     a: "Sim. Você sobe seu acervo, define recorte, rotação e área segura, e as artes usam a foto no melhor enquadramento.",
   },
+  {
+    q: "O que preciso ter em mãos para começar?",
+    a: "Só a vontade. Se tiver logo e manual de marca, sobe os dois logo no início; se não tiver, cole o site ou Instagram e o Studio extrai cores e fontes sozinho. O formulário guiado cuida do resto.",
+  },
+  {
+    q: "Quanto tempo leva para sair a primeira arte?",
+    a: "O cadastro completo da marca (formulário + identidade + públicos) leva cerca de 15 minutos. A partir daí, cada lote de artes fica pronto na hora — e você ainda ajusta o texto antes de baixar.",
+  },
 ];
 
 const FILTERS: { id: ShowcaseFormat | "todos"; label: string }[] = [
