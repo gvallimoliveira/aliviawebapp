@@ -26,7 +26,7 @@ const asQuery = (raw: string) =>
     .toLowerCase()
     .slice(0, 48);
 
-const SearchBlock = ({ content, rng, treatment, format, persona, picker }: BlockProps) => {
+const SearchBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
   const prefix = PREFIXES[treatment % PREFIXES.length];
 
   /* Só entram termos de busca reais (dores, diagnósticos, desejos do nicho).
