@@ -17,6 +17,7 @@
  */
 
 import type { CopyIngredients } from "./phrasing";
+import { nominal, readsWell, sentence } from "./grammar";
 
 /** Jargão vazio e promessa irreal — proibidos em qualquer texto de arte. */
 export const BANNED_JARGON: readonly string[] = [
@@ -121,6 +122,21 @@ const at = (list: string[], i: number, fallback: string) => {
   return value.length ? value[i % value.length] : fallback;
 };
 
+/**
+ * Forma NOMINAL do ingrediente — obrigatória em toda moldura que o encaixa
+ * depois de preposição, artigo ou verbo. É o que impede
+ * "Conviver com precisam postar todo dia".
+ */
+const nom = (list: string[], i: number, fallback: string) => {
+  const values = (list ?? []).map(clean).filter(Boolean);
+  for (let step = 0; step < Math.max(1, values.length); step += 1) {
+    const raw = values.length ? values[(i + step) % values.length] : "";
+    const form = raw ? nominal(raw, "") : "";
+    if (form) return form;
+  }
+  return fallback;
+};
+
 export type PersuasionFrame = {
   id: string;
   needs?: "pain" | "desire" | "solution";
@@ -140,22 +156,22 @@ export const PERSUASION_FRAMES: PersuasionFrame[] = [
   {
     id: "curiosidade-mesmo-motivo",
     needs: "pain",
-    build: (ing, i) => ({ strong: `Quase todo mundo trava em ${lower(at(ing.pains, i, "começar"))}`, rest: " pelo mesmo motivo. E não é falta de esforço." }),
+    build: (ing, i) => ({ strong: `Quase todo mundo trava em ${lower(nom(ing.pains, i, "começar"))}`, rest: " pelo mesmo motivo. E não é falta de esforço." }),
   },
   {
     id: "curiosidade-volta-sempre",
     needs: "pain",
-    build: (ing, i) => ({ strong: `Sabe por que ${lower(at(ing.pains, i, "o problema"))} volta sempre?`, rest: " A resposta não está onde você procura." }),
+    build: (ing, i) => ({ strong: `Sabe por que ${lower(nom(ing.pains, i, "o problema"))} volta sempre?`, rest: " A resposta não está onde você procura." }),
   },
   {
     id: "curiosidade-tres-coisas",
     needs: "desire",
-    build: (ing, i) => ({ strong: "Três coisas explicam", rest: ` ${lower(at(ing.desires, i, "o resultado que você quer"))}. A terceira ninguém comenta.` }),
+    build: (ing, i) => ({ strong: "Três coisas explicam", rest: ` ${lower(nom(ing.desires, i, "o resultado que você quer"))}. A terceira ninguém comenta.` }),
   },
   {
     id: "curiosidade-contraintuitivo",
     needs: "desire",
-    build: (ing, i) => ({ strong: `${upperFirst(at(ing.desires, i, "Resultado"))} não vem de fazer mais`, rest: ". Vem de parar de fazer o que atrapalha." }),
+    build: (ing, i) => ({ strong: `${upperFirst(nom(ing.desires, i, "Resultado"))} não vem de fazer mais`, rest: ". Vem de parar de fazer o que atrapalha." }),
   },
   {
     id: "curiosidade-erro-comum",
@@ -166,7 +182,7 @@ export const PERSUASION_FRAMES: PersuasionFrame[] = [
   {
     id: "custo-nao-e-economia",
     needs: "pain",
-    build: (ing, i) => ({ strong: `Conviver com ${lower(at(ing.pains, i, "o improviso"))} não é economia`, rest: ". É conta que chega depois." }),
+    build: (ing, i) => ({ strong: `Conviver com ${lower(nom(ing.pains, i, "o improviso"))} não é economia`, rest: ". É conta que chega depois." }),
   },
   {
     id: "custo-caro",
@@ -175,14 +191,14 @@ export const PERSUASION_FRAMES: PersuasionFrame[] = [
   {
     id: "custo-cada-semana",
     needs: "desire",
-    build: (ing, i) => ({ strong: "Cada semana sem decidir", rest: ` adia ${lower(at(ing.desires, i, "o que você quer"))}.` }),
+    build: (ing, i) => ({ strong: "Cada semana sem decidir", rest: ` adia ${lower(nom(ing.desires, i, "o que você quer"))}.` }),
   },
 
   // --- Quebra de objeção com empatia (reconhece, depois resolve) ---
   {
     id: "objecao-tempo",
     needs: "pain",
-    build: (ing, i) => ({ strong: "“Não tenho tempo”", rest: ` — é justamente por isso que ${lower(at(ing.pains, i, "isso"))} precisa sair do seu colo.` }),
+    build: (ing, i) => ({ strong: "“Não tenho tempo”", rest: ` — é justamente por isso que ${lower(nom(ing.pains, i, "isso"))} precisa sair do seu colo.` }),
   },
   {
     id: "objecao-tentei",
@@ -191,7 +207,7 @@ export const PERSUASION_FRAMES: PersuasionFrame[] = [
   {
     id: "objecao-comecar",
     needs: "solution",
-    build: (ing, i) => ({ strong: "“Não sei por onde começar”", rest: ` — o ponto zero é ${lower(at(ing.solutions, i, "organizar o que já existe"))}.` }),
+    build: (ing, i) => ({ strong: "“Não sei por onde começar”", rest: ` — o ponto zero é ${lower(nom(ing.solutions, i, "organizar o que já existe"))}.` }),
   },
   {
     id: "objecao-preco",
@@ -201,24 +217,24 @@ export const PERSUASION_FRAMES: PersuasionFrame[] = [
   // --- Especificidade (o oposto de genérico) ---
   {
     id: "especifico-antes-de",
-    build: (ing, i) => ({ strong: `Antes de investir em ${lower(at(ing.keywords, i, "mais uma tentativa"))}`, rest: ", resolva o que trava o começo." }),
+    build: (ing, i) => ({ strong: `Antes de investir em ${lower(nom(ing.keywords, i, "mais uma tentativa"))}`, rest: ", resolva o que trava o começo." }),
   },
   {
     id: "especifico-ponto-zero",
     needs: "pain",
-    build: (ing, i) => ({ strong: "Começa no ponto zero", rest: `: entender por que ${lower(at(ing.pains, i, "isso"))} acontece.` }),
+    build: (ing, i) => ({ strong: "Começa no ponto zero", rest: `: entender por que ${lower(nom(ing.pains, i, "isso"))} acontece.` }),
   },
   {
     id: "especifico-para-quem",
     needs: "solution",
-    build: (ing, i) => ({ strong: `Se ${lower(at(ing.pains, i, "o assunto"))} te soa familiar`, rest: `, ${lower(at(ing.solutions, i, "existe um caminho pronto"))} já resolve isso.` }),
+    build: (ing, i) => ({ strong: `Se ${lower(nom(ing.pains, i, "o assunto"))} te soa familiar`, rest: `, ${lower(nom(ing.solutions, i, "um caminho pronto"))} já resolve isso.` }),
   },
 ];
 
 /** Subtítulos de apoio com a mesma postura — usados junto do ponto zero. */
 export const persuasionSubs = (ing: CopyIngredients): ((i: number) => string)[] => [
-  (i) => `Ninguém para em ${lower(ing.niche)} por acaso: para quando reconhece ${lower(at(ing.pains, i, "o próprio problema"))}.`,
-  (i) => `${upperFirst(at(ing.solutions, i, "Um caminho definido"))} — sem prometer o que não se entrega.`,
-  (i) => `O custo de não resolver ${lower(at(ing.pains, i, "isso"))} aparece antes do próximo trimestre.`,
-  (i) => `Reconhecer o problema já é meia decisão. A outra metade é ${lower(at(ing.solutions, i, "escolher o método"))}.`,
+  (i) => `Ninguém para em ${lower(ing.niche)} por acaso: para quando reconhece ${lower(nom(ing.pains, i, "o próprio problema"))}.`,
+  (i) => `${upperFirst(nom(ing.solutions, i, "um caminho definido"))} — sem prometer o que não se entrega.`,
+  (i) => `O custo de não resolver ${lower(nom(ing.pains, i, "isso"))} aparece antes do próximo trimestre.`,
+  (i) => `Reconhecer o problema já é meia decisão. A outra metade é ${lower(nom(ing.solutions, i, "escolher o método"))}.`,
 ];
