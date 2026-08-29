@@ -114,6 +114,9 @@ export const sectionHeight = (format: StudioFormat) =>
  */
 export const blockPadding = (format: StudioFormat) => {
   if (format === "9x16") return "pt-[16%] pb-[22%] px-[10%]";
+  // 4x5 (post vertical do feed): altura extra sobra, então o respiro vertical
+  // é maior que no quadrado, mas sem os buffers de UI do Stories.
+  if (format === "4x5") return "py-[12%] px-[8%]";
   if (format === "1x1") return "py-[10%] px-[8%]";
   return "py-20 px-6";
 };
