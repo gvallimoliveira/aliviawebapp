@@ -229,7 +229,28 @@ export const PERSUASION_FRAMES: PersuasionFrame[] = [
     needs: "solution",
     build: (ing, i) => ({ strong: `Se ${lower(nom(ing.pains, i, "o assunto"))} te soa familiar`, rest: `, ${lower(nom(ing.solutions, i, "um caminho pronto"))} já resolve isso.` }),
   },
+
+  // --- Voz "sócio experiente": decisão, parceria e causa (registro do cliente) ---
+  {
+    id: "decisao-bem-tomada",
+    build: () => ({ strong: "Uma decisão bem tomada", rest: " economiza meses de tentativa e erro." }),
+  },
+  {
+    id: "parceria-time",
+    needs: "desire",
+    build: (ing, i) => ({ strong: `${upperFirst(nom(ing.desires, i, "O resultado"))} não sai de um lado só`, rest: ". Aqui é parceria: somos um time." }),
+  },
+  {
+    id: "causa-antes-do-plano",
+    needs: "pain",
+    build: (ing, i) => ({ strong: `Tratar ${lower(nom(ing.pains, i, "o sintoma"))} sem entender a causa`, rest: " é repetir o mesmo ciclo com outro nome." }),
+  },
+  {
+    id: "criterio-antes-do-volume",
+    build: () => ({ strong: "Fazer mais não é fazer melhor", rest: ". O que muda o jogo é critério na escolha." }),
+  },
 ];
+
 
 /** Subtítulos de apoio com a mesma postura — usados junto do ponto zero. */
 export const persuasionSubs = (ing: CopyIngredients): ((i: number) => string)[] => [
