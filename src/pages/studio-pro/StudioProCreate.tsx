@@ -835,7 +835,10 @@ const StudioProCreate = ({
       return;
     }
     setBusy(`save-${index}`);
+    // Lado B é outra peça: ganha sufixo próprio para não sobrescrever o lado A.
+    const side = flipped.has(index) ? "-b" : "";
     const node = document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
+
     let thumb: string | null = null;
     let pngPath: string | null = null;
     if (node) {
