@@ -706,30 +706,42 @@ const StudioProBrand = () => {
               <ul className="mt-4 grid gap-3 sm:grid-cols-3">
                 {shown.map((art) => (
                   <li key={art.id} className="overflow-hidden rounded-2xl border border-border bg-muted/40">
-                    {(() => {
-                      // Prefere o PNG de publicação; a miniatura é só fallback.
-                      const src = (art.png_path && previews[art.png_path]) || art.thumb;
-                      const ratio =
-                        art.format === "9x16"
-                          ? "aspect-[9/16]"
-                          : art.format === "4x5"
-                            ? "aspect-[4/5]"
-                            : "aspect-square";
-                      if (!src)
+                    {/* A própria miniatura abre o editor da arte salva (texto + formato). */}
+                    <button
+                      type="button"
+                      className="relative block w-full text-left"
+                      onClick={() => setEditingArt(art)}
+                      title="Editar texto e formato desta arte"
+                    >
+                      {(() => {
+                        // Prefere o PNG de publicação; a miniatura é só fallback.
+                        const src = (art.png_path && previews[art.png_path]) || art.thumb;
+                        const ratio =
+                          art.format === "9x16"
+                            ? "aspect-[9/16]"
+                            : art.format === "4x5"
+                              ? "aspect-[4/5]"
+                              : "aspect-square";
+                        if (!src)
+                          return (
+                            <div className="flex aspect-[4/5] w-full items-center justify-center text-xs text-muted-foreground">
+                              sem miniatura
+                            </div>
+                          );
                         return (
-                          <div className="flex aspect-[4/5] w-full items-center justify-center text-xs text-muted-foreground">
-                            sem miniatura
-                          </div>
+                          <img
+                            src={src}
+                            alt={art.headline ?? "arte"}
+                            loading="lazy"
+                            className={`${ratio} w-full bg-background object-contain`}
+                          />
                         );
-                      return (
-                        <img
-                          src={src}
-                          alt={art.headline ?? "arte"}
-                          loading="lazy"
-                          className={`${ratio} w-full bg-background object-contain`}
-                        />
-                      );
-                    })()}
+                      })()}
+                      <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-[10px] font-semibold shadow">
+                        <PencilLine className="h-3 w-3" />
+                        Editar
+                      </span>
+                    </button>
                     <div className="p-3">
                       <p className="line-clamp-2 text-xs font-semibold">{art.headline ?? "Sem título"}</p>
                       <p className="mt-1 text-[11px] text-muted-foreground">
