@@ -9,6 +9,7 @@ import {
   FolderPlus,
   Images,
   Loader2,
+  PencilLine,
   Save,
   Settings2,
   Sparkles,
@@ -39,6 +40,7 @@ import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } fr
 import { matrixAudiences, readAudiences, writeAudiences, type BrandAudience } from "./audiences";
 import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
+import StudioArtEditor from "./StudioArtEditor";
 import {
   answeredCount,
   formatBriefAnswers,
@@ -87,6 +89,12 @@ type Creation = {
   is_favorite: boolean;
   png_path: string | null;
   composition: unknown;
+  /** Receita da arte: seed, público, objetivo e texto exato (edição pela galeria). */
+  seed: string;
+  segment: string | null;
+  angle: string | null;
+  block_kind: string | null;
+  text_edits: unknown;
 };
 
 
@@ -197,6 +205,8 @@ const StudioProBrand = () => {
   const [creations, setCreations] = useState<Creation[]>([]);
   /** URLs assinadas dos PNGs salvos (prévia nítida na galeria). */
   const [previews, setPreviews] = useState<Record<string, string>>({});
+  /** Arte da galeria aberta para edição (texto e formato). */
+  const [editingArt, setEditingArt] = useState<Creation | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -235,7 +245,8 @@ const StudioProBrand = () => {
     document.title = brand ? `${brand.name} — ${PRODUCT.name}` : `${PRODUCT.name}`;
   }, [brand]);
 
-  const ART_FIELDS = "id, headline, caption, thumb, format, folder, created_at, is_favorite, png_path, composition";
+  const ART_FIELDS =
+    "id, headline, caption, thumb, format, folder, created_at, is_favorite, png_path, composition, seed, segment, angle, block_kind, text_edits";
 
   /**
    * Atualiza somente a lista de artes — sem tocar em `loading`. Isso é o que
@@ -755,6 +766,17 @@ const StudioProBrand = () => {
                         >
                           Copiar
                         </Button>
+                        {/* Reabre a arte salva para reescrever texto e trocar o formato. */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 rounded-full px-2 text-[11px]"
+                          onClick={() => setEditingArt(art)}
+                          title="Editar texto e formato desta arte"
+                        >
+                          <PencilLine className="mr-1 h-3.5 w-3.5" />
+                          Editar
+                        </Button>
                         <Button
                           size="sm"
                           variant={art.is_favorite ? "secondary" : "ghost"}
@@ -797,6 +819,16 @@ const StudioProBrand = () => {
               </ul>
             )}
           </section>
+        )}
+
+        {/* Editor de arte salva: texto na própria arte + troca de formato. */}
+        {editingArt && brand && (
+          <StudioArtEditor
+            brand={brand}
+            art={editingArt}
+            onClose={() => setEditingArt(null)}
+            onSaved={() => void loadCreations()}
+          />
         )}
 
         {tab === "ajustes" && (

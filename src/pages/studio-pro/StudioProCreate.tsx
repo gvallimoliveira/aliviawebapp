@@ -155,6 +155,14 @@ const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "free", label: "Livre" },
 ];
 
+/**
+ * BOTÃO "POR QUE ESTA ARTE" — desligado por escolha do dono do Studio.
+ *
+ * O filtro de nexo continua rodando (é ele que troca formatos sem sentido); só a
+ * leitura explicada deixou de aparecer no card. Trocar para `true` religa.
+ */
+const SHOW_WHY = false;
+
 /** Nome do formato em linguagem comum, usado na explicação de cada arte. */
 const FORMAT_LABEL: Record<StudioFormat, string> = {
   "9x16": "story vertical 9:16",
@@ -888,6 +896,8 @@ const StudioProCreate = ({
       png_path: pngPath,
       // Receita da arte: permite reusar a composição aprovada nas próximas versões.
       composition: JSON.parse(JSON.stringify(blocks)),
+      /** Texto exato exibido na arte: é o que a edição pela galeria reabre. */
+      text_edits: { 0: node ? readArtText(node) : {} },
 
       segment: activeSegment,
       angle,
@@ -985,6 +995,13 @@ const StudioProCreate = ({
       thumb,
       png_path: coverPath,
       composition: JSON.parse(JSON.stringify(indexes.map((i) => blocks[i]))),
+      /** Texto exato de cada slide: é o que a edição pela galeria reabre. */
+      text_edits: Object.fromEntries(
+        indexes.map((i, pos) => {
+          const node = document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null;
+          return [pos, node ? readArtText(node) : {}];
+        }),
+      ),
       segment: activeSegment,
       angle,
       folder: folder === "Todas" ? "Geral" : folder,
@@ -1364,15 +1381,17 @@ const StudioProCreate = ({
                   <Type className="mr-1.5 h-3.5 w-3.5" />
                   Legenda
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 rounded-full text-xs"
-                  onClick={() => openWhy(first.index)}
-                >
-                  <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
-                  Por que esta arte
-                </Button>
+                {SHOW_WHY && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => openWhy(first.index)}
+                  >
+                    <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
+                    Por que esta arte
+                  </Button>
+                )}
 
                 {editing === first.index ? (
                   <>
@@ -1440,7 +1459,7 @@ const StudioProCreate = ({
               </div>
 
               {/* Leitura de sentido: a explicação que o motor consegue dar da arte. */}
-              {whyOpen === first.index && (() => {
+              {SHOW_WHY && whyOpen === first.index && (() => {
                 const why = explainWhy(first.index, first.block);
                 if (!why) return null;
 
