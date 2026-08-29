@@ -639,11 +639,12 @@ Regras:
 - Escreva também um "tagline": UMA frase curta (até 80 caracteres) que resume a marca e pode aparecer dentro das artes.
 - "voice": diretriz de tom em 4 a 8 linhas — como falar, o que nunca dizer, como tratar preço, prova e objeção. É diretriz interna, nunca vai impressa na arte.
 - "keywords": vocabulário de marca utilizável como palavra em destaque na arte (não termos de SEO genéricos).
-- Cores (papéis, não decoração): "primary" é a cor de MARCA usada em fundos e formas; "primary2" é a cor de TEXTO que fica sobre ela e precisa de contraste alto (≥ 4.5:1); "secondary" é o destaque e "secondary2" um neutro claro de fundo. Em "extra" devolva até 4 outras cores reais da marca (paleta ampliada), sem repetir as quatro anteriores. Escolha entre as cores do site quando houver; nunca devolva um par de baixo contraste (ex.: verde neon com branco). Sem cores no briefing, omita o campo.
+- Cores (papéis, não decoração): "primary" é a cor de MARCA usada em fundos e formas; "primary2" é a cor de TEXTO que fica sobre ela e precisa de contraste alto (≥ 4.5:1); "secondary" é o destaque e "secondary2" um NEUTRO de apoio (fundo alternativo). REGRA DURA: "secondary2" não pode ser igual nem quase igual a "primary2" — se o manual só tiver um claro, escolha como neutro um cinza/bege/cimento da paleta, ou derive um tom intermediário entre "primary" e "primary2". Quatro papéis, quatro cores DISTINTAS.
+- Em "extra" devolva TODAS as outras cores da paleta que o briefing declarar (até 8), na ordem em que o manual as apresenta, incluindo neutros, tons profundos e variações do destaque. Se o manual anexado listar hexadecimais, transcreva-os literalmente — não aproxime nem invente. Escolha entre as cores do site quando não houver manual; nunca devolva um par de baixo contraste (ex.: verde neon com branco). Sem cores no briefing, omita o campo.
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
-Tipografia: se o briefing (manual anexado ou tipografia declarada no site) indicar a fonte da marca, devolva o nome dela em "font_family" (ex.: "Montserrat", "DM Sans", "Playfair Display"). Se não houver indicação, devolva "".
+Tipografia (campo obrigatório quando existe manual anexado): procure a seção de tipografia/fontes do documento e devolva em "font_family" o nome EXATO da fonte de TÍTULOS e em "font_body" a de TEXTO CORRIDO, quando o manual trouxer duas (ex.: "Outfit" e "Figtree"). Aceite variações escritas como "Família tipográfica", "Tipografia", "Fonte principal", "Display", "Headline", "Corpo". Nomes de peso ("Outfit SemiBold") devem devolver só a família ("Outfit"). Só devolva "" se o briefing realmente não citar nenhuma fonte.
 
 Responda SOMENTE com JSON válido neste formato:
 {
@@ -654,7 +655,8 @@ Responda SOMENTE com JSON válido neste formato:
   "keywords": ["8 a 12 palavras-chave curtas do vocabulário da marca"],
   "strategy_notes": "5 a 8 linhas sobre como girar informar / dor / desejo / venda nesta marca, incluindo temas a evitar",
   "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB", "extra": ["#RRGGBB"] },
-  "font_family": "nome da fonte da marca, ou vazio",
+  "font_family": "fonte de títulos da marca, ou vazio",
+  "font_body": "fonte de texto corrido da marca, ou vazio",
   "audiences": [
     {
       "label": "Nome curto do público",
@@ -787,8 +789,27 @@ Responda SOMENTE com JSON válido neste formato:
       const onSurface =
         primary2 && ratio(surface, primary2) >= 4.5 ? primary2 : readableOn(surface);
       const accent = secondary ?? surface;
+      /**
+       * NEUTRO DISTINTO (bug real: manual com um único claro fazia a IA repetir
+       * a cor de texto no papel de neutro, e a marca ficava com 3 cores úteis).
+       * Aceita qualquer claridade razoável vinda do manual, mas se o neutro
+       * colidir com a cor de texto, deriva um tom intermediário entre a cor de
+       * marca e o claro — ainda dentro da paleta, nunca um cinza genérico.
+       */
+      const mixHex = (a: string, b: string, weight: number) => {
+        const part = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+        const out = [0, 1, 2]
+          .map((i) => Math.round(part(a, i) * (1 - weight) + part(b, i) * weight))
+          .map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0"))
+          .join("");
+        return `#${out}`.toUpperCase();
+      };
+      const tooClose = (a: string, b: string) => ratio(a, b) < 1.25;
+      const neutralCandidate = secondary2 && lum(secondary2) > 0.35 ? secondary2 : null;
       const neutral =
-        secondary2 && lum(secondary2) > 0.75 ? secondary2 : "#F5F7F6";
+        neutralCandidate && !tooClose(neutralCandidate, onSurface) && !tooClose(neutralCandidate, accent)
+          ? neutralCandidate
+          : mixHex(surface, lum(onSurface) > 0.5 ? onSurface : "#FFFFFF", 0.68);
       colorKit = {
         primary: surface,
         primary2: onSurface,
@@ -809,7 +830,7 @@ Responda SOMENTE com JSON válido neste formato:
         .map(pickHex)
         .filter((c): c is string => !!c)
         .filter((c) => !used.has(c) && (used.add(c) || true))
-        .slice(0, 4);
+        .slice(0, 8);
       extras.forEach((color, i) => {
         colorKit![`primary${i + 3}`] = color;
       });
@@ -838,6 +859,11 @@ Responda SOMENTE com JSON válido neste formato:
       ["oswald", ["oswald"]],
       ["bebas", ["bebas"]],
       ["playfair", ["playfair"]],
+      ["figtree", ["figtree"]],
+      ["urbanist", ["urbanist"]],
+      ["rubik", ["rubik"]],
+      ["barlow", ["barlow"]],
+      ["karla", ["karla"]],
       ["lora", ["lora"]],
       ["merriweather", ["merriweather"]],
     ];
@@ -848,6 +874,7 @@ Responda SOMENTE com JSON válido neste formato:
     /** Fonte da IA primeiro; se ela não souber, a tipografia declarada no site. */
     const fontKey =
       matchFont(String(parsed.font_family ?? "")) ??
+      matchFont(String((parsed as Record<string, unknown>).font_body ?? "")) ??
       site.fonts.map(matchFont).find(Boolean) ??
       null;
 
