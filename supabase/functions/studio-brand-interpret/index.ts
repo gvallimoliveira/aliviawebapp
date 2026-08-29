@@ -789,8 +789,27 @@ Responda SOMENTE com JSON válido neste formato:
       const onSurface =
         primary2 && ratio(surface, primary2) >= 4.5 ? primary2 : readableOn(surface);
       const accent = secondary ?? surface;
+      /**
+       * NEUTRO DISTINTO (bug real: manual com um único claro fazia a IA repetir
+       * a cor de texto no papel de neutro, e a marca ficava com 3 cores úteis).
+       * Aceita qualquer claridade razoável vinda do manual, mas se o neutro
+       * colidir com a cor de texto, deriva um tom intermediário entre a cor de
+       * marca e o claro — ainda dentro da paleta, nunca um cinza genérico.
+       */
+      const mixHex = (a: string, b: string, weight: number) => {
+        const part = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+        const out = [0, 1, 2]
+          .map((i) => Math.round(part(a, i) * (1 - weight) + part(b, i) * weight))
+          .map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0"))
+          .join("");
+        return `#${out}`.toUpperCase();
+      };
+      const tooClose = (a: string, b: string) => ratio(a, b) < 1.25;
+      const neutralCandidate = secondary2 && lum(secondary2) > 0.35 ? secondary2 : null;
       const neutral =
-        secondary2 && lum(secondary2) > 0.75 ? secondary2 : "#F5F7F6";
+        neutralCandidate && !tooClose(neutralCandidate, onSurface) && !tooClose(neutralCandidate, accent)
+          ? neutralCandidate
+          : mixHex(surface, lum(onSurface) > 0.5 ? onSurface : "#FFFFFF", 0.68);
       colorKit = {
         primary: surface,
         primary2: onSurface,
