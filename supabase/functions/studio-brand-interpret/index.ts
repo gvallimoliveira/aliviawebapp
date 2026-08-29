@@ -634,6 +634,7 @@ Regras:
 - Cada público precisa de 5 a 8 dores, 5 a 8 desejos e 5 a 8 soluções/diferenciais. Frases curtas (até ~70 caracteres), concretas, uma ideia por linha.
 - IMPORTANTE: se o produto também é usado pelo consumidor final (paciente, cliente, aluno, usuário leigo), esse público NUNCA pode ficar de fora — inclua-o junto dos públicos profissionais/B2B.
 - Se a marca já tem públicos cadastrados no briefing, mantenha-os (pode refinar o texto), não os substitua por outros.
+- REGRA DURA (nunca deixar vazio): TODO público precisa de "keyword", "hook" e "cta". "keyword" é o termo que a arte vai gritar para a pessoa se reconhecer (2 a 3 palavras, ex.: "Dor crônica", "Pós-operatório", "Geração 60+"), nunca o nome da marca nem uma frase. "hook" é uma abertura em 2ª pessoa, começando por "Você", de até 90 caracteres, descrevendo o momento concreto dessa pessoa (ex.: "Você que saiu da cirurgia e não sabe o que pode fazer"). "cta" é um comando curto de até 40 caracteres, no imperativo. Sem esses três campos o público está incompleto e a resposta é inválida.
 - Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o problema estrutural do mercado, a tese da marca, a amplitude de uso e o que a separa das alternativas.
 - "description": 2 a 3 frases densas — o que é, para quem, o que entrega de concreto.
 - Escreva também um "tagline": UMA frase curta (até 80 caracteres) que resume a marca e pode aparecer dentro das artes.
