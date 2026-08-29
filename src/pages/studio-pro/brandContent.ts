@@ -330,11 +330,11 @@ export const buildBrandContent = (
     headlines: composedHeadlines.length
       ? composedHeadlines
       : [
-          { strong: `Quem procura ${niche}`, rest: " chega aqui com uma pergunta na cabeça." },
-          { strong: "A primeira conversa", rest: " já mostra o que dá e o que não dá." },
-          { strong: `${brand} atende poucos clientes`, rest: " por mês, e é de propósito." },
-          { strong: `Antes de contratar ${niche}`, rest: ", peça para ver o plano." },
-          { strong: "Você sai da conversa", rest: " sabendo o próximo passo." },
+          { strong: `Quem procura ${niche}`, rest: " chega com uma pergunta na cabeça." },
+          { strong: `A ${op.firstStep}`, rest: " já mostra o que dá e o que não dá." },
+          { strong: `${brand} trabalha com poucos ${op.whoPlural}`, rest: " por mês, e é de propósito." },
+          { strong: `Antes de fechar ${niche}`, rest: `, peça para ver o ${op.planWord}.` },
+          { strong: "Você sai do primeiro contato", rest: " sabendo o próximo passo." },
         ],
     subs: [
       tone,
@@ -342,18 +342,19 @@ export const buildBrandContent = (
       ...(composedSubs.length
         ? composedSubs
         : [
-            `${brand} escuta ${offer.yourCase} antes de propor qualquer coisa.`,
-            `O que muda em ${niche} é o quanto se mede antes de decidir.`,
+            `${brand} entende ${offer.yourCase} antes de propor qualquer coisa.`,
+            `O que muda em ${subject} é o quanto se mede antes de decidir.`,
             "Uma decisão bem tomada economiza meses.",
           ]),
     ],
     kinetic: composedKinetic.length
       ? composedKinetic
       : [
-          { kicker: "COMO COMEÇA", word: "Escuta", caption: `A primeira conversa serve para entender ${offer.yourCase}.` },
-          { kicker: "COMO SEGUE", word: "Plano", caption: "Cada etapa tem começo, fim e revisão." },
-          { kicker: "COMO TERMINA", word: "Alta", caption: "Você sabe quando o trabalho cumpriu o objetivo." },
+          { kicker: "COMO COMEÇA", word: "Escuta", caption: `A ${op.firstStep} serve para entender ${offer.yourCase}.` },
+          { kicker: "COMO SEGUE", word: nominal(op.planWord), caption: `Cada etapa tem começo, fim e ${op.reviewWord}.` },
+          { kicker: "COMO TERMINA", word: nominal(offer.closingLabel), caption: "Você sabe quando o trabalho cumpriu o objetivo." },
         ],
+
 
     metrics: [
       [
