@@ -644,7 +644,7 @@ Regras:
 - Nunca invente números, prêmios, certificações ou depoimentos.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
-Tipografia: se o briefing (manual anexado ou tipografia declarada no site) indicar a fonte da marca, devolva o nome dela em "font_family" (ex.: "Montserrat", "DM Sans", "Playfair Display"). Se não houver indicação, devolva "".
+Tipografia (campo obrigatório quando existe manual anexado): procure a seção de tipografia/fontes do documento e devolva em "font_family" o nome EXATO da fonte de TÍTULOS e em "font_body" a de TEXTO CORRIDO, quando o manual trouxer duas (ex.: "Outfit" e "Figtree"). Aceite variações escritas como "Família tipográfica", "Tipografia", "Fonte principal", "Display", "Headline", "Corpo". Nomes de peso ("Outfit SemiBold") devem devolver só a família ("Outfit"). Só devolva "" se o briefing realmente não citar nenhuma fonte.
 
 Responda SOMENTE com JSON válido neste formato:
 {
