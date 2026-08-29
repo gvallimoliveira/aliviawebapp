@@ -781,50 +781,14 @@ const StudioProCreate = ({
 
   /** Kit da marca aplicado como tokens: 2 principais + 2 secundárias + extras. */
   const kit = readColorKit(brand.colors);
-  const themeStyle = (() => {
-    const style: Record<string, string> = {};
-    /**
-     * Cores extras da marca entram na rotação: cada lote de artes (seed) escolhe
-     * um acento diferente da paleta, sem sair do kit aprovado pelo cliente.
-     */
-    const accents = [
-      ...(kit.useSecondary ? [kit.secondary] : []),
-      ...kit.extraPrimary,
-      ...(kit.useSecondary ? kit.extraSecondary : []),
-    ].filter(Boolean);
-    let accent = kit.useSecondary ? kit.secondary : kit.primary;
-    if (accents.length > 1) {
-      const pick = [...String(seed)].reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % accents.length;
-      accent = accents[pick];
-    }
+  const themeStyle = useMemo(() => buildBrandThemeStyle({ kit, seed }), [JSON.stringify(kit), seed]);
+  /** Lado B: mesmo kit, papéis das duas cores principais trocados. */
+  const invertedStyle = useMemo(
+    () => buildBrandThemeStyle({ kit, seed, invert: true }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(kit), seed],
+  );
 
-    /**
-     * CONTRASTE VERIFICADO ANTES DE APROVAR A ARTE: cada superfície do tema
-     * recebe o texto calculado (WCAG 4,5:1). Se o par reprovar, o TEXTO muda —
-     * a cor de marca do fundo é preservada.
-     */
-    const tokens = readableThemeTokens({
-      background: kit.primary2,
-      primary: kit.primary,
-      accent,
-      secondary: kit.useSecondary ? kit.secondary2 : kit.primary2,
-    });
-    Object.entries(tokens).forEach(([token, hex]) => {
-      const triplet = hexToHslTriplet(hex);
-      if (triplet) style[token] = triplet;
-    });
-    const ring = hexToHslTriplet(kit.primary);
-    if (ring) style["--ring"] = ring;
-
-    accents.forEach((color, i) => {
-      const triplet = hexToHslTriplet(color);
-      if (triplet) style[`--brand-extra-${i + 1}`] = triplet;
-    });
-    // Tipografia da marca: herdada por todos os blocos da versão.
-    const brandFont = findFont(kit.font);
-    if (brandFont.stack) style.fontFamily = brandFont.stack;
-    return Object.keys(style).length ? (style as React.CSSProperties) : undefined;
-  })();
 
 
 
