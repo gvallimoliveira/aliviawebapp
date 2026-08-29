@@ -22,8 +22,10 @@
 import type { WorldContent } from "@/pages/studio/content";
 import { charmCta, charmify, empathyBridge } from "@/pages/studio/charm";
 import { readsWell } from "@/pages/studio/grammar";
+import { isStudioSelfBrand } from "@/pages/studio/persuasion";
 import type { ContentAngle } from "./audiences";
 import type { Relation } from "./relational";
+import { findStudioSelfCharm, type StudioSelfCharmRow } from "./studioSelfCharm";
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const noDot = (text?: string) => clean(text).replace(/\s*[.!?…]+$/, "");
@@ -193,10 +195,29 @@ export const applyCharm = (
   content: WorldContent,
   angle: ContentAngle,
   relation?: Relation,
+  brand?: string,
 ): WorldContent => {
   if (angle === "informar") return content;
 
-  const row = findSubNicheCharm(relation);
+  /**
+   * Marca do próprio produto: o guia de copy do manual do Aliv.iA Studio tem
+   * precedência sobre a tabela de sub-nichos clínicos (que fala de paciente).
+   */
+  const selfRow: StudioSelfCharmRow | undefined = isStudioSelfBrand(brand ?? "")
+    ? findStudioSelfCharm(
+        [
+          relation?.keyword,
+          relation?.who,
+          relation?.audience?.label,
+          relation?.audience?.description,
+          relation?.hook,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      )
+    : undefined;
+
+  const row: SubNicheCharm | StudioSelfCharmRow | undefined = selfRow ?? findSubNicheCharm(relation);
   const frames = relation ? charmFrames(relation, angle) : { headlines: [], subs: [], closings: [] };
   const cta = charmCta(relation?.cta ?? "");
 

@@ -893,13 +893,13 @@ const applyGlobal = (
  * `applyCharm` (empatia estruturada, foco no "você", ritmo com remate seco,
  * antecipação e convite seguro). "Informar" fica de fora de propósito.
  */
-const applyAngle = (content: WorldContent, angle: ContentAngle, relation?: Relation): WorldContent => {
+const applyAngle = (content: WorldContent, angle: ContentAngle, relation?: Relation, brand?: string): WorldContent => {
   const rotate = <T,>(list: T[], n: number): T[] =>
     list.length > 1 ? [...list.slice(n % list.length), ...list.slice(0, n % list.length)] : list;
 
   switch (angle) {
     case "dor":
-      return applyCharm({ ...content, kickers: ["ISSO É COM VOCÊ", ...content.kickers] }, angle, relation);
+      return applyCharm({ ...content, kickers: ["ISSO É COM VOCÊ", ...content.kickers] }, angle, relation, brand);
     case "desejo":
       return applyCharm(
         {
@@ -910,6 +910,7 @@ const applyAngle = (content: WorldContent, angle: ContentAngle, relation?: Relat
         },
         angle,
         relation,
+        brand,
       );
     case "venda":
       return applyCharm(
@@ -922,6 +923,7 @@ const applyAngle = (content: WorldContent, angle: ContentAngle, relation?: Relat
         },
         angle,
         relation,
+        brand,
       );
     case "informar":
     default:
@@ -981,7 +983,7 @@ export const buildSegmentContent = ({
     pickRelation({ audience, dna, brand, angle, seed: variationSeed });
 
   const finish = (content: WorldContent, relation?: Relation) =>
-    sanitizeContent(applyAngle(content, angle, relation), dna.forbidden);
+    sanitizeContent(applyAngle(content, angle, relation, brand), dna.forbidden);
 
   if (segment === GLOBAL_SEGMENT) {
     // 360° = modo livre, quase aleatório: qualquer assunto relevante à marca.
