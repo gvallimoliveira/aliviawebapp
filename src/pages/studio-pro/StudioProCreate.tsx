@@ -540,6 +540,8 @@ const StudioProCreate = ({
   const [editing, setEditing] = useState<number | null>(null);
   /** Artes que o usuário revisou e reenviou para aprovação com sucesso. */
   const [approved, setApproved] = useState<Set<number>>(() => new Set());
+  /** Remonta os blocos para recompor o texto original do motor após um "desfazer". */
+  const [resetTick, setResetTick] = useState(0);
 
   const artNode = (index: number) =>
     document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
@@ -550,7 +552,7 @@ const StudioProCreate = ({
       const node = artNode(Number(key));
       if (node) applyArtText(node, value);
     });
-  }, [edits, blocks, format, seed, content, activePhotos]);
+  }, [edits, blocks, format, seed, content, activePhotos, resetTick]);
 
   const startEdit = (index: number) => {
     const node = artNode(index);
@@ -610,11 +612,11 @@ const StudioProCreate = ({
       return copy;
     });
     setEditing(null);
-    setSeed((prev) => prev);
-    // Re-render do bloco: recompõe o texto original do motor.
     const node = artNode(index);
     if (node) setArtEditing(node, false);
-    toast.success("Texto original restaurado. Gere a nova versão para recompor.");
+    // Remonta os blocos para o motor reescrever o texto original.
+    setResetTick((n) => n + 1);
+    toast.success("Texto original restaurado.");
   };
 
   /**
@@ -1174,7 +1176,7 @@ const StudioProCreate = ({
                 style={FRAME_STYLE[format]}
               >
                 <div id={`studio-pro-block-${item.index}`} className="h-full w-full">
-                  <ArtworkGuard brand={brand.name}>
+                  <ArtworkGuard key={`${item.index}:${resetTick}`} brand={brand.name}>
                   {/* AutoFit: copy longa encolhe para caber; nunca sai cortada. */}
                   <AutoFit resetKey={`${brand.id}:${seed}:${format}:${kind}:${item.index}`}>
                   <StudioProSignature
