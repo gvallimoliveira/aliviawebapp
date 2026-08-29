@@ -569,19 +569,23 @@ export const buildBrandContent = (
     ],
     lists: [
       {
-        heading: "4 sinais de que uma marca ainda não se conecta",
+        heading: `4 sinais de que ${offer.yourCase} pede outro caminho`,
         items: [
           "A orientação poderia servir para qualquer pessoa",
           "Ninguém explicou por que esse caminho e não outro",
           `Cada ${op.encounterWord} recomeça do zero`,
-          "A chamada não deixa claro o próximo passo",
+          `Não existe data de ${op.reviewWord}`,
         ],
         closing: `${brand} trata os quatro na ${op.firstStep}.`,
       },
       {
-        heading: "3 perguntas antes de escolher uma solução",
-        items: ["Isso foi pensado para a minha realidade?", "Qual transformação essa proposta oferece?", "Por que esta marca é diferente?"],
-        closing: "Quando as respostas são claras, escolher fica mais simples.",
+        heading: `3 perguntas antes de começar um ${op.planWord}`,
+        items: [
+          "Isso foi pensado para a minha realidade?",
+          "O que muda na minha rotina?",
+          "Como vou saber que está funcionando?",
+        ],
+        closing: "Quando as respostas são claras, decidir fica mais simples.",
       },
     ],
     carousels: [
@@ -597,16 +601,19 @@ export const buildBrandContent = (
         cta: { title: "Quer começar?", sub: `Manda uma mensagem — a ${op.firstStep} é sem compromisso.` },
       },
       {
+        /* Antes este carrossel falava de "imitar concorrentes" e "identidade
+           própria" — tema de marketing. Agora fala da operação da marca. */
         kicker: "GUIA RÁPIDO",
         title: `3 erros comuns em ${subject}`,
         coverSub: "E como evitar cada um.",
         slides: [
           { heading: "Escolher só pelo preço", body: "O barato costuma cobrar duas vezes.", topic: topicAt(3) },
-          { heading: "Falar sem conhecer", body: "Mensagem genérica raramente cria conexão.", topic: topicAt(4) },
-          { heading: "Imitar concorrentes", body: "Sem identidade própria, a marca desaparece.", topic: topicAt(5) },
+          { heading: "Começar sem entender", body: `Sem ${op.firstStep}, qualquer ${op.planWord} é chute.`, topic: topicAt(4) },
+          { heading: "Seguir receita de outro", body: `O que serviu para um ${op.who} pode atrasar você.`, topic: topicAt(5) },
         ],
         cta: { title: "Evite os três", sub: `Fale com ${brand} antes de fechar qualquer coisa.` },
       },
+
       /* Repertório temático extra: sem estes, toda geração devolvia o mesmo
          "passo a passo" — o bloco de carrossel escolhe pelo índice do grupo. */
       {
