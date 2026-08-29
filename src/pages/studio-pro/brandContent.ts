@@ -610,28 +610,44 @@ const strip = (text: string) => text.trim().replace(/\s*[.!?]+$/, "");
  * Aplica um público (nicho ou sub-nicho) sobre o acervo base.
  *
  * REGRA DURA DE DIRECIONAMENTO: a arte precisa CHAMAR o público pela
- * palavra-chave dele ("Dor crônica", "Esportista", "Geração 60+"). Por isso o
- * overlay não é decorativo: ele gera headline, tipografia-herói, listas de
- * medos, listas de valor, carrossel e fechos, todos citando a palavra-chave —
- * e, quando o público é um SUB-NICHO, o acervo base entra apenas como cauda
- * curta para não diluir a comunicação dirigida.
+ * palavra-chave dele ("Dor crônica", "Esportista", "Geração 60+").
+ *
+ * REGRA DE COPY RELACIONAL: quando o lote traz uma `relation`, TODOS os slots
+ * giram em volta do MESMO par (público × medo/desejo × gancho × CTA). Antes cada
+ * slot puxava um medo diferente do acervo e a arte saía desconexa.
  */
-const applyAudience = (base: WorldContent, brand: string, audience: BrandAudience): WorldContent => {
+const applyAudience = (
+  base: WorldContent,
+  brand: string,
+  audience: BrandAudience,
+  relation?: Relation,
+): WorldContent => {
   const who = audience.label.trim();
   const key = audienceKeyword(audience);
   const KEY = key.toUpperCase();
-  const hookList = audienceHooks(audience);
+  const hookList = relation?.hooks?.length ? relation.hooks : audienceHooks(audience);
   const hook = hookList[0];
   /** Alterna entre as variações de gancho para não repetir a mesma abertura. */
   const hk = (i: number) => hookList[i % hookList.length];
-  const pains = (audience.pains ?? []).map(strip);
-  const desires = (audience.desires ?? []).map(strip);
-  const proof = (audience.proof ?? []).map(strip);
-  const cta = audience.cta?.trim() || "Falar com a gente";
+  /** O medo/desejo eleito pela relação vem primeiro em todos os slots. */
+  const lead = (list: string[], chosen?: string) => {
+    const clean = list.map(strip).filter(Boolean);
+    if (!chosen) return clean;
+    const rest = clean.filter((v) => strip(chosen) !== v);
+    return [strip(chosen), ...rest];
+  };
+  const pains = lead(audience.pains ?? [], relation?.pain);
+  const desires = lead(audience.desires ?? [], relation?.desire);
+  const proof = lead(audience.proof ?? [], relation?.proof);
+  const cta = relation?.cta || audience.cta?.trim() || "Falar com a gente";
   const desc = audience.description?.trim();
-  // Sub-nicho = comunicação dirigida: o acervo genérico vira só cauda.
-  const focused = Boolean(audience.parentId?.trim());
-  const tail = <T,>(list: T[]) => (focused ? list.slice(0, 3) : list);
+  /**
+   * Comunicação dirigida: sub-nicho — ou qualquer público com acervo próprio —
+   * reduz o acervo neutro a uma cauda curta, para não diluir a mensagem.
+   */
+  const focused = Boolean(audience.parentId?.trim()) || pains.length + desires.length >= 2;
+  const tail = <T,>(list: T[]) => (focused ? list.slice(0, 2) : list);
+
 
   const headlines = [
     ...pains.slice(0, 3).map((p) => ({ strong: key, rest: `: ${lower1(p)} não precisa ser a sua rotina.` })),
