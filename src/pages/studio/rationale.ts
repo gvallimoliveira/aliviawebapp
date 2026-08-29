@@ -80,12 +80,14 @@ const SENSE: Record<BlockKind, Sense> = {
     job: "apresentar o tema em dois segundos e prender a atenção antes do resto",
   },
   marquee: {
-    format: "faixa de palavras",
-    sees: "uma faixa com palavras do assunto passando em sequência",
-    job: "fixar o vocabulário do tema por repetição, sem exigir leitura atenta",
-    needs: (c) => some(c.marquee),
-    needsLabel: "palavras-chave do assunto",
+    format: "índice numerado",
+    sees:
+      "uma afirmação em cima, abaixo dela uma lista numerada com os pontos do assunto e, no pé, uma linha de fecho",
+    job: "organizar o assunto em tópicos: quem passa o olho entende o escopo sem ler tudo",
+    needs: (c) => some(c.marquee) && some(c.headlines),
+    needsLabel: "tópicos do assunto e uma frase que diga o que a lista significa",
   },
+
   metrics: {
     format: "números",
     sees: "números grandes com o que cada um representa",
