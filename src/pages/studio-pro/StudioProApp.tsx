@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PRODUCT } from "./product";
+import { PLAN_LABELS } from "./plan";
 import { useStudioAccess } from "./useStudioAccess";
 import { useStudioQuota } from "./useStudioQuota";
 import BrandColorFields from "./BrandColorFields";
