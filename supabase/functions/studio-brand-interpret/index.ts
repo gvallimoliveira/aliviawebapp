@@ -662,11 +662,12 @@ Responda SOMENTE com JSON válido neste formato:
     {
       "label": "Nome curto do público",
       "description": "Quem é e em que momento chega",
+      "keyword": "termo curto que a arte grita (obrigatório)",
+      "hook": "abertura em 2ª pessoa começando por 'Você' (obrigatório)",
       "pains": ["5 a 8 dores concretas"],
       "desires": ["5 a 8 desejos"],
       "proof": ["5 a 8 soluções/diferenciais que convencem esse público"],
-      "cta": "Chamada para ação curta"
-
+      "cta": "Chamada para ação curta (obrigatório)"
     }
   ]
 }`;
