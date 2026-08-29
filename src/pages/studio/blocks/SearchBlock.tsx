@@ -63,8 +63,6 @@ const asQuery = (raw: string) =>
     .slice(0, 48);
 
 const SearchBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
-  const prefix = PREFIXES[treatment % PREFIXES.length];
-
   /* Só entram termos de busca reais (dores, diagnósticos, desejos do nicho).
      Nada de headline/frase institucional: ninguém digita isso no Google. */
   const pool = (content.searchQueries ?? [])
@@ -74,8 +72,22 @@ const SearchBlock = ({ content, rng, treatment, format, persona }: BlockProps) =
   const suggestions = rng.shuffle(Array.from(new Set(pool))).slice(0, 4);
   if (suggestions.length < 3) return null;
 
+  /* O texto digitado não é mais fixo: escolhe-se o prefixo que faz sentido com
+     o MAIOR número de sugestões. Se nenhum prefixo específico cobrir todas, o
+     abrangente ("saber mais sobre") assume — é o que sempre dá match. */
+  const scored = PREFIXES.map((p, i) => ({
+    p,
+    hits: suggestions.filter((s) => p.fits(s)).length,
+    rank: (i + treatment) % PREFIXES.length,
+  }));
+  const specific = scored.filter((s) => !s.p.broad && s.hits === suggestions.length);
+  const broad = scored.filter((s) => s.p.broad);
+  const candidates = specific.length ? specific : broad;
+  const prefix = candidates.sort((a, b) => a.rank - b.rank)[0].p.text;
+
   const answer = content.closings[treatment % content.closings.length];
   const dark = treatment % 2 === 1;
+
 
   return (
     <section
