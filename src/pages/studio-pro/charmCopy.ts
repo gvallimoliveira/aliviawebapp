@@ -22,8 +22,10 @@
 import type { WorldContent } from "@/pages/studio/content";
 import { charmCta, charmify, empathyBridge } from "@/pages/studio/charm";
 import { readsWell } from "@/pages/studio/grammar";
+import { isStudioSelfBrand } from "@/pages/studio/persuasion";
 import type { ContentAngle } from "./audiences";
 import type { Relation } from "./relational";
+import { findStudioSelfCharm, type StudioSelfCharmRow } from "./studioSelfCharm";
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const noDot = (text?: string) => clean(text).replace(/\s*[.!?…]+$/, "");
