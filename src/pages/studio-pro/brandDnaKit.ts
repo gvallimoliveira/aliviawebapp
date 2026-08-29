@@ -160,7 +160,18 @@ export type OfferWords = {
   stepsLabel: string;
   /** Fim do ciclo: "alta" (clínico), "renovação" (produto), "conclusão". */
   closingLabel: string;
+  /**
+   * VOCABULÁRIO DE JORNADA — o que a marca de fato conduz.
+   * "Caso" é palavra da saúde: só aparece em marca de atendimento clínico.
+   * Produto/SaaS conduz um "projeto"; programa conduz uma "jornada".
+   */
+  caseWord: string;
+  /** Com determinante: "o seu caso" / "o seu projeto" / "a sua jornada". */
+  yourCase: string;
+  /** Complemento verbal: "conduz um caso" / "trabalha a sua marca". */
+  conductPhrase: string;
 };
+
 
 const hasAny = (text: string, terms: string[]) => terms.some((t) => text.includes(t));
 
