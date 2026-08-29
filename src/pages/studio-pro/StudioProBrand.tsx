@@ -42,6 +42,8 @@ import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
 import StudioArtEditor from "./StudioArtEditor";
 import { isArtSnapshot } from "./artSnapshot";
+import { deliver } from "@/pages/studio/exportImage";
+
 import {
   answeredCount,
   formatBriefAnswers,
@@ -520,7 +522,11 @@ const StudioProBrand = () => {
     toast.success(next ? "Favoritada — vira referência das próximas artes." : "Removida das referências.");
   };
 
-  /** Baixa o PNG guardado no momento em que a arte foi salva. */
+  /**
+   * Baixa o PNG guardado no momento em que a arte foi salva usando exatamente o
+   * mesmo caminho de entrega da página de criação: no celular abre o pop-up de
+   * compartilhar (Salvar imagem / Instagram); no desktop baixa o arquivo.
+   */
   const downloadArt = async (art: Creation) => {
     if (!art.png_path) {
       toast.error("Esta arte foi salva antes do PNG guardado. Gere e salve novamente.");
@@ -531,27 +537,31 @@ const StudioProBrand = () => {
       toast.error("Não foi possível baixar o PNG.");
       return;
     }
-    const url = URL.createObjectURL(data);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = art.png_path.split("/").pop() ?? "arte.png";
-    a.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+    const name = art.png_path.split("/").pop() ?? "arte.png";
+    try {
+      const shared = await deliver(data, name, "image/png");
+      toast.success(shared ? "Arte pronta para compartilhar" : "Arte exportada em PNG");
+    } catch (err) {
+      console.error("[studio-pro] deliver png", err);
+      toast.error("Não foi possível baixar o PNG.");
+    }
   };
 
-  const downloadCaption = (art: Creation) => {
+  const downloadCaption = async (art: Creation) => {
     if (!art.caption) {
       toast.error("Esta arte não tem legenda salva.");
       return;
     }
     const blob = new Blob([art.caption], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(art.headline ?? "legenda").slice(0, 40).replace(/\s+/g, "-").toLowerCase()}.txt`;
-    a.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+    const name = `${(art.headline ?? "legenda").slice(0, 40).replace(/\s+/g, "-").toLowerCase()}.txt`;
+    try {
+      const shared = await deliver(blob, name, "text/plain");
+      toast.success(shared ? "Legenda pronta para compartilhar" : "Legenda baixada em .txt");
+    } catch {
+      toast.error("Não foi possível baixar a legenda.");
+    }
   };
+
 
   const copyCaption = async (art: Creation) => {
     if (!art.caption) return;
@@ -793,7 +803,7 @@ const StudioProBrand = () => {
                           size="sm"
                           variant="outline"
                           className="h-7 rounded-full px-2 text-[11px]"
-                          onClick={() => downloadArt(art)}
+                          onClick={() => void downloadArt(art)}
                           title="Baixar PNG em alta"
                         >
                           <Download className="mr-1 h-3.5 w-3.5" />
@@ -803,7 +813,7 @@ const StudioProBrand = () => {
                           size="sm"
                           variant="outline"
                           className="h-7 rounded-full px-2 text-[11px]"
-                          onClick={() => downloadCaption(art)}
+                          onClick={() => void downloadCaption(art)}
                           title="Baixar legenda (.txt)"
                         >
                           <FileText className="mr-1 h-3.5 w-3.5" />
