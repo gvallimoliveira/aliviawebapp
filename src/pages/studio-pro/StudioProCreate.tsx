@@ -1272,11 +1272,12 @@ const StudioProCreate = ({
                   size="sm"
                   variant="ghost"
                   className="h-8 rounded-full text-xs"
-                  onClick={() => setWhyOpen(whyOpen === first.index ? null : first.index)}
+                  onClick={() => openWhy(first.index)}
                 >
                   <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
                   Por que esta arte
                 </Button>
+
                 {editing === first.index ? (
                   <>
                     <Button
