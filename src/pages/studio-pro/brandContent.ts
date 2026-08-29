@@ -887,29 +887,41 @@ const applyGlobal = (
 /**
  * Ângulo estratégico: reordena o acervo para privilegiar a intenção do post
  * (informar, nomear a dor, gerar desejo ou vender).
+ *
+ * ESCRITA CHARMOSA: nos ângulos de venda, dor e desejo o acervo passa por
+ * `applyCharm` (empatia estruturada, foco no "você", ritmo com remate seco,
+ * antecipação e convite seguro). "Informar" fica de fora de propósito.
  */
-const applyAngle = (content: WorldContent, angle: ContentAngle): WorldContent => {
+const applyAngle = (content: WorldContent, angle: ContentAngle, relation?: Relation): WorldContent => {
   const rotate = <T,>(list: T[], n: number): T[] =>
     list.length > 1 ? [...list.slice(n % list.length), ...list.slice(0, n % list.length)] : list;
 
   switch (angle) {
     case "dor":
-      return { ...content, kickers: ["ISSO É COM VOCÊ", ...content.kickers] };
+      return applyCharm({ ...content, kickers: ["ISSO É COM VOCÊ", ...content.kickers] }, angle, relation);
     case "desejo":
-      return {
-        ...content,
-        kickers: ["IMAGINA ASSIM", ...content.kickers],
-        headlines: rotate(content.headlines, 1),
-        kinetic: rotate(content.kinetic, 1),
-      };
+      return applyCharm(
+        {
+          ...content,
+          kickers: ["IMAGINA ASSIM", ...content.kickers],
+          headlines: rotate(content.headlines, 1),
+          kinetic: rotate(content.kinetic, 1),
+        },
+        angle,
+        relation,
+      );
     case "venda":
-      return {
-        ...content,
-        kickers: ["AGENDA ABERTA", ...content.kickers],
-        headlines: rotate(content.headlines, 2),
-        closings: rotate(content.closings, 0),
-        sales: { ...content.sales, ctas: content.sales.ctas },
-      };
+      return applyCharm(
+        {
+          ...content,
+          kickers: ["AGENDA ABERTA", ...content.kickers],
+          headlines: rotate(content.headlines, 2),
+          closings: rotate(content.closings, 0),
+          sales: { ...content.sales, ctas: content.sales.ctas },
+        },
+        angle,
+        relation,
+      );
     case "informar":
     default:
       return {
@@ -919,6 +931,7 @@ const applyAngle = (content: WorldContent, angle: ContentAngle): WorldContent =>
       };
   }
 };
+
 
 export type SegmentContentInput = {
   kit: BrandKit;
