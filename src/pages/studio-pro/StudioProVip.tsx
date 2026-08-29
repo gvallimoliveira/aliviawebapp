@@ -86,7 +86,7 @@ const StudioProVip = () => {
     const { error } = await supabase.from("studio_granted_access").upsert(
       {
         email: mail,
-        plan: "solo",
+        plan,
         granted_by: user?.id ?? null,
         note: note.trim() || null,
         revoked_at: null,
