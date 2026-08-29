@@ -648,7 +648,7 @@ export const buildBrandContent = (
     ];
   }
 
-
+  const merged: WorldContent = {
     ...generic,
     kickers: prefer(dnaPools.kickers, generic.kickers),
     headlines: prefer(dnaPools.headlines, generic.headlines),
