@@ -375,9 +375,13 @@ const StudioProCreate = ({
       tone: brand.tone,
       description: brand.description,
       keywords: brand.topics,
+      positioning: brand.positioning,
+      /** Briefing declarado pelo cliente: fonte primária do texto das artes. */
+      briefAnswers: brand.brief_answers,
     }),
-    [brand.name, brand.niche, brand.tone, brand.description, brand.topics],
+    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers],
   );
+
 
   /**
    * Mundo Aliv.iA correspondente ao público ativo. Estruturalmente a marca tem
