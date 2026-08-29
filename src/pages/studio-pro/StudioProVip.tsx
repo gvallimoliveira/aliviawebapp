@@ -102,7 +102,7 @@ const StudioProVip = () => {
     }
     setEmail("");
     setNote("");
-    toast.success("Acesso cortesia concedido (plano Solo).");
+    toast.success(`Acesso cortesia concedido (plano ${PLAN_LABELS[plan]}).`);
     void load();
   };
 
