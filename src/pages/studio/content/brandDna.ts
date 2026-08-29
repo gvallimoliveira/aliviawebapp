@@ -22,6 +22,34 @@ export const BRAND_DNA = {
   essence:
     "Tecnologia que organiza o caso inteiro para o fisioterapeuta fazer o que só ele faz: raciocinar, decidir e tratar.",
 
+  /**
+   * DIFERENCIAL CENTRAL (aprovado ago/2026) — precisa aparecer em toda peça
+   * institucional e em qualquer copy que fale de "IA". O Aliv.iA não usa IA
+   * genérica de chat: o motor foi treinado e calibrado com competências,
+   * raciocínio e critérios do fisioterapeuta.
+   */
+  differentiator: {
+    claim: "IA especializada em fisioterapia — não é IA genérica.",
+    why: [
+      "Treinada com o raciocínio clínico do fisioterapeuta, não com respostas de internet",
+      "Integra método próprio: STEPS, D.I.F.I e triagem de sinais de alerta",
+      "Cada hipótese vem com justificativa clínica, não com texto genérico",
+      "Conhece testes, medidas e progressão de carga — vocabulário da profissão",
+      "Construída por fisioterapeuta, revisada contra evidência aplicada ao caso",
+    ],
+    /** Como dizer isso na arte, sem soar propaganda de tecnologia. */
+    lines: [
+      "IA especializada em fisioterapia. Não é IA genérica.",
+      "Uma IA que aprendeu a raciocinar como fisioterapeuta.",
+      "Não é chatbot com jaleco: é raciocínio clínico estruturado.",
+      "IA treinada com as competências de quem trata, não com achismo da internet.",
+      "Método de fisioterapeuta dentro da tecnologia — não o contrário.",
+    ],
+    /** Limite: especialização nunca vira substituição do profissional. */
+    rule: "Afirmar a especialização sem prometer autonomia: a IA é especialista em organizar e sugerir; a decisão continua do fisioterapeuta.",
+  },
+
+
   /** O que se vende, para quem, contra qual dor — por mundo. */
   positioning: {
     pro: {

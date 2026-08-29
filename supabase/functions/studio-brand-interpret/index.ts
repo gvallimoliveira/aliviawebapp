@@ -634,6 +634,7 @@ Regras:
 - Cada público precisa de 5 a 8 dores, 5 a 8 desejos e 5 a 8 soluções/diferenciais. Frases curtas (até ~70 caracteres), concretas, uma ideia por linha.
 - IMPORTANTE: se o produto também é usado pelo consumidor final (paciente, cliente, aluno, usuário leigo), esse público NUNCA pode ficar de fora — inclua-o junto dos públicos profissionais/B2B.
 - Se a marca já tem públicos cadastrados no briefing, mantenha-os (pode refinar o texto), não os substitua por outros.
+- REGRA DURA (nunca deixar vazio): TODO público precisa de "keyword", "hook" e "cta". "keyword" é o termo que a arte vai gritar para a pessoa se reconhecer (2 a 3 palavras, ex.: "Dor crônica", "Pós-operatório", "Geração 60+"), nunca o nome da marca nem uma frase. "hook" é uma abertura em 2ª pessoa, começando por "Você", de até 90 caracteres, descrevendo o momento concreto dessa pessoa (ex.: "Você que saiu da cirurgia e não sabe o que pode fazer"). "cta" é um comando curto de até 40 caracteres, no imperativo. Sem esses três campos o público está incompleto e a resposta é inválida.
 - Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o problema estrutural do mercado, a tese da marca, a amplitude de uso e o que a separa das alternativas.
 - "description": 2 a 3 frases densas — o que é, para quem, o que entrega de concreto.
 - Escreva também um "tagline": UMA frase curta (até 80 caracteres) que resume a marca e pode aparecer dentro das artes.
@@ -661,11 +662,12 @@ Responda SOMENTE com JSON válido neste formato:
     {
       "label": "Nome curto do público",
       "description": "Quem é e em que momento chega",
+      "keyword": "termo curto que a arte grita (obrigatório)",
+      "hook": "abertura em 2ª pessoa começando por 'Você' (obrigatório)",
       "pains": ["5 a 8 dores concretas"],
       "desires": ["5 a 8 desejos"],
       "proof": ["5 a 8 soluções/diferenciais que convencem esse público"],
-      "cta": "Chamada para ação curta"
-
+      "cta": "Chamada para ação curta (obrigatório)"
     }
   ]
 }`;
@@ -728,19 +730,48 @@ Responda SOMENTE com JSON válido neste formato:
       return json({ error: "Não foi possível interpretar a resposta da IA." }, 502);
     }
 
+    /**
+     * REGRA GLOBAL: palavra-chave, gancho e CTA nunca ficam vazios. A IA às
+     * vezes devolve só o CTA (ou nada) e a arte sai genérica — então o servidor
+     * deriva os campos que faltam a partir do label/descrição do público.
+     */
+    const cleanKeyword = (value: unknown, label: string) => {
+      const own = String(value ?? "").trim().replace(/[."]+$/g, "");
+      if (own && own.length <= 32 && own.split(/\s+/).length <= 4) return own;
+      return (
+        label
+          .trim()
+          .replace(/^(pacientes?|clientes?|alunos?|praticantes?)\s+(com|em|no|na|de|do|da)\s+/i, "")
+          .trim() || label.trim()
+      ).slice(0, 32);
+    };
+    const cleanHook = (value: unknown, keyword: string) => {
+      const own = String(value ?? "").trim();
+      if (own.length >= 12) return own.slice(0, 110);
+      return `Você que convive com ${keyword.toLowerCase()}`.slice(0, 110);
+    };
+    const cleanCta = (value: unknown, keyword: string) => {
+      const own = String(value ?? "").trim();
+      if (own.length >= 4) return own.slice(0, 60);
+      return `Fale sobre ${keyword.toLowerCase()}`.slice(0, 60);
+    };
+
     const audiences = (Array.isArray(parsed.audiences) ? parsed.audiences : [])
       .map((item: unknown) => {
         const row = (item ?? {}) as Record<string, unknown>;
         const label = String(row.label ?? "").trim();
         if (!label) return null;
+        const keyword = cleanKeyword(row.keyword, label);
         return {
           id: slugify(label),
           label: label.slice(0, 40),
           description: String(row.description ?? "").trim().slice(0, 300) || undefined,
+          keyword,
+          hook: cleanHook(row.hook, keyword),
           pains: strList(row.pains, 8),
           desires: strList(row.desires, 8),
           proof: strList(row.proof, 8),
-          cta: String(row.cta ?? "").trim().slice(0, 60) || undefined,
+          cta: cleanCta(row.cta, keyword),
         };
       })
       .filter(Boolean)
@@ -762,7 +793,19 @@ Responda SOMENTE com JSON válido neste formato:
       const prev = byId.get(id);
       byId.set(id, prev ? { ...prev, ...a } : a);
     }
-    const mergedAudiences = Array.from(byId.values()).slice(0, 12);
+    /** Público antigo sem keyword/hook/cta também é completado aqui. */
+    const mergedAudiences = Array.from(byId.values())
+      .slice(0, 12)
+      .map((a) => {
+        const label = String((a as Record<string, unknown>).label ?? "").trim();
+        const keyword = cleanKeyword((a as Record<string, unknown>).keyword, label);
+        return {
+          ...a,
+          keyword,
+          hook: cleanHook((a as Record<string, unknown>).hook, keyword),
+          cta: cleanCta((a as Record<string, unknown>).cta, keyword),
+        };
+      });
 
     /**
      * Cores do site: só aplicadas quando o cliente pediu (`applyColors`) e a IA

@@ -37,6 +37,7 @@ const patient: WorldContent = {
   subs: [
     "Avaliação guiada em poucos minutos, direto do celular.",
     "Feito por fisioterapeuta, com tecnologia por trás.",
+    "IA especializada em fisioterapia — não é IA genérica de internet.",
     "Entender é o primeiro alívio.",
     "Você responde, o Aliv.iA organiza, seu fisioterapeuta decide.",
     "Sem consultório, sem espera, sem palpite de internet.",
