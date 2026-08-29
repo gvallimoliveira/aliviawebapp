@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Download, FileText, Images, LayoutGrid, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
+import { Camera, Download, FileText, Images, LayoutGrid, Lightbulb, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -501,6 +501,8 @@ const StudioProCreate = ({
 
   const audit = useMemo(() => enforceRationale(composedBlocks, rationaleCtx), [composedBlocks, rationaleCtx]);
   const blocks = audit.blocks;
+  /** Índice da arte com a leitura de sentido aberta. */
+  const [whyOpen, setWhyOpen] = useState<number | null>(null);
 
   /**
    * AGRUPAMENTO DE ENTREGA.
@@ -1115,6 +1117,15 @@ const StudioProCreate = ({
                 </Button>
                 <Button
                   size="sm"
+                  variant="ghost"
+                  className="h-8 rounded-full text-xs"
+                  onClick={() => setWhyOpen(whyOpen === first.index ? null : first.index)}
+                >
+                  <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
+                  Por que esta arte
+                </Button>
+                <Button
+                  size="sm"
                   variant={isSaved ? "secondary" : "default"}
                   className="h-8 rounded-full text-xs"
                   disabled={isSaved || busy === `save-${first.index}`}
@@ -1136,6 +1147,43 @@ const StudioProCreate = ({
                       : "Salvar na marca"}
                 </Button>
               </div>
+
+              {/* Leitura de sentido: a explicação que o motor consegue dar da arte. */}
+              {whyOpen === first.index && (() => {
+                const why = audit.rationales[first.index];
+                if (!why) return null;
+                return (
+                  <div className="mx-auto mt-2 max-w-xl rounded-2xl border border-border bg-card p-4 text-left">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Formato: {why.format}
+                    </p>
+                    <ul className="mt-2 space-y-1.5 text-xs text-foreground">
+                      <li>
+                        <strong>O que se vê:</strong> {why.elements}
+                      </li>
+                      <li>
+                        <strong>O que diz:</strong> {why.message}
+                      </li>
+                      <li>
+                        <strong>O que quer despertar:</strong> {why.effect}
+                      </li>
+                    </ul>
+                    {why.gaps.length > 0 && (
+                      <p className="mt-2 rounded-xl bg-muted/60 p-2 text-[11px] text-muted-foreground">
+                        Ainda falta para esta arte ficar 100%: {why.gaps.join("; ")}.
+                      </p>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="mt-2 h-7 rounded-full px-2 text-[11px]"
+                      onClick={() => void copyCaption(rationaleText(why))}
+                    >
+                      Copiar explicação
+                    </Button>
+                  </div>
+                );
+              })()}
             </div>
           );
         })}
