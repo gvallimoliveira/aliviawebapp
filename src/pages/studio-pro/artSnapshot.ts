@@ -227,3 +227,27 @@ export const snapshotStyle = (snapshot: ArtSnapshot): React.CSSProperties => {
   });
   return style as React.CSSProperties;
 };
+
+/**
+ * Regrava o HTML do instantâneo (edição pela galeria) nos MESMOS arquivos, para
+ * que a arte salva continue sendo a mesma linha da galeria — apenas com o texto
+ * ajustado e/ou outro formato de saída.
+ */
+export const saveArtSnapshotHtml = async (
+  snapshot: ArtSnapshot,
+  htmlBySlide: string[],
+  format: string,
+): Promise<ArtSnapshot> => {
+  for (let i = 0; i < snapshot.slides.length; i += 1) {
+    const html = htmlBySlide[i];
+    if (!html) continue;
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .upload(snapshot.slides[i].storage_path, new Blob([html], { type: "text/html" }), {
+        contentType: "text/html",
+        upsert: true,
+      });
+    if (error) throw error;
+  }
+  return { ...snapshot, format };
+};
