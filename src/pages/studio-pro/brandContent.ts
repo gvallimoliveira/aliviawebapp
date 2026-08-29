@@ -646,7 +646,120 @@ export const buildBrandContent = (
       },
       ...generic.triptychs.slice(1),
     ];
+    /**
+     * Os blocos abaixo vinham do acervo neutro com temática de consultório
+     * ("revisão com data marcada", "quem começa é quem termina", "consulta
+     * perdida"). No Studio o diferencial é de SOFTWARE: kit de marca, público
+     * declarado, lote de artes, edição sem crédito.
+     */
+    generic.features = [
+      {
+        tag: "KIT DE MARCA",
+        title: "Sua identidade entra uma vez e vale para tudo",
+        description: "Cor, tipografia e logo ficam salvos e assinam cada arte gerada depois.",
+        topic: topicAt(0),
+        headline: "Nada de recomeçar do zero",
+      },
+      {
+        tag: "PÚBLICO DECLARADO",
+        title: "O texto sai escrito para quem você quer atingir",
+        description: "Cada público tem palavra-chave, medo e desejo — o texto nasce desse par.",
+        topic: topicAt(2),
+        headline: "Post que chama pelo nome",
+      },
+      {
+        tag: "LOTE PRONTO",
+        title: "Uma geração devolve um feed inteiro",
+        description: "Posts, carrossel e story saem juntos, em 1:1, 4:5 e vertical.",
+        topic: topicAt(3),
+        headline: "Semana de conteúdo em minutos",
+      },
+      {
+        tag: "EDIÇÃO LIVRE",
+        title: "Você reescreve o texto na própria arte",
+        description: "Ajuste palavra por palavra e baixe o PNG em alta sem gastar geração.",
+        topic: topicAt(4),
+        headline: "A última palavra é sua",
+      },
+    ];
+    generic.compare = [
+      {
+        title: "Antes e depois de ter um kit de marca",
+        before: ["Cada post com uma cor diferente", "Legenda escrita na pressa", "Feed sem assinatura", "Página em branco toda semana"],
+        after: ["Paleta e fonte fixas", "Texto escrito para o público", "Logo em toda arte", "Lote pronto para publicar"],
+      },
+      {
+        title: "Modelo genérico x arte da sua marca",
+        before: ["Template que todo mundo usa", "Texto que serve para qualquer um"],
+        after: ["Layout montado com a sua identidade", "Texto vindo do seu briefing"],
+      },
+    ];
+    generic.stats = [
+      {
+        heading: "O que uma geração devolve",
+        items: [
+          { value: "1", label: "briefing da marca", note: "responder uma vez basta" },
+          { value: "3", label: "formatos por arte", note: "1:1, 4:5 e vertical" },
+          { value: "0", label: "crédito gasto para editar", note: "o ajuste de texto é livre" },
+        ],
+      },
+      {
+        heading: "O que muda na sua semana",
+        items: [
+          { value: "-1", label: "página em branco", note: "o texto já vem escrito" },
+          { value: "+1", label: "feed com assinatura", note: "cor, fonte e logo constantes" },
+          { value: "0", label: "post genérico", note: "cada arte fala com um público" },
+        ],
+      },
+    ];
+    generic.metrics = [
+      [
+        { value: 1, label: "briefing responde por toda a marca" },
+        { value: 3, label: "formatos gerados por arte" },
+        { value: 5, label: "passos do formulário ao post" },
+      ],
+    ];
+    generic.lists = [
+      {
+        heading: "4 sinais de que o seu feed pede um kit de marca",
+        items: [
+          "Cada post parece de uma empresa diferente",
+          "A legenda é escrita minutos antes de publicar",
+          "Ninguém reconhece a arte sem ler o @",
+          "O conteúdo fala com todo mundo e com ninguém",
+        ],
+        closing: `${brand} resolve os quatro no formulário da marca.`,
+      },
+      {
+        heading: "3 perguntas antes de publicar",
+        items: ["Isso parece com a minha marca?", "Alguém específico vai se reconhecer aqui?", "O próximo passo está claro?"],
+        closing: "Quando as três respostas são sim, o post está pronto.",
+      },
+    ];
+    generic.stories = [
+      {
+        kicker: "ACONTECE TODA SEMANA",
+        title: "A marca que travava na hora de postar",
+        beats: [
+          "A ideia existia, o post não saía.",
+          "Cada arte era montada do zero, com cor diferente.",
+          "O texto ficava genérico para não errar.",
+        ],
+        turn: "Com o briefing respondido, o texto passou a nascer do que a marca já dizia.",
+        moral: "Marca declarada por escrito rende conteúdo o ano inteiro.",
+      },
+    ];
+    generic.quotes = [
+      { text: "“Respondi o formulário uma vez e o feed ganhou cara.”" },
+      { text: "“Pela primeira vez o texto do post falava com o meu público.”" },
+      { text: "“Editei a frase na própria arte e publiquei em seguida.”" },
+    ];
+    generic.marquee = [
+      [brand, "kit de marca", "público", "lote", "publicar"],
+      ["briefing", "paleta", "texto", "arte"],
+    ];
   }
+
 
   const merged: WorldContent = {
     ...generic,
