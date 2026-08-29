@@ -13,7 +13,7 @@ import {
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
 import { GLOBAL_SEGMENT, audienceHooks, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
-import { buildBrandDna, isDnaEmpty, offerWords, type BrandDna } from "./brandDnaKit";
+import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
 import { applyCharm } from "./charmCopy";
 import { condensePhrase } from "./textFit";
