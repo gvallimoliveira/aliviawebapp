@@ -71,6 +71,7 @@ import {
   type ArtTextEdits,
 } from "@/pages/studio/artTextEdit";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
+import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
 import AutoFit from "@/pages/studio/AutoFit";
