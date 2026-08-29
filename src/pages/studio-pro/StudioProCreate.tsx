@@ -885,6 +885,20 @@ const StudioProCreate = ({
         console.warn("[studio-pro] png upload", error);
       }
     }
+    /**
+     * Instantâneo da arte pronta: é o que a edição pela galeria reabre. Sem ele
+     * a edição teria que RECONSTRUIR a arte pelo motor textual — e devolveria
+     * outra arte, não esta.
+     */
+    const snapshot = node
+      ? await captureArtSnapshot({
+          userId: auth.user.id,
+          brandId: brand.id,
+          key: `${seed}-${String(index + 1).padStart(2, "0")}-${kind}`,
+          format,
+          nodes: [node],
+        })
+      : null;
     const { error } = await supabase.from("studio_creations").insert({
       user_id: auth.user.id,
       brand_id: brand.id,
@@ -899,6 +913,8 @@ const StudioProCreate = ({
       composition: JSON.parse(JSON.stringify(blocks)),
       /** Texto exato exibido na arte: é o que a edição pela galeria reabre. */
       text_edits: { 0: node ? readArtText(node) : {} },
+      snapshot,
+
 
       segment: activeSegment,
       angle,
