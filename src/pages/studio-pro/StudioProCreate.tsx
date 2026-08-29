@@ -61,7 +61,7 @@ import {
   resolveAudience,
   type ContentAngle,
 } from "./audiences";
-import { enforceRationale, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
+import { enforceRationale, explainArt, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
 import { hasBannedJargon } from "@/pages/studio/persuasion";
 import {
   applyArtText,
@@ -151,6 +151,15 @@ const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "1x1", label: "Post 1:1" },
   { id: "free", label: "Livre" },
 ];
+
+/** Nome do formato em linguagem comum, usado na explicação de cada arte. */
+const FORMAT_LABEL: Record<StudioFormat, string> = {
+  "9x16": "story vertical 9:16",
+  "4x5": "post de feed 4:5",
+  "1x1": "post quadrado 1:1",
+  free: "altura livre",
+};
+
 
 
 /** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
@@ -545,6 +554,40 @@ const StudioProCreate = ({
 
   const artNode = (index: number) =>
     document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
+
+  /**
+   * EXPLICAÇÃO PERSONALIZADA DE CADA ARTE.
+   *
+   * O filtro (`enforceRationale`) julga o formato, mas a explicação mostrada ao
+   * cliente precisa citar ESTA arte: as frases que foram realmente renderizadas
+   * (lidas do próprio nó), o arranjo sorteado, o movimento, o formato de saída e
+   * a posição dela na leva. Sem isso a leitura sairia igual para toda arte do
+   * mesmo tipo.
+   */
+  const [whyCopy, setWhyCopy] = useState<Record<number, string[]>>({});
+
+  const openWhy = (index: number) => {
+    if (whyOpen === index) {
+      setWhyOpen(null);
+      return;
+    }
+    const node = artNode(index);
+    if (node) {
+      const texts = Object.values(readArtText(node));
+      setWhyCopy((prev) => ({ ...prev, [index]: texts }));
+    }
+    setWhyOpen(index);
+  };
+
+  const explainWhy = (index: number, block: ComposedBlock) =>
+    explainArt(block, rationaleCtx, {
+      index,
+      total: blocks.length,
+      copy: whyCopy[index],
+      formatLabel: FORMAT_LABEL[format],
+      personaLabel: persona.name,
+    });
+
 
   /** Reaplica as edições depois de qualquer re-render das artes. */
   useEffect(() => {
@@ -1272,11 +1315,12 @@ const StudioProCreate = ({
                   size="sm"
                   variant="ghost"
                   className="h-8 rounded-full text-xs"
-                  onClick={() => setWhyOpen(whyOpen === first.index ? null : first.index)}
+                  onClick={() => openWhy(first.index)}
                 >
                   <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
                   Por que esta arte
                 </Button>
+
                 {editing === first.index ? (
                   <>
                     <Button
@@ -1344,8 +1388,9 @@ const StudioProCreate = ({
 
               {/* Leitura de sentido: a explicação que o motor consegue dar da arte. */}
               {whyOpen === first.index && (() => {
-                const why = audit.rationales[first.index];
+                const why = explainWhy(first.index, first.block);
                 if (!why) return null;
+
                 return (
                   <div className="mx-auto mt-2 max-w-xl rounded-2xl border border-border bg-card p-4 text-left">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
