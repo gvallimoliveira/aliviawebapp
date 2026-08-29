@@ -252,7 +252,7 @@ const BrandAssetsFields = ({
       </div>
 
       {/* ---------- Tipografia ---------- */}
-      <div className="border-t border-border pt-4">
+      <div className={shows("font") ? divider("font") : "hidden"}>
         <p className="text-sm font-semibold">Tipografia da marca</p>
         <p className="text-xs text-muted-foreground">
           Aplicada em todas as artes desta marca. A IA também sugere a fonte quando ela está no manual.
