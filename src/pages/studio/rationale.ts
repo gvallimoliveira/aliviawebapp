@@ -18,20 +18,43 @@ import type { BlockKind, ComposedBlock } from "./composePage";
 import type { WorldContent } from "./content/types";
 import { hasBannedJargon } from "./persuasion";
 
-/** Explicação de uma arte, do jeito que se contaria para um leigo. */
+/**
+ * Leitura interpretativa de uma arte, em quatro dimensões:
+ *   1. contexto da marca (INEGOCIÁVEL — vem do manual ou do formulário de marca),
+ *   2. público-alvo,
+ *   3. objetivo do lote (venda / desejo / dor / visão 360),
+ *   4. a arte em si (estética e texto).
+ *
+ * A arte só passa quando a dimensão 1 fecha E pelo menos 2 das outras 3 fecham.
+ */
 export type ArtRationale = {
   kind: BlockKind;
   /** Nome do formato em linguagem comum ("cartaz de frase", "lista numerada"). */
   format: string;
-  /** O que a pessoa vê na arte. */
-  elements: string;
-  /** O que a arte diz, com o público e a palavra-chave reais da marca. */
-  message: string;
-  /** O que a arte quer despertar em quem lê. */
-  effect: string;
-  /** Motivos que impedem a explicação de fechar. Vazio = arte aprovada. */
+  /** Como esta arte se apoia no contexto da marca (obrigatório). */
+  brandRead: string;
+  /** Como esta arte conversa com o público ativo. */
+  audienceRead: string;
+  /** Como esta arte serve ao objetivo do lote. */
+  objectiveRead: string;
+  /** Leitura estética e textual da arte concreta. */
+  artRead: string;
+  /** Veredito em uma linha: o que fecha e o que não fecha. */
+  verdict: string;
+  /** Motivos que impedem a leitura de fechar. Vazio = arte aprovada. */
   gaps: string[];
   ok: boolean;
+};
+
+/** Material do manual/formulário da marca — base inegociável da interpretação. */
+export type BrandContext = {
+  niche?: string | null;
+  tone?: string | null;
+  description?: string | null;
+  positioning?: string | null;
+  topics?: string[] | null;
+  /** Quantas perguntas do formulário de marca estão respondidas. */
+  briefAnswered?: number;
 };
 
 /** Contexto que o filtro precisa para julgar a arte. */
@@ -50,7 +73,10 @@ export type RationaleContext = {
   /** Quantidade de fotos do acervo disponíveis para esta marca. */
   photoCount: number;
   brandName: string;
+  /** Manual/formulário da marca. Sem isso nenhuma arte fecha a leitura. */
+  brand?: BrandContext;
 };
+
 
 type Sense = {
   /** Nome do formato para leigo. */
