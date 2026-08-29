@@ -172,9 +172,25 @@ const StudioProVip = () => {
                 placeholder="Ex.: parceria, teste"
               />
             </div>
+            <div className="sm:col-span-2">
+              <Label htmlFor="grant-plan">Plano concedido</Label>
+              <Select value={plan} onValueChange={(v) => setPlan(v as Exclude<StudioPlan, "free">)}>
+                <SelectTrigger id="grant-plan">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {GRANTABLE_PLANS.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {PLAN_LABELS[p]} · {PLAN_LIMITS[p].brands}{" "}
+                      {PLAN_LIMITS[p].brands === 1 ? "marca" : "marcas"} · {PLAN_LIMITS[p].credits} gerações
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button onClick={grant} disabled={saving} className="rounded-full sm:col-span-2">
               {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Plus className="mr-1.5 h-4 w-4" />}
-              Conceder acesso Solo
+              Conceder acesso {PLAN_LABELS[plan]}
             </Button>
           </div>
         </section>
