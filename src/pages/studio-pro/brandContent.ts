@@ -509,7 +509,7 @@ export const buildBrandContent = (
 
     stories: [
       {
-        kicker: "CLIENTE REAL, NOME PROTEGIDO",
+        kicker: `${op.who.toUpperCase()} REAL, NOME PROTEGIDO`,
         title: "Ela chegou depois de tentar soluções genéricas",
         beats: [
           "As opções pareciam iguais.",
@@ -517,7 +517,7 @@ export const buildBrandContent = (
           "Na terceira tentativa, encontrou uma proposta feita para seu contexto.",
         ],
         turn: "Foi a primeira vez que alguém explicou o porquê.",
-        moral: "Entender o contexto vem antes de propor qualquer conduta.",
+        moral: `Entender o contexto vem antes de propor qualquer ${op.planWord}.`,
       },
       {
         kicker: "ACONTECE TODA SEMANA",
@@ -533,10 +533,10 @@ export const buildBrandContent = (
         items: [
           "A orientação poderia servir para qualquer pessoa",
           "Ninguém explicou por que esse caminho e não outro",
-          "Cada consulta recomeça do zero",
+          `Cada ${op.encounterWord} recomeça do zero`,
           "A chamada não deixa claro o próximo passo",
         ],
-        closing: `${brand} trata os quatro na primeira conversa.`,
+        closing: `${brand} trata os quatro na ${op.firstStep}.`,
       },
       {
         heading: "3 perguntas antes de escolher uma solução",
@@ -550,15 +550,15 @@ export const buildBrandContent = (
         title: `Como ${brand} ${offer.conductPhrase}`,
         coverSub: `Como ${brand} ${offer.conductPhrase}, passo a passo.`,
         slides: [
-          { heading: "1. Conversa", body: "Entendemos o cenário antes de propor qualquer coisa.", topic: topicAt(0) },
-          { heading: "2. Plano", body: `O caminho de ${offer.yourCase} fica por escrito.`, topic: topicAt(1) },
-          { heading: "3. Revisão", body: "O que avançou fica; o que não avançou muda.", topic: topicAt(2) },
+          { heading: `1. ${cap(op.firstStep)}`, body: "Entendemos o cenário antes de propor qualquer coisa.", topic: topicAt(0) },
+          { heading: `2. ${cap(op.planWord)}`, body: `O caminho de ${offer.yourCase} fica por escrito.`, topic: topicAt(1) },
+          { heading: `3. ${cap(op.reviewWord)}`, body: "O que avançou fica; o que não avançou muda.", topic: topicAt(2) },
         ],
-        cta: { title: "Quer começar?", sub: "Manda uma mensagem — a primeira conversa é sem compromisso." },
+        cta: { title: "Quer começar?", sub: `Manda uma mensagem — a ${op.firstStep} é sem compromisso.` },
       },
       {
         kicker: "GUIA RÁPIDO",
-        title: `3 erros comuns em ${niche}`,
+        title: `3 erros comuns em ${subject}`,
         coverSub: "E como evitar cada um.",
         slides: [
           { heading: "Escolher só pelo preço", body: "O barato costuma cobrar duas vezes.", topic: topicAt(3) },
@@ -571,15 +571,15 @@ export const buildBrandContent = (
     sales: {
       audience: niche,
       proofs: [
-        "O plano é montado depois da primeira conversa",
-        `Quem atende acompanha ${offer.yourCase} do início ao fim`,
-        "Proposta por escrito, com data de revisão",
+        `O ${op.planWord} é montado depois da ${op.firstStep}`,
+        `Quem conduz acompanha ${offer.yourCase} do início ao fim`,
+        `Proposta por escrito, com data de ${op.reviewWord}`,
       ],
       objections: [
         "Não é mais caro: é previsível.",
-        "Não precisa decidir hoje — a primeira conversa é sem compromisso.",
+        `Não precisa decidir hoje — a ${op.firstStep} é sem compromisso.`,
       ],
-      offers: ["Primeira conversa gratuita", "Agenda limitada por mês para manter o padrão"],
+      offers: [`${cap(op.firstStep)} sem custo`, "Agenda limitada por mês para manter o padrão"],
       ctas: ["Chama no direct", "Manda mensagem", "Comenta aqui que eu te chamo"],
       hashtags: [brand.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), niche.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()],
     },
