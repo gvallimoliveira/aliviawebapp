@@ -20,11 +20,13 @@ Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário en
 LGPD: proibido script de rastreamento/session replay (Clarity removido). Controlador/DPO: Guilherme Vallim de Oliveira (aliviawebapp@gmail.com). Consentimento versionado via `POLICY_VERSION` em src/lib/consentLog.ts.
 Studio copy: variação linguística = RELEITURA da frase (src/pages/studio/rewrite.ts), nunca troca de 1-2 palavras; 100% local, sem créditos de IA.
 Studio copy: manual/briefing (brief_answers) é fonte primária do texto; acervo genérico só emergência; toda arte nasce de um par público × medo/desejo × gancho × CTA; vícios do Aliv.iA Fisio banidos (STALE_PHRASES).
+Studio gramática: toda frase passa pela guarda de português (nominalização de dores/desejos + portão readsWell); nunca cortar frase nem usar tapa-buraco visual (letra solta).
 Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lote), nunca todos juntos; ângulo "Informar" ≠ educacional.
 
 
 
 ## Memories
+- [Studio Grammar Guard](mem://features/studio-grammar-guard) — Nominalização, portão readsWell, léxico proibido e fim dos tapa-buracos visuais.
 - [AI Credits Period Timezone](mem://business/ai-credits-period-timezone) — Mês de créditos = fuso Brasília via `credit_period_start()`; escudos anti-falha no widget.
 - [No Email Confirmation](mem://constraints/no-email-confirmation) — Signup sem etapa de confirmação; implicações e como reverter.
 - [Auth Stability](mem://constraints/auth-stability) — Forbidden patterns around login (SW/PWA/cache) and required safeguards.
