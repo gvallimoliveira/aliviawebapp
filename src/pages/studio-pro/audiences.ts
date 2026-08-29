@@ -9,14 +9,23 @@
  * `WorldContent` já resolvido a partir do segmento + ângulo escolhidos.
  */
 
-/** Segmento global: visão 360° do produto/empresa, interpolando os nichos. */
+/**
+ * Segmento global: visão 360° = MODO LIVRE. Não é "falar de todos os públicos
+ * ao mesmo tempo": é qualquer assunto relevante à marca — características da
+ * própria marca ou de um público qualquer, sorteado a cada lote (quase
+ * aleatório, mas determinístico por seed).
+ */
 export const GLOBAL_SEGMENT = "360";
 
 /** Ângulos estratégicos de conteúdo — a "intenção" do post. */
 export type ContentAngle = "informar" | "dor" | "desejo" | "venda";
 
 export const ANGLES: { id: ContentAngle; label: string; hint: string }[] = [
-  { id: "informar", label: "Informar", hint: "explica, ensina, mostra o método" },
+  {
+    id: "informar",
+    label: "Informar",
+    hint: "comunica algo que a marca faz, resolve ou considera relevante — sem dar aula",
+  },
   { id: "dor", label: "Dor", hint: "nomeia o problema que o público vive hoje" },
   { id: "desejo", label: "Desejo", hint: "mostra o cenário que a pessoa quer" },
   { id: "venda", label: "Venda", hint: "prova, quebra objeção e chama para a ação" },

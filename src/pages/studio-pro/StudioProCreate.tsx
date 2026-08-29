@@ -528,7 +528,7 @@ const StudioProCreate = ({
       "";
     return {
       content,
-      audienceLabel: audience?.label ?? (activeSegment === GLOBAL_SEGMENT ? "todos os públicos (360°)" : activeSegment),
+      audienceLabel: audience?.label ?? (activeSegment === GLOBAL_SEGMENT ? "assunto livre da marca (360°)" : activeSegment),
       keyword,
       hook,
       cta,
@@ -1055,7 +1055,7 @@ const StudioProCreate = ({
             </p>
           )}
 
-          {/* Nichos da marca + visão 360° que interpola todos eles. */}
+          {/* Nichos da marca + visão 360° (modo livre: assunto sorteado por lote). */}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {segments.map((s) => (
               <Button
@@ -1063,13 +1063,18 @@ const StudioProCreate = ({
                 size="sm"
                 variant={activeSegment === s.id ? "secondary" : "ghost"}
                 className="h-7 rounded-full text-[11px]"
+                title={
+                  s.id === GLOBAL_SEGMENT
+                    ? "Assunto livre: cada lote fala da marca como um todo ou de um público relevante, sorteado"
+                    : undefined
+                }
                 onClick={() => setSegment(s.id)}
               >
                 {s.label}
               </Button>
             ))}
           </div>
-          {/* Ângulo estratégico: informar, dor, desejo ou venda. */}
+          {/* Ângulo estratégico: informar (sem dar aula), dor, desejo ou venda. */}
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {ANGLES.map((a) => (
               <Button

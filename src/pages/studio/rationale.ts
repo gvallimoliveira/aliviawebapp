@@ -330,7 +330,8 @@ const SENSE: Record<BlockKind, Sense> = {
 
 /** Intenção declarada por objetivo do lote. */
 const ANGLE_EFFECT: Record<RationaleContext["angle"], string> = {
-  informar: "sair da arte sabendo algo que não sabia antes e enxergar a marca como referência",
+  informar:
+    "ficar por dentro de algo que a marca comunica, resolve ou considera relevante — sem precisar de aula",
   dor: "reconhecer o próprio problema descrito com precisão e sentir que ali tem quem entenda",
   desejo: "imaginar a própria vida depois de resolver o problema e querer esse resultado",
   venda: "entender a oferta e dar o próximo passo agora, sem precisar perguntar mais nada",
@@ -536,8 +537,11 @@ export const explainArt = (
       ask: "a imagem do depois (o que a pessoa volta a fazer)",
     },
     informar: {
-      probe: /(porque|por que|como|sinal|erro|motivo|quando|evita|entenda|significa|passo|etapa|\d)/i,
-      ask: "uma explicação ou lista que ensine algo em 5 segundos",
+      // Informativo ≠ educacional: basta comunicar algo concreto — sobre o que
+      // a marca faz, resolve ou acredita — sem obrigar estrutura de ensino.
+      probe:
+        /(porque|por que|como|sinal|erro|motivo|quando|evita|entenda|significa|passo|etapa|método|avalia|atend|trata|cuida|resolve|acredita|funciona|\d)/i,
+      ask: "uma informação concreta sobre o que a marca comunica, resolve ou considera relevante",
     },
   };
   const objective = OBJECTIVE[ctx.angle];
