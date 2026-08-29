@@ -634,7 +634,7 @@ Regras:
 - Cada público precisa de 5 a 8 dores, 5 a 8 desejos e 5 a 8 soluções/diferenciais. Frases curtas (até ~70 caracteres), concretas, uma ideia por linha.
 - IMPORTANTE: se o produto também é usado pelo consumidor final (paciente, cliente, aluno, usuário leigo), esse público NUNCA pode ficar de fora — inclua-o junto dos públicos profissionais/B2B.
 - Se a marca já tem públicos cadastrados no briefing, mantenha-os (pode refinar o texto), não os substitua por outros.
-- REGRA DURA (nunca deixar vazio): TODO público precisa de "keyword", "hook" e "cta". "keyword" é o termo que a arte vai gritar para a pessoa se reconhecer (2 a 3 palavras, ex.: "Dor crônica", "Pós-operatório", "Geração 60+"), nunca o nome da marca nem uma frase. "hook" é uma abertura em 2ª pessoa, começando por "Você", de até 90 caracteres, descrevendo o momento concreto dessa pessoa (ex.: "Você que saiu da cirurgia e não sabe o que pode fazer"). "cta" é um comando curto de até 40 caracteres, no imperativo. Sem esses três campos o público está incompleto e a resposta é inválida.
+- REGRA DURA (nunca deixar vazio): TODO público precisa de "keyword", "hook", "hooks" e "cta". "keyword" é o termo que a arte vai gritar para a pessoa se reconhecer (2 a 3 palavras, ex.: "Dor crônica", "Pós-operatório", "Geração 60+"), nunca o nome da marca nem uma frase. "hook" é uma abertura em 2ª pessoa, começando por "Você", de até 90 caracteres, descrevendo o momento concreto dessa pessoa (ex.: "Você que saiu da cirurgia e não sabe o que pode fazer"). "hooks" são 3 a 5 OUTRAS aberturas em 2ª pessoa para o MESMO público, cada uma sobre um momento/objeção diferente (o motor alterna entre elas para não repetir a mesma frase em todas as artes) — nunca reescreva o "hook" com outras palavras. "cta" é um comando curto de até 40 caracteres, no imperativo. Sem esses campos o público está incompleto e a resposta é inválida.
 - Além dos nichos, escreva um posicionamento global 360° que interpola todos eles: o problema estrutural do mercado, a tese da marca, a amplitude de uso e o que a separa das alternativas.
 - "description": 2 a 3 frases densas — o que é, para quem, o que entrega de concreto.
 - Escreva também um "tagline": UMA frase curta (até 80 caracteres) que resume a marca e pode aparecer dentro das artes.
@@ -664,6 +664,7 @@ Responda SOMENTE com JSON válido neste formato:
       "description": "Quem é e em que momento chega",
       "keyword": "termo curto que a arte grita (obrigatório)",
       "hook": "abertura em 2ª pessoa começando por 'Você' (obrigatório)",
+      "hooks": ["3 a 5 outras aberturas em 2ª pessoa, momentos diferentes (obrigatório)"],
       "pains": ["5 a 8 dores concretas"],
       "desires": ["5 a 8 desejos"],
       "proof": ["5 a 8 soluções/diferenciais que convencem esse público"],
@@ -750,6 +751,30 @@ Responda SOMENTE com JSON válido neste formato:
       if (own.length >= 12) return own.slice(0, 110);
       return `Você que convive com ${keyword.toLowerCase()}`.slice(0, 110);
     };
+    /**
+     * Variações de gancho: o motor alterna entre elas. Quando a IA devolve
+     * poucas (ou nenhuma), o servidor deriva alternativas a partir da dor, do
+     * desejo e da palavra-chave — nunca fica só com uma abertura.
+     */
+    const cleanHooks = (value: unknown, keyword: string, main: string, pains: string[], desires: string[]) => {
+      const out: string[] = [];
+      const push = (raw: unknown) => {
+        const text = String(raw ?? "").trim().replace(/\s*[.!?]+$/, "").slice(0, 110);
+        if (text.length < 12) return;
+        if (text.toLowerCase() === main.toLowerCase()) return;
+        if (out.some((h) => h.toLowerCase() === text.toLowerCase())) return;
+        out.push(text);
+      };
+      if (Array.isArray(value)) for (const v of value) push(v);
+      const key = keyword.toLowerCase();
+      const lower = (t?: string) => (t ? t.charAt(0).toLowerCase() + t.slice(1).replace(/\s*[.!?]+$/, "") : "");
+      if (pains[0]) push(`Você que já ouviu que ${lower(pains[0])} é normal`);
+      if (desires[0]) push(`Você que quer ${lower(desires[0])}`);
+      if (pains[1]) push(`Você que convive com ${lower(pains[1])}`);
+      push(`Você que procura ${key} e não quer mais tentativa e erro`);
+      push(`Você que já tentou de tudo com ${key}`);
+      return out.slice(0, 5);
+    };
     const cleanCta = (value: unknown, keyword: string) => {
       const own = String(value ?? "").trim();
       if (own.length >= 4) return own.slice(0, 60);
@@ -768,6 +793,7 @@ Responda SOMENTE com JSON válido neste formato:
           description: String(row.description ?? "").trim().slice(0, 300) || undefined,
           keyword,
           hook: cleanHook(row.hook, keyword),
+          hooks: cleanHooks(row.hooks, keyword, cleanHook(row.hook, keyword), strList(row.pains, 8), strList(row.desires, 8)),
           pains: strList(row.pains, 8),
           desires: strList(row.desires, 8),
           proof: strList(row.proof, 8),
@@ -799,11 +825,14 @@ Responda SOMENTE com JSON válido neste formato:
       .map((a) => {
         const label = String((a as Record<string, unknown>).label ?? "").trim();
         const keyword = cleanKeyword((a as Record<string, unknown>).keyword, label);
+        const row = a as Record<string, unknown>;
+        const hook = cleanHook(row.hook, keyword);
         return {
           ...a,
           keyword,
-          hook: cleanHook((a as Record<string, unknown>).hook, keyword),
-          cta: cleanCta((a as Record<string, unknown>).cta, keyword),
+          hook,
+          hooks: cleanHooks(row.hooks, keyword, hook, strList(row.pains, 8), strList(row.desires, 8)),
+          cta: cleanCta(row.cta, keyword),
         };
       });
 
