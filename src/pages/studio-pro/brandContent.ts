@@ -285,6 +285,14 @@ export const buildBrandContent = (
   const dnaPools = isDnaEmpty(dna) ? {} : buildFromDna(dna, brand, niche);
   /** Como esta marca chama o que vende (produto / atendimento / programa). */
   const offer = offerWords(dna, brand);
+  /**
+   * VOCABULÁRIO DA OPERAÇÃO: quem é atendido, como começa, o que se revisa.
+   * É o que impede o acervo neutro de falar "consulta/alta/conduta" para uma
+   * marca de software, curso ou serviço que não é clínico.
+   */
+  const op = operationWords(dna, brand);
+  /** Assunto de referência: nicho declarado ou 1ª palavra-chave da marca. */
+  const subject = firstSentence(words[0] ?? niche, 30);
 
   /** Motor de variedade linguística (determinístico pela seed do lote). */
   const register: VoiceRegister = variation?.register ?? voiceRegister(kit.tone, brand);
