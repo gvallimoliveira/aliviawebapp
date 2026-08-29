@@ -1314,7 +1314,13 @@ const StudioProCreate = ({
                 } ${group.carousel ? "shrink-0 snap-center" : "mx-auto"}`}
                 style={FRAME_STYLE[format]}
               >
-                <div id={`studio-pro-block-${item.index}`} className="h-full w-full">
+                {/* Lado B aplica os tokens invertidos só nesta arte. */}
+                <div
+                  id={`studio-pro-block-${item.index}`}
+                  className="h-full w-full bg-background"
+                  style={flipped.has(item.index) ? invertedStyle : undefined}
+                >
+
                   <ArtworkGuard key={`${item.index}:${resetTick}`} brand={brand.name}>
                   {/* AutoFit: copy longa encolhe para caber; nunca sai cortada. */}
                   <AutoFit resetKey={`${brand.id}:${seed}:${format}:${kind}:${item.index}`}>
