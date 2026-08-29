@@ -1261,6 +1261,47 @@ const StudioProCreate = ({
                   <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
                   Por que esta arte
                 </Button>
+                {editing === first.index ? (
+                  <>
+                    <Button
+                      size="sm"
+                      className="h-8 rounded-full text-xs"
+                      onClick={() => finishEdit(first.index)}
+                    >
+                      <Check className="mr-1.5 h-3.5 w-3.5" />
+                      Concluir ajuste
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 rounded-full text-xs"
+                      onClick={() => cancelEdit(first.index)}
+                    >
+                      Cancelar
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => startEdit(first.index)}
+                  >
+                    <PencilLine className="mr-1.5 h-3.5 w-3.5" />
+                    Ajustar texto
+                  </Button>
+                )}
+                {hasArtEdits(edits[first.index]) && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => resetEdit(first.index)}
+                  >
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    Desfazer
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant={isSaved ? "secondary" : "default"}
@@ -1310,6 +1351,107 @@ const StudioProCreate = ({
                         Ainda falta para esta arte ficar 100%: {why.gaps.join("; ")}.
                       </p>
                     )}
+
+                    {/* EDITOR DO CARD: corrige o que o filtro apontou e reenvia para aprovação. */}
+                    {(() => {
+                      const gapText = why.gaps.join(" ").toLowerCase();
+                      const needsPhoto = gapText.includes("foto");
+                      const needsBrand =
+                        gapText.includes("público") || gapText.includes("cta") || gapText.includes("kit");
+                      const isEditing = editing === first.index;
+                      const wasEdited = hasArtEdits(edits[first.index]);
+                      return (
+                        <div className="mt-3 rounded-xl border border-dashed border-border p-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Ajustar esta arte
+                          </p>
+                          {isEditing ? (
+                            <p className="mt-1 text-[11px] text-foreground">
+                              Clique em qualquer frase da arte acima e reescreva. Quando terminar, use
+                              "Concluir ajuste" para reenviar a aprovação — a arte sai em PNG e é salva já com
+                              o seu texto.
+                            </p>
+                          ) : (
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                              {why.gaps.length > 0
+                                ? "O filtro apontou pontos abertos. Corrija a mensagem direto na arte ou complete o que falta no kit."
+                                : "A leitura já fecha. Se quiser trocar uma palavra, edite direto na arte."}
+                            </p>
+                          )}
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {isEditing ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  className="h-7 rounded-full text-[11px]"
+                                  onClick={() => finishEdit(first.index)}
+                                >
+                                  <Check className="mr-1 h-3 w-3" />
+                                  Concluir e reenviar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 rounded-full text-[11px]"
+                                  onClick={() => cancelEdit(first.index)}
+                                >
+                                  Cancelar
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 rounded-full text-[11px]"
+                                onClick={() => startEdit(first.index)}
+                              >
+                                <PencilLine className="mr-1 h-3 w-3" />
+                                Editar texto na arte
+                              </Button>
+                            )}
+                            {needsPhoto && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 rounded-full text-[11px]"
+                                onClick={() => setPhotosOpen(true)}
+                              >
+                                <Camera className="mr-1 h-3 w-3" />
+                                Enviar foto do acervo
+                              </Button>
+                            )}
+                            {needsBrand && onOpenBrandSettings && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 rounded-full text-[11px]"
+                                onClick={onOpenBrandSettings}
+                              >
+                                <Settings2 className="mr-1 h-3 w-3" />
+                                Completar público e CTA
+                              </Button>
+                            )}
+                            {wasEdited && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 rounded-full text-[11px]"
+                                onClick={() => resetEdit(first.index)}
+                              >
+                                <RotateCcw className="mr-1 h-3 w-3" />
+                                Voltar ao original
+                              </Button>
+                            )}
+                          </div>
+                          {approved.has(first.index) && !isEditing && (
+                            <p className="mt-2 text-[11px] font-semibold text-foreground">
+                              <Check className="mr-1 inline h-3 w-3" />
+                              Ajustada por você e aprovada. Baixe o PNG ou salve na marca.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                     <Button
                       size="sm"
                       variant="ghost"
