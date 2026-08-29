@@ -20,6 +20,7 @@ Signup: email auto-confirm está ativo (`auto_confirm_email: true`). Usuário en
 LGPD: proibido script de rastreamento/session replay (Clarity removido). Controlador/DPO: Guilherme Vallim de Oliveira (aliviawebapp@gmail.com). Consentimento versionado via `POLICY_VERSION` em src/lib/consentLog.ts.
 Studio copy: variação linguística = RELEITURA da frase (src/pages/studio/rewrite.ts), nunca troca de 1-2 palavras; 100% local, sem créditos de IA.
 Studio copy: manual/briefing (brief_answers) é fonte primária do texto; acervo genérico só emergência; toda arte nasce de um par público × medo/desejo × gancho × CTA; vícios do Aliv.iA Fisio banidos (STALE_PHRASES).
+Studio copy: ângulos venda/dor/desejo seguem os Pilares da Escrita Charmosa (empatia estruturada, ritmo com remate seco, foco no "você", antecipação, convite sem súplica). "Informar" fica fora.
 Studio gramática: toda frase passa pela guarda de português (nominalização de dores/desejos + portão readsWell); nunca cortar frase nem usar tapa-buraco visual (letra solta).
 Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lote), nunca todos juntos; ângulo "Informar" ≠ educacional.
 
@@ -135,3 +136,4 @@ Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lot
 - [Studio Persuasion Layer](mem://features/studio-persuasion-layer) — Diretrizes ago/2026: ponto zero de impacto, jargão proibido, postura padrão, léxico exclusivo do Studio; regras rejeitadas (limite de palavras, mix 4/2/2/2, séries).
 - [Studio Relational Copy](mem://features/studio-relational-copy) — Hierarquia DNA-first (manual/briefing), par relacional obrigatório por arte e vícios de linguagem banidos.
 - [Studio Copy Engine](mem://features/studio-copy-engine) — Motor textual local: léxico + releitura de frase (rewrite.ts), níveis Baixa/Média/Alta, sem créditos de IA.
+- [Studio Charm Writing](mem://features/studio-charm-writing) — Pilares da Escrita Charmosa nos ângulos venda/dor/desejo + tabela de copy charmosa por sub-nicho (dor crônica, esportista, pós-op, 60+, vestibular, feridas).
