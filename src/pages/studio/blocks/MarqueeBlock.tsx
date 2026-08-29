@@ -18,7 +18,13 @@ const MarqueeBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
   const items = rng.pick(content.marquee);
   const kicker = rng.pick(content.kickers);
   const dark = (treatment + persona.surfaceShift) % 2 === 1;
-  const rows = [...new Set(items.map((t) => t.trim()).filter(Boolean))].slice(0, 5);
+  // O nome da marca já está na assinatura: repetido como item do índice, vira
+  // ruído ("01 Nome da Marca") e rouba a linha de um tópico de verdade.
+  const label = content.label.toLowerCase();
+  const rows = [...new Set(items.map((t) => t.trim()).filter(Boolean))]
+    .filter((t) => t.length > 2 && !label.includes(t.toLowerCase()))
+    .slice(0, 5);
+
   const bullet = (treatment + persona.textureShift) % 3;
 
   const head = rng.pick(content.headlines);
