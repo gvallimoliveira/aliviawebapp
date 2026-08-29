@@ -57,6 +57,12 @@ export type BrandKit = {
    * acervo neutro só entra como emergência para marca sem manual e sem briefing.
    */
   briefAnswers?: unknown;
+  /**
+   * SLOGAN DECLARADO no kit de marca (`studio_brands.slogan`). Quando existe, é
+   * ele o slogan do lockup e é ele que habilita o sub-nicho "Slogan em
+   * destaque". Vazio ⇒ o slogan segue derivado da descrição/nicho.
+   */
+  slogan?: string | null;
 };
 
 
@@ -66,8 +72,8 @@ export type BrandKit = {
  * REGRA DURA: o campo "tom de voz" é DIRETRIZ de comunicação (como falar), não
  * copy. Antes ele era usado como slogan/subtítulo/depoimento — quando o cliente
  * colava um manual de marca inteiro ali, o manual aparecia dentro da arte.
- * Agora o slogan sai da descrição (primeira frase curta) ou do nicho, e o tom de
- * voz nunca é renderizado.
+ * Agora o slogan sai do campo próprio do kit e, na falta dele, da descrição ou
+ * do nicho. O tom de voz nunca é renderizado.
  */
 const firstSentence = (text: string, max = 90) => {
   const phrase = condensePhrase(text, max);
@@ -76,11 +82,37 @@ const firstSentence = (text: string, max = 90) => {
 
 
 export const brandSlogan = (kit: BrandKit) => {
+  const declared = firstSentence(kit.slogan ?? "");
+  if (declared) return declared;
   const fromDescription = firstSentence(kit.description ?? "");
   if (fromDescription) return fromDescription;
   const niche = (kit.niche ?? "").trim();
   return niche ? `${firstSentence(niche, 48)} com presença todo dia.` : "Presença digital todo dia.";
 };
+
+/**
+ * SUB-NICHO "SLOGAN EM DESTAQUE": a peça é a assinatura da marca. O slogan
+ * declarado assume o topo de headlines, tipográficos, kickers e marquee, com o
+ * resto do acervo intacto (variedade de formatos continua valendo).
+ */
+const applySloganFocus = (content: WorldContent, slogan: string, brand: string): WorldContent => {
+  const phrase = slogan.trim().replace(/\s*[.;]+$/, "");
+  if (phrase.length < 3) return content;
+  const words = phrase.split(/\s+/);
+  const cut = words.length <= 3 ? 1 : Math.ceil(words.length / 2);
+  const strong = words.slice(0, cut).join(" ");
+  const rest = words.slice(cut).join(" ");
+  return {
+    ...content,
+    kickers: [brand.toUpperCase(), ...content.kickers],
+    headlines: [{ strong, rest }, ...content.headlines],
+    typos: [{ lead: brand, big: strong, tail: rest }, ...content.typos],
+    quotes: [{ text: phrase }, ...content.quotes],
+    marquee: [[phrase, brand], ...content.marquee],
+    subs: [phrase, ...content.subs],
+  };
+};
+
 
 /**
  * VARIAÇÃO DO LOTE: semente + registro de voz. Quando presente, headlines,
