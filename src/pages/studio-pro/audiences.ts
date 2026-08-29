@@ -245,6 +245,51 @@ export const buildSegments = (audiences: BrandAudience[]): Segment[] => [
   ...audiences.map((a) => ({ id: a.id, label: a.label })),
 ];
 
+/* ------------------------------------------------------------------------- */
+/* SUB-NICHO "SLOGAN EM DESTAQUE" (automático em toda marca)                  */
+/* ------------------------------------------------------------------------- */
+
+/**
+ * Id do sub-nicho de slogan. Ele NÃO é salvo no kit: é derivado do campo
+ * `slogan` da marca a cada carregamento. Sem slogan preenchido, o sub-nicho
+ * simplesmente não existe (fica inativo para a marca e para qualquer usuário).
+ */
+export const SLOGAN_SEGMENT = "slogan-destaque";
+
+/** O slogan está preenchido de forma utilizável? */
+export const hasSlogan = (slogan?: string | null): boolean => (slogan ?? "").trim().length >= 3;
+
+/**
+ * Constrói o sub-nicho de slogan da marca. É um recorte de comunicação (nunca
+ * conta na métrica oficial de públicos): a arte existe para colocar a frase da
+ * marca em destaque, com o público matriz como pai quando houver algum.
+ */
+export const sloganAudience = (slogan?: string | null, audiences: BrandAudience[] = []): BrandAudience | null => {
+  const phrase = (slogan ?? "").trim().replace(/\s*[.;]+$/, "");
+  if (!hasSlogan(phrase)) return null;
+  const parent = matrixAudiences(audiences)[0];
+  return {
+    id: SLOGAN_SEGMENT,
+    label: "Slogan em destaque",
+    keyword: phrase,
+    hook: phrase,
+    hooks: [phrase],
+    description: `Arte de assinatura da marca: o slogan "${phrase}" ocupa o centro da peça, com o mínimo de texto em volta.`,
+    cta: parent?.cta,
+    ...(parent ? { parentId: parent.id } : {}),
+  };
+};
+
+/**
+ * Lista de públicos pronta para o motor: os salvos no kit + o sub-nicho de
+ * slogan quando a marca tem slogan. Usar sempre esta função no editor de artes.
+ */
+export const audiencesWithSlogan = (audiences: BrandAudience[], slogan?: string | null): BrandAudience[] => {
+  const extra = sloganAudience(slogan, audiences);
+  return extra ? [...audiences, extra] : audiences;
+};
+
+
 /**
  * Públicos oficiais da própria Aliv.iA. Estruturalmente são 4 nichos
  * (paciente, profissional, clínica, acadêmico) + 1 sub-nicho do acadêmico:
