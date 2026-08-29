@@ -177,29 +177,8 @@ const FORMAT_LABEL: Record<StudioFormat, string> = {
 
 
 
-/** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
-const hexToHslTriplet = (hex: string): string | null => {
-  const clean = hex.replace("#", "").trim();
-  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return null;
-  const r = parseInt(clean.slice(0, 2), 16) / 255;
-  const g = parseInt(clean.slice(2, 4), 16) / 255;
-  const b = parseInt(clean.slice(4, 6), 16) / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  const d = max - min;
-  let h = 0;
-  let s = 0;
-  if (d !== 0) {
-    s = d / (1 - Math.abs(2 * l - 1));
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h *= 60;
-    if (h < 0) h += 360;
-  }
-  return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
-};
+/* Tokens de tema (inclui o lado B com cores invertidas) vivem em brandTheme.ts. */
+
 
 /**
  * PERSISTÊNCIA DO EDITOR (por marca).
