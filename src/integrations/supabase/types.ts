@@ -3619,6 +3619,7 @@ export type Database = {
           created_at: string
           extra_credits: number
           free_credits: number
+          last_effective_plan: string | null
           period_start: string
           plan: string
           plan_credits: number
@@ -3632,6 +3633,7 @@ export type Database = {
           created_at?: string
           extra_credits?: number
           free_credits?: number
+          last_effective_plan?: string | null
           period_start?: string
           plan?: string
           plan_credits?: number
@@ -3645,6 +3647,7 @@ export type Database = {
           created_at?: string
           extra_credits?: number
           free_credits?: number
+          last_effective_plan?: string | null
           period_start?: string
           plan?: string
           plan_credits?: number
@@ -4243,6 +4246,7 @@ export type Database = {
           created_at: string
           extra_credits: number
           free_credits: number
+          last_effective_plan: string | null
           period_start: string
           plan: string
           plan_credits: number
