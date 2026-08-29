@@ -29,6 +29,7 @@ Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lot
 
 
 ## Memories
+- [Studio Gallery Edit](mem://features/studio-gallery-edit) — Edição de arte salva usa instantâneo (snapshot) da arte pronta; nunca reconstruir pela receita.
 - [Studio Proofreading](mem://features/studio-proofreading) — Revisor de concordância global e escolha do texto digitado na barra de busca.
 - [Studio Grammar Guard](mem://features/studio-grammar-guard) — Nominalização, portão readsWell, léxico proibido e fim dos tapa-buracos visuais.
 - [AI Credits Period Timezone](mem://business/ai-credits-period-timezone) — Mês de créditos = fuso Brasília via `credit_period_start()`; escudos anti-falha no widget.
