@@ -37,6 +37,11 @@ export const STUDIO_FONTS: StudioFont[] = [
   { key: "oswald", label: "Oswald (condensada)", stack: "'Oswald', system-ui, sans-serif", google: "Oswald:wght@400;500;600;700" },
   { key: "bebas", label: "Bebas Neue (títulos)", stack: "'Bebas Neue', system-ui, sans-serif", google: "Bebas+Neue", aliases: ["bebas neue", "bebas"] },
   { key: "playfair", label: "Playfair Display (serifada)", stack: "'Playfair Display', Georgia, serif", google: "Playfair+Display:wght@400;500;600;700;800;900", aliases: ["playfair display", "playfair"] },
+  { key: "figtree", label: "Figtree", stack: "'Figtree', system-ui, sans-serif", google: "Figtree:wght@400;500;600;700;800;900" },
+  { key: "urbanist", label: "Urbanist", stack: "'Urbanist', system-ui, sans-serif", google: "Urbanist:wght@400;500;600;700;800;900" },
+  { key: "rubik", label: "Rubik", stack: "'Rubik', system-ui, sans-serif", google: "Rubik:wght@400;500;600;700;800;900" },
+  { key: "barlow", label: "Barlow", stack: "'Barlow', system-ui, sans-serif", google: "Barlow:wght@400;500;600;700;800;900" },
+  { key: "karla", label: "Karla", stack: "'Karla', system-ui, sans-serif", google: "Karla:wght@400;500;600;700;800" },
   { key: "lora", label: "Lora (serifada)", stack: "'Lora', Georgia, serif", google: "Lora:wght@400;500;600;700" },
   { key: "merriweather", label: "Merriweather (serifada)", stack: "'Merriweather', Georgia, serif", google: "Merriweather:wght@400;700;900" },
 ];
