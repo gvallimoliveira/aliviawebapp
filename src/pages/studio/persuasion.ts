@@ -44,6 +44,48 @@ export const hasBannedJargon = (text: string): boolean => {
 };
 
 /**
+ * VÍCIOS DE LINGUAGEM DO MOTOR (clichês herdados).
+ *
+ * Frases que nasceram no acervo neutro/interno e passaram a aparecer em
+ * qualquer marca, independentemente do manual — é isso que fazia o texto soar
+ * igual desde a primeira versão do Studio. Qualquer frase que caia nesses
+ * padrões é descartada e recomposta a partir do kit da marca.
+ */
+export const STALE_PHRASES: readonly string[] = [
+  "detalhe não é enfeite",
+  "o barato sai caro",
+  "sem mistério",
+  "pilares",
+  "clareza que aproxima",
+  "presença digital todo dia",
+  "presença todo dia",
+  "com método, não com sorte",
+  "feito com método",
+  "difícil de esquecer",
+  "difícil de confundir",
+  "um produto,",
+  "um só padrão",
+  "escuta, método",
+  "quem escolhe bem",
+  "sem letra miúda",
+  "sem ruído",
+  "visão sobre o público",
+  "identidade reconhecível",
+  "consistência gera reconhecimento",
+  "existe para resolver",
+  "transforma conhecimento",
+  "faz sentido para o seu público",
+  "o certo sai uma vez",
+];
+
+/** True quando o texto repete um vício de linguagem do motor. */
+export const isStale = (text: string): boolean => {
+  const t = text.toLowerCase();
+  return STALE_PHRASES.some((term) => t.includes(term));
+};
+
+
+/**
  * Vocabulário exigido pelas diretrizes — EXCLUSIVO da marca Aliv.iA Studio
  * vendendo a si mesma. Não pode entrar no motor global: em uma marca de cliente
  * esses termos soariam como se ela vendesse a ferramenta, quebrando o
