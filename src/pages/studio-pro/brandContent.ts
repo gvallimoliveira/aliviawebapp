@@ -147,7 +147,11 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
     const t = raw.toLowerCase();
     if (isStale(t) || hasBannedJargon(t) || banned.some((f) => t.includes(f))) return true;
     // Portão de português: frase quebrada ("com precisam postar") nunca vai ao ar.
-    return raw.trim().split(/\s+/).length >= 4 && !readsWell(raw);
+    // O portão de português vale para FRASES (headline, fecho, tipografia).
+    // Blocos compostos (carrossel, passo a passo) são vários textos concatenados
+    // e não podem ser lidos como uma frase única.
+    const words = raw.trim().split(/\s+/).length;
+    return words >= 4 && words <= 22 && !readsWell(raw);
   };
   const purge = <T,>(list: T[]): T[] => {
     const kept = list.filter((item) => !bad(textOf(item)));
