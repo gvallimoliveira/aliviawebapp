@@ -22,6 +22,8 @@
  * 100% local e determinístico. Nenhuma ideia nova é inventada aqui — só a forma.
  */
 
+import { fixAgreement } from "./agreement";
+
 const clean = (text: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const noDot = (text: string) => clean(text).replace(/\s*[.!?…]+$/, "");
 const lower1 = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text);
@@ -165,7 +167,7 @@ export const nominalList = (values: (string | undefined)[]): string[] => {
 
 /** Frase autônoma: inicial maiúscula e ponto final, sem pontuação duplicada. */
 export const sentence = (text: string): string => {
-  const core = noDot(text);
+  const core = fixAgreement(noDot(text));
   if (!core) return "";
   return `${upper1(core)}.`;
 };
