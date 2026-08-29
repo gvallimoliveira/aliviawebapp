@@ -584,7 +584,71 @@ export const buildBrandContent = (
     return [...dnaItems, ...fallback];
   };
 
-  const merged: WorldContent = {
+  /**
+   * PROPAGANDA PRÓPRIA DO ALIV.IA STUDIO
+   *
+   * O motor neutro descrevia o Studio como se fosse consultório ("conduz um
+   * caso", "primeira conversa", "alta"). Aqui o passo a passo é o FLUXO REAL da
+   * ferramenta: formulário da marca → kit visual → públicos com medo/desejo →
+   * lote de artes → ajuste e download. Isolado por `isStudioSelfBrand`, não
+   * vaza para marca de cliente.
+   */
+  if (isStudioSelfBrand(brand)) {
+    const selfSteps = [
+      {
+        title: "1. Formulário da marca",
+        description: "Você responde quem atende, como trabalha e no que acredita — é isso que o motor lê.",
+        topic: topicAt(0),
+      },
+      {
+        title: "2. Identidade visual",
+        description: "Logo, paleta e tipografia entram no kit e passam a assinar toda arte.",
+        topic: topicAt(1),
+      },
+      {
+        title: "3. Públicos, medos e desejos",
+        description: "Cada público ganha palavra-chave, o medo que trava e o desejo que move.",
+        topic: topicAt(2),
+      },
+      {
+        title: "4. Lote de artes",
+        description: "O texto sai escrito para aquele público, em 1:1, 4:5 e story.",
+        topic: topicAt(3),
+      },
+      {
+        title: "5. Ajuste e publicação",
+        description: "Você reescreve o texto na própria arte e baixa o PNG em alta.",
+        topic: topicAt(4),
+      },
+    ];
+    generic.journeys = [
+      { kicker: "COMO FUNCIONA", heading: `Como ${brand} eleva a sua marca`, steps: selfSteps.slice(0, 4) },
+      { kicker: "DO BRIEFING AO POST", heading: "Cinco passos, nenhuma página em branco", steps: selfSteps },
+    ];
+    generic.carousels = [
+      {
+        kicker: "PASSO A PASSO",
+        title: `Como ${brand} eleva a sua marca`,
+        coverSub: "Do formulário da marca ao post pronto para publicar.",
+        slides: selfSteps.map((s) => ({ heading: s.title, body: s.description, topic: s.topic })),
+        cta: { title: "Comece pelo formulário", sub: "Dez minutos de briefing rendem meses de conteúdo." },
+      },
+      ...generic.carousels.slice(1),
+    ];
+    generic.triptychs = [
+      {
+        heading: "Briefing, público, arte",
+        panels: [
+          { word: "Briefing", line: "A marca declarada por escrito.", topic: topicAt(0) },
+          { word: "Público", line: "Medo e desejo de quem vai ler.", topic: topicAt(2) },
+          { word: "Arte", line: "Texto e visual saem juntos.", topic: topicAt(3) },
+        ],
+      },
+      ...generic.triptychs.slice(1),
+    ];
+  }
+
+
     ...generic,
     kickers: prefer(dnaPools.kickers, generic.kickers),
     headlines: prefer(dnaPools.headlines, generic.headlines),
