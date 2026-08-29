@@ -1,5 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Download, FileText, Images, LayoutGrid, Lightbulb, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
+import {
+  Camera,
+  Check,
+  Download,
+  FileText,
+  Images,
+  LayoutGrid,
+  Lightbulb,
+  Loader2,
+  PencilLine,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Settings2,
+  Sparkles,
+  Type,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -108,6 +124,8 @@ type Props = {
   /** Fotos que o plano permite no acervo privado (0 = acervo bloqueado). */
   photoLimit?: number;
   onSaved?: () => void;
+  /** Abre a aba de ajustes da marca (usado pelo editor quando falta público/CTA). */
+  onOpenBrandSettings?: () => void;
 
 };
 
