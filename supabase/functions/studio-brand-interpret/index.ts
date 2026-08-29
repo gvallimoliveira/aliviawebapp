@@ -609,7 +609,11 @@ Deno.serve(async (req) => {
       brand.instagram_handle ? `Instagram: ${brand.instagram_handle}` : null,
       Array.isArray(brand.topics) && brand.topics.length ? `Palavras-chave atuais: ${brand.topics.join(", ")}` : null,
       existingLabels.length ? `Públicos já cadastrados (manter todos): ${existingLabels.join(", ")}` : null,
-      typeof body?.extra === "string" && body.extra.trim() ? `Contexto extra do cliente: ${body.extra.trim()}` : null,
+      typeof body?.extra === "string" && body.extra.trim()
+        ? (docOk
+            ? `Contexto extra do cliente: ${body.extra.trim()}`
+            : `BRIEFING RESPONDIDO PELO CLIENTE (questionário de marca). Sem manual anexado, este briefing é a FONTE PRINCIPAL e prevalece sobre o site e sobre os campos atuais — respeite literalmente cores, tipografia, públicos, tom e limites declarados aqui:\n"""\n${body.extra.trim()}\n"""`)
+        : null,
       site.meta ? `Metadados do site (title/description/og): ${site.meta}` : null,
       site.headings.length
         ? `Títulos e chamadas do site (h1-h3, ordem de leitura):\n- ${site.headings.join("\n- ")}`

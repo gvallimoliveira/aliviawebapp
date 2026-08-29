@@ -59,6 +59,8 @@ const shrinkLogo = async (file: File): Promise<string> => {
   return canvas.toDataURL("image/png");
 };
 
+export type BrandAssetKey = "doc" | "logo" | "font";
+
 type Props = {
   logoUrl: string;
   onLogoChange: (value: string) => void;
@@ -66,13 +68,28 @@ type Props = {
   onFontChange: (key: string) => void;
   doc: BrandDoc | null;
   onDocChange: (doc: BrandDoc | null) => void;
+  /** Quais ativos mostrar — permite distribuí-los entre as etapas da página. */
+  only?: BrandAssetKey[];
 };
 
-const BrandAssetsFields = ({ logoUrl, onLogoChange, fontKey, onFontChange, doc, onDocChange }: Props) => {
+const BrandAssetsFields = ({
+  logoUrl,
+  onLogoChange,
+  fontKey,
+  onFontChange,
+  doc,
+  onDocChange,
+  only,
+}: Props) => {
   const logoInput = useRef<HTMLInputElement>(null);
   const docInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<"logo" | "doc" | null>(null);
   const font = findFont(fontKey);
+  const visible: BrandAssetKey[] = only ?? ["doc", "logo", "font"];
+  const shows = (key: BrandAssetKey) => visible.includes(key);
+  /** Separador só entre blocos visíveis — evita linha órfã no topo. */
+  const divider = (key: BrandAssetKey) => (visible.indexOf(key) > 0 ? "border-t border-border pt-4" : "");
+
 
   /** A prévia precisa da fonte real carregada. */
   useEffect(() => {
@@ -129,7 +146,7 @@ const BrandAssetsFields = ({ logoUrl, onLogoChange, fontKey, onFontChange, doc, 
   return (
     <div className="sm:col-span-2 space-y-4 rounded-2xl border border-border bg-muted/30 p-4">
       {/* ---------- Manual da marca (fonte principal) ---------- */}
-      <div>
+      <div className={shows("doc") ? divider("doc") : "hidden"}>
         <p className="text-sm font-semibold">Manual da marca (PDF)</p>
         <p className="text-xs text-muted-foreground">
           Envie o descritivo completo da marca. Ao interpretar, ele passa a ser a{" "}
@@ -176,7 +193,7 @@ const BrandAssetsFields = ({ logoUrl, onLogoChange, fontKey, onFontChange, doc, 
       </div>
 
       {/* ---------- Logo ---------- */}
-      <div className="border-t border-border pt-4">
+      <div className={shows("logo") ? divider("logo") : "hidden"}>
         <p className="text-sm font-semibold">Logo da marca</p>
         <p className="text-xs text-muted-foreground">
           PNG, JPG, WEBP ou SVG. Aparece na assinatura e nos blocos que usam o lockup.
@@ -235,7 +252,7 @@ const BrandAssetsFields = ({ logoUrl, onLogoChange, fontKey, onFontChange, doc, 
       </div>
 
       {/* ---------- Tipografia ---------- */}
-      <div className="border-t border-border pt-4">
+      <div className={shows("font") ? divider("font") : "hidden"}>
         <p className="text-sm font-semibold">Tipografia da marca</p>
         <p className="text-xs text-muted-foreground">
           Aplicada em todas as artes desta marca. A IA também sugere a fonte quando ela está no manual.

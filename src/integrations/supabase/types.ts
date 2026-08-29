@@ -3468,6 +3468,7 @@ export type Database = {
       studio_brands: {
         Row: {
           audiences: Json
+          brief_answers: Json
           colors: Json
           content_source: string
           created_at: string
@@ -3490,6 +3491,7 @@ export type Database = {
         }
         Insert: {
           audiences?: Json
+          brief_answers?: Json
           colors?: Json
           content_source?: string
           created_at?: string
@@ -3512,6 +3514,7 @@ export type Database = {
         }
         Update: {
           audiences?: Json
+          brief_answers?: Json
           colors?: Json
           content_source?: string
           created_at?: string
