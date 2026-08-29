@@ -448,9 +448,21 @@ export const explainArt = (
 
   // ---------- personalização desta arte ----------
   const copy = cleanCopy(detail?.copy);
-  const headline = copy.slice().sort((a, b) => b.length - a.length)[0] ?? "";
-  const lead = copy[0] && copy[0] !== headline ? copy[0] : copy.find((t) => t !== headline) ?? "";
-  const tail = copy.length > 2 ? copy[copy.length - 1] : "";
+  // A frase-âncora é a maior FRASE; rótulo solto ("visibilidade") não conta.
+  const sentences = copy.filter(isSentence);
+  const headline = sentences.slice().sort((a, b) => b.length - a.length)[0] ?? "";
+  const labels = copy.filter((t) => !isSentence(t));
+  const lead = sentences.find((t) => t !== headline) ?? "";
+  const tail = sentences.length > 2 ? sentences[sentences.length - 1] : "";
+
+  // 5) Rótulo solto não é mensagem: se a arte não tem nenhuma frase inteira,
+  // ela pode ser bonita, mas não diz nada a quem não conhece a marca.
+  if (copy.length && !sentences.length) {
+    gaps.push(
+      "a arte só mostra palavras soltas, sem nenhuma frase que diga o que elas significam para quem lê",
+    );
+  }
+
   const layout = LAYOUT_NOTES[block.treatment % LAYOUT_NOTES.length];
   const motion = block.motion ? MOTION_NOTES[block.motion] : "";
   const slide = block.slide
