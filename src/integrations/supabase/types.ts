@@ -3553,6 +3553,7 @@ export type Database = {
           png_path: string | null
           seed: string
           segment: string | null
+          snapshot: Json | null
           text_edits: Json | null
           thumb: string | null
           user_id: string
@@ -3573,6 +3574,7 @@ export type Database = {
           png_path?: string | null
           seed: string
           segment?: string | null
+          snapshot?: Json | null
           text_edits?: Json | null
           thumb?: string | null
           user_id: string
@@ -3593,6 +3595,7 @@ export type Database = {
           png_path?: string | null
           seed?: string
           segment?: string | null
+          snapshot?: Json | null
           text_edits?: Json | null
           thumb?: string | null
           user_id?: string
