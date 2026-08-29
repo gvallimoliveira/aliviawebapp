@@ -706,36 +706,58 @@ const StudioProBrand = () => {
               <ul className="mt-4 grid gap-3 sm:grid-cols-3">
                 {shown.map((art) => (
                   <li key={art.id} className="overflow-hidden rounded-2xl border border-border bg-muted/40">
-                    {(() => {
-                      // Prefere o PNG de publicação; a miniatura é só fallback.
-                      const src = (art.png_path && previews[art.png_path]) || art.thumb;
-                      const ratio =
-                        art.format === "9x16"
-                          ? "aspect-[9/16]"
-                          : art.format === "4x5"
-                            ? "aspect-[4/5]"
-                            : "aspect-square";
-                      if (!src)
+                    {/* A própria miniatura abre o editor da arte salva (texto + formato). */}
+                    <button
+                      type="button"
+                      className="relative block w-full text-left"
+                      onClick={() => setEditingArt(art)}
+                      title="Editar texto e formato desta arte"
+                    >
+                      {(() => {
+                        // Prefere o PNG de publicação; a miniatura é só fallback.
+                        const src = (art.png_path && previews[art.png_path]) || art.thumb;
+                        const ratio =
+                          art.format === "9x16"
+                            ? "aspect-[9/16]"
+                            : art.format === "4x5"
+                              ? "aspect-[4/5]"
+                              : "aspect-square";
+                        if (!src)
+                          return (
+                            <div className="flex aspect-[4/5] w-full items-center justify-center text-xs text-muted-foreground">
+                              sem miniatura
+                            </div>
+                          );
                         return (
-                          <div className="flex aspect-[4/5] w-full items-center justify-center text-xs text-muted-foreground">
-                            sem miniatura
-                          </div>
+                          <img
+                            src={src}
+                            alt={art.headline ?? "arte"}
+                            loading="lazy"
+                            className={`${ratio} w-full bg-background object-contain`}
+                          />
                         );
-                      return (
-                        <img
-                          src={src}
-                          alt={art.headline ?? "arte"}
-                          loading="lazy"
-                          className={`${ratio} w-full bg-background object-contain`}
-                        />
-                      );
-                    })()}
+                      })()}
+                      <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-[10px] font-semibold shadow">
+                        <PencilLine className="h-3 w-3" />
+                        Editar
+                      </span>
+                    </button>
                     <div className="p-3">
                       <p className="line-clamp-2 text-xs font-semibold">{art.headline ?? "Sem título"}</p>
                       <p className="mt-1 text-[11px] text-muted-foreground">
                         {art.folder || "Geral"} · {art.format ?? "post"}
                         {art.is_favorite && " · referência"}
                       </p>
+                      {/* Ação principal: reabrir a arte salva para reescrever texto e trocar o formato. */}
+                      <Button
+                        size="sm"
+                        className="mt-2 h-8 w-full rounded-full text-[11px]"
+                        onClick={() => setEditingArt(art)}
+                        title="Editar texto e formato desta arte"
+                      >
+                        <PencilLine className="mr-1.5 h-3.5 w-3.5" />
+                        Editar texto e formato
+                      </Button>
                       {/* PNG e legenda ficam guardados na arte salva. */}
                       <div className="mt-2 flex flex-wrap items-center gap-1">
                         <Button
@@ -765,17 +787,6 @@ const StudioProBrand = () => {
                           onClick={() => copyCaption(art)}
                         >
                           Copiar
-                        </Button>
-                        {/* Reabre a arte salva para reescrever texto e trocar o formato. */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 rounded-full px-2 text-[11px]"
-                          onClick={() => setEditingArt(art)}
-                          title="Editar texto e formato desta arte"
-                        >
-                          <PencilLine className="mr-1 h-3.5 w-3.5" />
-                          Editar
                         </Button>
                         <Button
                           size="sm"
