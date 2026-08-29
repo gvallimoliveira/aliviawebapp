@@ -1,5 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Download, FileText, Images, LayoutGrid, Lightbulb, Loader2, RefreshCw, Save, Sparkles, Type } from "lucide-react";
+import {
+  Camera,
+  Check,
+  Download,
+  FileText,
+  Images,
+  LayoutGrid,
+  Lightbulb,
+  Loader2,
+  PencilLine,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Settings2,
+  Sparkles,
+  Type,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -46,6 +62,14 @@ import {
   type ContentAngle,
 } from "./audiences";
 import { enforceRationale, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
+import { hasBannedJargon } from "@/pages/studio/persuasion";
+import {
+  applyArtText,
+  hasArtEdits,
+  readArtText,
+  setArtEditing,
+  type ArtTextEdits,
+} from "@/pages/studio/artTextEdit";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
@@ -108,6 +132,8 @@ type Props = {
   /** Fotos que o plano permite no acervo privado (0 = acervo bloqueado). */
   photoLimit?: number;
   onSaved?: () => void;
+  /** Abre a aba de ajustes da marca (usado pelo editor quando falta público/CTA). */
+  onOpenBrandSettings?: () => void;
 
 };
 
@@ -201,6 +227,7 @@ const StudioProCreate = ({
   unlimited: unlimitedAccess = false,
   photoLimit = 0,
   onSaved,
+  onOpenBrandSettings,
 }: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
   /** Assinatura da marca nas artes: ajuste global da marca (ligado por padrão). */
@@ -503,6 +530,110 @@ const StudioProCreate = ({
   const blocks = audit.blocks;
   /** Índice da arte com a leitura de sentido aberta. */
   const [whyOpen, setWhyOpen] = useState<number | null>(null);
+  /**
+   * AJUSTE FINO NO CARD: quando o filtro aponta que falta mensagem, o dono da
+   * marca reescreve o texto na própria arte e reenvia para aprovação. Os textos
+   * editados ficam guardados por posição e são reaplicados a cada re-render, de
+   * modo que o PNG exportado e a arte salva saem já corrigidos.
+   */
+  const [edits, setEdits] = useState<Record<number, ArtTextEdits>>({});
+  const [editing, setEditing] = useState<number | null>(null);
+  /** Artes que o usuário revisou e reenviou para aprovação com sucesso. */
+  const [approved, setApproved] = useState<Set<number>>(() => new Set());
+  /** Remonta os blocos para recompor o texto original do motor após um "desfazer". */
+  const [resetTick, setResetTick] = useState(0);
+
+  const artNode = (index: number) =>
+    document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
+
+  /** Reaplica as edições depois de qualquer re-render das artes. */
+  useEffect(() => {
+    Object.entries(edits).forEach(([key, value]) => {
+      const node = artNode(Number(key));
+      if (node) applyArtText(node, value);
+    });
+  }, [edits, blocks, format, seed, content, activePhotos, resetTick]);
+
+  /** Liga a edição direta na arte (ou em todos os slides do carrossel). */
+  const startEdit = (indexes: number[]) => {
+    setWhyOpen(indexes[0]);
+    setEditing(indexes[0]);
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (node) setArtEditing(node, true);
+    });
+  };
+
+  const cancelEdit = (indexes: number[]) => {
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (!node) return;
+      setArtEditing(node, false);
+      applyArtText(node, edits[i]);
+    });
+    setEditing(null);
+  };
+
+  /** Fecha a edição validando a mensagem antes de reenviar a arte para aprovação. */
+  const finishEdit = (indexes: number[]) => {
+    const collected: Record<number, ArtTextEdits> = {};
+    for (const i of indexes) {
+      const node = artNode(i);
+      if (!node) continue;
+      const next = readArtText(node);
+      const texts = Object.values(next);
+      if (texts.some((t) => !t)) {
+        toast.error("Há um texto vazio na arte. Preencha ou desfaça o ajuste.");
+        return;
+      }
+      const jargon = texts.find((t) => hasBannedJargon(t));
+      if (jargon) {
+        toast.error("Essa frase usa jargão de marketing. Escreva como você falaria com o paciente.");
+        return;
+      }
+      collected[i] = next;
+    }
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (node) setArtEditing(node, false);
+    });
+    setEdits((prev) => ({ ...prev, ...collected }));
+    setEditing(null);
+    setApproved((prev) => {
+      const copy = new Set(prev);
+      indexes.forEach((i) => copy.add(i));
+      return copy;
+    });
+    // A arte mudou: um salvamento anterior não representa mais o que está em tela.
+    setSaved((prev) => {
+      const copy = new Set(prev);
+      indexes.forEach((i) => copy.delete(i));
+      return copy;
+    });
+    toast.success("Arte ajustada e reenviada para aprovação.");
+  };
+
+  /** Volta ao texto original gerado pelo motor. */
+  const resetEdit = (indexes: number[]) => {
+    setEdits((prev) => {
+      const copy = { ...prev };
+      indexes.forEach((i) => delete copy[i]);
+      return copy;
+    });
+    setApproved((prev) => {
+      const copy = new Set(prev);
+      indexes.forEach((i) => copy.delete(i));
+      return copy;
+    });
+    setEditing(null);
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (node) setArtEditing(node, false);
+    });
+    // Remonta os blocos para o motor reescrever o texto original.
+    setResetTick((n) => n + 1);
+    toast.success("Texto original restaurado.");
+  };
 
   /**
    * AGRUPAMENTO DE ENTREGA.
@@ -1061,7 +1192,7 @@ const StudioProCreate = ({
                 style={FRAME_STYLE[format]}
               >
                 <div id={`studio-pro-block-${item.index}`} className="h-full w-full">
-                  <ArtworkGuard brand={brand.name}>
+                  <ArtworkGuard key={`${item.index}:${resetTick}`} brand={brand.name}>
                   {/* AutoFit: copy longa encolhe para caber; nunca sai cortada. */}
                   <AutoFit resetKey={`${brand.id}:${seed}:${format}:${kind}:${item.index}`}>
                   <StudioProSignature
@@ -1146,6 +1277,47 @@ const StudioProCreate = ({
                   <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
                   Por que esta arte
                 </Button>
+                {editing === first.index ? (
+                  <>
+                    <Button
+                      size="sm"
+                      className="h-8 rounded-full text-xs"
+                      onClick={() => finishEdit(indexes)}
+                    >
+                      <Check className="mr-1.5 h-3.5 w-3.5" />
+                      Concluir ajuste
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 rounded-full text-xs"
+                      onClick={() => cancelEdit(indexes)}
+                    >
+                      Cancelar
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => startEdit(indexes)}
+                  >
+                    <PencilLine className="mr-1.5 h-3.5 w-3.5" />
+                    Ajustar texto
+                  </Button>
+                )}
+                {indexes.some((i) => hasArtEdits(edits[i])) && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => resetEdit(indexes)}
+                  >
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    Desfazer
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant={isSaved ? "secondary" : "default"}
@@ -1195,6 +1367,107 @@ const StudioProCreate = ({
                         Ainda falta para esta arte ficar 100%: {why.gaps.join("; ")}.
                       </p>
                     )}
+
+                    {/* EDITOR DO CARD: corrige o que o filtro apontou e reenvia para aprovação. */}
+                    {(() => {
+                      const gapText = why.gaps.join(" ").toLowerCase();
+                      const needsPhoto = gapText.includes("foto");
+                      const needsBrand =
+                        gapText.includes("público") || gapText.includes("cta") || gapText.includes("kit");
+                      const isEditing = editing === first.index;
+                      const wasEdited = indexes.some((i) => hasArtEdits(edits[i]));
+                      return (
+                        <div className="mt-3 rounded-xl border border-dashed border-border p-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Ajustar esta arte
+                          </p>
+                          {isEditing ? (
+                            <p className="mt-1 text-[11px] text-foreground">
+                              Clique em qualquer frase da arte acima e reescreva. Quando terminar, use
+                              "Concluir ajuste" para reenviar a aprovação — a arte sai em PNG e é salva já com
+                              o seu texto.
+                            </p>
+                          ) : (
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                              {why.gaps.length > 0
+                                ? "O filtro apontou pontos abertos. Corrija a mensagem direto na arte ou complete o que falta no kit."
+                                : "A leitura já fecha. Se quiser trocar uma palavra, edite direto na arte."}
+                            </p>
+                          )}
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {isEditing ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  className="h-7 rounded-full text-[11px]"
+                                  onClick={() => finishEdit(indexes)}
+                                >
+                                  <Check className="mr-1 h-3 w-3" />
+                                  Concluir e reenviar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 rounded-full text-[11px]"
+                                  onClick={() => cancelEdit(indexes)}
+                                >
+                                  Cancelar
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 rounded-full text-[11px]"
+                                onClick={() => startEdit(indexes)}
+                              >
+                                <PencilLine className="mr-1 h-3 w-3" />
+                                Editar texto na arte
+                              </Button>
+                            )}
+                            {needsPhoto && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 rounded-full text-[11px]"
+                                onClick={() => setPhotosOpen(true)}
+                              >
+                                <Camera className="mr-1 h-3 w-3" />
+                                Enviar foto do acervo
+                              </Button>
+                            )}
+                            {needsBrand && onOpenBrandSettings && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 rounded-full text-[11px]"
+                                onClick={onOpenBrandSettings}
+                              >
+                                <Settings2 className="mr-1 h-3 w-3" />
+                                Completar público e CTA
+                              </Button>
+                            )}
+                            {wasEdited && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 rounded-full text-[11px]"
+                                onClick={() => resetEdit(indexes)}
+                              >
+                                <RotateCcw className="mr-1 h-3 w-3" />
+                                Voltar ao original
+                              </Button>
+                            )}
+                          </div>
+                          {approved.has(first.index) && !isEditing && (
+                            <p className="mt-2 text-[11px] font-semibold text-foreground">
+                              <Check className="mr-1 inline h-3 w-3" />
+                              Ajustada por você e aprovada. Baixe o PNG ou salve na marca.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                     <Button
                       size="sm"
                       variant="ghost"
