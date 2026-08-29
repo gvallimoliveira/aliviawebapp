@@ -311,10 +311,91 @@ const ANGLE_EFFECT: Record<RationaleContext["angle"], string> = {
 const trim = (v?: string | null) => (typeof v === "string" ? v.trim() : "");
 
 /**
+ * DETALHE DA ARTE CONCRETA.
+ *
+ * O filtro julga o formato, mas a explicação mostrada ao cliente precisa falar
+ * DESTA arte: o arranjo sorteado, o movimento, a posição dela na sequência e —
+ * principalmente — as frases que de fato foram renderizadas. Sem isso a
+ * explicação sai igual para todas as artes do mesmo tipo.
+ */
+export type ArtDetail = {
+  /** Posição da arte na versão (0-based). */
+  index?: number;
+  total?: number;
+  /** Textos reais lidos da arte renderizada, na ordem de leitura. */
+  copy?: string[];
+  /** Estilo visual/paleta ativa. */
+  styleLabel?: string;
+  /** Formato de saída (1:1, 4:5, story). */
+  formatLabel?: string;
+  /** Nome do modelo criativo (persona) que assinou a composição. */
+  personaLabel?: string;
+};
+
+/** Arranjo visual escolhido pelo sorteio de tratamento. */
+const LAYOUT_NOTES = [
+  "o texto ancorado no alto e muito respiro embaixo",
+  "o conteúdo centralizado, com a moldura fechando a arte por fora",
+  "o peso jogado para a base, do jeito que se lê um cartaz de rua",
+  "um arranjo assimétrico: um lado carregado, o outro deliberadamente vazio",
+  "camadas sobrepostas, com fundo texturizado passando atrás do texto",
+  "a informação organizada em grade, cada pedaço no seu quadro",
+];
+
+/** Como o movimento entra na leitura (só quando o bloco tem animação). */
+const MOTION_NOTES: Record<string, string> = {
+  focusPull: "o texto entra desfocado e ganha nitidez conforme a arte sobe na tela",
+  zoomIn: "a arte se aproxima aos poucos, puxando o olho para o centro",
+  zoomOut: "a arte começa colada e vai abrindo, revelando o contexto",
+  gradientDrift: "o fundo se movimenta devagar, dando vida sem disputar com o texto",
+  parallaxScrub: "as camadas correm em velocidades diferentes, criando profundidade",
+  maskWipe: "a mensagem é revelada como uma cortina que abre",
+  tiltRise: "a arte se endireita ao subir, como se assentasse no lugar",
+  slideDrift: "os elementos deslizam para a posição final, um depois do outro",
+};
+
+/** Papel da arte na sequência da versão. */
+const positionRole = (index?: number, total?: number): string => {
+  if (typeof index !== "number" || !total) return "";
+  if (index === 0) return "É a primeira arte da leva: o trabalho dela é abrir o assunto";
+  if (index === total - 1) return "É a última arte da leva: o trabalho dela é fechar e cobrar a ação";
+  if (index < Math.ceil(total / 3)) return `É a ${index + 1}ª arte da leva, ainda na fase de puxar atenção`;
+  if (index > total - Math.ceil(total / 3) - 1)
+    return `É a ${index + 1}ª arte da leva, já na reta de decisão`;
+  return `É a ${index + 1}ª arte da leva, no meio do raciocínio, onde entra o argumento`;
+};
+
+const hash = (s: string): number => {
+  let h = 0;
+  for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+};
+
+/** Frases reais da arte, limpas e sem repetição. */
+const cleanCopy = (copy?: string[]): string[] => {
+  const seen = new Set<string>();
+  return (copy ?? [])
+    .map((t) => trim(t).replace(/\s+/g, " "))
+    .filter((t) => {
+      if (t.length < 3 || t.length > 220) return false;
+      const key = t.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
+
+const quote = (t: string) => `“${t}”`;
+
+/**
  * Monta a explicação da arte e, no caminho, coleta as lacunas que impedem o
  * raciocínio de fechar.
  */
-export const explainArt = (block: ComposedBlock, ctx: RationaleContext): ArtRationale => {
+export const explainArt = (
+  block: ComposedBlock,
+  ctx: RationaleContext,
+  detail?: ArtDetail,
+): ArtRationale => {
   const sense = SENSE[block.kind];
   const gaps: string[] = [];
 
@@ -348,18 +429,76 @@ export const explainArt = (block: ComposedBlock, ctx: RationaleContext): ArtRati
   const subject = keyword || ctx.content.label || ctx.brandName;
   const audiencePart = hook ? `fala direto com quem se reconhece em "${hook}"` : `fala com ${audience}`;
 
+  // ---------- personalização desta arte ----------
+  const copy = cleanCopy(detail?.copy);
+  const headline = copy.slice().sort((a, b) => b.length - a.length)[0] ?? "";
+  const lead = copy[0] && copy[0] !== headline ? copy[0] : copy.find((t) => t !== headline) ?? "";
+  const tail = copy.length > 2 ? copy[copy.length - 1] : "";
+  const layout = LAYOUT_NOTES[block.treatment % LAYOUT_NOTES.length];
+  const motion = block.motion ? MOTION_NOTES[block.motion] : "";
+  const slide = block.slide
+    ? ` Este é o slide ${block.slide.index + 1} de ${block.slide.total} do carrossel, então ele não vive sozinho: prepara o slide seguinte.`
+    : "";
+  const role = positionRole(detail?.index, detail?.total);
+  const seedKey = `${block.kind}:${block.treatment}:${detail?.index ?? 0}:${headline}`;
+  const frame = hash(seedKey) % 3;
+
+  const seenParts = [
+    `A pessoa vê ${sense.sees}`,
+    `, com ${layout}`,
+    detail?.styleLabel ? `, no estilo ${detail.styleLabel}` : "",
+    detail?.formatLabel ? ` e no formato ${detail.formatLabel}` : "",
+    ".",
+  ];
+  const elementsBase = seenParts.join("");
+  const copySeen = copy.length
+    ? ` O que está escrito nela: ${copy.slice(0, 4).map(quote).join(", ")}${copy.length > 4 ? " (e o restante do texto de apoio)" : ""}.`
+    : "";
+  const motionSeen = motion ? ` No movimento, ${motion}.` : "";
+
+  const messageFrames = [
+    () =>
+      headline
+        ? `A frase que carrega a arte é ${quote(headline)} — escolhida porque ${audiencePart} sobre ${subject}.${
+            lead ? ` A linha ${quote(lead)} sustenta o argumento sem exigir esforço de leitura.` : ""
+          } O formato entra para ${sense.job}.`
+        : `A arte ${audiencePart} sobre ${subject}: ${sense.job}.`,
+    () =>
+      headline
+        ? `Pensando em ${audience}, o motor colocou ${quote(headline)} como centro da arte: é a leitura de dois segundos sobre ${subject}. Escolhi ${sense.format} porque o trabalho aqui é ${sense.job}.${
+            tail ? ` O fecho ${quote(tail)} amarra a ideia.` : ""
+          }`
+        : `A arte ${audiencePart} sobre ${subject}: ${sense.job}.`,
+    () =>
+      headline
+        ? `O assunto é ${subject} e o recorte é ${quote(headline)}. ${
+            hook ? `Falo com quem se reconhece em "${hook}"` : `Falo com ${audience}`
+          }, e por isso o formato ${sense.format} — ele serve para ${sense.job}.${
+            lead && lead !== headline ? ` ${quote(lead)} entra como apoio.` : ""
+          }`
+        : `A arte ${audiencePart} sobre ${subject}: ${sense.job}.`,
+  ];
+
+  const effect = [
+    role ? `${role}. ` : "",
+    `O objetivo é que quem lê ${ANGLE_EFFECT[ctx.angle]}`,
+    trim(ctaSource) ? ` — e o convite é "${trim(ctaSource)}"` : "",
+    ".",
+    slide,
+    detail?.personaLabel ? ` Composição assinada pelo modelo criativo ${detail.personaLabel}.` : "",
+  ].join("");
+
   return {
     kind: block.kind,
     format: sense.format,
-    elements: `A pessoa vê ${sense.sees}.`,
-    message: `A arte ${audiencePart} sobre ${subject}: ${sense.job}.`,
-    effect: `O objetivo é que quem lê ${ANGLE_EFFECT[ctx.angle]}${
-      trim(ctaSource) ? ` — e o convite é "${trim(ctaSource)}"` : ""
-    }.`,
+    elements: `${elementsBase}${copySeen}${motionSeen}`,
+    message: messageFrames[frame](),
+    effect,
     gaps,
     ok: gaps.length === 0,
   };
 };
+
 
 /** Explicação em texto corrido, para legenda, exportação e leitura rápida. */
 export const rationaleText = (r: ArtRationale): string =>
