@@ -41,6 +41,7 @@ import { matrixAudiences, readAudiences, writeAudiences, type BrandAudience } fr
 import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
 import StudioArtEditor from "./StudioArtEditor";
+import { isArtSnapshot } from "./artSnapshot";
 import {
   answeredCount,
   formatBriefAnswers,
