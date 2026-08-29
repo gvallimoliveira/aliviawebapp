@@ -9,6 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
+import { PLAN_LABELS, PLAN_LIMITS, type StudioPlan } from "./plan";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const GRANTABLE_PLANS: Exclude<StudioPlan, "free">[] = ["solo", "marca", "agencia"];
 
 /**
  * PAINEL VIP — ACESSOS CORTESIA
