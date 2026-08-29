@@ -1428,15 +1428,20 @@ const StudioProCreate = ({
                     </p>
                     <ul className="mt-2 space-y-1.5 text-xs text-foreground">
                       <li>
-                        <strong>O que se vê:</strong> {why.elements}
+                        <strong>Contexto da marca:</strong> {why.brandRead}
                       </li>
                       <li>
-                        <strong>O que diz:</strong> {why.message}
+                        <strong>Público-alvo:</strong> {why.audienceRead}
                       </li>
                       <li>
-                        <strong>O que quer despertar:</strong> {why.effect}
+                        <strong>Objetivo da arte:</strong> {why.objectiveRead}
                       </li>
+                      <li>
+                        <strong>A arte em si:</strong> {why.artRead}
+                      </li>
+                      <li className="text-muted-foreground">{why.verdict}</li>
                     </ul>
+
                     {why.gaps.length > 0 && (
                       <p className="mt-2 rounded-xl bg-muted/60 p-2 text-[11px] text-muted-foreground">
                         Ainda falta para esta arte ficar 100%: {why.gaps.join("; ")}.
