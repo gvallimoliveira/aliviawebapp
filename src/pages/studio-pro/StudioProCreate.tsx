@@ -1397,6 +1397,17 @@ const StudioProCreate = ({
                   <Type className="mr-1.5 h-3.5 w-3.5" />
                   Legenda
                 </Button>
+                {/* Lado A / Lado B: mesma arte com as cores principais trocadas. */}
+                <Button
+                  size="sm"
+                  variant={indexes.every((i) => flipped.has(i)) ? "secondary" : "outline"}
+                  className="h-8 rounded-full text-xs"
+                  onClick={() => toggleFlip(indexes)}
+                >
+                  <Contrast className="mr-1.5 h-3.5 w-3.5" />
+                  {indexes.every((i) => flipped.has(i)) ? "Lado B" : "Inverter cores"}
+                </Button>
+
                 {SHOW_WHY && (
                   <Button
                     size="sm"
