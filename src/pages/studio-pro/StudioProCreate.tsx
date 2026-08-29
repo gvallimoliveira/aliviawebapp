@@ -44,7 +44,7 @@ import { voiceRegister } from "@/pages/studio/lexicon";
 import { varyContent } from "@/pages/studio/vary";
 import { usePhraseMemory } from "./usePhraseMemory";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
-import { buildSegmentContent, brandSlogan } from "./brandContent";
+import { buildSegmentContent, brandSlogan, relationForSegment } from "./brandContent";
 
 import { readColorKit } from "./brandColors";
 import { readableThemeTokens } from "./contrast";
