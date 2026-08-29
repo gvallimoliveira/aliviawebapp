@@ -43,6 +43,7 @@ type StudioControlsProps = {
 
 const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "9x16", label: "9:16" },
+  { id: "4x5", label: "4:5" },
   { id: "1x1", label: "1:1" },
   { id: "free", label: "Livre" },
 ];

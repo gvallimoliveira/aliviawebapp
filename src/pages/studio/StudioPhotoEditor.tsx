@@ -12,6 +12,7 @@ const SAFE_LABELS: { id: SafeArea; label: string; hint: string }[] = [
 
 const RATIOS: { id: string; label: string; className: string }[] = [
   { id: "9x16", label: "9:16", className: "aspect-[9/16]" },
+  { id: "4x5", label: "4:5", className: "aspect-[4/5]" },
   { id: "1x1", label: "1:1", className: "aspect-square" },
   { id: "split", label: "Meia-face", className: "aspect-[1/2]" },
 ];

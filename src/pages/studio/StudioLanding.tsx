@@ -96,6 +96,7 @@ const isPreviewEnvironment = () =>
 
 const FRAME_WIDTH: Record<StudioFormat, string> = {
   "9x16": "min(430px, 100vw)",
+  "4x5": "min(560px, 100vw)",
   "1x1": "min(720px, 100vw)",
   free: "100%",
 };
@@ -133,7 +134,9 @@ const StudioLanding = () => {
   const world: WorldId = isWorldId(params.get("world")) ? (params.get("world") as WorldId) : "pro";
   const formatParam = params.get("format");
   const format: StudioFormat =
-    formatParam === "9x16" || formatParam === "1x1" || formatParam === "free" ? formatParam : "free";
+    formatParam === "9x16" || formatParam === "4x5" || formatParam === "1x1" || formatParam === "free"
+      ? formatParam
+      : "free";
   const seed = params.get("seed") ?? "a1";
   const variation: VariationProfile = {
     headlines: isVariationLevel(params.get("vh")) ? (params.get("vh") as VariationProfile["headlines"]) : DEFAULT_VARIATION_PROFILE.headlines,
