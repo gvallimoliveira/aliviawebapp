@@ -204,6 +204,8 @@ const StudioProBrand = () => {
   const [creations, setCreations] = useState<Creation[]>([]);
   /** URLs assinadas dos PNGs salvos (prévia nítida na galeria). */
   const [previews, setPreviews] = useState<Record<string, string>>({});
+  /** Arte da galeria aberta para edição (texto e formato). */
+  const [editingArt, setEditingArt] = useState<Creation | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
