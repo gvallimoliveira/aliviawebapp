@@ -113,6 +113,9 @@ type BrandInput = {
   positioning?: string | null;
   /** Ajuste global: assinar todas as artes com logo/nome da marca. */
   signature_enabled?: boolean | null;
+  /** Respostas do formulário de marca — base do contexto interpretativo. */
+  brief_answers?: unknown;
+
 };
 
 type Props = {
