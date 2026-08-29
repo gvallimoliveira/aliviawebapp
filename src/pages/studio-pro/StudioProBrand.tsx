@@ -813,7 +813,7 @@ const StudioProBrand = () => {
                           size="sm"
                           variant="outline"
                           className="h-7 rounded-full px-2 text-[11px]"
-                          onClick={() => downloadCaption(art)}
+                          onClick={() => void downloadCaption(art)}
                           title="Baixar legenda (.txt)"
                         >
                           <FileText className="mr-1 h-3.5 w-3.5" />
