@@ -576,27 +576,6 @@ const StudioProApp = () => {
                 </p>
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="brand-description">O que a marca faz (opcional)</Label>
-                <Textarea
-                  id="brand-description"
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Em poucas linhas: o que você vende, para quem e qual problema resolve."
-                />
-              </div>
-              <BrandColorFields idPrefix="brand" kit={colorKit} onChange={setColorKit} />
-              <div className="sm:col-span-2">
-                <Label htmlFor="brand-tone">Tom de voz</Label>
-                <Textarea
-                  id="brand-tone"
-                  rows={2}
-                  value={form.tone}
-                  onChange={(e) => setForm({ ...form, tone: e.target.value })}
-                  placeholder="Ex.: direto, com humor seco e frases curtas"
-                />
-              </div>
-              <div className="sm:col-span-2">
                 <Label htmlFor="brand-logo">URL do logo (opcional)</Label>
                 <Input
                   id="brand-logo"
@@ -649,6 +628,31 @@ const StudioProApp = () => {
                     </>
                   )}
                 </div>
+              </div>
+              <p className="rounded-2xl border border-dashed border-border p-3 text-xs text-muted-foreground sm:col-span-2">
+                Não tem manual da marca? Salve o kit e, nos ajustes, responda o questionário guiado —
+                a IA monta cores, mensagem e públicos a partir das suas respostas.
+              </p>
+              <div className="sm:col-span-2">
+                <Label htmlFor="brand-description">O que a marca faz (opcional)</Label>
+                <Textarea
+                  id="brand-description"
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Em poucas linhas: o que você vende, para quem e qual problema resolve."
+                />
+              </div>
+              <BrandColorFields idPrefix="brand" kit={colorKit} onChange={setColorKit} />
+              <div className="sm:col-span-2">
+                <Label htmlFor="brand-tone">Tom de voz</Label>
+                <Textarea
+                  id="brand-tone"
+                  rows={2}
+                  value={form.tone}
+                  onChange={(e) => setForm({ ...form, tone: e.target.value })}
+                  placeholder="Ex.: direto, com humor seco e frases curtas"
+                />
               </div>
               {(doc || form.source_url.trim() || form.description.trim() || form.niche.trim()) && (
                 <label className="flex items-start gap-2 rounded-2xl border border-border bg-muted/30 p-3 text-xs sm:col-span-2">
