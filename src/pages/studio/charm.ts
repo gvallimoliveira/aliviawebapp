@@ -23,6 +23,7 @@
  */
 
 import { readsWell } from "./grammar";
+import { proofread } from "./agreement";
 
 /** Súplica de venda — proibida em qualquer arte. */
 export const PLEADING_PHRASES: readonly string[] = [
@@ -158,7 +159,8 @@ export const charmify = (text: string, opts: CharmOptions = {}): string => {
   out = youFocus(out);
   out = charmRhythm(out);
   if (opts.role === "support") out = charmAnticipation(out, opts.teaser);
-  if (!out || !readsWell(out)) return original;
+  out = proofread(out);
+  if (!out || !readsWell(out)) return proofread(original);
   return out;
 };
 

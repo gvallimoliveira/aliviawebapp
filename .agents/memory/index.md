@@ -22,12 +22,14 @@ Studio copy: variação linguística = RELEITURA da frase (src/pages/studio/rewr
 Studio copy: manual/briefing (brief_answers) é fonte primária do texto; acervo genérico só emergência; toda arte nasce de um par público × medo/desejo × gancho × CTA; vícios do Aliv.iA Fisio banidos (STALE_PHRASES).
 Studio marca própria: copy charmosa do manual do Aliv.iA Studio (10 públicos) é exclusiva da marca dona — nunca vaza para marca de cliente.
 Studio copy: ângulos venda/dor/desejo seguem os Pilares da Escrita Charmosa (empatia estruturada, ritmo com remate seco, foco no "você", antecipação, convite sem súplica). "Informar" fica fora.
+Studio gramática: todo texto passa por proofread/agreement.ts (concordância determinante-possessivo-ordinal × núcleo nominal) — erro de concordância é bug; barra de busca escolhe o prefixo que dá match com as sugestões (fallback "saber mais sobre").
 Studio gramática: toda frase passa pela guarda de português (nominalização de dores/desejos + portão readsWell); nunca cortar frase nem usar tapa-buraco visual (letra solta).
 Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lote), nunca todos juntos; ângulo "Informar" ≠ educacional.
 
 
 
 ## Memories
+- [Studio Proofreading](mem://features/studio-proofreading) — Revisor de concordância global e escolha do texto digitado na barra de busca.
 - [Studio Grammar Guard](mem://features/studio-grammar-guard) — Nominalização, portão readsWell, léxico proibido e fim dos tapa-buracos visuais.
 - [AI Credits Period Timezone](mem://business/ai-credits-period-timezone) — Mês de créditos = fuso Brasília via `credit_period_start()`; escudos anti-falha no widget.
 - [No Email Confirmation](mem://constraints/no-email-confirmation) — Signup sem etapa de confirmação; implicações e como reverter.

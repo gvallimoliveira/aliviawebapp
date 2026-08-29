@@ -15,7 +15,43 @@ import { TextureLayer } from "./Texture";
  * O conteúdo nunca é inventado aqui: o prefixo vem dos kickers/headlines e as
  * sugestões vêm do acervo editorial da marca (features, quotes, marquee).
  */
-const PREFIXES = ["como tratar", "por que sinto", "o que fazer com", "vale a pena"] as const;
+/**
+ * Prefixos possíveis da barra. Cada um declara com o que ele COMBINA: o texto
+ * digitado tem de fazer sentido lido junto com as sugestões abaixo. O motor
+ * escolhe o prefixo que dá match com mais sugestões; sem match claro, cai nos
+ * prefixos abrangentes, que servem para qualquer termo.
+ */
+type Prefix = {
+  text: string;
+  /** Casa com sugestões que são um problema/diagnóstico ("dor lombar", "tendinite"). */
+  fits: (suggestion: string) => boolean;
+  /** Abrangente: lê bem com qualquer sugestão (fallback seguro). */
+  broad?: boolean;
+};
+
+/** Sugestão que nomeia um sintoma/diagnóstico ("dor no ombro", "capsulite"). */
+const isCondition = (s: string) =>
+  /\b(dor|dores|lesão|lesões|tendinite|capsulite|hérnia|artrose|bursite|entorse|ruptura|inflamação|contratura|fascite|luxação|fratura|instabilidade)\b/.test(
+    s,
+  );
+
+/** Sugestão escrita como falta/dificuldade ("falta de acompanhamento"). */
+const isGap = (s: string) => /^(falta|ausência|dificuldade|medo|risco|garantia|excesso)\b/.test(s);
+
+/** Sugestão escrita como ação/objetivo ("minimizar o ciclo", "voltar a correr"). */
+const isGoal = (s: string) => /^(?:[a-zà-ÿ]+(?:ar|er|ir))\b/.test(s);
+
+const PREFIXES: Prefix[] = [
+  { text: "como tratar", fits: isCondition },
+  { text: "por que sinto", fits: isCondition },
+  { text: "o que fazer com", fits: (s) => isCondition(s) || isGap(s) },
+  { text: "como resolver", fits: (s) => isGap(s) || isGoal(s) },
+  { text: "vale a pena", fits: isGoal },
+  { text: "saber mais sobre", fits: () => true, broad: true },
+  { text: "quero entender", fits: () => true, broad: true },
+  { text: "pesquisando sobre", fits: () => true, broad: true },
+];
+
 
 /** Normaliza um trecho de copy em algo que caberia numa busca real. */
 const asQuery = (raw: string) =>
@@ -27,8 +63,6 @@ const asQuery = (raw: string) =>
     .slice(0, 48);
 
 const SearchBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
-  const prefix = PREFIXES[treatment % PREFIXES.length];
-
   /* Só entram termos de busca reais (dores, diagnósticos, desejos do nicho).
      Nada de headline/frase institucional: ninguém digita isso no Google. */
   const pool = (content.searchQueries ?? [])
@@ -38,8 +72,22 @@ const SearchBlock = ({ content, rng, treatment, format, persona }: BlockProps) =
   const suggestions = rng.shuffle(Array.from(new Set(pool))).slice(0, 4);
   if (suggestions.length < 3) return null;
 
+  /* O texto digitado não é mais fixo: escolhe-se o prefixo que faz sentido com
+     o MAIOR número de sugestões. Se nenhum prefixo específico cobrir todas, o
+     abrangente ("saber mais sobre") assume — é o que sempre dá match. */
+  const scored = PREFIXES.map((p, i) => ({
+    p,
+    hits: suggestions.filter((s) => p.fits(s)).length,
+    rank: (i + treatment) % PREFIXES.length,
+  }));
+  const specific = scored.filter((s) => !s.p.broad && s.hits === suggestions.length);
+  const broad = scored.filter((s) => s.p.broad);
+  const candidates = specific.length ? specific : broad;
+  const prefix = candidates.sort((a, b) => a.rank - b.rank)[0].p.text;
+
   const answer = content.closings[treatment % content.closings.length];
   const dark = treatment % 2 === 1;
+
 
   return (
     <section

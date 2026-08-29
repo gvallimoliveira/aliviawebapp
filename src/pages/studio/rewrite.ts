@@ -16,6 +16,7 @@
 import { createRng, type Rng } from "./rng";
 import { applyLexicon, type VoiceRegister } from "./lexicon";
 import { readsWell } from "./grammar";
+import { proofread } from "./agreement";
 
 export type RewriteMode = "light" | "partial" | "full";
 
@@ -187,7 +188,7 @@ export const rephrase = (text: string, options: RewriteOptions): string => {
 
   const lexedRaw = applyLexicon(text, { register, seed, intensity: LEX_INTENSITY[mode], forbidden });
   // Troca de palavra que estraga a concordância é descartada na origem.
-  const lexed = readsWell(lexedRaw) || !readsWell(text) ? lexedRaw : text;
+  const lexed = proofread(readsWell(lexedRaw) || !readsWell(text) ? lexedRaw : text);
   if (mode === "light" || !isSentence(lexed)) return lexed;
 
   const sentences = lexed.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [lexed];
@@ -204,7 +205,7 @@ export const rephrase = (text: string, options: RewriteOptions): string => {
     .filter(Boolean)
     .join(" ");
 
-  const final = clean(rebuilt) || lexed;
+  const final = proofread(clean(rebuilt) || lexed);
   // Portão de leitura: reescrita que quebra o português volta para a origem.
   if (!readsWell(final) && readsWell(lexed)) return lexed;
   if (forbidden.some((bad) => bad && final.toLowerCase().includes(bad.toLowerCase()))) return lexed;
