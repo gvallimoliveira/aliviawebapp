@@ -95,7 +95,18 @@ const MarqueeBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
               </li>
             ))}
           </ul>
+
+          {closing && (
+            <p
+              className={`mt-5 max-w-[38ch] text-sm leading-snug md:text-base ${
+                dark ? "text-background/70" : "text-muted-foreground"
+              }`}
+            >
+              {closing}
+            </p>
+          )}
         </motion.div>
+
       </div>
     </section>
   );
