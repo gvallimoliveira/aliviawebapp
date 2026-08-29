@@ -160,7 +160,18 @@ export type OfferWords = {
   stepsLabel: string;
   /** Fim do ciclo: "alta" (clínico), "renovação" (produto), "conclusão". */
   closingLabel: string;
+  /**
+   * VOCABULÁRIO DE JORNADA — o que a marca de fato conduz.
+   * "Caso" é palavra da saúde: só aparece em marca de atendimento clínico.
+   * Produto/SaaS conduz um "projeto"; programa conduz uma "jornada".
+   */
+  caseWord: string;
+  /** Com determinante: "o seu caso" / "o seu projeto" / "a sua jornada". */
+  yourCase: string;
+  /** Complemento verbal: "conduz um caso" / "trabalha a sua marca". */
+  conductPhrase: string;
 };
+
 
 const hasAny = (text: string, terms: string[]) => terms.some((t) => text.includes(t));
 
@@ -221,6 +232,14 @@ export const offerWords = (dna: BrandDna, brandName = ""): OfferWords => {
   const personal = kind !== "produto" && isPersonalBrand(brandName, dna);
   const noun = kind === "serviço" ? "serviço" : kind;
 
+  /**
+   * "Caso" pertence ao vocabulário clínico. Marca de produto/SaaS conduz
+   * PROJETO; curso e mentoria conduzem JORNADA; serviço genérico, TRABALHO.
+   */
+  const caseWord =
+    kind === "atendimento" ? "caso" : kind === "produto" ? "projeto" : kind === "programa" ? "jornada" : "trabalho";
+  const article = caseWord === "jornada" ? "a sua" : "o seu";
+
   return {
     kind,
     noun,
@@ -229,5 +248,15 @@ export const offerWords = (dna: BrandDna, brandName = ""): OfferWords => {
       kind === "produto" ? "etapas até o primeiro resultado" : `etapas do ${noun}`,
     closingLabel:
       kind === "atendimento" ? "alta" : kind === "programa" ? "conclusão" : "entrega",
+    caseWord,
+    yourCase: `${article} ${caseWord}`,
+    conductPhrase:
+      kind === "atendimento"
+        ? "conduz um caso"
+        : kind === "produto"
+          ? "trabalha a sua marca"
+          : kind === "programa"
+            ? "conduz a sua jornada"
+            : "conduz o trabalho",
   };
 };
