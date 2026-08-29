@@ -752,19 +752,54 @@ const applyAudience = (
 
 
 /**
- * Visão 360° — ramo MARCA: leitura ampla do que a marca é e faz (um painel
- * por público para mostrar amplitude). É só uma das duas faces do 360°: o
- * sorteio em `buildSegmentContent` decide entre esta visão de marca e o mundo
- * de um público matriz isolado — o 360° é modo livre, não "todos juntos".
+ * Visão 360° — ramo MARCA: leitura ampla do que a marca é e faz.
+ *
+ * O material vem dos três eixos do briefing — QUEM SOU (`apresentacao`), COMO
+ * TRABALHO (`oferta`) e NO QUE ACREDITO (`diferencial`). Só quando esses eixos
+ * estão vazios o 360° recai na leitura por públicos.
  */
 const applyGlobal = (
   base: WorldContent,
   brand: string,
   audiences: BrandAudience[],
   positioning?: string | null,
+  dna?: BrandDna,
 ): WorldContent => {
+  const axes = [
+    { kicker: "QUEM SOU", text: dna?.presentation },
+    { kicker: "COMO EU TRABALHO", text: dna?.offer },
+    { kicker: "NO QUE EU ACREDITO", text: dna?.belief },
+  ]
+    .map((a) => ({ ...a, text: a.text ? firstSentence(a.text, 110) : "" }))
+    .filter((a) => a.text);
+
+  const brandAxes: Partial<WorldContent> = axes.length
+    ? {
+        kickers: [...axes.map((a) => a.kicker), "VISÃO 360°", ...base.kickers],
+        headlines: [
+          ...axes.map((a) => ({ strong: firstSentence(a.text, 58), rest: "" })),
+          ...base.headlines,
+        ],
+        subs: [...axes.map((a) => a.text), ...base.subs],
+        typos: [
+          ...axes.slice(0, 2).map((a) => ({ lead: `${lower1(a.kicker)}:`, big: firstSentence(a.text, 32), tail: "." })),
+          ...base.typos,
+        ],
+        quotes: [...axes.map((a) => ({ text: `“${a.text}.”` })), ...base.quotes],
+        lists: [
+          {
+            heading: `${brand} em três frases`,
+            items: axes.map((a) => a.text),
+            closing: dna?.cta || base.sales.ctas[0] || "Chamar no direct",
+          },
+          ...base.lists,
+        ],
+      }
+    : {};
+
   if (!audiences.length) {
-    return positioning?.trim() ? { ...base, subs: [positioning.trim(), ...base.subs] } : base;
+    const withAxes = { ...base, ...brandAxes };
+    return positioning?.trim() ? { ...withAxes, subs: [positioning.trim(), ...withAxes.subs] } : withAxes;
   }
   // Métrica oficial: só públicos matriz. Sub-nichos existem para comunicação
   // dirigida, mas contá-los produz números errados ("9 públicos").
@@ -778,16 +813,18 @@ const applyGlobal = (
 
   return {
     ...base,
-    kickers: ["VISÃO 360°", `UM PRODUTO, ${labels.length} PÚBLICOS`, ...base.kickers],
+    ...brandAxes,
+    kickers: brandAxes.kickers ?? ["VISÃO 360°", `PARA ${labels.length} PÚBLICOS`, ...base.kickers],
     headlines: [
-      { strong: `${labels.length} públicos`, rest: ", um só padrão de qualidade." },
+      ...(brandAxes.headlines ?? []),
       { strong: brand, rest: ` atende ${labels.slice(0, 3).join(", ").toLowerCase()} no mesmo lugar.` },
       ...base.headlines,
     ],
-    subs: [...(positioning?.trim() ? [positioning.trim()] : []), ...base.subs],
+    subs: [...(positioning?.trim() ? [positioning.trim()] : []), ...(brandAxes.subs ?? base.subs)],
     triptychs: [
       ...(panels.length === 3 ? [{ heading: "Para quem é", panels }] : []),
       ...base.triptychs,
+
     ],
     lists: [
       {
