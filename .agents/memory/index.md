@@ -145,3 +145,4 @@ Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lot
 - [Studio Copy Engine](mem://features/studio-copy-engine) — Motor textual local: léxico + releitura de frase (rewrite.ts), níveis Baixa/Média/Alta, sem créditos de IA.
 - [Studio Carousel Variety](mem://features/studio-carousel-variety) — Repertório de roteiros de carrossel por público/marca + rotação por seed (nunca repetir o mesmo tema).
 - [Studio Charm Writing](mem://features/studio-charm-writing) — Pilares da Escrita Charmosa nos ângulos venda/dor/desejo + tabela de copy charmosa por sub-nicho (dor crônica, esportista, pós-op, 60+, vestibular, feridas).
+- [Studio Color Precision](mem://features/studio-color-precision) — Lado A/B por arte (inverter cores), captura de tom pixel a pixel do manual e conta-gotas no kit de cores.
