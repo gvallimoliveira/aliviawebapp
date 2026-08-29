@@ -11,7 +11,7 @@ import {
   type CopyIngredients,
 } from "@/pages/studio/phrasing";
 import { isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
-import { GLOBAL_SEGMENT, audienceHook, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
+import { GLOBAL_SEGMENT, audienceHook, audienceHooks, audienceKeyword, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 
@@ -441,13 +441,13 @@ const applyAudience = (base: WorldContent, brand: string, audience: BrandAudienc
     ...pains.slice(0, 3).map((p) => ({ strong: key, rest: `: ${lower1(p)} não precisa ser a sua rotina.` })),
     ...desires.slice(0, 2).map((d) => ({ strong: key, rest: `: ${lower1(d)} começa com uma decisão.` })),
     ...proof.slice(0, 2).map((p) => ({ strong: `${key} pede método`, rest: `. ${p}.` })),
-    { strong: `${hook}`, rest: `: isso foi feito para o seu caso.` },
+    { strong: `${hk(1)}`, rest: `: isso foi feito para o seu caso.` },
     { strong: `Feito para ${lower1(key)}`, rest: ", não para todo mundo." },
   ];
 
   const typos = [
     { lead: "Se o assunto é", big: key, tail: pains[0] ? `${pains[0]}.` : `a conversa muda de nível.` },
-    { lead: hook.replace(/^Você/, "Você") + ":", big: key, tail: desires[0] ? `${desires[0]}.` : `tem caminho.` },
+    { lead: hk(2) + ":", big: key, tail: desires[0] ? `${desires[0]}.` : `tem caminho.` },
     ...proof.slice(0, 1).map((p) => ({ lead: `${key} com`, big: "critério", tail: `${p}.` })),
   ];
 
@@ -470,7 +470,7 @@ const applyAudience = (base: WorldContent, brand: string, audience: BrandAudienc
       ? [{
           heading: `O que muda quando ${lower1(key)} é levado a sério`,
           items: desires,
-          closing: `${hook}, o próximo passo existe e é claro.`,
+          closing: `${hk(3)}, o próximo passo existe e é claro.`,
         }]
       : []),
   ];
@@ -480,7 +480,7 @@ const applyAudience = (base: WorldContent, brand: string, audience: BrandAudienc
       ? [{
           kicker: KEY,
           title: `${key}: do medo ao plano`,
-          coverSub: `${hook}, este carrossel é para você.`,
+          coverSub: `${hk(4)}, este carrossel é para você.`,
           slides: [
             ...pains.slice(0, 2).map((p) => ({ heading: "O que você sente hoje", body: `${p}.` })),
             ...desires.slice(0, 1).map((d) => ({ heading: "O que passa a ser possível", body: `${d}.` })),
@@ -499,7 +499,7 @@ const applyAudience = (base: WorldContent, brand: string, audience: BrandAudienc
     subs: [
       ...(desc ? [desc] : []),
       ...proof.slice(0, 3).map((p) => `${key}: ${lower1(p)}.`),
-      ...(pains[0] ? [`${hook}: ${lower1(pains[0])} tem explicação — e conduta.`] : []),
+      ...(pains[0] ? [`${hk(5)}: ${lower1(pains[0])} tem explicação — e conduta.`] : []),
       ...tail(base.subs),
     ],
     typos: [...typos, ...tail(base.typos)],
@@ -522,7 +522,7 @@ const applyAudience = (base: WorldContent, brand: string, audience: BrandAudienc
     carousels: [...carousels, ...tail(base.carousels)],
     closings: [
       { title: `${key}: o próximo passo é seu`, sub: desires[0] ?? `Fale com ${brand} hoje.`, cta },
-      { title: hook, sub: proof[0] ?? `${brand} tem um caminho para o seu caso.`, cta },
+      { title: hk(6), sub: proof[0] ?? `${brand} tem um caminho para o seu caso.`, cta },
       ...tail(base.closings),
     ],
     sales: {
