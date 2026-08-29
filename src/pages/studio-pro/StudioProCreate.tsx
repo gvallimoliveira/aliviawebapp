@@ -554,66 +554,82 @@ const StudioProCreate = ({
     });
   }, [edits, blocks, format, seed, content, activePhotos, resetTick]);
 
-  const startEdit = (index: number) => {
-    const node = artNode(index);
-    if (!node) return;
-    setWhyOpen(index);
-    setEditing(index);
-    setArtEditing(node, true);
+  /** Liga a edição direta na arte (ou em todos os slides do carrossel). */
+  const startEdit = (indexes: number[]) => {
+    setWhyOpen(indexes[0]);
+    setEditing(indexes[0]);
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (node) setArtEditing(node, true);
+    });
   };
 
-  const cancelEdit = (index: number) => {
-    const node = artNode(index);
-    if (node) {
+  const cancelEdit = (indexes: number[]) => {
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (!node) return;
       setArtEditing(node, false);
-      applyArtText(node, edits[index]);
-    }
+      applyArtText(node, edits[i]);
+    });
     setEditing(null);
   };
 
-  /** Fecha a edição validando a mensagem antes de aprovar a arte. */
-  const finishEdit = (index: number) => {
-    const node = artNode(index);
-    if (!node) return;
-    const next = readArtText(node);
-    const texts = Object.values(next);
-    if (texts.some((t) => !t)) {
-      toast.error("Há um texto vazio na arte. Preencha ou desfaça o ajuste.");
-      return;
+  /** Fecha a edição validando a mensagem antes de reenviar a arte para aprovação. */
+  const finishEdit = (indexes: number[]) => {
+    const collected: Record<number, ArtTextEdits> = {};
+    for (const i of indexes) {
+      const node = artNode(i);
+      if (!node) continue;
+      const next = readArtText(node);
+      const texts = Object.values(next);
+      if (texts.some((t) => !t)) {
+        toast.error("Há um texto vazio na arte. Preencha ou desfaça o ajuste.");
+        return;
+      }
+      const jargon = texts.find((t) => hasBannedJargon(t));
+      if (jargon) {
+        toast.error("Essa frase usa jargão de marketing. Escreva como você falaria com o paciente.");
+        return;
+      }
+      collected[i] = next;
     }
-    const jargon = texts.find((t) => hasBannedJargon(t));
-    if (jargon) {
-      toast.error("Essa frase usa jargão de marketing. Escreva como você falaria com o paciente.");
-      return;
-    }
-    setArtEditing(node, false);
-    setEdits((prev) => ({ ...prev, [index]: next }));
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (node) setArtEditing(node, false);
+    });
+    setEdits((prev) => ({ ...prev, ...collected }));
     setEditing(null);
-    setApproved((prev) => new Set(prev).add(index));
-    // A arte foi alterada: um salvamento anterior não representa mais o que está em tela.
+    setApproved((prev) => {
+      const copy = new Set(prev);
+      indexes.forEach((i) => copy.add(i));
+      return copy;
+    });
+    // A arte mudou: um salvamento anterior não representa mais o que está em tela.
     setSaved((prev) => {
       const copy = new Set(prev);
-      copy.delete(index);
+      indexes.forEach((i) => copy.delete(i));
       return copy;
     });
     toast.success("Arte ajustada e reenviada para aprovação.");
   };
 
   /** Volta ao texto original gerado pelo motor. */
-  const resetEdit = (index: number) => {
+  const resetEdit = (indexes: number[]) => {
     setEdits((prev) => {
       const copy = { ...prev };
-      delete copy[index];
+      indexes.forEach((i) => delete copy[i]);
       return copy;
     });
     setApproved((prev) => {
       const copy = new Set(prev);
-      copy.delete(index);
+      indexes.forEach((i) => copy.delete(i));
       return copy;
     });
     setEditing(null);
-    const node = artNode(index);
-    if (node) setArtEditing(node, false);
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (node) setArtEditing(node, false);
+    });
     // Remonta os blocos para o motor reescrever o texto original.
     setResetTick((n) => n + 1);
     toast.success("Texto original restaurado.");
@@ -1266,7 +1282,7 @@ const StudioProCreate = ({
                     <Button
                       size="sm"
                       className="h-8 rounded-full text-xs"
-                      onClick={() => finishEdit(first.index)}
+                      onClick={() => finishEdit(indexes)}
                     >
                       <Check className="mr-1.5 h-3.5 w-3.5" />
                       Concluir ajuste
@@ -1275,7 +1291,7 @@ const StudioProCreate = ({
                       size="sm"
                       variant="ghost"
                       className="h-8 rounded-full text-xs"
-                      onClick={() => cancelEdit(first.index)}
+                      onClick={() => cancelEdit(indexes)}
                     >
                       Cancelar
                     </Button>
@@ -1285,18 +1301,18 @@ const StudioProCreate = ({
                     size="sm"
                     variant="outline"
                     className="h-8 rounded-full text-xs"
-                    onClick={() => startEdit(first.index)}
+                    onClick={() => startEdit(indexes)}
                   >
                     <PencilLine className="mr-1.5 h-3.5 w-3.5" />
                     Ajustar texto
                   </Button>
                 )}
-                {hasArtEdits(edits[first.index]) && (
+                {indexes.some((i) => hasArtEdits(edits[i])) && (
                   <Button
                     size="sm"
                     variant="ghost"
                     className="h-8 rounded-full text-xs"
-                    onClick={() => resetEdit(first.index)}
+                    onClick={() => resetEdit(indexes)}
                   >
                     <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
                     Desfazer
@@ -1359,7 +1375,7 @@ const StudioProCreate = ({
                       const needsBrand =
                         gapText.includes("público") || gapText.includes("cta") || gapText.includes("kit");
                       const isEditing = editing === first.index;
-                      const wasEdited = hasArtEdits(edits[first.index]);
+                      const wasEdited = indexes.some((i) => hasArtEdits(edits[i]));
                       return (
                         <div className="mt-3 rounded-xl border border-dashed border-border p-3">
                           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1384,7 +1400,7 @@ const StudioProCreate = ({
                                 <Button
                                   size="sm"
                                   className="h-7 rounded-full text-[11px]"
-                                  onClick={() => finishEdit(first.index)}
+                                  onClick={() => finishEdit(indexes)}
                                 >
                                   <Check className="mr-1 h-3 w-3" />
                                   Concluir e reenviar
@@ -1393,7 +1409,7 @@ const StudioProCreate = ({
                                   size="sm"
                                   variant="ghost"
                                   className="h-7 rounded-full text-[11px]"
-                                  onClick={() => cancelEdit(first.index)}
+                                  onClick={() => cancelEdit(indexes)}
                                 >
                                   Cancelar
                                 </Button>
@@ -1403,7 +1419,7 @@ const StudioProCreate = ({
                                 size="sm"
                                 variant="outline"
                                 className="h-7 rounded-full text-[11px]"
-                                onClick={() => startEdit(first.index)}
+                                onClick={() => startEdit(indexes)}
                               >
                                 <PencilLine className="mr-1 h-3 w-3" />
                                 Editar texto na arte
@@ -1436,7 +1452,7 @@ const StudioProCreate = ({
                                 size="sm"
                                 variant="ghost"
                                 className="h-7 rounded-full text-[11px]"
-                                onClick={() => resetEdit(first.index)}
+                                onClick={() => resetEdit(indexes)}
                               >
                                 <RotateCcw className="mr-1 h-3 w-3" />
                                 Voltar ao original
