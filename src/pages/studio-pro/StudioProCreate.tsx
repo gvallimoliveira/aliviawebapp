@@ -155,6 +155,14 @@ const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "free", label: "Livre" },
 ];
 
+/**
+ * BOTÃO "POR QUE ESTA ARTE" — desligado por escolha do dono do Studio.
+ *
+ * O filtro de nexo continua rodando (é ele que troca formatos sem sentido); só a
+ * leitura explicada deixou de aparecer no card. Trocar para `true` religa.
+ */
+const SHOW_WHY = false;
+
 /** Nome do formato em linguagem comum, usado na explicação de cada arte. */
 const FORMAT_LABEL: Record<StudioFormat, string> = {
   "9x16": "story vertical 9:16",
