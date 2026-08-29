@@ -373,11 +373,22 @@ const hash = (s: string): number => {
   return Math.abs(h);
 };
 
-/** Frases reais da arte, limpas e sem repetição. */
+/**
+ * Frases reais da arte, limpas e sem repetição.
+ *
+ * Blocos numerados (índice, lista, método) colam o número do item no texto ao
+ * serem lidos do DOM ("01Guilherme Vallim"). O número é enfeite de layout, não
+ * mensagem: sai antes de citar a frase.
+ */
 const cleanCopy = (copy?: string[]): string[] => {
   const seen = new Set<string>();
   return (copy ?? [])
-    .map((t) => trim(t).replace(/\s+/g, " "))
+    .map((t) =>
+      trim(t)
+        .replace(/\s+/g, " ")
+        .replace(/^(?:\d{1,2}[.)°º]?\s*)(?=\D)/, "")
+        .trim(),
+    )
     .filter((t) => {
       if (t.length < 3 || t.length > 220) return false;
       const key = t.toLowerCase();
@@ -386,6 +397,10 @@ const cleanCopy = (copy?: string[]): string[] => {
       return true;
     });
 };
+
+/** Uma frase de verdade (tem sujeito e ideia) ou só um rótulo solto? */
+const isSentence = (t: string) => t.split(/\s+/).filter(Boolean).length >= 4;
+
 
 const quote = (t: string) => `“${t}”`;
 
