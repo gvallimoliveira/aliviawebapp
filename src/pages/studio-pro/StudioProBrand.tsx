@@ -39,6 +39,7 @@ import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } fr
 import { matrixAudiences, readAudiences, writeAudiences, type BrandAudience } from "./audiences";
 import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
+import StudioArtEditor from "./StudioArtEditor";
 import {
   answeredCount,
   formatBriefAnswers,
