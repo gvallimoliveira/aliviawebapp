@@ -374,7 +374,7 @@ const StudioProLanding = () => {
         </div>
       </section>
 
-      {/* Como funciona */}
+      {/* Como funciona — resumo */}
       <section id="como-funciona" className="border-b border-border/60 px-5 py-16 md:py-24">
         <div className="mx-auto max-w-6xl">
           <h2 className="max-w-2xl text-3xl font-bold tracking-tight md:text-4xl">
@@ -390,6 +390,69 @@ const StudioProLanding = () => {
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Por dentro do cadastro da marca — passo a passo detalhado */}
+      <section className="border-b border-border/60 bg-muted/30 px-5 py-16 md:py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-2xl">
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              Depois de assinar
+            </span>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+              Como o Studio conduz sua marca, passo a passo.
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground md:text-base">
+              Nada de tela vazia perguntando "e agora?". Do formulário ao primeiro lote de artes,
+              cada etapa tem lugar certo na página de ajustes da marca — e você só faz uma vez.
+            </p>
+          </div>
+
+          <ol className="mt-12 space-y-4">
+            {ONBOARDING.map(({ icon: Icon, step, title, body, points }, i) => (
+              <li
+                key={title}
+                className="grid gap-5 rounded-3xl border border-border bg-card p-6 md:grid-cols-[auto_1fr_1fr] md:items-center md:gap-8 md:p-8"
+              >
+                <div className="flex items-center gap-4 md:flex-col md:items-start">
+                  <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                    {step}
+                    <span className="text-border"> / 5</span>
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold md:text-xl">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
+                </div>
+                <ul className="space-y-2 md:border-l md:border-border md:pl-8">
+                  {points.map((point) => (
+                    <li key={point} className="flex gap-2 text-sm text-muted-foreground">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+                {i < ONBOARDING.length - 1 && <span className="sr-only">em seguida</span>}
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-10 flex flex-col items-center gap-3 text-center">
+            <p className="max-w-xl text-sm text-muted-foreground">
+              Depois disso, o dia a dia é só escolher o assunto e baixar. A marca fica guardada —
+              e cada geração respeita o que você definiu.
+            </p>
+            <Button asChild size="lg" className="rounded-full">
+              <Link to={isLoggedIn ? `${PRODUCT.base}/app` : `${PRODUCT.base}/entrar`}>
+                {isLoggedIn ? "Configurar minha marca" : "Começar pelo formulário"}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
