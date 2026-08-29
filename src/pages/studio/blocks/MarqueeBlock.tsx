@@ -52,6 +52,18 @@ const MarqueeBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
             {kicker}
           </p>
 
+          {statement && (
+            <h2
+              className={`mb-5 max-w-[22ch] text-2xl font-semibold leading-[1.1] tracking-tight md:text-4xl ${
+                dark ? "text-background" : "text-foreground"
+              }`}
+            >
+              {statement}
+            </h2>
+          )}
+
+
+
           <ul
             className={`divide-y ${
               dark ? "divide-background/15 border-y border-background/15" : "divide-border border-y border-border"
