@@ -485,19 +485,26 @@ export const explainArt = (
     : "";
   const motionSeen = motion ? ` No movimento, ${motion}.` : "";
 
+  const labelsSeen = labels.slice(0, 4).map(quote).join(", ");
+  /** Quando a arte não tem frase, a explicação assume o problema em vez de enfeitar. */
+  const noSentence = () =>
+    `Sem frase inteira, esta arte não diz nada por si: ela mostra ${
+      labelsSeen || "apenas rótulos"
+    } e espera que a pessoa deduza a ligação. Para ${audience}, falta uma linha dizendo o que esses termos resolvem — do jeito que está, o valor só existe para quem já conhece ${ctx.brandName}.`;
+
   const messageFrames = [
     () =>
       headline
         ? `A frase que carrega a arte é ${quote(headline)} — escolhida porque ${audiencePart} sobre ${subject}.${
             lead ? ` A linha ${quote(lead)} sustenta o argumento sem exigir esforço de leitura.` : ""
-          } O formato entra para ${sense.job}.`
-        : `A arte ${audiencePart} sobre ${subject}: ${sense.job}.`,
+          }${labelsSeen ? ` Os itens ${labelsSeen} entram como apoio, não como mensagem.` : ""} O formato entra para ${sense.job}.`
+        : noSentence(),
     () =>
       headline
         ? `Pensando em ${audience}, o motor colocou ${quote(headline)} como centro da arte: é a leitura de dois segundos sobre ${subject}. Escolhi ${sense.format} porque o trabalho aqui é ${sense.job}.${
             tail ? ` O fecho ${quote(tail)} amarra a ideia.` : ""
           }`
-        : `A arte ${audiencePart} sobre ${subject}: ${sense.job}.`,
+        : noSentence(),
     () =>
       headline
         ? `O assunto é ${subject} e o recorte é ${quote(headline)}. ${
@@ -505,8 +512,9 @@ export const explainArt = (
           }, e por isso o formato ${sense.format} — ele serve para ${sense.job}.${
             lead && lead !== headline ? ` ${quote(lead)} entra como apoio.` : ""
           }`
-        : `A arte ${audiencePart} sobre ${subject}: ${sense.job}.`,
+        : noSentence(),
   ];
+
 
   const effect = [
     role ? `${role}. ` : "",
