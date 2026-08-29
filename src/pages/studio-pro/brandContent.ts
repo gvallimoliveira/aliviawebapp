@@ -1375,7 +1375,17 @@ export const buildSegmentContent = ({
   const audience = resolveAudience(audiences, segment);
   if (!audience) return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
   const relation = relationFor(audience);
-  return finish(applyAudience(root, brand, audience, relation), relation);
+  const built = finish(applyAudience(root, brand, audience, relation), relation);
+  /**
+   * O sub-nicho de slogan é o único caso em que uma frase entra JÁ PRONTA na
+   * arte: ela é a assinatura declarada da marca, então passa depois dos filtros
+   * para não ser reescrita nem descartada.
+   */
+  if (segment === SLOGAN_SEGMENT && hasSlogan(kit.slogan)) {
+    return applySloganFocus(built, kit.slogan as string, brand);
+  }
+  return built;
+
 };
 
 /** Relação usada por uma arte — exposta para o filtro de nexo e a legenda. */
