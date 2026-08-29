@@ -274,7 +274,7 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
           format,
           headline,
           text_edits: texts,
-          snapshot: nextSnapshot as unknown as Record<string, unknown>,
+          snapshot: JSON.parse(JSON.stringify(nextSnapshot)),
           ...(thumb ? { thumb } : {}),
           ...(pngPath ? { png_path: pngPath } : {}),
         })
