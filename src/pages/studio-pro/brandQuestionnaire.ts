@@ -144,7 +144,7 @@ export const BRAND_QUESTIONNAIRE: BrandQuestionBlock[] = [
       {
         id: "destaque",
         label: "Cor de destaque da marca",
-        hint: "Nome ou código. Ex.: âmbar #E8B54A. Se não tiver, deixe em branco.",
+        hint: "Nome ou código. Ex.: cobre #B87333. Se não tiver, deixe em branco.",
         kind: "short",
       },
       {
