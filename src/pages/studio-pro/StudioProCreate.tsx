@@ -1440,7 +1440,7 @@ const StudioProCreate = ({
               </div>
 
               {/* Leitura de sentido: a explicação que o motor consegue dar da arte. */}
-              {whyOpen === first.index && (() => {
+              {SHOW_WHY && whyOpen === first.index && (() => {
                 const why = explainWhy(first.index, first.block);
                 if (!why) return null;
 
