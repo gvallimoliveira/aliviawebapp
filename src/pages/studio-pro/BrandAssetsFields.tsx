@@ -59,6 +59,8 @@ const shrinkLogo = async (file: File): Promise<string> => {
   return canvas.toDataURL("image/png");
 };
 
+export type BrandAssetKey = "doc" | "logo" | "font";
+
 type Props = {
   logoUrl: string;
   onLogoChange: (value: string) => void;
@@ -66,13 +68,28 @@ type Props = {
   onFontChange: (key: string) => void;
   doc: BrandDoc | null;
   onDocChange: (doc: BrandDoc | null) => void;
+  /** Quais ativos mostrar — permite distribuí-los entre as etapas da página. */
+  only?: BrandAssetKey[];
 };
 
-const BrandAssetsFields = ({ logoUrl, onLogoChange, fontKey, onFontChange, doc, onDocChange }: Props) => {
+const BrandAssetsFields = ({
+  logoUrl,
+  onLogoChange,
+  fontKey,
+  onFontChange,
+  doc,
+  onDocChange,
+  only,
+}: Props) => {
   const logoInput = useRef<HTMLInputElement>(null);
   const docInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<"logo" | "doc" | null>(null);
   const font = findFont(fontKey);
+  const visible: BrandAssetKey[] = only ?? ["doc", "logo", "font"];
+  const shows = (key: BrandAssetKey) => visible.includes(key);
+  /** Separador só entre blocos visíveis — evita linha órfã no topo. */
+  const divider = (key: BrandAssetKey) => (visible.indexOf(key) > 0 ? "border-t border-border pt-4" : "");
+
 
   /** A prévia precisa da fonte real carregada. */
   useEffect(() => {
