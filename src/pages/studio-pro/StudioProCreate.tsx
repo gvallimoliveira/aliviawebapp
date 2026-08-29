@@ -62,6 +62,14 @@ import {
   type ContentAngle,
 } from "./audiences";
 import { enforceRationale, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
+import { hasBannedJargon } from "@/pages/studio/persuasion";
+import {
+  applyArtText,
+  hasArtEdits,
+  readArtText,
+  setArtEditing,
+  type ArtTextEdits,
+} from "@/pages/studio/artTextEdit";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
@@ -219,6 +227,7 @@ const StudioProCreate = ({
   unlimited: unlimitedAccess = false,
   photoLimit = 0,
   onSaved,
+  onOpenBrandSettings,
 }: Props) => {
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
   /** Assinatura da marca nas artes: ajuste global da marca (ligado por padrão). */
@@ -521,6 +530,92 @@ const StudioProCreate = ({
   const blocks = audit.blocks;
   /** Índice da arte com a leitura de sentido aberta. */
   const [whyOpen, setWhyOpen] = useState<number | null>(null);
+  /**
+   * AJUSTE FINO NO CARD: quando o filtro aponta que falta mensagem, o dono da
+   * marca reescreve o texto na própria arte e reenvia para aprovação. Os textos
+   * editados ficam guardados por posição e são reaplicados a cada re-render, de
+   * modo que o PNG exportado e a arte salva saem já corrigidos.
+   */
+  const [edits, setEdits] = useState<Record<number, ArtTextEdits>>({});
+  const [editing, setEditing] = useState<number | null>(null);
+  /** Artes que o usuário revisou e reenviou para aprovação com sucesso. */
+  const [approved, setApproved] = useState<Set<number>>(() => new Set());
+
+  const artNode = (index: number) =>
+    document.getElementById(`studio-pro-block-${index}`) as HTMLElement | null;
+
+  /** Reaplica as edições depois de qualquer re-render das artes. */
+  useEffect(() => {
+    Object.entries(edits).forEach(([key, value]) => {
+      const node = artNode(Number(key));
+      if (node) applyArtText(node, value);
+    });
+  }, [edits, blocks, format, seed, content, activePhotos]);
+
+  const startEdit = (index: number) => {
+    const node = artNode(index);
+    if (!node) return;
+    setWhyOpen(index);
+    setEditing(index);
+    setArtEditing(node, true);
+  };
+
+  const cancelEdit = (index: number) => {
+    const node = artNode(index);
+    if (node) {
+      setArtEditing(node, false);
+      applyArtText(node, edits[index]);
+    }
+    setEditing(null);
+  };
+
+  /** Fecha a edição validando a mensagem antes de aprovar a arte. */
+  const finishEdit = (index: number) => {
+    const node = artNode(index);
+    if (!node) return;
+    const next = readArtText(node);
+    const texts = Object.values(next);
+    if (texts.some((t) => !t)) {
+      toast.error("Há um texto vazio na arte. Preencha ou desfaça o ajuste.");
+      return;
+    }
+    const jargon = texts.find((t) => hasBannedJargon(t));
+    if (jargon) {
+      toast.error("Essa frase usa jargão de marketing. Escreva como você falaria com o paciente.");
+      return;
+    }
+    setArtEditing(node, false);
+    setEdits((prev) => ({ ...prev, [index]: next }));
+    setEditing(null);
+    setApproved((prev) => new Set(prev).add(index));
+    // A arte foi alterada: um salvamento anterior não representa mais o que está em tela.
+    setSaved((prev) => {
+      const copy = new Set(prev);
+      copy.delete(index);
+      return copy;
+    });
+    toast.success("Arte ajustada e reenviada para aprovação.");
+  };
+
+  /** Volta ao texto original gerado pelo motor. */
+  const resetEdit = (index: number) => {
+    setEdits((prev) => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
+    setApproved((prev) => {
+      const copy = new Set(prev);
+      copy.delete(index);
+      return copy;
+    });
+    setEditing(null);
+    setSeed((prev) => prev);
+    // Re-render do bloco: recompõe o texto original do motor.
+    const node = artNode(index);
+    if (node) setArtEditing(node, false);
+    toast.success("Texto original restaurado. Gere a nova versão para recompor.");
+  };
 
   /**
    * AGRUPAMENTO DE ENTREGA.
