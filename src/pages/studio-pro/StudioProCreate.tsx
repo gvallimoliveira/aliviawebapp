@@ -34,7 +34,18 @@ import { readColorKit } from "./brandColors";
 import { readableThemeTokens } from "./contrast";
 
 import { ensureFontLoaded, findFont } from "./brandFonts";
-import { ANGLES, GLOBAL_SEGMENT, audienceAncestors, buildSegments, readAudiences, type ContentAngle } from "./audiences";
+import {
+  ANGLES,
+  GLOBAL_SEGMENT,
+  audienceAncestors,
+  audienceHook,
+  audienceKeyword,
+  buildSegments,
+  readAudiences,
+  resolveAudience,
+  type ContentAngle,
+} from "./audiences";
+import { enforceRationale, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
@@ -433,7 +444,7 @@ const StudioProCreate = ({
    * carrossel, entregando um slide isolado). Trocar público, objetivo, modelo ou
    * formato navega a mesma geração sem custo.
    */
-  const blocks = useMemo(
+  const composedBlocks = useMemo(
     () =>
       composePage(
         createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
@@ -447,6 +458,49 @@ const StudioProCreate = ({
       ),
     [brand.id, seed, activeSegment, angle, persona, content, lineage, activePhotos.length, models, isAlivia],
   );
+
+  /**
+   * FILTRO INTERNO DE NEXO.
+   *
+   * Antes de mostrar qualquer arte, o motor precisa conseguir explicar — em
+   * linguagem de leigo — o que a arte mostra, o que ela diz para o público real
+   * da marca e o que quer despertar em quem lê. Arte cuja explicação não fecha
+   * não é intuitiva: é trocada por um formato que fecha o raciocínio. O filtro é
+   * local e determinístico (mesma seed → mesma arte, zero crédito de IA).
+   */
+  const rationaleCtx = useMemo<RationaleContext>(() => {
+    const audience = activeSegment === GLOBAL_SEGMENT ? null : resolveAudience(audiences, activeSegment);
+    const matrix = audiences.find((a) => !a.parentId && (a.keyword || a.hook || (a.hooks ?? []).length > 0));
+    const keyword =
+      (audience ? audienceKeyword(audience) : "") ||
+      (matrix ? audienceKeyword(matrix) : "") ||
+      brand.niche ||
+      brand.name;
+    const hook =
+      (audience ? audienceHook(audience) : "") ||
+      (matrix ? audienceHook(matrix) : "") ||
+      (brand.positioning ?? "").split(/[.;]/)[0] ||
+      "";
+    const cta =
+      (audience?.cta ?? "").trim() ||
+      (matrix?.cta ?? "").trim() ||
+      content.closings[0]?.cta ||
+      content.sales?.ctas?.[0] ||
+      "";
+    return {
+      content,
+      audienceLabel: audience?.label ?? (activeSegment === GLOBAL_SEGMENT ? "todos os públicos (360°)" : activeSegment),
+      keyword,
+      hook,
+      cta,
+      angle,
+      photoCount: activePhotos.length,
+      brandName: brand.name,
+    };
+  }, [audiences, activeSegment, angle, content, activePhotos.length, brand.name, brand.niche, brand.positioning]);
+
+  const audit = useMemo(() => enforceRationale(composedBlocks, rationaleCtx), [composedBlocks, rationaleCtx]);
+  const blocks = audit.blocks;
 
   /**
    * AGRUPAMENTO DE ENTREGA.
