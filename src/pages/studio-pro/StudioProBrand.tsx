@@ -9,6 +9,7 @@ import {
   FolderPlus,
   Images,
   Loader2,
+  PencilLine,
   Save,
   Settings2,
   Sparkles,
