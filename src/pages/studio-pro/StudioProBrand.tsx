@@ -87,6 +87,12 @@ type Creation = {
   is_favorite: boolean;
   png_path: string | null;
   composition: unknown;
+  /** Receita da arte: seed, público, objetivo e texto exato (edição pela galeria). */
+  seed: string;
+  segment: string | null;
+  angle: string | null;
+  block_kind: string | null;
+  text_edits: unknown;
 };
 
 
