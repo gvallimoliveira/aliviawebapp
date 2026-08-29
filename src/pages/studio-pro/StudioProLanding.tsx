@@ -46,6 +46,48 @@ const STEPS = [
   },
 ];
 
+/**
+ * Passo a passo real do onboarding da marca, na mesma ordem da tela de
+ * ajustes: formulário → identidade (logo + manual) → públicos → lote → ajuste.
+ */
+const ONBOARDING = [
+  {
+    icon: ClipboardList,
+    step: "Passo 1",
+    title: "Formulário da marca",
+    body: "Logo após assinar, você responde um questionário guiado: o que a marca oferece, para quem fala, tom de voz e o que nunca dizer. É o briefing que um estúdio pediria — em 10 minutos, sem reunião.",
+    points: ["Produto, serviço ou atendimento", "Tom de voz e palavras proibidas", "Pode baixar em PDF para revisar"],
+  },
+  {
+    icon: Palette,
+    step: "Passo 2",
+    title: "Identidade visual: logo, cores e manual",
+    body: "Você sobe a logo e o manual de marca (PDF) logo no início dos ajustes. Sem manual? Cole o site ou Instagram e o Studio extrai cores e fontes sozinho — você só confirma a paleta.",
+    points: ["Upload de logo e manual de marca", "Extração automática de cores e fontes", "Paleta editável cor a cor"],
+  },
+  {
+    icon: Users,
+    step: "Passo 3",
+    title: "Públicos, dores e desejos",
+    body: "Você declara seus públicos (ex.: iniciantes, atletas, gestantes) e o que cada um teme e deseja. É daqui que saem os textos: nenhuma arte fala genérico — cada peça conversa com um medo ou um desejo real.",
+    points: ["Públicos e sub-nichos ilimitados", "Ganchos e CTAs por público", "Texto relacional, não slogan vazio"],
+  },
+  {
+    icon: Layers,
+    step: "Passo 4",
+    title: "Lote de artes pronto",
+    body: "Com a marca configurada, o Studio monta o lote: capas, listas, provas, institucionais e carrosséis completos (capa → miolo → CTA) em 1:1, 4:5 e story 9:16 — tudo na sua identidade.",
+    points: ["Carrossel completo, não artes soltas", "Formatos 1:1, 4:5 e 9:16", "Variação de tema a cada geração"],
+  },
+  {
+    icon: PenLine,
+    step: "Passo 5",
+    title: "Ajuste fino e download",
+    body: "Antes de baixar, você edita o texto direto na arte e troca o formato quando precisar — sem gastar crédito. Depois é PNG em alta resolução (3×), com legenda pronta para publicar.",
+    points: ["Edição de texto na própria arte", "Troca de formato sem custo", "Galeria com tudo que você já salvou"],
+  },
+];
+
 const FORMATS: { label: string; ratio: string; body: string; icon: typeof Images }[] = [
   {
     label: "Story",
