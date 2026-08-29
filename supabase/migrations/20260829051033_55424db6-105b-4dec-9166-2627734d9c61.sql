@@ -1,0 +1,1 @@
+ALTER TABLE public.studio_brands ADD COLUMN IF NOT EXISTS brief_answers jsonb NOT NULL DEFAULT '{}'::jsonb;
