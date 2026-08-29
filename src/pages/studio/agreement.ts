@@ -34,8 +34,6 @@ const PLURAL_EXCEPTIONS = new Set(["mês","país","gás","atrás","através","de
 
 type Agreement = { gender: "m" | "f"; plural: boolean } | null;
 
-const stripAccents = (word: string) => word.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
 const isPlural = (word: string) => {
   const w = word.toLowerCase();
   if (PLURAL_EXCEPTIONS.has(w)) return false;
