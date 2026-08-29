@@ -33,6 +33,8 @@ import {
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
 import StudioProCreate from "./StudioProCreate";
+import StudioProAuthorial from "./StudioProAuthorial";
+import BrandTextsCard from "./BrandTextsCard";
 import type { ComposedBlock } from "@/studio-core";
 import BrandColorFields from "./BrandColorFields";
 import BrandAssetsFields, { type BrandDoc } from "./BrandAssetsFields";
@@ -672,7 +674,20 @@ const StudioProBrand = () => {
           ))}
         </div>
 
-        {tab === "criar" && (
+        {/* Marca autoral: o Studio diagrama os textos do autor, não escreve. */}
+        {tab === "criar" && brand.content_source === "authorial" && (
+          <StudioProAuthorial
+            brand={brand}
+            folder={folder}
+            watermark={access.watermark}
+            unlimited={access.unlimited}
+            photoLimit={access.photoLimit}
+            onSaved={() => void loadCreations()}
+            onOpenBrandSettings={() => setTab("ajustes")}
+          />
+        )}
+
+        {tab === "criar" && brand.content_source !== "authorial" && (
           <StudioProCreate
             brand={brand}
             folder={folder}
@@ -1114,6 +1129,13 @@ const StudioProBrand = () => {
                     escolhe o público (Paciente, Profissional, Clínica ou Estudante) e as artes saem com a
                     mensagem real de cada landing.
                   </p>
+                )}
+
+                {/* Marca autoral: o acervo de texto é o próprio conteúdo das artes. */}
+                {brand.content_source === "authorial" && (
+                  <div className="sm:col-span-2">
+                    <BrandTextsCard brandId={brand.id} />
+                  </div>
                 )}
               </div>
             </BrandSection>
