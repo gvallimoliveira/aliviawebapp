@@ -44,7 +44,16 @@ export type BrandKit = {
   description?: string | null;
   /** Palavras-chave da marca (alimentam kickers e marquee). */
   keywords?: string[] | null;
+  /** Posicionamento declarado (manual/IA). */
+  positioning?: string | null;
+  /**
+   * Respostas do questionário de marca (`studio_brands.brief_answers`).
+   * FONTE PRIMÁRIA do texto: quando existe, é ela que escreve as artes — o
+   * acervo neutro só entra como emergência para marca sem manual e sem briefing.
+   */
+  briefAnswers?: unknown;
 };
+
 
 /**
  * FRASE DE APOIO DA MARCA (slogan do lockup).
