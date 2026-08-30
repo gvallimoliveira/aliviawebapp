@@ -19,6 +19,8 @@ import {
   Sparkles,
   Type,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { PRODUCT } from "./product";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -1101,8 +1103,33 @@ const StudioProCreate = ({
                 Ele saiu da sua marca sem consumir nenhuma geração. Explore à vontade: trocar público,
                 objetivo, modelo de post e formato é sempre livre. Só o botão “Nova versão” usa 1 geração.
               </p>
+              {!!quota && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Depois deste lote você tem{" "}
+                  <span className="font-semibold text-foreground">
+                    {quota.allowance} {quota.allowance === 1 ? "geração" : "gerações"}
+                  </span>{" "}
+                  neste período — cada clique em “Nova versão” desconta 1. Salvar e baixar não custam nada.
+                </p>
+              )}
             </div>
           )}
+          {blocked && (
+            <div className="mt-2 rounded-2xl border border-primary/40 bg-primary/10 p-3">
+              <p className="text-xs font-semibold text-foreground">
+                <Sparkles className="mr-1 inline h-3.5 w-3.5" />
+                Suas gerações deste período acabaram
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                As artes já geradas continuam suas: navegue públicos, objetivos, modelos e formatos, salve e
+                baixe sem custo. Para criar versões novas, escolha um plano.
+              </p>
+              <Button asChild size="sm" className="mt-2 rounded-full">
+                <Link to={`${PRODUCT.base}#planos`}>Ver planos</Link>
+              </Button>
+            </div>
+          )}
+
 
 
           {/* Nichos da marca + visão 360° (modo livre: assunto sorteado por lote). */}

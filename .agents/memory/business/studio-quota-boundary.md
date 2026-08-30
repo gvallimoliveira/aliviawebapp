@@ -21,3 +21,11 @@ Decisão do dono (ago/2026), modelo **híbrido**:
 
 Razão: prova de valor no dia 1 e exploração sem medo de clicar (é assim que o cliente
 descobre os modelos). O flag local só governa o AVISO — o débito é sempre do servidor.
+
+## Conta gratuita (ago/2026)
+
+Fluxo confirmado e desejado: cadastro de marca é obrigatório também no grátis (alimenta o
+motor). Depois vem o **lote de boas-vindas grátis** (não debita) + **2 gerações do saldo free**
+(`PLAN_LIMITS.free.credits = 2`) — na prática 3 lotes. O aviso de cortesia informa o saldo do
+período. Ao zerar, o botão "Nova versão" fica desabilitado (`blocked`) e aparece um card com
+CTA "Ver planos" (`${PRODUCT.base}#planos`); navegar, salvar e baixar seguem livres.
