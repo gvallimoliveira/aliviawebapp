@@ -8,7 +8,7 @@ import {
   renderAccent,
 } from "./Texture";
 import { imageForTopic, type TopicId } from "../topics";
-import { BRAND_LOGO, BRAND_NAME } from "../brand";
+import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME } from "../brand";
 
 /**
  * Carousel block — sequência de artes numeradas (capa → miolo → CTA final)

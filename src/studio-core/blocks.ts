@@ -22,6 +22,9 @@ import PhotoSplitBlock from "@/pages/studio/blocks/PhotoSplitBlock";
 import PhotoPortraitBlock from "@/pages/studio/blocks/PhotoPortraitBlock";
 import PhotoVeilBlock from "@/pages/studio/blocks/PhotoVeilBlock";
 import SearchBlock from "@/pages/studio/blocks/SearchBlock";
+import AskBoxBlock from "@/pages/studio/blocks/AskBoxBlock";
+import PromoPhoneBlock from "@/pages/studio/blocks/PromoPhoneBlock";
+import StackTypeBlock from "@/pages/studio/blocks/StackTypeBlock";
 import DeviceBlock from "@/pages/studio/blocks/DeviceBlock";
 import DoorBlock from "@/pages/studio/blocks/DoorBlock";
 import StageBlock from "@/pages/studio/blocks/StageBlock";
@@ -69,6 +72,9 @@ export const STUDIO_BLOCKS = {
   photoPortrait: PhotoPortraitBlock,
   photoVeil: PhotoVeilBlock,
   search: SearchBlock,
+  askbox: AskBoxBlock,
+  promoPhone: PromoPhoneBlock,
+  stackType: StackTypeBlock,
   device: DeviceBlock,
   door: DoorBlock,
   stage: StageBlock,

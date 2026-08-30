@@ -27,6 +27,9 @@ export type BlockKind =
   | "photoPortrait"
   | "photoVeil"
   | "search"
+  | "askbox"
+  | "promoPhone"
+  | "stackType"
   | "device"
   | "door"
   | "stage"
@@ -73,12 +76,15 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   story: 3,
   list: 3,
   brand: 6,
-  carousel: 4,
+  carousel: 6,
   photoType: 2,
   photoSplit: 2,
   photoPortrait: 2,
   photoVeil: 4,
   search: 4,
+  askbox: 4,
+  promoPhone: 3,
+  stackType: 4,
   device: 3,
   door: 4,
   stage: 2,
@@ -262,6 +268,9 @@ export const composePage = (
     ["list", 2],
     ["brand", 1],
     ["search", 2],
+    ["askbox", 2],
+    ["promoPhone", 1],
+    ["stackType", 2],
     ["device", 2],
     ["door", 1],
     ["constellation", 1],
