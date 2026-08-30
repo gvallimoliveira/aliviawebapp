@@ -5,6 +5,20 @@ import PhotoFrame from "./PhotoFrame";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
+ * Triângulo invertido com vértices arredondados ("abrindo para fora da tela").
+ * Aplicado como máscara CSS via SVG data-URI para escalar com o frame e
+ * sobreviver à exportação PNG (rasterizada pelo próprio navegador).
+ */
+const POPOUT_TRIANGLE_MASK =
+  "url(\"data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">' +
+      '<path d="M12 0 L88 0 Q100 0 94.6 11.3 L55.4 88.7 Q50 100 44.6 88.7 L5.4 11.3 Q0 0 12 0 Z" fill="black"/>' +
+      "</svg>",
+  ) +
+  "\")";
+
+/**
  * PESSOA SOBRE O CELULAR (referência: modelo em pé no topo do celular com o
  * perfil da marca aberto)
  *
@@ -55,12 +69,22 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
           </p>
         </div>
 
-        {/* Palco: pessoa recortada em pé sobre o topo do celular. */}
+        {/* Palco: imagem "saindo" da tela em triângulo invertido arredondado. */}
         <div className="relative mt-6 w-full">
-          <PhotoFrame
-            photo={photo}
-            className="relative z-20 mx-auto h-[34svh] w-[46%] rounded-2xl"
-          />
+          <div
+            className="relative z-20 mx-auto h-[34svh] w-[52%]"
+            style={{
+              WebkitMaskImage: POPOUT_TRIANGLE_MASK,
+              maskImage: POPOUT_TRIANGLE_MASK,
+              WebkitMaskSize: "100% 100%",
+              maskSize: "100% 100%",
+              WebkitMaskRepeat: "no-repeat",
+              maskRepeat: "no-repeat",
+              filter: "drop-shadow(0 26px 28px hsl(var(--foreground) / 0.35))",
+            }}
+          >
+            <PhotoFrame photo={photo} className="h-full w-full" />
+          </div>
 
           {/* Celular deitado em perspectiva, com o perfil da marca. */}
           <div
