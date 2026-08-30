@@ -12,7 +12,7 @@ import {
 } from "@/pages/studio/phrasing";
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
-import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlogan, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
+import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlogan, sloganList, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
 import { applyCharm } from "./charmCopy";
@@ -84,8 +84,10 @@ const firstSentence = (text: string, max = 90) => {
 
 
 export const brandSlogan = (kit: BrandKit) => {
-  const declared = firstSentence(kit.slogan ?? "");
+  // Slogans são independentes (um por linha): o lockup usa sempre o primeiro.
+  const declared = firstSentence(sloganList(kit.slogan)[0] ?? "");
   if (declared) return declared;
+
   const fromDescription = firstSentence(kit.description ?? "");
   if (fromDescription) return fromDescription;
   const niche = (kit.niche ?? "").trim();
@@ -1480,8 +1482,17 @@ export const buildSegmentContent = ({
    * para não ser reescrita nem descartada.
    */
   if (segment === SLOGAN_SEGMENT && hasSlogan(kit.slogan)) {
-    return applySloganFocus(built, kit.slogan as string, brand);
+    /**
+     * Vários slogans = frases independentes. Uma arte usa UM slogan, sorteado
+     * pela seed do lote (mesma seed = mesma frase; lote novo, outra frase).
+     */
+    const phrases = sloganList(kit.slogan);
+    const pick = phrases.length > 1
+      ? phrases[createRng(`slogan:${variationSeed ?? "base"}:${angle}`).int(phrases.length)]
+      : phrases[0];
+    return applySloganFocus(built, pick, brand);
   }
+
   return built;
 
 };
