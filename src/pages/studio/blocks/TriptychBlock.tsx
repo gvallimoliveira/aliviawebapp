@@ -31,7 +31,7 @@ const TriptychBlock = ({ content, rng, treatment, format, picker, persona }: Blo
             <div className="grid gap-5 sm:grid-cols-3">
               {triptych.panels.map((panel, i) => (
                 <motion.figure
-                  key={panel.word}
+                  key={`${panel.word}-${i}`}
                   initial={{ opacity: 0, y: 18 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.3 }}
@@ -55,7 +55,7 @@ const TriptychBlock = ({ content, rng, treatment, format, picker, persona }: Blo
             <div className="grid gap-8 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-border">
               {triptych.panels.map((panel, i) => (
                 <motion.div
-                  key={panel.word}
+                  key={`${panel.word}-${i}`}
                   initial={{ opacity: 0, y: 18 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.3 }}

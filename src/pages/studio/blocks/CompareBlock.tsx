@@ -35,8 +35,8 @@ const CompareBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
             <div className="rounded-2xl border border-border bg-muted/60 p-6">
               <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground">Antes</p>
               <ul className="flex flex-col gap-3">
-                {compare.before.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground md:text-base">
+                {compare.before.map((item, i) => (
+                  <li key={`${item}-${i}`} className="flex items-start gap-2.5 text-sm text-muted-foreground md:text-base">
                     <X className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                     <span className="line-through decoration-muted-foreground/40">{item}</span>
                   </li>
@@ -47,8 +47,8 @@ const CompareBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
             <div className="rounded-2xl border border-primary/25 bg-primary/5 p-6">
               <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-primary">Com {BRAND_NAME}</p>
               <ul className="flex flex-col gap-3">
-                {compare.after.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm font-medium text-foreground md:text-base">
+                {compare.after.map((item, i) => (
+                  <li key={`${item}-${i}`} className="flex items-start gap-2.5 text-sm font-medium text-foreground md:text-base">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                     <span>{item}</span>
                   </li>

@@ -69,7 +69,7 @@ const ConstellationBlock = ({ content, rng, treatment, format }: BlockProps) => 
       >
         <div className="flex items-end justify-center gap-[8%]">
           {top.map((label, i) => (
-            <Pin key={label} label={label} height={26 + ((i * 17) % 44)} up ink={skin.ink} />
+            <Pin key={`${label}-${i}`} label={label} height={26 + ((i * 17) % 44)} up ink={skin.ink} />
           ))}
         </div>
 
@@ -82,7 +82,7 @@ const ConstellationBlock = ({ content, rng, treatment, format }: BlockProps) => 
 
         <div className="flex items-start justify-center gap-[12%]">
           {bottom.map((label, i) => (
-            <Pin key={label} label={label} height={24 + ((i * 21) % 40)} up={false} ink={skin.ink} />
+            <Pin key={`${label}-${i}`} label={label} height={24 + ((i * 21) % 40)} up={false} ink={skin.ink} />
           ))}
         </div>
 

@@ -86,9 +86,9 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
               </p>
 
               <div className="mt-3 grid grid-cols-4 gap-1.5">
-                {highlights.map((word) => (
+                {highlights.map((word, i) => (
                   <div
-                    key={word}
+                    key={`${word}-${i}`}
                     className="rounded-md border border-border bg-secondary/40 px-1 py-2 text-center text-[6px] uppercase tracking-[0.12em] text-muted-foreground"
                   >
                     <span className="line-clamp-2">{word}</span>

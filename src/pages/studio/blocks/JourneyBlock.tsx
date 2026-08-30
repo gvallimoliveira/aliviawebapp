@@ -47,7 +47,7 @@ const JourneyBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
             <ol className="relative ml-3 flex flex-col gap-7 border-l border-primary/25 pl-8 md:ml-5">
               {steps.map((step, i) => (
                 <motion.li
-                  key={step.title}
+                  key={`${step.title}-${i}`}
                   initial={{ opacity: 0, x: -12 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, amount: 0.3 }}
@@ -80,7 +80,7 @@ const JourneyBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
               <ol className={`space-y-4 ${withImage && wide && reversed ? "md:order-1" : ""}`}>
                 {steps.map((step, i) => (
                   <motion.li
-                    key={step.title}
+                    key={`${step.title}-${i}`}
                     initial={{ opacity: 0, x: -12 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true, amount: 0.3 }}

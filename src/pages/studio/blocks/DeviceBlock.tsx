@@ -39,8 +39,8 @@ const ScreenUi = ({
     <div className="flex-1 px-3 py-3">
       <p className={`font-bold leading-tight text-foreground ${compact ? "text-[10px]" : "text-[12px]"}`}>{title}</p>
       <div className="mt-3 space-y-2">
-        {rows.map((row) => (
-          <div key={row} className="rounded-md border border-border bg-secondary/30 px-2 py-1.5">
+        {rows.map((row, i) => (
+          <div key={`${row}-${i}`} className="rounded-md border border-border bg-secondary/30 px-2 py-1.5">
             <p className="truncate text-[7px] leading-tight text-muted-foreground">{row}</p>
             <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
               <div className="h-full w-2/3 rounded-full bg-primary" />

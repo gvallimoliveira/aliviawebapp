@@ -135,7 +135,7 @@ const SearchBlock = ({ content, rng, treatment, format, persona }: BlockProps) =
         >
           {suggestions.map((s, i) => (
             <div
-              key={s}
+              key={`${s}-${i}`}
               className={`flex items-center gap-3 px-4 py-3 ${
                 i % 2 === 1 ? (dark ? "bg-background/[0.06]" : "bg-foreground/[0.03]") : ""
               }`}
