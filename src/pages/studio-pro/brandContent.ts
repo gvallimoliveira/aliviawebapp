@@ -1436,23 +1436,20 @@ export const buildSegmentContent = ({
   };
 
   if (segment === GLOBAL_SEGMENT) {
-    // 360° = modo livre, quase aleatório: qualquer assunto relevante à marca.
-    // A seed do lote sorteia — metade fala da marca como um todo (applyGlobal),
-    // metade veste o mundo de UM público matriz. Determinístico: mesma seed =
-    // mesma arte, então "Nova versão" é que muda o assunto.
-    const matrix = matrixAudiences(audiences);
-    if (variationSeed && matrix.length) {
-      const dice = createRng(`360:${variationSeed}`);
-      if (dice.int(100) < 50) {
-        const picked = resolveAudience(audiences, matrix[dice.int(matrix.length)].id);
-        if (picked) {
-          const relation = relationFor(picked);
-          return finish(applyAudience(root, brand, picked, relation), relation);
-        }
-      }
+    /**
+     * 360° = modo livre: qualquer assunto relevante à marca. A maior parte dos
+     * lotes veste o mundo de UM público (matriz OU sub-nicho), escolhido com
+     * peso pela memória de cobertura — nicho recém-usado cede a vez. O restante
+     * fala da marca como um todo. Determinístico: mesma seed = mesma arte.
+     */
+    const picked = pickGlobalAudience({ audiences, variationSeed, segmentWeights });
+    if (picked) {
+      const relation = relationFor(picked);
+      return finish(applyAudience(root, brand, picked, relation), relation);
     }
     return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
   }
+
   // Sub-nichos herdam o kit do público matriz e sobrepõem o próprio recorte.
   const audience = resolveAudience(audiences, segment);
   if (!audience) return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
