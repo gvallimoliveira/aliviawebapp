@@ -295,6 +295,13 @@ const SENSE: Record<BlockKind, Sense> = {
     needs: (c) => some(c.features) || some(c.closings),
     needsLabel: "informação objetiva para avisar",
   },
+  punch: {
+    format: "frase de impacto",
+    sees: "quase nada além de uma frase curta e provocativa em letras enormes, com a assinatura no pé",
+    job: "parar o dedo com uma provocação de uma linha, deixando a condição só como nota pequena",
+    needs: (c) => some(c.headlines) || some(c.quotes),
+    needsLabel: "frases curtas e provocativas da marca",
+  },
   search: {
     format: "barra de busca",
     sees: "uma barra de busca com o que a pessoa digitaria",

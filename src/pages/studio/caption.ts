@@ -90,6 +90,10 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const f = rng.pick(c.features);
     return [f.headline ?? f.title, f.description];
   },
+  punch: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [h.strong, rng.pick(c.subs)];
+  },
   search: (c, rng) => [
     `${rng.pick(c.kickers)}: ${rng.pick(c.headlines).strong}`,
     rng.pick(c.subs),
