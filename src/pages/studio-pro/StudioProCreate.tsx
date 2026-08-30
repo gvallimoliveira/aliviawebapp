@@ -511,8 +511,10 @@ const StudioProCreate = ({
         activePhotos.length,
         kindsForModels(models, activePhotos.length, isAlivia),
         isAlivia,
+        photoFirst,
       ),
-    [brand.id, seed, activeSegment, angle, persona, content, lineage, activePhotos.length, models, isAlivia],
+    [brand.id, seed, activeSegment, angle, persona, content, lineage, activePhotos.length, models, isAlivia, photoFirst],
+
   );
 
   /**
