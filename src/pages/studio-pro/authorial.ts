@@ -14,7 +14,8 @@
  * 2. Uma arte pode usar 1 fragmento (a1) ou fragmentos CONTÍGUOS (b1 + b2).
  * 3. Uma arte NUNCA mistura fragmentos de textos diferentes (a1 + b1) nem
  *    fragmentos não contíguos do mesmo texto (a2 + a5) — isso quebra a leitura.
- * 4. Carrossel = o texto inteiro repartido em ordem cronológica.
+ * 4. Carrossel = o texto inteiro repartido em ordem cronológica, sem cortar o
+ *    final (até 20 quadros; textos maiores agrupam fragmentos contíguos).
  * 5. Slogan é peça própria: nunca entra junto de fragmento de texto.
  *
  * Tudo é determinístico: a mesma seed devolve o mesmo lote (nenhum crédito de
@@ -155,11 +156,18 @@ export const composeAuthorial = ({
     const fragments = fragmentsOf(text.body);
     const total = fragments.length;
 
-    // Carrossel: o texto inteiro, em ordem, um fragmento por slide (até 10).
+    // Carrossel: o texto INTEIRO, em ordem, sem cortar o final.
+    // O Instagram aceita até 20 quadros: se o texto tiver mais fragmentos,
+    // agrupamos fragmentos contíguos por slide até o texto caber inteiro.
     const carousel = total >= 3 && rng.chance(0.34);
     if (carousel) {
-      const start = total > 10 ? rng.int(total - 9) : 0;
-      const slice = fragments.slice(start, start + Math.min(10, total));
+      const MAX_SLIDES = 20;
+      const perSlide = Math.ceil(total / MAX_SLIDES);
+      const slides: AuthorialSlide[] = [];
+      for (let k = 0; k < total; k += perSlide) {
+        const lines = fragments.slice(k, k + perSlide);
+        slides.push({ lines, from: k, to: k + lines.length - 1 });
+      }
       arts.push({
         key: `carousel-${i}`,
         kind: "carousel",
@@ -168,11 +176,12 @@ export const composeAuthorial = ({
         layout,
         photoId,
         photoPartial,
-        slides: slice.map((line, k) => ({ lines: [line], from: start + k, to: start + k })),
+        slides,
         totalFragments: total,
       });
       continue;
     }
+
 
     // Post simples: 1 a 3 fragmentos CONTÍGUOS do mesmo texto.
     const maxSpan = Math.min(3, total);

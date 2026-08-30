@@ -70,10 +70,11 @@ const AuthorialArtBlock = ({ art, slide, slideIndex, format, photo, showMeta = t
 
   const meta =
     art.kind === "carousel"
-      ? `${art.title || "Trecho"} · ${slide.from + 1} de ${art.totalFragments}`
+      ? `${art.title || "Trecho"} · ${slideIndex + 1} de ${art.slides.length}`
       : art.kind === "slogan"
         ? ""
         : art.title;
+
 
   const surface = inverse ? "bg-primary" : usePhoto ? "bg-foreground" : "bg-background";
 

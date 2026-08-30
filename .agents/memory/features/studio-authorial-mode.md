@@ -12,7 +12,7 @@ Marca autoral (`studio_brands.content_source = 'authorial'`, ex.: **@lovechronic
 Regras inegociáveis (`src/pages/studio-pro/authorial.ts`, teste `src/test/studio-authorial-coherence.test.ts`):
 1. Fragmentação por parágrafo; parágrafo > 260 caracteres abre em frases.
 2. Uma arte usa 1 a 3 fragmentos **contíguos** de **um único** texto (nunca a1+b1, nunca a2+a5).
-3. Carrossel = o texto em ordem cronológica, 1 fragmento por slide (até 10).
+3. Carrossel = o texto INTEIRO em ordem cronológica, até 20 slides; se houver mais fragmentos, agrupa contíguos por slide (nunca corta o final).
 4. Slogan é peça própria — nunca junto de fragmento de texto.
 5. Determinístico: mesma seed = mesmo lote; zero crédito de IA (não há geração de texto).
 
