@@ -51,6 +51,10 @@ const punchOf = (raw: string): string | null => {
  */
 const HAND_RATIO = 1055 / 783;
 
+/** Centro vertical do vão da pinça (medido no alfa da foto: y 0,21–0,31). */
+const GAP_CENTER_Y = 0.26;
+
+
 
 const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
   /* Acervo de frases candidatas: headline, fala curta e fecho. */
