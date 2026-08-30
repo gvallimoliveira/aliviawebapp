@@ -165,6 +165,15 @@ export const composePage = (
    * recebe, nem pelo sorteio nem pela seleção de modelos.
    */
   exclusive = false,
+  /**
+   * FILTRO "FOTOS DO ACERVO EM DESTAQUE".
+   *
+   * Ligado, o lote passa a ter no mínimo metade das artes com foto do acervo
+   * como plano de fundo (`photoVeil`) — cota garantida, não sorteio. Continua
+   * valendo a exclusividade: arte com foto de fundo não usa foto em primeira
+   * camada.
+   */
+  photoFirst = false,
 ): ComposedBlock[] => {
   const allowed = (kinds: BlockKind[]) =>
     exclusive ? kinds : kinds.filter((k) => k !== "steps" && k !== "difi");
@@ -172,13 +181,14 @@ export const composePage = (
     const pool = allowed(only);
     if (pool.length === 0) return finish(rng, [{ kind: "hero", treatment: treatmentFor(rng, "hero", persona) }], persona, carousels);
     const count = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
-    const picked = spread(rng, pool, Math.max(2, count));
+    const picked = enforcePhotoFirst(rng, spread(rng, pool, Math.max(2, count)), photoCount, photoFirst);
     const chosen: ComposedBlock[] = picked.map((kind) => ({
       kind,
       treatment: treatmentFor(rng, kind, persona),
     }));
     return finish(rng, chosen, persona, carousels);
   }
+
   /**
    * Pool base do miolo: pesa prova (métricas/stats/compare), demonstração
    * (journey/feature/pinup), voz (quote/typo/triptych) e narrativa
