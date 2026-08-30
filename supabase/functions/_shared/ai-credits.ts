@@ -180,6 +180,7 @@ export type CreditPath =
   | "clinic_grace"
   | "clinic_quota_check"
   | "quota_check"
+  | "fail_open"
   | "shadow_error"
   | "error";
 
@@ -195,17 +196,19 @@ export type CreditDecision = {
     | "insufficient"
     | "anonymous"
     | "no_user"
+    | "fail_open"
     | "shadow_error"
     | "error";
   remaining: number | null;
   cost: number;
   enforced: boolean;
-  blocked: boolean; // true apenas quando enforced && !ok
+  blocked: boolean; // true apenas quando o tier está na allowlist && !ok
   tier?: string;
   path_taken: CreditPath;
   latency_ms: number;
   metadata?: Record<string, unknown>;
 };
+
 
 /**
  * Fire-and-forget telemetry insert for a credit decision. Never throws.
