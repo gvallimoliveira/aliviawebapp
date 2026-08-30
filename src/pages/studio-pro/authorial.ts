@@ -171,7 +171,9 @@ export const composeAuthorial = ({
     const rng = createRng(`${seed}:authorial:${i}`);
     const wantSlogan = cleanSlogans.length > 0 && (pool.length === 0 || sloganSlots.has(i));
 
-    const photoId = photoIds.length > 0 && rng.chance(0.45) ? rng.pick(photoIds) : null;
+    const photoId =
+      photoIds.length > 0 && (forcePhoto || rng.chance(0.45)) ? rng.pick(photoIds) : null;
+
     const photoPartial = !!photoId && rng.chance(0.5);
     const layout = photoId
       ? PHOTO_LAYOUTS[rng.int(PHOTO_LAYOUTS.length)]
