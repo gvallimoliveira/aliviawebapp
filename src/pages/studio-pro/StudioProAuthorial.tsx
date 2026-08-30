@@ -390,17 +390,17 @@ const StudioProAuthorial = ({
   const downloadAll = async () => {
     setBusy("all-png");
     try {
+      const items: Array<{ node: HTMLElement; fileName: string }> = [];
       for (const art of arts) {
         for (let i = 0; i < art.slides.length; i += 1) {
           const node = nodeOf(art.key, i);
           if (!node) continue;
-          const rect = node.getBoundingClientRect();
-          const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
-          const blob = await renderNodeToBlob(node, ratio, "image/png");
-          await deliver(blob, `${fileBase}-${art.key}-${String(i + 1).padStart(2, "0")}.png`);
+          items.push({ node, fileName: `${fileBase}-${art.key}-${String(i + 1).padStart(2, "0")}.png` });
         }
       }
-      toast.success("Artes exportadas");
+      if (!items.length) throw new Error("no-nodes");
+      const { delivered } = await exportNodesAsPng(items);
+      toast.success(`Artes exportadas (${delivered})`);
     } catch (error) {
       console.error("[studio-pro] export lote autoral", error);
       toast.error("Não foi possível exportar todas as artes.");
@@ -408,6 +408,7 @@ const StudioProAuthorial = ({
       setBusy(null);
     }
   };
+
 
   if (loading) {
     return (
