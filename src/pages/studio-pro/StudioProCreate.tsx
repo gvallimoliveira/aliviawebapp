@@ -6,6 +6,7 @@ import {
 
   Download,
   FileText,
+  Gift,
   LayoutGrid,
   Lightbulb,
   Loader2,
@@ -79,6 +80,7 @@ import {
 import { applyArtMoves, clearArtMoves, hasArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
 import { forgetArtLearning, learnArtMoves } from "@/pages/studio/artMoveLearning";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
+import { markWelcomeBatchUsed, welcomeBatchUsed } from "./welcomeBatch";
 import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
@@ -304,12 +306,32 @@ const StudioProCreate = ({
   const blocked = !unlimited && !!quota && !quotaError && quota.remaining < STUDIO_GENERATION_COST;
 
   /**
+   * LOTE DE BOAS-VINDAS: o primeiro lote da marca já vem montado sem custo.
+   * O aviso só aparece enquanto a marca não gastou nenhuma geração do período
+   * e ainda não clicou em "Nova versão" — assinante antigo não vê o recado.
+   */
+  const [welcomeUsed, setWelcomeUsed] = useState(() => welcomeBatchUsed(brand.id));
+  useEffect(() => {
+    setWelcomeUsed(welcomeBatchUsed(brand.id));
+  }, [brand.id]);
+  const showWelcomeBatch =
+    !unlimited &&
+    !welcomeUsed &&
+    !!quota &&
+    !quotaError &&
+    quota.generationsLeft === quota.allowance;
+
+
+  /**
    * "Nova versão" é o único clique que custa cota (1 geração). Trocar público,
    * objetivo, modelo ou formato navega a MESMA geração de graça — é ali que a
    * versão rende dezenas de artes. O desconto acontece no banco antes da nova
    * seed; se a cota do período acabou, a geração é bloqueada com aviso claro.
    */
   const newVersion = async () => {
+    // A partir daqui o lote de boas-vindas acabou: some o aviso de cortesia.
+    markWelcomeBatchUsed(brand.id);
+    setWelcomeUsed(true);
     if (unlimited) {
       setSeed(randomSeed());
       setSaved(new Set());
@@ -1069,6 +1091,19 @@ const StudioProCreate = ({
                 : "Gerações do período encerradas — faça upgrade para continuar gerando."}
             </p>
           )}
+          {showWelcomeBatch && (
+            <div className="mt-2 rounded-2xl border border-primary/30 bg-primary/10 p-3">
+              <p className="text-xs font-semibold text-foreground">
+                <Gift className="mr-1 inline h-3.5 w-3.5" />
+                Este primeiro lote é por nossa conta
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Ele saiu da sua marca sem consumir nenhuma geração. Explore à vontade: trocar público,
+                objetivo, modelo de post e formato é sempre livre. Só o botão “Nova versão” usa 1 geração.
+              </p>
+            </div>
+          )}
+
 
           {/* Nichos da marca + visão 360° (modo livre: assunto sorteado por lote). */}
           <div className="mt-2 flex flex-wrap gap-1.5">
