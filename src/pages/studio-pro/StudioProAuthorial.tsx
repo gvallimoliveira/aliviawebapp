@@ -104,7 +104,7 @@ const StudioProAuthorial = ({
       }
     })(),
   );
-  const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "1x1");
+  const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "free");
   const [seed, setSeed] = useState(() => restored.current.seed ?? randomSeed());
   const [textId, setTextId] = useState<string | null>(restored.current.textId ?? null);
   const [busy, setBusy] = useState<string | null>(null);
