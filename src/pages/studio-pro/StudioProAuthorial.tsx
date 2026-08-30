@@ -95,7 +95,12 @@ const StudioProAuthorial = ({
   onSaved,
   onOpenBrandSettings,
 }: Props) => {
-  const restored = useRef<{ seed?: string; format?: StudioFormat; textId?: string | null }>(
+  const restored = useRef<{
+    seed?: string;
+    format?: StudioFormat;
+    textId?: string | null;
+    pinnedPhotos?: string[];
+  }>(
     (() => {
       try {
         return JSON.parse(sessionStorage.getItem(stateKey(brand.id)) ?? "{}");
@@ -114,6 +119,11 @@ const StudioProAuthorial = ({
   const [loading, setLoading] = useState(true);
   const [photosOpen, setPhotosOpen] = useState(false);
   const [photosTotal, setPhotosTotal] = useState(0);
+  /** Fotos fixadas: quando há alguma, só elas entram nas artes desta marca. */
+  const [pinnedPhotos, setPinnedPhotos] = useState<string[]>(restored.current.pinnedPhotos ?? []);
+  const togglePin = (id: string) =>
+    setPinnedPhotos((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+
 
   const signatureOn = brand.signature_enabled !== false;
   const { quota, error: quotaError, consume } = useStudioQuota();
