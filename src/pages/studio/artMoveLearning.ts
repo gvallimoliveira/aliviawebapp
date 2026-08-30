@@ -117,9 +117,8 @@ export const learnArtMoves = (root: HTMLElement): string[] => {
     if (!frameRect.width || !frameRect.height) return;
 
     /* O arraste vem em fração da arte: reescalamos para fração do desenho. */
-    const mirrored = getComputedStyle(frame).direction === "rtl";
     const delta: LearnedSpot = {
-      x: (drag.x * artRect.width) / frameRect.width * (mirrored ? -1 : 1),
+      x: (drag.x * artRect.width) / frameRect.width,
       y: (drag.y * artRect.height) / frameRect.height,
     };
 

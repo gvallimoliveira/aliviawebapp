@@ -90,7 +90,13 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
    * Ponto de partida da frase segurada: o vão medido na foto OU, se o dono já
    * arrastou e fixou a posição alguma vez, o ponto aprendido dele.
    */
-  const gap = learnedSpot(LEARN_KEY) ?? { x: GAP_CENTER_X, y: GAP_CENTER_Y };
+  const nudge = learnedSpot(LEARN_KEY) ?? { x: 0, y: 0 };
+  const gap = {
+    /* Espelhado, o vão fica do outro lado; a correção aprendida continua no
+       mesmo sentido do arraste (direita é direita nas duas versões). */
+    x: (mirrored ? 1 - GAP_CENTER_X : GAP_CENTER_X) + nudge.x,
+    y: GAP_CENTER_Y + nudge.y,
+  };
 
   const ink = dark
     ? "hsl(var(--background))"
@@ -153,7 +159,7 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
               data-studio-learn-anchor="1"
               className="absolute w-[42%] text-left"
               style={{
-                left: `${(mirrored ? 1 - gap.x : gap.x) * 100}%`,
+                left: `${gap.x * 100}%`,
                 top: `${gap.y * 100}%`,
                 transform: "translate(-50%, -50%)",
                 textAlign: mirrored ? "right" : "left",
