@@ -33,6 +33,7 @@ import {
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
 import StudioProCreate from "./StudioProCreate";
+import StudioBoundary from "@/pages/studio/StudioBoundary";
 import StudioProAuthorial from "./StudioProAuthorial";
 import BrandTextsCard from "./BrandTextsCard";
 import type { ComposedBlock } from "@/studio-core";
@@ -676,6 +677,7 @@ const StudioProBrand = () => {
 
         {/* Marca autoral: o Studio diagrama os textos do autor, não escreve. */}
         {tab === "criar" && brand.content_source === "authorial" && (
+          <StudioBoundary context={`autoral:${brand.id}`}>
           <StudioProAuthorial
             brand={brand}
             folder={folder}
@@ -685,9 +687,11 @@ const StudioProBrand = () => {
             onSaved={() => void loadCreations()}
             onOpenBrandSettings={() => setTab("ajustes")}
           />
+          </StudioBoundary>
         )}
 
         {tab === "criar" && brand.content_source !== "authorial" && (
+          <StudioBoundary context={`criar:${brand.id}`}>
           <StudioProCreate
             brand={brand}
             folder={folder}
@@ -702,6 +706,7 @@ const StudioProBrand = () => {
             // O editor do card manda para cá quando falta público, CTA ou kit.
             onOpenBrandSettings={() => setTab("ajustes")}
           />
+          </StudioBoundary>
         )}
 
 
