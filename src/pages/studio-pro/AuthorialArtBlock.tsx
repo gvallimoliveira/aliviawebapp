@@ -150,27 +150,28 @@ const AuthorialArtBlock = ({ art, slide, slideIndex, format, photo, showMeta = t
             <span aria-hidden className="mb-8 block h-1 w-14 rounded-full bg-primary" />
           )}
 
-          <Lines
-            lines={slide.lines}
-            inverse={inverse}
-            className={`font-medium tracking-tight ${size} ${
-              isSlogan ? "font-semibold uppercase tracking-[0.06em]" : ""
-            } ${usePhoto ? "text-background" : ""}`}
-          />
+          {/* Sobre foto, o texto é SEMPRE claro — os tokens da marca podem
+              ser escuros e fariam o trecho sumir sobre o véu escuro. */}
+          <div style={usePhoto ? { color: "#f5f5f4" } : undefined}>
+            <Lines
+              lines={slide.lines}
+              inverse={inverse}
+              className={`font-medium tracking-tight ${size} ${
+                isSlogan ? "font-semibold uppercase tracking-[0.06em]" : ""
+              } ${usePhoto ? "text-inherit" : ""}`}
+            />
 
-          {showMeta && meta && (
-            <p
-              className={`mt-10 text-[10px] font-medium uppercase tracking-[0.3em] ${
-                usePhoto
-                  ? "text-background/70"
-                  : inverse
-                    ? "text-primary-foreground/70"
-                    : "text-muted-foreground"
-              }`}
-            >
-              {meta}
-            </p>
-          )}
+            {showMeta && meta && (
+              <p
+                className={`mt-10 text-[10px] font-medium uppercase tracking-[0.3em] ${
+                  inverse && !usePhoto ? "text-primary-foreground/70" : "text-muted-foreground"
+                }`}
+                style={usePhoto ? { color: "rgba(245,245,244,0.7)" } : undefined}
+              >
+                {meta}
+              </p>
+            )}
+          </div>
         </motion.div>
       </div>
 
