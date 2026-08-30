@@ -84,8 +84,10 @@ const firstSentence = (text: string, max = 90) => {
 
 
 export const brandSlogan = (kit: BrandKit) => {
-  const declared = firstSentence(kit.slogan ?? "");
+  // Slogans são independentes (um por linha): o lockup usa sempre o primeiro.
+  const declared = firstSentence(sloganList(kit.slogan)[0] ?? "");
   if (declared) return declared;
+
   const fromDescription = firstSentence(kit.description ?? "");
   if (fromDescription) return fromDescription;
   const niche = (kit.niche ?? "").trim();
