@@ -18,13 +18,13 @@ import { blockPadding, sectionHeight, type BlockProps } from "./shared";
  * 2 faixa inferior centralizada, 3 faixa inferior à esquerda.
  */
 const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos }: BlockProps) => {
-  const [item] = picker.pick(content.headlines, 1, rng, (h) => [h.topic]);
+  const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic]);
   if (!photo) return null;
 
   const partial = treatment >= 2;
   const centered = treatment % 2 === 0;
-  const sub = rng.pick(content.subs);
+  const sub = item.description;
   const kicker = rng.pick(content.kickers);
 
   return (
