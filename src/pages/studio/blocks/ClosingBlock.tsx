@@ -94,7 +94,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
       <TextureLayer persona={persona} index={treatment} dark={dark} />
       <div
         aria-hidden
-        className={`pointer-events-none absolute left-1/2 top-1/2 h-[70vw] w-[70vw] max-h-[560px] max-w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] ${
+        className={`pointer-events-none absolute left-1/2 top-1/2 h-[70%] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] ${
           dark ? "bg-primary/30" : "bg-primary/10"
         }`}
       />

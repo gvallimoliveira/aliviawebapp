@@ -149,12 +149,7 @@ type Props = {
 };
 
 
-const FRAME_STYLE: Record<StudioFormat, React.CSSProperties> = {
-  "9x16": { width: "min(400px, 100%)", aspectRatio: "9/16" },
-  "4x5": { width: "min(480px, 100%)", aspectRatio: "4/5" },
-  "1x1": { width: "min(560px, 100%)", aspectRatio: "1/1" },
-  free: { width: "100%" },
-};
+
 
 const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "9x16", label: "Story 9:16" },
@@ -1228,7 +1223,7 @@ const StudioProCreate = ({
                 className={`overflow-hidden rounded-2xl border border-border bg-background ${
                   format === "1x1" ? "studio-pro-square" : ""
                 } ${group.carousel ? "shrink-0 snap-center" : "mx-auto"}`}
-                style={FRAME_STYLE[format]}
+                style={frameStyle(format, frameKey)}
               >
                 {/* Lado B aplica os tokens invertidos só nesta arte. */}
                 <div
