@@ -456,7 +456,115 @@ export const ALIVIA_PATIENT_HOOKS: StudioHook[] = [
     sub: "Dor que dura semanas pede direcionamento.",
     cta: "Buscar direcionamento",
   },
+
+  /* --- Lote 2 (ago/2026): temas novos, mesma voz --- */
+  {
+    hook: "Exame de imagem",
+    strong: "Ressonância mostra o que apareceu, não o que dói",
+    rest: ".",
+    sub: "Muita gente sem dor tem o mesmo achado no exame.",
+    cta: "Entender além do exame",
+  },
+  {
+    hook: "Medo de movimento",
+    strong: "Você parou de se mexer para não piorar — e a dor ficou",
+    rest: ".",
+    sub: "Movimento na dose certa faz parte da recuperação.",
+    cta: "Descobrir a minha dose",
+  },
+  {
+    hook: "Cirurgia como única saída",
+    strong: "“Só cirurgia resolve” costuma ser a segunda frase, não a primeira",
+    rest: ".",
+    sub: "Entender o seu caso antes ajuda a fazer as perguntas certas.",
+    cta: "Organizar o meu caso",
+  },
+  {
+    hook: "Remédio todo dia",
+    strong: "Tomar anti-inflamatório toda semana não é plano",
+    rest: " — é pausa.",
+    sub: "O alívio compra tempo; o direcionamento resolve o resto.",
+    cta: "Buscar um direcionamento",
+  },
+  {
+    hook: "Dor no fim do dia",
+    strong: "Sua dor tem horário? Isso é informação, não coincidência",
+    rest: ".",
+    sub: "Quando e como a dor aparece ajuda a explicar o que a sustenta.",
+    cta: "Registrar quando dói",
+  },
+  {
+    hook: "Trabalho sentado",
+    strong: "O problema não é a cadeira, é ficar oito horas na mesma posição",
+    rest: ".",
+    sub: "Pequenas mudanças de posição valem mais que a cadeira caríssima.",
+    cta: "Ver o que muda no meu dia",
+  },
+  {
+    hook: "Voltar a correr",
+    strong: "Voltar a correr não é sobre a dor sumir, é sobre a perna aguentar",
+    rest: ".",
+    sub: "Existe caminho entre parar tudo e voltar como antes.",
+    cta: "Fazer a autoavaliação guiada",
+  },
+  {
+    hook: "Dormir com dor",
+    strong: "Noite ruim deixa a dor mais alta no dia seguinte",
+    rest: ".",
+    sub: "Sono entra na conta do que você sente — e pode ser acompanhado.",
+    cta: "Acompanhar sono e dor",
+  },
+  {
+    hook: "Recaída",
+    strong: "Melhorou, voltou, e você achou que perdeu tudo",
+    rest: ".",
+    sub: "Oscilação é comum; sem registro, ela parece recomeço.",
+    cta: "Ver a minha linha do tempo",
+  },
+  {
+    hook: "Vídeo aleatório",
+    strong: "O exercício que ajudou seu amigo pode não servir para você",
+    rest: ".",
+    sub: "Corpos e histórias diferentes pedem pontos de partida diferentes.",
+    cta: "Achar o meu ponto de partida",
+  },
+  {
+    hook: "Chegar preparado na consulta",
+    strong: "Dez minutos de consulta e você esquece metade do que queria contar",
+    rest: ".",
+    sub: "Sua história organizada em um documento facilita a conversa.",
+    cta: "Levar a minha história por escrito",
+  },
+  {
+    hook: "Alongar não é tudo",
+    strong: "Alongar alivia agora e não muda o motivo",
+    rest: ".",
+    sub: "Força e controle sustentam o alívio ao longo das semanas.",
+    cta: "Entender o que falta",
+  },
+  {
+    hook: "Idade não é sentença",
+    strong: "“É a idade” não explica dor que começou em março",
+    rest: ".",
+    sub: "Algo mudou na sua rotina — e isso pode ser identificado.",
+    cta: "Investigar o que mudou",
+  },
+  {
+    hook: "Achar o profissional",
+    strong: "Escolher fisioterapeuta no chute é começar duas vezes",
+    rest: ".",
+    sub: "Chegar com o seu caso organizado encurta o caminho.",
+    cta: "Organizar antes de procurar",
+  },
+  {
+    hook: "Semanas viram meses",
+    strong: "Você já conta a sua dor em meses, não em dias",
+    rest: ".",
+    sub: "Dor que se instala pede avaliação, não mais paciência.",
+    cta: "Começar a autoavaliação",
+  },
 ];
+
 
 /** 4) Guilherme Vallim Fisioterapia — marca pessoal de atendimento. */
 export const VALLIM_HOOKS: StudioHook[] = [
