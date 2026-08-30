@@ -306,19 +306,20 @@ function canBlock(cfg: EnforcementConfig, tier: string | null | undefined): bool
   return cfg.tiers.includes(tier);
 }
 
-}
-
 async function isVipEmail(admin: SupabaseClient, email: string | null): Promise<boolean> {
   if (!email) return false;
   const norm = email.trim().toLowerCase();
   if (VIP_FALLBACK_EMAILS.includes(norm)) return true;
   try {
+    // escapa curingas do LIKE para não casar e-mail errado (ex.: "a_b@x.com")
+    const safe = norm.replace(/[\\%_]/g, "\\$&");
     const { data } = await admin
       .from("vip_users")
       .select("email")
-      .ilike("email", norm)
+      .ilike("email", safe)
       .maybeSingle();
     return !!data;
+
   } catch {
     return false;
   }
