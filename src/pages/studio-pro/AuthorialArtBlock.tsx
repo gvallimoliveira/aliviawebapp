@@ -81,24 +81,39 @@ const AuthorialArtBlock = ({ art, slide, slideIndex, format, photo, showMeta = t
   const surface = inverse ? "bg-primary" : usePhoto ? "bg-foreground" : "bg-background";
 
   return (
-    <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}>
-      {/* Plano de fundo fotográfico esmaecido: presença, nunca protagonismo. */}
+    <section
+      className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}
+      style={usePhoto ? { backgroundColor: "#0c0c12" } : undefined}
+    >
+      {/* Plano de fundo fotográfico esmaecido: presença, nunca protagonismo.
+          A foto SEMPRE é camada absoluta atrás do texto — PhotoFrame é
+          `relative` por padrão, então o enquadramento absoluto fica no
+          wrapper, nunca na moldura (senão a foto entra no fluxo e empurra
+          o texto para fora do quadro). */}
       {usePhoto && photo && (
         <>
-          <PhotoFrame
-            photo={photo}
-            className={`pointer-events-none absolute inset-x-0 rounded-none ${
-              partial ? "bottom-0 h-[45%]" : "inset-y-0"
-            }`}
-            imgClassName="opacity-40 saturate-[0.55] contrast-[0.9]"
-          />
           <div
             aria-hidden
-            className={`pointer-events-none absolute inset-0 ${
-              partial
-                ? "bg-gradient-to-t from-foreground/85 via-foreground/70 to-foreground"
-                : "bg-foreground/70"
+            className={`pointer-events-none absolute inset-x-0 ${
+              partial ? "bottom-0 h-[45%]" : "inset-y-0"
             }`}
+          >
+            <PhotoFrame
+              photo={photo}
+              className="h-full w-full rounded-none"
+              imgClassName="opacity-50 brightness-[0.6] saturate-[0.6] contrast-[0.95]"
+            />
+          </div>
+          {/* Película translúcida levemente escurecida: garante o texto
+              destacado à frente em qualquer foto, sem apagar a imagem. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: partial
+                ? "linear-gradient(to top, rgba(8,8,12,0.82) 0%, rgba(8,8,12,0.55) 34%, rgba(8,8,12,0.25) 55%, rgba(8,8,12,0.55) 100%)"
+                : "rgba(8,8,12,0.55)",
+            }}
           />
         </>
       )}
