@@ -202,6 +202,9 @@ type PersistedCreateState = {
   variation?: VariationProfile;
   /** Fotos fixadas pelo usuário para forçar o acervo da geração. */
   pinnedPhotos?: string[];
+  /** Filtro "fotos do acervo em destaque": metade das artes com foto de fundo. */
+  photoFirst?: boolean;
+
 };
 
 const readPersisted = (brandId: string): PersistedCreateState => {
