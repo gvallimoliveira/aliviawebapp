@@ -45,7 +45,7 @@ import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
 import StudioArtEditor from "./StudioArtEditor";
 import { isArtSnapshot } from "./artSnapshot";
-import { deliver } from "@/pages/studio/exportImage";
+import { deliver, deliverMany } from "@/pages/studio/exportImage";
 
 import {
   answeredCount,
