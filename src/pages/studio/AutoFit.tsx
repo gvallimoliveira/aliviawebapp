@@ -137,7 +137,7 @@ const AutoFit = ({ children, resetKey }: Props) => {
 
     return () => {
       alive = false;
-      observer.disconnect();
+      observer?.disconnect();
       window.cancelAnimationFrame(frame);
       timers.forEach((t) => window.clearTimeout(t));
     };
