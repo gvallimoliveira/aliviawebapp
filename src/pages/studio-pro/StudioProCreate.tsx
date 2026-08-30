@@ -305,6 +305,23 @@ const StudioProCreate = ({
   const blocked = !unlimited && !!quota && !quotaError && quota.remaining < STUDIO_GENERATION_COST;
 
   /**
+   * LOTE DE BOAS-VINDAS: o primeiro lote da marca já vem montado sem custo.
+   * O aviso só aparece enquanto a marca não gastou nenhuma geração do período
+   * e ainda não clicou em "Nova versão" — assinante antigo não vê o recado.
+   */
+  const [welcomeUsed, setWelcomeUsed] = useState(() => welcomeBatchUsed(brand.id));
+  useEffect(() => {
+    setWelcomeUsed(welcomeBatchUsed(brand.id));
+  }, [brand.id]);
+  const showWelcomeBatch =
+    !unlimited &&
+    !welcomeUsed &&
+    !!quota &&
+    !quotaError &&
+    quota.generationsLeft === quota.allowance;
+
+
+  /**
    * "Nova versão" é o único clique que custa cota (1 geração). Trocar público,
    * objetivo, modelo ou formato navega a MESMA geração de graça — é ali que a
    * versão rende dezenas de artes. O desconto acontece no banco antes da nova
