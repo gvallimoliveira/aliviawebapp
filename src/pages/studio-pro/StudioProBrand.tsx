@@ -535,20 +535,27 @@ const StudioProBrand = () => {
       toast.error("Esta arte foi salva antes do PNG guardado. Gere e salve novamente.");
       return;
     }
-    const { data, error } = await supabase.storage.from("studio-art").download(art.png_path);
-    if (error || !data) {
-      toast.error("Não foi possível baixar o PNG.");
-      return;
-    }
-    const name = art.png_path.split("/").pop() ?? "arte.png";
     try {
-      const shared = await deliver(data, name, "image/png");
-      toast.success(shared ? "Arte pronta para compartilhar" : "Arte exportada em PNG");
+      const paths = await slidePathsOf(art);
+      const files: File[] = [];
+      for (const path of paths) {
+        const { data, error } = await supabase.storage.from("studio-art").download(path);
+        if (error || !data) continue;
+        files.push(new File([data], path.split("/").pop() ?? "arte.png", { type: "image/png" }));
+      }
+      if (!files.length) {
+        toast.error("Não foi possível baixar o PNG.");
+        return;
+      }
+      const shared = files.length > 1 ? await deliverMany(files) : await deliver(files[0], files[0].name, "image/png");
+      const many = files.length > 1 ? ` (${files.length} slides)` : "";
+      toast.success(shared ? `Arte pronta para compartilhar${many}` : `Arte exportada em PNG${many}`);
     } catch (err) {
       console.error("[studio-pro] deliver png", err);
       toast.error("Não foi possível baixar o PNG.");
     }
   };
+
 
   const downloadCaption = async (art: Creation) => {
     if (!art.caption) {
