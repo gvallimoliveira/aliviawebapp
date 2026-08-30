@@ -1034,16 +1034,18 @@ const StudioProBrand = () => {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="edit-slogan">Slogan da marca</Label>
-                  <Input
+                  <Textarea
                     id="edit-slogan"
-                    placeholder='ex.: "Movimento é liberdade."'
+                    rows={3}
+                    placeholder={'ex.: "Movimento é liberdade."\numa frase por linha'}
                     value={form.slogan}
                     onChange={(e) => setForm({ ...form, slogan: e.target.value })}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Aparece na assinatura das artes e libera o sub-nicho{" "}
-                    <strong>Slogan em destaque</strong> no editor. Sem slogan, esse sub-nicho fica inativo.
+                    Pode ter <strong>mais de um slogan</strong> — uma frase por linha (a primeira vira a
+                    assinatura das artes). Libera o sub-nicho <strong>Slogan em destaque</strong> no editor.
                   </p>
+
                 </div>
                 <div className="sm:col-span-2">
                   <Label htmlFor="edit-description">Descrição da marca</Label>
