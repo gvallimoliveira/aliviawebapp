@@ -153,7 +153,7 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
            * público dar zoom. Alinhada ao lado oposto quando a mão é espelhada.
            */}
           <div
-            className={`absolute top-[58%] w-[22%] -translate-y-1/2 ${
+            className={`absolute top-[60%] w-[22%] -translate-y-1/2 ${
               mirrored ? "right-[78%] text-right" : "left-[78%] text-left"
             }`}
           >
