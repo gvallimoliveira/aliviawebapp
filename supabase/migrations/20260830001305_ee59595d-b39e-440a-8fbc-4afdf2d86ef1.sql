@@ -1,0 +1,2 @@
+UPDATE public.studio_brands SET user_id = 'e428f8ef-4c84-4c6a-8fd3-7bf97ee74997' WHERE id = 'fed039db-40ca-4740-88fb-f00d7bf9d933';
+UPDATE public.studio_texts SET user_id = 'e428f8ef-4c84-4c6a-8fd3-7bf97ee74997' WHERE brand_id = 'fed039db-40ca-4740-88fb-f00d7bf9d933';
