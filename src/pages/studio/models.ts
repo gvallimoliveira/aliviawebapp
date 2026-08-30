@@ -25,7 +25,7 @@ export const STUDIO_MODELS: StudioModel[] = [
   { id: "citacao", label: "Citação", hint: "Bloco de fala em fundo de destaque", kinds: ["quote"] },
   { id: "carrossel", label: "Carrossel", hint: "Sequência capa → slides → CTA", kinds: ["carousel"] },
   { id: "foto", label: "Foto do acervo", hint: "Suas fotos com tipografia por cima", kinds: ["photoType", "photoSplit", "photoPortrait", "stage"], needsPhoto: true },
-  { id: "fotofundo", label: "Foto como plano de fundo", hint: "Sua foto esmaecida atrás do texto, com véu escurecido", kinds: ["photoVeil"], needsPhoto: true },
+  { id: "fotofundo", label: "Foto como plano de fundo", hint: "Sua foto esmaecida atrás do texto, com véu escurecido (substitui a foto em primeira camada)", kinds: ["photoVeil"], needsPhoto: true },
   { id: "numeros", label: "Números / prova", hint: "Métricas e dados em destaque", kinds: ["metrics", "stats"] },
   { id: "passos", label: "Passo a passo", hint: "Etapas numeradas do processo", kinds: ["journey", "list"] },
   { id: "recurso", label: "Recurso em close", hint: "Um benefício por arte", kinds: ["feature", "triptych"] },
@@ -43,12 +43,22 @@ export const STUDIO_MODELS: StudioModel[] = [
   { id: "cartaz", label: "Cartaz / faixa", hint: "Pin-up e faixa de termos", kinds: ["pinup", "marquee"] },
 ];
 
-/** Converte a seleção de modelos nos blocos permitidos do motor. */
+/**
+ * Converte a seleção de modelos nos blocos permitidos do motor.
+ *
+ * Exclusividade fotográfica: "Foto como plano de fundo" (fotofundo) e
+ * "Foto do acervo" (primeira camada) nunca se combinam — se o usuário
+ * marcar os dois, o plano de fundo vence e os blocos de foto em primeira
+ * camada saem do pool. É um ou outro.
+ */
 export const kindsForModels = (ids: string[], photoCount = 0, exclusive = false): BlockKind[] => {
   const set = new Set<BlockKind>();
   STUDIO_MODELS.filter((m) => ids.includes(m.id))
     .filter((m) => !m.needsPhoto || photoCount > 0)
     .filter((m) => !m.needsBrand || exclusive)
     .forEach((m) => m.kinds.forEach((k) => set.add(k)));
+  if (ids.includes("fotofundo")) {
+    (["photoType", "photoSplit", "photoPortrait", "stage"] as BlockKind[]).forEach((k) => set.delete(k));
+  }
   return [...set];
 };
