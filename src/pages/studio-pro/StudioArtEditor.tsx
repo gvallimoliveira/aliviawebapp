@@ -410,6 +410,34 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
                   Ajustar texto
                 </Button>
               )}
+              {/* MOVER TEXTO: arraste só pela alça de cada frase. */}
+              {moving ? (
+                <>
+                  <Button size="sm" className="h-8 rounded-full text-xs" onClick={() => stopMove(false)}>
+                    <Check className="mr-1.5 h-3.5 w-3.5" />
+                    Fixar posição
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => stopMove(true)}
+                  >
+                    Posição original
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-full text-xs"
+                  disabled={!htmls}
+                  onClick={startMove}
+                >
+                  <Move className="mr-1.5 h-3.5 w-3.5" />
+                  Mover texto
+                </Button>
+              )}
               <Button
                 size="sm"
                 className="h-8 rounded-full text-xs"
