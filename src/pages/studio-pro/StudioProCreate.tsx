@@ -424,6 +424,13 @@ const StudioProCreate = ({
    */
   const register = useMemo(() => voiceRegister(brand.tone, brand.name), [brand.tone, brand.name]);
 
+  /**
+   * COBERTURA DOS NICHOS: memória por marca que distribui a atenção criativa da
+   * Visão 360° entre todos os públicos e sub-nichos, em vez de repetir sempre os
+   * mesmos dois ou três.
+   */
+  const segmentMemory = useSegmentMemory(brand.id);
+
   const content = useMemo(() => {
     const built = buildSegmentContent({
       kit: contentKit,
@@ -438,7 +445,9 @@ const StudioProCreate = ({
       // Variedade linguística: cada lote reescreve a roupagem das frases.
       variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
       variationProfile: variation,
+      segmentWeights: segmentMemory.weights,
     });
+
     /**
      * Passagem final pelo léxico: vale também para o acervo curado dos mundos
      * internos, então nenhuma marca fica presa às mesmas palavras.
