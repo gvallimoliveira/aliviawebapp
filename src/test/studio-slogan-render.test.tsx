@@ -56,7 +56,7 @@ const KIT = {
   keywords: ["raciocínio clínico", "causa da dor", "método", "avaliação"],
   positioning: "Caminho claro, focado na causa da dor, com metodologia própria.",
   slogan: SLOGAN,
-} as never;
+};
 
 let errors: string[] = [];
 let spy: ReturnType<typeof vi.spyOn>;
@@ -98,7 +98,7 @@ describe("slogan em destaque", () => {
         const seed = `seed-${s}`;
         const vs = `brand:${seed}:${SLOGAN_SEGMENT}:${angle}`;
         const built = buildSegmentContent({
-          kit: KIT,
+          kit: KIT as never,
           audiences: AUDIENCES,
           segment: SLOGAN_SEGMENT,
           angle,
@@ -115,7 +115,7 @@ describe("slogan em destaque", () => {
         const blocks = composePage(createRng(`${vs}:layout`), persona, undefined, content.carousels, 0, undefined, false);
         const audience = resolveAudience(AUDIENCES, SLOGAN_SEGMENT);
         const relation = relationForSegment({
-          kit: KIT,
+          kit: KIT as never,
           audiences: AUDIENCES,
           segment: SLOGAN_SEGMENT,
           angle,
