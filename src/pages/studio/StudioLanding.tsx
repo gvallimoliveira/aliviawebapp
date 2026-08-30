@@ -8,7 +8,7 @@ import { composePage } from "./composePage";
 import { buildCaption } from "./caption";
 import { buildFavoritesCaptions, buildPageCaptions } from "./captionFile";
 import { exportTextFile } from "./exportText";
-import { exportNodeAsPng } from "./exportImage";
+import { exportNodeAsPng, exportNodesAsPng } from "./exportImage";
 import { buildSchedule, buildScheduleFile } from "./schedule";
 import { removeThumb } from "./thumbs";
 import { toast } from "sonner";
