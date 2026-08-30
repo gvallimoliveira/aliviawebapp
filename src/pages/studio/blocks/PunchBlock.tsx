@@ -42,54 +42,14 @@ const punchOf = (raw: string): string | null => {
 };
 
 /**
- * MÃO EM PINÇA (desenho vetorial, sem depender do acervo de fotos)
+ * MÃO EM PINÇA — foto original da referência (recorte com fundo transparente).
  *
- * Antebraço + palma entrando pela borda, indicador por cima e polegar por
- * baixo, deixando um VÃO à direita — é nesse vão que a frase é "segurada".
- * Textura de veias/vincos em traço fino dá o peso de foto em close.
+ * Não é desenho: é a própria fotografia em close, em escala de cinza, entrando
+ * pela borda esquerda com o vão da pinça à direita. Proporção original
+ * 1055 × 783, usada para ancorar a frase minúscula exatamente no vão.
  */
-const PinchHand = ({ tone, edge }: { tone: string; edge: string }) => (
-  <svg viewBox="0 0 100 74" className="h-full w-full" preserveAspectRatio="xMinYMid meet" aria-hidden>
-    <defs>
-      <linearGradient id="punchSkin" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor={tone} stopOpacity="0.95" />
-        <stop offset="55%" stopColor={tone} stopOpacity="0.78" />
-        <stop offset="100%" stopColor={tone} stopOpacity="0.92" />
-      </linearGradient>
-    </defs>
+const HAND_RATIO = 1055 / 783;
 
-    {/* Antebraço + palma entrando pela borda esquerda */}
-    <path
-      d="M-6,74 C4,68 12,62 20,54 C28,46 38,40 48,39 C58,38 66,43 66,50 C66,58 58,63 48,64 C36,65 24,70 16,74 Z"
-      fill="url(#punchSkin)"
-    />
-    {/* Dedos dobrados (nós da mão) — volume de close, como na referência */}
-    <path d="M46,40 C52,35 60,36 62,42 C63,47 57,49 52,47 Z" fill="url(#punchSkin)" />
-    <path d="M52,46 C58,44 64,46 65,51 C65,56 59,57 54,55 Z" fill="url(#punchSkin)" />
-    {/* Indicador (por cima) — ponta apontando para o vão */}
-    <path
-      d="M42,40 C48,31 58,25 70,24 C78,23 80,28 74,31 C66,35 58,40 53,46 C49,50 43,47 42,40 Z"
-      fill="url(#punchSkin)"
-    />
-    {/* Polegar (por baixo) — ponta apontando para o vão */}
-    <path
-      d="M50,55 C58,57 68,61 75,65 C80,68 77,72 71,71 C61,69 52,65 46,61 C43,59 46,54 50,55 Z"
-      fill="url(#punchSkin)"
-    />
-    {/* Vincos e veias: traço fino, dá textura de close fotográfico */}
-    <g stroke={edge} strokeWidth="0.4" fill="none" strokeLinecap="round" opacity="0.5">
-      <path d="M4,72 C14,66 22,60 30,52" />
-      <path d="M10,74 C20,69 28,63 36,56" />
-      <path d="M46,42 C52,36 60,30 68,27" />
-      <path d="M52,58 C60,60 68,63 74,67" />
-      <path d="M30,56 C36,53 42,51 48,50" />
-      <path d="M47,41 C51,38 56,38 59,41" />
-      <path d="M53,47 C57,45 61,46 63,49" />
-    </g>
-    {/* Pulseira fina no punho, como na referência */}
-    <path d="M18,60 C21,65 22,70 21,74" stroke={edge} strokeWidth="1.1" fill="none" strokeLinecap="round" />
-  </svg>
-);
 
 const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
   /* Acervo de frases candidatas: headline, fala curta e fecho. */
