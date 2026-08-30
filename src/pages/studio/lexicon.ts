@@ -95,7 +95,7 @@ const SYNONYMS: Record<string, SynonymRow> = {
   },
   método: {
     all: ["método", "processo", "caminho"],
-    tecnico: ["método", "protocolo", "padrão"],
+    tecnico: ["método", "método estruturado", "padrão"],
     proximo: ["método", "jeito de fazer", "passo a passo"],
     direto: ["método", "processo", "roteiro"],
     inspirador: ["método", "jornada", "caminho"],
@@ -267,7 +267,7 @@ const SYNONYMS: Record<string, SynonymRow> = {
   },
   processo: {
     all: ["processo", "percurso", "método"],
-    tecnico: ["processo", "protocolo", "fluxo"],
+    tecnico: ["processo", "direcionamento", "fluxo"],
     proximo: ["processo", "caminho", "passo a passo"],
     direto: ["processo", "roteiro"],
     inspirador: ["processo", "jornada", "caminho"],
