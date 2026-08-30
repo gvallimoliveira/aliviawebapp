@@ -79,6 +79,7 @@ import {
 import { applyArtMoves, clearArtMoves, hasArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
 import { forgetArtLearning, learnArtMoves } from "@/pages/studio/artMoveLearning";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
+import { markWelcomeBatchUsed, welcomeBatchUsed } from "./welcomeBatch";
 import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
