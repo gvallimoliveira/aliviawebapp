@@ -893,8 +893,8 @@ const StudioProCreate = ({
       caption,
       thumb,
       png_path: pngPath,
-      // Receita da arte: permite reusar a composição aprovada nas próximas versões.
-      composition: JSON.parse(JSON.stringify(blocks)),
+      // Receita unitária; slides mantêm group/index/total dentro do próprio bloco.
+      composition: JSON.parse(JSON.stringify([blocks[index]])),
       /** Texto exato exibido na arte: é o que a edição pela galeria reabre. */
       text_edits: { 0: node ? readArtText(node) : {} },
       snapshot,

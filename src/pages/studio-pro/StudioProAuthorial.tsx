@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, Contrast, Download, FileText, Loader2, RefreshCw, Save, Type } from "lucide-react";
+import { Camera, Check, Contrast, Download, FileText, Loader2, PencilLine, RefreshCw, RotateCcw, Save, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,13 @@ import StudioProSignature from "./StudioProSignature";
 import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import AuthorialArtBlock from "./AuthorialArtBlock";
+import {
+  applyArtText,
+  hasArtEdits,
+  readArtText,
+  setArtEditing,
+  type ArtTextEdits,
+} from "@/pages/studio/artTextEdit";
 import {
   authorialCaption,
   composeAuthorial,
@@ -115,6 +122,8 @@ const StudioProAuthorial = ({
   const [busy, setBusy] = useState<string | null>(null);
   const [saved, setSaved] = useState<Set<string>>(() => new Set());
   const [flipped, setFlipped] = useState<Set<string>>(() => new Set());
+  const [editing, setEditing] = useState<string | null>(null);
+  const [edits, setEdits] = useState<Record<string, ArtTextEdits>>({});
   const [texts, setTexts] = useState<AuthorialText[]>([]);
   const [loading, setLoading] = useState(true);
   const [photosOpen, setPhotosOpen] = useState(false);
@@ -241,6 +250,68 @@ const StudioProAuthorial = ({
   const nodeOf = (artKey: string, slide: number) =>
     document.getElementById(nodeId(artKey, slide)) as HTMLElement | null;
 
+  useEffect(() => {
+    Object.entries(edits).forEach(([key, value]) => {
+      const separator = key.lastIndexOf(":");
+      const node = nodeOf(key.slice(0, separator), Number(key.slice(separator + 1)));
+      if (node) applyArtText(node, value);
+    });
+  }, [edits, arts, format, seed]);
+
+  const startEdit = (artKey: string, slide: number) => {
+    const key = slideKey(artKey, slide);
+    const node = nodeOf(artKey, slide);
+    if (!node) return;
+    setArtEditing(node, true);
+    setEditing(key);
+  };
+
+  const cancelEdit = (artKey: string, slide: number) => {
+    const key = slideKey(artKey, slide);
+    const node = nodeOf(artKey, slide);
+    if (node) {
+      setArtEditing(node, false);
+      applyArtText(node, edits[key]);
+    }
+    setEditing(null);
+  };
+
+  const finishEdit = (artKey: string, slide: number) => {
+    const key = slideKey(artKey, slide);
+    const node = nodeOf(artKey, slide);
+    if (!node) return;
+    const next = readArtText(node);
+    if (Object.values(next).some((text) => !text)) {
+      toast.error("Há um texto vazio na arte. Preencha ou cancele o ajuste.");
+      return;
+    }
+    setArtEditing(node, false);
+    setEdits((prev) => ({ ...prev, [key]: next }));
+    setEditing(null);
+    setSaved((prev) => {
+      const copy = new Set(prev);
+      copy.delete(key);
+      return copy;
+    });
+    toast.success("Texto ajustado nesta arte.");
+  };
+
+  const resetEdit = (artKey: string, slide: number) => {
+    const key = slideKey(artKey, slide);
+    setEdits((prev) => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+    setSaved((prev) => {
+      const copy = new Set(prev);
+      copy.delete(key);
+      return copy;
+    });
+    setEditing(null);
+    setSeed((current) => current);
+  };
+
   const slideKey = (artKey: string, slide: number) => `${artKey}:${slide}`;
 
   const toggleFlip = (artKey: string, slide: number) => {
@@ -345,6 +416,7 @@ const StudioProAuthorial = ({
       png_path: pngPath,
       composition: JSON.parse(JSON.stringify({ ...art, slides: [art.slides[slideIndex]], slideIndex, slideTotal: art.slides.length })),
       snapshot,
+      text_edits: { 0: node ? readArtText(node) : {} },
       segment: art.textId ?? "autoral",
       angle: "informar",
       folder: folder === "Todas" ? "Geral" : folder,
@@ -570,6 +642,28 @@ const StudioProAuthorial = ({
                     <Contrast className="mr-1.5 h-3.5 w-3.5" />
                     {flipped.has(key) ? "Lado B" : "Inverter cores"}
                   </Button>
+                  {editing === key ? (
+                    <>
+                      <Button size="sm" className="h-8 rounded-full text-xs" onClick={() => finishEdit(art.key, slideIndex)}>
+                        <Check className="mr-1.5 h-3.5 w-3.5" />
+                        Concluir
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-8 rounded-full text-xs" onClick={() => cancelEdit(art.key, slideIndex)}>
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => startEdit(art.key, slideIndex)}>
+                      <PencilLine className="mr-1.5 h-3.5 w-3.5" />
+                      Ajustar texto
+                    </Button>
+                  )}
+                  {hasArtEdits(edits[key]) && (
+                    <Button size="sm" variant="ghost" className="h-8 rounded-full text-xs" onClick={() => resetEdit(art.key, slideIndex)}>
+                      <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                      Desfazer
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     className="h-8 rounded-full text-xs"
