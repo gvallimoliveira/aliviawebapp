@@ -69,12 +69,22 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
           </p>
         </div>
 
-        {/* Palco: pessoa recortada em pé sobre o topo do celular. */}
+        {/* Palco: imagem "saindo" da tela em triângulo invertido arredondado. */}
         <div className="relative mt-6 w-full">
-          <PhotoFrame
-            photo={photo}
-            className="relative z-20 mx-auto h-[34svh] w-[46%] rounded-2xl"
-          />
+          <div
+            className="relative z-20 mx-auto h-[34svh] w-[52%]"
+            style={{
+              WebkitMaskImage: POPOUT_TRIANGLE_MASK,
+              maskImage: POPOUT_TRIANGLE_MASK,
+              WebkitMaskSize: "100% 100%",
+              maskSize: "100% 100%",
+              WebkitMaskRepeat: "no-repeat",
+              maskRepeat: "no-repeat",
+              filter: "drop-shadow(0 26px 28px hsl(var(--foreground) / 0.35))",
+            }}
+          >
+            <PhotoFrame photo={photo} className="h-full w-full" />
+          </div>
 
           {/* Celular deitado em perspectiva, com o perfil da marca. */}
           <div
