@@ -302,6 +302,14 @@ const SENSE: Record<BlockKind, Sense> = {
     needs: (c) => some(c.headlines) || some(c.quotes),
     needsLabel: "frases curtas e provocativas da marca",
   },
+  hook: {
+    format: "gancho de parada",
+    sees: "uma frase de gancho ocupando quase todo o quadro, uma linha de apoio que fecha a ideia e o convite no pé",
+    job: "parar o scroll na primeira linha: o gancho aponta um erro comum, uma omissão ou um atalho e só o apoio entrega a explicação",
+    needs: (c) => some(c.hooks) || some(c.headlines),
+    needsLabel: "ganchos da marca (dor declarada, diferencial e chamada)",
+  },
+
   search: {
     format: "barra de busca",
     sees: "uma barra de busca com o que a pessoa digitaria",
