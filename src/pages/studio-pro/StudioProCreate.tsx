@@ -31,6 +31,7 @@ import {
   createRng,
   deliver,
   exportNodeAsPng,
+  exportNodesAsPng,
   exportTextFile,
   personaForSeed,
   randomSeed,
