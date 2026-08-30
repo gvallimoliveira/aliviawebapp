@@ -90,6 +90,15 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const f = rng.pick(c.features);
     return [f.headline ?? f.title, f.description];
   },
+  hook: (c, rng) => {
+    const list = c.hooks ?? [];
+    if (list.length === 0) {
+      const h = rng.pick(c.headlines);
+      return [`${h.strong} ${h.rest}`.trim(), rng.pick(c.subs)];
+    }
+    const k = rng.pick(list);
+    return [`${k.strong} ${k.rest ?? ""}`.trim(), k.sub ?? rng.pick(c.subs)];
+  },
   punch: (c, rng) => {
     const h = rng.pick(c.headlines);
     return [h.strong, rng.pick(c.subs)];

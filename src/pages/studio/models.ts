@@ -39,6 +39,7 @@ export const STUDIO_MODELS: StudioModel[] = [
   { id: "ladoalado", label: "Celular + explicação", hint: "Aparelho de um lado e título, texto e chamada do outro", kinds: ["phoneSide"] },
   { id: "recado", label: "Recado importante", hint: "Cartão de aviso com selo de exclamação sobre chapa de cor", kinds: ["notice"] },
   { id: "impacto", label: "Mão segurando a frase (dar zoom)", hint: "Mão grande em close segurando uma frase minúscula; embaixo, a chamada gigante que instiga dar zoom", kinds: ["punch"] },
+  { id: "ganchos", label: "Ganchos (frases virais)", hint: "Biblioteca de ganchos de parada de scroll adaptados à marca (ninguém te conta, o erro comum, 90% ignoram…)", kinds: ["hook"] },
   { id: "empilhado", label: "Letras empilhadas (cartaz)", hint: "Palavra repetida em contorno com chapa sólida e tarjas de cor", kinds: ["stackType"] },
   { id: "mockup", label: "Mockup de tela", hint: "Notebook, tablet ou celular", kinds: ["device"] },
   { id: "notificacoes", label: "Notificações do app", hint: "Pilha de avisos simulando o app da marca", kinds: ["notify"] },

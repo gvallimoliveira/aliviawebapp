@@ -31,6 +31,10 @@ export { createPicker, phraseSignature, type StudioPicker, type PhraseMemory } f
 // Variedade linguística global: léxico por registro de voz + frames retóricos.
 export { applyLexicon, voiceRegister, synonymsOf, VOICE_REGISTERS, type VoiceRegister } from "@/pages/studio/lexicon";
 export { varyContent, type VaryOptions } from "@/pages/studio/vary";
+
+// Biblioteca de ganchos: mecanismo (frames virais) + acervo curado por marca.
+export { HOOK_FRAMES, composeHooks, type HookFrame, type HookIngredients, type StudioHook } from "@/pages/studio/hooks";
+export { curatedHooksFor } from "@/pages/studio/hookLibrary";
 export {
   composeHeadlines,
   composeSubs,

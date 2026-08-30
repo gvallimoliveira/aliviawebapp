@@ -41,6 +41,7 @@ import TweetBlock from "@/pages/studio/blocks/TweetBlock";
 import PhoneSideBlock from "@/pages/studio/blocks/PhoneSideBlock";
 import NoticeBlock from "@/pages/studio/blocks/NoticeBlock";
 import PunchBlock from "@/pages/studio/blocks/PunchBlock";
+import HookBlock from "@/pages/studio/blocks/HookBlock";
 import StepsBlock from "@/pages/studio/blocks/StepsBlock";
 import DifiBlock from "@/pages/studio/blocks/DifiBlock";
 import type { BlockProps } from "@/pages/studio/blocks/shared";
@@ -83,6 +84,7 @@ export const STUDIO_BLOCKS = {
   phoneSide: PhoneSideBlock,
   notice: NoticeBlock,
   punch: PunchBlock,
+  hook: HookBlock,
   device: DeviceBlock,
   door: DoorBlock,
   stage: StageBlock,
