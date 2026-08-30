@@ -41,6 +41,14 @@ const BillboardBlock = ({ content, rng, treatment, format, persona }: BlockProps
   const skin = WALLS[treatment % WALLS.length];
   const headline = pickHeadline(rng, content.headlines, persona.headlineTaste);
   const closing = rng.pick(content.closings);
+  const streetHeight =
+    format === "9x16"
+      ? "h-[190px]"
+      : format === "1x1"
+        ? "h-[110px]"
+        : format === "4x5"
+          ? "h-[150px]"
+          : "h-[26svh]";
 
   return (
     <section
@@ -92,7 +100,7 @@ const BillboardBlock = ({ content, rng, treatment, format, persona }: BlockProps
       </motion.div>
 
       {/* Calçada + as duas pessoas se cruzando em sentidos opostos. */}
-      <div className="relative z-10 mt-8 h-[26svh] w-full">
+      <div className={`relative z-10 mt-8 w-full ${streetHeight}`}>
         <div className={`absolute bottom-0 left-0 right-0 h-[38%] ${skin.floor}`} />
         <Walker className="absolute bottom-[4%] left-[14%] h-[80%]" />
         <Walker flip className="absolute bottom-[4%] right-[16%] h-[74%]" />

@@ -40,9 +40,11 @@ const measureNeeded = (root: HTMLElement) => {
   for (const el of Array.from(root.querySelectorAll<HTMLElement>("*"))) {
     if (el.getAttribute("aria-hidden") === "true") continue;
     if (el.dataset.studioNoExport === "1" || el.closest('[data-studio-no-export="1"]')) continue;
-    if (el.children.length > 0) continue; // só folhas
     const text = el.textContent?.trim();
-    if (!text) continue;
+    const isVisualBoundary = el.dataset.studioFitVisual === "1";
+    // Texto é medido apenas nas folhas; molduras visuais entram pelo marcador
+    // explícito, sem contar a imagem ampliada internamente por object-cover.
+    if ((!text || el.children.length > 0) && !isVisualBoundary) continue;
     const style = getComputedStyle(el);
     if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) continue;
 
@@ -59,6 +61,13 @@ const measureNeeded = (root: HTMLElement) => {
   return {
     height: bottom - top,
     width: right - left,
+    /**
+     * Não basta medir o tamanho do conjunto: um bloco deslocado pode ter altura
+     * menor que o quadro e ainda assim ultrapassar só a borda inferior. A área
+     * efetivamente necessária inclui a posição do conteúdo dentro da moldura.
+     */
+    occupiedHeight: Math.max(frame.bottom - top, bottom - frame.top),
+    occupiedWidth: Math.max(frame.right - left, right - frame.left),
     avail: { height: frame.height - SAFE_PAD * 2, width: frame.width - SAFE_PAD * 2 },
   };
 };
@@ -97,8 +106,8 @@ const AutoFit = ({ children, resetKey }: Props) => {
       const needed = measureNeeded(frameRef.current);
       if (!needed) return;
       const fit = Math.min(
-        needed.height > 0 ? needed.avail.height / needed.height : 1,
-        needed.width > 0 ? needed.avail.width / needed.width : 1,
+        needed.occupiedHeight > 0 ? needed.avail.height / needed.occupiedHeight : 1,
+        needed.occupiedWidth > 0 ? needed.avail.width / needed.occupiedWidth : 1,
       );
       // Estourou: encolhe. Sobrou folga significativa: cresce de volta.
       const shrink = fit < 0.995;

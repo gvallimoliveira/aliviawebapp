@@ -23,6 +23,22 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, picker, phot
   /** Palavra-cartaz: a mais forte do assunto, nunca o nome do que está na foto. */
   const word = [...item.title.split(/\s+/)].sort((a, b) => b.length - a.length)[0]?.toUpperCase() ?? "MARCA";
   const bottom = treatment % 2 === 0;
+  const photoHeight =
+    format === "9x16"
+      ? bottom
+        ? "h-[320px]"
+        : "h-[285px]"
+      : format === "1x1"
+        ? bottom
+          ? "h-[220px]"
+          : "h-[195px]"
+        : format === "4x5"
+          ? bottom
+            ? "h-[280px]"
+            : "h-[250px]"
+          : bottom
+            ? "h-[62svh]"
+            : "h-[56svh]";
 
   return (
     <section
@@ -48,7 +64,7 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, picker, phot
       >
         <PhotoFrame
           photo={photo}
-          className={`w-full max-w-[86%] ${bottom ? "h-[62svh] rounded-[2rem]" : "h-[56svh] rounded-[2rem]"}`}
+          className={`w-full max-w-[86%] rounded-[2rem] ${photoHeight}`}
         />
 
         <div className="w-full px-6 pb-10 pt-5 text-center">

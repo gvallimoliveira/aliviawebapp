@@ -39,6 +39,7 @@ const PhotoFrame = ({
 
   return (
     <div
+      data-studio-fit-visual="1"
       className={`relative overflow-hidden ${hasRounded ? "" : "rounded-2xl"} ${className}`}
       style={style}
     >
