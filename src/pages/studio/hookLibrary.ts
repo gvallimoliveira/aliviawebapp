@@ -638,7 +638,115 @@ export const VALLIM_HOOKS: StudioHook[] = [
     sub: "Seu tecido tem outro tempo.",
     cta: "Ver o meu ritmo",
   },
+
+  /* --- Lote 2 (ago/2026): temas novos, mesma voz --- */
+  {
+    hook: "Dose antes de exercício novo",
+    strong: "Não é o exercício errado, é a dose errada",
+    rest: ".",
+    sub: "Mesma série, carga ajustada ao que o seu corpo aguenta hoje.",
+    cta: "Ajustar a minha dose",
+  },
+  {
+    hook: "Tendão pede tempo",
+    strong: "Tendão não responde em três dias",
+    rest: " — responde em semanas de carga constante.",
+    sub: "Paciência com o tecido é parte da conduta.",
+    cta: "Entender o tempo do tecido",
+  },
+  {
+    hook: "Cadência importa",
+    strong: "A mesma repetição feita em três segundos é outro estímulo",
+    rest: ".",
+    sub: "Tempo sob tensão muda o resultado sem mudar o peso.",
+    cta: "Ver como eu uso a cadência",
+  },
+  {
+    hook: "Sem dor não é alta",
+    strong: "Você saiu do tratamento quando parou de doer — e voltou a doer",
+    rest: ".",
+    sub: "Fase de força vem depois do alívio, não em vez dele.",
+    cta: "Terminar a fase de força",
+  },
+  {
+    hook: "Mobilidade sem controle",
+    strong: "Ganhar amplitude sem controle é só articulação solta",
+    rest: ".",
+    sub: "Amplitude nova precisa de força para virar movimento seguro.",
+    cta: "Somar controle à mobilidade",
+  },
+  {
+    hook: "Panturrilha esquecida",
+    strong: "Quase todo joelho que dói ao correr tem panturrilha fraca por perto",
+    rest: ".",
+    sub: "Testar antes de treinar evita meses de tentativa.",
+    cta: "Testar o meu tornozelo",
+  },
+  {
+    hook: "Pé firme, base menor",
+    strong: "Quer desafiar equilíbrio? Reduza a base, não a firmeza do chão",
+    rest: ".",
+    sub: "Ponta de pé, apoios sob ante e retropé, perturbação por carga.",
+    cta: "Ver o meu jeito de treinar equilíbrio",
+  },
+  {
+    hook: "Dor durante o exercício",
+    strong: "Sentir um pouco durante o exercício não significa parar tudo",
+    rest: ".",
+    sub: "Existe faixa aceitável — e critério para saber quando recuar.",
+    cta: "Entender o meu limite",
+  },
+  {
+    hook: "Semana de descarga",
+    strong: "Treinar pesado toda semana não é constância, é acúmulo",
+    rest: ".",
+    sub: "Reduzir volume em uma semana costuma destravar o progresso.",
+    cta: "Planejar a minha semana leve",
+  },
+  {
+    hook: "Medir para progredir",
+    strong: "Sem medir força, progressão vira palpite",
+    rest: ".",
+    sub: "Número na mão define quando avançar a carga.",
+    cta: "Medir a minha força",
+  },
+  {
+    hook: "Volta ao esporte",
+    strong: "Voltar ao jogo pede critério, não calendário",
+    rest: ".",
+    sub: "Teste, comparação com o outro lado e demanda do esporte.",
+    cta: "Ver os meus critérios de retorno",
+  },
+  {
+    hook: "Aquecer não é alongar",
+    strong: "Aquecimento é preparar carga, não esticar tecido",
+    rest: ".",
+    sub: "Movimento parecido com o treino, em intensidade crescente.",
+    cta: "Montar o meu aquecimento",
+  },
+  {
+    hook: "Assimetria",
+    strong: "Um lado bem mais forte que o outro é informação, não detalhe",
+    rest: ".",
+    sub: "Comparar lados mostra o que ainda falta na recuperação.",
+    cta: "Comparar os meus lados",
+  },
+  {
+    hook: "Treino de força na reabilitação",
+    strong: "Reabilitação boa termina parecendo treino de força",
+    rest: ".",
+    sub: "Sair da dor é o começo; sustentar carga é o objetivo.",
+    cta: "Chegar até essa fase",
+  },
+  {
+    hook: "Consistência ganha do intenso",
+    strong: "Três semanas seguidas valem mais que um treino perfeito",
+    rest: ".",
+    sub: "Frequência sustentada é o que muda tecido.",
+    cta: "Manter a minha frequência",
+  },
 ];
+
 
 /** Detecta o Aliv.iA Studio (produto de artes). */
 const isStudioSelf = (name: string) => /aliv\s*\.?\s*ia\s*studio/i.test(name);
