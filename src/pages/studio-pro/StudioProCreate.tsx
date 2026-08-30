@@ -328,6 +328,9 @@ const StudioProCreate = ({
    * seed; se a cota do período acabou, a geração é bloqueada com aviso claro.
    */
   const newVersion = async () => {
+    // A partir daqui o lote de boas-vindas acabou: some o aviso de cortesia.
+    markWelcomeBatchUsed(brand.id);
+    setWelcomeUsed(true);
     if (unlimited) {
       setSeed(randomSeed());
       setSaved(new Set());
