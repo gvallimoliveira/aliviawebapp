@@ -16,6 +16,9 @@ import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlog
 import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
 import { applyCharm } from "./charmCopy";
+import { isAliviaCoreBrand } from "./aliviaCoreCharm";
+import { applyTerminology, isPatientVoice } from "@/pages/studio/terminology";
+
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 
