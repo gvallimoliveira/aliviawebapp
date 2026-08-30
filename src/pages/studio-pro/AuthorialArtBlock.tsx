@@ -3,6 +3,8 @@ import PhotoFrame from "@/pages/studio/blocks/PhotoFrame";
 import { blockPadding, sectionHeight, type StudioFormat } from "@/pages/studio/blocks/shared";
 import type { StudioPhoto } from "@/pages/studio/photos";
 import type { AuthorialArt, AuthorialSlide } from "./authorial";
+import AuthorialOrnaments from "./AuthorialOrnaments";
+
 
 /**
  * ARTE DO MODO AUTORAL
