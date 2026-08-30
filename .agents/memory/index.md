@@ -32,7 +32,10 @@ Studio 360° = modo livre (seed sorteia marca ampla OU 1 público matriz por lot
 
 Studio autoral: marca com `content_source = 'authorial'` NUNCA gera texto — só diagrama textos do autor (`studio_texts`) e slogans; jamais mistura obras nem fragmentos fora de ordem.
 
+Studio léxico: marca Aliv.iA falando com paciente/sub-nicho clínico usa "AutoAvaliação"; nunca afirmar "protocolo" (método estruturado / direcionamento / raciocínio clínico).
+
 ## Memories
+- [Studio Terminology Rules](mem://features/studio-terminology-rules) — "AutoAvaliação" para paciente da marca Aliv.iA e proibição de afirmar "protocolo" (usar método estruturado/direcionamento/raciocínio clínico).
 - [Studio Authorial Mode](mem://features/studio-authorial-mode) — Marcas autorais: Studio só diagrama textos do autor, regras de coerência e fragmentação.
 - [Studio Gallery Edit](mem://features/studio-gallery-edit) — Edição de arte salva usa instantâneo (snapshot) da arte pronta; nunca reconstruir pela receita.
 - [Studio Proofreading](mem://features/studio-proofreading) — Revisor de concordância global e escolha do texto digitado na barra de busca.
