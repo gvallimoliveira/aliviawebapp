@@ -392,7 +392,9 @@ export async function assertCreditsAvailable(
       });
     }
     admin = createClient(supabaseUrl, serviceKey);
-    const enforced = await isEnforcementOn(admin);
+    const cfg = await readEnforcement(admin);
+    const enforced = cfg.global;
+
 
     // Resolve user_id + email
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
