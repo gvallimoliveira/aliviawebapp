@@ -14,7 +14,7 @@
  * bloqueada, porque reconstruir pela receita devolvia outra arte.
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Check, Loader2, PencilLine, Save, X } from "lucide-react";
+import { Check, Loader2, Move, PencilLine, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import {
   setArtEditing,
   type ArtTextEdits,
 } from "@/pages/studio/artTextEdit";
+import { applyArtMoves, clearArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
 import { hasBannedJargon } from "@/pages/studio/persuasion";
 import {
   isArtSnapshot,
@@ -168,6 +169,8 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
   );
   const [htmls, setHtmls] = useState<string[] | null>(null);
   const [editing, setEditing] = useState(false);
+  /** Modo de arrastar texto pela alça (não pelo corpo do texto). */
+  const [moving, setMoving] = useState(false);
   const [busy, setBusy] = useState(false);
 
   /** HTML de cada slide, baixado do instantâneo salvo. */

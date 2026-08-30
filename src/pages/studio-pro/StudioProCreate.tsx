@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   Lightbulb,
   Loader2,
+  Move,
   PencilLine,
   RefreshCw,
   RotateCcw,
@@ -75,6 +76,7 @@ import {
   setArtEditing,
   type ArtTextEdits,
 } from "@/pages/studio/artTextEdit";
+import { applyArtMoves, clearArtMoves, hasArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
@@ -635,6 +637,13 @@ const StudioProCreate = ({
    */
   const [edits, setEdits] = useState<Record<number, ArtTextEdits>>({});
   const [editing, setEditing] = useState<number | null>(null);
+  /**
+   * MOVER TEXTO: modo separado da edição de palavras. Ligado, cada frase da arte
+   * ganha uma alça redonda — só por ela o texto se move, para ninguém arrastar
+   * uma frase sem querer ao rolar a página ou tocar na arte no celular.
+   */
+  const [moving, setMoving] = useState<number | null>(null);
+  const [moveTick, setMoveTick] = useState(0);
   /** Artes que o usuário revisou e reenviou para aprovação com sucesso. */
   const [approved, setApproved] = useState<Set<number>>(() => new Set());
   /** Remonta os blocos para recompor o texto original do motor após um "desfazer". */
@@ -697,17 +706,68 @@ const StudioProCreate = ({
     });
 
 
-  /** Reaplica as edições depois de qualquer re-render das artes. */
+  /** Reaplica as edições e os deslocamentos depois de qualquer re-render das artes. */
   useEffect(() => {
     Object.entries(edits).forEach(([key, value]) => {
       const node = artNode(Number(key));
       if (node) applyArtText(node, value);
     });
-  }, [edits, blocks, format, seed, content, activePhotos, resetTick]);
+    blocks.forEach((_, i) => {
+      const node = artNode(i);
+      if (node) applyArtMoves(node);
+    });
+  }, [edits, blocks, format, seed, content, activePhotos, resetTick, moveTick]);
+
+  /** Liga/desliga o arraste por alça na arte selecionada. */
+  const startMove = (indexes: number[]) => {
+    setEditing(null);
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (node) setArtEditing(node, false);
+    });
+    setMoving(indexes[0]);
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (node) setArtMoving(node, true);
+    });
+  };
+
+  const finishMove = (indexes: number[]) => {
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (node) setArtMoving(node, false);
+    });
+    setMoving(null);
+    setMoveTick((n) => n + 1);
+    // A arte mudou de posição: um salvamento anterior não representa mais a tela.
+    setSaved((prev) => {
+      const copy = new Set(prev);
+      indexes.forEach((i) => copy.delete(i));
+      return copy;
+    });
+  };
+
+  const resetMove = (indexes: number[]) => {
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (!node) return;
+      clearArtMoves(node);
+      setArtMoving(node, false);
+    });
+    setMoving(null);
+    setMoveTick((n) => n + 1);
+    toast.success("Textos voltaram para a posição original.");
+  };
+
 
   /** Liga a edição direta somente na arte selecionada. */
   const startEdit = (indexes: number[]) => {
     setWhyOpen(indexes[0]);
+    setMoving(null);
+    indexes.forEach((i) => {
+      const node = artNode(i);
+      if (node) setArtMoving(node, false);
+    });
     setEditing(indexes[0]);
     indexes.forEach((i) => {
       const node = artNode(i);
@@ -1321,6 +1381,34 @@ const StudioProCreate = ({
                     Ajustar texto
                   </Button>
                 )}
+                {/* MOVER TEXTO: arraste só pela alça de cada frase. */}
+                {moving === item.index ? (
+                  <>
+                    <Button size="sm" className="h-8 rounded-full text-xs" onClick={() => finishMove(slideIndexes)}>
+                      <Check className="mr-1.5 h-3.5 w-3.5" />
+                      Fixar posição
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 rounded-full text-xs"
+                      onClick={() => resetMove(slideIndexes)}
+                    >
+                      <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                      Posição original
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => startMove(slideIndexes)}
+                  >
+                    <Move className="mr-1.5 h-3.5 w-3.5" />
+                    Mover texto
+                  </Button>
+                )}
                 {hasArtEdits(edits[item.index]) && (
                   <Button size="sm" variant="ghost" className="h-8 rounded-full text-xs" onClick={() => resetEdit(slideIndexes)}>
                     <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
@@ -1441,6 +1529,34 @@ const StudioProCreate = ({
                   >
                     <PencilLine className="mr-1.5 h-3.5 w-3.5" />
                     Ajustar texto
+                  </Button>
+                )}
+                {/* MOVER TEXTO: arraste só pela alça de cada frase. */}
+                {moving === first.index ? (
+                  <>
+                    <Button size="sm" className="h-8 rounded-full text-xs" onClick={() => finishMove(indexes)}>
+                      <Check className="mr-1.5 h-3.5 w-3.5" />
+                      Fixar posição
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 rounded-full text-xs"
+                      onClick={() => resetMove(indexes)}
+                    >
+                      <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                      Posição original
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => startMove(indexes)}
+                  >
+                    <Move className="mr-1.5 h-3.5 w-3.5" />
+                    Mover texto
                   </Button>
                 )}
                 {indexes.some((i) => hasArtEdits(edits[i])) && (
