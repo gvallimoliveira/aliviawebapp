@@ -1393,6 +1393,8 @@ export const buildSegmentContent = ({
   positioning,
   variationSeed,
   variationProfile,
+  segmentWeights,
+
 }: SegmentContentInput): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
   const variation: CopyVariation | undefined = variationSeed ? { seed: variationSeed, profile: variationProfile } : undefined;
