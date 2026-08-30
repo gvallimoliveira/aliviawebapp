@@ -1,5 +1,6 @@
 import { describe, it } from "vitest";
 globalThis.IntersectionObserver = class { constructor(){} observe(){} unobserve(){} disconnect(){} takeRecords(){return []} } as any;
+(globalThis as any).Element && (Element.prototype as any).animate === undefined && ((Element.prototype as any).animate = () => ({ finished: Promise.resolve(), cancel(){}, play(){}, pause(){}, addEventListener(){}, removeEventListener(){} }));
 import { render } from "@testing-library/react";
 import { STUDIO_BLOCKS, composePage, buildCoverage, createPicker, createRng, personaForSeed } from "@/studio-core";
 import { buildSegmentContent } from "@/pages/studio-pro/brandContent";
