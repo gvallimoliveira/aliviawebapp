@@ -259,8 +259,13 @@ const StudioProAuthorial = ({
 
   const fileBase = `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}`;
 
+  /** No formato Livre os slides do carrossel saem todos com a maior altura. */
+  const lockCarouselHeight = (nodes: HTMLElement[]) =>
+    format === "free" ? lockUniformHeight(nodes) : () => {};
+
   const download = async (art: AuthorialArt) => {
     setBusy(`png-${art.key}`);
+    let unlock = () => {};
     try {
       if (art.slides.length === 1) {
         const node = nodeOf(art.key, 0);
@@ -276,6 +281,7 @@ const StudioProAuthorial = ({
           })
           .filter((item): item is { node: HTMLElement; fileName: string } => !!item);
         if (!items.length) throw new Error("no-nodes");
+        unlock = lockCarouselHeight(items.map((item) => item.node));
         await exportNodesAsPng(items);
       }
       toast.success(art.slides.length > 1 ? `Carrossel exportado (${art.slides.length} slides)` : "Arte exportada");
@@ -283,6 +289,7 @@ const StudioProAuthorial = ({
       console.error("[studio-pro] export autoral", error);
       toast.error("Não foi possível exportar esta arte.");
     } finally {
+      unlock();
       setBusy(null);
     }
   };
