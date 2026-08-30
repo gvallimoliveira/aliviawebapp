@@ -30,6 +30,9 @@ export type BlockKind =
   | "askbox"
   | "promoPhone"
   | "stackType"
+  | "tweet"
+  | "phoneSide"
+  | "notice"
   | "device"
   | "door"
   | "stage"
@@ -85,6 +88,9 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   askbox: 4,
   promoPhone: 3,
   stackType: 4,
+  tweet: 4,
+  phoneSide: 3,
+  notice: 4,
   device: 3,
   door: 4,
   stage: 2,
@@ -271,6 +277,9 @@ export const composePage = (
     ["askbox", 2],
     ["promoPhone", 1],
     ["stackType", 2],
+    ["tweet", 2],
+    ["phoneSide", 2],
+    ["notice", 1],
     ["device", 2],
     ["door", 1],
     ["constellation", 1],

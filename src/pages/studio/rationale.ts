@@ -274,6 +274,27 @@ const SENSE: Record<BlockKind, Sense> = {
     needs: (c) => some(c.headlines),
     needsLabel: "frases curtas da marca",
   },
+  tweet: {
+    format: "post de rede social",
+    sees: "o print de um post curto da marca, com avatar, @, horário e barra de ações",
+    job: "fazer uma frase circular como opinião — formato que o público lê sem perceber que é anúncio",
+    needs: (c) => some(c.quotes) || some(c.headlines),
+    needsLabel: "falas curtas da marca",
+  },
+  phoneSide: {
+    format: "celular ao lado da explicação",
+    sees: "o aparelho de um lado e, do outro, título, explicação e chamada",
+    job: "mostrar a coisa funcionando e explicar em uma leitura o que ela resolve",
+    needs: (c) => some(c.features) && some(c.closings),
+    needsLabel: "recursos e chamada de ação",
+  },
+  notice: {
+    format: "recado importante",
+    sees: "um cartão de aviso com selo de exclamação sobre chapa de cor",
+    job: "dar urgência a uma informação que o público precisa ler agora",
+    needs: (c) => some(c.features) || some(c.closings),
+    needsLabel: "informação objetiva para avisar",
+  },
   search: {
     format: "barra de busca",
     sees: "uma barra de busca com o que a pessoa digitaria",

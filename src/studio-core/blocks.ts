@@ -37,6 +37,9 @@ import TrendBlock from "@/pages/studio/blocks/TrendBlock";
 import FocusBlock from "@/pages/studio/blocks/FocusBlock";
 import DivergeBlock from "@/pages/studio/blocks/DivergeBlock";
 import OutboxBlock from "@/pages/studio/blocks/OutboxBlock";
+import TweetBlock from "@/pages/studio/blocks/TweetBlock";
+import PhoneSideBlock from "@/pages/studio/blocks/PhoneSideBlock";
+import NoticeBlock from "@/pages/studio/blocks/NoticeBlock";
 import StepsBlock from "@/pages/studio/blocks/StepsBlock";
 import DifiBlock from "@/pages/studio/blocks/DifiBlock";
 import type { BlockProps } from "@/pages/studio/blocks/shared";
@@ -75,6 +78,9 @@ export const STUDIO_BLOCKS = {
   askbox: AskBoxBlock,
   promoPhone: PromoPhoneBlock,
   stackType: StackTypeBlock,
+  tweet: TweetBlock,
+  phoneSide: PhoneSideBlock,
+  notice: NoticeBlock,
   device: DeviceBlock,
   door: DoorBlock,
   stage: StageBlock,

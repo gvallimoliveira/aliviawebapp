@@ -81,6 +81,15 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const h = rng.pick(c.headlines);
     return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
   },
+  tweet: (c, rng) => [rng.pick(c.quotes).text, rng.pick(c.subs)],
+  phoneSide: (c, rng) => {
+    const f = rng.pick(c.features);
+    return [f.headline ?? f.title, f.description];
+  },
+  notice: (c, rng) => {
+    const f = rng.pick(c.features);
+    return [f.headline ?? f.title, f.description];
+  },
   search: (c, rng) => [
     `${rng.pick(c.kickers)}: ${rng.pick(c.headlines).strong}`,
     rng.pick(c.subs),
