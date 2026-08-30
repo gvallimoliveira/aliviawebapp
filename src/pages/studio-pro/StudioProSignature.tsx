@@ -40,10 +40,15 @@ const cornerFor = (key: string): SignatureCorner => {
 /**
  * A arte já traz um lockup evidente da marca?
  * Critério apertado, para nunca deixar uma arte sem assinatura por engano:
+ * - o modelo declara a própria assinatura (`data-studio-own-lockup="1"`); ou
  * - uma imagem de logo REALMENTE visível (>= 40px de lado); ou
  * - o nome da marca em tipografia grande (>= 22px), como wordmark do layout.
  */
 const hasOwnLockup = (node: HTMLElement, brandName: string): boolean => {
+  // Modelos que já fecham com logo + @ da marca no pé (ex.: "Frase de impacto")
+  // se declaram assinados — assim a arte não sai com duas assinaturas.
+  if (node.querySelector('[data-studio-own-lockup="1"]')) return true;
+
   const logos = Array.from(node.querySelectorAll<HTMLImageElement>("img")).filter((img) => {
     const alt = (img.getAttribute("alt") ?? "").trim().toLowerCase();
     const isBrandImg =
@@ -53,6 +58,7 @@ const hasOwnLockup = (node: HTMLElement, brandName: string): boolean => {
     return rect.width >= 40 && rect.height >= 40;
   });
   if (logos.length > 0) return true;
+
 
   const name = brandName.trim();
   if (!name) return false;
