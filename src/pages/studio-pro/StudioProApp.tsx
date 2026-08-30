@@ -361,8 +361,8 @@ const StudioProApp = () => {
   }
 
   return (
-    <main className="min-h-screen bg-background px-5 py-8">
-      <div className="mx-auto max-w-5xl">
+    <main className="min-h-screen overflow-x-hidden bg-background px-5 py-8">
+      <div className="mx-auto w-full min-w-0 max-w-5xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             to={PRODUCT.base}

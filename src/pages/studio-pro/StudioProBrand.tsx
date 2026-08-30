@@ -644,7 +644,7 @@ const StudioProBrand = () => {
   const accent = brand.colors?.primary ?? "hsl(var(--primary))";
 
   return (
-    <main className="min-h-screen bg-background px-5 py-8">
+    <main className="min-h-screen overflow-x-hidden bg-background px-5 py-8">
       <div className="mx-auto max-w-5xl">
         {/* Breadcrumb + troca de marca */}
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">

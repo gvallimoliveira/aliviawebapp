@@ -129,7 +129,7 @@ const StudioProVip = () => {
   const active = grants.filter((g) => !g.revoked_at).length;
 
   return (
-    <main className="min-h-screen bg-background px-5 py-8">
+    <main className="min-h-screen overflow-x-hidden bg-background px-5 py-8">
       <div className="mx-auto max-w-3xl">
         <Link
           to={`${PRODUCT.base}/app`}
