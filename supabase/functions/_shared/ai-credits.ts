@@ -248,18 +248,64 @@ function logDecisionTelemetry(
   }
 }
 
-async function isEnforcementOn(admin: SupabaseClient): Promise<boolean> {
+// Tiers cujo saldo é confiável o suficiente para virar bloqueio real.
+// Qualquer tier fora desta lista NUNCA bloqueia (fail-open), mesmo com a
+// flag global ligada — inclui 'unknown' (email não resolvido) e tiers novos.
+export const BLOCKABLE_TIERS = [
+  "pro_monthly",
+  "pro_annual",
+  "academic_monthly",
+  "academic_annual",
+  "clinic_small",
+  "clinic_medium",
+  "clinic_large",
+  "premium_b2c",
+] as const;
+
+type EnforcementConfig = {
+  /** flag global (app_config.ai_credits_enforced) */
+  global: boolean;
+  /** allowlist de tiers efetivamente bloqueáveis (app_config.ai_credits_enforced_tiers) */
+  tiers: string[];
+};
+
+/**
+ * Lê a configuração de enforcement. Duas travas independentes:
+ *   1. `ai_credits_enforced` (global on/off — kill switch)
+ *   2. `ai_credits_enforced_tiers` (allowlist de tiers; ausente/vazia = NINGUÉM bloqueia)
+ * A allowlist existe porque a flag global já está `true` em produção só para
+ * telemetria: sem allowlist preenchida, a 5.4 não pode escapar por acidente.
+ */
+async function readEnforcement(admin: SupabaseClient): Promise<EnforcementConfig> {
   try {
     const { data } = await admin
       .from("app_config")
-      .select("value")
-      .eq("key", "ai_credits_enforced")
-      .maybeSingle();
-    const v = (data as { value: unknown } | null)?.value;
-    return v === true || v === "true";
+      .select("key, value")
+      .in("key", ["ai_credits_enforced", "ai_credits_enforced_tiers"]);
+    const rows = (data ?? []) as Array<{ key: string; value: unknown }>;
+    const g = rows.find((r) => r.key === "ai_credits_enforced")?.value;
+    const t = rows.find((r) => r.key === "ai_credits_enforced_tiers")?.value;
+    let tiers: string[] = [];
+    if (Array.isArray(t)) tiers = t.filter((x): x is string => typeof x === "string");
+    else if (typeof t === "string") {
+      try {
+        const parsed = JSON.parse(t);
+        if (Array.isArray(parsed)) tiers = parsed.filter((x): x is string => typeof x === "string");
+      } catch { /* noop */ }
+    }
+    return { global: g === true || g === "true", tiers };
   } catch {
-    return false;
+    return { global: false, tiers: [] };
   }
+}
+
+/** Só bloqueia se a flag global E o tier estiver na allowlist E for bloqueável. */
+function canBlock(cfg: EnforcementConfig, tier: string | null | undefined): boolean {
+  if (!cfg.global || !tier) return false;
+  if (!(BLOCKABLE_TIERS as readonly string[]).includes(tier)) return false;
+  return cfg.tiers.includes(tier);
+}
+
 }
 
 async function isVipEmail(admin: SupabaseClient, email: string | null): Promise<boolean> {
