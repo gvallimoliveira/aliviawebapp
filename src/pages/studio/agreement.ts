@@ -51,10 +51,19 @@ const singularOf = (word: string) => {
   return w;
 };
 
+/**
+ * Siglas ("DNA", "IA", "CRM", "SEO") não seguem o sufixo: "DNA" termina em "a"
+ * mas é masculino ("o DNA"). Como o gênero de sigla é imprevisível, o revisor
+ * declara desconhecido e não mexe no determinante escrito pela marca.
+ */
+const isAcronym = (rawWord: string) => /^[A-ZÀ-Ý][A-ZÀ-Ý0-9.]{1,}$/.test(rawWord.replace(/[^A-Za-zÀ-ÿ0-9.]/g, ""));
+
 /** Gênero e número do núcleo nominal; `null` quando não há certeza suficiente. */
 export const agreementOf = (rawWord: string): Agreement => {
+  if (isAcronym(rawWord)) return null;
   const word = rawWord.toLowerCase().replace(/[^a-zà-ÿ]/g, "");
   if (!word || word.length < 3) return null;
+
   const plural = isPlural(word);
   const base = plural ? singularOf(word) : word;
 
