@@ -45,7 +45,7 @@ import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
 import StudioArtEditor from "./StudioArtEditor";
 import { isArtSnapshot } from "./artSnapshot";
-import { deliver } from "@/pages/studio/exportImage";
+import { deliver, deliverMany } from "@/pages/studio/exportImage";
 
 import {
   answeredCount,
@@ -526,29 +526,57 @@ const StudioProBrand = () => {
   };
 
   /**
+   * Descobre todos os PNGs de uma criação. Carrossel é salvo como
+   * `...-01.png`, `...-02.png` na mesma pasta: listamos a pasta e devolvemos a
+   * sequência inteira para baixar slide por slide, como arte individual.
+   */
+  const slidePathsOf = async (art: Creation): Promise<string[]> => {
+    const path = art.png_path as string;
+    const match = path.match(/^(.*)-(\d{2})\.png$/);
+    if (!match) return [path];
+    const folder = path.slice(0, path.lastIndexOf("/"));
+    const prefix = `${match[1].split("/").pop()}-`;
+    const { data, error } = await supabase.storage.from("studio-art").list(folder, { limit: 200 });
+    if (error || !data) return [path];
+    const names = data
+      .map((f) => f.name)
+      .filter((n) => n.startsWith(prefix) && /-\d{2}\.png$/.test(n))
+      .sort();
+    return names.length > 1 ? names.map((n) => `${folder}/${n}`) : [path];
+  };
+
+  /**
    * Baixa o PNG guardado no momento em que a arte foi salva usando exatamente o
    * mesmo caminho de entrega da página de criação: no celular abre o pop-up de
    * compartilhar (Salvar imagem / Instagram); no desktop baixa o arquivo.
    */
+
   const downloadArt = async (art: Creation) => {
     if (!art.png_path) {
       toast.error("Esta arte foi salva antes do PNG guardado. Gere e salve novamente.");
       return;
     }
-    const { data, error } = await supabase.storage.from("studio-art").download(art.png_path);
-    if (error || !data) {
-      toast.error("Não foi possível baixar o PNG.");
-      return;
-    }
-    const name = art.png_path.split("/").pop() ?? "arte.png";
     try {
-      const shared = await deliver(data, name, "image/png");
-      toast.success(shared ? "Arte pronta para compartilhar" : "Arte exportada em PNG");
+      const paths = await slidePathsOf(art);
+      const files: File[] = [];
+      for (const path of paths) {
+        const { data, error } = await supabase.storage.from("studio-art").download(path);
+        if (error || !data) continue;
+        files.push(new File([data], path.split("/").pop() ?? "arte.png", { type: "image/png" }));
+      }
+      if (!files.length) {
+        toast.error("Não foi possível baixar o PNG.");
+        return;
+      }
+      const shared = files.length > 1 ? await deliverMany(files) : await deliver(files[0], files[0].name, "image/png");
+      const many = files.length > 1 ? ` (${files.length} slides)` : "";
+      toast.success(shared ? `Arte pronta para compartilhar${many}` : `Arte exportada em PNG${many}`);
     } catch (err) {
       console.error("[studio-pro] deliver png", err);
       toast.error("Não foi possível baixar o PNG.");
     }
   };
+
 
   const downloadCaption = async (art: Creation) => {
     if (!art.caption) {

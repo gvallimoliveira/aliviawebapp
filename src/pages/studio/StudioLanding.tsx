@@ -8,7 +8,7 @@ import { composePage } from "./composePage";
 import { buildCaption } from "./caption";
 import { buildFavoritesCaptions, buildPageCaptions } from "./captionFile";
 import { exportTextFile } from "./exportText";
-import { exportNodeAsPng } from "./exportImage";
+import { exportNodeAsPng, exportNodesAsPng } from "./exportImage";
 import { buildSchedule, buildScheduleFile } from "./schedule";
 import { removeThumb } from "./thumbs";
 import { toast } from "sonner";
@@ -262,25 +262,28 @@ const StudioLanding = () => {
   };
 
 
-  /** Exporta em sequência todas as artes visíveis (a barra é oculta durante o lote). */
+  /** Exporta todas as artes visíveis (a barra é oculta durante o lote). */
   const exportAllPng = async () => {
     if (batchProgress) return;
     setHidden(true);
     await new Promise((r) => window.setTimeout(r, 250));
-    let ok = 0;
+    setBatchProgress(`0/${blocks.length}`);
+    const items: Array<{ node: HTMLElement; fileName: string }> = [];
     for (let i = 0; i < blocks.length; i++) {
-      setBatchProgress(`${i + 1}/${blocks.length}`);
       const node = document.getElementById(`studio-block-${i}`);
       if (!node) continue;
-      try {
-        await exportNodeAsPng(
-          node as HTMLElement,
-          `alivia-studio-${world}-${seed}-${String(i + 1).padStart(2, "0")}-${blocks[i].kind}.png`,
-        );
-        ok++;
-      } catch (error) {
-        console.error("[studio] batch export failed", i, error);
-      }
+      items.push({
+        node: node as HTMLElement,
+        fileName: `alivia-studio-${world}-${seed}-${String(i + 1).padStart(2, "0")}-${blocks[i].kind}.png`,
+      });
+    }
+    let ok = 0;
+    try {
+      setBatchProgress(`${blocks.length}/${blocks.length}`);
+      const { delivered } = await exportNodesAsPng(items);
+      ok = delivered;
+    } catch (error) {
+      console.error("[studio] batch export failed", error);
     }
     setBatchProgress(null);
     setHidden(false);
@@ -288,6 +291,7 @@ const StudioLanding = () => {
       ok ? `${ok} de ${blocks.length} artes exportadas` : "Não foi possível exportar as artes",
     );
   };
+
 
   const exportAllCaptions = async () => {
     try {

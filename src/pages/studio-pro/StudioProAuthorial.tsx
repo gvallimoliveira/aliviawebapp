@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   deliver,
   exportNodeAsPng,
+  exportNodesAsPng,
   exportTextFile,
   randomSeed,
   renderNodeToBlob,
@@ -262,16 +263,19 @@ const StudioProAuthorial = ({
     try {
       if (art.slides.length === 1) {
         const node = nodeOf(art.key, 0);
-        if (node) await exportNodeAsPng(node, `${fileBase}-${art.key}.png`);
+        if (!node) throw new Error("no-node");
+        await exportNodeAsPng(node, `${fileBase}-${art.key}.png`);
       } else {
-        for (let i = 0; i < art.slides.length; i += 1) {
-          const node = nodeOf(art.key, i);
-          if (!node) continue;
-          const rect = node.getBoundingClientRect();
-          const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
-          const blob = await renderNodeToBlob(node, ratio, "image/png");
-          await deliver(blob, `${fileBase}-${art.key}-${String(i + 1).padStart(2, "0")}.png`);
-        }
+        const items = art.slides
+          .map((_, i) => {
+            const node = nodeOf(art.key, i);
+            return node
+              ? { node, fileName: `${fileBase}-${art.key}-${String(i + 1).padStart(2, "0")}.png` }
+              : null;
+          })
+          .filter((item): item is { node: HTMLElement; fileName: string } => !!item);
+        if (!items.length) throw new Error("no-nodes");
+        await exportNodesAsPng(items);
       }
       toast.success(art.slides.length > 1 ? `Carrossel exportado (${art.slides.length} slides)` : "Arte exportada");
     } catch (error) {
@@ -281,6 +285,7 @@ const StudioProAuthorial = ({
       setBusy(null);
     }
   };
+
 
   const save = async (art: AuthorialArt, caption: string) => {
     const { data: auth } = await supabase.auth.getUser();
@@ -385,17 +390,17 @@ const StudioProAuthorial = ({
   const downloadAll = async () => {
     setBusy("all-png");
     try {
+      const items: Array<{ node: HTMLElement; fileName: string }> = [];
       for (const art of arts) {
         for (let i = 0; i < art.slides.length; i += 1) {
           const node = nodeOf(art.key, i);
           if (!node) continue;
-          const rect = node.getBoundingClientRect();
-          const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
-          const blob = await renderNodeToBlob(node, ratio, "image/png");
-          await deliver(blob, `${fileBase}-${art.key}-${String(i + 1).padStart(2, "0")}.png`);
+          items.push({ node, fileName: `${fileBase}-${art.key}-${String(i + 1).padStart(2, "0")}.png` });
         }
       }
-      toast.success("Artes exportadas");
+      if (!items.length) throw new Error("no-nodes");
+      const { delivered } = await exportNodesAsPng(items);
+      toast.success(`Artes exportadas (${delivered})`);
     } catch (error) {
       console.error("[studio-pro] export lote autoral", error);
       toast.error("Não foi possível exportar todas as artes.");
@@ -403,6 +408,7 @@ const StudioProAuthorial = ({
       setBusy(null);
     }
   };
+
 
   if (loading) {
     return (

@@ -31,6 +31,7 @@ import {
   createRng,
   deliver,
   exportNodeAsPng,
+  exportNodesAsPng,
   exportTextFile,
   personaForSeed,
   randomSeed,
@@ -921,22 +922,22 @@ const StudioProCreate = ({
     onSaved?.();
   };
 
-  /** Exporta a sequência inteira do carrossel, um PNG numerado por slide. */
+  /** Exporta a sequência inteira do carrossel: cada slide sai como PNG individual. */
   const downloadCarousel = async (indexes: number[]) => {
     setBusy(`png-${indexes[0]}`);
     try {
-      for (let i = 0; i < indexes.length; i += 1) {
-        const node = document.getElementById(`studio-pro-block-${indexes[i]}`) as HTMLElement | null;
-        if (!node) continue;
-        const rect = node.getBoundingClientRect();
-        const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
-        const blob = await renderNodeToBlob(node, ratio, "image/png");
-        await deliver(
-          blob,
-          `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}-carrossel-${String(i + 1).padStart(2, "0")}.png`,
-        );
-      }
-      toast.success(`Carrossel exportado (${indexes.length} slides)`);
+      const base = brand.name.replace(/\s+/g, "-").toLowerCase();
+      const items = indexes
+        .map((idx, i) => {
+          const node = document.getElementById(`studio-pro-block-${idx}`) as HTMLElement | null;
+          return node
+            ? { node, fileName: `${base}-${seed}-carrossel-${String(i + 1).padStart(2, "0")}.png` }
+            : null;
+        })
+        .filter((item): item is { node: HTMLElement; fileName: string } => !!item);
+      if (!items.length) throw new Error("no-nodes");
+      const { delivered } = await exportNodesAsPng(items);
+      toast.success(`Carrossel exportado (${delivered} slides)`);
     } catch (error) {
       console.error("[studio-pro] export carousel", error);
       toast.error("Não foi possível exportar o carrossel.");
@@ -944,6 +945,7 @@ const StudioProCreate = ({
       setBusy(null);
     }
   };
+
 
   /** Salva o carrossel como UM item da galeria: capa é a miniatura. */
   const saveCarousel = async (indexes: number[], caption: string) => {
@@ -1046,22 +1048,23 @@ const StudioProCreate = ({
     }
   };
 
-  /** Baixa todas as artes desta versão, uma a uma. */
+  /** Baixa todas as artes desta versão com a mesma qualidade do download individual. */
   const downloadAll = async () => {
     setBusy("all-png");
     try {
+      const base = brand.name.replace(/\s+/g, "-").toLowerCase();
+      const items: Array<{ node: HTMLElement; fileName: string }> = [];
       for (let i = 0; i < blocks.length; i += 1) {
         const node = document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null;
         if (!node) continue;
-        const rect = node.getBoundingClientRect();
-        const ratio = Math.max(1, Math.min(3, 1440 / (rect.width || 1440)));
-        const blob = await renderNodeToBlob(node, ratio, "image/png");
-        await deliver(
-          blob,
-          `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}-${String(i + 1).padStart(2, "0")}-${blocks[i].kind}.png`,
-        );
+        items.push({
+          node,
+          fileName: `${base}-${seed}-${String(i + 1).padStart(2, "0")}-${blocks[i].kind}.png`,
+        });
       }
-      toast.success("Todas as artes desta versão foram exportadas");
+      if (!items.length) throw new Error("no-nodes");
+      const { delivered } = await exportNodesAsPng(items);
+      toast.success(`Todas as artes desta versão foram exportadas (${delivered})`);
     } catch (error) {
       console.error("[studio-pro] export all", error);
       toast.error("Não foi possível exportar todas as artes.");
@@ -1069,6 +1072,7 @@ const StudioProCreate = ({
       setBusy(null);
     }
   };
+
 
   /** Baixa as legendas da versão inteira em um .txt. */
   const downloadCaptions = () => {
