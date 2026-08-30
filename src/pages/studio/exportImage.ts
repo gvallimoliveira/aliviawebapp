@@ -2,6 +2,25 @@ import { toCanvas, getFontEmbedCSS } from "html-to-image";
 
 /** iOS/Safari abortam canvas muito grandes. Mantemos folga sobre os limites reais. */
 const MAX_DIMENSION = 4096;
+
+/**
+ * Iguala a altura de um conjunto de artes (slides de um carrossel) à maior do
+ * grupo durante a exportação. No formato Livre cada slide tem altura própria e
+ * o Instagram só aceita carrossel com proporção única.
+ */
+export const lockUniformHeight = (nodes: HTMLElement[]) => {
+  if (nodes.length < 2) return () => {};
+  const tallest = Math.max(...nodes.map((node) => node.getBoundingClientRect().height));
+  if (!Number.isFinite(tallest) || tallest <= 0) return () => {};
+  const restores = nodes.map((node) => {
+    const previous = node.style.height;
+    node.style.height = `${Math.round(tallest)}px`;
+    return () => {
+      node.style.height = previous;
+    };
+  });
+  return () => restores.forEach((fn) => fn());
+};
 const MAX_AREA = 12_000_000;
 
 let cachedFontCss: string | null | undefined;
