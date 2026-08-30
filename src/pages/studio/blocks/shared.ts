@@ -124,7 +124,8 @@ export const sectionHeight = (format: StudioFormat) =>
 export const frameHeight = (
   format: StudioFormat,
   pct: { "9x16": number; "4x5": number; "1x1": number },
-) => `h-[${pct[format === "free" ? "4x5" : format]}%]`;
+): CSSProperties => ({ height: `${pct[format === "free" ? "4x5" : format]}%` });
+
 
 /**
  * PADDING DINÂMICO POR FORMATO
