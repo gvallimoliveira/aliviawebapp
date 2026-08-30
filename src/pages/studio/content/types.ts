@@ -1,4 +1,5 @@
 import type { TopicId } from "../topics";
+import type { StudioHook } from "../hooks";
 
 export type WorldId = "pro" | "academico" | "paciente" | "clinica";
 
@@ -115,6 +116,11 @@ export type WorldContent = {
   lists: StudioList[];
   /** Sequências de artes para carrossel (CarouselBlock). */
   carousels: StudioCarousel[];
+  /**
+   * BIBLIOTECA DE GANCHOS: frases de parada de scroll adaptadas à marca
+   * (acervo curado + mecanismo de `hooks.ts`). Usada pelo bloco `hook`.
+   */
+  hooks?: StudioHook[];
   sales: WorldSales;
   /**
    * Termos que o público digitaria numa busca real (queixa, diagnóstico,
