@@ -285,8 +285,17 @@ const StudioProCreate = ({
   useEffect(() => {
     writePersisted(brand.id, { pinnedPhotos });
   }, [brand.id, pinnedPhotos]);
+  /**
+   * FOTOS DO ACERVO EM DESTAQUE: cota garantida de metade das artes com foto
+   * como plano de fundo. Fica salvo por marca junto das outras preferências.
+   */
+  const [photoFirst, setPhotoFirst] = useState<boolean>(restored.current.photoFirst ?? false);
+  useEffect(() => {
+    writePersisted(brand.id, { photoFirst });
+  }, [brand.id, photoFirst]);
   /** Cota do período: contada em gerações — 1 por clique em "Nova versão". */
   const { quota, error: quotaError, consume } = useStudioQuota();
+
 
 
   const unlimited = unlimitedAccess || !!quota?.unlimited;
