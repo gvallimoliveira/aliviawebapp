@@ -445,3 +445,46 @@ export async function assertCreditsAvailable(
 }
 
 
+
+// ---------------------------------------------------------------------------
+// Fase 5.3 — canário: um único ponto de entrada por edge function
+// ---------------------------------------------------------------------------
+// Roda a decisão de crédito em modo shadow (nunca bloqueia), imprime o caminho
+// no log e registra o uso já com o motivo/saldo no metadata. A Fase 5.4 só
+// precisa checar `decision.blocked` para devolver 402.
+export async function canaryCredits(
+  req: Request,
+  function_name: string,
+  opts: { user_id?: string | null; credits?: number; metadata?: Record<string, unknown> } = {},
+): Promise<CreditDecision> {
+  const decision = await assertCreditsAvailable(req, {
+    function_name,
+    user_id: opts.user_id,
+    credits: opts.credits,
+  });
+  console.log(`[ai-credits] ${function_name} decision:`, JSON.stringify({
+    reason: decision.reason,
+    path: decision.path_taken,
+    remaining: decision.remaining,
+    enforced: decision.enforced,
+    blocked: decision.blocked,
+    tier: decision.tier,
+    latency_ms: decision.latency_ms,
+  }));
+  shadowLogAiUsage(req, {
+    function_name,
+    user_id: opts.user_id,
+    credits: opts.credits,
+    metadata: {
+      ...(opts.metadata ?? {}),
+      credit_reason: decision.reason,
+      credit_path: decision.path_taken,
+      credit_remaining: decision.remaining,
+      credit_enforced: decision.enforced,
+      credit_blocked: decision.blocked,
+      credit_tier: decision.tier ?? null,
+      credit_latency_ms: decision.latency_ms,
+    },
+  });
+  return decision;
+}
