@@ -526,10 +526,31 @@ const StudioProBrand = () => {
   };
 
   /**
+   * Descobre todos os PNGs de uma criação. Carrossel é salvo como
+   * `...-01.png`, `...-02.png` na mesma pasta: listamos a pasta e devolvemos a
+   * sequência inteira para baixar slide por slide, como arte individual.
+   */
+  const slidePathsOf = async (art: Creation): Promise<string[]> => {
+    const path = art.png_path as string;
+    const match = path.match(/^(.*)-(\d{2})\.png$/);
+    if (!match) return [path];
+    const folder = path.slice(0, path.lastIndexOf("/"));
+    const prefix = `${match[1].split("/").pop()}-`;
+    const { data, error } = await supabase.storage.from("studio-art").list(folder, { limit: 200 });
+    if (error || !data) return [path];
+    const names = data
+      .map((f) => f.name)
+      .filter((n) => n.startsWith(prefix) && /-\d{2}\.png$/.test(n))
+      .sort();
+    return names.length > 1 ? names.map((n) => `${folder}/${n}`) : [path];
+  };
+
+  /**
    * Baixa o PNG guardado no momento em que a arte foi salva usando exatamente o
    * mesmo caminho de entrega da página de criação: no celular abre o pop-up de
    * compartilhar (Salvar imagem / Instagram); no desktop baixa o arquivo.
    */
+
   const downloadArt = async (art: Creation) => {
     if (!art.png_path) {
       toast.error("Esta arte foi salva antes do PNG guardado. Gere e salve novamente.");
