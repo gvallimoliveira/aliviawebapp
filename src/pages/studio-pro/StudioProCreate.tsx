@@ -6,6 +6,7 @@ import {
 
   Download,
   FileText,
+  Gift,
   LayoutGrid,
   Lightbulb,
   Loader2,
