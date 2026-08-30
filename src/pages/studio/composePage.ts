@@ -272,8 +272,11 @@ export const composePage = (
      * "Foto como plano de fundo" (photoVeil) é excludente: quando entra,
      * nenhum bloco de foto em primeira camada entra na mesma página —
      * é um ou outro, nunca os dois.
+     *
+     * Acervo grande merece mais presença: com 4+ fotos o fundo fotográfico é
+     * bem mais provável (antes era 30% fixo e o acervo ficava parado).
      */
-    const useVeil = rng.chance(0.3);
+    const useVeil = photoFirst || rng.chance(photoCount >= 4 ? 0.45 : 0.3);
     const photoKinds: BlockKind[] = useVeil
       ? ["photoVeil"]
       : rng.shuffle(["photoType", "photoSplit", "photoPortrait", "stage"]);
@@ -290,7 +293,11 @@ export const composePage = (
     }
   }
 
-  const fresh: ComposedBlock[] = kinds.map((kind) => ({ kind, treatment: treatmentFor(rng, kind, persona) }));
+  const fresh: ComposedBlock[] = enforcePhotoFirst(rng, kinds, photoCount, photoFirst).map((kind) => ({
+    kind,
+    treatment: treatmentFor(rng, kind, persona),
+  }));
+
 
   const result = (() => {
     if (!inspiration || inspiration.length === 0) return fresh;
