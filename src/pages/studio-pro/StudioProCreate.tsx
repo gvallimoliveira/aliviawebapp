@@ -19,6 +19,8 @@ import {
   Sparkles,
   Type,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { PRODUCT } from "./product";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
