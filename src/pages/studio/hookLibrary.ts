@@ -274,7 +274,115 @@ export const ALIVIA_PRO_HOOKS: StudioHook[] = [
     sub: "Padrão único para a equipe, com a marca da casa em todo relatório.",
     cta: "Padronizar a equipe",
   },
+
+  /* --- Lote 2 (ago/2026): temas novos, mesma voz --- */
+  {
+    hook: "Primeira consulta",
+    strong: "A primeira consulta decide o tratamento inteiro",
+    rest: " — e quase ninguém a trata assim.",
+    sub: "Triagem de sinais de alerta, história completa e raciocínio registrado desde o começo.",
+    cta: "Ver a primeira consulta estruturada",
+  },
+  {
+    hook: "Paciente que desmarca",
+    strong: "Paciente que não entende o plano é paciente que desmarca",
+    rest: ".",
+    sub: "Plano escrito, com fases e objetivos, sustenta a sequência de sessões.",
+    cta: "Entregar o plano por escrito",
+  },
+  {
+    hook: "Alta por dado",
+    strong: "Alta não é “ele disse que está bem”",
+    rest: " — é comparação entre o que era e o que é.",
+    sub: "Reavaliação com os mesmos testes mostra o caminho percorrido.",
+    cta: "Fechar alta com comparação",
+  },
+  {
+    hook: "Exercício em casa",
+    strong: "O programa de casa não falha por falta de exercício",
+    rest: ", falha por falta de clareza.",
+    sub: "Séries, dose e progressão em um documento que o paciente entende.",
+    cta: "Gerar o programa de casa",
+  },
+  {
+    hook: "Cobrar pelo raciocínio",
+    strong: "Você cobra pela hora de sala e entrega horas de raciocínio de graça",
+    rest: ".",
+    sub: "Quando o raciocínio fica visível, o valor da consulta fica óbvio.",
+    cta: "Mostrar o meu raciocínio",
+  },
+  {
+    hook: "Indicação médica",
+    strong: "Médico indica quem devolve relatório",
+    rest: ".",
+    sub: "Um retorno claro sobre o caso constrói via de duas mãos.",
+    cta: "Ver o relatório de retorno",
+  },
+  {
+    hook: "Anotar depois",
+    strong: "“Depois eu anoto” é como se perde metade da avaliação",
+    rest: ".",
+    sub: "Registro que nasce na sessão preserva o detalhe que muda a conduta.",
+    cta: "Registrar na hora da sessão",
+  },
+  {
+    hook: "Teste sem critério",
+    strong: "Aplicar teste sem critério de progressão é coletar dado que não decide nada",
+    rest: ".",
+    sub: "Cada medida precisa de um gatilho de avanço.",
+    cta: "Definir critério de progressão",
+  },
+  {
+    hook: "Recém-formado",
+    strong: "Insegurança na primeira consulta não se resolve com mais curso",
+    rest: " — se resolve com fluxo repetido.",
+    sub: "Mesmo caminho de raciocínio, caso após caso.",
+    cta: "Repetir o fluxo completo",
+  },
+  {
+    hook: "Dor persistente",
+    strong: "Dor que dura meses raramente tem uma causa só",
+    rest: ".",
+    sub: "D.I.F.I. separa dor, inibição, fraqueza e incapacidade — cada uma pede conduta.",
+    cta: "Separar os quatro eixos",
+  },
+  {
+    hook: "Equipe desalinhada",
+    strong: "Dois terapeutas, dois raciocínios, um paciente confuso",
+    rest: ".",
+    sub: "Padrão único de avaliação para toda a equipe, com a marca da casa.",
+    cta: "Alinhar a equipe",
+  },
+  {
+    hook: "Documento é defesa",
+    strong: "Prontuário raso protege quem exatamente?",
+    rest: "",
+    sub: "Registro do raciocínio e do consentimento é a sua defesa técnica.",
+    cta: "Fortalecer o meu registro",
+  },
+  {
+    hook: "Evidência aplicada",
+    strong: "Ler artigo é fácil; aplicar no paciente das 14h é o trabalho",
+    rest: ".",
+    sub: "Direcionamento com base em evidência, aplicado ao caso que está na agenda.",
+    cta: "Aplicar no caso de hoje",
+  },
+  {
+    hook: "Sinais de alerta",
+    strong: "O caso que você não deveria tratar chega igual aos outros",
+    rest: ".",
+    sub: "A triagem de sinais de alerta existe para separar antes de conduzir.",
+    cta: "Rodar a triagem sempre",
+  },
+  {
+    hook: "Retorno do paciente",
+    strong: "Paciente que vê a própria evolução em números não abandona no meio",
+    rest: ".",
+    sub: "Histórico comparável transforma sensação em progresso visível.",
+    cta: "Mostrar a evolução medida",
+  },
 ];
+
 
 /** 3) Aliv.iA — versão paciente (usa "autoavaliação", sem promessa de cura). */
 export const ALIVIA_PATIENT_HOOKS: StudioHook[] = [
