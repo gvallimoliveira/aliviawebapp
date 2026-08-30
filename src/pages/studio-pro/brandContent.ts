@@ -12,6 +12,7 @@ import {
 } from "@/pages/studio/phrasing";
 import { composeHooks } from "@/pages/studio/hooks";
 import { curatedHooksFor } from "@/pages/studio/hookLibrary";
+import { applyHookPrefs } from "@/pages/studio/hookStore";
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
 import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlogan, sloganList, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
@@ -915,20 +916,24 @@ export const buildBrandContent = (
    * ingredientes reais do kit. Nenhum gancho é inventado: frame sem insumo é
    * descartado em `composeHooks`.
    */
-  merged.hooks = [
-    ...curatedHooksFor(brand),
-    ...composeHooks({
-      brand,
-      niche,
-      audience: dna.primaryAudience || audiences[0]?.label,
-      pain: dna.pain || audiences[0]?.pains?.[0],
-      desire: dna.desire || audiences[0]?.desires?.[0],
-      offer: dna.offer,
-      belief: dna.belief || dna.positioning,
-      keyword: words[0],
-      cta: dna.cta,
-    }),
-  ].filter((hook, i, all) => all.findIndex((h) => h.strong === hook.strong) === i);
+  merged.hooks = applyHookPrefs(
+    brand,
+    [
+      ...curatedHooksFor(brand),
+      ...composeHooks({
+        brand,
+        niche,
+        audience: dna.primaryAudience || audiences[0]?.label,
+        pain: dna.pain || audiences[0]?.pains?.[0],
+        desire: dna.desire || audiences[0]?.desires?.[0],
+        offer: dna.offer,
+        belief: dna.belief || dna.positioning,
+        keyword: words[0],
+        cta: dna.cta,
+      }),
+    ].filter((hook, i, all) => all.findIndex((h) => h.strong === hook.strong) === i),
+  );
+
 
   return sanitizeContent(merged, dna.forbidden);
 };

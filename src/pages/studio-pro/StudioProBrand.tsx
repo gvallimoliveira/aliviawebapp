@@ -35,6 +35,7 @@ import { useStudioAccess } from "./useStudioAccess";
 import StudioProCreate from "./StudioProCreate";
 import StudioBoundary from "@/pages/studio/StudioBoundary";
 import StudioProAuthorial from "./StudioProAuthorial";
+import BrandHooksCard from "./BrandHooksCard";
 import BrandTextsCard from "./BrandTextsCard";
 import type { ComposedBlock } from "@/studio-core";
 import BrandColorFields from "./BrandColorFields";
@@ -1158,7 +1159,26 @@ const StudioProBrand = () => {
                   </div>
                 </div>
 
+                {/* Curadoria da biblioteca de ganchos (não vale no modo autoral). */}
+                {brand.content_source !== "authorial" && (
+                  <div className="sm:col-span-2">
+                    <BrandHooksCard
+                      brandName={brand.name}
+                      ingredients={{
+                        niche: form.niche || undefined,
+                        audience: audiences[0]?.label,
+                        pain: audiences[0]?.pains?.[0],
+                        desire: audiences[0]?.desires?.[0],
+                        offer: form.positioning || undefined,
+                        belief: form.strategy_notes || form.positioning || undefined,
+                        cta: audiences[0]?.cta,
+                      }}
+                    />
+                  </div>
+                )}
+
                 {brand.content_source === "alivia" && (
+
                   <p className="rounded-2xl border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground sm:col-span-2">
                     Esta marca usa o acervo editorial oficial do Aliv.iA. Na aba <strong>Criar</strong> você
                     escolhe o público (Paciente, Profissional, Clínica ou Estudante) e as artes saem com a

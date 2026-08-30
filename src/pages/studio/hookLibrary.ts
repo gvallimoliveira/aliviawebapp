@@ -85,7 +85,115 @@ export const STUDIO_SELF_HOOKS: StudioHook[] = [
     sub: "Toda arte pode terminar com um próximo passo claro.",
     cta: "Colocar oferta em cada arte",
   },
+
+  /* --- Lote 2 (ago/2026): temas novos, mesma voz --- */
+  {
+    hook: "O tempo que você perde",
+    strong: "Você não paga o Canva com dinheiro, paga com as suas noites",
+    rest: ".",
+    sub: "Duas horas por arte é meio dia de trabalho por semana.",
+    cta: "Gerar o lote da semana em minutos",
+  },
+  {
+    hook: "Seguidor não paga conta",
+    strong: "Seguidor não paga conta — cliente paga",
+    rest: ".",
+    sub: "Arte com público declarado e convite claro conversa com quem compra.",
+    cta: "Escolher o meu público",
+  },
+  {
+    hook: "O perfil decide em 3 segundos",
+    strong: "Ninguém lê a sua bio antes de olhar as três primeiras artes",
+    rest: ".",
+    sub: "A grade é a sua vitrine — e ela fala primeiro.",
+    cta: "Arrumar as próximas três artes",
+  },
+  {
+    hook: "Preço é percepção",
+    strong: "Quando o visual parece amador, o preço parece caro",
+    rest: ".",
+    sub: "Mesma oferta, outra apresentação, outra conversa.",
+    cta: "Ver a minha oferta bem apresentada",
+  },
+  {
+    hook: "Repetir não é chato",
+    strong: "Você se cansa da sua mensagem muito antes do seu público entendê-la",
+    rest: ".",
+    sub: "Repetição com variação é o que fixa a ideia.",
+    cta: "Repetir a mensagem com variação",
+  },
+  {
+    hook: "Medo de aparecer",
+    strong: "Não quer gravar vídeo? Então sua marca precisa de tipografia forte",
+    rest: ".",
+    sub: "Dá para construir presença sem colocar a cara na câmera.",
+    cta: "Construir presença sem vídeo",
+  },
+  {
+    hook: "Um post, três formatos",
+    strong: "A mesma ideia vira feed, story e carrossel",
+    rest: " — sem começar de novo.",
+    sub: "Trocar o formato não deveria custar mais uma noite.",
+    cta: "Trocar de formato na hora",
+  },
+  {
+    hook: "Postar sem oferta",
+    strong: "Feed cheio e nenhuma venda costuma ser um problema de convite",
+    rest: ", não de alcance.",
+    sub: "Toda arte pode terminar com um próximo passo.",
+    cta: "Colocar convite em todas as artes",
+  },
+  {
+    hook: "Datas do calendário",
+    strong: "Toda data comemorativa te pega de surpresa porque você planeja no dia",
+    rest: ".",
+    sub: "Um lote pronto tira a urgência da criação.",
+    cta: "Adiantar o lote do mês",
+  },
+  {
+    hook: "Contratar ou sistematizar",
+    strong: "Antes de contratar um social media, organize a sua marca",
+    rest: ".",
+    sub: "Sem cores, fonte e mensagem definidas, qualquer designer chuta.",
+    cta: "Definir o meu kit de marca",
+  },
+  {
+    hook: "O que trava não é a arte",
+    strong: "O que te trava não é o design, é não saber o que dizer",
+    rest: ".",
+    sub: "O texto sai do público, do medo dele e da sua oferta.",
+    cta: "Ver o texto pronto da arte",
+  },
+  {
+    hook: "Comparação com marca grande",
+    strong: "Você compara seu feed com marca que tem equipe inteira",
+    rest: ".",
+    sub: "O que dá para copiar delas é a constância, não o orçamento.",
+    cta: "Ter constância de marca grande",
+  },
+  {
+    hook: "Salvar não é vaidade",
+    strong: "Post que ensina é salvo; post salvo é lembrado",
+    rest: ".",
+    sub: "Conteúdo útil e oferta clara convivem na mesma grade.",
+    cta: "Misturar utilidade e oferta",
+  },
+  {
+    hook: "Sua marca sem você",
+    strong: "Se você parar de postar um mês, alguém sente falta da sua marca?",
+    rest: "",
+    sub: "Presença é memória construída semana após semana.",
+    cta: "Manter presença toda semana",
+  },
+  {
+    hook: "Antes do tráfego pago",
+    strong: "Impulsionar post sem identidade é pagar para parecer amador mais rápido",
+    rest: ".",
+    sub: "Arrume a casa antes de convidar visita.",
+    cta: "Arrumar a marca primeiro",
+  },
 ];
+
 
 /** 2) Aliv.iA (app clínico) — versão profissional / clínica. */
 export const ALIVIA_PRO_HOOKS: StudioHook[] = [
@@ -166,7 +274,115 @@ export const ALIVIA_PRO_HOOKS: StudioHook[] = [
     sub: "Padrão único para a equipe, com a marca da casa em todo relatório.",
     cta: "Padronizar a equipe",
   },
+
+  /* --- Lote 2 (ago/2026): temas novos, mesma voz --- */
+  {
+    hook: "Primeira consulta",
+    strong: "A primeira consulta decide o tratamento inteiro",
+    rest: " — e quase ninguém a trata assim.",
+    sub: "Triagem de sinais de alerta, história completa e raciocínio registrado desde o começo.",
+    cta: "Ver a primeira consulta estruturada",
+  },
+  {
+    hook: "Paciente que desmarca",
+    strong: "Paciente que não entende o plano é paciente que desmarca",
+    rest: ".",
+    sub: "Plano escrito, com fases e objetivos, sustenta a sequência de sessões.",
+    cta: "Entregar o plano por escrito",
+  },
+  {
+    hook: "Alta por dado",
+    strong: "Alta não é “ele disse que está bem”",
+    rest: " — é comparação entre o que era e o que é.",
+    sub: "Reavaliação com os mesmos testes mostra o caminho percorrido.",
+    cta: "Fechar alta com comparação",
+  },
+  {
+    hook: "Exercício em casa",
+    strong: "O programa de casa não falha por falta de exercício",
+    rest: ", falha por falta de clareza.",
+    sub: "Séries, dose e progressão em um documento que o paciente entende.",
+    cta: "Gerar o programa de casa",
+  },
+  {
+    hook: "Cobrar pelo raciocínio",
+    strong: "Você cobra pela hora de sala e entrega horas de raciocínio de graça",
+    rest: ".",
+    sub: "Quando o raciocínio fica visível, o valor da consulta fica óbvio.",
+    cta: "Mostrar o meu raciocínio",
+  },
+  {
+    hook: "Indicação médica",
+    strong: "Médico indica quem devolve relatório",
+    rest: ".",
+    sub: "Um retorno claro sobre o caso constrói via de duas mãos.",
+    cta: "Ver o relatório de retorno",
+  },
+  {
+    hook: "Anotar depois",
+    strong: "“Depois eu anoto” é como se perde metade da avaliação",
+    rest: ".",
+    sub: "Registro que nasce na sessão preserva o detalhe que muda a conduta.",
+    cta: "Registrar na hora da sessão",
+  },
+  {
+    hook: "Teste sem critério",
+    strong: "Aplicar teste sem critério de progressão é coletar dado que não decide nada",
+    rest: ".",
+    sub: "Cada medida precisa de um gatilho de avanço.",
+    cta: "Definir critério de progressão",
+  },
+  {
+    hook: "Recém-formado",
+    strong: "Insegurança na primeira consulta não se resolve com mais curso",
+    rest: " — se resolve com fluxo repetido.",
+    sub: "Mesmo caminho de raciocínio, caso após caso.",
+    cta: "Repetir o fluxo completo",
+  },
+  {
+    hook: "Dor persistente",
+    strong: "Dor que dura meses raramente tem uma causa só",
+    rest: ".",
+    sub: "D.I.F.I. separa dor, inibição, fraqueza e incapacidade — cada uma pede conduta.",
+    cta: "Separar os quatro eixos",
+  },
+  {
+    hook: "Equipe desalinhada",
+    strong: "Dois terapeutas, dois raciocínios, um paciente confuso",
+    rest: ".",
+    sub: "Padrão único de avaliação para toda a equipe, com a marca da casa.",
+    cta: "Alinhar a equipe",
+  },
+  {
+    hook: "Documento é defesa",
+    strong: "Prontuário raso protege quem exatamente?",
+    rest: "",
+    sub: "Registro do raciocínio e do consentimento é a sua defesa técnica.",
+    cta: "Fortalecer o meu registro",
+  },
+  {
+    hook: "Evidência aplicada",
+    strong: "Ler artigo é fácil; aplicar no paciente das 14h é o trabalho",
+    rest: ".",
+    sub: "Direcionamento com base em evidência, aplicado ao caso que está na agenda.",
+    cta: "Aplicar no caso de hoje",
+  },
+  {
+    hook: "Sinais de alerta",
+    strong: "O caso que você não deveria tratar chega igual aos outros",
+    rest: ".",
+    sub: "A triagem de sinais de alerta existe para separar antes de conduzir.",
+    cta: "Rodar a triagem sempre",
+  },
+  {
+    hook: "Retorno do paciente",
+    strong: "Paciente que vê a própria evolução em números não abandona no meio",
+    rest: ".",
+    sub: "Histórico comparável transforma sensação em progresso visível.",
+    cta: "Mostrar a evolução medida",
+  },
 ];
+
 
 /** 3) Aliv.iA — versão paciente (usa "autoavaliação", sem promessa de cura). */
 export const ALIVIA_PATIENT_HOOKS: StudioHook[] = [
@@ -240,7 +456,115 @@ export const ALIVIA_PATIENT_HOOKS: StudioHook[] = [
     sub: "Dor que dura semanas pede direcionamento.",
     cta: "Buscar direcionamento",
   },
+
+  /* --- Lote 2 (ago/2026): temas novos, mesma voz --- */
+  {
+    hook: "Exame de imagem",
+    strong: "Ressonância mostra o que apareceu, não o que dói",
+    rest: ".",
+    sub: "Muita gente sem dor tem o mesmo achado no exame.",
+    cta: "Entender além do exame",
+  },
+  {
+    hook: "Medo de movimento",
+    strong: "Você parou de se mexer para não piorar — e a dor ficou",
+    rest: ".",
+    sub: "Movimento na dose certa faz parte da recuperação.",
+    cta: "Descobrir a minha dose",
+  },
+  {
+    hook: "Cirurgia como única saída",
+    strong: "“Só cirurgia resolve” costuma ser a segunda frase, não a primeira",
+    rest: ".",
+    sub: "Entender o seu caso antes ajuda a fazer as perguntas certas.",
+    cta: "Organizar o meu caso",
+  },
+  {
+    hook: "Remédio todo dia",
+    strong: "Tomar anti-inflamatório toda semana não é plano",
+    rest: " — é pausa.",
+    sub: "O alívio compra tempo; o direcionamento resolve o resto.",
+    cta: "Buscar um direcionamento",
+  },
+  {
+    hook: "Dor no fim do dia",
+    strong: "Sua dor tem horário? Isso é informação, não coincidência",
+    rest: ".",
+    sub: "Quando e como a dor aparece ajuda a explicar o que a sustenta.",
+    cta: "Registrar quando dói",
+  },
+  {
+    hook: "Trabalho sentado",
+    strong: "O problema não é a cadeira, é ficar oito horas na mesma posição",
+    rest: ".",
+    sub: "Pequenas mudanças de posição valem mais que a cadeira caríssima.",
+    cta: "Ver o que muda no meu dia",
+  },
+  {
+    hook: "Voltar a correr",
+    strong: "Voltar a correr não é sobre a dor sumir, é sobre a perna aguentar",
+    rest: ".",
+    sub: "Existe caminho entre parar tudo e voltar como antes.",
+    cta: "Fazer a autoavaliação guiada",
+  },
+  {
+    hook: "Dormir com dor",
+    strong: "Noite ruim deixa a dor mais alta no dia seguinte",
+    rest: ".",
+    sub: "Sono entra na conta do que você sente — e pode ser acompanhado.",
+    cta: "Acompanhar sono e dor",
+  },
+  {
+    hook: "Recaída",
+    strong: "Melhorou, voltou, e você achou que perdeu tudo",
+    rest: ".",
+    sub: "Oscilação é comum; sem registro, ela parece recomeço.",
+    cta: "Ver a minha linha do tempo",
+  },
+  {
+    hook: "Vídeo aleatório",
+    strong: "O exercício que ajudou seu amigo pode não servir para você",
+    rest: ".",
+    sub: "Corpos e histórias diferentes pedem pontos de partida diferentes.",
+    cta: "Achar o meu ponto de partida",
+  },
+  {
+    hook: "Chegar preparado na consulta",
+    strong: "Dez minutos de consulta e você esquece metade do que queria contar",
+    rest: ".",
+    sub: "Sua história organizada em um documento facilita a conversa.",
+    cta: "Levar a minha história por escrito",
+  },
+  {
+    hook: "Alongar não é tudo",
+    strong: "Alongar alivia agora e não muda o motivo",
+    rest: ".",
+    sub: "Força e controle sustentam o alívio ao longo das semanas.",
+    cta: "Entender o que falta",
+  },
+  {
+    hook: "Idade não é sentença",
+    strong: "“É a idade” não explica dor que começou em março",
+    rest: ".",
+    sub: "Algo mudou na sua rotina — e isso pode ser identificado.",
+    cta: "Investigar o que mudou",
+  },
+  {
+    hook: "Achar o profissional",
+    strong: "Escolher fisioterapeuta no chute é começar duas vezes",
+    rest: ".",
+    sub: "Chegar com o seu caso organizado encurta o caminho.",
+    cta: "Organizar antes de procurar",
+  },
+  {
+    hook: "Semanas viram meses",
+    strong: "Você já conta a sua dor em meses, não em dias",
+    rest: ".",
+    sub: "Dor que se instala pede avaliação, não mais paciência.",
+    cta: "Começar a autoavaliação",
+  },
 ];
+
 
 /** 4) Guilherme Vallim Fisioterapia — marca pessoal de atendimento. */
 export const VALLIM_HOOKS: StudioHook[] = [
@@ -314,7 +638,115 @@ export const VALLIM_HOOKS: StudioHook[] = [
     sub: "Seu tecido tem outro tempo.",
     cta: "Ver o meu ritmo",
   },
+
+  /* --- Lote 2 (ago/2026): temas novos, mesma voz --- */
+  {
+    hook: "Dose antes de exercício novo",
+    strong: "Não é o exercício errado, é a dose errada",
+    rest: ".",
+    sub: "Mesma série, carga ajustada ao que o seu corpo aguenta hoje.",
+    cta: "Ajustar a minha dose",
+  },
+  {
+    hook: "Tendão pede tempo",
+    strong: "Tendão não responde em três dias",
+    rest: " — responde em semanas de carga constante.",
+    sub: "Paciência com o tecido é parte da conduta.",
+    cta: "Entender o tempo do tecido",
+  },
+  {
+    hook: "Cadência importa",
+    strong: "A mesma repetição feita em três segundos é outro estímulo",
+    rest: ".",
+    sub: "Tempo sob tensão muda o resultado sem mudar o peso.",
+    cta: "Ver como eu uso a cadência",
+  },
+  {
+    hook: "Sem dor não é alta",
+    strong: "Você saiu do tratamento quando parou de doer — e voltou a doer",
+    rest: ".",
+    sub: "Fase de força vem depois do alívio, não em vez dele.",
+    cta: "Terminar a fase de força",
+  },
+  {
+    hook: "Mobilidade sem controle",
+    strong: "Ganhar amplitude sem controle é só articulação solta",
+    rest: ".",
+    sub: "Amplitude nova precisa de força para virar movimento seguro.",
+    cta: "Somar controle à mobilidade",
+  },
+  {
+    hook: "Panturrilha esquecida",
+    strong: "Quase todo joelho que dói ao correr tem panturrilha fraca por perto",
+    rest: ".",
+    sub: "Testar antes de treinar evita meses de tentativa.",
+    cta: "Testar o meu tornozelo",
+  },
+  {
+    hook: "Pé firme, base menor",
+    strong: "Quer desafiar equilíbrio? Reduza a base, não a firmeza do chão",
+    rest: ".",
+    sub: "Ponta de pé, apoios sob ante e retropé, perturbação por carga.",
+    cta: "Ver o meu jeito de treinar equilíbrio",
+  },
+  {
+    hook: "Dor durante o exercício",
+    strong: "Sentir um pouco durante o exercício não significa parar tudo",
+    rest: ".",
+    sub: "Existe faixa aceitável — e critério para saber quando recuar.",
+    cta: "Entender o meu limite",
+  },
+  {
+    hook: "Semana de descarga",
+    strong: "Treinar pesado toda semana não é constância, é acúmulo",
+    rest: ".",
+    sub: "Reduzir volume em uma semana costuma destravar o progresso.",
+    cta: "Planejar a minha semana leve",
+  },
+  {
+    hook: "Medir para progredir",
+    strong: "Sem medir força, progressão vira palpite",
+    rest: ".",
+    sub: "Número na mão define quando avançar a carga.",
+    cta: "Medir a minha força",
+  },
+  {
+    hook: "Volta ao esporte",
+    strong: "Voltar ao jogo pede critério, não calendário",
+    rest: ".",
+    sub: "Teste, comparação com o outro lado e demanda do esporte.",
+    cta: "Ver os meus critérios de retorno",
+  },
+  {
+    hook: "Aquecer não é alongar",
+    strong: "Aquecimento é preparar carga, não esticar tecido",
+    rest: ".",
+    sub: "Movimento parecido com o treino, em intensidade crescente.",
+    cta: "Montar o meu aquecimento",
+  },
+  {
+    hook: "Assimetria",
+    strong: "Um lado bem mais forte que o outro é informação, não detalhe",
+    rest: ".",
+    sub: "Comparar lados mostra o que ainda falta na recuperação.",
+    cta: "Comparar os meus lados",
+  },
+  {
+    hook: "Treino de força na reabilitação",
+    strong: "Reabilitação boa termina parecendo treino de força",
+    rest: ".",
+    sub: "Sair da dor é o começo; sustentar carga é o objetivo.",
+    cta: "Chegar até essa fase",
+  },
+  {
+    hook: "Consistência ganha do intenso",
+    strong: "Três semanas seguidas valem mais que um treino perfeito",
+    rest: ".",
+    sub: "Frequência sustentada é o que muda tecido.",
+    cta: "Manter a minha frequência",
+  },
 ];
+
 
 /** Detecta o Aliv.iA Studio (produto de artes). */
 const isStudioSelf = (name: string) => /aliv\s*\.?\s*ia\s*studio/i.test(name);
