@@ -705,7 +705,9 @@ Deno.serve(async (req) => {
     shadowLogAiUsage(req, {
       function_name: "clinical-agent-chat",
       user_id: user.id,
+      was_bypassed: isExempt || creditDecision.unlimited,
       credits: isExempt ? 0 : (addonConsumed ? 0 : undefined),
+
       metadata: {
         ...(isExempt ? { exempt: vipEarly ? "vip" : "partner" } : {}),
         ...(addonConsumed ? { chat_addon: true } : {}),

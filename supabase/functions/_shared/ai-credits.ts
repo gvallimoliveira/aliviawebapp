@@ -40,7 +40,15 @@ type LogOptions = {
   transcriptions?: number;
   metadata?: Record<string, unknown>;
   user_id?: string | null;
+  /**
+   * Marca a linha como consumo NÃO faturável (VIP, parceiro, tier ilimitado).
+   * Crítico: `get_user_credit_status` soma o pool da clínica por membro e
+   * ignora linhas com was_bypassed=true. Sem isso, um VIP/parceiro dentro de
+   * uma clínica queimaria a cota do time inteiro.
+   */
+  was_bypassed?: boolean;
 };
+
 
 /**
  * Decode the `sub` claim from a Bearer JWT without verifying the signature.
@@ -110,8 +118,9 @@ export function shadowLogAiUsage(
         transcriptions_used: transcriptions,
         metadata,
         was_blocked: false,
-        was_bypassed: false,
+        was_bypassed: opts.was_bypassed ?? false,
       });
+
       if (error) {
         console.error("[ai-credits] insert failed:", error.message, "fn=", opts.function_name);
       }
@@ -171,6 +180,7 @@ export type CreditPath =
   | "clinic_grace"
   | "clinic_quota_check"
   | "quota_check"
+  | "fail_open"
   | "shadow_error"
   | "error";
 
@@ -186,17 +196,19 @@ export type CreditDecision = {
     | "insufficient"
     | "anonymous"
     | "no_user"
+    | "fail_open"
     | "shadow_error"
     | "error";
   remaining: number | null;
   cost: number;
   enforced: boolean;
-  blocked: boolean; // true apenas quando enforced && !ok
+  blocked: boolean; // true apenas quando o tier está na allowlist && !ok
   tier?: string;
   path_taken: CreditPath;
   latency_ms: number;
   metadata?: Record<string, unknown>;
 };
+
 
 /**
  * Fire-and-forget telemetry insert for a credit decision. Never throws.
@@ -239,18 +251,62 @@ function logDecisionTelemetry(
   }
 }
 
-async function isEnforcementOn(admin: SupabaseClient): Promise<boolean> {
+// Tiers cujo saldo é confiável o suficiente para virar bloqueio real.
+// Qualquer tier fora desta lista NUNCA bloqueia (fail-open), mesmo com a
+// flag global ligada — inclui 'unknown' (email não resolvido) e tiers novos.
+export const BLOCKABLE_TIERS = [
+  "pro_monthly",
+  "pro_annual",
+  "academic_monthly",
+  "academic_annual",
+  "clinic_small",
+  "clinic_medium",
+  "clinic_large",
+  "premium_b2c",
+] as const;
+
+type EnforcementConfig = {
+  /** flag global (app_config.ai_credits_enforced) */
+  global: boolean;
+  /** allowlist de tiers efetivamente bloqueáveis (app_config.ai_credits_enforced_tiers) */
+  tiers: string[];
+};
+
+/**
+ * Lê a configuração de enforcement. Duas travas independentes:
+ *   1. `ai_credits_enforced` (global on/off — kill switch)
+ *   2. `ai_credits_enforced_tiers` (allowlist de tiers; ausente/vazia = NINGUÉM bloqueia)
+ * A allowlist existe porque a flag global já está `true` em produção só para
+ * telemetria: sem allowlist preenchida, a 5.4 não pode escapar por acidente.
+ */
+async function readEnforcement(admin: SupabaseClient): Promise<EnforcementConfig> {
   try {
     const { data } = await admin
       .from("app_config")
-      .select("value")
-      .eq("key", "ai_credits_enforced")
-      .maybeSingle();
-    const v = (data as { value: unknown } | null)?.value;
-    return v === true || v === "true";
+      .select("key, value")
+      .in("key", ["ai_credits_enforced", "ai_credits_enforced_tiers"]);
+    const rows = (data ?? []) as Array<{ key: string; value: unknown }>;
+    const g = rows.find((r) => r.key === "ai_credits_enforced")?.value;
+    const t = rows.find((r) => r.key === "ai_credits_enforced_tiers")?.value;
+    let tiers: string[] = [];
+    if (Array.isArray(t)) tiers = t.filter((x): x is string => typeof x === "string");
+    else if (typeof t === "string") {
+      try {
+        const parsed = JSON.parse(t);
+        if (Array.isArray(parsed)) tiers = parsed.filter((x): x is string => typeof x === "string");
+      } catch { /* noop */ }
+    }
+    return { global: g === true || g === "true", tiers };
   } catch {
-    return false;
+    return { global: false, tiers: [] };
   }
+}
+
+/** Só bloqueia se a flag global E o tier estiver na allowlist E for bloqueável. */
+function canBlock(cfg: EnforcementConfig, tier: string | null | undefined): boolean {
+  if (!cfg.global || !tier) return false;
+  if (!(BLOCKABLE_TIERS as readonly string[]).includes(tier)) return false;
+  return cfg.tiers.includes(tier);
 }
 
 async function isVipEmail(admin: SupabaseClient, email: string | null): Promise<boolean> {
@@ -258,12 +314,15 @@ async function isVipEmail(admin: SupabaseClient, email: string | null): Promise<
   const norm = email.trim().toLowerCase();
   if (VIP_FALLBACK_EMAILS.includes(norm)) return true;
   try {
+    // escapa curingas do LIKE para não casar e-mail errado (ex.: "a_b@x.com")
+    const safe = norm.replace(/[\\%_]/g, "\\$&");
     const { data } = await admin
       .from("vip_users")
       .select("email")
-      .ilike("email", norm)
+      .ilike("email", safe)
       .maybeSingle();
     return !!data;
+
   } catch {
     return false;
   }
@@ -336,7 +395,9 @@ export async function assertCreditsAvailable(
       });
     }
     admin = createClient(supabaseUrl, serviceKey);
-    const enforced = await isEnforcementOn(admin);
+    const cfg = await readEnforcement(admin);
+    const enforced = cfg.global;
+
 
     // Resolve user_id + email
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
@@ -359,10 +420,12 @@ export async function assertCreditsAvailable(
 
     // Email para VIP: tenta do JWT, senão profiles/auth
     let email = decodeJwtEmail(authHeader);
+    let emailResolved = !!email;
     if (!email) {
       try {
         const { data: u } = await admin.auth.admin.getUserById(userId);
         email = u?.user?.email ?? null;
+        emailResolved = !!email;
       } catch { /* noop */ }
     }
 
@@ -373,13 +436,24 @@ export async function assertCreditsAvailable(
       });
     }
 
-    // Partner
+    // Se não conseguimos nem descobrir o e-mail, não temos como afirmar que a
+    // pessoa NÃO é VIP/parceiro → fail-open explícito (nunca bloqueia).
+    if (!emailResolved) {
+      return finalize(admin, userId, {
+        ...base, enforced, ok: true, reason: "fail_open", path_taken: "fail_open",
+        metadata: { fail_open_cause: "email_unresolved" },
+      });
+    }
+
+    // Partner (e sinalização de estudante, usada no fail-open abaixo)
+    let isStudent = false;
     try {
       const { data: prof } = await admin
         .from("professionals")
-        .select("is_partner")
+        .select("is_partner, is_student")
         .eq("user_id", userId)
         .maybeSingle();
+      isStudent = !!prof?.is_student;
       if (prof?.is_partner) {
         bypassCache.set(userId, { unlimited: true, reason: "partner", path: "partner", at: Date.now() });
         return finalize(admin, userId, {
@@ -419,6 +493,31 @@ export async function assertCreditsAvailable(
       });
     }
 
+    // ---- Fail-open guards: casos em que o tier não é confiável -------------
+    // (a) tier desconhecido / não bloqueável (novo plano, e-mail sem match);
+    // (b) incluso 0 sem pacote — quase sempre classificação errada, não
+    //     usuário legítimo sem plano;
+    // (c) estudante cujo cadastro acadêmico está incompleto (academic_period
+    //     nulo cai em premium_b2c=15 em vez de academic=60).
+    const failOpenCause =
+      !(BLOCKABLE_TIERS as readonly string[]).includes(s.tier)
+        ? "tier_not_blockable"
+        : (s.included ?? 0) <= 0 && (s.purchased ?? 0) <= 0
+          ? "zero_included"
+          : isStudent && s.tier === "premium_b2c"
+            ? "student_tier_mismatch"
+            : null;
+    if (failOpenCause) {
+      return finalize(admin, userId, {
+        ...base, enforced, ok: true, reason: "fail_open", path_taken: "fail_open", tier: s.tier,
+        metadata: {
+          fail_open_cause: failOpenCause,
+          included: s.included, used: s.used, purchased: s.purchased,
+        },
+      });
+    }
+
+    const blockable = canBlock(cfg, s.tier);
 
     if (s.clinic_id) {
       // Política de carência: 20% acima do incluso antes de tocar em pacotes.
@@ -433,8 +532,8 @@ export async function assertCreditsAvailable(
       return finalize(admin, userId, {
         ...base,
         enforced,
-        ok: sufficient || !enforced,
-        blocked: enforced && !sufficient,
+        ok: sufficient || !blockable,
+        blocked: blockable && !sufficient,
         remaining,
         reason: inGrace ? "clinic_grace" : sufficient ? "sufficient" : "insufficient",
         path_taken: inGrace ? "clinic_grace" : "clinic_quota_check",
@@ -442,6 +541,7 @@ export async function assertCreditsAvailable(
         metadata: {
           included, used, purchased, clinic_id: s.clinic_id,
           grace_limit: graceLimit, grace_ratio: CLINIC_GRACE_RATIO,
+          blockable, enforced_tiers: cfg.tiers,
         },
       });
     }
@@ -453,14 +553,18 @@ export async function assertCreditsAvailable(
     return finalize(admin, userId, {
       ...base,
       enforced,
-      ok: sufficient || !enforced, // shadow mode nunca bloqueia
-      blocked: enforced && !sufficient,
+      ok: sufficient || !blockable, // só bloqueia tier na allowlist
+      blocked: blockable && !sufficient,
       remaining,
       reason: sufficient ? "sufficient" : "insufficient",
       path_taken: "quota_check",
       tier: s.tier,
-      metadata: { included: s.included, used: s.used, purchased: s.purchased },
+      metadata: {
+        included: s.included, used: s.used, purchased: s.purchased,
+        blockable, enforced_tiers: cfg.tiers,
+      },
     });
+
   } catch (e) {
     console.error("[ai-credits] assertCreditsAvailable error:", (e as Error).message);
     return finalize(admin, null, {
@@ -501,6 +605,9 @@ export async function canaryCredits(
     function_name,
     user_id: opts.user_id,
     credits: opts.credits,
+    // VIP/parceiro/ilimitado não consome cota nem queima o pool da clínica.
+    was_bypassed: decision.unlimited,
+
     metadata: {
       ...(opts.metadata ?? {}),
       credit_reason: decision.reason,
