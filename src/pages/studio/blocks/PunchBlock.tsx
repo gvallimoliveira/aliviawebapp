@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import punchHand from "@/assets/punch-hand.png";
 import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME } from "../brand";
 import { blockPadding, sectionHeight, type BlockProps } from "./shared";
 
@@ -42,54 +43,14 @@ const punchOf = (raw: string): string | null => {
 };
 
 /**
- * MÃO EM PINÇA (desenho vetorial, sem depender do acervo de fotos)
+ * MÃO EM PINÇA — foto original da referência (recorte com fundo transparente).
  *
- * Antebraço + palma entrando pela borda, indicador por cima e polegar por
- * baixo, deixando um VÃO à direita — é nesse vão que a frase é "segurada".
- * Textura de veias/vincos em traço fino dá o peso de foto em close.
+ * Não é desenho: é a própria fotografia em close, em escala de cinza, entrando
+ * pela borda esquerda com o vão da pinça à direita. Proporção original
+ * 1055 × 783, usada para ancorar a frase minúscula exatamente no vão.
  */
-const PinchHand = ({ tone, edge }: { tone: string; edge: string }) => (
-  <svg viewBox="0 0 100 74" className="h-full w-full" preserveAspectRatio="xMinYMid meet" aria-hidden>
-    <defs>
-      <linearGradient id="punchSkin" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor={tone} stopOpacity="0.95" />
-        <stop offset="55%" stopColor={tone} stopOpacity="0.78" />
-        <stop offset="100%" stopColor={tone} stopOpacity="0.92" />
-      </linearGradient>
-    </defs>
+const HAND_RATIO = 1055 / 783;
 
-    {/* Antebraço + palma entrando pela borda esquerda */}
-    <path
-      d="M-6,74 C4,68 12,62 20,54 C28,46 38,40 48,39 C58,38 66,43 66,50 C66,58 58,63 48,64 C36,65 24,70 16,74 Z"
-      fill="url(#punchSkin)"
-    />
-    {/* Dedos dobrados (nós da mão) — volume de close, como na referência */}
-    <path d="M46,40 C52,35 60,36 62,42 C63,47 57,49 52,47 Z" fill="url(#punchSkin)" />
-    <path d="M52,46 C58,44 64,46 65,51 C65,56 59,57 54,55 Z" fill="url(#punchSkin)" />
-    {/* Indicador (por cima) — ponta apontando para o vão */}
-    <path
-      d="M42,40 C48,31 58,25 70,24 C78,23 80,28 74,31 C66,35 58,40 53,46 C49,50 43,47 42,40 Z"
-      fill="url(#punchSkin)"
-    />
-    {/* Polegar (por baixo) — ponta apontando para o vão */}
-    <path
-      d="M50,55 C58,57 68,61 75,65 C80,68 77,72 71,71 C61,69 52,65 46,61 C43,59 46,54 50,55 Z"
-      fill="url(#punchSkin)"
-    />
-    {/* Vincos e veias: traço fino, dá textura de close fotográfico */}
-    <g stroke={edge} strokeWidth="0.4" fill="none" strokeLinecap="round" opacity="0.5">
-      <path d="M4,72 C14,66 22,60 30,52" />
-      <path d="M10,74 C20,69 28,63 36,56" />
-      <path d="M46,42 C52,36 60,30 68,27" />
-      <path d="M52,58 C60,60 68,63 74,67" />
-      <path d="M30,56 C36,53 42,51 48,50" />
-      <path d="M47,41 C51,38 56,38 59,41" />
-      <path d="M53,47 C57,45 61,46 63,49" />
-    </g>
-    {/* Pulseira fina no punho, como na referência */}
-    <path d="M18,60 C21,65 22,70 21,74" stroke={edge} strokeWidth="1.1" fill="none" strokeLinecap="round" />
-  </svg>
-);
 
 const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
   /* Acervo de frases candidatas: headline, fala curta e fecho. */
@@ -135,38 +96,49 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
       style={{ backgroundColor: stage }}
     >
       <div className={`container relative flex h-full flex-col ${blockPadding(format)}`}>
-        {/* ALTO: a mão grande em close segurando a frase pequena. */}
+        {/* ALTO: a foto da mão em close segurando a frase pequena. */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="relative flex-1"
+          className="relative flex flex-1 items-center"
         >
-          <div className={`absolute inset-0 ${mirrored ? "scale-x-[-1]" : ""}`}>
-            <PinchHand tone={ink} edge={stage} />
-          </div>
+          <div className="relative w-full" style={{ aspectRatio: HAND_RATIO }}>
+            <img
+              src={punchHand}
+              alt="Mão em close fazendo o gesto de pinça, como se segurasse a frase"
+              className={`absolute inset-0 h-full w-full object-contain ${
+                mirrored ? "scale-x-[-1]" : ""
+              }`}
+              style={{
+                filter: dark || primary ? "grayscale(1) invert(1)" : "grayscale(1)",
+                opacity: primary ? 0.92 : 1,
+              }}
+            />
 
-          {/*
-           * A FRASE SEGURADA: fica no vão da pinça (≈ 78% da largura, meio da
-           * altura da mão). Fonte deliberadamente pequena — é o que faz o
-           * público dar zoom. Alinhada ao lado oposto quando a mão é espelhada.
-           */}
-          <div
-            className={`absolute top-[60%] w-[22%] -translate-y-1/2 ${
-              mirrored ? "right-[78%] text-right" : "left-[78%] text-left"
-            }`}
-          >
-            <p className="text-[8px] font-medium leading-tight md:text-[11px]" style={{ color: ink }}>
-              {punch}
-            </p>
-            {note ? (
-              <p className="mt-1 text-[7px] leading-tight md:text-[9px]" style={{ color: soft }}>
-                {note}
+            {/*
+             * A FRASE SEGURADA: ancorada no vão da pinça da foto (≈ 79% da
+             * largura, 44% da altura). Fonte deliberadamente pequena — é o que
+             * faz o público dar zoom. Espelha o lado quando a mão é espelhada.
+             */}
+            <div
+              className={`absolute top-[44%] w-[21%] ${
+                mirrored ? "right-[79%] text-right" : "left-[79%] text-left"
+              }`}
+            >
+              <p className="text-[8px] font-medium leading-tight md:text-[11px]" style={{ color: ink }}>
+                {punch}
               </p>
-            ) : null}
+              {note ? (
+                <p className="mt-1 text-[7px] leading-tight md:text-[9px]" style={{ color: soft }}>
+                  {note}
+                </p>
+              ) : null}
+            </div>
           </div>
         </motion.div>
+
 
         {/* BAIXO: a chamada gigante que instiga o zoom. */}
         <motion.h2
