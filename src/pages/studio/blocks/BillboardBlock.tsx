@@ -92,7 +92,7 @@ const BillboardBlock = ({ content, rng, treatment, format, persona }: BlockProps
       </motion.div>
 
       {/* Calçada + as duas pessoas se cruzando em sentidos opostos. */}
-      <div className="relative z-10 mt-8 h-[26svh] w-full">
+      <div className="relative z-10 mt-8 h-[24%] min-h-24 w-full">
         <div className={`absolute bottom-0 left-0 right-0 h-[38%] ${skin.floor}`} />
         <Walker className="absolute bottom-[4%] left-[14%] h-[80%]" />
         <Walker flip className="absolute bottom-[4%] right-[16%] h-[74%]" />

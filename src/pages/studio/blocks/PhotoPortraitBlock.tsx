@@ -49,7 +49,7 @@ const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, picker, 
 
         <PhotoFrame
           photo={photo}
-          className="h-[46svh] w-[58%] rounded-2xl border border-border shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.5)]"
+          className="h-[42%] min-h-36 w-[58%] rounded-2xl border border-border shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.5)]"
         />
 
         <p className="mt-7 max-w-md text-[12px] leading-relaxed text-muted-foreground md:text-sm">

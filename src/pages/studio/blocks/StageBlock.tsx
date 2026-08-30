@@ -72,7 +72,7 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
         {/* Palco: imagem "saindo" da tela em triângulo invertido arredondado. */}
         <div className="relative mt-6 w-full">
           <div
-            className="relative z-20 mx-auto h-[34svh] w-[52%]"
+            className="relative z-20 mx-auto h-[32%] min-h-32 w-[52%]"
             style={{
               WebkitMaskImage: POPOUT_TRIANGLE_MASK,
               maskImage: POPOUT_TRIANGLE_MASK,

@@ -77,14 +77,11 @@ const frameRatio = (format: StudioFormat, slide: ArtSnapshotSlide) => {
   return (slide.width || 1080) / (slide.height || 1350);
 };
 
-/** Quanto a arte pode passar do "cabe inteira" para preencher o quadro. */
-const MAX_FILL_ZOOM = 1.18;
-
 /**
- * Um slide do instantâneo dentro da moldura escolhida: a arte é escalada para
- * PREENCHER o quadro (sem faixas lisas de fundo), com um teto de ampliação
- * para não sacrificar o texto. Se preencher exigiria zoom acima do teto, a
- * arte cabe inteira e o restante fica com o fundo da marca.
+ * Um slide do instantâneo dentro da moldura escolhida. A arte principal sempre
+ * usa `contain`, portanto nenhum texto ou elemento é cortado. Quando a nova
+ * proporção deixa sobra, uma segunda cópia ampliada da própria arte preenche o
+ * fundo como textura — nunca uma faixa lisa ou uma cor genérica.
  */
 const SnapshotSlide = ({
   html,
@@ -116,12 +113,6 @@ const SnapshotSlide = ({
   const artHeight = slide.height || 1350;
   const contain = width ? Math.min(width / artWidth, frameHeight / artHeight) : 0;
   const cover = width ? Math.max(width / artWidth, frameHeight / artHeight) : 0;
-  const scale = contain
-    ? cover / contain <= MAX_FILL_ZOOM
-      ? cover
-      : contain * MAX_FILL_ZOOM
-    : 0;
-
 
   return (
     <div
@@ -129,17 +120,37 @@ const SnapshotSlide = ({
       className="relative w-full overflow-hidden rounded-2xl border border-border"
       style={{ aspectRatio: `${ratio}`, background: "hsl(var(--background))" }}
     >
+      {cover > contain && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 overflow-hidden opacity-35 blur-xl"
+        >
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              width: `${slide.width}px`,
+              height: `${slide.height}px`,
+              transform: `translate(-50%, -50%) scale(${cover * 1.04 || 0.001})`,
+              transformOrigin: "center center",
+            }}
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        </div>
+      )}
       <div
         id={domId}
-        // A arte original em tamanho natural, apenas escalada para caber.
+        // A arte editável permanece inteira e acima da extensão texturizada.
         style={{
           position: "absolute",
           left: "50%",
           top: "50%",
           width: `${slide.width}px`,
           height: `${slide.height}px`,
-          transform: `translate(-50%, -50%) scale(${scale || 0.001})`,
+          transform: `translate(-50%, -50%) scale(${contain || 0.001})`,
           transformOrigin: "center center",
+          zIndex: 1,
         }}
         dangerouslySetInnerHTML={{ __html: html }}
       />
