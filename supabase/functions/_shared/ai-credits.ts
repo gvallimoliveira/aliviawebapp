@@ -417,10 +417,12 @@ export async function assertCreditsAvailable(
 
     // Email para VIP: tenta do JWT, senão profiles/auth
     let email = decodeJwtEmail(authHeader);
+    let emailResolved = !!email;
     if (!email) {
       try {
         const { data: u } = await admin.auth.admin.getUserById(userId);
         email = u?.user?.email ?? null;
+        emailResolved = !!email;
       } catch { /* noop */ }
     }
 
@@ -431,13 +433,24 @@ export async function assertCreditsAvailable(
       });
     }
 
-    // Partner
+    // Se não conseguimos nem descobrir o e-mail, não temos como afirmar que a
+    // pessoa NÃO é VIP/parceiro → fail-open explícito (nunca bloqueia).
+    if (!emailResolved) {
+      return finalize(admin, userId, {
+        ...base, enforced, ok: true, reason: "fail_open", path_taken: "fail_open",
+        metadata: { fail_open_cause: "email_unresolved" },
+      });
+    }
+
+    // Partner (e sinalização de estudante, usada no fail-open abaixo)
+    let isStudent = false;
     try {
       const { data: prof } = await admin
         .from("professionals")
-        .select("is_partner")
+        .select("is_partner, is_student")
         .eq("user_id", userId)
         .maybeSingle();
+      isStudent = !!prof?.is_student;
       if (prof?.is_partner) {
         bypassCache.set(userId, { unlimited: true, reason: "partner", path: "partner", at: Date.now() });
         return finalize(admin, userId, {
@@ -477,6 +490,31 @@ export async function assertCreditsAvailable(
       });
     }
 
+    // ---- Fail-open guards: casos em que o tier não é confiável -------------
+    // (a) tier desconhecido / não bloqueável (novo plano, e-mail sem match);
+    // (b) incluso 0 sem pacote — quase sempre classificação errada, não
+    //     usuário legítimo sem plano;
+    // (c) estudante cujo cadastro acadêmico está incompleto (academic_period
+    //     nulo cai em premium_b2c=15 em vez de academic=60).
+    const failOpenCause =
+      !(BLOCKABLE_TIERS as readonly string[]).includes(s.tier)
+        ? "tier_not_blockable"
+        : (s.included ?? 0) <= 0 && (s.purchased ?? 0) <= 0
+          ? "zero_included"
+          : isStudent && s.tier === "premium_b2c"
+            ? "student_tier_mismatch"
+            : null;
+    if (failOpenCause) {
+      return finalize(admin, userId, {
+        ...base, enforced, ok: true, reason: "fail_open", path_taken: "fail_open", tier: s.tier,
+        metadata: {
+          fail_open_cause: failOpenCause,
+          included: s.included, used: s.used, purchased: s.purchased,
+        },
+      });
+    }
+
+    const blockable = canBlock(cfg, s.tier);
 
     if (s.clinic_id) {
       // Política de carência: 20% acima do incluso antes de tocar em pacotes.
@@ -491,8 +529,8 @@ export async function assertCreditsAvailable(
       return finalize(admin, userId, {
         ...base,
         enforced,
-        ok: sufficient || !enforced,
-        blocked: enforced && !sufficient,
+        ok: sufficient || !blockable,
+        blocked: blockable && !sufficient,
         remaining,
         reason: inGrace ? "clinic_grace" : sufficient ? "sufficient" : "insufficient",
         path_taken: inGrace ? "clinic_grace" : "clinic_quota_check",
@@ -500,6 +538,7 @@ export async function assertCreditsAvailable(
         metadata: {
           included, used, purchased, clinic_id: s.clinic_id,
           grace_limit: graceLimit, grace_ratio: CLINIC_GRACE_RATIO,
+          blockable, enforced_tiers: cfg.tiers,
         },
       });
     }
@@ -511,14 +550,18 @@ export async function assertCreditsAvailable(
     return finalize(admin, userId, {
       ...base,
       enforced,
-      ok: sufficient || !enforced, // shadow mode nunca bloqueia
-      blocked: enforced && !sufficient,
+      ok: sufficient || !blockable, // só bloqueia tier na allowlist
+      blocked: blockable && !sufficient,
       remaining,
       reason: sufficient ? "sufficient" : "insufficient",
       path_taken: "quota_check",
       tier: s.tier,
-      metadata: { included: s.included, used: s.used, purchased: s.purchased },
+      metadata: {
+        included: s.included, used: s.used, purchased: s.purchased,
+        blockable, enforced_tiers: cfg.tiers,
+      },
     });
+
   } catch (e) {
     console.error("[ai-credits] assertCreditsAvailable error:", (e as Error).message);
     return finalize(admin, null, {
