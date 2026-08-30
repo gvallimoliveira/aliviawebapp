@@ -14,7 +14,7 @@
  * bloqueada, porque reconstruir pela receita devolvia outra arte.
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Check, Loader2, PencilLine, Save, X } from "lucide-react";
+import { Check, Loader2, Move, PencilLine, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import {
   setArtEditing,
   type ArtTextEdits,
 } from "@/pages/studio/artTextEdit";
+import { applyArtMoves, clearArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
 import { hasBannedJargon } from "@/pages/studio/persuasion";
 import {
   isArtSnapshot,
@@ -168,6 +169,8 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
   );
   const [htmls, setHtmls] = useState<string[] | null>(null);
   const [editing, setEditing] = useState(false);
+  /** Modo de arrastar texto pela alça (não pelo corpo do texto). */
+  const [moving, setMoving] = useState(false);
   const [busy, setBusy] = useState(false);
 
   /** HTML de cada slide, baixado do instantâneo salvo. */
@@ -187,12 +190,38 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
   const frameOf = (pos: number) => stageOf(pos)?.parentElement ?? null;
 
   const startEdit = () => {
+    stopMove(false);
     (htmls ?? []).forEach((_, pos) => {
       const node = stageOf(pos);
       if (node) setArtEditing(node, true);
     });
     setEditing(true);
   };
+
+  /** Liga o arraste por alça em todos os slides abertos. */
+  const startMove = () => {
+    (htmls ?? []).forEach((_, pos) => {
+      const node = stageOf(pos);
+      if (!node) return;
+      setArtEditing(node, false);
+      setArtMoving(node, true);
+    });
+    setEditing(false);
+    setMoving(true);
+  };
+
+  /** Desliga o arraste; `reset` devolve toda frase à posição original. */
+  const stopMove = (reset: boolean) => {
+    (htmls ?? []).forEach((_, pos) => {
+      const node = stageOf(pos);
+      if (!node) return;
+      if (reset) clearArtMoves(node);
+      setArtMoving(node, false);
+    });
+    setMoving(false);
+    if (reset) toast.success("Textos voltaram para a posição original.");
+  };
+
 
   const stopEdit = (keep: boolean) => {
     const slides = htmls ?? [];
@@ -235,6 +264,10 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
     if (!snapshot || !htmls) return;
     if (editing) {
       toast.error("Conclua o ajuste do texto antes de salvar.");
+      return;
+    }
+    if (moving) {
+      toast.error("Fixe a posição dos textos antes de salvar.");
       return;
     }
     const { data: auth } = await supabase.auth.getUser();
@@ -375,6 +408,34 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
                 >
                   <PencilLine className="mr-1.5 h-3.5 w-3.5" />
                   Ajustar texto
+                </Button>
+              )}
+              {/* MOVER TEXTO: arraste só pela alça de cada frase. */}
+              {moving ? (
+                <>
+                  <Button size="sm" className="h-8 rounded-full text-xs" onClick={() => stopMove(false)}>
+                    <Check className="mr-1.5 h-3.5 w-3.5" />
+                    Fixar posição
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => stopMove(true)}
+                  >
+                    Posição original
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-full text-xs"
+                  disabled={!htmls}
+                  onClick={startMove}
+                >
+                  <Move className="mr-1.5 h-3.5 w-3.5" />
+                  Mover texto
                 </Button>
               )}
               <Button

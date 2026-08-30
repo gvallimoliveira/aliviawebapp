@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, Contrast, Download, FileText, Loader2, PencilLine, RefreshCw, RotateCcw, Save, Type } from "lucide-react";
+import { Camera, Check, Contrast, Download, FileText, Loader2, Move, PencilLine, RefreshCw, RotateCcw, Save, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import {
   setArtEditing,
   type ArtTextEdits,
 } from "@/pages/studio/artTextEdit";
+import { applyArtMoves, clearArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
 import {
   authorialCaption,
   composeAuthorial,
@@ -119,6 +120,9 @@ const StudioProAuthorial = ({
   const [saved, setSaved] = useState<Set<string>>(() => new Set());
   const [flipped, setFlipped] = useState<Set<string>>(() => new Set());
   const [editing, setEditing] = useState<string | null>(null);
+  /** Modo de arrastar texto pela alça (não pelo corpo do texto). */
+  const [moving, setMoving] = useState<string | null>(null);
+  const [moveTick, setMoveTick] = useState(0);
   const [edits, setEdits] = useState<Record<string, ArtTextEdits>>({});
   const [resetTick, setResetTick] = useState(0);
   const [texts, setTexts] = useState<AuthorialText[]>([]);
@@ -253,15 +257,57 @@ const StudioProAuthorial = ({
       const node = nodeOf(key.slice(0, separator), Number(key.slice(separator + 1)));
       if (node) applyArtText(node, value);
     });
-  }, [edits, arts, format, seed]);
+    arts.forEach((art) => {
+      art.slides.forEach((_, slide) => {
+        const node = nodeOf(art.key, slide);
+        if (node) applyArtMoves(node);
+      });
+    });
+  }, [edits, arts, format, seed, moveTick]);
+
+  /** Liga o arraste por alça nesta arte. */
+  const startMove = (artKey: string, slide: number) => {
+    const node = nodeOf(artKey, slide);
+    if (!node) return;
+    setArtEditing(node, false);
+    setEditing(null);
+    setArtMoving(node, true);
+    setMoving(slideKey(artKey, slide));
+  };
+
+  const finishMove = (artKey: string, slide: number) => {
+    const node = nodeOf(artKey, slide);
+    if (node) setArtMoving(node, false);
+    setMoving(null);
+    setMoveTick((n) => n + 1);
+    setSaved((prev) => {
+      const copy = new Set(prev);
+      copy.delete(slideKey(artKey, slide));
+      return copy;
+    });
+  };
+
+  const resetMove = (artKey: string, slide: number) => {
+    const node = nodeOf(artKey, slide);
+    if (node) {
+      clearArtMoves(node);
+      setArtMoving(node, false);
+    }
+    setMoving(null);
+    setMoveTick((n) => n + 1);
+    toast.success("Textos voltaram para a posição original.");
+  };
 
   const startEdit = (artKey: string, slide: number) => {
     const key = slideKey(artKey, slide);
     const node = nodeOf(artKey, slide);
     if (!node) return;
+    setArtMoving(node, false);
+    setMoving(null);
     setArtEditing(node, true);
     setEditing(key);
   };
+
 
   const cancelEdit = (artKey: string, slide: number) => {
     const key = slideKey(artKey, slide);
@@ -657,6 +703,34 @@ const StudioProAuthorial = ({
                     <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => startEdit(art.key, slideIndex)}>
                       <PencilLine className="mr-1.5 h-3.5 w-3.5" />
                       Ajustar texto
+                    </Button>
+                  )}
+                  {/* MOVER TEXTO: arraste só pela alça de cada frase. */}
+                  {moving === key ? (
+                    <>
+                      <Button size="sm" className="h-8 rounded-full text-xs" onClick={() => finishMove(art.key, slideIndex)}>
+                        <Check className="mr-1.5 h-3.5 w-3.5" />
+                        Fixar posição
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 rounded-full text-xs"
+                        onClick={() => resetMove(art.key, slideIndex)}
+                      >
+                        <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                        Posição original
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 rounded-full text-xs"
+                      onClick={() => startMove(art.key, slideIndex)}
+                    >
+                      <Move className="mr-1.5 h-3.5 w-3.5" />
+                      Mover texto
                     </Button>
                   )}
                   {hasArtEdits(edits[key]) && (
