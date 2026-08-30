@@ -36,6 +36,14 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
   const showSite = treatment % 2 === 1;
   const headline = rng.pick(content.headlines);
   const highlights = content.marquee.flat().slice(0, 4);
+  const popoutHeight =
+    format === "9x16"
+      ? "h-[260px]"
+      : format === "1x1"
+        ? "h-[150px]"
+        : format === "4x5"
+          ? "h-[210px]"
+          : "h-[34svh]";
 
   return (
     <section
@@ -72,7 +80,7 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
         {/* Palco: imagem "saindo" da tela em triângulo invertido arredondado. */}
         <div className="relative mt-6 w-full">
           <div
-            className="relative z-20 mx-auto h-[32%] min-h-32 w-[52%]"
+            className={`relative z-20 mx-auto w-[52%] ${popoutHeight}`}
             style={{
               WebkitMaskImage: POPOUT_TRIANGLE_MASK,
               maskImage: POPOUT_TRIANGLE_MASK,
