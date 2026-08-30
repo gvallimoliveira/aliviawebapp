@@ -6,7 +6,6 @@ import {
 
   Download,
   FileText,
-  Images,
   LayoutGrid,
   Lightbulb,
   Loader2,
@@ -31,8 +30,6 @@ import {
   createRng,
   deliver,
   exportNodeAsPng,
-  exportNodesAsPng,
-  lockUniformHeight,
   exportTextFile,
   personaForSeed,
   randomSeed,
@@ -669,7 +666,7 @@ const StudioProCreate = ({
     });
   }, [edits, blocks, format, seed, content, activePhotos, resetTick]);
 
-  /** Liga a edição direta na arte (ou em todos os slides do carrossel). */
+  /** Liga a edição direta somente na arte selecionada. */
   const startEdit = (indexes: number[]) => {
     setWhyOpen(indexes[0]);
     setEditing(indexes[0]);
@@ -896,8 +893,8 @@ const StudioProCreate = ({
       caption,
       thumb,
       png_path: pngPath,
-      // Receita da arte: permite reusar a composição aprovada nas próximas versões.
-      composition: JSON.parse(JSON.stringify(blocks)),
+      // Receita unitária; slides mantêm group/index/total dentro do próprio bloco.
+      composition: JSON.parse(JSON.stringify([blocks[index]])),
       /** Texto exato exibido na arte: é o que a edição pela galeria reabre. */
       text_edits: { 0: node ? readArtText(node) : {} },
       snapshot,
@@ -923,138 +920,6 @@ const StudioProCreate = ({
     onSaved?.();
   };
 
-  /**
-   * No formato Livre cada slide tem altura própria; o Instagram só aceita
-   * carrossel com proporção única. Nos formatos fixos a proporção já é única.
-   */
-  const lockCarouselHeight = (nodes: HTMLElement[]) =>
-    format === "free" ? lockUniformHeight(nodes) : () => {};
-
-  /** Exporta a sequência inteira do carrossel: cada slide sai como PNG individual. */
-  const downloadCarousel = async (indexes: number[]) => {
-    setBusy(`png-${indexes[0]}`);
-    let unlock = () => {};
-    try {
-      const base = brand.name.replace(/\s+/g, "-").toLowerCase();
-      const items = indexes
-        .map((idx, i) => {
-          const node = document.getElementById(`studio-pro-block-${idx}`) as HTMLElement | null;
-          return node
-            ? { node, fileName: `${base}-${seed}-carrossel-${String(i + 1).padStart(2, "0")}.png` }
-            : null;
-        })
-        .filter((item): item is { node: HTMLElement; fileName: string } => !!item);
-      if (!items.length) throw new Error("no-nodes");
-      unlock = lockCarouselHeight(items.map((item) => item.node));
-      const { delivered } = await exportNodesAsPng(items);
-      toast.success(`Carrossel exportado (${delivered} slides)`);
-    } catch (error) {
-      console.error("[studio-pro] export carousel", error);
-      toast.error("Não foi possível exportar o carrossel.");
-    } finally {
-      unlock();
-      setBusy(null);
-    }
-  };
-
-
-  /** Salva o carrossel como UM item da galeria: capa é a miniatura. */
-  const saveCarousel = async (indexes: number[], caption: string) => {
-    const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) {
-      toast.error("Faça login novamente para salvar.");
-      return;
-    }
-    setBusy(`save-${indexes[0]}`);
-    let thumb: string | null = null;
-    let coverPath: string | null = null;
-    const carouselNodes = indexes
-      .map((i) => document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null)
-      .filter((n): n is HTMLElement => !!n);
-    const unlockHeights = lockCarouselHeight(carouselNodes);
-    for (let i = 0; i < indexes.length; i += 1) {
-      const node = document.getElementById(`studio-pro-block-${indexes[i]}`) as HTMLElement | null;
-      if (!node) continue;
-      const rect = node.getBoundingClientRect();
-      if (i === 0) {
-        try {
-          const thumbRatio = Math.max(1, Math.min(3, 900 / (rect.width || 900)));
-          const blob = await renderNodeToBlob(node, thumbRatio, "image/jpeg", 0.9);
-          thumb = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result));
-            reader.onerror = () => reject(reader.error);
-            reader.readAsDataURL(blob);
-          });
-        } catch (error) {
-          console.warn("[studio-pro] carousel thumb", error);
-        }
-      }
-      try {
-        const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
-        const png = await renderNodeToBlob(node, ratio, "image/png");
-        const path = `${auth.user.id}/${brand.id}/${seed}-carrossel-${String(i + 1).padStart(2, "0")}.png`;
-        const { error: upErr } = await supabase.storage
-          .from("studio-art")
-          .upload(path, png, { contentType: "image/png", upsert: true });
-        if (upErr) throw upErr;
-        if (i === 0) coverPath = path;
-      } catch (error) {
-        console.warn("[studio-pro] carousel png upload", error);
-      }
-    }
-    unlockHeights();
-    /** Instantâneo de cada slide: a edição pela galeria reabre exatamente estes. */
-    const slideNodes = indexes
-      .map((i) => document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null)
-      .filter((n): n is HTMLElement => !!n);
-    const snapshot = await captureArtSnapshot({
-      userId: auth.user.id,
-      brandId: brand.id,
-      key: `${seed}-carrossel-${indexes[0]}`,
-      format,
-      nodes: slideNodes,
-    });
-    const { error } = await supabase.from("studio_creations").insert({
-      user_id: auth.user.id,
-      brand_id: brand.id,
-      seed: `${seed}:carrossel:${indexes[0]}`,
-      block_kind: "carousel",
-      format,
-      headline: headlineOf(indexes[0]) || null,
-      caption,
-      thumb,
-      png_path: coverPath,
-      composition: JSON.parse(JSON.stringify(indexes.map((i) => blocks[i]))),
-      /** Texto exato de cada slide: é o que a edição pela galeria reabre. */
-      text_edits: Object.fromEntries(
-        indexes.map((i, pos) => {
-          const node = document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null;
-          return [pos, node ? readArtText(node) : {}];
-        }),
-      ),
-      snapshot,
-
-      segment: activeSegment,
-      angle,
-      folder: folder === "Todas" ? "Geral" : folder,
-      watermarked: watermark,
-    });
-    setBusy(null);
-    if (error) {
-      console.error("[studio-pro] save carousel", error);
-      toast.error("Não foi possível salvar o carrossel.");
-      return;
-    }
-    setSaved((prev) => {
-      const next = new Set(prev);
-      for (const i of indexes) next.add(i);
-      return next;
-    });
-    toast.success(`Carrossel salvo em ${folder === "Todas" ? "Geral" : folder} (${indexes.length} slides)`);
-    onSaved?.();
-  };
-
   const copyCaption = async (caption: string) => {
     try {
       await navigator.clipboard.writeText(caption);
@@ -1063,32 +928,6 @@ const StudioProCreate = ({
       toast.error("Não foi possível copiar a legenda.");
     }
   };
-
-  /** Baixa todas as artes desta versão com a mesma qualidade do download individual. */
-  const downloadAll = async () => {
-    setBusy("all-png");
-    try {
-      const base = brand.name.replace(/\s+/g, "-").toLowerCase();
-      const items: Array<{ node: HTMLElement; fileName: string }> = [];
-      for (let i = 0; i < blocks.length; i += 1) {
-        const node = document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null;
-        if (!node) continue;
-        items.push({
-          node,
-          fileName: `${base}-${seed}-${String(i + 1).padStart(2, "0")}-${blocks[i].kind}.png`,
-        });
-      }
-      if (!items.length) throw new Error("no-nodes");
-      const { delivered } = await exportNodesAsPng(items);
-      toast.success(`Todas as artes desta versão foram exportadas (${delivered})`);
-    } catch (error) {
-      console.error("[studio-pro] export all", error);
-      toast.error("Não foi possível exportar todas as artes.");
-    } finally {
-      setBusy(null);
-    }
-  };
-
 
   /** Baixa as legendas da versão inteira em um .txt. */
   const downloadCaptions = () => {
@@ -1266,20 +1105,6 @@ const StudioProCreate = ({
               {f.label}
             </Button>
           ))}
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 rounded-full text-xs"
-            disabled={busy === "all-png"}
-            onClick={downloadAll}
-          >
-            {busy === "all-png" ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Images className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            Todas em PNG
-          </Button>
           <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={downloadCaptions}>
             <FileText className="mr-1.5 h-3.5 w-3.5" />
             Legendas (.txt)
@@ -1380,6 +1205,83 @@ const StudioProCreate = ({
             );
           };
 
+          /**
+           * Carrosséis são apenas uma sequência visual: cada slide percorre o
+           * mesmo fluxo confiável de uma arte avulsa, sem captura em lote.
+           */
+          const slideActions = (item: { block: ComposedBlock; index: number }) => {
+            const slideIndexes = [item.index];
+            const slideSaved = saved.has(item.index);
+            const isEditing = editing === item.index;
+            return (
+              <div className="mt-2 flex w-full flex-wrap items-center justify-center gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-full text-xs"
+                  disabled={busy === `png-${item.index}`}
+                  onClick={() => void download(item.index, item.block.kind)}
+                >
+                  {busy === `png-${item.index}` ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  PNG
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => copyCaption(caption)}>
+                  <Type className="mr-1.5 h-3.5 w-3.5" />
+                  Legenda
+                </Button>
+                <Button
+                  size="sm"
+                  variant={flipped.has(item.index) ? "secondary" : "outline"}
+                  className="h-8 rounded-full text-xs"
+                  onClick={() => toggleFlip(slideIndexes)}
+                >
+                  <Contrast className="mr-1.5 h-3.5 w-3.5" />
+                  {flipped.has(item.index) ? "Lado B" : "Inverter cores"}
+                </Button>
+                {isEditing ? (
+                  <>
+                    <Button size="sm" className="h-8 rounded-full text-xs" onClick={() => finishEdit(slideIndexes)}>
+                      <Check className="mr-1.5 h-3.5 w-3.5" />
+                      Concluir
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-8 rounded-full text-xs" onClick={() => cancelEdit(slideIndexes)}>
+                      Cancelar
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => startEdit(slideIndexes)}>
+                    <PencilLine className="mr-1.5 h-3.5 w-3.5" />
+                    Ajustar texto
+                  </Button>
+                )}
+                {hasArtEdits(edits[item.index]) && (
+                  <Button size="sm" variant="ghost" className="h-8 rounded-full text-xs" onClick={() => resetEdit(slideIndexes)}>
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    Desfazer
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant={slideSaved ? "secondary" : "default"}
+                  className="h-8 rounded-full text-xs"
+                  disabled={slideSaved || busy === `save-${item.index}`}
+                  onClick={() => void save(item.index, item.block.kind, caption)}
+                >
+                  {busy === `save-${item.index}` ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Save className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  {slideSaved ? "Salvo" : "Salvar na marca"}
+                </Button>
+              </div>
+            );
+          };
+
           return (
             <div key={group.key} className="w-full">
               {group.carousel ? (
@@ -1390,8 +1292,9 @@ const StudioProCreate = ({
                   {/* Faixa com scroll lateral e snap: a sequência é vista como no Instagram. */}
                   <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
                     {group.items.map((item) => (
-                      <div key={item.index} className="shrink-0">
+                      <div key={item.index} className="w-[min(480px,88vw)] shrink-0 snap-center">
                         {art(item)}
+                        {slideActions(item)}
                       </div>
                     ))}
                   </div>
@@ -1400,24 +1303,20 @@ const StudioProCreate = ({
                 art(first)
               )}
 
-              <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
+              {!group.carousel && <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-8 rounded-full text-xs"
                   disabled={busy === `png-${first.index}`}
-                  onClick={() =>
-                    group.carousel
-                      ? void downloadCarousel(indexes)
-                      : void download(first.index, first.block.kind)
-                  }
+                  onClick={() => void download(first.index, first.block.kind)}
                 >
                   {busy === `png-${first.index}` ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Download className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  {group.carousel ? `PNG (${group.items.length})` : "PNG"}
+                  PNG
                 </Button>
                 <Button
                   size="sm"
@@ -1497,24 +1396,16 @@ const StudioProCreate = ({
                   variant={isSaved ? "secondary" : "default"}
                   className="h-8 rounded-full text-xs"
                   disabled={isSaved || busy === `save-${first.index}`}
-                  onClick={() =>
-                    group.carousel
-                      ? void saveCarousel(indexes, caption)
-                      : void save(first.index, first.block.kind, caption)
-                  }
+                  onClick={() => void save(first.index, first.block.kind, caption)}
                 >
                   {busy === `save-${first.index}` ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Save className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  {isSaved
-                    ? "Salvo"
-                    : group.carousel
-                      ? "Salvar carrossel"
-                      : "Salvar na marca"}
+                  {isSaved ? "Salvo" : "Salvar na marca"}
                 </Button>
-              </div>
+              </div>}
 
               {/* Leitura de sentido: a explicação que o motor consegue dar da arte. */}
               {SHOW_WHY && whyOpen === first.index && (() => {

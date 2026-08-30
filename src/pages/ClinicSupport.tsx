@@ -93,6 +93,12 @@ const categories: ToolCategory[] = [
         desc: "Salve programas de exercício como templates personalizados e reutilize em novos pacientes. Inclui templates pré-construídos (ex: progressão de ombro) e templates próprios que você cria e edita. Em clínica, os templates são compartilhados entre toda a equipe. Após aplicar um template, você pode remover exercícios individualmente se houver contraindicação para aquele paciente.",
       },
       {
+        key: "studio_carousel",
+        icon: Palette,
+        title: "Studio: carrosséis com slides independentes",
+        desc: "No Studio, cada slide do carrossel tem seus próprios controles para baixar, salvar, editar texto e inverter cores. Os slides permanecem em ordem no scroll lateral, mas cada um é salvo como uma arte independente na galeria.",
+      },
+      {
         key: "voice_notes",
         icon: Mic,
         title: "Notas de voz na avaliação manual (IA)",

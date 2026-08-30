@@ -1104,6 +1104,8 @@
   "support.pro.tool.hep.desc": "In the patient evolution panel, click 'Create Exercise Program'. Select from 70+ exercises (home and gym), set sets, reps and frequency, or add custom exercises manually. A public link is generated for the patient to access on their phone with instructional videos, no login needed. Valid for 90 days.",
   "support.pro.tool.hep_templates.title": "Reusable HEP templates",
   "support.pro.tool.hep_templates.desc": "Save exercise programs as custom templates and reuse them for new patients. Includes pre-built templates (e.g., shoulder progression) and your own templates that you create and edit. After applying a template, you can remove individual exercises if they are contraindicated for that patient.",
+  "support.pro.tool.studio_carousel.title": "Studio: carousels with independent slides",
+  "support.pro.tool.studio_carousel.desc": "Each carousel slide has its own controls to download, save, edit text, and invert colors. The sequence remains in the horizontal scroll, while each slide is saved as an independent gallery item.",
   "support.pro.tool.ai_test_suggestions.title": "Test suggestions in manual assessment (AI)",
   "support.pro.tool.ai_test_suggestions.desc": "During the manual assessment, the AI analyzes the anamnesis, pain regions, and questionnaires filled in previous steps and suggests 2 to 6 additional clinical tests (orthopedic, mobility, neurodynamic, or functional). Clicking a suggestion automatically inserts the test into the functional tests field as inspiration for the professional.",
   "support.pro.tool.reassessment.title": "Express Reassessment",

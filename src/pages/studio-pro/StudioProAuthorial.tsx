@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, Contrast, Download, FileText, Images, Loader2, RefreshCw, Save, Type } from "lucide-react";
+import { Camera, Check, Contrast, Download, FileText, Loader2, PencilLine, RefreshCw, RotateCcw, Save, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   deliver,
   exportNodeAsPng,
-  exportNodesAsPng,
-  lockUniformHeight,
   exportTextFile,
   randomSeed,
   renderNodeToBlob,
@@ -25,6 +23,13 @@ import StudioProSignature from "./StudioProSignature";
 import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import AuthorialArtBlock from "./AuthorialArtBlock";
+import {
+  applyArtText,
+  hasArtEdits,
+  readArtText,
+  setArtEditing,
+  type ArtTextEdits,
+} from "@/pages/studio/artTextEdit";
 import {
   authorialCaption,
   composeAuthorial,
@@ -117,6 +122,9 @@ const StudioProAuthorial = ({
   const [busy, setBusy] = useState<string | null>(null);
   const [saved, setSaved] = useState<Set<string>>(() => new Set());
   const [flipped, setFlipped] = useState<Set<string>>(() => new Set());
+  const [editing, setEditing] = useState<string | null>(null);
+  const [edits, setEdits] = useState<Record<string, ArtTextEdits>>({});
+  const [resetTick, setResetTick] = useState(0);
   const [texts, setTexts] = useState<AuthorialText[]>([]);
   const [loading, setLoading] = useState(true);
   const [photosOpen, setPhotosOpen] = useState(false);
@@ -243,69 +251,115 @@ const StudioProAuthorial = ({
   const nodeOf = (artKey: string, slide: number) =>
     document.getElementById(nodeId(artKey, slide)) as HTMLElement | null;
 
-  const toggleFlip = (artKey: string) => {
-    setFlipped((prev) => {
+  useEffect(() => {
+    Object.entries(edits).forEach(([key, value]) => {
+      const separator = key.lastIndexOf(":");
+      const node = nodeOf(key.slice(0, separator), Number(key.slice(separator + 1)));
+      if (node) applyArtText(node, value);
+    });
+  }, [edits, arts, format, seed]);
+
+  const startEdit = (artKey: string, slide: number) => {
+    const key = slideKey(artKey, slide);
+    const node = nodeOf(artKey, slide);
+    if (!node) return;
+    setArtEditing(node, true);
+    setEditing(key);
+  };
+
+  const cancelEdit = (artKey: string, slide: number) => {
+    const key = slideKey(artKey, slide);
+    const node = nodeOf(artKey, slide);
+    if (node) {
+      setArtEditing(node, false);
+      applyArtText(node, edits[key]);
+    }
+    setEditing(null);
+  };
+
+  const finishEdit = (artKey: string, slide: number) => {
+    const key = slideKey(artKey, slide);
+    const node = nodeOf(artKey, slide);
+    if (!node) return;
+    const next = readArtText(node);
+    if (Object.values(next).some((text) => !text)) {
+      toast.error("Há um texto vazio na arte. Preencha ou cancele o ajuste.");
+      return;
+    }
+    setArtEditing(node, false);
+    setEdits((prev) => ({ ...prev, [key]: next }));
+    setEditing(null);
+    setSaved((prev) => {
       const copy = new Set(prev);
-      if (copy.has(artKey)) copy.delete(artKey);
-      else copy.add(artKey);
+      copy.delete(key);
+      return copy;
+    });
+    toast.success("Texto ajustado nesta arte.");
+  };
+
+  const resetEdit = (artKey: string, slide: number) => {
+    const key = slideKey(artKey, slide);
+    setEdits((prev) => {
+      const copy = { ...prev };
+      delete copy[key];
       return copy;
     });
     setSaved((prev) => {
       const copy = new Set(prev);
-      copy.delete(artKey);
+      copy.delete(key);
+      return copy;
+    });
+    setEditing(null);
+    setResetTick((current) => current + 1);
+  };
+
+  const slideKey = (artKey: string, slide: number) => `${artKey}:${slide}`;
+
+  const toggleFlip = (artKey: string, slide: number) => {
+    const key = slideKey(artKey, slide);
+    setFlipped((prev) => {
+      const copy = new Set(prev);
+      if (copy.has(key)) copy.delete(key);
+      else copy.add(key);
+      return copy;
+    });
+    setSaved((prev) => {
+      const copy = new Set(prev);
+      copy.delete(key);
       return copy;
     });
   };
 
   const fileBase = `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}`;
 
-  /** No formato Livre os slides do carrossel saem todos com a maior altura. */
-  const lockCarouselHeight = (nodes: HTMLElement[]) =>
-    format === "free" ? lockUniformHeight(nodes) : () => {};
-
-  const download = async (art: AuthorialArt) => {
-    setBusy(`png-${art.key}`);
-    let unlock = () => {};
+  const download = async (art: AuthorialArt, slideIndex: number) => {
+    const key = slideKey(art.key, slideIndex);
+    setBusy(`png-${key}`);
     try {
-      if (art.slides.length === 1) {
-        const node = nodeOf(art.key, 0);
-        if (!node) throw new Error("no-node");
-        await exportNodeAsPng(node, `${fileBase}-${art.key}.png`);
-      } else {
-        const items = art.slides
-          .map((_, i) => {
-            const node = nodeOf(art.key, i);
-            return node
-              ? { node, fileName: `${fileBase}-${art.key}-${String(i + 1).padStart(2, "0")}.png` }
-              : null;
-          })
-          .filter((item): item is { node: HTMLElement; fileName: string } => !!item);
-        if (!items.length) throw new Error("no-nodes");
-        unlock = lockCarouselHeight(items.map((item) => item.node));
-        await exportNodesAsPng(items);
-      }
-      toast.success(art.slides.length > 1 ? `Carrossel exportado (${art.slides.length} slides)` : "Arte exportada");
+      const node = nodeOf(art.key, slideIndex);
+      if (!node) throw new Error("no-node");
+      await exportNodeAsPng(node, `${fileBase}-${art.key}-${String(slideIndex + 1).padStart(2, "0")}.png`);
+      toast.success("Arte exportada");
     } catch (error) {
       console.error("[studio-pro] export autoral", error);
       toast.error("Não foi possível exportar esta arte.");
     } finally {
-      unlock();
       setBusy(null);
     }
   };
 
 
-  const save = async (art: AuthorialArt, caption: string) => {
+  const save = async (art: AuthorialArt, slideIndex: number, caption: string) => {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
       toast.error("Faça login novamente para salvar.");
       return;
     }
-    setBusy(`save-${art.key}`);
-    const side = flipped.has(art.key) ? "-b" : "";
-    const nodes = art.slides
-      .map((_, i) => nodeOf(art.key, i))
-      .filter((n): n is HTMLElement => !!n);
+    const key = slideKey(art.key, slideIndex);
+    setBusy(`save-${key}`);
+    const side = flipped.has(key) ? "-b" : "";
+    const node = nodeOf(art.key, slideIndex);
+    const nodes = node ? [node] : [];
 
     let thumb: string | null = null;
     let pngPath: string | null = null;
@@ -329,7 +383,9 @@ const StudioProAuthorial = ({
       try {
         const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
         const png = await renderNodeToBlob(node, ratio, "image/png");
-        const path = `${auth.user.id}/${brand.id}/${seed}-${art.key}${side}-${String(i + 1).padStart(2, "0")}.png`;
+        // Não terminar em "-NN.png": a galeria usa esse padrão apenas para
+        // reconhecer carrosséis legados agrupados e baixar seus arquivos irmãos.
+        const path = `${auth.user.id}/${brand.id}/${seed}-${art.key}-slide-${String(slideIndex + 1).padStart(2, "0")}${side}-art.png`;
         const { error: upErr } = await supabase.storage
           .from("studio-art")
           .upload(path, png, { contentType: "image/png", upsert: true });
@@ -345,7 +401,7 @@ const StudioProAuthorial = ({
         ? await captureArtSnapshot({
             userId: auth.user.id,
             brandId: brand.id,
-            key: `${seed}-${art.key}${side}`,
+             key: `${seed}-${art.key}-${String(slideIndex + 1).padStart(2, "0")}${side}`,
             format,
             nodes,
           })
@@ -354,15 +410,16 @@ const StudioProAuthorial = ({
     const { error } = await supabase.from("studio_creations").insert({
       user_id: auth.user.id,
       brand_id: brand.id,
-      seed: `${seed}${side}:${art.key}`,
+      seed: `${seed}${side}:${art.key}:${slideIndex}`,
       block_kind: art.kind === "carousel" ? "carousel" : "quote",
       format,
-      headline: art.slides[0]?.lines[0]?.slice(0, 140) ?? null,
+      headline: art.slides[slideIndex]?.lines[0]?.slice(0, 140) ?? null,
       caption,
       thumb,
       png_path: pngPath,
-      composition: JSON.parse(JSON.stringify(art)),
+      composition: JSON.parse(JSON.stringify({ ...art, slides: [art.slides[slideIndex]], slideIndex, slideTotal: art.slides.length })),
       snapshot,
+      text_edits: { 0: node ? readArtText(node) : {} },
       segment: art.textId ?? "autoral",
       angle: "informar",
       folder: folder === "Todas" ? "Geral" : folder,
@@ -374,7 +431,7 @@ const StudioProAuthorial = ({
       toast.error("Não foi possível salvar na marca.");
       return;
     }
-    setSaved((prev) => new Set(prev).add(art.key));
+    setSaved((prev) => new Set(prev).add(key));
     toast.success(`Arte salva em ${folder === "Todas" ? "Geral" : folder}`);
     onSaved?.();
   };
@@ -393,28 +450,6 @@ const StudioProAuthorial = ({
       .map((art, i) => `--- ${String(i + 1).padStart(2, "0")} · ${art.kind} ---\n${authorialCaption(art, splitSlogans(brand.slogan)[0] ?? null)}`)
       .join("\n\n");
     exportTextFile(`${fileBase}-legendas.txt`, body);
-  };
-
-  const downloadAll = async () => {
-    setBusy("all-png");
-    try {
-      const items: Array<{ node: HTMLElement; fileName: string }> = [];
-      for (const art of arts) {
-        for (let i = 0; i < art.slides.length; i += 1) {
-          const node = nodeOf(art.key, i);
-          if (!node) continue;
-          items.push({ node, fileName: `${fileBase}-${art.key}-${String(i + 1).padStart(2, "0")}.png` });
-        }
-      }
-      if (!items.length) throw new Error("no-nodes");
-      const { delivered } = await exportNodesAsPng(items);
-      toast.success(`Artes exportadas (${delivered})`);
-    } catch (error) {
-      console.error("[studio-pro] export lote autoral", error);
-      toast.error("Não foi possível exportar todas as artes.");
-    } finally {
-      setBusy(null);
-    }
   };
 
 
@@ -526,20 +561,6 @@ const StudioProAuthorial = ({
               {f.label}
             </Button>
           ))}
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 rounded-full text-xs"
-            disabled={busy === "all-png"}
-            onClick={() => void downloadAll()}
-          >
-            {busy === "all-png" ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Images className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            Todas em PNG
-          </Button>
           <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={downloadCaptions}>
             <FileText className="mr-1.5 h-3.5 w-3.5" />
             Legendas (.txt)
@@ -565,37 +586,106 @@ const StudioProAuthorial = ({
           const caption = authorialCaption(art, splitSlogans(brand.slogan)[0] ?? null);
           const photo = photoOf(art);
           const isCarousel = art.slides.length > 1;
-          const frame = (slideIndex: number) => (
-            <div
-              key={slideIndex}
-              className={`overflow-hidden rounded-2xl border border-border bg-background ${
-                isCarousel ? "shrink-0 snap-center" : "mx-auto"
-              }`}
-              style={{ ...FRAME_STYLE[format], ...themeStyle }}
-            >
-              <div
-                id={nodeId(art.key, slideIndex)}
-                className="h-full w-full bg-background"
-                style={flipped.has(art.key) ? invertedStyle : undefined}
-              >
-                <AutoFit resetKey={`${brand.id}:${seed}:${format}:${art.key}:${slideIndex}`}>
-                  <StudioProSignature
-                    artKey={`${brand.id}:${seed}:${art.key}:${slideIndex}`}
-                    enabled={signatureOn}
-                    brandName={brand.name}
+          const frame = (slideIndex: number) => {
+            const key = slideKey(art.key, slideIndex);
+            const slideSaved = saved.has(key);
+            return (
+              <div key={slideIndex} className={isCarousel ? "w-[min(480px,88vw)] shrink-0 snap-center" : "w-full"}>
+                <div
+                  className={`overflow-hidden rounded-2xl border border-border bg-background ${isCarousel ? "" : "mx-auto"}`}
+                  style={{ ...FRAME_STYLE[format], ...themeStyle }}
+                >
+                  <div
+                    id={nodeId(art.key, slideIndex)}
+                    className="h-full w-full bg-background"
+                    style={flipped.has(key) ? invertedStyle : undefined}
                   >
-                    <AuthorialArtBlock
-                      art={art}
-                      slide={art.slides[slideIndex]}
-                      slideIndex={slideIndex}
-                      format={format}
-                      photo={photo}
-                    />
-                  </StudioProSignature>
-                </AutoFit>
+                    <AutoFit resetKey={`${brand.id}:${seed}:${format}:${art.key}:${slideIndex}:${resetTick}`}>
+                      <StudioProSignature
+                        artKey={`${brand.id}:${seed}:${art.key}:${slideIndex}`}
+                        enabled={signatureOn}
+                        brandName={brand.name}
+                      >
+                        <AuthorialArtBlock
+                          art={art}
+                          slide={art.slides[slideIndex]}
+                          slideIndex={slideIndex}
+                          format={format}
+                          photo={photo}
+                        />
+                      </StudioProSignature>
+                    </AutoFit>
+                  </div>
+                </div>
+                <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-full text-xs"
+                    disabled={busy === `png-${key}`}
+                    onClick={() => void download(art, slideIndex)}
+                  >
+                    {busy === `png-${key}` ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Download className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    PNG
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => void copyCaption(caption)}>
+                    <Type className="mr-1.5 h-3.5 w-3.5" />
+                    Legenda
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={flipped.has(key) ? "secondary" : "outline"}
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => toggleFlip(art.key, slideIndex)}
+                  >
+                    <Contrast className="mr-1.5 h-3.5 w-3.5" />
+                    {flipped.has(key) ? "Lado B" : "Inverter cores"}
+                  </Button>
+                  {editing === key ? (
+                    <>
+                      <Button size="sm" className="h-8 rounded-full text-xs" onClick={() => finishEdit(art.key, slideIndex)}>
+                        <Check className="mr-1.5 h-3.5 w-3.5" />
+                        Concluir
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-8 rounded-full text-xs" onClick={() => cancelEdit(art.key, slideIndex)}>
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => startEdit(art.key, slideIndex)}>
+                      <PencilLine className="mr-1.5 h-3.5 w-3.5" />
+                      Ajustar texto
+                    </Button>
+                  )}
+                  {hasArtEdits(edits[key]) && (
+                    <Button size="sm" variant="ghost" className="h-8 rounded-full text-xs" onClick={() => resetEdit(art.key, slideIndex)}>
+                      <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                      Desfazer
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    className="h-8 rounded-full text-xs"
+                    disabled={busy === `save-${key}` || slideSaved}
+                    onClick={() => void save(art, slideIndex, caption)}
+                  >
+                    {busy === `save-${key}` ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : slideSaved ? (
+                      <Check className="mr-1.5 h-3.5 w-3.5" />
+                    ) : (
+                      <Save className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    {slideSaved ? "Salva" : "Salvar na marca"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          );
+            );
+          };
 
           return (
             <div key={art.key} className="w-full">
@@ -612,55 +702,6 @@ const StudioProAuthorial = ({
                 frame(0)
               )}
 
-              <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 rounded-full text-xs"
-                  disabled={busy === `png-${art.key}`}
-                  onClick={() => void download(art)}
-                >
-                  {busy === `png-${art.key}` ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Download className="mr-1.5 h-3.5 w-3.5" />
-                  )}
-                  {isCarousel ? `PNG (${art.slides.length})` : "PNG"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 rounded-full text-xs"
-                  onClick={() => void copyCaption(caption)}
-                >
-                  <Type className="mr-1.5 h-3.5 w-3.5" />
-                  Legenda
-                </Button>
-                <Button
-                  size="sm"
-                  variant={flipped.has(art.key) ? "secondary" : "outline"}
-                  className="h-8 rounded-full text-xs"
-                  onClick={() => toggleFlip(art.key)}
-                >
-                  <Contrast className="mr-1.5 h-3.5 w-3.5" />
-                  {flipped.has(art.key) ? "Lado B" : "Inverter cores"}
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-8 rounded-full text-xs"
-                  disabled={busy === `save-${art.key}` || saved.has(art.key)}
-                  onClick={() => void save(art, caption)}
-                >
-                  {busy === `save-${art.key}` ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  ) : saved.has(art.key) ? (
-                    <Check className="mr-1.5 h-3.5 w-3.5" />
-                  ) : (
-                    <Save className="mr-1.5 h-3.5 w-3.5" />
-                  )}
-                  {saved.has(art.key) ? "Salva" : "Salvar na marca"}
-                </Button>
-              </div>
             </div>
           );
         })}
