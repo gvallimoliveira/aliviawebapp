@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import punchHand from "@/assets/punch-hand.png";
 import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME } from "../brand";
 import { blockPadding, sectionHeight, type BlockProps } from "./shared";
 
