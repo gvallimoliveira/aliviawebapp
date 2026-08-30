@@ -10,13 +10,18 @@ const MAX_DIMENSION = 4096;
  */
 export const lockUniformHeight = (nodes: HTMLElement[]) => {
   if (nodes.length < 2) return () => {};
-  const tallest = Math.max(...nodes.map((node) => node.getBoundingClientRect().height));
+  const tallest = Math.max(
+    ...nodes.map((node) => Math.max(node.scrollHeight, node.getBoundingClientRect().height)),
+  );
   if (!Number.isFinite(tallest) || tallest <= 0) return () => {};
   const restores = nodes.map((node) => {
-    const previous = node.style.height;
-    node.style.height = `${Math.round(tallest)}px`;
+    const previousHeight = node.style.height;
+    const previousMinHeight = node.style.minHeight;
+    node.style.height = `${Math.ceil(tallest)}px`;
+    node.style.minHeight = `${Math.ceil(tallest)}px`;
     return () => {
-      node.style.height = previous;
+      node.style.height = previousHeight;
+      node.style.minHeight = previousMinHeight;
     };
   });
   return () => restores.forEach((fn) => fn());
@@ -382,7 +387,57 @@ export const freezeMotion = (node: HTMLElement) => {
   return () => restores.forEach((fn) => fn());
 };
 
-export const renderNodeToBlob = async (
+/** Espera duas pinturas para que fontes, imagens e medidas CSS se estabilizem. */
+const settleLayout = async () => {
+  const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
+  await fonts?.ready?.catch(() => undefined);
+  await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+};
+
+/**
+ * Cria uma superfície estática fora da tela. A captura nunca usa o card vivo:
+ * scroll, faixa horizontal e atualizações do Framer Motion não conseguem mais
+ * alterar a geometria enquanto o PNG está sendo rasterizado.
+ */
+export const createStaticExportSurface = async (source: HTMLElement) => {
+  const rect = source.getBoundingClientRect();
+  const host = document.createElement("div");
+  host.dataset.studioExportSurface = "1";
+  Object.assign(host.style, {
+    position: "fixed",
+    left: "-100000px",
+    top: "0",
+    width: `${Math.ceil(rect.width)}px`,
+    pointerEvents: "none",
+    zIndex: "-2147483647",
+  });
+
+  const clone = source.cloneNode(true) as HTMLElement;
+  clone.removeAttribute("id");
+  clone.style.width = `${Math.ceil(rect.width)}px`;
+  clone.style.height = `${Math.ceil(rect.height)}px`;
+  clone.style.maxWidth = "none";
+
+  // Tokens da marca são herdados de wrappers da tela; materialize-os na cópia.
+  const computed = getComputedStyle(source);
+  for (let i = 0; i < computed.length; i += 1) {
+    const property = computed.item(i);
+    if (property.startsWith("--")) clone.style.setProperty(property, computed.getPropertyValue(property));
+  }
+
+  host.appendChild(clone);
+  document.body.appendChild(host);
+  freezeMotion(clone);
+  await waitForAssets(clone);
+  await settleLayout();
+
+  return {
+    node: clone,
+    dispose: () => host.remove(),
+  };
+};
+
+const renderStaticNodeToBlob = async (
   node: HTMLElement,
   pixelRatio: number,
   type: "image/png" | "image/jpeg" = "image/png",
@@ -390,12 +445,13 @@ export const renderNodeToBlob = async (
 ) => {
   const fontEmbedCSS = await resolveFontCss(node);
   const backgroundColor = getComputedStyle(document.body).backgroundColor || "#ffffff";
-  const unfreeze = freezeMotion(node);
   const { specs, restore } = hideCssStrokes(node);
 
   let canvas: HTMLCanvasElement;
   try {
     canvas = await toCanvas(node, {
+      width: Math.ceil(node.getBoundingClientRect().width),
+      height: Math.ceil(Math.max(node.scrollHeight, node.getBoundingClientRect().height)),
       pixelRatio,
       backgroundColor,
       skipFonts: fontEmbedCSS === null,
@@ -406,10 +462,25 @@ export const renderNodeToBlob = async (
     paintStrokeTextOnCanvas(canvas, node, specs);
   } finally {
     restore();
-    unfreeze();
   }
-
   return canvasToBlob(canvas, type, quality);
+};
+
+export const renderNodeToBlob = async (
+  node: HTMLElement,
+  pixelRatio: number,
+  type: "image/png" | "image/jpeg" = "image/png",
+  quality?: number,
+) => {
+  const surface = await createStaticExportSurface(node);
+  const restoreImages = await inlineImages(surface.node);
+  try {
+    await settleLayout();
+    return await renderStaticNodeToBlob(surface.node, pixelRatio, type, quality);
+  } finally {
+    restoreImages();
+    surface.dispose();
+  }
 };
 
 /**
@@ -473,15 +544,29 @@ export const exportNodesAsPng = async (
   desiredRatio = 3,
 ): Promise<{ delivered: number; shared: boolean }> => {
   const files: File[] = [];
+  const surfaces = await Promise.all(items.map((item) => createStaticExportSurface(item.node)));
+  const imageRestores = await Promise.all(surfaces.map((surface) => inlineImages(surface.node)));
+  const restoreHeight = lockUniformHeight(surfaces.map((surface) => surface.node));
   let lastError: unknown;
 
-  for (const item of items) {
-    try {
-      const { blob } = await renderNodeToPngBlob(item.node, desiredRatio);
-      files.push(new File([blob], item.fileName, { type: "image/png" }));
-    } catch (error) {
-      lastError = error;
+  try {
+    await settleLayout();
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index];
+      const surface = surfaces[index];
+      try {
+        const rect = surface.node.getBoundingClientRect();
+        const ratio = safeRatio(rect.width, Math.max(rect.height, surface.node.scrollHeight), desiredRatio);
+        const blob = await renderStaticNodeToBlob(surface.node, ratio);
+        files.push(new File([blob], item.fileName, { type: "image/png" }));
+      } catch (error) {
+        lastError = error;
+      }
     }
+  } finally {
+    restoreHeight();
+    imageRestores.forEach((restore) => restore());
+    surfaces.forEach((surface) => surface.dispose());
   }
 
   if (!files.length) throw lastError instanceof Error ? lastError : new Error("export-failed");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { freezeMotion } from "@/pages/studio/exportImage";
+import { createStaticExportSurface, freezeMotion, lockUniformHeight } from "@/pages/studio/exportImage";
 
 /**
  * Slides de carrossel fora do centro da tela eram capturados no meio do efeito
@@ -44,5 +44,42 @@ describe("freezeMotion", () => {
     expect(node.style.transform).toBe("none");
     restore();
     expect(node.style.transform).toBe("translateX(80px)");
+  });
+});
+
+describe("static export surface", () => {
+  it("clona a arte fora da tela e neutraliza o movimento sem alterar o original", async () => {
+    const root = document.createElement("div");
+    root.style.width = "320px";
+    root.style.height = "480px";
+    root.innerHTML = '<div data-studio-motion="1" style="transform:translateY(70px);opacity:.72">Arte</div>';
+    document.body.appendChild(root);
+
+    const surface = await createStaticExportSurface(root);
+    const original = root.querySelector<HTMLElement>('[data-studio-motion="1"]');
+    const clone = surface.node.querySelector<HTMLElement>('[data-studio-motion="1"]');
+
+    expect(surface.node.isConnected).toBe(true);
+    expect(clone?.style.transform).toBe("none");
+    expect(clone?.style.opacity).toBe("1");
+    expect(original?.style.transform).toContain("translateY(70px)");
+
+    surface.dispose();
+    expect(surface.node.isConnected).toBe(false);
+    root.remove();
+  });
+
+  it("normaliza o lote pela maior altura real e restaura os estilos", () => {
+    const first = document.createElement("div");
+    const second = document.createElement("div");
+    Object.defineProperty(first, "scrollHeight", { value: 500 });
+    Object.defineProperty(second, "scrollHeight", { value: 700 });
+
+    const restore = lockUniformHeight([first, second]);
+    expect(first.style.height).toBe("700px");
+    expect(second.style.minHeight).toBe("700px");
+    restore();
+    expect(first.style.height).toBe("");
+    expect(second.style.minHeight).toBe("");
   });
 });

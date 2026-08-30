@@ -14,6 +14,7 @@
  * nada e sem gastar crédito de IA.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { createStaticExportSurface, lockUniformHeight } from "@/pages/studio/exportImage";
 
 export const SNAPSHOT_VERSION = 1;
 const BUCKET = "studio-art";
@@ -176,28 +177,35 @@ export const captureArtSnapshot = async ({
   if (nodes.length === 0) return null;
   const slides: ArtSnapshotSlide[] = [];
   const theme = readTheme(nodes[0]);
-  for (let i = 0; i < nodes.length; i += 1) {
-    const node = nodes[i];
-    const rect = node.getBoundingClientRect();
-    try {
-      const html = await serializeArtNode(node);
-      if (!html) continue;
-      const path = `${userId}/${brandId}/snapshot/${key}-${String(i + 1).padStart(2, "0")}.html`;
-      const { error } = await supabase.storage
-        .from(BUCKET)
-        .upload(path, new Blob([html], { type: "text/html" }), {
-          contentType: "text/html",
-          upsert: true,
+  const surfaces = await Promise.all(nodes.map((node) => createStaticExportSurface(node)));
+  const restoreHeight = format === "free" ? lockUniformHeight(surfaces.map((surface) => surface.node)) : () => {};
+  try {
+    for (let i = 0; i < surfaces.length; i += 1) {
+      const node = surfaces[i].node;
+      const rect = node.getBoundingClientRect();
+      try {
+        const html = await serializeArtNode(node);
+        if (!html) continue;
+        const path = `${userId}/${brandId}/snapshot/${key}-${String(i + 1).padStart(2, "0")}.html`;
+        const { error } = await supabase.storage
+          .from(BUCKET)
+          .upload(path, new Blob([html], { type: "text/html" }), {
+            contentType: "text/html",
+            upsert: true,
+          });
+        if (error) throw error;
+        slides.push({
+          storage_path: path,
+          width: Math.round(rect.width) || 1080,
+          height: Math.round(Math.max(rect.height, node.scrollHeight)) || 1350,
         });
-      if (error) throw error;
-      slides.push({
-        storage_path: path,
-        width: Math.round(rect.width) || 1080,
-        height: Math.round(rect.height) || 1350,
-      });
-    } catch (error) {
-      console.warn("[studio-pro] snapshot capture", error);
+      } catch (error) {
+        console.warn("[studio-pro] snapshot capture", error);
+      }
     }
+  } finally {
+    restoreHeight();
+    surfaces.forEach((surface) => surface.dispose());
   }
   if (slides.length === 0) return null;
   return { version: SNAPSHOT_VERSION, format, theme, slides };

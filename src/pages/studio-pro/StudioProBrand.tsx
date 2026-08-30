@@ -171,7 +171,7 @@ const BrandSection = ({
 }) => {
   const [open, setOpen] = useState(!!defaultOpen);
   return (
-    <section className="overflow-hidden rounded-3xl border border-border bg-card">
+    <section className="min-w-0 max-w-full overflow-hidden rounded-3xl border border-border bg-card">
       <button
         type="button"
         className="flex w-full items-start gap-3 p-4 text-left sm:p-5"
@@ -197,7 +197,7 @@ const BrandSection = ({
           className={`mt-1 h-4 w-4 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && <div className="border-t border-border p-4 sm:p-5">{children}</div>}
+      {open && <div className="min-w-0 max-w-full border-t border-border p-4 sm:p-5">{children}</div>}
     </section>
   );
 };
