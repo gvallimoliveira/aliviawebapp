@@ -377,6 +377,12 @@ const StudioLanding = () => {
           {format === "4x5" && (
             <style>{`.studio-portrait section { min-height: min(700px, calc(100vw * 5 / 4)) !important; height: min(700px, calc(100vw * 5 / 4)) !important; }`}</style>
           )}
+          {/* No app o formato "Livre" tem proporção real (o bloco preenche o
+              quadro). Aqui a landing é rolagem contínua, então a altura volta a
+              ser automática com um piso confortável. */}
+          {format === "free" && (
+            <style>{`.studio-free-frame { height: auto !important; min-height: min(700px, calc(100vw * 5 / 4)); }`}</style>
+          )}
           <div
             className={
               format === "1x1"

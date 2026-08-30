@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
 import { renderAccent, TextureLayer } from "./Texture";
-import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * RETRATO EDITORIAL COM DESTAQUE
@@ -22,14 +22,8 @@ const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, picker, 
   const quote = item.text;
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const title = (feature.headline ?? feature.title).toUpperCase();
-  const photoHeight =
-    format === "9x16"
-      ? "h-[300px]"
-      : format === "1x1"
-        ? "h-[180px]"
-        : format === "4x5"
-          ? "h-[240px]"
-          : "h-[46svh]";
+  // Altura percentual do quadro (antes px/svh: achatava num formato e estourava no outro).
+  const photoHeight = frameHeight(format, { "9x16": 42, "4x5": 40, "1x1": 32 });
 
   return (
     <section
@@ -57,7 +51,8 @@ const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, picker, 
 
         <PhotoFrame
           photo={photo}
-          className={`${photoHeight} w-[58%] rounded-2xl border border-border shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.5)]`}
+          className="w-[58%] rounded-2xl border border-border shadow-[0_30px_70px_-40px_hsl(var(--foreground)/0.5)]"
+          style={photoHeight}
         />
 
         <p className="mt-7 max-w-md text-[12px] leading-relaxed text-muted-foreground md:text-sm">

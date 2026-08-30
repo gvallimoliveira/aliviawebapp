@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { pickPhotoForTopics } from "../photoMeaning";
 import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME, BRAND_SITE } from "../brand";
 import PhotoFrame from "./PhotoFrame";
-import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * Triângulo invertido com vértices arredondados ("abrindo para fora da tela").
@@ -36,14 +36,8 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
   const showSite = treatment % 2 === 1;
   const headline = rng.pick(content.headlines);
   const highlights = content.marquee.flat().slice(0, 4);
-  const popoutHeight =
-    format === "9x16"
-      ? "h-[260px]"
-      : format === "1x1"
-        ? "h-[150px]"
-        : format === "4x5"
-          ? "h-[210px]"
-          : "h-[34svh]";
+  // Altura percentual do quadro: acompanha o formato em vez da tela do aparelho.
+  const popoutHeight = frameHeight(format, { "9x16": 37, "4x5": 35, "1x1": 27 });
 
   return (
     <section
@@ -80,8 +74,9 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
         {/* Palco: imagem "saindo" da tela em triângulo invertido arredondado. */}
         <div className="relative mt-6 w-full">
           <div
-            className={`relative z-20 mx-auto w-[52%] ${popoutHeight}`}
+            className="relative z-20 mx-auto w-[52%]"
             style={{
+              ...popoutHeight,
               WebkitMaskImage: POPOUT_TRIANGLE_MASK,
               maskImage: POPOUT_TRIANGLE_MASK,
               WebkitMaskSize: "100% 100%",
@@ -91,6 +86,7 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
               filter: "drop-shadow(0 26px 28px hsl(var(--foreground) / 0.35))",
             }}
           >
+
             <PhotoFrame photo={photo} className="h-full w-full" />
           </div>
 

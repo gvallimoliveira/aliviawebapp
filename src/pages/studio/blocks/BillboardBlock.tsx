@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { BRAND_NAME } from "../brand";
-import { pickHeadline, sectionHeight, type BlockProps } from "./shared";
+import { frameHeight, pickHeadline, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * OUTDOOR NA PAREDE (referência: quadro branco na parede com duas pessoas
@@ -41,14 +41,8 @@ const BillboardBlock = ({ content, rng, treatment, format, persona }: BlockProps
   const skin = WALLS[treatment % WALLS.length];
   const headline = pickHeadline(rng, content.headlines, persona.headlineTaste);
   const closing = rng.pick(content.closings);
-  const streetHeight =
-    format === "9x16"
-      ? "h-[190px]"
-      : format === "1x1"
-        ? "h-[110px]"
-        : format === "4x5"
-          ? "h-[150px]"
-          : "h-[26svh]";
+  // Altura percentual do quadro: a calçada acompanha a proporção escolhida.
+  const streetHeight = frameHeight(format, { "9x16": 27, "4x5": 25, "1x1": 20 });
 
   return (
     <section
@@ -100,7 +94,7 @@ const BillboardBlock = ({ content, rng, treatment, format, persona }: BlockProps
       </motion.div>
 
       {/* Calçada + as duas pessoas se cruzando em sentidos opostos. */}
-      <div className={`relative z-10 mt-8 w-full ${streetHeight}`}>
+      <div className="relative z-10 mt-8 w-full" style={streetHeight}>
         <div className={`absolute bottom-0 left-0 right-0 h-[38%] ${skin.floor}`} />
         <Walker className="absolute bottom-[4%] left-[14%] h-[80%]" />
         <Walker flip className="absolute bottom-[4%] right-[16%] h-[74%]" />

@@ -100,9 +100,32 @@ export const pickHeadline = <T extends { strong: string; rest: string }>(
   return rng.pick(pool);
 };
 
-/** Section height contract: blocks must fill the recording frame. */
+/**
+ * CONTRATO DE ALTURA DA SEÇÃO
+ *
+ * Todo formato — inclusive "Livre" — tem proporção real no quadro (ver
+ * `studio/frame.ts`), então a seção SEMPRE preenche a moldura. A classe
+ * `studio-free-frame` só existe para a landing pública, que usa os mesmos
+ * blocos em rolagem contínua e restaura a altura automática por CSS.
+ */
 export const sectionHeight = (format: StudioFormat) =>
-  format === "free" ? "min-h-[80svh]" : "h-full w-full overflow-hidden";
+  format === "free"
+    ? "studio-free-frame h-full w-full overflow-hidden"
+    : "h-full w-full overflow-hidden";
+
+/**
+ * ALTURA RELATIVA AO QUADRO
+ *
+ * Blocos com faixa de foto/cenário mediam altura em pixels fixos ou em `svh`
+ * (altura da tela do aparelho). O resultado não acompanhava o quadro: a mesma
+ * arte saía achatada num formato e transbordando no outro. Aqui a altura é
+ * sempre percentual da moldura, então trocar o formato reorganiza a arte.
+ */
+export const frameHeight = (
+  format: StudioFormat,
+  pct: { "9x16": number; "4x5": number; "1x1": number },
+): CSSProperties => ({ height: `${pct[format === "free" ? "4x5" : format]}%` });
+
 
 /**
  * PADDING DINÂMICO POR FORMATO
@@ -121,8 +144,10 @@ export const blockPadding = (format: StudioFormat) => {
   if (format === "4x5") return "py-[12%] px-[8%]";
   // 1x1: quadrado é o formato mais apertado em altura — respiro menor.
   if (format === "1x1") return "py-[7%] px-[7%]";
-  return "py-20 px-6";
+  // Livre: agora tem proporção real, então o respiro também é percentual.
+  return "py-[11%] px-[8%]";
 };
+
 
 
 /**

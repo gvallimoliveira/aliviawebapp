@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
 import { TextureLayer } from "./Texture";
-import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * TIPOGRAFIA GIGANTE ATRÁS DO SUJEITO
@@ -23,22 +23,10 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, picker, phot
   /** Palavra-cartaz: a mais forte do assunto, nunca o nome do que está na foto. */
   const word = [...item.title.split(/\s+/)].sort((a, b) => b.length - a.length)[0]?.toUpperCase() ?? "MARCA";
   const bottom = treatment % 2 === 0;
-  const photoHeight =
-    format === "9x16"
-      ? bottom
-        ? "h-[320px]"
-        : "h-[285px]"
-      : format === "1x1"
-        ? bottom
-          ? "h-[220px]"
-          : "h-[195px]"
-        : format === "4x5"
-          ? bottom
-            ? "h-[280px]"
-            : "h-[250px]"
-          : bottom
-            ? "h-[62svh]"
-            : "h-[56svh]";
+  // Altura percentual do quadro: a faixa da foto acompanha o formato.
+  const photoHeight = bottom
+    ? frameHeight(format, { "9x16": 45, "4x5": 47, "1x1": 39 })
+    : frameHeight(format, { "9x16": 40, "4x5": 42, "1x1": 35 });
 
   return (
     <section
@@ -64,7 +52,8 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, picker, phot
       >
         <PhotoFrame
           photo={photo}
-          className={`w-full max-w-[86%] rounded-[2rem] ${photoHeight}`}
+          className="w-full max-w-[86%] rounded-[2rem]"
+          style={photoHeight}
         />
 
         <div className="w-full px-6 pb-10 pt-5 text-center">

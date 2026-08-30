@@ -80,6 +80,7 @@ import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
 import AutoFit from "@/pages/studio/AutoFit";
+import { frameStyle } from "@/pages/studio/frame";
 import ArtworkGuard from "@/pages/studio/ArtworkGuard";
 import VariationControl from "@/pages/studio/VariationControl";
 import {
@@ -149,12 +150,7 @@ type Props = {
 };
 
 
-const FRAME_STYLE: Record<StudioFormat, React.CSSProperties> = {
-  "9x16": { width: "min(400px, 100%)", aspectRatio: "9/16" },
-  "4x5": { width: "min(480px, 100%)", aspectRatio: "4/5" },
-  "1x1": { width: "min(560px, 100%)", aspectRatio: "1/1" },
-  free: { width: "100%" },
-};
+
 
 const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "9x16", label: "Story 9:16" },
@@ -1220,16 +1216,23 @@ const StudioProCreate = ({
           const isSaved = group.carousel
             ? indexes.every((i) => saved.has(i))
             : saved.has(first.index);
+          /**
+           * Chave da proporção: no formato "Livre" o motor sorteia a proporção
+           * da arte. Todos os slides de um carrossel usam a MESMA chave, então
+           * a sequência sai com proporção única (exigência do Instagram).
+           */
+          const frameKey = `${brand.id}:${seed}:${first.block.kind}:${first.index}`;
           const art = (item: { block: ComposedBlock; index: number }) => {
             const { kind, treatment, motion, slide } = item.block;
             const Block = STUDIO_BLOCKS[kind];
             return (
               <div
                 className={`overflow-hidden rounded-2xl border border-border bg-background ${
-                  format === "1x1" ? "studio-pro-square" : ""
-                } ${group.carousel ? "shrink-0 snap-center" : "mx-auto"}`}
-                style={FRAME_STYLE[format]}
+                  group.carousel ? "shrink-0 snap-center" : "mx-auto"
+                }`}
+                style={frameStyle(format, frameKey)}
               >
+
                 {/* Lado B aplica os tokens invertidos só nesta arte. */}
                 <div
                   id={`studio-pro-block-${item.index}`}
@@ -1239,7 +1242,7 @@ const StudioProCreate = ({
 
                   <ArtworkGuard key={`${item.index}:${resetTick}`} brand={brand.name}>
                   {/* AutoFit: copy longa encolhe para caber; nunca sai cortada. */}
-                  <AutoFit resetKey={`${brand.id}:${seed}:${format}:${kind}:${item.index}`}>
+                  <AutoFit resetKey={`${brand.id}:${seed}:${format}:${frameKey}:${kind}:${item.index}`}>
                   <StudioProSignature
                     artKey={`${brand.id}:${seed}:${kind}:${item.index}`}
                     enabled={signatureOn}
