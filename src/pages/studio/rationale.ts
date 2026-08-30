@@ -297,8 +297,8 @@ const SENSE: Record<BlockKind, Sense> = {
   },
   punch: {
     format: "frase de impacto",
-    sees: "quase nada além de uma frase curta e provocativa em letras enormes, com a assinatura no pé",
-    job: "parar o dedo com uma provocação de uma linha, deixando a condição só como nota pequena",
+    sees: "uma mão grande em close segurando uma frase minúscula na pinça, e embaixo a chamada gigante convidando a dar zoom",
+    job: "fazer o público ampliar a arte para ler a frase que a mão segura — atenção conquistada pela curiosidade",
     needs: (c) => some(c.headlines) || some(c.quotes),
     needsLabel: "frases curtas e provocativas da marca",
   },
