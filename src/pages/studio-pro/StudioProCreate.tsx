@@ -1205,6 +1205,83 @@ const StudioProCreate = ({
             );
           };
 
+          /**
+           * Carrosséis são apenas uma sequência visual: cada slide percorre o
+           * mesmo fluxo confiável de uma arte avulsa, sem captura em lote.
+           */
+          const slideActions = (item: { block: ComposedBlock; index: number }) => {
+            const slideIndexes = [item.index];
+            const slideSaved = saved.has(item.index);
+            const isEditing = editing === item.index;
+            return (
+              <div className="mt-2 flex w-full flex-wrap items-center justify-center gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-full text-xs"
+                  disabled={busy === `png-${item.index}`}
+                  onClick={() => void download(item.index, item.block.kind)}
+                >
+                  {busy === `png-${item.index}` ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  PNG
+                </Button>
+                <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => copyCaption(caption)}>
+                  <Type className="mr-1.5 h-3.5 w-3.5" />
+                  Legenda
+                </Button>
+                <Button
+                  size="sm"
+                  variant={flipped.has(item.index) ? "secondary" : "outline"}
+                  className="h-8 rounded-full text-xs"
+                  onClick={() => toggleFlip(slideIndexes)}
+                >
+                  <Contrast className="mr-1.5 h-3.5 w-3.5" />
+                  {flipped.has(item.index) ? "Lado B" : "Inverter cores"}
+                </Button>
+                {isEditing ? (
+                  <>
+                    <Button size="sm" className="h-8 rounded-full text-xs" onClick={() => finishEdit(slideIndexes)}>
+                      <Check className="mr-1.5 h-3.5 w-3.5" />
+                      Concluir
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-8 rounded-full text-xs" onClick={() => cancelEdit(slideIndexes)}>
+                      Cancelar
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => startEdit(slideIndexes)}>
+                    <PencilLine className="mr-1.5 h-3.5 w-3.5" />
+                    Ajustar texto
+                  </Button>
+                )}
+                {hasArtEdits(edits[item.index]) && (
+                  <Button size="sm" variant="ghost" className="h-8 rounded-full text-xs" onClick={() => resetEdit(slideIndexes)}>
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    Desfazer
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant={slideSaved ? "secondary" : "default"}
+                  className="h-8 rounded-full text-xs"
+                  disabled={slideSaved || busy === `save-${item.index}`}
+                  onClick={() => void save(item.index, item.block.kind, caption)}
+                >
+                  {busy === `save-${item.index}` ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Save className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  {slideSaved ? "Salvo" : "Salvar na marca"}
+                </Button>
+              </div>
+            );
+          };
+
           return (
             <div key={group.key} className="w-full">
               {group.carousel ? (
@@ -1215,8 +1292,9 @@ const StudioProCreate = ({
                   {/* Faixa com scroll lateral e snap: a sequência é vista como no Instagram. */}
                   <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
                     {group.items.map((item) => (
-                      <div key={item.index} className="shrink-0">
+                      <div key={item.index} className="w-[min(480px,88vw)] shrink-0 snap-center">
                         {art(item)}
+                        {slideActions(item)}
                       </div>
                     ))}
                   </div>
@@ -1225,24 +1303,20 @@ const StudioProCreate = ({
                 art(first)
               )}
 
-              <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
+              {!group.carousel && <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-8 rounded-full text-xs"
                   disabled={busy === `png-${first.index}`}
-                  onClick={() =>
-                    group.carousel
-                      ? void downloadCarousel(indexes)
-                      : void download(first.index, first.block.kind)
-                  }
+                  onClick={() => void download(first.index, first.block.kind)}
                 >
                   {busy === `png-${first.index}` ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Download className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  {group.carousel ? `PNG (${group.items.length})` : "PNG"}
+                  PNG
                 </Button>
                 <Button
                   size="sm"
@@ -1322,24 +1396,16 @@ const StudioProCreate = ({
                   variant={isSaved ? "secondary" : "default"}
                   className="h-8 rounded-full text-xs"
                   disabled={isSaved || busy === `save-${first.index}`}
-                  onClick={() =>
-                    group.carousel
-                      ? void saveCarousel(indexes, caption)
-                      : void save(first.index, first.block.kind, caption)
-                  }
+                  onClick={() => void save(first.index, first.block.kind, caption)}
                 >
                   {busy === `save-${first.index}` ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Save className="mr-1.5 h-3.5 w-3.5" />
                   )}
-                  {isSaved
-                    ? "Salvo"
-                    : group.carousel
-                      ? "Salvar carrossel"
-                      : "Salvar na marca"}
+                  {isSaved ? "Salvo" : "Salvar na marca"}
                 </Button>
-              </div>
+              </div>}
 
               {/* Leitura de sentido: a explicação que o motor consegue dar da arte. */}
               {SHOW_WHY && whyOpen === first.index && (() => {
