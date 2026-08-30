@@ -341,7 +341,16 @@ export const composePage = (
     return cleaned;
   })();
 
-  return finish(rng, result, persona, carousels);
+  const withQuota = photoFirst
+    ? enforcePhotoFirst(rng, result.map((b) => b.kind), photoCount, true).map((kind, i) => {
+        const previous = result[i];
+        if (previous && previous.kind === kind) return previous;
+        return { kind, treatment: treatmentFor(rng, kind, persona) };
+      })
+    : result;
+
+  return finish(rng, withQuota, persona, carousels);
+
 };
 
 /**
