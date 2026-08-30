@@ -26,6 +26,8 @@ import { isStudioSelfBrand } from "@/pages/studio/persuasion";
 import type { ContentAngle } from "./audiences";
 import type { Relation } from "./relational";
 import { findStudioSelfCharm, type StudioSelfCharmRow } from "./studioSelfCharm";
+import { professionFor, wantsProfession } from "./professions";
+
 import { findAliviaCoreCharm, isAliviaCoreBrand, type AliviaCoreCharmRow } from "./aliviaCoreCharm";
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
