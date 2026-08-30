@@ -81,7 +81,7 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
 
   if (kind === "gradientDrift") {
     return (
-      <div ref={ref} className="relative isolate overflow-hidden">
+      <div ref={ref} className="relative isolate h-full w-full overflow-hidden">
         <motion.div
           aria-hidden
           data-studio-motion="1"
@@ -100,8 +100,8 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
 
   if (kind === "maskWipe") {
     return (
-      <div ref={ref} className="overflow-hidden">
-        <motion.div data-studio-motion="1" style={{ clipPath: wipeClip }}>
+      <div ref={ref} className="h-full w-full overflow-hidden">
+        <motion.div data-studio-motion="1" className="h-full w-full" style={{ clipPath: wipeClip }}>
           {children}
         </motion.div>
       </div>
@@ -110,8 +110,8 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
 
   if (kind === "parallaxScrub") {
     return (
-      <div ref={ref} className="overflow-hidden">
-        <motion.div data-studio-motion="1" style={{ y: rise, opacity: fade }}>
+      <div ref={ref} className="h-full w-full overflow-hidden">
+        <motion.div data-studio-motion="1" className="h-full w-full" style={{ y: rise, opacity: fade }}>
           {children}
         </motion.div>
       </div>
@@ -120,11 +120,11 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
 
   if (kind === "slideDrift") {
     return (
-      <div ref={ref} className="overflow-hidden">
+      <div ref={ref} className="h-full w-full overflow-hidden">
         <motion.div
           data-studio-motion="1"
           style={{ x: drift, opacity: fade }}
-          className="will-change-transform"
+          className="h-full w-full will-change-transform"
         >
           {children}
         </motion.div>
@@ -134,8 +134,8 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
 
   if (kind === "focusPull") {
     return (
-      <div ref={ref} className="overflow-hidden">
-        <motion.div data-studio-motion="1" style={{ filter: blur, opacity: fade }}>
+      <div ref={ref} className="h-full w-full overflow-hidden">
+        <motion.div data-studio-motion="1" className="h-full w-full" style={{ filter: blur, opacity: fade }}>
           {children}
         </motion.div>
       </div>
@@ -144,11 +144,11 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
 
   if (kind === "tiltRise") {
     return (
-      <div ref={ref} className="overflow-hidden [perspective:1200px]">
+      <div ref={ref} className="h-full w-full overflow-hidden [perspective:1200px]">
         <motion.div
           data-studio-motion="1"
           style={{ rotateX: tilt, y: rise }}
-          className="origin-top will-change-transform"
+          className="h-full w-full origin-top will-change-transform"
         >
           {children}
         </motion.div>
@@ -158,11 +158,11 @@ const StudioMotion = ({ kind = "none", children }: Props) => {
 
   // zoomIn / zoomOut
   return (
-    <div ref={ref} className="overflow-hidden">
+    <div ref={ref} className="h-full w-full overflow-hidden">
       <motion.div
         data-studio-motion="1"
         style={{ scale: kind === "zoomIn" ? zoomIn : zoomOut }}
-        className="will-change-transform"
+        className="h-full w-full will-change-transform"
       >
         {children}
       </motion.div>
