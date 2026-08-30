@@ -4,6 +4,8 @@ import academic from "./academic";
 import clinic from "./clinic";
 import { applyTerminology } from "../terminology";
 import { ALIVIA_PATIENT_HOOKS, ALIVIA_PRO_HOOKS } from "../hookLibrary";
+import { applyHookPrefs } from "../hookStore";
+import { BRAND_NAME } from "../brand";
 import type { WorldContent, WorldId } from "./types";
 
 /**
@@ -17,11 +19,27 @@ import type { WorldContent, WorldId } from "./types";
  * clínica; o mundo do paciente usa a variante de autoavaliação (ver
  * `hookLibrary.ts`).
  */
+/**
+ * Getters (e não valores fixos): a curadoria de ganchos feita pelo dono
+ * (`hookStore.ts` — ordem e ativação por marca) é lida a cada acesso, então
+ * editar a biblioteca já reflete na próxima geração, sem recarregar o app.
+ */
 export const WORLDS: Record<WorldId, WorldContent> = {
-  pro: { ...applyTerminology(professional), hooks: ALIVIA_PRO_HOOKS },
-  paciente: { ...applyTerminology(patient, { patientVoice: true }), hooks: ALIVIA_PATIENT_HOOKS },
-  academico: { ...applyTerminology(academic), hooks: ALIVIA_PRO_HOOKS },
-  clinica: { ...applyTerminology(clinic), hooks: ALIVIA_PRO_HOOKS },
+  get pro() {
+    return { ...applyTerminology(professional), hooks: applyHookPrefs(BRAND_NAME, ALIVIA_PRO_HOOKS) };
+  },
+  get paciente() {
+    return {
+      ...applyTerminology(patient, { patientVoice: true }),
+      hooks: applyHookPrefs(BRAND_NAME, ALIVIA_PATIENT_HOOKS, { patientVoice: true }),
+    };
+  },
+  get academico() {
+    return { ...applyTerminology(academic), hooks: applyHookPrefs(BRAND_NAME, ALIVIA_PRO_HOOKS) };
+  },
+  get clinica() {
+    return { ...applyTerminology(clinic), hooks: applyHookPrefs(BRAND_NAME, ALIVIA_PRO_HOOKS) };
+  },
 };
 
 export const WORLD_IDS: WorldId[] = ["pro", "paciente", "academico", "clinica"];

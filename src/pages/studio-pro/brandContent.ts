@@ -12,6 +12,7 @@ import {
 } from "@/pages/studio/phrasing";
 import { composeHooks } from "@/pages/studio/hooks";
 import { curatedHooksFor } from "@/pages/studio/hookLibrary";
+import { applyHookPrefs } from "@/pages/studio/hookStore";
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
 import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlogan, sloganList, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
