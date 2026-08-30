@@ -135,6 +135,56 @@ const pickKinds = (rng: Rng, weighted: [BlockKind, number][], count: number): Bl
   return spread(rng, pool, count);
 };
 
+/** Peças que ocupam o quadro inteiro com foto em primeira camada. */
+const FIRST_LAYER_PHOTO: BlockKind[] = ["photoType", "photoSplit", "photoPortrait", "stage"];
+
+/**
+ * COTA DE FOTOS DO ACERVO COMO PLANO DE FUNDO.
+ *
+ * Com o filtro ligado, metade das artes do lote (arredondando para cima) vira
+ * `photoVeil`. A conversão respeita a estrutura: hero, closing e a sequência de
+ * carrossel ficam intactos; peças de foto em primeira camada são as primeiras a
+ * ceder lugar (véu e primeira camada nunca convivem na mesma arte).
+ */
+const enforcePhotoFirst = (
+  rng: Rng,
+  kinds: BlockKind[],
+  photoCount: number,
+  on: boolean,
+): BlockKind[] => {
+  if (!on || photoCount <= 0 || kinds.length < 3) return kinds;
+  const out = [...kinds];
+  const target = Math.ceil(out.length / 2);
+  const count = () => out.filter((k) => k === "photoVeil").length;
+
+  const convertible = out
+    .map((kind, i) => ({ kind, i }))
+    .filter(({ kind, i }) => i > 0 && i < out.length - 1 && kind !== "photoVeil" && kind !== "carousel");
+
+  // Primeiro as peças fotográficas de primeira camada, depois o restante do miolo.
+  const order = [
+    ...convertible.filter((c) => FIRST_LAYER_PHOTO.includes(c.kind)),
+    ...rng.shuffle(convertible.filter((c) => !FIRST_LAYER_PHOTO.includes(c.kind))),
+  ];
+
+  for (const item of order) {
+    if (count() >= target) break;
+    // Sem véu colado em véu: mantém ritmo visual no scroll.
+    if (out[item.i - 1] === "photoVeil" && out[item.i + 1] === "photoVeil") continue;
+    out[item.i] = "photoVeil";
+  }
+
+  // Exclusividade: com véu na página, foto em primeira camada sai de cena.
+  if (count() > 0) {
+    for (let i = 0; i < out.length; i += 1) {
+      if (FIRST_LAYER_PHOTO.includes(out[i])) out[i] = "photoVeil";
+    }
+  }
+  return out;
+};
+
+
+
 /**
  * Builds the section order for a version.
  *
