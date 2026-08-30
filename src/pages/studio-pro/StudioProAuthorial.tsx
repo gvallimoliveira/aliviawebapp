@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Check, Contrast, Download, FileText, Images, Loader2, RefreshCw, Save, Type } from "lucide-react";
+import { Camera, Check, Contrast, Download, FileText, Loader2, RefreshCw, Save, Type } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   deliver,
   exportNodeAsPng,
-  exportNodesAsPng,
-  lockUniformHeight,
   exportTextFile,
   randomSeed,
   renderNodeToBlob,
@@ -243,69 +241,53 @@ const StudioProAuthorial = ({
   const nodeOf = (artKey: string, slide: number) =>
     document.getElementById(nodeId(artKey, slide)) as HTMLElement | null;
 
-  const toggleFlip = (artKey: string) => {
+  const slideKey = (artKey: string, slide: number) => `${artKey}:${slide}`;
+
+  const toggleFlip = (artKey: string, slide: number) => {
+    const key = slideKey(artKey, slide);
     setFlipped((prev) => {
       const copy = new Set(prev);
-      if (copy.has(artKey)) copy.delete(artKey);
-      else copy.add(artKey);
+      if (copy.has(key)) copy.delete(key);
+      else copy.add(key);
       return copy;
     });
     setSaved((prev) => {
       const copy = new Set(prev);
-      copy.delete(artKey);
+      copy.delete(key);
       return copy;
     });
   };
 
   const fileBase = `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}`;
 
-  /** No formato Livre os slides do carrossel saem todos com a maior altura. */
-  const lockCarouselHeight = (nodes: HTMLElement[]) =>
-    format === "free" ? lockUniformHeight(nodes) : () => {};
-
-  const download = async (art: AuthorialArt) => {
-    setBusy(`png-${art.key}`);
-    let unlock = () => {};
+  const download = async (art: AuthorialArt, slideIndex: number) => {
+    const key = slideKey(art.key, slideIndex);
+    setBusy(`png-${key}`);
     try {
-      if (art.slides.length === 1) {
-        const node = nodeOf(art.key, 0);
-        if (!node) throw new Error("no-node");
-        await exportNodeAsPng(node, `${fileBase}-${art.key}.png`);
-      } else {
-        const items = art.slides
-          .map((_, i) => {
-            const node = nodeOf(art.key, i);
-            return node
-              ? { node, fileName: `${fileBase}-${art.key}-${String(i + 1).padStart(2, "0")}.png` }
-              : null;
-          })
-          .filter((item): item is { node: HTMLElement; fileName: string } => !!item);
-        if (!items.length) throw new Error("no-nodes");
-        unlock = lockCarouselHeight(items.map((item) => item.node));
-        await exportNodesAsPng(items);
-      }
-      toast.success(art.slides.length > 1 ? `Carrossel exportado (${art.slides.length} slides)` : "Arte exportada");
+      const node = nodeOf(art.key, slideIndex);
+      if (!node) throw new Error("no-node");
+      await exportNodeAsPng(node, `${fileBase}-${art.key}-${String(slideIndex + 1).padStart(2, "0")}.png`);
+      toast.success("Arte exportada");
     } catch (error) {
       console.error("[studio-pro] export autoral", error);
       toast.error("Não foi possível exportar esta arte.");
     } finally {
-      unlock();
       setBusy(null);
     }
   };
 
 
-  const save = async (art: AuthorialArt, caption: string) => {
+  const save = async (art: AuthorialArt, slideIndex: number, caption: string) => {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
       toast.error("Faça login novamente para salvar.");
       return;
     }
-    setBusy(`save-${art.key}`);
-    const side = flipped.has(art.key) ? "-b" : "";
-    const nodes = art.slides
-      .map((_, i) => nodeOf(art.key, i))
-      .filter((n): n is HTMLElement => !!n);
+    const key = slideKey(art.key, slideIndex);
+    setBusy(`save-${key}`);
+    const side = flipped.has(key) ? "-b" : "";
+    const node = nodeOf(art.key, slideIndex);
+    const nodes = node ? [node] : [];
 
     let thumb: string | null = null;
     let pngPath: string | null = null;
@@ -329,7 +311,7 @@ const StudioProAuthorial = ({
       try {
         const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
         const png = await renderNodeToBlob(node, ratio, "image/png");
-        const path = `${auth.user.id}/${brand.id}/${seed}-${art.key}${side}-${String(i + 1).padStart(2, "0")}.png`;
+        const path = `${auth.user.id}/${brand.id}/${seed}-${art.key}-${String(slideIndex + 1).padStart(2, "0")}${side}.png`;
         const { error: upErr } = await supabase.storage
           .from("studio-art")
           .upload(path, png, { contentType: "image/png", upsert: true });
@@ -345,7 +327,7 @@ const StudioProAuthorial = ({
         ? await captureArtSnapshot({
             userId: auth.user.id,
             brandId: brand.id,
-            key: `${seed}-${art.key}${side}`,
+             key: `${seed}-${art.key}-${String(slideIndex + 1).padStart(2, "0")}${side}`,
             format,
             nodes,
           })
@@ -354,14 +336,14 @@ const StudioProAuthorial = ({
     const { error } = await supabase.from("studio_creations").insert({
       user_id: auth.user.id,
       brand_id: brand.id,
-      seed: `${seed}${side}:${art.key}`,
+      seed: `${seed}${side}:${art.key}:${slideIndex}`,
       block_kind: art.kind === "carousel" ? "carousel" : "quote",
       format,
-      headline: art.slides[0]?.lines[0]?.slice(0, 140) ?? null,
+      headline: art.slides[slideIndex]?.lines[0]?.slice(0, 140) ?? null,
       caption,
       thumb,
       png_path: pngPath,
-      composition: JSON.parse(JSON.stringify(art)),
+      composition: JSON.parse(JSON.stringify({ ...art, slides: [art.slides[slideIndex]], slideIndex, slideTotal: art.slides.length })),
       snapshot,
       segment: art.textId ?? "autoral",
       angle: "informar",
@@ -374,7 +356,7 @@ const StudioProAuthorial = ({
       toast.error("Não foi possível salvar na marca.");
       return;
     }
-    setSaved((prev) => new Set(prev).add(art.key));
+    setSaved((prev) => new Set(prev).add(key));
     toast.success(`Arte salva em ${folder === "Todas" ? "Geral" : folder}`);
     onSaved?.();
   };
@@ -393,28 +375,6 @@ const StudioProAuthorial = ({
       .map((art, i) => `--- ${String(i + 1).padStart(2, "0")} · ${art.kind} ---\n${authorialCaption(art, splitSlogans(brand.slogan)[0] ?? null)}`)
       .join("\n\n");
     exportTextFile(`${fileBase}-legendas.txt`, body);
-  };
-
-  const downloadAll = async () => {
-    setBusy("all-png");
-    try {
-      const items: Array<{ node: HTMLElement; fileName: string }> = [];
-      for (const art of arts) {
-        for (let i = 0; i < art.slides.length; i += 1) {
-          const node = nodeOf(art.key, i);
-          if (!node) continue;
-          items.push({ node, fileName: `${fileBase}-${art.key}-${String(i + 1).padStart(2, "0")}.png` });
-        }
-      }
-      if (!items.length) throw new Error("no-nodes");
-      const { delivered } = await exportNodesAsPng(items);
-      toast.success(`Artes exportadas (${delivered})`);
-    } catch (error) {
-      console.error("[studio-pro] export lote autoral", error);
-      toast.error("Não foi possível exportar todas as artes.");
-    } finally {
-      setBusy(null);
-    }
   };
 
 
