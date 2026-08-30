@@ -122,14 +122,18 @@ const AutoFit = ({ children, resetKey }: Props) => {
     fonts?.ready?.then(() => refine()).catch(() => undefined);
 
     let lastWidth = node.getBoundingClientRect().width;
-    const observer = new ResizeObserver(() => {
-      const width = node.getBoundingClientRect().width;
-      if (Math.abs(width - lastWidth) < 2) return;
-      lastWidth = width;
-      passes.current = 0;
-      setScale(1);
-    });
-    observer.observe(node);
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => {
+            const width = node.getBoundingClientRect().width;
+            if (Math.abs(width - lastWidth) < 2) return;
+            lastWidth = width;
+            passes.current = 0;
+            setScale(1);
+          });
+    observer?.observe(node);
+
 
     return () => {
       alive = false;
