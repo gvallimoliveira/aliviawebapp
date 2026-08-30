@@ -40,7 +40,15 @@ type LogOptions = {
   transcriptions?: number;
   metadata?: Record<string, unknown>;
   user_id?: string | null;
+  /**
+   * Marca a linha como consumo NÃO faturável (VIP, parceiro, tier ilimitado).
+   * Crítico: `get_user_credit_status` soma o pool da clínica por membro e
+   * ignora linhas com was_bypassed=true. Sem isso, um VIP/parceiro dentro de
+   * uma clínica queimaria a cota do time inteiro.
+   */
+  was_bypassed?: boolean;
 };
+
 
 /**
  * Decode the `sub` claim from a Bearer JWT without verifying the signature.
@@ -110,8 +118,9 @@ export function shadowLogAiUsage(
         transcriptions_used: transcriptions,
         metadata,
         was_blocked: false,
-        was_bypassed: false,
+        was_bypassed: opts.was_bypassed ?? false,
       });
+
       if (error) {
         console.error("[ai-credits] insert failed:", error.message, "fn=", opts.function_name);
       }
