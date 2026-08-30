@@ -486,20 +486,6 @@ const StudioProAuthorial = ({
               {f.label}
             </Button>
           ))}
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 rounded-full text-xs"
-            disabled={busy === "all-png"}
-            onClick={() => void downloadAll()}
-          >
-            {busy === "all-png" ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Images className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            Todas em PNG
-          </Button>
           <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={downloadCaptions}>
             <FileText className="mr-1.5 h-3.5 w-3.5" />
             Legendas (.txt)
@@ -525,37 +511,84 @@ const StudioProAuthorial = ({
           const caption = authorialCaption(art, splitSlogans(brand.slogan)[0] ?? null);
           const photo = photoOf(art);
           const isCarousel = art.slides.length > 1;
-          const frame = (slideIndex: number) => (
-            <div
-              key={slideIndex}
-              className={`overflow-hidden rounded-2xl border border-border bg-background ${
-                isCarousel ? "shrink-0 snap-center" : "mx-auto"
-              }`}
-              style={{ ...FRAME_STYLE[format], ...themeStyle }}
-            >
-              <div
-                id={nodeId(art.key, slideIndex)}
-                className="h-full w-full bg-background"
-                style={flipped.has(art.key) ? invertedStyle : undefined}
-              >
-                <AutoFit resetKey={`${brand.id}:${seed}:${format}:${art.key}:${slideIndex}`}>
-                  <StudioProSignature
-                    artKey={`${brand.id}:${seed}:${art.key}:${slideIndex}`}
-                    enabled={signatureOn}
-                    brandName={brand.name}
+          const frame = (slideIndex: number) => {
+            const key = slideKey(art.key, slideIndex);
+            const slideSaved = saved.has(key);
+            return (
+              <div key={slideIndex} className={isCarousel ? "w-[min(480px,88vw)] shrink-0 snap-center" : "w-full"}>
+                <div
+                  className={`overflow-hidden rounded-2xl border border-border bg-background ${isCarousel ? "" : "mx-auto"}`}
+                  style={{ ...FRAME_STYLE[format], ...themeStyle }}
+                >
+                  <div
+                    id={nodeId(art.key, slideIndex)}
+                    className="h-full w-full bg-background"
+                    style={flipped.has(key) ? invertedStyle : undefined}
                   >
-                    <AuthorialArtBlock
-                      art={art}
-                      slide={art.slides[slideIndex]}
-                      slideIndex={slideIndex}
-                      format={format}
-                      photo={photo}
-                    />
-                  </StudioProSignature>
-                </AutoFit>
+                    <AutoFit resetKey={`${brand.id}:${seed}:${format}:${art.key}:${slideIndex}`}>
+                      <StudioProSignature
+                        artKey={`${brand.id}:${seed}:${art.key}:${slideIndex}`}
+                        enabled={signatureOn}
+                        brandName={brand.name}
+                      >
+                        <AuthorialArtBlock
+                          art={art}
+                          slide={art.slides[slideIndex]}
+                          slideIndex={slideIndex}
+                          format={format}
+                          photo={photo}
+                        />
+                      </StudioProSignature>
+                    </AutoFit>
+                  </div>
+                </div>
+                <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-full text-xs"
+                    disabled={busy === `png-${key}`}
+                    onClick={() => void download(art, slideIndex)}
+                  >
+                    {busy === `png-${key}` ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Download className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    PNG
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => void copyCaption(caption)}>
+                    <Type className="mr-1.5 h-3.5 w-3.5" />
+                    Legenda
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={flipped.has(key) ? "secondary" : "outline"}
+                    className="h-8 rounded-full text-xs"
+                    onClick={() => toggleFlip(art.key, slideIndex)}
+                  >
+                    <Contrast className="mr-1.5 h-3.5 w-3.5" />
+                    {flipped.has(key) ? "Lado B" : "Inverter cores"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8 rounded-full text-xs"
+                    disabled={busy === `save-${key}` || slideSaved}
+                    onClick={() => void save(art, slideIndex, caption)}
+                  >
+                    {busy === `save-${key}` ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : slideSaved ? (
+                      <Check className="mr-1.5 h-3.5 w-3.5" />
+                    ) : (
+                      <Save className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    {slideSaved ? "Salva" : "Salvar na marca"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          );
+            );
+          };
 
           return (
             <div key={art.key} className="w-full">
@@ -572,55 +605,6 @@ const StudioProAuthorial = ({
                 frame(0)
               )}
 
-              <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 rounded-full text-xs"
-                  disabled={busy === `png-${art.key}`}
-                  onClick={() => void download(art)}
-                >
-                  {busy === `png-${art.key}` ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Download className="mr-1.5 h-3.5 w-3.5" />
-                  )}
-                  {isCarousel ? `PNG (${art.slides.length})` : "PNG"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 rounded-full text-xs"
-                  onClick={() => void copyCaption(caption)}
-                >
-                  <Type className="mr-1.5 h-3.5 w-3.5" />
-                  Legenda
-                </Button>
-                <Button
-                  size="sm"
-                  variant={flipped.has(art.key) ? "secondary" : "outline"}
-                  className="h-8 rounded-full text-xs"
-                  onClick={() => toggleFlip(art.key)}
-                >
-                  <Contrast className="mr-1.5 h-3.5 w-3.5" />
-                  {flipped.has(art.key) ? "Lado B" : "Inverter cores"}
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-8 rounded-full text-xs"
-                  disabled={busy === `save-${art.key}` || saved.has(art.key)}
-                  onClick={() => void save(art, caption)}
-                >
-                  {busy === `save-${art.key}` ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  ) : saved.has(art.key) ? (
-                    <Check className="mr-1.5 h-3.5 w-3.5" />
-                  ) : (
-                    <Save className="mr-1.5 h-3.5 w-3.5" />
-                  )}
-                  {saved.has(art.key) ? "Salva" : "Salvar na marca"}
-                </Button>
-              </div>
             </div>
           );
         })}
