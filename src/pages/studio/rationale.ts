@@ -253,6 +253,27 @@ const SENSE: Record<BlockKind, Sense> = {
     job: "dar clima e prova real sem roubar a leitura da mensagem",
     needsPhoto: true,
   },
+  askbox: {
+    format: "caixa de perguntas",
+    sees: "um convite com o sticker de pergunta sobre um tema da marca",
+    job: "abrir conversa: quem manda a dúvida já entra em contato",
+    needs: (c) => some(c.features) || some(c.searchQueries),
+    needsLabel: "temas e dúvidas reais do público",
+  },
+  promoPhone: {
+    format: "oferta com o produto na tela",
+    sees: "o produto ou plano aberto na tela do celular com a palavra da oferta repetida atrás",
+    job: "mostrar o que se compra e qual é a condição, sem rodeio",
+    needs: (c) => some(c.features) && (some(c.sales?.offers) || some(c.sales?.ctas) || some(c.subs)),
+    needsLabel: "linhas de oferta e recursos do plano",
+  },
+  stackType: {
+    format: "cartaz de letras empilhadas",
+    sees: "a palavra-chave repetida em contorno até aterrissar sólida, com tarjas de cor",
+    job: "fixar uma palavra da marca com força de cartaz",
+    needs: (c) => some(c.headlines),
+    needsLabel: "frases curtas da marca",
+  },
   search: {
     format: "barra de busca",
     sees: "uma barra de busca com o que a pessoa digitaria",
