@@ -16,6 +16,7 @@ import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
 import StudioPhotos from "@/pages/studio/StudioPhotos";
 import { countPhotos } from "@/pages/studio/photos";
 import AutoFit from "@/pages/studio/AutoFit";
+import { frameStyle } from "@/pages/studio/frame";
 import { readColorKit } from "./brandColors";
 import { buildBrandThemeStyle } from "./brandTheme";
 import { ensureFontLoaded } from "./brandFonts";
@@ -75,12 +76,7 @@ type Props = {
   onOpenBrandSettings?: () => void;
 };
 
-const FRAME_STYLE: Record<StudioFormat, React.CSSProperties> = {
-  "9x16": { width: "min(400px, 100%)", aspectRatio: "9/16" },
-  "4x5": { width: "min(480px, 100%)", aspectRatio: "4/5" },
-  "1x1": { width: "min(560px, 100%)", aspectRatio: "1/1" },
-  free: { width: "100%" },
-};
+
 
 const FORMATS: { id: StudioFormat; label: string }[] = [
   { id: "9x16", label: "Story 9:16" },
@@ -586,6 +582,8 @@ const StudioProAuthorial = ({
           const caption = authorialCaption(art, splitSlogans(brand.slogan)[0] ?? null);
           const photo = photoOf(art);
           const isCarousel = art.slides.length > 1;
+          /** Proporção do quadro; no "Livre" todos os slides da arte compartilham a chave. */
+          const frameKey = `${brand.id}:${seed}:${art.key}`;
           const frame = (slideIndex: number) => {
             const key = slideKey(art.key, slideIndex);
             const slideSaved = saved.has(key);
@@ -593,14 +591,14 @@ const StudioProAuthorial = ({
               <div key={slideIndex} className={isCarousel ? "w-[min(480px,88vw)] shrink-0 snap-center" : "w-full"}>
                 <div
                   className={`overflow-hidden rounded-2xl border border-border bg-background ${isCarousel ? "" : "mx-auto"}`}
-                  style={{ ...FRAME_STYLE[format], ...themeStyle }}
+                  style={{ ...frameStyle(format, frameKey), ...themeStyle }}
                 >
                   <div
                     id={nodeId(art.key, slideIndex)}
                     className="h-full w-full bg-background"
                     style={flipped.has(key) ? invertedStyle : undefined}
                   >
-                    <AutoFit resetKey={`${brand.id}:${seed}:${format}:${art.key}:${slideIndex}:${resetTick}`}>
+                    <AutoFit resetKey={`${brand.id}:${seed}:${format}:${frameKey}:${slideIndex}:${resetTick}`}>
                       <StudioProSignature
                         artKey={`${brand.id}:${seed}:${art.key}:${slideIndex}`}
                         enabled={signatureOn}
