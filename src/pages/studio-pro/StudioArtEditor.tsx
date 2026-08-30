@@ -190,12 +190,38 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
   const frameOf = (pos: number) => stageOf(pos)?.parentElement ?? null;
 
   const startEdit = () => {
+    stopMove(false);
     (htmls ?? []).forEach((_, pos) => {
       const node = stageOf(pos);
       if (node) setArtEditing(node, true);
     });
     setEditing(true);
   };
+
+  /** Liga o arraste por alça em todos os slides abertos. */
+  const startMove = () => {
+    (htmls ?? []).forEach((_, pos) => {
+      const node = stageOf(pos);
+      if (!node) return;
+      setArtEditing(node, false);
+      setArtMoving(node, true);
+    });
+    setEditing(false);
+    setMoving(true);
+  };
+
+  /** Desliga o arraste; `reset` devolve toda frase à posição original. */
+  const stopMove = (reset: boolean) => {
+    (htmls ?? []).forEach((_, pos) => {
+      const node = stageOf(pos);
+      if (!node) return;
+      if (reset) clearArtMoves(node);
+      setArtMoving(node, false);
+    });
+    setMoving(false);
+    if (reset) toast.success("Textos voltaram para a posição original.");
+  };
+
 
   const stopEdit = (keep: boolean) => {
     const slides = htmls ?? [];
