@@ -366,10 +366,29 @@ const StudioLanding = () => {
           className="w-full overflow-x-hidden bg-background"
           style={{ width: FRAME_WIDTH[format], maxWidth: "100vw" }}
         >
+          {/* Cada formato fixa a altura da seção na proporção real do quadro,
+              então 9x16 e 1x1 param de sair achatados/alongados. */}
           {format === "1x1" && (
-            <style>{`.studio-square section { min-height: min(720px, 100vw) !important; }`}</style>
+            <style>{`.studio-square section { min-height: min(720px, 100vw) !important; height: min(720px, 100vw) !important; }`}</style>
           )}
-          <div className={format === "1x1" ? "studio-square" : undefined}>
+          {format === "9x16" && (
+            <style>{`.studio-story section { min-height: min(764px, calc(100vw * 16 / 9)) !important; height: min(764px, calc(100vw * 16 / 9)) !important; }`}</style>
+          )}
+          {format === "4x5" && (
+            <style>{`.studio-portrait section { min-height: min(700px, calc(100vw * 5 / 4)) !important; height: min(700px, calc(100vw * 5 / 4)) !important; }`}</style>
+          )}
+          <div
+            className={
+              format === "1x1"
+                ? "studio-square"
+                : format === "9x16"
+                  ? "studio-story"
+                  : format === "4x5"
+                    ? "studio-portrait"
+                    : undefined
+            }
+          >
+
             {blocks.map(({ kind, treatment, motion, slide }, i) => {
               const Block = BLOCKS[kind];
               const rng = createRng(`${world}:${seed}:${kind}:${i}`);

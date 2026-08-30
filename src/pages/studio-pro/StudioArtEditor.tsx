@@ -77,10 +77,14 @@ const frameRatio = (format: StudioFormat, slide: ArtSnapshotSlide) => {
   return (slide.width || 1080) / (slide.height || 1350);
 };
 
+/** Quanto a arte pode passar do "cabe inteira" para preencher o quadro. */
+const MAX_FILL_ZOOM = 1.18;
+
 /**
- * Um slide do instantâneo dentro da moldura escolhida: a arte original é
- * escalada por inteiro (nunca cortada) e o espaço restante fica com a cor de
- * fundo da marca.
+ * Um slide do instantâneo dentro da moldura escolhida: a arte é escalada para
+ * PREENCHER o quadro (sem faixas lisas de fundo), com um teto de ampliação
+ * para não sacrificar o texto. Se preencher exigiria zoom acima do teto, a
+ * arte cabe inteira e o restante fica com o fundo da marca.
  */
 const SnapshotSlide = ({
   html,
@@ -108,9 +112,16 @@ const SnapshotSlide = ({
 
   const ratio = frameRatio(format, slide);
   const frameHeight = width ? width / ratio : 0;
-  const scale = width
-    ? Math.min(width / (slide.width || 1080), frameHeight / (slide.height || 1350))
+  const artWidth = slide.width || 1080;
+  const artHeight = slide.height || 1350;
+  const contain = width ? Math.min(width / artWidth, frameHeight / artHeight) : 0;
+  const cover = width ? Math.max(width / artWidth, frameHeight / artHeight) : 0;
+  const scale = contain
+    ? cover / contain <= MAX_FILL_ZOOM
+      ? cover
+      : contain * MAX_FILL_ZOOM
     : 0;
+
 
   return (
     <div
