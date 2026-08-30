@@ -35,6 +35,7 @@ import { useStudioAccess } from "./useStudioAccess";
 import StudioProCreate from "./StudioProCreate";
 import StudioBoundary from "@/pages/studio/StudioBoundary";
 import StudioProAuthorial from "./StudioProAuthorial";
+import BrandHooksCard from "./BrandHooksCard";
 import BrandTextsCard from "./BrandTextsCard";
 import type { ComposedBlock } from "@/studio-core";
 import BrandColorFields from "./BrandColorFields";
