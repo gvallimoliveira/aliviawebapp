@@ -58,31 +58,36 @@ const PinchHand = ({ tone, edge }: { tone: string; edge: string }) => (
       </linearGradient>
     </defs>
 
-    {/* Antebraço + palma */}
+    {/* Antebraço + palma entrando pela borda esquerda */}
     <path
-      d="M-4,66 C6,62 14,58 22,52 C30,46 40,40 50,39 C58,38 64,42 64,48 C64,54 58,58 50,60 C40,63 28,68 18,71 L-4,72 Z"
+      d="M-6,74 C4,68 12,62 20,54 C28,46 38,40 48,39 C58,38 66,43 66,50 C66,58 58,63 48,64 C36,65 24,70 16,74 Z"
       fill="url(#punchSkin)"
     />
+    {/* Dedos dobrados (nós da mão) — volume de close, como na referência */}
+    <path d="M46,40 C52,35 60,36 62,42 C63,47 57,49 52,47 Z" fill="url(#punchSkin)" />
+    <path d="M52,46 C58,44 64,46 65,51 C65,56 59,57 54,55 Z" fill="url(#punchSkin)" />
     {/* Indicador (por cima) — ponta apontando para o vão */}
     <path
-      d="M40,41 C46,32 56,25 68,23 C76,22 80,26 76,30 C70,35 62,40 56,46 C52,50 44,49 40,45 Z"
+      d="M42,40 C48,31 58,25 70,24 C78,23 80,28 74,31 C66,35 58,40 53,46 C49,50 43,47 42,40 Z"
       fill="url(#punchSkin)"
     />
     {/* Polegar (por baixo) — ponta apontando para o vão */}
     <path
-      d="M48,55 C56,57 66,60 74,64 C80,67 78,71 72,71 C62,70 52,66 45,62 C42,60 44,55 48,55 Z"
+      d="M50,55 C58,57 68,61 75,65 C80,68 77,72 71,71 C61,69 52,65 46,61 C43,59 46,54 50,55 Z"
       fill="url(#punchSkin)"
     />
     {/* Vincos e veias: traço fino, dá textura de close fotográfico */}
-    <g stroke={edge} strokeWidth="0.4" fill="none" strokeLinecap="round" opacity="0.55">
-      <path d="M6,66 C16,62 24,57 32,51" />
-      <path d="M10,70 C20,66 28,61 36,55" />
-      <path d="M44,44 C50,38 58,32 66,28" />
-      <path d="M50,58 C58,60 66,63 72,67" />
-      <path d="M30,54 C36,52 42,50 48,49" />
+    <g stroke={edge} strokeWidth="0.4" fill="none" strokeLinecap="round" opacity="0.5">
+      <path d="M4,72 C14,66 22,60 30,52" />
+      <path d="M10,74 C20,69 28,63 36,56" />
+      <path d="M46,42 C52,36 60,30 68,27" />
+      <path d="M52,58 C60,60 68,63 74,67" />
+      <path d="M30,56 C36,53 42,51 48,50" />
+      <path d="M47,41 C51,38 56,38 59,41" />
+      <path d="M53,47 C57,45 61,46 63,49" />
     </g>
     {/* Pulseira fina no punho, como na referência */}
-    <path d="M14,58 C17,63 18,68 17,72" stroke={edge} strokeWidth="1.1" fill="none" strokeLinecap="round" />
+    <path d="M18,60 C21,65 22,70 21,74" stroke={edge} strokeWidth="1.1" fill="none" strokeLinecap="round" />
   </svg>
 );
 
@@ -148,8 +153,8 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
            * público dar zoom. Alinhada ao lado oposto quando a mão é espelhada.
            */}
           <div
-            className={`absolute top-1/2 w-[34%] -translate-y-1/2 ${
-              mirrored ? "left-[4%] text-left" : "right-[2%] text-right"
+            className={`absolute top-[58%] w-[22%] -translate-y-1/2 ${
+              mirrored ? "right-[78%] text-right" : "left-[78%] text-left"
             }`}
           >
             <p className="text-[8px] font-medium leading-tight md:text-[11px]" style={{ color: ink }}>
