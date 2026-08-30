@@ -32,6 +32,7 @@ import {
   deliver,
   exportNodeAsPng,
   exportNodesAsPng,
+  lockUniformHeight,
   exportTextFile,
   personaForSeed,
   randomSeed,
