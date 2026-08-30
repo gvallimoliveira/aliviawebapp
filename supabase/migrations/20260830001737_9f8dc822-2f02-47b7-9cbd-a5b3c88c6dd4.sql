@@ -1,0 +1,1 @@
+UPDATE public.studio_brands SET logo_url = '/__l5e/assets-v1/2aea59ad-447d-4e48-ad36-4a1e4ccec2ad/lovechronicles-logo.png' WHERE id = 'fed039db-40ca-4740-88fb-f00d7bf9d933';
