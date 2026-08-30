@@ -25,7 +25,7 @@ export const STUDIO_MODELS: StudioModel[] = [
   { id: "citacao", label: "Citação", hint: "Bloco de fala em fundo de destaque", kinds: ["quote"] },
   { id: "carrossel", label: "Carrossel", hint: "Sequência capa → slides → CTA", kinds: ["carousel"] },
   { id: "foto", label: "Foto do acervo", hint: "Suas fotos com tipografia por cima", kinds: ["photoType", "photoSplit", "photoPortrait", "stage"], needsPhoto: true },
-  { id: "fotofundo", label: "Foto como plano de fundo", hint: "Sua foto esmaecida atrás do texto, com véu escurecido", kinds: ["photoVeil"], needsPhoto: true },
+  { id: "fotofundo", label: "Foto como plano de fundo", hint: "Sua foto esmaecida atrás do texto, com véu escurecido (substitui a foto em primeira camada)", kinds: ["photoVeil"], needsPhoto: true },
   { id: "numeros", label: "Números / prova", hint: "Métricas e dados em destaque", kinds: ["metrics", "stats"] },
   { id: "passos", label: "Passo a passo", hint: "Etapas numeradas do processo", kinds: ["journey", "list"] },
   { id: "recurso", label: "Recurso em close", hint: "Um benefício por arte", kinds: ["feature", "triptych"] },
