@@ -85,7 +85,115 @@ export const STUDIO_SELF_HOOKS: StudioHook[] = [
     sub: "Toda arte pode terminar com um próximo passo claro.",
     cta: "Colocar oferta em cada arte",
   },
+
+  /* --- Lote 2 (ago/2026): temas novos, mesma voz --- */
+  {
+    hook: "O tempo que você perde",
+    strong: "Você não paga o Canva com dinheiro, paga com as suas noites",
+    rest: ".",
+    sub: "Duas horas por arte é meio dia de trabalho por semana.",
+    cta: "Gerar o lote da semana em minutos",
+  },
+  {
+    hook: "Seguidor não paga conta",
+    strong: "Seguidor não paga conta — cliente paga",
+    rest: ".",
+    sub: "Arte com público declarado e convite claro conversa com quem compra.",
+    cta: "Escolher o meu público",
+  },
+  {
+    hook: "O perfil decide em 3 segundos",
+    strong: "Ninguém lê a sua bio antes de olhar as três primeiras artes",
+    rest: ".",
+    sub: "A grade é a sua vitrine — e ela fala primeiro.",
+    cta: "Arrumar as próximas três artes",
+  },
+  {
+    hook: "Preço é percepção",
+    strong: "Quando o visual parece amador, o preço parece caro",
+    rest: ".",
+    sub: "Mesma oferta, outra apresentação, outra conversa.",
+    cta: "Ver a minha oferta bem apresentada",
+  },
+  {
+    hook: "Repetir não é chato",
+    strong: "Você se cansa da sua mensagem muito antes do seu público entendê-la",
+    rest: ".",
+    sub: "Repetição com variação é o que fixa a ideia.",
+    cta: "Repetir a mensagem com variação",
+  },
+  {
+    hook: "Medo de aparecer",
+    strong: "Não quer gravar vídeo? Então sua marca precisa de tipografia forte",
+    rest: ".",
+    sub: "Dá para construir presença sem colocar a cara na câmera.",
+    cta: "Construir presença sem vídeo",
+  },
+  {
+    hook: "Um post, três formatos",
+    strong: "A mesma ideia vira feed, story e carrossel",
+    rest: " — sem começar de novo.",
+    sub: "Trocar o formato não deveria custar mais uma noite.",
+    cta: "Trocar de formato na hora",
+  },
+  {
+    hook: "Postar sem oferta",
+    strong: "Feed cheio e nenhuma venda costuma ser um problema de convite",
+    rest: ", não de alcance.",
+    sub: "Toda arte pode terminar com um próximo passo.",
+    cta: "Colocar convite em todas as artes",
+  },
+  {
+    hook: "Datas do calendário",
+    strong: "Toda data comemorativa te pega de surpresa porque você planeja no dia",
+    rest: ".",
+    sub: "Um lote pronto tira a urgência da criação.",
+    cta: "Adiantar o lote do mês",
+  },
+  {
+    hook: "Contratar ou sistematizar",
+    strong: "Antes de contratar um social media, organize a sua marca",
+    rest: ".",
+    sub: "Sem cores, fonte e mensagem definidas, qualquer designer chuta.",
+    cta: "Definir o meu kit de marca",
+  },
+  {
+    hook: "O que trava não é a arte",
+    strong: "O que te trava não é o design, é não saber o que dizer",
+    rest: ".",
+    sub: "O texto sai do público, do medo dele e da sua oferta.",
+    cta: "Ver o texto pronto da arte",
+  },
+  {
+    hook: "Comparação com marca grande",
+    strong: "Você compara seu feed com marca que tem equipe inteira",
+    rest: ".",
+    sub: "O que dá para copiar delas é a constância, não o orçamento.",
+    cta: "Ter constância de marca grande",
+  },
+  {
+    hook: "Salvar não é vaidade",
+    strong: "Post que ensina é salvo; post salvo é lembrado",
+    rest: ".",
+    sub: "Conteúdo útil e oferta clara convivem na mesma grade.",
+    cta: "Misturar utilidade e oferta",
+  },
+  {
+    hook: "Sua marca sem você",
+    strong: "Se você parar de postar um mês, alguém sente falta da sua marca?",
+    rest: "",
+    sub: "Presença é memória construída semana após semana.",
+    cta: "Manter presença toda semana",
+  },
+  {
+    hook: "Antes do tráfego pago",
+    strong: "Impulsionar post sem identidade é pagar para parecer amador mais rápido",
+    rest: ".",
+    sub: "Arrume a casa antes de convidar visita.",
+    cta: "Arrumar a marca primeiro",
+  },
 ];
+
 
 /** 2) Aliv.iA (app clínico) — versão profissional / clínica. */
 export const ALIVIA_PRO_HOOKS: StudioHook[] = [
