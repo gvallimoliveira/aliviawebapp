@@ -91,8 +91,20 @@ export const fragmentsOf = (body: string): string[] => {
   return out;
 };
 
+/**
+ * O campo de slogan do kit aceita VÁRIOS slogans — um por linha (o manual da
+ * marca costuma propor 2 ou 3). A primeira linha é a assinatura do lockup; as
+ * demais entram no sorteio das peças de slogan.
+ */
+export const splitSlogans = (raw?: string | null): string[] =>
+  (raw ?? "")
+    .split(/\r?\n|\s\|\s/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
 /** Quantidade de layouts disponíveis (ver AuthorialArtBlock). */
 export const AUTHORIAL_LAYOUTS = 6;
+
 /** Layouts que exigem foto no acervo. */
 const PHOTO_LAYOUTS = [4, 5];
 
