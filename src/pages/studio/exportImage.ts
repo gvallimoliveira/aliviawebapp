@@ -465,7 +465,18 @@ export const deliverMany = async (files: File[], mime = "image/png"): Promise<bo
   return false;
 };
 
-
+/** Dispara o download de um blob via link temporário. */
+const downloadBlob = (blob: Blob, fileName: string, mime = "image/png") => {
+  const url = URL.createObjectURL(blob.type ? blob : new Blob([blob], { type: mime }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 20_000);
+};
 
 /** Compartilha no mobile, baixa no desktop, abre em nova aba como último recurso. */
 export const deliver = async (blob: Blob, fileName: string, mime = "image/png"): Promise<boolean> => {
@@ -482,15 +493,7 @@ export const deliver = async (blob: Blob, fileName: string, mime = "image/png"):
     }
   }
 
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  link.rel = "noopener";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  downloadBlob(blob, fileName, mime);
 
-  window.setTimeout(() => URL.revokeObjectURL(url), 20_000);
   return false;
 };
