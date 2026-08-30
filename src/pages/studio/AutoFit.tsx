@@ -16,9 +16,16 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
  * decorativos que são propositalmente sangrados fora do quadro.
  */
 
-const MIN_SCALE = 0.58;
+/**
+ * Piso da escala. 9x16 e 1x1 sobram menos altura que 4x5, então o piso precisa
+ * ser baixo o suficiente para a copy longa caber em vez de sair cortada.
+ */
+const MIN_SCALE = 0.4;
 /** Folga interna para o texto não encostar na borda do quadro. */
 const SAFE_PAD = 6;
+/** Limite de passadas: evita laço infinito se a medida oscilar. */
+const MAX_PASSES = 14;
+
 
 const measureNeeded = (root: HTMLElement) => {
   const frame = root.getBoundingClientRect();
