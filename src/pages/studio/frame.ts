@@ -12,6 +12,7 @@
  * sempre entre proporções publicáveis no Instagram, de forma determinística
  * pela chave da arte (mesma seed ⇒ mesma proporção).
  */
+import type { CSSProperties } from "react";
 import type { StudioFormat } from "./blocks/shared";
 
 /** Proporção (largura / altura) dos formatos fixos. */
@@ -53,7 +54,7 @@ export const frameRatio = (format: StudioFormat, key = "studio") =>
   format === "free" ? freeRatioFor(key) : FORMAT_RATIO[format];
 
 /** Estilo do quadro: largura da tela + proporção real. Nunca altura livre. */
-export const frameStyle = (format: StudioFormat, key = "studio"): React.CSSProperties => ({
+export const frameStyle = (format: StudioFormat, key = "studio"): CSSProperties => ({
   width: `min(${MAX_WIDTH[format]}px, 100%)`,
   aspectRatio: String(frameRatio(format, key)),
 });
