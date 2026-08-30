@@ -15,6 +15,7 @@ import ArtworkGuard from "../../pages/studio/ArtworkGuard";
 
 class IO { observe(){} unobserve(){} disconnect(){} takeRecords(){return [];} }
 (globalThis as any).IntersectionObserver = IO as any;
+(Element.prototype as any).animate = () => ({ finished: Promise.resolve(), cancel(){}, play(){}, pause(){}, commitStyles(){}, addEventListener(){}, removeEventListener(){}, currentTime: 0, startTime: 0, playState: "finished" });
 
 describe("slogan segment render", () => {
   it("renders all blocks", () => {
