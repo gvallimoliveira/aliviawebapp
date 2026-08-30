@@ -35,6 +35,7 @@ Studio autoral: marca com `content_source = 'authorial'` NUNCA gera texto — s�
 Studio léxico: marca Aliv.iA falando com paciente/sub-nicho clínico usa "AutoAvaliação"; nunca afirmar "protocolo" (método estruturado / direcionamento / raciocínio clínico).
 
 ## Memories
+- [Studio Multi-Slogan](mem://features/studio-multi-slogan) — Slogans independentes por linha no kit e siglas (DNA) sem flexão de artigo.
 - [Studio Template Blocks](mem://features/studio-template-blocks) — Blocos de template externo (caixa de perguntas, promoção no celular, letras empilhadas, tratamentos 4/5 de carrossel) e checklist de registro.
 - [Studio Terminology Rules](mem://features/studio-terminology-rules) — "AutoAvaliação" para paciente da marca Aliv.iA e proibição de afirmar "protocolo" (usar método estruturado/direcionamento/raciocínio clínico).
 - [Studio Authorial Mode](mem://features/studio-authorial-mode) — Marcas autorais: Studio só diagrama textos do autor, regras de coerência e fragmentação.
