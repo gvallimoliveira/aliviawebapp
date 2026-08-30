@@ -6,7 +6,6 @@ import {
 
   Download,
   FileText,
-  Images,
   LayoutGrid,
   Lightbulb,
   Loader2,
@@ -31,8 +30,6 @@ import {
   createRng,
   deliver,
   exportNodeAsPng,
-  exportNodesAsPng,
-  lockUniformHeight,
   exportTextFile,
   personaForSeed,
   randomSeed,
@@ -669,7 +666,7 @@ const StudioProCreate = ({
     });
   }, [edits, blocks, format, seed, content, activePhotos, resetTick]);
 
-  /** Liga a edição direta na arte (ou em todos os slides do carrossel). */
+  /** Liga a edição direta somente na arte selecionada. */
   const startEdit = (indexes: number[]) => {
     setWhyOpen(indexes[0]);
     setEditing(indexes[0]);
@@ -923,138 +920,6 @@ const StudioProCreate = ({
     onSaved?.();
   };
 
-  /**
-   * No formato Livre cada slide tem altura própria; o Instagram só aceita
-   * carrossel com proporção única. Nos formatos fixos a proporção já é única.
-   */
-  const lockCarouselHeight = (nodes: HTMLElement[]) =>
-    format === "free" ? lockUniformHeight(nodes) : () => {};
-
-  /** Exporta a sequência inteira do carrossel: cada slide sai como PNG individual. */
-  const downloadCarousel = async (indexes: number[]) => {
-    setBusy(`png-${indexes[0]}`);
-    let unlock = () => {};
-    try {
-      const base = brand.name.replace(/\s+/g, "-").toLowerCase();
-      const items = indexes
-        .map((idx, i) => {
-          const node = document.getElementById(`studio-pro-block-${idx}`) as HTMLElement | null;
-          return node
-            ? { node, fileName: `${base}-${seed}-carrossel-${String(i + 1).padStart(2, "0")}.png` }
-            : null;
-        })
-        .filter((item): item is { node: HTMLElement; fileName: string } => !!item);
-      if (!items.length) throw new Error("no-nodes");
-      unlock = lockCarouselHeight(items.map((item) => item.node));
-      const { delivered } = await exportNodesAsPng(items);
-      toast.success(`Carrossel exportado (${delivered} slides)`);
-    } catch (error) {
-      console.error("[studio-pro] export carousel", error);
-      toast.error("Não foi possível exportar o carrossel.");
-    } finally {
-      unlock();
-      setBusy(null);
-    }
-  };
-
-
-  /** Salva o carrossel como UM item da galeria: capa é a miniatura. */
-  const saveCarousel = async (indexes: number[], caption: string) => {
-    const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) {
-      toast.error("Faça login novamente para salvar.");
-      return;
-    }
-    setBusy(`save-${indexes[0]}`);
-    let thumb: string | null = null;
-    let coverPath: string | null = null;
-    const carouselNodes = indexes
-      .map((i) => document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null)
-      .filter((n): n is HTMLElement => !!n);
-    const unlockHeights = lockCarouselHeight(carouselNodes);
-    for (let i = 0; i < indexes.length; i += 1) {
-      const node = document.getElementById(`studio-pro-block-${indexes[i]}`) as HTMLElement | null;
-      if (!node) continue;
-      const rect = node.getBoundingClientRect();
-      if (i === 0) {
-        try {
-          const thumbRatio = Math.max(1, Math.min(3, 900 / (rect.width || 900)));
-          const blob = await renderNodeToBlob(node, thumbRatio, "image/jpeg", 0.9);
-          thumb = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result));
-            reader.onerror = () => reject(reader.error);
-            reader.readAsDataURL(blob);
-          });
-        } catch (error) {
-          console.warn("[studio-pro] carousel thumb", error);
-        }
-      }
-      try {
-        const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
-        const png = await renderNodeToBlob(node, ratio, "image/png");
-        const path = `${auth.user.id}/${brand.id}/${seed}-carrossel-${String(i + 1).padStart(2, "0")}.png`;
-        const { error: upErr } = await supabase.storage
-          .from("studio-art")
-          .upload(path, png, { contentType: "image/png", upsert: true });
-        if (upErr) throw upErr;
-        if (i === 0) coverPath = path;
-      } catch (error) {
-        console.warn("[studio-pro] carousel png upload", error);
-      }
-    }
-    unlockHeights();
-    /** Instantâneo de cada slide: a edição pela galeria reabre exatamente estes. */
-    const slideNodes = indexes
-      .map((i) => document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null)
-      .filter((n): n is HTMLElement => !!n);
-    const snapshot = await captureArtSnapshot({
-      userId: auth.user.id,
-      brandId: brand.id,
-      key: `${seed}-carrossel-${indexes[0]}`,
-      format,
-      nodes: slideNodes,
-    });
-    const { error } = await supabase.from("studio_creations").insert({
-      user_id: auth.user.id,
-      brand_id: brand.id,
-      seed: `${seed}:carrossel:${indexes[0]}`,
-      block_kind: "carousel",
-      format,
-      headline: headlineOf(indexes[0]) || null,
-      caption,
-      thumb,
-      png_path: coverPath,
-      composition: JSON.parse(JSON.stringify(indexes.map((i) => blocks[i]))),
-      /** Texto exato de cada slide: é o que a edição pela galeria reabre. */
-      text_edits: Object.fromEntries(
-        indexes.map((i, pos) => {
-          const node = document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null;
-          return [pos, node ? readArtText(node) : {}];
-        }),
-      ),
-      snapshot,
-
-      segment: activeSegment,
-      angle,
-      folder: folder === "Todas" ? "Geral" : folder,
-      watermarked: watermark,
-    });
-    setBusy(null);
-    if (error) {
-      console.error("[studio-pro] save carousel", error);
-      toast.error("Não foi possível salvar o carrossel.");
-      return;
-    }
-    setSaved((prev) => {
-      const next = new Set(prev);
-      for (const i of indexes) next.add(i);
-      return next;
-    });
-    toast.success(`Carrossel salvo em ${folder === "Todas" ? "Geral" : folder} (${indexes.length} slides)`);
-    onSaved?.();
-  };
-
   const copyCaption = async (caption: string) => {
     try {
       await navigator.clipboard.writeText(caption);
@@ -1063,32 +928,6 @@ const StudioProCreate = ({
       toast.error("Não foi possível copiar a legenda.");
     }
   };
-
-  /** Baixa todas as artes desta versão com a mesma qualidade do download individual. */
-  const downloadAll = async () => {
-    setBusy("all-png");
-    try {
-      const base = brand.name.replace(/\s+/g, "-").toLowerCase();
-      const items: Array<{ node: HTMLElement; fileName: string }> = [];
-      for (let i = 0; i < blocks.length; i += 1) {
-        const node = document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null;
-        if (!node) continue;
-        items.push({
-          node,
-          fileName: `${base}-${seed}-${String(i + 1).padStart(2, "0")}-${blocks[i].kind}.png`,
-        });
-      }
-      if (!items.length) throw new Error("no-nodes");
-      const { delivered } = await exportNodesAsPng(items);
-      toast.success(`Todas as artes desta versão foram exportadas (${delivered})`);
-    } catch (error) {
-      console.error("[studio-pro] export all", error);
-      toast.error("Não foi possível exportar todas as artes.");
-    } finally {
-      setBusy(null);
-    }
-  };
-
 
   /** Baixa as legendas da versão inteira em um .txt. */
   const downloadCaptions = () => {
@@ -1266,20 +1105,6 @@ const StudioProCreate = ({
               {f.label}
             </Button>
           ))}
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 rounded-full text-xs"
-            disabled={busy === "all-png"}
-            onClick={downloadAll}
-          >
-            {busy === "all-png" ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Images className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            Todas em PNG
-          </Button>
           <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={downloadCaptions}>
             <FileText className="mr-1.5 h-3.5 w-3.5" />
             Legendas (.txt)
