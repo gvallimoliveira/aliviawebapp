@@ -263,11 +263,17 @@ export const composePage = (
      * nenhum bloco de foto em primeira camada entra na mesma página —
      * é um ou outro, nunca os dois.
      */
-    const useVeil = rng.chance(0.2);
+    const useVeil = rng.chance(0.3);
     const photoKinds: BlockKind[] = useVeil
       ? ["photoVeil"]
       : rng.shuffle(["photoType", "photoSplit", "photoPortrait", "stage"]);
-    const howMany = useVeil ? 1 : photoCount > 1 && rng.chance(0.5) ? 2 : 1;
+    /**
+     * Acervo grande merece mais presença: com 4+ fotos, duas peças
+     * fotográficas por página é o normal (antes era moeda ao ar).
+     */
+    const twoChance = photoCount >= 4 ? 0.7 : 0.5;
+    const howMany = useVeil ? 1 : photoCount > 1 && rng.chance(twoChance) ? 2 : 1;
+
     for (let i = 0; i < howMany; i += 1) {
       const at = 1 + rng.int(Math.max(1, kinds.length - 2));
       kinds.splice(at, 0, photoKinds[i]);

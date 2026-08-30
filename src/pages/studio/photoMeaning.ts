@@ -219,6 +219,24 @@ export const photoAffinity = (photo: StudioPhoto, topics: (TopicId | undefined)[
 
 
 /**
+ * Embaralhamento determinístico: mesma seed → mesma ordem, mas ordens
+ * diferentes para índices diferentes. É o que faz o acervo CIRCULAR de verdade
+ * em vez de a primeira foto empatada no topo aparecer sempre.
+ */
+const spread = (id: string, salt: number): number => {
+  let h = (salt * 2654435761) | 0;
+  for (let i = 0; i < id.length; i += 1) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return Math.abs(h);
+};
+
+/**
+ * Faixa de circulação: uma foto não precisa ser a MAIS afim ao assunto para
+ * entrar — basta sustentar o assunto com folga razoável. Sem essa faixa, só as
+ * fotos de afinidade máxima apareciam e o resto do acervo ficava parado.
+ */
+const CIRCULATION_BAND = 0.5;
+
+/**
  * Escolhe a foto que sustenta o assunto já decidido pela copy. Determinístico
  * (mesma seed → mesma foto) e com desempate por afinidade, não por sorteio
  * cego. Sem nenhuma foto com nexo, devolve `undefined`: o bloco fotográfico
@@ -238,7 +256,10 @@ export const pickPhotoForTopics = (
       score: photoAffinity(photo, topics) + (prefer?.includes(photo.usage) ? 0.35 : 0),
     }))
     .filter((s) => s.score > 0)
-    .sort((a, b) => b.score - a.score);
+    .sort(
+      (a, b) =>
+        b.score - a.score || spread(a.photo.id, index) - spread(b.photo.id, index),
+    );
 
   if (scored.length === 0) {
     /**
@@ -247,14 +268,19 @@ export const pickPhotoForTopics = (
      * assunto alheio — antes o fallback cego colocava termografia em arte de
      * questionários.
      */
-    const neutral = photos.filter((p) => !restrictionOf(p));
+    const neutral = photos
+      .filter((p) => !restrictionOf(p))
+      .sort((a, b) => spread(a.id, index) - spread(b.id, index));
     if (neutral.length === 0) return undefined;
     return neutral[Math.abs(index) % neutral.length];
   }
 
-
-  /** Roda entre as fotos empatadas no topo para não repetir sempre a mesma. */
+  /**
+   * Circula por todas as fotos que sustentam o assunto (não só as empatadas no
+   * topo), em ordem embaralhada por índice.
+   */
   const best = scored[0].score;
-  const top = scored.filter((s) => s.score >= best - 0.001).map((s) => s.photo);
-  return top[Math.abs(index) % top.length];
+  const pool = scored.filter((s) => s.score >= best * CIRCULATION_BAND).map((s) => s.photo);
+  return pool[Math.abs(index) % pool.length];
 };
+
