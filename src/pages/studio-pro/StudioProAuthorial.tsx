@@ -195,20 +195,29 @@ const StudioProAuthorial = ({
     [JSON.stringify(kit), seed],
   );
 
+  /** Fixação: com fotos fixadas, só elas alimentam as artes desta geração. */
+  const activePhotos = useMemo(() => {
+    if (pinnedPhotos.length === 0) return photos;
+    const only = photos.filter((p) => pinnedPhotos.includes(p.id));
+    return only.length > 0 ? only : photos;
+  }, [photos, pinnedPhotos]);
+
   const arts = useMemo(
     () =>
       composeAuthorial({
         texts,
         slogans: splitSlogans(brand.slogan),
         seed: `${brand.id}:${seed}`,
-        photoIds: photos.map((p) => p.id),
+        photoIds: activePhotos.map((p) => p.id),
         count: ART_COUNT,
         onlyTextId: textId,
+        forcePhoto: pinnedPhotos.length > 0,
       }),
-    [texts, brand.slogan, brand.id, seed, photos, textId],
+    [texts, brand.slogan, brand.id, seed, activePhotos, textId, pinnedPhotos.length],
   );
 
   const photoOf = (art: AuthorialArt) => photos.find((p) => p.id === art.photoId) ?? null;
+
 
   const newVersion = async () => {
     if (unlimited) {
