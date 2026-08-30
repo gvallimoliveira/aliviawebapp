@@ -113,13 +113,17 @@ export const sectionHeight = (format: StudioFormat) =>
  * - free: padding padrão.
  */
 export const blockPadding = (format: StudioFormat) => {
-  if (format === "9x16") return "pt-[16%] pb-[22%] px-[10%]";
+  // 9x16 (story): mantém buffer de UI no topo/rodapé, mas sem exagero — o
+  // excesso antigo (16%/22%) roubava altura e a copy saía cortada.
+  if (format === "9x16") return "pt-[11%] pb-[15%] px-[8%]";
   // 4x5 (post vertical do feed): altura extra sobra, então o respiro vertical
   // é maior que no quadrado, mas sem os buffers de UI do Stories.
   if (format === "4x5") return "py-[12%] px-[8%]";
-  if (format === "1x1") return "py-[10%] px-[8%]";
+  // 1x1: quadrado é o formato mais apertado em altura — respiro menor.
+  if (format === "1x1") return "py-[7%] px-[7%]";
   return "py-20 px-6";
 };
+
 
 /**
  * TIPO GRANDE SEM ATROPELO
