@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   deliver,
   exportNodeAsPng,
+  exportNodesAsPng,
   exportTextFile,
   randomSeed,
   renderNodeToBlob,
