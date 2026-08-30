@@ -13,6 +13,9 @@ import { kindsForModels } from "../../pages/studio/models";
 import AutoFit from "../../pages/studio/AutoFit";
 import ArtworkGuard from "../../pages/studio/ArtworkGuard";
 
+class IO { observe(){} unobserve(){} disconnect(){} takeRecords(){return [];} }
+(globalThis as any).IntersectionObserver = IO as any;
+
 describe("slogan segment render", () => {
   it("renders all blocks", () => {
     const b: any = brand;
