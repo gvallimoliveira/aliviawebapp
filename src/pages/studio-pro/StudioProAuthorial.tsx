@@ -383,7 +383,9 @@ const StudioProAuthorial = ({
       try {
         const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
         const png = await renderNodeToBlob(node, ratio, "image/png");
-        const path = `${auth.user.id}/${brand.id}/${seed}-${art.key}-${String(slideIndex + 1).padStart(2, "0")}${side}.png`;
+        // Não terminar em "-NN.png": a galeria usa esse padrão apenas para
+        // reconhecer carrosséis legados agrupados e baixar seus arquivos irmãos.
+        const path = `${auth.user.id}/${brand.id}/${seed}-${art.key}-slide-${String(slideIndex + 1).padStart(2, "0")}${side}-art.png`;
         const { error: upErr } = await supabase.storage
           .from("studio-art")
           .upload(path, png, { contentType: "image/png", upsert: true });
