@@ -40,9 +40,11 @@ const measureNeeded = (root: HTMLElement) => {
   for (const el of Array.from(root.querySelectorAll<HTMLElement>("*"))) {
     if (el.getAttribute("aria-hidden") === "true") continue;
     if (el.dataset.studioNoExport === "1" || el.closest('[data-studio-no-export="1"]')) continue;
-    if (el.children.length > 0) continue; // só folhas
     const text = el.textContent?.trim();
-    if (!text) continue;
+    const isVisualBoundary = el.dataset.studioFitVisual === "1";
+    // Texto é medido apenas nas folhas; molduras visuais entram pelo marcador
+    // explícito, sem contar a imagem ampliada internamente por object-cover.
+    if ((!text || el.children.length > 0) && !isVisualBoundary) continue;
     const style = getComputedStyle(el);
     if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) continue;
 
