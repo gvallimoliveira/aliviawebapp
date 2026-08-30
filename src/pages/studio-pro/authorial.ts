@@ -14,7 +14,8 @@
  * 2. Uma arte pode usar 1 fragmento (a1) ou fragmentos CONTÍGUOS (b1 + b2).
  * 3. Uma arte NUNCA mistura fragmentos de textos diferentes (a1 + b1) nem
  *    fragmentos não contíguos do mesmo texto (a2 + a5) — isso quebra a leitura.
- * 4. Carrossel = o texto inteiro repartido em ordem cronológica.
+ * 4. Carrossel = o texto inteiro repartido em ordem cronológica, sem cortar o
+ *    final (até 20 quadros; textos maiores agrupam fragmentos contíguos).
  * 5. Slogan é peça própria: nunca entra junto de fragmento de texto.
  *
  * Tudo é determinístico: a mesma seed devolve o mesmo lote (nenhum crédito de
