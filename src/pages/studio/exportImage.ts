@@ -545,24 +545,29 @@ export const exportNodesAsPng = async (
 ): Promise<{ delivered: number; shared: boolean }> => {
   const files: File[] = [];
   const surfaces = await Promise.all(items.map((item) => createStaticExportSurface(item.node)));
+  const imageRestores = await Promise.all(surfaces.map((surface) => inlineImages(surface.node)));
   const restoreHeight = lockUniformHeight(surfaces.map((surface) => surface.node));
   let lastError: unknown;
 
-  for (let index = 0; index < items.length; index += 1) {
-    const item = items[index];
-    const surface = surfaces[index];
-    try {
-      const rect = surface.node.getBoundingClientRect();
-      const ratio = safeRatio(rect.width, Math.max(rect.height, surface.node.scrollHeight), desiredRatio);
-      const blob = await renderStaticNodeToBlob(surface.node, ratio);
-      files.push(new File([blob], item.fileName, { type: "image/png" }));
-    } catch (error) {
-      lastError = error;
+  try {
+    await settleLayout();
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index];
+      const surface = surfaces[index];
+      try {
+        const rect = surface.node.getBoundingClientRect();
+        const ratio = safeRatio(rect.width, Math.max(rect.height, surface.node.scrollHeight), desiredRatio);
+        const blob = await renderStaticNodeToBlob(surface.node, ratio);
+        files.push(new File([blob], item.fileName, { type: "image/png" }));
+      } catch (error) {
+        lastError = error;
+      }
     }
+  } finally {
+    restoreHeight();
+    imageRestores.forEach((restore) => restore());
+    surfaces.forEach((surface) => surface.dispose());
   }
-
-  restoreHeight();
-  surfaces.forEach((surface) => surface.dispose());
 
   if (!files.length) throw lastError instanceof Error ? lastError : new Error("export-failed");
 
