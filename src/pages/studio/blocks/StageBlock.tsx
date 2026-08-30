@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { pickPhotoForTopics } from "../photoMeaning";
 import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME, BRAND_SITE } from "../brand";
 import PhotoFrame from "./PhotoFrame";
-import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * Triângulo invertido com vértices arredondados ("abrindo para fora da tela").

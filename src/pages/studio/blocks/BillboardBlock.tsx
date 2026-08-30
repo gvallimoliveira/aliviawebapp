@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { BRAND_NAME } from "../brand";
-import { pickHeadline, sectionHeight, type BlockProps } from "./shared";
+import { frameHeight, pickHeadline, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * OUTDOOR NA PAREDE (referência: quadro branco na parede com duas pessoas

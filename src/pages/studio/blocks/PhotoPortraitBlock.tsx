@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
 import { renderAccent, TextureLayer } from "./Texture";
-import { personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * RETRATO EDITORIAL COM DESTAQUE
