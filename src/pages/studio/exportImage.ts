@@ -363,11 +363,11 @@ export const renderNodeToBlob = async (
 };
 
 /**
- * Exporta um elemento em PNG de alta resolução e entrega o arquivo ao usuário.
- * Faz downscale progressivo quando o canvas estoura (comum no iPhone) e usa
- * Web Share no mobile, onde `<a download>` costuma ser ignorado.
+ * Rasteriza um nó em PNG com o MESMO cuidado da exportação individual:
+ * espera fontes/imagens, embute as fotos e faz downscale progressivo quando o
+ * canvas estoura (comum no iPhone).
  */
-export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desiredRatio = 3): Promise<ExportResult> => {
+export const renderNodeToPngBlob = async (node: HTMLElement, desiredRatio = 3) => {
   await waitForAssets(node);
   const restoreImages = await inlineImages(node);
 
@@ -386,8 +386,7 @@ export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desir
       try {
         const blob = await renderNodeToBlob(node, pixelRatio);
         if (blob.size < 1024) throw new Error("empty-canvas");
-        const shared = await deliver(blob, fileName);
-        return { blob, ratio: pixelRatio, shared };
+        return { blob, ratio: pixelRatio };
       } catch (error) {
         lastError = error;
       }
@@ -398,6 +397,74 @@ export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desir
 
   throw lastError instanceof Error ? lastError : new Error("export-failed");
 };
+
+/**
+ * Exporta um elemento em PNG de alta resolução e entrega o arquivo ao usuário.
+ * Usa Web Share no mobile, onde `<a download>` costuma ser ignorado.
+ */
+export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desiredRatio = 3): Promise<ExportResult> => {
+  const { blob, ratio } = await renderNodeToPngBlob(node, desiredRatio);
+  const shared = await deliver(blob, fileName);
+  return { blob, ratio, shared };
+};
+
+/**
+ * Exporta VÁRIAS artes (slides de um carrossel ou a leva inteira) com a mesma
+ * qualidade da exportação individual.
+ *
+ * Por que não basta chamar `exportNodeAsPng` num laço: `navigator.share` só
+ * aceita uma chamada por gesto do usuário — a partir do segundo slide o
+ * navegador rejeita e o download "não funciona". Aqui rasterizamos todos os
+ * slides primeiro e entregamos em UM único share com todos os arquivos; sem
+ * share (desktop), baixamos um por um com folga entre os cliques.
+ */
+export const exportNodesAsPng = async (
+  items: Array<{ node: HTMLElement; fileName: string }>,
+  desiredRatio = 3,
+): Promise<{ delivered: number; shared: boolean }> => {
+  const files: File[] = [];
+  let lastError: unknown;
+
+  for (const item of items) {
+    try {
+      const { blob } = await renderNodeToPngBlob(item.node, desiredRatio);
+      files.push(new File([blob], item.fileName, { type: "image/png" }));
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (!files.length) throw lastError instanceof Error ? lastError : new Error("export-failed");
+
+  const shared = await deliverMany(files);
+  return { delivered: files.length, shared };
+};
+
+/**
+ * Entrega um conjunto de arquivos: share único no mobile (com todos juntos) e,
+ * como alternativa, um download por arquivo em sequência espaçada.
+ */
+export const deliverMany = async (files: File[], mime = "image/png"): Promise<boolean> => {
+  const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+
+  if (files.length > 1 && typeof nav.share === "function" && nav.canShare?.({ files })) {
+    try {
+      await nav.share({ files });
+      return true;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return true;
+      // Share múltiplo indisponível: cai para o download arquivo por arquivo.
+    }
+  }
+
+  for (let i = 0; i < files.length; i += 1) {
+    downloadBlob(files[i], files[i].name, mime);
+    // Safari/Chrome descartam downloads disparados no mesmo instante.
+    if (i < files.length - 1) await new Promise<void>((resolve) => window.setTimeout(resolve, 450));
+  }
+  return false;
+};
+
 
 
 /** Compartilha no mobile, baixa no desktop, abre em nova aba como último recurso. */
