@@ -286,6 +286,14 @@ function decodeJwtEmail(authHeader: string | null): string | null {
   }
 }
 
+// Cache de bypass por isolate (5 min). VIP/parceiro/ilimitado não mudam de
+// minuto a minuto, e é justamente esse caminho que somava ~0,5–2s de latência
+// no canário (getUserById + vip_users + professionals + RPC). Só cacheia
+// decisões ilimitadas — nunca decisões que possam bloquear.
+type BypassEntry = { unlimited: true; reason: "vip" | "partner" | "unlimited_tier"; path: CreditPath; tier?: string; at: number };
+const BYPASS_TTL_MS = 5 * 60 * 1000;
+const bypassCache = new Map<string, BypassEntry>();
+
 /**
  * Consulta status de créditos e devolve decisão. Nunca throws.
  * O caller decide: `if (!decision.ok && decision.enforced) return 402;`
@@ -294,6 +302,7 @@ export async function assertCreditsAvailable(
   req: Request,
   opts: { function_name: string; credits?: number; user_id?: string | null },
 ): Promise<CreditDecision> {
+
   const t0 = Date.now();
   const cost = opts.credits ?? AI_CREDIT_COST[opts.function_name] ?? 0.05;
   const base = {
