@@ -14,48 +14,45 @@ import { blockPadding, sectionHeight, type BlockProps } from "./shared";
  * Não substitui os blocos em que a foto é elemento de primeira camada
  * (`photoType`, `photoSplit`, `photoPortrait`, `stage`) — é uma opção a mais.
  *
- * Tratamentos: 0 fundo total centralizado, 1 fundo total à esquerda,
- * 2 faixa inferior centralizada, 3 faixa inferior à esquerda.
+ * Tratamentos: variam APENAS a ancoragem/alinhamento do texto (rodapé,
+ * topo, centro) e a intensidade do véu. A foto é SEMPRE sangrada de borda a
+ * borda — é ela a protagonista da arte, como no modo autoral.
  */
 const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos }: BlockProps) => {
   const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic]);
   if (!photo) return null;
 
-  const partial = treatment >= 2;
-  const centered = treatment % 2 === 0;
+  /** 0 rodapé, 1 rodapé à esquerda, 2 topo, 3 centro. */
+  const anchor = treatment % 4;
+  const centered = anchor === 3 || anchor === 0;
+  const justify = anchor === 2 ? "items-start" : anchor === 3 ? "items-center" : "items-end";
   const sub = item.description;
   const kicker = rng.pick(content.kickers);
 
+  /** Véu direcional: escurece só o lado do texto, o resto da foto respira. */
+  const veil =
+    anchor === 2
+      ? "linear-gradient(to bottom, rgba(8,8,12,0.86) 0%, rgba(8,8,12,0.5) 42%, rgba(8,8,12,0.2) 72%, rgba(8,8,12,0.42) 100%)"
+      : anchor === 3
+        ? "radial-gradient(72% 58% at 50% 50%, rgba(8,8,12,0.78) 0%, rgba(8,8,12,0.42) 62%, rgba(8,8,12,0.3) 100%)"
+        : "linear-gradient(to top, rgba(8,8,12,0.88) 0%, rgba(8,8,12,0.58) 38%, rgba(8,8,12,0.2) 68%, rgba(8,8,12,0.38) 100%)";
+
   return (
     <section
-      className={`relative flex ${sectionHeight(format)} items-center overflow-hidden`}
+      className={`relative flex ${sectionHeight(format)} ${justify} overflow-hidden`}
       style={{ backgroundColor: "#0c0c12" }}
     >
-      {/* A foto é sempre camada absoluta atrás do texto — PhotoFrame é
-          `relative`, então o enquadramento absoluto fica no wrapper. */}
-      <div
-        aria-hidden
-        className={`pointer-events-none absolute inset-x-0 ${partial ? "bottom-0 h-[45%]" : "inset-y-0"}`}
-      >
+      {/* Foto sangrada: ocupa o quadro inteiro em qualquer formato. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
         <PhotoFrame
           photo={photo}
           className="h-full w-full rounded-none"
-          imgClassName="opacity-50 brightness-[0.6] saturate-[0.6] contrast-[0.95]"
+          imgClassName="opacity-90 brightness-[0.82] saturate-[0.85] contrast-[1.02]"
         />
       </div>
 
-      {/* Película translúcida levemente escurecida: leitura garantida em
-          qualquer foto, sem apagar a imagem. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: partial
-            ? "linear-gradient(to top, rgba(8,8,12,0.82) 0%, rgba(8,8,12,0.55) 34%, rgba(8,8,12,0.25) 55%, rgba(8,8,12,0.55) 100%)"
-            : "rgba(8,8,12,0.55)",
-        }}
-      />
+      <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: veil }} />
 
       <div className={`container relative ${blockPadding(format)}`}>
         <motion.div
@@ -68,7 +65,7 @@ const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos }: Blo
         >
           <p
             className="mb-4 text-[10px] font-semibold uppercase tracking-[0.32em]"
-            style={{ color: "rgba(245,245,244,0.7)" }}
+            style={{ color: "rgba(245,245,244,0.72)" }}
           >
             {kicker}
           </p>
@@ -82,7 +79,7 @@ const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos }: Blo
 
           <p
             className="mt-6 max-w-xl text-sm leading-relaxed md:text-base"
-            style={{ color: "rgba(245,245,244,0.85)", marginInline: centered ? "auto" : undefined }}
+            style={{ color: "rgba(245,245,244,0.88)", marginInline: centered ? "auto" : undefined }}
           >
             {sub}
           </p>
