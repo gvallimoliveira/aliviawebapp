@@ -1,11 +1,10 @@
 import { buildSegmentContent, relationForSegment } from "../../pages/studio-pro/brandContent";
 import { audiencesWithSlogan, SLOGAN_SEGMENT, resolveAudience, audienceKeyword, audienceHook, audienceAncestors, buildSegments } from "../../pages/studio-pro/audiences";
-import { composePage } from "../../studio-core/index";
+import { composePage, buildCoverage, createPicker, personaForSeed } from "../../studio-core/index";
+import { voiceRegister } from "../../pages/studio/lexicon";
 import { enforceRationale, explainArt, rationaleText } from "../../pages/studio/rationale";
 import { createRng } from "../../pages/studio/rng";
-import { personaForSeed } from "../../pages/studio/personas";
-import { varyContent, voiceRegister } from "../../pages/studio/copyEngine";
-import { buildCoverage, createPicker } from "../../pages/studio/coverage";
+import { varyContent } from "../../pages/studio/vary";
 const slogan = "Onde a dor insistiu em ficar, o raciocínio clínico encontra a saída.";
 const kit: any = { name: "Guilherme Vallim Fisioterapia", niche: "Fisioterapia", tone: "sócio experiente", description: "Fisioterapia ortopédica e esportiva", slogan };
 const base: any[] = ["dor-cronica","pos-operatorio","esportista-performance","geracao-60","atleta"].map((id, i) => ({ id, label: id, keyword: "K"+i, hook: "Você que "+id, cta: "CTA "+i, pains:["dor "+i], desires:["desejo "+i], proof:["prova "+i] }));
