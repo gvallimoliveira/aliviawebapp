@@ -1071,7 +1071,7 @@ const StudioProCreate = ({
           </p>
 
           {/* Acervo privado de fotos: envio, enquadramento e fixação. */}
-          <div className="mt-2">
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <Button
               type="button"
               size="sm"
@@ -1082,12 +1082,29 @@ const StudioProCreate = ({
               <Camera className="mr-1.5 h-3.5 w-3.5" />
               Adicionar / gerenciar fotos
             </Button>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {photos.length === 0
-                ? "Nenhuma foto nesta marca — clique para enviar as suas."
-                : `${photos.length} foto(s) nesta marca${photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}${pinnedPhotos.length > 0 ? ` · ${pinnedPhotos.length} fixada(s) para a próxima geração` : " · fixe uma foto ali para usá-la obrigatoriamente"}.`}
-            </p>
+            {photos.length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant={photoFirst ? "secondary" : "outline"}
+                className="h-8 rounded-full text-xs"
+                onClick={() => setPhotoFirst((v) => !v)}
+              >
+                <Camera className="mr-1.5 h-3.5 w-3.5" />
+                Fotos do acervo em destaque
+              </Button>
+            )}
           </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {photos.length === 0
+              ? "Nenhuma foto nesta marca — clique para enviar as suas."
+              : `${photos.length} foto(s) nesta marca${photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}${pinnedPhotos.length > 0 ? ` · ${pinnedPhotos.length} fixada(s) para a próxima geração` : " · fixe uma foto ali para usá-la obrigatoriamente"}.`}
+            {photos.length > 0 &&
+              (photoFirst
+                ? " Filtro ligado: metade das artes deste lote usa foto do acervo como plano de fundo."
+                : " Ligue o filtro para forçar metade das artes com foto de fundo.")}
+          </p>
+
 
 
 
