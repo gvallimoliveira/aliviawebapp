@@ -1480,8 +1480,17 @@ export const buildSegmentContent = ({
    * para não ser reescrita nem descartada.
    */
   if (segment === SLOGAN_SEGMENT && hasSlogan(kit.slogan)) {
-    return applySloganFocus(built, kit.slogan as string, brand);
+    /**
+     * Vários slogans = frases independentes. Uma arte usa UM slogan, sorteado
+     * pela seed do lote (mesma seed = mesma frase; lote novo, outra frase).
+     */
+    const phrases = sloganList(kit.slogan);
+    const pick = phrases.length > 1
+      ? phrases[createRng(`slogan:${variationSeed ?? "base"}:${angle}`).int(phrases.length)]
+      : phrases[0];
+    return applySloganFocus(built, pick, brand);
   }
+
   return built;
 
 };
