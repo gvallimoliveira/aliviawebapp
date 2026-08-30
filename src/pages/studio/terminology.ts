@@ -137,9 +137,26 @@ const walk = (value: unknown, options: TerminologyOptions): unknown => {
   return value;
 };
 
-/** Varre todo o acervo (headlines, subs, fechos, carrosséis, vendas…). */
-export const applyTerminology = (content: WorldContent, options: TerminologyOptions = {}): WorldContent =>
-  walk(content, options) as WorldContent;
+/**
+ * Varre todo o acervo (headlines, subs, fechos, carrosséis, vendas…).
+ * Memoizado por objeto: a geração de lote reaproveita o mesmo acervo dezenas de
+ * vezes e a varredura não precisa repetir trabalho.
+ */
+const cache = new WeakMap<object, Map<boolean, WorldContent>>();
+
+export const applyTerminology = (content: WorldContent, options: TerminologyOptions = {}): WorldContent => {
+  const key = !!options.patientVoice;
+  let byVoice = cache.get(content as object);
+  if (!byVoice) {
+    byVoice = new Map();
+    cache.set(content as object, byVoice);
+  }
+  const hit = byVoice.get(key);
+  if (hit) return hit;
+  const out = walk(content, options) as WorldContent;
+  byVoice.set(key, out);
+  return out;
+};
 
 /** Termos que identificam público de paciente / sub-nicho clínico. */
 const PATIENT_AUDIENCE =
