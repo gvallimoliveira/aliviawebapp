@@ -20,6 +20,7 @@
  * 100% local e determinístico: nenhuma chamada de IA, mesma frase ⇒ mesmo texto.
  */
 
+import { isAliviaCoreBrand } from "@/pages/studio-pro/aliviaCoreCharm";
 import type { WorldContent } from "./content/types";
 
 /* ------------------------------------------------------------------ *
@@ -126,3 +127,10 @@ const PATIENT_AUDIENCE =
 
 /** A relação da arte fala com paciente? (aceita rótulo, palavra-chave, gancho) */
 export const isPatientVoice = (probe: string): boolean => PATIENT_AUDIENCE.test(probe ?? "");
+
+/**
+ * Decide o modo "autoavaliação" de uma arte: só vale para a marca clínica dona
+ * do app e apenas quando a relação da arte fala com paciente/sub-nicho clínico.
+ */
+export const patientVoiceFor = (brand: string, probe: string): boolean =>
+  isAliviaCoreBrand(brand ?? "") && isPatientVoice(probe);

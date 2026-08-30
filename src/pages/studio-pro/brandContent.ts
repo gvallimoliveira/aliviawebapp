@@ -16,8 +16,7 @@ import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlog
 import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
 import { applyCharm } from "./charmCopy";
-import { isAliviaCoreBrand } from "./aliviaCoreCharm";
-import { applyTerminology, isPatientVoice } from "@/pages/studio/terminology";
+import { applyTerminology, patientVoiceFor } from "@/pages/studio/terminology";
 
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
@@ -1418,13 +1417,12 @@ export const buildSegmentContent = ({
      * arte dirigida a paciente / sub-nicho clínico diz AUTOavaliação. Em qualquer
      * marca, a copy nunca afirma ter "protocolo".
      */
-    const patientVoice =
-      isAliviaCoreBrand(brand) &&
-      isPatientVoice(
-        [relation?.keyword, relation?.who, relation?.audience?.label, relation?.audience?.description, relation?.hook]
-          .filter(Boolean)
-          .join(" · "),
-      );
+    const patientVoice = patientVoiceFor(
+      brand,
+      [relation?.keyword, relation?.who, relation?.audience?.label, relation?.audience?.description, relation?.hook]
+        .filter(Boolean)
+        .join(" · "),
+    );
     const done = applyTerminology(
       sanitizeContent(applyAngle(content, angle, relation, brand), dna.forbidden),
       { patientVoice },
