@@ -75,8 +75,8 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
         <div className="relative mt-6 w-full">
           <div
             className="relative z-20 mx-auto w-[52%]"
-            style={popoutHeight}
             style={{
+              ...popoutHeight,
               WebkitMaskImage: POPOUT_TRIANGLE_MASK,
               maskImage: POPOUT_TRIANGLE_MASK,
               WebkitMaskSize: "100% 100%",
@@ -86,6 +86,7 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }
               filter: "drop-shadow(0 26px 28px hsl(var(--foreground) / 0.35))",
             }}
           >
+
             <PhotoFrame photo={photo} className="h-full w-full" />
           </div>
 
