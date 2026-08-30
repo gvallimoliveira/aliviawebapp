@@ -99,7 +99,7 @@ const StudioProSignature = ({ artKey, enabled, brandName = "", children }: Props
   }, [artKey, enabled, brandName]);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative h-full w-full">
       {children}
       {enabled && !signed && <StudioSignature dark={dark} corner={corner} />}
     </div>
