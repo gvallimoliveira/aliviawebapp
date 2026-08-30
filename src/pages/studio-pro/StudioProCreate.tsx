@@ -238,7 +238,7 @@ const StudioProCreate = ({
   const restored = useRef<PersistedCreateState>(readPersisted(brand.id));
   /** Assinatura da marca nas artes: ajuste global da marca (ligado por padrão). */
   const signatureOn = brand.signature_enabled !== false;
-  const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "1x1");
+  const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "free");
   const [seed, setSeed] = useState(() => restored.current.seed ?? randomSeed());
   const [busy, setBusy] = useState<string | null>(null);
   /** Índices das artes já salvas nesta versão — evita cliques duplicados. */
