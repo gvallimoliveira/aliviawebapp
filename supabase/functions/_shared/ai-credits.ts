@@ -347,6 +347,16 @@ export async function assertCreditsAvailable(
       });
     }
 
+    // Bypass já conhecido neste isolate? Devolve sem tocar em rede.
+    const cached = bypassCache.get(userId);
+    if (cached && Date.now() - cached.at < BYPASS_TTL_MS) {
+      return finalize(admin, userId, {
+        ...base, enforced, ok: true, unlimited: true,
+        reason: cached.reason, path_taken: cached.path, tier: cached.tier,
+        metadata: { bypass_cache: true },
+      });
+    }
+
     // Email para VIP: tenta do JWT, senão profiles/auth
     let email = decodeJwtEmail(authHeader);
     if (!email) {
@@ -357,6 +367,7 @@ export async function assertCreditsAvailable(
     }
 
     if (await isVipEmail(admin, email)) {
+      bypassCache.set(userId, { unlimited: true, reason: "vip", path: "vip", at: Date.now() });
       return finalize(admin, userId, {
         ...base, enforced, ok: true, unlimited: true, reason: "vip", path_taken: "vip",
       });
@@ -370,11 +381,13 @@ export async function assertCreditsAvailable(
         .eq("user_id", userId)
         .maybeSingle();
       if (prof?.is_partner) {
+        bypassCache.set(userId, { unlimited: true, reason: "partner", path: "partner", at: Date.now() });
         return finalize(admin, userId, {
           ...base, enforced, ok: true, unlimited: true, reason: "partner", path_taken: "partner",
         });
       }
     } catch { /* noop */ }
+
 
     // Consulta consolidada
     const { data: statusData, error: statusError } = await admin.rpc(
