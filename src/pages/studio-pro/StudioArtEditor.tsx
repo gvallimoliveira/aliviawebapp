@@ -266,6 +266,10 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
       toast.error("Conclua o ajuste do texto antes de salvar.");
       return;
     }
+    if (moving) {
+      toast.error("Fixe a posição dos textos antes de salvar.");
+      return;
+    }
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) {
       toast.error("Faça login novamente para salvar.");
