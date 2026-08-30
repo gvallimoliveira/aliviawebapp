@@ -218,6 +218,25 @@ const paintImagesOnCanvas = (canvas: HTMLCanvasElement, node: HTMLElement) => {
     roundedRect(context, x, y, width, height, radius);
     context.clip();
 
+    /*
+     * O repinte tem de reproduzir o MESMO tratamento visual da tela. Sem isso a
+     * arte sai estragada: o modelo "Frase de impacto" espelha a mão
+     * (scale-x-[-1]) e aplica grayscale/invert por CSS — o html-to-image já
+     * rasteriza a versão tratada e este repinte colava a foto original em cima,
+     * o que parecia uma segunda mão duplicada.
+     */
+    const cssFilter = style.filter && style.filter !== "none" ? style.filter : "";
+    if (cssFilter && "filter" in context) {
+      (context as CanvasRenderingContext2D & { filter: string }).filter = cssFilter;
+    }
+    const matrix = style.transform && style.transform !== "none" ? new DOMMatrixReadOnly(style.transform) : null;
+    const flipX = !!matrix && matrix.a < 0;
+    const flipY = !!matrix && matrix.d < 0;
+    if (flipX || flipY) {
+      context.translate(flipX ? x * 2 + width : 0, flipY ? y * 2 + height : 0);
+      context.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+    }
+
     if (style.objectFit === "contain") {
       const fit = Math.min(width / sourceWidth, height / sourceHeight);
       const drawWidth = sourceWidth * fit;
@@ -227,6 +246,7 @@ const paintImagesOnCanvas = (canvas: HTMLCanvasElement, node: HTMLElement) => {
       context.drawImage(image, sx, sy, sw, sh, x, y, width, height);
     }
     context.restore();
+
   }
 };
 
