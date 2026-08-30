@@ -260,25 +260,41 @@ export const SLOGAN_SEGMENT = "slogan-destaque";
 export const hasSlogan = (slogan?: string | null): boolean => (slogan ?? "").trim().length >= 3;
 
 /**
+ * O campo de slogan aceita VÁRIAS frases — uma por linha. Cada linha é um
+ * slogan INDEPENDENTE (não é continuação da anterior): nunca se juntam na mesma
+ * arte. A primeira é a principal (lockup); as demais entram na rotação.
+ */
+export const sloganList = (slogan?: string | null): string[] =>
+  (slogan ?? "")
+    .split(/\r?\n|;/)
+    .map((line) => line.trim().replace(/\s*[.;]+$/, ""))
+    .filter((line) => line.length >= 3);
+
+/**
  * Constrói o sub-nicho de slogan da marca. É um recorte de comunicação (nunca
  * conta na métrica oficial de públicos): a arte existe para colocar a frase da
  * marca em destaque, com o público matriz como pai quando houver algum.
  */
 export const sloganAudience = (slogan?: string | null, audiences: BrandAudience[] = []): BrandAudience | null => {
-  const phrase = (slogan ?? "").trim().replace(/\s*[.;]+$/, "");
-  if (!hasSlogan(phrase)) return null;
+  const phrases = sloganList(slogan);
+  const phrase = phrases[0];
+  if (!phrase) return null;
   const parent = matrixAudiences(audiences)[0];
   return {
     id: SLOGAN_SEGMENT,
     label: "Slogan em destaque",
     keyword: phrase,
     hook: phrase,
-    hooks: [phrase],
-    description: `Arte de assinatura da marca: o slogan "${phrase}" ocupa o centro da peça, com o mínimo de texto em volta.`,
+    hooks: phrases,
+    description:
+      phrases.length > 1
+        ? `Arte de assinatura da marca: um dos slogans declarados (${phrases.map((p) => `"${p}"`).join(" ou ")}) ocupa o centro da peça, com o mínimo de texto em volta.`
+        : `Arte de assinatura da marca: o slogan "${phrase}" ocupa o centro da peça, com o mínimo de texto em volta.`,
     cta: parent?.cta,
     ...(parent ? { parentId: parent.id } : {}),
   };
 };
+
 
 /**
  * Lista de públicos pronta para o motor: os salvos no kit + o sub-nicho de
