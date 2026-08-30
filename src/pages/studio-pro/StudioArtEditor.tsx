@@ -216,11 +216,21 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
     (htmls ?? []).forEach((_, pos) => {
       const node = stageOf(pos);
       if (!node) return;
-      if (reset) clearArtMoves(node);
+      if (reset) {
+        clearArtMoves(node);
+        forgetArtLearning(node);
+      } else {
+        // Ao fixar, o motor guarda o ponto escolhido para as próximas artes.
+        learnArtMoves(node);
+      }
       setArtMoving(node, false);
     });
     setMoving(false);
-    if (reset) toast.success("Textos voltaram para a posição original.");
+    toast.success(
+      reset
+        ? "Textos voltaram para a posição original (aprendizado apagado)."
+        : "Posição fixada — o motor vai usar esse ponto nas próximas artes.",
+    );
   };
 
 

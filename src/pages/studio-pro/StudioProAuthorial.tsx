@@ -278,7 +278,12 @@ const StudioProAuthorial = ({
 
   const finishMove = (artKey: string, slide: number) => {
     const node = nodeOf(artKey, slide);
-    if (node) setArtMoving(node, false);
+    if (node) {
+      // O motor aprende o ponto escolhido antes de fechar o arraste.
+      if (learnArtMoves(node).length)
+        toast.success("Posição fixada — o motor vai usar esse ponto nas próximas artes.");
+      setArtMoving(node, false);
+    }
     setMoving(null);
     setMoveTick((n) => n + 1);
     setSaved((prev) => {
@@ -292,11 +297,12 @@ const StudioProAuthorial = ({
     const node = nodeOf(artKey, slide);
     if (node) {
       clearArtMoves(node);
+      forgetArtLearning(node);
       setArtMoving(node, false);
     }
     setMoving(null);
     setMoveTick((n) => n + 1);
-    toast.success("Textos voltaram para a posição original.");
+    toast.success("Textos voltaram para a posição original (aprendizado apagado).");
   };
 
   const startEdit = (artKey: string, slide: number) => {
