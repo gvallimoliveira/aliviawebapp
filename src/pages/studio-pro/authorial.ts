@@ -138,10 +138,31 @@ export const composeAuthorial = ({
   const cleanSlogans = slogans.map((s) => s.trim()).filter(Boolean);
   if (pool.length === 0 && cleanSlogans.length === 0) return [];
 
+  /*
+   * Slogans do kit: TODOS entram no lote, não só o primeiro.
+   * Reservamos um número de slots proporcional (no mínimo a quantidade de
+   * slogans quando o lote permite) e percorremos a lista em rotação, com um
+   * deslocamento derivado da seed para variar a ordem em cada nova versão.
+   */
+  const slotCount =
+    cleanSlogans.length === 0
+      ? 0
+      : pool.length === 0
+        ? count
+        : Math.min(cleanSlogans.length, Math.max(1, Math.floor(count / 2)));
+  const slotStep = slotCount > 0 ? Math.max(1, Math.floor(count / slotCount)) : 0;
+  const sloganSlots = new Set<number>();
+  for (let s = 0; s < slotCount; s += 1) {
+    sloganSlots.add(Math.min(count - 1, s * slotStep + (slotStep > 1 ? slotStep - 1 : 0)));
+  }
+  const offsetRng = createRng(`${seed}:slogan-offset`);
+  const sloganOffset = cleanSlogans.length > 0 ? offsetRng.int(cleanSlogans.length) : 0;
+  let sloganTaken = 0;
+
   const arts: AuthorialArt[] = [];
   for (let i = 0; i < count; i += 1) {
     const rng = createRng(`${seed}:authorial:${i}`);
-    const wantSlogan = cleanSlogans.length > 0 && (pool.length === 0 || (i > 0 && i % 5 === 4));
+    const wantSlogan = cleanSlogans.length > 0 && (pool.length === 0 || sloganSlots.has(i));
 
     const photoId = photoIds.length > 0 && rng.chance(0.45) ? rng.pick(photoIds) : null;
     const photoPartial = !!photoId && rng.chance(0.5);
@@ -150,6 +171,8 @@ export const composeAuthorial = ({
       : rng.int(AUTHORIAL_LAYOUTS - PHOTO_LAYOUTS.length);
 
     if (wantSlogan) {
+      const slogan = cleanSlogans[(sloganOffset + sloganTaken) % cleanSlogans.length];
+      sloganTaken += 1;
       arts.push({
         key: `slogan-${i}`,
         kind: "slogan",
@@ -158,11 +181,12 @@ export const composeAuthorial = ({
         layout,
         photoId,
         photoPartial,
-        slides: [{ lines: [rng.pick(cleanSlogans)], from: 0, to: 0 }],
+        slides: [{ lines: [slogan], from: 0, to: 0 }],
         totalFragments: 1,
       });
       continue;
     }
+
 
     const text = pool[rng.int(pool.length)];
     const fragments = fragmentsOf(text.body);
