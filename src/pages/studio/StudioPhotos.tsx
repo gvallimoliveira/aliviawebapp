@@ -317,7 +317,7 @@ const StudioPhotos = ({
                     <select
                       value={photo.usage}
                       onChange={(e) => void onEdit(photo.id, { usage: e.target.value as PhotoUsage })}
-                      className="rounded-md border border-border bg-card px-1.5 py-1 text-[10px] text-muted-foreground"
+                      className="rounded-md border border-border bg-card px-1.5 py-1 text-base text-muted-foreground md:text-[10px]"
                     >
                       {PHOTO_USAGES.map((u) => (
                         <option key={u.id} value={u.id}>

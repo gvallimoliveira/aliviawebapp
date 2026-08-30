@@ -173,7 +173,7 @@ const BrandSection = ({
     <section className="overflow-hidden rounded-3xl border border-border bg-card">
       <button
         type="button"
-        className="flex w-full items-start gap-3 p-5 text-left"
+        className="flex w-full items-start gap-3 p-4 text-left sm:p-5"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
@@ -196,7 +196,7 @@ const BrandSection = ({
           className={`mt-1 h-4 w-4 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && <div className="border-t border-border p-5">{children}</div>}
+      {open && <div className="border-t border-border p-4 sm:p-5">{children}</div>}
     </section>
   );
 };
@@ -1175,7 +1175,7 @@ const StudioProBrand = () => {
                       </Label>
                       <select
                         id={`edit-parent-${a.id}`}
-                        className="h-9 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+                        className="h-9 rounded-md border border-input bg-background px-2 text-base text-foreground md:text-xs"
                         value={a.parentId ?? ""}
                         onChange={(e) => updateAudience(i, { parentId: e.target.value || undefined })}
                       >
