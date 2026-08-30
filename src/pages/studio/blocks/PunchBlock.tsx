@@ -51,6 +51,10 @@ const punchOf = (raw: string): string | null => {
  */
 const HAND_RATIO = 1055 / 783;
 
+/** Centro vertical do vão da pinça (medido no alfa da foto: y 0,21–0,31). */
+const GAP_CENTER_Y = 0.26;
+
+
 
 const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
   /* Acervo de frases candidatas: headline, fala curta e fecho. */
@@ -102,9 +106,13 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="relative flex flex-1 items-center"
+          className={`relative flex flex-1 items-center ${mirrored ? "justify-end" : "justify-start"}`}
         >
-          <div className="relative w-full" style={{ aspectRatio: HAND_RATIO }}>
+          {/*
+           * A mão ocupa 84% da largura: a faixa restante é o espaço de leitura
+           * da frase minúscula, que sai do vão da pinça sem nunca ser cortada.
+           */}
+          <div className="relative w-[84%]" style={{ aspectRatio: HAND_RATIO }}>
             <img
               src={punchHand}
               alt="Mão em close fazendo o gesto de pinça, como se segurasse a frase"
@@ -118,14 +126,16 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
             />
 
             {/*
-             * A FRASE SEGURADA: ancorada no vão da pinça da foto (≈ 79% da
-             * largura, 44% da altura). Fonte deliberadamente pequena — é o que
-             * faz o público dar zoom. Espelha o lado quando a mão é espelhada.
+             * A FRASE SEGURADA: posição OBRIGATÓRIA, medida no canal alfa da
+             * própria foto. O vão da pinça vai de x 0,75–0,88 e y 0,21–0,31 da
+             * imagem; o texto nasce na boca do vão (x 0,775) e fica centrado
+             * na vertical do vão (y 0,26), espelhando quando a mão espelha.
              */}
             <div
-              className={`absolute top-[44%] w-[21%] ${
-                mirrored ? "right-[79%] text-right" : "left-[79%] text-left"
+              className={`absolute w-[42%] -translate-y-1/2 ${
+                mirrored ? "right-[77.5%] text-right" : "left-[77.5%] text-left"
               }`}
+              style={{ top: `${GAP_CENTER_Y * 100}%` }}
             >
               <p className="text-[8px] font-medium leading-tight md:text-[11px]" style={{ color: ink }}>
                 {punch}
@@ -138,6 +148,7 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
             </div>
           </div>
         </motion.div>
+
 
 
         {/* BAIXO: a chamada gigante que instiga o zoom. */}
