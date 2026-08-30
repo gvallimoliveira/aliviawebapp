@@ -148,11 +148,12 @@ const StudioProAuthorial = ({
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(stateKey(brand.id), JSON.stringify({ seed, format, textId }));
+      sessionStorage.setItem(stateKey(brand.id), JSON.stringify({ seed, format, textId, pinnedPhotos }));
     } catch {
       /* modo privado — ignora */
     }
-  }, [brand.id, seed, format, textId]);
+  }, [brand.id, seed, format, textId, pinnedPhotos]);
+
 
   useEffect(() => {
     let alive = true;
