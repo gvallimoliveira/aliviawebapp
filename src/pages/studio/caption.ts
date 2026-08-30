@@ -69,6 +69,18 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const h = rng.pick(c.headlines);
     return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
   },
+  askbox: (c, rng) => {
+    const f = rng.pick(c.features);
+    return [`Qual a sua dúvida sobre ${f.tag.toLowerCase()}?`, f.description];
+  },
+  promoPhone: (c, rng) => [
+    rng.pick([...(c.sales?.offers ?? []), rng.pick(c.subs)]),
+    rng.pick(c.features).description,
+  ],
+  stackType: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
+  },
   search: (c, rng) => [
     `${rng.pick(c.kickers)}: ${rng.pick(c.headlines).strong}`,
     rng.pick(c.subs),

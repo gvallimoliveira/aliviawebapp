@@ -8,7 +8,7 @@ import {
   renderAccent,
 } from "./Texture";
 import { imageForTopic, type TopicId } from "../topics";
-import { BRAND_LOGO, BRAND_NAME } from "../brand";
+import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME } from "../brand";
 
 /**
  * Carousel block — sequência de artes numeradas (capa → miolo → CTA final)
@@ -245,6 +245,148 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
       </section>
     );
   }
+
+  if (treatment === 4) {
+    /**
+     * Glossário em cartão (referência: cartões de cantos arredondados
+     * alternando claro/escuro, número no topo, termo em pill e setas no pé).
+     */
+     const inverted = index % 2 === 1;
+    const cardBg = inverted ? "hsl(var(--foreground))" : "hsl(var(--background))";
+    const cardInk = inverted ? "hsl(var(--background))" : "hsl(var(--foreground))";
+    const pillBg = inverted ? "hsl(var(--background))" : "hsl(var(--foreground))";
+    const pillInk = inverted ? "hsl(var(--foreground))" : "hsl(var(--background))";
+    const label = middle ? middle.heading : isCover ? carousel.title : carousel.cta.title;
+    const body = middle ? middle.body : isCover ? carousel.coverSub : carousel.cta.sub;
+
+    return (
+      <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
+        <div className="relative h-full w-full p-[4%]">
+          <div
+            className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[2.2rem] px-[9%] text-center"
+            style={{ backgroundColor: cardBg, color: cardInk }}
+          >
+            {/* Cantos arredondados fantasmas, como no template de referência. */}
+            <div aria-hidden className="pointer-events-none absolute -bottom-6 -left-8 opacity-25">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="absolute block rounded-[1.6rem] border"
+                  style={{
+                    width: `${90 + i * 46}px`,
+                    height: `${90 + i * 46}px`,
+                    borderColor: cardInk,
+                    opacity: 0.5,
+                    bottom: `${i * 12}px`,
+                    left: `${i * 12}px`,
+                  }}
+                />
+              ))}
+            </div>
+
+            <motion.div {...anim} className="relative flex w-full max-w-sm flex-col items-center">
+              {isCover ? (
+                <>
+                  <span className="text-5xl font-light leading-none md:text-7xl">{carousel.slides.length}</span>
+                  <span aria-hidden className="my-4 block h-px w-16" style={{ backgroundColor: cardInk }} />
+                  <h2 className="text-xl font-normal leading-snug md:text-3xl">{carousel.title}</h2>
+                  <p className="mt-4 text-sm leading-relaxed opacity-75 md:text-base">{carousel.coverSub}</p>
+                </>
+              ) : (
+                <>
+                  {middle && <span className="text-2xl font-semibold leading-none md:text-4xl">{index}</span>}
+                  <span
+                    className="mt-4 inline-block rounded-full px-5 py-2 text-sm font-bold uppercase tracking-[0.08em] md:text-lg"
+                    style={{ backgroundColor: pillBg, color: pillInk }}
+                  >
+                    {label}
+                  </span>
+                  <p className="mt-6 text-sm leading-relaxed opacity-80 md:text-base">{body}</p>
+                  {isCta && (
+                    <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.24em] opacity-70">{BRAND_NAME}</p>
+                  )}
+                </>
+              )}
+            </motion.div>
+
+            {!isCta && (
+              <span
+                aria-hidden
+                className="absolute bottom-[6%] right-[8%] text-lg font-bold tracking-[-0.1em] opacity-70"
+              >
+                &gt;&gt;&gt;
+              </span>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (treatment === 5) {
+    /**
+     * Editorial escuro numerado (referência: capa com número fantasma e
+     * "veja mais", miolo 01/02/03 e fecho em cartão de mensagem).
+     */
+    return (
+      <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden bg-foreground text-background`}>
+        <TextureLayer persona={persona} index={treatment} dark />
+        <div className="container relative flex h-full flex-col justify-center px-[8%] py-[9%]">
+          {isCover && (
+            <motion.div {...anim} className="relative">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -left-2 -top-6 select-none font-bold leading-none text-background/15"
+                style={{ fontSize: "clamp(6rem, 34vw, 14rem)" }}
+              >
+                {carousel.slides.length}
+              </span>
+              <h2 className="relative text-3xl font-bold leading-[1.1] tracking-tight md:text-5xl">
+                {renderAccent(carousel.title, accentVariant)}
+              </h2>
+              <p className="relative mt-5 max-w-md text-base text-background/70 md:text-lg">{carousel.coverSub}</p>
+              <p className="relative mt-10 text-sm font-semibold italic text-background/80">veja mais →</p>
+            </motion.div>
+          )}
+
+          {middle && (
+            <motion.div {...anim}>
+              <span className="block text-4xl font-bold leading-none text-background/35 md:text-6xl">
+                {bigIndex(index - 1)}
+              </span>
+              <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight md:text-4xl">
+                {renderAccent(middle.heading, accentVariant)}
+              </h2>
+              <p className="mt-5 max-w-md text-sm leading-relaxed text-background/75 md:text-base">{middle.body}</p>
+            </motion.div>
+          )}
+
+          {isCta && (
+            <motion.div {...anim} className="rounded-2xl bg-background/10 p-5 backdrop-blur-sm md:p-7">
+              <div className="flex items-center gap-3">
+                <img src={BRAND_LOGO} alt="" aria-hidden className="h-9 w-9 rounded-full object-contain ring-1 ring-background/30" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{BRAND_NAME}</p>
+                  <p className="truncate text-xs text-background/60">{BRAND_HANDLE}</p>
+                </div>
+              </div>
+              <p className="mt-4 text-lg font-semibold italic leading-snug md:text-2xl">{carousel.cta.title}</p>
+              <p className="mt-2 text-sm text-background/75 md:text-base">{carousel.cta.sub}</p>
+            </motion.div>
+          )}
+
+          <div className="mt-8 flex items-center justify-between">
+            <Dots total={total} active={index} dark />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-background/50">
+              {counter}
+            </span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+
 
   // Treatment 0 — moldura editorial clara: filete superior, contador, progresso.
   return (

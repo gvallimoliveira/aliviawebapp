@@ -1,0 +1,13 @@
+---
+name: Studio Template Blocks (referências externas)
+description: Blocos nascidos de templates enviados pelo usuário (caixa de perguntas, promoção com celular, letras empilhadas, 2 tratamentos de carrossel) — globais, exceto modo autoral.
+type: feature
+---
+Templates de referência viram BLOCOS globais do núcleo criativo (todas as marcas do Studio; modo autoral/lovechronicles usa `AuthorialArtBlock` e fica de fora automaticamente).
+
+- `askbox` (AskBoxBlock) — engajamento: filetes em degradê topo/rodapé, chapa com pergunta curta, tema em serifada itálica, cartão do sticker (convite + campo) e @ da marca. Tema vem de `features.tag/title` ou `searchQueries` — nunca inventado. 4 tratamentos (0 usa foto do acervo se houver).
+- `promoPhone` (PromoPhoneBlock) — oferta: produto/plano na tela do celular, palavra-chave repetida em contorno atrás + versão sólida embaixo, linha de condição de `sales.offers/ctas`. 3 tratamentos.
+- `stackType` (StackTypeBlock) — cartaz: papel granulado, tarjas de cor nos cantos, palavra em contorno 2x + sólida, complemento em chapa. 4 tratamentos.
+- `CarouselBlock` tratamento 4 = glossário em cartão (claro/escuro alternando, número, pill do termo, `>>>`); tratamento 5 = editorial escuro numerado com fecho em cartão de mensagem. `TREATMENT_COUNT.carousel = 6`.
+
+Ao criar bloco novo a partir de template: registrar em `composePage.BlockKind` + `TREATMENT_COUNT` + pool `baseWeighted`, `studio-core/blocks.ts`, `models.ts` (rótulo em português), `caption.ts` e `rationale.ts` (registros exaustivos por bloco — build quebra sem eles).
