@@ -28,6 +28,8 @@ import {
   composeAuthorial,
   fragmentsOf,
   listAuthorialTexts,
+  splitSlogans,
+
   type AuthorialArt,
   type AuthorialText,
 } from "./authorial";
@@ -159,7 +161,7 @@ const StudioProAuthorial = ({
   useEffect(() => {
     applyStudioBrandTheme({
       name: brand.name,
-      slogan: brand.slogan ?? "",
+      slogan: splitSlogans(brand.slogan)[0] ?? "",
       logo: brand.logo_url,
       handle: brand.instagram_handle ?? null,
       site: brand.source_url ?? null,
@@ -186,7 +188,7 @@ const StudioProAuthorial = ({
     () =>
       composeAuthorial({
         texts,
-        slogans: brand.slogan ? [brand.slogan] : [],
+        slogans: splitSlogans(brand.slogan),
         seed: `${brand.id}:${seed}`,
         photoIds: photos.map((p) => p.id),
         count: ART_COUNT,
@@ -355,7 +357,7 @@ const StudioProAuthorial = ({
 
   const downloadCaptions = () => {
     const body = arts
-      .map((art, i) => `--- ${String(i + 1).padStart(2, "0")} · ${art.kind} ---\n${authorialCaption(art, brand.slogan)}`)
+      .map((art, i) => `--- ${String(i + 1).padStart(2, "0")} · ${art.kind} ---\n${authorialCaption(art, splitSlogans(brand.slogan)[0] ?? null)}`)
       .join("\n\n");
     exportTextFile(`${fileBase}-legendas.txt`, body);
   };
@@ -515,7 +517,7 @@ const StudioProAuthorial = ({
 
       <div className="mt-5 flex flex-col items-center gap-6">
         {arts.map((art) => {
-          const caption = authorialCaption(art, brand.slogan);
+          const caption = authorialCaption(art, splitSlogans(brand.slogan)[0] ?? null);
           const photo = photoOf(art);
           const isCarousel = art.slides.length > 1;
           const frame = (slideIndex: number) => (
