@@ -410,11 +410,15 @@ export async function assertCreditsAvailable(
     };
 
     if (s.unlimited) {
+      bypassCache.set(userId, {
+        unlimited: true, reason: "unlimited_tier", path: "unlimited_tier", tier: s.tier, at: Date.now(),
+      });
       return finalize(admin, userId, {
         ...base, enforced, ok: true, unlimited: true, reason: "unlimited_tier",
         path_taken: "unlimited_tier", tier: s.tier,
       });
     }
+
 
     if (s.clinic_id) {
       // Política de carência: 20% acima do incluso antes de tocar em pacotes.
