@@ -458,7 +458,25 @@ const StudioProCreate = ({
       forbidden: isAlivia ? [] : ["aliv.ia", "alivia", "fisioterap"],
       profile: variation,
     });
-  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning, brand.id, seed, register, isAlivia, variation]);
+  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning, brand.id, seed, register, isAlivia, variation, segmentMemory.weights]);
+
+  /**
+   * Registra a cobertura: o público que este lote vestiu pesa menos no próximo
+   * sorteio do 360°, então os nichos giram de verdade entre gerações.
+   */
+  useEffect(() => {
+    if (activeSegment !== GLOBAL_SEGMENT) {
+      segmentMemory.record(activeSegment);
+      return;
+    }
+    const picked = pickGlobalAudience({
+      audiences,
+      variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+      segmentWeights: segmentMemory.weights,
+    });
+    if (picked) segmentMemory.record(picked.id);
+  }, [activeSegment, audiences, brand.id, seed, angle, segmentMemory]);
+
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
 
