@@ -454,19 +454,30 @@ const StudioProAuthorial = ({
           </div>
 
           <div className="mt-2">
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 rounded-full text-xs"
               onClick={() => setPhotosOpen(true)}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground underline-offset-2 hover:underline"
             >
-              <Camera className="h-3 w-3" />
-              Imagens de fundo desta marca: {photos.length}
-              {photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}
-            </button>
+              <Camera className="mr-1.5 h-3.5 w-3.5" />
+              Adicionar / gerenciar fotos
+            </Button>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {photos.length === 0
+                ? "Nenhuma imagem nesta marca — clique para enviar as suas."
+                : `${photos.length} imagem(ns) nesta marca${photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}${
+                    pinnedPhotos.length > 0
+                      ? ` · ${pinnedPhotos.length} fixada(s): só elas entram na próxima geração`
+                      : " · fixe uma imagem ali para usá-la obrigatoriamente"
+                  }.`}
+            </p>
             <p className="mt-1 text-[11px] text-muted-foreground">
               As imagens do acervo entram como fundo esmaecido — presença, nunca competindo com o texto.
             </p>
           </div>
+
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
