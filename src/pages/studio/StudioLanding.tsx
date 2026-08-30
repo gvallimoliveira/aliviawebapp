@@ -34,6 +34,7 @@ import StudioPhotos from "./StudioPhotos";
 import PhotoTypeBlock from "./blocks/PhotoTypeBlock";
 import PhotoSplitBlock from "./blocks/PhotoSplitBlock";
 import PhotoPortraitBlock from "./blocks/PhotoPortraitBlock";
+import PhotoVeilBlock from "./blocks/PhotoVeilBlock";
 import HeroBlock from "./blocks/HeroBlock";
 import MarqueeBlock from "./blocks/MarqueeBlock";
 import MetricsBlock from "./blocks/MetricsBlock";
@@ -83,6 +84,7 @@ const BLOCKS = {
   photoType: PhotoTypeBlock,
   photoSplit: PhotoSplitBlock,
   photoPortrait: PhotoPortraitBlock,
+  photoVeil: PhotoVeilBlock,
 } satisfies Record<string, (props: BlockProps) => JSX.Element>;
 
 const PREVIEW_MARKERS = ["id-preview--", "localhost", "127.0.0.1", ".lovableproject.com", "sandbox"];

@@ -65,6 +65,10 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
   },
   photoPortrait: (c, rng) => [rng.pick(c.quotes).text, rng.pick(c.subs)],
+  photoVeil: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];
+  },
   search: (c, rng) => [
     `${rng.pick(c.kickers)}: ${rng.pick(c.headlines).strong}`,
     rng.pick(c.subs),

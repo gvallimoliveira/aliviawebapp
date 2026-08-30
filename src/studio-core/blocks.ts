@@ -20,6 +20,7 @@ import CarouselBlock from "@/pages/studio/blocks/CarouselBlock";
 import PhotoTypeBlock from "@/pages/studio/blocks/PhotoTypeBlock";
 import PhotoSplitBlock from "@/pages/studio/blocks/PhotoSplitBlock";
 import PhotoPortraitBlock from "@/pages/studio/blocks/PhotoPortraitBlock";
+import PhotoVeilBlock from "@/pages/studio/blocks/PhotoVeilBlock";
 import SearchBlock from "@/pages/studio/blocks/SearchBlock";
 import DeviceBlock from "@/pages/studio/blocks/DeviceBlock";
 import DoorBlock from "@/pages/studio/blocks/DoorBlock";
@@ -66,6 +67,7 @@ export const STUDIO_BLOCKS = {
   photoType: PhotoTypeBlock,
   photoSplit: PhotoSplitBlock,
   photoPortrait: PhotoPortraitBlock,
+  photoVeil: PhotoVeilBlock,
   search: SearchBlock,
   device: DeviceBlock,
   door: DoorBlock,
