@@ -5,6 +5,20 @@ import PhotoFrame from "./PhotoFrame";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
+ * Triângulo invertido com vértices arredondados ("abrindo para fora da tela").
+ * Aplicado como máscara CSS via SVG data-URI para escalar com o frame e
+ * sobreviver à exportação PNG (rasterizada pelo próprio navegador).
+ */
+const POPOUT_TRIANGLE_MASK =
+  "url(\"data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">' +
+      '<path d="M12 0 L88 0 Q100 0 94.6 11.3 L55.4 88.7 Q50 100 44.6 88.7 L5.4 11.3 Q0 0 12 0 Z" fill="black"/>' +
+      "</svg>",
+  ) +
+  "\")";
+
+/**
  * PESSOA SOBRE O CELULAR (referência: modelo em pé no topo do celular com o
  * perfil da marca aberto)
  *
