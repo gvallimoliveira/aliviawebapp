@@ -29,6 +29,8 @@ serve(async (req) => {
     // Shadow mode: never blocks. Phase 5.4 will translate blocked=true into 402.
     shadowLogAiUsage(req, {
       function_name: "generate-treatment",
+      was_bypassed: creditDecision.unlimited,
+
       metadata: {
         credit_reason: creditDecision.reason,
         credit_remaining: creditDecision.remaining,
