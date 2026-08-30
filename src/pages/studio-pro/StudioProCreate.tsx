@@ -45,7 +45,9 @@ import { voiceRegister } from "@/pages/studio/lexicon";
 import { varyContent } from "@/pages/studio/vary";
 import { usePhraseMemory } from "./usePhraseMemory";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
-import { buildSegmentContent, brandSlogan, relationForSegment } from "./brandContent";
+import { buildSegmentContent, brandSlogan, relationForSegment, pickGlobalAudience } from "./brandContent";
+import { useSegmentMemory } from "./useSegmentMemory";
+
 
 import { readColorKit } from "./brandColors";
 import { buildBrandThemeStyle } from "./brandTheme";
@@ -202,6 +204,9 @@ type PersistedCreateState = {
   variation?: VariationProfile;
   /** Fotos fixadas pelo usuário para forçar o acervo da geração. */
   pinnedPhotos?: string[];
+  /** Filtro "fotos do acervo em destaque": metade das artes com foto de fundo. */
+  photoFirst?: boolean;
+
 };
 
 const readPersisted = (brandId: string): PersistedCreateState => {
@@ -282,8 +287,17 @@ const StudioProCreate = ({
   useEffect(() => {
     writePersisted(brand.id, { pinnedPhotos });
   }, [brand.id, pinnedPhotos]);
+  /**
+   * FOTOS DO ACERVO EM DESTAQUE: cota garantida de metade das artes com foto
+   * como plano de fundo. Fica salvo por marca junto das outras preferências.
+   */
+  const [photoFirst, setPhotoFirst] = useState<boolean>(restored.current.photoFirst ?? false);
+  useEffect(() => {
+    writePersisted(brand.id, { photoFirst });
+  }, [brand.id, photoFirst]);
   /** Cota do período: contada em gerações — 1 por clique em "Nova versão". */
   const { quota, error: quotaError, consume } = useStudioQuota();
+
 
 
   const unlimited = unlimitedAccess || !!quota?.unlimited;
@@ -412,6 +426,13 @@ const StudioProCreate = ({
    */
   const register = useMemo(() => voiceRegister(brand.tone, brand.name), [brand.tone, brand.name]);
 
+  /**
+   * COBERTURA DOS NICHOS: memória por marca que distribui a atenção criativa da
+   * Visão 360° entre todos os públicos e sub-nichos, em vez de repetir sempre os
+   * mesmos dois ou três.
+   */
+  const segmentMemory = useSegmentMemory(brand.id);
+
   const content = useMemo(() => {
     const built = buildSegmentContent({
       kit: contentKit,
@@ -426,7 +447,9 @@ const StudioProCreate = ({
       // Variedade linguística: cada lote reescreve a roupagem das frases.
       variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
       variationProfile: variation,
+      segmentWeights: segmentMemory.weights,
     });
+
     /**
      * Passagem final pelo léxico: vale também para o acervo curado dos mundos
      * internos, então nenhuma marca fica presa às mesmas palavras.
@@ -437,7 +460,25 @@ const StudioProCreate = ({
       forbidden: isAlivia ? [] : ["aliv.ia", "alivia", "fisioterap"],
       profile: variation,
     });
-  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning, brand.id, seed, register, isAlivia, variation]);
+  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning, brand.id, seed, register, isAlivia, variation, segmentMemory.weights]);
+
+  /**
+   * Registra a cobertura: o público que este lote vestiu pesa menos no próximo
+   * sorteio do 360°, então os nichos giram de verdade entre gerações.
+   */
+  useEffect(() => {
+    if (activeSegment !== GLOBAL_SEGMENT) {
+      segmentMemory.record(activeSegment);
+      return;
+    }
+    const picked = pickGlobalAudience({
+      audiences,
+      variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+      segmentWeights: segmentMemory.weights,
+    });
+    if (picked) segmentMemory.record(picked.id);
+  }, [activeSegment, audiences, brand.id, seed, angle, segmentMemory]);
+
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
 
@@ -499,8 +540,10 @@ const StudioProCreate = ({
         activePhotos.length,
         kindsForModels(models, activePhotos.length, isAlivia),
         isAlivia,
+        photoFirst,
       ),
-    [brand.id, seed, activeSegment, angle, persona, content, lineage, activePhotos.length, models, isAlivia],
+    [brand.id, seed, activeSegment, angle, persona, content, lineage, activePhotos.length, models, isAlivia, photoFirst],
+
   );
 
   /**
@@ -1071,7 +1114,7 @@ const StudioProCreate = ({
           </p>
 
           {/* Acervo privado de fotos: envio, enquadramento e fixação. */}
-          <div className="mt-2">
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <Button
               type="button"
               size="sm"
@@ -1082,12 +1125,29 @@ const StudioProCreate = ({
               <Camera className="mr-1.5 h-3.5 w-3.5" />
               Adicionar / gerenciar fotos
             </Button>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {photos.length === 0
-                ? "Nenhuma foto nesta marca — clique para enviar as suas."
-                : `${photos.length} foto(s) nesta marca${photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}${pinnedPhotos.length > 0 ? ` · ${pinnedPhotos.length} fixada(s) para a próxima geração` : " · fixe uma foto ali para usá-la obrigatoriamente"}.`}
-            </p>
+            {photos.length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant={photoFirst ? "secondary" : "outline"}
+                className="h-8 rounded-full text-xs"
+                onClick={() => setPhotoFirst((v) => !v)}
+              >
+                <Camera className="mr-1.5 h-3.5 w-3.5" />
+                Fotos do acervo em destaque
+              </Button>
+            )}
           </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {photos.length === 0
+              ? "Nenhuma foto nesta marca — clique para enviar as suas."
+              : `${photos.length} foto(s) nesta marca${photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}${pinnedPhotos.length > 0 ? ` · ${pinnedPhotos.length} fixada(s) para a próxima geração` : " · fixe uma foto ali para usá-la obrigatoriamente"}.`}
+            {photos.length > 0 &&
+              (photoFirst
+                ? " Filtro ligado: metade das artes deste lote usa foto do acervo como plano de fundo."
+                : " Ligue o filtro para forçar metade das artes com foto de fundo.")}
+          </p>
+
 
 
 

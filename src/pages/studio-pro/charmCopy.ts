@@ -26,6 +26,8 @@ import { isStudioSelfBrand } from "@/pages/studio/persuasion";
 import type { ContentAngle } from "./audiences";
 import type { Relation } from "./relational";
 import { findStudioSelfCharm, type StudioSelfCharmRow } from "./studioSelfCharm";
+import { professionFor, wantsProfession } from "./professions";
+
 import { findAliviaCoreCharm, isAliviaCoreBrand, type AliviaCoreCharmRow } from "./aliviaCoreCharm";
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
@@ -231,12 +233,38 @@ export const applyCharm = (
   const frames = relation ? charmFrames(relation, angle) : { headlines: [], subs: [], closings: [] };
   const cta = charmCta(relation?.cta ?? "");
 
+  /**
+   * PROFISSÃO CONCRETA: nos públicos genéricos do guia do Studio (autônomo,
+   * pequena empresa, serviço local), a arte nomeia uma profissão real para quem
+   * lê se reconhecer na primeira linha. Determinístico pelo acervo do lote.
+   */
+  const professional =
+    selfRow && wantsProfession(selfRow.id)
+      ? professionFor(`${selfRow.id}:${relation?.keyword ?? ""}:${content.headlines[0]?.strong ?? ""}`)
+      : undefined;
+  const professionLines = professional
+    ? {
+        headline: {
+          strong: `Você é ${professional.noun}`,
+          rest: `, não social media do seu próprio ${professional.place.replace(/^n[oa]s? /, "")}.`,
+        },
+        sub: `O seu dia é ${professional.work} — e ainda sobra o feed para resolver ${professional.place}. O Studio devolve essa parte para você.`,
+      }
+    : undefined;
+
   const headlines = [
+    ...(professionLines ? [professionLines.headline] : []),
     ...(row ? [row.headline] : []),
     ...frames.headlines,
     ...content.headlines,
   ];
-  const subs = [...(row ? [row.sub] : []), ...frames.subs, ...content.subs];
+  const subs = [
+    ...(professionLines ? [professionLines.sub] : []),
+    ...(row ? [row.sub] : []),
+    ...frames.subs,
+    ...content.subs,
+  ];
+
   const closings = [
     ...(row ? [{ title: `${row.headline.strong}${row.headline.rest}`, sub: row.sub, cta: row.cta }] : []),
     ...frames.closings,

@@ -234,7 +234,15 @@ const spread = (id: string, salt: number): number => {
  * entrar — basta sustentar o assunto com folga razoável. Sem essa faixa, só as
  * fotos de afinidade máxima apareciam e o resto do acervo ficava parado.
  */
-const CIRCULATION_BAND = 0.5;
+const CIRCULATION_BAND = 0.38;
+
+/**
+ * FOTO DE AMPLA APLICAÇÃO: sem restrição de procedimento específico
+ * (termografia, laserterapia etc.), a foto é registro de contexto e pode
+ * sustentar qualquer assunto da marca. Ganha um bônus para o acervo circular de
+ * verdade em vez de só as fotos de afinidade máxima aparecerem.
+ */
+const BROAD_USE_BONUS = 0.3;
 
 /**
  * Escolhe a foto que sustenta o assunto já decidido pela copy. Determinístico
@@ -253,9 +261,13 @@ export const pickPhotoForTopics = (
   const scored = photos
     .map((photo) => ({
       photo,
-      score: photoAffinity(photo, topics) + (prefer?.includes(photo.usage) ? 0.35 : 0),
+      score:
+        photoAffinity(photo, topics) +
+        (prefer?.includes(photo.usage) ? 0.35 : 0) +
+        (restrictionOf(photo) ? 0 : BROAD_USE_BONUS),
     }))
     .filter((s) => s.score > 0)
+
     .sort(
       (a, b) =>
         b.score - a.score || spread(a.photo.id, index) - spread(b.photo.id, index),

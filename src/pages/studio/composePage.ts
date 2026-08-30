@@ -135,6 +135,56 @@ const pickKinds = (rng: Rng, weighted: [BlockKind, number][], count: number): Bl
   return spread(rng, pool, count);
 };
 
+/** Peças que ocupam o quadro inteiro com foto em primeira camada. */
+const FIRST_LAYER_PHOTO: BlockKind[] = ["photoType", "photoSplit", "photoPortrait", "stage"];
+
+/**
+ * COTA DE FOTOS DO ACERVO COMO PLANO DE FUNDO.
+ *
+ * Com o filtro ligado, metade das artes do lote (arredondando para cima) vira
+ * `photoVeil`. A conversão respeita a estrutura: hero, closing e a sequência de
+ * carrossel ficam intactos; peças de foto em primeira camada são as primeiras a
+ * ceder lugar (véu e primeira camada nunca convivem na mesma arte).
+ */
+const enforcePhotoFirst = (
+  rng: Rng,
+  kinds: BlockKind[],
+  photoCount: number,
+  on: boolean,
+): BlockKind[] => {
+  if (!on || photoCount <= 0 || kinds.length < 3) return kinds;
+  const out = [...kinds];
+  const target = Math.ceil(out.length / 2);
+  const count = () => out.filter((k) => k === "photoVeil").length;
+
+  const convertible = out
+    .map((kind, i) => ({ kind, i }))
+    .filter(({ kind, i }) => i > 0 && i < out.length - 1 && kind !== "photoVeil" && kind !== "carousel");
+
+  // Primeiro as peças fotográficas de primeira camada, depois o restante do miolo.
+  const order = [
+    ...convertible.filter((c) => FIRST_LAYER_PHOTO.includes(c.kind)),
+    ...rng.shuffle(convertible.filter((c) => !FIRST_LAYER_PHOTO.includes(c.kind))),
+  ];
+
+  for (const item of order) {
+    if (count() >= target) break;
+    // Sem véu colado em véu: mantém ritmo visual no scroll.
+    if (out[item.i - 1] === "photoVeil" && out[item.i + 1] === "photoVeil") continue;
+    out[item.i] = "photoVeil";
+  }
+
+  // Exclusividade: com véu na página, foto em primeira camada sai de cena.
+  if (count() > 0) {
+    for (let i = 0; i < out.length; i += 1) {
+      if (FIRST_LAYER_PHOTO.includes(out[i])) out[i] = "photoVeil";
+    }
+  }
+  return out;
+};
+
+
+
 /**
  * Builds the section order for a version.
  *
@@ -165,6 +215,15 @@ export const composePage = (
    * recebe, nem pelo sorteio nem pela seleção de modelos.
    */
   exclusive = false,
+  /**
+   * FILTRO "FOTOS DO ACERVO EM DESTAQUE".
+   *
+   * Ligado, o lote passa a ter no mínimo metade das artes com foto do acervo
+   * como plano de fundo (`photoVeil`) — cota garantida, não sorteio. Continua
+   * valendo a exclusividade: arte com foto de fundo não usa foto em primeira
+   * camada.
+   */
+  photoFirst = false,
 ): ComposedBlock[] => {
   const allowed = (kinds: BlockKind[]) =>
     exclusive ? kinds : kinds.filter((k) => k !== "steps" && k !== "difi");
@@ -172,13 +231,14 @@ export const composePage = (
     const pool = allowed(only);
     if (pool.length === 0) return finish(rng, [{ kind: "hero", treatment: treatmentFor(rng, "hero", persona) }], persona, carousels);
     const count = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
-    const picked = spread(rng, pool, Math.max(2, count));
+    const picked = enforcePhotoFirst(rng, spread(rng, pool, Math.max(2, count)), photoCount, photoFirst);
     const chosen: ComposedBlock[] = picked.map((kind) => ({
       kind,
       treatment: treatmentFor(rng, kind, persona),
     }));
     return finish(rng, chosen, persona, carousels);
   }
+
   /**
    * Pool base do miolo: pesa prova (métricas/stats/compare), demonstração
    * (journey/feature/pinup), voz (quote/typo/triptych) e narrativa
@@ -262,8 +322,11 @@ export const composePage = (
      * "Foto como plano de fundo" (photoVeil) é excludente: quando entra,
      * nenhum bloco de foto em primeira camada entra na mesma página —
      * é um ou outro, nunca os dois.
+     *
+     * Acervo grande merece mais presença: com 4+ fotos o fundo fotográfico é
+     * bem mais provável (antes era 30% fixo e o acervo ficava parado).
      */
-    const useVeil = rng.chance(0.3);
+    const useVeil = photoFirst || rng.chance(photoCount >= 4 ? 0.45 : 0.3);
     const photoKinds: BlockKind[] = useVeil
       ? ["photoVeil"]
       : rng.shuffle(["photoType", "photoSplit", "photoPortrait", "stage"]);
@@ -280,7 +343,11 @@ export const composePage = (
     }
   }
 
-  const fresh: ComposedBlock[] = kinds.map((kind) => ({ kind, treatment: treatmentFor(rng, kind, persona) }));
+  const fresh: ComposedBlock[] = enforcePhotoFirst(rng, kinds, photoCount, photoFirst).map((kind) => ({
+    kind,
+    treatment: treatmentFor(rng, kind, persona),
+  }));
+
 
   const result = (() => {
     if (!inspiration || inspiration.length === 0) return fresh;
@@ -324,7 +391,16 @@ export const composePage = (
     return cleaned;
   })();
 
-  return finish(rng, result, persona, carousels);
+  const withQuota = photoFirst
+    ? enforcePhotoFirst(rng, result.map((b) => b.kind), photoCount, true).map((kind, i) => {
+        const previous = result[i];
+        if (previous && previous.kind === kind) return previous;
+        return { kind, treatment: treatmentFor(rng, kind, persona) };
+      })
+    : result;
+
+  return finish(rng, withQuota, persona, carousels);
+
 };
 
 /**

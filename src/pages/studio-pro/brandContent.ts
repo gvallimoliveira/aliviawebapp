@@ -1321,7 +1321,62 @@ export type SegmentContentInput = {
    */
   variationSeed?: string;
   variationProfile?: VariationProfile;
+  /**
+   * COBERTURA DOS NICHOS (só usada na Visão 360°): peso por id de público —
+   * 1 = ainda não apareceu, valores menores = usado recentemente. É o que
+   * distribui a atenção criativa entre todos os públicos e sub-nichos em vez de
+   * concentrar sempre nos mesmos dois ou três.
+   */
+  segmentWeights?: Record<string, number>;
 };
+
+/**
+ * Sorteio ponderado determinístico: mesma seed + mesmos pesos = mesmo público.
+ */
+const weightedPick = <T extends { id: string }>(
+  list: T[],
+  weights: Record<string, number> | undefined,
+  seed: string,
+): T | undefined => {
+  if (list.length === 0) return undefined;
+  const scored = list.map((item) => ({ item, weight: Math.max(0.05, weights?.[item.id] ?? 1) }));
+  const total = scored.reduce((sum, s) => sum + s.weight, 0);
+  const dice = createRng(seed).int(100_000) / 100_000;
+  let cursor = dice * total;
+  for (const s of scored) {
+    cursor -= s.weight;
+    if (cursor <= 0) return s.item;
+  }
+  return scored[scored.length - 1].item;
+};
+
+/**
+ * Público que a Visão 360° veste neste lote — exposto para que a interface possa
+ * registrar a cobertura (memória de nichos) e para os testes do motor.
+ * `null` = lote fala da marca como um todo (assunto livre).
+ */
+export const pickGlobalAudience = ({
+  audiences,
+  variationSeed,
+  segmentWeights,
+}: {
+  audiences: BrandAudience[];
+  variationSeed?: string;
+  segmentWeights?: Record<string, number>;
+}): BrandAudience | null => {
+  /**
+   * Todos os públicos entram no sorteio — matriz E sub-nichos. Antes só os
+   * matriz entravam, então sub-nicho cadastrado nunca ganhava arte no 360°.
+   */
+  const pool = audiences.filter((a) => a.id);
+  if (!variationSeed || pool.length === 0) return null;
+  const dice = createRng(`360:${variationSeed}`);
+  // 2 em 3 lotes falam de um público; o restante fala da marca como um todo.
+  if (dice.int(100) >= 66) return null;
+  const chosen = weightedPick(pool, segmentWeights, `360:pick:${variationSeed}`);
+  return chosen ? (resolveAudience(audiences, chosen.id) ?? null) : null;
+};
+
 
 /**
  * Ponto de entrada único do motor: resolve marca + segmento + ângulo em um
@@ -1338,6 +1393,8 @@ export const buildSegmentContent = ({
   positioning,
   variationSeed,
   variationProfile,
+  segmentWeights,
+
 }: SegmentContentInput): WorldContent => {
   const brand = kit.name.trim() || "Sua marca";
   const variation: CopyVariation | undefined = variationSeed ? { seed: variationSeed, profile: variationProfile } : undefined;
@@ -1381,23 +1438,20 @@ export const buildSegmentContent = ({
   };
 
   if (segment === GLOBAL_SEGMENT) {
-    // 360° = modo livre, quase aleatório: qualquer assunto relevante à marca.
-    // A seed do lote sorteia — metade fala da marca como um todo (applyGlobal),
-    // metade veste o mundo de UM público matriz. Determinístico: mesma seed =
-    // mesma arte, então "Nova versão" é que muda o assunto.
-    const matrix = matrixAudiences(audiences);
-    if (variationSeed && matrix.length) {
-      const dice = createRng(`360:${variationSeed}`);
-      if (dice.int(100) < 50) {
-        const picked = resolveAudience(audiences, matrix[dice.int(matrix.length)].id);
-        if (picked) {
-          const relation = relationFor(picked);
-          return finish(applyAudience(root, brand, picked, relation), relation);
-        }
-      }
+    /**
+     * 360° = modo livre: qualquer assunto relevante à marca. A maior parte dos
+     * lotes veste o mundo de UM público (matriz OU sub-nicho), escolhido com
+     * peso pela memória de cobertura — nicho recém-usado cede a vez. O restante
+     * fala da marca como um todo. Determinístico: mesma seed = mesma arte.
+     */
+    const picked = pickGlobalAudience({ audiences, variationSeed, segmentWeights });
+    if (picked) {
+      const relation = relationFor(picked);
+      return finish(applyAudience(root, brand, picked, relation), relation);
     }
     return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
   }
+
   // Sub-nichos herdam o kit do público matriz e sobrepõem o próprio recorte.
   const audience = resolveAudience(audiences, segment);
   if (!audience) return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
