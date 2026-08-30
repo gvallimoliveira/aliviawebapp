@@ -102,16 +102,28 @@ const applySloganFocus = (content: WorldContent, slogan: string, brand: string):
   const cut = words.length <= 3 ? 1 : Math.ceil(words.length / 2);
   const strong = words.slice(0, cut).join(" ");
   const rest = words.slice(cut).join(" ");
+  /**
+   * O slogan entra no TOPO de cada acervo, mas nunca em duplicidade: se a frase
+   * (ou o nome da marca) já estava na lista, a cópia antiga sai. Duas entradas
+   * idênticas na mesma lista faziam blocos com faixa/sugestões renderizarem
+   * itens repetidos e quebravam a identidade dos nós na tela.
+   */
+  const same = (a: string, b: string) =>
+    a.trim().replace(/\s*[.;]+$/, "").toLowerCase() === b.trim().replace(/\s*[.;]+$/, "").toLowerCase();
   return {
     ...content,
-    kickers: [brand.toUpperCase(), ...content.kickers],
-    headlines: [{ strong, rest }, ...content.headlines],
-    typos: [{ lead: brand, big: strong, tail: rest }, ...content.typos],
-    quotes: [{ text: phrase }, ...content.quotes],
-    marquee: [[phrase, brand], ...content.marquee],
-    subs: [phrase, ...content.subs],
+    kickers: [brand.toUpperCase(), ...content.kickers.filter((k) => !same(k, brand))],
+    headlines: [{ strong, rest }, ...content.headlines.filter((h) => !same(`${h.strong} ${h.rest}`, phrase))],
+    typos: [{ lead: brand, big: strong, tail: rest }, ...content.typos.filter((t) => !same(`${t.big} ${t.tail}`, phrase))],
+    quotes: [{ text: phrase }, ...content.quotes.filter((q) => !same(q.text, phrase))],
+    marquee: [
+      [phrase, brand],
+      ...content.marquee.map((row) => row.filter((term) => !same(term, phrase))).filter((row) => row.length > 0),
+    ],
+    subs: [phrase, ...content.subs.filter((s) => !same(s, phrase))],
   };
 };
+
 
 
 /**
