@@ -32,6 +32,7 @@ import {
   type ArtTextEdits,
 } from "@/pages/studio/artTextEdit";
 import { applyArtMoves, clearArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
+import { forgetArtLearning, learnArtMoves } from "@/pages/studio/artMoveLearning";
 import {
   authorialCaption,
   composeAuthorial,

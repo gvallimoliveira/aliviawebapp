@@ -77,6 +77,7 @@ import {
   type ArtTextEdits,
 } from "@/pages/studio/artTextEdit";
 import { applyArtMoves, clearArtMoves, hasArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
+import { forgetArtLearning, learnArtMoves } from "@/pages/studio/artMoveLearning";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
@@ -733,10 +734,15 @@ const StudioProCreate = ({
   };
 
   const finishMove = (indexes: number[]) => {
+    let learnedAny = false;
     indexes.forEach((i) => {
       const node = artNode(i);
-      if (node) setArtMoving(node, false);
+      if (!node) return;
+      // O motor aprende com o ajuste antes de fechar o modo de arraste.
+      if (learnArtMoves(node).length) learnedAny = true;
+      setArtMoving(node, false);
     });
+    if (learnedAny) toast.success("Posição fixada — o motor vai usar esse ponto nas próximas artes.");
     setMoving(null);
     setMoveTick((n) => n + 1);
     // A arte mudou de posição: um salvamento anterior não representa mais a tela.
@@ -752,11 +758,12 @@ const StudioProCreate = ({
       const node = artNode(i);
       if (!node) return;
       clearArtMoves(node);
+      forgetArtLearning(node);
       setArtMoving(node, false);
     });
     setMoving(null);
     setMoveTick((n) => n + 1);
-    toast.success("Textos voltaram para a posição original.");
+    toast.success("Textos voltaram para a posição original (aprendizado apagado).");
   };
 
 
