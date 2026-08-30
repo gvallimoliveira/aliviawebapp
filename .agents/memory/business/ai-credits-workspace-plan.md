@@ -151,3 +151,6 @@ flag `app_config.ai_credits_enforced` false até 5.3; bypass VIP + `is_partner` 
 - Tabela de preços por modelo em `app_config` para o custo de IA não ficar hardcoded.
 
 **Pré-requisito:** ≥30 dias de `ai_token_usage` populado para que o custo real seja confiável.
+
+## Correção 5.4 — nomenclatura do aviso
+No Aliv.iA fisioterapia (avaliações), o soft warning do rollout 5.4 deve falar em "créditos de IA" (ex.: "restam X créditos de IA no seu plano este mês"). "Gerações" é a moeda do Aliv.iA Studio — nunca misturar os dois vocabulários.
