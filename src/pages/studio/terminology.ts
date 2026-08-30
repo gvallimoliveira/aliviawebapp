@@ -106,13 +106,33 @@ export const applyTerms = (text: string, options: TerminologyOptions = {}): stri
   return options.patientVoice ? selfAssessmentTerms(out) : out;
 };
 
+/**
+ * Varredura barata: só reconstrói o nó quando alguma string realmente mudou —
+ * o acervo é grande e a geração de lote passa por aqui a cada arte.
+ */
 const walk = (value: unknown, options: TerminologyOptions): unknown => {
-  if (typeof value === "string") return applyTerms(value, options);
-  if (Array.isArray(value)) return value.map((item) => walk(item, options));
+  if (typeof value === "string") {
+    if (!/protocolo|avalia/i.test(value)) return value;
+    return applyTerms(value, options);
+  }
+  if (Array.isArray(value)) {
+    let changed = false;
+    const out = value.map((item) => {
+      const next = walk(item, options);
+      if (next !== item) changed = true;
+      return next;
+    });
+    return changed ? out : value;
+  }
   if (value && typeof value === "object") {
+    let changed = false;
     const out: Record<string, unknown> = {};
-    for (const [key, item] of Object.entries(value as Record<string, unknown>)) out[key] = walk(item, options);
-    return out;
+    for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+      const next = walk(item, options);
+      if (next !== item) changed = true;
+      out[key] = next;
+    }
+    return changed ? out : value;
   }
   return value;
 };
