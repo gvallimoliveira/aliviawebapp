@@ -605,6 +605,9 @@ export async function canaryCredits(
     function_name,
     user_id: opts.user_id,
     credits: opts.credits,
+    // VIP/parceiro/ilimitado não consome cota nem queima o pool da clínica.
+    was_bypassed: decision.unlimited,
+
     metadata: {
       ...(opts.metadata ?? {}),
       credit_reason: decision.reason,
