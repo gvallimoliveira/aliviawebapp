@@ -495,13 +495,13 @@ const StudioProApp = () => {
               separada — nada se mistura.
             </p>
           ) : (
-            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            <ul className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
               {visible.map((brand) => (
                 <li
                   key={brand.id}
-                  className="group relative rounded-2xl border border-border bg-muted/40 p-4 transition hover:border-primary/50"
+                  className="group relative min-w-0 max-w-full rounded-2xl border border-border bg-muted/40 p-4 transition hover:border-primary/50"
                 >
-                  <Link to={`${PRODUCT.base}/app/marca/${brand.id}`} className="flex items-center gap-3">
+                  <Link to={`${PRODUCT.base}/app/marca/${brand.id}`} className="flex min-w-0 max-w-full items-center gap-3">
                     <span
                       className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border text-sm font-black text-white"
                       style={{ background: brand.colors?.primary ?? "hsl(var(--primary))" }}
