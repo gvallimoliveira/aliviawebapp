@@ -95,38 +95,49 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
       style={{ backgroundColor: stage }}
     >
       <div className={`container relative flex h-full flex-col ${blockPadding(format)}`}>
-        {/* ALTO: a mão grande em close segurando a frase pequena. */}
+        {/* ALTO: a foto da mão em close segurando a frase pequena. */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="relative flex-1"
+          className="relative flex flex-1 items-center"
         >
-          <div className={`absolute inset-0 ${mirrored ? "scale-x-[-1]" : ""}`}>
-            <PinchHand tone={ink} edge={stage} />
-          </div>
+          <div className="relative w-full" style={{ aspectRatio: HAND_RATIO }}>
+            <img
+              src={punchHand}
+              alt="Mão em close fazendo o gesto de pinça, como se segurasse a frase"
+              className={`absolute inset-0 h-full w-full object-contain ${
+                mirrored ? "scale-x-[-1]" : ""
+              }`}
+              style={{
+                filter: dark || primary ? "grayscale(1) invert(1)" : "grayscale(1)",
+                opacity: primary ? 0.92 : 1,
+              }}
+            />
 
-          {/*
-           * A FRASE SEGURADA: fica no vão da pinça (≈ 78% da largura, meio da
-           * altura da mão). Fonte deliberadamente pequena — é o que faz o
-           * público dar zoom. Alinhada ao lado oposto quando a mão é espelhada.
-           */}
-          <div
-            className={`absolute top-[60%] w-[22%] -translate-y-1/2 ${
-              mirrored ? "right-[78%] text-right" : "left-[78%] text-left"
-            }`}
-          >
-            <p className="text-[8px] font-medium leading-tight md:text-[11px]" style={{ color: ink }}>
-              {punch}
-            </p>
-            {note ? (
-              <p className="mt-1 text-[7px] leading-tight md:text-[9px]" style={{ color: soft }}>
-                {note}
+            {/*
+             * A FRASE SEGURADA: ancorada no vão da pinça da foto (≈ 79% da
+             * largura, 44% da altura). Fonte deliberadamente pequena — é o que
+             * faz o público dar zoom. Espelha o lado quando a mão é espelhada.
+             */}
+            <div
+              className={`absolute top-[44%] w-[21%] ${
+                mirrored ? "right-[79%] text-right" : "left-[79%] text-left"
+              }`}
+            >
+              <p className="text-[8px] font-medium leading-tight md:text-[11px]" style={{ color: ink }}>
+                {punch}
               </p>
-            ) : null}
+              {note ? (
+                <p className="mt-1 text-[7px] leading-tight md:text-[9px]" style={{ color: soft }}>
+                  {note}
+                </p>
+              ) : null}
+            </div>
           </div>
         </motion.div>
+
 
         {/* BAIXO: a chamada gigante que instiga o zoom. */}
         <motion.h2
