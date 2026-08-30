@@ -641,9 +641,12 @@ const StudioProAuthorial = ({
           onRemove={removePhoto}
           limit={photoLimit}
           usedTotal={photosTotal}
+          pinnedIds={pinnedPhotos}
+          onTogglePin={togglePin}
           onClose={() => setPhotosOpen(false)}
         />
       )}
+
     </section>
   );
 };
