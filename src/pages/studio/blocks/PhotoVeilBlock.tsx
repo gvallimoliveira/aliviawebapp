@@ -77,7 +77,7 @@ const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos }: Blo
             className="font-semibold tracking-tight text-inherit"
             style={{ fontSize: "clamp(1.9rem, 8vw, 4.2rem)", lineHeight: 1.05 }}
           >
-            {item.strong} {item.rest}
+            {item.headline ?? item.title}
           </h2>
 
           <p
