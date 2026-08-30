@@ -57,8 +57,11 @@ export { buildSchedule, buildScheduleFile } from "@/pages/studio/schedule";
 // Exportação de imagem.
 export {
   exportNodeAsPng,
+  exportNodesAsPng,
   renderNodeToBlob,
+  renderNodeToPngBlob,
   deliver,
+  deliverMany,
   type ExportResult,
 } from "@/pages/studio/exportImage";
 
