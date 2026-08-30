@@ -45,7 +45,7 @@ const keepCase = (sample: string, word: string) => {
  */
 export const selfAssessmentTerms = (text: string): string => {
   if (!text) return text;
-  return text.replace(/(\w*?)(avalia[çc][ãa](?:o|ões|oes))/gi, (match, prefix: string, word: string, offset: number) => {
+  return text.replace(/(\w*?)(avalia[çc](?:[ãa]o|[õo]es))/gi, (match, prefix: string, word: string, offset: number) => {
     // já é auto/re-avaliação, ou parte de outra palavra (ex. "reavaliação")
     if (prefix) return match;
     const before = text.slice(Math.max(0, offset - 24), offset);
