@@ -16,6 +16,8 @@ import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlog
 import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
 import { applyCharm } from "./charmCopy";
+import { applyTerminology, patientVoiceFor } from "@/pages/studio/terminology";
+
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 
@@ -1410,7 +1412,22 @@ export const buildSegmentContent = ({
     pickRelation({ audience, dna, brand, angle, seed: variationSeed });
 
   const finish = (content: WorldContent, relation?: Relation) => {
-    const done = sanitizeContent(applyAngle(content, angle, relation, brand), dna.forbidden);
+    /**
+     * TERMINOLOGIA DA MARCA (ver `@/pages/studio/terminology`): na marca Aliv.iA,
+     * arte dirigida a paciente / sub-nicho clínico diz AUTOavaliação. Em qualquer
+     * marca, a copy nunca afirma ter "protocolo".
+     */
+    const patientVoice = patientVoiceFor(
+      brand,
+      [relation?.keyword, relation?.who, relation?.audience?.label, relation?.audience?.description, relation?.hook]
+        .filter(Boolean)
+        .join(" · "),
+    );
+    const done = applyTerminology(
+      sanitizeContent(applyAngle(content, angle, relation, brand), dna.forbidden),
+      { patientVoice },
+    );
+
     /* Cauda genérica limitada a 12 títulos: comunicação dirigida vem primeiro e
        não pode ser diluída. Para não perder variedade entre lotes, a sobra não
        é descartada sempre igual — a seed sorteia quais títulos da cauda entram. */

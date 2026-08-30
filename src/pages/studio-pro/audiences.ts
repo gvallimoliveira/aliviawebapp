@@ -302,8 +302,8 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     description: "Sente dor, já pesquisou no Google e não sabe se o caso é grave nem por onde começar.",
     pains: ["Dor que volta sempre", "Diagnóstico vago", "Medo de piorar se se mexer"],
     desires: ["Entender o que está acontecendo", "Um plano claro para seguir em casa"],
-    proof: ["Avaliação guiada por perguntas objetivas", "Triagem de sinais de alerta", "Plano de exercícios com acompanhamento"],
-    cta: "Fazer minha avaliação",
+    proof: ["Autoavaliação guiada por perguntas objetivas", "Triagem de sinais de alerta", "Plano de exercícios com acompanhamento"],
+    cta: "Fazer minha autoavaliação",
   },
   {
     id: "pro",
@@ -367,12 +367,12 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     ],
     desires: ["Entender a causa em linguagem simples", "Voltar à rotina sem depender de remédio", "Ver a melhora em números"],
     proof: [
-      "Avaliação guiada com mapa e mecanismo de dor",
+      "Autoavaliação guiada com mapa e mecanismo de dor",
       "Hipótese explicada passo a passo, sem nome difícil",
       "Plano de exercícios com progressão e vídeo",
       "Diário de dor para ver a evolução dia a dia",
     ],
-    cta: "Fazer minha avaliação",
+    cta: "Fazer minha autoavaliação",
     parentId: "paciente",
   },
   {
