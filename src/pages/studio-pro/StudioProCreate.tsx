@@ -32,6 +32,7 @@ import {
   deliver,
   exportNodeAsPng,
   exportNodesAsPng,
+  lockUniformHeight,
   exportTextFile,
   personaForSeed,
   randomSeed,
@@ -922,9 +923,17 @@ const StudioProCreate = ({
     onSaved?.();
   };
 
+  /**
+   * No formato Livre cada slide tem altura própria; o Instagram só aceita
+   * carrossel com proporção única. Nos formatos fixos a proporção já é única.
+   */
+  const lockCarouselHeight = (nodes: HTMLElement[]) =>
+    format === "free" ? lockUniformHeight(nodes) : () => {};
+
   /** Exporta a sequência inteira do carrossel: cada slide sai como PNG individual. */
   const downloadCarousel = async (indexes: number[]) => {
     setBusy(`png-${indexes[0]}`);
+    let unlock = () => {};
     try {
       const base = brand.name.replace(/\s+/g, "-").toLowerCase();
       const items = indexes
@@ -936,12 +945,14 @@ const StudioProCreate = ({
         })
         .filter((item): item is { node: HTMLElement; fileName: string } => !!item);
       if (!items.length) throw new Error("no-nodes");
+      unlock = lockCarouselHeight(items.map((item) => item.node));
       const { delivered } = await exportNodesAsPng(items);
       toast.success(`Carrossel exportado (${delivered} slides)`);
     } catch (error) {
       console.error("[studio-pro] export carousel", error);
       toast.error("Não foi possível exportar o carrossel.");
     } finally {
+      unlock();
       setBusy(null);
     }
   };
@@ -957,6 +968,10 @@ const StudioProCreate = ({
     setBusy(`save-${indexes[0]}`);
     let thumb: string | null = null;
     let coverPath: string | null = null;
+    const carouselNodes = indexes
+      .map((i) => document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null)
+      .filter((n): n is HTMLElement => !!n);
+    const unlockHeights = lockCarouselHeight(carouselNodes);
     for (let i = 0; i < indexes.length; i += 1) {
       const node = document.getElementById(`studio-pro-block-${indexes[i]}`) as HTMLElement | null;
       if (!node) continue;
@@ -988,6 +1003,7 @@ const StudioProCreate = ({
         console.warn("[studio-pro] carousel png upload", error);
       }
     }
+    unlockHeights();
     /** Instantâneo de cada slide: a edição pela galeria reabre exatamente estes. */
     const slideNodes = indexes
       .map((i) => document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null)

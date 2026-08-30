@@ -2,6 +2,25 @@ import { toCanvas, getFontEmbedCSS } from "html-to-image";
 
 /** iOS/Safari abortam canvas muito grandes. Mantemos folga sobre os limites reais. */
 const MAX_DIMENSION = 4096;
+
+/**
+ * Iguala a altura de um conjunto de artes (slides de um carrossel) à maior do
+ * grupo durante a exportação. No formato Livre cada slide tem altura própria e
+ * o Instagram só aceita carrossel com proporção única.
+ */
+export const lockUniformHeight = (nodes: HTMLElement[]) => {
+  if (nodes.length < 2) return () => {};
+  const tallest = Math.max(...nodes.map((node) => node.getBoundingClientRect().height));
+  if (!Number.isFinite(tallest) || tallest <= 0) return () => {};
+  const restores = nodes.map((node) => {
+    const previous = node.style.height;
+    node.style.height = `${Math.round(tallest)}px`;
+    return () => {
+      node.style.height = previous;
+    };
+  });
+  return () => restores.forEach((fn) => fn());
+};
 const MAX_AREA = 12_000_000;
 
 let cachedFontCss: string | null | undefined;
@@ -334,6 +353,35 @@ export const paintStrokeTextOnCanvas = (
   }
 };
 
+/**
+ * Congela as camadas de movimento ANTES da captura.
+ *
+ * Metade dos modelos recebe efeito ligado ao scroll (`StudioMotion`), que só
+ * fica neutro quando a arte está centralizada na tela. Ao exportar vários
+ * slides de um carrossel de uma vez, os que não estavam centralizados eram
+ * rasterizados no meio do efeito — a camada interna saía deslocada, com zoom ou
+ * recortada, sobrando no PNG apenas a assinatura da marca. Aqui zeramos
+ * transform/filter/clip-path/opacity dessas camadas e restauramos depois.
+ */
+export const freezeMotion = (node: HTMLElement) => {
+  const restores: Array<() => void> = [];
+  const layers = Array.from(node.querySelectorAll<HTMLElement>('[data-studio-motion="1"]'));
+  if (node.dataset.studioMotion === "1") layers.push(node);
+
+  for (const layer of layers) {
+    const previous = layer.style.cssText;
+    restores.push(() => {
+      layer.style.cssText = previous;
+    });
+    layer.style.setProperty("transform", "none", "important");
+    layer.style.setProperty("filter", "none", "important");
+    layer.style.setProperty("clip-path", "none", "important");
+    layer.style.setProperty("opacity", "1", "important");
+  }
+
+  return () => restores.forEach((fn) => fn());
+};
+
 export const renderNodeToBlob = async (
   node: HTMLElement,
   pixelRatio: number,
@@ -342,6 +390,7 @@ export const renderNodeToBlob = async (
 ) => {
   const fontEmbedCSS = await resolveFontCss(node);
   const backgroundColor = getComputedStyle(document.body).backgroundColor || "#ffffff";
+  const unfreeze = freezeMotion(node);
   const { specs, restore } = hideCssStrokes(node);
 
   let canvas: HTMLCanvasElement;
@@ -353,12 +402,13 @@ export const renderNodeToBlob = async (
       fontEmbedCSS: fontEmbedCSS ?? undefined,
       filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
     });
+    paintImagesOnCanvas(canvas, node);
+    paintStrokeTextOnCanvas(canvas, node, specs);
   } finally {
     restore();
+    unfreeze();
   }
 
-  paintImagesOnCanvas(canvas, node);
-  paintStrokeTextOnCanvas(canvas, node, specs);
   return canvasToBlob(canvas, type, quality);
 };
 
