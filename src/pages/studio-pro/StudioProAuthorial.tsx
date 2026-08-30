@@ -124,6 +124,7 @@ const StudioProAuthorial = ({
   const [flipped, setFlipped] = useState<Set<string>>(() => new Set());
   const [editing, setEditing] = useState<string | null>(null);
   const [edits, setEdits] = useState<Record<string, ArtTextEdits>>({});
+  const [resetTick, setResetTick] = useState(0);
   const [texts, setTexts] = useState<AuthorialText[]>([]);
   const [loading, setLoading] = useState(true);
   const [photosOpen, setPhotosOpen] = useState(false);
@@ -309,7 +310,7 @@ const StudioProAuthorial = ({
       return copy;
     });
     setEditing(null);
-    setSeed((current) => current);
+    setResetTick((current) => current + 1);
   };
 
   const slideKey = (artKey: string, slide: number) => `${artKey}:${slide}`;
@@ -597,7 +598,7 @@ const StudioProAuthorial = ({
                     className="h-full w-full bg-background"
                     style={flipped.has(key) ? invertedStyle : undefined}
                   >
-                    <AutoFit resetKey={`${brand.id}:${seed}:${format}:${art.key}:${slideIndex}`}>
+                    <AutoFit resetKey={`${brand.id}:${seed}:${format}:${art.key}:${slideIndex}:${resetTick}`}>
                       <StudioProSignature
                         artKey={`${brand.id}:${seed}:${art.key}:${slideIndex}`}
                         enabled={signatureOn}

@@ -1105,6 +1105,8 @@
   "support.pro.tool.hep.desc": "No painel de evolução do paciente, clique em 'Criar Programa de Exercícios'. Selecione exercícios do banco com 70+ opções (domiciliares e de academia), defina séries, repetições e frequência, ou adicione exercícios personalizados manualmente. Um link público é gerado para o paciente acessar pelo celular com vídeos instrucionais, sem precisar de login. Validade de 90 dias.",
   "support.pro.tool.hep_templates.title": "Templates reutilizáveis no HEP",
   "support.pro.tool.hep_templates.desc": "Salve programas de exercício como templates personalizados e reutilize em novos pacientes. Inclui templates pré-construídos (ex: progressão de ombro) e templates próprios que você cria e edita. Após aplicar um template, você pode remover exercícios individualmente se houver contraindicação para aquele paciente.",
+  "support.pro.tool.studio_carousel.title": "Studio: carrosséis com slides independentes",
+  "support.pro.tool.studio_carousel.desc": "Cada slide do carrossel tem seus próprios controles para baixar, salvar, editar texto e inverter cores. A sequência permanece no scroll lateral, mas cada slide é salvo como uma arte independente na galeria.",
   "support.pro.tool.ai_test_suggestions.title": "Sugestões de testes na avaliação manual (IA)",
   "support.pro.tool.ai_test_suggestions.desc": "Durante a avaliação manual, a IA analisa a anamnese, regiões de dor e questionários preenchidos nas etapas anteriores e sugere 2 a 6 testes clínicos adicionais (ortopédicos, de mobilidade, neurodinâmicos ou funcionais). Clicando em uma sugestão, o teste é inserido automaticamente no campo de testes funcionais como inspiração para o profissional.",
   "support.pro.tool.reassessment.title": "Reavaliação Expressa",
