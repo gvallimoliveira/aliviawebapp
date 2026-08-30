@@ -101,6 +101,15 @@ const AuthorialArtBlock = ({ art, slide, slideIndex, format, photo, showMeta = t
         </>
       )}
 
+      {/* Sem foto: camada gráfica leve (chuva, linhas, geometria) para o fundo
+          nunca ficar completamente liso. */}
+      {!usePhoto && (
+        <AuthorialOrnaments
+          seed={`${art.key}:${slideIndex}:${art.layout}`}
+          tone={inverse ? "inverse" : "normal"}
+        />
+      )}
+
       {/* Aspas gigantes como elemento gráfico (layout 3). */}
       {art.layout === 3 && (
         <span
@@ -110,6 +119,7 @@ const AuthorialArtBlock = ({ art, slide, slideIndex, format, photo, showMeta = t
           &ldquo;
         </span>
       )}
+
 
       <div className={`container relative ${blockPadding(format)}`}>
         <motion.div
