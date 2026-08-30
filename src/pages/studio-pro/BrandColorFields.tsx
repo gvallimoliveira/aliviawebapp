@@ -278,7 +278,7 @@ const ColorSampler = ({
               id={`${idPrefix}-sample-role`}
               value={role}
               onChange={(e) => setRole(e.target.value as SampleRole)}
-              className="mt-1 h-10 w-full rounded-md border border-input bg-background px-2 text-xs"
+              className="mt-1 h-10 w-full rounded-md border border-input bg-background px-2 text-base md:text-xs"
             >
               {(Object.keys(ROLE_LABEL) as SampleRole[]).map((key) => (
                 <option key={key} value={key}>

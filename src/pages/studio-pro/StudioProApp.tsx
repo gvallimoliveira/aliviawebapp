@@ -401,7 +401,7 @@ const StudioProApp = () => {
         </div>
 
         {/* Plano + saldo */}
-        <section className="mt-5 rounded-3xl border border-border bg-card p-6">
+        <section className="mt-5 rounded-3xl border border-border bg-card p-4 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -455,7 +455,7 @@ const StudioProApp = () => {
         </section>
 
         {/* Marcas */}
-        <section className="mt-5 rounded-3xl border border-border bg-card p-6">
+        <section className="mt-5 rounded-3xl border border-border bg-card p-4 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-lg font-bold">
               <Palette className="h-5 w-5 text-primary" />

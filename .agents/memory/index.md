@@ -1,6 +1,7 @@
 # Project Memory
 
 ## Core
+Formulários mobile: todo campo de texto/select precisa de fonte >=16px no mobile (padrão `text-base md:text-sm` do Input; Textarea já segue) — fonte menor faz o iOS dar auto-zoom e cortar a tela.
 Brand: Aliv.iA. Modern warm design, primary teal & earthy tones, rounded corners. Slogan: "...sistema de raciocínio clínico com alma de fisioterapeuta".
 URL oficial do app: **https://aliviawebapp.com.br** — usar SEMPRE esse domínio em conteúdos gerados/embutidos (blog, e-mails, PDFs). Nunca alivia.app / alivia.com.br.
 Blog: NÃO prometer "avaliação gratuita" em textos direcionados a fisioterapeuta/clínica/acadêmico — só existe "teste grátis 14 dias do plano PRO".
