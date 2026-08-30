@@ -513,7 +513,7 @@ const StudioProAuthorial = ({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-col items-center gap-6" style={themeStyle}>
+      <div className="mt-5 flex flex-col items-center gap-6">
         {arts.map((art) => {
           const caption = authorialCaption(art, brand.slogan);
           const photo = photoOf(art);
@@ -524,7 +524,7 @@ const StudioProAuthorial = ({
               className={`overflow-hidden rounded-2xl border border-border bg-background ${
                 isCarousel ? "shrink-0 snap-center" : "mx-auto"
               }`}
-              style={FRAME_STYLE[format]}
+              style={{ ...FRAME_STYLE[format], ...themeStyle }}
             >
               <div
                 id={nodeId(art.key, slideIndex)}
