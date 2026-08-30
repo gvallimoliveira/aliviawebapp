@@ -80,6 +80,7 @@ import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
 import StudioProSignature from "./StudioProSignature";
 import AutoFit from "@/pages/studio/AutoFit";
+import { frameStyle } from "@/pages/studio/frame";
 import ArtworkGuard from "@/pages/studio/ArtworkGuard";
 import VariationControl from "@/pages/studio/VariationControl";
 import {
@@ -1215,6 +1216,12 @@ const StudioProCreate = ({
           const isSaved = group.carousel
             ? indexes.every((i) => saved.has(i))
             : saved.has(first.index);
+          /**
+           * Chave da proporção: no formato "Livre" o motor sorteia a proporção
+           * da arte. Todos os slides de um carrossel usam a MESMA chave, então
+           * a sequência sai com proporção única (exigência do Instagram).
+           */
+          const frameKey = `${brand.id}:${seed}:${first.block.kind}:${first.index}`;
           const art = (item: { block: ComposedBlock; index: number }) => {
             const { kind, treatment, motion, slide } = item.block;
             const Block = STUDIO_BLOCKS[kind];
@@ -1234,7 +1241,7 @@ const StudioProCreate = ({
 
                   <ArtworkGuard key={`${item.index}:${resetTick}`} brand={brand.name}>
                   {/* AutoFit: copy longa encolhe para caber; nunca sai cortada. */}
-                  <AutoFit resetKey={`${brand.id}:${seed}:${format}:${kind}:${item.index}`}>
+                  <AutoFit resetKey={`${brand.id}:${seed}:${format}:${frameKey}:${kind}:${item.index}`}>
                   <StudioProSignature
                     artKey={`${brand.id}:${seed}:${kind}:${item.index}`}
                     enabled={signatureOn}
