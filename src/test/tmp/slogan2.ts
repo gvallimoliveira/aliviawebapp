@@ -22,3 +22,10 @@ const audit = enforceRationale(blocks, ctx);
 console.log("blocks", audit.blocks.length);
 audit.blocks.forEach((b, i) => { const w = explainArt(b, ctx, {} as any); rationaleText(w); });
 console.log("OK");
+import { buildCaption } from "../../studio-core/index";
+{
+  const c2 = buildSegmentContent({ kit, audiences: auds, segment: SLOGAN_SEGMENT, angle: "venda", variationSeed: "s1" });
+  const blocks2 = composePage(createRng("x:layout"), personaForSeed("x"), undefined, c2.carousels, 2, undefined, false);
+  blocks2.forEach((b: any, i: number) => { const cap = buildCaption(b, c2 as any, createRng("cap:"+i)); if (!cap) throw new Error("caption vazia "+b.kind); });
+  console.log("captions OK");
+}
