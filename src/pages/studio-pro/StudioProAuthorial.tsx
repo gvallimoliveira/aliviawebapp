@@ -7,6 +7,7 @@ import {
   deliver,
   exportNodeAsPng,
   exportNodesAsPng,
+  lockUniformHeight,
   exportTextFile,
   randomSeed,
   renderNodeToBlob,
