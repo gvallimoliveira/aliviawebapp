@@ -924,22 +924,10 @@ const StudioProCreate = ({
 
   /**
    * No formato Livre cada slide tem altura própria; o Instagram só aceita
-   * carrossel com proporção única. Antes de exportar, igualamos todos à maior
-   * altura do grupo e restauramos em seguida.
+   * carrossel com proporção única. Nos formatos fixos a proporção já é única.
    */
-  const lockUniformHeight = (nodes: HTMLElement[]) => {
-    if (format !== "free" || nodes.length < 2) return () => {};
-    const tallest = Math.max(...nodes.map((n) => n.getBoundingClientRect().height));
-    if (!Number.isFinite(tallest) || tallest <= 0) return () => {};
-    const restores = nodes.map((n) => {
-      const previous = n.style.height;
-      n.style.height = `${Math.round(tallest)}px`;
-      return () => {
-        n.style.height = previous;
-      };
-    });
-    return () => restores.forEach((fn) => fn());
-  };
+  const lockCarouselHeight = (nodes: HTMLElement[]) =>
+    format === "free" ? lockUniformHeight(nodes) : () => {};
 
   /** Exporta a sequência inteira do carrossel: cada slide sai como PNG individual. */
   const downloadCarousel = async (indexes: number[]) => {
