@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import punchHand from "@/assets/punch-hand.png";
 import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME } from "../brand";
 import { blockPadding, sectionHeight, type BlockProps } from "./shared";
+import { learnedSpot } from "../artMoveLearning";
 
 /**
  * "É SÓ DAR ZOOM" — MÃO SEGURANDO O TEXTO (referência do usuário)
@@ -51,8 +52,15 @@ const punchOf = (raw: string): string | null => {
  */
 const HAND_RATIO = 1055 / 783;
 
-/** Centro vertical do vão da pinça (medido no alfa da foto: y 0,21–0,31). */
+/** Centro do vão da pinça medido no alfa da foto (x 0,75–0,88 / y 0,21–0,31). */
+const GAP_CENTER_X = 0.86;
 const GAP_CENTER_Y = 0.26;
+
+/**
+ * Chave de aprendizado: quando o dono arrasta a frase e fixa a posição, o
+ * Studio guarda o centro dela em fração da caixa da mão e passa a nascer ali.
+ */
+const LEARN_KEY = "punch.phrase";
 
 
 
@@ -77,6 +85,18 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
   const dark = treatment === 1;
   const primary = treatment === 2;
   const mirrored = treatment === 3;
+
+  /*
+   * Ponto de partida da frase segurada: o vão medido na foto OU, se o dono já
+   * arrastou e fixou a posição alguma vez, o ponto aprendido dele.
+   */
+  const nudge = learnedSpot(LEARN_KEY) ?? { x: 0, y: 0 };
+  const gap = {
+    /* Espelhado, o vão fica do outro lado; a correção aprendida continua no
+       mesmo sentido do arraste (direita é direita nas duas versões). */
+    x: (mirrored ? 1 - GAP_CENTER_X : GAP_CENTER_X) + nudge.x,
+    y: GAP_CENTER_Y + nudge.y,
+  };
 
   const ink = dark
     ? "hsl(var(--background))"
@@ -112,7 +132,11 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
            * A mão ocupa 84% da largura: a faixa restante é o espaço de leitura
            * da frase minúscula, que sai do vão da pinça sem nunca ser cortada.
            */}
-          <div className="relative w-[84%]" style={{ aspectRatio: HAND_RATIO }}>
+          <div
+            data-studio-learn-frame={LEARN_KEY}
+            className="relative w-[84%]"
+            style={{ aspectRatio: HAND_RATIO }}
+          >
             <img
               src={punchHand}
               alt="Mão em close fazendo o gesto de pinça, como se segurasse a frase"
@@ -132,12 +156,20 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
              * na vertical do vão (y 0,26), espelhando quando a mão espelha.
              */}
             <div
-              className={`absolute w-[42%] -translate-y-1/2 ${
-                mirrored ? "right-[77.5%] text-right" : "left-[77.5%] text-left"
-              }`}
-              style={{ top: `${GAP_CENTER_Y * 100}%` }}
+              data-studio-learn-anchor="1"
+              className="absolute w-[42%] text-left"
+              style={{
+                left: `${gap.x * 100}%`,
+                top: `${gap.y * 100}%`,
+                transform: "translate(-50%, -50%)",
+                textAlign: mirrored ? "right" : "left",
+              }}
             >
-              <p className="text-[8px] font-medium leading-tight md:text-[11px]" style={{ color: ink }}>
+              <p
+                data-studio-learn={LEARN_KEY}
+                className="text-[8px] font-medium leading-tight md:text-[11px]"
+                style={{ color: ink }}
+              >
                 {punch}
               </p>
               {note ? (

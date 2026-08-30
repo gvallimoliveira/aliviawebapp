@@ -57,6 +57,21 @@ export const hasArtMoves = (root: HTMLElement) =>
     return !!move && (!!move.x || !!move.y);
   });
 
+/** Deslocamento atual (fração da arte) de um texto específico. */
+export const moveForNode = (root: HTMLElement, el: HTMLElement): ArtTextMove | null => {
+  const index = collectEditableNodes(root).indexOf(el);
+  if (index < 0) return null;
+  return registry.get(keyOf(root, index)) ?? null;
+};
+
+/** Zera o deslocamento de um texto específico (usado quando o motor aprende a posição). */
+export const clearMoveForNode = (root: HTMLElement, el: HTMLElement) => {
+  const index = collectEditableNodes(root).indexOf(el);
+  if (index < 0) return;
+  registry.delete(keyOf(root, index));
+  paint(root, el, undefined);
+};
+
 /** Devolve toda frase ao lugar original do modelo. */
 export const clearArtMoves = (root: HTMLElement) => {
   collectEditableNodes(root).forEach((el, i) => {
