@@ -95,7 +95,12 @@ const StudioProAuthorial = ({
   onSaved,
   onOpenBrandSettings,
 }: Props) => {
-  const restored = useRef<{ seed?: string; format?: StudioFormat; textId?: string | null }>(
+  const restored = useRef<{
+    seed?: string;
+    format?: StudioFormat;
+    textId?: string | null;
+    pinnedPhotos?: string[];
+  }>(
     (() => {
       try {
         return JSON.parse(sessionStorage.getItem(stateKey(brand.id)) ?? "{}");
@@ -114,6 +119,11 @@ const StudioProAuthorial = ({
   const [loading, setLoading] = useState(true);
   const [photosOpen, setPhotosOpen] = useState(false);
   const [photosTotal, setPhotosTotal] = useState(0);
+  /** Fotos fixadas: quando há alguma, só elas entram nas artes desta marca. */
+  const [pinnedPhotos, setPinnedPhotos] = useState<string[]>(restored.current.pinnedPhotos ?? []);
+  const togglePin = (id: string) =>
+    setPinnedPhotos((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+
 
   const signatureOn = brand.signature_enabled !== false;
   const { quota, error: quotaError, consume } = useStudioQuota();
@@ -138,11 +148,12 @@ const StudioProAuthorial = ({
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(stateKey(brand.id), JSON.stringify({ seed, format, textId }));
+      sessionStorage.setItem(stateKey(brand.id), JSON.stringify({ seed, format, textId, pinnedPhotos }));
     } catch {
       /* modo privado — ignora */
     }
-  }, [brand.id, seed, format, textId]);
+  }, [brand.id, seed, format, textId, pinnedPhotos]);
+
 
   useEffect(() => {
     let alive = true;
@@ -184,20 +195,29 @@ const StudioProAuthorial = ({
     [JSON.stringify(kit), seed],
   );
 
+  /** Fixação: com fotos fixadas, só elas alimentam as artes desta geração. */
+  const activePhotos = useMemo(() => {
+    if (pinnedPhotos.length === 0) return photos;
+    const only = photos.filter((p) => pinnedPhotos.includes(p.id));
+    return only.length > 0 ? only : photos;
+  }, [photos, pinnedPhotos]);
+
   const arts = useMemo(
     () =>
       composeAuthorial({
         texts,
         slogans: splitSlogans(brand.slogan),
         seed: `${brand.id}:${seed}`,
-        photoIds: photos.map((p) => p.id),
+        photoIds: activePhotos.map((p) => p.id),
         count: ART_COUNT,
         onlyTextId: textId,
+        forcePhoto: pinnedPhotos.length > 0,
       }),
-    [texts, brand.slogan, brand.id, seed, photos, textId],
+    [texts, brand.slogan, brand.id, seed, activePhotos, textId, pinnedPhotos.length],
   );
 
   const photoOf = (art: AuthorialArt) => photos.find((p) => p.id === art.photoId) ?? null;
+
 
   const newVersion = async () => {
     if (unlimited) {
@@ -454,19 +474,30 @@ const StudioProAuthorial = ({
           </div>
 
           <div className="mt-2">
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 rounded-full text-xs"
               onClick={() => setPhotosOpen(true)}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground underline-offset-2 hover:underline"
             >
-              <Camera className="h-3 w-3" />
-              Imagens de fundo desta marca: {photos.length}
-              {photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}
-            </button>
+              <Camera className="mr-1.5 h-3.5 w-3.5" />
+              Adicionar / gerenciar fotos
+            </Button>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {photos.length === 0
+                ? "Nenhuma imagem nesta marca — clique para enviar as suas."
+                : `${photos.length} imagem(ns) nesta marca${photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}${
+                    pinnedPhotos.length > 0
+                      ? ` · ${pinnedPhotos.length} fixada(s): só elas entram na próxima geração`
+                      : " · fixe uma imagem ali para usá-la obrigatoriamente"
+                  }.`}
+            </p>
             <p className="mt-1 text-[11px] text-muted-foreground">
               As imagens do acervo entram como fundo esmaecido — presença, nunca competindo com o texto.
             </p>
           </div>
+
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
@@ -630,9 +661,12 @@ const StudioProAuthorial = ({
           onRemove={removePhoto}
           limit={photoLimit}
           usedTotal={photosTotal}
+          pinnedIds={pinnedPhotos}
+          onTogglePin={togglePin}
           onClose={() => setPhotosOpen(false)}
         />
       )}
+
     </section>
   );
 };

@@ -118,6 +118,11 @@ type ComposeArgs = {
   count: number;
   /** Restringe o lote a um único texto (seletor do editor). */
   onlyTextId?: string | null;
+  /**
+   * Fotos fixadas pelo usuário: toda arte do lote usa uma delas (é uma escolha
+   * explícita de controle criativo, não um sorteio).
+   */
+  forcePhoto?: boolean;
 };
 
 /**
@@ -131,7 +136,9 @@ export const composeAuthorial = ({
   photoIds,
   count,
   onlyTextId,
+  forcePhoto = false,
 }: ComposeArgs): AuthorialArt[] => {
+
   const pool = (onlyTextId ? texts.filter((t) => t.id === onlyTextId) : texts).filter(
     (t) => fragmentsOf(t.body).length > 0,
   );
@@ -164,7 +171,9 @@ export const composeAuthorial = ({
     const rng = createRng(`${seed}:authorial:${i}`);
     const wantSlogan = cleanSlogans.length > 0 && (pool.length === 0 || sloganSlots.has(i));
 
-    const photoId = photoIds.length > 0 && rng.chance(0.45) ? rng.pick(photoIds) : null;
+    const photoId =
+      photoIds.length > 0 && (forcePhoto || rng.chance(0.45)) ? rng.pick(photoIds) : null;
+
     const photoPartial = !!photoId && rng.chance(0.5);
     const layout = photoId
       ? PHOTO_LAYOUTS[rng.int(PHOTO_LAYOUTS.length)]
