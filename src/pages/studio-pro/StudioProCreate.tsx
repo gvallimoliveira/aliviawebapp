@@ -922,9 +922,29 @@ const StudioProCreate = ({
     onSaved?.();
   };
 
+  /**
+   * No formato Livre cada slide tem altura própria; o Instagram só aceita
+   * carrossel com proporção única. Antes de exportar, igualamos todos à maior
+   * altura do grupo e restauramos em seguida.
+   */
+  const lockUniformHeight = (nodes: HTMLElement[]) => {
+    if (format !== "free" || nodes.length < 2) return () => {};
+    const tallest = Math.max(...nodes.map((n) => n.getBoundingClientRect().height));
+    if (!Number.isFinite(tallest) || tallest <= 0) return () => {};
+    const restores = nodes.map((n) => {
+      const previous = n.style.height;
+      n.style.height = `${Math.round(tallest)}px`;
+      return () => {
+        n.style.height = previous;
+      };
+    });
+    return () => restores.forEach((fn) => fn());
+  };
+
   /** Exporta a sequência inteira do carrossel: cada slide sai como PNG individual. */
   const downloadCarousel = async (indexes: number[]) => {
     setBusy(`png-${indexes[0]}`);
+    let unlock = () => {};
     try {
       const base = brand.name.replace(/\s+/g, "-").toLowerCase();
       const items = indexes
@@ -936,12 +956,14 @@ const StudioProCreate = ({
         })
         .filter((item): item is { node: HTMLElement; fileName: string } => !!item);
       if (!items.length) throw new Error("no-nodes");
+      unlock = lockUniformHeight(items.map((item) => item.node));
       const { delivered } = await exportNodesAsPng(items);
       toast.success(`Carrossel exportado (${delivered} slides)`);
     } catch (error) {
       console.error("[studio-pro] export carousel", error);
       toast.error("Não foi possível exportar o carrossel.");
     } finally {
+      unlock();
       setBusy(null);
     }
   };
