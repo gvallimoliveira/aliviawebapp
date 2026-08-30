@@ -22,7 +22,7 @@ describe("slogan segment render", () => {
           const Cmp = (STUDIO_BLOCKS as any)[b.kind];
           if (!Cmp) throw new Error("bloco sem componente: " + b.kind);
           try {
-            render(<Cmp block={b} content={content} picker={picker} persona={persona} rng={createRng(`b:${s}:${i}`)} format="free" index={i} />);
+            render(<Cmp block={b} content={content} picker={picker} persona={persona} rng={createRng(`b:${s}:${i}`)} format="free" index={i} treatment={b.treatment ?? 0} />);
           } catch (e) {
             throw new Error(`${angle}/${s}/${b.kind}: ${(e as Error).message}`);
           }
