@@ -118,6 +118,11 @@ type ComposeArgs = {
   count: number;
   /** Restringe o lote a um único texto (seletor do editor). */
   onlyTextId?: string | null;
+  /**
+   * Fotos fixadas pelo usuário: toda arte do lote usa uma delas (é uma escolha
+   * explícita de controle criativo, não um sorteio).
+   */
+  forcePhoto?: boolean;
 };
 
 /**
@@ -131,7 +136,9 @@ export const composeAuthorial = ({
   photoIds,
   count,
   onlyTextId,
+  forcePhoto = false,
 }: ComposeArgs): AuthorialArt[] => {
+
   const pool = (onlyTextId ? texts.filter((t) => t.id === onlyTextId) : texts).filter(
     (t) => fragmentsOf(t.body).length > 0,
   );
