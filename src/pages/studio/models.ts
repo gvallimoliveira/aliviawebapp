@@ -38,6 +38,7 @@ export const STUDIO_MODELS: StudioModel[] = [
   { id: "tweet", label: "Post de rede (tweet)", hint: "Print de um post curto com avatar, @, horário e barra de ações", kinds: ["tweet"] },
   { id: "ladoalado", label: "Celular + explicação", hint: "Aparelho de um lado e título, texto e chamada do outro", kinds: ["phoneSide"] },
   { id: "recado", label: "Recado importante", hint: "Cartão de aviso com selo de exclamação sobre chapa de cor", kinds: ["notice"] },
+  { id: "impacto", label: "Frase de impacto", hint: "Pouco texto: uma frase provocativa gigante, nota curta e assinatura", kinds: ["punch"] },
   { id: "empilhado", label: "Letras empilhadas (cartaz)", hint: "Palavra repetida em contorno com chapa sólida e tarjas de cor", kinds: ["stackType"] },
   { id: "mockup", label: "Mockup de tela", hint: "Notebook, tablet ou celular", kinds: ["device"] },
   { id: "notificacoes", label: "Notificações do app", hint: "Pilha de avisos simulando o app da marca", kinds: ["notify"] },

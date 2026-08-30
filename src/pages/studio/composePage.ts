@@ -33,6 +33,7 @@ export type BlockKind =
   | "tweet"
   | "phoneSide"
   | "notice"
+  | "punch"
   | "device"
   | "door"
   | "stage"
@@ -91,6 +92,7 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   tweet: 4,
   phoneSide: 3,
   notice: 4,
+  punch: 4,
   device: 3,
   door: 4,
   stage: 2,
@@ -280,6 +282,7 @@ export const composePage = (
     ["tweet", 2],
     ["phoneSide", 2],
     ["notice", 1],
+    ["punch", 2],
     ["device", 2],
     ["door", 1],
     ["constellation", 1],
