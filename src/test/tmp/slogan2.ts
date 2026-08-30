@@ -26,6 +26,6 @@ import { buildCaption } from "../../studio-core/index";
 {
   const c2 = buildSegmentContent({ kit, audiences: auds, segment: SLOGAN_SEGMENT, angle: "venda", variationSeed: "s1" });
   const blocks2 = composePage(createRng("x:layout"), personaForSeed("x"), undefined, c2.carousels, 2, undefined, false);
-  blocks2.forEach((b: any, i: number) => { const cap = buildCaption(b, c2 as any, createRng("cap:"+i)); if (!cap) throw new Error("caption vazia "+b.kind); });
+  blocks2.forEach((b: any, i: number) => { const cap = buildCaption(c2 as any, b.kind, createRng("cap:"+i)); if (!cap) throw new Error("caption vazia "+b.kind); });
   console.log("captions OK");
 }
