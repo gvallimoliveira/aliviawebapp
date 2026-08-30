@@ -1228,10 +1228,11 @@ const StudioProCreate = ({
             return (
               <div
                 className={`overflow-hidden rounded-2xl border border-border bg-background ${
-                  format === "1x1" ? "studio-pro-square" : ""
-                } ${group.carousel ? "shrink-0 snap-center" : "mx-auto"}`}
+                  group.carousel ? "shrink-0 snap-center" : "mx-auto"
+                }`}
                 style={frameStyle(format, frameKey)}
               >
+
                 {/* Lado B aplica os tokens invertidos só nesta arte. */}
                 <div
                   id={`studio-pro-block-${item.index}`}
