@@ -25,6 +25,7 @@ export type BlockKind =
   | "photoType"
   | "photoSplit"
   | "photoPortrait"
+  | "photoVeil"
   | "search"
   | "device"
   | "door"
@@ -76,6 +77,7 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   photoType: 2,
   photoSplit: 2,
   photoPortrait: 2,
+  photoVeil: 4,
   search: 4,
   device: 3,
   door: 4,
@@ -256,7 +258,7 @@ export const composePage = (
    * São peças de destaque — no máximo duas por página, sempre no miolo.
    */
   if (photoCount > 0) {
-    const photoKinds: BlockKind[] = rng.shuffle(["photoType", "photoSplit", "photoPortrait", "stage"]);
+    const photoKinds: BlockKind[] = rng.shuffle(["photoType", "photoSplit", "photoPortrait", "stage", "photoVeil"]);
     const howMany = photoCount > 1 && rng.chance(0.5) ? 2 : 1;
     for (let i = 0; i < howMany; i += 1) {
       const at = 1 + rng.int(Math.max(1, kinds.length - 2));

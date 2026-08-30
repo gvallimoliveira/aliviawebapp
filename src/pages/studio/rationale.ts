@@ -247,6 +247,12 @@ const SENSE: Record<BlockKind, Sense> = {
     job: "criar vínculo com a pessoa por trás do serviço",
     needsPhoto: true,
   },
+  photoVeil: {
+    format: "foto de fundo com véu",
+    sees: "sua foto como plano de fundo esmaecido e o texto claro à frente",
+    job: "dar clima e prova real sem roubar a leitura da mensagem",
+    needsPhoto: true,
+  },
   search: {
     format: "barra de busca",
     sees: "uma barra de busca com o que a pessoa digitaria",
