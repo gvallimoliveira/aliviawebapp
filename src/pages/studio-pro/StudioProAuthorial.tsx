@@ -28,6 +28,8 @@ import {
   composeAuthorial,
   fragmentsOf,
   listAuthorialTexts,
+  splitSlogans,
+
   type AuthorialArt,
   type AuthorialText,
 } from "./authorial";
