@@ -181,9 +181,8 @@ const AuthorialArtBlock = ({ art, slide, slideIndex, format, photo, showMeta = t
           {art.slides.map((_, i) => (
             <span
               key={i}
-              className={`h-1 w-4 rounded-full ${
-                i === slideIndex ? "bg-primary" : usePhoto ? "bg-background/30" : "bg-muted-foreground/25"
-              }`}
+              className={`h-1 w-4 rounded-full ${i === slideIndex ? "bg-primary" : "bg-muted-foreground/25"}`}
+              style={usePhoto && i !== slideIndex ? { backgroundColor: "rgba(245,245,244,0.35)" } : undefined}
             />
           ))}
         </div>
