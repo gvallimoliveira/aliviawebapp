@@ -60,6 +60,8 @@ export {
   exportNodesAsPng,
   renderNodeToBlob,
   renderNodeToPngBlob,
+  freezeMotion,
+  lockUniformHeight,
   deliver,
   deliverMany,
   type ExportResult,
