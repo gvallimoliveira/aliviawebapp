@@ -979,6 +979,10 @@ const StudioProCreate = ({
     setBusy(`save-${indexes[0]}`);
     let thumb: string | null = null;
     let coverPath: string | null = null;
+    const carouselNodes = indexes
+      .map((i) => document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null)
+      .filter((n): n is HTMLElement => !!n);
+    const unlockHeights = lockUniformHeight(carouselNodes);
     for (let i = 0; i < indexes.length; i += 1) {
       const node = document.getElementById(`studio-pro-block-${indexes[i]}`) as HTMLElement | null;
       if (!node) continue;
@@ -1010,6 +1014,7 @@ const StudioProCreate = ({
         console.warn("[studio-pro] carousel png upload", error);
       }
     }
+    unlockHeights();
     /** Instantâneo de cada slide: a edição pela galeria reabre exatamente estes. */
     const slideNodes = indexes
       .map((i) => document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null)
