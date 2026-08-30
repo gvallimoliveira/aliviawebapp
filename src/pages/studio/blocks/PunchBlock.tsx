@@ -163,8 +163,9 @@ const PunchBlock = ({ content, rng, treatment, format }: BlockProps) => {
           {call}
         </motion.h2>
 
-        {/* PÉ: assinatura discreta da marca. */}
-        <div className="mt-[6%] flex flex-col items-center gap-1.5">
+        {/* PÉ: assinatura discreta da marca (o modelo já assina — ver flag). */}
+        <div data-studio-own-lockup="1" className="mt-[6%] flex flex-col items-center gap-1.5">
+
           {BRAND_LOGO ? (
             <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-8 w-8 object-contain md:h-10 md:w-10" />
           ) : null}
