@@ -1090,6 +1090,19 @@ const StudioProCreate = ({
                 : "Gerações do período encerradas — faça upgrade para continuar gerando."}
             </p>
           )}
+          {showWelcomeBatch && (
+            <div className="mt-2 rounded-2xl border border-primary/30 bg-primary/10 p-3">
+              <p className="text-xs font-semibold text-foreground">
+                <Gift className="mr-1 inline h-3.5 w-3.5" />
+                Este primeiro lote é por nossa conta
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Ele saiu da sua marca sem consumir nenhuma geração. Explore à vontade: trocar público,
+                objetivo, modelo de post e formato é sempre livre. Só o botão “Nova versão” usa 1 geração.
+              </p>
+            </div>
+          )}
+
 
           {/* Nichos da marca + visão 360° (modo livre: assunto sorteado por lote). */}
           <div className="mt-2 flex flex-wrap gap-1.5">
