@@ -944,7 +944,7 @@ const StudioProCreate = ({
         })
         .filter((item): item is { node: HTMLElement; fileName: string } => !!item);
       if (!items.length) throw new Error("no-nodes");
-      unlock = lockUniformHeight(items.map((item) => item.node));
+      unlock = lockCarouselHeight(items.map((item) => item.node));
       const { delivered } = await exportNodesAsPng(items);
       toast.success(`Carrossel exportado (${delivered} slides)`);
     } catch (error) {
@@ -970,7 +970,7 @@ const StudioProCreate = ({
     const carouselNodes = indexes
       .map((i) => document.getElementById(`studio-pro-block-${i}`) as HTMLElement | null)
       .filter((n): n is HTMLElement => !!n);
-    const unlockHeights = lockUniformHeight(carouselNodes);
+    const unlockHeights = lockCarouselHeight(carouselNodes);
     for (let i = 0; i < indexes.length; i += 1) {
       const node = document.getElementById(`studio-pro-block-${indexes[i]}`) as HTMLElement | null;
       if (!node) continue;
