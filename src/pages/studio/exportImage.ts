@@ -17,7 +17,7 @@ export const lockUniformHeight = (nodes: HTMLElement[]) => {
   const restores = nodes.map((node) => {
     const previousHeight = node.style.height;
     const previousMinHeight = node.style.minHeight;
-    node.style.height = "auto";
+    node.style.height = `${Math.ceil(tallest)}px`;
     node.style.minHeight = `${Math.ceil(tallest)}px`;
     return () => {
       node.style.height = previousHeight;
