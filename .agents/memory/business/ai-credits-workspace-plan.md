@@ -62,7 +62,11 @@ flag `app_config.ai_credits_enforced` false até 5.3; bypass VIP + `is_partner` 
   - Demais usuários veem barra `used/included`, saldo de pacotes comprados e CTA de compra.
   - Ainda **zero bloqueio ou warning** — só apresentação.
 - **✅ 5.2 — Warning a 80% (02/07/2026)** — `AiCreditsWidget.tsx` mostra barra âmbar + banner amigável a partir de 80% e banner vermelho (ainda sem bloqueio) a partir de 100%. Nada bloqueia uso; VIP/parceiro seguem no card "Uso ilimitado". Push opcional adiado para junto de 5.3.
-- **⏳ 5.3 — Path de enforcement em canário (VIP/parceiro)** — validar que bypass não regride latência antes de bloquear ninguém.
+- **✅ 5.3 — Path de enforcement em canário (30/08/2026)**
+  - `assertCreditsAvailable` agora roda em 9 edge functions via novo helper `canaryCredits()` (`_shared/ai-credits.ts`): diagnosis, treatment, clinical-agent-chat, progression-suggestion, evolution-summary, agent-generate-hep, interpret-external-assessment, clinical-impression, differential-diagnosis.
+  - Nenhuma function bloqueia: a decisão só vai para log + `ai_credit_decisions` + metadata de `ai_credit_usage`. `blocked` sempre 0 até 5.4.
+  - Latência medida no canário: caminho VIP 0,24–1,0s e `quota_check` até 2,8s. Corrigido com **cache de bypass por isolate (5 min)** para VIP/parceiro/tier ilimitado — só decisões ilimitadas são cacheadas, nunca decisões que possam bloquear.
+  - ⚠️ Atenção para 5.4: `app_config.ai_credits_enforced` **já está `true`** (era lido só como telemetria). Antes de traduzir `blocked` em 402, desligar a flag ou o bloqueio entra de uma vez para todos.
 - **⏳ 5.4 — Soft-block real em PRO/Acadêmico/Premium** — retorno 402 + modal otimista, rollout em 3 ondas. Clínica fica de fora.
 - **⏳ 5.5 — Soft-block em clínica** — só se dados mostrarem abuso; nunca bloqueia atendimento.
 - Consumir saldo (Fase 5.4): primeiro pacote comprado (FIFO por `expires_at`), depois quota mensal.

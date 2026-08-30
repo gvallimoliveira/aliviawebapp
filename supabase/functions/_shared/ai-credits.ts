@@ -286,6 +286,14 @@ function decodeJwtEmail(authHeader: string | null): string | null {
   }
 }
 
+// Cache de bypass por isolate (5 min). VIP/parceiro/ilimitado não mudam de
+// minuto a minuto, e é justamente esse caminho que somava ~0,5–2s de latência
+// no canário (getUserById + vip_users + professionals + RPC). Só cacheia
+// decisões ilimitadas — nunca decisões que possam bloquear.
+type BypassEntry = { unlimited: true; reason: "vip" | "partner" | "unlimited_tier"; path: CreditPath; tier?: string; at: number };
+const BYPASS_TTL_MS = 5 * 60 * 1000;
+const bypassCache = new Map<string, BypassEntry>();
+
 /**
  * Consulta status de créditos e devolve decisão. Nunca throws.
  * O caller decide: `if (!decision.ok && decision.enforced) return 402;`
@@ -294,6 +302,7 @@ export async function assertCreditsAvailable(
   req: Request,
   opts: { function_name: string; credits?: number; user_id?: string | null },
 ): Promise<CreditDecision> {
+
   const t0 = Date.now();
   const cost = opts.credits ?? AI_CREDIT_COST[opts.function_name] ?? 0.05;
   const base = {
@@ -338,6 +347,16 @@ export async function assertCreditsAvailable(
       });
     }
 
+    // Bypass já conhecido neste isolate? Devolve sem tocar em rede.
+    const cached = bypassCache.get(userId);
+    if (cached && Date.now() - cached.at < BYPASS_TTL_MS) {
+      return finalize(admin, userId, {
+        ...base, enforced, ok: true, unlimited: true,
+        reason: cached.reason, path_taken: cached.path, tier: cached.tier,
+        metadata: { bypass_cache: true },
+      });
+    }
+
     // Email para VIP: tenta do JWT, senão profiles/auth
     let email = decodeJwtEmail(authHeader);
     if (!email) {
@@ -348,6 +367,7 @@ export async function assertCreditsAvailable(
     }
 
     if (await isVipEmail(admin, email)) {
+      bypassCache.set(userId, { unlimited: true, reason: "vip", path: "vip", at: Date.now() });
       return finalize(admin, userId, {
         ...base, enforced, ok: true, unlimited: true, reason: "vip", path_taken: "vip",
       });
@@ -361,11 +381,13 @@ export async function assertCreditsAvailable(
         .eq("user_id", userId)
         .maybeSingle();
       if (prof?.is_partner) {
+        bypassCache.set(userId, { unlimited: true, reason: "partner", path: "partner", at: Date.now() });
         return finalize(admin, userId, {
           ...base, enforced, ok: true, unlimited: true, reason: "partner", path_taken: "partner",
         });
       }
     } catch { /* noop */ }
+
 
     // Consulta consolidada
     const { data: statusData, error: statusError } = await admin.rpc(
@@ -388,11 +410,15 @@ export async function assertCreditsAvailable(
     };
 
     if (s.unlimited) {
+      bypassCache.set(userId, {
+        unlimited: true, reason: "unlimited_tier", path: "unlimited_tier", tier: s.tier, at: Date.now(),
+      });
       return finalize(admin, userId, {
         ...base, enforced, ok: true, unlimited: true, reason: "unlimited_tier",
         path_taken: "unlimited_tier", tier: s.tier,
       });
     }
+
 
     if (s.clinic_id) {
       // Política de carência: 20% acima do incluso antes de tocar em pacotes.
@@ -445,3 +471,46 @@ export async function assertCreditsAvailable(
 }
 
 
+
+// ---------------------------------------------------------------------------
+// Fase 5.3 — canário: um único ponto de entrada por edge function
+// ---------------------------------------------------------------------------
+// Roda a decisão de crédito em modo shadow (nunca bloqueia), imprime o caminho
+// no log e registra o uso já com o motivo/saldo no metadata. A Fase 5.4 só
+// precisa checar `decision.blocked` para devolver 402.
+export async function canaryCredits(
+  req: Request,
+  function_name: string,
+  opts: { user_id?: string | null; credits?: number; metadata?: Record<string, unknown> } = {},
+): Promise<CreditDecision> {
+  const decision = await assertCreditsAvailable(req, {
+    function_name,
+    user_id: opts.user_id,
+    credits: opts.credits,
+  });
+  console.log(`[ai-credits] ${function_name} decision:`, JSON.stringify({
+    reason: decision.reason,
+    path: decision.path_taken,
+    remaining: decision.remaining,
+    enforced: decision.enforced,
+    blocked: decision.blocked,
+    tier: decision.tier,
+    latency_ms: decision.latency_ms,
+  }));
+  shadowLogAiUsage(req, {
+    function_name,
+    user_id: opts.user_id,
+    credits: opts.credits,
+    metadata: {
+      ...(opts.metadata ?? {}),
+      credit_reason: decision.reason,
+      credit_path: decision.path_taken,
+      credit_remaining: decision.remaining,
+      credit_enforced: decision.enforced,
+      credit_blocked: decision.blocked,
+      credit_tier: decision.tier ?? null,
+      credit_latency_ms: decision.latency_ms,
+    },
+  });
+  return decision;
+}
