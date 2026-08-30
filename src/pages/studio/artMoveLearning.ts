@@ -21,6 +21,7 @@
  */
 
 import { BRAND_HANDLE, BRAND_NAME } from "./brand";
+import { clearMoveForNode } from "./artTextMove";
 
 /** Ponto aprendido: centro do texto em fração do quadro de referência. */
 export type LearnedSpot = { x: number; y: number };
@@ -106,6 +107,13 @@ export const learnArtMoves = (root: HTMLElement): string[] => {
     const samples = [...(store[slot] ?? []), spot].slice(-MAX_SAMPLES);
     store[slot] = samples;
     learned.push(key);
+
+    /*
+     * O deslocamento manual já virou aprendizado: zeramos o arraste para o
+     * texto não sair deslocado duas vezes quando a arte renderizar de novo
+     * partindo do ponto aprendido.
+     */
+    clearMoveForNode(root, textEl);
   });
 
   if (learned.length) write(store);
