@@ -220,7 +220,93 @@ export const HOOK_FRAMES: HookFrame[] = [
   },
 ];
 
+/**
+ * LIMITE DE PARADA DE SCROLL (regra global, todas as marcas)
+ *
+ * Gancho é frase de impacto, não redação: passando deste tamanho a pessoa lê
+ * em vez de parar. O excedente não é jogado fora — desce para o apoio (`sub`),
+ * que é justamente o lugar de fechar a ponte lógica.
+ */
+export const HOOK_HEADLINE_MAX = 64;
+const HOOK_SUB_MAX = 130;
+
+const END_PUNCT = /[.!?…]+$/;
+
+/** Pontos naturais de corte, do mais “editorial” para o mais neutro. */
+const CUT_MARKS = [" — ", " – ", ": ", "; ", ". ", ", "];
+
+const capSub = (text: string) => {
+  const value = clean(text);
+  if (value.length <= HOOK_SUB_MAX) return value;
+  const cut = value.slice(0, HOOK_SUB_MAX);
+  const space = cut.lastIndexOf(" ");
+  return `${noDot(space > 40 ? cut.slice(0, space) : cut)}.`;
+};
+
+/**
+ * Encurta um gancho longo sem perder conteúdo: corta a manchete no ponto
+ * natural mais próximo do limite e manda a cauda para o apoio.
+ */
+export const tightenHook = (hook: StudioHook): StudioHook => {
+  const headline = clean(`${hook.strong ?? ""}${hook.rest ?? ""}`);
+  if (!headline) return hook;
+  if (headline.length <= HOOK_HEADLINE_MAX) {
+    return hook.sub ? { ...hook, sub: capSub(hook.sub) } : hook;
+  }
+
+  let cutAt = -1;
+  let markLength = 0;
+  for (const mark of CUT_MARKS) {
+    let index = headline.indexOf(mark);
+    let best = -1;
+    while (index > 12) {
+      if (index <= HOOK_HEADLINE_MAX) best = index;
+      else break;
+      index = headline.indexOf(mark, index + 1);
+    }
+    /* Nenhum corte dentro do limite: aceita o primeiro, que já encurta. */
+    if (best < 0) {
+      const first = headline.indexOf(mark, 13);
+      if (first > 12) best = first;
+    }
+    if (best > cutAt) {
+      cutAt = best;
+      markLength = mark.length;
+    }
+  }
+
+  if (cutAt < 0) {
+    const window = headline.slice(0, HOOK_HEADLINE_MAX);
+    const space = window.lastIndexOf(" ");
+    if (space > 12) {
+      cutAt = space;
+      markLength = 1;
+    }
+  }
+
+  if (cutAt < 0) return hook.sub ? { ...hook, sub: capSub(hook.sub) } : hook;
+
+  const head = noDot(headline.slice(0, cutAt));
+  const tail = noDot(headline.slice(cutAt + markLength));
+  const endMark = headline.match(END_PUNCT)?.[0] ?? ".";
+  const extra = tail ? `${upper1(tail)}.` : "";
+  const sub = [extra, clean(hook.sub)].filter(Boolean).join(" ");
+
+  return {
+    ...hook,
+    strong: head,
+    rest: endMark === "." ? "." : endMark,
+    sub: sub ? capSub(sub) : undefined,
+  };
+};
+
+/** Aplica o limite de manchete a uma lista inteira de ganchos. */
+export const tightenHooks = (hooks: StudioHook[] | undefined): StudioHook[] =>
+  (hooks ?? []).map(tightenHook);
+
 /** Aplica o mecanismo aos ingredientes da marca (determinístico, sem IA). */
 export const composeHooks = (ing: HookIngredients): StudioHook[] =>
   HOOK_FRAMES.map((frame) => frame.build(ing))
-    .filter((hook): hook is StudioHook => !!hook && hook.strong.length >= 12);
+    .filter((hook): hook is StudioHook => !!hook && hook.strong.length >= 12)
+    .map(tightenHook);
+
