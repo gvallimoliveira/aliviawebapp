@@ -166,7 +166,8 @@ const roundedRect = (
  * mas a área da foto fica branca. Desenhar os pixels após a rasterização evita
  * definitivamente esse caminho frágil do navegador.
  */
-const paintImagesOnCanvas = (canvas: HTMLCanvasElement, node: HTMLElement) => {
+const paintImagesOnCanvas = (canvas: HTMLCanvasElement, node: HTMLElement): PaintedRect[] => {
+  const painted: PaintedRect[] = [];
   const context = canvas.getContext("2d");
   if (!context) return;
 
