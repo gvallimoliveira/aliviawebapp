@@ -247,7 +247,110 @@ const paintImagesOnCanvas = (canvas: HTMLCanvasElement, node: HTMLElement): Pain
       context.drawImage(image, sx, sy, sw, sh, x, y, width, height);
     }
     context.restore();
+    painted.push({ x, y, width, height });
+  }
 
+  return painted;
+};
+
+/**
+ * REPINTE DAS PELÍCULAS SOBRE A FOTO (fidelidade preview → PNG)
+ *
+ * `paintImagesOnCanvas` recoloca as fotos POR CIMA do canvas rasterizado (o
+ * WebKit não pinta <img> dentro do foreignObject). O efeito colateral era
+ * grave: qualquer camada translúcida que na tela fica ACIMA da foto — o véu
+ * escurecido dos blocos de foto de fundo e do modo autoral — era coberta pela
+ * foto repintada. O usuário aprovava a arte com película e baixava sem ela.
+ *
+ * Aqui repintamos essas camadas (marcadas com `data-studio-overlay="1"`)
+ * depois das fotos, recortadas apenas à área onde alguma foto foi repintada —
+ * assim nada é escurecido duas vezes.
+ */
+type PaintedRect = { x: number; y: number; width: number; height: number };
+
+const buildOverlayFill = (
+  context: CanvasRenderingContext2D,
+  style: CSSStyleDeclaration,
+  box: PaintedRect,
+): string | CanvasGradient | null => {
+  const image = style.backgroundImage;
+  if (image && image !== "none") {
+    const stops = Array.from(image.matchAll(/(rgba?\([^)]+\))\s*([\d.]+)%?/g)).map((m) => ({
+      color: m[1],
+      offset: Math.min(1, Math.max(0, Number(m[2]) / 100)),
+    }));
+    if (stops.length >= 2) {
+      const isRadial = image.includes("radial-gradient");
+      const gradient = isRadial
+        ? context.createRadialGradient(
+            box.x + box.width / 2,
+            box.y + box.height / 2,
+            0,
+            box.x + box.width / 2,
+            box.y + box.height / 2,
+            Math.max(box.width, box.height) * 0.62,
+          )
+        : image.includes("to top")
+          ? context.createLinearGradient(box.x, box.y + box.height, box.x, box.y)
+          : context.createLinearGradient(box.x, box.y, box.x, box.y + box.height);
+      stops.forEach((stop) => gradient.addColorStop(stop.offset, stop.color));
+      return gradient;
+    }
+  }
+  const color = style.backgroundColor;
+  const parsed = color ? parseCssColor(color) : null;
+  if (parsed && parsed[3] > 0.01) return color;
+  return null;
+};
+
+const paintOverlaysOnCanvas = (
+  canvas: HTMLCanvasElement,
+  node: HTMLElement,
+  imageRects: PaintedRect[],
+) => {
+  if (imageRects.length === 0) return;
+  const context = canvas.getContext("2d");
+  if (!context) return;
+
+  const rootRect = node.getBoundingClientRect();
+  if (!rootRect.width || !rootRect.height) return;
+  const scaleX = canvas.width / rootRect.width;
+  const scaleY = canvas.height / rootRect.height;
+
+  for (const overlay of Array.from(node.querySelectorAll<HTMLElement>('[data-studio-overlay="1"]'))) {
+    if (overlay.closest('[data-studio-no-export="1"]')) continue;
+    const style = getComputedStyle(overlay);
+    if (style.display === "none" || style.visibility === "hidden") continue;
+    const opacity = Number.parseFloat(style.opacity);
+    if (opacity === 0) continue;
+
+    const rect = overlay.getBoundingClientRect();
+    if (!rect.width || !rect.height) continue;
+    const box: PaintedRect = {
+      x: (rect.left - rootRect.left) * scaleX,
+      y: (rect.top - rootRect.top) * scaleY,
+      width: rect.width * scaleX,
+      height: rect.height * scaleY,
+    };
+
+    const fill = buildOverlayFill(context, style, box);
+    if (!fill) continue;
+
+    for (const image of imageRects) {
+      const x = Math.max(box.x, image.x);
+      const y = Math.max(box.y, image.y);
+      const right = Math.min(box.x + box.width, image.x + image.width);
+      const bottom = Math.min(box.y + box.height, image.y + image.height);
+      if (right <= x || bottom <= y) continue;
+      context.save();
+      context.globalAlpha = Number.isFinite(opacity) ? opacity : 1;
+      context.beginPath();
+      context.rect(x, y, right - x, bottom - y);
+      context.clip();
+      context.fillStyle = fill;
+      context.fillRect(x, y, right - x, bottom - y);
+      context.restore();
+    }
   }
 };
 
