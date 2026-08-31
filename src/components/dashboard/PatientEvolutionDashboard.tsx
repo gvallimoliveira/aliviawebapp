@@ -624,6 +624,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       }
 
       setSelectedEmail(null);
+      setLocallyDeletedIds((prev) => [...prev, ...assessmentIds.filter((id) => !prev.includes(id))]);
       onAssessmentsDeleted?.(assessmentIds);
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
       toast({ title: "Paciente e dados excluídos permanentemente" });
