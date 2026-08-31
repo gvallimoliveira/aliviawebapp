@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
-import { shadowLogAiUsage, assertCreditsAvailable } from "../_shared/ai-credits.ts";
+import { canaryCredits } from "../_shared/ai-credits.ts";
 import { mechanismSummary } from "../_shared/pain-mechanism.ts";
 
 function normalizeAnamnesis(raw: any) {
