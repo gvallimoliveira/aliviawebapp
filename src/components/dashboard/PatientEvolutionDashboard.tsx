@@ -728,6 +728,9 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const handleDeleteAssessment = async (assessmentId: string) => {
     if (deletingAssessmentId) return;
     setDeletingAssessmentId(assessmentId);
+    // A lista encolhe quando o card some; sem âncora o navegador joga a página
+    // para o topo. Guardamos a posição do bloco de histórico e a restauramos.
+    const restoreScroll = anchorScrollById("sec-historico", 1200);
     try {
       // Exclusão via RPC segura: valida permissão (paciente, profissional vinculado
       // ou equipe da clínica) e limpa/desvincula registros filhos que bloqueiam o delete
@@ -758,10 +761,11 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         );
       }
 
-      // Remove from in-memory list
-      const idx = assessments.findIndex((a) => a.id === assessmentId);
-      if (idx >= 0) assessments.splice(idx, 1);
+      // Some da UI imediatamente e avisa o pai para sincronizar o estado dele.
+      setLocallyDeletedIds((prev) => (prev.includes(assessmentId) ? prev : [...prev, assessmentId]));
+      onAssessmentsDeleted?.([assessmentId]);
       setAssessmentRefreshTick((x) => x + 1);
+      restoreScroll();
       toast({ title: language === "pt" ? "Avaliação excluída" : "Assessment deleted" });
     } catch (err: any) {
       toast({ title: language === "pt" ? "Erro ao excluir" : "Error deleting", description: err?.message, variant: "destructive" });
