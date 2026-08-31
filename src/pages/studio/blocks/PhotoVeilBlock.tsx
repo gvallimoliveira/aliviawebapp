@@ -52,9 +52,10 @@ const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos }: Blo
         />
       </div>
 
-      {/* `data-studio-overlay` garante que o exportador repinte a película
-          acima da foto (o repinte das fotos no canvas acontece depois da
-          rasterização e cobriria esta camada). */}
+      {/* Película: fica ACIMA da foto e ABAIXO do texto. Na exportação a foto é
+          composta por baixo do raster, então esta camada escurece apenas a
+          foto — o texto sai com brilho total. */}
+
       <div
         aria-hidden
         data-studio-overlay="1"

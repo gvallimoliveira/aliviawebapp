@@ -254,111 +254,122 @@ const paintImagesOnCanvas = (canvas: HTMLCanvasElement, node: HTMLElement): Pain
 };
 
 /**
- * REPINTE DAS PELÍCULAS SOBRE A FOTO (fidelidade preview → PNG)
+ * COMPOSIÇÃO EM CAMADAS (fidelidade preview → PNG)
  *
- * `paintImagesOnCanvas` recoloca as fotos POR CIMA do canvas rasterizado (o
- * WebKit não pinta <img> dentro do foreignObject). O efeito colateral era
- * grave: qualquer camada translúcida que na tela fica ACIMA da foto — o véu
- * escurecido dos blocos de foto de fundo e do modo autoral — era coberta pela
- * foto repintada. O usuário aprovava a arte com película e baixava sem ela.
+ * Na tela a ordem é: foto → película escurecida → texto (brilho total). O
+ * html-to-image rasteriza película e texto corretamente, mas o WebKit pode não
+ * pintar <img> dentro do foreignObject — por isso as fotos são repintadas no
+ * canvas. Repintá-las (e as películas) POR CIMA do raster escurecia o texto.
  *
- * Aqui repintamos essas camadas (marcadas com `data-studio-overlay="1"`)
- * depois das fotos, recortadas apenas à área onde alguma foto foi repintada —
- * assim nada é escurecido duas vezes.
+ * Solução definitiva: as fotos são pintadas ATRÁS do raster. O raster entra por
+ * cima com a película e o texto já no lugar, então a película nunca toca o
+ * texto e a foto aparece por baixo dela.
+ *
+ * Como o raster pode trazer o fundo opaco do bloco (ex.: `#0c0c12` do bloco de
+ * foto de fundo) cobrindo a foto que vem por baixo, esses fundos são
+ * neutralizados durante a captura e repintados no canvas final antes das fotos
+ * — preservando a cor de segurança caso a foto não carregue.
  */
 type PaintedRect = { x: number; y: number; width: number; height: number };
 
-const buildOverlayFill = (
-  context: CanvasRenderingContext2D,
-  style: CSSStyleDeclaration,
-  box: PaintedRect,
-): string | CanvasGradient | null => {
-  const image = style.backgroundImage;
-  if (image && image !== "none" && image.includes("gradient")) {
-    /* Aceita tanto stops com posição explícita (véus escritos à mão) quanto sem
-       posição (classes `bg-gradient-to-*` do Tailwind), distribuindo-os. */
-    const raw = Array.from(image.matchAll(/(rgba?\([^)]+\))(?:\s+([\d.]+)%)?/g));
-    if (raw.length >= 2) {
-      const stops = raw.map((match, index) => ({
-        color: match[1],
-        offset:
-          match[2] === undefined
-            ? index / (raw.length - 1)
-            : Math.min(1, Math.max(0, Number(match[2]) / 100)),
-      }));
-      const isRadial = image.includes("radial-gradient");
-      const gradient = isRadial
-        ? context.createRadialGradient(
-            box.x + box.width / 2,
-            box.y + box.height / 2,
-            0,
-            box.x + box.width / 2,
-            box.y + box.height / 2,
-            Math.max(box.width, box.height) * 0.62,
-          )
-        : image.includes("to top")
-          ? context.createLinearGradient(box.x, box.y + box.height, box.x, box.y)
-          : context.createLinearGradient(box.x, box.y, box.x, box.y + box.height);
-      stops.forEach((stop) => gradient.addColorStop(stop.offset, stop.color));
-      return gradient;
-    }
-  }
-  const color = style.backgroundColor;
-  const parsed = color ? parseCssColor(color) : null;
-  if (parsed && parsed[3] > 0.01) return color;
-  return null;
+type Backdrop = PaintedRect & { color: string; radius: number };
+
+const isOpaqueColor = (value: string) => {
+  const parsed = parseCssColor(value);
+  return !!parsed && parsed[3] > 0.98;
 };
 
-const paintOverlaysOnCanvas = (
+/**
+ * Torna transparentes, apenas durante a captura, os fundos opacos que ficam
+ * ATRÁS de uma foto e devolve esses retângulos para repinte no canvas final.
+ */
+const openPhotoBackdrops = (node: HTMLElement) => {
+  const backdrops: Backdrop[] = [];
+  const restores: Array<() => void> = [];
+  const seen = new Set<HTMLElement>();
+
+  const rootRect = node.getBoundingClientRect();
+  if (!rootRect.width || !rootRect.height) return { backdrops, restore: () => undefined };
+
+  for (const image of Array.from(node.querySelectorAll("img"))) {
+    if (image.closest('[data-studio-no-export="1"]')) continue;
+    if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) continue;
+    const imageRect = image.getBoundingClientRect();
+    if (!imageRect.width || !imageRect.height) continue;
+
+    let ancestor: HTMLElement | null = image.parentElement;
+    while (ancestor) {
+      const style = getComputedStyle(ancestor);
+      const rect = ancestor.getBoundingClientRect();
+      const covers =
+        rect.left <= imageRect.left + 1 &&
+        rect.top <= imageRect.top + 1 &&
+        rect.right >= imageRect.right - 1 &&
+        rect.bottom >= imageRect.bottom - 1;
+
+      if (covers && isOpaqueColor(style.backgroundColor) && !seen.has(ancestor)) {
+        seen.add(ancestor);
+        backdrops.push({
+          x: rect.left - rootRect.left,
+          y: rect.top - rootRect.top,
+          width: rect.width,
+          height: rect.height,
+          color: style.backgroundColor,
+          radius: Number.parseFloat(style.borderTopLeftRadius) || 0,
+        });
+        const element = ancestor;
+        const previous = element.style.cssText;
+        restores.push(() => {
+          element.style.cssText = previous;
+        });
+        element.style.setProperty("background-color", "transparent", "important");
+      }
+
+      if (ancestor === node) break;
+      ancestor = ancestor.parentElement;
+    }
+  }
+
+  /* Do fundo mais externo para o mais interno, como na tela. */
+  backdrops.reverse();
+  return { backdrops, restore: () => restores.forEach((fn) => fn()) };
+};
+
+const paintBackdropsOnCanvas = (
   canvas: HTMLCanvasElement,
   node: HTMLElement,
-  imageRects: PaintedRect[],
+  backdrops: Backdrop[],
 ) => {
-  if (imageRects.length === 0) return;
+  if (!backdrops.length) return;
   const context = canvas.getContext("2d");
   if (!context) return;
-
   const rootRect = node.getBoundingClientRect();
   if (!rootRect.width || !rootRect.height) return;
   const scaleX = canvas.width / rootRect.width;
   const scaleY = canvas.height / rootRect.height;
 
-  for (const overlay of Array.from(node.querySelectorAll<HTMLElement>('[data-studio-overlay="1"]'))) {
-    if (overlay.closest('[data-studio-no-export="1"]')) continue;
-    const style = getComputedStyle(overlay);
-    if (style.display === "none" || style.visibility === "hidden") continue;
-    const opacity = Number.parseFloat(style.opacity);
-    if (opacity === 0) continue;
-
-    const rect = overlay.getBoundingClientRect();
-    if (!rect.width || !rect.height) continue;
-    const box: PaintedRect = {
-      x: (rect.left - rootRect.left) * scaleX,
-      y: (rect.top - rootRect.top) * scaleY,
-      width: rect.width * scaleX,
-      height: rect.height * scaleY,
-    };
-
-    const fill = buildOverlayFill(context, style, box);
-    if (!fill) continue;
-
-    for (const image of imageRects) {
-      const x = Math.max(box.x, image.x);
-      const y = Math.max(box.y, image.y);
-      const right = Math.min(box.x + box.width, image.x + image.width);
-      const bottom = Math.min(box.y + box.height, image.y + image.height);
-      if (right <= x || bottom <= y) continue;
-      context.save();
-      context.globalAlpha = Number.isFinite(opacity) ? opacity : 1;
-      context.beginPath();
-      context.rect(x, y, right - x, bottom - y);
-      context.clip();
-      context.fillStyle = fill;
-      context.fillRect(x, y, right - x, bottom - y);
-      context.restore();
-    }
+  for (const backdrop of backdrops) {
+    context.save();
+    roundedRect(
+      context,
+      backdrop.x * scaleX,
+      backdrop.y * scaleY,
+      backdrop.width * scaleX,
+      backdrop.height * scaleY,
+      backdrop.radius * Math.min(scaleX, scaleY),
+    );
+    context.clip();
+    context.fillStyle = backdrop.color;
+    context.fillRect(
+      backdrop.x * scaleX,
+      backdrop.y * scaleY,
+      backdrop.width * scaleX,
+      backdrop.height * scaleY,
+    );
+    context.restore();
   }
 };
+
 
 const canvasToBlob = (canvas: HTMLCanvasElement, type = "image/png", quality?: number) =>
   new Promise<Blob>((resolve, reject) => {
@@ -576,40 +587,46 @@ const renderStaticNodeToBlob = async (
   const fontEmbedCSS = await resolveFontCss(node);
   const backgroundColor = getComputedStyle(document.body).backgroundColor || "#ffffff";
   const { specs, restore } = hideCssStrokes(node);
+  const { backdrops, restore: restoreBackdrops } = openPhotoBackdrops(node);
 
-  let canvas: HTMLCanvasElement;
+  let output: HTMLCanvasElement;
   try {
-    canvas = await toCanvas(node, {
+    /* Raster SEM fundo opaco: ele precisa de transparência para que a foto
+       possa ser composta por baixo da película já rasterizada. */
+    const raster = await toCanvas(node, {
       width: Math.ceil(node.getBoundingClientRect().width),
       height: Math.ceil(Math.max(node.scrollHeight, node.getBoundingClientRect().height)),
       pixelRatio,
-      backgroundColor,
       skipFonts: fontEmbedCSS === null,
       fontEmbedCSS: fontEmbedCSS ?? undefined,
       filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
     });
+
     /*
-     * Fotos e películas são compostas numa CAMADA SEPARADA e só então
-     * aplicadas sobre a arte rasterizada. Se a película fosse repintada
-     * direto no canvas final, ela escureceria também o texto — na tela a
-     * ordem é foto → película → texto, e o texto precisa continuar sendo a
-     * primeira camada visual do PNG.
+     * Montagem final, na MESMA ordem da tela:
+     * 1) cor de fundo, 2) fundos opacos dos blocos de foto, 3) fotos,
+     * 4) raster da arte (película + texto) por cima. Assim a película
+     * escurece apenas a foto e o texto mantém brilho total.
      */
-    const layer = document.createElement("canvas");
-    layer.width = canvas.width;
-    layer.height = canvas.height;
-    const paintedRects = paintImagesOnCanvas(layer, node);
-    if (paintedRects.length > 0) {
-      paintOverlaysOnCanvas(layer, node, paintedRects);
-      const context = canvas.getContext("2d");
-      if (context) context.drawImage(layer, 0, 0);
-    }
-    paintStrokeTextOnCanvas(canvas, node, specs);
+    output = document.createElement("canvas");
+    output.width = raster.width;
+    output.height = raster.height;
+    const context = output.getContext("2d");
+    if (!context) throw new Error("no-2d-context");
+    context.fillStyle = backgroundColor;
+    context.fillRect(0, 0, output.width, output.height);
+    paintBackdropsOnCanvas(output, node, backdrops);
+    paintImagesOnCanvas(output, node);
+    context.drawImage(raster, 0, 0);
+
+    paintStrokeTextOnCanvas(output, node, specs);
   } finally {
+    restoreBackdrops();
     restore();
   }
-  return canvasToBlob(canvas, type, quality);
+  return canvasToBlob(output, type, quality);
 };
+
 
 export const renderNodeToBlob = async (
   node: HTMLElement,
