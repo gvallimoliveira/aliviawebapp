@@ -14,6 +14,7 @@ import {
   TrendingUp,
   User,
   Map,
+  MessageSquarePlus,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -33,6 +34,8 @@ export const PATIENT_SECTIONS: PatientSectionDef[] = [
   { id: "patient-detail-anchor", icon: User, label: { pt: "Paciente", en: "Patient", es: "Paciente" } },
   { id: "treatment-unlock-section", icon: Stethoscope, label: { pt: "Hipótese diagnóstica", en: "Diagnostic hypothesis", es: "Hipótesis diagnóstica" } },
   { id: "sec-impressao-clinica", icon: Brain, label: { pt: "Impressão clínica", en: "Clinical impression", es: "Impresión clínica" } },
+  { id: "sec-adendos", icon: MessageSquarePlus, label: { pt: "Informações adicionais", en: "Additional information", es: "Información adicional" } },
+
   { id: "sec-anamnese", icon: ClipboardList, label: { pt: "Anamnese", en: "Anamnesis", es: "Anamnesis" } },
   { id: "saude-geral", icon: HeartPulse, label: { pt: "Saúde geral", en: "General health", es: "Salud general" } },
   { id: "sec-timeline", icon: History, label: { pt: "Linha do tempo", en: "Timeline", es: "Línea de tiempo" } },

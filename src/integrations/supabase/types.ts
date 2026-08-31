@@ -811,6 +811,56 @@ export type Database = {
         }
         Relationships: []
       }
+      assessment_addenda: {
+        Row: {
+          assessment_id: string
+          author_name: string | null
+          author_type: string
+          author_user_id: string | null
+          considered_at: string | null
+          content: string
+          created_at: string
+          id: string
+          status: string
+          token: string | null
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          author_name?: string | null
+          author_type?: string
+          author_user_id?: string | null
+          considered_at?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          status?: string
+          token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          author_name?: string | null
+          author_type?: string
+          author_user_id?: string | null
+          considered_at?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          status?: string
+          token?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_addenda_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_progress: {
         Row: {
           created_at: string

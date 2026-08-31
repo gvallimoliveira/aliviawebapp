@@ -314,6 +314,10 @@ const categories: ToolCategory[] = [
 
 const faqKeys = [
   {
+    q: "Um paciente lembrou de informações depois da avaliação. Como adiciono sem refazer tudo?",
+    a: "No prontuário, no bloco \"Informações adicionais\" (abaixo da impressão clínica), qualquer terapeuta da clínica pode escrever o adendo ou gerar um link exclusivo daquela avaliação para o próprio paciente complementar (cirurgias, exames, medicação, o que piora/alivia). O adendo chega marcado como \"não interpretado\" e notifica a equipe. Se mudar o raciocínio, clique em \"Reinterpretar avaliação\": a IA reprocessa a avaliação original somada às novas informações e atualiza hipótese e impressão clínica, guardando a versão anterior. Se for irrelevante, não clique — nada é consumido e o texto fica registrado no prontuário e no PDF.",
+  },
+  {
     q: "Como aplico o FABQ-Brasil (medo-evitação / catastrofização) na clínica?",
     a: "O FABQ-Brasil é um questionário complementar do domínio Psicossocial (yellow flags): não depende de região corporal, e sim do perfil do paciente. Fica no painel de \"Questionários complementares\" da avaliação manual e da avaliação pelo link institucional. A IA o sugere em dor persistente (> 3 meses), mecanismo nociplástico/sensibilização central, dor de alta intensidade ou relatos de medo de mover, recidiva e afastamento do trabalho — e qualquer terapeuta da equipe também pode aplicá-lo manualmente, na versão completa (16 itens) ou curta (FABQ-PA, 4 itens). Na reavaliação expressa, marque a etapa \"Perfil psicossocial (FABQ)\" e o próprio paciente responde pelo link. As subescalas Atividade Física (0–24, corte ≥ 15) e Trabalho (0–42, corte ≥ 34) ficam no prontuário, saem no PDF e orientam a IA a priorizar educação em dor e exposição gradual em vez de carga agressiva.",
   },

@@ -176,6 +176,8 @@ interface PdfOptions {
   /** ISO timestamp when the red-flag screening was completed (assessment.red_flags?.answered_at). */
   redFlagsAnsweredAt?: string;
   professionalNotes?: string;
+  /** Adendos ("informações adicionais") registrados após a avaliação. */
+  addenda?: Array<{ content: string; created_at: string; author_type?: string; author_name?: string | null }>;
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
   clinicName?: string;
@@ -2443,7 +2445,7 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, redFlags, redFlagsDismissal, redFlagAnswers, redFlagsAnsweredAt, professionalNotes, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, redFlags, redFlagsDismissal, redFlagAnswers, redFlagsAnsweredAt, professionalNotes, addenda, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
   const doc = createPdfDoc();
   const isPt = language === "pt";
   let y = MARGIN;
@@ -2903,6 +2905,43 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
     y = drawTextCard(doc, y, professionalNotes, notesCardOpts);
 
     y += 4;
+  }
+
+  // ── Informações adicionais (adendos) ──
+  const addendaRows = (addenda || []).filter((a) => (a.content || "").trim().length > 0);
+  if (addendaRows.length > 0) {
+    y = checkPage(doc, y, 26);
+    y = renderSectionTitle(
+      doc,
+      y,
+      isPt ? "Informações Adicionais" : language === "es" ? "Información Adicional" : "Additional Information",
+      COLORS.primary,
+    );
+    for (const row of addendaRows) {
+      const who = row.author_name
+        || (row.author_type === "patient"
+          ? (isPt ? "Paciente" : language === "es" ? "Paciente" : "Patient")
+          : (isPt ? "Profissional" : language === "es" ? "Profesional" : "Professional"));
+      const when = row.created_at
+        ? new Date(row.created_at).toLocaleDateString(isPt ? "pt-BR" : language === "es" ? "es-ES" : "en-US")
+        : "";
+      y = checkPage(doc, y, 14);
+      doc.setFont("Inter", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.foreground);
+      doc.text(`${who}${when ? ` — ${when}` : ""}`, SECTION_X, y);
+      y += 4;
+      doc.setFont("Inter", "normal");
+      doc.setTextColor(...COLORS.muted);
+      const lines = doc.splitTextToSize(row.content.trim(), SECTION_TEXT_W);
+      for (const line of lines) {
+        y = checkPage(doc, y, 8);
+        doc.text(line, SECTION_X, y);
+        y += 3.8;
+      }
+      y += 3;
+    }
+    y += 2;
   }
 
   // ── Disclaimer ──

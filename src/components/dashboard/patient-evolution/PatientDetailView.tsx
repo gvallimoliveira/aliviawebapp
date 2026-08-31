@@ -50,6 +50,7 @@ import HealthGeneralCard from "./HealthGeneralCard";
 import DifferentialDiagnosisPanel from "./DifferentialDiagnosisPanel";
 import { shouldOfferDifferential } from "@/lib/differentialDiagnosis";
 import PatientSectionRail from "./PatientSectionRail";
+import AssessmentAddendaCard from "./AssessmentAddendaCard";
 
 import { getHealthRiskAssessment, isHealthHistoryEmpty, normalizeHealthHistory, type HealthRiskAssessment } from "@/lib/healthHistory";
 import { mechanismTrajectoryLines, buildMechanismTimeline } from "@/lib/painMechanismEvolution";
@@ -1274,6 +1275,22 @@ export default function PatientDetailView(props: any) {
                 isDemo={isDemo}
               />
             </div>
+
+            <div id="sec-adendos" className="scroll-mt-24">
+              <AssessmentAddendaCard
+                assessment={target}
+                patientName={patient?.name || null}
+                readOnly={readOnly}
+                isDemo={isDemo}
+                onReinterpreted={(diagnosis) => {
+                  target.diagnosis = diagnosis;
+                  target.needs_reimpression = true;
+                  setNotes((prev: any) => ({ ...prev }));
+                }}
+              />
+            </div>
+
+
 
           </>
         );

@@ -9,7 +9,7 @@
 
 ## Comportamento da reinterpretação
 
-- Confirmação antes de rodar, avisando que consome créditos de IA.
+- Confirmação antes de rodar,  nao precisa avisar que consome créditos de IA.
 - A hipótese anterior é preservada; a nova fica marcada como versão atualizada, com data e a observação de que foi reinterpretada após adendo.
 - A impressão clínica é regenerada junto (usa a mesma marcação de "precisa reprocessar" que já existe hoje).
 - Adendos já considerados ficam marcados como "incluídos na interpretação"; um novo adendo reativa o botão.
