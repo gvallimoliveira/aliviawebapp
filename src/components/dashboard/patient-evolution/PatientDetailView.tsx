@@ -50,6 +50,7 @@ import HealthGeneralCard from "./HealthGeneralCard";
 import DifferentialDiagnosisPanel from "./DifferentialDiagnosisPanel";
 import { shouldOfferDifferential } from "@/lib/differentialDiagnosis";
 import PatientSectionRail from "./PatientSectionRail";
+import AssessmentAddendaCard from "./AssessmentAddendaCard";
 
 import { getHealthRiskAssessment, isHealthHistoryEmpty, normalizeHealthHistory, type HealthRiskAssessment } from "@/lib/healthHistory";
 import { mechanismTrajectoryLines, buildMechanismTimeline } from "@/lib/painMechanismEvolution";
