@@ -16,7 +16,7 @@ import {
   pendingReinterpretation,
   reinterpretAssessmentWithAddenda,
 } from "@/lib/assessmentAddenda";
-import { Copy, Link2, Loader2, MessageSquarePlus, Plus, RefreshCw, Sparkles, Trash2, User, UserRound } from "lucide-react";
+import { Copy, Link2, Loader2, MessageSquarePlus, Plus, Sparkles, Trash2, User, UserRound } from "lucide-react";
 
 interface Props {
   assessment: any;
