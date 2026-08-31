@@ -250,6 +250,19 @@ const HookList = ({
                     aria-label={`Ativar gancho ${i + 1}`}
                     onCheckedChange={(value) => toggle(hook, value)}
                   />
+                  {customKeys.has(key) ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      aria-label={`Apagar gancho manual ${i + 1}`}
+                      onClick={() => deleteHook(hook)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : null}
+
                 </div>
               </div>
             </li>
