@@ -11,9 +11,11 @@
  * - Gancho sem preferência salva permanece ATIVO — o padrão é o acervo inteiro.
  */
 
-import type { StudioHook } from "./hooks";
+import { tightenHook, type StudioHook } from "./hooks";
 
 const STORAGE_KEY = "studio.hooks.prefs.v1";
+const CUSTOM_KEY = "studio.hooks.custom.v1";
+
 
 export type HookPrefs = {
   /** Ganchos desativados (chaves). */
@@ -99,26 +101,106 @@ export const clearHookPrefs = (brandName: string, opts: { patientVoice?: boolean
 };
 
 /**
- * Aplica a curadoria a uma lista de ganchos: remove desativados e reordena
- * conforme a ordem salva. Sem preferência salva, devolve a lista intacta.
+ * GANCHOS MANUAIS (escritos pelo dono da marca)
+ *
+ * Guardados por marca/voz e somados ao acervo antes da curadoria: entram no
+ * topo da biblioteca e valem para as próximas gerações, sem crédito de IA.
+ */
+type CustomStore = Record<string, StudioHook[]>;
+
+const readCustomStore = (): CustomStore => {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? (parsed as CustomStore) : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeCustomStore = (store: CustomStore) => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CUSTOM_KEY, JSON.stringify(store));
+  } catch {
+    /* cota cheia / modo privado: o gancho manual simplesmente não persiste */
+  }
+};
+
+/** Ganchos manuais da marca (mais recente primeiro). */
+export const readCustomHooks = (
+  brandName: string,
+  opts: { patientVoice?: boolean } = {},
+): StudioHook[] => {
+  const list = readCustomStore()[hookBrandKey(brandName, opts)];
+  return Array.isArray(list) ? list.filter((h) => !!h?.strong) : [];
+};
+
+/** Adiciona um gancho manual (ignora repetição de manchete). */
+export const addCustomHook = (
+  brandName: string,
+  hook: StudioHook,
+  opts: { patientVoice?: boolean } = {},
+): StudioHook[] => {
+  const store = readCustomStore();
+  const key = hookBrandKey(brandName, opts);
+  const current = Array.isArray(store[key]) ? store[key] : [];
+  const clean: StudioHook = {
+    hook: (hook.hook || "Gancho da marca").trim(),
+    strong: (hook.strong || "").trim(),
+    rest: (hook.rest || "").trim(),
+    sub: hook.sub?.trim() || undefined,
+    cta: hook.cta?.trim() || undefined,
+  };
+  if (clean.strong.length < 12) return current;
+  const next = [clean, ...current.filter((h) => hookKey(h) !== hookKey(clean))];
+  store[key] = next;
+  writeCustomStore(store);
+  return next;
+};
+
+/** Remove um gancho manual pela chave. */
+export const removeCustomHook = (
+  brandName: string,
+  key: string,
+  opts: { patientVoice?: boolean } = {},
+): StudioHook[] => {
+  const store = readCustomStore();
+  const brand = hookBrandKey(brandName, opts);
+  const next = (Array.isArray(store[brand]) ? store[brand] : []).filter((h) => hookKey(h) !== key);
+  store[brand] = next;
+  writeCustomStore(store);
+  return next;
+};
+
+/**
+ * Aplica a curadoria a uma lista de ganchos: soma os ganchos manuais da marca,
+ * remove desativados, reordena conforme a ordem salva e aplica o limite de
+ * manchete (gancho é frase de impacto, nunca redação).
  */
 export const applyHookPrefs = (
   brandName: string,
   hooks: StudioHook[] | undefined,
   opts: { patientVoice?: boolean } = {},
 ): StudioHook[] => {
-  const list = hooks ?? [];
+  const custom = readCustomHooks(brandName, opts);
+  const base = hooks ?? [];
+  const list = custom.length
+    ? [...custom, ...base.filter((h) => !custom.some((c) => hookKey(c) === hookKey(h)))]
+    : base;
   if (list.length === 0) return list;
   const prefs = readHookPrefs(brandName, opts);
-  if (prefs.off.length === 0 && prefs.order.length === 0) return list;
+  if (prefs.off.length === 0 && prefs.order.length === 0) return list.map(tightenHook);
 
   const off = new Set(prefs.off);
   const kept = list.filter((hook) => !off.has(hookKey(hook)));
-  if (prefs.order.length === 0) return kept;
+  if (prefs.order.length === 0) return kept.map(tightenHook);
 
   const rank = new Map(prefs.order.map((key, i) => [key, i] as const));
   return kept
     .map((hook, i) => ({ hook, i, rank: rank.get(hookKey(hook)) ?? Number.MAX_SAFE_INTEGER }))
     .sort((a, b) => a.rank - b.rank || a.i - b.i)
-    .map((entry) => entry.hook);
+    .map((entry) => tightenHook(entry.hook));
 };
+

@@ -220,7 +220,112 @@ export const HOOK_FRAMES: HookFrame[] = [
   },
 ];
 
+/**
+ * LIMITE DE PARADA DE SCROLL (regra global, todas as marcas)
+ *
+ * Gancho é frase de impacto, não redação: passando deste tamanho a pessoa lê
+ * em vez de parar. O excedente não é jogado fora — desce para o apoio (`sub`),
+ * que é justamente o lugar de fechar a ponte lógica.
+ */
+export const HOOK_HEADLINE_MAX = 64;
+const HOOK_SUB_MAX = 130;
+
+const END_PUNCT = /[.!?…]+$/;
+
+/** Pontos naturais de corte, do mais “editorial” para o mais neutro. */
+const CUT_MARKS = [" — ", " – ", ": ", "; ", ". ", ", "];
+
+const capSub = (text: string) => {
+  const value = clean(text);
+  if (value.length <= HOOK_SUB_MAX) return value;
+  const cut = value.slice(0, HOOK_SUB_MAX);
+  const space = cut.lastIndexOf(" ");
+  return `${noDot(space > 40 ? cut.slice(0, space) : cut)}.`;
+};
+
+/**
+ * Encurta um gancho longo sem perder conteúdo: corta a manchete no ponto
+ * natural mais próximo do limite e manda a cauda para o apoio.
+ */
+export const tightenHook = (hook: StudioHook): StudioHook => {
+  const headline = clean(`${hook.strong ?? ""}${hook.rest ?? ""}`);
+  if (!headline) return hook;
+  if (headline.length <= HOOK_HEADLINE_MAX) {
+    return hook.sub ? { ...hook, sub: capSub(hook.sub) } : hook;
+  }
+
+  /**
+   * Candidatos de corte. Prefere o mais longo dentro do limite, mas descarta
+   * manchete pendurada ("…muda mais do que.") — frase incompleta não é gancho.
+   */
+  const candidates: Array<{ at: number; mark: number }> = [];
+  for (const mark of CUT_MARKS) {
+    let index = headline.indexOf(mark, 13);
+    while (index > 12) {
+      candidates.push({ at: index, mark: mark.length });
+      index = headline.indexOf(mark, index + 1);
+    }
+  }
+  const window = headline.slice(0, HOOK_HEADLINE_MAX);
+  const space = window.lastIndexOf(" ");
+  if (space > 12) candidates.push({ at: space, mark: 1 });
+
+  const DANGLING =
+    /\b(?:e|ou|mas|que|do|da|de|dos|das|no|na|nos|nas|ao|aos|à|às|a|o|os|as|com|sem|por|para|em|se|the|mais|menos|muito|como|quando|onde|um|uma)$/i;
+
+  const inLimit = candidates
+    .filter((c) => c.at <= HOOK_HEADLINE_MAX)
+    .sort((a, b) => b.at - a.at);
+  const overflow = candidates
+    .filter((c) => c.at > HOOK_HEADLINE_MAX)
+    .sort((a, b) => a.at - b.at);
+
+  /* Último recurso: recua palavra por palavra até a manchete fechar sentido. */
+  const backOff = (from: number): { at: number; mark: number } | undefined => {
+    let at = from;
+    for (let guard = 0; guard < 12; guard += 1) {
+      const prev = headline.lastIndexOf(" ", at - 1);
+      if (prev <= 12) return undefined;
+      if (!DANGLING.test(noDot(headline.slice(0, prev)))) return { at: prev, mark: 1 };
+      at = prev;
+    }
+    return undefined;
+  };
+
+  const pick =
+    inLimit.find((c) => !DANGLING.test(noDot(headline.slice(0, c.at)))) ??
+    overflow.find((c) => !DANGLING.test(noDot(headline.slice(0, c.at)))) ??
+    (inLimit[0] ? backOff(inLimit[0].at) : undefined) ??
+    inLimit[0] ??
+    overflow[0];
+
+  if (!pick) return hook.sub ? { ...hook, sub: capSub(hook.sub) } : hook;
+  const cutAt = pick.at;
+  const markLength = pick.mark;
+
+
+
+  const head = noDot(headline.slice(0, cutAt));
+  const tail = noDot(headline.slice(cutAt + markLength));
+  const endMark = headline.match(END_PUNCT)?.[0] ?? ".";
+  const extra = tail ? `${upper1(tail)}.` : "";
+  const sub = [extra, clean(hook.sub)].filter(Boolean).join(" ");
+
+  return {
+    ...hook,
+    strong: head,
+    rest: endMark === "." ? "." : endMark,
+    sub: sub ? capSub(sub) : undefined,
+  };
+};
+
+/** Aplica o limite de manchete a uma lista inteira de ganchos. */
+export const tightenHooks = (hooks: StudioHook[] | undefined): StudioHook[] =>
+  (hooks ?? []).map(tightenHook);
+
 /** Aplica o mecanismo aos ingredientes da marca (determinístico, sem IA). */
 export const composeHooks = (ing: HookIngredients): StudioHook[] =>
   HOOK_FRAMES.map((frame) => frame.build(ing))
-    .filter((hook): hook is StudioHook => !!hook && hook.strong.length >= 12);
+    .filter((hook): hook is StudioHook => !!hook && hook.strong.length >= 12)
+    .map(tightenHook);
+

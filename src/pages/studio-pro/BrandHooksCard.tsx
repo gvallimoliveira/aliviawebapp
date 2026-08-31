@@ -1,17 +1,27 @@
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, RotateCcw } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { composeHooks, type StudioHook } from "@/pages/studio/hooks";
+import {
+  HOOK_HEADLINE_MAX,
+  composeHooks,
+  tightenHook,
+  type StudioHook,
+} from "@/pages/studio/hooks";
 import { curatedHooksFor } from "@/pages/studio/hookLibrary";
 import {
+  addCustomHook,
   applyHookPrefs,
   clearHookPrefs,
   hookKey,
+  readCustomHooks,
   readHookPrefs,
+  removeCustomHook,
   saveHookPrefs,
 } from "@/pages/studio/hookStore";
+
 
 /**
  * EDITOR DA BIBLIOTECA DE GANCHOS (por marca)
@@ -37,11 +47,15 @@ const buildLibrary = (
   brandName: string,
   ing: BrandHooksIngredients,
   patientVoice: boolean,
+  custom: StudioHook[],
 ): StudioHook[] =>
   [
+    ...custom,
     ...curatedHooksFor(brandName, { patientVoice }),
     ...composeHooks({ brand: brandName, ...ing }),
-  ].filter((hook, i, all) => all.findIndex((h) => h.strong === hook.strong) === i);
+  ]
+    .map(tightenHook)
+    .filter((hook, i, all) => all.findIndex((h) => h.strong === hook.strong) === i);
 
 const HookList = ({
   brandName,
@@ -53,20 +67,26 @@ const HookList = ({
   patientVoice: boolean;
 }) => {
   const { toast } = useToast();
+  const [custom, setCustom] = useState<StudioHook[]>(() =>
+    readCustomHooks(brandName, { patientVoice }),
+  );
+  const customKeys = useMemo(() => new Set(custom.map(hookKey)), [custom]);
   const library = useMemo(
-    () => buildLibrary(brandName, ingredients, patientVoice),
-    [brandName, ingredients, patientVoice],
+    () => buildLibrary(brandName, ingredients, patientVoice, custom),
+    [brandName, ingredients, patientVoice, custom],
   );
 
   // Estado inicial: curadoria salva aplicada ao acervo atual.
   const [order, setOrder] = useState<StudioHook[]>(() => {
     const active = applyHookPrefs(brandName, library, { patientVoice });
-    const rest = library.filter((h) => !active.includes(h));
+    const rest = library.filter((h) => !active.some((a) => hookKey(a) === hookKey(h)));
     return [...active, ...rest];
   });
   const [off, setOff] = useState<Set<string>>(
     () => new Set(readHookPrefs(brandName, { patientVoice }).off),
   );
+
+  const [draft, setDraft] = useState({ strong: "", sub: "", cta: "" });
 
   const persist = (nextOrder: StudioHook[], nextOff: Set<string>) => {
     saveHookPrefs(
@@ -93,6 +113,37 @@ const HookList = ({
     persist(order, next);
   };
 
+  const addHook = () => {
+    const strong = draft.strong.trim();
+    if (strong.length < 12) {
+      toast({
+        title: "Gancho muito curto",
+        description: "Escreva a frase de impacto com pelo menos 12 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const created = tightenHook({
+      hook: "Gancho da marca",
+      strong,
+      rest: /[.!?…]$/.test(strong) ? "" : ".",
+      sub: draft.sub.trim() || undefined,
+      cta: draft.cta.trim() || undefined,
+    });
+    const nextCustom = addCustomHook(brandName, created, { patientVoice });
+    setCustom(nextCustom);
+    setOrder((prev) => [created, ...prev.filter((h) => hookKey(h) !== hookKey(created))]);
+    setDraft({ strong: "", sub: "", cta: "" });
+    toast({ title: "Gancho adicionado", description: "Já entra nas próximas gerações desta marca." });
+  };
+
+  const deleteHook = (hook: StudioHook) => {
+    const key = hookKey(hook);
+    setCustom(removeCustomHook(brandName, key, { patientVoice }));
+    setOrder((prev) => prev.filter((h) => hookKey(h) !== key));
+    toast({ title: "Gancho manual removido" });
+  };
+
   const reset = () => {
     clearHookPrefs(brandName, { patientVoice });
     setOrder(library);
@@ -101,6 +152,7 @@ const HookList = ({
   };
 
   const activeCount = order.filter((h) => !off.has(hookKey(h))).length;
+
 
   return (
     <div className="space-y-3">
@@ -113,6 +165,40 @@ const HookList = ({
           Restaurar original
         </Button>
       </div>
+
+      <div className="rounded-2xl border border-dashed border-border bg-card p-3">
+        <p className="text-xs font-semibold text-foreground">Adicionar gancho manualmente</p>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">
+          Frase de impacto curta (até {HOOK_HEADLINE_MAX} caracteres). O que passar disso desce
+          automaticamente para o apoio.
+        </p>
+        <div className="mt-2 space-y-2">
+          <Input
+            value={draft.strong}
+            maxLength={160}
+            placeholder="Frase de impacto (ex.: Dor não é sinal para parar)"
+            onChange={(e) => setDraft((d) => ({ ...d, strong: e.target.value }))}
+          />
+          <Input
+            value={draft.sub}
+            maxLength={160}
+            placeholder="Apoio (opcional)"
+            onChange={(e) => setDraft((d) => ({ ...d, sub: e.target.value }))}
+          />
+          <Input
+            value={draft.cta}
+            maxLength={80}
+            placeholder="Convite / CTA (opcional)"
+            onChange={(e) => setDraft((d) => ({ ...d, cta: e.target.value }))}
+          />
+          <Button type="button" size="sm" className="rounded-full" onClick={addHook}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            Adicionar à biblioteca
+          </Button>
+        </div>
+      </div>
+
+
 
       <ol className="space-y-2">
         {order.map((hook, i) => {
@@ -132,11 +218,13 @@ const HookList = ({
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
                     {hook.hook}
+                    {customKeys.has(key) ? " • manual" : ""}
                   </p>
                   <p className="break-words text-sm font-semibold text-foreground">
                     {hook.strong}
                     {hook.rest ? <span className="font-normal">{hook.rest}</span> : null}
                   </p>
+
                   {hook.sub ? (
                     <p className="mt-0.5 break-words text-xs text-muted-foreground">{hook.sub}</p>
                   ) : null}
@@ -172,6 +260,19 @@ const HookList = ({
                     aria-label={`Ativar gancho ${i + 1}`}
                     onCheckedChange={(value) => toggle(hook, value)}
                   />
+                  {customKeys.has(key) ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      aria-label={`Apagar gancho manual ${i + 1}`}
+                      onClick={() => deleteHook(hook)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : null}
+
                 </div>
               </div>
             </li>
