@@ -587,40 +587,46 @@ const renderStaticNodeToBlob = async (
   const fontEmbedCSS = await resolveFontCss(node);
   const backgroundColor = getComputedStyle(document.body).backgroundColor || "#ffffff";
   const { specs, restore } = hideCssStrokes(node);
+  const { backdrops, restore: restoreBackdrops } = openPhotoBackdrops(node);
 
-  let canvas: HTMLCanvasElement;
+  let output: HTMLCanvasElement;
   try {
-    canvas = await toCanvas(node, {
+    /* Raster SEM fundo opaco: ele precisa de transparência para que a foto
+       possa ser composta por baixo da película já rasterizada. */
+    const raster = await toCanvas(node, {
       width: Math.ceil(node.getBoundingClientRect().width),
       height: Math.ceil(Math.max(node.scrollHeight, node.getBoundingClientRect().height)),
       pixelRatio,
-      backgroundColor,
       skipFonts: fontEmbedCSS === null,
       fontEmbedCSS: fontEmbedCSS ?? undefined,
       filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
     });
+
     /*
-     * Fotos e películas são compostas numa CAMADA SEPARADA e só então
-     * aplicadas sobre a arte rasterizada. Se a película fosse repintada
-     * direto no canvas final, ela escureceria também o texto — na tela a
-     * ordem é foto → película → texto, e o texto precisa continuar sendo a
-     * primeira camada visual do PNG.
+     * Montagem final, na MESMA ordem da tela:
+     * 1) cor de fundo, 2) fundos opacos dos blocos de foto, 3) fotos,
+     * 4) raster da arte (película + texto) por cima. Assim a película
+     * escurece apenas a foto e o texto mantém brilho total.
      */
-    const layer = document.createElement("canvas");
-    layer.width = canvas.width;
-    layer.height = canvas.height;
-    const paintedRects = paintImagesOnCanvas(layer, node);
-    if (paintedRects.length > 0) {
-      paintOverlaysOnCanvas(layer, node, paintedRects);
-      const context = canvas.getContext("2d");
-      if (context) context.drawImage(layer, 0, 0);
-    }
-    paintStrokeTextOnCanvas(canvas, node, specs);
+    output = document.createElement("canvas");
+    output.width = raster.width;
+    output.height = raster.height;
+    const context = output.getContext("2d");
+    if (!context) throw new Error("no-2d-context");
+    context.fillStyle = backgroundColor;
+    context.fillRect(0, 0, output.width, output.height);
+    paintBackdropsOnCanvas(output, node, backdrops);
+    paintImagesOnCanvas(output, node);
+    context.drawImage(raster, 0, 0);
+
+    paintStrokeTextOnCanvas(output, node, specs);
   } finally {
+    restoreBackdrops();
     restore();
   }
-  return canvasToBlob(canvas, type, quality);
+  return canvasToBlob(output, type, quality);
 };
+
 
 export const renderNodeToBlob = async (
   node: HTMLElement,
