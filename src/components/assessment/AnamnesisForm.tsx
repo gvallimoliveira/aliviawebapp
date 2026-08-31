@@ -274,8 +274,10 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     "anamnesis.complaint.knee_pain",
     "anamnesis.complaint.hip_pain",
     "anamnesis.complaint.ankle_pain",
+    "anamnesis.complaint.arm_pain",
     "anamnesis.complaint.wrist_pain",
     "anamnesis.complaint.elbow_pain",
+    "anamnesis.complaint.hand_pain",
     "anamnesis.complaint.foot_pain",
     "anamnesis.complaint.headache",
   ];
@@ -320,7 +322,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
   };
 
   // Biomechanical groups for complaint validation
-  const upperGroup = ["anamnesis.complaint.shoulder_pain", "anamnesis.complaint.elbow_pain", "anamnesis.complaint.wrist_pain"];
+  const upperGroup = ["anamnesis.complaint.shoulder_pain", "anamnesis.complaint.arm_pain", "anamnesis.complaint.elbow_pain", "anamnesis.complaint.wrist_pain", "anamnesis.complaint.hand_pain"];
   const lowerGroup = ["anamnesis.complaint.back_pain", "anamnesis.complaint.hip_pain", "anamnesis.complaint.knee_pain", "anamnesis.complaint.ankle_pain", "anamnesis.complaint.foot_pain"];
   // Spinal + head group: cervical, costas, lombar and headache are allowed together (full spine chain + cervicogenic headache)
   const spinalHeadGroup = ["anamnesis.complaint.neck_pain", "anamnesis.complaint.back_pain", "anamnesis.complaint.headache"];
@@ -1029,7 +1031,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">{t("anamnesis.evolution_title")}{stepHasPrefill("evolution") && <PrefilledBadge />}</h3>
             <div className="grid gap-3">
-              {["anamnesis.evolution.improving", "anamnesis.evolution.stable", "anamnesis.evolution.worsening"].map((e) => (
+              {["anamnesis.evolution.improving", "anamnesis.evolution.stable", "anamnesis.evolution.fluctuating", "anamnesis.evolution.worsening"].map((e) => (
                 <Card key={e} className={`cursor-pointer transition-all ${data.evolution === e ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"}`} onClick={() => setData({ ...data, evolution: e })}>
                   <CardContent className="py-3 px-4 flex items-center gap-3">
                     <span className={`text-lg ${e.includes("improving") ? "text-primary" : e.includes("worsening") ? "text-destructive" : "text-muted-foreground"}`}>
