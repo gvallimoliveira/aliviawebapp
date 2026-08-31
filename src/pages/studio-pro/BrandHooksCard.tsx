@@ -37,11 +37,15 @@ const buildLibrary = (
   brandName: string,
   ing: BrandHooksIngredients,
   patientVoice: boolean,
+  custom: StudioHook[],
 ): StudioHook[] =>
   [
+    ...custom,
     ...curatedHooksFor(brandName, { patientVoice }),
     ...composeHooks({ brand: brandName, ...ing }),
-  ].filter((hook, i, all) => all.findIndex((h) => h.strong === hook.strong) === i);
+  ]
+    .map(tightenHook)
+    .filter((hook, i, all) => all.findIndex((h) => h.strong === hook.strong) === i);
 
 const HookList = ({
   brandName,
@@ -53,20 +57,26 @@ const HookList = ({
   patientVoice: boolean;
 }) => {
   const { toast } = useToast();
+  const [custom, setCustom] = useState<StudioHook[]>(() =>
+    readCustomHooks(brandName, { patientVoice }),
+  );
+  const customKeys = useMemo(() => new Set(custom.map(hookKey)), [custom]);
   const library = useMemo(
-    () => buildLibrary(brandName, ingredients, patientVoice),
-    [brandName, ingredients, patientVoice],
+    () => buildLibrary(brandName, ingredients, patientVoice, custom),
+    [brandName, ingredients, patientVoice, custom],
   );
 
   // Estado inicial: curadoria salva aplicada ao acervo atual.
   const [order, setOrder] = useState<StudioHook[]>(() => {
     const active = applyHookPrefs(brandName, library, { patientVoice });
-    const rest = library.filter((h) => !active.includes(h));
+    const rest = library.filter((h) => !active.some((a) => hookKey(a) === hookKey(h)));
     return [...active, ...rest];
   });
   const [off, setOff] = useState<Set<string>>(
     () => new Set(readHookPrefs(brandName, { patientVoice }).off),
   );
+
+  const [draft, setDraft] = useState({ strong: "", sub: "", cta: "" });
 
   const persist = (nextOrder: StudioHook[], nextOff: Set<string>) => {
     saveHookPrefs(
@@ -93,6 +103,37 @@ const HookList = ({
     persist(order, next);
   };
 
+  const addHook = () => {
+    const strong = draft.strong.trim();
+    if (strong.length < 12) {
+      toast({
+        title: "Gancho muito curto",
+        description: "Escreva a frase de impacto com pelo menos 12 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const created = tightenHook({
+      hook: "Gancho da marca",
+      strong,
+      rest: /[.!?…]$/.test(strong) ? "" : ".",
+      sub: draft.sub.trim() || undefined,
+      cta: draft.cta.trim() || undefined,
+    });
+    const nextCustom = addCustomHook(brandName, created, { patientVoice });
+    setCustom(nextCustom);
+    setOrder((prev) => [created, ...prev.filter((h) => hookKey(h) !== hookKey(created))]);
+    setDraft({ strong: "", sub: "", cta: "" });
+    toast({ title: "Gancho adicionado", description: "Já entra nas próximas gerações desta marca." });
+  };
+
+  const deleteHook = (hook: StudioHook) => {
+    const key = hookKey(hook);
+    setCustom(removeCustomHook(brandName, key, { patientVoice }));
+    setOrder((prev) => prev.filter((h) => hookKey(h) !== key));
+    toast({ title: "Gancho manual removido" });
+  };
+
   const reset = () => {
     clearHookPrefs(brandName, { patientVoice });
     setOrder(library);
@@ -101,6 +142,7 @@ const HookList = ({
   };
 
   const activeCount = order.filter((h) => !off.has(hookKey(h))).length;
+
 
   return (
     <div className="space-y-3">
