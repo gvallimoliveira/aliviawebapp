@@ -274,12 +274,18 @@ const buildOverlayFill = (
   box: PaintedRect,
 ): string | CanvasGradient | null => {
   const image = style.backgroundImage;
-  if (image && image !== "none") {
-    const stops = Array.from(image.matchAll(/(rgba?\([^)]+\))\s*([\d.]+)%?/g)).map((m) => ({
-      color: m[1],
-      offset: Math.min(1, Math.max(0, Number(m[2]) / 100)),
-    }));
-    if (stops.length >= 2) {
+  if (image && image !== "none" && image.includes("gradient")) {
+    /* Aceita tanto stops com posição explícita (véus escritos à mão) quanto sem
+       posição (classes `bg-gradient-to-*` do Tailwind), distribuindo-os. */
+    const raw = Array.from(image.matchAll(/(rgba?\([^)]+\))(?:\s+([\d.]+)%)?/g));
+    if (raw.length >= 2) {
+      const stops = raw.map((match, index) => ({
+        color: match[1],
+        offset:
+          match[2] === undefined
+            ? index / (raw.length - 1)
+            : Math.min(1, Math.max(0, Number(match[2]) / 100)),
+      }));
       const isRadial = image.includes("radial-gradient");
       const gradient = isRadial
         ? context.createRadialGradient(
