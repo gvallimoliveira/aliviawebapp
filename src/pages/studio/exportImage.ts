@@ -582,7 +582,7 @@ const renderStaticNodeToBlob = async (
       fontEmbedCSS: fontEmbedCSS ?? undefined,
       filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
     });
-    paintImagesOnCanvas(canvas, node);
+    paintOverlaysOnCanvas(canvas, node, paintImagesOnCanvas(canvas, node));
     paintStrokeTextOnCanvas(canvas, node, specs);
   } finally {
     restore();
