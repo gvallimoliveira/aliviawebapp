@@ -156,6 +156,40 @@ const HookList = ({
         </Button>
       </div>
 
+      <div className="rounded-2xl border border-dashed border-border bg-card p-3">
+        <p className="text-xs font-semibold text-foreground">Adicionar gancho manualmente</p>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">
+          Frase de impacto curta (até {HOOK_HEADLINE_MAX} caracteres). O que passar disso desce
+          automaticamente para o apoio.
+        </p>
+        <div className="mt-2 space-y-2">
+          <Input
+            value={draft.strong}
+            maxLength={160}
+            placeholder="Frase de impacto (ex.: Dor não é sinal para parar)"
+            onChange={(e) => setDraft((d) => ({ ...d, strong: e.target.value }))}
+          />
+          <Input
+            value={draft.sub}
+            maxLength={160}
+            placeholder="Apoio (opcional)"
+            onChange={(e) => setDraft((d) => ({ ...d, sub: e.target.value }))}
+          />
+          <Input
+            value={draft.cta}
+            maxLength={80}
+            placeholder="Convite / CTA (opcional)"
+            onChange={(e) => setDraft((d) => ({ ...d, cta: e.target.value }))}
+          />
+          <Button type="button" size="sm" className="rounded-full" onClick={addHook}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            Adicionar à biblioteca
+          </Button>
+        </div>
+      </div>
+
+
+
       <ol className="space-y-2">
         {order.map((hook, i) => {
           const key = hookKey(hook);
