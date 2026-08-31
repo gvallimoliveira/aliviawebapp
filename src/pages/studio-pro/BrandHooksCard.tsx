@@ -1,17 +1,27 @@
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, RotateCcw } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { composeHooks, type StudioHook } from "@/pages/studio/hooks";
+import {
+  HOOK_HEADLINE_MAX,
+  composeHooks,
+  tightenHook,
+  type StudioHook,
+} from "@/pages/studio/hooks";
 import { curatedHooksFor } from "@/pages/studio/hookLibrary";
 import {
+  addCustomHook,
   applyHookPrefs,
   clearHookPrefs,
   hookKey,
+  readCustomHooks,
   readHookPrefs,
+  removeCustomHook,
   saveHookPrefs,
 } from "@/pages/studio/hookStore";
+
 
 /**
  * EDITOR DA BIBLIOTECA DE GANCHOS (por marca)
