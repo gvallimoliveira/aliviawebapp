@@ -152,19 +152,17 @@ const AssessmentView = () => {
     if (!assessment?.id) return;
     setDeleting(true);
     try {
-      // Best-effort cleanup of related rows; assessment delete will succeed if RLS permits.
-      await (supabase as any).from("professional_notes").delete().eq("assessment_id", assessment.id);
-      await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", assessment.id);
-      const { data: programs } = await (supabase as any)
-        .from("exercise_programs").select("id").eq("assessment_id", assessment.id);
-      if (programs && Array.isArray(programs)) {
-        for (const prog of programs) {
-          await (supabase as any).from("exercise_program_items").delete().eq("program_id", prog.id);
-          await (supabase as any).from("exercise_programs").delete().eq("id", prog.id);
-        }
+      // Exclusão SEMPRE via RPC segura: valida permissão (paciente, profissional
+      // vinculado ou equipe da clínica) e limpa/desvincula todos os registros
+      // filhos. O delete direto por RLS falhava em silêncio (0 linhas) quando a
+      // política exigia assinatura ativa, dando a impressão de "não encontrada".
+      const { data: rpcOk, error: rpcError } = await (supabase as any).rpc("delete_assessment_secure", {
+        _assessment_id: assessment.id,
+      });
+      if (rpcError) throw rpcError;
+      if (rpcOk === false) {
+        throw new Error(isPt ? "Avaliação não encontrada." : "Assessment not found.");
       }
-      const { error } = await supabase.from("assessments").delete().eq("id", assessment.id);
-      if (error) throw error;
       toast({ title: isPt ? "Avaliação excluída" : "Assessment deleted" });
       goBack();
     } catch (err: any) {
@@ -175,6 +173,7 @@ const AssessmentView = () => {
       setDeleteDialogOpen(false);
     }
   };
+
 
   const handleDownloadPdf = async () => {
     if (!assessment?.diagnosis) return;

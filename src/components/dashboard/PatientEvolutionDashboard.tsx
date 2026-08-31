@@ -576,10 +576,15 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         await (supabase as any).from("follow_up_emails").delete().eq("assessment_id", aid);
       }
 
-      // Delete all assessments for this patient
+      // Delete all assessments for this patient (RPC segura — o delete direto
+      // por RLS falha em silêncio quando a política exige assinatura ativa)
       for (const aid of assessmentIds) {
-        await supabase.from("assessments").delete().eq("id", aid);
+        const { data: ok, error } = await (supabase as any).rpc("delete_assessment_secure", { _assessment_id: aid });
+        if (error || ok === false) {
+          await supabase.from("assessments").delete().eq("id", aid);
+        }
       }
+
 
       // Delete patient record(s) from patients table (handles patients with no assessments)
       const group: any = patients.find((p: any) => p.groupKey === groupKey);
