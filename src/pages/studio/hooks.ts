@@ -280,15 +280,29 @@ export const tightenHook = (hook: StudioHook): StudioHook => {
     .filter((c) => c.at > HOOK_HEADLINE_MAX)
     .sort((a, b) => a.at - b.at);
 
+  /* Último recurso: recua palavra por palavra até a manchete fechar sentido. */
+  const backOff = (from: number): { at: number; mark: number } | undefined => {
+    let at = from;
+    for (let guard = 0; guard < 12; guard += 1) {
+      const prev = headline.lastIndexOf(" ", at - 1);
+      if (prev <= 12) return undefined;
+      if (!DANGLING.test(noDot(headline.slice(0, prev)))) return { at: prev, mark: 1 };
+      at = prev;
+    }
+    return undefined;
+  };
+
   const pick =
     inLimit.find((c) => !DANGLING.test(noDot(headline.slice(0, c.at)))) ??
     overflow.find((c) => !DANGLING.test(noDot(headline.slice(0, c.at)))) ??
+    (inLimit[0] ? backOff(inLimit[0].at) : undefined) ??
     inLimit[0] ??
     overflow[0];
 
   if (!pick) return hook.sub ? { ...hook, sub: capSub(hook.sub) } : hook;
   const cutAt = pick.at;
   const markLength = pick.mark;
+
 
 
   const head = noDot(headline.slice(0, cutAt));
