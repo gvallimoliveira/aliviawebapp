@@ -73,7 +73,8 @@ const AssessmentAddendum = () => {
           </CardTitle>
           {dateLabel && (
             <p className="text-sm text-muted-foreground">
-              Estas informações serão adicionadas à sua avaliação de <strong>{dateLabel}</strong>
+              Estas informações serão adicionadas à avaliação
+              {info?.patient_name ? <> de <strong>{info.patient_name}</strong></> : null} de <strong>{dateLabel}</strong>
               {info?.professional_name ? <> e enviadas a <strong>{info.professional_name}</strong></> : null}.
             </p>
           )}
