@@ -4251,6 +4251,10 @@ export type Database = {
             Args: { _caller?: string; _email?: string; _user_id: string }
             Returns: Json
           }
+      can_access_assessment_addenda: {
+        Args: { _assessment_id: string; _pro_only?: boolean; _user_id: string }
+        Returns: boolean
+      }
       can_manage_clinic: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
