@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ import {
   pendingReinterpretation,
   reinterpretAssessmentWithAddenda,
 } from "@/lib/assessmentAddenda";
-import { Copy, Link2, Loader2, MessageSquarePlus, Plus, RefreshCw, Sparkles, Trash2, User, UserRound } from "lucide-react";
+import { Copy, Link2, Loader2, MessageSquarePlus, Plus, Sparkles, Trash2, User, UserRound } from "lucide-react";
 
 interface Props {
   assessment: any;
@@ -46,6 +46,7 @@ export const AssessmentAddendaCard = ({
   const [linking, setLinking] = useState(false);
   const [reinterpreting, setReinterpreting] = useState(false);
   const [lastLink, setLastLink] = useState<string | null>(null);
+  const addendaRef = useRef<AssessmentAddendum[]>([]);
 
   const assessmentId = assessment?.id;
   const dateLabel = assessment?.created_at
@@ -59,7 +60,21 @@ export const AssessmentAddendaCard = ({
     setLoading(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [assessmentId, isDemo]);
+  useEffect(() => {
+    addendaRef.current = addenda;
+  }, [addenda]);
+
+  useEffect(() => {
+    load();
+    // Atualiza automaticamente enquanto houver links pendentes de resposta.
+    if (!assessmentId || isDemo) return;
+    const interval = setInterval(() => {
+      const hasPendingLinks = addendaRef.current.some((a) => a.status === "pending" && a.token);
+      if (hasPendingLinks) load();
+    }, 10000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assessmentId, isDemo]);
 
   const filled = filledAddenda(addenda);
   const pending = pendingReinterpretation(addenda);
@@ -218,10 +233,6 @@ export const AssessmentAddendaCard = ({
                 <Button size="sm" variant="outline" className="rounded-xl gap-1.5 text-xs" onClick={handleGenerateLink} disabled={linking}>
                   {linking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
                   Gerar link para o paciente
-                </Button>
-                <Button size="sm" variant="ghost" className="rounded-xl gap-1.5 text-xs" onClick={load}>
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Atualizar
                 </Button>
               </div>
             )}
