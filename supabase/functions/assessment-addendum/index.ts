@@ -109,17 +109,6 @@ serve(async (req) => {
         return json({ error: "update_failed" }, 500);
       }
 
-      // Flag the chart so the clinical impression can be refreshed after a
-      // professional decides to reinterpret.
-      try {
-        await supabase
-          .from("assessments")
-          .update({ has_new_addendum: true } as any)
-          .eq("id", assessment.id);
-      } catch (_e) {
-        // Column is optional — the addendum row itself is the source of truth.
-      }
-
       try {
         if (proUserId || assessment.clinic_id) {
           await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push-notification`, {
