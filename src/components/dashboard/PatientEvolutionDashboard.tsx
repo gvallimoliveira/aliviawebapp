@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
+import { anchorScrollById } from "@/hooks/useScrollAnchor";
 import PainMapView from "@/components/assessment/PainMapView";
 import RegionPainComparison from "@/components/dashboard/RegionPainComparison";
 import AssessmentTimeline from "@/components/dashboard/AssessmentTimeline";
