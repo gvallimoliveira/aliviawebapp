@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, Loader2, MessageSquarePlus } from "lucide-react";
-import { setPageSeo } from "@/lib/seo";
+import { setSeo } from "@/lib/seo";
 
 type State = "loading" | "ready" | "done" | "error";
 
@@ -18,7 +18,7 @@ const AssessmentAddendum = () => {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    setPageSeo({
+    setSeo({
       title: "Adicionar informações à sua avaliação | Aliv.iA",
       description: "Complemente sua avaliação com informações que você lembrou depois.",
     });
