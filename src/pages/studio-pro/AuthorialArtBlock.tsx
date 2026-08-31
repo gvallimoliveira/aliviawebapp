@@ -101,18 +101,21 @@ const AuthorialArtBlock = ({ art, slide, slideIndex, format, photo, showMeta = t
             <PhotoFrame
               photo={photo}
               className="h-full w-full rounded-none"
-              imgClassName="opacity-50 brightness-[0.6] saturate-[0.6] contrast-[0.95]"
+              imgClassName="opacity-80 brightness-[0.8] saturate-[0.8] contrast-[1]"
             />
           </div>
           {/* Película translúcida levemente escurecida: garante o texto
-              destacado à frente em qualquer foto, sem apagar a imagem. */}
+              destacado à frente em qualquer foto, sem apagar a imagem.
+              `data-studio-overlay` faz o exportador repintar esta camada ACIMA
+              da foto — sem isso o PNG saía sem película. */}
           <div
             aria-hidden
+            data-studio-overlay="1"
             className="pointer-events-none absolute inset-0"
             style={{
               background: partial
-                ? "linear-gradient(to top, rgba(8,8,12,0.82) 0%, rgba(8,8,12,0.55) 34%, rgba(8,8,12,0.25) 55%, rgba(8,8,12,0.55) 100%)"
-                : "rgba(8,8,12,0.55)",
+                ? "linear-gradient(to top, rgba(8,8,12,0.7) 0%, rgba(8,8,12,0.42) 34%, rgba(8,8,12,0.16) 55%, rgba(8,8,12,0.4) 100%)"
+                : "rgba(8,8,12,0.38)",
             }}
           />
         </>

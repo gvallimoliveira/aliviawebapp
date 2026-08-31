@@ -66,6 +66,7 @@ const PhotoFrame = ({
       {photo.safeArea !== "none" && (
         <div
           aria-hidden
+          data-studio-overlay="1"
           className={`pointer-events-none absolute inset-x-0 h-[42%] ${
             photo.safeArea === "top"
               ? "top-0 bg-gradient-to-b from-foreground/55 to-transparent"

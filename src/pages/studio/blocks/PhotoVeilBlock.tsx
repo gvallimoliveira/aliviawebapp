@@ -52,7 +52,15 @@ const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos }: Blo
         />
       </div>
 
-      <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: veil }} />
+      {/* `data-studio-overlay` garante que o exportador repinte a película
+          acima da foto (o repinte das fotos no canvas acontece depois da
+          rasterização e cobriria esta camada). */}
+      <div
+        aria-hidden
+        data-studio-overlay="1"
+        className="pointer-events-none absolute inset-0"
+        style={{ background: veil }}
+      />
 
       <div className={`container relative ${blockPadding(format)}`}>
         <motion.div
