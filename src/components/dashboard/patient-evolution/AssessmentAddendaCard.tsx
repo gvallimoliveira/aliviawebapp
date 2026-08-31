@@ -229,10 +229,6 @@ export const AssessmentAddendaCard = ({
                   {linking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
                   Gerar link para o paciente
                 </Button>
-                <Button size="sm" variant="ghost" className="rounded-xl gap-1.5 text-xs" onClick={load}>
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Atualizar
-                </Button>
               </div>
             )}
 
