@@ -254,45 +254,42 @@ export const tightenHook = (hook: StudioHook): StudioHook => {
     return hook.sub ? { ...hook, sub: capSub(hook.sub) } : hook;
   }
 
-  /* Melhor corte DENTRO do limite (o mais longo); fora dele, o mais curto. */
-  let cutAt = -1;
-  let markLength = 0;
-  let overflowAt = Number.MAX_SAFE_INTEGER;
-  let overflowMark = 0;
+  /**
+   * Candidatos de corte. Prefere o mais longo dentro do limite, mas descarta
+   * manchete pendurada ("…muda mais do que.") — frase incompleta não é gancho.
+   */
+  const candidates: Array<{ at: number; mark: number }> = [];
   for (const mark of CUT_MARKS) {
     let index = headline.indexOf(mark, 13);
     while (index > 12) {
-      if (index <= HOOK_HEADLINE_MAX) {
-        if (index > cutAt) {
-          cutAt = index;
-          markLength = mark.length;
-        }
-      } else {
-        if (index < overflowAt) {
-          overflowAt = index;
-          overflowMark = mark.length;
-        }
-        break;
-      }
+      candidates.push({ at: index, mark: mark.length });
       index = headline.indexOf(mark, index + 1);
     }
   }
-  if (cutAt < 0 && overflowAt < Number.MAX_SAFE_INTEGER) {
-    cutAt = overflowAt;
-    markLength = overflowMark;
-  }
+  const window = headline.slice(0, HOOK_HEADLINE_MAX);
+  const space = window.lastIndexOf(" ");
+  if (space > 12) candidates.push({ at: space, mark: 1 });
 
+  const DANGLING =
+    /\b(?:e|ou|mas|que|do|da|de|dos|das|no|na|nos|nas|ao|aos|à|às|a|o|os|as|com|sem|por|para|em|se|the|mais|menos|muito|como|quando|onde|um|uma)$/i;
 
-  if (cutAt < 0) {
-    const window = headline.slice(0, HOOK_HEADLINE_MAX);
-    const space = window.lastIndexOf(" ");
-    if (space > 12) {
-      cutAt = space;
-      markLength = 1;
-    }
-  }
+  const inLimit = candidates
+    .filter((c) => c.at <= HOOK_HEADLINE_MAX)
+    .sort((a, b) => b.at - a.at);
+  const overflow = candidates
+    .filter((c) => c.at > HOOK_HEADLINE_MAX)
+    .sort((a, b) => a.at - b.at);
 
-  if (cutAt < 0) return hook.sub ? { ...hook, sub: capSub(hook.sub) } : hook;
+  const pick =
+    inLimit.find((c) => !DANGLING.test(noDot(headline.slice(0, c.at)))) ??
+    overflow.find((c) => !DANGLING.test(noDot(headline.slice(0, c.at)))) ??
+    inLimit[0] ??
+    overflow[0];
+
+  if (!pick) return hook.sub ? { ...hook, sub: capSub(hook.sub) } : hook;
+  const cutAt = pick.at;
+  const markLength = pick.mark;
+
 
   const head = noDot(headline.slice(0, cutAt));
   const tail = noDot(headline.slice(cutAt + markLength));
