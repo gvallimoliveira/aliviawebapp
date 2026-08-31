@@ -208,11 +208,13 @@ const HookList = ({
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
                     {hook.hook}
+                    {customKeys.has(key) ? " • manual" : ""}
                   </p>
                   <p className="break-words text-sm font-semibold text-foreground">
                     {hook.strong}
                     {hook.rest ? <span className="font-normal">{hook.rest}</span> : null}
                   </p>
+
                   {hook.sub ? (
                     <p className="mt-0.5 break-words text-xs text-muted-foreground">{hook.sub}</p>
                   ) : null}
