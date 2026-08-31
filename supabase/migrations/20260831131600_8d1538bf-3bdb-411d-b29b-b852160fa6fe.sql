@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.can_access_assessment_addenda(uuid, uuid, boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.can_access_assessment_addenda(uuid, uuid, boolean) TO authenticated, service_role;
