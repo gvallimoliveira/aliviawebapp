@@ -169,10 +169,10 @@ const roundedRect = (
 const paintImagesOnCanvas = (canvas: HTMLCanvasElement, node: HTMLElement): PaintedRect[] => {
   const painted: PaintedRect[] = [];
   const context = canvas.getContext("2d");
-  if (!context) return;
+  if (!context) return painted;
 
   const rootRect = node.getBoundingClientRect();
-  if (!rootRect.width || !rootRect.height) return;
+  if (!rootRect.width || !rootRect.height) return painted;
   const scaleX = canvas.width / rootRect.width;
   const scaleY = canvas.height / rootRect.height;
 
