@@ -11,9 +11,11 @@
  * - Gancho sem preferência salva permanece ATIVO — o padrão é o acervo inteiro.
  */
 
-import type { StudioHook } from "./hooks";
+import { tightenHook, type StudioHook } from "./hooks";
 
 const STORAGE_KEY = "studio.hooks.prefs.v1";
+const CUSTOM_KEY = "studio.hooks.custom.v1";
+
 
 export type HookPrefs = {
   /** Ganchos desativados (chaves). */
