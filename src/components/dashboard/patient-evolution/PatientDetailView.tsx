@@ -1275,6 +1275,22 @@ export default function PatientDetailView(props: any) {
               />
             </div>
 
+            <div id="sec-adendos" className="scroll-mt-24">
+              <AssessmentAddendaCard
+                assessment={target}
+                patientName={patient?.name || null}
+                readOnly={readOnly}
+                isDemo={isDemo}
+                onReinterpreted={(diagnosis) => {
+                  target.diagnosis = diagnosis;
+                  target.needs_reimpression = true;
+                  setNotes((prev: any) => ({ ...prev }));
+                }}
+              />
+            </div>
+
+
+
           </>
         );
       })()}
