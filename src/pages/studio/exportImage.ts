@@ -588,7 +588,22 @@ const renderStaticNodeToBlob = async (
       fontEmbedCSS: fontEmbedCSS ?? undefined,
       filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
     });
-    paintOverlaysOnCanvas(canvas, node, paintImagesOnCanvas(canvas, node));
+    /*
+     * Fotos e películas são compostas numa CAMADA SEPARADA e só então
+     * aplicadas sobre a arte rasterizada. Se a película fosse repintada
+     * direto no canvas final, ela escureceria também o texto — na tela a
+     * ordem é foto → película → texto, e o texto precisa continuar sendo a
+     * primeira camada visual do PNG.
+     */
+    const layer = document.createElement("canvas");
+    layer.width = canvas.width;
+    layer.height = canvas.height;
+    const paintedRects = paintImagesOnCanvas(layer, node);
+    if (paintedRects.length > 0) {
+      paintOverlaysOnCanvas(layer, node, paintedRects);
+      const context = canvas.getContext("2d");
+      if (context) context.drawImage(layer, 0, 0);
+    }
     paintStrokeTextOnCanvas(canvas, node, specs);
   } finally {
     restore();
