@@ -18,25 +18,9 @@ serve(async (req) => {
 
   try {
     const { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, forceRefresh, painMechanism: bodyPainMechanism, painExtent: bodyPainExtent } = await req.json();
-    const creditDecision = await assertCreditsAvailable(req, { function_name: "generate-treatment" });
-    console.log("[ai-credits] generate-treatment decision:", JSON.stringify({
-      reason: creditDecision.reason,
-      remaining: creditDecision.remaining,
-      enforced: creditDecision.enforced,
-      blocked: creditDecision.blocked,
-      tier: creditDecision.tier,
-    }));
-    // Shadow mode: never blocks. Phase 5.4 will translate blocked=true into 402.
-    shadowLogAiUsage(req, {
-      function_name: "generate-treatment",
-      was_bypassed: creditDecision.unlimited,
-
-      metadata: {
-        credit_reason: creditDecision.reason,
-        credit_remaining: creditDecision.remaining,
-        credit_enforced: creditDecision.enforced,
-      },
-    });
+    // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
+    const creditDecision = await canaryCredits(req, "generate-treatment");
+    void creditDecision;
 
     // --- Content-addressed cache (TTL 30d) ---
     // Key = hash of the full clinical payload (anamnesis + tests + questionnaires
