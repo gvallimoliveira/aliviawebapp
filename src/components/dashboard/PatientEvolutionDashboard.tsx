@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { useToast } from "@/hooks/use-toast";
+import { anchorScrollById } from "@/hooks/useScrollAnchor";
 import PainMapView from "@/components/assessment/PainMapView";
 import RegionPainComparison from "@/components/dashboard/RegionPainComparison";
 import AssessmentTimeline from "@/components/dashboard/AssessmentTimeline";
@@ -190,9 +191,16 @@ const SEVERITY_COLORS: Record<string, string> = {
 const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient, allowManualAssessment, allowAssessmentLink, allowQuickNote, onSelectionChange, onAssessmentsDeleted }: PatientEvolutionDashboardProps) => {
   // Normalize legacy snake_case anamnesis keys + test_results object→array shape
   // so older manual assessments are fully readable in the UI.
+  // Avaliações excluídas nesta sessão: somem da lista na hora, sem esperar o
+  // refetch do componente pai (a lista vinha de um array memoizado, então
+  // mutar/splicar não re-renderizava nada).
+  const [locallyDeletedIds, setLocallyDeletedIds] = useState<string[]>([]);
   const assessments = useMemo(
-    () => (rawAssessments || []).map((a) => normalizeAssessment(a) as any),
-    [rawAssessments]
+    () =>
+      (rawAssessments || [])
+        .filter((a) => !locallyDeletedIds.includes(a.id))
+        .map((a) => normalizeAssessment(a) as any),
+    [rawAssessments, locallyDeletedIds]
   );
 
   const { t, language } = useLanguage();
@@ -616,6 +624,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       }
 
       setSelectedEmail(null);
+      setLocallyDeletedIds((prev) => [...prev, ...assessmentIds.filter((id) => !prev.includes(id))]);
       onAssessmentsDeleted?.(assessmentIds);
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
       toast({ title: "Paciente e dados excluídos permanentemente" });
@@ -721,6 +730,9 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const handleDeleteAssessment = async (assessmentId: string) => {
     if (deletingAssessmentId) return;
     setDeletingAssessmentId(assessmentId);
+    // A lista encolhe quando o card some; sem âncora o navegador joga a página
+    // para o topo. Guardamos a posição do bloco de histórico e a restauramos.
+    const restoreScroll = anchorScrollById("sec-historico", 1200);
     try {
       // Exclusão via RPC segura: valida permissão (paciente, profissional vinculado
       // ou equipe da clínica) e limpa/desvincula registros filhos que bloqueiam o delete
@@ -751,10 +763,11 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         );
       }
 
-      // Remove from in-memory list
-      const idx = assessments.findIndex((a) => a.id === assessmentId);
-      if (idx >= 0) assessments.splice(idx, 1);
+      // Some da UI imediatamente e avisa o pai para sincronizar o estado dele.
+      setLocallyDeletedIds((prev) => (prev.includes(assessmentId) ? prev : [...prev, assessmentId]));
+      onAssessmentsDeleted?.([assessmentId]);
       setAssessmentRefreshTick((x) => x + 1);
+      restoreScroll();
       toast({ title: language === "pt" ? "Avaliação excluída" : "Assessment deleted" });
     } catch (err: any) {
       toast({ title: language === "pt" ? "Erro ao excluir" : "Error deleting", description: err?.message, variant: "destructive" });
