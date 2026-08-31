@@ -46,6 +46,7 @@ export const AssessmentAddendaCard = ({
   const [linking, setLinking] = useState(false);
   const [reinterpreting, setReinterpreting] = useState(false);
   const [lastLink, setLastLink] = useState<string | null>(null);
+  const addendaRef = useRef<AssessmentAddendum[]>([]);
 
   const assessmentId = assessment?.id;
   const dateLabel = assessment?.created_at
