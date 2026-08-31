@@ -37,3 +37,39 @@ Aplicar após CADA etapa concluída do plano de créditos (`mem://business/ai-cr
 
 ## Origem
 Pedido explícito de Guilherme em 31/08/2026, após a revisão da Fase 5.3 ter encontrado 4 falhas que causariam bloqueios indevidos na 5.4.
+
+---
+
+## Registro da revisão da Fase 5.3 — 31/08/2026
+
+### O que a etapa prometia
+Implementar um canário de decisão de crédito em modo shadow (nunca bloqueia) nas 9 edge functions críticas de IA, alimentando `ai_credit_decisions` e `ai_credit_usage` para validar caminhos antes da Fase 5.4 (bloqueio real).
+
+### O que foi verificado
+1. **Paridade código ↔ helper**: 4 das 9 funções ainda faziam a decisão manualmente com `assertCreditsAvailable` + `shadowLogAiUsage` em vez do ponto único `canaryCredits`.
+   - `generate-diagnosis`
+   - `generate-treatment`
+   - `clinical-agent-chat`
+   - As outras 5 já usavam `canaryCredits`.
+2. **Configuração de enforcement**: flag global `ai_credits_enforced = true`, mas `ai_credits_enforced_tiers = []` (ninguém bloqueia) — estado esperado para o canário.
+3. **Distribuição real de tiers**: 13 `academic_monthly`, 9 `clinic_large`, 1 `clinic_small`, 27 `premium_b2c`, 8 `pro_monthly`, 2 `unlimited`. Nenhum `unknown`.
+4. **Estudantes em premium_b2c**: 0 casos após correção anterior — query confirmou que todos os 13 estudantes estão em `academic_monthly`.
+5. **Telemetria ativa**: 88 decisões em `ai_credit_decisions`, com caminhos `vip`, `partner`, `anonymous`, `quota_check` visíveis.
+
+### Erros encontrados e corrigidos
+- **Inconsistência de integração**: 4 funções não usavam o helper canário padronizado. Isso causaria:
+  - Telemetria fragmentada (`ai_credit_decisions` incompleta);
+  - Risco de `was_bypassed` inconsistente entre funções;
+  - Manutenção duplicada na 5.4.
+- **Correção aplicada**: substituídos os blocos manuais por `canaryCredits(...)` em `generate-diagnosis`, `generate-treatment` e `clinical-agent-chat`, preservando a lógica especial de addon/isentos no agent-chat.
+- **Deploy realizado** das 9 funções críticas com sucesso.
+
+### O que não foi verificado / risco aceito
+- **Latência de bypass em produção**: o cache de 5 min por isolate existe, mas não medimos percentis reais. Detectar via `latency_ms` no `ai_credit_decisions` nos próximos 7 dias.
+- **Cobertura de telemetria**: só 88 decisões. Com a padronização, esperamos volume maior; se em 7 dias alguma função crítica não aparecer, investigar.
+- **Fail-open em cenário de indisponibilidade do RPC**: testado no código, mas não simulado em produção.
+
+### Estado atual
+- Canário padronizado nas 9 funções.
+- Nenhum bloqueio real ativo (`ai_credits_enforced_tiers` vazia).
+- Pronto para aguardar 5–7 dias de dados antes da Fase 5.4.

@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
-import { shadowLogAiUsage, assertCreditsAvailable } from "../_shared/ai-credits.ts";
+import { canaryCredits } from "../_shared/ai-credits.ts";
 import { mechanismSummary } from "../_shared/pain-mechanism.ts";
 
 function normalizeAnamnesis(raw: any) {
@@ -686,36 +686,19 @@ Deno.serve(async (req) => {
         console.warn("[agent] chat addon check failed (non-blocking):", (e as Error).message);
       }
     }
-    // Phase 5.3 canary — shadow-mode credit check. Never blocks the agent;
-    // simply records the decision so we can audit VIP/partner bypass paths
-    // and remaining balance before enabling 402s in Phase 5.4.
-    const creditDecision = await assertCreditsAvailable(req, {
-      function_name: "clinical-agent-chat",
+    // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
+    // Preserva a lógica de isenção VIP/parceiro e consumo do chat addon.
+    const creditDecision = await canaryCredits(req, "clinical-agent-chat", {
       user_id: user.id,
-    });
-    console.log("[ai-credits] clinical-agent-chat decision:", JSON.stringify({
-      reason: creditDecision.reason,
-      remaining: creditDecision.remaining,
-      enforced: creditDecision.enforced,
-      blocked: creditDecision.blocked,
-      tier: creditDecision.tier,
-      addon_consumed: addonConsumed,
-      legacy_exempt: isExempt,
-    }));
-    shadowLogAiUsage(req, {
-      function_name: "clinical-agent-chat",
-      user_id: user.id,
-      was_bypassed: isExempt || creditDecision.unlimited,
       credits: isExempt ? 0 : (addonConsumed ? 0 : undefined),
-
       metadata: {
         ...(isExempt ? { exempt: vipEarly ? "vip" : "partner" } : {}),
         ...(addonConsumed ? { chat_addon: true } : {}),
-        credit_reason: creditDecision.reason,
-        credit_remaining: creditDecision.remaining,
-        credit_enforced: creditDecision.enforced,
+        addon_consumed: addonConsumed,
+        legacy_exempt: isExempt,
       },
     });
+    void creditDecision;
 
 
     // Access gate (reusa vipEarly)
