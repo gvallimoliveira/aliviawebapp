@@ -190,9 +190,16 @@ const SEVERITY_COLORS: Record<string, string> = {
 const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient, allowManualAssessment, allowAssessmentLink, allowQuickNote, onSelectionChange, onAssessmentsDeleted }: PatientEvolutionDashboardProps) => {
   // Normalize legacy snake_case anamnesis keys + test_results object→array shape
   // so older manual assessments are fully readable in the UI.
+  // Avaliações excluídas nesta sessão: somem da lista na hora, sem esperar o
+  // refetch do componente pai (a lista vinha de um array memoizado, então
+  // mutar/splicar não re-renderizava nada).
+  const [locallyDeletedIds, setLocallyDeletedIds] = useState<string[]>([]);
   const assessments = useMemo(
-    () => (rawAssessments || []).map((a) => normalizeAssessment(a) as any),
-    [rawAssessments]
+    () =>
+      (rawAssessments || [])
+        .filter((a) => !locallyDeletedIds.includes(a.id))
+        .map((a) => normalizeAssessment(a) as any),
+    [rawAssessments, locallyDeletedIds]
   );
 
   const { t, language } = useLanguage();
