@@ -59,7 +59,17 @@ export const AssessmentAddendaCard = ({
     setLoading(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [assessmentId, isDemo]);
+  useEffect(() => {
+    load();
+    // Atualiza automaticamente enquanto houver links pendentes de resposta.
+    if (!assessmentId || isDemo) return;
+    const interval = setInterval(() => {
+      const hasPendingLinks = addenda.some((a) => a.status === "pending" && a.token);
+      if (hasPendingLinks) load();
+    }, 10000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assessmentId, isDemo, addenda]);
 
   const filled = filledAddenda(addenda);
   const pending = pendingReinterpretation(addenda);
