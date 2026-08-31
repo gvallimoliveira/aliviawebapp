@@ -2914,16 +2914,16 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
     y = renderSectionTitle(
       doc,
       y,
-      isPt ? "Informações Adicionais" : lang === "es" ? "Información Adicional" : "Additional Information",
+      isPt ? "Informações Adicionais" : language === "es" ? "Información Adicional" : "Additional Information",
       COLORS.primary,
     );
     for (const row of addendaRows) {
       const who = row.author_name
         || (row.author_type === "patient"
-          ? (isPt ? "Paciente" : lang === "es" ? "Paciente" : "Patient")
-          : (isPt ? "Profissional" : lang === "es" ? "Profesional" : "Professional"));
+          ? (isPt ? "Paciente" : language === "es" ? "Paciente" : "Patient")
+          : (isPt ? "Profissional" : language === "es" ? "Profesional" : "Professional"));
       const when = row.created_at
-        ? new Date(row.created_at).toLocaleDateString(isPt ? "pt-BR" : lang === "es" ? "es-ES" : "en-US")
+        ? new Date(row.created_at).toLocaleDateString(isPt ? "pt-BR" : language === "es" ? "es-ES" : "en-US")
         : "";
       y = checkPage(doc, y, 14);
       doc.setFont("Inter", "bold");
