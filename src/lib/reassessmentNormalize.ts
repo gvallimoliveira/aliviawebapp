@@ -40,7 +40,9 @@ export const deriveComplaintsFromRegions = (regions: string[] | null | undefined
     else if (id.includes("cervical") || id.includes("neck")) out.add("anamnesis.complaint.neck_pain");
     else if (id.includes("shoulder")) out.add("anamnesis.complaint.shoulder_pain");
     else if (id.includes("elbow")) out.add("anamnesis.complaint.elbow_pain");
-    else if (id.includes("wrist") || id.includes("hand")) out.add("anamnesis.complaint.wrist_pain");
+    else if (id.includes("hand")) out.add("anamnesis.complaint.hand_pain");
+    else if (id.includes("wrist")) out.add("anamnesis.complaint.wrist_pain");
+    else if (id.includes("arm")) out.add("anamnesis.complaint.arm_pain");
     else if (id.includes("hip") || id.includes("gluteal")) out.add("anamnesis.complaint.hip_pain");
     else if (id.includes("knee")) out.add("anamnesis.complaint.knee_pain");
     else if (id.includes("ankle")) out.add("anamnesis.complaint.ankle_pain");
