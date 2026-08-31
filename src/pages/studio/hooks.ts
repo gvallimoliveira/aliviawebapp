@@ -254,26 +254,34 @@ export const tightenHook = (hook: StudioHook): StudioHook => {
     return hook.sub ? { ...hook, sub: capSub(hook.sub) } : hook;
   }
 
+  /* Melhor corte DENTRO do limite (o mais longo); fora dele, o mais curto. */
   let cutAt = -1;
   let markLength = 0;
+  let overflowAt = Number.MAX_SAFE_INTEGER;
+  let overflowMark = 0;
   for (const mark of CUT_MARKS) {
-    let index = headline.indexOf(mark);
-    let best = -1;
+    let index = headline.indexOf(mark, 13);
     while (index > 12) {
-      if (index <= HOOK_HEADLINE_MAX) best = index;
-      else break;
+      if (index <= HOOK_HEADLINE_MAX) {
+        if (index > cutAt) {
+          cutAt = index;
+          markLength = mark.length;
+        }
+      } else {
+        if (index < overflowAt) {
+          overflowAt = index;
+          overflowMark = mark.length;
+        }
+        break;
+      }
       index = headline.indexOf(mark, index + 1);
     }
-    /* Nenhum corte dentro do limite: aceita o primeiro, que já encurta. */
-    if (best < 0) {
-      const first = headline.indexOf(mark, 13);
-      if (first > 12) best = first;
-    }
-    if (best > cutAt) {
-      cutAt = best;
-      markLength = mark.length;
-    }
   }
+  if (cutAt < 0 && overflowAt < Number.MAX_SAFE_INTEGER) {
+    cutAt = overflowAt;
+    markLength = overflowMark;
+  }
+
 
   if (cutAt < 0) {
     const window = headline.slice(0, HOOK_HEADLINE_MAX);
