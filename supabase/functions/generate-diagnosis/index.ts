@@ -636,8 +636,8 @@ ${additionalInfo}` : ""}
 ${testResults && testResults.length > 0 ? `Functional test results:
 ${testResults.map((t: any) => `- ${t.testId}: ${t.painful ? "PAINFUL/UNCOMFORTABLE" : "No discomfort"}`).join("\n")}` : "No functional tests performed."}
 
-${questionnaireResults && questionnaireResults.length > 0 ? `Validated questionnaire results:
-${questionnaireResults.map((q: any) => `- ${q.questionnaireName} (${q.questionnaireId.toUpperCase()}): Total score ${q.percentageScore}% | Interpretation: ${q.interpretation_pt || q.interpretation_en} | Severity: ${q.severity}
+${Array.isArray(questionnaireResults) && questionnaireResults.some((q: any) => q && (q.questionnaireId || q.questionnaireName)) ? `Validated questionnaire results:
+${questionnaireResults.filter((q: any) => q && (q.questionnaireId || q.questionnaireName)).map((q: any) => `- ${q.questionnaireName || "Questionnaire"} (${String(q.questionnaireId || "unknown").toUpperCase()}): Total score ${q.percentageScore ?? "N/A"}% | Interpretation: ${q.interpretation_pt || q.interpretation_en || "N/A"} | Severity: ${q.severity || "N/A"}
   Subscale scores: ${Object.entries(q.subscaleScores || {}).map(([k, v]) => `${k}: ${v}%`).join(", ")}`).join("\n")}` : "No validated questionnaires applied."}
 
 ${Array.isArray(anamnesisData?.romTable) && anamnesisData.romTable.length > 0 ? `Joint mobility / ROM (range of motion):
