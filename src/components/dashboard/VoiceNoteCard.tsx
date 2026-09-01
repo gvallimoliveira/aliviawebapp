@@ -162,10 +162,16 @@ export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId, 
           return (
             <div key={n.id} className="border border-border rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                   <span>{date}</span>
                   {dur && <span>· {dur}</span>}
+                  {!n.assessment_id && (
+                    <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/20">
+                      {isPt ? "Avaliação em aberto" : "Assessment not finalised"}
+                    </Badge>
+                  )}
                 </div>
+
                 {n.status === "processing" && (
                   <Badge variant="outline" className="gap-1 text-xs">
                     <Loader2 className="h-3 w-3 animate-spin" />
