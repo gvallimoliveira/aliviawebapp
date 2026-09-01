@@ -117,13 +117,14 @@ export const AssessmentAddendaCard = ({
   const handleReinterpret = async () => {
     const restoreScroll = anchorScroll(() => cardRef.current || document.getElementById("sec-adendos"), 3000);
     setReinterpreting(true);
-    restoreScroll();
     try {
       const diagnosis = await reinterpretAssessmentWithAddenda({ assessmentId, addenda, language });
+      restoreScroll();
       await load();
       onReinterpreted?.(diagnosis);
       toast({ title: "Avaliação reinterpretada", description: "Hipótese atualizada com as novas informações." });
     } catch (e: any) {
+      restoreScroll();
       toast({ title: "Erro ao reinterpretar", description: e?.message, variant: "destructive" });
     } finally {
       setReinterpreting(false);
