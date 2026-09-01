@@ -15,7 +15,9 @@ interface VoiceNote {
   error: string | null;
   duration_seconds: number | null;
   created_at: string;
+  assessment_id?: string | null;
 }
+
 
 interface Props {
   assessmentId?: string | null;
