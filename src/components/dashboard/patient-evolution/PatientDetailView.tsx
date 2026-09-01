@@ -1439,9 +1439,14 @@ export default function PatientDetailView(props: any) {
 
       {/* Voice notes (insumos brutos sobem antes das notas escritas) */}
       <div id="sec-notas-voz" className="scroll-mt-24">
-      {!isDemo && patient?.assessments?.length > 0 && (
-        <VoiceNoteCard assessmentIds={patient.assessments.map((a: any) => a.id)} />
+      {!isDemo && (
+        <VoiceNoteCard
+          assessmentIds={(patient?.assessments || []).map((a: any) => a.id)}
+          professionalId={professionalId}
+          patientName={patient?.name}
+        />
       )}
+
       </div>
 
 

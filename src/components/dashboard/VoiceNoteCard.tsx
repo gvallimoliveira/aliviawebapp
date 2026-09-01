@@ -15,15 +15,20 @@ interface VoiceNote {
   error: string | null;
   duration_seconds: number | null;
   created_at: string;
+  assessment_id?: string | null;
 }
+
 
 interface Props {
   assessmentId?: string | null;
   assessmentIds?: string[];
   patientId?: string | null;
+  /** Quando informados, também traz gravações ainda NÃO vinculadas a nenhuma avaliação. */
+  professionalId?: string | null;
+  patientName?: string | null;
 }
 
-export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId }: Props) {
+export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId, professionalId, patientName }: Props) {
   const { language } = useLanguage();
   const { toast } = useToast();
   const isPt = language === "pt";
@@ -31,20 +36,48 @@ export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId }
   const [expandedTranscript, setExpandedTranscript] = useState<Record<string, boolean>>({});
 
   const idsKey = (assessmentIds || []).join(",");
+  const trimmedName = (patientName || "").trim();
 
   useEffect(() => {
     const ids = assessmentIds && assessmentIds.length > 0
       ? assessmentIds
       : assessmentId ? [assessmentId] : [];
-    if (ids.length === 0 && !patientId) return;
+    const canFetchUnlinked = !!professionalId && !!trimmedName;
+    if (ids.length === 0 && !patientId && !canFetchUnlinked) return;
     let cancelled = false;
 
     const load = async () => {
-      let q = supabase.from("assessment_voice_notes").select("*").order("created_at", { ascending: false });
-      if (ids.length > 0) q = q.in("assessment_id", ids);
-      else if (patientId) q = q.eq("patient_id", patientId);
-      const { data } = await q;
-      if (cancelled || !data) return;
+      const collected: VoiceNote[] = [];
+
+      if (ids.length > 0 || patientId) {
+        let q = supabase.from("assessment_voice_notes").select("*").order("created_at", { ascending: false });
+        if (ids.length > 0) q = q.in("assessment_id", ids);
+        else if (patientId) q = q.eq("patient_id", patientId);
+        const { data } = await q;
+        if (data) collected.push(...(data as VoiceNote[]));
+      }
+
+      // Gravações feitas durante uma avaliação manual ainda não finalizada:
+      // ficam sem assessment_id e são resgatadas pelo nome do paciente.
+      if (canFetchUnlinked) {
+        const { data: orphans } = await supabase
+          .from("assessment_voice_notes")
+          .select("*")
+          .eq("professional_id", professionalId!)
+          .is("assessment_id", null)
+          .ilike("patient_name", trimmedName)
+          .order("created_at", { ascending: false });
+        if (orphans) {
+          const seen = new Set(collected.map((n) => n.id));
+          collected.push(...(orphans as VoiceNote[]).filter((n) => !seen.has(n.id)));
+        }
+      }
+
+      const data = collected.sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+      if (cancelled) return;
+
 
       // Watchdog: if a note is stuck on "processing" for more than 10 min,
       // mark it as failed so the user sees a real error and can retry,
@@ -78,7 +111,7 @@ export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId }
     load();
 
     const channel = supabase
-      .channel(`voice_notes_${ids.join("_") || patientId}`)
+      .channel(`voice_notes_${ids.join("_") || patientId || trimmedName || "any"}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "assessment_voice_notes" }, () => load())
       .subscribe();
 
@@ -86,7 +119,8 @@ export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId }
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [assessmentId, idsKey, patientId]);
+  }, [assessmentId, idsKey, patientId, professionalId, trimmedName]);
+
 
 
   if (notes.length === 0) return null;
@@ -128,10 +162,16 @@ export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId }
           return (
             <div key={n.id} className="border border-border rounded-xl p-3 space-y-2">
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                   <span>{date}</span>
                   {dur && <span>· {dur}</span>}
+                  {!n.assessment_id && (
+                    <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 border-amber-500/20">
+                      {isPt ? "Avaliação em aberto" : "Assessment not finalised"}
+                    </Badge>
+                  )}
                 </div>
+
                 {n.status === "processing" && (
                   <Badge variant="outline" className="gap-1 text-xs">
                     <Loader2 className="h-3 w-3 animate-spin" />
