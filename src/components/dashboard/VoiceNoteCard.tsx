@@ -109,7 +109,7 @@ export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId, 
     load();
 
     const channel = supabase
-      .channel(`voice_notes_${ids.join("_") || patientId}`)
+      .channel(`voice_notes_${ids.join("_") || patientId || trimmedName || "any"}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "assessment_voice_notes" }, () => load())
       .subscribe();
 
@@ -117,7 +117,8 @@ export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId, 
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [assessmentId, idsKey, patientId]);
+  }, [assessmentId, idsKey, patientId, professionalId, trimmedName]);
+
 
 
   if (notes.length === 0) return null;
