@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import { anchorScroll } from "@/hooks/useScrollAnchor";
 import {
   AssessmentAddendum,
   createPatientAddendumRequest,
@@ -47,6 +48,7 @@ export const AssessmentAddendaCard = ({
   const [reinterpreting, setReinterpreting] = useState(false);
   const [lastLink, setLastLink] = useState<string | null>(null);
   const addendaRef = useRef<AssessmentAddendum[]>([]);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const assessmentId = assessment?.id;
   const dateLabel = assessment?.created_at
@@ -113,13 +115,16 @@ export const AssessmentAddendaCard = ({
   };
 
   const handleReinterpret = async () => {
+    const restoreScroll = anchorScroll(() => cardRef.current || document.getElementById("sec-adendos"), 3000);
     setReinterpreting(true);
     try {
       const diagnosis = await reinterpretAssessmentWithAddenda({ assessmentId, addenda, language });
+      restoreScroll();
       await load();
       onReinterpreted?.(diagnosis);
       toast({ title: "Avaliação reinterpretada", description: "Hipótese atualizada com as novas informações." });
     } catch (e: any) {
+      restoreScroll();
       toast({ title: "Erro ao reinterpretar", description: e?.message, variant: "destructive" });
     } finally {
       setReinterpreting(false);
@@ -140,7 +145,7 @@ export const AssessmentAddendaCard = ({
   if (readOnly && filled.length === 0) return null;
 
   return (
-    <Card className={pending.length > 0 ? "border-primary/40 bg-primary/[0.03]" : undefined}>
+    <Card ref={cardRef} className={pending.length > 0 ? "border-primary/40 bg-primary/[0.03]" : undefined}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div>

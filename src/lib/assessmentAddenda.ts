@@ -125,13 +125,16 @@ export async function reinterpretAssessmentWithAddenda(opts: {
   const additionalInfo = [previousAdditional, addendaText].filter((s) => s && s.trim()).join("\n");
 
   const testResults = assessment.test_results;
+  const questionnaireResults = Array.isArray(testResults)
+    ? testResults.filter((item: any) => item && (item.questionnaireId || item.questionnaireName))
+    : [];
   const redFlags = (assessment.red_flags as any)?.detected ?? undefined;
 
   const { data, error } = await supabase.functions.invoke("generate-diagnosis", {
     body: {
       anamnesisData: anamnesis,
       testResults,
-      questionnaireResults: Array.isArray(testResults) ? testResults : [],
+      questionnaireResults,
       mode: "professional",
       language: opts.language === "en" ? "en" : opts.language === "es" ? "es" : "pt",
       additionalInfo,
