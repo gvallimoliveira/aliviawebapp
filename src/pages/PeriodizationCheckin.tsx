@@ -213,6 +213,8 @@ const PeriodizationCheckin = () => {
                     </>
                   )}
                 </TabsContent>
+                )}
+
 
                 <TabsContent value="srpe" className="space-y-4 pt-4">
                   {srpeDone ? (
