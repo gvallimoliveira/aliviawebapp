@@ -19,7 +19,7 @@ import { motion } from "framer-motion";
 import {
   GraduationCap, ArrowRight, ArrowDown, Brain, Sparkles, BookOpen,
   ClipboardList, FlaskConical, Compass, ShieldAlert, Stethoscope,
-  Check, Lightbulb, FileText, Activity, MessageCircleQuestion, Workflow,
+  Check, Lightbulb, FileText, Activity, MessageCircleQuestion, Workflow, Gauge,
   UserPlus, Filter, Star, ShieldCheck,
 } from "lucide-react";
 import { PRO_PLAN_PRICE, PRO_PLAN_ANNUAL_PRICE } from "@/constants/pricing";
@@ -56,6 +56,7 @@ const COPY = {
       { icon: FlaskConical, title: "Casos Clínicos Simulados", desc: "Pacientes virtuais com história completa para você avaliar do zero: anamnese, mapa de dor, testes funcionais, hipótese e plano. Erre sem consequências, aprenda com gabarito." },
       { icon: BookOpen, title: "Evidência de alta qualidade", desc: "Base de conhecimento filtrada por PEDro ≥ 7 e diretrizes internacionais. Estude a partir do que realmente sustenta a prática baseada em evidência." },
       { icon: Workflow, title: "Fluxo padrão-ouro de avaliação", desc: "Pratique o fluxo completo: anamnese estruturada → red flags → mapa de dor → valores de ADM (goniometria) → dinamometria com valores de força → questionários validados → hipótese → tratamento. O hábito da boa avaliação se constrói repetindo." },
+      { icon: Gauge, title: "Controle de carga e periodização (sRPE/ACWR)", desc: "Aprenda na prática a periodizar: macro e mesociclos sugeridos a partir das fases do STEPS, carga da sessão por sRPE, ACWR e prontidão — com as fases de potência e retorno ao esporte tratadas como opcionais, conforme o objetivo do paciente." },
       { icon: Activity, title: "Da teoria à prática, mais rápido", desc: "Cada caso usa as mesmas ferramentas que profissionais usam com pacientes reais. Você chega ao estágio sabendo o que fazer — não tentando lembrar." },
     ],
     disclaimerTitle: "Acesso Estudante: o que muda em relação ao Profissional",
@@ -125,6 +126,7 @@ const COPY = {
       { icon: FlaskConical, title: "Simulated Clinical Cases", desc: "Virtual patients with full history for you to assess from scratch: anamnesis, pain map, functional tests, hypothesis and plan. Make mistakes safely." },
       { icon: BookOpen, title: "High-quality evidence", desc: "Knowledge base filtered by PEDro ≥ 7 and international guidelines. Study from what really backs evidence-based practice." },
       { icon: Workflow, title: "Gold-standard assessment flow", desc: "Practice the full flow: structured anamnesis → red flags → pain map → ROM (goniometry) values → dynamometry with strength values → validated questionnaires → hypothesis → treatment." },
+      { icon: Gauge, title: "Load management and periodization (sRPE/ACWR)", desc: "Learn periodization hands-on: macro and meso cycles suggested from the STEPS phases, session load via sRPE, ACWR and readiness — with power and return-to-sport phases treated as optional, according to the patient goal." },
       { icon: Activity, title: "Theory to practice, faster", desc: "Every case uses the same tools professionals use with real patients. You arrive at internship knowing what to do." },
     ],
     disclaimerTitle: "Student Access: what changes vs Professional",
@@ -194,6 +196,7 @@ const COPY = {
       { icon: FlaskConical, title: "Casos Clínicos Simulados", desc: "Pacientes virtuales con historia completa para evaluar desde cero." },
       { icon: BookOpen, title: "Evidencia de alta calidad", desc: "Base filtrada por PEDro ≥ 7 y directrices internacionales." },
       { icon: Workflow, title: "Flujo de evaluación estándar de oro", desc: "Practica el flujo completo: anamnesis → red flags → mapa de dolor → valores de ROM (goniometría) → dinamometría con valores de fuerza → cuestionarios → hipótesis → tratamiento." },
+      { icon: Gauge, title: "Control de carga y periodización (sRPE/ACWR)", desc: "Aprende a periodizar en la práctica: macro y mesociclos sugeridos desde las fases de STEPS, carga de sesión por sRPE, ACWR y disposición — con potencia y retorno al deporte como fases opcionales." },
       { icon: Activity, title: "De la teoría a la práctica, más rápido", desc: "Cada caso usa las mismas herramientas que los profesionales usan con pacientes reales." },
     ],
     disclaimerTitle: "Acceso Estudiante: qué cambia frente al Profesional",
