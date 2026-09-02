@@ -86,7 +86,7 @@ const CoachWeekOverview = ({ sessions, today }: { sessions: WeekSession[]; today
                   className={`rounded-lg border px-2.5 py-1.5 ${isToday ? "border-primary/50 bg-primary/5" : "border-border bg-background"}`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-foreground w-14 shrink-0">
+                    <span className="text-[11px] font-semibold text-foreground whitespace-nowrap shrink-0">
                       {WEEK_DOW[i]} {label}
                     </span>
                     {isToday && <Badge variant="secondary" className="text-[9px] px-1.5 py-0">hoje</Badge>}
