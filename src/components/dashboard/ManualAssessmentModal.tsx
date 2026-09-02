@@ -42,7 +42,8 @@ import RomTable, { createInitialRomRows, sanitizeRomRows, type RomRow } from "@/
 import StrengthTable, { createInitialStrengthRows, sanitizeStrengthRows, type StrengthRow } from "@/components/assessment/StrengthTable";
 import {
   saveManualAssessmentSession,
-  clearManualAssessmentSession,
+  closeManualAssessmentSession,
+  newManualAssessmentSessionId,
 } from "@/lib/manualAssessmentSession";
 import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
 import PainMechanismWizard from "@/components/assessment/PainMechanismWizard";
@@ -1070,7 +1071,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
   const confirmExit = () => {
     setConfirmExitOpen(false);
-    clearManualAssessmentSession();
+    closeManualAssessmentSession();
     resetForm();
     onOpenChange(false);
   };
@@ -1695,7 +1696,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
       toast({ title: isEditing ? (isPt ? "Avaliação atualizada!" : "Assessment updated!") : (isPt ? "Avaliação criada!" : "Assessment created!") });
       if (!isEditing) void draft.discard();
-      clearManualAssessmentSession();
+      closeManualAssessmentSession();
       if (savedId) onSaved?.(savedId);
 
       // Se há pendências (gerais ou de especialidade), gera o link único e
