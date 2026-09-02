@@ -30,7 +30,11 @@ import ClearanceChecklistCard from "./ClearanceChecklistCard";
 import BridgeCard from "./BridgeCard";
 
 interface Props {
+  /** Id do registro em `patients`, quando o prontuário já o conhece. */
   patientId?: string | null;
+  /** Fallbacks para resolver (ou criar) o registro do paciente. */
+  patientName?: string | null;
+  patientEmail?: string | null;
   professionalId?: string | null;
   clinicId?: string | null;
   latestAssessmentId?: string | null;
@@ -39,7 +43,9 @@ interface Props {
 }
 
 const PeriodizationSection = ({
-  patientId,
+  patientId: patientIdProp,
+  patientName,
+  patientEmail,
   professionalId,
   clinicId,
   latestAssessmentId,
@@ -47,6 +53,8 @@ const PeriodizationSection = ({
   isDemo,
 }: Props) => {
   const { toast } = useToast();
+  const [patientId, setPatientId] = useState<string | null>(patientIdProp ?? null);
+  const [resolving, setResolving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [plan, setPlan] = useState<PeriodizationPlan | null>(null);
@@ -58,6 +66,7 @@ const PeriodizationSection = ({
   const [restrictions, setRestrictions] = useState<PlanRestriction[]>([]);
   const [links, setLinks] = useState<PeriodizationLink[]>([]);
   const [sport, setSport] = useState("");
+
 
   const load = useCallback(async () => {
     if (!patientId || isDemo) { setLoading(false); return; }
