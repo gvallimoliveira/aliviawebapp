@@ -149,11 +149,12 @@ const PeriodizationSection = ({
   useEffect(() => { load(); }, [load]);
 
   const createPlan = async () => {
-    if (!patientId) return;
+    const id = await ensurePatientRecord();
+    if (!id) return;
     setCreating(true);
     try {
       await createPlanWithTemplate({
-        patientId,
+        patientId: id,
         professionalId,
         clinicId,
         assessmentId: latestAssessmentId,
@@ -168,18 +169,40 @@ const PeriodizationSection = ({
     }
   };
 
-  if (isDemo || !patientId) {
+  if (isDemo) {
     return (
       <Card className="border-dashed">
         <CardContent className="py-6 text-center">
           <Gauge className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">
-            A periodização de carga fica disponível para pacientes cadastrados.
+            No ambiente simulado a periodização de carga fica apenas ilustrativa.
           </p>
         </CardContent>
       </Card>
     );
   }
+
+  if (!patientId) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="py-6 space-y-3 text-center">
+          <Gauge className="h-6 w-6 text-primary/60 mx-auto" />
+          <p className="text-sm font-medium text-foreground">Monitorar carga e prontidão</p>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            Registre sRPE e check-ins diários (sono, dor, fadiga, estresse, prontidão) e acompanhe o ACWR.
+            Vale para qualquer paciente, não só atletas.
+          </p>
+          {!readOnly && (
+            <Button className="rounded-xl gap-1" onClick={ensurePatientRecord} disabled={resolving}>
+              {resolving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              Ativar para este paciente
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
 
   if (loading) {
     return (
