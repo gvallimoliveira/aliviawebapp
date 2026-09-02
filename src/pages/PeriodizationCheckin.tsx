@@ -436,6 +436,9 @@ const PeriodizationCheckin = () => {
 
 
                 <TabsContent value="srpe" className="space-y-4 pt-4">
+                  {isCoach && info?.week_sessions && (
+                    <CoachWeekOverview sessions={info.week_sessions} today={info.today} />
+                  )}
                   {isCoach ? (
                     planDone ? (
                       <div className="text-center py-6 space-y-2">
