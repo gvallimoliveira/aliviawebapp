@@ -7,7 +7,6 @@ import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  ClearanceItem,
   PeriodizationCycle,
   PeriodizationLink,
   PeriodizationPlan,
@@ -19,7 +18,6 @@ import {
   createPlanWithTemplate,
   fetchActivePlan,
   fetchCheckins,
-  fetchClearance,
   fetchCycles,
   fetchLinks,
   fetchRestrictions,
@@ -30,8 +28,9 @@ import LoadMonitorCard from "./LoadMonitorCard";
 import DoseAdherenceCard from "./DoseAdherenceCard";
 import MacroTimeline from "./MacroTimeline";
 import MicroWeekGrid from "./MicroWeekGrid";
-import ClearanceChecklistCard from "./ClearanceChecklistCard";
+// Critérios de liberação desativados por ora (componente mantido no projeto).
 import BridgeCard from "./BridgeCard";
+import PeriodizationCollapsible from "./PeriodizationCollapsible";
 
 interface Props {
   /** Id do registro em `patients`, quando o prontuário já o conhece. */
@@ -66,7 +65,6 @@ const PeriodizationSection = ({
   const [sessions, setSessions] = useState<PeriodizationSession[]>([]);
   const [entries, setEntries] = useState<SrpeEntry[]>([]);
   const [checkins, setCheckins] = useState<ReadinessCheckin[]>([]);
-  const [clearance, setClearance] = useState<ClearanceItem[]>([]);
   const [restrictions, setRestrictions] = useState<PlanRestriction[]>([]);
   const [links, setLinks] = useState<PeriodizationLink[]>([]);
   const [sport, setSport] = useState("");
@@ -141,16 +139,13 @@ const PeriodizationSection = ({
     setSessions(plannedSessions);
 
     if (activePlan) {
-      const [cy, cl, re] = await Promise.all([
+      const [cy, re] = await Promise.all([
         fetchCycles(activePlan.id),
-        fetchClearance(activePlan.id),
         fetchRestrictions(activePlan.id),
       ]);
       setCycles(cy);
-      setClearance(cl);
       setRestrictions(re);
     } else {
-      setCycles([]); setClearance([]); setRestrictions([]);
     }
     setLoading(false);
     if (keepScroll !== null) {
@@ -266,49 +261,60 @@ const PeriodizationSection = ({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Monitoramento funciona mesmo sem plano estruturado. */}
-      <LoadMonitorCard
-        patientId={patientId}
-        planId={plan?.id ?? null}
-        entries={entries}
-        checkins={checkins}
-        onChanged={refresh}
-        readOnly={readOnly}
-      />
+    <div className="space-y-3">
+      {/* Ordem definida: links de check-in → carga/prontidão → dose → microciclo → macrociclo. */}
+      <PeriodizationCollapsible title="Links de check-in" icon={<Link2 className="h-4 w-4 text-primary" />}>
+        <BridgeCard
+          patientId={patientId}
+          planId={plan?.id ?? null}
+          restrictions={restrictions}
+          links={links}
+          onChanged={refresh}
+          readOnly={readOnly}
+        />
+      </PeriodizationCollapsible>
 
-      <DoseAdherenceCard
-        patientId={patientId}
-        planId={plan?.id ?? null}
-        sessions={sessions}
-        entries={entries}
-        onChanged={refresh}
-        readOnly={readOnly}
-      />
+      <PeriodizationCollapsible title="Carga e prontidão" icon={<Gauge className="h-4 w-4 text-primary" />}>
+        <LoadMonitorCard
+          patientId={patientId}
+          planId={plan?.id ?? null}
+          entries={entries}
+          checkins={checkins}
+          onChanged={refresh}
+          readOnly={readOnly}
+        />
+      </PeriodizationCollapsible>
 
-      <BridgeCard
-        patientId={patientId}
-        planId={plan?.id ?? null}
-        restrictions={restrictions}
-        links={links}
-        onChanged={refresh}
-        readOnly={readOnly}
-      />
+      <PeriodizationCollapsible title="Dose planejada x percebida" icon={<Gauge className="h-4 w-4 text-primary" />}>
+        <DoseAdherenceCard
+          patientId={patientId}
+          planId={plan?.id ?? null}
+          sessions={sessions}
+          entries={entries}
+          onChanged={refresh}
+          readOnly={readOnly}
+        />
+      </PeriodizationCollapsible>
 
-      {plan ? (
+      {plan && (
         <>
-          <MacroTimeline cycles={cycles} />
-          <MicroWeekGrid planId={plan.id} patientId={patientId} sessions={sessions} entries={entries} onChanged={refresh} readOnly={readOnly} />
-          <ClearanceChecklistCard items={clearance} onChanged={refresh} readOnly={readOnly} />
+          <PeriodizationCollapsible title="Microciclo da semana" icon={<Plus className="h-4 w-4 text-primary" />}>
+            <MicroWeekGrid planId={plan.id} patientId={patientId} sessions={sessions} entries={entries} onChanged={refresh} readOnly={readOnly} />
+          </PeriodizationCollapsible>
+          <PeriodizationCollapsible title="Macrociclo e mesociclos" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
+            <MacroTimeline cycles={cycles} />
+          </PeriodizationCollapsible>
         </>
-      ) : !readOnly ? (
+      )}
+
+      {!plan && !readOnly && (
         <Card className="border-dashed">
           <CardContent className="py-6 space-y-3 text-center">
             <Gauge className="h-6 w-6 text-primary/60 mx-auto" />
             <p className="text-sm text-foreground font-medium">Estruturar periodização</p>
             <p className="text-xs text-muted-foreground max-w-md mx-auto">
-              Cria o macrociclo a partir das fases do STEPS (cicatrização → força → potência → retorno ao esporte),
-              os mesociclos do primeiro bloco e o checklist de liberação.
+              Cria o macrociclo a partir das fases do STEPS (cicatrização → força → potência → retorno ao esporte)
+              e os mesociclos do primeiro bloco.
             </p>
             <div className="flex gap-2 max-w-sm mx-auto">
               <Input
@@ -324,7 +330,7 @@ const PeriodizationSection = ({
             </div>
           </CardContent>
         </Card>
-      ) : null}
+      )}
     </div>
   );
 };
