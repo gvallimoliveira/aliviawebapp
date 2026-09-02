@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Plus, ShieldCheck, Loader2, LayoutDashboard, Users, UserCheck, FileText, MessageSquare, Mail, Brain, Zap, ShieldAlert, HeartPulse } from "lucide-react";
+import { Trash2, Plus, ShieldCheck, Loader2, LayoutDashboard, Users, UserCheck, FileText, MessageSquare, Mail, Brain, Zap, ShieldAlert, HeartPulse, Video } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import ProfessionalManagement from "@/components/admin/ProfessionalManagement";
@@ -23,6 +23,7 @@ import AdminAgentKnowledge from "@/components/admin/AdminAgentKnowledge";
 import AdminAiUsage from "@/components/admin/AdminAiUsage";
 import AdminLgpdCenter from "@/components/admin/AdminLgpdCenter";
 import PatientUserManagement from "@/components/admin/PatientUserManagement";
+import AdminVideoAudit from "@/components/admin/AdminVideoAudit";
 
 interface VipUser {
   id: string;
