@@ -4,23 +4,25 @@
  * background, the user is brought back to where they were instead of
  * being dumped on the home / dashboard.
  *
- * This module deliberately does NOT touch:
- *  - Service workers
- *  - Caches
- *  - Supabase auth storage
+ * Regras de estabilidade (setembro/2026):
+ *  - A restauração de rota só acontece quando o app foi DESCARREGADO com o
+ *    usuário numa tela profunda (marcador gravado em `pagehide`/`freeze`).
+ *    Navegar normalmente entre telas nunca reescreve a URL.
+ *  - Janela curta (30 min). Nada de trazer de volta rota de horas atrás.
+ *  - O patch de `history` é único e emite `alivia:navigation`, para que
+ *    outros módulos (ex. versionChecker) escutem em vez de patchar de novo.
  *
- * It only reads/writes a tiny localStorage key with the last route and an
- * optional opaque "draft" payload (used by Assessment.tsx for auto-save).
- *
- * See mem://constraints/auth-stability — keep this module isolated.
+ * This module deliberately does NOT touch service workers, caches, or
+ * Supabase auth storage. See mem://constraints/auth-stability.
  */
 
 const KEY = "alivia:last-session";
+const UNLOAD_KEY = "alivia:last-session:unloaded-at";
 const FRESH_BOOT_PATHS = new Set(["/", "/index", "/index.html"]);
-// 6 hours: long enough to cover "I switched apps for a few minutes" and
-// "I came back the next morning to finish an assessment", but short enough
-// that we never restore a stale state from days ago.
-const TTL_MS = 6 * 60 * 60 * 1000;
+// 30 minutos: cobre "troquei de app / a tela bloqueou e o SO matou a aba".
+const TTL_MS = 30 * 60 * 1000;
+// Só restauramos se o descarregamento aconteceu há pouco tempo.
+const UNLOAD_WINDOW_MS = 30 * 60 * 1000;
 
 // Routes we never want to restore on cold boot. These are auth/payment/
 // transactional flows where re-landing mid-state would be confusing or
@@ -126,22 +128,52 @@ export const clearSession = () => {
   }
 };
 
+const markUnloaded = () => {
+  try {
+    const path = window.location.pathname;
+    if (FRESH_BOOT_PATHS.has(path)) return;
+    localStorage.setItem(UNLOAD_KEY, String(Date.now()));
+  } catch {
+    /* noop */
+  }
+};
+
+const consumeUnloadMark = (): number | null => {
+  try {
+    const raw = localStorage.getItem(UNLOAD_KEY);
+    localStorage.removeItem(UNLOAD_KEY);
+    const at = Number(raw || "0");
+    return at > 0 ? at : null;
+  } catch {
+    return null;
+  }
+};
+
 /**
- * Called once at app boot. If we are landing on the home/gateway because
- * the OS killed the PWA tab, transparently navigate back to the last
- * meaningful route the user was on. Returns the URL to restore (or null).
+ * Called once at app boot. Restores the last meaningful route ONLY when the
+ * previous session was actually torn down by the OS/browser while the user
+ * was on a deep screen, and that happened recently. Returns the URL to
+ * restore (or null).
  */
 export const getRestoreTarget = (): string | null => {
   if (typeof window === "undefined") return null;
   const currentPath = window.location.pathname;
   // Only restore if we landed on a "fresh boot" entry point.
-  const isFreshBoot = FRESH_BOOT_PATHS.has(currentPath);
-  if (!isFreshBoot) return null;
+  if (!FRESH_BOOT_PATHS.has(currentPath)) {
+    consumeUnloadMark();
+    return null;
+  }
 
   // Skip restore if the user explicitly came from a link (has utm_, ref, etc)
   // or hit the gateway from outside.
   const search = window.location.search;
-  if (search && /[?&](utm_|ref=|source=(?!pwa))/i.test(search)) return null;
+  if (search && /[?&](utm_|ref=|source=(?!pwa))/i.test(search)) {
+    consumeUnloadMark();
+    return null;
+  }
+
+  const unloadedAt = consumeUnloadMark();
+  if (!unloadedAt || Date.now() - unloadedAt > UNLOAD_WINDOW_MS) return null;
 
   const stored = read();
   if (!stored) return null;
@@ -150,6 +182,8 @@ export const getRestoreTarget = (): string | null => {
 
 /**
  * Auto-track route changes. Call once at app boot.
+ * Also installs the single `history` patch used app-wide, emitting
+ * `alivia:navigation` for other listeners.
  */
 export const installRouteTracker = () => {
   if (typeof window === "undefined") return;
@@ -158,24 +192,40 @@ export const installRouteTracker = () => {
   // Track initial location after mount
   setTimeout(track, 50);
 
-  window.addEventListener("popstate", track);
+  const emitNavigation = () => {
+    track();
+    window.dispatchEvent(new Event("alivia:navigation"));
+  };
+
+  window.addEventListener("popstate", emitNavigation);
 
   const origPush = history.pushState;
   const origReplace = history.replaceState;
   history.pushState = function (...args) {
     const r = origPush.apply(this, args as never);
-    queueMicrotask(track);
+    queueMicrotask(emitNavigation);
     return r;
   };
   history.replaceState = function (...args) {
     const r = origReplace.apply(this, args as never);
-    queueMicrotask(track);
+    queueMicrotask(emitNavigation);
     return r;
   };
 
   // Refresh timestamp when user comes back so the TTL window resets.
-  window.addEventListener("visibilitychange", () => {
+  document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") track();
+    else {
+      track();
+      markUnloaded();
+    }
   });
-  window.addEventListener("pagehide", track);
+  window.addEventListener("pagehide", () => {
+    track();
+    markUnloaded();
+  });
+  document.addEventListener("freeze", () => {
+    track();
+    markUnloaded();
+  });
 };
