@@ -314,6 +314,10 @@ const categories: ToolCategory[] = [
 
 const faqKeys = [
   {
+    q: "Como funciona o controle de carga (sRPE) e a comparação entre dose planejada e percebida?",
+    a: "Na seção \"Periodização e carga\" do prontuário, o esforço percebido (sRPE) é sempre respondido pelo paciente: duração da sessão × RPE de 0 a 10 gera a carga da sessão, que alimenta carga aguda (7 dias), crônica (média de 28 dias) e ACWR. O link do treinador/preparador tem outro papel: planejar a dose esperada (duração alvo × esforço alvo) por frente — fisioterapia, academia e campo/esporte. O sistema cruza os dois dados: se o planejado era 40 min × 8 = 320 e o paciente percebeu 40 min × 7 = 280, a razão é 0,88 e o trabalho aparece como subdosado; entre 0,90 e 1,10 é dose certa; acima de 1,10, superdosado. Isso aparece no card \"Dose planejada x percebida\" (por frente, total da semana e sessão por sessão), com selo na grade do microciclo, e gera alerta por push à equipe quando o desvio se repete. O cálculo é local e determinístico — não consome créditos de IA — e a decisão de ajustar a carga é sempre do terapeuta responsável.",
+  },
+  {
     q: "Um paciente lembrou de informações depois da avaliação. Como adiciono sem refazer tudo?",
     a: "No prontuário, no bloco \"Informações adicionais\" (abaixo da impressão clínica), qualquer terapeuta da clínica pode escrever o adendo ou gerar um link exclusivo daquela avaliação para o próprio paciente complementar (cirurgias, exames, medicação, o que piora/alivia). O adendo chega marcado como \"não interpretado\" e notifica a equipe. Se mudar o raciocínio, clique em \"Reinterpretar avaliação\": a IA reprocessa a avaliação original somada às novas informações e atualiza hipótese e impressão clínica, guardando a versão anterior. Se for irrelevante, não clique — nada é consumido e o texto fica registrado no prontuário e no PDF.",
   },
