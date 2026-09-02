@@ -30,8 +30,10 @@ interface Info {
     planned_duration_min: number | null;
     planned_rpe: number | null;
     title: string | null;
+    already_reported?: boolean;
   }>;
 }
+
 
 const PeriodizationCheckin = () => {
   const { token } = useParams<{ token: string }>();
