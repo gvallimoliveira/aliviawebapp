@@ -1191,6 +1191,59 @@ export type Database = {
         }
         Relationships: []
       }
+      clearance_items: {
+        Row: {
+          created_at: string
+          evaluated_at: string | null
+          evaluated_by: string | null
+          id: string
+          item_key: string
+          label: string
+          phase: string
+          plan_id: string
+          sort_order: number
+          status: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          evaluated_at?: string | null
+          evaluated_by?: string | null
+          id?: string
+          item_key: string
+          label: string
+          phase?: string
+          plan_id: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          evaluated_at?: string | null
+          evaluated_by?: string | null
+          id?: string
+          item_key?: string
+          label?: string
+          phase?: string
+          plan_id?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clearance_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_addons: {
         Row: {
           addon_type: string
@@ -2794,6 +2847,312 @@ export type Database = {
           },
         ]
       }
+      periodization_cycles: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          exit_criteria: string | null
+          goal: string | null
+          id: string
+          level: string
+          name: string
+          parent_id: string | null
+          plan_id: string
+          sort_order: number
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          exit_criteria?: string | null
+          goal?: string | null
+          id?: string
+          level: string
+          name: string
+          parent_id?: string | null
+          plan_id: string
+          sort_order?: number
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          exit_criteria?: string | null
+          goal?: string | null
+          id?: string
+          level?: string
+          name?: string
+          parent_id?: string | null
+          plan_id?: string
+          sort_order?: number
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodization_cycles_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodization_cycles_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      periodization_links: {
+        Row: {
+          active: boolean
+          audience: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string | null
+          last_used_at: string | null
+          patient_id: string
+          plan_id: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          audience?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          last_used_at?: string | null
+          patient_id: string
+          plan_id?: string | null
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          audience?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          last_used_at?: string | null
+          patient_id?: string
+          plan_id?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodization_links_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodization_links_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      periodization_plans: {
+        Row: {
+          assessment_id: string | null
+          clinic_id: string | null
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          id: string
+          injured_limb: string | null
+          notes: string | null
+          patient_id: string
+          professional_id: string | null
+          sport: string | null
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_id?: string | null
+          clinic_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          injured_limb?: string | null
+          notes?: string | null
+          patient_id: string
+          professional_id?: string | null
+          sport?: string | null
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string | null
+          clinic_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          injured_limb?: string | null
+          notes?: string | null
+          patient_id?: string
+          professional_id?: string | null
+          sport?: string | null
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodization_plans_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodization_plans_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodization_plans_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodization_plans_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodization_plans_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      periodization_sessions: {
+        Row: {
+          created_at: string
+          cycle_id: string | null
+          exercise_program_id: string | null
+          id: string
+          notes: string | null
+          plan_id: string
+          planned_load: string
+          session_date: string
+          title: string | null
+          track: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cycle_id?: string | null
+          exercise_program_id?: string | null
+          id?: string
+          notes?: string | null
+          plan_id: string
+          planned_load?: string
+          session_date: string
+          title?: string | null
+          track?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cycle_id?: string | null
+          exercise_program_id?: string | null
+          id?: string
+          notes?: string | null
+          plan_id?: string
+          planned_load?: string
+          session_date?: string
+          title?: string | null
+          track?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodization_sessions_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodization_sessions_exercise_program_id_fkey"
+            columns: ["exercise_program_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodization_sessions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_restrictions: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          plan_id: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          plan_id: string
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          plan_id?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_restrictions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_addons: {
         Row: {
           addon_type: string
@@ -3306,6 +3665,72 @@ export type Database = {
         }
         Relationships: []
       }
+      readiness_checkins: {
+        Row: {
+          checkin_date: string
+          created_at: string
+          fatigue: number | null
+          id: string
+          note: string | null
+          pain: number | null
+          patient_id: string
+          plan_id: string | null
+          readiness: number | null
+          sleep: number | null
+          soreness: number | null
+          source: string
+          stress: number | null
+          updated_at: string
+        }
+        Insert: {
+          checkin_date?: string
+          created_at?: string
+          fatigue?: number | null
+          id?: string
+          note?: string | null
+          pain?: number | null
+          patient_id: string
+          plan_id?: string | null
+          readiness?: number | null
+          sleep?: number | null
+          soreness?: number | null
+          source?: string
+          stress?: number | null
+          updated_at?: string
+        }
+        Update: {
+          checkin_date?: string
+          created_at?: string
+          fatigue?: number | null
+          id?: string
+          note?: string | null
+          pain?: number | null
+          patient_id?: string
+          plan_id?: string | null
+          readiness?: number | null
+          sleep?: number | null
+          soreness?: number | null
+          source?: string
+          stress?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "readiness_checkins_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "readiness_checkins_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_codes: {
         Row: {
           code: string
@@ -3514,6 +3939,66 @@ export type Database = {
           target_url?: string | null
         }
         Relationships: []
+      }
+      srpe_entries: {
+        Row: {
+          created_at: string
+          duration_min: number
+          id: string
+          notes: string | null
+          patient_id: string
+          plan_id: string | null
+          rpe: number
+          session_date: string
+          source: string
+          track: string
+          training_load: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_min: number
+          id?: string
+          notes?: string | null
+          patient_id: string
+          plan_id?: string | null
+          rpe: number
+          session_date?: string
+          source?: string
+          track?: string
+          training_load?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_min?: number
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          plan_id?: string | null
+          rpe?: number
+          session_date?: string
+          source?: string
+          track?: string
+          training_load?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "srpe_entries_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "srpe_entries_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       studio_brands: {
         Row: {
@@ -4253,6 +4738,10 @@ export type Database = {
           }
       can_access_assessment_addenda: {
         Args: { _assessment_id: string; _pro_only?: boolean; _user_id: string }
+        Returns: boolean
+      }
+      can_access_patient: {
+        Args: { _patient_id: string; _user_id: string }
         Returns: boolean
       }
       can_manage_clinic: {

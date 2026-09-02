@@ -1,0 +1,272 @@
+// Endpoint público do módulo de Periodização e Carga.
+// Paciente ou treinador acessam por token, sem login (mesmo padrão do adendo).
+//
+// POST { action: "load", token }
+//   -> { info: { patient_name, professional_name, audience, today, today_checkin, plan_title, restrictions } }
+// POST { action: "submit_checkin", token, values: { soreness, sleep, stress, fatigue, readiness, pain, note } }
+// POST { action: "submit_srpe", token, entry: { session_date, track, duration_min, rpe, notes } }
+
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const clampScale = (v: unknown): number | null => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  return Math.min(10, Math.max(1, Math.round(n)));
+};
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const body = await req.json();
+    const { action, token } = body ?? {};
+    if (!token || typeof token !== "string" || token.length < 8) {
+      return json({ error: "invalid_token" }, 400);
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
+    const { data: link } = await supabase
+      .from("periodization_links")
+      .select("id, patient_id, plan_id, audience, label, active")
+      .eq("token", token)
+      .maybeSingle();
+
+    if (!link || !link.active) return json({ error: "not_found" }, 404);
+
+    const { data: patient } = await supabase
+      .from("patients")
+      .select("id, full_name, professional_id, clinic_id")
+      .eq("id", link.patient_id)
+      .maybeSingle();
+    if (!patient) return json({ error: "not_found" }, 404);
+
+    let professionalName: string | null = null;
+    let proUserId: string | null = null;
+    if (patient.professional_id) {
+      const { data: pro } = await supabase
+        .from("professionals")
+        .select("user_id, full_name")
+        .eq("id", patient.professional_id)
+        .maybeSingle();
+      professionalName = pro?.full_name ?? null;
+      proUserId = pro?.user_id ?? null;
+    }
+    if (!professionalName && patient.clinic_id) {
+      const { data: clinic } = await supabase.from("clinics").select("name").eq("id", patient.clinic_id).maybeSingle();
+      professionalName = clinic?.name ?? null;
+    }
+
+    let planTitle: string | null = null;
+    let restrictions: Array<{ kind: string; text: string }> = [];
+    if (link.plan_id) {
+      const { data: plan } = await supabase
+        .from("periodization_plans")
+        .select("title")
+        .eq("id", link.plan_id)
+        .maybeSingle();
+      planTitle = plan?.title ?? null;
+      const { data: rest } = await supabase
+        .from("plan_restrictions")
+        .select("kind, text")
+        .eq("plan_id", link.plan_id);
+      restrictions = (rest || []) as Array<{ kind: string; text: string }>;
+    }
+
+    if (action === "load") {
+      const { data: existing } = await supabase
+        .from("readiness_checkins")
+        .select("soreness, sleep, stress, fatigue, readiness, pain, note")
+        .eq("patient_id", patient.id)
+        .eq("checkin_date", todayISO())
+        .maybeSingle();
+
+      return json({
+        info: {
+          patient_name: patient.full_name ?? null,
+          professional_name: professionalName,
+          audience: link.audience,
+          label: link.label,
+          plan_title: planTitle,
+          today: todayISO(),
+          today_checkin: existing ?? null,
+          restrictions,
+        },
+      });
+    }
+
+    if (action === "submit_checkin") {
+      const v = body.values ?? {};
+      const payload = {
+        patient_id: patient.id,
+        plan_id: link.plan_id,
+        checkin_date: todayISO(),
+        soreness: clampScale(v.soreness),
+        sleep: clampScale(v.sleep),
+        stress: clampScale(v.stress),
+        fatigue: clampScale(v.fatigue),
+        readiness: clampScale(v.readiness),
+        pain: clampScale(v.pain),
+        note: typeof v.note === "string" ? v.note.slice(0, 1000) : null,
+        source: link.audience === "coach" ? "coach" : "patient",
+      };
+      const answered = [payload.soreness, payload.sleep, payload.stress, payload.fatigue, payload.readiness, payload.pain]
+        .filter((x) => x !== null).length;
+      if (answered === 0) return json({ error: "empty_checkin" }, 400);
+
+      const { error } = await supabase
+        .from("readiness_checkins")
+        .upsert(payload, { onConflict: "patient_id,checkin_date" });
+      if (error) {
+        console.error("checkin upsert failed", error);
+        return json({ error: "save_failed" }, 500);
+      }
+
+      await maybeAlert(supabase, {
+        patientId: patient.id,
+        patientName: patient.full_name ?? "Paciente",
+        clinicId: patient.clinic_id,
+        proUserId,
+      });
+
+      await supabase.from("periodization_links").update({ last_used_at: new Date().toISOString() }).eq("id", link.id);
+      return json({ ok: true });
+    }
+
+    if (action === "submit_srpe") {
+      const e = body.entry ?? {};
+      const duration = Number(e.duration_min);
+      const rpe = Number(e.rpe);
+      if (!Number.isFinite(duration) || duration <= 0 || duration > 600) return json({ error: "invalid_duration" }, 400);
+      if (!Number.isFinite(rpe) || rpe < 0 || rpe > 10) return json({ error: "invalid_rpe" }, 400);
+      const track = ["physio", "gym", "sport"].includes(e.track) ? e.track : "physio";
+      const sessionDate = typeof e.session_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.session_date)
+        ? e.session_date
+        : todayISO();
+
+      const { error } = await supabase.from("srpe_entries").insert({
+        patient_id: patient.id,
+        plan_id: link.plan_id,
+        session_date: sessionDate,
+        track,
+        duration_min: Math.round(duration),
+        rpe,
+        notes: typeof e.notes === "string" ? e.notes.slice(0, 1000) : null,
+        source: link.audience === "coach" ? "coach" : "patient",
+      });
+      if (error) {
+        console.error("srpe insert failed", error);
+        return json({ error: "save_failed" }, 500);
+      }
+
+      await maybeAlert(supabase, {
+        patientId: patient.id,
+        patientName: patient.full_name ?? "Paciente",
+        clinicId: patient.clinic_id,
+        proUserId,
+      });
+
+      await supabase.from("periodization_links").update({ last_used_at: new Date().toISOString() }).eq("id", link.id);
+      return json({ ok: true });
+    }
+
+    return json({ error: "unknown_action" }, 400);
+  } catch (err) {
+    console.error("periodization-checkin error:", err);
+    return json({ error: String(err) }, 500);
+  }
+});
+
+/** Avisa o profissional quando a carga ou a prontidão saem da faixa segura. */
+async function maybeAlert(
+  supabase: ReturnType<typeof createClient>,
+  ctx: { patientId: string; patientName: string; clinicId: string | null; proUserId: string | null },
+) {
+  try {
+    const since = new Date();
+    since.setUTCDate(since.getUTCDate() - 27);
+    const sinceISO = since.toISOString().slice(0, 10);
+
+    const { data: entries } = await supabase
+      .from("srpe_entries")
+      .select("session_date, training_load")
+      .eq("patient_id", ctx.patientId)
+      .gte("session_date", sinceISO);
+
+    const now = Date.now();
+    let acute = 0;
+    let chronic = 0;
+    (entries || []).forEach((e: { session_date: string; training_load: number }) => {
+      const diff = Math.round((now - new Date(`${e.session_date}T12:00:00Z`).getTime()) / 86400000);
+      const load = Number(e.training_load) || 0;
+      if (diff >= 0 && diff < 28) chronic += load;
+      if (diff >= 0 && diff < 7) acute += load;
+    });
+    const chronicWeekly = chronic / 4;
+    const ratio = chronicWeekly > 0 ? acute / chronicWeekly : null;
+
+    const { data: checkins } = await supabase
+      .from("readiness_checkins")
+      .select("checkin_date, soreness, sleep, stress, fatigue, readiness, pain")
+      .eq("patient_id", ctx.patientId)
+      .gte("checkin_date", sinceISO)
+      .order("checkin_date", { ascending: true });
+
+    const score = (c: Record<string, number | null>): number | null => {
+      const values: number[] = [];
+      [c.readiness, c.sleep].forEach((v) => { if (typeof v === "number") values.push(v); });
+      [c.soreness, c.stress, c.fatigue, c.pain].forEach((v) => { if (typeof v === "number") values.push(11 - v); });
+      if (!values.length) return null;
+      const avg = values.reduce((a, b) => a + b, 0) / values.length;
+      return Math.round(((avg - 1) / 9) * 100);
+    };
+    const scores = (checkins || []).map((c) => score(c as Record<string, number | null>)).filter((s): s is number => s !== null);
+    const current = scores[scores.length - 1] ?? null;
+    const prev = scores.slice(Math.max(0, scores.length - 8), scores.length - 1);
+    const baseline = prev.length ? Math.round(prev.reduce((a, b) => a + b, 0) / prev.length) : null;
+
+    const reasons: string[] = [];
+    if (ratio !== null && ratio > 1.5) reasons.push(`ACWR ${ratio.toFixed(2)}`);
+    if (current !== null && baseline !== null && baseline - current >= 20) reasons.push("queda de prontidão");
+    if (current !== null && current < 40) reasons.push("prontidão baixa");
+    if (!reasons.length) return;
+
+    if (!ctx.proUserId && !ctx.clinicId) return;
+    await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push-notification`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({
+        user_id: ctx.proUserId ?? undefined,
+        clinic_id: ctx.clinicId ?? undefined,
+        title: "⚠️ Alerta de carga",
+        body: `${ctx.patientName}: ${reasons.join(" · ")}. Considere ajustar a carga.`,
+        url: `/dashboard`,
+        tag: `load-alert-${ctx.patientId}`,
+        category: "clinical",
+      }),
+    });
+  } catch (e) {
+    console.warn("maybeAlert failed", e);
+  }
+}
