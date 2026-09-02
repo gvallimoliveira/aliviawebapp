@@ -2287,6 +2287,7 @@ export type Database = {
           billing: boolean
           care_plan: boolean
           created_at: string
+          load_alerts: boolean
           messages: boolean
           my_assessment: boolean
           payments: boolean
@@ -2300,6 +2301,7 @@ export type Database = {
           billing?: boolean
           care_plan?: boolean
           created_at?: string
+          load_alerts?: boolean
           messages?: boolean
           my_assessment?: boolean
           payments?: boolean
@@ -2313,6 +2315,7 @@ export type Database = {
           billing?: boolean
           care_plan?: boolean
           created_at?: string
+          load_alerts?: boolean
           messages?: boolean
           my_assessment?: boolean
           payments?: boolean
