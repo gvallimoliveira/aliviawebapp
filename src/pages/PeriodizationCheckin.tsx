@@ -505,7 +505,10 @@ const PeriodizationCheckin = () => {
 
 
                       <div className="space-y-1.5">
-                        <span className="text-sm font-medium text-foreground">Duração (minutos)</span>
+                        <span className="text-sm font-medium text-foreground">
+                          Duração real (minutos){!freeMode && selectedSessionId ? " — ajuste se foi diferente" : ""}
+                        </span>
+
                         <Input
                           type="number"
                           inputMode="numeric"
