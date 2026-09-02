@@ -30,7 +30,16 @@ interface UseAutosaveDraftOptions<T> {
   debounceMs?: number;
   /** Tamanho máx do payload serializado (default 200KB). Acima disso, só salva local. */
   maxPayloadBytes?: number;
+  /**
+   * Opcional: decide se um payload deve ser considerado "vazio". Quando
+   * omitido, o hook usa o primeiro estado visto após habilitar como linha de
+   * base — enquanto o estado for igual a ela, nada é gravado (nem local nem
+   * na nuvem) e nenhum rascunho é oferecido. Isso evita "rascunhos fantasma"
+   * criados só por abrir e fechar um modal.
+   */
+  isEmpty?: (state: T) => boolean;
 }
+
 
 interface DraftMeta {
   updatedAt: Date;
