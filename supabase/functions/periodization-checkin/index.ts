@@ -4,7 +4,8 @@
 // POST { action: "load", token }
 //   -> { info: { patient_name, professional_name, audience, today, today_checkin, plan_title, restrictions } }
 // POST { action: "submit_checkin", token, values: { soreness, sleep, stress, fatigue, readiness, pain, note } }
-// POST { action: "submit_srpe", token, entry: { session_date, track, duration_min, rpe, notes } }
+// POST { action: "submit_srpe", token, entry: { session_date, track, duration_min, rpe, notes } }  (só paciente)
+// POST { action: "submit_planned_session", token, session: { session_date, track, planned_duration_min, planned_rpe, title } }  (só treinador)
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -91,6 +92,13 @@ serve(async (req) => {
       restrictions = (rest || []) as Array<{ kind: string; text: string }>;
     }
 
+    // Dose planejada para hoje (e, para o treinador, o histórico recente da prescrição).
+    const { data: todaySessions } = await supabase
+      .from("periodization_sessions")
+      .select("id, session_date, track, planned_duration_min, planned_rpe, title")
+      .eq("patient_id", patient.id)
+      .eq("session_date", todayISO());
+
     if (action === "load") {
       const { data: existing } = await supabase
         .from("readiness_checkins")
@@ -109,6 +117,15 @@ serve(async (req) => {
           today: todayISO(),
           today_checkin: existing ?? null,
           restrictions,
+          // O paciente vê duração e esforço alvo, nunca o número de carga
+          // (revelar a carga alvo enviesaria o sRPE que ele vai relatar).
+          today_targets: (todaySessions || []).map((s: Record<string, unknown>) => ({
+            id: s.id,
+            track: s.track,
+            planned_duration_min: s.planned_duration_min,
+            planned_rpe: s.planned_rpe,
+            title: s.title,
+          })),
         },
       });
     }
@@ -152,6 +169,8 @@ serve(async (req) => {
     }
 
     if (action === "submit_srpe") {
+      // sRPE é dado subjetivo do paciente: o link do treinador não responde por ele.
+      if (link.audience === "coach") return json({ error: "srpe_is_patient_only" }, 403);
       const e = body.entry ?? {};
       const duration = Number(e.duration_min);
       const rpe = Number(e.rpe);
@@ -162,15 +181,24 @@ serve(async (req) => {
         ? e.session_date
         : todayISO();
 
+      // Pareia com a sessão prescrita do mesmo dia e frente, quando existir.
+      const { data: sameDay } = await supabase
+        .from("periodization_sessions")
+        .select("id, track")
+        .eq("patient_id", patient.id)
+        .eq("session_date", sessionDate);
+      const matched = (sameDay || []).find((s: { track: string }) => s.track === track);
+
       const { error } = await supabase.from("srpe_entries").insert({
         patient_id: patient.id,
         plan_id: link.plan_id,
+        session_id: matched?.id ?? null,
         session_date: sessionDate,
         track,
         duration_min: Math.round(duration),
         rpe,
         notes: typeof e.notes === "string" ? e.notes.slice(0, 1000) : null,
-        source: link.audience === "coach" ? "coach" : "patient",
+        source: "patient",
       });
       if (error) {
         console.error("srpe insert failed", error);
@@ -183,6 +211,39 @@ serve(async (req) => {
         clinicId: patient.clinic_id,
         proUserId,
       });
+
+      await supabase.from("periodization_links").update({ last_used_at: new Date().toISOString() }).eq("id", link.id);
+      return json({ ok: true });
+    }
+
+    if (action === "submit_planned_session") {
+      // Papel do treinador/preparador: prescrever a dose esperada da sessão.
+      if (link.audience !== "coach") return json({ error: "planning_is_coach_only" }, 403);
+      const p = body.session ?? {};
+      const duration = Number(p.planned_duration_min);
+      const rpe = Number(p.planned_rpe);
+      if (!Number.isFinite(duration) || duration <= 0 || duration > 600) return json({ error: "invalid_duration" }, 400);
+      if (!Number.isFinite(rpe) || rpe < 0 || rpe > 10) return json({ error: "invalid_rpe" }, 400);
+      const track = ["physio", "gym", "sport"].includes(p.track) ? p.track : "gym";
+      const sessionDate = typeof p.session_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.session_date)
+        ? p.session_date
+        : todayISO();
+
+      const { error } = await supabase.from("periodization_sessions").insert({
+        patient_id: patient.id,
+        plan_id: link.plan_id,
+        session_date: sessionDate,
+        track,
+        planned_load: "moderate",
+        planned_duration_min: Math.round(duration),
+        planned_rpe: rpe,
+        title: typeof p.title === "string" ? p.title.slice(0, 200) : null,
+        created_source: "coach",
+      });
+      if (error) {
+        console.error("planned session insert failed", error);
+        return json({ error: "save_failed" }, 500);
+      }
 
       await supabase.from("periodization_links").update({ last_used_at: new Date().toISOString() }).eq("id", link.id);
       return json({ ok: true });
@@ -207,7 +268,7 @@ async function maybeAlert(
 
     const { data: entries } = await supabase
       .from("srpe_entries")
-      .select("session_date, training_load")
+      .select("session_date, training_load, track")
       .eq("patient_id", ctx.patientId)
       .gte("session_date", sinceISO);
 
@@ -262,6 +323,34 @@ async function maybeAlert(
       reasons.push(`queda de prontidão (${baseline} → ${current})`);
     }
     if (current !== null && current < 40) reasons.push(`prontidão baixa (${current}/100)`);
+
+    // Dose planejada x percebida nos últimos 7 dias, por frente.
+    const weekAgo = new Date();
+    weekAgo.setUTCDate(weekAgo.getUTCDate() - 6);
+    const weekISO = weekAgo.toISOString().slice(0, 10);
+    const { data: planned } = await supabase
+      .from("periodization_sessions")
+      .select("session_date, track, planned_duration_min, planned_rpe")
+      .eq("patient_id", ctx.patientId)
+      .gte("session_date", weekISO);
+    const TRACK_PT: Record<string, string> = { physio: "fisioterapia", gym: "academia", sport: "campo/esporte" };
+    const plannedByTrack: Record<string, number> = {};
+    (planned || []).forEach((s: { track: string; planned_duration_min: number | null; planned_rpe: number | null }) => {
+      const load = Number(s.planned_duration_min || 0) * Number(s.planned_rpe || 0);
+      if (load > 0) plannedByTrack[s.track] = (plannedByTrack[s.track] || 0) + load;
+    });
+    const realByTrack: Record<string, number> = {};
+    (entries || []).forEach((e: { session_date: string; training_load: number; track?: string }) => {
+      if (e.session_date < weekISO) return;
+      const t = e.track || "physio";
+      realByTrack[t] = (realByTrack[t] || 0) + (Number(e.training_load) || 0);
+    });
+    Object.entries(plannedByTrack).forEach(([t, target]) => {
+      const ratio = (realByTrack[t] || 0) / target;
+      if (ratio < 0.85) reasons.push(`${TRACK_PT[t] || t} subdosada (${ratio.toFixed(2)} do planejado)`);
+      else if (ratio > 1.15) reasons.push(`${TRACK_PT[t] || t} superdosada (${ratio.toFixed(2)} do planejado)`);
+    });
+
     if (!reasons.length) return;
 
     // Destinatários: profissional responsável + equipe ativa da clínica.
