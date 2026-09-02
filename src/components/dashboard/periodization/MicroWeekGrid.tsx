@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Loader2, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, FileDown, Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { backToBackHighDays, loadLevelFromRpe, pairSessionsWithSrpe, plannedLoad } from "@/lib/periodization";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
@@ -62,6 +62,7 @@ const MicroWeekGrid = ({
   const [plannedMin, setPlannedMin] = useState("");
   const [plannedRpe, setPlannedRpe] = useState(7);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Selo de dose por sessão (alvo prescrito x sRPE relatado pelo paciente).
   const doseBySession = useMemo(() => {
