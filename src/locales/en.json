@@ -1346,6 +1346,8 @@
   "b2b.feature_11_desc": "Mic button during manual assessment: AI transcribes your speech and saves it as structured clinical text — raw audio discarded for privacy",
   "b2b.feature_12_desc": "Churn prediction, discharge prediction, 0-100 adherence score, anonymous benchmark between clinics and a revenue 'what-if' simulator",
   "b2b.feature_13_desc": "Complete (.zip) backup with patients, assessments, notes and document index — full LGPD/GDPR portability in 1 click",
+  "b2b.feature_14": "Load management (sRPE/ACWR) + periodization tied to STEPS",
+  "b2b.feature_14_desc": "Log sessions with sRPE, track ACWR, readiness and risk alerts — with macro/meso cycles suggested from the STEPS phases (power and return-to-sport optional)",
   "exercise_checklist.title": "Today's Exercises",
   "exercise_checklist.progress": "Today's progress",
   "exercise_checklist.all_done": "Congratulations! All exercises completed today! 🎉",
