@@ -100,6 +100,7 @@ const ProfessionalLandingClassic = () => {
     { icon: Brain, key: "b2b.feature_11", descKey: "b2b.feature_11_desc" },
     { icon: BarChart3, key: "b2b.feature_12", descKey: "b2b.feature_12_desc" },
     { icon: Zap, key: "b2b.feature_13", descKey: "b2b.feature_13_desc" },
+    { icon: Gauge, key: "b2b.feature_14", descKey: "b2b.feature_14_desc" },
   ];
 
   const faqKeys = ["b2b.faq1", "b2b.faq2", "b2b.faq3", "b2b.faq4", "b2b.faq5", "b2b.faq6"];
