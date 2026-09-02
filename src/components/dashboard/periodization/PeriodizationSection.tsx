@@ -146,7 +146,6 @@ const PeriodizationSection = ({
       setCycles(cy);
       setRestrictions(re);
     } else {
-      setCycles([]); setClearance([]); setRestrictions([]);
     }
     setLoading(false);
     if (keepScroll !== null) {
