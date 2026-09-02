@@ -256,7 +256,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                     <XAxis dataKey="frente" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
                     <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                    <Tooltip contentStyle={tooltipStyle} />
+                    <Tooltip content={<DoseTooltip />} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                     <Bar dataKey="Planejado" fill="hsl(var(--muted-foreground) / 0.5)" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="Percebido" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
