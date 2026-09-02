@@ -1,7 +1,7 @@
 import {
   Clock, Target, Activity, Stethoscope, UserPlus, Link2, Send, ClipboardCheck,
   LayoutDashboard, Brain, User, Zap, RefreshCw, Dumbbell, Palette, TrendingUp,
-  BarChart3, DollarSign, Timer, Users,
+  BarChart3, DollarSign, Timer, Users, Gauge,
 } from "lucide-react";
 
 /** Pure content module — no JSX, no hooks, so sections stay cheap to mount. */
@@ -41,6 +41,7 @@ export const FEATURES = [
   { icon: Brain, key: "b2b.feature_11", descKey: "b2b.feature_11_desc" },
   { icon: BarChart3, key: "b2b.feature_12", descKey: "b2b.feature_12_desc" },
   { icon: Zap, key: "b2b.feature_13", descKey: "b2b.feature_13_desc" },
+  { icon: Gauge, key: "b2b.feature_14", descKey: "b2b.feature_14_desc" },
 ];
 
 export const ROI_ITEMS = [

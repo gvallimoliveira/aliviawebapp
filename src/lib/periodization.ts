@@ -292,12 +292,22 @@ export function dailyPlannedWeight(sessions: PlannedSessionLike[]): Record<strin
 }
 
 /** Fases padrão do macrociclo, espelhando as fases do STEPS. */
-export const MACRO_PHASES: Array<{ key: string; name: string; goal: string; weeks: number }> = [
+export const MACRO_PHASES: Array<{ key: string; name: string; goal: string; weeks: number; optional?: boolean }> = [
   { key: "healing", name: "Cicatrização tecidual", goal: "Controle de dor e proteção do tecido", weeks: 3 },
   { key: "hypertrophy", name: "Hipertrofia e força", goal: "Reconstrução de capacidade e tolerância à carga", weeks: 8 },
-  { key: "power", name: "Potência e transição", goal: "Velocidade, pliometria e mudança de direção", weeks: 6 },
-  { key: "rts", name: "Retorno ao esporte", goal: "Demanda específica do esporte e critérios de liberação", weeks: 4 },
+  { key: "power", name: "Potência e transição", goal: "Velocidade, pliometria e mudança de direção", weeks: 6, optional: true },
+  { key: "rts", name: "Retorno ao esporte", goal: "Demanda específica do esporte e critérios de liberação", weeks: 4, optional: true },
 ];
+
+/** Fases que só se aplicam a parte dos pacientes (atleta/esporte/alta demanda). */
+export const OPTIONAL_MACRO_PHASE_KEYS = ["power", "rts"] as const;
+
+/** Detecta, pelo nome do ciclo salvo, se a fase é opcional (caso aplicável). */
+export function isOptionalMacroPhase(name: string | null | undefined): boolean {
+  if (!name) return false;
+  const n = name.toLowerCase();
+  return MACRO_PHASES.some((p) => p.optional && p.name.toLowerCase() === n);
+}
 
 /** Blocos padrão de mesociclo. */
 export const MESO_BLOCKS: Array<{ key: string; name: string; goal: string }> = [

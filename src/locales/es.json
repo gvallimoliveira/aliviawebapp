@@ -1346,6 +1346,8 @@
   "b2b.feature_11_desc": "Botón de micrófono en la evaluación manual: la IA transcribe su habla y la guarda como texto clínico estructurado — audio descartado por privacidad",
   "b2b.feature_12_desc": "Predicción de abandono, predicción de alta, score de adherencia 0-100, benchmark anónimo entre clínicas y simulador 'what-if' de ingresos",
   "b2b.feature_13_desc": "Backup completo (.zip) con pacientes, evaluaciones, notas e índice de documentos — portabilidad total LGPD/RGPD en 1 clic",
+  "b2b.feature_14": "Control de carga (sRPE/ACWR) + periodización vinculada a STEPS",
+  "b2b.feature_14_desc": "Registra sesiones con sRPE, sigue ACWR, disposición y alertas de riesgo — con macro/mesociclos sugeridos desde las fases de STEPS (potencia y retorno al deporte opcionales)",
   "exercise_checklist.title": "Ejercicios del Día",
   "exercise_checklist.progress": "Progreso de hoy",
   "exercise_checklist.all_done": "¡Felicidades! ¡Todos los ejercicios completados hoy! 🎉",

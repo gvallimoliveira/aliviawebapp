@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarRange } from "lucide-react";
 import type { PeriodizationCycle } from "@/lib/periodizationData";
+import { isOptionalMacroPhase } from "@/lib/periodization";
 
 interface Props {
   cycles: PeriodizationCycle[];
@@ -35,12 +36,15 @@ const MacroTimeline = ({ cycles }: Props) => {
               key={m.id}
               className={`min-w-[190px] rounded-xl border p-3 ${
                 isCurrent(m) ? "border-primary bg-primary/5" : "border-border"
-              }`}
+              } ${isOptionalMacroPhase(m.name) ? "border-dashed" : ""}`}
             >
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span className="text-xs font-semibold text-foreground">{m.name}</span>
                 {isCurrent(m) && <Badge className="text-[10px]">Fase atual</Badge>}
               </div>
+              {isOptionalMacroPhase(m.name) && (
+                <Badge variant="outline" className="text-[10px] mb-1">Opcional, caso aplicável</Badge>
+              )}
               <p className="text-[11px] text-muted-foreground">{m.goal}</p>
               <p className="text-[10px] text-muted-foreground mt-1">
                 {fmt(m.start_date)} → {fmt(m.end_date)}
@@ -63,7 +67,7 @@ const MacroTimeline = ({ cycles }: Props) => {
           ))}
         </div>
         <p className="text-[10px] text-muted-foreground">
-          Fases herdadas do STEPS. Ajuste datas e objetivos conforme a evolução do paciente.
+          Fases herdadas do STEPS. As fases de potência e retorno ao esporte são opcionais — mantenha apenas se o objetivo do paciente exigir. Ajuste datas e objetivos conforme a evolução.
         </p>
       </CardContent>
     </Card>
