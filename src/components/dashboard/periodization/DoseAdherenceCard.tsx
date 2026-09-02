@@ -1,0 +1,287 @@
+import { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Plus, Target } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  adherenceByTrack,
+  pairSessionsWithSrpe,
+  plannedLoad,
+  repeatedDoseDeviation,
+  weekStartOf,
+} from "@/lib/periodization";
+import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
+import { savePlannedDose } from "@/lib/periodizationData";
+import { DOSE_CLASS, DOSE_LABEL, TRACK_LABEL } from "./scales";
+
+interface Props {
+  patientId: string;
+  planId?: string | null;
+  sessions: PeriodizationSession[];
+  entries: SrpeEntry[];
+  onChanged: () => void;
+  readOnly?: boolean;
+}
+
+const addDays = (iso: string, n: number): string => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+const shortDate = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+
+const tooltipStyle = {
+  borderRadius: 8,
+  border: "1px solid hsl(var(--border))",
+  background: "hsl(var(--card))",
+  fontSize: 12,
+};
+
+const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, readOnly }: Props) => {
+  const { toast } = useToast();
+  const [weekStart, setWeekStart] = useState(() => weekStartOf());
+
+  const summary = useMemo(() => adherenceByTrack(entries, sessions, weekStart), [entries, sessions, weekStart]);
+  const pairs = useMemo(() => pairSessionsWithSrpe(sessions, entries), [sessions, entries]);
+  const repeated = useMemo(() => repeatedDoseDeviation(pairs), [pairs]);
+
+  const chartData = useMemo(
+    () =>
+      summary.byTrack
+        .filter((t) => t.planned > 0 || t.real > 0)
+        .map((t) => ({ frente: TRACK_LABEL[t.track], Planejado: t.planned, Percebido: t.real })),
+    [summary],
+  );
+
+  const hasTarget = summary.byTrack.some((t) => t.planned > 0);
+
+  // Prescrição de dose
+  const [open, setOpen] = useState(false);
+  const [track, setTrack] = useState("gym");
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [duration, setDuration] = useState("");
+  const [rpe, setRpe] = useState(7);
+  const [title, setTitle] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    const min = Number(duration);
+    if (!Number.isFinite(min) || min <= 0) {
+      toast({ title: "Informe a duração planejada", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      await savePlannedDose({
+        patientId,
+        planId,
+        sessionDate: date,
+        track,
+        plannedDurationMin: min,
+        plannedRpe: rpe,
+        title: title.trim() || null,
+      });
+      setDuration("");
+      setTitle("");
+      setOpen(false);
+      onChanged();
+      toast({ title: "Dose prescrita", description: `Alvo: ${plannedLoad(min, rpe)} unidades.` });
+    } catch (e: any) {
+      toast({ title: "Não foi possível prescrever", description: e?.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2 flex-wrap">
+          <div>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              Dose planejada x percebida
+            </CardTitle>
+            <p className="text-[11px] text-muted-foreground pt-1">
+              O sRPE é sempre do paciente. Aqui ele é comparado com a dose que você (ou o preparador) planejou.
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+              {shortDate(summary.weekStart)} → {shortDate(summary.weekEnd)}
+            </span>
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            {!readOnly && (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1 rounded-xl text-xs ml-1">
+                    <ClipboardList className="h-3.5 w-3.5" /> Prescrever
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader><DialogTitle className="text-base">Dose planejada da sessão</DialogTitle></DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-2">
+                      {Object.entries(TRACK_LABEL).map(([key, label]) => (
+                        <Button
+                          key={key}
+                          size="sm"
+                          variant={track === key ? "default" : "outline"}
+                          className="text-[11px] rounded-xl"
+                          onClick={() => setTrack(key)}
+                        >
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-xs text-muted-foreground">Data da sessão</span>
+                      <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-xs text-muted-foreground">Duração planejada (min)</span>
+                      <Input type="number" min={1} max={600} value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="40" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Esforço alvo (0-10)</span>
+                        <Badge variant="outline" className="text-xs">{rpe}</Badge>
+                      </div>
+                      <Slider min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => setRpe(v)} />
+                    </div>
+                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Descrição curta (opcional)" />
+                    {Number(duration) > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Carga alvo: <strong>{plannedLoad(Number(duration), rpe)}</strong> unidades.
+                      </p>
+                    )}
+                    <Button className="w-full rounded-xl gap-2" onClick={submit} disabled={saving}>
+                      {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      Prescrever dose
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        {!hasTarget ? (
+          <p className="text-xs text-muted-foreground">
+            Nenhuma dose planejada nesta semana. Prescreva duração e esforço alvo por frente (fisioterapia, academia,
+            campo) para saber se o trabalho ficou na dose certa, subdosado ou superdosado.
+          </p>
+        ) : (
+          <>
+            <div className="space-y-1.5">
+              {[...summary.byTrack.filter((t) => t.planned > 0 || t.real > 0), summary.total].map((t, i, arr) => {
+                const isTotal = i === arr.length - 1;
+                return (
+                  <div
+                    key={isTotal ? "total" : t.track}
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 ${
+                      isTotal ? "border-primary/40 bg-muted/40" : "border-border"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-foreground">
+                        {isTotal ? "Total da semana" : TRACK_LABEL[t.track]}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Alvo {t.planned} · Percebido {t.real}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-sm font-semibold text-foreground">
+                        {t.ratio !== null ? t.ratio.toFixed(2) : "—"}
+                      </span>
+                      {t.verdict && (
+                        <Badge variant="outline" className={`text-[10px] border-0 ${DOSE_CLASS[t.verdict]}`}>
+                          {DOSE_LABEL[t.verdict]}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {chartData.length > 0 && (
+              <div className="h-40">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis dataKey="frente" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
+                    <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="Planejado" fill="hsl(var(--muted-foreground) / 0.5)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Percebido" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {summary.byTrack.some((t) => t.verdict === "under" || t.verdict === "over") && (
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 space-y-1">
+                {summary.byTrack
+                  .filter((t) => t.verdict === "under" || t.verdict === "over")
+                  .map((t) => (
+                    <p key={t.track} className="text-xs text-amber-800 dark:text-amber-300">
+                      {TRACK_LABEL[t.track]}: {t.verdict === "under" ? "estímulo abaixo" : "estímulo acima"} do planejado
+                      ({t.ratio?.toFixed(2)}). {t.verdict === "under"
+                        ? "Considere aumentar duração ou intensidade alvo."
+                        : "Considere reduzir a próxima sessão desta frente."}
+                    </p>
+                  ))}
+                {repeated.length > 0 && (
+                  <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+                    Desvio repetido em {repeated.map((r) => TRACK_LABEL[r.track]).join(", ")} — duas sessões seguidas fora
+                    da dose. Ajuste a prescrição.
+                  </p>
+                )}
+                <p className="text-[10px] opacity-80">Leitura automática. A decisão é sempre sua.</p>
+              </div>
+            )}
+
+            {pairs.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-foreground">Sessão por sessão</p>
+                {pairs
+                  .filter((p) => p.session.session_date >= summary.weekStart && p.session.session_date <= summary.weekEnd)
+                  .map((p, i) => (
+                    <div key={p.session.id || i} className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="text-muted-foreground truncate">
+                        {shortDate(p.session.session_date)} · {TRACK_LABEL[p.session.track as string] || p.session.track}
+                        {p.session.title ? ` · ${p.session.title}` : ""}
+                      </span>
+                      <span className="text-foreground whitespace-nowrap">
+                        {p.plannedLoad} → {p.ratio === null ? "sem resposta" : p.realLoad}
+                        {p.verdict ? ` · ${DOSE_LABEL[p.verdict]}` : ""}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default DoseAdherenceCard;
