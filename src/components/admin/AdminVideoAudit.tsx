@@ -258,71 +258,104 @@ const AdminVideoAudit = () => {
         </CardContent>
       </Card>
 
-      {last && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              {issues.length === 0 ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  Nenhum problema na última auditoria
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  Exercícios que precisam de revisão ({issues.length})
-                </>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Última execução:{" "}
-              {new Date(last.started_at).toLocaleString("pt-BR")} ({last.source === "cron" ? "automática" : "manual"})
-            </CardDescription>
-          </CardHeader>
-          {issues.length > 0 && (
-            <CardContent className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Exercício</TableHead>
-                    <TableHead>Situação</TableHead>
-                    <TableHead>Título do vídeo</TableHead>
-                    <TableHead>Link</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {issues.map((i, idx) => (
-                    <TableRow key={`${i.id || i.video_id}-${idx}`}>
-                      <TableCell className="font-medium">{i.name || i.query_key}</TableCell>
-                      <TableCell>
-                        <Badge variant={i.status === "mismatch" ? "secondary" : "destructive"}>
-                          {STATUS_LABEL[i.status] || i.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {i.video_title || "—"}
-                      </TableCell>
-                      <TableCell>
-                        {i.url ? (
-                          <a
-                            href={i.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-primary underline text-sm"
-                          >
-                            abrir
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          )}
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            {pending.length === 0 ? (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                Nenhum vídeo pendente de revisão
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                Vídeos aguardando sua decisão ({pending.length})
+              </>
+            )}
+          </CardTitle>
+          <CardDescription>
+            Abra o link, confira o vídeo e decida: aprovar (não volta a ser sinalizado),
+            solicitar substituição ou colar direto um novo link do YouTube.
+            {last && (
+              <>
+                {" "}Última execução: {new Date(last.started_at).toLocaleString("pt-BR")} (
+                {last.source === "cron" ? "automática" : "manual"})
+              </>
+            )}
+          </CardDescription>
+        </CardHeader>
+        {pending.length > 0 && (
+          <CardContent className="space-y-4">
+            {pending.map((item) => {
+              const runIssue = issues.find((i) => i.id === item.id);
+              const busy = savingId === item.id;
+              return (
+                <div key={item.id} className="rounded-lg border p-3 space-y-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium">{item.name_pt}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {runIssue?.video_title || item.video_check_note || "—"}
+                        {runIssue?.channel ? ` · ${runIssue.channel}` : ""}
+                      </p>
+                    </div>
+                    <Badge variant={item.video_status === "broken" ? "destructive" : "secondary"}>
+                      {STATUS_LABEL[item.video_status] || item.video_status}
+                    </Badge>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {item.video_url && (
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={item.video_url} target="_blank" rel="noreferrer">
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Ver vídeo
+                        </a>
+                      </Button>
+                    )}
+                    <Button size="sm" disabled={busy} onClick={() => decide(item, "approved")}>
+                      {busy ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <ThumbsUp className="h-4 w-4 mr-1" />
+                      )}
+                      Aprovar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy || item.video_status === "needs_replacement"}
+                      onClick={() => decide(item, "needs_replacement")}
+                    >
+                      <Replace className="h-4 w-4 mr-1" />
+                      Solicitar substituição
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      value={newUrl[item.id] || ""}
+                      onChange={(e) => setNewUrl((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                      placeholder="Colar novo link do YouTube (substitui e aprova)"
+                      className="sm:flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy || !(newUrl[item.id] || "").trim()}
+                      onClick={() => saveNewUrl(item)}
+                    >
+                      <Save className="h-4 w-4 mr-1" />
+                      Salvar novo link
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        )}
+      </Card>
+
       )}
 
       {runs.length > 1 && (
