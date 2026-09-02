@@ -86,7 +86,7 @@ const MicroWeekGrid = ({
   }, [sessions]);
 
   // Nível de intensidade do calendário deriva da nota de sRPE alvo.
-  const load = loadLevelFromRpe(plannedRpe, Number(plannedMin) > 0 ? Number(plannedMin) : null);
+  const load = loadLevelFromRpe(plannedRpe, String(plannedMin).trim() === "" ? null : Number(plannedMin));
 
   const add = async () => {
     if (!editing) return;
@@ -99,7 +99,7 @@ const MicroWeekGrid = ({
         track,
         plannedLoad: load,
         plannedDurationMin: Number(plannedMin) > 0 ? Number(plannedMin) : 0,
-        plannedRpe: Number(plannedMin) > 0 ? plannedRpe : 0,
+        plannedRpe,
         title: title.trim() || null,
       });
       setTitle("");
