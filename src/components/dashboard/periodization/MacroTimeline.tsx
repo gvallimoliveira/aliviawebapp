@@ -57,7 +57,7 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
 
 
   return (
-    <Card>
+    <Card ref={cardRef}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <CalendarRange className="h-4 w-4 text-primary" />
