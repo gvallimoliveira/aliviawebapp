@@ -172,8 +172,14 @@ const PeriodizationCheckin = () => {
   };
 
   const submitSrpe = async () => {
+    const pendingTargets = (info?.today_targets || []).filter((t) => !t.already_reported);
+    if (!freeMode && pendingTargets.length > 0 && !selectedSessionId) {
+      setErrorMsg("Escolha qual sessão de hoje você fez.");
+      return;
+    }
     const min = Number(duration);
     if (!Number.isFinite(min) || min <= 0) { setErrorMsg("Informe a duração da sessão em minutos."); return; }
+
     setErrorMsg("");
     setSavingSrpe(true);
     const { data, error } = await supabase.functions.invoke("periodization-checkin", {
