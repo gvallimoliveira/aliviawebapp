@@ -5,8 +5,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
+  closeManualAssessmentSession,
   clearManualAssessmentSession,
-  getManualAssessmentSession,
+  getResumableManualAssessmentSession,
   type ManualAssessmentSession,
 } from "@/lib/manualAssessmentSession";
 import { lazy, Suspense } from "react";
@@ -16,17 +17,17 @@ import { lazy, Suspense } from "react";
 const ManualAssessmentModal = lazy(() => import("./ManualAssessmentModal"));
 
 /**
- * Reabre automaticamente o modal de Avaliação Manual quando o app é recarregado
- * com uma sessão ativa no localStorage. Cobre os cenários em que o SO descarrega
- * a PWA (tela bloqueada, troca de app, kill de memória) — o usuário volta
- * exatamente onde estava, com o rascunho restaurado via useAutosaveDraft.
+ * Reabre o modal de Avaliação Manual quando o app foi descarregado pelo SO
+ * (tela bloqueada, troca de app, kill de memória) com uma avaliação em
+ * andamento — e SOMENTE nesse caso.
  *
- * Estratégia de detecção brute-force (iOS PWA é teimoso):
- *  - tenta logo no mount,
- *  - re-tenta a cada mudança de auth/rota,
- *  - faz polling de 500ms nos primeiros 30s,
- *  - escuta `storage`, `visibilitychange`, `pageshow` e `focus`.
- *  Qualquer um desses gatilhos abre o modal se houver sessão válida.
+ * Regras de estabilidade (evitam reabertura fantasma durante navegação):
+ *  - uma única tentativa por boot do app, após o auth resolver;
+ *  - só retoma sessões com conteúdo real (`hasContent`);
+ *  - sessões encerradas explicitamente nunca voltam;
+ *  - nunca monta se já existe um diálogo aberto na tela;
+ *  - sem polling e sem escuta de `focus`/`visibilitychange` (era isso que
+ *    reabria o modal ao alternar de aba/app).
  */
 const ManualAssessmentResumer = () => {
   const { user, loading } = useAuth();
@@ -39,18 +40,22 @@ const ManualAssessmentResumer = () => {
   const [editAssessment, setEditAssessment] = useState<any | null>(null);
   const [open, setOpen] = useState(false);
   const tryingRef = useRef(false);
-  const restoredRef = useRef(false);
+  const attemptedRef = useRef(false);
 
   useEffect(() => {
-    if (restoredRef.current) return; // já restaurou nesta sessão
+    if (attemptedRef.current) return;
+    if (loading) return; // espera o auth resolver antes da única tentativa
 
     let cancelled = false;
 
     const tryRestore = async () => {
-      if (cancelled || restoredRef.current || tryingRef.current || open) return;
+      if (cancelled || tryingRef.current) return;
 
-      const stored = getManualAssessmentSession();
-      if (!stored) return;
+      const stored = getResumableManualAssessmentSession();
+      if (!stored) {
+        attemptedRef.current = true;
+        return;
+      }
 
       // Rotas onde nunca devemos interromper o usuário
       const skipPrefixes = [
@@ -69,20 +74,22 @@ const ManualAssessmentResumer = () => {
       const path = window.location.pathname;
       if (skipPrefixes.some((p) => path.startsWith(p))) return;
 
-      // Espera o auth carregar — se houver usuário e ele bater com a sessão,
-      // tudo ok; se a sessão não tiver userId salvo, abrimos mesmo assim
-      // (cobre clínicas onde o user.id chega tarde no boot).
-      if (loading) return;
       if (stored.userId && user?.id && stored.userId !== user.id) {
         clearManualAssessmentSession();
+        attemptedRef.current = true;
         return;
       }
 
-      // Evita duplicar: se outro host já montou o modal (clique manual num
-      // botão de avaliação no exato momento do boot), não monta o nosso.
-      if (document.querySelector("[data-manual-assessment-modal]")) return;
+      // Não empilha em cima de outro modal/diálogo já aberto.
+      if (
+        document.querySelector("[data-manual-assessment-modal]") ||
+        document.querySelector("[role='dialog'],[data-state='open'][role='alertdialog']")
+      ) {
+        return;
+      }
 
       tryingRef.current = true;
+      attemptedRef.current = true;
       try {
         let editData: any = null;
         if (stored.editAssessmentId) {
@@ -97,8 +104,7 @@ const ManualAssessmentResumer = () => {
             /* ignora — segue como nova */
           }
         }
-        if (cancelled || restoredRef.current) return;
-        restoredRef.current = true;
+        if (cancelled) return;
         setEditAssessment(editData);
         setSession(stored);
         setOpen(true);
@@ -113,52 +119,22 @@ const ManualAssessmentResumer = () => {
       }
     };
 
-    // 1) primeira tentativa síncrona
-    void tryRestore();
-
-    // 2) polling agressivo nos primeiros 30s
-    const poll = window.setInterval(() => {
-      if (restoredRef.current) {
-        window.clearInterval(poll);
-        return;
-      }
-      void tryRestore();
-    }, 500);
-    const stopPoll = window.setTimeout(() => window.clearInterval(poll), 30_000);
-
-    // 3) eventos do navegador que indicam "app voltou ao primeiro plano"
-    const onVisible = () => { if (document.visibilityState === "visible") void tryRestore(); };
-    const onPageShow = () => void tryRestore();
-    const onFocus = () => void tryRestore();
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key || e.key.includes("manual-assessment")) void tryRestore();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("pageshow", onPageShow);
-    window.addEventListener("focus", onFocus);
-    window.addEventListener("storage", onStorage);
+    // Pequeno atraso: deixa a rota inicial estabilizar antes de decidir.
+    const t = window.setTimeout(() => void tryRestore(), 400);
 
     return () => {
       cancelled = true;
-      window.clearInterval(poll);
-      window.clearTimeout(stopPoll);
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("pageshow", onPageShow);
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener("storage", onStorage);
+      window.clearTimeout(t);
     };
-    // re-arma quando auth/rota muda para que a 1ª tentativa "real" rode no
-    // momento certo (após login resolvido e BrowserRouter trocar de rota).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user?.id, location.pathname]);
 
   const handleOpenChange = (o: boolean) => {
     setOpen(o);
     if (!o) {
-      clearManualAssessmentSession();
+      closeManualAssessmentSession();
       setSession(null);
       setEditAssessment(null);
-      restoredRef.current = false; // permite nova retomada no futuro
     }
   };
 
@@ -172,6 +148,7 @@ const ManualAssessmentResumer = () => {
         clinicId={session.clinicId}
         patientName={session.patientName}
         patientEmail={session.patientEmail || undefined}
+        patientId={session.patientId || undefined}
         editAssessment={editAssessment}
       />
     </Suspense>
