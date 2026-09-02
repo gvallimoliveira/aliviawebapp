@@ -682,8 +682,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // ── Autosave (local + nuvem) ───────────────────────────────────────────────
   const isEditing = !!editAssessment?.id;
   const draftScopeKey = open && !isEditing
-    ? `${professionalId}:${(patientEmail || patientName || "").toLowerCase().trim()}`
+    ? `${professionalId}:${(patientId || patientEmail || patientName || "").toLowerCase().trim()}`
     : null;
+
   const draftState = {
     step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
