@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalendarRange, CheckCircle2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { anchorScroll } from "@/hooks/useScrollAnchor";
 import type { PeriodizationCycle } from "@/lib/periodizationData";
 import { setCurrentMacroPhase } from "@/lib/periodizationData";
 import { isOptionalMacroPhase } from "@/lib/periodization";
+
 
 interface Props {
   cycles: PeriodizationCycle[];
@@ -21,6 +23,8 @@ const fmt = (iso: string | null) =>
 const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
   const [savingId, setSavingId] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const railRef = useRef<HTMLDivElement | null>(null);
   const macros = cycles.filter((c) => c.level === "macro");
   if (macros.length === 0) return null;
 
@@ -28,10 +32,18 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
 
   const mark = async (cycle: PeriodizationCycle) => {
     if (!planId) return;
+    // Mantém a página exatamente onde está: o recarregamento da seção
+    // encolhe/expande cards e o navegador empurrava a rolagem para cima.
+    const keepAnchored = anchorScroll(() => cardRef.current, 1500);
+    const keepLeft = railRef.current?.scrollLeft ?? 0;
+    keepAnchored();
     setSavingId(cycle.id);
     try {
       await setCurrentMacroPhase(planId, cycle.id);
       onChanged?.();
+      requestAnimationFrame(() => {
+        if (railRef.current) railRef.current.scrollLeft = keepLeft;
+      });
       toast({
         title: `Fase atual: ${cycle.name}`,
         description: "As datas das fases seguintes foram sugeridas a partir de hoje — ajuste se precisar.",
@@ -43,8 +55,9 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
     }
   };
 
+
   return (
-    <Card>
+    <Card ref={cardRef}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <CalendarRange className="h-4 w-4 text-primary" />
@@ -57,7 +70,7 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
             Nenhuma fase marcada. Marque em qual fase o paciente está — o sistema não decide isso por você.
           </p>
         )}
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div ref={railRef} className="flex gap-2 overflow-x-auto pb-1" style={{ overflowAnchor: "none" }}>
           {macros.map((m) => (
             <div
               key={m.id}
