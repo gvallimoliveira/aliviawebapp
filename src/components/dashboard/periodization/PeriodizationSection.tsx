@@ -68,8 +68,51 @@ const PeriodizationSection = ({
   const [sport, setSport] = useState("");
 
 
+  // Resolve o registro em `patients` quando o prontuário não passa o id
+  // (pacientes agrupados por e-mail podem não ter registro carregado).
+  useEffect(() => {
+    if (patientIdProp) { setPatientId(patientIdProp); return; }
+    if (isDemo || (!patientEmail && !patientName)) { setLoading(false); return; }
+    let cancelled = false;
+    (async () => {
+      const sb = supabase as any;
+      let q = sb.from("patients").select("id").limit(1);
+      q = patientEmail ? q.eq("email", patientEmail) : q.eq("full_name", patientName);
+      if (clinicId) q = q.eq("clinic_id", clinicId);
+      else if (professionalId) q = q.eq("professional_id", professionalId);
+      const { data } = await q.maybeSingle();
+      if (!cancelled) {
+        setPatientId(data?.id ?? null);
+        if (!data?.id) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [patientIdProp, patientEmail, patientName, clinicId, professionalId, isDemo]);
+
+  const ensurePatientRecord = async (): Promise<string | null> => {
+    if (patientId) return patientId;
+    setResolving(true);
+    try {
+      const sb = supabase as any;
+      const payload: Record<string, any> = { full_name: patientName || patientEmail || "Paciente" };
+      if (patientEmail) payload.email = patientEmail;
+      if (clinicId) payload.clinic_id = clinicId;
+      else if (professionalId) payload.professional_id = professionalId;
+      const { data, error } = await sb.from("patients").insert(payload).select("id").single();
+      if (error) throw error;
+      setPatientId(data.id);
+      return data.id as string;
+    } catch (e: any) {
+      toast({ title: "Não foi possível ativar", description: e?.message, variant: "destructive" });
+      return null;
+    } finally {
+      setResolving(false);
+    }
+  };
+
   const load = useCallback(async () => {
     if (!patientId || isDemo) { setLoading(false); return; }
+
     setLoading(true);
     const since = new Date();
     since.setUTCDate(since.getUTCDate() - 90);
