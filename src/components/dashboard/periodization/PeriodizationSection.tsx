@@ -152,6 +152,12 @@ const PeriodizationSection = ({
       setCycles([]); setSessions([]); setClearance([]); setRestrictions([]);
     }
     setLoading(false);
+    if (keepScroll !== null) {
+      requestAnimationFrame(() => {
+        if (Math.abs(window.scrollY - keepScroll) > 4) window.scrollTo({ top: keepScroll, behavior: "auto" });
+      });
+    }
+
   }, [patientId, isDemo]);
 
   useEffect(() => { load(); }, [load]);
