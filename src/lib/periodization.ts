@@ -195,6 +195,7 @@ export function loadStatus(
   ref: Date = new Date(),
 ): LoadStatus {
   const ratio = acwr(entries, ref);
+  const baselineReady = chronicBaselineReady(entries, ref);
   const zone = loadZone(ratio);
   const weekly = weeklyLoadSeries(entries);
   const spike = weeklySpikeAlert(weekly);
@@ -214,6 +215,10 @@ export function loadStatus(
     messages.push("Carga subindo rápido (ACWR entre 1,3 e 1,5). Sugestão: manter volume, sem novos incrementos.");
   } else if (zone === "undertraining") {
     messages.push("Carga aguda abaixo da crônica. Há espaço para progressão gradual.");
+  } else if (!baselineReady && entries.length > 0) {
+    messages.push(
+      `ACWR ainda indisponível: precisa de pelo menos ${CHRONIC_MIN_SESSIONS} sessões registradas e ${CHRONIC_MIN_DAYS} dias de histórico. Até lá, só a carga por sessão é confiável.`,
+    );
   }
 
   if (spike) {
@@ -231,7 +236,7 @@ export function loadStatus(
 
   return {
     acuteLoad: acuteLoad(entries, ref),
-    chronicLoad: chronicLoad(entries, ref),
+    chronicLoad: baselineReady ? chronicLoad(entries, ref) : 0,
     acwr: ratio,
     zone,
     weekly,
@@ -239,8 +244,10 @@ export function loadStatus(
     readiness,
     drop,
     level,
+    baselineReady,
     messages,
   };
+
 }
 
 /** Peso relativo de cada carga planejada, para a heurística do microciclo. */
