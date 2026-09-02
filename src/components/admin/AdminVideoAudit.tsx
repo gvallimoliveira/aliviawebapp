@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -18,7 +19,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, RefreshCw, Video, AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  RefreshCw,
+  Video,
+  AlertTriangle,
+  CheckCircle2,
+  ExternalLink,
+  ThumbsUp,
+  Replace,
+  Save,
+} from "lucide-react";
 
 interface AuditIssue {
   id?: string;
@@ -45,17 +56,33 @@ interface AuditRun {
   error: string | null;
 }
 
+interface PendingVideo {
+  id: string;
+  name_pt: string;
+  video_url: string | null;
+  video_status: string;
+  video_check_note: string | null;
+  video_checked_at: string | null;
+}
+
 const STATUS_LABEL: Record<string, string> = {
   broken: "Vídeo fora do ar",
   invalid_url: "Link inválido",
   mismatch: "Revisar (título pouco parecido)",
+  needs_replacement: "Substituição solicitada",
   cache_broken: "Cache removido",
 };
 
+const REVIEW_STATUSES = ["broken", "mismatch", "needs_replacement"];
+
 const AdminVideoAudit = () => {
   const [runs, setRuns] = useState<AuditRun[]>([]);
+  const [pending, setPending] = useState<PendingVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [newUrl, setNewUrl] = useState<Record<string, string>>({});
+
 
   const load = useCallback(async () => {
     setLoading(true);
