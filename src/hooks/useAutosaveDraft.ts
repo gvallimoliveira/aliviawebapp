@@ -189,7 +189,9 @@ export function useAutosaveDraft<T>({
       }
 
       if (cancelled) return;
-      if (best) {
+      // Ignora rascunhos sem conteúdo real (estado inicial gravado por versões
+      // antigas do app) — não faz sentido oferecer "restaurar" para eles.
+      if (best && !isBlank(best.payload)) {
         setDraftPayload(best.payload);
         setDraftMeta({ updatedAt: best.updatedAt, source: best.source });
       } else {
@@ -202,6 +204,7 @@ export function useAutosaveDraft<T>({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, formKey, scopeKey]);
 
   // Salvar (debounced) quando state muda
@@ -211,6 +214,9 @@ export function useAutosaveDraft<T>({
     const serialized = JSON.stringify(state);
     if (serialized === lastSerializedRef.current) return;
     if (serialized === "{}" || serialized === "null" || serialized === "undefined") return;
+    // Formulário intocado: não cria rascunho fantasma.
+    if (isBlank(state, serialized)) return;
+
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
