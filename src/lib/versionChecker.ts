@@ -56,11 +56,18 @@ function getLocalHash(): string {
 
 function isUnsafeRoute(): boolean {
   if (typeof window === "undefined") return true;
+  // Um modal/diálogo aberto conta como fluxo em andamento: não interrompemos.
+  try {
+    if (document.querySelector("[role='dialog'],[role='alertdialog']")) return true;
+  } catch {
+    /* noop */
+  }
   const path = window.location.pathname;
   return UNSAFE_PATH_PREFIXES.some((prefix) =>
     prefix.endsWith("/") ? path.startsWith(prefix) : path === prefix || path.startsWith(prefix + "/"),
   );
 }
+
 
 function isStandalonePWA(): boolean {
   if (typeof window === "undefined") return false;
