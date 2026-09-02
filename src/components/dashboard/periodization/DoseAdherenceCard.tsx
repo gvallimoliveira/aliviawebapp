@@ -56,7 +56,13 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
     () =>
       summary.byTrack
         .filter((t) => t.planned > 0 || t.real > 0)
-        .map((t) => ({ frente: TRACK_LABEL[t.track], Planejado: t.planned, Percebido: t.real })),
+        .map((t) => ({
+          frente: TRACK_LABEL[t.track],
+          Planejado: t.planned,
+          Percebido: t.real,
+          planejadoDetalhe: t.plannedParts,
+          percebidoDetalhe: t.realParts,
+        })),
     [summary],
   );
 
