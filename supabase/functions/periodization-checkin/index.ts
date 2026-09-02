@@ -186,23 +186,40 @@ serve(async (req) => {
       const rpe = Number(e.rpe);
       if (!Number.isFinite(duration) || duration <= 0 || duration > 600) return json({ error: "invalid_duration" }, 400);
       if (!Number.isFinite(rpe) || rpe < 0 || rpe > 10) return json({ error: "invalid_rpe" }, 400);
-      const track = ["physio", "gym", "sport"].includes(e.track) ? e.track : "physio";
+      let track = ["physio", "gym", "sport"].includes(e.track) ? e.track : "physio";
       const sessionDate = typeof e.session_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.session_date)
         ? e.session_date
         : todayISO();
 
-      // Pareia com a sessão prescrita do mesmo dia e frente, quando existir.
-      const { data: sameDay } = await supabase
-        .from("periodization_sessions")
-        .select("id, track")
-        .eq("patient_id", patient.id)
-        .eq("session_date", sessionDate);
-      const matched = (sameDay || []).find((s: { track: string }) => s.track === track);
+      // Vínculo explícito: o paciente confirmou uma sessão planejada do microciclo.
+      let linkedId: string | null = null;
+      if (typeof e.session_id === "string" && e.session_id.length > 10) {
+        const { data: chosen } = await supabase
+          .from("periodization_sessions")
+          .select("id, track, session_date, patient_id")
+          .eq("id", e.session_id)
+          .maybeSingle();
+        if (chosen && chosen.patient_id === patient.id && String(chosen.session_date).slice(0, 10) === sessionDate) {
+          linkedId = chosen.id;
+          track = chosen.track; // a frente vem do planejamento, não da escolha manual
+        }
+      }
+
+      // Sem vínculo explícito, pareia pela sessão prescrita do mesmo dia e frente.
+      if (!linkedId) {
+        const { data: sameDay } = await supabase
+          .from("periodization_sessions")
+          .select("id, track")
+          .eq("patient_id", patient.id)
+          .eq("session_date", sessionDate);
+        linkedId = (sameDay || []).find((s: { track: string }) => s.track === track)?.id ?? null;
+      }
 
       const { error } = await supabase.from("srpe_entries").insert({
         patient_id: patient.id,
         plan_id: link.plan_id,
-        session_id: matched?.id ?? null,
+        session_id: linkedId,
+
         session_date: sessionDate,
         track,
         duration_min: Math.round(duration),
