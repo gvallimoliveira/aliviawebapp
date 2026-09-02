@@ -1797,6 +1797,9 @@ export type Database = {
           name_es: string
           name_pt: string
           thumbnail_url: string | null
+          video_check_note: string | null
+          video_checked_at: string | null
+          video_status: string
           video_url: string | null
         }
         Insert: {
@@ -1812,6 +1815,9 @@ export type Database = {
           name_es?: string
           name_pt: string
           thumbnail_url?: string | null
+          video_check_note?: string | null
+          video_checked_at?: string | null
+          video_status?: string
           video_url?: string | null
         }
         Update: {
@@ -1827,6 +1833,9 @@ export type Database = {
           name_es?: string
           name_pt?: string
           thumbnail_url?: string | null
+          video_check_note?: string | null
+          video_checked_at?: string | null
+          video_status?: string
           video_url?: string | null
         }
         Relationships: []
@@ -1939,6 +1948,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      exercise_video_audit_runs: {
+        Row: {
+          broken_count: number
+          checked_count: number
+          error: string | null
+          finished_at: string | null
+          fixed_count: number
+          id: string
+          issues: Json
+          mismatch_count: number
+          ok_count: number
+          source: string
+          started_at: string
+        }
+        Insert: {
+          broken_count?: number
+          checked_count?: number
+          error?: string | null
+          finished_at?: string | null
+          fixed_count?: number
+          id?: string
+          issues?: Json
+          mismatch_count?: number
+          ok_count?: number
+          source?: string
+          started_at?: string
+        }
+        Update: {
+          broken_count?: number
+          checked_count?: number
+          error?: string | null
+          finished_at?: string | null
+          fixed_count?: number
+          id?: string
+          issues?: Json
+          mismatch_count?: number
+          ok_count?: number
+          source?: string
+          started_at?: string
+        }
+        Relationships: []
       }
       follow_up_emails: {
         Row: {
