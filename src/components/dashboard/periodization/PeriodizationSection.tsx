@@ -7,7 +7,6 @@ import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  ClearanceItem,
   PeriodizationCycle,
   PeriodizationLink,
   PeriodizationPlan,
@@ -19,7 +18,6 @@ import {
   createPlanWithTemplate,
   fetchActivePlan,
   fetchCheckins,
-  fetchClearance,
   fetchCycles,
   fetchLinks,
   fetchRestrictions,
@@ -146,7 +144,6 @@ const PeriodizationSection = ({
         fetchRestrictions(activePlan.id),
       ]);
       setCycles(cy);
-      setClearance([]);
       setRestrictions(re);
     } else {
       setCycles([]); setClearance([]); setRestrictions([]);
