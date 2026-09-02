@@ -23,6 +23,8 @@ const fmt = (iso: string | null) =>
 const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
   const [savingId, setSavingId] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const railRef = useRef<HTMLDivElement | null>(null);
   const macros = cycles.filter((c) => c.level === "macro");
   if (macros.length === 0) return null;
 
@@ -30,10 +32,18 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
 
   const mark = async (cycle: PeriodizationCycle) => {
     if (!planId) return;
+    // Mantém a página exatamente onde está: o recarregamento da seção
+    // encolhe/expande cards e o navegador empurrava a rolagem para cima.
+    const keepAnchored = anchorScroll(() => cardRef.current, 1500);
+    const keepLeft = railRef.current?.scrollLeft ?? 0;
+    keepAnchored();
     setSavingId(cycle.id);
     try {
       await setCurrentMacroPhase(planId, cycle.id);
       onChanged?.();
+      requestAnimationFrame(() => {
+        if (railRef.current) railRef.current.scrollLeft = keepLeft;
+      });
       toast({
         title: `Fase atual: ${cycle.name}`,
         description: "As datas das fases seguintes foram sugeridas a partir de hoje — ajuste se precisar.",
@@ -44,6 +54,7 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
       setSavingId(null);
     }
   };
+
 
   return (
     <Card>
