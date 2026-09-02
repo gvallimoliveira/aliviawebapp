@@ -201,8 +201,9 @@ Deno.serve(async (req: Request) => {
   try {
     const { data: exercises, error } = await supabase
       .from("exercise_library")
-      .select("id, name_pt, name_en, video_url")
+      .select("id, name_pt, name_en, video_url, video_status")
       .not("video_url", "is", null);
+
     if (error) throw error;
 
     const issues: Array<Record<string, unknown>> = [];
