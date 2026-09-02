@@ -68,6 +68,9 @@ const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, r
     return map;
   }, [sessions]);
 
+  // Nível de intensidade do calendário deriva da nota de sRPE alvo.
+  const load = loadLevelFromRpe(plannedRpe, Number(plannedMin) > 0 ? Number(plannedMin) : null);
+
   const add = async () => {
     if (!editing) return;
     setSaving(true);
