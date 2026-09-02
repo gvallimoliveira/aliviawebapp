@@ -311,13 +311,15 @@ const PeriodizationSection = ({
           </PeriodizationCollapsible>
         </>
       )}
+
+      {!plan && !readOnly && (
         <Card className="border-dashed">
           <CardContent className="py-6 space-y-3 text-center">
             <Gauge className="h-6 w-6 text-primary/60 mx-auto" />
             <p className="text-sm text-foreground font-medium">Estruturar periodização</p>
             <p className="text-xs text-muted-foreground max-w-md mx-auto">
-              Cria o macrociclo a partir das fases do STEPS (cicatrização → força → potência → retorno ao esporte),
-              os mesociclos do primeiro bloco e o checklist de liberação.
+              Cria o macrociclo a partir das fases do STEPS (cicatrização → força → potência → retorno ao esporte)
+              e os mesociclos do primeiro bloco.
             </p>
             <div className="flex gap-2 max-w-sm mx-auto">
               <Input
@@ -333,7 +335,7 @@ const PeriodizationSection = ({
             </div>
           </CardContent>
         </Card>
-      ) : null}
+      )}
     </div>
   );
 };
