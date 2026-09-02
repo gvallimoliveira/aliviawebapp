@@ -250,6 +250,23 @@ const PeriodizationCheckin = () => {
                         </div>
                       </div>
 
+                      {isCoach && (
+                        <div className="space-y-1.5">
+                          <span className="text-sm font-medium text-foreground">Data da sessão</span>
+                          <Input
+                            type="date"
+                            value={sessionDate}
+                            max={info?.today}
+                            onChange={(e) => setSessionDate(e.target.value)}
+                          />
+                          <p className="text-[10px] text-muted-foreground">
+                            Pode registrar uma sessão de dias anteriores.
+                          </p>
+                        </div>
+                      )}
+
+
+
                       <div className="space-y-1.5">
                         <span className="text-sm font-medium text-foreground">Duração (minutos)</span>
                         <Input
