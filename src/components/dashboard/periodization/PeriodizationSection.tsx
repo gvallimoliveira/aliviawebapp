@@ -23,10 +23,11 @@ import {
   fetchCycles,
   fetchLinks,
   fetchRestrictions,
-  fetchSessions,
+  fetchSessionsByPatient,
   fetchSrpe,
 } from "@/lib/periodizationData";
 import LoadMonitorCard from "./LoadMonitorCard";
+import DoseAdherenceCard from "./DoseAdherenceCard";
 import MacroTimeline from "./MacroTimeline";
 import MicroWeekGrid from "./MicroWeekGrid";
 import ClearanceChecklistCard from "./ClearanceChecklistCard";
@@ -126,30 +127,30 @@ const PeriodizationSection = ({
 
 
 
-    const [activePlan, srpe, checks, linkRows] = await Promise.all([
+    const [activePlan, srpe, checks, linkRows, plannedSessions] = await Promise.all([
       fetchActivePlan(patientId),
       fetchSrpe(patientId, sinceISO),
       fetchCheckins(patientId, sinceISO),
       fetchLinks(patientId),
+      fetchSessionsByPatient(patientId, sinceISO),
     ]);
     setPlan(activePlan);
     setEntries(srpe);
     setCheckins(checks);
     setLinks(linkRows);
+    setSessions(plannedSessions);
 
     if (activePlan) {
-      const [cy, se, cl, re] = await Promise.all([
+      const [cy, cl, re] = await Promise.all([
         fetchCycles(activePlan.id),
-        fetchSessions(activePlan.id),
         fetchClearance(activePlan.id),
         fetchRestrictions(activePlan.id),
       ]);
       setCycles(cy);
-      setSessions(se);
       setClearance(cl);
       setRestrictions(re);
     } else {
-      setCycles([]); setSessions([]); setClearance([]); setRestrictions([]);
+      setCycles([]); setClearance([]); setRestrictions([]);
     }
     setLoading(false);
     if (keepScroll !== null) {
@@ -170,6 +171,7 @@ const PeriodizationSection = ({
       .channel(`periodization:${patientId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "readiness_checkins", filter: `patient_id=eq.${patientId}` }, () => load({ silent: true }))
       .on("postgres_changes", { event: "*", schema: "public", table: "srpe_entries", filter: `patient_id=eq.${patientId}` }, () => load({ silent: true }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "periodization_sessions", filter: `patient_id=eq.${patientId}` }, () => load({ silent: true }))
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [patientId, isDemo, load]);
@@ -275,6 +277,15 @@ const PeriodizationSection = ({
         readOnly={readOnly}
       />
 
+      <DoseAdherenceCard
+        patientId={patientId}
+        planId={plan?.id ?? null}
+        sessions={sessions}
+        entries={entries}
+        onChanged={refresh}
+        readOnly={readOnly}
+      />
+
       <BridgeCard
         patientId={patientId}
         planId={plan?.id ?? null}
@@ -287,7 +298,7 @@ const PeriodizationSection = ({
       {plan ? (
         <>
           <MacroTimeline cycles={cycles} />
-          <MicroWeekGrid planId={plan.id} sessions={sessions} onChanged={refresh} readOnly={readOnly} />
+          <MicroWeekGrid planId={plan.id} patientId={patientId} sessions={sessions} onChanged={refresh} readOnly={readOnly} />
           <ClearanceChecklistCard items={clearance} onChanged={refresh} readOnly={readOnly} />
         </>
       ) : !readOnly ? (
