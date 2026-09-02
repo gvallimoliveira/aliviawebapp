@@ -162,6 +162,15 @@ const PeriodizationCheckin = () => {
     setPlanTitle("");
   };
 
+  const pickSession = (t: NonNullable<Info["today_targets"]>[number]) => {
+    if (t.already_reported) return;
+    setSelectedSessionId(t.id);
+    setTrack(t.track);
+    setDuration(t.planned_duration_min ? String(t.planned_duration_min) : "");
+    setFreeMode(false);
+    setErrorMsg("");
+  };
+
   const submitSrpe = async () => {
     const min = Number(duration);
     if (!Number.isFinite(min) || min <= 0) { setErrorMsg("Informe a duração da sessão em minutos."); return; }
@@ -171,7 +180,15 @@ const PeriodizationCheckin = () => {
       body: {
         action: "submit_srpe",
         token,
-        entry: { session_date: sessionDate || info?.today, track, duration_min: min, rpe, notes: srpeNotes },
+        entry: {
+          session_date: sessionDate || info?.today,
+          track,
+          duration_min: min,
+          rpe,
+          notes: srpeNotes,
+          // Vínculo direto com a sessão planejada, quando o paciente confirmou uma.
+          session_id: freeMode ? null : selectedSessionId,
+        },
       },
     });
     setSavingSrpe(false);
@@ -179,7 +196,16 @@ const PeriodizationCheckin = () => {
     setSrpeDone(true);
     setDuration("");
     setSrpeNotes("");
+    setRpe(5);
+    setSelectedSessionId(null);
+    // Recarrega os alvos para marcar a sessão como já relatada.
+    const refreshed = await fetchInfo();
+    if (refreshed) {
+      setInfo(refreshed);
+      applyAutoSelection(refreshed);
+    }
   };
+
 
   const isCoach = info?.audience === "coach";
   const todayTargets = info?.today_targets || [];
