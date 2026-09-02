@@ -111,7 +111,24 @@ export async function generateMicrocyclePdfBlob(options: MicrocyclePdfOptions): 
   // ── Dias ─────────────────────────────────────────────────────────────────
   days.forEach((date, i) => {
     const items = byDay.get(date) || [];
-    const rowH = Math.max(14, 8 + items.length * 9 + (items.length ? 2 : 4));
+
+    // Medimos com a MESMA fonte/tamanho do desenho, para a caixa nunca
+    // ficar menor que o texto (fonte de erros de sobreposição em PDF).
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(8.5);
+    const measured = items.map((s) => {
+      const track = TRACK_LABEL[s.track] || s.track;
+      const level = PLANNED_LOAD_LABEL[s.planned_load] || s.planned_load;
+      const isRest = s.planned_load === "rest" || plannedLoad(s.planned_duration_min, s.planned_rpe) <= 0;
+      const dose = isRest
+        ? "duração e esforço a combinar na sessão"
+        : `${s.planned_duration_min} min · esforço alvo ${s.planned_rpe}/10 · intensidade ${String(level).toLowerCase()}`;
+      const detail = `${dose}${s.title ? ` — ${s.title}` : ""}`;
+      return { track, lines: doc.splitTextToSize(detail, TEXT_W - 8) as string[] };
+    });
+
+    const itemsH = measured.reduce((acc, m) => acc + 4.5 + m.lines.length * 4, 0);
+    const rowH = items.length === 0 ? 15 : 9 + itemsH + 1;
     ensure(rowH + 2);
 
     doc.setFillColor(...(items.length ? COLORS.soft : COLORS.primaryLight));
@@ -127,28 +144,20 @@ export async function generateMicrocyclePdfBlob(options: MicrocyclePdfOptions): 
       doc.setFont("Inter", "italic");
       doc.setFontSize(8);
       doc.setTextColor(...COLORS.muted);
-      doc.text("Descanso — sem sessão planejada", SECTION_X, y + 11);
+      doc.text("Descanso — sem sessão planejada", SECTION_X, y + 11.5);
     } else {
-      let ly = y + 12;
-      items.forEach((s) => {
-        const track = TRACK_LABEL[s.track] || s.track;
-        const level = PLANNED_LOAD_LABEL[s.planned_load] || s.planned_load;
-        const dose =
-          plannedLoad(s.planned_duration_min, s.planned_rpe) > 0
-            ? `${s.planned_duration_min} min · esforço alvo ${s.planned_rpe}/10`
-            : "duração e esforço a combinar";
-
+      let ly = y + 11.5;
+      measured.forEach((m) => {
         doc.setFont("Inter", "bold");
         doc.setFontSize(8.5);
         doc.setTextColor(...COLORS.primary);
-        doc.text(`• ${track}`, SECTION_X, ly);
+        doc.text(`• ${m.track}`, SECTION_X, ly);
 
         doc.setFont("Inter", "normal");
+        doc.setFontSize(8.5);
         doc.setTextColor(...COLORS.foreground);
-        const detail = `${dose} · intensidade ${String(level).toLowerCase()}${s.title ? ` — ${s.title}` : ""}`;
-        const lines = doc.splitTextToSize(detail, TEXT_W - 6) as string[];
-        doc.text(lines.slice(0, 2), SECTION_X + 4, ly + 4, { lineHeightFactor: 1.3 });
-        ly += 9;
+        doc.text(m.lines, SECTION_X + 4, ly + 4, { lineHeightFactor: 1.35 });
+        ly += 4.5 + m.lines.length * 4;
       });
     }
 
