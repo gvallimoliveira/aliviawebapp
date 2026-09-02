@@ -166,7 +166,7 @@ const PeriodizationCheckin = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-xl flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              {isCoach ? "Registro de sessão (treinador)" : "Check-in de hoje"}
+              {isCoach ? "Planejamento da sessão (treinador)" : "Check-in de hoje"}
             </CardTitle>
             {state === "ready" && (
               <p className="text-sm text-muted-foreground">
