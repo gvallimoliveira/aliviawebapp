@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { backToBackHighDays, pairSessionsWithSrpe, plannedLoad } from "@/lib/periodization";
+import { backToBackHighDays, loadLevelFromRpe, pairSessionsWithSrpe, plannedLoad } from "@/lib/periodization";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
 import { deleteSession, savePlannedDose } from "@/lib/periodizationData";
 import { DOSE_CLASS, DOSE_LABEL, PLANNED_LOAD_CLASS, PLANNED_LOAD_LABEL, TRACK_LABEL } from "./scales";
@@ -42,7 +42,6 @@ const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, r
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()));
   const [editing, setEditing] = useState<{ date: string } | null>(null);
   const [track, setTrack] = useState("physio");
-  const [load, setLoad] = useState("moderate");
   const [title, setTitle] = useState("");
   const [plannedMin, setPlannedMin] = useState("");
   const [plannedRpe, setPlannedRpe] = useState(7);
@@ -68,6 +67,9 @@ const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, r
     });
     return map;
   }, [sessions]);
+
+  // Nível de intensidade do calendário deriva da nota de sRPE alvo.
+  const load = loadLevelFromRpe(plannedRpe, Number(plannedMin) > 0 ? Number(plannedMin) : null);
 
   const add = async () => {
     if (!editing) return;
@@ -204,37 +206,39 @@ const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, r
                   </Button>
                 ))}
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                {Object.entries(PLANNED_LOAD_LABEL).map(([key, label]) => (
-                  <Button key={key} size="sm" variant={load === key ? "default" : "outline"} className="text-[11px] rounded-xl" onClick={() => setLoad(key)}>
-                    {label}
-                  </Button>
-                ))}
-              </div>
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground">Duração planejada (min) — opcional</span>
+                <span className="text-xs text-muted-foreground">Duração planejada (min)</span>
                 <Input
                   type="number"
-                  min={1}
+                  min={0}
                   max={600}
                   value={plannedMin}
                   onChange={(e) => setPlannedMin(e.target.value)}
                   placeholder="40"
                 />
               </div>
-              {Number(plannedMin) > 0 && (
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">Esforço alvo (0-10)</span>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">sRPE alvo (0-10)</span>
+                  <div className="flex items-center gap-1">
                     <Badge variant="outline" className="text-xs">{plannedRpe}</Badge>
+                    <Badge variant="outline" className={`text-[10px] border-0 ${PLANNED_LOAD_CLASS[load] || ""}`}>
+                      {PLANNED_LOAD_LABEL[load]}
+                    </Badge>
                   </div>
-                  <Slider min={0} max={10} step={1} value={[plannedRpe]} onValueChange={([v]) => setPlannedRpe(v)} />
-                  <p className="text-[10px] text-muted-foreground">
-                    Carga alvo: <strong>{plannedLoad(Number(plannedMin), plannedRpe)}</strong> — será comparada ao sRPE
-                    que o paciente relatar.
-                  </p>
                 </div>
-              )}
+                <Slider min={0} max={10} step={1} value={[plannedRpe]} onValueChange={([v]) => setPlannedRpe(v)} />
+                <p className="text-[10px] text-muted-foreground">
+                  {Number(plannedMin) > 0 ? (
+                    <>
+                      Carga alvo: <strong>{plannedLoad(Number(plannedMin), plannedRpe)}</strong> — será comparada ao sRPE
+                      que o paciente relatar.
+                    </>
+                  ) : (
+                    <>Informe a duração para calcular a carga alvo (duração × sRPE).</>
+                  )}
+                </p>
+              </div>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Descrição curta (opcional)" />
               <Button className="w-full rounded-xl gap-2" onClick={add} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
