@@ -104,7 +104,7 @@ const PeriodizationCheckin = () => {
       body: {
         action: "submit_srpe",
         token,
-        entry: { session_date: info?.today, track, duration_min: min, rpe, notes: srpeNotes },
+        entry: { session_date: sessionDate || info?.today, track, duration_min: min, rpe, notes: srpeNotes },
       },
     });
     setSavingSrpe(false);
