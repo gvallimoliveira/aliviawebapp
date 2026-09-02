@@ -44,6 +44,29 @@ const tooltipStyle = {
   fontSize: 12,
 };
 
+/** Tooltip com a conta que forma cada barra (duração × RPE por sessão). */
+const DoseTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const d = payload[0]?.payload;
+  if (!d) return null;
+  return (
+    <div style={tooltipStyle} className="px-3 py-2 shadow-md max-w-[240px]">
+      <p className="font-semibold mb-1">{label}</p>
+      <p className="text-muted-foreground">Planejado: {d.Planejado}</p>
+      {d.planejadoDetalhe?.map((p: string, i: number) => (
+        <p key={`p${i}`} className="text-muted-foreground pl-2 text-[11px]">· {p}</p>
+      ))}
+      <p className="mt-1" style={{ color: "hsl(var(--primary))" }}>Percebido: {d.Percebido}</p>
+      {d.percebidoDetalhe?.map((p: string, i: number) => (
+        <p key={`r${i}`} className="pl-2 text-[11px]" style={{ color: "hsl(var(--primary))" }}>· {p}</p>
+      ))}
+      {d.Percebido === 0 && (
+        <p className="pl-2 text-[11px] text-muted-foreground">· sem resposta de sRPE</p>
+      )}
+    </div>
+  );
+};
+
 const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
   const [weekStart, setWeekStart] = useState(() => weekStartOf());
