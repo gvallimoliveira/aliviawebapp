@@ -162,3 +162,4 @@ Créditos de IA: após CADA etapa do plano de créditos, rodar o double-check pa
 - [Studio Charm Writing](mem://features/studio-charm-writing) — Pilares da Escrita Charmosa nos ângulos venda/dor/desejo + tabela de copy charmosa por sub-nicho (dor crônica, esportista, pós-op, 60+, vestibular, feridas).
 - [Studio Color Precision](mem://features/studio-color-precision) — Lado A/B por arte (inverter cores), captura de tom pixel a pixel do manual e conta-gotas no kit de cores.
 - [Periodization Load](mem://features/periodization-load) — Periodização macro/meso/micro, sRPE, ACWR, check-in 1–10 e link público /carga/:token.
+- [Exercise Video Monthly Audit](mem://features/exercise-video-monthly-audit) — Auditoria mensal automática dos vídeos do YouTube da biblioteca de exercícios (cron dia 1º, aba Vídeos no Admin).
