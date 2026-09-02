@@ -22,3 +22,8 @@ export const ENABLE_PAIN_MECHANISM = true;
 // Passos C1 (chips espelhados) e C2 (contador + extensão) entregues.
 // Flag independente do mecanismo — permite reverter só o mapa.
 export const ENABLE_PAINMAP_V2 = true;
+
+// Periodização de carga + escalas subjetivas (sRPE, prontidão, ACWR).
+// Fases 1-4 entregues; ligar após o double-check visual do prontuário.
+export const ENABLE_PERIODIZATION = true;
+

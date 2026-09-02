@@ -1,0 +1,171 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import { Copy, Link2, Loader2, Plus, ShieldAlert, Trash2, UserRound, Dumbbell } from "lucide-react";
+import type { PeriodizationLink, PlanRestriction } from "@/lib/periodizationData";
+import { addRestriction, createLink, deleteRestriction, revokeLink } from "@/lib/periodizationData";
+
+interface Props {
+  patientId: string;
+  planId?: string | null;
+  restrictions: PlanRestriction[];
+  links: PeriodizationLink[];
+  onChanged: () => void;
+  readOnly?: boolean;
+}
+
+const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnly }: Props) => {
+  const { toast } = useToast();
+  const [text, setText] = useState("");
+  const [kind, setKind] = useState<"allow" | "avoid">("avoid");
+  const [saving, setSaving] = useState(false);
+  const [creating, setCreating] = useState<"patient" | "coach" | null>(null);
+
+  const linkUrl = (token: string) => `${getPublicOrigin()}/carga/${token}`;
+
+  const submit = async () => {
+    if (!planId || text.trim().length < 3) return;
+    setSaving(true);
+    try {
+      await addRestriction(planId, kind, text);
+      setText("");
+      onChanged();
+    } catch (e: any) {
+      toast({ title: "Não foi possível salvar", description: e?.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const makeLink = async (audience: "patient" | "coach") => {
+    setCreating(audience);
+    try {
+      const link = await createLink({ patientId, planId, audience });
+      await navigator.clipboard.writeText(linkUrl(link.token)).catch(() => undefined);
+      onChanged();
+      toast({
+        title: audience === "coach" ? "Link do preparador criado" : "Link do paciente criado",
+        description: "Link copiado para a área de transferência.",
+      });
+    } catch (e: any) {
+      toast({ title: "Não foi possível criar o link", description: e?.message, variant: "destructive" });
+    } finally {
+      setCreating(null);
+    }
+  };
+
+  const copy = async (token: string) => {
+    await navigator.clipboard.writeText(linkUrl(token)).catch(() => undefined);
+    toast({ title: "Link copiado" });
+  };
+
+  const activeLinks = links.filter((l) => l.active);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Link2 className="h-4 w-4 text-primary" />
+          Links de check-in e orientações compartilhadas
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!readOnly && (
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => makeLink("patient")} disabled={creating !== null}>
+              {creating === "patient" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserRound className="h-3.5 w-3.5" />}
+              Link do paciente
+            </Button>
+            <Button size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => makeLink("coach")} disabled={creating !== null}>
+              {creating === "coach" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Dumbbell className="h-3.5 w-3.5" />}
+              Link do preparador
+            </Button>
+          </div>
+        )}
+
+        {activeLinks.length > 0 && (
+          <div className="space-y-1.5">
+            {activeLinks.map((l) => (
+              <div key={l.id} className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
+                <Badge variant="outline" className="text-[10px]">
+                  {l.audience === "coach" ? "Preparador" : "Paciente"}
+                </Badge>
+                <span className="text-[11px] text-muted-foreground truncate flex-1">{linkUrl(l.token)}</span>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copy(l.token)}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+                {!readOnly && (
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={async () => { await revokeLink(l.id); onChanged(); }}>
+                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <p className="text-[10px] text-muted-foreground">
+              O link não expira: serve para o check-in diário. Desative quando o acompanhamento terminar.
+            </p>
+          </div>
+        )}
+
+        {/* Restrições */}
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-foreground flex items-center gap-1">
+            <ShieldAlert className="h-3.5 w-3.5 text-amber-500" /> Pode / evitar
+          </p>
+          {restrictions.map((r) => (
+            <div key={r.id} className="flex items-start gap-2 rounded-xl border border-border px-3 py-2">
+              <Badge
+                variant="outline"
+                className={r.kind === "allow"
+                  ? "text-[10px] text-emerald-700 dark:text-emerald-400 border-emerald-500/40"
+                  : "text-[10px] text-rose-700 dark:text-rose-400 border-rose-500/40"}
+              >
+                {r.kind === "allow" ? "Pode" : "Evitar"}
+              </Badge>
+              <span className="text-xs text-foreground flex-1">{r.text}</span>
+              {!readOnly && (
+                <button onClick={async () => { await deleteRestriction(r.id); onChanged(); }}>
+                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+          ))}
+
+          {!readOnly && planId && (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-xl text-[11px] shrink-0"
+                onClick={() => setKind(kind === "avoid" ? "allow" : "avoid")}
+              >
+                {kind === "avoid" ? "Evitar" : "Pode"}
+              </Button>
+              <Input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Ex.: evitar salto unipodal até 8 semanas"
+                className="text-sm"
+                onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+              />
+              <Button size="icon" className="rounded-xl shrink-0" onClick={submit} disabled={saving || text.trim().length < 3}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              </Button>
+            </div>
+          )}
+          {restrictions.length === 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              As orientações aparecem no link do paciente e do preparador, sem expor o prontuário.
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default BridgeCard;

@@ -1,0 +1,288 @@
+import { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine,
+} from "recharts";
+import { Activity, HeartPulse, Loader2, Plus, TrendingUp } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { loadStatus, readinessScore, trainingLoad } from "@/lib/periodization";
+import type { ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
+import { addSrpe, saveCheckin } from "@/lib/periodizationData";
+import { CHECKIN_ITEMS, LEVEL_CLASS, TRACK_LABEL, ZONE_LABEL } from "./scales";
+
+interface Props {
+  patientId: string;
+  planId?: string | null;
+  entries: SrpeEntry[];
+  checkins: ReadinessCheckin[];
+  onChanged: () => void;
+  readOnly?: boolean;
+}
+
+const tooltipStyle = {
+  borderRadius: 8,
+  border: "1px solid hsl(var(--border))",
+  background: "hsl(var(--card))",
+  fontSize: 12,
+};
+
+const shortDate = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+
+const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, readOnly }: Props) => {
+  const { toast } = useToast();
+  const status = useMemo(() => loadStatus(entries, checkins), [entries, checkins]);
+
+  const weeklyData = useMemo(
+    () => status.weekly.map((w) => ({ week: shortDate(w.weekStart), Carga: w.load, spike: w.spikePct })),
+    [status.weekly],
+  );
+
+  const readinessData = useMemo(
+    () =>
+      checkins
+        .map((c) => ({ date: shortDate(c.checkin_date), Prontidão: readinessScore(c) }))
+        .filter((d) => d.Prontidão !== null),
+    [checkins],
+  );
+
+  // Formulário de sRPE
+  const [srpeOpen, setSrpeOpen] = useState(false);
+  const [track, setTrack] = useState("physio");
+  const [duration, setDuration] = useState("");
+  const [rpe, setRpe] = useState(5);
+  const [srpeDate, setSrpeDate] = useState(new Date().toISOString().slice(0, 10));
+  const [savingSrpe, setSavingSrpe] = useState(false);
+
+  // Formulário de check-in manual (fisio registrando pelo paciente)
+  const [checkinOpen, setCheckinOpen] = useState(false);
+  const [values, setValues] = useState<Record<string, number>>({});
+  const [note, setNote] = useState("");
+  const [checkinDate, setCheckinDate] = useState(new Date().toISOString().slice(0, 10));
+  const [savingCheckin, setSavingCheckin] = useState(false);
+
+  const submitSrpe = async () => {
+    const min = Number(duration);
+    if (!Number.isFinite(min) || min <= 0) {
+      toast({ title: "Informe a duração da sessão", variant: "destructive" });
+      return;
+    }
+    setSavingSrpe(true);
+    try {
+      await addSrpe({ patientId, planId, sessionDate: srpeDate, track, durationMin: min, rpe });
+      setDuration("");
+      setSrpeOpen(false);
+      onChanged();
+      toast({ title: "Sessão registrada", description: `Carga: ${trainingLoad(min, rpe)} unidades.` });
+    } catch (e: any) {
+      toast({ title: "Não foi possível registrar", description: e?.message, variant: "destructive" });
+    } finally {
+      setSavingSrpe(false);
+    }
+  };
+
+  const submitCheckin = async () => {
+    if (Object.keys(values).length === 0) {
+      toast({ title: "Responda pelo menos uma escala", variant: "destructive" });
+      return;
+    }
+    setSavingCheckin(true);
+    try {
+      await saveCheckin({ patientId, planId, date: checkinDate, ...values, note, source: "professional" });
+      setValues({});
+      setNote("");
+      setCheckinOpen(false);
+      onChanged();
+      toast({ title: "Check-in registrado" });
+    } catch (e: any) {
+      toast({ title: "Não foi possível registrar", description: e?.message, variant: "destructive" });
+    } finally {
+      setSavingCheckin(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2 flex-wrap">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            Carga e prontidão
+          </CardTitle>
+          {!readOnly && (
+            <div className="flex gap-2">
+              <Dialog open={srpeOpen} onOpenChange={setSrpeOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
+                    <Activity className="h-3.5 w-3.5" /> sRPE
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-sm">
+                  <DialogHeader><DialogTitle className="text-base">Registrar sessão (sRPE)</DialogTitle></DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-2">
+                      {Object.entries(TRACK_LABEL).map(([key, label]) => (
+                        <Button
+                          key={key}
+                          variant={track === key ? "default" : "outline"}
+                          size="sm"
+                          className="text-[11px] rounded-xl"
+                          onClick={() => setTrack(key)}
+                        >
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-xs text-muted-foreground">Data</span>
+                      <Input type="date" value={srpeDate} onChange={(e) => setSrpeDate(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-xs text-muted-foreground">Duração (min)</span>
+                      <Input type="number" min={1} max={600} value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="50" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">RPE (0-10)</span>
+                        <Badge variant="outline" className="text-xs">{rpe}</Badge>
+                      </div>
+                      <Slider min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => setRpe(v)} />
+                    </div>
+                    {Number(duration) > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Carga: <strong>{trainingLoad(Number(duration), rpe)}</strong>
+                      </p>
+                    )}
+                    <Button className="w-full rounded-xl gap-2" onClick={submitSrpe} disabled={savingSrpe}>
+                      {savingSrpe ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      Registrar
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={checkinOpen} onOpenChange={setCheckinOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
+                    <HeartPulse className="h-3.5 w-3.5" /> Check-in
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-sm max-h-[85vh] overflow-y-auto">
+                  <DialogHeader><DialogTitle className="text-base">Check-in de prontidão</DialogTitle></DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <span className="text-xs text-muted-foreground">Data</span>
+                      <Input type="date" value={checkinDate} onChange={(e) => setCheckinDate(e.target.value)} />
+                    </div>
+                    {CHECKIN_ITEMS.map((item) => (
+                      <div key={item.key} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-foreground">{item.label}</span>
+                          <Badge variant="outline" className="text-xs">{values[item.key] ?? "—"}</Badge>
+                        </div>
+                        <Slider
+                          min={1} max={10} step={1}
+                          value={[values[item.key] ?? 5]}
+                          onValueChange={([v]) => setValues((prev) => ({ ...prev, [item.key]: v }))}
+                        />
+                      </div>
+                    ))}
+                    <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Observação (opcional)" className="text-sm" />
+                    <Button className="w-full rounded-xl gap-2" onClick={submitCheckin} disabled={savingCheckin}>
+                      {savingCheckin ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      Salvar check-in
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Números-chave */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="rounded-xl border border-border p-2">
+            <p className="text-[10px] text-muted-foreground">Carga aguda (7d)</p>
+            <p className="text-lg font-semibold text-foreground">{status.acuteLoad}</p>
+          </div>
+          <div className="rounded-xl border border-border p-2">
+            <p className="text-[10px] text-muted-foreground">Crônica (semanal)</p>
+            <p className="text-lg font-semibold text-foreground">{status.chronicLoad}</p>
+          </div>
+          <div className="rounded-xl border border-border p-2">
+            <p className="text-[10px] text-muted-foreground">ACWR</p>
+            <p className="text-lg font-semibold text-foreground">{status.acwr ?? "—"}</p>
+            {status.zone && <p className="text-[10px] text-muted-foreground">{ZONE_LABEL[status.zone]}</p>}
+          </div>
+          <div className="rounded-xl border border-border p-2">
+            <p className="text-[10px] text-muted-foreground">Prontidão</p>
+            <p className="text-lg font-semibold text-foreground">{status.readiness !== null ? `${status.readiness}%` : "—"}</p>
+          </div>
+        </div>
+
+        {/* Sugestões */}
+        {status.messages.length > 0 && (
+          <div className={`rounded-xl border px-3 py-2 space-y-1 ${LEVEL_CLASS[status.level]}`}>
+            {status.messages.map((m, i) => (
+              <p key={i} className="text-xs">{m}</p>
+            ))}
+            <p className="text-[10px] opacity-80">Sugestões automáticas. A decisão clínica é sempre sua.</p>
+          </div>
+        )}
+
+        {/* Carga semanal */}
+        {weeklyData.length > 0 && (
+          <div>
+            <p className="text-xs font-medium text-foreground mb-1">Carga semanal</p>
+            <div className="h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="week" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
+                  <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Area type="monotone" dataKey="Carga" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.2)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* Prontidão */}
+        {readinessData.length > 1 && (
+          <div>
+            <p className="text-xs font-medium text-foreground mb-1">Prontidão (0-100)</p>
+            <div className="h-36">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={readinessData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} className="fill-muted-foreground" />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <ReferenceLine y={40} stroke="hsl(0, 70%, 55%)" strokeDasharray="4 4" />
+                  <Line type="monotone" dataKey="Prontidão" stroke="hsl(150, 60%, 40%)" strokeWidth={2} dot={{ r: 2 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {entries.length === 0 && checkins.length === 0 && (
+          <p className="text-xs text-muted-foreground">
+            Sem registros ainda. Use os botões acima para lançar a sessão de hoje ou envie um link de check-in ao paciente.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default LoadMonitorCard;

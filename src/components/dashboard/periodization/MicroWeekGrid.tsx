@@ -1,0 +1,192 @@
+import { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Loader2, Plus, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { backToBackHighDays } from "@/lib/periodization";
+import type { PeriodizationSession } from "@/lib/periodizationData";
+import { deleteSession, saveSession } from "@/lib/periodizationData";
+import { PLANNED_LOAD_CLASS, PLANNED_LOAD_LABEL, TRACK_LABEL } from "./scales";
+
+interface Props {
+  planId: string;
+  sessions: PeriodizationSession[];
+  onChanged: () => void;
+  readOnly?: boolean;
+}
+
+const mondayOf = (d: Date): string => {
+  const copy = new Date(d.getTime());
+  const dow = (copy.getUTCDay() + 6) % 7;
+  copy.setUTCDate(copy.getUTCDate() - dow);
+  return copy.toISOString().slice(0, 10);
+};
+
+const addDays = (iso: string, n: number): string => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+const DOW = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+const MicroWeekGrid = ({ planId, sessions, onChanged, readOnly }: Props) => {
+  const { toast } = useToast();
+  const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()));
+  const [editing, setEditing] = useState<{ date: string } | null>(null);
+  const [track, setTrack] = useState("physio");
+  const [load, setLoad] = useState("moderate");
+  const [title, setTitle] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
+  const flagged = useMemo(() => new Set(backToBackHighDays(sessions)), [sessions]);
+
+  const byDay = useMemo(() => {
+    const map = new Map<string, PeriodizationSession[]>();
+    sessions.forEach((s) => {
+      const key = s.session_date.slice(0, 10);
+      map.set(key, [...(map.get(key) || []), s]);
+    });
+    return map;
+  }, [sessions]);
+
+  const add = async () => {
+    if (!editing) return;
+    setSaving(true);
+    try {
+      await saveSession({
+        plan_id: planId,
+        session_date: editing.date,
+        track,
+        planned_load: load,
+        title: title.trim() || null,
+      });
+      setTitle("");
+      setEditing(null);
+      onChanged();
+    } catch (e: any) {
+      toast({ title: "Não foi possível salvar", description: e?.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const remove = async (id: string) => {
+    await deleteSession(id);
+    onChanged();
+  };
+
+  const weekLabel = `${new Date(`${weekStart}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} → ${new Date(`${addDays(weekStart, 6)}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-primary" />
+            Microciclo da semana
+          </CardTitle>
+          <div className="flex items-center gap-1">
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-[11px] text-muted-foreground whitespace-nowrap">{weekLabel}</span>
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          {days.map((date, i) => {
+            const items = byDay.get(date) || [];
+            const isFlagged = flagged.has(date);
+            const isToday = date === new Date().toISOString().slice(0, 10);
+            return (
+              <div
+                key={date}
+                className={`rounded-xl border p-2 min-h-[104px] space-y-1 ${
+                  isFlagged ? "border-rose-500/50 bg-rose-500/5" : isToday ? "border-primary" : "border-border"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-foreground">
+                    {DOW[i]} {date.slice(8, 10)}
+                  </span>
+                  {isFlagged && <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />}
+                </div>
+                {items.map((s) => (
+                  <div key={s.id} className="group rounded-lg bg-muted/60 px-1.5 py-1">
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-medium text-foreground truncate">{TRACK_LABEL[s.track] || s.track}</p>
+                        {s.title && <p className="text-[10px] text-muted-foreground truncate">{s.title}</p>}
+                      </div>
+                      {!readOnly && (
+                        <button onClick={() => remove(s.id)} className="opacity-0 group-hover:opacity-100 transition">
+                          <Trash2 className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      )}
+                    </div>
+                    <Badge variant="outline" className={`mt-0.5 text-[9px] border-0 ${PLANNED_LOAD_CLASS[s.planned_load] || ""}`}>
+                      {PLANNED_LOAD_LABEL[s.planned_load] || s.planned_load}
+                    </Badge>
+                  </div>
+                ))}
+                {!readOnly && (
+                  <button
+                    onClick={() => setEditing({ date })}
+                    className="w-full text-[10px] text-muted-foreground hover:text-primary flex items-center justify-center gap-1 py-1"
+                  >
+                    <Plus className="h-3 w-3" /> sessão
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {flagged.size > 0 && (
+          <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-2 flex items-center gap-1">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            Dias de alto estresse em sequência — considere intercalar carga leve ou descanso.
+          </p>
+        )}
+
+        <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader><DialogTitle className="text-base">Sessão planejada</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries(TRACK_LABEL).map(([key, label]) => (
+                  <Button key={key} size="sm" variant={track === key ? "default" : "outline"} className="text-[11px] rounded-xl" onClick={() => setTrack(key)}>
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {Object.entries(PLANNED_LOAD_LABEL).map(([key, label]) => (
+                  <Button key={key} size="sm" variant={load === key ? "default" : "outline"} className="text-[11px] rounded-xl" onClick={() => setLoad(key)}>
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Descrição curta (opcional)" />
+              <Button className="w-full rounded-xl gap-2" onClick={add} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                Adicionar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default MicroWeekGrid;
