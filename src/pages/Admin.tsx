@@ -395,9 +395,14 @@ const Admin = () => {
             <AdminAiUsage isPt={isPt} />
           </TabsContent>
 
+          <TabsContent value="videos">
+            <AdminVideoAudit />
+          </TabsContent>
+
           <TabsContent value="lgpd">
             <AdminLgpdCenter />
           </TabsContent>
+
         </Tabs>
       </main>
       <Footer />
