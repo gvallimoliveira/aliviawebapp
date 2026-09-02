@@ -24,6 +24,7 @@ describe("micro pdf", () => {
         s("2026-09-12", "gym", 60, 9, "high", "Sessão principal da semana"),
       ] as any,
     });
-    writeFileSync("/tmp/micro.pdf", Buffer.from(await blob.arrayBuffer()));
+    const buf: any = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsArrayBuffer(blob as any); });
+    writeFileSync("/tmp/micro.pdf", Buffer.from(buf));
   });
 });
