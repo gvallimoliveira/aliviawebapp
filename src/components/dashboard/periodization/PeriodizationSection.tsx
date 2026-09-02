@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Gauge, Loader2, Plus } from "lucide-react";
+import { Gauge, Link2, Loader2, Plus } from "lucide-react";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,6 +15,7 @@ import {
   PlanRestriction,
   ReadinessCheckin,
   SrpeEntry,
+  createLink,
   createPlanWithTemplate,
   fetchActivePlan,
   fetchCheckins,
