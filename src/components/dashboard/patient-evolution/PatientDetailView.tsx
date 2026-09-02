@@ -23,12 +23,14 @@ import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResult
 import RegionPainComparison from "../RegionPainComparison";
 import SessionNotesSection from "../SessionNotesSection";
 import VoiceNoteCard from "../VoiceNoteCard";
+import PeriodizationSection from "../periodization/PeriodizationSection";
+import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
 import PainMapView from "@/components/assessment/PainMapView";
 import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
+import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Gauge, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
 import { Bar, BarChart, CartesianGrid, LabelList, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
@@ -1508,6 +1510,27 @@ export default function PatientDetailView(props: any) {
         return <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Dumbbell className="h-4 w-4 text-primary" /> Programas de Exercícios Enviados</CardTitle><CardDescription className="text-xs">{patientHeps.length} programa(s) criado(s)</CardDescription></CardHeader><CardContent className="space-y-2">{patientHeps.map((hep: any) => { const link = `${origin}/hep/${hep.token}`; const isExpired = new Date(hep.expires_at) < new Date(); return <div key={hep.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg border bg-muted/30"><div className="min-w-0 flex-1"><p className="text-xs font-medium text-foreground truncate">{new Date(hep.created_at).toLocaleDateString("pt-BR")}{hep.notes && <span className="text-muted-foreground ml-2">— {hep.notes}</span>}</p><p className="text-[10px] text-muted-foreground truncate">{link}</p></div><div className="flex items-center gap-1 shrink-0">{isExpired && <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30">Expirado</Badge>}<Button variant="ghost" size="icon" className="h-7 w-7" title="Editar programa" onClick={() => handleEditHep(hep.id)}><Pencil className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" title="Copiar link" onClick={() => { navigator.clipboard.writeText(link); toast({ title: "Link copiado!" }); }}><Copy className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" title="Abrir link" onClick={() => window.open(link, "_blank")}><ExternalLink className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" title="Enviar via WhatsApp" onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Seu programa de exercícios: ${link}`)}`, "_blank")}><Share2 className="h-3.5 w-3.5" /></Button>{!readOnly && patient.email && <Button variant="ghost" size="icon" className="h-7 w-7" title={language === "pt" ? "Enviar via chat interno" : "Send via internal chat"} onClick={() => handleSendHepViaChat(link, patient.email)}><MessageCircle className="h-3.5 w-3.5" /></Button>}<Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="Excluir programa" disabled={deletingHepId === hep.id} onClick={() => { if (confirm("Tem certeza que deseja excluir este programa de exercícios?")) handleDeleteHep(hep.id); }}>{deletingHepId === hep.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}</Button></div></div>; })}</CardContent></Card>;
       })()}
       </div>
+
+      {/* Carga e periodização (sRPE, prontidão, ACWR e ciclos) */}
+      {ENABLE_PERIODIZATION && (
+        <div id="sec-periodizacao" className="scroll-mt-24 space-y-3">
+          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Gauge className="h-4 w-4 text-primary" />
+            {language === "pt" ? "Carga e periodização" : language === "es" ? "Carga y periodización" : "Load & periodization"}
+          </h4>
+          <PeriodizationSection
+            patientId={patient?.patientRecord?.id ?? null}
+            patientName={patient?.name ?? null}
+            patientEmail={selectedEmail ?? patient?.email ?? null}
+            professionalId={professionalId}
+            clinicId={clinicId}
+            latestAssessmentId={latestWithDiagnosis?.id ?? patient?.assessments?.[0]?.id ?? null}
+            readOnly={readOnly}
+            isDemo={isDemo}
+          />
+        </div>
+      )}
+
 
 
 
