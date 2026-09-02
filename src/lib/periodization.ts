@@ -335,6 +335,7 @@ export interface PlannedDoseLike {
   track?: LoadTrack | string | null;
   planned_duration_min?: number | null;
   planned_rpe?: number | null;
+  title?: string | null;
 }
 
 /** Carga alvo de uma sessão prescrita (duração planejada × RPE alvo). */
