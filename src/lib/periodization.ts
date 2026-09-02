@@ -415,20 +415,36 @@ export function adherenceByTrack(
 
   const planned: Record<LoadTrack, number> = { physio: 0, gym: 0, sport: 0 };
   const real: Record<LoadTrack, number> = { physio: 0, gym: 0, sport: 0 };
+  const plannedParts: Record<LoadTrack, string[]> = { physio: [], gym: [], sport: [] };
+  const realParts: Record<LoadTrack, string[]> = { physio: [], gym: [], sport: [] };
 
   sessions.forEach((s) => {
     if (!inWeek(s.session_date)) return;
-    planned[normalizeTrack(s.track)] += plannedLoad(s.planned_duration_min, s.planned_rpe);
+    const track = normalizeTrack(s.track);
+    const load = plannedLoad(s.planned_duration_min, s.planned_rpe);
+    planned[track] += load;
+    if (load > 0) plannedParts[track].push(`${s.planned_duration_min}×${s.planned_rpe} = ${load}`);
   });
   entries.forEach((e) => {
     if (!inWeek(e.session_date)) return;
-    real[normalizeTrack(e.track)] += trainingLoad(e.duration_min, e.rpe);
+    const track = normalizeTrack(e.track);
+    const load = trainingLoad(e.duration_min, e.rpe);
+    real[track] += load;
+    if (load > 0) realParts[track].push(`${e.duration_min}×${e.rpe} = ${load}`);
   });
 
   const bounds = { min: DOSE_WEEK_ON_TARGET_MIN, max: DOSE_WEEK_ON_TARGET_MAX };
   const byTrack: TrackAdherence[] = TRACKS.map((track) => {
     const ratio = doseAdherence(real[track], planned[track]);
-    return { track, planned: planned[track], real: real[track], ratio, verdict: doseVerdict(ratio, bounds) };
+    return {
+      track,
+      planned: planned[track],
+      real: real[track],
+      ratio,
+      verdict: doseVerdict(ratio, bounds),
+      plannedParts: plannedParts[track],
+      realParts: realParts[track],
+    };
   });
   const totalPlanned = TRACKS.reduce((a, t) => a + planned[t], 0);
   const totalReal = TRACKS.reduce((a, t) => a + real[t], 0);
@@ -444,6 +460,8 @@ export function adherenceByTrack(
       real: totalReal,
       ratio: totalRatio,
       verdict: doseVerdict(totalRatio, bounds),
+      plannedParts: TRACKS.flatMap((t) => plannedParts[t]),
+      realParts: TRACKS.flatMap((t) => realParts[t]),
     },
   };
 }
