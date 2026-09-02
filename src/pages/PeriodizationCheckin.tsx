@@ -40,8 +40,10 @@ const PeriodizationCheckin = () => {
   const [duration, setDuration] = useState("");
   const [rpe, setRpe] = useState(5);
   const [srpeNotes, setSrpeNotes] = useState("");
+  const [sessionDate, setSessionDate] = useState("");
   const [savingSrpe, setSavingSrpe] = useState(false);
   const [srpeDone, setSrpeDone] = useState(false);
+
 
   useEffect(() => {
     setSeo({
@@ -63,6 +65,8 @@ const PeriodizationCheckin = () => {
       }
       const loaded = data.info as Info;
       setInfo(loaded);
+      setSessionDate(loaded.today);
+      if (loaded.audience === "coach") setTrack("gym");
       if (loaded.today_checkin) {
         const preset: Record<string, number> = {};
         CHECKIN_ITEMS.forEach((item) => {
@@ -72,6 +76,7 @@ const PeriodizationCheckin = () => {
         setValues(preset);
       }
       setState("ready");
+
     })();
   }, [token]);
 
@@ -99,7 +104,7 @@ const PeriodizationCheckin = () => {
       body: {
         action: "submit_srpe",
         token,
-        entry: { session_date: info?.today, track, duration_min: min, rpe, notes: srpeNotes },
+        entry: { session_date: sessionDate || info?.today, track, duration_min: min, rpe, notes: srpeNotes },
       },
     });
     setSavingSrpe(false);
@@ -121,13 +126,20 @@ const PeriodizationCheckin = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-xl flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              {isCoach ? "Registro de sessão" : "Check-in de hoje"}
+              {isCoach ? "Registro de sessão (treinador)" : "Check-in de hoje"}
             </CardTitle>
             {state === "ready" && (
               <p className="text-sm text-muted-foreground">
                 {info?.patient_name ? <><strong>{info.patient_name}</strong> · </> : null}
                 {dateLabel}
                 {info?.professional_name ? <> · acompanhamento de <strong>{info.professional_name}</strong></> : null}
+              </p>
+            )}
+            {state === "ready" && (
+              <p className="text-xs text-muted-foreground pt-1">
+                {isCoach
+                  ? "Este link é do treinador/preparador: registre a sessão treinada (tipo, duração e esforço). As escalas subjetivas são respondidas pelo próprio paciente no link dele."
+                  : "Este link é seu: conte como você está hoje e, se treinou, registre como foi a sessão."}
               </p>
             )}
           </CardHeader>
@@ -141,15 +153,19 @@ const PeriodizationCheckin = () => {
 
             {state === "ready" && (
               <Tabs defaultValue={isCoach ? "srpe" : "checkin"}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="checkin" className="gap-1 text-xs">
-                    <HeartPulse className="h-3.5 w-3.5" /> Como estou
-                  </TabsTrigger>
-                  <TabsTrigger value="srpe" className="gap-1 text-xs">
-                    <Activity className="h-3.5 w-3.5" /> Sessão de hoje
-                  </TabsTrigger>
-                </TabsList>
+                {!isCoach && (
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="checkin" className="gap-1 text-xs">
+                      <HeartPulse className="h-3.5 w-3.5" /> Como estou
+                    </TabsTrigger>
+                    <TabsTrigger value="srpe" className="gap-1 text-xs">
+                      <Activity className="h-3.5 w-3.5" /> Sessão de hoje
+                    </TabsTrigger>
+                  </TabsList>
+                )}
 
+
+                {!isCoach && (
                 <TabsContent value="checkin" className="space-y-5 pt-4">
                   {checkinDone ? (
                     <div className="text-center py-6 space-y-2">
@@ -202,6 +218,8 @@ const PeriodizationCheckin = () => {
                     </>
                   )}
                 </TabsContent>
+                )}
+
 
                 <TabsContent value="srpe" className="space-y-4 pt-4">
                   {srpeDone ? (
@@ -231,6 +249,23 @@ const PeriodizationCheckin = () => {
                           ))}
                         </div>
                       </div>
+
+                      {isCoach && (
+                        <div className="space-y-1.5">
+                          <span className="text-sm font-medium text-foreground">Data da sessão</span>
+                          <Input
+                            type="date"
+                            value={sessionDate}
+                            max={info?.today}
+                            onChange={(e) => setSessionDate(e.target.value)}
+                          />
+                          <p className="text-[10px] text-muted-foreground">
+                            Pode registrar uma sessão de dias anteriores.
+                          </p>
+                        </div>
+                      )}
+
+
 
                       <div className="space-y-1.5">
                         <span className="text-sm font-medium text-foreground">Duração (minutos)</span>
