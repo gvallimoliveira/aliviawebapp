@@ -318,6 +318,8 @@ export function useAutosaveDraft<T>({
     }
     const serialized = JSON.stringify(state);
     if (!serialized || serialized === "{}" || serialized === "null" || serialized === "undefined") return;
+    if (isBlank(state, serialized)) return;
+
     lastSerializedRef.current = serialized;
     writeLocal(formKey, scopeKey, state);
     setLastSavedAt(new Date());
