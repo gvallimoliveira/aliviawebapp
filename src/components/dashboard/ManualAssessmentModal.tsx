@@ -42,7 +42,8 @@ import RomTable, { createInitialRomRows, sanitizeRomRows, type RomRow } from "@/
 import StrengthTable, { createInitialStrengthRows, sanitizeStrengthRows, type StrengthRow } from "@/components/assessment/StrengthTable";
 import {
   saveManualAssessmentSession,
-  clearManualAssessmentSession,
+  closeManualAssessmentSession,
+  newManualAssessmentSessionId,
 } from "@/lib/manualAssessmentSession";
 import { ENABLE_PAIN_MECHANISM } from "@/lib/featureFlags";
 import PainMechanismWizard from "@/components/assessment/PainMechanismWizard";
@@ -153,6 +154,9 @@ interface ManualAssessmentModalProps {
   clinicId?: string | null;
   patientName: string;
   patientEmail?: string;
+  /** Quando disponível, usado como escopo estável do rascunho (evita colisão entre homônimos). */
+  patientId?: string;
+
   /** When provided, the modal edits this existing assessment instead of creating a new one. */
   editAssessment?: any | null;
   /**
@@ -203,7 +207,7 @@ const STEPS = [
   { id: "diagnostico", label: "Diagnóstico" },
 ];
 
-const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, editAssessment, prefillData, onSaved, demoMode = false }: ManualAssessmentModalProps) => {
+const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, patientId, editAssessment, prefillData, onSaved, demoMode = false }: ManualAssessmentModalProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -679,8 +683,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // ── Autosave (local + nuvem) ───────────────────────────────────────────────
   const isEditing = !!editAssessment?.id;
   const draftScopeKey = open && !isEditing
-    ? `${professionalId}:${(patientEmail || patientName || "").toLowerCase().trim()}`
+    ? `${professionalId}:${(patientId || patientEmail || patientName || "").toLowerCase().trim()}`
     : null;
+
   const draftState = {
     step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
@@ -984,43 +989,42 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Grava em localStorage que existe uma avaliação manual em andamento, para
   // que o ManualAssessmentResumer reabra automaticamente caso o app seja
   // descarregado pelo SO (tela bloqueada, troca de app, reload da PWA).
+  // `hasContent` só fica true quando o rascunho de fato gravou conteúdo real —
+  // abrir e fechar sem digitar nunca gera retomada automática.
   const sessionTrackingEnabled = open && !demoMode;
+  const sessionIdRef = useRef<string>("");
+  const hasDraftContent = !!draft.lastSavedAt;
   useEffect(() => {
-    if (!sessionTrackingEnabled) return;
-    saveManualAssessmentSession({
-      professionalId,
-      clinicId: clinicId ?? null,
-      patientName,
-      patientEmail: patientEmail ?? null,
-      editAssessmentId: editAssessment?.id ?? null,
-      userId: user?.id ?? null,
-      openedAt: Date.now(),
-    });
-    // Refresh marker periodically and on visibility change so TTL stays fresh.
+    if (!sessionTrackingEnabled) {
+      sessionIdRef.current = "";
+      return;
+    }
+    if (!sessionIdRef.current) sessionIdRef.current = newManualAssessmentSessionId();
     const refresh = () => saveManualAssessmentSession({
       professionalId,
       clinicId: clinicId ?? null,
       patientName,
       patientEmail: patientEmail ?? null,
+      patientId: patientId ?? null,
       editAssessmentId: editAssessment?.id ?? null,
       userId: user?.id ?? null,
       openedAt: Date.now(),
+      sessionId: sessionIdRef.current,
+      hasContent: hasDraftContent || !!editAssessment?.id,
     });
-    document.addEventListener("visibilitychange", refresh);
+    refresh();
     window.addEventListener("pagehide", refresh);
     window.addEventListener("beforeunload", refresh);
-    window.addEventListener("blur", refresh);
     // freeze é disparado pelo iOS antes de descarregar a aba — última
     // chance de gravar o marcador para que o Resumer reabra ao voltar.
     document.addEventListener("freeze", refresh);
     return () => {
-      document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("pagehide", refresh);
       window.removeEventListener("beforeunload", refresh);
-      window.removeEventListener("blur", refresh);
       document.removeEventListener("freeze", refresh);
     };
-  }, [sessionTrackingEnabled, professionalId, clinicId, patientName, patientEmail, editAssessment?.id, user?.id]);
+  }, [sessionTrackingEnabled, hasDraftContent, professionalId, clinicId, patientName, patientEmail, patientId, editAssessment?.id, user?.id]);
+
 
   // ── Screen Wake Lock (best-effort) ────────────────────────────────────────
   // Evita que a tela bloqueie enquanto o fisio está medindo ADM/força.
@@ -1067,7 +1071,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
   const confirmExit = () => {
     setConfirmExitOpen(false);
-    clearManualAssessmentSession();
+    closeManualAssessmentSession();
     resetForm();
     onOpenChange(false);
   };
@@ -1692,7 +1696,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
       toast({ title: isEditing ? (isPt ? "Avaliação atualizada!" : "Assessment updated!") : (isPt ? "Avaliação criada!" : "Assessment created!") });
       if (!isEditing) void draft.discard();
-      clearManualAssessmentSession();
+      closeManualAssessmentSession();
       if (savedId) onSaved?.(savedId);
 
       // Se há pendências (gerais ou de especialidade), gera o link único e

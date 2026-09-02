@@ -67,7 +67,7 @@ const AssessPatientPicker = ({ open, onOpenChange, professionalId, clinicId, isD
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
-  const [target, setTarget] = useState<{ name: string; email?: string } | null>(null);
+  const [target, setTarget] = useState<{ name: string; email?: string; id?: string } | null>(null);
 
   useEffect(() => {
     if (!open || isDemo || !professionalId) return;
@@ -139,7 +139,7 @@ const AssessPatientPicker = ({ open, onOpenChange, professionalId, clinicId, isD
   }, [patients, search]);
 
   const handlePick = (p: PatientRow) => {
-    setTarget({ name: p.full_name, email: p.email || undefined });
+    setTarget({ name: p.full_name, email: p.email || undefined, id: p.id });
     onOpenChange(false);
   };
 
@@ -243,6 +243,7 @@ const AssessPatientPicker = ({ open, onOpenChange, professionalId, clinicId, isD
           clinicId={clinicId || null}
           patientName={target.name}
           patientEmail={target.email}
+          patientId={target.id}
           demoMode={!!isDemo}
         />
       )}

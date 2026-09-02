@@ -436,6 +436,7 @@ export default function PatientListView(props: any) {
           clinicId={clinicId}
           patientName={manualAssessmentTarget.name}
           patientEmail={manualAssessmentTarget.email}
+          patientId={manualAssessmentTarget.id}
           demoMode={!!isDemo}
         />
       )}

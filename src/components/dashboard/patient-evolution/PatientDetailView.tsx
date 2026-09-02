@@ -1036,6 +1036,7 @@ export default function PatientDetailView(props: any) {
           clinicId={clinicId}
           patientName={patient.name}
           patientEmail={patient.email}
+          patientId={patient.id}
           editAssessment={resumeAssessment}
           demoMode={isDemo}
         />
@@ -1052,6 +1053,7 @@ export default function PatientDetailView(props: any) {
           clinicId={clinicId}
           patientName={patient.name}
           patientEmail={patient.email}
+          patientId={patient.id}
           prefillData={externalPrefill}
           demoMode={isDemo}
         />
@@ -1065,6 +1067,7 @@ export default function PatientDetailView(props: any) {
           clinicId={clinicId}
           patientName={patient.name}
           patientEmail={patient.email}
+
           demoMode={isDemo}
           onInterpreted={({ interpretation, sourceFile, sourceFiles }) => {
             // Constrói uma "linha de avaliação" no mesmo shape que o editAssessment

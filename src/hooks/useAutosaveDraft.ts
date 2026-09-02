@@ -30,7 +30,16 @@ interface UseAutosaveDraftOptions<T> {
   debounceMs?: number;
   /** Tamanho máx do payload serializado (default 200KB). Acima disso, só salva local. */
   maxPayloadBytes?: number;
+  /**
+   * Opcional: decide se um payload deve ser considerado "vazio". Quando
+   * omitido, o hook usa o primeiro estado visto após habilitar como linha de
+   * base — enquanto o estado for igual a ela, nada é gravado (nem local nem
+   * na nuvem) e nenhum rascunho é oferecido. Isso evita "rascunhos fantasma"
+   * criados só por abrir e fechar um modal.
+   */
+  isEmpty?: (state: T) => boolean;
 }
+
 
 interface DraftMeta {
   updatedAt: Date;
@@ -93,6 +102,7 @@ export function useAutosaveDraft<T>({
   enabled = true,
   debounceMs = 800,
   maxPayloadBytes = 200 * 1024,
+  isEmpty,
 }: UseAutosaveDraftOptions<T>): UseAutosaveDraftResult<T> {
   const [draftPayload, setDraftPayload] = useState<T | null>(null);
   const [draftMeta, setDraftMeta] = useState<DraftMeta | null>(null);
@@ -103,6 +113,41 @@ export function useAutosaveDraft<T>({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userIdRef = useRef<string | null>(null);
   const restoredRef = useRef(false);
+  // Linha de base: primeiro estado visto após habilitar. Enquanto o estado
+  // atual for idêntico a ela, o formulário está "intocado".
+  const baselineRef = useRef<string | null>(null);
+
+  const isBlank = useCallback(
+    (value: T, serialized?: string): boolean => {
+      if (isEmpty) {
+        try {
+          return isEmpty(value);
+        } catch {
+          /* cai no fallback abaixo */
+        }
+      }
+      const s = serialized ?? JSON.stringify(value);
+      return !!baselineRef.current && s === baselineRef.current;
+    },
+    [isEmpty],
+  );
+
+  // Captura/limpa a linha de base conforme o formulário é habilitado.
+  useEffect(() => {
+    if (!enabled || !scopeKey) {
+      baselineRef.current = null;
+      return;
+    }
+    if (baselineRef.current === null) {
+      try {
+        baselineRef.current = JSON.stringify(state);
+      } catch {
+        baselineRef.current = null;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, scopeKey]);
+
 
   // Carregar rascunho existente (local + nuvem) ao habilitar
   useEffect(() => {
@@ -144,7 +189,9 @@ export function useAutosaveDraft<T>({
       }
 
       if (cancelled) return;
-      if (best) {
+      // Ignora rascunhos sem conteúdo real (estado inicial gravado por versões
+      // antigas do app) — não faz sentido oferecer "restaurar" para eles.
+      if (best && !isBlank(best.payload)) {
         setDraftPayload(best.payload);
         setDraftMeta({ updatedAt: best.updatedAt, source: best.source });
       } else {
@@ -157,6 +204,7 @@ export function useAutosaveDraft<T>({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, formKey, scopeKey]);
 
   // Salvar (debounced) quando state muda
@@ -166,6 +214,9 @@ export function useAutosaveDraft<T>({
     const serialized = JSON.stringify(state);
     if (serialized === lastSerializedRef.current) return;
     if (serialized === "{}" || serialized === "null" || serialized === "undefined") return;
+    // Formulário intocado: não cria rascunho fantasma.
+    if (isBlank(state, serialized)) return;
+
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
@@ -209,18 +260,20 @@ export function useAutosaveDraft<T>({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [state, enabled, formKey, scopeKey, debounceMs, maxPayloadBytes]);
+  }, [state, enabled, formKey, scopeKey, debounceMs, maxPayloadBytes, isBlank]);
 
   // Flush imediato antes do app sumir
   useEffect(() => {
     if (!enabled || !scopeKey) return;
     const flush = () => {
       const serialized = JSON.stringify(state);
+      if (isBlank(state, serialized)) return;
       if (serialized && serialized !== lastSerializedRef.current && serialized !== "{}") {
         writeLocal(formKey, scopeKey, state);
         lastSerializedRef.current = serialized;
       }
     };
+
     window.addEventListener("beforeunload", flush);
     window.addEventListener("pagehide", flush);
     document.addEventListener("visibilitychange", flush);
@@ -229,7 +282,7 @@ export function useAutosaveDraft<T>({
       window.removeEventListener("pagehide", flush);
       document.removeEventListener("visibilitychange", flush);
     };
-  }, [enabled, formKey, scopeKey, state]);
+  }, [enabled, formKey, scopeKey, state, isBlank]);
 
   const restore = useCallback((): T | null => {
     restoredRef.current = true;
@@ -265,6 +318,8 @@ export function useAutosaveDraft<T>({
     }
     const serialized = JSON.stringify(state);
     if (!serialized || serialized === "{}" || serialized === "null" || serialized === "undefined") return;
+    if (isBlank(state, serialized)) return;
+
     lastSerializedRef.current = serialized;
     writeLocal(formKey, scopeKey, state);
     setLastSavedAt(new Date());
@@ -301,7 +356,7 @@ export function useAutosaveDraft<T>({
     } finally {
       setSaving(false);
     }
-  }, [formKey, scopeKey, state, maxPayloadBytes]);
+  }, [formKey, scopeKey, state, maxPayloadBytes, isBlank]);
 
   return {
     hasDraft: !!draftPayload && !restoredRef.current,
