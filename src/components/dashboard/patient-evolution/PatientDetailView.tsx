@@ -23,6 +23,8 @@ import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResult
 import RegionPainComparison from "../RegionPainComparison";
 import SessionNotesSection from "../SessionNotesSection";
 import VoiceNoteCard from "../VoiceNoteCard";
+import PeriodizationSection from "../periodization/PeriodizationSection";
+import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
 import PainMapView from "@/components/assessment/PainMapView";
 import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
