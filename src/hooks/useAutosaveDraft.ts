@@ -282,7 +282,7 @@ export function useAutosaveDraft<T>({
       window.removeEventListener("pagehide", flush);
       document.removeEventListener("visibilitychange", flush);
     };
-  }, [enabled, formKey, scopeKey, state]);
+  }, [enabled, formKey, scopeKey, state, isBlank]);
 
   const restore = useCallback((): T | null => {
     restoredRef.current = true;
@@ -356,7 +356,7 @@ export function useAutosaveDraft<T>({
     } finally {
       setSaving(false);
     }
-  }, [formKey, scopeKey, state, maxPayloadBytes]);
+  }, [formKey, scopeKey, state, maxPayloadBytes, isBlank]);
 
   return {
     hasDraft: !!draftPayload && !restoredRef.current,
