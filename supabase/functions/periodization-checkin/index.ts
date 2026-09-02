@@ -115,6 +115,27 @@ serve(async (req) => {
         .eq("session_date", todayISO());
       const reportedIds = new Set((reported || []).map((r: { session_id: string | null }) => r.session_id).filter(Boolean));
 
+      // Visão do microciclo para o preparador: toda a semana (seg→dom), todas as
+      // frentes, somente leitura. O paciente NÃO recebe isso — ver a semana
+      // inteira poderia enviesar o sRPE que ele vai relatar.
+      let weekSessions: Array<Record<string, unknown>> | undefined;
+      if (link.audience === "coach") {
+        const now = new Date();
+        const dow = (now.getUTCDay() + 6) % 7; // segunda = 0
+        const monday = new Date(now.getTime());
+        monday.setUTCDate(monday.getUTCDate() - dow);
+        const sunday = new Date(monday.getTime());
+        sunday.setUTCDate(sunday.getUTCDate() + 6);
+        const { data: week } = await supabase
+          .from("periodization_sessions")
+          .select("session_date, track, planned_duration_min, planned_rpe, title")
+          .eq("patient_id", patient.id)
+          .gte("session_date", monday.toISOString().slice(0, 10))
+          .lte("session_date", sunday.toISOString().slice(0, 10))
+          .order("session_date", { ascending: true });
+        weekSessions = (week || []) as Array<Record<string, unknown>>;
+      }
+
       return json({
         info: {
           patient_name: patient.full_name ?? null,
@@ -135,6 +156,7 @@ serve(async (req) => {
             title: s.title,
             already_reported: reportedIds.has(s.id as string),
           })),
+          week_sessions: weekSessions,
         },
       });
     }

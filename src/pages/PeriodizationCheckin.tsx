@@ -8,10 +8,120 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, Loader2, Activity, HeartPulse, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Loader2, Activity, HeartPulse, ShieldAlert, CalendarDays, ChevronDown } from "lucide-react";
 import { setSeo } from "@/lib/seo";
 import { CHECKIN_ITEMS, TRACK_LABEL } from "@/components/dashboard/periodization/scales";
-import { plannedLoad, trainingLoad } from "@/lib/periodization";
+import { plannedLoad, trainingLoad, loadLevelFromRpe } from "@/lib/periodization";
+
+const LEVEL_BADGE: Record<string, { label: string; className: string }> = {
+  rest: { label: "Descanso", className: "bg-muted text-muted-foreground" },
+  low: { label: "Leve", className: "bg-emerald-100 text-emerald-700" },
+  moderate: { label: "Moderada", className: "bg-amber-100 text-amber-700" },
+  high: { label: "Alta", className: "bg-red-100 text-red-700" },
+};
+
+const WEEK_DOW = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
+interface WeekSession {
+  session_date: string;
+  track: string;
+  planned_duration_min: number | null;
+  planned_rpe: number | null;
+  title: string | null;
+}
+
+/** Segunda-feira (UTC) da semana da data informada — mesma regra do MicroWeekGrid. */
+const mondayOfISO = (iso: string): string => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  const dow = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - dow);
+  return d.toISOString().slice(0, 10);
+};
+const addDaysISO = (iso: string, n: number): string => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+/**
+ * Visão somente leitura do microciclo para o preparador: ele vê como a semana
+ * está montada em todas as frentes antes de dosar a própria sessão. Não edita.
+ */
+const CoachWeekOverview = ({ sessions, today }: { sessions: WeekSession[]; today: string }) => {
+  const [open, setOpen] = useState(true);
+  const monday = mondayOfISO(today);
+  const days = Array.from({ length: 7 }, (_, i) => addDaysISO(monday, i));
+  const byDate = new Map<string, WeekSession[]>();
+  sessions.forEach((s) => {
+    const key = String(s.session_date).slice(0, 10);
+    byDate.set(key, [...(byDate.get(key) || []), s]);
+  });
+
+  return (
+    <div className="rounded-xl border border-border bg-muted/30">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left"
+      >
+        <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <CalendarDays className="h-4 w-4 text-primary" />
+          Semana planejada (visão geral)
+        </span>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="px-3 pb-3 space-y-2">
+          <p className="text-[11px] text-muted-foreground">
+            Veja como a semana está montada em todas as frentes para dosar melhor a sua sessão. Apenas visualização.
+          </p>
+          <div className="space-y-1.5">
+            {days.map((day, i) => {
+              const items = byDate.get(day) || [];
+              const isToday = day === today;
+              const label = new Date(`${day}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+              return (
+                <div
+                  key={day}
+                  className={`rounded-lg border px-2.5 py-1.5 ${isToday ? "border-primary/50 bg-primary/5" : "border-border bg-background"}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-foreground whitespace-nowrap shrink-0">
+                      {WEEK_DOW[i]} {label}
+                    </span>
+                    {isToday && <Badge variant="secondary" className="text-[9px] px-1.5 py-0">hoje</Badge>}
+                  </div>
+                  {items.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground/70 mt-0.5">Sem sessão planejada</p>
+                  ) : (
+                    <div className="mt-1 space-y-1">
+                      {items.map((s, j) => {
+                        const level = LEVEL_BADGE[loadLevelFromRpe(s.planned_rpe, s.planned_duration_min)] || LEVEL_BADGE.rest;
+                        return (
+                          <div key={j} className="flex items-center justify-between gap-2 text-[11px]">
+                            <span className="text-foreground">
+                              <strong>{TRACK_LABEL[s.track] || s.track}</strong>
+                              {s.planned_duration_min ? ` · ${s.planned_duration_min} min` : ""}
+                              {s.planned_rpe !== null && s.planned_rpe !== undefined ? ` · alvo ${s.planned_rpe}/10` : ""}
+                              {s.title ? ` · ${s.title}` : ""}
+                            </span>
+                            <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${level.className}`}>
+                              {level.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 type State = "loading" | "ready" | "error";
 
@@ -32,6 +142,7 @@ interface Info {
     title: string | null;
     already_reported?: boolean;
   }>;
+  week_sessions?: WeekSession[];
 }
 
 
@@ -160,6 +271,9 @@ const PeriodizationCheckin = () => {
     setPlanDone(true);
     setPlanMin("");
     setPlanTitle("");
+    // Atualiza a visão semanal com a sessão recém-planejada.
+    const refreshed = await fetchInfo();
+    if (refreshed) setInfo(refreshed);
   };
 
   const pickSession = (t: NonNullable<Info["today_targets"]>[number]) => {
@@ -322,6 +436,9 @@ const PeriodizationCheckin = () => {
 
 
                 <TabsContent value="srpe" className="space-y-4 pt-4">
+                  {isCoach && info?.week_sessions && (
+                    <CoachWeekOverview sessions={info.week_sessions} today={info.today} />
+                  )}
                   {isCoach ? (
                     planDone ? (
                       <div className="text-center py-6 space-y-2">
