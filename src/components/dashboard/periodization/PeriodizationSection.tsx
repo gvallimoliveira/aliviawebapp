@@ -113,13 +113,16 @@ const PeriodizationSection = ({
     }
   };
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!patientId || isDemo) { setLoading(false); return; }
 
-    setLoading(true);
+    // Recarregar depois de um registro não deve colapsar a seção em um spinner:
+    // o documento encurta e o navegador joga a página para o topo.
+    if (!opts?.silent) setLoading(true);
     const since = new Date();
     since.setUTCDate(since.getUTCDate() - 90);
     const sinceISO = since.toISOString().slice(0, 10);
+
 
     const [activePlan, srpe, checks, linkRows] = await Promise.all([
       fetchActivePlan(patientId),
