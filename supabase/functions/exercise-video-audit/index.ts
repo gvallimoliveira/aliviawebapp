@@ -62,13 +62,75 @@ function tokens(name: string): string[] {
     .filter((t) => t.length >= 4 && !STOP_WORDS.has(t));
 }
 
-/** 0..1 share of meaningful exercise-name tokens present in the video title */
-function titleMatch(name: string, title: string): number {
+const SYNONYMS: Record<string, string[]> = {
+  agachamento: ["squat"],
+  joelho: ["knee", "leg"],
+  quadril: ["hip"],
+  ombro: ["shoulder", "delt"],
+  cotovelo: ["elbow"],
+  punho: ["wrist"],
+  tornozelo: ["ankle"],
+  panturrilha: ["calf"],
+  gluteo: ["glute"],
+  ponte: ["bridge"],
+  prancha: ["plank"],
+  halteres: ["dumbbell"],
+  haltere: ["dumbbell"],
+  barra: ["barbell", "bar"],
+  elastico: ["band"],
+  elevacao: ["raise", "elevation"],
+  extensao: ["extension"],
+  flexao: ["flexion", "curl", "push"],
+  rotacao: ["rotation"],
+  abducao: ["abduction"],
+  aducao: ["adduction"],
+  alongamento: ["stretch"],
+  fortalecimento: ["strength"],
+  remada: ["row"],
+  puxada: ["pulldown", "pull"],
+  desenvolvimento: ["press"],
+  supino: ["bench press"],
+  terra: ["deadlift"],
+  afundo: ["lunge"],
+  cervical: ["neck", "cervical"],
+  lombar: ["lumbar", "back", "low back"],
+  escapular: ["scapular"],
+  isquiotibiais: ["hamstring"],
+  quadriceps: ["quadriceps", "quad"],
+  frontal: ["front"],
+  lateral: ["lateral", "side"],
+  sentado: ["seated", "sitting"],
+  deitado: ["lying"],
+  unipodal: ["single leg", "single-leg"],
+  equilibrio: ["balance"],
+  excentrica: ["eccentric"],
+  excentrico: ["eccentric"],
+  isometrico: ["isometric"],
+  isometrica: ["isometric"],
+  plantar: ["plantar", "foot"],
+  antebraco: ["forearm"],
+  panturrilhas: ["calf"],
+};
+
+/** 0..1 share of meaningful name tokens present in the video title */
+function matchScore(name: string, title: string): number {
   const toks = tokens(name);
   if (toks.length === 0) return 1;
   const t = stripAccents(title);
-  const hits = toks.filter((tok) => t.includes(tok.slice(0, 6))).length;
+  const hits = toks.filter((tok) => {
+    if (t.includes(tok.slice(0, 6))) return true;
+    const syns = SYNONYMS[tok] || [];
+    return syns.some((s) => t.includes(s));
+  }).length;
   return hits / toks.length;
+}
+
+/** Best score across the PT and EN names of the exercise */
+function titleMatch(namePt: string, nameEn: string, title: string): number {
+  return Math.max(
+    matchScore(namePt || "", title),
+    matchScore(nameEn || "", title),
+  );
 }
 
 type OEmbed = { ok: boolean; title?: string; author?: string };
@@ -139,7 +201,7 @@ Deno.serve(async (req: Request) => {
   try {
     const { data: exercises, error } = await supabase
       .from("exercise_library")
-      .select("id, name_pt, video_url")
+      .select("id, name_pt, name_en, video_url")
       .not("video_url", "is", null);
     if (error) throw error;
 
@@ -191,7 +253,7 @@ Deno.serve(async (req: Request) => {
           return;
         }
 
-        const score = titleMatch(ex.name_pt || "", res.title || "");
+        const score = titleMatch(ex.name_pt || "", ex.name_en || "", res.title || "");
         if (score < 0.34) {
           mismatch++;
           issues.push({
