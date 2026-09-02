@@ -2287,6 +2287,7 @@ export type Database = {
           billing: boolean
           care_plan: boolean
           created_at: string
+          load_alerts: boolean
           messages: boolean
           my_assessment: boolean
           payments: boolean
@@ -2300,6 +2301,7 @@ export type Database = {
           billing?: boolean
           care_plan?: boolean
           created_at?: string
+          load_alerts?: boolean
           messages?: boolean
           my_assessment?: boolean
           payments?: boolean
@@ -2313,6 +2315,7 @@ export type Database = {
           billing?: boolean
           care_plan?: boolean
           created_at?: string
+          load_alerts?: boolean
           messages?: boolean
           my_assessment?: boolean
           payments?: boolean
@@ -5069,6 +5072,22 @@ export type Database = {
           professional_id: string
           reasons: Json
           score: number
+        }[]
+      }
+      get_patient_load_alerts: {
+        Args: { _clinic_id?: string; _professional_id?: string }
+        Returns: {
+          acute_load: number
+          acwr: number
+          chronic_load: number
+          last_checkin_date: string
+          last_srpe_date: string
+          level: string
+          patient_id: string
+          patient_name: string
+          readiness_baseline: number
+          readiness_current: number
+          reasons: Json
         }[]
       }
       get_patient_professionals: {

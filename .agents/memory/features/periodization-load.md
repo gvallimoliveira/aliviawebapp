@@ -9,5 +9,6 @@ type: feature
 - Fases padrão do macrociclo espelham o STEPS: Cicatrização tecidual (3s) → Hipertrofia e força (8s) → Potência e transição (6s) → Retorno ao esporte (4s).
 - Proibido superfície instável (Bosu) nas recomendações; preferir solo firme, perturbação por carga/elástico e redução da base de apoio.
 - Link público por token via Edge Function `periodization-checkin` (rota `/carga/:token`), audiências `patient` e `coach`; independe de HEP — paciente presencial usa link simples ou registro manual pelo profissional.
-- Alertas push quando ACWR > 1,5, prontidão baixa ou queda abrupta de prontidão.
+- Alertas push (sem e-mail) quando ACWR > 1,3/1,5, prontidão baixa (<40) ou queda ≥20 pts: disparados por `periodization-checkin` via `notify-user` com `x-internal-secret`, categoria `load_alerts`, kind `load_alert`, 1 alerta por paciente/dia por destinatário (dedupe em `push_delivery_log`); destinatários = profissional responsável + membros ativos da clínica; toggle "Alertas de carga e prontidão" em Minha Conta (`notification_preferences.load_alerts`).
+- Insights: card "Carga e prontidão" (`LoadReadinessCard.tsx`) na aba Insights (PRO e clínica), alimentado pela RPC `get_patient_load_alerts(_clinic_id,_professional_id)` — cálculo no banco, sem IA.
 - Se o paciente ainda não tem registro em `patients`, a seção resolve por e-mail/nome e cria sob demanda ("Ativar para este paciente").

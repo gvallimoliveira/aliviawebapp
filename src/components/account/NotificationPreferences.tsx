@@ -11,6 +11,7 @@ export type NotificationCategory =
   | "messages"
   | "red_flags"
   | "questionnaires"
+  | "load_alerts"
   | "billing"
   | "care_plan"
   | "my_assessment"
@@ -23,6 +24,7 @@ const DEFAULTS: Prefs = {
   messages: true,
   red_flags: true,
   questionnaires: true,
+  load_alerts: true,
   billing: true,
   care_plan: true,
   my_assessment: true,
@@ -54,6 +56,10 @@ const COPY: Record<string, Copy> = {
       title: "Questionários e exercícios",
       desc: "Questionário pendente respondido ou exercícios do HEP concluídos.",
     },
+    load_alerts: {
+      title: "Alertas de carga e prontidão",
+      desc: "Carga de treino fora da faixa segura (ACWR) ou queda de prontidão do paciente.",
+    },
     billing: {
       title: "Assinatura e cobrança",
       desc: "Renovação confirmada, cobrança recusada ou plano prestes a vencer.",
@@ -83,6 +89,10 @@ const COPY: Record<string, Copy> = {
     questionnaires: {
       title: "Questionnaires and exercises",
       desc: "Pending questionnaire answered or home exercises completed.",
+    },
+    load_alerts: {
+      title: "Load and readiness alerts",
+      desc: "Training load outside the safe range (ACWR) or a drop in patient readiness.",
     },
     billing: {
       title: "Subscription and billing",
@@ -114,6 +124,10 @@ const COPY: Record<string, Copy> = {
       title: "Cuestionarios y ejercicios",
       desc: "Cuestionario pendiente respondido o ejercicios del HEP completados.",
     },
+    load_alerts: {
+      title: "Alertas de carga y disposición",
+      desc: "Carga de entrenamiento fuera del rango seguro (ACWR) o caída de la disposición del paciente.",
+    },
     billing: {
       title: "Suscripción y cobro",
       desc: "Renovación confirmada, cobro rechazado o plan por vencer.",
@@ -139,6 +153,7 @@ const PRO_ORDER: NotificationCategory[] = [
   "messages",
   "red_flags",
   "questionnaires",
+  "load_alerts",
   "billing",
 ];
 

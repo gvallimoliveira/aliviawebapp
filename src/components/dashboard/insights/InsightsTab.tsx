@@ -6,6 +6,8 @@ import PatientAdherenceCard from "./PatientAdherenceCard";
 import BenchmarkCard from "./BenchmarkCard";
 import RevenueGoalCard from "./RevenueGoalCard";
 import OccupancyVsNoShowCard from "./OccupancyVsNoShowCard";
+import LoadReadinessCard from "./LoadReadinessCard";
+import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
 
 interface Props {
   /** Set when in clinic mode (owner/secretary). */
@@ -44,6 +46,12 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false }: Props
 
       {/* Occupancy vs No-show — both modes */}
       <OccupancyVsNoShowCard clinicId={clinicId} professionalId={professionalId} />
+
+      {/* Carga e prontidão (periodização) — ambos os modos */}
+      {ENABLE_PERIODIZATION && (
+        <LoadReadinessCard clinicId={clinicId} professionalId={professionalId} />
+      )}
+
 
       {/* Clinic-only: adherence + benchmark */}
       {fullClinicMode && clinicId && (

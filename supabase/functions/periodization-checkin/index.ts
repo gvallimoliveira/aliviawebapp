@@ -245,27 +245,67 @@ async function maybeAlert(
 
     const reasons: string[] = [];
     if (ratio !== null && ratio > 1.5) reasons.push(`ACWR ${ratio.toFixed(2)}`);
-    if (current !== null && baseline !== null && baseline - current >= 20) reasons.push("queda de prontidão");
-    if (current !== null && current < 40) reasons.push("prontidão baixa");
+    else if (ratio !== null && ratio > 1.3) reasons.push(`ACWR em atenção (${ratio.toFixed(2)})`);
+    if (current !== null && baseline !== null && baseline - current >= 20) {
+      reasons.push(`queda de prontidão (${baseline} → ${current})`);
+    }
+    if (current !== null && current < 40) reasons.push(`prontidão baixa (${current}/100)`);
     if (!reasons.length) return;
 
-    if (!ctx.proUserId && !ctx.clinicId) return;
-    await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push-notification`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-      },
-      body: JSON.stringify({
-        user_id: ctx.proUserId ?? undefined,
-        clinic_id: ctx.clinicId ?? undefined,
-        title: "⚠️ Alerta de carga",
-        body: `${ctx.patientName}: ${reasons.join(" · ")}. Considere ajustar a carga.`,
-        url: `/dashboard`,
-        tag: `load-alert-${ctx.patientId}`,
-        category: "clinical",
-      }),
-    });
+    // Destinatários: profissional responsável + equipe ativa da clínica.
+    const recipients = new Set<string>();
+    if (ctx.proUserId) recipients.add(ctx.proUserId);
+    if (ctx.clinicId) {
+      const { data: members } = await supabase
+        .from("clinic_members")
+        .select("user_id, status")
+        .eq("clinic_id", ctx.clinicId)
+        .eq("status", "active");
+      (members || []).forEach((m: { user_id: string | null }) => {
+        if (m.user_id) recipients.add(m.user_id);
+      });
+    }
+    if (!recipients.size) return;
+
+    // Um alerta por paciente por dia, por destinatário (evita spam de push).
+    const dayStart = new Date();
+    dayStart.setUTCHours(0, 0, 0, 0);
+    const { data: alreadySent } = await supabase
+      .from("push_delivery_log")
+      .select("user_id")
+      .eq("kind", "load_alert")
+      .eq("ref", ctx.patientId)
+      .gte("created_at", dayStart.toISOString());
+    const sentToday = new Set((alreadySent || []).map((r: { user_id: string }) => r.user_id));
+
+    const internalSecret = Deno.env.get("INTERNAL_ALERT_SECRET") || "";
+    const title = "⚠️ Alerta de carga e prontidão";
+    const bodyText = `${ctx.patientName}: ${reasons.join(" · ")}. Considere ajustar a carga.`;
+
+    await Promise.all(
+      Array.from(recipients)
+        .filter((uid) => !sentToday.has(uid))
+        .map((uid) =>
+          fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-user`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-internal-secret": internalSecret,
+              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({
+              user_id: uid,
+              title,
+              body: bodyText,
+              url: "/dashboard?tab=insights",
+              tag: `load-alert-${ctx.patientId}`,
+              kind: "load_alert",
+              category: "load_alerts",
+              ref: ctx.patientId,
+            }),
+          }).catch((e) => console.warn("notify-user failed", uid, String(e))),
+        ),
+    );
   } catch (e) {
     console.warn("maybeAlert failed", e);
   }

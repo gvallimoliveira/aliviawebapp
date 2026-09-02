@@ -241,6 +241,7 @@ Deno.serve(async (req) => {
       "messages",
       "red_flags",
       "questionnaires",
+      "load_alerts",
       "billing",
       "care_plan",
       "my_assessment",
