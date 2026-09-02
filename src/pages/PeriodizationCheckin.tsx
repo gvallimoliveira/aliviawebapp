@@ -52,6 +52,10 @@ const PeriodizationCheckin = () => {
   const [sessionDate, setSessionDate] = useState("");
   const [savingSrpe, setSavingSrpe] = useState(false);
   const [srpeDone, setSrpeDone] = useState(false);
+  // Sessão planejada do microciclo escolhida pelo paciente (pré-preenchimento).
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [freeMode, setFreeMode] = useState(false);
+
 
   // Prescrição de dose (link do treinador/preparador)
   const [planMin, setPlanMin] = useState("");
