@@ -72,21 +72,42 @@ const PeriodizationCheckin = () => {
     });
   }, []);
 
+  // Pré-seleciona a única sessão planejada ainda não relatada do dia.
+  const applyAutoSelection = (loaded: Info) => {
+    if (loaded.audience === "coach") return;
+    const pending = (loaded.today_targets || []).filter((t) => !t.already_reported);
+    if (pending.length === 1) {
+      setSelectedSessionId(pending[0].id);
+      setTrack(pending[0].track);
+      setDuration(pending[0].planned_duration_min ? String(pending[0].planned_duration_min) : "");
+      setFreeMode(false);
+    } else {
+      setSelectedSessionId(null);
+      setFreeMode(pending.length === 0);
+    }
+  };
+
+  const fetchInfo = async (): Promise<Info | null> => {
+    const { data, error } = await supabase.functions.invoke("periodization-checkin", {
+      body: { action: "load", token },
+    });
+    if (error || !data?.info) return null;
+    return data.info as Info;
+  };
+
   useEffect(() => {
     (async () => {
       if (!token) { setState("error"); setErrorMsg("Link inválido."); return; }
-      const { data, error } = await supabase.functions.invoke("periodization-checkin", {
-        body: { action: "load", token },
-      });
-      if (error || !data?.info) {
+      const loaded = await fetchInfo();
+      if (!loaded) {
         setState("error");
         setErrorMsg("Não encontramos este link. Ele pode ter sido desativado pelo profissional.");
         return;
       }
-      const loaded = data.info as Info;
       setInfo(loaded);
       setSessionDate(loaded.today);
       if (loaded.audience === "coach") setTrack("gym");
+      applyAutoSelection(loaded);
       if (loaded.today_checkin) {
         const preset: Record<string, number> = {};
         CHECKIN_ITEMS.forEach((item) => {
@@ -99,6 +120,7 @@ const PeriodizationCheckin = () => {
 
     })();
   }, [token]);
+
 
   const submitCheckin = async () => {
     if (Object.keys(values).length === 0) {
