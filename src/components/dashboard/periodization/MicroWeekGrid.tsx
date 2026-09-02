@@ -137,6 +137,18 @@ const MicroWeekGrid = ({
             </Button>
           </div>
         </div>
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-xl gap-1 h-7 text-[11px]"
+            disabled={exporting}
+            onClick={exportWeekPdf}
+          >
+            {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+            PDF da semana
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
