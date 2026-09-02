@@ -30,8 +30,10 @@ interface Info {
     planned_duration_min: number | null;
     planned_rpe: number | null;
     title: string | null;
+    already_reported?: boolean;
   }>;
 }
+
 
 const PeriodizationCheckin = () => {
   const { token } = useParams<{ token: string }>();
@@ -50,6 +52,10 @@ const PeriodizationCheckin = () => {
   const [sessionDate, setSessionDate] = useState("");
   const [savingSrpe, setSavingSrpe] = useState(false);
   const [srpeDone, setSrpeDone] = useState(false);
+  // Sessão planejada do microciclo escolhida pelo paciente (pré-preenchimento).
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [freeMode, setFreeMode] = useState(false);
+
 
   // Prescrição de dose (link do treinador/preparador)
   const [planMin, setPlanMin] = useState("");
@@ -66,21 +72,42 @@ const PeriodizationCheckin = () => {
     });
   }, []);
 
+  // Pré-seleciona a única sessão planejada ainda não relatada do dia.
+  const applyAutoSelection = (loaded: Info) => {
+    if (loaded.audience === "coach") return;
+    const pending = (loaded.today_targets || []).filter((t) => !t.already_reported);
+    if (pending.length === 1) {
+      setSelectedSessionId(pending[0].id);
+      setTrack(pending[0].track);
+      setDuration(pending[0].planned_duration_min ? String(pending[0].planned_duration_min) : "");
+      setFreeMode(false);
+    } else {
+      setSelectedSessionId(null);
+      setFreeMode(pending.length === 0);
+    }
+  };
+
+  const fetchInfo = async (): Promise<Info | null> => {
+    const { data, error } = await supabase.functions.invoke("periodization-checkin", {
+      body: { action: "load", token },
+    });
+    if (error || !data?.info) return null;
+    return data.info as Info;
+  };
+
   useEffect(() => {
     (async () => {
       if (!token) { setState("error"); setErrorMsg("Link inválido."); return; }
-      const { data, error } = await supabase.functions.invoke("periodization-checkin", {
-        body: { action: "load", token },
-      });
-      if (error || !data?.info) {
+      const loaded = await fetchInfo();
+      if (!loaded) {
         setState("error");
         setErrorMsg("Não encontramos este link. Ele pode ter sido desativado pelo profissional.");
         return;
       }
-      const loaded = data.info as Info;
       setInfo(loaded);
       setSessionDate(loaded.today);
       if (loaded.audience === "coach") setTrack("gym");
+      applyAutoSelection(loaded);
       if (loaded.today_checkin) {
         const preset: Record<string, number> = {};
         CHECKIN_ITEMS.forEach((item) => {
@@ -93,6 +120,7 @@ const PeriodizationCheckin = () => {
 
     })();
   }, [token]);
+
 
   const submitCheckin = async () => {
     if (Object.keys(values).length === 0) {
@@ -134,16 +162,39 @@ const PeriodizationCheckin = () => {
     setPlanTitle("");
   };
 
+  const pickSession = (t: NonNullable<Info["today_targets"]>[number]) => {
+    if (t.already_reported) return;
+    setSelectedSessionId(t.id);
+    setTrack(t.track);
+    setDuration(t.planned_duration_min ? String(t.planned_duration_min) : "");
+    setFreeMode(false);
+    setErrorMsg("");
+  };
+
   const submitSrpe = async () => {
+    const pendingTargets = (info?.today_targets || []).filter((t) => !t.already_reported);
+    if (!freeMode && pendingTargets.length > 0 && !selectedSessionId) {
+      setErrorMsg("Escolha qual sessão de hoje você fez.");
+      return;
+    }
     const min = Number(duration);
     if (!Number.isFinite(min) || min <= 0) { setErrorMsg("Informe a duração da sessão em minutos."); return; }
+
     setErrorMsg("");
     setSavingSrpe(true);
     const { data, error } = await supabase.functions.invoke("periodization-checkin", {
       body: {
         action: "submit_srpe",
         token,
-        entry: { session_date: sessionDate || info?.today, track, duration_min: min, rpe, notes: srpeNotes },
+        entry: {
+          session_date: sessionDate || info?.today,
+          track,
+          duration_min: min,
+          rpe,
+          notes: srpeNotes,
+          // Vínculo direto com a sessão planejada, quando o paciente confirmou uma.
+          session_id: freeMode ? null : selectedSessionId,
+        },
       },
     });
     setSavingSrpe(false);
@@ -151,7 +202,16 @@ const PeriodizationCheckin = () => {
     setSrpeDone(true);
     setDuration("");
     setSrpeNotes("");
+    setRpe(5);
+    setSelectedSessionId(null);
+    // Recarrega os alvos para marcar a sessão como já relatada.
+    const refreshed = await fetchInfo();
+    if (refreshed) {
+      setInfo(refreshed);
+      applyAutoSelection(refreshed);
+    }
   };
+
 
   const isCoach = info?.audience === "coach";
   const todayTargets = info?.today_targets || [];
@@ -358,45 +418,97 @@ const PeriodizationCheckin = () => {
                     </div>
                   ) : (
                     <>
-                      <div className="space-y-1.5">
-                        <span className="text-sm font-medium text-foreground">Tipo de sessão</span>
-                        <div className="grid grid-cols-3 gap-2">
-                          {Object.entries(TRACK_LABEL).map(([key, label]) => (
-                            <Button
-                              key={key}
-                              type="button"
-                              variant={track === key ? "default" : "outline"}
-                              size="sm"
-                              className="text-xs rounded-xl"
-                              onClick={() => setTrack(key)}
-                            >
-                              {label}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {todayTargets.length > 0 && (
-                        <div className="rounded-xl border border-border bg-muted/40 px-3 py-2 space-y-1">
-                          <p className="text-[11px] font-medium text-foreground">Planejado para hoje</p>
-                          {todayTargets.map((t) => (
-                            <p key={t.id} className="text-[11px] text-muted-foreground">
-                              {TRACK_LABEL[t.track] || t.track}
-                              {t.planned_duration_min ? ` · ~${t.planned_duration_min} min` : ""}
-                              {t.planned_rpe !== null && t.planned_rpe !== undefined ? ` · esforço alvo ${t.planned_rpe}/10` : ""}
-                              {t.title ? ` · ${t.title}` : ""}
-                            </p>
-                          ))}
+                      {todayTargets.length > 0 && !freeMode ? (
+                        <div className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Suas sessões de hoje</span>
+                          <div className="space-y-2">
+                            {todayTargets.map((t) => {
+                              const done = !!t.already_reported;
+                              const active = selectedSessionId === t.id && !done;
+                              return (
+                                <button
+                                  key={t.id}
+                                  type="button"
+                                  onClick={() => pickSession(t)}
+                                  disabled={done}
+                                  className={`w-full text-left rounded-xl border px-3 py-2 transition ${
+                                    active
+                                      ? "border-primary bg-primary/5"
+                                      : done
+                                        ? "border-border bg-muted/40 opacity-70 cursor-default"
+                                        : "border-border hover:border-primary/60"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-medium text-foreground">
+                                      {TRACK_LABEL[t.track] || t.track}
+                                    </span>
+                                    {done ? (
+                                      <Badge variant="secondary" className="text-[10px]">Já registrada</Badge>
+                                    ) : active ? (
+                                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                                    ) : null}
+                                  </div>
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {t.planned_duration_min ? `~${t.planned_duration_min} min` : "duração livre"}
+                                    {t.planned_rpe !== null && t.planned_rpe !== undefined
+                                      ? ` · esforço alvo ${t.planned_rpe}/10`
+                                      : ""}
+                                    {t.title ? ` · ${t.title}` : ""}
+                                  </p>
+                                </button>
+                              );
+                            })}
+                          </div>
                           <p className="text-[10px] text-muted-foreground">
                             Responda pelo que você realmente sentiu — não precisa bater com o alvo.
                           </p>
+                          <button
+                            type="button"
+                            onClick={() => { setFreeMode(true); setSelectedSessionId(null); setDuration(""); }}
+                            className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-primary"
+                          >
+                            Fiz outra atividade não planejada
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <span className="text-sm font-medium text-foreground">Tipo de sessão</span>
+                          <div className="grid grid-cols-3 gap-2">
+                            {Object.entries(TRACK_LABEL).map(([key, label]) => (
+                              <Button
+                                key={key}
+                                type="button"
+                                variant={track === key ? "default" : "outline"}
+                                size="sm"
+                                className="text-xs rounded-xl"
+                                onClick={() => setTrack(key)}
+                              >
+                                {label}
+                              </Button>
+                            ))}
+                          </div>
+                          {todayTargets.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => { setFreeMode(false); applyAutoSelection(info!); }}
+                              className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-primary"
+                            >
+                              Voltar para as sessões planejadas
+                            </button>
+                          )}
                         </div>
                       )}
 
 
 
+
+
                       <div className="space-y-1.5">
-                        <span className="text-sm font-medium text-foreground">Duração (minutos)</span>
+                        <span className="text-sm font-medium text-foreground">
+                          Duração real (minutos){!freeMode && selectedSessionId ? " — ajuste se foi diferente" : ""}
+                        </span>
+
                         <Input
                           type="number"
                           inputMode="numeric"
