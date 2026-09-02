@@ -260,7 +260,7 @@ export function useAutosaveDraft<T>({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [state, enabled, formKey, scopeKey, debounceMs, maxPayloadBytes]);
+  }, [state, enabled, formKey, scopeKey, debounceMs, maxPayloadBytes, isBlank]);
 
   // Flush imediato antes do app sumir
   useEffect(() => {
