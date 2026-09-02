@@ -162,6 +162,18 @@ const PeriodizationSection = ({
 
   useEffect(() => { load(); }, [load]);
 
+  // Atualização automática: quando o paciente/preparador registra check-in ou
+  // sessão (inclusive pelo link público), a seção recarrega em silêncio.
+  useEffect(() => {
+    if (!patientId || isDemo) return;
+    const channel = supabase
+      .channel(`periodization:${patientId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "readiness_checkins", filter: `patient_id=eq.${patientId}` }, () => load({ silent: true }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "srpe_entries", filter: `patient_id=eq.${patientId}` }, () => load({ silent: true }))
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [patientId, isDemo, load]);
+
   /** Recarrega preservando a rolagem (sem spinner de página inteira). */
   const refresh = useCallback(() => { void load({ silent: true }); }, [load]);
 
