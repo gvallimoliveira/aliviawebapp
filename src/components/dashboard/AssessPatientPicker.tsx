@@ -243,6 +243,7 @@ const AssessPatientPicker = ({ open, onOpenChange, professionalId, clinicId, isD
           clinicId={clinicId || null}
           patientName={target.name}
           patientEmail={target.email}
+          patientId={target.id}
           demoMode={!!isDemo}
         />
       )}
