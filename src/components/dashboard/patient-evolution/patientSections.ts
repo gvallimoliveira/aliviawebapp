@@ -14,6 +14,7 @@ import {
   TrendingUp,
   User,
   Map,
+  Gauge,
   MessageSquarePlus,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
