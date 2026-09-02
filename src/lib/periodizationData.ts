@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { CLEARANCE_TEMPLATE, MACRO_PHASES, MESO_BLOCKS } from "@/lib/periodization";
+import { CLEARANCE_TEMPLATE, MACRO_PHASES } from "@/lib/periodization";
 
 export interface PeriodizationPlan {
   id: string;
@@ -186,29 +186,11 @@ export async function createPlanWithTemplate(opts: {
       sort_order: i,
     };
   });
-  const { data: macroRows } = await supabase.from("periodization_cycles").insert(macros).select("*");
+  await supabase.from("periodization_cycles").insert(macros);
 
-  // Mesociclos do primeiro macrociclo, 3 semanas cada.
-  const first = (macroRows || [])[0];
-  if (first) {
-    let mCursor = first.start_date as string;
-    const mesos = MESO_BLOCKS.map((block, i) => {
-      const startDate = mCursor;
-      const endDate = addDays(mCursor, 20);
-      mCursor = addDays(endDate, 1);
-      return {
-        plan_id: plan.id,
-        parent_id: first.id,
-        level: "meso",
-        name: block.name,
-        goal: block.goal,
-        start_date: startDate,
-        end_date: endDate,
-        sort_order: i,
-      };
-    });
-    await supabase.from("periodization_cycles").insert(mesos);
-  }
+  // Mesociclos (Acumulação/Transmutação/Realização) não são mais criados:
+  // o macrociclo mostra apenas a janela de tempo sugerida de cada fase do STEPS.
+
 
   await supabase.from("clearance_items").insert(
     CLEARANCE_TEMPLATE.map((item, i) => ({

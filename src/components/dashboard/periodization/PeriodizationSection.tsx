@@ -301,7 +301,7 @@ const PeriodizationSection = ({
           <PeriodizationCollapsible title="Microciclo da semana" icon={<Plus className="h-4 w-4 text-primary" />}>
             <MicroWeekGrid planId={plan.id} patientId={patientId} sessions={sessions} entries={entries} onChanged={refresh} readOnly={readOnly} />
           </PeriodizationCollapsible>
-          <PeriodizationCollapsible title="Macrociclo e mesociclos" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
+          <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
             <MacroTimeline cycles={cycles} />
           </PeriodizationCollapsible>
         </>

@@ -18,7 +18,6 @@ const isCurrent = (c: PeriodizationCycle) => {
 
 const MacroTimeline = ({ cycles }: Props) => {
   const macros = cycles.filter((c) => c.level === "macro");
-  const mesos = cycles.filter((c) => c.level === "meso");
   if (macros.length === 0) return null;
 
   return (
@@ -26,7 +25,7 @@ const MacroTimeline = ({ cycles }: Props) => {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <CalendarRange className="h-4 w-4 text-primary" />
-          Macrociclo e mesociclos
+          Macrociclo
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -49,25 +48,12 @@ const MacroTimeline = ({ cycles }: Props) => {
               <p className="text-[10px] text-muted-foreground mt-1">
                 {fmt(m.start_date)} → {fmt(m.end_date)}
               </p>
-              {mesos.filter((x) => x.parent_id === m.id).length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {mesos
-                    .filter((x) => x.parent_id === m.id)
-                    .map((x) => (
-                      <div key={x.id} className="rounded-lg bg-muted/60 px-2 py-1">
-                        <p className="text-[11px] font-medium text-foreground">{x.name}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {fmt(x.start_date)} → {fmt(x.end_date)}
-                        </p>
-                      </div>
-                    ))}
-                </div>
-              )}
             </div>
           ))}
         </div>
         <p className="text-[10px] text-muted-foreground">
-          Fases herdadas do STEPS. As fases de potência e retorno ao esporte são opcionais — mantenha apenas se o objetivo do paciente exigir. Ajuste datas e objetivos conforme a evolução.
+          Janelas de tempo sugeridas para cada fase do STEPS — ajuste conforme a evolução do paciente.
+          As fases de potência e retorno ao esporte são opcionais: mantenha apenas se o objetivo exigir.
         </p>
       </CardContent>
     </Card>
