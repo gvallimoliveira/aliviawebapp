@@ -154,6 +154,9 @@ const PeriodizationSection = ({
 
   useEffect(() => { load(); }, [load]);
 
+  /** Recarrega preservando a rolagem (sem spinner de página inteira). */
+  const refresh = useCallback(() => { void load({ silent: true }); }, [load]);
+
   const createPlan = async () => {
     const id = await ensurePatientRecord();
     if (!id) return;
@@ -195,7 +198,7 @@ const PeriodizationSection = ({
       const link = await createLink({ patientId: id, planId: null, audience: "patient" });
       const url = `${getPublicOrigin()}/carga/${link.token}`;
       await navigator.clipboard.writeText(url).catch(() => undefined);
-      await load();
+      await load({ silent: true });
       toast({ title: "Link de check-in criado", description: "Link copiado para a área de transferência." });
     } catch (e: any) {
       toast({ title: "Não foi possível criar o link", description: e?.message, variant: "destructive" });
@@ -248,7 +251,7 @@ const PeriodizationSection = ({
         planId={plan?.id ?? null}
         entries={entries}
         checkins={checkins}
-        onChanged={load}
+        onChanged={refresh}
         readOnly={readOnly}
       />
 
@@ -257,15 +260,15 @@ const PeriodizationSection = ({
         planId={plan?.id ?? null}
         restrictions={restrictions}
         links={links}
-        onChanged={load}
+        onChanged={refresh}
         readOnly={readOnly}
       />
 
       {plan ? (
         <>
           <MacroTimeline cycles={cycles} />
-          <MicroWeekGrid planId={plan.id} sessions={sessions} onChanged={load} readOnly={readOnly} />
-          <ClearanceChecklistCard items={clearance} onChanged={load} readOnly={readOnly} />
+          <MicroWeekGrid planId={plan.id} sessions={sessions} onChanged={refresh} readOnly={readOnly} />
+          <ClearanceChecklistCard items={clearance} onChanged={refresh} readOnly={readOnly} />
         </>
       ) : !readOnly ? (
         <Card className="border-dashed">
