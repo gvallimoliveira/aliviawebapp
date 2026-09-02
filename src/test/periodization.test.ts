@@ -53,6 +53,10 @@ describe("acwr", () => {
     expect(acwr([], REF)).toBeNull();
   });
 
+  it("não calcula ACWR com histórico insuficiente (1 sessão)", () => {
+    expect(acwr([{ session_date: day(0), duration_min: 60, rpe: 7 }], REF)).toBeNull();
+  });
+
   it("calcula a razão e a zona", () => {
     const entries = [
       { session_date: day(0), duration_min: 100, rpe: 6 },
@@ -123,6 +127,7 @@ describe("loadStatus", () => {
     const entries = [
       { session_date: day(0), duration_min: 120, rpe: 8 },
       { session_date: day(-9), duration_min: 40, rpe: 4 },
+      { session_date: day(-14), duration_min: 40, rpe: 4 },
       { session_date: day(-18), duration_min: 40, rpe: 4 },
     ];
     const status = loadStatus(entries, [], REF);
