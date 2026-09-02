@@ -12,6 +12,12 @@ import {
   loadStatus,
   backToBackHighDays,
   dailyPlannedWeight,
+  plannedLoad,
+  doseAdherence,
+  doseVerdict,
+  adherenceByTrack,
+  pairSessionsWithSrpe,
+  repeatedDoseDeviation,
 } from "@/lib/periodization";
 
 const day = (offset: number, ref = new Date("2026-09-02T12:00:00Z")) => {
@@ -158,5 +164,70 @@ describe("microcycle heuristics", () => {
       { session_date: "2026-09-01", planned_load: "low" },
     ]);
     expect(weights["2026-09-01"]).toBe(4);
+  });
+});
+
+describe("dose planejada x percebida", () => {
+  it("carga alvo é duração planejada × RPE alvo", () => {
+    expect(plannedLoad(40, 8)).toBe(320);
+    expect(plannedLoad(null, 8)).toBe(0);
+  });
+
+  it("classifica subdosado no exemplo 320 alvo x 280 real", () => {
+    const ratio = doseAdherence(280, 320)!;
+    expect(ratio).toBeCloseTo(0.88, 2);
+    expect(doseVerdict(ratio)).toBe("under");
+  });
+
+  it("classifica dose certa e superdosado", () => {
+    expect(doseVerdict(doseAdherence(320, 320))).toBe("on_target");
+    expect(doseVerdict(doseAdherence(420, 320))).toBe("over");
+    expect(doseVerdict(null)).toBeNull();
+  });
+
+  it("separa aderência por frente e mostra compensação no total", () => {
+    const week = "2026-08-31"; // segunda-feira
+    const sessions = [
+      { id: "s1", session_date: "2026-08-31", track: "gym", planned_duration_min: 60, planned_rpe: 8 },
+      { id: "s2", session_date: "2026-09-01", track: "sport", planned_duration_min: 60, planned_rpe: 5 },
+    ];
+    const entries = [
+      { session_date: "2026-08-31", track: "gym", duration_min: 40, rpe: 6 },
+      { session_date: "2026-09-01", track: "sport", duration_min: 80, rpe: 6 },
+    ];
+    const summary = adherenceByTrack(entries, sessions, week);
+    const gym = summary.byTrack.find((t) => t.track === "gym")!;
+    const sport = summary.byTrack.find((t) => t.track === "sport")!;
+    expect(gym.planned).toBe(480);
+    expect(gym.verdict).toBe("under");
+    expect(sport.verdict).toBe("over");
+    expect(summary.total.planned).toBe(780);
+    expect(summary.total.real).toBe(720);
+  });
+
+  it("pareia sessão prescrita com o sRPE relatado e detecta desvio repetido", () => {
+    const sessions = [
+      { id: "a", session_date: "2026-09-01", track: "gym", planned_duration_min: 40, planned_rpe: 8 },
+      { id: "b", session_date: "2026-09-03", track: "gym", planned_duration_min: 40, planned_rpe: 8 },
+    ];
+    const entries = [
+      { session_date: "2026-09-01", track: "gym", duration_min: 40, rpe: 7, session_id: null },
+      { session_date: "2026-09-03", track: "gym", duration_min: 40, rpe: 6, session_id: null },
+    ];
+    const pairs = pairSessionsWithSrpe(sessions, entries);
+    expect(pairs[0].plannedLoad).toBe(320);
+    expect(pairs[0].realLoad).toBe(280);
+    expect(pairs[0].verdict).toBe("under");
+    expect(repeatedDoseDeviation(pairs)).toEqual([{ track: "gym", verdict: "under" }]);
+  });
+
+  it("sem alvo prescrito não há veredito", () => {
+    const summary = adherenceByTrack(
+      [{ session_date: "2026-09-01", track: "physio", duration_min: 40, rpe: 6 }],
+      [],
+      "2026-08-31",
+    );
+    expect(summary.total.ratio).toBeNull();
+    expect(summary.total.verdict).toBeNull();
   });
 });

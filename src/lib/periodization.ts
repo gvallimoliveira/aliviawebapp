@@ -316,6 +316,189 @@ export const MESO_BLOCKS: Array<{ key: string; name: string; goal: string }> = [
   { key: "realization", name: "Realização", goal: "Pico de desempenho com volume reduzido" },
 ];
 
+/* ------------------------------------------------------------------------- */
+/* Dose planejada (prescrita) x carga percebida (sRPE do paciente)           */
+/* ------------------------------------------------------------------------- */
+
+export type DoseVerdict = "under" | "on_target" | "over";
+
+/** Faixa considerada "dose certa" por sessão. */
+export const DOSE_ON_TARGET_MIN = 0.9;
+export const DOSE_ON_TARGET_MAX = 1.1;
+/** Faixa considerada "dose certa" no fechamento da semana (mais tolerante). */
+export const DOSE_WEEK_ON_TARGET_MIN = 0.85;
+export const DOSE_WEEK_ON_TARGET_MAX = 1.15;
+
+export interface PlannedDoseLike {
+  id?: string;
+  session_date: string;
+  track?: LoadTrack | string | null;
+  planned_duration_min?: number | null;
+  planned_rpe?: number | null;
+  title?: string | null;
+}
+
+/** Carga alvo de uma sessão prescrita (duração planejada × RPE alvo). */
+export function plannedLoad(durationMin?: number | null, rpe?: number | null): number {
+  if (!Number.isFinite(Number(durationMin)) || !Number.isFinite(Number(rpe))) return 0;
+  return Math.max(0, Math.round(Number(durationMin) * Number(rpe)));
+}
+
+/** Aderência de dose = carga real ÷ carga alvo. Null quando não há alvo. */
+export function doseAdherence(real: number, planned: number): number | null {
+  if (!Number.isFinite(planned) || planned <= 0) return null;
+  return Number((real / planned).toFixed(2));
+}
+
+/** Leitura da aderência: subdosado, dose certa ou superdosado. */
+export function doseVerdict(
+  ratio: number | null,
+  bounds: { min: number; max: number } = { min: DOSE_ON_TARGET_MIN, max: DOSE_ON_TARGET_MAX },
+): DoseVerdict | null {
+  if (ratio === null) return null;
+  if (ratio < bounds.min) return "under";
+  if (ratio > bounds.max) return "over";
+  return "on_target";
+}
+
+export interface TrackAdherence {
+  track: LoadTrack;
+  planned: number;
+  real: number;
+  ratio: number | null;
+  verdict: DoseVerdict | null;
+}
+
+export interface DoseAdherenceSummary {
+  weekStart: string;
+  weekEnd: string;
+  byTrack: TrackAdherence[];
+  total: TrackAdherence;
+}
+
+const TRACKS: LoadTrack[] = ["physio", "gym", "sport"];
+
+const normalizeTrack = (t?: string | null): LoadTrack =>
+  t === "gym" || t === "sport" ? t : "physio";
+
+/** Segunda-feira (YYYY-MM-DD) da semana da data informada. */
+export function weekStartOf(ref: Date = new Date()): string {
+  return mondayOf(toDate(ref.toISOString()));
+}
+
+const addIsoDays = (iso: string, n: number): string => {
+  const d = toDate(iso);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+/**
+ * Cruza a dose prescrita com o sRPE relatado, por frente (fisio / academia /
+ * campo) dentro de uma semana. O total também é devolvido, mas a leitura por
+ * frente é o que orienta o ajuste — compensações entre frentes escondem
+ * subdose em uma e superdose em outra.
+ */
+export function adherenceByTrack(
+  entries: SrpeEntryLike[],
+  sessions: PlannedDoseLike[],
+  weekStart: string = weekStartOf(),
+): DoseAdherenceSummary {
+  const weekEnd = addIsoDays(weekStart, 6);
+  const inWeek = (iso: string) => {
+    const d = iso.slice(0, 10);
+    return d >= weekStart && d <= weekEnd;
+  };
+
+  const planned: Record<LoadTrack, number> = { physio: 0, gym: 0, sport: 0 };
+  const real: Record<LoadTrack, number> = { physio: 0, gym: 0, sport: 0 };
+
+  sessions.forEach((s) => {
+    if (!inWeek(s.session_date)) return;
+    planned[normalizeTrack(s.track)] += plannedLoad(s.planned_duration_min, s.planned_rpe);
+  });
+  entries.forEach((e) => {
+    if (!inWeek(e.session_date)) return;
+    real[normalizeTrack(e.track)] += trainingLoad(e.duration_min, e.rpe);
+  });
+
+  const bounds = { min: DOSE_WEEK_ON_TARGET_MIN, max: DOSE_WEEK_ON_TARGET_MAX };
+  const byTrack: TrackAdherence[] = TRACKS.map((track) => {
+    const ratio = doseAdherence(real[track], planned[track]);
+    return { track, planned: planned[track], real: real[track], ratio, verdict: doseVerdict(ratio, bounds) };
+  });
+  const totalPlanned = TRACKS.reduce((a, t) => a + planned[t], 0);
+  const totalReal = TRACKS.reduce((a, t) => a + real[t], 0);
+  const totalRatio = doseAdherence(totalReal, totalPlanned);
+
+  return {
+    weekStart,
+    weekEnd,
+    byTrack,
+    total: {
+      track: "physio",
+      planned: totalPlanned,
+      real: totalReal,
+      ratio: totalRatio,
+      verdict: doseVerdict(totalRatio, bounds),
+    },
+  };
+}
+
+export interface SessionDosePair {
+  session: PlannedDoseLike;
+  plannedLoad: number;
+  realLoad: number;
+  ratio: number | null;
+  verdict: DoseVerdict | null;
+}
+
+/**
+ * Pareia cada sessão prescrita com o sRPE relatado. Prefere o vínculo
+ * explícito (`session_id`); sem ele, casa por data + frente.
+ */
+export function pairSessionsWithSrpe(
+  sessions: PlannedDoseLike[],
+  entries: Array<SrpeEntryLike & { session_id?: string | null }>,
+): SessionDosePair[] {
+  return sessions
+    .filter((s) => plannedLoad(s.planned_duration_min, s.planned_rpe) > 0)
+    .map((session) => {
+      const target = plannedLoad(session.planned_duration_min, session.planned_rpe);
+      const matched = entries.filter((e) =>
+        session.id && e.session_id
+          ? e.session_id === session.id
+          : e.session_date.slice(0, 10) === session.session_date.slice(0, 10) &&
+            normalizeTrack(e.track) === normalizeTrack(session.track),
+      );
+      const realLoad = matched.reduce((sum, e) => sum + trainingLoad(e.duration_min, e.rpe), 0);
+      const ratio = matched.length ? doseAdherence(realLoad, target) : null;
+      return { session, plannedLoad: target, realLoad, ratio, verdict: doseVerdict(ratio) };
+    });
+}
+
+/**
+ * Desvio repetido: mesma frente subdosada (ou superdosada) em 2 sessões
+ * consecutivas com resposta do paciente — sinal para ajustar a prescrição.
+ */
+export function repeatedDoseDeviation(pairs: SessionDosePair[]): Array<{ track: LoadTrack; verdict: DoseVerdict }> {
+  const out: Array<{ track: LoadTrack; verdict: DoseVerdict }> = [];
+  TRACKS.forEach((track) => {
+    const seq = pairs
+      .filter((p) => normalizeTrack(p.session.track) === track && p.verdict !== null)
+      .sort((a, b) => a.session.session_date.localeCompare(b.session.session_date));
+    for (let i = 1; i < seq.length; i++) {
+      const a = seq[i - 1].verdict;
+      const b = seq[i].verdict;
+      if (a === b && (b === "under" || b === "over")) {
+        out.push({ track, verdict: b });
+        break;
+      }
+    }
+  });
+  return out;
+}
+
+
 /** Checklist padrão de liberação (fisio → academia → esporte). */
 export const CLEARANCE_TEMPLATE: Array<{ item_key: string; label: string }> = [
   { item_key: "lsi_strength", label: "Índice de simetria de força < 10%" },

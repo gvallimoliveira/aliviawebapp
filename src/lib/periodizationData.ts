@@ -40,6 +40,13 @@ export interface PeriodizationSession {
   title: string | null;
   exercise_program_id: string | null;
   notes: string | null;
+  patient_id: string | null;
+  /** Dose prescrita: duração planejada (min) e RPE alvo. */
+  planned_duration_min: number | null;
+  planned_rpe: number | null;
+  /** Carga alvo derivada no banco (duração × RPE). */
+  planned_target_load: number | null;
+  created_source: string;
 }
 
 export interface SrpeEntry {
@@ -53,6 +60,7 @@ export interface SrpeEntry {
   training_load: number;
   source: string;
   notes: string | null;
+  session_id: string | null;
 }
 
 export interface ReadinessCheckin {
@@ -262,6 +270,49 @@ export async function saveSession(session: Partial<PeriodizationSession> & { pla
     return;
   }
   const { error } = await supabase.from("periodization_sessions").insert(session);
+  if (error) throw error;
+}
+
+/** Sessões prescritas do paciente, com ou sem plano estruturado. */
+export async function fetchSessionsByPatient(patientId: string, fromDate?: string): Promise<PeriodizationSession[]> {
+  let q = supabase.from("periodization_sessions").select("*").eq("patient_id", patientId);
+  if (fromDate) q = q.gte("session_date", fromDate);
+  const { data } = await q.order("session_date", { ascending: true });
+  return (data || []) as PeriodizationSession[];
+}
+
+/** Prescreve (ou ajusta) a dose alvo de uma sessão. */
+export async function savePlannedDose(opts: {
+  id?: string | null;
+  patientId: string;
+  planId?: string | null;
+  sessionDate: string;
+  track: string;
+  plannedLoad?: string;
+  plannedDurationMin: number;
+  plannedRpe: number;
+  title?: string | null;
+  notes?: string | null;
+  source?: string;
+}): Promise<void> {
+  const payload: Record<string, unknown> = {
+    patient_id: opts.patientId,
+    plan_id: opts.planId ?? null,
+    session_date: opts.sessionDate,
+    track: opts.track,
+    planned_load: opts.plannedLoad ?? "moderate",
+    planned_duration_min: Math.round(opts.plannedDurationMin),
+    planned_rpe: opts.plannedRpe,
+    title: opts.title ?? null,
+    notes: opts.notes ?? null,
+    created_source: opts.source ?? "professional",
+  };
+  if (opts.id) {
+    const { error } = await supabase.from("periodization_sessions").update(payload).eq("id", opts.id);
+    if (error) throw error;
+    return;
+  }
+  const { error } = await supabase.from("periodization_sessions").insert(payload as never);
   if (error) throw error;
 }
 

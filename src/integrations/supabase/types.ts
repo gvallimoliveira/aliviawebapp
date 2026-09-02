@@ -3060,12 +3060,17 @@ export type Database = {
       periodization_sessions: {
         Row: {
           created_at: string
+          created_source: string
           cycle_id: string | null
           exercise_program_id: string | null
           id: string
           notes: string | null
-          plan_id: string
+          patient_id: string | null
+          plan_id: string | null
+          planned_duration_min: number | null
           planned_load: string
+          planned_rpe: number | null
+          planned_target_load: number | null
           session_date: string
           title: string | null
           track: string
@@ -3073,12 +3078,17 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_source?: string
           cycle_id?: string | null
           exercise_program_id?: string | null
           id?: string
           notes?: string | null
-          plan_id: string
+          patient_id?: string | null
+          plan_id?: string | null
+          planned_duration_min?: number | null
           planned_load?: string
+          planned_rpe?: number | null
+          planned_target_load?: number | null
           session_date: string
           title?: string | null
           track?: string
@@ -3086,12 +3096,17 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_source?: string
           cycle_id?: string | null
           exercise_program_id?: string | null
           id?: string
           notes?: string | null
-          plan_id?: string
+          patient_id?: string | null
+          plan_id?: string | null
+          planned_duration_min?: number | null
           planned_load?: string
+          planned_rpe?: number | null
+          planned_target_load?: number | null
           session_date?: string
           title?: string | null
           track?: string
@@ -3953,6 +3968,7 @@ export type Database = {
           plan_id: string | null
           rpe: number
           session_date: string
+          session_id: string | null
           source: string
           track: string
           training_load: number | null
@@ -3967,6 +3983,7 @@ export type Database = {
           plan_id?: string | null
           rpe: number
           session_date?: string
+          session_id?: string | null
           source?: string
           track?: string
           training_load?: number | null
@@ -3981,6 +3998,7 @@ export type Database = {
           plan_id?: string | null
           rpe?: number
           session_date?: string
+          session_id?: string | null
           source?: string
           track?: string
           training_load?: number | null
@@ -3999,6 +4017,13 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "periodization_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "srpe_entries_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "periodization_sessions"
             referencedColumns: ["id"]
           },
         ]

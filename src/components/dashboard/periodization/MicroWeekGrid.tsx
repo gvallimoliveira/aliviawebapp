@@ -6,14 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { backToBackHighDays } from "@/lib/periodization";
-import type { PeriodizationSession } from "@/lib/periodizationData";
-import { deleteSession, saveSession } from "@/lib/periodizationData";
-import { PLANNED_LOAD_CLASS, PLANNED_LOAD_LABEL, TRACK_LABEL } from "./scales";
+import { backToBackHighDays, pairSessionsWithSrpe, plannedLoad } from "@/lib/periodization";
+import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
+import { deleteSession, savePlannedDose } from "@/lib/periodizationData";
+import { DOSE_CLASS, DOSE_LABEL, PLANNED_LOAD_CLASS, PLANNED_LOAD_LABEL, TRACK_LABEL } from "./scales";
+import { Slider } from "@/components/ui/slider";
 
 interface Props {
   planId: string;
+  patientId: string;
   sessions: PeriodizationSession[];
+  /** sRPE relatado pelo paciente, para o selo de aderência de dose. */
+  entries?: SrpeEntry[];
   onChanged: () => void;
   readOnly?: boolean;
 }
@@ -33,14 +37,25 @@ const addDays = (iso: string, n: number): string => {
 
 const DOW = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
-const MicroWeekGrid = ({ planId, sessions, onChanged, readOnly }: Props) => {
+const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, readOnly }: Props) => {
   const { toast } = useToast();
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()));
   const [editing, setEditing] = useState<{ date: string } | null>(null);
   const [track, setTrack] = useState("physio");
   const [load, setLoad] = useState("moderate");
   const [title, setTitle] = useState("");
+  const [plannedMin, setPlannedMin] = useState("");
+  const [plannedRpe, setPlannedRpe] = useState(7);
   const [saving, setSaving] = useState(false);
+
+  // Selo de dose por sessão (alvo prescrito x sRPE relatado pelo paciente).
+  const doseBySession = useMemo(() => {
+    const map = new Map<string, { verdict: string | null; realLoad: number; plannedLoad: number }>();
+    pairSessionsWithSrpe(sessions, entries).forEach((p) => {
+      if (p.session.id) map.set(p.session.id, { verdict: p.verdict, realLoad: p.realLoad, plannedLoad: p.plannedLoad });
+    });
+    return map;
+  }, [sessions, entries]);
 
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
   const flagged = useMemo(() => new Set(backToBackHighDays(sessions)), [sessions]);
@@ -58,14 +73,18 @@ const MicroWeekGrid = ({ planId, sessions, onChanged, readOnly }: Props) => {
     if (!editing) return;
     setSaving(true);
     try {
-      await saveSession({
-        plan_id: planId,
-        session_date: editing.date,
+      await savePlannedDose({
+        patientId,
+        planId,
+        sessionDate: editing.date,
         track,
-        planned_load: load,
+        plannedLoad: load,
+        plannedDurationMin: Number(plannedMin) > 0 ? Number(plannedMin) : 0,
+        plannedRpe: Number(plannedMin) > 0 ? plannedRpe : 0,
         title: title.trim() || null,
       });
       setTitle("");
+      setPlannedMin("");
       setEditing(null);
       onChanged();
     } catch (e: any) {
@@ -133,9 +152,25 @@ const MicroWeekGrid = ({ planId, sessions, onChanged, readOnly }: Props) => {
                         </button>
                       )}
                     </div>
-                    <Badge variant="outline" className={`mt-0.5 text-[9px] border-0 ${PLANNED_LOAD_CLASS[s.planned_load] || ""}`}>
-                      {PLANNED_LOAD_LABEL[s.planned_load] || s.planned_load}
-                    </Badge>
+                    <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                      <Badge variant="outline" className={`text-[9px] border-0 ${PLANNED_LOAD_CLASS[s.planned_load] || ""}`}>
+                        {PLANNED_LOAD_LABEL[s.planned_load] || s.planned_load}
+                      </Badge>
+                      {plannedLoad(s.planned_duration_min, s.planned_rpe) > 0 && (
+                        <span className="text-[9px] text-muted-foreground">
+                          {s.planned_duration_min}&apos; @{s.planned_rpe} = {plannedLoad(s.planned_duration_min, s.planned_rpe)}
+                        </span>
+                      )}
+                      {(() => {
+                        const dose = doseBySession.get(s.id);
+                        if (!dose?.verdict) return null;
+                        return (
+                          <Badge variant="outline" className={`text-[9px] border-0 ${DOSE_CLASS[dose.verdict] || ""}`}>
+                            {DOSE_LABEL[dose.verdict]}
+                          </Badge>
+                        );
+                      })()}
+                    </div>
                   </div>
                 ))}
                 {!readOnly && (
@@ -176,6 +211,30 @@ const MicroWeekGrid = ({ planId, sessions, onChanged, readOnly }: Props) => {
                   </Button>
                 ))}
               </div>
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">Duração planejada (min) — opcional</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={600}
+                  value={plannedMin}
+                  onChange={(e) => setPlannedMin(e.target.value)}
+                  placeholder="40"
+                />
+              </div>
+              {Number(plannedMin) > 0 && (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Esforço alvo (0-10)</span>
+                    <Badge variant="outline" className="text-xs">{plannedRpe}</Badge>
+                  </div>
+                  <Slider min={0} max={10} step={1} value={[plannedRpe]} onValueChange={([v]) => setPlannedRpe(v)} />
+                  <p className="text-[10px] text-muted-foreground">
+                    Carga alvo: <strong>{plannedLoad(Number(plannedMin), plannedRpe)}</strong> — será comparada ao sRPE
+                    que o paciente relatar.
+                  </p>
+                </div>
+              )}
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Descrição curta (opcional)" />
               <Button className="w-full rounded-xl gap-2" onClick={add} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
