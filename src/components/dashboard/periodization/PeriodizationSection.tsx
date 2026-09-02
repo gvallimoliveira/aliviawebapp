@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Gauge, Loader2, Plus } from "lucide-react";
+import { Gauge, Link2, Loader2, Plus } from "lucide-react";
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,6 +15,7 @@ import {
   PlanRestriction,
   ReadinessCheckin,
   SrpeEntry,
+  createLink,
   createPlanWithTemplate,
   fetchActivePlan,
   fetchCheckins,
@@ -183,6 +185,20 @@ const PeriodizationSection = ({
     );
   }
 
+  const activateAndCreateLink = async () => {
+    const id = await ensurePatientRecord();
+    if (!id) return;
+    try {
+      const link = await createLink({ patientId: id, planId: null, audience: "patient" });
+      const url = `${getPublicOrigin()}/carga/${link.token}`;
+      await navigator.clipboard.writeText(url).catch(() => undefined);
+      await load();
+      toast({ title: "Link de check-in criado", description: "Link copiado para a área de transferência." });
+    } catch (e: any) {
+      toast({ title: "Não foi possível criar o link", description: e?.message, variant: "destructive" });
+    }
+  };
+
   if (!patientId) {
     return (
       <Card className="border-dashed">
@@ -191,13 +207,19 @@ const PeriodizationSection = ({
           <p className="text-sm font-medium text-foreground">Monitorar carga e prontidão</p>
           <p className="text-xs text-muted-foreground max-w-md mx-auto">
             Registre sRPE e check-ins diários (sono, dor, fadiga, estresse, prontidão) e acompanhe o ACWR.
-            Vale para qualquer paciente, não só atletas.
+            O paciente responde por um link próprio (como o link de adendo), sem precisar de conta.
           </p>
           {!readOnly && (
-            <Button className="rounded-xl gap-1" onClick={ensurePatientRecord} disabled={resolving}>
-              {resolving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Ativar para este paciente
-            </Button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button className="rounded-xl gap-1" onClick={activateAndCreateLink} disabled={resolving}>
+                {resolving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                Gerar link de check-in
+              </Button>
+              <Button variant="outline" className="rounded-xl gap-1" onClick={async () => { const id = await ensurePatientRecord(); if (id) load(); }} disabled={resolving}>
+                <Plus className="h-4 w-4" />
+                Ativar sem link
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
