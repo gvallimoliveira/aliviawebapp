@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarRange, CheckCircle2, Loader2 } from "lucide-react";
+import { CalendarRange, CheckCircle2, History, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
 import type { PeriodizationCycle } from "@/lib/periodizationData";
