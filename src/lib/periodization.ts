@@ -144,14 +144,15 @@ export function weeklySpikeAlert(series: WeeklyLoadPoint[]): { spikePct: number;
  * no cálculo os que foram respondidos.
  */
 export function readinessScore(c: ReadinessLike): number | null {
+  const clamp = (v: number) => Math.min(10, Math.max(1, v));
   const good: Array<number | null | undefined> = [c.readiness, c.sleep];
   const bad: Array<number | null | undefined> = [c.soreness, c.stress, c.fatigue, c.pain];
   const values: number[] = [];
-  good.forEach((v) => { if (typeof v === "number") values.push(v); });
-  bad.forEach((v) => { if (typeof v === "number") values.push(11 - v); });
+  good.forEach((v) => { if (typeof v === "number") values.push(clamp(v)); });
+  bad.forEach((v) => { if (typeof v === "number") values.push(11 - clamp(v)); });
   if (values.length === 0) return null;
   const avg = values.reduce((a, b) => a + b, 0) / values.length;
-  return Math.round(((avg - 1) / 9) * 100);
+  return Math.min(100, Math.max(0, Math.round(((avg - 1) / 9) * 100)));
 }
 
 /**
