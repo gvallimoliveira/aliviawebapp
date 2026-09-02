@@ -52,5 +52,7 @@ export const PATIENT_SECTIONS: PatientSectionDef[] = [
   { id: "sec-adm", icon: Activity, label: { pt: "ADM (mobilidade)", en: "ROM (mobility)", es: "ADM (movilidad)" } },
   { id: "sec-arquivos", icon: FolderOpen, label: { pt: "Arquivos e fotos", en: "Files & photos", es: "Archivos y fotos" } },
   { id: "sec-hep", icon: Dumbbell, label: { pt: "Programas de exercícios", en: "Exercise programs", es: "Programas de ejercicios" } },
+  { id: "sec-periodizacao", icon: Gauge, label: { pt: "Carga e periodização", en: "Load & periodization", es: "Carga y periodización" } },
   { id: "sec-historico", icon: History, label: { pt: "Histórico de avaliações", en: "Assessment history", es: "Historial de evaluaciones" } },
+
 ];
