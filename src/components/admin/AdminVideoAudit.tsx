@@ -86,18 +86,96 @@ const AdminVideoAudit = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("exercise_video_audit_runs")
-      .select("*")
-      .order("started_at", { ascending: false })
-      .limit(12);
-    if (error) {
-      toast({ title: "Erro ao carregar auditorias", description: error.message, variant: "destructive" });
+    const [{ data, error }, { data: pend, error: pendError }] = await Promise.all([
+      supabase
+        .from("exercise_video_audit_runs")
+        .select("*")
+        .order("started_at", { ascending: false })
+        .limit(12),
+      supabase
+        .from("exercise_library")
+        .select("id, name_pt, video_url, video_status, video_check_note, video_checked_at")
+        .in("video_status", REVIEW_STATUSES)
+        .order("name_pt"),
+    ]);
+    if (error || pendError) {
+      toast({
+        title: "Erro ao carregar auditorias",
+        description: (error || pendError)?.message,
+        variant: "destructive",
+      });
     } else {
       setRuns((data as unknown as AuditRun[]) || []);
+      setPending((pend as unknown as PendingVideo[]) || []);
     }
     setLoading(false);
   }, []);
+
+  const decide = async (
+    item: PendingVideo,
+    decision: "approved" | "needs_replacement",
+  ) => {
+    setSavingId(item.id);
+    const note =
+      decision === "approved"
+        ? `Aprovado manualmente em ${new Date().toLocaleDateString("pt-BR")}`
+        : `Substituição solicitada em ${new Date().toLocaleDateString("pt-BR")}`;
+    const { error } = await supabase
+      .from("exercise_library")
+      .update({
+        video_status: decision,
+        video_check_note: note,
+        video_checked_at: new Date().toISOString(),
+      })
+      .eq("id", item.id);
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Não foi possível salvar", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({
+      title: decision === "approved" ? "Vídeo aprovado" : "Substituição solicitada",
+      description: item.name_pt,
+    });
+    if (decision === "approved") {
+      setPending((prev) => prev.filter((p) => p.id !== item.id));
+    } else {
+      setPending((prev) =>
+        prev.map((p) => (p.id === item.id ? { ...p, video_status: decision, video_check_note: note } : p)),
+      );
+    }
+  };
+
+  const saveNewUrl = async (item: PendingVideo) => {
+    const url = (newUrl[item.id] || "").trim();
+    if (!/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(url)) {
+      toast({
+        title: "Link inválido",
+        description: "Cole um link do YouTube (youtube.com ou youtu.be).",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSavingId(item.id);
+    const { error } = await supabase
+      .from("exercise_library")
+      .update({
+        video_url: url,
+        video_status: "approved",
+        video_check_note: `Vídeo substituído manualmente em ${new Date().toLocaleDateString("pt-BR")}`,
+        video_checked_at: new Date().toISOString(),
+      })
+      .eq("id", item.id);
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Não foi possível substituir", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Vídeo substituído", description: item.name_pt });
+    setNewUrl((prev) => ({ ...prev, [item.id]: "" }));
+    setPending((prev) => prev.filter((p) => p.id !== item.id));
+  };
+
 
   useEffect(() => {
     load();
