@@ -65,6 +65,8 @@ const PeriodizationCheckin = () => {
       }
       const loaded = data.info as Info;
       setInfo(loaded);
+      setSessionDate(loaded.today);
+      if (loaded.audience === "coach") setTrack("gym");
       if (loaded.today_checkin) {
         const preset: Record<string, number> = {};
         CHECKIN_ITEMS.forEach((item) => {
@@ -74,6 +76,7 @@ const PeriodizationCheckin = () => {
         setValues(preset);
       }
       setState("ready");
+
     })();
   }, [token]);
 
