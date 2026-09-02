@@ -254,8 +254,33 @@ Deno.serve(async (req: Request) => {
           return;
         }
 
+        // Manual admin decisions win over the automatic title heuristic
+        if (ex.video_status === "approved") {
+          ok++;
+          await supabase.from("exercise_library").update({
+            video_checked_at: now,
+          }).eq("id", ex.id);
+          return;
+        }
+        if (ex.video_status === "needs_replacement") {
+          mismatch++;
+          issues.push({
+            id: ex.id,
+            name: ex.name_pt,
+            url: ex.video_url,
+            status: "needs_replacement",
+            video_title: res.title,
+            channel: res.author,
+          });
+          await supabase.from("exercise_library").update({
+            video_checked_at: now,
+          }).eq("id", ex.id);
+          return;
+        }
+
         const score = titleMatch(ex.name_pt || "", ex.name_en || "", res.title || "");
         if (score < 0.34) {
+
           mismatch++;
           issues.push({
             id: ex.id,
