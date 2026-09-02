@@ -40,8 +40,10 @@ const PeriodizationCheckin = () => {
   const [duration, setDuration] = useState("");
   const [rpe, setRpe] = useState(5);
   const [srpeNotes, setSrpeNotes] = useState("");
+  const [sessionDate, setSessionDate] = useState("");
   const [savingSrpe, setSavingSrpe] = useState(false);
   const [srpeDone, setSrpeDone] = useState(false);
+
 
   useEffect(() => {
     setSeo({
