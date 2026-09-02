@@ -121,13 +121,20 @@ const PeriodizationCheckin = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-xl flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              {isCoach ? "Registro de sessão" : "Check-in de hoje"}
+              {isCoach ? "Registro de sessão (treinador)" : "Check-in de hoje"}
             </CardTitle>
             {state === "ready" && (
               <p className="text-sm text-muted-foreground">
                 {info?.patient_name ? <><strong>{info.patient_name}</strong> · </> : null}
                 {dateLabel}
                 {info?.professional_name ? <> · acompanhamento de <strong>{info.professional_name}</strong></> : null}
+              </p>
+            )}
+            {state === "ready" && (
+              <p className="text-xs text-muted-foreground pt-1">
+                {isCoach
+                  ? "Este link é do treinador/preparador: registre a sessão treinada (tipo, duração e esforço). As escalas subjetivas são respondidas pelo próprio paciente no link dele."
+                  : "Este link é seu: conte como você está hoje e, se treinou, registre como foi a sessão."}
               </p>
             )}
           </CardHeader>
@@ -141,14 +148,17 @@ const PeriodizationCheckin = () => {
 
             {state === "ready" && (
               <Tabs defaultValue={isCoach ? "srpe" : "checkin"}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="checkin" className="gap-1 text-xs">
-                    <HeartPulse className="h-3.5 w-3.5" /> Como estou
-                  </TabsTrigger>
-                  <TabsTrigger value="srpe" className="gap-1 text-xs">
-                    <Activity className="h-3.5 w-3.5" /> Sessão de hoje
-                  </TabsTrigger>
-                </TabsList>
+                {!isCoach && (
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="checkin" className="gap-1 text-xs">
+                      <HeartPulse className="h-3.5 w-3.5" /> Como estou
+                    </TabsTrigger>
+                    <TabsTrigger value="srpe" className="gap-1 text-xs">
+                      <Activity className="h-3.5 w-3.5" /> Sessão de hoje
+                    </TabsTrigger>
+                  </TabsList>
+                )}
+
 
                 <TabsContent value="checkin" className="space-y-5 pt-4">
                   {checkinDone ? (
