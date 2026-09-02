@@ -181,9 +181,12 @@ export interface LoadStatus {
   readiness: number | null;
   drop: { current: number; baseline: number; drop: number } | null;
   level: AlertLevel;
+  /** Falso enquanto não há histórico suficiente para calcular o ACWR. */
+  baselineReady: boolean;
   /** Sugestões — a decisão clínica é sempre do fisioterapeuta. */
   messages: string[];
 }
+
 
 /** Consolida carga + prontidão em um status único para a UI. */
 export function loadStatus(
