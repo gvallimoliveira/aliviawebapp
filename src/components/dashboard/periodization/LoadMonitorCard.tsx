@@ -242,10 +242,16 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
               : <p className="text-[10px] text-muted-foreground">Aguardando histórico</p>}
           </div>
 
-          <div className="rounded-xl border border-border p-2">
+          <button
+            type="button"
+            onClick={() => readinessDetail && setReadinessOpen(true)}
+            disabled={!readinessDetail}
+            className="rounded-xl border border-border p-2 text-left transition hover:bg-accent/50 disabled:cursor-default disabled:hover:bg-transparent"
+          >
             <p className="text-[10px] text-muted-foreground">Prontidão</p>
             <p className="text-lg font-semibold text-foreground">{status.readiness !== null ? `${status.readiness}%` : "—"}</p>
-          </div>
+            {readinessDetail && <p className="text-[10px] text-primary">Toque para ver as respostas</p>}
+          </button>
         </div>
 
         {/* Sugestões */}
