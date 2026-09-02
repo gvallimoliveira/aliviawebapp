@@ -61,6 +61,26 @@ export function chronicLoad(entries: SrpeEntryLike[], ref: Date = new Date()): n
   return Math.round(loadInWindow(entries, 28, ref) / 4);
 }
 
+/** Mínimos para a linha de base crônica fazer sentido. */
+export const CHRONIC_MIN_DAYS = 14;
+export const CHRONIC_MIN_SESSIONS = 4;
+
+/**
+ * A carga crônica só é comparável quando há histórico suficiente.
+ * Com 1–3 sessões (ou menos de 2 semanas de registro) a média de 28 dias fica
+ * artificialmente baixa e o ACWR dispara um "risco" que não existe.
+ */
+export function chronicBaselineReady(entries: SrpeEntryLike[], ref: Date = new Date()): boolean {
+  const end = toDate(ref.toISOString());
+  const inWindow = entries.filter((e) => {
+    const diff = daysBetween(toDate(e.session_date), end);
+    return diff >= 0 && diff < 28 && trainingLoad(e.duration_min, e.rpe) > 0;
+  });
+  if (inWindow.length < CHRONIC_MIN_SESSIONS) return false;
+  const oldest = Math.max(...inWindow.map((e) => daysBetween(toDate(e.session_date), end)));
+  return oldest >= CHRONIC_MIN_DAYS;
+}
+
 /**
  * ACWR (acute:chronic workload ratio). Retorna null quando não há histórico
  * crônico suficiente — mostrar ACWR com poucos dias de dado engana.
@@ -68,8 +88,10 @@ export function chronicLoad(entries: SrpeEntryLike[], ref: Date = new Date()): n
 export function acwr(entries: SrpeEntryLike[], ref: Date = new Date()): number | null {
   const chronic = chronicLoad(entries, ref);
   if (chronic <= 0) return null;
+  if (!chronicBaselineReady(entries, ref)) return null;
   return Number((acuteLoad(entries, ref) / chronic).toFixed(2));
 }
+
 
 /** Zona de risco a partir do ACWR. */
 export function loadZone(ratio: number | null): LoadZone | null {
