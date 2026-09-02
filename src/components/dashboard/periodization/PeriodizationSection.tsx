@@ -298,7 +298,7 @@ const PeriodizationSection = ({
       {plan ? (
         <>
           <MacroTimeline cycles={cycles} />
-          <MicroWeekGrid planId={plan.id} patientId={patientId} sessions={sessions} onChanged={refresh} readOnly={readOnly} />
+          <MicroWeekGrid planId={plan.id} patientId={patientId} sessions={sessions} entries={entries} onChanged={refresh} readOnly={readOnly} />
           <ClearanceChecklistCard items={clearance} onChanged={refresh} readOnly={readOnly} />
         </>
       ) : !readOnly ? (
