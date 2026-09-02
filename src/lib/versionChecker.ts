@@ -142,21 +142,11 @@ async function checkOnce(force = false) {
 }
 
 function maybeSurfaceOrAutoReload() {
-  // Called on visibility/focus/route transitions.
-  // 1) If we have a pending update and the route is now safe, show the toast.
-  // 2) If the toast was already shown AND the user is on a safe route AND
-  //    the tab just regained visibility → auto-reload silently.
+  // Só revela o toast quando a rota fica segura. NUNCA recarrega sozinho:
+  // auto-reload por foco/visibilidade fazia o app "voltar" de tela durante
+  // navegação normal. A atualização é sempre decisão do usuário.
   if (pendingHash && !isUnsafeRoute()) {
     showMinimalToast(pendingHash, pendingMeta ?? {});
-    return;
-  }
-  if (
-    toastShownForHash &&
-    !isUnsafeRoute() &&
-    document.visibilityState === "visible" &&
-    currentHash === toastShownForHash
-  ) {
-    hardReload(toastShownForHash);
   }
 }
 
@@ -167,17 +157,11 @@ export function startVersionChecker() {
 
   setTimeout(() => void checkOnce(true), 2000);
 
-  // The biggest auto-reload moment: user came back to the tab/PWA.
   window.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       void checkOnce();
-      // Give checkOnce a tick to update toastShownForHash, then evaluate.
       setTimeout(maybeSurfaceOrAutoReload, 600);
     }
-  });
-  window.addEventListener("focus", () => {
-    void checkOnce();
-    setTimeout(maybeSurfaceOrAutoReload, 600);
   });
 
   setInterval(() => {
@@ -185,21 +169,10 @@ export function startVersionChecker() {
   }, POLL_INTERVAL_MS);
 
   // SPA navigations — re-evaluate pending toast when leaving an unsafe route.
-  const surface = () => maybeSurfaceOrAutoReload();
-  window.addEventListener("popstate", surface);
-  const origPush = history.pushState;
-  const origReplace = history.replaceState;
-  history.pushState = function (...args) {
-    const r = origPush.apply(this, args as never);
-    queueMicrotask(surface);
-    return r;
-  };
-  history.replaceState = function (...args) {
-    const r = origReplace.apply(this, args as never);
-    queueMicrotask(surface);
-    return r;
-  };
+  window.addEventListener("popstate", maybeSurfaceOrAutoReload);
+  window.addEventListener("alivia:navigation", maybeSurfaceOrAutoReload as EventListener);
 }
+
 
 export function _getCurrentRemoteHash() {
   return currentHash;
