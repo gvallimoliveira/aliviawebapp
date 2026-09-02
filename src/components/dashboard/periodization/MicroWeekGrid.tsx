@@ -20,6 +20,11 @@ interface Props {
   entries?: SrpeEntry[];
   onChanged: () => void;
   readOnly?: boolean;
+  /** Dados só para o PDF do plano da semana entregue ao paciente. */
+  patientName?: string | null;
+  professionalName?: string | null;
+  sport?: string | null;
+  currentPhase?: string | null;
 }
 
 const mondayOf = (d: Date): string => {
