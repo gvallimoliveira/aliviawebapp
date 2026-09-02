@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarRange } from "lucide-react";
 import type { PeriodizationCycle } from "@/lib/periodizationData";
+import { isOptionalMacroPhase } from "@/lib/periodization";
 
 interface Props {
   cycles: PeriodizationCycle[];
@@ -66,7 +67,7 @@ const MacroTimeline = ({ cycles }: Props) => {
           ))}
         </div>
         <p className="text-[10px] text-muted-foreground">
-          Fases herdadas do STEPS. Ajuste datas e objetivos conforme a evolução do paciente.
+          Fases herdadas do STEPS. As fases de potência e retorno ao esporte são opcionais — mantenha apenas se o objetivo do paciente exigir. Ajuste datas e objetivos conforme a evolução.
         </p>
       </CardContent>
     </Card>
