@@ -412,40 +412,89 @@ const PeriodizationCheckin = () => {
                     </div>
                   ) : (
                     <>
-                      <div className="space-y-1.5">
-                        <span className="text-sm font-medium text-foreground">Tipo de sessão</span>
-                        <div className="grid grid-cols-3 gap-2">
-                          {Object.entries(TRACK_LABEL).map(([key, label]) => (
-                            <Button
-                              key={key}
-                              type="button"
-                              variant={track === key ? "default" : "outline"}
-                              size="sm"
-                              className="text-xs rounded-xl"
-                              onClick={() => setTrack(key)}
-                            >
-                              {label}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {todayTargets.length > 0 && (
-                        <div className="rounded-xl border border-border bg-muted/40 px-3 py-2 space-y-1">
-                          <p className="text-[11px] font-medium text-foreground">Planejado para hoje</p>
-                          {todayTargets.map((t) => (
-                            <p key={t.id} className="text-[11px] text-muted-foreground">
-                              {TRACK_LABEL[t.track] || t.track}
-                              {t.planned_duration_min ? ` · ~${t.planned_duration_min} min` : ""}
-                              {t.planned_rpe !== null && t.planned_rpe !== undefined ? ` · esforço alvo ${t.planned_rpe}/10` : ""}
-                              {t.title ? ` · ${t.title}` : ""}
-                            </p>
-                          ))}
+                      {todayTargets.length > 0 && !freeMode ? (
+                        <div className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">Suas sessões de hoje</span>
+                          <div className="space-y-2">
+                            {todayTargets.map((t) => {
+                              const done = !!t.already_reported;
+                              const active = selectedSessionId === t.id && !done;
+                              return (
+                                <button
+                                  key={t.id}
+                                  type="button"
+                                  onClick={() => pickSession(t)}
+                                  disabled={done}
+                                  className={`w-full text-left rounded-xl border px-3 py-2 transition ${
+                                    active
+                                      ? "border-primary bg-primary/5"
+                                      : done
+                                        ? "border-border bg-muted/40 opacity-70 cursor-default"
+                                        : "border-border hover:border-primary/60"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-medium text-foreground">
+                                      {TRACK_LABEL[t.track] || t.track}
+                                    </span>
+                                    {done ? (
+                                      <Badge variant="secondary" className="text-[10px]">Já registrada</Badge>
+                                    ) : active ? (
+                                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                                    ) : null}
+                                  </div>
+                                  <p className="text-[11px] text-muted-foreground">
+                                    {t.planned_duration_min ? `~${t.planned_duration_min} min` : "duração livre"}
+                                    {t.planned_rpe !== null && t.planned_rpe !== undefined
+                                      ? ` · esforço alvo ${t.planned_rpe}/10`
+                                      : ""}
+                                    {t.title ? ` · ${t.title}` : ""}
+                                  </p>
+                                </button>
+                              );
+                            })}
+                          </div>
                           <p className="text-[10px] text-muted-foreground">
                             Responda pelo que você realmente sentiu — não precisa bater com o alvo.
                           </p>
+                          <button
+                            type="button"
+                            onClick={() => { setFreeMode(true); setSelectedSessionId(null); setDuration(""); }}
+                            className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-primary"
+                          >
+                            Fiz outra atividade não planejada
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <span className="text-sm font-medium text-foreground">Tipo de sessão</span>
+                          <div className="grid grid-cols-3 gap-2">
+                            {Object.entries(TRACK_LABEL).map(([key, label]) => (
+                              <Button
+                                key={key}
+                                type="button"
+                                variant={track === key ? "default" : "outline"}
+                                size="sm"
+                                className="text-xs rounded-xl"
+                                onClick={() => setTrack(key)}
+                              >
+                                {label}
+                              </Button>
+                            ))}
+                          </div>
+                          {todayTargets.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => { setFreeMode(false); applyAutoSelection(info!); }}
+                              className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-primary"
+                            >
+                              Voltar para as sessões planejadas
+                            </button>
+                          )}
                         </div>
                       )}
+
+
 
 
 
