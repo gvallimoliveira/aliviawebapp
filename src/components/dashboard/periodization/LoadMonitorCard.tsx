@@ -215,13 +215,19 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
           </div>
           <div className="rounded-xl border border-border p-2">
             <p className="text-[10px] text-muted-foreground">Crônica (semanal)</p>
-            <p className="text-lg font-semibold text-foreground">{status.chronicLoad}</p>
+            <p className="text-lg font-semibold text-foreground">
+              {status.baselineReady ? status.chronicLoad : "—"}
+            </p>
+            {!status.baselineReady && <p className="text-[10px] text-muted-foreground">Histórico insuficiente</p>}
           </div>
           <div className="rounded-xl border border-border p-2">
             <p className="text-[10px] text-muted-foreground">ACWR</p>
             <p className="text-lg font-semibold text-foreground">{status.acwr ?? "—"}</p>
-            {status.zone && <p className="text-[10px] text-muted-foreground">{ZONE_LABEL[status.zone]}</p>}
+            {status.zone
+              ? <p className="text-[10px] text-muted-foreground">{ZONE_LABEL[status.zone]}</p>
+              : <p className="text-[10px] text-muted-foreground">Aguardando histórico</p>}
           </div>
+
           <div className="rounded-xl border border-border p-2">
             <p className="text-[10px] text-muted-foreground">Prontidão</p>
             <p className="text-lg font-semibold text-foreground">{status.readiness !== null ? `${status.readiness}%` : "—"}</p>
