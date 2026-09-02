@@ -171,8 +171,16 @@ const PeriodizationSection = ({
     return () => { void supabase.removeChannel(channel); };
   }, [patientId, isDemo, load]);
 
-  /** Recarrega preservando a rolagem (sem spinner de página inteira). */
-  const refresh = useCallback(() => { void load({ silent: true }); }, [load]);
+  /**
+   * Recarrega preservando a rolagem (sem spinner de página inteira). Ancoramos
+   * na seção do prontuário: quando um card colapsa e volta, o navegador não
+   * empurra mais a página para o topo.
+   */
+  const refresh = useCallback(() => {
+    const keepAnchored = anchorScrollById("sec-periodizacao", 1800);
+    keepAnchored();
+    void load({ silent: true });
+  }, [load]);
 
   const createPlan = async () => {
     const id = await ensurePatientRecord();
