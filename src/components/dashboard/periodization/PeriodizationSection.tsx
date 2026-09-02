@@ -67,7 +67,6 @@ const PeriodizationSection = ({
   const [sessions, setSessions] = useState<PeriodizationSession[]>([]);
   const [entries, setEntries] = useState<SrpeEntry[]>([]);
   const [checkins, setCheckins] = useState<ReadinessCheckin[]>([]);
-  const [clearance, setClearance] = useState<ClearanceItem[]>([]);
   const [restrictions, setRestrictions] = useState<PlanRestriction[]>([]);
   const [links, setLinks] = useState<PeriodizationLink[]>([]);
   const [sport, setSport] = useState("");
