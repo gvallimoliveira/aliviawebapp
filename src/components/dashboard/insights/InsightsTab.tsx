@@ -47,6 +47,12 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false }: Props
       {/* Occupancy vs No-show — both modes */}
       <OccupancyVsNoShowCard clinicId={clinicId} professionalId={professionalId} />
 
+      {/* Carga e prontidão (periodização) — ambos os modos */}
+      {ENABLE_PERIODIZATION && (
+        <LoadReadinessCard clinicId={clinicId} professionalId={professionalId} />
+      )}
+
+
       {/* Clinic-only: adherence + benchmark */}
       {fullClinicMode && clinicId && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
