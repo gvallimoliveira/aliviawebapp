@@ -345,6 +345,19 @@ export function plannedLoad(durationMin?: number | null, rpe?: number | null): n
   return Math.max(0, Math.round(Number(durationMin) * Number(rpe)));
 }
 
+/**
+ * Linguagem única: o profissional planeja em nota de sRPE alvo (0-10) e o
+ * calendário continua mostrando o nível de intensidade correspondente.
+ */
+export function loadLevelFromRpe(rpe?: number | null, durationMin?: number | null): "rest" | "low" | "moderate" | "high" {
+  const r = Number(rpe);
+  const d = Number(durationMin);
+  if (!Number.isFinite(r) || r <= 0 || (Number.isFinite(d) && d <= 0)) return "rest";
+  if (r <= 3) return "low";
+  if (r <= 6) return "moderate";
+  return "high";
+}
+
 /** Aderência de dose = carga real ÷ carga alvo. Null quando não há alvo. */
 export function doseAdherence(real: number, planned: number): number | null {
   if (!Number.isFinite(planned) || planned <= 0) return null;
