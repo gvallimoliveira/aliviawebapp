@@ -42,7 +42,18 @@ const addDays = (iso: string, n: number): string => {
 
 const DOW = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
-const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, readOnly }: Props) => {
+const MicroWeekGrid = ({
+  planId,
+  patientId,
+  sessions,
+  entries = [],
+  onChanged,
+  readOnly,
+  patientName,
+  professionalName,
+  sport,
+  currentPhase,
+}: Props) => {
   const { toast } = useToast();
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()));
   const [editing, setEditing] = useState<{ date: string } | null>(null);
