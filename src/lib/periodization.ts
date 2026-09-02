@@ -61,6 +61,26 @@ export function chronicLoad(entries: SrpeEntryLike[], ref: Date = new Date()): n
   return Math.round(loadInWindow(entries, 28, ref) / 4);
 }
 
+/** Mínimos para a linha de base crônica fazer sentido. */
+export const CHRONIC_MIN_DAYS = 14;
+export const CHRONIC_MIN_SESSIONS = 4;
+
+/**
+ * A carga crônica só é comparável quando há histórico suficiente.
+ * Com 1–3 sessões (ou menos de 2 semanas de registro) a média de 28 dias fica
+ * artificialmente baixa e o ACWR dispara um "risco" que não existe.
+ */
+export function chronicBaselineReady(entries: SrpeEntryLike[], ref: Date = new Date()): boolean {
+  const end = toDate(ref.toISOString());
+  const inWindow = entries.filter((e) => {
+    const diff = daysBetween(toDate(e.session_date), end);
+    return diff >= 0 && diff < 28 && trainingLoad(e.duration_min, e.rpe) > 0;
+  });
+  if (inWindow.length < CHRONIC_MIN_SESSIONS) return false;
+  const oldest = Math.max(...inWindow.map((e) => daysBetween(toDate(e.session_date), end)));
+  return oldest >= CHRONIC_MIN_DAYS;
+}
+
 /**
  * ACWR (acute:chronic workload ratio). Retorna null quando não há histórico
  * crônico suficiente — mostrar ACWR com poucos dias de dado engana.
@@ -68,8 +88,10 @@ export function chronicLoad(entries: SrpeEntryLike[], ref: Date = new Date()): n
 export function acwr(entries: SrpeEntryLike[], ref: Date = new Date()): number | null {
   const chronic = chronicLoad(entries, ref);
   if (chronic <= 0) return null;
+  if (!chronicBaselineReady(entries, ref)) return null;
   return Number((acuteLoad(entries, ref) / chronic).toFixed(2));
 }
+
 
 /** Zona de risco a partir do ACWR. */
 export function loadZone(ratio: number | null): LoadZone | null {
@@ -159,9 +181,12 @@ export interface LoadStatus {
   readiness: number | null;
   drop: { current: number; baseline: number; drop: number } | null;
   level: AlertLevel;
+  /** Falso enquanto não há histórico suficiente para calcular o ACWR. */
+  baselineReady: boolean;
   /** Sugestões — a decisão clínica é sempre do fisioterapeuta. */
   messages: string[];
 }
+
 
 /** Consolida carga + prontidão em um status único para a UI. */
 export function loadStatus(
@@ -170,6 +195,7 @@ export function loadStatus(
   ref: Date = new Date(),
 ): LoadStatus {
   const ratio = acwr(entries, ref);
+  const baselineReady = chronicBaselineReady(entries, ref);
   const zone = loadZone(ratio);
   const weekly = weeklyLoadSeries(entries);
   const spike = weeklySpikeAlert(weekly);
@@ -189,6 +215,10 @@ export function loadStatus(
     messages.push("Carga subindo rápido (ACWR entre 1,3 e 1,5). Sugestão: manter volume, sem novos incrementos.");
   } else if (zone === "undertraining") {
     messages.push("Carga aguda abaixo da crônica. Há espaço para progressão gradual.");
+  } else if (!baselineReady && entries.length > 0) {
+    messages.push(
+      `ACWR ainda indisponível: precisa de pelo menos ${CHRONIC_MIN_SESSIONS} sessões registradas e ${CHRONIC_MIN_DAYS} dias de histórico. Até lá, só a carga por sessão é confiável.`,
+    );
   }
 
   if (spike) {
@@ -206,7 +236,7 @@ export function loadStatus(
 
   return {
     acuteLoad: acuteLoad(entries, ref),
-    chronicLoad: chronicLoad(entries, ref),
+    chronicLoad: baselineReady ? chronicLoad(entries, ref) : 0,
     acwr: ratio,
     zone,
     weekly,
@@ -214,8 +244,10 @@ export function loadStatus(
     readiness,
     drop,
     level,
+    baselineReady,
     messages,
   };
+
 }
 
 /** Peso relativo de cada carga planejada, para a heurística do microciclo. */

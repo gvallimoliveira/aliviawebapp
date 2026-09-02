@@ -214,14 +214,26 @@ async function maybeAlert(
     const now = Date.now();
     let acute = 0;
     let chronic = 0;
+    let sessions = 0;
+    let oldestDiff = 0;
     (entries || []).forEach((e: { session_date: string; training_load: number }) => {
       const diff = Math.round((now - new Date(`${e.session_date}T12:00:00Z`).getTime()) / 86400000);
       const load = Number(e.training_load) || 0;
-      if (diff >= 0 && diff < 28) chronic += load;
+      if (diff >= 0 && diff < 28) {
+        chronic += load;
+        if (load > 0) {
+          sessions += 1;
+          if (diff > oldestDiff) oldestDiff = diff;
+        }
+      }
       if (diff >= 0 && diff < 7) acute += load;
     });
+    // Sem histórico mínimo (4 sessões / 14 dias) a média de 28 dias é artificial
+    // e geraria alerta de risco falso já na primeira sessão registrada.
+    const baselineReady = sessions >= 4 && oldestDiff >= 14;
     const chronicWeekly = chronic / 4;
-    const ratio = chronicWeekly > 0 ? acute / chronicWeekly : null;
+    const ratio = baselineReady && chronicWeekly > 0 ? acute / chronicWeekly : null;
+
 
     const { data: checkins } = await supabase
       .from("readiness_checkins")
