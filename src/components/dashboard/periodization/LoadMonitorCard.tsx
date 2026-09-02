@@ -306,6 +306,50 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
             Sem registros ainda. Use os botões acima para lançar a sessão de hoje ou envie um link de check-in ao paciente.
           </p>
         )}
+
+        {/* Detalhe das respostas que formam a prontidão exibida */}
+        <Dialog open={readinessOpen} onOpenChange={setReadinessOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-base">Prontidão de {readinessDetail?.date}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+              {readinessDetail?.items.map((c) => {
+                const score = readinessScore(c);
+                const answered = CHECKIN_ITEMS.filter((it) => typeof c[it.key] === "number");
+                return (
+                  <div key={c.id} className="rounded-xl border border-border p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-[10px]">
+                        {c.source === "coach" ? "Preparador" : c.source === "professional" ? "Fisioterapeuta" : "Paciente"}
+                      </Badge>
+                      <p className="text-sm font-semibold text-foreground">{score !== null ? `${score}%` : "—"}</p>
+                    </div>
+                    {answered.length === 0 && (
+                      <p className="text-xs text-muted-foreground">Nenhuma escala respondida neste registro.</p>
+                    )}
+                    {answered.map((it) => {
+                      const raw = c[it.key] as number;
+                      const pts = it.inverse ? 11 - raw : raw;
+                      return (
+                        <div key={it.key} className="flex items-center justify-between gap-2 text-xs">
+                          <span className="text-muted-foreground">{it.label}</span>
+                          <span className="font-medium text-foreground whitespace-nowrap">
+                            {raw}/10{it.inverse ? ` → ${pts} pts` : ""}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {c.note && <p className="text-xs italic text-muted-foreground">“{c.note}”</p>}
+                  </div>
+                );
+              })}
+              <p className="text-[10px] text-muted-foreground">
+                Cada escala vale 1-10. Nas escalas ruins (dor, fadiga, estresse, dor muscular) a nota é invertida (11 − nota) antes da média, convertida para 0-100.
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
