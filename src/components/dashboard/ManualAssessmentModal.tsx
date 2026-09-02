@@ -988,43 +988,42 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Grava em localStorage que existe uma avaliação manual em andamento, para
   // que o ManualAssessmentResumer reabra automaticamente caso o app seja
   // descarregado pelo SO (tela bloqueada, troca de app, reload da PWA).
+  // `hasContent` só fica true quando o rascunho de fato gravou conteúdo real —
+  // abrir e fechar sem digitar nunca gera retomada automática.
   const sessionTrackingEnabled = open && !demoMode;
+  const sessionIdRef = useRef<string>("");
+  const hasDraftContent = !!draft.lastSavedAt;
   useEffect(() => {
-    if (!sessionTrackingEnabled) return;
-    saveManualAssessmentSession({
-      professionalId,
-      clinicId: clinicId ?? null,
-      patientName,
-      patientEmail: patientEmail ?? null,
-      editAssessmentId: editAssessment?.id ?? null,
-      userId: user?.id ?? null,
-      openedAt: Date.now(),
-    });
-    // Refresh marker periodically and on visibility change so TTL stays fresh.
+    if (!sessionTrackingEnabled) {
+      sessionIdRef.current = "";
+      return;
+    }
+    if (!sessionIdRef.current) sessionIdRef.current = newManualAssessmentSessionId();
     const refresh = () => saveManualAssessmentSession({
       professionalId,
       clinicId: clinicId ?? null,
       patientName,
       patientEmail: patientEmail ?? null,
+      patientId: patientId ?? null,
       editAssessmentId: editAssessment?.id ?? null,
       userId: user?.id ?? null,
       openedAt: Date.now(),
+      sessionId: sessionIdRef.current,
+      hasContent: hasDraftContent || !!editAssessment?.id,
     });
-    document.addEventListener("visibilitychange", refresh);
+    refresh();
     window.addEventListener("pagehide", refresh);
     window.addEventListener("beforeunload", refresh);
-    window.addEventListener("blur", refresh);
     // freeze é disparado pelo iOS antes de descarregar a aba — última
     // chance de gravar o marcador para que o Resumer reabra ao voltar.
     document.addEventListener("freeze", refresh);
     return () => {
-      document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("pagehide", refresh);
       window.removeEventListener("beforeunload", refresh);
-      window.removeEventListener("blur", refresh);
       document.removeEventListener("freeze", refresh);
     };
-  }, [sessionTrackingEnabled, professionalId, clinicId, patientName, patientEmail, editAssessment?.id, user?.id]);
+  }, [sessionTrackingEnabled, hasDraftContent, professionalId, clinicId, patientName, patientEmail, patientId, editAssessment?.id, user?.id]);
+
 
   // ── Screen Wake Lock (best-effort) ────────────────────────────────────────
   // Evita que a tela bloqueie enquanto o fisio está medindo ADM/força.
