@@ -119,6 +119,33 @@ const MicroWeekGrid = ({
 
   const weekLabel = `${new Date(`${weekStart}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} → ${new Date(`${addDays(weekStart, 6)}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`;
 
+  /** PDF do plano da semana, para alinhar com o paciente. */
+  const exportWeekPdf = async () => {
+    setExporting(true);
+    try {
+      const weekEnd = addDays(weekStart, 6);
+      const weekSessions = sessions
+        .filter((s) => {
+          const d = s.session_date.slice(0, 10);
+          return d >= weekStart && d <= weekEnd;
+        })
+        .sort((a, b) => a.session_date.localeCompare(b.session_date));
+      const { downloadMicrocyclePdf } = await import("@/utils/generateMicrocyclePdf");
+      await downloadMicrocyclePdf({
+        weekStart,
+        sessions: weekSessions,
+        patientName,
+        professionalName,
+        sport,
+        currentPhase,
+      });
+    } catch (e: any) {
+      toast({ title: "Não foi possível gerar o PDF", description: e?.message, variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
