@@ -142,6 +142,7 @@ interface Info {
     title: string | null;
     already_reported?: boolean;
   }>;
+  week_sessions?: WeekSession[];
 }
 
 
@@ -270,6 +271,9 @@ const PeriodizationCheckin = () => {
     setPlanDone(true);
     setPlanMin("");
     setPlanTitle("");
+    // Atualiza a visão semanal com a sessão recém-planejada.
+    const refreshed = await fetchInfo();
+    if (refreshed) setInfo(refreshed);
   };
 
   const pickSession = (t: NonNullable<Info["today_targets"]>[number]) => {
