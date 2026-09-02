@@ -267,11 +267,13 @@ export function useAutosaveDraft<T>({
     if (!enabled || !scopeKey) return;
     const flush = () => {
       const serialized = JSON.stringify(state);
+      if (isBlank(state, serialized)) return;
       if (serialized && serialized !== lastSerializedRef.current && serialized !== "{}") {
         writeLocal(formKey, scopeKey, state);
         lastSerializedRef.current = serialized;
       }
     };
+
     window.addEventListener("beforeunload", flush);
     window.addEventListener("pagehide", flush);
     document.addEventListener("visibilitychange", flush);
