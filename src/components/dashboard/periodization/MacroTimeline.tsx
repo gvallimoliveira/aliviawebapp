@@ -70,7 +70,7 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
             Nenhuma fase marcada. Marque em qual fase o paciente está — o sistema não decide isso por você.
           </p>
         )}
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div ref={railRef} className="flex gap-2 overflow-x-auto pb-1" style={{ overflowAnchor: "none" }}>
           {macros.map((m) => (
             <div
               key={m.id}
