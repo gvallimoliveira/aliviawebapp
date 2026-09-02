@@ -269,11 +269,16 @@ const Admin = () => {
               <Zap className="h-3.5 w-3.5" />
               {isPt ? "Uso de IA" : "AI Usage"}
             </TabsTrigger>
+            <TabsTrigger value="videos" className="gap-1.5">
+              <Video className="h-3.5 w-3.5" />
+              {isPt ? "Vídeos" : "Videos"}
+            </TabsTrigger>
             <TabsTrigger value="lgpd" className="gap-1.5">
               <ShieldAlert className="h-3.5 w-3.5" />
               LGPD
             </TabsTrigger>
           </TabsList>
+
 
           <TabsContent value="dashboard">
             <AdminDashboard language={language} onNavigate={setActiveTab} />
