@@ -107,6 +107,14 @@ serve(async (req) => {
         .eq("checkin_date", todayISO())
         .maybeSingle();
 
+      // Sessões já relatadas hoje: evita o paciente registrar a mesma sessão duas vezes.
+      const { data: reported } = await supabase
+        .from("srpe_entries")
+        .select("session_id")
+        .eq("patient_id", patient.id)
+        .eq("session_date", todayISO());
+      const reportedIds = new Set((reported || []).map((r: { session_id: string | null }) => r.session_id).filter(Boolean));
+
       return json({
         info: {
           patient_name: patient.full_name ?? null,
@@ -125,10 +133,12 @@ serve(async (req) => {
             planned_duration_min: s.planned_duration_min,
             planned_rpe: s.planned_rpe,
             title: s.title,
+            already_reported: reportedIds.has(s.id as string),
           })),
         },
       });
     }
+
 
     if (action === "submit_checkin") {
       const v = body.values ?? {};
