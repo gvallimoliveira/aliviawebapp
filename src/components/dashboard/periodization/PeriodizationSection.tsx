@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Gauge, Link2, Loader2, Plus } from "lucide-react";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { useToast } from "@/hooks/use-toast";
+import { anchorScrollById } from "@/hooks/useScrollAnchor";
 import { supabase } from "@/integrations/supabase/client";
 import {
   PeriodizationCycle,
