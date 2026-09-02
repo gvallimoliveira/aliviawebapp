@@ -153,6 +153,9 @@ interface ManualAssessmentModalProps {
   clinicId?: string | null;
   patientName: string;
   patientEmail?: string;
+  /** Quando disponível, usado como escopo estável do rascunho (evita colisão entre homônimos). */
+  patientId?: string;
+
   /** When provided, the modal edits this existing assessment instead of creating a new one. */
   editAssessment?: any | null;
   /**
