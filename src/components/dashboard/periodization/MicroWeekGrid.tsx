@@ -42,7 +42,6 @@ const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, r
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()));
   const [editing, setEditing] = useState<{ date: string } | null>(null);
   const [track, setTrack] = useState("physio");
-  const [load, setLoad] = useState("moderate");
   const [title, setTitle] = useState("");
   const [plannedMin, setPlannedMin] = useState("");
   const [plannedRpe, setPlannedRpe] = useState(7);
