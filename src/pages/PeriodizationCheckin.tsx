@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, Loader2, Activity, HeartPulse, ShieldAlert } from "lucide-react";
 import { setSeo } from "@/lib/seo";
 import { CHECKIN_ITEMS, TRACK_LABEL } from "@/components/dashboard/periodization/scales";
-import { trainingLoad } from "@/lib/periodization";
+import { plannedLoad, trainingLoad } from "@/lib/periodization";
 
 type State = "loading" | "ready" | "error";
 
@@ -24,6 +24,13 @@ interface Info {
   today: string;
   today_checkin: Record<string, number | null> | null;
   restrictions: Array<{ kind: string; text: string }>;
+  today_targets?: Array<{
+    id: string;
+    track: string;
+    planned_duration_min: number | null;
+    planned_rpe: number | null;
+    title: string | null;
+  }>;
 }
 
 const PeriodizationCheckin = () => {
@@ -43,6 +50,13 @@ const PeriodizationCheckin = () => {
   const [sessionDate, setSessionDate] = useState("");
   const [savingSrpe, setSavingSrpe] = useState(false);
   const [srpeDone, setSrpeDone] = useState(false);
+
+  // Prescrição de dose (link do treinador/preparador)
+  const [planMin, setPlanMin] = useState("");
+  const [planRpe, setPlanRpe] = useState(7);
+  const [planTitle, setPlanTitle] = useState("");
+  const [savingPlan, setSavingPlan] = useState(false);
+  const [planDone, setPlanDone] = useState(false);
 
 
   useEffect(() => {
@@ -95,6 +109,31 @@ const PeriodizationCheckin = () => {
     setCheckinDone(true);
   };
 
+  const submitPlanned = async () => {
+    const min = Number(planMin);
+    if (!Number.isFinite(min) || min <= 0) { setErrorMsg("Informe a duração planejada em minutos."); return; }
+    setErrorMsg("");
+    setSavingPlan(true);
+    const { data, error } = await supabase.functions.invoke("periodization-checkin", {
+      body: {
+        action: "submit_planned_session",
+        token,
+        session: {
+          session_date: sessionDate || info?.today,
+          track,
+          planned_duration_min: min,
+          planned_rpe: planRpe,
+          title: planTitle,
+        },
+      },
+    });
+    setSavingPlan(false);
+    if (error || !data?.ok) { setErrorMsg("Não foi possível enviar agora. Tente novamente."); return; }
+    setPlanDone(true);
+    setPlanMin("");
+    setPlanTitle("");
+  };
+
   const submitSrpe = async () => {
     const min = Number(duration);
     if (!Number.isFinite(min) || min <= 0) { setErrorMsg("Informe a duração da sessão em minutos."); return; }
@@ -115,6 +154,7 @@ const PeriodizationCheckin = () => {
   };
 
   const isCoach = info?.audience === "coach";
+  const todayTargets = info?.today_targets || [];
   const dateLabel = info?.today
     ? new Date(`${info.today}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
     : "";
@@ -138,8 +178,8 @@ const PeriodizationCheckin = () => {
             {state === "ready" && (
               <p className="text-xs text-muted-foreground pt-1">
                 {isCoach
-                  ? "Este link é do treinador/preparador: registre a sessão treinada (tipo, duração e esforço). As escalas subjetivas são respondidas pelo próprio paciente no link dele."
-                  : "Este link é seu: conte como você está hoje e, se treinou, registre como foi a sessão."}
+                  ? "Este link é do treinador/preparador: planeje a dose esperada da sessão (tipo, duração e esforço alvo). O esforço percebido (sRPE) é sempre relatado pelo próprio paciente no link dele — o sistema cruza os dois para mostrar se o trabalho ficou na dose certa, subdosado ou superdosado."
+                  : "Este link é seu: conte como você está hoje e, se treinou, registre como foi a sessão. Só você responde o esforço percebido."}
               </p>
             )}
           </CardHeader>
@@ -222,7 +262,93 @@ const PeriodizationCheckin = () => {
 
 
                 <TabsContent value="srpe" className="space-y-4 pt-4">
-                  {srpeDone ? (
+                  {isCoach ? (
+                    planDone ? (
+                      <div className="text-center py-6 space-y-2">
+                        <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto" />
+                        <p className="text-sm font-semibold text-foreground">Dose planejada registrada!</p>
+                        <p className="text-xs text-muted-foreground">
+                          Quando o paciente relatar o esforço percebido, o fisioterapeuta verá se ficou na dose certa.
+                        </p>
+                        <Button variant="outline" size="sm" className="mt-2" onClick={() => setPlanDone(false)}>
+                          Planejar outra sessão
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-1.5">
+                          <span className="text-sm font-medium text-foreground">Frente de trabalho</span>
+                          <div className="grid grid-cols-3 gap-2">
+                            {Object.entries(TRACK_LABEL).map(([key, label]) => (
+                              <Button
+                                key={key}
+                                type="button"
+                                variant={track === key ? "default" : "outline"}
+                                size="sm"
+                                className="text-xs rounded-xl"
+                                onClick={() => setTrack(key)}
+                              >
+                                {label}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <span className="text-sm font-medium text-foreground">Data da sessão</span>
+                          <Input type="date" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)} />
+                          <p className="text-[10px] text-muted-foreground">
+                            Pode planejar para hoje ou para os próximos dias.
+                          </p>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <span className="text-sm font-medium text-foreground">Duração planejada (minutos)</span>
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            min={1}
+                            max={600}
+                            value={planMin}
+                            onChange={(e) => setPlanMin(e.target.value)}
+                            placeholder="Ex.: 40"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-foreground">Esforço alvo (0-10)</span>
+                            <Badge variant="outline" className="text-xs">{planRpe}</Badge>
+                          </div>
+                          <Slider min={0} max={10} step={1} value={[planRpe]} onValueChange={([v]) => setPlanRpe(v)} />
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                            <span>Muito leve</span><span>Máximo</span>
+                          </div>
+                        </div>
+
+                        {Number(planMin) > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            Dose alvo desta sessão: <strong>{plannedLoad(Number(planMin), planRpe)}</strong> unidades
+                            ({planMin} min × {planRpe}).
+                          </p>
+                        )}
+
+                        <Textarea
+                          value={planTitle}
+                          onChange={(e) => setPlanTitle(e.target.value)}
+                          rows={2}
+                          maxLength={200}
+                          placeholder="O que está planejado? (opcional)"
+                          className="text-sm"
+                        />
+                        {errorMsg && <p className="text-xs text-destructive">{errorMsg}</p>}
+                        <Button className="w-full rounded-xl gap-2" onClick={submitPlanned} disabled={savingPlan}>
+                          {savingPlan ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                          Salvar dose planejada
+                        </Button>
+                      </>
+                    )
+                  ) : srpeDone ? (
                     <div className="text-center py-6 space-y-2">
                       <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto" />
                       <p className="text-sm font-semibold text-foreground">Sessão registrada!</p>
@@ -250,17 +376,19 @@ const PeriodizationCheckin = () => {
                         </div>
                       </div>
 
-                      {isCoach && (
-                        <div className="space-y-1.5">
-                          <span className="text-sm font-medium text-foreground">Data da sessão</span>
-                          <Input
-                            type="date"
-                            value={sessionDate}
-                            max={info?.today}
-                            onChange={(e) => setSessionDate(e.target.value)}
-                          />
+                      {todayTargets.length > 0 && (
+                        <div className="rounded-xl border border-border bg-muted/40 px-3 py-2 space-y-1">
+                          <p className="text-[11px] font-medium text-foreground">Planejado para hoje</p>
+                          {todayTargets.map((t) => (
+                            <p key={t.id} className="text-[11px] text-muted-foreground">
+                              {TRACK_LABEL[t.track] || t.track}
+                              {t.planned_duration_min ? ` · ~${t.planned_duration_min} min` : ""}
+                              {t.planned_rpe !== null && t.planned_rpe !== undefined ? ` · esforço alvo ${t.planned_rpe}/10` : ""}
+                              {t.title ? ` · ${t.title}` : ""}
+                            </p>
+                          ))}
                           <p className="text-[10px] text-muted-foreground">
-                            Pode registrar uma sessão de dias anteriores.
+                            Responda pelo que você realmente sentiu — não precisa bater com o alvo.
                           </p>
                         </div>
                       )}
