@@ -160,6 +160,7 @@ const PeriodizationCheckin = () => {
                 )}
 
 
+                {!isCoach && (
                 <TabsContent value="checkin" className="space-y-5 pt-4">
                   {checkinDone ? (
                     <div className="text-center py-6 space-y-2">
