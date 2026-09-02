@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalendarRange, CheckCircle2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { anchorScroll } from "@/hooks/useScrollAnchor";
 import type { PeriodizationCycle } from "@/lib/periodizationData";
 import { setCurrentMacroPhase } from "@/lib/periodizationData";
 import { isOptionalMacroPhase } from "@/lib/periodization";
+
 
 interface Props {
   cycles: PeriodizationCycle[];
