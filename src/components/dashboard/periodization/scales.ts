@@ -47,3 +47,16 @@ export const LEVEL_CLASS: Record<string, string> = {
   caution: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   danger: "border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-400",
 };
+
+/** Leitura da dose planejada x carga percebida. */
+export const DOSE_LABEL: Record<string, string> = {
+  under: "Subdosado",
+  on_target: "Dose certa",
+  over: "Superdosado",
+};
+
+export const DOSE_CLASS: Record<string, string> = {
+  under: "bg-sky-500/15 text-sky-700 dark:text-sky-400",
+  on_target: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  over: "bg-rose-500/15 text-rose-700 dark:text-rose-400",
+};
