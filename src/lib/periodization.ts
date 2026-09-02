@@ -367,6 +367,10 @@ export interface TrackAdherence {
   real: number;
   ratio: number | null;
   verdict: DoseVerdict | null;
+  /** Parcelas que compõem o planejado, ex.: "45×7 = 315". */
+  plannedParts: string[];
+  /** Parcelas que compõem o percebido (sRPE), ex.: "40×3 = 120". */
+  realParts: string[];
 }
 
 export interface DoseAdherenceSummary {
