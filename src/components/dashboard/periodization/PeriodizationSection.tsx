@@ -308,10 +308,20 @@ const PeriodizationSection = ({
       {plan && (
         <>
           <PeriodizationCollapsible title="Microciclo da semana" icon={<Plus className="h-4 w-4 text-primary" />}>
-            <MicroWeekGrid planId={plan.id} patientId={patientId} sessions={sessions} entries={entries} onChanged={refresh} readOnly={readOnly} />
+            <MicroWeekGrid
+              planId={plan.id}
+              patientId={patientId}
+              sessions={sessions}
+              entries={entries}
+              onChanged={refresh}
+              readOnly={readOnly}
+              patientName={patientName}
+              sport={plan.sport}
+              currentPhase={cycles.find((c) => c.level === "macro" && c.is_current)?.name ?? null}
+            />
           </PeriodizationCollapsible>
           <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
-            <MacroTimeline cycles={cycles} />
+            <MacroTimeline cycles={cycles} planId={plan.id} onChanged={refresh} readOnly={readOnly} />
           </PeriodizationCollapsible>
         </>
       )}

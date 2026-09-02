@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Loader2, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, FileDown, Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { backToBackHighDays, loadLevelFromRpe, pairSessionsWithSrpe, plannedLoad } from "@/lib/periodization";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
@@ -20,6 +20,11 @@ interface Props {
   entries?: SrpeEntry[];
   onChanged: () => void;
   readOnly?: boolean;
+  /** Dados só para o PDF do plano da semana entregue ao paciente. */
+  patientName?: string | null;
+  professionalName?: string | null;
+  sport?: string | null;
+  currentPhase?: string | null;
 }
 
 const mondayOf = (d: Date): string => {
@@ -37,7 +42,18 @@ const addDays = (iso: string, n: number): string => {
 
 const DOW = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
-const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, readOnly }: Props) => {
+const MicroWeekGrid = ({
+  planId,
+  patientId,
+  sessions,
+  entries = [],
+  onChanged,
+  readOnly,
+  patientName,
+  professionalName,
+  sport,
+  currentPhase,
+}: Props) => {
   const { toast } = useToast();
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()));
   const [editing, setEditing] = useState<{ date: string } | null>(null);
@@ -46,6 +62,7 @@ const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, r
   const [plannedMin, setPlannedMin] = useState("");
   const [plannedRpe, setPlannedRpe] = useState(7);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Selo de dose por sessão (alvo prescrito x sRPE relatado pelo paciente).
   const doseBySession = useMemo(() => {
@@ -103,6 +120,33 @@ const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, r
 
   const weekLabel = `${new Date(`${weekStart}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} → ${new Date(`${addDays(weekStart, 6)}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`;
 
+  /** PDF do plano da semana, para alinhar com o paciente. */
+  const exportWeekPdf = async () => {
+    setExporting(true);
+    try {
+      const weekEnd = addDays(weekStart, 6);
+      const weekSessions = sessions
+        .filter((s) => {
+          const d = s.session_date.slice(0, 10);
+          return d >= weekStart && d <= weekEnd;
+        })
+        .sort((a, b) => a.session_date.localeCompare(b.session_date));
+      const { downloadMicrocyclePdf } = await import("@/utils/generateMicrocyclePdf");
+      await downloadMicrocyclePdf({
+        weekStart,
+        sessions: weekSessions,
+        patientName,
+        professionalName,
+        sport,
+        currentPhase,
+      });
+    } catch (e: any) {
+      toast({ title: "Não foi possível gerar o PDF", description: e?.message, variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -120,6 +164,18 @@ const MicroWeekGrid = ({ planId, patientId, sessions, entries = [], onChanged, r
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-xl gap-1 h-7 text-[11px]"
+            disabled={exporting}
+            onClick={exportWeekPdf}
+          >
+            {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+            PDF da semana
+          </Button>
         </div>
       </CardHeader>
       <CardContent>

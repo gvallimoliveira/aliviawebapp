@@ -2908,7 +2908,9 @@ export type Database = {
           exit_criteria: string | null
           goal: string | null
           id: string
+          is_current: boolean
           level: string
+          marked_current_at: string | null
           name: string
           parent_id: string | null
           plan_id: string
@@ -2922,7 +2924,9 @@ export type Database = {
           exit_criteria?: string | null
           goal?: string | null
           id?: string
+          is_current?: boolean
           level: string
+          marked_current_at?: string | null
           name: string
           parent_id?: string | null
           plan_id: string
@@ -2936,7 +2940,9 @@ export type Database = {
           exit_criteria?: string | null
           goal?: string | null
           id?: string
+          is_current?: boolean
           level?: string
+          marked_current_at?: string | null
           name?: string
           parent_id?: string | null
           plan_id?: string

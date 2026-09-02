@@ -28,6 +28,9 @@ export interface PeriodizationCycle {
   start_date: string | null;
   end_date: string | null;
   sort_order: number;
+  /** Fase atual marcada pelo profissional (nunca inferida pelo sistema). */
+  is_current?: boolean;
+  marked_current_at?: string | null;
 }
 
 export interface PeriodizationSession {
@@ -229,6 +232,51 @@ export async function upsertCycle(cycle: Partial<PeriodizationCycle> & { plan_id
   }
   const { error } = await supabase.from("periodization_cycles").insert(cycle);
   if (error) throw error;
+}
+
+/**
+ * O profissional marca a fase atual do macrociclo. A partir dessa marcação o
+ * sistema apenas SUGERE as janelas de datas: a fase marcada começa hoje (ou na
+ * data informada) e as seguintes são encadeadas pela duração padrão do STEPS.
+ * Fases anteriores ficam como estão (histórico).
+ */
+export async function setCurrentMacroPhase(
+  planId: string,
+  cycleId: string,
+  fromDate?: string,
+): Promise<void> {
+  const sb = supabase as any;
+  const cycles = await fetchCycles(planId);
+  const macros = cycles
+    .filter((c) => c.level === "macro")
+    .sort((a, b) => a.sort_order - b.sort_order);
+  const idx = macros.findIndex((c) => c.id === cycleId);
+  if (idx < 0) return;
+
+  const start = fromDate || new Date().toISOString().slice(0, 10);
+  const { error: clearError } = await sb
+    .from("periodization_cycles")
+    .update({ is_current: false, marked_current_at: null })
+    .eq("plan_id", planId)
+    .eq("level", "macro");
+  if (clearError) throw clearError;
+
+  let cursor = start;
+  for (let i = idx; i < macros.length; i++) {
+    const weeks = MACRO_PHASES.find((p) => p.name.toLowerCase() === macros[i].name.toLowerCase())?.weeks ?? 4;
+    const endDate = addDays(cursor, weeks * 7 - 1);
+    const { error } = await sb
+      .from("periodization_cycles")
+      .update({
+        start_date: cursor,
+        end_date: endDate,
+        is_current: i === idx,
+        marked_current_at: i === idx ? new Date().toISOString() : null,
+      })
+      .eq("id", macros[i].id);
+    if (error) throw error;
+    cursor = addDays(endDate, 1);
+  }
 }
 
 export async function deleteCycle(id: string): Promise<void> {
