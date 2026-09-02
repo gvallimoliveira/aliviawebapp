@@ -39,6 +39,20 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
   const { toast } = useToast();
   const status = useMemo(() => loadStatus(entries, checkins), [entries, checkins]);
 
+  // Detalhamento da prontidão: check-ins da data que forma o score exibido
+  const [readinessOpen, setReadinessOpen] = useState(false);
+  const readinessDetail = useMemo(() => {
+    if (status.readiness === null) return null;
+    const dated = checkins.filter((c) => readinessScore(c) !== null);
+    if (dated.length === 0) return null;
+    const lastDate = dated.reduce((max, c) => (c.checkin_date > max ? c.checkin_date : max), dated[0].checkin_date);
+    const sameDay = checkins.filter((c) => c.checkin_date === lastDate);
+    return {
+      date: new Date(`${lastDate}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }),
+      items: sameDay,
+    };
+  }, [checkins, status.readiness]);
+
   const weeklyData = useMemo(
     () => status.weekly.map((w) => ({ week: shortDate(w.weekStart), Carga: w.load, spike: w.spikePct })),
     [status.weekly],
