@@ -48,7 +48,7 @@ interface AuditRun {
 const STATUS_LABEL: Record<string, string> = {
   broken: "Vídeo fora do ar",
   invalid_url: "Link inválido",
-  mismatch: "Título divergente",
+  mismatch: "Revisar (título pouco parecido)",
   cache_broken: "Cache removido",
 };
 
