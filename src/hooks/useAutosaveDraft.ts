@@ -102,6 +102,7 @@ export function useAutosaveDraft<T>({
   enabled = true,
   debounceMs = 800,
   maxPayloadBytes = 200 * 1024,
+  isEmpty,
 }: UseAutosaveDraftOptions<T>): UseAutosaveDraftResult<T> {
   const [draftPayload, setDraftPayload] = useState<T | null>(null);
   const [draftMeta, setDraftMeta] = useState<DraftMeta | null>(null);
@@ -112,6 +113,41 @@ export function useAutosaveDraft<T>({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userIdRef = useRef<string | null>(null);
   const restoredRef = useRef(false);
+  // Linha de base: primeiro estado visto após habilitar. Enquanto o estado
+  // atual for idêntico a ela, o formulário está "intocado".
+  const baselineRef = useRef<string | null>(null);
+
+  const isBlank = useCallback(
+    (value: T, serialized?: string): boolean => {
+      if (isEmpty) {
+        try {
+          return isEmpty(value);
+        } catch {
+          /* cai no fallback abaixo */
+        }
+      }
+      const s = serialized ?? JSON.stringify(value);
+      return !!baselineRef.current && s === baselineRef.current;
+    },
+    [isEmpty],
+  );
+
+  // Captura/limpa a linha de base conforme o formulário é habilitado.
+  useEffect(() => {
+    if (!enabled || !scopeKey) {
+      baselineRef.current = null;
+      return;
+    }
+    if (baselineRef.current === null) {
+      try {
+        baselineRef.current = JSON.stringify(state);
+      } catch {
+        baselineRef.current = null;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, scopeKey]);
+
 
   // Carregar rascunho existente (local + nuvem) ao habilitar
   useEffect(() => {
