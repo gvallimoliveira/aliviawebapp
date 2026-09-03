@@ -27,3 +27,9 @@ export const ENABLE_PAINMAP_V2 = true;
 // Fases 1-4 entregues; ligar após o double-check visual do prontuário.
 export const ENABLE_PERIODIZATION = true;
 
+// Compra de tratamento vitalício PRO.
+// Desativado: o agente de raciocínio clínico passou a gerar planos de tratamento,
+// e o modelo vitalício será substituído por cobrança separada do agente no futuro.
+export const ENABLE_LIFETIME_TREATMENT_PURCHASE = false;
+
+
