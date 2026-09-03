@@ -142,14 +142,23 @@ const StudioPhotoEditor = ({
         </div>
 
         <div
-          onClick={pick}
-          className="mx-auto mb-3 w-full max-w-[240px] cursor-crosshair rounded-2xl border border-border"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={() => {
+            drag.current = null;
+            setDragging(false);
+          }}
+          className={`mx-auto mb-3 w-full max-w-[240px] touch-none select-none rounded-2xl border border-border ${
+            dragging ? "cursor-grabbing" : "cursor-grab"
+          }`}
         >
           <PhotoFrame
             photo={{ ...photo, ...framing }}
             className={`w-full rounded-2xl ${ratio.className}`}
           />
         </div>
+
 
         <div className="space-y-3 rounded-2xl border border-border bg-background p-3">
           <label className="block">
