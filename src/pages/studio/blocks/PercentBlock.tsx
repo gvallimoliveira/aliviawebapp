@@ -24,12 +24,16 @@ const percentsOf = (content: BlockProps["content"]) => {
   const out: { value: string; label: string; note?: string }[] = [];
   content.stats.forEach((set) =>
     set.items.forEach((item) => {
-      if (/%/.test(item.value)) out.push({ value: item.value, label: item.label, note: item.note });
+      // Percentuais do produto continuam disponíveis no StatsBlock, mas este
+      // modelo editorial só aceita fatos externos marcados no acervo.
+      if (item.source === "market" && /%/.test(item.value)) {
+        out.push({ value: item.value, label: item.label, note: item.note });
+      }
     }),
   );
   content.metrics.forEach((set) =>
     set.forEach((m) => {
-      if (m.suffix?.includes("%")) out.push({ value: `${m.prefix ?? ""}${m.value}%`, label: m.label });
+      if (m.source === "market" && m.suffix?.includes("%")) out.push({ value: `${m.prefix ?? ""}${m.value}%`, label: m.label });
     }),
   );
   return out;

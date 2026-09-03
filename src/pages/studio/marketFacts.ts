@@ -4,6 +4,8 @@
  * O bloco `percent` e o bloco `stats` só podem mostrar número que exista de
  * verdade: o motor NUNCA inventa estatística. Este arquivo é a única fonte de
  * percentuais externos das artes — cada item traz, na própria nota, a FONTE e o
+ * ANO e é marcado como `source: "market"` para não se confundir com métricas
+ * internas do produto.
  * ANO. Se um dado não tem fonte pública verificável, ele não entra aqui.
  *
  * ISOLAMENTO DE MARCA: cada tabela só é lida quando a marca corresponde
@@ -24,6 +26,12 @@ import type { StatItem, WorldContent } from "./content/types";
 export type MarketFactSet = { heading: string; items: StatItem[] };
 
 /** Dor lombar, condições musculoesqueléticas e adesão — público paciente. */
+  return {
+    heading,
+    items: items.map((item) => ({ ...item, source: "market" as const })),
+  };
+};
+
 const PAIN_FACTS: MarketFactSet[] = [
   {
     heading: "Dor nas costas não é exceção — é regra",
