@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import SessionNoteItem, { SessionNoteData } from "./SessionNoteItem";
 import SessionNotesHistoryModal from "./SessionNotesHistoryModal";
+import { anchorScroll } from "@/hooks/useScrollAnchor";
 
 
 type SessionNote = SessionNoteData;
@@ -59,6 +60,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
       setFormContent("");
       setFormObservation("");
       setFormDate(new Date());
+      setHint(null);
       setShowForm(true);
       window.setTimeout(() => contentRef.current?.focus(), 250);
     };
@@ -70,6 +72,18 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   const [templates, setTemplates] = useState<NoteTemplate[]>([]);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  // Feedback inline dos atalhos (evita toast fixo no topo, que no iOS com o
+  // teclado aberto empurrava a página para o topo).
+  const [hint, setHint] = useState<string | null>(null);
+
+  // Mantém o card ancorado na mesma posição da viewport durante ações que
+  // re-renderizam a lista ou fecham o teclado.
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const withAnchor = (fn: () => void) => {
+    const restore = anchorScroll(() => cardRef.current, 1200);
+    fn();
+    restore();
+  };
 
   const itemLabels = {
     repeat: t("session_notes.repeat_today") || "Repetir evolução hoje",
@@ -92,25 +106,31 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   const applyPrevious = () => {
     const previous = notes[0];
     if (!previous) {
-      toast({ title: "Sem evolução anterior para copiar" });
+      setHint("Sem evolução anterior para copiar.");
       return;
     }
-    setFormContent(previous.content || "");
-    setFormObservation(previous.observation || "");
-    toast({ title: "Preenchido com a evolução anterior" });
+    withAnchor(() => {
+      setFormContent(previous.content || "");
+      setFormObservation(previous.observation || "");
+      setHint("Preenchido com a evolução anterior.");
+    });
   };
 
   const applyTemplate = (id: string) => {
     const tpl = templates.find((x) => x.id === id);
     if (!tpl) return;
-    setFormContent(tpl.content || "");
-    setFormObservation(tpl.observation || "");
+    withAnchor(() => {
+      setFormContent(tpl.content || "");
+      setFormObservation(tpl.observation || "");
+      setHint(`Modelo aplicado: ${tpl.name}`);
+    });
   };
 
   const saveAsTemplate = async () => {
     if (!formContent.trim()) return;
     const name = window.prompt("Nome do modelo de evolução:");
     if (!name?.trim()) return;
+    const restore = anchorScroll(() => cardRef.current, 2000);
     setSavingTemplate(true);
     try {
       await (supabase.from("session_note_templates" as any) as any).insert({
@@ -119,12 +139,13 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
         content: formContent,
         observation: formObservation || null,
       });
-      toast({ title: "Modelo salvo" });
-      fetchTemplates();
+      setHint(`Modelo "${name.trim()}" salvo.`);
+      await fetchTemplates();
     } catch {
-      toast({ title: "Não foi possível salvar o modelo", variant: "destructive" });
+      setHint("Não foi possível salvar o modelo.");
     } finally {
       setSavingTemplate(false);
+      restore();
     }
   };
 
@@ -173,8 +194,10 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
       setFormContent("");
       setFormObservation("");
       setFormDate(new Date());
-
-      fetchNotes();
+      setHint(null);
+      const restore = anchorScroll(() => cardRef.current, 1500);
+      await fetchNotes();
+      restore();
     } catch {
       toast({ title: t("session_notes.error"), variant: "destructive" });
     } finally {
@@ -190,7 +213,9 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
       await (supabase.from("session_notes" as any) as any).delete().eq("id", deleteId);
       toast({ title: t("session_notes.deleted") });
       setDeleteId(null);
-      fetchNotes();
+      const restore = anchorScroll(() => cardRef.current, 1500);
+      await fetchNotes();
+      restore();
     } catch {
       toast({ title: t("session_notes.error"), variant: "destructive" });
     } finally {
@@ -216,7 +241,9 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
       });
       toast({ title: t("session_notes.repeated") || "Evolução repetida na data de hoje" });
-      fetchNotes();
+      const restore = anchorScroll(() => cardRef.current, 1500);
+      await fetchNotes();
+      restore();
     } catch {
       toast({ title: t("session_notes.error"), variant: "destructive" });
     }
@@ -224,6 +251,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
   const startEdit = (note: SessionNote) => {
     setShowHistory(false);
+    setHint(null);
     setEditingNote(note);
     setFormDate(new Date(note.session_date + "T12:00:00"));
     setFormContent(note.content);
@@ -234,7 +262,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
 
   return (
-    <Card>
+    <Card ref={cardRef}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
@@ -250,6 +278,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
               setFormContent("");
               setFormObservation("");
               setFormDate(new Date());
+              setHint(null);
               setShowForm(!showForm);
             }}
           >
@@ -287,27 +316,52 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
             {/* Atalhos: evolução anterior e modelos */}
             {!isDemo && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-[11px]" onClick={applyPrevious} disabled={notes.length === 0}>
-                  <Copy className="h-3 w-3" />
-                  Preencher com evolução anterior
-                </Button>
-                {templates.length > 0 && (
-                  <Select onValueChange={applyTemplate}>
-                    <SelectTrigger className="h-7 w-[190px] text-[11px]">
-                      <SelectValue placeholder="Usar modelo…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {templates.map((tpl) => (
-                        <SelectItem key={tpl.id} value={tpl.id} className="text-xs">{tpl.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1.5 text-[11px]"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={applyPrevious}
+                    disabled={notes.length === 0}
+                  >
+                    <Copy className="h-3 w-3" />
+                    Preencher com evolução anterior
+                  </Button>
+                  {templates.length > 0 && (
+                    <Select onValueChange={applyTemplate}>
+                      <SelectTrigger className="h-7 w-[190px] text-[11px]">
+                        <SelectValue placeholder="Usar modelo…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {templates.map((tpl) => (
+                          <SelectItem key={tpl.id} value={tpl.id} className="text-xs">{tpl.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1.5 text-[11px] text-muted-foreground"
+                    title={!formContent.trim() ? "Escreva a evolução antes de salvar como modelo" : undefined}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={saveAsTemplate}
+                    disabled={savingTemplate || !formContent.trim()}
+                  >
+                    {savingTemplate ? <Loader2 className="h-3 w-3 animate-spin" /> : <BookmarkPlus className="h-3 w-3" />}
+                    Salvar como modelo
+                  </Button>
+                </div>
+                {hint && <p className="text-[11px] text-primary">{hint}</p>}
+                {!hint && templates.length === 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Escreva uma evolução e use "Salvar como modelo" para reutilizá-la nas próximas sessões.
+                  </p>
                 )}
-                <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-[11px] text-muted-foreground" onClick={saveAsTemplate} disabled={savingTemplate || !formContent.trim()}>
-                  {savingTemplate ? <Loader2 className="h-3 w-3 animate-spin" /> : <BookmarkPlus className="h-3 w-3" />}
-                  Salvar como modelo
-                </Button>
               </div>
             )}
 
