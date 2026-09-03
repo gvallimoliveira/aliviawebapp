@@ -105,25 +105,31 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   const applyPrevious = () => {
     const previous = notes[0];
     if (!previous) {
-      toast({ title: "Sem evolução anterior para copiar" });
+      setHint("Sem evolução anterior para copiar.");
       return;
     }
-    setFormContent(previous.content || "");
-    setFormObservation(previous.observation || "");
-    toast({ title: "Preenchido com a evolução anterior" });
+    withAnchor(() => {
+      setFormContent(previous.content || "");
+      setFormObservation(previous.observation || "");
+      setHint("Preenchido com a evolução anterior.");
+    });
   };
 
   const applyTemplate = (id: string) => {
     const tpl = templates.find((x) => x.id === id);
     if (!tpl) return;
-    setFormContent(tpl.content || "");
-    setFormObservation(tpl.observation || "");
+    withAnchor(() => {
+      setFormContent(tpl.content || "");
+      setFormObservation(tpl.observation || "");
+      setHint(`Modelo aplicado: ${tpl.name}`);
+    });
   };
 
   const saveAsTemplate = async () => {
     if (!formContent.trim()) return;
     const name = window.prompt("Nome do modelo de evolução:");
     if (!name?.trim()) return;
+    const restore = anchorScroll(() => cardRef.current, 2000);
     setSavingTemplate(true);
     try {
       await (supabase.from("session_note_templates" as any) as any).insert({
@@ -132,12 +138,13 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
         content: formContent,
         observation: formObservation || null,
       });
-      toast({ title: "Modelo salvo" });
-      fetchTemplates();
+      setHint(`Modelo "${name.trim()}" salvo.`);
+      await fetchTemplates();
     } catch {
-      toast({ title: "Não foi possível salvar o modelo", variant: "destructive" });
+      setHint("Não foi possível salvar o modelo.");
     } finally {
       setSavingTemplate(false);
+      restore();
     }
   };
 
