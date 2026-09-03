@@ -24,7 +24,7 @@ const PhoneSideBlock = ({ content, rng, treatment, format, picker, photos }: Blo
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   if (!feature) return null;
   const closing = rng.pick(content.closings);
-  const photo = pickPhotoForTopics(photos, treatment + rng.int(7), [feature.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(7), [feature.topic], undefined, artKey);
 
   const dark = treatment === 1;
   const stage = dark ? "hsl(var(--foreground))" : treatment === 2 ? "hsl(var(--primary))" : "hsl(var(--background))";

@@ -30,7 +30,7 @@ const POPOUT_TRIANGLE_MASK =
  */
 const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }: BlockProps) => {
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
-  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [feature.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [feature.topic], undefined, artKey);
   if (!photo) return null;
 
   const showSite = treatment % 2 === 1;

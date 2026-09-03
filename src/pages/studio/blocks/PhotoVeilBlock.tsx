@@ -20,7 +20,7 @@ import { blockPadding, sectionHeight, type BlockProps } from "./shared";
  */
 const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos }: BlockProps) => {
   const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
-  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic], undefined, artKey);
   if (!photo) return null;
 
   /** 0 rodapé, 1 rodapé à esquerda, 2 topo, 3 centro. */

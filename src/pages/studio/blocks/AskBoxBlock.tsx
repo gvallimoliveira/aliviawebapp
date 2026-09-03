@@ -57,7 +57,7 @@ const AskBoxBlock = ({ content, rng, treatment, format, picker, photos }: BlockP
   const placeholder = rng.pick(PLACEHOLDERS);
 
   const usePhoto = treatment === 0;
-  const photo = usePhoto ? pickPhotoForTopics(photos, treatment + rng.int(5), [feature.topic]) : null;
+  const photo = usePhoto ? pickPhotoForTopics(photos, treatment + rng.int(5), [feature.topic], undefined, artKey) : null;
 
   const light = treatment === 2;
   const surface = light

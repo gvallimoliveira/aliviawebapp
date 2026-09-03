@@ -1,4 +1,5 @@
 import type { StudioPhoto } from "./photos";
+import { claimPhoto } from "./photoLedger";
 import type { TopicId } from "./topics";
 
 /**

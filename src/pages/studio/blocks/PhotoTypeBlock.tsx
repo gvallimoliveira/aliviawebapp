@@ -17,7 +17,7 @@ import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./s
  */
 const PhotoTypeBlock = ({ content, rng, treatment, format, persona, picker, photos }: BlockProps) => {
   const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
-  const photo = pickPhotoForTopics(photos, treatment + rng.int(3), [item.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(3), [item.topic], undefined, artKey);
   if (!photo) return null;
 
   /** Palavra-cartaz: a mais forte do assunto, nunca o nome do que está na foto. */

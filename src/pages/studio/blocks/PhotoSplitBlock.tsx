@@ -16,7 +16,7 @@ import { personaSurface, sectionHeight, type BlockProps } from "./shared";
  */
 const PhotoSplitBlock = ({ content, rng, treatment, format, persona, picker, photos }: BlockProps) => {
   const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
-  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic], undefined, artKey);
   if (!photo) return null;
 
   /** Só o pedaço forte: frase longa atravessando a foto fica ilegível. */

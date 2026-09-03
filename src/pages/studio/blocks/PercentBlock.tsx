@@ -45,7 +45,7 @@ const PercentBlock = ({ content, rng, treatment, format, picker, photos }: Block
   const data = rng.pick(options);
 
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
-  const photo = treatment === 3 ? pickPhotoForTopics(photos, rng.int(5), [feature.topic]) : undefined;
+  const photo = treatment === 3 ? pickPhotoForTopics(photos, rng.int(5), [feature.topic], undefined, artKey) : undefined;
 
   const dark = treatment === 1;
   const primary = treatment === 2;

@@ -54,7 +54,7 @@ const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos }: Bl
   if (!parts) return null;
 
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
-  const photo = treatment === 0 ? pickPhotoForTopics(photos, treatment + rng.int(4), [feature.topic]) : undefined;
+  const photo = treatment === 0 ? pickPhotoForTopics(photos, treatment + rng.int(4), [feature.topic], undefined, artKey) : undefined;
   const kicker = rng.pick(content.kickers);
 
   const onDark = treatment !== 2;
