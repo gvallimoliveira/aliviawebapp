@@ -28,7 +28,9 @@ import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireDa
 import { functionalTests } from "@/data/functionalTestsData";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
+import { ENABLE_LIFETIME_TREATMENT_PURCHASE } from "@/lib/featureFlags";
 import { useToast } from "@/hooks/use-toast";
+
 import { normalizeAssessment } from "@/lib/anamnesisCompat";
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { Separator } from "@/components/ui/separator";
@@ -1340,7 +1342,7 @@ const BlurredTreatmentPreview = ({
                   ? (isPt ? "Desbloquear (Demonstração)" : "Unlock (Demo)")
                   : (isPt ? `Desbloquear por R$ 29,90` : `Unlock for R$ 29.90`)}
               </Button>
-              {!isDemo && (
+              {ENABLE_LIFETIME_TREATMENT_PURCHASE && !isDemo && (
                 <button
                   onClick={handleLifetime}
                   disabled={lifetimeLoading}
@@ -1352,6 +1354,7 @@ const BlurredTreatmentPreview = ({
                     : "Or unlock all treatments for R$ 149.90 — permanent access!"}
                 </button>
               )}
+
             </div>
           </div>
         </div>

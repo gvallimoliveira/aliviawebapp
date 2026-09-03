@@ -14,7 +14,9 @@ import {
   PRO_LIFETIME_TREATMENT_PRICE_FORMATTED,
   PRO_LIFETIME_TREATMENT_ORIGINAL_FORMATTED,
 } from "@/constants/pricing";
+import { ENABLE_LIFETIME_TREATMENT_PURCHASE } from "@/lib/featureFlags";
 import { mockPatientAssessments } from "@/data/mockPatientData";
+
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
 } from "@/components/ui/card";
@@ -899,7 +901,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       )}
 
       {/* Lifetime Treatment Upsell — only for non-lifetime pros, not in clinic mode */}
-      {!isDemoMode && !isSimulated && !clinicCoversAccess && !professional.lifetime_treatment && (isWithinFirstMonth ? (
+      {ENABLE_LIFETIME_TREATMENT_PURCHASE && !isDemoMode && !isSimulated && !clinicCoversAccess && !professional.lifetime_treatment && (isWithinFirstMonth ? (
+
         <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardContent className="py-5">
