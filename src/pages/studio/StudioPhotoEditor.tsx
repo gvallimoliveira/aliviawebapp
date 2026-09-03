@@ -42,16 +42,60 @@ const StudioPhotoEditor = ({
   });
   const [ratio, setRatio] = useState(RATIOS[0]);
   const [saving, setSaving] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{ x: number; y: number; fx: number; fy: number } | null>(null);
 
   const set = <K extends keyof PhotoFraming>(key: K, value: PhotoFraming[K]) =>
     setFraming((prev) => ({ ...prev, [key]: value }));
 
-  /** Clique/arraste no preview move o ponto focal — mais rápido que sliders. */
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+
+  /** Clique no preview move o ponto focal — mais rápido que sliders. */
   const pick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    set("focusX", Math.round(((e.clientX - rect.left) / rect.width) * 100));
-    set("focusY", Math.round(((e.clientY - rect.top) / rect.height) * 100));
+    setFraming((prev) => ({
+      ...prev,
+      focusX: clamp(((e.clientX - rect.left) / rect.width) * 100),
+      focusY: clamp(((e.clientY - rect.top) / rect.height) * 100),
+    }));
   };
+
+  /**
+   * ARRASTAR PARA ESCOLHER O QUADRO.
+   *
+   * Com zoom aplicado, só o ponto focal define o recorte — então arrastar move
+   * o ponto focal na direção oposta ao gesto (o quadro "anda" junto com o
+   * dedo/mouse, como em qualquer visualizador de imagem). A sensibilidade cai
+   * com o zoom, porque cada pixel de tela cobre menos imagem.
+   */
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    drag.current = { x: e.clientX, y: e.clientY, fx: framing.focusX, fy: framing.focusY };
+    setDragging(true);
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = drag.current;
+    if (!start) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const k = 100 / Math.max(framing.zoom, 1);
+    setFraming((prev) => ({
+      ...prev,
+      focusX: clamp(start.fx - ((e.clientX - start.x) / rect.width) * k),
+      focusY: clamp(start.fy - ((e.clientY - start.y) / rect.height) * k),
+    }));
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = drag.current;
+    drag.current = null;
+    setDragging(false);
+    /** Gesto curto = toque: vale como clique para marcar o ponto focal. */
+    if (start && Math.abs(e.clientX - start.x) < 4 && Math.abs(e.clientY - start.y) < 4) {
+      pick(e as unknown as React.MouseEvent<HTMLDivElement>);
+    }
+  };
+
 
   const save = async () => {
     setSaving(true);
