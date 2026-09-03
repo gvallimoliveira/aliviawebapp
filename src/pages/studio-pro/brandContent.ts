@@ -298,7 +298,66 @@ const buildFromDna = (
       { title: desire[0] ? firstSentence(desire[0], 60) : `Falar com ${brand}`, sub: presentation || offer[0] || "", cta },
       ...(pain[0] ? [{ title: "Isso te soa familiar?", sub: pain[0], cta }] : []),
     ],
+    /**
+     * CARTAZES DA MARCA (bloco de foto de fundo, feature, pinup).
+     *
+     * Antes este slot era o ÚNICO que não nascia do manual: ficavam sempre os
+     * mesmos 4 cartazes neutros ("sempre a mesma pessoa", "nada roda no
+     * automático"), e o bloco de foto de fundo — que só lê `features` —
+     * repetia as mesmas 3 frases em todo lote. Agora cada eixo do briefing
+     * (quem sou, como trabalho, no que acredito, dor, desejo, convite) rende
+     * um cartaz próprio, com frase de cartaz curta e apoio explicando.
+     */
+    features: [
+      ...(presentation
+        ? [{
+            tag: "QUEM CONDUZ",
+            title: firstSentence(presentation, 62),
+            description: offer[0] ?? belief[0] ?? presentation,
+            topic: topicAt(0),
+            headline: condensePhrase(presentation, 36),
+          }]
+        : []),
+      ...offer.map((o, i) => ({
+        tag: "COMO EU TRABALHO",
+        title: firstSentence(o, 62),
+        description: belief[i] ?? (presentation || o),
+        topic: topicAt(i + 1),
+        headline: condensePhrase(o, 36),
+      })),
+      ...belief.map((b, i) => ({
+        tag: "NO QUE EU ACREDITO",
+        title: firstSentence(b, 62),
+        description: offer[i] ?? (presentation || b),
+        topic: topicAt(i + 2),
+        headline: condensePhrase(b, 36),
+      })),
+      ...pain.map((p, i) => ({
+        tag: "SE ISSO É COM VOCÊ",
+        title: firstSentence(p, 62),
+        description: desire[i] ?? offer[0] ?? `${brand} começa entendendo esse ponto.`,
+        topic: topicAt(i + 3),
+        headline: condensePhrase(p, 36),
+      })),
+      ...desire.map((d, i) => ({
+        tag: "O QUE PASSA A SER POSSÍVEL",
+        title: firstSentence(d, 62),
+        description: offer[i] ?? (presentation || d),
+        topic: topicAt(i + 4),
+        headline: condensePhrase(d, 36),
+      })),
+      ...(cta
+        ? [{
+            tag: "PRÓXIMO PASSO",
+            title: cta,
+            description: desire[0] ?? (presentation || `Fale com ${brand}.`),
+            topic: topicAt(5),
+            headline: condensePhrase(cta, 36),
+          }]
+        : []),
+    ].filter((f) => f.title.length >= 8 && Boolean(f.description)),
     marquee: [[brand, ...(who ? [who] : []), ...belief.slice(0, 2)].filter(Boolean)],
+
     sales: {
       audience: who,
       proofs: [...offer, ...belief].slice(0, 5),
@@ -538,7 +597,64 @@ export const buildBrandContent = (
         topic: topicAt(3),
         headline: "Sem dúvida no caminho",
       },
+      {
+        tag: "COMO COMEÇA",
+        title: `A ${op.firstStep} vem antes da proposta`,
+        description: `Primeiro entendemos ${offer.yourCase}; só depois existe um ${op.planWord}.`,
+        topic: topicAt(4),
+        headline: "Entender vem antes",
+      },
+      {
+        tag: "METODOLOGIA",
+        title: `Cada etapa tem objetivo declarado`,
+        description: `Você sabe o que está sendo feito agora, o que vem depois e para que serve.`,
+        topic: topicAt(5),
+        headline: "Etapa por etapa, no claro",
+      },
+      {
+        tag: "MEDIDA",
+        title: "Decisão com dado, não com impressão",
+        description: `Na ${op.reviewWord} comparamos o que foi medido no início com o que mudou.`,
+        topic: topicAt(6),
+        headline: "O que muda, a gente mede",
+      },
+      {
+        tag: "REGISTRO",
+        title: `O ${op.planWord} fica por escrito`,
+        description: "Combinado registrado é combinado que ninguém precisa lembrar de cor.",
+        topic: topicAt(0),
+        headline: "Nada fica só na conversa",
+      },
+      {
+        tag: "LIMITE",
+        title: "O que não dá, a gente diz na hora",
+        description: `${brand} prefere ajustar a expectativa no começo a decepcionar no fim.`,
+        topic: topicAt(1),
+        headline: "Sem promessa que não cabe",
+      },
+      {
+        tag: "RITMO",
+        title: `Poucos ${op.whoPlural} por vez, de propósito`,
+        description: "Agenda enxuta é o que permite manter o padrão de atenção.",
+        topic: topicAt(2),
+        headline: "Padrão antes de volume",
+      },
+      {
+        tag: "CONVITE",
+        title: `Conte o seu cenário para ${brand}`,
+        description: `A ${op.firstStep} já mostra se faz sentido seguir juntos.`,
+        topic: topicAt(3),
+        headline: "Comece por uma conversa",
+      },
+      {
+        tag: "DECISÃO",
+        title: `Peça para ver o ${op.planWord} antes de fechar`,
+        description: "Quem explica o caminho antes não tem nada a esconder depois.",
+        topic: topicAt(4),
+        headline: "Pergunte antes de decidir",
+      },
     ],
+
     quotes: [
       { text: `“${description || `${brand} explica o ${op.planWord} antes de começar.`}”` },
       { text: "“Finalmente encontrei uma proposta feita para o que eu precisava.”" },
@@ -898,6 +1014,8 @@ export const buildBrandContent = (
     quotes: prefer(dnaPools.quotes, generic.quotes),
     lists: prefer(dnaPools.lists, generic.lists),
     closings: prefer(dnaPools.closings, generic.closings),
+    features: prefer(dnaPools.features, generic.features),
+
     marquee: prefer(dnaPools.marquee, generic.marquee),
     sales: dnaPools.sales
       ? {
@@ -1151,6 +1269,43 @@ const applyAudience = (
       ...tail(base.compare),
     ],
     lists: [...lists, ...tail(base.lists)],
+    /**
+     * Cartazes dirigidos: o bloco de foto de fundo lê `features`, então o par
+     * relacional (medo/desejo do público + gancho + CTA) precisa chegar aqui —
+     * senão a arte com foto volta a falar a frase institucional neutra.
+     */
+    features: [
+      ...pains.slice(0, 3).map((p, i) => ({
+        tag: KEY,
+        title: sentence(p),
+        description: desires[i] ? sentence(desires[i]) : `${brand} trata esse ponto com processo, não com promessa.`,
+        topic: topicAt(i),
+        headline: condensePhrase(nomPain(i, sentence(p)), 36),
+      })),
+      ...desires.slice(0, 2).map((d, i) => ({
+        tag: `${KEY} · O DEPOIS`,
+        title: sentence(d),
+        description: proof[i] ? `${proof[i]}.` : `É o que passa a ser possível com ${lower1(key)} levado a sério.`,
+        topic: topicAt(i + 3),
+        headline: condensePhrase(desireNoms[i] ?? sentence(d), 36),
+      })),
+      ...proof.slice(0, 2).map((p, i) => ({
+        tag: `${KEY} · COMO FUNCIONA`,
+        title: `${p}.`,
+        description: desires[0] ? sentence(desires[0]) : `Assim ${brand} conduz quem chega com ${lower1(key)}.`,
+        topic: topicAt(i + 5),
+        headline: condensePhrase(p, 36),
+      })),
+      {
+        tag: `${KEY} · PRÓXIMO PASSO`,
+        title: hk(7),
+        description: cta,
+        topic: topicAt(2),
+        headline: condensePhrase(cta, 36),
+      },
+      ...tail(base.features),
+    ].filter((f) => f.title.length >= 8),
+
     quotes: [
       ...desires.slice(0, 2).map((d) => ({ text: `“${sentence(d)}”` })),
       ...(painNoms[0] ? [{ text: `“Achei que ${lower1(painNoms[0])} fosse para sempre.”` }] : []),
@@ -1218,6 +1373,18 @@ const applyGlobal = (
           ...base.typos,
         ],
         quotes: [...axes.map((a) => ({ text: `“${a.text}.”` })), ...base.quotes],
+        /* Retrato da marca também como cartaz (é o slot que a foto de fundo lê). */
+        features: [
+          ...axes.map((a, i) => ({
+            tag: a.kicker,
+            title: firstSentence(a.text, 62),
+            description: axes[(i + 1) % axes.length]?.text ?? a.text,
+            topic: topicAt(i),
+            headline: condensePhrase(a.text, 36),
+          })),
+          ...base.features,
+        ],
+
         lists: [
           {
             heading: `${brand} em três frases`,
