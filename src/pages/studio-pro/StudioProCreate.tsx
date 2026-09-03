@@ -358,6 +358,13 @@ const StudioProCreate = ({
     setSaved(new Set());
   };
 
+  /** Mesmo lote novo, disparado pelo fim da página: sobe primeiro, depois gera. */
+  const newVersionFromBottom = async () => {
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    await newVersion();
+  };
+
+
 
   useEffect(() => {
     writePersisted(brand.id, { seed, format });
