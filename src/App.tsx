@@ -70,7 +70,6 @@ const AcademicLanding = lazy(() => import("./pages/AcademicLanding"));
 const AcademicSupport = lazy(() => import("./pages/AcademicSupport"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Terms = lazy(() => import("./pages/Terms"));
-const QaBlocks = lazy(() => import("./pages/studio/QaBlocks"));
 const StudioLanding = lazy(() => import("./pages/studio/StudioLanding"));
 // Produto público de criação de posts (shell isolado, sem vínculo com o app clínico).
 const StudioProLanding = lazy(() => import("./pages/studio-pro/StudioProLanding"));
@@ -176,7 +175,6 @@ const App = () => {
                   <Route path="/privacidade" element={<PrivacyPolicy />} />
                   <Route path="/termos" element={<Terms />} />
                   {/* Interno: landing mutável de marketing, só no preview + conta admin */}
-                  <Route path="/studio-qa-blocks" element={<QaBlocks />} />
                   <Route path="/studio" element={<StudioLanding />} />
                   <Route path="/studio-pro" element={<StudioProLanding />} />
                   <Route path="/studio-pro/entrar" element={<StudioProAuth />} />
