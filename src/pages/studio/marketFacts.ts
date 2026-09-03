@@ -57,8 +57,8 @@ const PAIN_FACTS: MarketFactSet[] = [
     heading: "O problema não é começar. É continuar",
     items: [
       {
-        value: "70%",
-        label: "das pessoas não seguem o exercício em casa como combinado",
+        value: "até 70%",
+        label: "não seguem o exercício em casa como combinado",
         note: "Peek et al., Disability and Rehabilitation, 2017",
       },
       {
@@ -101,7 +101,7 @@ const CARE_MARKET_FACTS: MarketFactSet[] = [
     heading: "A conta que a agenda não mostra",
     items: [
       {
-        value: "70%",
+        value: "até 70%",
         label: "dos pacientes não seguem o programa domiciliar como prescrito",
         note: "Peek et al., Disability and Rehabilitation, 2017",
       },
