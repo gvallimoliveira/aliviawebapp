@@ -254,7 +254,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
 
   return (
-    <Card>
+    <Card ref={cardRef}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
@@ -307,27 +307,52 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
             {/* Atalhos: evolução anterior e modelos */}
             {!isDemo && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-[11px]" onClick={applyPrevious} disabled={notes.length === 0}>
-                  <Copy className="h-3 w-3" />
-                  Preencher com evolução anterior
-                </Button>
-                {templates.length > 0 && (
-                  <Select onValueChange={applyTemplate}>
-                    <SelectTrigger className="h-7 w-[190px] text-[11px]">
-                      <SelectValue placeholder="Usar modelo…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {templates.map((tpl) => (
-                        <SelectItem key={tpl.id} value={tpl.id} className="text-xs">{tpl.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1.5 text-[11px]"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={applyPrevious}
+                    disabled={notes.length === 0}
+                  >
+                    <Copy className="h-3 w-3" />
+                    Preencher com evolução anterior
+                  </Button>
+                  {templates.length > 0 && (
+                    <Select onValueChange={applyTemplate}>
+                      <SelectTrigger className="h-7 w-[190px] text-[11px]">
+                        <SelectValue placeholder="Usar modelo…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {templates.map((tpl) => (
+                          <SelectItem key={tpl.id} value={tpl.id} className="text-xs">{tpl.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1.5 text-[11px] text-muted-foreground"
+                    title={!formContent.trim() ? "Escreva a evolução antes de salvar como modelo" : undefined}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={saveAsTemplate}
+                    disabled={savingTemplate || !formContent.trim()}
+                  >
+                    {savingTemplate ? <Loader2 className="h-3 w-3 animate-spin" /> : <BookmarkPlus className="h-3 w-3" />}
+                    Salvar como modelo
+                  </Button>
+                </div>
+                {hint && <p className="text-[11px] text-primary">{hint}</p>}
+                {!hint && templates.length === 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Escreva uma evolução e use "Salvar como modelo" para reutilizá-la nas próximas sessões.
+                  </p>
                 )}
-                <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-[11px] text-muted-foreground" onClick={saveAsTemplate} disabled={savingTemplate || !formContent.trim()}>
-                  {savingTemplate ? <Loader2 className="h-3 w-3 animate-spin" /> : <BookmarkPlus className="h-3 w-3" />}
-                  Salvar como modelo
-                </Button>
               </div>
             )}
 
