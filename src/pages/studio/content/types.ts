@@ -3,7 +3,7 @@ import type { StudioHook } from "../hooks";
 
 export type WorldId = "pro" | "academico" | "paciente" | "clinica";
 
-export type StudioMetric = { value: number; prefix?: string; suffix?: string; label: string };
+export type StudioMetric = { value: number; prefix?: string; suffix?: string; label: string; source?: "market" };
 
 /**
  * REGRA TAXATIVA: nenhum item de copy declara imagem de UI. A imagem vem do
@@ -15,7 +15,7 @@ export type StudioMetric = { value: number; prefix?: string; suffix?: string; la
 export type StudioStep = { title: string; description: string; topic: TopicId };
 
 /** Número editorial com nota de rodapé — o "recibo de verdade" por trás da métrica. */
-export type StatItem = { value: string; label: string; note: string };
+export type StatItem = { value: string; label: string; note: string; source?: "market" };
 
 /** Insumos de copy de vendas usados para montar a legenda pronta de cada seção. */
 export type WorldSales = {
