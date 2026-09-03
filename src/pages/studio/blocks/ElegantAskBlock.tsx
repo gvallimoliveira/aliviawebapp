@@ -3,6 +3,7 @@ import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
 import { blockPadding, sectionHeight, type BlockProps } from "./shared";
 import { BRAND_HANDLE } from "../brand";
+import { condensePhrase } from "@/pages/studio-pro/textFit";
 
 /**
  * PERGUNTA ELEGANTE (referência estilística: foto em plano de fundo escurecido,
@@ -39,10 +40,16 @@ const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos }: Bl
     ...content.compare.flatMap((c) => c.before),
     ...content.sales.objections,
     ...(content.searchQueries ?? []),
-  ].filter((p) => p.split(/\s+/).length >= 3 && p.length <= 90);
+  ]
+    /* Pergunta curta: a arte só respira com frase de uma leitura (até 8 palavras). */
+    .map((p) => condensePhrase(p, 52))
+    .filter((p) => {
+      const words = p.split(/\s+/).filter(Boolean).length;
+      return words >= 3 && words <= 8;
+    });
   if (pool.length === 0) return null;
 
-  const raw = rng.pick(pool).replace(/[.!?…]+$/g, "").trim();
+  const raw = rng.pick(pool).replace(/[.!?…:;]+$/g, "").trim();
   const parts = splitAccent(raw);
   if (!parts) return null;
 
