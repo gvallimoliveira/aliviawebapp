@@ -20,7 +20,7 @@ import { blockPadding, sectionHeight, type BlockProps } from "./shared";
  * direita, 2 chapa da cor primária/aparelho à esquerda.
  */
 
-const PhoneSideBlock = ({ content, rng, treatment, format, picker, photos }: BlockProps) => {
+const PhoneSideBlock = ({ content, rng, treatment, format, picker, photos, artKey }: BlockProps) => {
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   if (!feature) return null;
   const closing = rng.pick(content.closings);

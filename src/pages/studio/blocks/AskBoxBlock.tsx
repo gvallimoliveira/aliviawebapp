@@ -43,7 +43,7 @@ const asTheme = (raw: string) =>
     .slice(0, 4)
     .join(" ");
 
-const AskBoxBlock = ({ content, rng, treatment, format, picker, photos }: BlockProps) => {
+const AskBoxBlock = ({ content, rng, treatment, format, picker, photos, artKey }: BlockProps) => {
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const candidates = [feature?.tag, feature?.title, ...(content.searchQueries ?? [])]
     .filter((t): t is string => !!t && t.trim().length > 3)

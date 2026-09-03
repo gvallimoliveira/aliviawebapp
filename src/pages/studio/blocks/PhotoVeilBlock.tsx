@@ -18,7 +18,7 @@ import { blockPadding, sectionHeight, type BlockProps } from "./shared";
  * topo, centro) e a intensidade do véu. A foto é SEMPRE sangrada de borda a
  * borda — é ela a protagonista da arte, como no modo autoral.
  */
-const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos }: BlockProps) => {
+const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos, artKey }: BlockProps) => {
   const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic], undefined, artKey);
   if (!photo) return null;

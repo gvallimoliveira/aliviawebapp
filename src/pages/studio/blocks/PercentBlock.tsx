@@ -39,7 +39,7 @@ const percentsOf = (content: BlockProps["content"]) => {
   return out;
 };
 
-const PercentBlock = ({ content, rng, treatment, format, picker, photos }: BlockProps) => {
+const PercentBlock = ({ content, rng, treatment, format, picker, photos, artKey }: BlockProps) => {
   const options = percentsOf(content);
   if (options.length === 0) return null;
   const data = rng.pick(options);

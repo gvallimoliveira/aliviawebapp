@@ -35,7 +35,7 @@ const splitAccent = (phrase: string) => {
   };
 };
 
-const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos }: BlockProps) => {
+const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos, artKey }: BlockProps) => {
   const pool = [
     ...content.compare.flatMap((c) => c.before),
     ...content.sales.objections,
