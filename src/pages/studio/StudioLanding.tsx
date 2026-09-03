@@ -411,7 +411,7 @@ const StudioLanding = () => {
                 >
                   <ArtworkGuard brand="Aliv.iA">
                     <StudioMotion kind={motion}>
-                      <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} slide={slide} photos={photos} />
+                      <Block content={content} rng={rng} treatment={treatment} format={format} picker={picker} persona={persona} slide={slide} photos={photos} artKey={`::|`} />
                     </StudioMotion>
                   </ArtworkGuard>
                 </StudioCapture>
