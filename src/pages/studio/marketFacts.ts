@@ -13,7 +13,7 @@
  * sem acervo próprio simplesmente não recebe percentual externo — e aí o bloco
  * de dado percentual não é gerado, em vez de exibir número de outra empresa.
  *
- * Conferido em out/2026 nas fontes primárias:
+ * Conferido nas fontes públicas consultadas:
  * - OMS — "Low back pain" (2023) e "Musculoskeletal health" (2022).
  * - Peek et al., *Disability and Rehabilitation* (2017) — adesão a exercício domiciliar.
  * - Doctoralia/Docplanner — "Quem é o Paciente Digital" (2023).
@@ -201,10 +201,10 @@ export const marketStatsFor = (
 ): WorldContent["stats"] => {
   const name = (brandName ?? "").replace(/\s+/g, " ").trim();
   if (!name) return [];
-  if (isStudioSelf(name)) return SOCIAL_MEDIA_FACTS;
-  if (isClinicalApp(name)) return opts.patientVoice ? PAIN_FACTS : CARE_MARKET_FACTS;
+  if (isStudioSelf(name)) return markMarketFacts(SOCIAL_MEDIA_FACTS);
+  if (isClinicalApp(name)) return markMarketFacts(opts.patientVoice ? PAIN_FACTS : CARE_MARKET_FACTS);
   // Marca pessoal do fisioterapeuta: fala com quem sente dor e com quem indica.
-  if (isVallim(name)) return [...PAIN_FACTS, CARE_MARKET_FACTS[0]];
+  if (isVallim(name)) return markMarketFacts([...PAIN_FACTS, CARE_MARKET_FACTS[0]]);
   return [];
 };
 
