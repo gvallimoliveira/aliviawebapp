@@ -14,7 +14,9 @@ import {
   PRO_LIFETIME_TREATMENT_PRICE_FORMATTED,
   PRO_LIFETIME_TREATMENT_ORIGINAL_FORMATTED,
 } from "@/constants/pricing";
+import { ENABLE_LIFETIME_TREATMENT_PURCHASE } from "@/lib/featureFlags";
 import { mockPatientAssessments } from "@/data/mockPatientData";
+
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription,
 } from "@/components/ui/card";
