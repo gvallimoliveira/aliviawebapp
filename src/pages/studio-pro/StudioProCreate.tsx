@@ -1396,6 +1396,8 @@ const StudioProCreate = ({
                         persona={persona}
                         slide={slide}
                         photos={activePhotos}
+                        artKey={`${brand.id}:${seed}:${format}|${kind}:${item.index}`}
+
                       />
                     </StudioMotion>
                   </StudioProSignature>
