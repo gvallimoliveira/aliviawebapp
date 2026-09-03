@@ -4,6 +4,7 @@ import academic from "./academic";
 import clinic from "./clinic";
 import { applyTerminology } from "../terminology";
 import { ALIVIA_PATIENT_HOOKS, ALIVIA_PRO_HOOKS } from "../hookLibrary";
+import { marketStatsFor } from "../marketFacts";
 import { applyHookPrefs } from "../hookStore";
 import { BRAND_NAME } from "../brand";
 import type { WorldContent, WorldId } from "./types";
