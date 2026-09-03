@@ -194,12 +194,19 @@ const enforcePhotoFirst = (
     ...rng.shuffle(convertible.filter((c) => !FIRST_LAYER_PHOTO.includes(c.kind))),
   ];
 
+  // Primeira passada evita véu cercado por véu (ritmo visual no scroll).
   for (const item of order) {
     if (count() >= target) break;
-    // Sem véu colado em véu: mantém ritmo visual no scroll.
     if (out[item.i - 1] === "photoVeil" && out[item.i + 1] === "photoVeil") continue;
     out[item.i] = "photoVeil";
   }
+  // Segunda passada: com cota de 70% a vizinhança nem sempre cabe — completa.
+  for (const item of order) {
+    if (count() >= target) break;
+    if (out[item.i] === "photoVeil") continue;
+    out[item.i] = "photoVeil";
+  }
+
 
   // Exclusividade: com véu na página, foto em primeira camada sai de cena.
   if (count() > 0) {
