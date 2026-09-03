@@ -16,19 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  NotebookPen, Plus, CalendarIcon, Loader2, Trash2, Pencil, ChevronDown, ChevronUp, Copy, BookmarkPlus,
+  NotebookPen, Plus, CalendarIcon, Loader2, Copy, BookmarkPlus, History,
 } from "lucide-react";
+import SessionNoteItem, { SessionNoteData } from "./SessionNoteItem";
+import SessionNotesHistoryModal from "./SessionNotesHistoryModal";
 
 
-interface SessionNote {
-  id: string;
-  session_date: string;
-  content: string;
-  observation?: string | null;
-  created_at: string;
-  updated_at: string;
-  appointment_id?: string | null;
-}
+type SessionNote = SessionNoteData;
 
 interface NoteTemplate {
   id: string;
@@ -36,6 +30,7 @@ interface NoteTemplate {
   content: string;
   observation?: string | null;
 }
+
 
 interface SessionNotesSectionProps {
   professionalId: string;
@@ -72,9 +67,16 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   }, []);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [templates, setTemplates] = useState<NoteTemplate[]>([]);
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const itemLabels = {
+    repeat: t("session_notes.repeat_today") || "Repetir evolução hoje",
+    expand: t("session_notes.expand"),
+    collapse: t("session_notes.collapse"),
+  };
+
 
   const fetchTemplates = useCallback(async () => {
     if (isDemo) return;
@@ -221,12 +223,14 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   };
 
   const startEdit = (note: SessionNote) => {
+    setShowHistory(false);
     setEditingNote(note);
     setFormDate(new Date(note.session_date + "T12:00:00"));
     setFormContent(note.content);
     setFormObservation(note.observation || "");
     setShowForm(true);
   };
+
 
 
   return (
@@ -350,65 +354,50 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
           <p className="text-xs text-muted-foreground text-center py-3">{t("session_notes.empty")}</p>
         ) : (
           <div className="space-y-2">
-            {notes.map((note) => {
-              const isExpanded = expanded[note.id];
-              const isLong = note.content.length > 150;
-              return (
-                <div key={note.id} className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-xs font-semibold text-foreground">
-                        {new Date(note.session_date + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        title={t("session_notes.repeat_today") || "Repetir evolução hoje"}
-                        onClick={() => handleRepeat(note)}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEdit(note)}>
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => setDeleteId(note.id)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <p className={cn("text-xs text-muted-foreground whitespace-pre-wrap", !isExpanded && isLong && "line-clamp-3")}>
-                    {note.content}
-                  </p>
-                  {note.observation?.trim() && (
-                    <div className="mt-1 rounded-md border-l-2 border-primary/40 bg-background/60 px-2 py-1">
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground/80">Observação</p>
-                      <p className="text-xs text-muted-foreground whitespace-pre-wrap">{note.observation}</p>
-                    </div>
-                  )}
-
-                  {isLong && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-5 text-[10px] px-1 gap-0.5"
-                      onClick={() => setExpanded((prev) => ({ ...prev, [note.id]: !prev[note.id] }))}
-                    >
-                      {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                      {isExpanded ? t("session_notes.collapse") : t("session_notes.expand")}
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
+            <div className="flex items-center justify-between gap-2 px-0.5">
+              <p className="text-[11px] text-muted-foreground">
+                {notes.length} registro{notes.length === 1 ? "" : "s"} · última sessão em{" "}
+                {new Date(notes[0].session_date + "T12:00:00").toLocaleDateString("pt-BR")}
+              </p>
+            </div>
+            {notes.slice(0, 3).map((note) => (
+              <SessionNoteItem
+                key={note.id}
+                note={note}
+                onEdit={startEdit}
+                onRepeat={handleRepeat}
+                onDelete={setDeleteId}
+                labels={itemLabels}
+              />
+            ))}
+            {notes.length > 3 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full rounded-xl gap-1.5 text-xs"
+                onClick={() => setShowHistory(true)}
+              >
+                <History className="h-3.5 w-3.5" />
+                Ver histórico completo ({notes.length})
+              </Button>
+            )}
           </div>
         )}
+
       </CardContent>
 
+      <SessionNotesHistoryModal
+        open={showHistory}
+        onOpenChange={setShowHistory}
+        notes={notes}
+        onEdit={startEdit}
+        onRepeat={handleRepeat}
+        onDelete={setDeleteId}
+        labels={itemLabels}
+      />
+
       {/* Delete confirmation */}
+
       <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
