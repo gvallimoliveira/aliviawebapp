@@ -1373,6 +1373,18 @@ const applyGlobal = (
           ...base.typos,
         ],
         quotes: [...axes.map((a) => ({ text: `“${a.text}.”` })), ...base.quotes],
+        /* Retrato da marca também como cartaz (é o slot que a foto de fundo lê). */
+        features: [
+          ...axes.map((a, i) => ({
+            tag: a.kicker,
+            title: firstSentence(a.text, 62),
+            description: axes[(i + 1) % axes.length]?.text ?? a.text,
+            topic: topicAt(i),
+            headline: condensePhrase(a.text, 36),
+          })),
+          ...base.features,
+        ],
+
         lists: [
           {
             heading: `${brand} em três frases`,
