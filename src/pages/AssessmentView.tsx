@@ -28,7 +28,9 @@ import { questionnaires, type QuestionnaireResult } from "@/data/questionnaireDa
 import { functionalTests } from "@/data/functionalTestsData";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
+import { ENABLE_LIFETIME_TREATMENT_PURCHASE } from "@/lib/featureFlags";
 import { useToast } from "@/hooks/use-toast";
+
 import { normalizeAssessment } from "@/lib/anamnesisCompat";
 import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { Separator } from "@/components/ui/separator";
