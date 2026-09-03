@@ -90,6 +90,24 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const f = rng.pick(c.features);
     return [f.headline ?? f.title, f.description];
   },
+  shrink: (c, rng) => {
+    const pain = c.compare.length > 0 && c.compare[0].before.length > 0
+      ? rng.pick(rng.pick(c.compare).before)
+      : rng.pick(c.sales.objections);
+    return [`E se isso fosse perdendo tamanho a cada semana?`, pain];
+  },
+  elegantAsk: (c, rng) => {
+    const pain = c.compare.length > 0 && c.compare[0].before.length > 0
+      ? rng.pick(rng.pick(c.compare).before)
+      : rng.pick(c.sales.objections);
+    return [`${pain}?`, rng.pick(c.subs)];
+  },
+  pullQuote: (c, rng) => [rng.pick(c.quotes).text, rng.pick(c.subs)],
+  percent: (c, rng) => {
+    const set = rng.pick(c.stats);
+    const item = rng.pick(set.items);
+    return [`${item.value} — ${item.label}`, item.note];
+  },
   hook: (c, rng) => {
     const list = c.hooks ?? [];
     if (list.length === 0) {
