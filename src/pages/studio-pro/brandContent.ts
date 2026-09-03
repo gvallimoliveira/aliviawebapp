@@ -298,7 +298,66 @@ const buildFromDna = (
       { title: desire[0] ? firstSentence(desire[0], 60) : `Falar com ${brand}`, sub: presentation || offer[0] || "", cta },
       ...(pain[0] ? [{ title: "Isso te soa familiar?", sub: pain[0], cta }] : []),
     ],
+    /**
+     * CARTAZES DA MARCA (bloco de foto de fundo, feature, pinup).
+     *
+     * Antes este slot era o ÚNICO que não nascia do manual: ficavam sempre os
+     * mesmos 4 cartazes neutros ("sempre a mesma pessoa", "nada roda no
+     * automático"), e o bloco de foto de fundo — que só lê `features` —
+     * repetia as mesmas 3 frases em todo lote. Agora cada eixo do briefing
+     * (quem sou, como trabalho, no que acredito, dor, desejo, convite) rende
+     * um cartaz próprio, com frase de cartaz curta e apoio explicando.
+     */
+    features: [
+      ...(presentation
+        ? [{
+            tag: "QUEM CONDUZ",
+            title: firstSentence(presentation, 62),
+            description: offer[0] ?? belief[0] ?? presentation,
+            topic: topicAt(0),
+            headline: condensePhrase(presentation, 36),
+          }]
+        : []),
+      ...offer.map((o, i) => ({
+        tag: "COMO EU TRABALHO",
+        title: firstSentence(o, 62),
+        description: belief[i] ?? presentation || o,
+        topic: topicAt(i + 1),
+        headline: condensePhrase(o, 36),
+      })),
+      ...belief.map((b, i) => ({
+        tag: "NO QUE EU ACREDITO",
+        title: firstSentence(b, 62),
+        description: offer[i] ?? presentation || b,
+        topic: topicAt(i + 2),
+        headline: condensePhrase(b, 36),
+      })),
+      ...pain.map((p, i) => ({
+        tag: "SE ISSO É COM VOCÊ",
+        title: firstSentence(p, 62),
+        description: desire[i] ?? offer[0] ?? `${brand} começa entendendo esse ponto.`,
+        topic: topicAt(i + 3),
+        headline: condensePhrase(p, 36),
+      })),
+      ...desire.map((d, i) => ({
+        tag: "O QUE PASSA A SER POSSÍVEL",
+        title: firstSentence(d, 62),
+        description: offer[i] ?? presentation || d,
+        topic: topicAt(i + 4),
+        headline: condensePhrase(d, 36),
+      })),
+      ...(cta
+        ? [{
+            tag: "PRÓXIMO PASSO",
+            title: cta,
+            description: desire[0] ?? presentation || `Fale com ${brand}.`,
+            topic: topicAt(5),
+            headline: condensePhrase(cta, 36),
+          }]
+        : []),
+    ].filter((f) => f.title.length >= 8 && Boolean(f.description)),
     marquee: [[brand, ...(who ? [who] : []), ...belief.slice(0, 2)].filter(Boolean)],
+
     sales: {
       audience: who,
       proofs: [...offer, ...belief].slice(0, 5),
