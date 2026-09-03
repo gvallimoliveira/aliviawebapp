@@ -16,19 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  NotebookPen, Plus, CalendarIcon, Loader2, Trash2, Pencil, ChevronDown, ChevronUp, Copy, BookmarkPlus,
+  NotebookPen, Plus, CalendarIcon, Loader2, Trash2, Pencil, ChevronDown, ChevronUp, Copy, BookmarkPlus, History,
 } from "lucide-react";
+import SessionNoteItem, { SessionNoteData } from "./SessionNoteItem";
+import SessionNotesHistoryModal from "./SessionNotesHistoryModal";
 
 
-interface SessionNote {
-  id: string;
-  session_date: string;
-  content: string;
-  observation?: string | null;
-  created_at: string;
-  updated_at: string;
-  appointment_id?: string | null;
-}
+type SessionNote = SessionNoteData;
 
 interface NoteTemplate {
   id: string;
@@ -36,6 +30,7 @@ interface NoteTemplate {
   content: string;
   observation?: string | null;
 }
+
 
 interface SessionNotesSectionProps {
   professionalId: string;
