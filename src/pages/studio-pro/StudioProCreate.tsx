@@ -251,6 +251,8 @@ const StudioProCreate = ({
   /** Índices das artes já salvas nesta versão — evita cliques duplicados. */
   const [saved, setSaved] = useState<Set<number>>(() => new Set());
   const wrapper = useRef<HTMLDivElement>(null);
+  /** Topo do bloco de criação: alvo do scroll ao renovar pelo fim da página. */
+  const topRef = useRef<HTMLElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const {
     photos,
@@ -357,6 +359,13 @@ const StudioProCreate = ({
     setSeed(randomSeed());
     setSaved(new Set());
   };
+
+  /** Mesmo lote novo, disparado pelo fim da página: sobe primeiro, depois gera. */
+  const newVersionFromBottom = async () => {
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    await newVersion();
+  };
+
 
 
   useEffect(() => {
@@ -1072,7 +1081,7 @@ const StudioProCreate = ({
 
 
   return (
-    <section className="mt-5 rounded-3xl border border-border bg-card p-5">
+    <section ref={topRef} className="mt-5 rounded-3xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-foreground">Criar artes de {brand.name}</h2>
@@ -1802,6 +1811,28 @@ const StudioProCreate = ({
           );
         })}
       </div>
+
+      {/* NOVA VERSÃO NO FIM DO LOTE: quem revisou até aqui não precisa voltar ao
+          topo para renovar — o clique já sobe a página e troca as artes. */}
+      <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-muted/30 p-4 text-center">
+        <p className="text-xs text-muted-foreground">
+          Chegou ao fim do lote? Renove as artes sem voltar ao topo.
+        </p>
+        <Button
+          size="sm"
+          className="rounded-full"
+          disabled={busy === "quota" || blocked}
+          onClick={() => void newVersionFromBottom()}
+        >
+          {busy === "quota" ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-1.5 h-4 w-4" />
+          )}
+          Nova versão
+        </Button>
+      </div>
+
 
       {photosOpen && (
         <StudioPhotos

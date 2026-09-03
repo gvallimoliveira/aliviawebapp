@@ -284,15 +284,27 @@ export const pickPhotoForTopics = (
       .filter((p) => !restrictionOf(p))
       .sort((a, b) => spread(a.id, index) - spread(b.id, index));
     if (neutral.length === 0) return undefined;
-    return neutral[Math.abs(index) % neutral.length];
+    return neutral[Math.abs(spread("n", index)) % neutral.length];
   }
 
   /**
-   * Circula por todas as fotos que sustentam o assunto (não só as empatadas no
-   * topo), em ordem embaralhada por índice.
+   * CIRCULAÇÃO REAL DO ACERVO.
+   *
+   * Duas correções: (1) toda foto de ampla aplicação entra na faixa, mesmo sem
+   * afinidade máxima com o assunto — antes a faixa relativa ao melhor score
+   * derrubava o acervo inteiro e sobravam 3/4 fotos; (2) a escolha não é mais
+   * `index % pool.length` sobre uma lista ordenada por pontuação (o que fazia
+   * as primeiras fotos repetirem), e sim o primeiro item de uma PERMUTAÇÃO
+   * determinística do pool por índice — cada arte enxerga o acervo em outra
+   * ordem, e o resultado segue estável (mesma seed → mesma foto).
    */
   const best = scored[0].score;
-  const pool = scored.filter((s) => s.score >= best * CIRCULATION_BAND).map((s) => s.photo);
-  return pool[Math.abs(index) % pool.length];
+  const floor = Math.min(best * CIRCULATION_BAND, BROAD_USE_BONUS);
+  const pool = scored
+    .filter((s) => s.score >= floor)
+    .map((s) => s.photo)
+    .sort((a, b) => spread(a.id, index) - spread(b.id, index));
+  return pool[0];
 };
+
 
