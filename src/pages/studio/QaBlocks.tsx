@@ -10,8 +10,8 @@ import type { BlockKind } from "./composePage";
 const KINDS: BlockKind[] = ["shrink", "elegantAsk", "pullQuote", "percent"];
 
 const QaBlocks = () => {
-  const content = WORLDS.professional;
-  const coverage = buildCoverage("professional", content, {});
+  const content = WORLDS.pro;
+  const coverage = buildCoverage("pro", content, {});
   const picker = createPicker(coverage, () => undefined);
   const persona = personaForSeed("qa");
 
