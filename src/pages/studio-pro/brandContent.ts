@@ -20,6 +20,7 @@ import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } 
 import { pickRelation, type Relation } from "./relational";
 import { applyCharm } from "./charmCopy";
 import { applyTerminology, patientVoiceFor } from "@/pages/studio/terminology";
+import { marketStatsFor } from "@/pages/studio/marketFacts";
 
 import { condensePhrase } from "./textFit";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
@@ -423,6 +424,7 @@ export const buildBrandContent = (
       ],
     ],
     stats: [
+      ...marketStatsFor(brand),
       {
         heading: `Como ${offer.possessive} se organiza`,
         items: [
