@@ -67,9 +67,16 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   }, []);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [templates, setTemplates] = useState<NoteTemplate[]>([]);
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const itemLabels = {
+    repeat: t("session_notes.repeat_today") || "Repetir evolução hoje",
+    expand: t("session_notes.expand"),
+    collapse: t("session_notes.collapse"),
+  };
+
 
   const fetchTemplates = useCallback(async () => {
     if (isDemo) return;
