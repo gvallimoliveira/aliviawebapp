@@ -25,12 +25,12 @@ import type { StatItem, WorldContent } from "./content/types";
 
 export type MarketFactSet = { heading: string; items: StatItem[] };
 
-/** Dor lombar, condições musculoesqueléticas e adesão — público paciente. */
-  return {
+/** Marca cada item como dado externo para o bloco de percentual. */
+const markMarketFacts = (sets: MarketFactSet[]): MarketFactSet[] =>
+  sets.map(({ heading, items }) => ({
     heading,
     items: items.map((item) => ({ ...item, source: "market" as const })),
-  };
-};
+  }));
 
 const PAIN_FACTS: MarketFactSet[] = [
   {
