@@ -118,7 +118,9 @@ const StudioPhotoEditor = ({
           <div>
             <h2 className="text-sm font-semibold text-foreground">Enquadrar foto</h2>
             <p className="text-[11px] text-muted-foreground">
-              Toque na foto para marcar o que não pode ser cortado. Vale para todas as artes.
+              Arraste a foto para escolher o quadro e toque para marcar o que não pode ser cortado.
+              Vale para todas as artes.
+
             </p>
           </div>
           <button type="button" onClick={onClose} className="rounded-full border border-border p-1.5 text-muted-foreground">
