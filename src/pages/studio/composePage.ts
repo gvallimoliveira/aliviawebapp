@@ -34,6 +34,10 @@ export type BlockKind =
   | "phoneSide"
   | "notice"
   | "punch"
+  | "shrink"
+  | "elegantAsk"
+  | "pullQuote"
+  | "percent"
   | "hook"
   | "device"
   | "door"
@@ -94,6 +98,10 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   phoneSide: 3,
   notice: 4,
   punch: 4,
+  shrink: 4,
+  elegantAsk: 4,
+  pullQuote: 4,
+  percent: 4,
   hook: 4,
   device: 3,
   door: 4,
@@ -285,6 +293,10 @@ export const composePage = (
     ["phoneSide", 2],
     ["notice", 1],
     ["punch", 2],
+    ["shrink", 2],
+    ["elegantAsk", 3],
+    ["pullQuote", 3],
+    ["percent", 2],
     ["hook", 3],
     ["device", 2],
     ["door", 1],
