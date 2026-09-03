@@ -60,6 +60,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
       setFormContent("");
       setFormObservation("");
       setFormDate(new Date());
+      setHint(null);
       setShowForm(true);
       window.setTimeout(() => contentRef.current?.focus(), 250);
     };
@@ -193,8 +194,10 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
       setFormContent("");
       setFormObservation("");
       setFormDate(new Date());
-
-      fetchNotes();
+      setHint(null);
+      const restore = anchorScroll(() => cardRef.current, 1500);
+      await fetchNotes();
+      restore();
     } catch {
       toast({ title: t("session_notes.error"), variant: "destructive" });
     } finally {
@@ -210,7 +213,9 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
       await (supabase.from("session_notes" as any) as any).delete().eq("id", deleteId);
       toast({ title: t("session_notes.deleted") });
       setDeleteId(null);
-      fetchNotes();
+      const restore = anchorScroll(() => cardRef.current, 1500);
+      await fetchNotes();
+      restore();
     } catch {
       toast({ title: t("session_notes.error"), variant: "destructive" });
     } finally {
@@ -236,7 +241,9 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
       });
       toast({ title: t("session_notes.repeated") || "Evolução repetida na data de hoje" });
-      fetchNotes();
+      const restore = anchorScroll(() => cardRef.current, 1500);
+      await fetchNotes();
+      restore();
     } catch {
       toast({ title: t("session_notes.error"), variant: "destructive" });
     }
@@ -244,6 +251,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
   const startEdit = (note: SessionNote) => {
     setShowHistory(false);
+    setHint(null);
     setEditingNote(note);
     setFormDate(new Date(note.session_date + "T12:00:00"));
     setFormContent(note.content);
@@ -270,6 +278,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
               setFormContent("");
               setFormObservation("");
               setFormDate(new Date());
+              setHint(null);
               setShowForm(!showForm);
             }}
           >
