@@ -386,7 +386,18 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
 
       </CardContent>
 
+      <SessionNotesHistoryModal
+        open={showHistory}
+        onOpenChange={setShowHistory}
+        notes={notes}
+        onEdit={startEdit}
+        onRepeat={handleRepeat}
+        onDelete={setDeleteId}
+        labels={itemLabels}
+      />
+
       {/* Delete confirmation */}
+
       <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
