@@ -1014,6 +1014,8 @@ export const buildBrandContent = (
     quotes: prefer(dnaPools.quotes, generic.quotes),
     lists: prefer(dnaPools.lists, generic.lists),
     closings: prefer(dnaPools.closings, generic.closings),
+    features: prefer(dnaPools.features, generic.features),
+
     marquee: prefer(dnaPools.marquee, generic.marquee),
     sales: dnaPools.sales
       ? {
