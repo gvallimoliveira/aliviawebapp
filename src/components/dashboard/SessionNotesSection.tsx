@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import SessionNoteItem, { SessionNoteData } from "./SessionNoteItem";
 import SessionNotesHistoryModal from "./SessionNotesHistoryModal";
+import { anchorScroll } from "@/hooks/useScrollAnchor";
 
 
 type SessionNote = SessionNoteData;
@@ -70,6 +71,18 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   const [templates, setTemplates] = useState<NoteTemplate[]>([]);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  // Feedback inline dos atalhos (evita toast fixo no topo, que no iOS com o
+  // teclado aberto empurrava a página para o topo).
+  const [hint, setHint] = useState<string | null>(null);
+
+  // Mantém o card ancorado na mesma posição da viewport durante ações que
+  // re-renderizam a lista ou fecham o teclado.
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const withAnchor = (fn: () => void) => {
+    const restore = anchorScroll(() => cardRef.current, 1200);
+    fn();
+    restore();
+  };
 
   const itemLabels = {
     repeat: t("session_notes.repeat_today") || "Repetir evolução hoje",
