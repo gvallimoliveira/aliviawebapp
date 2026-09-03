@@ -1803,6 +1803,28 @@ const StudioProCreate = ({
         })}
       </div>
 
+      {/* NOVA VERSÃO NO FIM DO LOTE: quem revisou até aqui não precisa voltar ao
+          topo para renovar — o clique já sobe a página e troca as artes. */}
+      <div className="mt-6 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-muted/30 p-4 text-center">
+        <p className="text-xs text-muted-foreground">
+          Chegou ao fim do lote? Renove as artes sem voltar ao topo.
+        </p>
+        <Button
+          size="sm"
+          className="rounded-full"
+          disabled={busy === "quota" || blocked}
+          onClick={() => void newVersionFromBottom()}
+        >
+          {busy === "quota" ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-1.5 h-4 w-4" />
+          )}
+          Nova versão
+        </Button>
+      </div>
+
+
       {photosOpen && (
         <StudioPhotos
           photos={photos}
