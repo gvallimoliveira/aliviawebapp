@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 import PhotoFrame from "./blocks/PhotoFrame";
