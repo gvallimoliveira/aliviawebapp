@@ -1269,6 +1269,43 @@ const applyAudience = (
       ...tail(base.compare),
     ],
     lists: [...lists, ...tail(base.lists)],
+    /**
+     * Cartazes dirigidos: o bloco de foto de fundo lê `features`, então o par
+     * relacional (medo/desejo do público + gancho + CTA) precisa chegar aqui —
+     * senão a arte com foto volta a falar a frase institucional neutra.
+     */
+    features: [
+      ...pains.slice(0, 3).map((p, i) => ({
+        tag: KEY,
+        title: sentence(p),
+        description: desires[i] ? sentence(desires[i]) : `${brand} trata esse ponto com processo, não com promessa.`,
+        topic: topicAt(i),
+        headline: condensePhrase(nomPain(i, sentence(p)), 36),
+      })),
+      ...desires.slice(0, 2).map((d, i) => ({
+        tag: `${KEY} · O DEPOIS`,
+        title: sentence(d),
+        description: proof[i] ? `${proof[i]}.` : `É o que passa a ser possível com ${lower1(key)} levado a sério.`,
+        topic: topicAt(i + 3),
+        headline: condensePhrase(desireNoms[i] ?? sentence(d), 36),
+      })),
+      ...proof.slice(0, 2).map((p, i) => ({
+        tag: `${KEY} · COMO FUNCIONA`,
+        title: `${p}.`,
+        description: desires[0] ? sentence(desires[0]) : `Assim ${brand} conduz quem chega com ${lower1(key)}.`,
+        topic: topicAt(i + 5),
+        headline: condensePhrase(p, 36),
+      })),
+      {
+        tag: `${KEY} · PRÓXIMO PASSO`,
+        title: hk(7),
+        description: cta,
+        topic: topicAt(2),
+        headline: condensePhrase(cta, 36),
+      },
+      ...tail(base.features),
+    ].filter((f) => f.title.length >= 8),
+
     quotes: [
       ...desires.slice(0, 2).map((d) => ({ text: `“${sentence(d)}”` })),
       ...(painNoms[0] ? [{ text: `“Achei que ${lower1(painNoms[0])} fosse para sempre.”` }] : []),
