@@ -17,7 +17,9 @@ import { blockPadding, sectionHeight, type BlockProps } from "./shared";
 
 /** Fecho da citação: as últimas palavras ganham a serifada itálica. */
 const splitTail = (text: string) => {
-  const words = text.replace(/\s+/g, " ").trim().split(" ");
+  /* As aspas gigantes do desenho já marcam a citação — texto entra limpo. */
+  const clean = text.replace(/\s+/g, " ").trim().replace(/^["“”\u2018\u2019']+|["“”\u2018\u2019']+$/g, "").trim();
+  const words = clean.split(" ");
   if (words.length < 5) return { head: "", tail: words.join(" ") };
   const tailSize = words.length >= 10 ? 3 : 2;
   return {
@@ -104,11 +106,6 @@ const PullQuoteBlock = ({ content, rng, treatment, format, picker }: BlockProps)
               </span>
             </span>
           </div>
-          <span
-            aria-hidden
-            className="hidden h-8 w-8 shrink-0 rounded-full md:block"
-            style={{ backgroundColor: accentInk, opacity: 0.28 }}
-          />
         </div>
       </div>
     </section>

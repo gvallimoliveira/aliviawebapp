@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
 import { BRAND_HANDLE } from "../brand";
-import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { blockPadding, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * DADO PERCENTUAL (referência estilística: percentual gigantesco no topo, frase
@@ -35,7 +35,7 @@ const percentsOf = (content: BlockProps["content"]) => {
   return out;
 };
 
-const PercentBlock = ({ content, rng, treatment, format, picker, persona, photos }: BlockProps) => {
+const PercentBlock = ({ content, rng, treatment, format, picker, photos }: BlockProps) => {
   const options = percentsOf(content);
   if (options.length === 0) return null;
   const data = rng.pick(options);
@@ -45,16 +45,14 @@ const PercentBlock = ({ content, rng, treatment, format, picker, persona, photos
 
   const dark = treatment === 1;
   const primary = treatment === 2;
-  const bg = dark ? "hsl(var(--foreground))" : primary ? "hsl(var(--primary))" : undefined;
+  const bg = dark ? "hsl(var(--foreground))" : primary ? "hsl(var(--primary))" : "hsl(var(--background))";
   const ink = dark || primary ? "hsl(var(--background))" : "hsl(var(--foreground))";
   const numberInk = dark || primary ? "hsl(var(--accent))" : "hsl(var(--primary))";
 
   return (
     <section
-      className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${
-        dark || primary ? "" : personaSurface(persona, treatment + 3)
-      }`}
-      style={bg ? { backgroundColor: bg } : undefined}
+      className={`relative flex ${sectionHeight(format)} items-center overflow-hidden`}
+      style={{ backgroundColor: bg }}
     >
       <div
         aria-hidden

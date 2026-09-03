@@ -46,12 +46,11 @@ const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos }: Bl
   const parts = splitAccent(raw);
   if (!parts) return null;
 
-  const question = `${parts.after}?`;
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const photo = treatment === 0 ? pickPhotoForTopics(photos, treatment + rng.int(4), [feature.topic]) : undefined;
   const kicker = rng.pick(content.kickers);
 
-  const onDark = treatment === 0 ? !!photo : treatment !== 2;
+  const onDark = treatment !== 2;
   const bg = photo
     ? undefined
     : treatment === 2
@@ -103,29 +102,16 @@ const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos }: Bl
             {kicker}
           </p>
 
-          {parts.before && (
+          <h2 className="font-bold tracking-tight" style={{ fontSize: bigSize, lineHeight: 1.06 }}>
+            {parts.before && <span>{parts.before} </span>}
             <span
-              className="block font-bold tracking-tight"
-              style={{ fontSize: bigSize, lineHeight: 1.02 }}
+              className="[font-family:Georgia,'Times_New_Roman',serif]"
+              style={{ fontStyle: "italic", color: accentInk }}
             >
-              {parts.before}
+              {parts.accent}
             </span>
-          )}
-
-          <span
-            className="my-1 block tracking-tight [font-family:Georgia,'Times_New_Roman',serif]"
-            style={{
-              fontSize: `calc(${bigSize} * 1.32)`,
-              lineHeight: 1,
-              fontStyle: "italic",
-              color: accentInk,
-            }}
-          >
-            {parts.accent}
-          </span>
-
-          <h2 className="block font-bold tracking-tight" style={{ fontSize: bigSize, lineHeight: 1.02 }}>
-            {question}
+            {parts.after && <span> {parts.after}</span>}
+            <span>?</span>
           </h2>
 
           <p className="mt-8 text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ opacity: 0.75 }}>

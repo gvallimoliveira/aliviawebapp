@@ -14,7 +14,7 @@ import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./
  * O alvo (o que precisa diminuir) NUNCA é inventado: sai do vocabulário real
  * da marca (cenário "antes", objeções e buscas do público).
  *
- * Tratamentos: 0 chapa de destaque, 1 chapa escura, 2 papel claro com tinta da
+ * Tratamentos: 0 chapa do acento da marca, 1 chapa escura, 2 papel claro com tinta da
  * marca, 3 chapa primária.
  */
 
@@ -54,13 +54,17 @@ const ShrinkBlock = ({ content, rng, treatment, format, persona }: BlockProps) =
   const chapa = treatment === 0 || treatment === 3;
   const bg =
     treatment === 0
-      ? "hsl(var(--destructive))"
+      ? "hsl(var(--accent))"
       : treatment === 1
         ? "hsl(var(--foreground))"
         : treatment === 3
           ? "hsl(var(--primary))"
           : undefined;
-  const ink = paperLight ? "hsl(var(--primary))" : "hsl(var(--background))";
+  const ink = paperLight
+    ? "hsl(var(--primary))"
+    : treatment === 0
+      ? "hsl(var(--foreground))"
+      : "hsl(var(--background))";
 
   /** 13 linhas: cada uma com 78% do tamanho da anterior. */
   const lines = Array.from({ length: 13 }, (_, i) => 0.78 ** i);
