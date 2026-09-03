@@ -36,7 +36,14 @@ export type BlockProps = {
    * daqui de forma determinística; sem acervo, eles não renderizam.
    */
   photos?: StudioPhoto[];
+  /**
+   * Identidade desta arte no lote, no formato "<lote>|<arte>". Usada pelos
+   * blocos fotográficos para garantir rotatividade do acervo dentro da mesma
+   * geração (foto menos usada primeiro; teto de repetições com acervo grande).
+   */
+  artKey?: string;
 };
+
 
 
 /** Surface treatments — all inside the brand palette. */

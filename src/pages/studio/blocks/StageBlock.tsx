@@ -28,9 +28,9 @@ const POPOUT_TRIANGLE_MASK =
  *
  * Tratamentos: 0 tela de perfil social (@handle) · 1 tela do site.
  */
-const StageBlock = ({ content, rng, treatment, format, persona, picker, photos }: BlockProps) => {
+const StageBlock = ({ content, rng, treatment, format, persona, picker, photos, artKey }: BlockProps) => {
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
-  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [feature.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [feature.topic], undefined, artKey);
   if (!photo) return null;
 
   const showSite = treatment % 2 === 1;

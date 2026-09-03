@@ -1,4 +1,5 @@
 import type { StudioPhoto } from "./photos";
+import { claimPhoto } from "./photoLedger";
 import type { TopicId } from "./topics";
 
 /**
@@ -255,8 +256,21 @@ export const pickPhotoForTopics = (
   index: number,
   topics: (TopicId | undefined)[],
   prefer?: StudioPhoto["usage"][],
+  /**
+   * Identidade da arte no lote ("<lote>|<arte>"). Com ela, a escolha passa pelo
+   * registro de rotatividade: foto menos usada primeiro e teto de 3 repetições
+   * por geração quando o acervo tem 10+ fotos.
+   */
+  artKey?: string,
 ): StudioPhoto | undefined => {
   if (!photos || photos.length === 0) return undefined;
+
+  /**
+   * Semente da permutação: quando existe `artKey`, ela vem do identificador da
+   * arte (bem mais disperso que o `index` pequeno que os blocos passavam — era
+   * a causa de o lote inteiro cair em 3/4 fotos).
+   */
+  const salt = artKey ? spread(artKey, 7) : index;
 
   const scored = photos
     .map((photo) => ({
@@ -270,7 +284,7 @@ export const pickPhotoForTopics = (
 
     .sort(
       (a, b) =>
-        b.score - a.score || spread(a.photo.id, index) - spread(b.photo.id, index),
+        b.score - a.score || spread(a.photo.id, salt) - spread(b.photo.id, salt),
     );
 
   if (scored.length === 0) {
@@ -282,9 +296,9 @@ export const pickPhotoForTopics = (
      */
     const neutral = photos
       .filter((p) => !restrictionOf(p))
-      .sort((a, b) => spread(a.id, index) - spread(b.id, index));
+      .sort((a, b) => spread(a.id, salt) - spread(b.id, salt));
     if (neutral.length === 0) return undefined;
-    return neutral[Math.abs(spread("n", index)) % neutral.length];
+    return claimPhoto(artKey, neutral, photos.length);
   }
 
   /**
@@ -294,17 +308,17 @@ export const pickPhotoForTopics = (
    * afinidade máxima com o assunto — antes a faixa relativa ao melhor score
    * derrubava o acervo inteiro e sobravam 3/4 fotos; (2) a escolha não é mais
    * `index % pool.length` sobre uma lista ordenada por pontuação (o que fazia
-   * as primeiras fotos repetirem), e sim o primeiro item de uma PERMUTAÇÃO
-   * determinística do pool por índice — cada arte enxerga o acervo em outra
-   * ordem, e o resultado segue estável (mesma seed → mesma foto).
+   * as primeiras fotos repetirem), e sim uma PERMUTAÇÃO determinística do pool
+   * por arte, filtrada pelo registro de rotatividade do lote.
    */
   const best = scored[0].score;
   const floor = Math.min(best * CIRCULATION_BAND, BROAD_USE_BONUS);
   const pool = scored
     .filter((s) => s.score >= floor)
     .map((s) => s.photo)
-    .sort((a, b) => spread(a.id, index) - spread(b.id, index));
-  return pool[0];
+    .sort((a, b) => spread(a.id, salt) - spread(b.id, salt));
+  return claimPhoto(artKey, pool, photos.length);
 };
+
 
 

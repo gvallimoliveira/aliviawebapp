@@ -14,9 +14,9 @@ import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./s
  * NEXO: o assunto vem da frase de impacto escolhida pelo picker; a foto entra
  * por afinidade extrapolada com esse assunto. O label da foto NUNCA é título.
  */
-const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, picker, photos }: BlockProps) => {
+const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, picker, photos, artKey }: BlockProps) => {
   const [item] = picker.pick(content.quotes, 1, rng, (q) => [q.topic]);
-  const photo = pickPhotoForTopics(photos, treatment + rng.int(7), [item.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(7), [item.topic], undefined, artKey);
   if (!photo) return null;
 
   const quote = item.text;

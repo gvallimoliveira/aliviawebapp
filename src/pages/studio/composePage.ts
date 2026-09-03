@@ -165,11 +165,13 @@ const FIRST_LAYER_PHOTO: BlockKind[] = ["photoType", "photoSplit", "photoPortrai
 /**
  * COTA DE FOTOS DO ACERVO COMO PLANO DE FUNDO.
  *
- * Com o filtro ligado, metade das artes do lote (arredondando para cima) vira
+ * Com o filtro ligado, 70% das artes do lote (arredondando para cima) viram
  * `photoVeil`. A conversão respeita a estrutura: hero, closing e a sequência de
  * carrossel ficam intactos; peças de foto em primeira camada são as primeiras a
  * ceder lugar (véu e primeira camada nunca convivem na mesma arte).
  */
+const PHOTO_FIRST_SHARE = 0.7;
+
 const enforcePhotoFirst = (
   rng: Rng,
   kinds: BlockKind[],
@@ -178,7 +180,8 @@ const enforcePhotoFirst = (
 ): BlockKind[] => {
   if (!on || photoCount <= 0 || kinds.length < 3) return kinds;
   const out = [...kinds];
-  const target = Math.ceil(out.length / 2);
+  const target = Math.ceil(out.length * PHOTO_FIRST_SHARE);
+
   const count = () => out.filter((k) => k === "photoVeil").length;
 
   const convertible = out
@@ -191,12 +194,19 @@ const enforcePhotoFirst = (
     ...rng.shuffle(convertible.filter((c) => !FIRST_LAYER_PHOTO.includes(c.kind))),
   ];
 
+  // Primeira passada evita véu cercado por véu (ritmo visual no scroll).
   for (const item of order) {
     if (count() >= target) break;
-    // Sem véu colado em véu: mantém ritmo visual no scroll.
     if (out[item.i - 1] === "photoVeil" && out[item.i + 1] === "photoVeil") continue;
     out[item.i] = "photoVeil";
   }
+  // Segunda passada: com cota de 70% a vizinhança nem sempre cabe — completa.
+  for (const item of order) {
+    if (count() >= target) break;
+    if (out[item.i] === "photoVeil") continue;
+    out[item.i] = "photoVeil";
+  }
+
 
   // Exclusividade: com véu na página, foto em primeira camada sai de cena.
   if (count() > 0) {

@@ -14,9 +14,9 @@ import { personaSurface, sectionHeight, type BlockProps } from "./shared";
  * NEXO: assunto decidido pela copy (picker) e foto escolhida por afinidade
  * extrapolada. Sem foto com nexo, não entra na composição.
  */
-const PhotoSplitBlock = ({ content, rng, treatment, format, persona, picker, photos }: BlockProps) => {
+const PhotoSplitBlock = ({ content, rng, treatment, format, persona, picker, photos, artKey }: BlockProps) => {
   const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
-  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic]);
+  const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic], undefined, artKey);
   if (!photo) return null;
 
   /** Só o pedaço forte: frase longa atravessando a foto fica ilegível. */
