@@ -1342,7 +1342,7 @@ const BlurredTreatmentPreview = ({
                   ? (isPt ? "Desbloquear (Demonstração)" : "Unlock (Demo)")
                   : (isPt ? `Desbloquear por R$ 29,90` : `Unlock for R$ 29.90`)}
               </Button>
-              {!isDemo && (
+              {ENABLE_LIFETIME_TREATMENT_PURCHASE && !isDemo && (
                 <button
                   onClick={handleLifetime}
                   disabled={lifetimeLoading}
@@ -1354,6 +1354,7 @@ const BlurredTreatmentPreview = ({
                     : "Or unlock all treatments for R$ 149.90 — permanent access!"}
                 </button>
               )}
+
             </div>
           </div>
         </div>
