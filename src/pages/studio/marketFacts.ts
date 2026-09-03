@@ -6,7 +6,7 @@
  * percentuais externos das artes — cada item traz, na própria nota, a FONTE e o
  * ANO e é marcado como `source: "market"` para não se confundir com métricas
  * internas do produto.
- * ANO. Se um dado não tem fonte pública verificável, ele não entra aqui.
+ * Se um dado não tem fonte pública verificável, ele não entra aqui.
  *
  * ISOLAMENTO DE MARCA: cada tabela só é lida quando a marca corresponde
  * (mesma regra do acervo curado de ganchos, `hookLibrary.ts`). Marca de cliente
