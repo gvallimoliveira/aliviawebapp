@@ -251,6 +251,8 @@ const StudioProCreate = ({
   /** Índices das artes já salvas nesta versão — evita cliques duplicados. */
   const [saved, setSaved] = useState<Set<number>>(() => new Set());
   const wrapper = useRef<HTMLDivElement>(null);
+  /** Topo do bloco de criação: alvo do scroll ao renovar pelo fim da página. */
+  const topRef = useRef<HTMLElement>(null);
   /** Acervo privado de fotos da conta — habilita os blocos fotográficos. */
   const {
     photos,
@@ -1079,7 +1081,7 @@ const StudioProCreate = ({
 
 
   return (
-    <section className="mt-5 rounded-3xl border border-border bg-card p-5">
+    <section ref={topRef} className="mt-5 rounded-3xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-foreground">Criar artes de {brand.name}</h2>
