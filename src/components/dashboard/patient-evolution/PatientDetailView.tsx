@@ -1333,6 +1333,22 @@ export default function PatientDetailView(props: any) {
 
       <Separator className="opacity-40" />
 
+      {/* Aviso de prontuário cru: paciente criado sem nenhuma avaliação. */}
+      {patient.assessments.length === 0 && (
+        <Card className="border-dashed border-primary/30 bg-primary/5">
+          <CardContent className="py-4 flex items-start gap-3">
+            <FileText className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <p className="text-sm text-foreground leading-relaxed">
+              {language === "pt"
+                ? "Realize uma avaliação manual ou aguarde a conclusão da avaliação via link para que o prontuário seja preenchido."
+                : language === "es"
+                  ? "Realice una evaluación manual o espere la conclusión de la evaluación por enlace para que se complete la ficha."
+                  : "Complete a manual assessment or wait for the link assessment to be finished so the record is filled in."}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Linha do tempo das avaliações (visão longitudinal sobe acima dos gráficos detalhados) */}
       <HealthGeneralCard
         assessments={patient.assessments}
