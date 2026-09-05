@@ -160,14 +160,30 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
       setLoading(false);
       return;
     }
-    const { data } = await (supabase.from("session_notes" as any) as any)
+    // Modo clínica: o prontuário é da equipe — todos os registros do paciente
+    // naquela clínica aparecem, com o autor identificado.
+    let q = (supabase.from("session_notes" as any) as any)
       .select("*")
-      .eq("professional_id", professionalId)
       .eq("patient_email", patientEmail)
       .order("session_date", { ascending: false });
-    setNotes((data as SessionNote[]) || []);
+    q = clinicId ? q.eq("clinic_id", clinicId) : q.eq("professional_id", professionalId);
+    const { data } = await q;
+    const list = (data as SessionNote[]) || [];
+    setNotes(list);
     setLoading(false);
-  }, [professionalId, patientEmail, isDemo]);
+
+    if (clinicId) {
+      const ids = Array.from(new Set(list.map((n: any) => n.professional_id).filter(Boolean)));
+      if (ids.length > 0) {
+        const { data: pros } = await (supabase.from("professionals") as any)
+          .select("id, full_name")
+          .in("id", ids);
+        const map: Record<string, string> = {};
+        (pros || []).forEach((p: any) => { map[p.id] = p.full_name; });
+        setAuthors(map);
+      }
+    }
+  }, [professionalId, patientEmail, isDemo, clinicId]);
 
   useEffect(() => { fetchNotes(); }, [fetchNotes]);
 
