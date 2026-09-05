@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -149,27 +149,24 @@ const MicroWeekGrid = ({
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-primary" />
-            Microciclo da semana
-          </CardTitle>
+      {/* O wrapper colapsável oculta o CardHeader (título duplicado); por isso a
+          barra de semana + PDF vive dentro do CardContent, sempre visível. */}
+      <CardContent className="pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-1">
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+            <CalendarDays className="h-4 w-4 text-primary" />
+            <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Semana anterior" onClick={() => setWeekStart(addDays(weekStart, -7))}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-[11px] text-muted-foreground whitespace-nowrap">{weekLabel}</span>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+            <span className="text-xs font-semibold text-foreground whitespace-nowrap">{weekLabel}</span>
+            <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Próxima semana" onClick={() => setWeekStart(addDays(weekStart, 7))}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        </div>
-        <div className="flex justify-end">
           <Button
             size="sm"
             variant="outline"
-            className="rounded-xl gap-1 h-7 text-[11px]"
+            className="rounded-xl gap-1 h-8 text-[11px]"
             disabled={exporting}
             onClick={exportWeekPdf}
           >
@@ -177,8 +174,6 @@ const MicroWeekGrid = ({
             PDF da semana
           </Button>
         </div>
-      </CardHeader>
-      <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           {days.map((date, i) => {
             const items = byDay.get(date) || [];
