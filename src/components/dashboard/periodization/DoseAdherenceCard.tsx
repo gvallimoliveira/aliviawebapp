@@ -131,7 +131,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
 
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 periodization-card-header">
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div>
             <CardTitle className="text-sm flex items-center gap-2">

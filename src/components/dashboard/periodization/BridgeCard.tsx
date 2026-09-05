@@ -67,7 +67,7 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
 
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 periodization-card-header">
         <CardTitle className="text-sm flex items-center gap-2">
           <Link2 className="h-4 w-4 text-primary" />
           Links de check-in e orientações compartilhadas

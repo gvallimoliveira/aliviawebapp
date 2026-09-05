@@ -30,7 +30,9 @@ const PeriodizationCollapsible = ({ title, icon, defaultOpen = true, children }:
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`} />
         </button>
       </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2 [&>div>div:first-child]:hidden">
+      {/* Oculta apenas o cabeçalho interno marcado (título duplicado); cards sem
+          CardHeader (ex.: MicroWeekGrid) mantêm o conteúdo visível. */}
+      <CollapsibleContent className="pt-2 [&_.periodization-card-header]:hidden">
         {children}
       </CollapsibleContent>
     </Collapsible>
