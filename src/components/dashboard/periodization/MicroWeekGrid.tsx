@@ -251,6 +251,21 @@ const MicroWeekGrid = ({
           </p>
         )}
 
+        {/* Navegação explícita de semanas: permite planejar semanas futuras (ex.: no sábado, montar a próxima). */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-border/60">
+          <Button size="sm" variant="outline" className="rounded-xl gap-1 h-8 text-[11px]" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+            <ChevronLeft className="h-3.5 w-3.5" /> Semana anterior
+          </Button>
+          {weekStart !== mondayOf(new Date()) && (
+            <Button size="sm" variant="ghost" className="h-8 text-[11px]" onClick={() => setWeekStart(mondayOf(new Date()))}>
+              Semana atual
+            </Button>
+          )}
+          <Button size="sm" variant="outline" className="rounded-xl gap-1 h-8 text-[11px]" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+            Próxima semana <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+
         <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
           <DialogContent className="max-w-sm">
             <DialogHeader><DialogTitle className="text-base">Sessão planejada</DialogTitle></DialogHeader>
