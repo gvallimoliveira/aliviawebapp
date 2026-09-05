@@ -18,6 +18,8 @@ interface Props {
   onRepeat: (note: SessionNoteData) => void;
   onDelete: (id: string) => void;
   labels: { repeat: string; expand: string; collapse: string };
+  /** Mapa professional_id -> nome (modo clínica). */
+  authors?: Record<string, string>;
 }
 
 const monthLabel = (iso: string) => {
@@ -26,7 +28,7 @@ const monthLabel = (iso: string) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-const SessionNotesHistoryModal = ({ open, onOpenChange, notes, onEdit, onRepeat, onDelete, labels }: Props) => {
+const SessionNotesHistoryModal = ({ open, onOpenChange, notes, onEdit, onRepeat, onDelete, labels, authors }: Props) => {
   const [query, setQuery] = useState("");
   const [period, setPeriod] = useState<PeriodKey>("all");
   const [visible, setVisible] = useState(PAGE_SIZE);
@@ -123,6 +125,7 @@ const SessionNotesHistoryModal = ({ open, onOpenChange, notes, onEdit, onRepeat,
                     onRepeat={onRepeat}
                     onDelete={onDelete}
                     labels={labels}
+                    authorName={authors ? authors[(note as any).professional_id] : undefined}
                   />
                 ))}
               </div>

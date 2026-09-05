@@ -11,6 +11,7 @@ export interface SessionNoteData {
   created_at: string;
   updated_at: string;
   appointment_id?: string | null;
+  professional_id?: string | null;
 }
 
 interface SessionNoteItemProps {
@@ -23,9 +24,11 @@ interface SessionNoteItemProps {
     expand: string;
     collapse: string;
   };
+  /** Em modo clínica: nome do profissional que registrou. */
+  authorName?: string;
 }
 
-const SessionNoteItem = ({ note, onEdit, onRepeat, onDelete, labels }: SessionNoteItemProps) => {
+const SessionNoteItem = ({ note, onEdit, onRepeat, onDelete, labels, authorName }: SessionNoteItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isLong = note.content.length > 150;
 
@@ -37,6 +40,11 @@ const SessionNoteItem = ({ note, onEdit, onRepeat, onDelete, labels }: SessionNo
           <span className="text-xs font-semibold text-foreground">
             {new Date(note.session_date + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
           </span>
+          {authorName && (
+            <span className="text-[10px] text-muted-foreground truncate max-w-[120px] sm:max-w-none">
+              · {authorName}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" className="h-6 w-6" title={labels.repeat} onClick={() => onRepeat(note)}>

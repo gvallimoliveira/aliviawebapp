@@ -37,9 +37,11 @@ interface SessionNotesSectionProps {
   professionalId: string;
   patientEmail: string;
   isDemo?: boolean;
+  /** Em modo clínica os registros são da equipe: leitura e escrita usam o clinic_id. */
+  clinicId?: string | null;
 }
 
-const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNotesSectionProps) => {
+const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }: SessionNotesSectionProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [notes, setNotes] = useState<SessionNote[]>([]);
@@ -75,6 +77,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
   // Feedback inline dos atalhos (evita toast fixo no topo, que no iOS com o
   // teclado aberto empurrava a página para o topo).
   const [hint, setHint] = useState<string | null>(null);
+  const [authors, setAuthors] = useState<Record<string, string>>({});
 
   // Mantém o card ancorado na mesma posição da viewport durante ações que
   // re-renderizam a lista ou fecham o teclado.
@@ -158,14 +161,30 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
       setLoading(false);
       return;
     }
-    const { data } = await (supabase.from("session_notes" as any) as any)
+    // Modo clínica: o prontuário é da equipe — todos os registros do paciente
+    // naquela clínica aparecem, com o autor identificado.
+    let q = (supabase.from("session_notes" as any) as any)
       .select("*")
-      .eq("professional_id", professionalId)
       .eq("patient_email", patientEmail)
       .order("session_date", { ascending: false });
-    setNotes((data as SessionNote[]) || []);
+    q = clinicId ? q.eq("clinic_id", clinicId) : q.eq("professional_id", professionalId);
+    const { data } = await q;
+    const list = (data as SessionNote[]) || [];
+    setNotes(list);
     setLoading(false);
-  }, [professionalId, patientEmail, isDemo]);
+
+    if (clinicId) {
+      const ids = Array.from(new Set(list.map((n: any) => n.professional_id).filter(Boolean)));
+      if (ids.length > 0) {
+        const { data: pros } = await (supabase.from("professionals") as any)
+          .select("id, full_name")
+          .in("id", ids);
+        const map: Record<string, string> = {};
+        (pros || []).forEach((p: any) => { map[p.id] = p.full_name; });
+        setAuthors(map);
+      }
+    }
+  }, [professionalId, patientEmail, isDemo, clinicId]);
 
   useEffect(() => { fetchNotes(); }, [fetchNotes]);
 
@@ -182,6 +201,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
         await (supabase.from("session_notes" as any) as any)
           .insert({
             professional_id: professionalId,
+            clinic_id: clinicId || null,
             patient_email: patientEmail,
             session_date: format(formDate, "yyyy-MM-dd"),
             content: formContent,
@@ -234,6 +254,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
     try {
       await (supabase.from("session_notes" as any) as any).insert({
         professional_id: professionalId,
+        clinic_id: clinicId || null,
         patient_email: patientEmail,
         session_date: today,
         content: note.content,
@@ -422,6 +443,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
                 onRepeat={handleRepeat}
                 onDelete={setDeleteId}
                 labels={itemLabels}
+                authorName={clinicId ? authors[(note as any).professional_id] : undefined}
               />
             ))}
             {notes.length > 3 && (
@@ -448,6 +470,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNo
         onRepeat={handleRepeat}
         onDelete={setDeleteId}
         labels={itemLabels}
+        authors={clinicId ? authors : undefined}
       />
 
       {/* Delete confirmation */}
