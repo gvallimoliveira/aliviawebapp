@@ -27,7 +27,7 @@ const ClearanceChecklistCard = ({ items, onChanged, readOnly }: Props) => {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 periodization-card-header">
         <CardTitle className="text-sm flex items-center gap-2">
           <ListChecks className="h-4 w-4 text-primary" />
           Critérios de liberação (fisio → academia → esporte)

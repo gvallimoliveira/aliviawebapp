@@ -123,7 +123,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
 
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 periodization-card-header">
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <CardTitle className="text-sm flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
