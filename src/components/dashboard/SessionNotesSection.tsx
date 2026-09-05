@@ -77,6 +77,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
   // Feedback inline dos atalhos (evita toast fixo no topo, que no iOS com o
   // teclado aberto empurrava a página para o topo).
   const [hint, setHint] = useState<string | null>(null);
+  const [authors, setAuthors] = useState<Record<string, string>>({});
 
   // Mantém o card ancorado na mesma posição da viewport durante ações que
   // re-renderizam a lista ou fecham o teclado.
@@ -200,6 +201,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
         await (supabase.from("session_notes" as any) as any)
           .insert({
             professional_id: professionalId,
+            clinic_id: clinicId || null,
             patient_email: patientEmail,
             session_date: format(formDate, "yyyy-MM-dd"),
             content: formContent,
@@ -252,6 +254,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
     try {
       await (supabase.from("session_notes" as any) as any).insert({
         professional_id: professionalId,
+        clinic_id: clinicId || null,
         patient_email: patientEmail,
         session_date: today,
         content: note.content,
@@ -440,6 +443,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
                 onRepeat={handleRepeat}
                 onDelete={setDeleteId}
                 labels={itemLabels}
+                authorName={clinicId ? authors[(note as any).professional_id] : undefined}
               />
             ))}
             {notes.length > 3 && (
@@ -466,6 +470,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
         onRepeat={handleRepeat}
         onDelete={setDeleteId}
         labels={itemLabels}
+        authors={clinicId ? authors : undefined}
       />
 
       {/* Delete confirmation */}
