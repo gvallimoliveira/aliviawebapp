@@ -69,6 +69,37 @@ const PeriodizationSection = ({
   const [restrictions, setRestrictions] = useState<PlanRestriction[]>([]);
   const [links, setLinks] = useState<PeriodizationLink[]>([]);
   const [sport, setSport] = useState("");
+  const [proName, setProName] = useState<string | null>(null);
+
+  // Nome de quem assina o PDF da semana: profissional logado; na clínica, a
+  // clínica entra como fallback quando o perfil não tem nome preenchido.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        let name: string | null = null;
+        if (auth?.user?.id) {
+          const { data: me } = await supabase
+            .from("professionals")
+            .select("full_name")
+            .eq("user_id", auth.user.id)
+            .maybeSingle();
+          name = me?.full_name ?? null;
+        }
+        if (!name && clinicId) {
+          const { data: clinic } = await supabase.from("clinics").select("name").eq("id", clinicId).maybeSingle();
+          name = clinic?.name ?? null;
+        }
+        if (!cancelled) setProName(name);
+      } catch {
+        /* nome é opcional no PDF */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [clinicId]);
+
+
 
 
   // Resolve o registro em `patients` quando o prontuário não passa o id
@@ -316,6 +347,8 @@ const PeriodizationSection = ({
               onChanged={refresh}
               readOnly={readOnly}
               patientName={patientName}
+              professionalName={proName}
+
               sport={plan.sport}
               currentPhase={cycles.find((c) => c.level === "macro" && c.is_current)?.name ?? null}
             />
