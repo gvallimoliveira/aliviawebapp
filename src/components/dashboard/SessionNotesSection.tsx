@@ -37,9 +37,11 @@ interface SessionNotesSectionProps {
   professionalId: string;
   patientEmail: string;
   isDemo?: boolean;
+  /** Em modo clínica os registros são da equipe: leitura e escrita usam o clinic_id. */
+  clinicId?: string | null;
 }
 
-const SessionNotesSection = ({ professionalId, patientEmail, isDemo }: SessionNotesSectionProps) => {
+const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }: SessionNotesSectionProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [notes, setNotes] = useState<SessionNote[]>([]);
