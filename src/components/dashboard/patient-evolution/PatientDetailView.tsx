@@ -1457,7 +1457,7 @@ export default function PatientDetailView(props: any) {
 
       {/* Notas de sessão */}
       <div id="sec-notas-sessao" className="scroll-mt-24">
-      {selectedEmail && <SessionNotesSection professionalId={professionalId} patientEmail={selectedEmail} isDemo={isDemo} />}
+      {selectedEmail && <SessionNotesSection professionalId={professionalId} patientEmail={selectedEmail} isDemo={isDemo} clinicId={clinicId} />}
       </div>
 
       {/* Dinamometria — sempre disponível no prontuário (upload PDF/foto ou registro manual) */}
