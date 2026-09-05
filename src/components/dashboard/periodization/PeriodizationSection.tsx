@@ -347,6 +347,8 @@ const PeriodizationSection = ({
               onChanged={refresh}
               readOnly={readOnly}
               patientName={patientName}
+              professionalName={proName}
+
               sport={plan.sport}
               currentPhase={cycles.find((c) => c.level === "macro" && c.is_current)?.name ?? null}
             />
