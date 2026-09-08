@@ -558,7 +558,8 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
     const style = getComputedStyle(element);
     if (!["block", "inline-block", "list-item", "flex"].includes(style.display)) return;
     if (style.display === "none" || style.visibility === "hidden") return;
-    if (!["normal", "pre-line"].includes(style.whiteSpace)) return;
+    // JSDOM devolve vazio; no navegador o padrão computado é `normal`.
+    if (style.whiteSpace && !["normal", "pre-line"].includes(style.whiteSpace)) return;
 
     const textNode = Array.from(element.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
     if (!textNode || element.childNodes.length !== 1) return;
