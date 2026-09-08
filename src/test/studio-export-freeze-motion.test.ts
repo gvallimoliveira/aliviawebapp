@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createStaticExportSurface, freezeMotion, lockUniformHeight } from "@/pages/studio/exportImage";
+import {
+  createStaticExportSurface,
+  freezeMotion,
+  lockRenderedTextLines,
+  lockUniformHeight,
+} from "@/pages/studio/exportImage";
 
 /**
  * Slides de carrossel fora do centro da tela eram capturados no meio do efeito
@@ -67,6 +72,46 @@ describe("static export surface", () => {
     surface.dispose();
     expect(surface.node.isConnected).toBe(false);
     root.remove();
+  });
+
+  it("engessa no clone as linhas vistas sem alterar a arte original", () => {
+    const source = document.createElement("div");
+    source.innerHTML = '<p style="display:block">O prontuário contou por ela.</p>';
+    const clone = source.cloneNode(true) as HTMLElement;
+    const textNode = source.querySelector("p")?.firstChild;
+    expect(textNode).toBeTruthy();
+
+    const originalCreateRange = document.createRange.bind(document);
+    document.createRange = (() => {
+      const range = originalCreateRange();
+      let start = 0;
+      range.setStart = ((_node: Node, offset: number) => { start = offset; }) as typeof range.setStart;
+      range.setEnd = (() => undefined) as typeof range.setEnd;
+      range.getBoundingClientRect = (() => ({
+        x: 0,
+        y: start < 22 ? 10 : 30,
+        top: start < 22 ? 10 : 30,
+        left: 0,
+        right: 100,
+        bottom: start < 22 ? 20 : 40,
+        width: 100,
+        height: 10,
+        toJSON: () => ({}),
+      })) as typeof range.getBoundingClientRect;
+      return range;
+    }) as typeof document.createRange;
+
+    try {
+      lockRenderedTextLines(source, clone);
+    } finally {
+      document.createRange = originalCreateRange;
+    }
+
+    const lines = clone.querySelectorAll<HTMLElement>("[data-studio-export-line='1']");
+    expect(lines).toHaveLength(2);
+    expect(lines[0]?.textContent).toBe("O prontuário contou por");
+    expect(lines[1]?.textContent).toBe("ela.");
+    expect(source.querySelector("[data-studio-export-line='1']")).toBeNull();
   });
 
   it("normaliza o lote pela maior altura real e restaura os estilos", () => {

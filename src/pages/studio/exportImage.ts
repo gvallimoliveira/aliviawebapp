@@ -536,11 +536,76 @@ const settleLayout = async () => {
 };
 
 /**
+ * Congela no clone as quebras de linha que o usuário realmente aprovou.
+ *
+ * `html-to-image` monta um segundo DOM dentro de um SVG. Uma diferença mínima
+ * na métrica da fonte nesse passo pode empurrar só a última palavra para outra
+ * linha — depois que o AutoFit já terminou — e fazê-la escapar de uma tarja.
+ * Transformamos cada linha visual de textos-folha em uma linha explícita antes
+ * da rasterização. O DOM vivo não é alterado.
+ */
+export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) => {
+  const sources = [source, ...Array.from(source.querySelectorAll<HTMLElement>("*"))];
+  const clones = [clone, ...Array.from(clone.querySelectorAll<HTMLElement>("*"))];
+
+  sources.forEach((element, index) => {
+    const target = clones[index];
+    if (!target || element.children.length > 0) return;
+    if (element.closest('[data-studio-no-export="1"]')) return;
+
+    const raw = element.textContent ?? "";
+    if (!raw.trim()) return;
+    const style = getComputedStyle(element);
+    if (!["block", "inline-block", "list-item", "flex"].includes(style.display)) return;
+    if (style.display === "none" || style.visibility === "hidden") return;
+    // JSDOM devolve vazio; no navegador o padrão computado é `normal`.
+    if (style.whiteSpace && !["normal", "pre-line"].includes(style.whiteSpace)) return;
+
+    const textNode = Array.from(element.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
+    if (!textNode || element.childNodes.length !== 1) return;
+    const probe = document.createRange();
+    if (typeof probe.getBoundingClientRect !== "function") return;
+
+    const tokens = Array.from(raw.matchAll(/\S+(?:\s+|$)/g));
+    if (!tokens.length) return;
+    const lines: Array<{ top: number; text: string }> = [];
+
+    tokens.forEach((match) => {
+      const start = match.index ?? 0;
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, start + match[0].length);
+      const rect = range.getBoundingClientRect();
+      range.detach?.();
+      if (!rect.width && !rect.height) return;
+      const line = lines.find((item) => Math.abs(item.top - rect.top) < 2);
+      if (line) line.text += match[0];
+      else lines.push({ top: rect.top, text: match[0] });
+    });
+
+    if (!lines.length) return;
+    target.replaceChildren(
+      ...lines.map((line) => {
+        const span = document.createElement("span");
+        span.dataset.studioExportLine = "1";
+        span.style.display = "block";
+        span.style.whiteSpace = "pre";
+        span.textContent = line.text.trimEnd();
+        return span;
+      }),
+    );
+  });
+};
+
+/**
  * Cria uma superfície estática fora da tela. A captura nunca usa o card vivo:
  * scroll, faixa horizontal e atualizações do Framer Motion não conseguem mais
  * alterar a geometria enquanto o PNG está sendo rasterizado.
  */
 export const createStaticExportSurface = async (source: HTMLElement) => {
+  // Mede somente depois que a mesma fonte/foto vista pelo usuário estabilizou.
+  await waitForAssets(source);
+  await settleLayout();
   const rect = source.getBoundingClientRect();
   const host = document.createElement("div");
   host.dataset.studioExportSurface = "1";
@@ -548,15 +613,15 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
     position: "fixed",
     left: "-100000px",
     top: "0",
-    width: `${Math.ceil(rect.width)}px`,
+    width: `${rect.width}px`,
     pointerEvents: "none",
     zIndex: "-2147483647",
   });
 
   const clone = source.cloneNode(true) as HTMLElement;
   clone.removeAttribute("id");
-  clone.style.width = `${Math.ceil(rect.width)}px`;
-  clone.style.height = `${Math.ceil(rect.height)}px`;
+  clone.style.width = `${rect.width}px`;
+  clone.style.height = `${rect.height}px`;
   clone.style.maxWidth = "none";
 
   // Tokens da marca são herdados de wrappers da tela; materialize-os na cópia.
@@ -570,6 +635,8 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   document.body.appendChild(host);
   freezeMotion(clone);
   await waitForAssets(clone);
+  await settleLayout();
+  lockRenderedTextLines(source, clone);
   await settleLayout();
 
   return {
