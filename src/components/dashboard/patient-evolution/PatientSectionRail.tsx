@@ -169,7 +169,7 @@ const PatientSectionRail = ({ riskLevel }: Props) => {
         type="button"
         onClick={() => setMobileOpen((v) => !v)}
         aria-label={lang === "pt" ? "Atalhos do prontuário" : lang === "es" ? "Atajos del expediente" : "Record shortcuts"}
-        className="fixed left-0 top-1/2 z-40 flex h-20 w-[18px] -translate-y-1/2 items-center justify-center rounded-r-md border border-l-0 border-border/50 bg-primary/15 text-primary/80 shadow-sm backdrop-blur transition-colors hover:bg-primary/25 active:bg-primary/30 md:hidden"
+        className="fixed left-0 top-1/2 z-40 flex h-20 w-[18px] -translate-y-1/2 items-center justify-center rounded-r-md border border-l-0 border-border/50 bg-primary/15 text-primary/80 shadow-sm backdrop-blur transition-colors hover:bg-primary/25 active:bg-primary/30 lg:hidden"
       >
         {mobileOpen ? <X className="h-3 w-3" /> : <List className="h-3 w-3" />}
       </button>
@@ -178,7 +178,7 @@ const PatientSectionRail = ({ riskLevel }: Props) => {
 
         <nav
           aria-label={lang === "pt" ? "Atalhos do prontuário" : lang === "es" ? "Atajos del expediente" : "Record shortcuts"}
-          className="fixed left-2 top-1/2 z-40 w-56 -translate-y-1/2 rounded-2xl border border-border/60 bg-background/95 p-1.5 shadow-xl backdrop-blur md:hidden animate-scale-in"
+          className="fixed left-2 top-1/2 z-40 w-56 -translate-y-1/2 rounded-2xl border border-border/60 bg-background/95 p-1.5 shadow-xl backdrop-blur lg:hidden animate-scale-in"
         >
           <ul className="flex max-h-[70vh] flex-col gap-0.5 overflow-y-auto">
             {sections.map((s) => renderItem(s, true))}
