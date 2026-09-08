@@ -63,7 +63,7 @@ const SessionNoteItem = ({ note, onEdit, onRepeat, onDelete, labels, authorName 
           </Button>
         </div>
       </div>
-      <p className={cn("text-xs text-muted-foreground whitespace-pre-wrap", !isExpanded && isLong && "line-clamp-3")}>
+      <p className={cn("text-xs text-muted-foreground whitespace-pre-wrap break-words [overflow-wrap:anywhere]", !isExpanded && isLong && "line-clamp-3")}>
         {note.content}
       </p>
       {note.observation?.trim() && (

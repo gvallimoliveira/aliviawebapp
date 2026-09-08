@@ -155,7 +155,7 @@ const PatientSectionRail = ({ riskLevel }: Props) => {
         onMouseEnter={() => setExpanded(true)}
         onMouseLeave={() => setExpanded(false)}
         className={cn(
-          "fixed left-2 top-1/2 z-40 hidden -translate-y-1/2 rounded-2xl border border-border/60 bg-background/85 p-1.5 shadow-lg backdrop-blur transition-all duration-200 md:block",
+          "fixed left-2 top-1/2 z-40 hidden -translate-y-1/2 rounded-2xl border border-border/60 bg-background/85 p-1.5 shadow-lg backdrop-blur transition-all duration-200 lg:block",
           expanded ? "w-56" : "w-[52px]",
         )}
       >
