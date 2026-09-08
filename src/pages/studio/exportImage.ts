@@ -563,6 +563,8 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
 
     const textNode = Array.from(element.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
     if (!textNode || element.childNodes.length !== 1) return;
+    const probe = document.createRange();
+    if (typeof probe.getBoundingClientRect !== "function") return;
 
     const tokens = Array.from(raw.matchAll(/\S+(?:\s+|$)/g));
     if (!tokens.length) return;
