@@ -257,6 +257,7 @@ const patient: WorldContent = {
   ],
   carousels: [
     {
+      id: "patient-understand-pain",
       kicker: "PARA QUEM SENTE DOR",
       title: "Entenda a sua dor em três passos",
       coverSub: "Arraste para ver como funciona.",
@@ -268,6 +269,7 @@ const patient: WorldContent = {
       cta: { title: "Comece pela avaliação gratuita", sub: "Link na bio." },
     },
     {
+      id: "patient-low-back-investigation",
       kicker: "ANTES DE ACEITAR O DESGASTE",
       title: "Dor lombar: o que investigar primeiro",
       coverSub: "Duas frentes que mudam o rumo do caso. Arraste.",
@@ -278,6 +280,7 @@ const patient: WorldContent = {
       cta: { title: "Faça a sua triagem guiada", sub: "Link na bio." },
     },
     {
+      id: "patient-week-with-plan",
       kicker: "UMA SEMANA COM PLANO",
       title: "Como é ter um plano de verdade",
       coverSub: "A semana de quem trata com método. Arraste.",

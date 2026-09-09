@@ -336,17 +336,26 @@ export const planBatch = (input: {
    * buscar o roteiro e vários grupos acabavam apontando para o mesmo texto.
    */
   const carouselByGroup = new Map<number, WorldContent["carousels"][number]>();
-  const carouselStream = createStream(
-    content.carousels,
-    `${seed}:carousels`,
-    (signature) => weightOf?.(signature) ?? 1,
-    (carousel) => phraseSignature(carousel.id ?? carousel),
-  );
+  const carouselStreams = new Map<number, Stream<WorldContent["carousels"][number]>>();
+  const carouselStreamFor = (middleSlides: number) => {
+    const found = carouselStreams.get(middleSlides);
+    if (found) return found;
+    const exact = content.carousels.filter((carousel) => carousel.slides.length === middleSlides);
+    const pool = exact.length ? exact : content.carousels;
+    const made = createStream(
+      pool,
+      `${seed}:carousels:${middleSlides}`,
+      (signature) => weightOf?.(signature) ?? 1,
+      (carousel) => phraseSignature(carousel.id ?? carousel),
+    );
+    carouselStreams.set(middleSlides, made);
+    return made;
+  };
   blocks?.forEach((block) => {
     if (block.kind !== "carousel" || block.slide === undefined || carouselByGroup.has(block.slide.group)) return;
     // O roteiro é escolhido pelo diretor, não pelo índice visual: isso aplica a
     // memória entre lotes e ainda mantém roteiros distintos dentro desta leva.
-    const selected = carouselStream.take({
+    const selected = carouselStreamFor(Math.max(1, block.slide.total - 2)).take({
       axis: wheel[(block.slide.group + offset) % wheel.length],
       extra,
       voice,

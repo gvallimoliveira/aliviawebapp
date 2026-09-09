@@ -523,6 +523,7 @@ const professional: WorldContent = {
   ],
   carousels: [
     {
+      id: "pro-link-to-report",
       kicker: "DO LINK AO RELATÓRIO",
       title: "Sua próxima avaliação, em três movimentos",
       coverSub: "Arraste para ver o fluxo completo.",
@@ -534,6 +535,7 @@ const professional: WorldContent = {
       cta: { title: "Teste no seu próximo paciente", sub: "Painel demonstrativo no link da bio." },
     },
     {
+      id: "pro-new-graduate-method",
       kicker: "RECÉM-FORMADO",
       title: "Do diploma ao primeiro atendimento com método",
       coverSub: "Quatro passos para não improvisar. Arraste.",
@@ -546,6 +548,7 @@ const professional: WorldContent = {
       cta: { title: "Comece pelo plano acadêmico", sub: "Link na bio." },
     },
     {
+      id: "pro-paperwork-routine",
       kicker: "NA ROTINA",
       title: "O que muda quando a papelada sai na hora",
       coverSub: "Dois retratos da rotina de quem usa o Aliv.iA.",
@@ -556,6 +559,7 @@ const professional: WorldContent = {
       cta: { title: "Recupere as suas noites", sub: "Link na bio." },
     },
     {
+      id: "pro-dynamometry-decision",
       kicker: "DECISÃO COM MEDIDA",
       title: "Por que medir força muda a conduta",
       coverSub: "Arraste para ver o que o olho clínico não pega.",
