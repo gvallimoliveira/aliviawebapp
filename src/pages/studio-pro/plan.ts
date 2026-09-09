@@ -45,6 +45,9 @@ export const PLAN_LIMITS: Record<StudioPlan, { brands: number; credits: number; 
   agencia: { brands: 15, credits: 120, photos: 120 },
 };
 
+/** Teto de fotos do acervo para VIP/admin (soma de todas as marcas). */
+export const VIP_PHOTO_LIMIT = 200;
+
 const buildAccess = (
   plan: StudioPlan,
   opts: { isVip?: boolean; granted?: boolean } = {},
