@@ -36,8 +36,18 @@ export const shortKicker = (raw: string | null | undefined, max = 30): string =>
   const single = noParens.split(AUDIENCE_BREAK)[0]?.trim() ?? noParens;
   if (single.length <= max) return single.toUpperCase();
   const clause = single.split(/,\s*/)[0]?.trim() ?? single;
-  const fitted = condensePhrase(clause.length >= 12 ? clause : single, max);
-  return (fitted || clause.slice(0, max)).replace(/\s+\S*$/, (t) => (fitted ? t : "")).trim().toUpperCase();
+  const source = clause.length >= 12 ? clause : single;
+  const fitted = condensePhrase(source, max);
+  if (fitted) return fitted.toUpperCase();
+  /* Última saída: palavras inteiras até o limite (nunca corta palavra). */
+  const words = source.split(" ");
+  let acc = "";
+  for (const w of words) {
+    const next = acc ? `${acc} ${w}` : w;
+    if (next.length > max) break;
+    acc = next;
+  }
+  return (acc || words[0] || "").toUpperCase();
 };
 
 /* -------------------------------------------------------------------------- */
