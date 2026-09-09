@@ -262,7 +262,7 @@ export const ALIVIA_PRO_HOOKS: StudioHook[] = [
   },
   {
     hook: "Pare imediatamente",
-    strong: "Pare de prometer protocolo.",
+    strong: "Pare de prometer protocolo de prateleira.",
     rest: " Entregue raciocínio clínico.",
     sub: "Método estruturado e direcionamento — não receita igual para todos.",
     cta: "Ver o raciocínio na prática",
@@ -560,7 +560,7 @@ export const ALIVIA_PATIENT_HOOKS: StudioHook[] = [
     hook: "Semanas viram meses",
     strong: "Você já conta a sua dor em meses, não em dias",
     rest: ".",
-    sub: "Dor que se instala pede avaliação, não mais paciência.",
+    sub: "Dor que se instala pede autoavaliação, não mais paciência.",
     cta: "Começar a autoavaliação",
   },
 ];
