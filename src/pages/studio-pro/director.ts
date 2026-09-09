@@ -32,6 +32,7 @@
  */
 
 import type { WorldContent, WorldSales } from "@/pages/studio/content/types";
+import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import type { BrandDna } from "./brandDnaKit";
@@ -111,7 +112,7 @@ const similarity = (a: string, b: string): number => {
 };
 
 /** Frase parecida demais com algo que já foi ao ar neste lote. */
-const TOO_SIMILAR = 0.62;
+const TOO_SIMILAR = 0.52;
 
 const axisScore = (text: string, axis: DirectorAxis, extra: string[]): number => {
   const t = normalize(text);
@@ -135,7 +136,11 @@ type TakeOptions = {
  * evitando frase parecida demais com o que já saiu e descontando o que a marca
  * já usou em gerações anteriores (`weightOf`).
  */
-const createStream = <T>(items: readonly T[], seedKey: string, weightOf?: (signature: string) => number) => {
+const createStream = <T>(
+  items: readonly T[],
+  seedKey: string,
+  weightOf?: (signature: string) => number,
+) => {
   const pool = items.map((item, index) => ({
     item,
     index,
@@ -163,7 +168,7 @@ const createStream = <T>(items: readonly T[], seedKey: string, weightOf?: (signa
           axisScore(entry.text, axis, voice) * 0.75 +
           // Memória da marca: frase muito rodada perde até 4 pontos.
           (entry.fresh - 1) * 4 -
-          aired.reduce((worst, previous) => Math.max(worst, similarity(entry.text, previous)), 0) * 5 +
+          aired.reduce((worst, previous) => Math.max(worst, similarity(entry.text, previous)), 0) * 8 +
           rng.next() * 0.9,
       }))
       .sort((a, b) => b.score - a.score);
@@ -285,6 +290,8 @@ const brandVocabulary = (dna?: BrandDna, brief?: BrandBrief): string[] =>
 export const planBatch = (input: {
   content: WorldContent;
   count: number;
+  /** Estrutura visual do lote, necessária para tratar um carrossel como grupo. */
+  blocks?: ComposedBlock[];
   seed: string;
   relation?: { pain?: string; desire?: string; axis?: "pain" | "desire" };
   dna?: BrandDna;
@@ -294,7 +301,7 @@ export const planBatch = (input: {
   /** Palavras dos ajustes de texto que o dono da marca já fez. */
   learnedVoice?: string[];
 }): BatchDirection => {
-  const { content, count, seed, relation, dna, brief, weightOf, learnedVoice } = input;
+  const { content, count, blocks, seed, relation, dna, brief, weightOf, learnedVoice } = input;
   const rng = createRng(`${seed}:director`);
   const extra = brandVocabulary(dna, brief);
   const voice = (learnedVoice ?? [])
@@ -321,8 +328,27 @@ export const planBatch = (input: {
 
   const relText = (relation?.axis === "desire" ? relation?.desire : relation?.pain || relation?.desire) ?? "";
 
+  /**
+   * Reserva UM roteiro distinto por grupo de carrossel. Todos os slides daquele
+   * grupo recebem o mesmo roteiro; o grupo seguinte obrigatoriamente recebe
+   * outro enquanto houver repertório. Antes, o índice visual era usado para
+   * buscar o roteiro e vários grupos acabavam apontando para o mesmo texto.
+   */
+  const carouselByGroup = new Map<number, WorldContent["carousels"][number]>();
+  blocks?.forEach((block) => {
+    if (block.kind !== "carousel" || block.slide === undefined || carouselByGroup.has(block.slide.group)) return;
+    // O compositor atribui o roteiro pela ordem dos grupos, nunca pela posição
+    // visual. A rotação temática já ocorre antes, pela seed e pela memória.
+    const selected = content.carousels[block.slide.script % content.carousels.length];
+    if (selected) carouselByGroup.set(block.slide.group, selected as WorldContent["carousels"][number]);
+  });
+
   const shots: ArtShot[] = Array.from({ length: Math.max(0, count) }, (_, index) => {
     const axis = wheel[(index + offset) % wheel.length];
+    const block = blocks?.[index];
+    const carousel = block?.kind === "carousel" && block.slide !== undefined
+      ? carouselByGroup.get(block.slide.group)
+      : undefined;
 
     /** Reserva `quota` itens de um acervo — nenhum outro da leva os repete. */
     const claim = (key: string, items: readonly unknown[] | undefined, quota: number): unknown[] => {
@@ -337,16 +363,22 @@ export const planBatch = (input: {
     };
 
     const reserved: Partial<WorldContent> = {};
-    (Object.keys(SLOT_QUOTA) as ListSlot[]).forEach((slot) => {
-      const items = content[slot] as readonly unknown[] | undefined;
-      const picked = claim(slot, items, SLOT_QUOTA[slot]);
-      if (picked.length > 0) {
-        (reserved as Record<string, unknown>)[slot] = picked;
-      }
-    });
+    if (carousel) {
+      // O slide só renderiza o roteiro do carrossel. Não consuma frases dos
+      // outros acervos como se elas tivessem ido ao ar.
+      reserved.carousels = [carousel];
+    } else {
+      (Object.keys(SLOT_QUOTA) as ListSlot[]).forEach((slot) => {
+        const items = content[slot] as readonly unknown[] | undefined;
+        const picked = claim(slot, items, SLOT_QUOTA[slot]);
+        if (picked.length > 0) {
+          (reserved as Record<string, unknown>)[slot] = picked;
+        }
+      });
+    }
 
     let sales: WorldSales | undefined;
-    if (content.sales) {
+    if (content.sales && !carousel) {
       sales = { ...content.sales };
       (Object.keys(SALES_QUOTA) as SalesSlot[]).forEach((slot) => {
         const picked = claim(`sales.${slot}`, content.sales?.[slot], SALES_QUOTA[slot]) as string[];
@@ -354,18 +386,26 @@ export const planBatch = (input: {
       });
     }
 
-    const headlines = (reserved.headlines ?? content.headlines) as WorldContent["headlines"];
-    const subs = (reserved.subs ?? content.subs) as WorldContent["subs"];
-    const kickers = (reserved.kickers ?? content.kickers) as WorldContent["kickers"];
-    const closings = (reserved.closings ?? content.closings) as WorldContent["closings"];
-    const typos = (reserved.typos ?? content.typos) as WorldContent["typos"];
-    const quotes = (reserved.quotes ?? content.quotes) as WorldContent["quotes"];
+    const headlines = (carousel ? [] : reserved.headlines ?? content.headlines) as WorldContent["headlines"];
+    const subs = (carousel ? [] : reserved.subs ?? content.subs) as WorldContent["subs"];
+    const kickers = (carousel ? [] : reserved.kickers ?? content.kickers) as WorldContent["kickers"];
+    const closings = (carousel ? [] : reserved.closings ?? content.closings) as WorldContent["closings"];
+    const typos = (carousel ? [] : reserved.typos ?? content.typos) as WorldContent["typos"];
+    const quotes = (carousel ? [] : reserved.quotes ?? content.quotes) as WorldContent["quotes"];
 
     /**
      * Texto previsto da arte: entra no filtro de nexo e na auditoria. Reúne o
      * que os blocos mais expõem — destaque, apoio, kicker, fecho, cartaz,
      * citação, recurso e chamada.
      */
+    const carouselCopy = (() => {
+      if (!carousel || !block?.slide) return [];
+      const slideIndex = block.slide.index;
+      if (slideIndex === 0) return [carousel.kicker, carousel.title, carousel.coverSub];
+      if (slideIndex === carousel.slides.length + 1) return [carousel.cta.title, carousel.cta.sub];
+      const middle = carousel.slides[slideIndex - 1];
+      return middle ? [middle.heading, middle.body] : [];
+    })();
     const copy = [
       ...headlines.map((h) => `${h.strong} ${h.rest}`),
       ...subs,
@@ -375,6 +415,7 @@ export const planBatch = (input: {
       ...quotes.map((q) => q.text),
       ...((reserved.features ?? []) as WorldContent["features"]).map((f) => `${f.title} ${f.description}`),
       ...(sales?.ctas ?? []),
+      ...carouselCopy,
     ].filter((t) => t.trim().length > 0);
 
     const affinity = [
@@ -419,9 +460,14 @@ export const planBatch = (input: {
       return next;
     },
     report: () => {
-      const all = shots.flatMap((shot) => shot.copy.map((line) => normalize(line)));
-      const distinct = new Set(all).size;
-      return { arts: shots.length, distinct, repeated: all.length - distinct };
+      const all = shots.flatMap((shot) => shot.copy.map((line) => normalize(line))).filter(Boolean);
+      const accepted: string[] = [];
+      let repeated = 0;
+      all.forEach((line) => {
+        if (accepted.some((previous) => similarity(line, previous) >= TOO_SIMILAR)) repeated += 1;
+        else accepted.push(line);
+      });
+      return { arts: shots.length, distinct: accepted.length, repeated };
     },
   };
 };

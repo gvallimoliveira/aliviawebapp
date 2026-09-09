@@ -60,7 +60,7 @@ export type ComposedBlock = {
   treatment: number;
   motion?: MotionKind;
   /** Posição dentro de uma sequência de carrossel (só em blocos `carousel`). */
-  slide?: { index: number; total: number; group: number };
+  slide?: { index: number; total: number; group: number; script: number };
 };
 
 /**
@@ -264,7 +264,15 @@ export const composePage = (
   if (only && only.length > 0) {
     const pool = allowed(only);
     if (pool.length === 0) return finish(rng, [{ kind: "hero", treatment: treatmentFor(rng, "hero", persona) }], persona, carousels);
-    const count = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
+    const desiredCount = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
+    /**
+     * Um bloco `carousel` vira uma sequência inteira de 4–6 artes. Quando ele é
+     * o único modelo escolhido, repetir o bloco além do número de roteiros
+     * disponíveis só poderia duplicar conteúdo dentro da mesma geração.
+     */
+    const count = pool.every((kind) => kind === "carousel")
+      ? Math.max(1, Math.min(desiredCount, carousels?.length ?? 1))
+      : desiredCount;
     const picked = enforcePhotoFirst(rng, spread(rng, pool, Math.max(2, count)), photoCount, photoFirst);
     const chosen: ComposedBlock[] = picked.map((kind) => ({
       kind,
@@ -494,16 +502,21 @@ const finish = (
     );
   }
   const expanded: ComposedBlock[] = [];
+  let carouselOrdinal = 0;
   withMotion.forEach((block) => {
     if (block.kind !== "carousel") {
       expanded.push(block);
       return;
     }
     const group = expanded.length;
-    const slides = carousels[group % carousels.length].slides.length;
-    const total = Math.min(6, Math.max(4, slides + 2));
+    const script = carouselOrdinal % carousels.length;
+    carouselOrdinal += 1;
+    const slides = carousels[script].slides.length;
+    // Exatamente capa + miolo + CTA. Forçar mínimo de quatro criava um slide
+    // vazio quando o roteiro tinha apenas um miolo e também confundia a memória.
+    const total = Math.min(6, Math.max(3, slides + 2));
     for (let i = 0; i < total; i += 1) {
-      expanded.push({ ...block, slide: { index: i, total, group } });
+      expanded.push({ ...block, slide: { index: i, total, group, script } });
     }
   });
   return expanded;
