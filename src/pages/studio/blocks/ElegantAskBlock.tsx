@@ -4,6 +4,7 @@ import PhotoFrame from "./PhotoFrame";
 import { blockPadding, sectionHeight, type BlockProps } from "./shared";
 import { BRAND_HANDLE } from "../brand";
 import { condensePhrase } from "@/pages/studio-pro/textFit";
+import { onPhotoTextStyle, photoTextPlate, shortKicker } from "../typographyGuards";
 
 /**
  * PERGUNTA ELEGANTE (referência estilística: foto em plano de fundo escurecido,
