@@ -1072,6 +1072,7 @@ Responda SOMENTE com JSON válido neste formato:
         ...(fillTone ? { tone: aiVoice } : {}),
         ...(result.keywords.length ? { topics: result.keywords } : {}),
         ...(colorKit ? { colors: colorKit } : {}),
+        ...(briefFilledByAi > 0 ? { brief_answers: mergedBrief } : {}),
         ...(logoUrl && !currentLogoIsImage ? { logo_url: logoUrl } : {}),
       })
       .eq("id", brandId);
