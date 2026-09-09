@@ -251,6 +251,20 @@ const BROAD_USE_BONUS = 0.3;
  * cego. Sem nenhuma foto com nexo, devolve `undefined`: o bloco fotográfico
  * sai da composição em vez de ilustrar um assunto que a foto não sustenta.
  */
+/**
+ * Afinidade textual: quanto a foto (legenda + etiquetas) fala das palavras que
+ * a arte vai dizer. Bônus limitado, para não atropelar a afinidade de assunto.
+ */
+const wordAffinity = (photo: StudioPhoto, words?: string[]): number => {
+  if (!words || words.length === 0) return 0;
+  const hay = `${photo.caption ?? ""} ${(photo.tags ?? []).join(" ")} ${photo.usage ?? ""}`
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const hits = words.filter((w) => w.length > 3 && hay.includes(w.toLowerCase())).length;
+  return Math.min(0.3, hits * 0.1);
+};
+
 export const pickPhotoForTopics = (
   photos: StudioPhoto[] | undefined,
   index: number,
@@ -262,6 +276,12 @@ export const pickPhotoForTopics = (
    * por geração quando o acervo tem 10+ fotos.
    */
   artKey?: string,
+  /**
+   * Palavras do eixo/par relacional da arte (diretor criativo). Foto cuja
+   * legenda/etiquetas falam dessas palavras entra na frente — é o que faz a
+   * imagem conversar com o que o texto diz, e não só com o tópico técnico.
+   */
+  words?: string[],
 ): StudioPhoto | undefined => {
   if (!photos || photos.length === 0) return undefined;
 
@@ -278,6 +298,7 @@ export const pickPhotoForTopics = (
       score:
         photoAffinity(photo, topics) +
         (prefer?.includes(photo.usage) ? 0.35 : 0) +
+        wordAffinity(photo, words) +
         (restrictionOf(photo) ? 0 : BROAD_USE_BONUS),
     }))
     .filter((s) => s.score > 0)

@@ -25,6 +25,11 @@ export type PhraseMemory = {
   weightOf: (signature: string) => number;
   /** Registra as assinaturas que foram efetivamente ao ar. */
   record: (signatures: string[]) => void;
+  /**
+   * Abre um novo lote: zera o desconto imediato (o que valia só para a leva
+   * anterior). O peso persistido na conta continua valendo.
+   */
+  startBatch?: (key: string) => void;
 };
 
 /** Assinatura estável e curta de um item de copy (texto, não layout). */

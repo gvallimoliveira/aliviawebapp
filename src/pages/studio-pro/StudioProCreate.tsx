@@ -51,6 +51,9 @@ import { usePhraseMemory } from "./usePhraseMemory";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
 import { buildSegmentContent, brandSlogan, relationForSegment, pickGlobalAudience } from "./brandContent";
 import { useSegmentMemory } from "./useSegmentMemory";
+import { planBatch } from "./director";
+import { buildBrandDna } from "./brandDnaKit";
+import { useBrandBrief } from "./useBrandBrief";
 
 
 import { readColorKit } from "./brandColors";
@@ -531,8 +534,24 @@ const StudioProCreate = ({
   /** Memória de frases da marca (na conta): frase recente perde vez no sorteio. */
   const phraseMemory = usePhraseMemory(brand.id);
 
+  /**
+   * Registro de cobertura DURANTE o lote: antes entrava como `() => {}`, então
+   * a dívida editorial não mudava enquanto a versão era montada e duas artes
+   * diferentes convergiam para o mesmo assunto.
+   */
+  const exposed = useRef<{ key: string; topics: Set<TopicId> }>({ key: "", topics: new Set() });
+  const batchKey = `${brand.id}:${seed}:${activeSegment}:${angle}`;
+  if (exposed.current.key !== batchKey) exposed.current = { key: batchKey, topics: new Set() };
+  phraseMemory.startBatch?.(batchKey);
+
   const picker = useMemo(
-    () => createPicker(buildCoverage(aliviaWorld ?? "pro", content, {}), () => {}, undefined, phraseMemory),
+    () =>
+      createPicker(
+        buildCoverage(aliviaWorld ?? "pro", content, {}),
+        (topics) => topics.forEach((t) => exposed.current.topics.add(t)),
+        undefined,
+        phraseMemory,
+      ),
     [content, aliviaWorld, phraseMemory],
   );
 
@@ -576,6 +595,52 @@ const StudioProCreate = ({
       ),
     [brand.id, seed, activeSegment, angle, persona, content, lineage, activePhotos.length, models, isAlivia, photoFirst],
 
+  );
+
+  /** DNA da marca (manual + briefing): matéria-prima do diretor criativo. */
+  const dna = useMemo(
+    () =>
+      buildBrandDna({
+        niche: brand.niche,
+        tone: brand.tone,
+        description: brand.description,
+        positioning: brand.positioning,
+        briefAnswers: brand.brief_answers,
+      }),
+    [brand.niche, brand.tone, brand.description, brand.positioning, brand.brief_answers],
+  );
+
+  /**
+   * BRIEFING DE IA (só conta admin, e só quando ligado no botão): uma leitura
+   * por lote, nunca por arte. Desligado, o diretor segue 100% local.
+   */
+  const { brief, enabled: briefOn, canUse: canUseBrief, loading: briefLoading, toggle: toggleBrief } = useBrandBrief({
+    brandId: brand.id,
+    kit: contentKit,
+  });
+
+  /**
+   * DIRETOR CRIATIVO: roteiro do lote (um eixo por arte) e reserva de texto —
+   * nenhuma arte da mesma leva repete a frase de outra.
+   */
+  const director = useMemo(
+    () =>
+      planBatch({
+        content,
+        count: composedBlocks.length,
+        seed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+        relation: relationForSegment({
+          kit: contentKit,
+          audiences,
+          segment: activeSegment,
+          angle,
+          positioning: brand.positioning,
+          variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+        }),
+        dna,
+        brief: briefOn ? brief ?? undefined : undefined,
+      }),
+    [content, composedBlocks.length, brand.id, brand.positioning, seed, activeSegment, angle, contentKit, audiences, dna, brief, briefOn],
   );
 
   /**
@@ -659,7 +724,10 @@ const StudioProCreate = ({
 
 
 
-  const audit = useMemo(() => enforceRationale(composedBlocks, rationaleCtx), [composedBlocks, rationaleCtx]);
+  const audit = useMemo(
+    () => enforceRationale(composedBlocks, rationaleCtx, (index) => director.copyOf(index)),
+    [composedBlocks, rationaleCtx, director],
+  );
   const blocks = audit.blocks;
   /** Índice da arte com a leitura de sentido aberta. */
   const [whyOpen, setWhyOpen] = useState<number | null>(null);
@@ -1175,8 +1243,25 @@ const StudioProCreate = ({
               </Button>
             ))}
           </div>
+          {/*
+            LEITURA DE IA DO KIT (só conta admin). Desligado, o diretor criativo
+            trabalha 100% local e sem consumo de crédito — o padrão de todos.
+          */}
+          {canUseBrief && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={toggleBrief}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground underline-offset-2 hover:underline"
+              >
+                <Sparkles className="h-3 w-3" />
+                Direção com IA: {briefOn ? (briefLoading ? "lendo o kit…" : "ligada") : "desligada"}
+              </button>
+            </div>
+          )}
           {/* Modelos de arte: aleatório por padrão, ou seleção manual de tipos. */}
           <div className="mt-2">
+
             <button
               type="button"
               onClick={() => setModelsOpen((v) => !v)}
@@ -1388,7 +1473,8 @@ const StudioProCreate = ({
                   >
                     <StudioMotion kind={motion}>
                       <Block
-                        content={content}
+                        content={director.contentFor(item.index)}
+                        shot={director.shotFor(item.index)}
                         rng={createRng(`${brand.id}:${seed}:${kind}:${item.index}`)}
                         treatment={treatment}
                         format={format}

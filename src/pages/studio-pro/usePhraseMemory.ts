@@ -20,7 +20,15 @@ type Row = { signature: string; uses: number; last_used_at: string };
 export const usePhraseMemory = (brandId?: string) => {
   const [rows, setRows] = useState<Row[]>([]);
   const pending = useRef<Map<string, number>>(new Map());
+  /**
+   * DESCONTO IMEDIATO (dentro do mesmo lote). Gravar no banco leva 2,5s, então
+   * sem isso a frase que a arte anterior acabou de usar continuava com peso
+   * cheio na arte seguinte — era parte da repetição percebida.
+   */
+  const optimistic = useRef<Map<string, number>>(new Map());
+  const batchKey = useRef<string>("");
   const flushTimer = useRef<number | null>(null);
+
 
   useEffect(() => {
     if (!brandId) {
@@ -89,8 +97,20 @@ export const usePhraseMemory = (brandId?: string) => {
 
   const memory: PhraseMemory = useMemo(
     () => ({
-      weightOf: (signature) => weights.get(signature) ?? 1,
+      weightOf: (signature) => {
+        const persisted = weights.get(signature) ?? 1;
+        const justUsed = optimistic.current.get(signature) ?? 0;
+        if (justUsed === 0) return persisted;
+        // Frase já usada nesta leva praticamente sai do sorteio.
+        return Math.max(0.02, persisted * Math.pow(0.15, justUsed));
+      },
+      startBatch: (key) => {
+        if (batchKey.current === key) return;
+        batchKey.current = key;
+        optimistic.current.clear();
+      },
       record: (signatures) => {
+        signatures.forEach((sig) => optimistic.current.set(sig, (optimistic.current.get(sig) ?? 0) + 1));
         if (!brandId) return;
         signatures.forEach((sig) => pending.current.set(sig, (pending.current.get(sig) ?? 0) + 1));
         if (flushTimer.current === null && typeof window !== "undefined") {
@@ -102,6 +122,7 @@ export const usePhraseMemory = (brandId?: string) => {
     }),
     [weights, brandId, flush],
   );
+
 
   useEffect(
     () => () => {

@@ -762,17 +762,28 @@ const FALLBACKS: BlockKind[] = ["typo", "hero", "billboard", "mono", "closing"];
 export const enforceRationale = (
   blocks: ComposedBlock[],
   ctx: RationaleContext,
+  /**
+   * TEXTO PREVISTO DE CADA ARTE (diretor criativo). Com ele o filtro julga a
+   * arte COM as frases na mão — antes ele julgava em branco, e as checagens de
+   * "o texto realmente fala com esse público" passavam por omissão.
+   */
+  copyOf?: (index: number) => string[],
 ): { blocks: ComposedBlock[]; rationales: ArtRationale[]; fixed: number; gaps: string[] } => {
   const gapSet = new Set<string>();
   let fixed = 0;
+  const detailFor = (index: number): ArtDetail | undefined => {
+    const copy = copyOf?.(index);
+    return copy && copy.length > 0 ? { index, total: blocks.length, copy } : { index, total: blocks.length };
+  };
 
-  const out = blocks.map((block) => {
-    const first = explainArt(block, ctx);
+  const out = blocks.map((block, index) => {
+    const detail = detailFor(index);
+    const first = explainArt(block, ctx, detail);
     if (first.ok || block.slide) return block;
     first.gaps.forEach((g) => gapSet.add(g));
 
     const replacement = FALLBACKS.map((kind) => ({ ...block, kind, motion: block.motion }))
-      .find((candidate) => explainArt(candidate, ctx).ok);
+      .find((candidate) => explainArt(candidate, ctx, detail).ok);
     if (!replacement) return block;
     fixed += 1;
     return replacement;
@@ -780,8 +791,9 @@ export const enforceRationale = (
 
   return {
     blocks: out,
-    rationales: out.map((block) => explainArt(block, ctx)),
+    rationales: out.map((block, index) => explainArt(block, ctx, detailFor(index))),
     fixed,
     gaps: [...gapSet],
   };
 };
+
