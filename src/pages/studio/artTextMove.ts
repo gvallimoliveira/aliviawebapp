@@ -25,7 +25,23 @@ export type ArtTextMove = { x: number; y: number };
 /** Memória de deslocamentos: `${idDaArte}#${posiçãoDoTexto}` -> deslocamento. */
 const registry = new Map<string, ArtTextMove>();
 
-const keyOf = (root: HTMLElement, index: number) => `${root.id || "art"}#${index}`;
+/**
+ * Identidade da arte: usamos a chave editorial (marca + geração + modelo)
+ * quando ela existe. O `id` do nó carrega apenas a POSIÇÃO na lista, então
+ * reaproveitá-lo fazia o deslocamento de uma arte antiga cair na arte nova que
+ * ocupava a mesma posição — era isso que jogava o texto de um slide fora do
+ * lugar sem ninguém ter arrastado nada.
+ */
+const artIdOf = (root: HTMLElement) => root.dataset.studioArtKey || root.id || "art";
+
+const keyOf = (root: HTMLElement, index: number) => `${artIdOf(root)}#${index}`;
+
+/** O deslocamento nunca pode empurrar o texto para fora do quadro. */
+const MAX_MOVE = 0.45;
+const clampMove = (move: ArtTextMove): ArtTextMove => ({
+  x: Math.min(MAX_MOVE, Math.max(-MAX_MOVE, move.x)),
+  y: Math.min(MAX_MOVE, Math.max(-MAX_MOVE, move.y)),
+});
 
 const BASE_ATTR = "studioMoveBase";
 
@@ -177,10 +193,10 @@ export const setArtMoving = (root: HTMLElement, on: boolean) => {
       if (!start) return;
       const rect = root.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
-      const next: ArtTextMove = {
+      const next: ArtTextMove = clampMove({
         x: start.move.x + (event.clientX - start.px) / rect.width,
         y: start.move.y + (event.clientY - start.py) / rect.height,
-      };
+      });
       registry.set(keyOf(root, index), next);
       paint(root, el, next);
       place();
