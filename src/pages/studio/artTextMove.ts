@@ -193,10 +193,10 @@ export const setArtMoving = (root: HTMLElement, on: boolean) => {
       if (!start) return;
       const rect = root.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
-      const next: ArtTextMove = {
+      const next: ArtTextMove = clampMove({
         x: start.move.x + (event.clientX - start.px) / rect.width,
         y: start.move.y + (event.clientY - start.py) / rect.height,
-      };
+      });
       registry.set(keyOf(root, index), next);
       paint(root, el, next);
       place();
