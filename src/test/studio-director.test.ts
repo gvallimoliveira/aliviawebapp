@@ -9,6 +9,8 @@
 import { describe, expect, it } from "vitest";
 import { WORLDS } from "@/pages/studio/content";
 import { planBatch } from "@/pages/studio-pro/director";
+import { composePage } from "@/pages/studio/composePage";
+import { createRng } from "@/pages/studio/rng";
 
 const plan = (seed: string, count = 8) =>
   planBatch({ content: WORLDS.pro, count, seed, relation: { pain: "dor que trava", axis: "pain" } });
@@ -71,6 +73,39 @@ describe("Diretor criativo", () => {
       weightOf: () => 1,
     });
     expect(after.shots[0].copy.join("|")).toBe(first.shots[0].copy.join("|"));
+  });
+
+  it("reserva um roteiro diferente para cada grupo de carrossel", () => {
+    const blocks = composePage(
+      createRng("carrosseis"),
+      undefined,
+      undefined,
+      WORLDS.pro.carousels,
+      0,
+      ["carousel"],
+    );
+    const direction = planBatch({ content: WORLDS.pro, count: blocks.length, blocks, seed: "carrosseis" });
+    const titles = new Map<number, string>();
+    blocks.forEach((block, index) => {
+      if (block.kind !== "carousel" || !block.slide) return;
+      const title = direction.contentFor(index).carousels[0]?.title;
+      expect(title).toBeTruthy();
+      const previous = titles.get(block.slide.group);
+      if (previous) expect(title).toBe(previous);
+      else titles.set(block.slide.group, title);
+    });
+    expect(new Set(titles.values()).size).toBe(titles.size);
+    expect(titles.size).toBeLessThanOrEqual(WORLDS.pro.carousels.length);
+  });
+
+  it("inclui o texto visível dos carrosséis na memória do lote", () => {
+    const blocks = composePage(createRng("memoria-carrossel"), undefined, undefined, WORLDS.pro.carousels, 0, ["carousel"]);
+    const direction = planBatch({ content: WORLDS.pro, count: blocks.length, blocks, seed: "memoria-carrossel" });
+    blocks.forEach((block, index) => {
+      if (block.kind !== "carousel") return;
+      expect(direction.copyOf(index).length).toBeGreaterThan(0);
+      expect(direction.shotFor(index)?.headlines).toHaveLength(0);
+    });
   });
 });
 

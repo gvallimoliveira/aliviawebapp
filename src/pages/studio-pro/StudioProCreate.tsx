@@ -663,6 +663,7 @@ const StudioProCreate = ({
       planBatch({
         content,
         count: composedBlocks.length,
+        blocks: composedBlocks,
         seed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
         relation: relationForSegment({
           kit: contentKit,
@@ -774,7 +775,10 @@ const StudioProCreate = ({
    * tornava a oferecer as mesmas frases com peso cheio.
    */
   useEffect(() => {
-    const signatures = director.shots.flatMap((shot) => shot.copy.map((line) => phraseSignature(line)));
+    const signatures = director.shots.flatMap((shot) => [
+      ...shot.copy.map((line) => phraseSignature(line)),
+      ...(shot.reserved.carousels ?? []).map((carousel) => phraseSignature(carousel)),
+    ]);
     if (signatures.length > 0) phraseMemory.record(signatures);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [director]);

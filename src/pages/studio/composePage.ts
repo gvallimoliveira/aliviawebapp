@@ -264,7 +264,15 @@ export const composePage = (
   if (only && only.length > 0) {
     const pool = allowed(only);
     if (pool.length === 0) return finish(rng, [{ kind: "hero", treatment: treatmentFor(rng, "hero", persona) }], persona, carousels);
-    const count = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
+    const desiredCount = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
+    /**
+     * Um bloco `carousel` vira uma sequência inteira de 4–6 artes. Quando ele é
+     * o único modelo escolhido, repetir o bloco além do número de roteiros
+     * disponíveis só poderia duplicar conteúdo dentro da mesma geração.
+     */
+    const count = pool.every((kind) => kind === "carousel")
+      ? Math.max(1, Math.min(desiredCount, carousels?.length ?? 1))
+      : desiredCount;
     const picked = enforcePhotoFirst(rng, spread(rng, pool, Math.max(2, count)), photoCount, photoFirst);
     const chosen: ComposedBlock[] = picked.map((kind) => ({
       kind,
