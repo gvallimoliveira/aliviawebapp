@@ -10,7 +10,7 @@
  * claro — sem gastar geração nem crédito de IA.
  */
 import type { BrandColorKit } from "./brandColors";
-import { readableThemeTokens } from "./contrast";
+import { lighten, readableThemeTokens } from "./contrast";
 import { findFont } from "./brandFonts";
 
 /** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
@@ -81,6 +81,16 @@ export const buildBrandThemeStyle = ({ kit, seed, invert }: Args): React.CSSProp
   });
   const ring = hexToHslTriplet(primary);
   if (ring) style["--ring"] = ring;
+
+  /**
+   * TINTA DE DESTAQUE PARA FUNDO ESCURO / FOTO
+   *
+   * Acento do kit costuma ser um tom terroso ou médio: sobre foto escurecida
+   * ele desaparece. Aqui a mesma cor é clareada até ter contraste de leitura,
+   * então o destaque continua sendo a cor da marca — só legível.
+   */
+  const inkAccent = hexToHslTriplet(lighten(accent, 6));
+  if (inkAccent) style["--studio-ink-accent"] = inkAccent;
 
   accents.forEach((color, i) => {
     const triplet = hexToHslTriplet(color);

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { BRAND_HANDLE, BRAND_SITE } from "../brand";
 import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { displayWord, displayWordContainer, displayWordStyle } from "../typographyGuards";
 
 /**
  * CARTAZ DE LETRAS EMPILHADAS (referência estilística: papel texturizado,
@@ -14,18 +15,16 @@ import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./
  * 2 chapa da cor primária, 3 papel claro com tarjas invertidas.
  */
 
-const asWord = (raw: string) =>
-  raw
-    .replace(/[.!?,;:]+/g, " ")
-    .trim()
-    .split(/\s+/)
-    .sort((a, b) => b.length - a.length)[0]
-    ?.toUpperCase() ?? "";
-
 const StackTypeBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
   const headline = rng.pick(content.headlines);
-  const word = asWord(headline.strong);
+  /**
+   * REGRA DURA: a palavra-cartaz aparece INTEIRA. Palavra longa não é quebrada
+   * ao meio (ver `typographyGuards`) — o corpo da letra cai e, se nem assim
+   * couber, o motor escolhe outra palavra da frase.
+   */
+  const word = displayWord(headline.strong, 12);
   if (word.length < 3) return null;
+  const wordStyle = displayWordStyle(word, { widthPct: 98, maxRem: 5.6 });
 
   const tail = headline.rest
     .replace(/[.]+$/g, "")
@@ -84,15 +83,15 @@ const StackTypeBlock = ({ content, rng, treatment, format, persona }: BlockProps
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="flex flex-col items-start"
-          style={{ color: ink }}
+          style={{ color: ink, ...displayWordContainer }}
         >
           {[0, 1].map((i) => (
             <span
               key={i}
               aria-hidden
-              className="block w-full break-words font-extrabold uppercase leading-[0.86] tracking-tight"
+              className="block w-full font-extrabold uppercase leading-[0.86] tracking-tight"
               style={{
-                fontSize: "clamp(2.2rem, 15vw, 5.6rem)",
+                ...wordStyle,
                 color: "transparent",
                 WebkitTextStrokeWidth: "1.5px",
                 WebkitTextStrokeColor: outline,
@@ -102,8 +101,8 @@ const StackTypeBlock = ({ content, rng, treatment, format, persona }: BlockProps
             </span>
           ))}
           <h2
-            className="block w-full break-words font-extrabold uppercase leading-[0.86] tracking-tight"
-            style={{ fontSize: "clamp(2.2rem, 15vw, 5.6rem)" }}
+            className="block w-full font-extrabold uppercase leading-[0.86] tracking-tight"
+            style={wordStyle}
           >
             {word}
           </h2>
