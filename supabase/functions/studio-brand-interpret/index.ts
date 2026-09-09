@@ -653,7 +653,28 @@ Regras:
 
 Tipografia (campo obrigatório quando existe manual anexado): procure a seção de tipografia/fontes do documento e devolva em "font_family" o nome EXATO da fonte de TÍTULOS e em "font_body" a de TEXTO CORRIDO, quando o manual trouxer duas (ex.: "Outfit" e "Figtree"). Aceite variações escritas como "Família tipográfica", "Tipografia", "Fonte principal", "Display", "Headline", "Corpo". Nomes de peso ("Outfit SemiBold") devem devolver só a família ("Outfit"). Só devolva "" se o briefing realmente não citar nenhuma fonte.
 
+QUESTIONÁRIO DE MARCA (campo "brief_answers", obrigatório): o questionário respondido pelo cliente e o manual da marca têm o MESMO peso para o motor criativo. Quando o cliente anexou manual (ou o site traz o conteúdo), preencha você o questionário a partir desse material, com as palavras da própria marca — assim a marca não perde qualidade por não ter respondido o formulário. Só deixe uma chave vazia quando o material realmente não permitir inferir nada; nunca invente fato, número, prêmio ou área de atendimento. Chaves e conteúdo esperado:
+- "apresentacao": uma frase de apresentação, sem jargão.
+- "oferta": o que a marca vende/entrega, na prática, com os nomes que ela usa.
+- "diferencial": diferencial verificável (nunca "excelência" ou "soluções inovadoras").
+- "assinatura": como a marca assina as artes (nome + registro profissional, se houver).
+- "publico_primario": quem é o público primário.
+- "perfil": perfil do cliente ideal (momento, rotina, o que já tentou).
+- "dor": a maior dor, na voz do cliente.
+- "desejo": maior desejo + objeção mais comum.
+- "tom": tom da comunicação, um destes: "Direto e objetivo" | "Acolhedor e educativo" | "Direto com provocação leve" | "Técnico e criterioso".
+- "nivel_tecnico": um destes: "Quase tudo em linguagem do cliente" | "Meio a meio" | "Bem técnico, público especializado".
+- "proibidas": palavras e promessas proibidas.
+- "cta": ação que a marca quer que a pessoa tome.
+- "fundo": um destes: "Escuro com destaque quente" | "Claro e limpo" | "Alternar os dois".
+- "destaque": cor de destaque com nome e hexadecimal, quando o material declarar.
+- "sensacao": um destes: "Premium, com muito respiro" | "Enérgica e densa de informação" | "Séria e institucional" | "Próxima e humana".
+- "referencias": estética, tipo de fotografia e referências que o material declara.
+- "nunca_prometer": o que nunca pode ser prometido.
+- "nao_atrair": casos ou públicos que a marca não quer atrair.
+
 Responda SOMENTE com JSON válido neste formato:
+
 {
   "description": "2 a 3 frases densas sobre o que é, para quem e o que entrega",
   "positioning": "3 a 5 frases sobre o produto inteiro, servindo de base do conteúdo 360°",
