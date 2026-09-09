@@ -222,6 +222,28 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
     if (Array.isArray(value)) sales[key] = purge(value as unknown[]);
   }
   out.sales = sales;
+
+  /**
+   * ACABAMENTO TIPOGRÁFICO GLOBAL (ver `@/pages/studio/typographyGuards`)
+   *
+   * Vale para TODAS as marcas e todos os modelos, num único ponto do motor:
+   * - chamada de público curta e de um público por vez (kickers e tags);
+   * - trecho de rótulo em caixa alta entra nas frases em caixa de frase
+   *   ("COMO EU TRABALHO" → "Como eu trabalho", nunca "cOMO EU TRABALHO").
+   */
+  const kickers = content.kickers.map((k) => shortKicker(k, 30)).filter(Boolean);
+  out.kickers = kickers.length
+    ? kickers.filter((k, i, all) => all.indexOf(k) === i)
+    : content.kickers;
+  out.features = (out.features as WorldContent["features"]).map((f) => ({
+    ...f,
+    tag: shortKicker(f.tag, 30) || f.tag,
+  }));
+  out.typos = (out.typos as WorldContent["typos"]).map((t) => ({
+    ...t,
+    lead: sentenceLead(t.lead),
+  }));
+
   return out as unknown as WorldContent;
 };
 
