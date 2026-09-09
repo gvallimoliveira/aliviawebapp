@@ -1573,6 +1573,9 @@ const StudioProCreate = ({
                 {/* Lado B aplica os tokens invertidos só nesta arte. */}
                 <div
                   id={`studio-pro-block-${item.index}`}
+                  /* Identidade editorial: impede que um ajuste manual de outra
+                     geração caia nesta arte só por ocupar a mesma posição. */
+                  data-studio-art-key={`${brand.id}:${seed}:${kind}:${item.index}`}
                   className="h-full w-full bg-background"
                   style={flipped.has(item.index) ? invertedStyle : undefined}
                 >
