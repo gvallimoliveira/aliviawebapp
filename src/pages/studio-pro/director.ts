@@ -337,7 +337,7 @@ export const planBatch = (input: {
   const carouselByGroup = new Map<number, WorldContent["carousels"][number]>();
   const carouselStream = streamFor("carousels", content.carousels);
   blocks?.forEach((block, index) => {
-    if (block.kind !== "carousel" || !block.slide || carouselByGroup.has(block.slide.group)) return;
+    if (block.kind !== "carousel" || block.slide === undefined || carouselByGroup.has(block.slide.group)) return;
     const axis = wheel[(index + offset) % wheel.length];
     const selected = carouselStream.take({ axis, extra, voice, salt: `carousel-group:${block.slide.group}` });
     if (selected) carouselByGroup.set(block.slide.group, selected as WorldContent["carousels"][number]);
@@ -346,7 +346,7 @@ export const planBatch = (input: {
   const shots: ArtShot[] = Array.from({ length: Math.max(0, count) }, (_, index) => {
     const axis = wheel[(index + offset) % wheel.length];
     const block = blocks?.[index];
-    const carousel = block?.kind === "carousel" && block.slide
+    const carousel = block?.kind === "carousel" && block.slide !== undefined
       ? carouselByGroup.get(block.slide.group)
       : undefined;
 
