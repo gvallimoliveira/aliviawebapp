@@ -89,14 +89,12 @@ const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos, artK
               imgClassName="opacity-95 brightness-[0.78] saturate-[0.9]"
             />
           </div>
+          {/* Película de leitura: garante contraste do texto sobre qualquer foto. */}
           <div
             aria-hidden
             data-studio-overlay="1"
             className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to top, rgba(8,8,12,0.9) 0%, rgba(8,8,12,0.6) 40%, rgba(8,8,12,0.18) 74%, rgba(8,8,12,0.32) 100%)",
-            }}
+            style={photoTextPlate("bottom")}
           />
         </>
       )}
@@ -108,7 +106,7 @@ const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos, artK
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-3xl text-left"
-          style={{ color: ink }}
+          style={photo || onDark ? { ...onPhotoTextStyle(ink) } : { color: ink }}
         >
           <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.32em]" style={{ opacity: 0.72 }}>
             {kicker}
