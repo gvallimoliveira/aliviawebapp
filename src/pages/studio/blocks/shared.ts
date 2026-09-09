@@ -37,6 +37,12 @@ export type BlockProps = {
    */
   photos?: StudioPhoto[];
   /**
+   * DIREÇÃO DESTA ARTE (diretor criativo): eixo de comunicação do lote e
+   * palavras que a foto precisa sustentar. Opcional — sem diretor o bloco se
+   * comporta como antes.
+   */
+  shot?: { axis: string; axisLabel: string; affinity: string[] };
+  /**
    * Identidade desta arte no lote, no formato "<lote>|<arte>". Usada pelos
    * blocos fotográficos para garantir rotatividade do acervo dentro da mesma
    * geração (foto menos usada primeiro; teto de repetições com acervo grande).

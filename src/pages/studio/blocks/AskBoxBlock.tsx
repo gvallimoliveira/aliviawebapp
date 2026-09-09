@@ -43,7 +43,7 @@ const asTheme = (raw: string) =>
     .slice(0, 4)
     .join(" ");
 
-const AskBoxBlock = ({ content, rng, treatment, format, picker, photos, artKey }: BlockProps) => {
+const AskBoxBlock = ({ content, rng, treatment, format, picker, photos, artKey, shot }: BlockProps) => {
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const candidates = [feature?.tag, feature?.title, ...(content.searchQueries ?? [])]
     .filter((t): t is string => !!t && t.trim().length > 3)
@@ -57,7 +57,7 @@ const AskBoxBlock = ({ content, rng, treatment, format, picker, photos, artKey }
   const placeholder = rng.pick(PLACEHOLDERS);
 
   const usePhoto = treatment === 0;
-  const photo = usePhoto ? pickPhotoForTopics(photos, treatment + rng.int(5), [feature.topic], undefined, artKey) : null;
+  const photo = usePhoto ? pickPhotoForTopics(photos, treatment + rng.int(5), [feature.topic], undefined, artKey, shot?.affinity) : null;
 
   const light = treatment === 2;
   const surface = light
