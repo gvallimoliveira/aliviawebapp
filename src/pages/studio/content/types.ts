@@ -70,6 +70,8 @@ export type StudioList = {
  * carrossel é sempre tipográfico — nunca carrega imagem.
  */
 export type StudioCarousel = {
+  /** Identidade editorial estável; sobrevive à variação linguística entre lotes. */
+  id?: string;
   kicker: string;
   /** Headline da capa. */
   title: string;

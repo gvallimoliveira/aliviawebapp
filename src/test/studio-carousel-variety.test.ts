@@ -48,4 +48,21 @@ describe("variedade temática dos carrosséis", () => {
   it("mantém determinismo: mesma seed devolve o mesmo roteiro", () => {
     expect(contentFor("lote-x").carousels[0].title).toBe(contentFor("lote-x").carousels[0].title);
   });
+
+  it("mantém uma identidade editorial estável para a memória entre lotes", () => {
+    const ids = contentFor("lote-identidade").carousels.map((carousel) => carousel.id);
+    expect(ids.every(Boolean)).toBe(true);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("cria várias histórias completas a partir do mesmo público", () => {
+    const stories = contentFor("lote-historias").stories;
+    expect(stories.length).toBeGreaterThanOrEqual(5);
+    expect(new Set(stories.map((story) => story.title)).size).toBe(stories.length);
+    stories.forEach((story) => {
+      expect(story.beats.length).toBeGreaterThanOrEqual(3);
+      expect(story.turn.length).toBeGreaterThan(15);
+      expect(story.moral.length).toBeGreaterThan(15);
+    });
+  });
 });

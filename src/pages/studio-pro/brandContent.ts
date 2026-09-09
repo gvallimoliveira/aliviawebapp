@@ -1180,6 +1180,49 @@ const applyAudience = (
   ];
 
   /**
+   * HISTÓRIAS DO PÚBLICO: cada uma usa uma tensão diferente do kit e fecha com
+   * uma prova/desejo. Assim o modelo narrativo não recai sempre no mesmo caso
+   * genérico, mesmo quando o público selecionado permanece igual.
+   */
+  const stories = [
+    ...pains.slice(0, 3).map((pain, i) => ({
+      kicker: `${KEY} · HISTÓRIA REAL`,
+      title: i === 0 ? `${cap(who)} que já tinha tentado de tudo` : `${cap(who)} diante de ${lower1(nomPain(i, pain))}`,
+      beats: [
+        sentence(pain),
+        i === 0 ? "As tentativas anteriores tratavam o sintoma sem ler o contexto." : "A rotina foi se adaptando ao problema, pouco a pouco.",
+        proof[i % Math.max(1, proof.length)] ? sentence(proof[i % proof.length]) : `Foi quando ${brand} começou pelo cenário inteiro.`,
+      ],
+      turn: desires[i % Math.max(1, desires.length)]
+        ? `O caminho passou a mirar ${lower1(desires[i % desires.length])}.`
+        : "Pela primeira vez, cada escolha ganhou um porquê.",
+      moral: proof[(i + 1) % Math.max(1, proof.length)]
+        ? `${sentence(proof[(i + 1) % proof.length])} Contexto antes de conduta.`
+        : `Para ${lower1(key)}, entender o contexto vem antes de propor o caminho.`,
+    })),
+    ...desires.slice(0, 2).map((desire, i) => ({
+      kicker: `${KEY} · O QUE MUDOU`,
+      title: `O dia em que ${lower1(desire)} deixou de parecer distante`,
+      beats: [
+        pains[i] ? sentence(pains[i]) : `O ponto de partida parecia não ter saída.`,
+        "Em vez de repetir uma receita, o caso foi lido etapa por etapa.",
+        proof[i] ? sentence(proof[i]) : "O próximo passo ficou claro e possível de acompanhar.",
+      ],
+      turn: `A mudança começou quando o plano passou a caber na vida real.`,
+      moral: `${sentence(desire)} Não por promessa — por direção.`,
+    })),
+    ...(proof.length >= 2
+      ? [{
+          kicker: `${KEY} · BASTIDORES`,
+          title: "A diferença apareceu antes do resultado final",
+          beats: [sentence(pains[0] ?? desc ?? key), sentence(proof[0]), sentence(proof[1])],
+          turn: "O valor não estava em fazer mais. Estava em decidir melhor.",
+          moral: `${brand}: cada etapa precisa fazer sentido para quem vive o caso.`,
+        }]
+      : []),
+  ];
+
+  /**
    * REPERTÓRIO DE CARROSSEL POR PÚBLICO
    *
    * Antes existia UM roteiro só ("do medo ao plano"): como o bloco de carrossel
@@ -1190,6 +1233,7 @@ const applyAudience = (
   const carousels = [
     ...(pains.length && desires.length
       ? [{
+          id: "audience-fear-to-plan",
           kicker: KEY,
           title: `${key}: do medo ao plano`,
           coverSub: `${hk(4)}, este carrossel é para você.`,
@@ -1203,6 +1247,7 @@ const applyAudience = (
       : []),
     ...(painNoms.length >= 3
       ? [{
+          id: "audience-signs",
           kicker: `${KEY} · SINAIS`,
           title: `3 sinais de que ${lower1(key)} precisa de atenção`,
           coverSub: "Se você reconhecer dois, vale conversar.",
@@ -1216,6 +1261,7 @@ const applyAudience = (
       : []),
     ...(painNoms.length >= 2 && desireNoms.length >= 2
       ? [{
+          id: "audience-myth-truth",
           kicker: `${KEY} · MITO E VERDADE`,
           title: `O que se diz sobre ${lower1(key)} — e o que é verdade`,
           coverSub: "Três frases que atrapalham mais do que ajudam.",
@@ -1229,6 +1275,7 @@ const applyAudience = (
       : []),
     ...(proof.length >= 2
       ? [{
+          id: "audience-process",
           kicker: `${KEY} · POR DENTRO`,
           title: `Como ${brand} trabalha com ${lower1(key)}`,
           coverSub: "O que acontece do primeiro contato ao resultado.",
@@ -1242,6 +1289,7 @@ const applyAudience = (
       : []),
     ...(desireNoms.length >= 2
       ? [{
+          id: "audience-after",
           kicker: `${KEY} · O DEPOIS`,
           title: `O que muda quando ${lower1(key)} é levado a sério`,
           coverSub: "Não é promessa: é o que passa a ser possível.",
@@ -1255,6 +1303,7 @@ const applyAudience = (
       : []),
     ...(pains.length
       ? [{
+          id: "audience-questions",
           kicker: `${KEY} · PERGUNTAS`,
           title: `3 perguntas de quem convive com ${lower1(key)}`,
           coverSub: "As respostas que quase ninguém dá com clareza.",
@@ -1292,6 +1341,7 @@ const applyAudience = (
       ...tail(base.compare),
     ],
     lists: [...lists, ...tail(base.lists)],
+    stories: stories.length >= 3 ? stories : [...stories, ...tail(base.stories)],
     /**
      * Cartazes dirigidos: o bloco de foto de fundo lê `features`, então o par
      * relacional (medo/desejo do público + gancho + CTA) precisa chegar aqui —
@@ -1340,7 +1390,9 @@ const applyAudience = (
     searchQueries: [key, ...pains, ...desires, ...(base.searchQueries ?? [])]
       .map((q) => strip(q))
       .filter(Boolean),
-    carousels: [...carousels, ...tail(base.carousels)],
+    // Havendo repertório dirigido suficiente, não misture roteiros genéricos:
+    // eles diluíam o assunto e voltavam a parecer o mesmo carrossel de sempre.
+    carousels: carousels.length >= 4 ? carousels : [...carousels, ...tail(base.carousels)],
     closings: [
       { title: `${key}: o próximo passo é seu`, sub: desires[0] ? sentence(desires[0]) : `Fale com ${brand} hoje.`, cta },
       { title: hk(6), sub: proof[0] ?? `${brand} tem um caminho claro para quem está nessa situação.`, cta },

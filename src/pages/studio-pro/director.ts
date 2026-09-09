@@ -335,11 +335,21 @@ export const planBatch = (input: {
    * buscar o roteiro e vários grupos acabavam apontando para o mesmo texto.
    */
   const carouselByGroup = new Map<number, WorldContent["carousels"][number]>();
+  const carouselStream = createStream(
+    content.carousels,
+    `${seed}:carousels`,
+    (signature) => weightOf?.(signature) ?? 1,
+  );
   blocks?.forEach((block) => {
     if (block.kind !== "carousel" || block.slide === undefined || carouselByGroup.has(block.slide.group)) return;
-    // O compositor atribui o roteiro pela ordem dos grupos, nunca pela posição
-    // visual. A rotação temática já ocorre antes, pela seed e pela memória.
-    const selected = content.carousels[block.slide.script % content.carousels.length];
+    // O roteiro é escolhido pelo diretor, não pelo índice visual: isso aplica a
+    // memória entre lotes e ainda mantém roteiros distintos dentro desta leva.
+    const selected = carouselStream.take({
+      axis: wheel[(block.slide.group + offset) % wheel.length],
+      extra,
+      voice,
+      salt: `group:${block.slide.group}:script:${block.slide.script}`,
+    });
     if (selected) carouselByGroup.set(block.slide.group, selected as WorldContent["carousels"][number]);
   });
 
