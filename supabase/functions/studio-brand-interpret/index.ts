@@ -685,6 +685,7 @@ Responda SOMENTE com JSON válido neste formato:
   "colors": { "primary": "#RRGGBB", "primary2": "#RRGGBB", "secondary": "#RRGGBB", "secondary2": "#RRGGBB", "extra": ["#RRGGBB"] },
   "font_family": "fonte de títulos da marca, ou vazio",
   "font_body": "fonte de texto corrido da marca, ou vazio",
+  "brief_answers": { "apresentacao": "", "oferta": "", "diferencial": "", "assinatura": "", "publico_primario": "", "perfil": "", "dor": "", "desejo": "", "tom": "", "nivel_tecnico": "", "proibidas": "", "cta": "", "fundo": "", "destaque": "", "sensacao": "", "referencias": "", "nunca_prometer": "", "nao_atrair": "" },
   "audiences": [
     {
       "label": "Nome curto do público",
