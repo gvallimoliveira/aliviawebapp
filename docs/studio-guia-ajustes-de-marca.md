@@ -77,7 +77,7 @@ sem repetir frase no mesmo lote.
 
 ## 3. Rotina de geração que rende mais
 
-1. Kit completo (questionário respondido) antes da primeira geração.
+1. Kit completo antes da primeira geração: manual em PDF interpretado **ou** questionário respondido (os dois valem igual; com manual, revise as respostas que a IA preencheu).
 2. Gerar com "Modelos: Aleatório" para ver a amplitude do motor.
 3. Favoritar as artes boas — favoritos alimentam a geração seguinte.
 4. Corrigir posição de texto pelo "Fixar posição": isso **ensina** o motor por marca.
@@ -87,7 +87,7 @@ sem repetir frase no mesmo lote.
 
 ## 4. Checklist de 1 minuto
 
-- [ ] Questionário de marca respondido (não só descrição).
+- [ ] Manual em PDF interpretado ou questionário respondido — e as respostas revisadas (não só descrição).
 - [ ] Slogan com 3+ linhas.
 - [ ] Todo público com palavra-chave, gancho + alternativas, CTA, 6+ dores, 5+ desejos, 5+ soluções.
 - [ ] Paleta com 4 cores úteis e contraste validado.
