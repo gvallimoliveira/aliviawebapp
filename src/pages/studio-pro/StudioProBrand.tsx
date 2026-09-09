@@ -448,11 +448,17 @@ const StudioProBrand = () => {
         toast.error((data as { error: string }).error);
         return;
       }
+      const briefFilled = Number((data as { brief_filled?: number })?.brief_filled ?? 0);
       toast.success(
         doc
-          ? "Manual interpretado: kit, cores e tipografia preenchidos. Revise abaixo."
-          : "Marca interpretada. Revise os públicos abaixo.",
+          ? briefFilled > 0
+            ? `Manual interpretado: kit, cores, tipografia e ${briefFilled} respostas do questionário preenchidas. Revise abaixo.`
+            : "Manual interpretado: kit, cores e tipografia preenchidos. Revise abaixo."
+          : briefFilled > 0
+            ? `Marca interpretada e ${briefFilled} respostas do questionário preenchidas. Revise abaixo.`
+            : "Marca interpretada. Revise os públicos abaixo.",
       );
+
 
       // Espera a recarga e força a re-hidratação: sem isso os campos só
       // apareciam após F5.

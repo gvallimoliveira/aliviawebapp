@@ -6,10 +6,16 @@ não "inventa" o que a marca não declarou.
 
 ## 1. Hierarquia real das fontes de texto
 
+**Manual da marca (PDF) e questionário pesam igual.** São dois caminhos para a mesma coisa:
+declarar o DNA da marca. Quem só anexou o manual não perde qualidade nem variedade — na
+interpretação por IA o manual é lido como fonte principal e a própria IA responde o
+questionário a partir dele (você só revisa). Quem não tem manual responde o questionário e
+chega no mesmo nível. Resposta escrita à mão nunca é sobrescrita pela IA.
+
 Ordem de prioridade que o motor usa para escrever cada arte:
 
-1. **Questionário de marca** (`brief_answers`) — FONTE PRIMÁRIA. Quando preenchido, é ele
-   que escreve. Vazio ⇒ o motor cai para as camadas seguintes.
+1. **Manual da marca em PDF / questionário respondido** (`brief_answers`) — FONTE PRIMÁRIA.
+   Vazios os dois ⇒ o motor cai para as camadas seguintes.
 2. **Públicos / sub-nichos** (`audiences`): dores, desejos, soluções, palavra-chave, gancho e
    objetivo/CTA. É daqui que sai o par relacional de cada arte (para quem × contra qual medo).
 3. **Slogan declarado** (um por linha) — habilita o sub-nicho "Slogan em destaque" e é o
@@ -18,6 +24,7 @@ Ordem de prioridade que o motor usa para escrever cada arte:
 5. **Textos autorais** (quando cadastrados) — usados literalmente, sem reescrita.
 6. **Acervo neutro** — emergência para marca sem manual e sem briefing. É o que gera arte
    com cara de genérica.
+
 
 Regras duras:
 - **Tom de voz nunca é impresso na arte.** É diretriz (classifica o registro: técnico,
@@ -70,7 +77,7 @@ sem repetir frase no mesmo lote.
 
 ## 3. Rotina de geração que rende mais
 
-1. Kit completo (questionário respondido) antes da primeira geração.
+1. Kit completo antes da primeira geração: manual em PDF interpretado **ou** questionário respondido (os dois valem igual; com manual, revise as respostas que a IA preencheu).
 2. Gerar com "Modelos: Aleatório" para ver a amplitude do motor.
 3. Favoritar as artes boas — favoritos alimentam a geração seguinte.
 4. Corrigir posição de texto pelo "Fixar posição": isso **ensina** o motor por marca.
@@ -80,7 +87,7 @@ sem repetir frase no mesmo lote.
 
 ## 4. Checklist de 1 minuto
 
-- [ ] Questionário de marca respondido (não só descrição).
+- [ ] Manual em PDF interpretado ou questionário respondido — e as respostas revisadas (não só descrição).
 - [ ] Slogan com 3+ linhas.
 - [ ] Todo público com palavra-chave, gancho + alternativas, CTA, 6+ dores, 5+ desejos, 5+ soluções.
 - [ ] Paleta com 4 cores úteis e contraste validado.

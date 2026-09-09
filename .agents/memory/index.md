@@ -36,7 +36,10 @@ Studio léxico: marca Aliv.iA falando com paciente/sub-nicho clínico usa "AutoA
 
 Créditos de IA: após CADA etapa do plano de créditos, rodar o double-check padrão (mem://process/credits-phase-doublecheck) antes de declarar a etapa concluída.
 
+Studio: manual da marca em PDF e questionário valem IGUAL — marca com só o manual não perde qualidade; a IA responde o questionário a partir dele.
+
 ## Memories
+- [Studio Manual = Questionário](mem://features/studio-manual-equals-questionnaire) — Manual em PDF e questionário com peso igual; IA preenche o questionário a partir do manual sem sobrescrever resposta escrita à mão.
 - [Assessment Addenda](mem://features/assessment-addenda) — Informações adicionais em avaliação concluída: adendo manual, link /adendo/:token e reinterpretação opcional da IA.
 - [Credits Phase Double-check](mem://process/credits-phase-doublecheck) — Revisão adversarial obrigatória ao fim de cada etapa do sistema de créditos de IA (bypass, paridade SQL, fail-open, trava dupla, relato).
 - [Studio Multi-Slogan](mem://features/studio-multi-slogan) — Slogans independentes por linha no kit e siglas (DNA) sem flexão de artigo.
