@@ -252,12 +252,12 @@ const BROAD_USE_BONUS = 0.3;
  * sai da composição em vez de ilustrar um assunto que a foto não sustenta.
  */
 /**
- * Afinidade textual: quanto a foto (legenda + etiquetas) fala das palavras que
+ * Afinidade textual: quanto a foto (rótulo + descrição do usuário) fala das palavras que
  * a arte vai dizer. Bônus limitado, para não atropelar a afinidade de assunto.
  */
 const wordAffinity = (photo: StudioPhoto, words?: string[]): number => {
   if (!words || words.length === 0) return 0;
-  const hay = `${photo.caption ?? ""} ${(photo.tags ?? []).join(" ")} ${photo.usage ?? ""}`
+  const hay = `${photo.label ?? ""} ${photo.description ?? ""} ${photo.usage ?? ""}`
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");

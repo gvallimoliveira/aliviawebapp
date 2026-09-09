@@ -52,6 +52,7 @@ import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/conte
 import { buildSegmentContent, brandSlogan, relationForSegment, pickGlobalAudience } from "./brandContent";
 import { useSegmentMemory } from "./useSegmentMemory";
 import { planBatch } from "./director";
+import type { TopicId } from "@/pages/studio/topics";
 import { buildBrandDna } from "./brandDnaKit";
 import { useBrandBrief } from "./useBrandBrief";
 
