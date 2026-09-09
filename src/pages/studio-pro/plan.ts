@@ -61,7 +61,7 @@ const buildAccess = (
     granted: !!opts.granted,
     brandLimit: isVip ? PLAN_LIMITS.agencia.brands : limits.brands,
     creditsPerPeriod: isVip ? Infinity : limits.credits,
-    photoLimit: isVip ? PLAN_LIMITS.agencia.photos : limits.photos,
+    photoLimit: isVip ? VIP_PHOTO_LIMIT : limits.photos,
     watermark: !isVip && plan === "free",
   };
 };
