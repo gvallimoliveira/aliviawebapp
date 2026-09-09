@@ -478,6 +478,42 @@ const professional: WorldContent = {
       moral: "Segunda opinião não deveria depender de horário.",
       topic: "clinical-agent",
     },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "A dor no ombro que pedia outra pergunta",
+      beats: [
+        "O exame falava em tendão. A queixa aparecia também em repouso.",
+        "Antes de prescrever, a fisioterapeuta retomou a triagem.",
+        "O agente organizou sinais, hipóteses e o que ainda precisava ser testado.",
+      ],
+      turn: "A conduta mudou porque o raciocínio veio antes do exercício.",
+      moral: "IA especializada organiza o caso. A decisão continua sendo clínica.",
+      topic: "clinical-agent",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "O programa que finalmente coube na rotina",
+      beats: [
+        "O paciente recebia listas longas e abandonava na primeira semana.",
+        "A fisio registrou limitações, nível e objetivo funcional.",
+        "O HEP saiu em vídeo, por fases e com dificuldade mista.",
+      ],
+      turn: "Na revisão, ele não pediu novos exercícios. Pediu a próxima fase.",
+      moral: "Adesão começa quando a prescrição conversa com a vida real.",
+      topic: "hep",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "A evolução que deixou de depender da memória",
+      beats: [
+        "A melhora era percebida, mas difícil de demonstrar.",
+        "Força, questionário e dor foram comparados no mesmo prontuário.",
+        "A curva mostrou o que avançou e o que ainda travava.",
+      ],
+      turn: "A alta deixou de ser uma impressão e virou decisão compartilhada.",
+      moral: "Quando a evolução aparece, o valor clínico também aparece.",
+      topic: "express-reassessment",
+    },
   ],
   lists: [
     {

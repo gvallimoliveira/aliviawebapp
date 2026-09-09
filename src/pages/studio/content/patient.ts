@@ -222,6 +222,42 @@ const patient: WorldContent = {
       moral: "Segurança vem antes de qualquer plano.",
       topic: "red-flags",
     },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "Ela parou de levantar o braço por medo",
+      beats: [
+        "A dor no ombro começou num movimento simples.",
+        "Depois, até vestir a blusa virou motivo para evitar o braço.",
+        "A avaliação separou dor, força e limitação funcional.",
+      ],
+      turn: "O movimento deixou de ser ameaça e voltou a ser parte do caminho.",
+      moral: "Entender o que limita você é diferente de apenas localizar a dor.",
+      topic: "difi",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "A lombar melhorava — mas a confiança não",
+      beats: [
+        "A intensidade caiu, mas ela ainda evitava abaixar e carregar peso.",
+        "O diário mostrou melhora. O medo do movimento continuava alto.",
+        "O plano passou a acompanhar função, não só a nota da dor.",
+      ],
+      turn: "A evolução real apareceu quando ela voltou à própria rotina.",
+      moral: "Melhorar é recuperar capacidade, não apenas reduzir um número.",
+      topic: "pain-diary",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "O exercício certo na dose errada",
+      beats: [
+        "Ele copiava vídeos diferentes toda vez que o joelho incomodava.",
+        "Alguns dias fazia demais. Em outros, parava completamente.",
+        "O programa organizou nível, volume e progressão por fase.",
+      ],
+      turn: "O exercício não mudou sozinho. A dose ganhou lógica.",
+      moral: "Um bom plano diz o que fazer, quanto fazer e quando avançar.",
+      topic: "hep",
+    },
   ],
   lists: [
     {
