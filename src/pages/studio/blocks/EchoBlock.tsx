@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
+import { displayWord, displayWordContainer, displayWordStyle } from "../typographyGuards";
 
 /**
  * Echo block — a palavra-chave do ecossistema repetida em coluna: todas as
@@ -19,7 +20,8 @@ const REPETITIONS = 7;
 
 const EchoBlock = ({ content, rng, treatment, format, persona, picker }: BlockProps) => {
   const [item] = picker.pick(content.kinetic, 1, rng, (k) => [k.topic]);
-  const word = item.word.toUpperCase();
+  /* Palavra inteira, sempre: corpo da letra calculado pelo comprimento. */
+  const word = displayWord(item.word, 14) || item.word.toUpperCase();
   const dark = treatment === 1;
   const filledAt = Math.floor(REPETITIONS / 2);
 
@@ -28,10 +30,13 @@ const EchoBlock = ({ content, rng, treatment, format, persona, picker }: BlockPr
     : "text-transparent [-webkit-text-stroke:1.5px_hsl(var(--foreground)/0.4)]";
   const filledClass = dark ? "text-background" : "text-primary";
 
+  const wordStyle = displayWordStyle(word, { widthPct: 96, maxRem: 6 });
+
   const stack = (align: "center" | "left") => (
     <div
       aria-label={word}
       className={`flex select-none flex-col ${align === "center" ? "items-center text-center" : "items-start text-left"}`}
+      style={displayWordContainer}
     >
       {Array.from({ length: REPETITIONS }, (_, i) => {
         const filled = i === filledAt;
@@ -40,9 +45,8 @@ const EchoBlock = ({ content, rng, treatment, format, persona, picker }: BlockPr
             key={i}
             aria-hidden={!filled}
             data-studio-stroke={filled ? undefined : "1"}
-            className={`whitespace-nowrap text-5xl font-bold leading-[1.02] tracking-tight md:text-8xl ${
-              filled ? filledClass : outlineClass
-            }`}
+            className={`font-bold leading-[1.02] tracking-tight ${filled ? filledClass : outlineClass}`}
+            style={wordStyle}
           >
             {word}
           </span>
