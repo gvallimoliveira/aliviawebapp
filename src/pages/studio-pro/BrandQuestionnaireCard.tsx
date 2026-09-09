@@ -149,15 +149,18 @@ const BrandQuestionnaireCard = ({
         <div className="flex gap-3">
           <FileQuestion className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Não tenho manual de marca</h3>
+            <h3 className="text-sm font-semibold text-foreground">Questionário de marca</h3>
             <p className="mt-0.5 max-w-xl text-xs text-muted-foreground">
-              Responda um questionário curto e o Studio monta o kit por você: posicionamento, tom,
-              públicos com chamada e CTA, cores e tipografia. Dá para baixar em PDF e responder fora
-              do sistema — ou enviar para o seu cliente responder.
+              O questionário e o manual da marca em PDF valem o mesmo: com um dos dois, o Studio
+              monta o kit completo — posicionamento, tom, públicos com chamada e CTA, cores e
+              tipografia. Anexou o manual? Ao mandar a IA interpretar, ela responde este
+              questionário por você a partir do documento, e você só revisa. Dá para baixar em PDF e
+              responder fora do sistema — ou enviar para o seu cliente responder.
             </p>
             <p className="mt-1 text-[11px] font-medium text-primary">
               {filled} de {BRAND_QUESTIONS.length} perguntas respondidas
             </p>
+
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
