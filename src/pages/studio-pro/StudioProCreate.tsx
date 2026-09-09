@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Camera,
   Check,
@@ -41,7 +41,9 @@ import {
   type ComposedBlock,
   type StudioFormat,
 } from "@/studio-core";
+import { phraseSignature } from "@/pages/studio/picker";
 import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
+
 import { countPhotos } from "@/pages/studio/photos";
 import StudioPhotos from "@/pages/studio/StudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
@@ -55,6 +57,9 @@ import { planBatch } from "./director";
 import type { TopicId } from "@/pages/studio/topics";
 import { buildBrandDna } from "./brandDnaKit";
 import { useBrandBrief } from "./useBrandBrief";
+import { useCopyLearning } from "./useCopyLearning";
+import { applyLearnedCopy, diffArtText } from "@/pages/studio/copyLearning";
+
 
 
 import { readColorKit } from "./brandColors";
@@ -469,7 +474,15 @@ const StudioProCreate = ({
    */
   const segmentMemory = useSegmentMemory(brand.id);
 
-  const content = useMemo(() => {
+  /**
+   * APRENDIZADO DE TEXTO DA MARCA: cada frase que você reescreveu na arte
+   * substitui a frase original em todas as gerações seguintes — o motor não
+   * volta a oferecer o que você já corrigiu.
+   */
+  const learning = useCopyLearning(brand.id);
+
+  const baseContent = useMemo(() => {
+
     const built = buildSegmentContent({
       kit: contentKit,
       base: aliviaWorld ? WORLDS[aliviaWorld] : undefined,
@@ -497,6 +510,16 @@ const StudioProCreate = ({
       profile: variation,
     });
   }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning, brand.id, seed, register, isAlivia, variation, segmentMemory.weights]);
+
+  /**
+   * ACERVO JÁ CORRIGIDO: antes de qualquer sorteio, as frases que você
+   * reescreveu na arte tomam o lugar das originais. Assim o ajuste vale para
+   * sempre naquela marca, em vez de virar retrabalho a cada geração.
+   */
+  const learnedContent = useMemo(() => applyLearnedCopy(baseContent, learning.rewrites), [baseContent, learning.rewrites]);
+  const content = learnedContent.content;
+
+
 
   /**
    * Registra a cobertura: o público que este lote vestiu pesa menos no próximo
@@ -612,17 +635,28 @@ const StudioProCreate = ({
   );
 
   /**
-   * BRIEFING DE IA (só conta admin, e só quando ligado no botão): uma leitura
-   * por lote, nunca por arte. Desligado, o diretor segue 100% local.
+   * BRIEFING DE IA: a leitura em si é exclusiva do admin com o botão ligado —
+   * mas o que ela aprendeu fica guardado na marca e continua valendo nas
+   * gerações com a IA DESLIGADA, sem novo consumo.
    */
-  const { brief, enabled: briefOn, canUse: canUseBrief, loading: briefLoading, toggle: toggleBrief } = useBrandBrief({
+  const { brief, enabled: briefOn, canUse: canUseBrief, loading: briefLoading, toggle: toggleBrief, learned: briefLearned } = useBrandBrief({
     brandId: brand.id,
     kit: contentKit,
   });
 
   /**
+   * Peso da memória da marca lido no momento da montagem, por referência: se o
+   * diretor dependesse do objeto da memória, a gravação (2,5s depois) remontaria
+   * o lote e trocaria o texto das artes já em tela.
+   */
+  const phraseWeight = useRef(phraseMemory.weightOf);
+  phraseWeight.current = phraseMemory.weightOf;
+  const weightOf = useCallback((signature: string) => phraseWeight.current(signature), []);
+
+  /**
    * DIRETOR CRIATIVO: roteiro do lote (um eixo por arte) e reserva de texto —
-   * nenhuma arte da mesma leva repete a frase de outra.
+   * nenhuma arte da mesma leva repete a frase de outra, e frase muito rodada na
+   * marca entra com peso menor também entre lotes.
    */
   const director = useMemo(
     () =>
@@ -639,9 +673,12 @@ const StudioProCreate = ({
           variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
         }),
         dna,
-        brief: briefOn ? brief ?? undefined : undefined,
+        brief: brief ?? undefined,
+        weightOf,
+        learnedVoice: learning.voice,
       }),
-    [content, composedBlocks.length, brand.id, brand.positioning, seed, activeSegment, angle, contentKit, audiences, dna, brief, briefOn],
+    [content, composedBlocks.length, brand.id, brand.positioning, seed, activeSegment, angle, contentKit, audiences, dna, brief, weightOf, learning.voice],
+
   );
 
   /**
@@ -730,6 +767,49 @@ const StudioProCreate = ({
     [composedBlocks, rationaleCtx, director],
   );
   const blocks = audit.blocks;
+
+  /**
+   * MEMÓRIA ENTRE LOTES: o que o diretor reservou é o que vai ao ar, então é
+   * isso que fica registrado na marca. Sem este registro, a próxima geração
+   * tornava a oferecer as mesmas frases com peso cheio.
+   */
+  useEffect(() => {
+    const signatures = director.shots.flatMap((shot) => shot.copy.map((line) => phraseSignature(line)));
+    if (signatures.length > 0) phraseMemory.record(signatures);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [director]);
+
+  /**
+   * COLETA DE RESULTADOS: cada geração deixa uma medida simples (quantas artes,
+   * quantas frases distintas, quantas repetidas, IA ligada ou não e quantas
+   * correções aprendidas foram aplicadas). É esse histórico que mostra se o
+   * motor está melhorando de verdade a cada ajuste.
+   */
+  const loggedRun = useRef<string>("");
+  useEffect(() => {
+    if (blocks.length === 0 || loggedRun.current === batchKey) return;
+    loggedRun.current = batchKey;
+    const stats = director.report();
+    void (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+      await supabase.from("studio_director_runs").upsert(
+        {
+          user_id: auth.user.id,
+          brand_id: brand.id,
+          batch_key: batchKey,
+          ai_on: briefOn,
+          arts: stats.arts,
+          distinct_copy: stats.distinct,
+          repeated_copy: stats.repeated,
+          learned_applied: learnedContent.applied,
+        },
+        { onConflict: "brand_id,batch_key" },
+      );
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batchKey, blocks.length]);
+
   /** Índice da arte com a leitura de sentido aberta. */
   const [whyOpen, setWhyOpen] = useState<number | null>(null);
   /**
@@ -869,6 +949,12 @@ const StudioProCreate = ({
   };
 
 
+  /**
+   * Texto da arte no momento em que a edição começou: é a base da comparação
+   * que transforma o seu ajuste em aprendizado da marca.
+   */
+  const textBeforeEdit = useRef<Record<number, ArtTextEdits>>({});
+
   /** Liga a edição direta somente na arte selecionada. */
   const startEdit = (indexes: number[]) => {
     setWhyOpen(indexes[0]);
@@ -880,9 +966,12 @@ const StudioProCreate = ({
     setEditing(indexes[0]);
     indexes.forEach((i) => {
       const node = artNode(i);
-      if (node) setArtEditing(node, true);
+      if (!node) return;
+      textBeforeEdit.current[i] = readArtText(node);
+      setArtEditing(node, true);
     });
   };
+
 
   const cancelEdit = (indexes: number[]) => {
     indexes.forEach((i) => {
@@ -918,6 +1007,14 @@ const StudioProCreate = ({
       if (node) setArtEditing(node, false);
     });
     setEdits((prev) => ({ ...prev, ...collected }));
+    /**
+     * APRENDIZADO: a frase que você escreveu passa a substituir a frase antiga
+     * nas próximas gerações desta marca — o motor não volta a oferecê-la.
+     */
+    const lessons = Object.entries(collected).flatMap(([key, next]) =>
+      diffArtText(textBeforeEdit.current[Number(key)], next),
+    );
+    if (lessons.length > 0) void learning.learn(lessons);
     setEditing(null);
     setApproved((prev) => {
       const copy = new Set(prev);
@@ -930,7 +1027,12 @@ const StudioProCreate = ({
       indexes.forEach((i) => copy.delete(i));
       return copy;
     });
-    toast.success("Arte ajustada e reenviada para aprovação.");
+    toast.success(
+      lessons.length > 0
+        ? "Arte ajustada. O motor guardou sua correção para as próximas gerações."
+        : "Arte ajustada e reenviada para aprovação.",
+    );
+
   };
 
   /** Volta ao texto original gerado pelo motor. */
@@ -1258,8 +1360,15 @@ const StudioProCreate = ({
                 <Sparkles className="h-3 w-3" />
                 Direção com IA: {briefOn ? (briefLoading ? "lendo o kit…" : "ligada") : "desligada"}
               </button>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {briefLearned
+                  ? "Leitura do kit guardada: continua valendo com a IA desligada."
+                  : "Ligue uma vez para a IA ler o kit; o aprendizado fica guardado na marca."}
+                {learning.count > 0 ? ` ${learning.count} correção(ões) de texto aprendidas.` : ""}
+              </p>
             </div>
           )}
+
           {/* Modelos de arte: aleatório por padrão, ou seleção manual de tipos. */}
           <div className="mt-2">
 

@@ -168,3 +168,4 @@ Studio: manual da marca em PDF e questionário valem IGUAL — marca com só o m
 - [Exercise Video Monthly Audit](mem://features/exercise-video-monthly-audit) — Auditoria mensal automática dos vídeos do YouTube da biblioteca de exercícios (cron dia 1º, aba Vídeos no Admin).
 - [Studio Photo Rotation](mem://features/studio-photo-rotation) — Rotatividade do acervo no lote: foto menos usada primeiro, teto de 3 repetições com 10+ fotos, cota de 70% com foto de fundo.
 - [Studio Typography Guards](mem://features/studio-typography-guards) — Regras globais das artes: palavra-cartaz inteira, chamada de público curta (1 por vez), caixa de frase, fecho da arte e contraste garantido sobre foto.
+- [Studio Creative Learning Loop](mem://features/studio-creative-learning) — Correções de texto viram regra da marca, memória entre lotes, briefing de IA guardado (vale com IA off) e coleta de resultados por geração.

@@ -4085,6 +4085,33 @@ export type Database = {
           },
         ]
       }
+      studio_brand_briefs: {
+        Row: {
+          brand_id: string
+          brief: Json
+          created_at: string
+          id: string
+          kit_version: string
+          user_id: string
+        }
+        Insert: {
+          brand_id: string
+          brief: Json
+          created_at?: string
+          id?: string
+          kit_version: string
+          user_id: string
+        }
+        Update: {
+          brand_id?: string
+          brief?: Json
+          created_at?: string
+          id?: string
+          kit_version?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       studio_brands: {
         Row: {
           audiences: Json
@@ -4157,6 +4184,42 @@ export type Database = {
           topics?: string[]
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      studio_copy_learning: {
+        Row: {
+          brand_id: string
+          created_at: string
+          edited_text: string
+          id: string
+          original_text: string
+          signature: string
+          updated_at: string
+          user_id: string
+          uses: number
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          edited_text: string
+          id?: string
+          original_text: string
+          signature: string
+          updated_at?: string
+          user_id: string
+          uses?: number
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          edited_text?: string
+          id?: string
+          original_text?: string
+          signature?: string
+          updated_at?: string
+          user_id?: string
+          uses?: number
         }
         Relationships: []
       }
@@ -4275,6 +4338,45 @@ export type Database = {
           subscription_status?: string | null
           updated_at?: string
           used_this_period?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      studio_director_runs: {
+        Row: {
+          ai_on: boolean
+          arts: number
+          batch_key: string
+          brand_id: string
+          created_at: string
+          distinct_copy: number
+          id: string
+          learned_applied: number
+          repeated_copy: number
+          user_id: string
+        }
+        Insert: {
+          ai_on?: boolean
+          arts?: number
+          batch_key: string
+          brand_id: string
+          created_at?: string
+          distinct_copy?: number
+          id?: string
+          learned_applied?: number
+          repeated_copy?: number
+          user_id: string
+        }
+        Update: {
+          ai_on?: boolean
+          arts?: number
+          batch_key?: string
+          brand_id?: string
+          created_at?: string
+          distinct_copy?: number
+          id?: string
+          learned_applied?: number
+          repeated_copy?: number
           user_id?: string
         }
         Relationships: []
