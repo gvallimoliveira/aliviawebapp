@@ -30,7 +30,7 @@ export type BlockProps = {
    * arte da sequência este bloco renderiza, o total de artes e o grupo
    * (posição onde a sequência foi inserida) que ancora a escolha do conteúdo.
    */
-  slide?: { index: number; total: number; group: number };
+  slide?: { index: number; total: number; group: number; script: number };
   /**
    * Acervo privado de fotos da conta. Blocos fotográficos escolhem uma foto
    * daqui de forma determinística; sem acervo, eles não renderizam.

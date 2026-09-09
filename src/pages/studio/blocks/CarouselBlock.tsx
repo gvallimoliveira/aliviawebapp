@@ -22,7 +22,7 @@ import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME } from "../brand";
  * 3 palco central (marca no topo, headline gigante, pill de CTA embaixo).
  */
 
-const pickCarousel = <T,>(items: T[], group: number): T => items[group % items.length];
+const pickCarousel = <T,>(items: T[], script: number): T => items[script % items.length];
 
 /** Número gigante do slide atual, usado como ornamentação em alguns treatments. */
 const bigIndex = (index: number) => String(index + 1).padStart(2, "0");
@@ -56,7 +56,7 @@ const SlideImage = ({ topic }: { topic?: TopicId }) => {
 const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: BlockProps) => {
   const group = slide?.group ?? 0;
   const index = slide?.index ?? 0;
-  const carousel = pickCarousel(content.carousels, group);
+  const carousel = pickCarousel(content.carousels, slide?.script ?? group);
 
   // Roteiro: capa = 0, miolo = 1..slides.length, CTA = slides.length + 1.
   const total = carousel.slides.length + 2;

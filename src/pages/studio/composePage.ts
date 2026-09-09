@@ -60,7 +60,7 @@ export type ComposedBlock = {
   treatment: number;
   motion?: MotionKind;
   /** Posição dentro de uma sequência de carrossel (só em blocos `carousel`). */
-  slide?: { index: number; total: number; group: number };
+  slide?: { index: number; total: number; group: number; script: number };
 };
 
 /**
@@ -502,18 +502,21 @@ const finish = (
     );
   }
   const expanded: ComposedBlock[] = [];
+  let carouselOrdinal = 0;
   withMotion.forEach((block) => {
     if (block.kind !== "carousel") {
       expanded.push(block);
       return;
     }
     const group = expanded.length;
-    const slides = carousels[group % carousels.length].slides.length;
+    const script = carouselOrdinal % carousels.length;
+    carouselOrdinal += 1;
+    const slides = carousels[script].slides.length;
     // Exatamente capa + miolo + CTA. Forçar mínimo de quatro criava um slide
     // vazio quando o roteiro tinha apenas um miolo e também confundia a memória.
     const total = Math.min(6, Math.max(3, slides + 2));
     for (let i = 0; i < total; i += 1) {
-      expanded.push({ ...block, slide: { index: i, total, group } });
+      expanded.push({ ...block, slide: { index: i, total, group, script } });
     }
   });
   return expanded;

@@ -335,16 +335,11 @@ export const planBatch = (input: {
    * buscar o roteiro e vários grupos acabavam apontando para o mesmo texto.
    */
   const carouselByGroup = new Map<number, WorldContent["carousels"][number]>();
-  blocks?.forEach((block, index) => {
+  blocks?.forEach((block) => {
     if (block.kind !== "carousel" || block.slide === undefined || carouselByGroup.has(block.slide.group)) return;
-    const axis = wheel[(index + offset) % wheel.length];
-    // Mantém a quantidade de slides definida pelo compositor: trocar por um
-    // roteiro de outro tamanho criaria páginas vazias ou cortaria o CTA.
-    const middleCount = Math.max(1, block.slide.total - 2);
-    const compatible = content.carousels.filter((item) => item.slides.length === middleCount);
-    const candidates = compatible.length > 0 ? compatible : content.carousels;
-    const carouselStream = streamFor(`carousels.${middleCount}`, candidates);
-    const selected = carouselStream.take({ axis, extra, voice, salt: `carousel-group:${block.slide.group}` });
+    // O compositor atribui o roteiro pela ordem dos grupos, nunca pela posição
+    // visual. A rotação temática já ocorre antes, pela seed e pela memória.
+    const selected = content.carousels[block.slide.script % content.carousels.length];
     if (selected) carouselByGroup.set(block.slide.group, selected as WorldContent["carousels"][number]);
   });
 
