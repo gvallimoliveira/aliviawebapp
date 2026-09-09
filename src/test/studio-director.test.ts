@@ -11,6 +11,7 @@ import { WORLDS } from "@/pages/studio/content";
 import { planBatch } from "@/pages/studio-pro/director";
 import { composePage } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
+import { phraseSignature } from "@/pages/studio/picker";
 
 const plan = (seed: string, count = 8) =>
   planBatch({ content: WORLDS.pro, count, seed, relation: { pain: "dor que trava", axis: "pain" } });

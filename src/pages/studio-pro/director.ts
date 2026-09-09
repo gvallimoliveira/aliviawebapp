@@ -140,13 +140,14 @@ const createStream = <T>(
   items: readonly T[],
   seedKey: string,
   weightOf?: (signature: string) => number,
+  signatureOf: (item: T) => string = phraseSignature,
 ) => {
   const pool = items.map((item, index) => ({
     item,
     index,
     text: flatten(item),
     /** 1 = inédito na marca; perto de 0 = frase muito rodada. */
-    fresh: weightOf ? weightOf(phraseSignature(item)) : 1,
+    fresh: weightOf ? weightOf(signatureOf(item)) : 1,
   }));
   const used = new Set<number>();
   const aired: string[] = [];
@@ -339,6 +340,7 @@ export const planBatch = (input: {
     content.carousels,
     `${seed}:carousels`,
     (signature) => weightOf?.(signature) ?? 1,
+    (carousel) => phraseSignature(carousel.id ?? carousel),
   );
   blocks?.forEach((block) => {
     if (block.kind !== "carousel" || block.slide === undefined || carouselByGroup.has(block.slide.group)) return;
