@@ -1392,7 +1392,12 @@ const applyGlobal = (
         ],
         subs: [...axes.map((a) => a.text), ...base.subs],
         typos: [
-          ...axes.slice(0, 2).map((a) => ({ lead: `${lower1(a.kicker)}:`, big: firstSentence(a.text, 32), tail: "." })),
+          /* Abertura em caixa de frase e destaque em ideia FECHADA (não meia frase). */
+          ...axes.slice(0, 2).map((a) => ({
+            lead: `${sentenceLead(a.kicker)}:`,
+            big: condensePhrase(a.text, 34),
+            tail: ".",
+          })),
           ...base.typos,
         ],
         quotes: [...axes.map((a) => ({ text: `“${a.text}.”` })), ...base.quotes],
