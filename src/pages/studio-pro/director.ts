@@ -9,23 +9,31 @@
  *    (quem sou / como trabalho / no que acredito / dor / desejo / prova /
  *    convite), de modo que a leva fale de várias frentes da marca em vez de
  *    repetir a mesma ideia em modelos diferentes;
- * 2. RESERVA o texto de cada arte: destaque, apoio, kicker e fecho saem de um
- *    distribuidor que já sabe o que as artes anteriores do MESMO lote usaram.
- *    Frase igual (ou parecida demais) nunca cai duas vezes na mesma leva;
+ * 2. RESERVA o texto de cada arte em TODOS os acervos que os blocos consomem
+ *    (destaque, apoio, kicker, fecho, cartaz, comparação, palavra cinética,
+ *    listas, jornadas, histórias, ganchos e as linhas de venda). Frase igual —
+ *    ou parecida demais — nunca cai duas vezes na mesma leva;
  * 3. entrega para cada arte um `WorldContent` estreitado nos slots reservados —
- *    então nenhum bloco precisa mudar: o `rng.pick` deles já só encontra a
- *    frase que o diretor reservou;
- * 4. informa a AFINIDADE da arte (palavras do eixo + do par relacional), usada
+ *    então nenhum bloco precisa mudar: o `rng.pick`/`picker.pick` deles já só
+ *    encontra o que o diretor reservou;
+ * 4. respeita a MEMÓRIA DA MARCA (`weightOf`): frase que já circulou nas
+ *    gerações anteriores entra com peso menor, então a variabilidade cresce
+ *    entre lotes, não só dentro de um;
+ * 5. respeita o APRENDIZADO DO DONO DA MARCA (`learnedVoice`): as palavras dos
+ *    ajustes que o usuário fez na arte passam a atrair as escolhas do diretor;
+ * 6. informa a AFINIDADE da arte (palavras do eixo + do par relacional), usada
  *    para a foto conversar com o que o texto diz;
- * 5. expõe `copyOf(i)` — o texto previsto da arte — para o filtro de nexo
+ * 7. expõe `copyOf(i)` — o texto previsto da arte — para o filtro de nexo
  *    julgar a arte COM o texto na mão, e não em branco.
  *
  * 100% local e determinístico: mesma seed ⇒ mesmo roteiro, zero crédito de IA.
- * O briefing de IA (`brief`) é opcional e entra apenas como vocabulário extra.
+ * O briefing de IA (`brief`) é opcional, entra apenas como matéria-prima e —
+ * uma vez lido — fica guardado na marca, valendo também com a IA desligada.
  */
 
-import type { WorldContent } from "@/pages/studio/content/types";
+import type { WorldContent, WorldSales } from "@/pages/studio/content/types";
 import { createRng } from "@/pages/studio/rng";
+import { phraseSignature } from "@/pages/studio/picker";
 import type { BrandDna } from "./brandDnaKit";
 
 export const DIRECTOR_AXES = [
@@ -103,7 +111,7 @@ const similarity = (a: string, b: string): number => {
 };
 
 /** Frase parecida demais com algo que já foi ao ar neste lote. */
-const TOO_SIMILAR = 0.7;
+const TOO_SIMILAR = 0.62;
 
 const axisScore = (text: string, axis: DirectorAxis, extra: string[]): number => {
   const t = normalize(text);
@@ -113,17 +121,32 @@ const axisScore = (text: string, axis: DirectorAxis, extra: string[]): number =>
   return own * 2 + brand;
 };
 
+type TakeOptions = {
+  axis: DirectorAxis;
+  extra: string[];
+  /** Palavras aprendidas com os ajustes do dono da marca. */
+  voice: string[];
+  salt: string;
+};
+
 /**
  * Distribuidor de um slot textual: entrega itens SEM repetir dentro do lote
- * enquanto o acervo permitir, priorizando o item mais afim ao eixo da arte e
- * evitando frase parecida demais com o que já saiu.
+ * enquanto o acervo permitir, priorizando o item mais afim ao eixo da arte,
+ * evitando frase parecida demais com o que já saiu e descontando o que a marca
+ * já usou em gerações anteriores (`weightOf`).
  */
-const createStream = <T>(items: readonly T[], seedKey: string) => {
-  const pool = items.map((item, index) => ({ item, index, text: flatten(item) }));
+const createStream = <T>(items: readonly T[], seedKey: string, weightOf?: (signature: string) => number) => {
+  const pool = items.map((item, index) => ({
+    item,
+    index,
+    text: flatten(item),
+    /** 1 = inédito na marca; perto de 0 = frase muito rodada. */
+    fresh: weightOf ? weightOf(phraseSignature(item)) : 1,
+  }));
   const used = new Set<number>();
   const aired: string[] = [];
 
-  const take = (axis: DirectorAxis, extra: string[], salt: string): T | undefined => {
+  const take = ({ axis, extra, voice, salt }: TakeOptions): T | undefined => {
     if (pool.length === 0) return undefined;
     const rng = createRng(`${seedKey}:${salt}`);
     let free = pool.filter((entry) => !used.has(entry.index));
@@ -136,9 +159,12 @@ const createStream = <T>(items: readonly T[], seedKey: string) => {
       .map((entry) => ({
         entry,
         score:
-          axisScore(entry.text, axis, extra) -
-          aired.reduce((worst, previous) => Math.max(worst, similarity(entry.text, previous)), 0) * 3 +
-          rng.next() * 0.5,
+          axisScore(entry.text, axis, extra) +
+          axisScore(entry.text, axis, voice) * 0.75 +
+          // Memória da marca: frase muito rodada perde até 4 pontos.
+          (entry.fresh - 1) * 4 -
+          aired.reduce((worst, previous) => Math.max(worst, similarity(entry.text, previous)), 0) * 5 +
+          rng.next() * 0.9,
       }))
       .sort((a, b) => b.score - a.score);
 
@@ -153,6 +179,42 @@ const createStream = <T>(items: readonly T[], seedKey: string) => {
   return { take, size: pool.length };
 };
 
+type Stream<T> = ReturnType<typeof createStream<T>>;
+
+/**
+ * Quantos itens cada arte reserva por acervo. O número é o MÁXIMO que algum
+ * bloco consome daquele acervo (ex.: `NotifyBlock` mostra 5 recursos), com uma
+ * folga mínima de 2 para blocos que mostram dois itens do mesmo tipo.
+ *
+ * `stats`, `metrics` e `carousels` ficam FORA de propósito: os números vêm de
+ * dado real com fonte (estreitar poderia apagar o dado que o bloco precisa) e o
+ * carrossel é indivisível, roteirizado à parte.
+ */
+const SLOT_QUOTA = {
+  headlines: 2,
+  subs: 2,
+  kickers: 2,
+  closings: 2,
+  typos: 2,
+  quotes: 2,
+  features: 5,
+  compare: 2,
+  kinetic: 2,
+  marquee: 2,
+  lists: 2,
+  journeys: 2,
+  stories: 2,
+  triptychs: 2,
+  hooks: 2,
+} as const;
+
+type ListSlot = keyof typeof SLOT_QUOTA;
+
+/** Linhas de venda: entram na legenda e em vários blocos, então também giram. */
+const SALES_QUOTA = { proofs: 3, objections: 3, offers: 2, ctas: 2 } as const;
+
+type SalesSlot = keyof typeof SALES_QUOTA;
+
 export type ArtShot = {
   axis: DirectorAxis;
   axisLabel: string;
@@ -160,7 +222,11 @@ export type ArtShot = {
   affinity: string[];
   /** Texto previsto da arte (usado pelo filtro de nexo e pela explicação). */
   copy: string[];
-  /** Slots reservados desta arte. */
+  /** Acervos reservados desta arte (todos os slots dirigidos). */
+  reserved: Partial<WorldContent>;
+  /** Linhas de venda reservadas desta arte. */
+  sales?: WorldSales;
+  /** Atalhos mantidos por compatibilidade com quem já lia o roteiro. */
   headlines: WorldContent["headlines"];
   subs: WorldContent["subs"];
   kickers: WorldContent["kickers"];
@@ -187,6 +253,8 @@ export type BatchDirection = {
   /** Texto previsto da arte `index` (para o filtro de nexo). */
   copyOf: (index: number) => string[];
   shotFor: (index: number) => ArtShot | undefined;
+  /** Radiografia do lote: é o que alimenta a otimização contínua do motor. */
+  report: () => { arts: number; distinct: number; repeated: number };
 };
 
 /** Vocabulário da própria marca: reforça candidatos que soam como ela. */
@@ -221,10 +289,18 @@ export const planBatch = (input: {
   relation?: { pain?: string; desire?: string; axis?: "pain" | "desire" };
   dna?: BrandDna;
   brief?: BrandBrief;
+  /** Memória da marca: peso 1 = frase inédita, perto de 0 = muito usada. */
+  weightOf?: (signature: string) => number;
+  /** Palavras dos ajustes de texto que o dono da marca já fez. */
+  learnedVoice?: string[];
 }): BatchDirection => {
-  const { content, count, seed, relation, dna, brief } = input;
+  const { content, count, seed, relation, dna, brief, weightOf, learnedVoice } = input;
   const rng = createRng(`${seed}:director`);
   const extra = brandVocabulary(dna, brief);
+  const voice = (learnedVoice ?? [])
+    .flatMap((v) => normalize(v).split(/[^a-z0-9]+/))
+    .filter((w) => w.length > 4)
+    .slice(0, 60);
 
   /** Eixos disponíveis: os do briefing de IA primeiro, quando existirem. */
   const preferred = (brief?.angles ?? [])
@@ -233,41 +309,72 @@ export const planBatch = (input: {
   const wheel: DirectorAxis[] = [...new Set([...preferred, ...DIRECTOR_AXES])];
   const offset = rng.int(wheel.length);
 
-  const headlines = createStream(content.headlines, `${seed}:headlines`);
-  const subs = createStream(content.subs, `${seed}:subs`);
-  const kickers = createStream(content.kickers, `${seed}:kickers`);
-  const closings = createStream(content.closings, `${seed}:closings`);
-  const typos = createStream(content.typos, `${seed}:typos`);
-  const quotes = createStream(content.quotes, `${seed}:quotes`);
+  /** Um distribuidor por acervo dirigido. */
+  const streams = new Map<string, Stream<unknown>>();
+  const streamFor = (key: string, items: readonly unknown[]) => {
+    const found = streams.get(key);
+    if (found) return found;
+    const made = createStream(items, `${seed}:${key}`, weightOf);
+    streams.set(key, made);
+    return made;
+  };
 
   const relText = (relation?.axis === "desire" ? relation?.desire : relation?.pain || relation?.desire) ?? "";
 
   const shots: ArtShot[] = Array.from({ length: Math.max(0, count) }, (_, index) => {
     const axis = wheel[(index + offset) % wheel.length];
+
+    /** Reserva `quota` itens de um acervo — nenhum outro da leva os repete. */
+    const claim = (key: string, items: readonly unknown[] | undefined, quota: number): unknown[] => {
+      if (!items || items.length === 0) return [];
+      const stream = streamFor(key, items);
+      const out: unknown[] = [];
+      for (let n = 0; n < quota; n += 1) {
+        const item = stream.take({ axis, extra, voice, salt: `${index}:${n}` });
+        if (item !== undefined) out.push(item);
+      }
+      return out;
+    };
+
+    const reserved: Partial<WorldContent> = {};
+    (Object.keys(SLOT_QUOTA) as ListSlot[]).forEach((slot) => {
+      const items = content[slot] as readonly unknown[] | undefined;
+      const picked = claim(slot, items, SLOT_QUOTA[slot]);
+      if (picked.length > 0) {
+        (reserved as Record<string, unknown>)[slot] = picked;
+      }
+    });
+
+    let sales: WorldSales | undefined;
+    if (content.sales) {
+      sales = { ...content.sales };
+      (Object.keys(SALES_QUOTA) as SalesSlot[]).forEach((slot) => {
+        const picked = claim(`sales.${slot}`, content.sales?.[slot], SALES_QUOTA[slot]) as string[];
+        if (picked.length > 0 && sales) sales[slot] = picked;
+      });
+    }
+
+    const headlines = (reserved.headlines ?? content.headlines) as WorldContent["headlines"];
+    const subs = (reserved.subs ?? content.subs) as WorldContent["subs"];
+    const kickers = (reserved.kickers ?? content.kickers) as WorldContent["kickers"];
+    const closings = (reserved.closings ?? content.closings) as WorldContent["closings"];
+    const typos = (reserved.typos ?? content.typos) as WorldContent["typos"];
+    const quotes = (reserved.quotes ?? content.quotes) as WorldContent["quotes"];
+
     /**
-     * Dois itens por slot: o primeiro é a frase-âncora da arte, o segundo dá
-     * folga para blocos que mostram duas frases do mesmo tipo. Como os dois
-     * saem do mesmo distribuidor, nenhuma outra arte do lote os repete.
+     * Texto previsto da arte: entra no filtro de nexo e na auditoria. Reúne o
+     * que os blocos mais expõem — destaque, apoio, kicker, fecho, cartaz,
+     * citação, recurso e chamada.
      */
-    const pickPair = <T>(stream: { take: (axis: DirectorAxis, extra: string[], salt: string) => T | undefined }) =>
-      [stream.take(axis, extra, `${index}:a`), stream.take(axis, extra, `${index}:b`)].filter(
-        (v): v is T => v !== undefined,
-      );
-
-    const shotHeadlines = pickPair(headlines);
-    const shotSubs = pickPair(subs);
-    const shotKickers = pickPair(kickers);
-    const shotClosings = pickPair(closings);
-    const shotTypos = pickPair(typos);
-    const shotQuotes = pickPair(quotes);
-
     const copy = [
-      ...shotHeadlines.map((h) => `${h.strong} ${h.rest}`),
-      ...shotSubs,
-      ...shotKickers,
-      ...shotClosings.map((c) => `${c.title} ${c.sub} ${c.cta}`),
-      ...shotTypos.map((t) => `${t.lead} ${t.big} ${t.tail}`),
-      ...shotQuotes.map((q) => q.text),
+      ...headlines.map((h) => `${h.strong} ${h.rest}`),
+      ...subs,
+      ...kickers,
+      ...closings.map((c) => `${c.title} ${c.sub} ${c.cta}`),
+      ...typos.map((t) => `${t.lead} ${t.big} ${t.tail}`),
+      ...quotes.map((q) => q.text),
+      ...((reserved.features ?? []) as WorldContent["features"]).map((f) => `${f.title} ${f.description}`),
+      ...(sales?.ctas ?? []),
     ].filter((t) => t.trim().length > 0);
 
     const affinity = [
@@ -280,12 +387,14 @@ export const planBatch = (input: {
       axisLabel: AXIS_LABEL[axis],
       affinity,
       copy,
-      headlines: shotHeadlines.length > 0 ? shotHeadlines : content.headlines,
-      subs: shotSubs.length > 0 ? shotSubs : content.subs,
-      kickers: shotKickers.length > 0 ? shotKickers : content.kickers,
-      closings: shotClosings.length > 0 ? shotClosings : content.closings,
-      typos: shotTypos.length > 0 ? shotTypos : content.typos,
-      quotes: shotQuotes.length > 0 ? shotQuotes : content.quotes,
+      reserved,
+      sales,
+      headlines,
+      subs,
+      kickers,
+      closings,
+      typos,
+      quotes,
     };
   });
 
@@ -303,15 +412,16 @@ export const planBatch = (input: {
       if (cached) return cached;
       const next: WorldContent = {
         ...content,
-        headlines: shot.headlines,
-        subs: shot.subs,
-        kickers: shot.kickers,
-        closings: shot.closings,
-        typos: shot.typos,
-        quotes: shot.quotes,
+        ...shot.reserved,
+        ...(shot.sales ? { sales: shot.sales } : {}),
       };
       directed.set(index, next);
       return next;
+    },
+    report: () => {
+      const all = shots.flatMap((shot) => shot.copy.map((line) => normalize(line)));
+      const distinct = new Set(all).size;
+      return { arts: shots.length, distinct, repeated: all.length - distinct };
     },
   };
 };

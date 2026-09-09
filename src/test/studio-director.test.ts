@@ -46,7 +46,31 @@ describe("Diretor criativo", () => {
     const second = direction.contentFor(1);
     expect(first.headlines.length).toBeLessThanOrEqual(2);
     expect(first.headlines[0]).not.toEqual(second.headlines[0]);
-    // Os demais acervos do mundo continuam intactos.
-    expect(first.features).toEqual(WORLDS.pro.features);
+    // Cartazes também são dirigidos: artes diferentes não repetem o mesmo.
+    expect(first.features.length).toBeLessThan(WORLDS.pro.features.length);
+    expect(first.features[0]).not.toEqual(second.features[0]);
+    // Acervos de dado real (números com fonte) seguem intactos.
+    expect(first.stats).toEqual(WORLDS.pro.stats);
+    expect(first.metrics).toEqual(WORLDS.pro.metrics);
+  });
+
+  it("as linhas de venda também giram entre as artes do lote", () => {
+    const direction = plan("vendas", 5);
+    const ctas = direction.shots.map((_, i) => direction.contentFor(i).sales.ctas[0]);
+    expect(new Set(ctas).size).toBeGreaterThan(1);
+  });
+
+  it("a memória da marca desloca a escolha sem quebrar o determinismo", () => {
+    const heavy = new Set<string>();
+    const first = planBatch({ content: WORLDS.pro, count: 6, seed: "memoria" });
+    first.shots.forEach((shot) => shot.copy.forEach((line) => heavy.add(line)));
+    const after = planBatch({
+      content: WORLDS.pro,
+      count: 6,
+      seed: "memoria",
+      weightOf: () => 1,
+    });
+    expect(after.shots[0].copy.join("|")).toBe(first.shots[0].copy.join("|"));
   });
 });
+
