@@ -66,8 +66,13 @@ const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos, artK
         ? "hsl(var(--primary))"
         : "hsl(var(--foreground))";
   const ink = onDark || !!photo ? "#f7f5f0" : "hsl(var(--foreground))";
-  /* Palavra protagonista: acento do kit em fundo escuro, cor de marca em fundo claro. */
-  const accentInk = onDark || !!photo ? "hsl(var(--accent))" : "hsl(var(--primary))";
+  /**
+   * Palavra protagonista: em fundo escuro/foto usa a tinta de destaque JÁ
+   * clareada pelo tema da marca (`--studio-ink-accent`), nunca o acento cru —
+   * era o que fazia a palavra desaparecer sobre a imagem.
+   */
+  const accentInk =
+    onDark || !!photo ? "hsl(var(--studio-ink-accent, var(--accent)))" : "hsl(var(--primary))";
   const bigSize = "clamp(1.7rem, 8.4vw, 4rem)";
 
   return (
