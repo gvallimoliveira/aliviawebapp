@@ -1003,6 +1003,40 @@ Responda SOMENTE com JSON válido neste formato:
     const fillDescription = aiDescription.length > 40 && currentDescription.length < 60;
     const fillTone = aiVoice.length > 60 && currentTone.length < 60;
 
+    /**
+     * QUESTIONÁRIO DE MARCA a partir do manual/site: manual e questionário
+     * pesam igual no motor criativo, então quem só anexou o manual não fica
+     * com o briefing vazio. Resposta escrita à mão nunca é sobrescrita.
+     */
+    const BRIEF_KEYS = [
+      "apresentacao", "oferta", "diferencial", "assinatura",
+      "publico_primario", "perfil", "dor", "desejo",
+      "tom", "nivel_tecnico", "proibidas", "cta",
+      "fundo", "destaque", "sensacao", "referencias",
+      "nunca_prometer", "nao_atrair",
+    ];
+    const currentBrief = ((): Record<string, string> => {
+      const raw = (brand as Record<string, unknown>).brief_answers;
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+      const out: Record<string, string> = {};
+      for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+        if (typeof v === "string" && v.trim()) out[k] = v.trim();
+      }
+      return out;
+    })();
+    const aiBriefRaw = (parsed as Record<string, unknown>).brief_answers;
+    const mergedBrief: Record<string, string> = { ...currentBrief };
+    let briefFilledByAi = 0;
+    if (aiBriefRaw && typeof aiBriefRaw === "object" && !Array.isArray(aiBriefRaw)) {
+      for (const key of BRIEF_KEYS) {
+        if (mergedBrief[key]) continue;
+        const value = String((aiBriefRaw as Record<string, unknown>)[key] ?? "").trim().slice(0, 1200);
+        if (value.length < 3) continue;
+        mergedBrief[key] = value;
+        briefFilledByAi += 1;
+      }
+    }
+
     const result = {
       description: aiDescription,
       positioning: String(parsed.positioning ?? "").trim().slice(0, 1400),
@@ -1018,7 +1052,10 @@ Responda SOMENTE com JSON válido neste formato:
       site_pages: site.pages,
       site_fonts: site.fonts,
       doc_read: docOk,
+      brief_filled: briefFilledByAi,
+      brief_answers: mergedBrief,
     };
+
 
 
     // Persiste como briefing da marca — o usuário revisa e edita depois.
