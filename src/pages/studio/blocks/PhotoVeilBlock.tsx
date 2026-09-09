@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
 import { blockPadding, sectionHeight, type BlockProps } from "./shared";
+import { onPhotoTextStyle, photoTextPlate } from "../typographyGuards";
 
 /**
  * FOTO COMO PLANO DE FUNDO (véu translúcido)
@@ -30,13 +31,11 @@ const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos, artKe
   const sub = item.description;
   const kicker = rng.pick(content.kickers);
 
-  /** Véu direcional: escurece só o lado do texto, o resto da foto respira. */
-  const veil =
-    anchor === 2
-      ? "linear-gradient(to bottom, rgba(8,8,12,0.86) 0%, rgba(8,8,12,0.5) 42%, rgba(8,8,12,0.2) 72%, rgba(8,8,12,0.42) 100%)"
-      : anchor === 3
-        ? "radial-gradient(72% 58% at 50% 50%, rgba(8,8,12,0.78) 0%, rgba(8,8,12,0.42) 62%, rgba(8,8,12,0.3) 100%)"
-        : "linear-gradient(to top, rgba(8,8,12,0.88) 0%, rgba(8,8,12,0.58) 38%, rgba(8,8,12,0.2) 68%, rgba(8,8,12,0.38) 100%)";
+  /**
+   * Película de leitura: sempre forte o suficiente para o texto claro ficar
+   * legível, independente da foto (ver `typographyGuards`).
+   */
+  const veil = photoTextPlate(anchor === 2 ? "top" : anchor === 3 ? "center" : "bottom");
 
   return (
     <section
@@ -60,7 +59,7 @@ const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos, artKe
         aria-hidden
         data-studio-overlay="1"
         className="pointer-events-none absolute inset-0"
-        style={{ background: veil }}
+        style={veil}
       />
 
       <div className={`container relative ${blockPadding(format)}`}>
@@ -70,7 +69,7 @@ const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos, artKe
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className={centered ? "mx-auto max-w-3xl text-center" : "max-w-3xl text-left"}
-          style={{ color: "#f5f5f4" }}
+          style={onPhotoTextStyle("#f8f6f1")}
         >
           <p
             className="mb-4 text-[10px] font-semibold uppercase tracking-[0.32em]"
