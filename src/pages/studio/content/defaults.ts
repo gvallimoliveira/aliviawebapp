@@ -131,6 +131,7 @@ export const defaultLists: WorldContent["lists"] = [
  */
 export const defaultCarousels: WorldContent["carousels"] = [
   {
+    id: "alivia-method-steps-difi",
     kicker: "O MÉTODO",
     title: "Duas siglas que organizam qualquer caso",
     coverSub: "STEPS e D.I.F.I — o esqueleto do raciocínio Aliv.iA. Arraste.",
@@ -141,6 +142,7 @@ export const defaultCarousels: WorldContent["carousels"] = [
     cta: { title: "Conheça o método por dentro", sub: "Link na bio." },
   },
   {
+    id: "alivia-flow-three-movements",
     kicker: "COMO FUNCIONA",
     title: "O fluxo Aliv.iA em três movimentos",
     coverSub: "Arraste para ver como um caso atravessa a plataforma.",
@@ -152,6 +154,7 @@ export const defaultCarousels: WorldContent["carousels"] = [
     cta: { title: "Veja o fluxo com os seus casos", sub: "Link na bio." },
   },
   {
+    id: "alivia-journey-arrival-discharge",
     kicker: "DA CHEGADA À ALTA",
     title: "O que acontece com um caso dentro do Aliv.iA",
     coverSub: "Quatro momentos, uma linha do tempo só. Arraste.",

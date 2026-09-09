@@ -478,6 +478,42 @@ const professional: WorldContent = {
       moral: "Segunda opinião não deveria depender de horário.",
       topic: "clinical-agent",
     },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "A dor no ombro que pedia outra pergunta",
+      beats: [
+        "O exame falava em tendão. A queixa aparecia também em repouso.",
+        "Antes de prescrever, a fisioterapeuta retomou a triagem.",
+        "O agente organizou sinais, hipóteses e o que ainda precisava ser testado.",
+      ],
+      turn: "A conduta mudou porque o raciocínio veio antes do exercício.",
+      moral: "IA especializada organiza o caso. A decisão continua sendo clínica.",
+      topic: "clinical-agent",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "O programa que finalmente coube na rotina",
+      beats: [
+        "O paciente recebia listas longas e abandonava na primeira semana.",
+        "A fisio registrou limitações, nível e objetivo funcional.",
+        "O HEP saiu em vídeo, por fases e com dificuldade mista.",
+      ],
+      turn: "Na revisão, ele não pediu novos exercícios. Pediu a próxima fase.",
+      moral: "Adesão começa quando a prescrição conversa com a vida real.",
+      topic: "hep",
+    },
+    {
+      kicker: "CASO REAL, NOME PROTEGIDO",
+      title: "A evolução que deixou de depender da memória",
+      beats: [
+        "A melhora era percebida, mas difícil de demonstrar.",
+        "Força, questionário e dor foram comparados no mesmo prontuário.",
+        "A curva mostrou o que avançou e o que ainda travava.",
+      ],
+      turn: "A alta deixou de ser uma impressão e virou decisão compartilhada.",
+      moral: "Quando a evolução aparece, o valor clínico também aparece.",
+      topic: "express-reassessment",
+    },
   ],
   lists: [
     {
@@ -523,6 +559,7 @@ const professional: WorldContent = {
   ],
   carousels: [
     {
+      id: "pro-link-to-report",
       kicker: "DO LINK AO RELATÓRIO",
       title: "Sua próxima avaliação, em três movimentos",
       coverSub: "Arraste para ver o fluxo completo.",
@@ -534,6 +571,7 @@ const professional: WorldContent = {
       cta: { title: "Teste no seu próximo paciente", sub: "Painel demonstrativo no link da bio." },
     },
     {
+      id: "pro-new-graduate-method",
       kicker: "RECÉM-FORMADO",
       title: "Do diploma ao primeiro atendimento com método",
       coverSub: "Quatro passos para não improvisar. Arraste.",
@@ -546,6 +584,7 @@ const professional: WorldContent = {
       cta: { title: "Comece pelo plano acadêmico", sub: "Link na bio." },
     },
     {
+      id: "pro-paperwork-routine",
       kicker: "NA ROTINA",
       title: "O que muda quando a papelada sai na hora",
       coverSub: "Dois retratos da rotina de quem usa o Aliv.iA.",
@@ -556,6 +595,7 @@ const professional: WorldContent = {
       cta: { title: "Recupere as suas noites", sub: "Link na bio." },
     },
     {
+      id: "pro-dynamometry-decision",
       kicker: "DECISÃO COM MEDIDA",
       title: "Por que medir força muda a conduta",
       coverSub: "Arraste para ver o que o olho clínico não pega.",

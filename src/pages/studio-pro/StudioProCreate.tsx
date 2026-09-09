@@ -777,7 +777,7 @@ const StudioProCreate = ({
   useEffect(() => {
     const signatures = director.shots.flatMap((shot) => [
       ...shot.copy.map((line) => phraseSignature(line)),
-      ...(shot.reserved.carousels ?? []).map((carousel) => phraseSignature(carousel)),
+      ...(shot.reserved.carousels ?? []).map((carousel) => phraseSignature(carousel.id ?? carousel)),
     ]);
     if (signatures.length > 0) phraseMemory.record(signatures);
     // eslint-disable-next-line react-hooks/exhaustive-deps

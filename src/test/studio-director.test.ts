@@ -11,6 +11,7 @@ import { WORLDS } from "@/pages/studio/content";
 import { planBatch } from "@/pages/studio-pro/director";
 import { composePage } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
+import { phraseSignature } from "@/pages/studio/picker";
 
 const plan = (seed: string, count = 8) =>
   planBatch({ content: WORLDS.pro, count, seed, relation: { pain: "dor que trava", axis: "pain" } });
@@ -106,6 +107,25 @@ describe("Diretor criativo", () => {
       expect(direction.copyOf(index).length).toBeGreaterThan(0);
       expect(direction.shotFor(index)?.headlines).toHaveLength(0);
     });
+  });
+
+  it("deixa um roteiro já usado perder prioridade no próximo lote", () => {
+    const blocks = composePage(createRng("memoria-roteiro"), undefined, undefined, WORLDS.pro.carousels, 0, ["carousel"]);
+    const first = planBatch({ content: WORLDS.pro, count: blocks.length, blocks, seed: "memoria-roteiro" });
+    const firstTitle = first.shots.find((shot) => shot.reserved.carousels?.length)?.reserved.carousels?.[0]?.title;
+    expect(firstTitle).toBeTruthy();
+    const second = planBatch({
+      content: WORLDS.pro,
+      count: blocks.length,
+      blocks,
+      seed: "memoria-roteiro",
+      weightOf: (signature) => {
+        const carousel = WORLDS.pro.carousels.find((item) => item.title === firstTitle);
+        return carousel && signature === phraseSignature(carousel.id ?? carousel) ? 0.02 : 1;
+      },
+    });
+    const secondTitle = second.shots.find((shot) => shot.reserved.carousels?.length)?.reserved.carousels?.[0]?.title;
+    expect(secondTitle).not.toBe(firstTitle);
   });
 });
 

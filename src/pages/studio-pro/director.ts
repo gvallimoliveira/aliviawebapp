@@ -140,13 +140,14 @@ const createStream = <T>(
   items: readonly T[],
   seedKey: string,
   weightOf?: (signature: string) => number,
+  signatureOf: (item: T) => string = phraseSignature,
 ) => {
   const pool = items.map((item, index) => ({
     item,
     index,
     text: flatten(item),
     /** 1 = inédito na marca; perto de 0 = frase muito rodada. */
-    fresh: weightOf ? weightOf(phraseSignature(item)) : 1,
+    fresh: weightOf ? weightOf(signatureOf(item)) : 1,
   }));
   const used = new Set<number>();
   const aired: string[] = [];
@@ -335,11 +336,31 @@ export const planBatch = (input: {
    * buscar o roteiro e vários grupos acabavam apontando para o mesmo texto.
    */
   const carouselByGroup = new Map<number, WorldContent["carousels"][number]>();
+  const carouselStreams = new Map<number, Stream<WorldContent["carousels"][number]>>();
+  const carouselStreamFor = (middleSlides: number) => {
+    const found = carouselStreams.get(middleSlides);
+    if (found) return found;
+    const exact = content.carousels.filter((carousel) => carousel.slides.length === middleSlides);
+    const pool = exact.length ? exact : content.carousels;
+    const made = createStream(
+      pool,
+      `${seed}:carousels:${middleSlides}`,
+      (signature) => weightOf?.(signature) ?? 1,
+      (carousel) => phraseSignature(carousel.id ?? carousel),
+    );
+    carouselStreams.set(middleSlides, made);
+    return made;
+  };
   blocks?.forEach((block) => {
     if (block.kind !== "carousel" || block.slide === undefined || carouselByGroup.has(block.slide.group)) return;
-    // O compositor atribui o roteiro pela ordem dos grupos, nunca pela posição
-    // visual. A rotação temática já ocorre antes, pela seed e pela memória.
-    const selected = content.carousels[block.slide.script % content.carousels.length];
+    // O roteiro é escolhido pelo diretor, não pelo índice visual: isso aplica a
+    // memória entre lotes e ainda mantém roteiros distintos dentro desta leva.
+    const selected = carouselStreamFor(Math.max(1, block.slide.total - 2)).take({
+      axis: wheel[(block.slide.group + offset) % wheel.length],
+      extra,
+      voice,
+      salt: `group:${block.slide.group}:script:${block.slide.script}`,
+    });
     if (selected) carouselByGroup.set(block.slide.group, selected as WorldContent["carousels"][number]);
   });
 
