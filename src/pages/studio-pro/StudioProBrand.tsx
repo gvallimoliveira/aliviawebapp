@@ -85,6 +85,8 @@ type Brand = {
   signature_enabled: boolean | null;
   /** Respostas do questionário de marca (caminho de quem não tem manual). */
   brief_answers?: unknown;
+  /** Insights de formatos: ideias de arte com o diálogo já pronto (uma por linha). */
+  format_insights?: string | null;
 };
 
 type Creation = {
