@@ -25,6 +25,7 @@ import { marketStatsFor } from "@/pages/studio/marketFacts";
 import { condensePhrase } from "./textFit";
 import { sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
+import { applyFormatInsights, readFormatInsights } from "./formatInsights";
 
 
 
@@ -70,6 +71,12 @@ export type BrandKit = {
    * destaque". Vazio ⇒ o slogan segue derivado da descrição/nicho.
    */
   slogan?: string | null;
+  /**
+   * INSIGHTS DE FORMATOS (`studio_brands.format_insights`): ideias de formato já
+   * com o diálogo pronto, uma por linha (`título | fala | fala | fecho`). Entram
+   * literalmente no topo dos acervos — ver `formatInsights.ts`.
+   */
+  formatInsights?: string | null;
 };
 
 
