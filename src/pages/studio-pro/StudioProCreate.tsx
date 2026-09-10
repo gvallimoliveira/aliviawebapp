@@ -140,6 +140,8 @@ type BrandInput = {
   brief_answers?: unknown;
   /** Slogan declarado — habilita o sub-nicho "Slogan em destaque". */
   slogan?: string | null;
+  /** Insights de formatos: ideias de arte com o diálogo já pronto (uma por linha). */
+  format_insights?: string | null;
 
 };
 
