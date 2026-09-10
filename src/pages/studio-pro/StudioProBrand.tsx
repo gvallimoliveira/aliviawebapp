@@ -233,6 +233,7 @@ const StudioProBrand = () => {
     keywords: "",
     positioning: "",
     strategy_notes: "",
+    format_insights: "",
     slogan: "",
   });
   /** Nichos da marca — cada um alimenta uma aba de conteúdo no editor. */
@@ -345,6 +346,7 @@ const StudioProBrand = () => {
         keywords: (brand.topics ?? []).join(", "),
         positioning: brand.positioning ?? "",
         strategy_notes: brand.strategy_notes ?? "",
+        format_insights: brand.format_insights ?? "",
         slogan: brand.slogan ?? "",
       });
       setAudiences(readAudiences(brand.audiences));
@@ -400,6 +402,7 @@ const StudioProBrand = () => {
         colors: writeColorKit(colorKit),
         positioning: form.positioning.trim() || null,
         strategy_notes: form.strategy_notes.trim() || null,
+        format_insights: form.format_insights.trim() || null,
         slogan: form.slogan.trim() || null,
         audiences: writeAudiences(audiences),
         signature_enabled: signatureEnabled,
