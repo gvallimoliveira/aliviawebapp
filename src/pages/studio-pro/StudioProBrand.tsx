@@ -85,6 +85,8 @@ type Brand = {
   signature_enabled: boolean | null;
   /** Respostas do questionário de marca (caminho de quem não tem manual). */
   brief_answers?: unknown;
+  /** Insights de formatos: ideias de arte com o diálogo já pronto (uma por linha). */
+  format_insights?: string | null;
 };
 
 type Creation = {
@@ -231,6 +233,7 @@ const StudioProBrand = () => {
     keywords: "",
     positioning: "",
     strategy_notes: "",
+    format_insights: "",
     slogan: "",
   });
   /** Nichos da marca — cada um alimenta uma aba de conteúdo no editor. */
@@ -343,6 +346,7 @@ const StudioProBrand = () => {
         keywords: (brand.topics ?? []).join(", "),
         positioning: brand.positioning ?? "",
         strategy_notes: brand.strategy_notes ?? "",
+        format_insights: brand.format_insights ?? "",
         slogan: brand.slogan ?? "",
       });
       setAudiences(readAudiences(brand.audiences));
@@ -398,6 +402,7 @@ const StudioProBrand = () => {
         colors: writeColorKit(colorKit),
         positioning: form.positioning.trim() || null,
         strategy_notes: form.strategy_notes.trim() || null,
+        format_insights: form.format_insights.trim() || null,
         slogan: form.slogan.trim() || null,
         audiences: writeAudiences(audiences),
         signature_enabled: signatureEnabled,
@@ -1140,6 +1145,27 @@ const StudioProBrand = () => {
                     onChange={(e) => setForm({ ...form, strategy_notes: e.target.value })}
                   />
                 </div>
+
+                {/* INSIGHTS DE FORMATOS: ideias de arte com o diálogo já escrito. */}
+                <div className="sm:col-span-2">
+                  <Label htmlFor="edit-format-insights">Insights de formatos</Label>
+                  <Textarea
+                    id="edit-format-insights"
+                    rows={6}
+                    placeholder={
+                      "Uma ideia por linha, com as falas separadas por |\n" +
+                      "Ex.: O que ninguém explica sobre a sua dor | Dor não é só lesão | O contexto decide a conduta | Comece pela avaliação"
+                    }
+                    value={form.format_insights}
+                    onChange={(e) => setForm({ ...form, format_insights: e.target.value })}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    É o único campo em que você escreve o <strong>diálogo pronto</strong> da arte:
+                    abertura, falas do meio e fecho. Uma linha com 3 partes ou mais também vira lista,
+                    história e carrossel. O texto entra na arte como você escreveu — nada é reescrito.
+                  </p>
+                </div>
+
 
                 {/* Kits de conteúdo prontos por nicho — ponto de partida editável */}
                 <div className="rounded-xl border border-dashed border-border p-3 sm:col-span-2">

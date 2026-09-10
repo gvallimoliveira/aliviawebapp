@@ -25,6 +25,7 @@ import { marketStatsFor } from "@/pages/studio/marketFacts";
 import { condensePhrase } from "./textFit";
 import { sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
+import { applyFormatInsights, readFormatInsights } from "./formatInsights";
 
 
 
@@ -70,6 +71,12 @@ export type BrandKit = {
    * destaque". Vazio ⇒ o slogan segue derivado da descrição/nicho.
    */
   slogan?: string | null;
+  /**
+   * INSIGHTS DE FORMATOS (`studio_brands.format_insights`): ideias de formato já
+   * com o diálogo pronto, uma por linha (`título | fala | fala | fecho`). Entram
+   * literalmente no topo dos acervos — ver `formatInsights.ts`.
+   */
+  formatInsights?: string | null;
 };
 
 
@@ -1691,6 +1698,15 @@ export const buildSegmentContent = ({
   const relationFor = (audience?: BrandAudience) =>
     pickRelation({ audience, dna, brand, angle, seed: variationSeed });
 
+  /**
+   * INSIGHTS DE FORMATOS: entram por ÚLTIMO, já no topo dos acervos, para não
+   * serem reescritos pela variação linguística nem diluídos pela cauda genérica.
+   * É mais um input do kit — sem o campo preenchido, nada muda.
+   */
+  const insights = readFormatInsights(kit.formatInsights);
+  const withInsights = (content: WorldContent) =>
+    insights.length ? applyFormatInsights(content, insights, brand) : content;
+
   const finish = (content: WorldContent, relation?: Relation) => {
     /**
      * TERMINOLOGIA DA MARCA (ver `@/pages/studio/terminology`): na marca Aliv.iA,
@@ -1730,7 +1746,7 @@ export const buildSegmentContent = ({
     const carousels = scripts.length > 1
       ? [...scripts.slice(spin), ...scripts.slice(0, spin)]
       : scripts;
-    return { ...done, headlines: [...head, ...picked], carousels };
+    return withInsights({ ...done, headlines: [...head, ...picked], carousels });
 
   };
 

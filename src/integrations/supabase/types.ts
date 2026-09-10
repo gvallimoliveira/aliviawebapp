@@ -4121,6 +4121,7 @@ export type Database = {
           created_at: string
           description: string | null
           fonts: Json
+          format_insights: string | null
           id: string
           instagram_handle: string | null
           is_active: boolean
@@ -4145,6 +4146,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           fonts?: Json
+          format_insights?: string | null
           id?: string
           instagram_handle?: string | null
           is_active?: boolean
@@ -4169,6 +4171,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           fonts?: Json
+          format_insights?: string | null
           id?: string
           instagram_handle?: string | null
           is_active?: boolean

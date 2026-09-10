@@ -54,6 +54,7 @@ import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/conte
 import { buildSegmentContent, brandSlogan, relationForSegment, pickGlobalAudience } from "./brandContent";
 import { useSegmentMemory } from "./useSegmentMemory";
 import { planBatch } from "./director";
+import { formatInsightWords, readFormatInsights } from "./formatInsights";
 import type { TopicId } from "@/pages/studio/topics";
 import { buildBrandDna } from "./brandDnaKit";
 import { useBrandBrief } from "./useBrandBrief";
@@ -140,6 +141,8 @@ type BrandInput = {
   brief_answers?: unknown;
   /** Slogan declarado — habilita o sub-nicho "Slogan em destaque". */
   slogan?: string | null;
+  /** Insights de formatos: ideias de arte com o diálogo já pronto (uma por linha). */
+  format_insights?: string | null;
 
 };
 
@@ -434,8 +437,10 @@ const StudioProCreate = ({
       /** Briefing declarado pelo cliente: fonte primária do texto das artes. */
       briefAnswers: brand.brief_answers,
       slogan: brand.slogan,
+      /** Insights de formatos: diálogo declarado pelo dono, entra literal na arte. */
+      formatInsights: brand.format_insights,
     }),
-    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers, brand.slogan],
+    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers, brand.slogan, brand.format_insights],
   );
 
 
@@ -676,9 +681,14 @@ const StudioProCreate = ({
         dna,
         brief: brief ?? undefined,
         weightOf,
-        learnedVoice: learning.voice,
+        /**
+         * A voz que o diretor persegue soma os ajustes que o dono já fez na arte
+         * com as palavras dos INSIGHTS DE FORMATOS — assim o diálogo declarado
+         * atrai as escolhas do lote, além de já estar no topo dos acervos.
+         */
+        learnedVoice: [...learning.voice, ...formatInsightWords(readFormatInsights(brand.format_insights))],
       }),
-    [content, composedBlocks.length, brand.id, brand.positioning, seed, activeSegment, angle, contentKit, audiences, dna, brief, weightOf, learning.voice],
+    [content, composedBlocks.length, brand.id, brand.positioning, brand.format_insights, seed, activeSegment, angle, contentKit, audiences, dna, brief, weightOf, learning.voice],
 
   );
 

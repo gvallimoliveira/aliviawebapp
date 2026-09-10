@@ -56,6 +56,23 @@ Quanto mais públicos bem preenchidos, mais o diretor criativo consegue distribu
 diferentes (quem sou / como trabalho / no que acredito / dor / desejo / prova / convite)
 sem repetir frase no mesmo lote.
 
+### Insights de formatos (o campo do diálogo pronto)
+É o único campo em que você escreve a FALA da arte, não o DNA. Uma ideia por linha,
+partes separadas por `|`:
+
+```text
+Título/gancho | fala 1 | fala 2 | fecho ou CTA
+```
+
+- 1 parte: vira cartaz/manchete.
+- 2 partes: cartaz com apoio.
+- 3+ partes: vira também lista, história e roteiro de carrossel (capa + miolo + CTA).
+- Linha começando com `#` é comentário e nunca entra em arte.
+
+O texto entra literalmente, no topo dos acervos: o diretor criativo o encontra primeiro
+e distribui as falas entre as artes do lote sem repetir. Não é reescrito pela variação
+linguística e não gasta crédito de IA.
+
 ### Visual
 - **Cores**: cor de marca + fundo claro + escuro de texto + 1 destaque distinto. Neutro
   clonado (dois tons quase iguais) derruba a marca para 3 cores úteis.
