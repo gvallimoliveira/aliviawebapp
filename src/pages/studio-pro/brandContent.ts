@@ -1698,6 +1698,15 @@ export const buildSegmentContent = ({
   const relationFor = (audience?: BrandAudience) =>
     pickRelation({ audience, dna, brand, angle, seed: variationSeed });
 
+  /**
+   * INSIGHTS DE FORMATOS: entram por ÚLTIMO, já no topo dos acervos, para não
+   * serem reescritos pela variação linguística nem diluídos pela cauda genérica.
+   * É mais um input do kit — sem o campo preenchido, nada muda.
+   */
+  const insights = readFormatInsights(kit.formatInsights);
+  const withInsights = (content: WorldContent) =>
+    insights.length ? applyFormatInsights(content, insights, brand) : content;
+
   const finish = (content: WorldContent, relation?: Relation) => {
     /**
      * TERMINOLOGIA DA MARCA (ver `@/pages/studio/terminology`): na marca Aliv.iA,
