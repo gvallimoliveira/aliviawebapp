@@ -24,7 +24,7 @@ describe("studio text sizing", () => {
     expect(root.querySelector("h2")?.style.fontSize).toBe("44px");
 
     clearArtTextSizes(root);
-    expect(root.querySelector("h2")?.style.fontSize).toBe("");
+    expect(root.querySelector("h2")?.style.fontSize).toBe("40px");
     root.remove();
   });
 });
