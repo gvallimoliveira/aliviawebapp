@@ -1746,7 +1746,7 @@ export const buildSegmentContent = ({
     const carousels = scripts.length > 1
       ? [...scripts.slice(spin), ...scripts.slice(0, spin)]
       : scripts;
-    return { ...done, headlines: [...head, ...picked], carousels };
+    return withInsights({ ...done, headlines: [...head, ...picked], carousels });
 
   };
 
