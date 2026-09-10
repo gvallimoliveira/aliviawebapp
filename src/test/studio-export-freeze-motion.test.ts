@@ -142,7 +142,7 @@ describe("stroke text fidelity", () => {
     lockRenderedTextLines(source, clone);
 
     expect(clone.textContent).toBe(source.textContent);
-    expect(clonedAccent.querySelector("[data-studio-export-line]"))toBeNull();
+    expect(clonedAccent.querySelector("[data-studio-export-line]")).toBeNull();
     expect(clonedAccent.style.display).toBe("inline-block");
   });
 
