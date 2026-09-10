@@ -131,6 +131,21 @@ describe("static export surface", () => {
 });
 
 describe("stroke text fidelity", () => {
+  it("não transforma um destaque inline-block em linhas de bloco", () => {
+    const source = document.createElement("p");
+    source.innerHTML = '<span>Quem sou: </span><span data-studio-stroke="1" style="display:inline-block">Aliv.iA, um sistema</span><span> de raciocínio.</span>';
+    const clone = source.cloneNode(true) as HTMLElement;
+    const accent = source.querySelector<HTMLElement>("[data-studio-stroke]");
+    const clonedAccent = clone.querySelector<HTMLElement>("[data-studio-stroke]");
+    if (!accent || !clonedAccent) throw new Error("Destaque de teste ausente");
+
+    lockRenderedTextLines(source, clone);
+
+    expect(clone.textContent).toBe(source.textContent);
+    expect(clonedAccent.querySelector("[data-studio-export-line]"))toBeNull();
+    expect(clonedAccent.style.display).toBe("inline-block");
+  });
+
   it("preserva as palavras nas linhas e posições vistas após a edição", () => {
     const element = document.createElement("span");
     element.textContent = "Aliv.iA, um sistema de raciocínio";

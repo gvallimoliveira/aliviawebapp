@@ -606,7 +606,12 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
     const raw = element.textContent ?? "";
     if (!raw.trim()) return;
     const style = getComputedStyle(element);
-    if (!["block", "inline-block", "list-item", "flex"].includes(style.display)) return;
+    /**
+     * Nunca congele isoladamente um destaque inline/inline-block. Ele participa
+     * do fluxo contínuo do título com os spans irmãos; transformá-lo em blocos
+     * separa a frase e muda justamente as quebras que queremos preservar.
+     */
+    if (!["block", "list-item", "flex"].includes(style.display)) return;
     if (style.display === "none" || style.visibility === "hidden") return;
     // JSDOM devolve vazio; no navegador o padrão computado é `normal`.
     if (style.whiteSpace && !["normal", "pre-line"].includes(style.whiteSpace)) return;
