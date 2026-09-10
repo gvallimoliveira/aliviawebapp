@@ -1146,6 +1146,27 @@ const StudioProBrand = () => {
                   />
                 </div>
 
+                {/* INSIGHTS DE FORMATOS: ideias de arte com o diálogo já escrito. */}
+                <div className="sm:col-span-2">
+                  <Label htmlFor="edit-format-insights">Insights de formatos</Label>
+                  <Textarea
+                    id="edit-format-insights"
+                    rows={6}
+                    placeholder={
+                      "Uma ideia por linha, com as falas separadas por |\n" +
+                      "Ex.: O que ninguém explica sobre a sua dor | Dor não é só lesão | O contexto decide a conduta | Comece pela avaliação"
+                    }
+                    value={form.format_insights}
+                    onChange={(e) => setForm({ ...form, format_insights: e.target.value })}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    É o único campo em que você escreve o <strong>diálogo pronto</strong> da arte:
+                    abertura, falas do meio e fecho. Uma linha com 3 partes ou mais também vira lista,
+                    história e carrossel. O texto entra na arte como você escreveu — nada é reescrito.
+                  </p>
+                </div>
+
+
                 {/* Kits de conteúdo prontos por nicho — ponto de partida editável */}
                 <div className="rounded-xl border border-dashed border-border p-3 sm:col-span-2">
                   <p className="text-xs font-medium text-foreground">Começar com um kit de nicho</p>
