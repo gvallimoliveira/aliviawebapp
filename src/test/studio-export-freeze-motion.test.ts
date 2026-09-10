@@ -80,7 +80,10 @@ describe("static export surface", () => {
     source.innerHTML = '<p style="display:block">O prontuário contou por ela.</p>';
     const clone = source.cloneNode(true) as HTMLElement;
     const textNode = source.querySelector("p")?.firstChild;
+    const paragraph = source.querySelector("p");
     expect(textNode).toBeTruthy();
+    if (!paragraph) throw new Error("Parágrafo de teste ausente");
+    Object.defineProperty(paragraph, "offsetWidth", { value: 240 });
 
     const originalCreateRange = document.createRange.bind(document);
     document.createRange = (() => {
@@ -90,8 +93,8 @@ describe("static export surface", () => {
       range.setEnd = (() => undefined) as typeof range.setEnd;
       range.getBoundingClientRect = (() => ({
         x: 0,
-        y: start < 22 ? 10 : 30,
-        top: start < 22 ? 10 : 30,
+        y: start < 23 ? 10 : 30,
+        top: start < 23 ? 10 : 30,
         left: 0,
         right: 100,
         bottom: start < 22 ? 20 : 40,
@@ -112,7 +115,46 @@ describe("static export surface", () => {
     expect(lines).toHaveLength(2);
     expect(lines[0]?.textContent).toBe("O prontuário contou por");
     expect(lines[1]?.textContent).toBe("ela.");
+    expect(clone.querySelector("p")?.style.width).toBe("240px");
+    expect(lines[0]?.style.whiteSpace).toBe("pre");
     expect(source.querySelector("[data-studio-export-line='1']")).toBeNull();
+  });
+
+  it("mantém a largura e a quebra do título longo do modelo com foto", () => {
+    const source = document.createElement("div");
+    source.innerHTML = '<h2 style="display:block">Fisioterapeuta traumato-ortopédico</h2>';
+    const clone = source.cloneNode(true) as HTMLElement;
+    const title = source.querySelector("h2");
+    const textNode = title?.firstChild;
+    if (!title || !textNode) throw new Error("Título de teste ausente");
+    Object.defineProperty(title, "offsetWidth", { value: 520 });
+
+    const originalCreateRange = document.createRange.bind(document);
+    document.createRange = (() => {
+      const range = originalCreateRange();
+      let start = 0;
+      range.setStart = ((_node: Node, offset: number) => { start = offset; }) as typeof range.setStart;
+      range.setEnd = (() => undefined) as typeof range.setEnd;
+      range.getBoundingClientRect = (() => ({
+        x: 0, y: start < 24 ? 20 : 72, top: start < 24 ? 20 : 72,
+        left: 0, right: 500, bottom: start < 24 ? 60 : 112,
+        width: 500, height: 40, toJSON: () => ({}),
+      })) as typeof range.getBoundingClientRect;
+      return range;
+    }) as typeof document.createRange;
+
+    try {
+      lockRenderedTextLines(source, clone);
+    } finally {
+      document.createRange = originalCreateRange;
+    }
+
+    const clonedTitle = clone.querySelector("h2");
+    const lines = clonedTitle?.querySelectorAll("[data-studio-export-line]");
+    expect(clonedTitle?.style.width).toBe("520px");
+    expect(lines).toHaveLength(2);
+    expect(lines?.[0]?.textContent).toBe("Fisioterapeuta traumato-");
+    expect(lines?.[1]?.textContent).toBe("ortopédico");
   });
 
   it("normaliza o lote pela maior altura real e restaura os estilos", () => {

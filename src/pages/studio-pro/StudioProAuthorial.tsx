@@ -25,6 +25,7 @@ import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import AuthorialArtBlock from "./AuthorialArtBlock";
 import {
+  applyArtTextSizes,
   applyArtText,
   hasArtEdits,
   readArtText,
@@ -261,7 +262,10 @@ const StudioProAuthorial = ({
     arts.forEach((art) => {
       art.slides.forEach((_, slide) => {
         const node = nodeOf(art.key, slide);
-        if (node) applyArtMoves(node);
+        if (node) {
+          applyArtTextSizes(node);
+          applyArtMoves(node);
+        }
       });
     });
   }, [edits, arts, format, seed, moveTick]);

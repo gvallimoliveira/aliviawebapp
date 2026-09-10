@@ -621,31 +621,48 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
     const probe = document.createRange();
     if (typeof probe.getBoundingClientRect !== "function") return;
 
-    const tokens = Array.from(raw.matchAll(/\S+(?:\s+|$)/g));
-    if (!tokens.length) return;
+    const characters = Array.from(raw);
+    if (!characters.length) return;
     const lines: Array<{ top: number; text: string }> = [];
 
-    tokens.forEach((match) => {
-      const start = match.index ?? 0;
+    let offset = 0;
+    characters.forEach((character) => {
+      const start = offset;
+      offset += character.length;
       const range = document.createRange();
       range.setStart(textNode, start);
-      range.setEnd(textNode, start + match[0].length);
+      range.setEnd(textNode, offset);
       const rect = range.getBoundingClientRect();
       range.detach?.();
       if (!rect.width && !rect.height) return;
       const line = lines.find((item) => Math.abs(item.top - rect.top) < 2);
-      if (line) line.text += match[0];
-      else lines.push({ top: rect.top, text: match[0] });
+      if (line) line.text += character;
+      else lines.push({ top: rect.top, text: character });
     });
 
     if (!lines.length) return;
+    /**
+     * O SVG interno do `html-to-image` pode avaliar novamente max-width e
+     * breakpoints. Materializamos a largura de layout que produziu as linhas
+     * aprovadas para que o título não volte a crescer e seja cortado à direita.
+     * `offsetWidth` é anterior ao scale do AutoFit, exatamente a largura usada
+     * pelo navegador para quebrar o texto vivo.
+     */
+    if (element.offsetWidth > 0) {
+      target.style.setProperty("width", `${element.offsetWidth}px`, "important");
+      target.style.setProperty("max-width", `${element.offsetWidth}px`, "important");
+      target.style.setProperty("min-width", "0", "important");
+      target.style.setProperty("box-sizing", "border-box", "important");
+    }
     target.replaceChildren(
       ...lines.map((line) => {
         const span = document.createElement("span");
         span.dataset.studioExportLine = "1";
         span.style.display = "block";
-        span.style.whiteSpace = "pre";
-        span.textContent = line.text.trimEnd();
+        span.style.setProperty("white-space", "pre", "important");
+        span.style.setProperty("width", "max-content", "important");
+        span.style.setProperty("max-width", "100%", "important");
+        span.textContent = line.text.trim();
         return span;
       }),
     );
