@@ -382,6 +382,37 @@ const canvasToBlob = (canvas: HTMLCanvasElement, type = "image/png", quality?: n
 
 type StrokeSpec = { element: HTMLElement; color: string; width: number };
 
+type StrokeTextRun = { text: string; rect: DOMRect };
+
+/**
+ * Lê cada palavra vazada na posição em que ela realmente aparece na tela.
+ *
+ * Um destaque pode quebrar em duas ou três linhas depois de uma edição. Usar
+ * apenas o retângulo total e chamar `strokeText` uma vez redesenhava tudo em
+ * uma linha: só o começo cabia no quadro e o restante desaparecia no PNG.
+ */
+export const readStrokeTextRuns = (element: HTMLElement): StrokeTextRun[] => {
+  const runs: StrokeTextRun[] = [];
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let textNode = walker.nextNode();
+
+  while (textNode) {
+    const raw = textNode.textContent ?? "";
+    for (const match of raw.matchAll(/\S+/g)) {
+      const start = match.index ?? 0;
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, start + match[0].length);
+      const rect = range.getBoundingClientRect();
+      range.detach?.();
+      if (rect.width > 0 && rect.height > 0) runs.push({ text: match[0], rect });
+    }
+    textNode = walker.nextNode();
+  }
+
+  return runs;
+};
+
 const parseCssColor = (value: string): [number, number, number, number] | null => {
   const match = value.match(/rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:[\s,/]+([\d.]+))?\s*\)/);
   if (!match) return null;
@@ -446,56 +477,75 @@ export const paintStrokeTextOnCanvas = (
     const style = getComputedStyle(el);
     if (!rect.width || !rect.height || style.display === "none" || style.visibility === "hidden") continue;
 
-    const fontSize = (Number.parseFloat(style.fontSize) || 16) * scaleY;
+    /**
+     * `getComputedStyle().fontSize` não inclui o `scale()` herdado do AutoFit.
+     * A posição medida por Range já inclui esse scale; o tamanho da fonte
+     * também precisa incluí-lo para o contorno ocupar exatamente o mesmo lugar.
+     */
+    const renderedScale = el.offsetHeight > 0 ? rect.height / el.offsetHeight : 1;
+    const fontSize = (Number.parseFloat(style.fontSize) || 16) * renderedScale * scaleY;
     const font = `${style.fontStyle} ${style.fontWeight} ${fontSize}px ${style.fontFamily}`;
-    let text = el.textContent || "";
+    const transformText = (value: string) => {
+      if (style.textTransform === "uppercase") return value.toUpperCase();
+      if (style.textTransform === "capitalize") return value.replace(/\b\p{L}/gu, (c) => c.toUpperCase());
+      return value;
+    };
+    const text = transformText(el.textContent || "");
     if (!text.trim()) continue;
-    if (style.textTransform === "uppercase") text = text.toUpperCase();
-    else if (style.textTransform === "capitalize") text = text.replace(/\b\p{L}/gu, (c) => c.toUpperCase());
+
+    const measuredRuns = readStrokeTextRuns(el);
+    const runs = measuredRuns.length
+      ? measuredRuns.map((run) => ({ text: transformText(run.text), rect: run.rect }))
+      : [{ text, rect }];
 
     const strokeWidth = spec.width * Math.max(scaleX, scaleY);
     const pad = Math.ceil(strokeWidth + 8);
 
-    const off = document.createElement("canvas");
-    off.width = Math.ceil(rect.width * scaleX) + pad * 2;
-    off.height = Math.ceil(rect.height * scaleY) + pad * 2;
-    const octx = off.getContext("2d");
-    if (!octx) continue;
+    for (const run of runs) {
+      const off = document.createElement("canvas");
+      off.width = Math.ceil(run.rect.width * scaleX) + pad * 2;
+      off.height = Math.ceil(run.rect.height * scaleY) + pad * 2;
+      const octx = off.getContext("2d");
+      if (!octx) continue;
 
-    octx.font = font;
-    const spacing = style.letterSpacing === "normal" ? 0 : (Number.parseFloat(style.letterSpacing) || 0) * scaleX;
-    if ("letterSpacing" in octx) {
-      (octx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${spacing}px`;
+      octx.font = font;
+      const spacing =
+        style.letterSpacing === "normal"
+          ? 0
+          : (Number.parseFloat(style.letterSpacing) || 0) * renderedScale * scaleX;
+      if ("letterSpacing" in octx) {
+        (octx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${spacing}px`;
+      }
+      octx.textBaseline = "alphabetic";
+      octx.lineJoin = "round";
+
+      const metrics = octx.measureText(run.text);
+      const descent = metrics.fontBoundingBoxDescent ?? metrics.actualBoundingBoxDescent ?? fontSize * 0.22;
+      const baselineY = pad + run.rect.height * scaleY - descent;
+
+      octx.lineWidth = strokeWidth;
+      octx.strokeStyle = spec.color;
+      octx.strokeText(run.text, pad, baselineY);
+
+      // Corta a metade interna do traço usando o glifo preenchido como máscara.
+      octx.globalCompositeOperation = "destination-out";
+      octx.fillStyle = "#000";
+      octx.fillText(run.text, pad, baselineY);
+      octx.globalCompositeOperation = "source-over";
+
+      // Se algum dia o destaque tiver preenchimento visível, repinta o miolo.
+      const fill = parseCssColor(style.color);
+      if (fill && fill[3] > 0.02) {
+        octx.fillStyle = style.color;
+        octx.fillText(run.text, pad, baselineY);
+      }
+
+      context.drawImage(
+        off,
+        (run.rect.left - rootRect.left) * scaleX - pad,
+        (run.rect.top - rootRect.top) * scaleY - pad,
+      );
     }
-    octx.textBaseline = "alphabetic";
-    octx.lineJoin = "round";
-
-    const metrics = octx.measureText(text);
-    const descent = metrics.fontBoundingBoxDescent ?? metrics.actualBoundingBoxDescent ?? fontSize * 0.22;
-    const baselineY = pad + rect.height * scaleY - descent;
-
-    octx.lineWidth = strokeWidth;
-    octx.strokeStyle = spec.color;
-    octx.strokeText(text, pad, baselineY);
-
-    // Corta a metade interna do traço usando o glifo preenchido como máscara.
-    octx.globalCompositeOperation = "destination-out";
-    octx.fillStyle = "#000";
-    octx.fillText(text, pad, baselineY);
-    octx.globalCompositeOperation = "source-over";
-
-    // Se algum dia o destaque tiver preenchimento visível, repinta o miolo.
-    const fill = parseCssColor(style.color);
-    if (fill && fill[3] > 0.02) {
-      octx.fillStyle = style.color;
-      octx.fillText(text, pad, baselineY);
-    }
-
-    context.drawImage(
-      off,
-      (rect.left - rootRect.left) * scaleX - pad,
-      (rect.top - rootRect.top) * scaleY - pad,
-    );
   }
 };
 
@@ -556,7 +606,12 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
     const raw = element.textContent ?? "";
     if (!raw.trim()) return;
     const style = getComputedStyle(element);
-    if (!["block", "inline-block", "list-item", "flex"].includes(style.display)) return;
+    /**
+     * Nunca congele isoladamente um destaque inline/inline-block. Ele participa
+     * do fluxo contínuo do título com os spans irmãos; transformá-lo em blocos
+     * separa a frase e muda justamente as quebras que queremos preservar.
+     */
+    if (!["block", "list-item", "flex"].includes(style.display)) return;
     if (style.display === "none" || style.visibility === "hidden") return;
     // JSDOM devolve vazio; no navegador o padrão computado é `normal`.
     if (style.whiteSpace && !["normal", "pre-line"].includes(style.whiteSpace)) return;

@@ -4,6 +4,7 @@ import {
   freezeMotion,
   lockRenderedTextLines,
   lockUniformHeight,
+  readStrokeTextRuns,
 } from "@/pages/studio/exportImage";
 
 /**
@@ -126,5 +127,60 @@ describe("static export surface", () => {
     restore();
     expect(first.style.height).toBe("");
     expect(second.style.minHeight).toBe("");
+  });
+});
+
+describe("stroke text fidelity", () => {
+  it("não transforma um destaque inline-block em linhas de bloco", () => {
+    const source = document.createElement("p");
+    source.innerHTML = '<span>Quem sou: </span><span data-studio-stroke="1" style="display:inline-block">Aliv.iA, um sistema</span><span> de raciocínio.</span>';
+    const clone = source.cloneNode(true) as HTMLElement;
+    const accent = source.querySelector<HTMLElement>("[data-studio-stroke]");
+    const clonedAccent = clone.querySelector<HTMLElement>("[data-studio-stroke]");
+    if (!accent || !clonedAccent) throw new Error("Destaque de teste ausente");
+
+    lockRenderedTextLines(source, clone);
+
+    expect(clone.textContent).toBe(source.textContent);
+    expect(clonedAccent.querySelector("[data-studio-export-line]")).toBeNull();
+    expect(clonedAccent.style.display).toBe("inline-block");
+  });
+
+  it("preserva as palavras nas linhas e posições vistas após a edição", () => {
+    const element = document.createElement("span");
+    element.textContent = "Aliv.iA, um sistema de raciocínio";
+    document.body.appendChild(element);
+
+    const originalCreateRange = document.createRange.bind(document);
+    document.createRange = (() => {
+      const range = originalCreateRange();
+      let start = 0;
+      range.setStart = ((_node: Node, offset: number) => { start = offset; }) as typeof range.setStart;
+      range.setEnd = (() => undefined) as typeof range.setEnd;
+      range.getBoundingClientRect = (() => {
+        const line = start < 10 ? 0 : start < 21 ? 1 : 2;
+        return {
+          x: 20,
+          y: 40 + line * 32,
+          top: 40 + line * 32,
+          left: 20,
+          right: 100,
+          bottom: 64 + line * 32,
+          width: 80,
+          height: 24,
+          toJSON: () => ({}),
+        };
+      }) as typeof range.getBoundingClientRect;
+      return range;
+    }) as typeof document.createRange;
+
+    try {
+      const runs = readStrokeTextRuns(element);
+      expect(runs.map((run) => run.text)).toEqual(["Aliv.iA,", "um", "sistema", "de", "raciocínio"]);
+      expect(new Set(runs.map((run) => run.rect.top))).toEqual(new Set([40, 72, 104]));
+    } finally {
+      document.createRange = originalCreateRange;
+      element.remove();
+    }
   });
 });
