@@ -639,12 +639,27 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
     });
 
     if (!lines.length) return;
+    /**
+     * O SVG interno do `html-to-image` pode avaliar novamente max-width e
+     * breakpoints. Materializamos a largura de layout que produziu as linhas
+     * aprovadas para que o título não volte a crescer e seja cortado à direita.
+     * `offsetWidth` é anterior ao scale do AutoFit, exatamente a largura usada
+     * pelo navegador para quebrar o texto vivo.
+     */
+    if (element.offsetWidth > 0) {
+      target.style.setProperty("width", `${element.offsetWidth}px`, "important");
+      target.style.setProperty("max-width", `${element.offsetWidth}px`, "important");
+      target.style.setProperty("min-width", "0", "important");
+      target.style.setProperty("box-sizing", "border-box", "important");
+    }
     target.replaceChildren(
       ...lines.map((line) => {
         const span = document.createElement("span");
         span.dataset.studioExportLine = "1";
         span.style.display = "block";
-        span.style.whiteSpace = "pre";
+        span.style.setProperty("white-space", "pre", "important");
+        span.style.setProperty("width", "max-content", "important");
+        span.style.setProperty("max-width", "100%", "important");
         span.textContent = line.text.trimEnd();
         return span;
       }),
