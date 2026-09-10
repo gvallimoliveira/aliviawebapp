@@ -25,6 +25,7 @@ export type ArtTextSize = Record<number, number>;
 
 const sizeRegistry = new Map<string, number>();
 const BASE_SIZE_ATTR = "studioTextBaseSize";
+const ORIGINAL_SIZE_ATTR = "studioTextOriginalSize";
 const EDIT_LAYER_ATTR = "data-studio-text-size-layer";
 const MIN_TEXT_SCALE = 0.55;
 const MAX_TEXT_SCALE = 1.8;
@@ -35,10 +36,13 @@ const sizeKey = (root: HTMLElement, index: number) => `${artIdOf(root)}#${index}
 
 const paintTextSize = (root: HTMLElement, el: HTMLElement, index: number, scale?: number) => {
   if (!el.dataset[BASE_SIZE_ATTR]) {
+    el.dataset[ORIGINAL_SIZE_ATTR] = el.style.fontSize || "";
     el.dataset[BASE_SIZE_ATTR] = getComputedStyle(el).fontSize || "16px";
   }
   const base = Number.parseFloat(el.dataset[BASE_SIZE_ATTR] || "16") || 16;
-  el.style.fontSize = scale && scale !== 1 ? `${Number((base * scale).toFixed(2))}px` : "";
+  el.style.fontSize = scale && scale !== 1
+    ? `${Number((base * scale).toFixed(2))}px`
+    : (el.dataset[ORIGINAL_SIZE_ATTR] || "");
   if (scale && scale !== 1) sizeRegistry.set(sizeKey(root, index), scale);
   else sizeRegistry.delete(sizeKey(root, index));
 };
@@ -55,8 +59,9 @@ export const applyArtTextSizes = (root: HTMLElement) => {
 export const clearArtTextSizes = (root: HTMLElement) => {
   collectEditableNodes(root).forEach((el, index) => {
     sizeRegistry.delete(sizeKey(root, index));
-    el.style.fontSize = "";
+    el.style.fontSize = el.dataset[ORIGINAL_SIZE_ATTR] || "";
     delete el.dataset[BASE_SIZE_ATTR];
+    delete el.dataset[ORIGINAL_SIZE_ATTR];
   });
 };
 
