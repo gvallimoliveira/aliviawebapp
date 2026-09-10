@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { renderNodeToBlob, type StudioFormat } from "@/studio-core";
 import {
+  applyArtTextSizes,
   applyArtText,
   readArtText,
   setArtEditing,
@@ -189,6 +190,13 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
 
   const stageOf = (pos: number) => document.getElementById(`studio-art-edit-${pos}`) as HTMLElement | null;
   const frameOf = (pos: number) => stageOf(pos)?.parentElement ?? null;
+
+  useEffect(() => {
+    (htmls ?? []).forEach((_, pos) => {
+      const node = stageOf(pos);
+      if (node) applyArtTextSizes(node);
+    });
+  }, [htmls, format]);
 
   const startEdit = () => {
     stopMove(false);

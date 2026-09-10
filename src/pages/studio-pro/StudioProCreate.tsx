@@ -83,6 +83,7 @@ import {
 import { enforceRationale, explainArt, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
 import { hasBannedJargon } from "@/pages/studio/persuasion";
 import {
+  applyArtTextSizes,
   applyArtText,
   hasArtEdits,
   readArtText,
@@ -911,7 +912,10 @@ const StudioProCreate = ({
     });
     blocks.forEach((_, i) => {
       const node = artNode(i);
-      if (node) applyArtMoves(node);
+      if (node) {
+        applyArtTextSizes(node);
+        applyArtMoves(node);
+      }
     });
   }, [edits, blocks, format, seed, content, activePhotos, resetTick, moveTick]);
 

@@ -621,21 +621,23 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
     const probe = document.createRange();
     if (typeof probe.getBoundingClientRect !== "function") return;
 
-    const tokens = Array.from(raw.matchAll(/\S+(?:\s+|$)/g));
-    if (!tokens.length) return;
+    const characters = Array.from(raw);
+    if (!characters.length) return;
     const lines: Array<{ top: number; text: string }> = [];
 
-    tokens.forEach((match) => {
-      const start = match.index ?? 0;
+    let offset = 0;
+    characters.forEach((character) => {
+      const start = offset;
+      offset += character.length;
       const range = document.createRange();
       range.setStart(textNode, start);
-      range.setEnd(textNode, start + match[0].length);
+      range.setEnd(textNode, offset);
       const rect = range.getBoundingClientRect();
       range.detach?.();
       if (!rect.width && !rect.height) return;
       const line = lines.find((item) => Math.abs(item.top - rect.top) < 2);
-      if (line) line.text += match[0];
-      else lines.push({ top: rect.top, text: match[0] });
+      if (line) line.text += character;
+      else lines.push({ top: rect.top, text: character });
     });
 
     if (!lines.length) return;
@@ -660,7 +662,7 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
         span.style.setProperty("white-space", "pre", "important");
         span.style.setProperty("width", "max-content", "important");
         span.style.setProperty("max-width", "100%", "important");
-        span.textContent = line.text.trimEnd();
+        span.textContent = line.text.trim();
         return span;
       }),
     );
