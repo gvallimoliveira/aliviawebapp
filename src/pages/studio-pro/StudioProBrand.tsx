@@ -1146,25 +1146,8 @@ const StudioProBrand = () => {
                   />
                 </div>
 
-                {/* INSIGHTS DE FORMATOS: ideias de arte com o diálogo já escrito. */}
-                <div className="sm:col-span-2">
-                  <Label htmlFor="edit-format-insights">Insights de formatos</Label>
-                  <Textarea
-                    id="edit-format-insights"
-                    rows={6}
-                    placeholder={
-                      "Uma ideia por linha, com as falas separadas por |\n" +
-                      "Ex.: O que ninguém explica sobre a sua dor | Dor não é só lesão | O contexto decide a conduta | Comece pela avaliação"
-                    }
-                    value={form.format_insights}
-                    onChange={(e) => setForm({ ...form, format_insights: e.target.value })}
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    É o único campo em que você escreve o <strong>diálogo pronto</strong> da arte:
-                    abertura, falas do meio e fecho. Uma linha com 3 partes ou mais também vira lista,
-                    história e carrossel. O texto entra na arte como você escreveu — nada é reescrito.
-                  </p>
-                </div>
+
+
 
 
                 {/* Kits de conteúdo prontos por nicho — ponto de partida editável */}
@@ -1227,10 +1210,39 @@ const StudioProBrand = () => {
               </div>
             </BrandSection>
 
-            {/* ================= 4. PÚBLICOS ================= */}
+            {/* ================= 4. INSIGHTS DE FORMATOS ================= */}
             <BrandSection
               step={4}
+              title="Insights de formatos"
+              hint="Ideias de arte com o diálogo já escrito: abertura, falas do meio e fecho."
+              defaultOpen={!form.format_insights}
+              filled={!!form.format_insights.trim()}
+            >
+              <div>
+                <Label htmlFor="edit-format-insights">Uma ideia por linha</Label>
+                <Textarea
+                  id="edit-format-insights"
+                  rows={8}
+                  placeholder={
+                    "Separe as falas por |\n" +
+                    "Ex.: O que ninguém explica sobre a sua dor | Dor não é só lesão | O contexto decide a conduta | Comece pela avaliação"
+                  }
+                  value={form.format_insights}
+                  onChange={(e) => setForm({ ...form, format_insights: e.target.value })}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  É o único campo em que você escreve o <strong>diálogo pronto</strong> da arte. Uma
+                  linha com 3 partes ou mais também vira lista, história e carrossel. O texto entra na
+                  arte como você escreveu — nada é reescrito e não gasta crédito.
+                </p>
+              </div>
+            </BrandSection>
+
+            {/* ================= 5. PÚBLICOS ================= */}
+            <BrandSection
+              step={5}
               title="Públicos"
+
               hint="Cada público vira uma aba na criação, com dores, desejos, chamada e CTA próprios."
               defaultOpen={audiences.length > 0}
               filled={audiences.length > 0}
