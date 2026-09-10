@@ -93,8 +93,8 @@ describe("static export surface", () => {
       range.setEnd = (() => undefined) as typeof range.setEnd;
       range.getBoundingClientRect = (() => ({
         x: 0,
-        y: start < 22 ? 10 : 30,
-        top: start < 22 ? 10 : 30,
+        y: start < 23 ? 10 : 30,
+        top: start < 23 ? 10 : 30,
         left: 0,
         right: 100,
         bottom: start < 22 ? 20 : 40,
@@ -136,8 +136,8 @@ describe("static export surface", () => {
       range.setStart = ((_node: Node, offset: number) => { start = offset; }) as typeof range.setStart;
       range.setEnd = (() => undefined) as typeof range.setEnd;
       range.getBoundingClientRect = (() => ({
-        x: 0, y: start < 27 ? 20 : 72, top: start < 27 ? 20 : 72,
-        left: 0, right: 500, bottom: start < 27 ? 60 : 112,
+        x: 0, y: start < 24 ? 20 : 72, top: start < 24 ? 20 : 72,
+        left: 0, right: 500, bottom: start < 24 ? 60 : 112,
         width: 500, height: 40, toJSON: () => ({}),
       })) as typeof range.getBoundingClientRect;
       return range;

@@ -87,6 +87,7 @@ export const applyArtText = (root: HTMLElement, edits?: ArtTextEdits) => {
     if (typeof next !== "string") return;
     if ((el.textContent ?? "").replace(/\s+/g, " ").trim() === next) return;
     el.textContent = next;
+    el.dispatchEvent(new Event("input", { bubbles: true }));
   });
 };
 
@@ -101,7 +102,10 @@ export const setArtEditing = (root: HTMLElement, on: boolean) => {
     el.style.borderRadius = on ? "6px" : "";
     el.style.cursor = on ? "text" : "";
   });
-  if (!on) return;
+  if (!on) {
+    root.dispatchEvent(new Event("input", { bubbles: true }));
+    return;
+  }
 
   if (getComputedStyle(root).position === "static") root.style.position = "relative";
   const nodes = collectEditableNodes(root);

@@ -143,10 +143,25 @@ const AutoFit = ({ children, resetKey }: Props) => {
           });
     observer?.observe(node);
 
+    /**
+     * `contentEditable` altera os nós de texto sem mudar a largura da moldura.
+     * Sem observar o conteúdo, o AutoFit continuava com a escala anterior e a
+     * frase editada podia sair do quadro no PNG.
+     */
+    const contentObserver =
+      typeof MutationObserver === "undefined"
+        ? null
+        : new MutationObserver(() => {
+            passes.current = 0;
+            window.requestAnimationFrame(refine);
+          });
+    contentObserver?.observe(node, { childList: true, characterData: true, subtree: true });
+
 
     return () => {
       alive = false;
       observer?.disconnect();
+      contentObserver?.disconnect();
       window.cancelAnimationFrame(frame);
       timers.forEach((t) => window.clearTimeout(t));
     };
