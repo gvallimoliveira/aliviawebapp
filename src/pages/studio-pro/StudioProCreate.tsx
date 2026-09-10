@@ -436,8 +436,10 @@ const StudioProCreate = ({
       /** Briefing declarado pelo cliente: fonte primária do texto das artes. */
       briefAnswers: brand.brief_answers,
       slogan: brand.slogan,
+      /** Insights de formatos: diálogo declarado pelo dono, entra literal na arte. */
+      formatInsights: brand.format_insights,
     }),
-    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers, brand.slogan],
+    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers, brand.slogan, brand.format_insights],
   );
 
 
