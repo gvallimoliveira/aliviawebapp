@@ -477,7 +477,13 @@ export const paintStrokeTextOnCanvas = (
     const style = getComputedStyle(el);
     if (!rect.width || !rect.height || style.display === "none" || style.visibility === "hidden") continue;
 
-    const fontSize = (Number.parseFloat(style.fontSize) || 16) * scaleY;
+    /**
+     * `getComputedStyle().fontSize` não inclui o `scale()` herdado do AutoFit.
+     * A posição medida por Range já inclui esse scale; o tamanho da fonte
+     * também precisa incluí-lo para o contorno ocupar exatamente o mesmo lugar.
+     */
+    const renderedScale = el.offsetHeight > 0 ? rect.height / el.offsetHeight : 1;
+    const fontSize = (Number.parseFloat(style.fontSize) || 16) * renderedScale * scaleY;
     const font = `${style.fontStyle} ${style.fontWeight} ${fontSize}px ${style.fontFamily}`;
     const transformText = (value: string) => {
       if (style.textTransform === "uppercase") return value.toUpperCase();
@@ -503,7 +509,10 @@ export const paintStrokeTextOnCanvas = (
       if (!octx) continue;
 
       octx.font = font;
-      const spacing = style.letterSpacing === "normal" ? 0 : (Number.parseFloat(style.letterSpacing) || 0) * scaleX;
+      const spacing =
+        style.letterSpacing === "normal"
+          ? 0
+          : (Number.parseFloat(style.letterSpacing) || 0) * renderedScale * scaleX;
       if ("letterSpacing" in octx) {
         (octx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${spacing}px`;
       }
