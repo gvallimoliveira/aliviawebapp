@@ -23,6 +23,12 @@ export type ArtTextEdits = Record<number, string>;
 /** Escala tipográfica por texto: 1 mantém o tamanho original. */
 export type ArtTextSize = Record<number, number>;
 
+/** Estado completo no início de uma edição; cancelar restaura texto e tamanho juntos. */
+export type ArtTextEditSnapshot = {
+  text: ArtTextEdits;
+  sizes: ArtTextSize;
+};
+
 const sizeRegistry = new Map<string, number>();
 const BASE_SIZE_ATTR = "studioTextBaseSize";
 const ORIGINAL_SIZE_ATTR = "studioTextOriginalSize";
@@ -52,6 +58,22 @@ export const applyArtTextSizes = (root: HTMLElement) => {
   collectEditableNodes(root).forEach((el, index) => {
     const scale = sizeRegistry.get(sizeKey(root, index));
     if (scale) paintTextSize(root, el, index, scale);
+  });
+};
+
+/** Lê inclusive a escala original (1), para permitir uma restauração exata. */
+export const readArtTextSizes = (root: HTMLElement): ArtTextSize => {
+  const out: ArtTextSize = {};
+  collectEditableNodes(root).forEach((_, index) => {
+    out[index] = sizeRegistry.get(sizeKey(root, index)) ?? 1;
+  });
+  return out;
+};
+
+/** Restaura uma fotografia de tamanhos sem preservar ajustes feitos depois dela. */
+export const restoreArtTextSizes = (root: HTMLElement, sizes: ArtTextSize) => {
+  collectEditableNodes(root).forEach((el, index) => {
+    paintTextSize(root, el, index, sizes[index] ?? 1);
   });
 };
 
@@ -108,7 +130,7 @@ export const setArtEditing = (root: HTMLElement, on: boolean) => {
     el.style.cursor = on ? "text" : "";
   });
   if (!on) {
-    root.dispatchEvent(new Event("input", { bubbles: true }));
+    root.dispatchEvent(new Event("studio-text-commit", { bubbles: true }));
     return;
   }
 
@@ -198,6 +220,18 @@ export const setArtEditing = (root: HTMLElement, on: boolean) => {
 
   const first = nodes[0];
   first?.focus();
+};
+
+/** Fotografia atômica usada por Cancelar: palavras e tipografia são uma só alteração. */
+export const captureArtTextEditSnapshot = (root: HTMLElement): ArtTextEditSnapshot => ({
+  text: readArtText(root),
+  sizes: readArtTextSizes(root),
+});
+
+export const restoreArtTextEditSnapshot = (root: HTMLElement, snapshot: ArtTextEditSnapshot) => {
+  applyArtText(root, snapshot.text);
+  restoreArtTextSizes(root, snapshot.sizes);
+  root.dispatchEvent(new Event("studio-text-commit", { bubbles: true }));
 };
 
 /** Alguma coisa foi realmente alterada nesta arte? */

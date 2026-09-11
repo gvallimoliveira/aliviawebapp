@@ -22,8 +22,11 @@ import { renderNodeToBlob, type StudioFormat } from "@/studio-core";
 import {
   applyArtTextSizes,
   applyArtText,
+  captureArtTextEditSnapshot,
+  restoreArtTextEditSnapshot,
   readArtText,
   setArtEditing,
+  type ArtTextEditSnapshot,
   type ArtTextEdits,
 } from "@/pages/studio/artTextEdit";
 import { applyArtMoves, clearArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
@@ -174,6 +177,7 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
   /** Modo de arrastar texto pela alça (não pelo corpo do texto). */
   const [moving, setMoving] = useState(false);
   const [busy, setBusy] = useState(false);
+  const editBefore = useRef<Record<number, ArtTextEditSnapshot>>({});
 
   /** HTML de cada slide, baixado do instantâneo salvo. */
   useEffect(() => {
@@ -202,7 +206,10 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
     stopMove(false);
     (htmls ?? []).forEach((_, pos) => {
       const node = stageOf(pos);
-      if (node) setArtEditing(node, true);
+      if (node) {
+        editBefore.current[pos] = captureArtTextEditSnapshot(node);
+        setArtEditing(node, true);
+      }
     });
     setEditing(true);
   };
@@ -263,10 +270,11 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
         snapshots[pos] = next;
       }
       setArtEditing(node, false);
-    }
-    if (!keep && snapshot) {
-      // Descarta o rascunho: recarrega o HTML original do instantâneo.
-      void loadArtSnapshot(snapshot).then(setHtmls);
+      if (!keep) {
+        const before = editBefore.current[pos];
+        if (before) restoreArtTextEditSnapshot(node, before);
+      }
+      delete editBefore.current[pos];
     }
     setEditing(false);
     if (keep) {

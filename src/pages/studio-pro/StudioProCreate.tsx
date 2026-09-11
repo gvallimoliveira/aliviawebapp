@@ -85,9 +85,13 @@ import { hasBannedJargon } from "@/pages/studio/persuasion";
 import {
   applyArtTextSizes,
   applyArtText,
+  captureArtTextEditSnapshot,
+  clearArtTextSizes,
   hasArtEdits,
   readArtText,
+  restoreArtTextEditSnapshot,
   setArtEditing,
+  type ArtTextEditSnapshot,
   type ArtTextEdits,
 } from "@/pages/studio/artTextEdit";
 import { applyArtMoves, clearArtMoves, hasArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
@@ -972,6 +976,8 @@ const StudioProCreate = ({
    * que transforma o seu ajuste em aprendizado da marca.
    */
   const textBeforeEdit = useRef<Record<number, ArtTextEdits>>({});
+  /** Estado visual exato usado por Cancelar, incluindo os tamanhos manuais. */
+  const editBefore = useRef<Record<number, ArtTextEditSnapshot>>({});
 
   /** Liga a edição direta somente na arte selecionada. */
   const startEdit = (indexes: number[]) => {
@@ -986,6 +992,7 @@ const StudioProCreate = ({
       const node = artNode(i);
       if (!node) return;
       textBeforeEdit.current[i] = readArtText(node);
+      editBefore.current[i] = captureArtTextEditSnapshot(node);
       setArtEditing(node, true);
     });
   };
@@ -996,7 +1003,8 @@ const StudioProCreate = ({
       const node = artNode(i);
       if (!node) return;
       setArtEditing(node, false);
-      applyArtText(node, edits[i]);
+      const snapshot = editBefore.current[i];
+      if (snapshot) restoreArtTextEditSnapshot(node, snapshot);
     });
     setEditing(null);
   };
@@ -1022,7 +1030,12 @@ const StudioProCreate = ({
     }
     indexes.forEach((i) => {
       const node = artNode(i);
-      if (node) setArtEditing(node, false);
+      if (node) {
+        setArtEditing(node, false);
+        clearArtTextSizes(node);
+      }
+      delete editBefore.current[i];
+      delete textBeforeEdit.current[i];
     });
     setEdits((prev) => ({ ...prev, ...collected }));
     /**

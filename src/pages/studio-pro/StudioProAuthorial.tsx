@@ -27,9 +27,13 @@ import AuthorialArtBlock from "./AuthorialArtBlock";
 import {
   applyArtTextSizes,
   applyArtText,
+  captureArtTextEditSnapshot,
+  clearArtTextSizes,
   hasArtEdits,
   readArtText,
+  restoreArtTextEditSnapshot,
   setArtEditing,
+  type ArtTextEditSnapshot,
   type ArtTextEdits,
 } from "@/pages/studio/artTextEdit";
 import { applyArtMoves, clearArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
@@ -127,6 +131,7 @@ const StudioProAuthorial = ({
   const [moveTick, setMoveTick] = useState(0);
   const [edits, setEdits] = useState<Record<string, ArtTextEdits>>({});
   const [resetTick, setResetTick] = useState(0);
+  const editBefore = useRef<Record<string, ArtTextEditSnapshot>>({});
   const [texts, setTexts] = useState<AuthorialText[]>([]);
   const [loading, setLoading] = useState(true);
   const [photosOpen, setPhotosOpen] = useState(false);
@@ -315,6 +320,7 @@ const StudioProAuthorial = ({
     if (!node) return;
     setArtMoving(node, false);
     setMoving(null);
+    editBefore.current[key] = captureArtTextEditSnapshot(node);
     setArtEditing(node, true);
     setEditing(key);
   };
@@ -325,8 +331,10 @@ const StudioProAuthorial = ({
     const node = nodeOf(artKey, slide);
     if (node) {
       setArtEditing(node, false);
-      applyArtText(node, edits[key]);
+      const snapshot = editBefore.current[key];
+      if (snapshot) restoreArtTextEditSnapshot(node, snapshot);
     }
+    delete editBefore.current[key];
     setEditing(null);
   };
 
@@ -340,6 +348,7 @@ const StudioProAuthorial = ({
       return;
     }
     setArtEditing(node, false);
+    delete editBefore.current[key];
     setEdits((prev) => ({ ...prev, [key]: next }));
     setEditing(null);
     setSaved((prev) => {
@@ -352,6 +361,12 @@ const StudioProAuthorial = ({
 
   const resetEdit = (artKey: string, slide: number) => {
     const key = slideKey(artKey, slide);
+    const node = nodeOf(artKey, slide);
+    if (node) {
+      setArtEditing(node, false);
+      clearArtTextSizes(node);
+    }
+    delete editBefore.current[key];
     setEdits((prev) => {
       const copy = { ...prev };
       delete copy[key];

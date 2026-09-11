@@ -152,16 +152,26 @@ const AutoFit = ({ children, resetKey }: Props) => {
       typeof MutationObserver === "undefined"
         ? null
         : new MutationObserver(() => {
+            // Durante a digitação, a composição fica estável. O novo encaixe só
+            // acontece ao concluir/cancelar, evitando o texto "pular" de tamanho.
+            if (node.querySelector('[contenteditable="true"]')) return;
             passes.current = 0;
             window.requestAnimationFrame(refine);
           });
     contentObserver?.observe(node, { childList: true, characterData: true, subtree: true });
+
+    const commitText = () => {
+      passes.current = 0;
+      window.requestAnimationFrame(refine);
+    };
+    node.addEventListener("studio-text-commit", commitText);
 
 
     return () => {
       alive = false;
       observer?.disconnect();
       contentObserver?.disconnect();
+      node.removeEventListener("studio-text-commit", commitText);
       window.cancelAnimationFrame(frame);
       timers.forEach((t) => window.clearTimeout(t));
     };
