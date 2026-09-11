@@ -97,7 +97,20 @@ export const TEXTURES: StudioTexture[] = [
   },
 ];
 
+/**
+ * PADRÃO DA MARCA — o símbolo da marca repetido no lugar da trama geométrica,
+ * na mesma escala e no mesmo tom pastel (mão da Aliv.iA, raio do PerformaPro).
+ * Entram na mesma rotação das tramas: duas densidades, uma mais fechada e uma
+ * mais espaçada. Sem símbolo/logo, o bloco cai na trama geométrica seguinte.
+ */
+export const BRAND_MARK_TEXTURES = [
+  { id: "brandmark", opacity: 1, tile: 46, alpha: 0.09 },
+  { id: "brandmark-wide", opacity: 1, tile: 82, alpha: 0.075 },
+] as const;
+
+/** Só as tramas geométricas (blocos que consomem o CSS puro da textura). */
 export const TEXTURE_COUNT = TEXTURES.length;
+export const PATTERN_COUNT = TEXTURES.length + BRAND_MARK_TEXTURES.length;
 
 /** Trama da vez: o índice do bloco é deslocado pela mão da persona. */
 export const textureFor = (persona: StudioPersona, index: number): StudioTexture =>
@@ -110,9 +123,65 @@ type TextureLayerProps = {
   dark?: boolean;
 };
 
+/** Padrão repetido com o símbolo da marca; devolve null enquanto/se não houver. */
+const BrandMarkPattern = ({
+  tile,
+  alpha,
+  opacity,
+  dark,
+}: {
+  tile: number;
+  alpha: number;
+  opacity: number;
+  dark: boolean;
+}) => {
+  const src = BRAND_MARK;
+  const color = dark ? `rgba(255,255,255,${alpha + 0.03})` : `rgba(0,0,0,${alpha})`;
+  const [pattern, setPattern] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    if (!src) {
+      setPattern(null);
+      return;
+    }
+    void brandMarkTile(src, color).then((url) => {
+      if (alive) setPattern(url);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [src, color]);
+
+  if (!pattern) return null;
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0"
+      style={{
+        backgroundImage: `url("${pattern}")`,
+        backgroundSize: `${tile}px ${tile}px`,
+        backgroundRepeat: "repeat",
+        opacity,
+      }}
+    />
+  );
+};
+
 /** Camada de fundo pronta: absoluta, inerte e sutil. */
 export const TextureLayer = ({ persona, index, dark = false }: TextureLayerProps) => {
-  const texture = textureFor(persona, index);
+  const slot = (index + persona.textureShift) % PATTERN_COUNT;
+  const mark = slot >= TEXTURES.length ? BRAND_MARK_TEXTURES[slot - TEXTURES.length] : null;
+
+  if (mark && BRAND_MARK) {
+    return (
+      <>
+        <BrandMarkPattern tile={mark.tile} alpha={mark.alpha} opacity={mark.opacity} dark={dark} />
+      </>
+    );
+  }
+
+  const texture = TEXTURES[slot % TEXTURES.length];
   return (
     <div
       aria-hidden
