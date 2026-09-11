@@ -35,6 +35,8 @@ export type StudioBrandTheme = {
   slogan: string;
   /** Sem logo o lockup usa apenas o wordmark. */
   logo?: string | null;
+  /** Símbolo isolado da marca para o padrão de fundo; sem ele, usa o logo. */
+  mark?: string | null;
   /** Perfil social (ex.: @marca) e site — opcionais. */
   handle?: string | null;
   site?: string | null;
@@ -65,6 +67,7 @@ export const applyStudioBrandTheme = (theme: StudioBrandTheme) => {
   BRAND_NAME = theme.name || NEUTRAL_NAME;
   BRAND_SLOGAN = theme.slogan || "";
   BRAND_LOGO = theme.logo || BLANK_LOGO;
+  BRAND_MARK = theme.mark || theme.logo || "";
   BRAND_HANDLE = theme.handle?.trim()
     ? (theme.handle.trim().startsWith("@") ? theme.handle.trim() : `@${theme.handle.trim()}`)
     : theme.name || NEUTRAL_NAME;
@@ -76,6 +79,7 @@ export const resetStudioBrandTheme = () => {
   BRAND_NAME = ALIVIA_NAME;
   BRAND_SLOGAN = ALIVIA_SLOGAN;
   BRAND_LOGO = ALIVIA_LOGO;
+  BRAND_MARK = ALIVIA_LOGO;
   BRAND_HANDLE = ALIVIA_HANDLE;
   BRAND_SITE = ALIVIA_SITE;
 };
