@@ -30,6 +30,7 @@ export type ArtTextEditSnapshot = {
 };
 
 const sizeRegistry = new Map<string, number>();
+const editListeners = new WeakMap<HTMLElement, AbortController>();
 const BASE_SIZE_ATTR = "studioTextBaseSize";
 const ORIGINAL_SIZE_ATTR = "studioTextOriginalSize";
 const EDIT_LAYER_ATTR = "data-studio-text-size-layer";
@@ -120,6 +121,8 @@ export const applyArtText = (root: HTMLElement, edits?: ArtTextEdits) => {
 
 /** Liga/desliga a edição direta na arte, com contorno de foco visível. */
 export const setArtEditing = (root: HTMLElement, on: boolean) => {
+  editListeners.get(root)?.abort();
+  editListeners.delete(root);
   root.querySelectorAll(`[${EDIT_LAYER_ATTR}]`).forEach((el) => el.remove());
   collectEditableNodes(root).forEach((el) => {
     el.contentEditable = on ? "true" : "false";
@@ -136,6 +139,8 @@ export const setArtEditing = (root: HTMLElement, on: boolean) => {
 
   if (getComputedStyle(root).position === "static") root.style.position = "relative";
   const nodes = collectEditableNodes(root);
+  const listeners = new AbortController();
+  editListeners.set(root, listeners);
   const layer = document.createElement("div");
   layer.setAttribute(EDIT_LAYER_ATTR, "1");
   layer.dataset.studioNoExport = "1";
@@ -199,8 +204,8 @@ export const setArtEditing = (root: HTMLElement, on: boolean) => {
       lineHeight: "1",
       cursor: "pointer",
     });
-    button.addEventListener("pointerdown", (event) => event.preventDefault());
-    button.addEventListener("click", () => resize(delta));
+    button.addEventListener("pointerdown", (event) => event.preventDefault(), { signal: listeners.signal });
+    button.addEventListener("click", () => resize(delta), { signal: listeners.signal });
     toolbar.appendChild(button);
   };
   control("Diminuir texto", "−", -TEXT_SCALE_STEP);
@@ -210,11 +215,11 @@ export const setArtEditing = (root: HTMLElement, on: boolean) => {
     el.addEventListener("focus", () => {
       selected = index;
       place();
-    });
+    }, { signal: listeners.signal });
     el.addEventListener("click", () => {
       selected = index;
       place();
-    });
+    }, { signal: listeners.signal });
   });
   place();
 
