@@ -104,8 +104,14 @@ export const TEXTURES: StudioTexture[] = [
  * mais espaçada. Sem símbolo/logo, o bloco cai na trama geométrica seguinte.
  */
 export const BRAND_MARK_TEXTURES = [
-  { id: "brandmark", opacity: 1, tile: 46, alpha: 0.09 },
-  { id: "brandmark-wide", opacity: 1, tile: 82, alpha: 0.075 },
+  { id: "brandmark", kind: "tile", opacity: 1, tile: 46, alpha: 0.09 },
+  { id: "brandmark-wide", kind: "tile", opacity: 1, tile: 82, alpha: 0.075 },
+  /** Faixa diagonal só num canto: o símbolo repetido dentro de uma tarja. */
+  { id: "brandmark-band", kind: "band", opacity: 1, tile: 52, alpha: 0.1 },
+  /** Símbolo gigante em contorno, marca d'água atrás do texto. */
+  { id: "brandmark-ghost", kind: "ghost", opacity: 1, tile: 0, alpha: 0.16 },
+  /** Misto: símbolo alternando com a trama geométrica. */
+  { id: "brandmark-mixed", kind: "mixed", opacity: 1, tile: 64, alpha: 0.085 },
 ] as const;
 
 /** Só as tramas geométricas (blocos que consomem o CSS puro da textura). */
