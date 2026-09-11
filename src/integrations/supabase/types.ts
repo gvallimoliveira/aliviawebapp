@@ -4126,6 +4126,7 @@ export type Database = {
           instagram_handle: string | null
           is_active: boolean
           logo_url: string | null
+          mark_url: string | null
           name: string
           niche: string | null
           positioning: string | null
@@ -4151,6 +4152,7 @@ export type Database = {
           instagram_handle?: string | null
           is_active?: boolean
           logo_url?: string | null
+          mark_url?: string | null
           name: string
           niche?: string | null
           positioning?: string | null
@@ -4176,6 +4178,7 @@ export type Database = {
           instagram_handle?: string | null
           is_active?: boolean
           logo_url?: string | null
+          mark_url?: string | null
           name?: string
           niche?: string | null
           positioning?: string | null

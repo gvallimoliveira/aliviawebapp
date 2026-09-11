@@ -18,6 +18,12 @@ export const ALIVIA_SITE = "aliviawebapp.com.br";
 export const ALIVIA_SLOGAN = "Sistema de raciocínio clínico com alma de fisioterapeuta.";
 
 export let BRAND_LOGO: string = ALIVIA_LOGO;
+/**
+ * Símbolo da marca (só o ícone, sem wordmark) usado como PADRÃO DE FUNDO
+ * repetido — a mão da Aliv.iA, o raio do PerformaPro, etc. Sem símbolo próprio,
+ * cai no logo; sem logo, o padrão simplesmente não aparece.
+ */
+export let BRAND_MARK: string = ALIVIA_LOGO;
 export let BRAND_NAME: string = ALIVIA_NAME;
 export let BRAND_SLOGAN: string = ALIVIA_SLOGAN;
 /** Perfil social e site da marca — usados pelos blocos de mockup/palco. */
