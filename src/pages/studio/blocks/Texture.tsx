@@ -1,5 +1,7 @@
-import { Fragment, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import type { StudioPersona } from "../personas";
+import { BRAND_MARK } from "../brand";
+import { brandMarkTile } from "./brandMarkTile";
 
 /**
  * KIT GRÁFICO DO STUDIO
