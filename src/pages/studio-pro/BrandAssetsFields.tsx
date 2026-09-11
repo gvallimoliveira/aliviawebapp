@@ -59,11 +59,14 @@ const shrinkLogo = async (file: File): Promise<string> => {
   return canvas.toDataURL("image/png");
 };
 
-export type BrandAssetKey = "doc" | "logo" | "font";
+export type BrandAssetKey = "doc" | "logo" | "mark" | "font";
 
 type Props = {
   logoUrl: string;
   onLogoChange: (value: string) => void;
+  /** Símbolo isolado da marca (padrão de fundo das artes). */
+  markUrl?: string;
+  onMarkChange?: (value: string) => void;
   fontKey: string;
   onFontChange: (key: string) => void;
   doc: BrandDoc | null;
@@ -75,6 +78,8 @@ type Props = {
 const BrandAssetsFields = ({
   logoUrl,
   onLogoChange,
+  markUrl = "",
+  onMarkChange,
   fontKey,
   onFontChange,
   doc,
@@ -82,10 +87,11 @@ const BrandAssetsFields = ({
   only,
 }: Props) => {
   const logoInput = useRef<HTMLInputElement>(null);
+  const markInput = useRef<HTMLInputElement>(null);
   const docInput = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState<"logo" | "doc" | null>(null);
+  const [busy, setBusy] = useState<"logo" | "mark" | "doc" | null>(null);
   const font = findFont(fontKey);
-  const visible: BrandAssetKey[] = only ?? ["doc", "logo", "font"];
+  const visible: BrandAssetKey[] = only ?? ["doc", "logo", "mark", "font"];
   const shows = (key: BrandAssetKey) => visible.includes(key);
   /** Separador só entre blocos visíveis — evita linha órfã no topo. */
   const divider = (key: BrandAssetKey) => (visible.indexOf(key) > 0 ? "border-t border-border pt-4" : "");
@@ -115,6 +121,29 @@ const BrandAssetsFields = ({
     } finally {
       setBusy(null);
       if (logoInput.current) logoInput.current.value = "";
+    }
+  };
+
+  /** O símbolo segue as mesmas regras do logo (silhueta é o que importa). */
+  const pickMark = async (file?: File | null) => {
+    if (!file || !onMarkChange) return;
+    if (!LOGO_MIME.includes(file.type)) {
+      toast.error("Use PNG, JPG, WEBP ou SVG.");
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      toast.error("Símbolo muito grande (máx. 4MB).");
+      return;
+    }
+    setBusy("mark");
+    try {
+      onMarkChange(await shrinkLogo(file));
+      toast.success("Símbolo carregado. Salve para aplicar no fundo das artes.");
+    } catch {
+      toast.error("Não foi possível ler esta imagem.");
+    } finally {
+      setBusy(null);
+      if (markInput.current) markInput.current.value = "";
     }
   };
 
@@ -247,6 +276,63 @@ const BrandAssetsFields = ({
           />
           {logoUrl.startsWith("data:") && (
             <p className="mt-1 text-[11px] text-muted-foreground">Logo enviado por upload (guardado na marca).</p>
+          )}
+        </div>
+      </div>
+
+      {/* ---------- Símbolo (padrão de fundo) ---------- */}
+      <div className={shows("mark") && onMarkChange ? divider("mark") : "hidden"}>
+        <p className="text-sm font-semibold">Símbolo da marca (padrão de fundo)</p>
+        <p className="text-xs text-muted-foreground">
+          Só o ícone, sem o nome — a mão, o raio, o monograma. Ele vira um padrão repetido no fundo de
+          parte das artes, no mesmo tom suave das tramas geométricas. Sem símbolo próprio, o logo é usado.
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <div
+            className="h-14 w-14 rounded-xl border border-border bg-background"
+            style={
+              markUrl || logoUrl
+                ? {
+                    backgroundImage: `url("${markUrl || logoUrl}")`,
+                    backgroundSize: "18px 18px",
+                    backgroundRepeat: "repeat",
+                    opacity: 0.55,
+                  }
+                : undefined
+            }
+          />
+          <input
+            ref={markInput}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            className="hidden"
+            onChange={(e) => void pickMark(e.target.files?.[0])}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            disabled={busy === "mark"}
+            onClick={() => markInput.current?.click()}
+          >
+            {busy === "mark" ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <ImageUp className="mr-1.5 h-4 w-4" />
+            )}
+            Enviar símbolo
+          </Button>
+          {markUrl && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+              onClick={() => onMarkChange?.("")}
+            >
+              Remover
+            </Button>
           )}
         </div>
       </div>
