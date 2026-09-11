@@ -70,6 +70,7 @@ type Brand = {
   niche: string | null;
   tone: string | null;
   logo_url: string | null;
+  mark_url: string | null;
   colors: Record<string, string> | null;
   description: string | null;
   source_url: string | null;
@@ -227,6 +228,7 @@ const StudioProBrand = () => {
     niche: "",
     tone: "",
     logo_url: "",
+    mark_url: "",
     description: "",
     source_url: "",
     instagram_handle: "",
@@ -340,6 +342,7 @@ const StudioProBrand = () => {
         niche: brand.niche ?? "",
         tone: brand.tone ?? "",
         logo_url: brand.logo_url ?? "",
+        mark_url: brand.mark_url ?? "",
         description: brand.description ?? "",
         source_url: brand.source_url ?? "",
         instagram_handle: brand.instagram_handle ?? "",
@@ -392,6 +395,7 @@ const StudioProBrand = () => {
         niche: form.niche.trim() || null,
         tone: form.tone.trim() || null,
         logo_url: form.logo_url.trim() || null,
+        mark_url: form.mark_url.trim() || null,
         description: form.description.trim() || null,
         source_url: form.source_url.trim() || null,
         instagram_handle: form.instagram_handle.trim() || null,
@@ -990,9 +994,11 @@ const StudioProBrand = () => {
 
                 {/* Logo e manual da marca vêm antes de tudo: é a matéria-prima. */}
                 <BrandAssetsFields
-                  only={["logo", "doc"]}
+                  only={["logo", "mark", "doc"]}
                   logoUrl={form.logo_url}
                   onLogoChange={(logo_url) => setForm({ ...form, logo_url })}
+                  markUrl={form.mark_url}
+                  onMarkChange={(mark_url) => setForm({ ...form, mark_url })}
                   fontKey={colorKit.font}
                   onFontChange={(font) => setColorKit({ ...colorKit, font })}
                   doc={doc}

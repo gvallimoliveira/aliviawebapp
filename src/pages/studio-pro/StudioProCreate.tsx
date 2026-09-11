@@ -129,6 +129,7 @@ type BrandInput = {
   niche: string | null;
   tone: string | null;
   logo_url: string | null;
+  mark_url?: string | null;
   colors: Record<string, string> | null;
   description?: string | null;
   topics?: string[] | null;
@@ -558,11 +559,12 @@ const StudioProCreate = ({
       // Tom de voz é diretriz, não copy: o slogan sai da descrição/nicho.
       slogan: brandSlogan({ name: brand.name, niche: brand.niche, description: brand.description, slogan: brand.slogan }),
       logo: brand.logo_url,
+      mark: brand.mark_url ?? null,
       handle: brand.instagram_handle ?? null,
       site: brand.source_url ?? null,
     });
     return `${brand.id}:${brand.name}:${brand.logo_url ?? ""}`;
-  }, [brand.id, brand.name, brand.niche, brand.description, brand.slogan, brand.logo_url, brand.instagram_handle, brand.source_url]);
+  }, [brand.id, brand.name, brand.niche, brand.description, brand.slogan, brand.logo_url, brand.mark_url, brand.instagram_handle, brand.source_url]);
 
 
   /** Memória de frases da marca (na conta): frase recente perde vez no sorteio. */

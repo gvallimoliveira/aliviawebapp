@@ -18,6 +18,12 @@ export const ALIVIA_SITE = "aliviawebapp.com.br";
 export const ALIVIA_SLOGAN = "Sistema de raciocínio clínico com alma de fisioterapeuta.";
 
 export let BRAND_LOGO: string = ALIVIA_LOGO;
+/**
+ * Símbolo da marca (só o ícone, sem wordmark) usado como PADRÃO DE FUNDO
+ * repetido — a mão da Aliv.iA, o raio do PerformaPro, etc. Sem símbolo próprio,
+ * cai no logo; sem logo, o padrão simplesmente não aparece.
+ */
+export let BRAND_MARK: string = ALIVIA_LOGO;
 export let BRAND_NAME: string = ALIVIA_NAME;
 export let BRAND_SLOGAN: string = ALIVIA_SLOGAN;
 /** Perfil social e site da marca — usados pelos blocos de mockup/palco. */
@@ -29,6 +35,8 @@ export type StudioBrandTheme = {
   slogan: string;
   /** Sem logo o lockup usa apenas o wordmark. */
   logo?: string | null;
+  /** Símbolo isolado da marca para o padrão de fundo; sem ele, usa o logo. */
+  mark?: string | null;
   /** Perfil social (ex.: @marca) e site — opcionais. */
   handle?: string | null;
   site?: string | null;
@@ -59,6 +67,7 @@ export const applyStudioBrandTheme = (theme: StudioBrandTheme) => {
   BRAND_NAME = theme.name || NEUTRAL_NAME;
   BRAND_SLOGAN = theme.slogan || "";
   BRAND_LOGO = theme.logo || BLANK_LOGO;
+  BRAND_MARK = theme.mark || theme.logo || "";
   BRAND_HANDLE = theme.handle?.trim()
     ? (theme.handle.trim().startsWith("@") ? theme.handle.trim() : `@${theme.handle.trim()}`)
     : theme.name || NEUTRAL_NAME;
@@ -70,6 +79,7 @@ export const resetStudioBrandTheme = () => {
   BRAND_NAME = ALIVIA_NAME;
   BRAND_SLOGAN = ALIVIA_SLOGAN;
   BRAND_LOGO = ALIVIA_LOGO;
+  BRAND_MARK = ALIVIA_LOGO;
   BRAND_HANDLE = ALIVIA_HANDLE;
   BRAND_SITE = ALIVIA_SITE;
 };
