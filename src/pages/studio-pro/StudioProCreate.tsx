@@ -1030,12 +1030,7 @@ const StudioProCreate = ({
     }
     indexes.forEach((i) => {
       const node = artNode(i);
-      if (node) {
-        setArtEditing(node, false);
-        clearArtTextSizes(node);
-      }
-      delete editBefore.current[i];
-      delete textBeforeEdit.current[i];
+      if (node) setArtEditing(node, false);
     });
     setEdits((prev) => ({ ...prev, ...collected }));
     /**
@@ -1045,6 +1040,10 @@ const StudioProCreate = ({
     const lessons = Object.entries(collected).flatMap(([key, next]) =>
       diffArtText(textBeforeEdit.current[Number(key)], next),
     );
+    indexes.forEach((i) => {
+      delete editBefore.current[i];
+      delete textBeforeEdit.current[i];
+    });
     if (lessons.length > 0) void learning.learn(lessons);
     setEditing(null);
     setApproved((prev) => {
@@ -1081,7 +1080,12 @@ const StudioProCreate = ({
     setEditing(null);
     indexes.forEach((i) => {
       const node = artNode(i);
-      if (node) setArtEditing(node, false);
+      if (node) {
+        setArtEditing(node, false);
+        clearArtTextSizes(node);
+      }
+      delete editBefore.current[i];
+      delete textBeforeEdit.current[i];
     });
     // Remonta os blocos para o motor reescrever o texto original.
     setResetTick((n) => n + 1);

@@ -49,4 +49,20 @@ describe("studio text sizing", () => {
     expect(title?.style.fontSize).toBe("40px");
     root.remove();
   });
+
+  it("mantém o tamanho escolhido ao concluir e o remove só no desfazer geral", () => {
+    const root = document.createElement("div");
+    root.id = "commit-art";
+    root.innerHTML = '<h2 style="font-size:40px">Título</h2>';
+    document.body.appendChild(root);
+
+    setArtEditing(root, true);
+    root.querySelector<HTMLButtonElement>('[aria-label="Aumentar texto"]')?.click();
+    setArtEditing(root, false);
+    expect(root.querySelector("h2")?.style.fontSize).toBe("44px");
+
+    clearArtTextSizes(root);
+    expect(root.querySelector("h2")?.style.fontSize).toBe("40px");
+    root.remove();
+  });
 });

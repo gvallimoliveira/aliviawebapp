@@ -667,6 +667,7 @@ const StudioProAuthorial = ({
                 >
                   <div
                     id={nodeId(art.key, slideIndex)}
+                    data-studio-art-key={`${brand.id}:${seed}:${art.key}:${slideIndex}`}
                     className="h-full w-full bg-background"
                     style={flipped.has(key) ? invertedStyle : undefined}
                   >
