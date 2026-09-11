@@ -129,17 +129,32 @@ type TextureLayerProps = {
   dark?: boolean;
 };
 
-/** Padrão repetido com o símbolo da marca; devolve null enquanto/se não houver. */
+type MarkKind = "tile" | "band" | "ghost" | "mixed";
+
+/**
+ * Padrão com o símbolo da marca. Quatro formas:
+ * · tile  — símbolo repetido em todo o fundo (duas densidades);
+ * · band  — tarja diagonal com o símbolo repetido, só num canto da arte;
+ * · ghost — símbolo gigante em contorno, marca d'água atrás do texto;
+ * · mixed — símbolo alternando com a trama geométrica da vez.
+ * Devolve null enquanto/se não houver símbolo utilizável.
+ */
 const BrandMarkPattern = ({
+  kind,
   tile,
   alpha,
   opacity,
   dark,
+  index,
+  geometric,
 }: {
+  kind: MarkKind;
   tile: number;
   alpha: number;
   opacity: number;
   dark: boolean;
+  index: number;
+  geometric: StudioTexture;
 }) => {
   const src = BRAND_MARK;
   const color = dark ? `rgba(255,255,255,${alpha + 0.03})` : `rgba(0,0,0,${alpha})`;
@@ -151,15 +166,88 @@ const BrandMarkPattern = ({
       setPattern(null);
       return;
     }
-    void brandMarkTile(src, color).then((url) => {
+    const task = kind === "ghost" ? brandMarkOutline(src, color) : brandMarkTile(src, color);
+    void task.then((url) => {
       if (alive) setPattern(url);
     });
     return () => {
       alive = false;
     };
-  }, [src, color]);
+  }, [src, color, kind]);
 
   if (!pattern) return null;
+
+  if (kind === "ghost") {
+    // Contorno gigante: sempre parcialmente fora do quadro, atrás do texto.
+    const corner = index % 2 === 0;
+    return (
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute"
+          style={{
+            width: "118%",
+            height: "118%",
+            [corner ? "right" : "left"]: "-24%",
+            [corner ? "bottom" : "top"]: "-18%",
+            backgroundImage: `url("${pattern}")`,
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            backgroundSize: "contain",
+            opacity,
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (kind === "band") {
+    // Tarja diagonal num canto só: o resto da arte fica limpo.
+    const topRight = index % 2 === 0;
+    return (
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute"
+          style={{
+            width: "170%",
+            height: `${Math.round(tile * 2.6)}px`,
+            [topRight ? "right" : "left"]: "-38%",
+            [topRight ? "top" : "bottom"]: `${Math.round(tile * 0.6)}px`,
+            transform: `rotate(${topRight ? -32 : 32}deg)`,
+            transformOrigin: "center",
+            backgroundImage: `url("${pattern}")`,
+            backgroundSize: `${tile}px ${tile}px`,
+            backgroundRepeat: "repeat",
+            opacity,
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (kind === "mixed") {
+    // Misto: trama geométrica no fundo + símbolo alternado por cima.
+    return (
+      <>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{ ...geometric.style(dark), opacity: (dark ? 0.7 : 0.85) * geometric.opacity }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: `url("${pattern}")`,
+            backgroundSize: `${tile * 2}px ${tile * 2}px`,
+            backgroundPosition: `${Math.round(tile * 0.5)}px ${Math.round(tile * 0.5)}px`,
+            backgroundRepeat: "repeat",
+            opacity,
+          }}
+        />
+      </>
+    );
+  }
+
   return (
     <div
       aria-hidden
@@ -181,9 +269,15 @@ export const TextureLayer = ({ persona, index, dark = false }: TextureLayerProps
 
   if (mark && BRAND_MARK) {
     return (
-      <>
-        <BrandMarkPattern tile={mark.tile} alpha={mark.alpha} opacity={mark.opacity} dark={dark} />
-      </>
+      <BrandMarkPattern
+        kind={mark.kind as MarkKind}
+        tile={mark.tile}
+        alpha={mark.alpha}
+        opacity={mark.opacity}
+        dark={dark}
+        index={index}
+        geometric={TEXTURES[(index + persona.textureShift) % TEXTURES.length]}
+      />
     );
   }
 
