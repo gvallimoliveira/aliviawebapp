@@ -63,6 +63,7 @@ type BrandInput = {
   id: string;
   name: string;
   logo_url: string | null;
+  mark_url?: string | null;
   colors: Record<string, string> | null;
   slogan?: string | null;
   niche?: string | null;
@@ -191,10 +192,11 @@ const StudioProAuthorial = ({
       name: brand.name,
       slogan: splitSlogans(brand.slogan)[0] ?? "",
       logo: brand.logo_url,
+      mark: brand.mark_url ?? null,
       handle: brand.instagram_handle ?? null,
       site: brand.source_url ?? null,
     });
-  }, [brand.name, brand.slogan, brand.logo_url, brand.instagram_handle, brand.source_url]);
+  }, [brand.name, brand.slogan, brand.logo_url, brand.mark_url, brand.instagram_handle, brand.source_url]);
 
   const kit = readColorKit(brand.colors);
   useEffect(() => {

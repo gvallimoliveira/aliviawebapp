@@ -35,6 +35,7 @@ export type ArtRenderBrand = {
   niche: string | null;
   tone: string | null;
   logo_url: string | null;
+  mark_url?: string | null;
   colors: Record<string, string> | null;
   description?: string | null;
   topics?: string[] | null;
@@ -146,10 +147,11 @@ export const useArtRender = ({ brand, seed, segment, angle, variation }: Args) =
       name: brand.name,
       slogan: brandSlogan({ name: brand.name, niche: brand.niche, description: brand.description }),
       logo: brand.logo_url,
+      mark: brand.mark_url ?? null,
       handle: brand.instagram_handle ?? null,
       site: brand.source_url ?? null,
     });
-  }, [brand.name, brand.niche, brand.description, brand.logo_url, brand.instagram_handle, brand.source_url]);
+  }, [brand.name, brand.niche, brand.description, brand.logo_url, brand.mark_url, brand.instagram_handle, brand.source_url]);
 
   const kit = readColorKit(brand.colors);
   useEffect(() => {
