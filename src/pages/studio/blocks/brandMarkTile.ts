@@ -57,3 +57,51 @@ export const brandMarkTile = (src: string, color: string, size = 96): Promise<st
   cache.set(key, task);
   return task;
 };
+
+/**
+ * CONTORNO GIGANTE — o símbolo vira só a "casca" (silhueta menos silhueta
+ * interna), para virar marca d'água grande atrás do texto sem competir com a
+ * leitura. Mesma lógica de data URL do ladrilho.
+ */
+const buildOutline = async (src: string, color: string, size: number): Promise<string | null> => {
+  try {
+    const img = await loadImage(src);
+    if (!img.naturalWidth || !img.naturalHeight) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    const box = size * 0.94;
+    const scale = Math.min(box / img.naturalWidth, box / img.naturalHeight);
+    const w = img.naturalWidth * scale;
+    const h = img.naturalHeight * scale;
+    ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+    ctx.globalCompositeOperation = "source-in";
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, size, size);
+    // Fura o meio com uma cópia levemente menor: sobra só o contorno.
+    ctx.globalCompositeOperation = "destination-out";
+    const inner = 0.965;
+    ctx.drawImage(
+      img,
+      (size - w * inner) / 2,
+      (size - h * inner) / 2,
+      w * inner,
+      h * inner,
+    );
+    return canvas.toDataURL("image/png");
+  } catch {
+    return null;
+  }
+};
+
+export const brandMarkOutline = (src: string, color: string, size = 512): Promise<string | null> => {
+  if (!src || typeof document === "undefined") return Promise.resolve(null);
+  const key = `outline|${src}|${color}|${size}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const task = buildOutline(src, color, size);
+  cache.set(key, task);
+  return task;
+};
