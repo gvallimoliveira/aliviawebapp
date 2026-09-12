@@ -13,6 +13,7 @@ import { createRng } from "@/pages/studio/rng";
 import { audienceHooks, audienceKeyword, type BrandAudience, type ContentAngle } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
 import { buildNarrativeRoutes, type NarrativeRoute } from "./synapses";
+import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
 
 export type Relation = {
   audience?: BrandAudience;
@@ -69,7 +70,16 @@ export const pickRelation = ({
   const routes = buildNarrativeRoutes({ audience, audiences, dna, brand, seed: seed ?? "static" });
   const route = routes[0];
 
-  const pains = audience ? list(audience.pains) : list(dna.pain ? [dna.pain] : []);
+  const vestibular = matchesVestibular([
+    audience?.label,
+    audience?.keyword,
+    audience?.description,
+    audience?.hook,
+  ].filter(Boolean).join(" · "));
+  const rawPains = audience ? list(audience.pains) : list(dna.pain ? [dna.pain] : []);
+  // `pains` é o nome histórico do campo de tensão. Para tontura, qualquer item
+  // que apresente dor como sintoma é descartado antes de construir a relação.
+  const pains = vestibular ? rawPains.filter((item) => !mentionsPainAsSymptom(item)) : rawPains;
   const desires = audience ? list(audience.desires) : list(dna.desire ? [dna.desire] : []);
   const proofs = audience ? list(audience.proof) : list([dna.belief, dna.offer].filter(Boolean) as string[]);
 

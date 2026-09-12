@@ -40,7 +40,7 @@ import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typograph
 import type { BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
-import { matchesVestibular, vestibularLines } from "./vestibularLexicon";
+import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
 import { matchesMsk, mskLines } from "./mskLexicon";
 
 
@@ -434,10 +434,11 @@ export const planBatch = (input: {
   ]
     .filter(Boolean)
     .join(" · ");
+  const isVestibular = matchesVestibular(lexProbe);
   const lexiconFor = (index: number) => {
     if (!lexProbe) return undefined;
     const salt = `${seed}:lex:${index}`;
-    if (matchesVestibular(lexProbe)) {
+    if (isVestibular) {
       const lines = vestibularLines(salt);
       return { ...lines, heading: "Tontura: o que é o quê" };
     }
@@ -524,7 +525,12 @@ export const planBatch = (input: {
     /** Reserva `quota` itens de um acervo — nenhum outro da leva os repete. */
     const claim = (key: string, items: readonly unknown[] | undefined, quota: number): unknown[] => {
       if (!items || items.length === 0) return [];
-      const stream = streamFor(key, items);
+      // Não deixa o acervo geral reintroduzir "dor" como sintoma em uma peça
+      // vestibular. Os itens específicos entram logo abaixo, com terminologia
+      // de vertigem, instabilidade, desequilíbrio e sensação de giro.
+      const eligible = isVestibular ? items.filter((item) => !mentionsPainAsSymptom(flatten(item))) : items;
+      if (!eligible.length) return [];
+      const stream = streamFor(key, eligible);
       const out: unknown[] = [];
       for (let n = 0; n < quota; n += 1) {
         const item = stream.take({ axis, extra: shotExtra, voice, salt: `${index}:${n}` });
