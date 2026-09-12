@@ -132,6 +132,39 @@ export const carouselTweetCopy = (
   support: closeThought(support ?? "", 116),
 });
 
+const EDITORIAL_TAIL = /\s*(?:[;|•·]|[.!?]\s+)?(?:obje(?:ç|c)(?:ão|oes|ões)(?:\s+mais\s+comuns?)?|dor(?:es)?|medo(?:s)?|perfil|público(?:\s+alvo)?)\s*:\s*/i;
+const ACTOR_WANTS = /^(?:(?:o|a)\s+)?(?:profissional|fisioterapeuta|acadêmico|acadêmica|clínica|equipe)\s+quer\s+/i;
+
+/**
+ * Último slide: uma intenção e uma ação, nunca o campo editorial inteiro.
+ * Também transforma "profissional quer receber..." em "Quer receber...?".
+ */
+export const carouselClosingCopy = (
+  title: string | null | undefined,
+  support: string | null | undefined,
+): { title: string; support: string } => {
+  const withoutEditorialTail = (title ?? "").split(EDITORIAL_TAIL)[0]?.trim() ?? "";
+  const shouldAsk = /^(?:quer\s+|(?:(?:o|a)\s+)?(?:profissional|fisioterapeuta|acadêmico|acadêmica|clínica|equipe)\s+quer\s+)/i.test(
+    withoutEditorialTail,
+  );
+  const questionBody = withoutEditorialTail
+    .replace(/^quer\s+/i, "")
+    .replace(ACTOR_WANTS, "")
+    .replace(/[.!?…]+$/, "")
+    .trim();
+  const compactTitle = closeThought(questionBody, 52);
+  const compactSupport = closeThought((support ?? "").split(EDITORIAL_TAIL)[0] ?? "", 48);
+
+  return {
+    title: compactTitle
+      ? shouldAsk
+        ? `Quer ${compactTitle.charAt(0).toLowerCase()}${compactTitle.slice(1)}?`
+        : compactTitle
+      : "",
+    support: compactSupport,
+  };
+};
+
 /* -------------------------------------------------------------------------- */
 /* 4. Palavra-cartaz                                                          */
 /* -------------------------------------------------------------------------- */
