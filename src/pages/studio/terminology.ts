@@ -138,9 +138,11 @@ export type TerminologyOptions = {
 
 /** Aplica as regras a uma string solta (usado também nos testes). */
 export const applyTerms = (text: string, options: TerminologyOptions = {}): string => {
-  const out = preAssessmentTerms(deprotocol(text));
-  return options.patientVoice ? selfAssessmentTerms(out) : out;
+  const out = deprotocol(text);
+  // Voz de paciente: fluxo direto com a Aliv.iA — nunca é o link do profissional.
+  return options.patientVoice ? selfAssessmentTerms(out) : preAssessmentTerms(out);
 };
+
 
 
 /**
