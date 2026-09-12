@@ -8,6 +8,7 @@
 import { createRng } from "@/pages/studio/rng";
 import type { BrandAudience } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
+import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
 
 export type NarrativeRouteKind =
   | "pain-to-desire"
@@ -106,7 +107,14 @@ export const buildNarrativeRoute = ({
   const routeSeed = `${seed}:v${variant}`;
   const rng = createRng(`narrative-route:${routeSeed}:${audience?.id ?? "brand"}`);
   const neighbor = neighborFor(audience, audiences ?? [], routeSeed);
-  const pains = [...first(audience?.pains), clean(dna.pain)].filter(Boolean);
+  const vestibular = matchesVestibular([
+    audience?.label,
+    audience?.keyword,
+    audience?.description,
+    audience?.hook,
+  ].filter(Boolean).join(" · "));
+  const rawPains = [...first(audience?.pains), clean(dna.pain)].filter(Boolean);
+  const pains = vestibular ? rawPains.filter((item) => !mentionsPainAsSymptom(item)) : rawPains;
   const desires = [...first(audience?.desires), clean(dna.desire)].filter(Boolean);
   const proofs = [...first(audience?.proof), clean(dna.belief)].filter(Boolean);
   const features = [clean(dna.offer), ...proofs].filter(Boolean);

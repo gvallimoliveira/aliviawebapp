@@ -52,7 +52,7 @@ const HEADLINES: { strong: string; rest: string }[] = [
   { strong: "Antes da manobra", rest: ", vem a avaliação de VPPB." },
   { strong: "Existe teste para isso", rest: ": a avaliação diz qual canal está envolvido." },
   { strong: "Tontura tem endereço", rest: ": canais semicirculares, cristais, posição." },
-  { strong: "Instabilidade não é dor", rest: ". É um sinal do sistema vestibular." },
+  { strong: "Instabilidade ao caminhar", rest: " pode ser um sinal vestibular." },
   { strong: "Quando o mundo parece rodar", rest: ", o sintoma é vertigem." },
   { strong: "Desequilíbrio e sensação de giro", rest: " pedem avaliação vestibular." },
 ];
@@ -63,7 +63,7 @@ const SUBS: string[] = [
   "Chamar tudo de labirintite atrasa o cuidado. Um sinal claro é a vertigem que começa ao virar na cama.",
   "As manobras posicionais corretivas não são exercício de força: são movimentos guiados para reposicionar os cristais.",
   "A investigação começa pela pergunta certa: o giro aparece na posição ou o desequilíbrio é constante?",
-  "Vertigem, instabilidade e desequilíbrio descrevem melhor esses quadros — dor não é o sintoma vestibular.",
+  "Vertigem, instabilidade, desequilíbrio e sensação de giro descrevem os sintomas vestibulares.",
 ];
 
 const QUOTES: string[] = [

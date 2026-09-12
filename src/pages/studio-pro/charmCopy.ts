@@ -134,7 +134,6 @@ export const findSubNicheCharm = (relation?: Relation): SubNicheCharm | undefine
   ]
     .filter(Boolean)
     .join(" · ");
-  const vestibular = matchesVestibular(probe);
   if (!probe.trim()) return undefined;
   return SUBNICHE_CHARM.find((row) => row.match.test(probe));
 };
@@ -214,6 +213,7 @@ export const applyCharm = (
   ]
     .filter(Boolean)
     .join(" · ");
+  const vestibular = matchesVestibular(probe);
 
   /**
    * TONTURA: o público vestibular ganha o vocabulário real (labirintite, VPPB,
