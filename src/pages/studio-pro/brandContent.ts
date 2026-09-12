@@ -287,7 +287,12 @@ const buildFromDna = (
   const offer = briefPhrases(dna.offer, 3);
   const pain = briefPhrases(dna.pain, 2);
   const desire = briefPhrases(dna.desire, 2);
-  const who = dna.primaryAudience?.trim() || niche;
+  const who = editorialAudience(dna.primaryAudience, {
+    clinical: /fisioter|cl[ií]nic|paciente|reabilita|terapia/i.test(
+      [niche, dna.description, dna.presentation, dna.offer].filter(Boolean).join(" "),
+    ),
+    fallback: niche,
+  });
   /** Vocabulário de oferta: "produto" só quando a marca vende produto. */
   const offerVoice = offerWords(dna, brand);
   const cta = dna.cta?.trim() || "Chamar no direct";
@@ -1081,7 +1086,12 @@ export const buildBrandContent = (
       ...composeHooks({
         brand,
         niche,
-        audience: dna.primaryAudience || audiences[0]?.label,
+        audience: editorialAudience(dna.primaryAudience, {
+          clinical: /fisioter|cl[ií]nic|paciente|reabilita|terapia/i.test(
+            [niche, dna.description, dna.presentation, dna.offer].filter(Boolean).join(" "),
+          ),
+          fallback: audiences[0]?.label || niche,
+        }),
         pain: dna.pain || audiences[0]?.pains?.[0],
         desire: dna.desire || audiences[0]?.desires?.[0],
         offer: dna.offer,
