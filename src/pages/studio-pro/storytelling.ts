@@ -11,6 +11,8 @@
  * Determinístico: mesma rota ⇒ mesmo texto.
  */
 import { isStale } from "@/pages/studio/persuasion";
+import { phraseSignature } from "@/pages/studio/picker";
+import { createRng } from "@/pages/studio/rng";
 import { applyTerms } from "@/pages/studio/terminology";
 import { sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import type { WorldContent } from "@/pages/studio/content/types";
@@ -61,7 +63,14 @@ const bigWord = (source?: string) => {
  */
 export const composeRouteCopy = (
   route: NarrativeRoute | undefined,
-  options: { brand?: string; patientVoice?: boolean } = {},
+  options: {
+    brand?: string;
+    patientVoice?: boolean;
+    /** Faz a mesma conexão ganhar outro ritmo em cada arte/lote. */
+    seed?: string;
+    /** Memória da marca: permite trocar o molde antes de abandonar a rota. */
+    weightOf?: (signature: string) => number;
+  } = {},
 ): Partial<WorldContent> => {
   if (!route) return {};
   const terms = (text: string) => applyTerms(text, { patientVoice: options.patientVoice });
@@ -79,45 +88,99 @@ export const composeRouteCopy = (
   const gain = desire || proof || feature;
   if (!lead || !turn) return {};
 
-  const out: Partial<WorldContent> = {};
-
-  const headline = { strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) };
-  if (usable(`${headline.strong} ${headline.rest}`) && headline.strong && headline.rest) {
-    out.headlines = [{ strong: terms(headline.strong), rest: terms(headline.rest) }];
-  }
-
-  const sub = (() => {
-    switch (route.kind) {
-      case "pain-to-desire":
-        return `${cap(lead)}. O caminho passa por ${low(turn)}.`;
-      case "desire-through-proof":
-        return `${cap(gain)}. A base é ${low(proof || turn)}.`;
-      case "feature-to-human":
-        return `${cap(turn)}. Na prática, ${low(gain)}.`;
-      default:
-        return `${cap(turn)} do começo ao fim: ${low(gain)}.`;
+  const buildFrame = (frame: number): Partial<WorldContent> => {
+    const out: Partial<WorldContent> = {};
+    const headlines = [
+      { strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
+      { strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
+      { strong: fit(`De ${low(lead)}`, 30), rest: fit(`a ${low(gain)}`, 42) },
+      { strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
+      { strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
+    ];
+    const headline = headlines[frame % headlines.length];
+    if (usable(`${headline.strong} ${headline.rest}`) && headline.strong && headline.rest) {
+      out.headlines = [{ strong: terms(headline.strong), rest: terms(headline.rest) }];
     }
-  })();
-  if (usable(sub) && sub.length <= 190) out.subs = [terms(fit(sub, 188) + (sub.endsWith(".") ? "." : ""))];
 
-  if (who) {
-    const kicker = shortKicker(who, 28);
-    if (kicker) out.kickers = [terms(kicker)];
-  }
+    const subsByKind: Record<NarrativeRoute["kind"], string[]> = {
+      "pain-to-desire": [
+        `${cap(lead)}. O caminho passa por ${low(turn)}.`,
+        `${cap(turn)} muda o ponto de partida: ${low(gain)}.`,
+        `Entre ${low(lead)} e ${low(gain)}, entra ${low(turn)}.`,
+        `${cap(gain)} não começa no fim. Começa com ${low(turn)}.`,
+        `${cap(lead)} pede outra resposta: ${low(turn)}.`,
+      ],
+      "desire-through-proof": [
+        `${cap(gain)}. A base é ${low(proof || turn)}.`,
+        `${cap(proof || turn)} dá base para ${low(gain)}.`,
+        `Antes de ${low(gain)}, vem ${low(proof || turn)}.`,
+        `${cap(gain)} ganha forma quando existe ${low(proof || turn)}.`,
+        `A diferença entre desejar e avançar: ${low(proof || turn)}.`,
+      ],
+      "feature-to-human": [
+        `${cap(turn)}. Na prática, ${low(gain)}.`,
+        `${cap(gain)} é o efeito humano de ${low(turn)}.`,
+        `${cap(turn)} existe para tornar possível ${low(gain)}.`,
+        `Por trás de ${low(gain)}, existe ${low(turn)}.`,
+        `${cap(turn)} no processo. ${cap(gain)} na experiência.`,
+      ],
+      "journey-bridge": [
+        `${cap(turn)} do começo ao fim: ${low(gain)}.`,
+        `${cap(lead)} é o início. ${cap(gain)} é a direção.`,
+        `O elo entre ${low(lead)} e ${low(gain)} é ${low(turn)}.`,
+        `${cap(turn)} conecta o ponto de partida a ${low(gain)}.`,
+        `Uma jornada coerente liga ${low(lead)} a ${low(gain)}.`,
+      ],
+    };
+    const sub = subsByKind[route.kind][frame % subsByKind[route.kind].length];
+    if (usable(sub) && sub.length <= 190) out.subs = [terms(fit(sub, 188))];
 
-  const closingTitle = fit(cap(gain), 52);
-  const closingSub = fit(cap(proof || tension || turn), 64);
-  if (closingTitle && closingSub && cta) {
-    out.closings = [{ title: terms(closingTitle), sub: terms(closingSub), cta: terms(fit(cta, 28)) }];
-  }
-
-  const big = bigWord(gain) || bigWord(turn);
-  if (big) {
-    const tail = fit(cap(turn === big ? gain : turn), 46);
-    if (tail) {
-      out.typos = [{ lead: terms(fit(cap(lead), 26)), big: terms(big).toUpperCase(), tail: terms(tail) }];
+    if (who) {
+      const kickerFrames = [who, `Para ${low(who)}`, `No dia a dia de ${low(who)}`];
+      const kicker = shortKicker(kickerFrames[frame % kickerFrames.length], 28);
+      if (kicker) out.kickers = [terms(kicker)];
     }
-  }
 
-  return out;
+    const closingTitles = [cap(gain), `O próximo passo: ${low(gain)}`, `Agora, ${low(gain)}`, `Pronto para ${low(gain)}?`];
+    const closingSupports = [proof || tension || turn, turn, lead, proof || turn];
+    const closingTitle = fit(closingTitles[frame % closingTitles.length], 52);
+    const closingSub = fit(cap(closingSupports[frame % closingSupports.length]), 64);
+    if (closingTitle && closingSub && cta) {
+      out.closings = [{ title: terms(closingTitle), sub: terms(closingSub), cta: terms(fit(cta, 28)) }];
+    }
+
+    const bigSources = [gain, turn, lead];
+    const big = bigWord(bigSources[frame % bigSources.length]) || bigWord(gain) || bigWord(turn);
+    if (big) {
+      const leads = [lead, turn, gain];
+      const tails = [turn, gain, lead];
+      const tail = fit(cap(tails[frame % tails.length]), 46);
+      if (tail) {
+        out.typos = [{ lead: terms(fit(cap(leads[frame % leads.length]), 26)), big: terms(big).toUpperCase(), tail: terms(tail) }];
+      }
+    }
+    return out;
+  };
+
+  const frameCount = 5;
+  const offset = createRng(`storytelling:${options.seed ?? route.signature}`).int(frameCount);
+  const frames = Array.from({ length: frameCount }, (_, index) => (index + offset) % frameCount);
+  if (!options.weightOf) return buildFrame(frames[0]);
+
+  const scored = frames.map((frame, order) => {
+    const content = buildFrame(frame);
+    const signatures: string[] = [];
+    const collect = (value: unknown) => {
+      if (typeof value === "string" && value.trim()) signatures.push(phraseSignature(value));
+      else if (Array.isArray(value)) value.forEach(collect);
+      else if (value && typeof value === "object") Object.values(value as Record<string, unknown>).forEach(collect);
+    };
+    collect(content);
+    const freshness = signatures.length
+      ? signatures.reduce((sum, signature) => sum + (options.weightOf?.(signature) ?? 1), 0) / signatures.length
+      : 0;
+    return { content, freshness, order };
+  });
+  scored.sort((a, b) => b.freshness - a.freshness || a.order - b.order);
+  return scored[0].content;
 };

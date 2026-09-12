@@ -5,3 +5,4 @@
 - [x] Enriquecer vínculos reais do Aliv.iA
 - [x] Atualizar ajuda nos três idiomas
 - [x] Testar coerência, variedade e determinismo
+- [x] Ampliar moldes textuais e rotatividade entre lotes

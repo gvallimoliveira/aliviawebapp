@@ -523,7 +523,10 @@ export const planBatch = (input: {
      */
     if (!carousel && shotRoute) {
       const fresh = (text: string) => (weightOf?.(phraseSignature(text)) ?? 1) > 0.25;
-      const composed = composeRouteCopy(shotRoute);
+      const composed = composeRouteCopy(shotRoute, {
+        seed: `${seed}:art:${index}`,
+        weightOf,
+      });
       (Object.keys(composed) as (keyof typeof composed)[]).forEach((slot) => {
         const items = (composed[slot] ?? []) as unknown[];
         const kept = items.filter((item) => fresh(flatten(item)));
