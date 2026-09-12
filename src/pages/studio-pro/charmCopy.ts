@@ -101,12 +101,13 @@ export const SUBNICHE_CHARM: SubNicheCharm[] = [
     match: /vestibular|tontura|vertigem|labirintite|equil[ií]brio corporal/i,
     cold: "Tratamento eficaz para labirintite e tontura. Entre em contato com a clínica.",
     headline: {
-      strong: "Tontura e vertigem",
-      rest: " não devem ditar o seu ritmo.",
+      strong: "Nem toda tontura é labirintite",
+      rest: ". Muitas vezes é um cristal no canal errado.",
     },
-    sub: "Com avaliação estruturada, o problema é investigado e tratado direto na causa.",
-    cta: "Recuperar o meu equilíbrio",
+    sub: "A avaliação de VPPB mostra qual canal semicircular está envolvido; as manobras posicionais corretivas vêm depois disso.",
+    cta: "Investigar a minha tontura",
   },
+
   {
     id: "feridas",
     match: /ferida|[uú]lcera|cicatriza[çc][ãa]o|curativo|les[ãa]o de pele/i,
