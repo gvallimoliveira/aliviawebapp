@@ -15,7 +15,7 @@ const relation = {
   audience: { id: "tontura", label: "Paciente com tontura", pains: [], desires: [] },
 } as unknown as Relation;
 
-const base = WORLDS.find((world) => world.id === "patient") ?? WORLDS[0];
+const base = WORLDS.patient;
 
 describe("léxico vestibular", () => {
   it("reconhece o público de tontura", () => {
