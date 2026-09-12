@@ -70,6 +70,13 @@ export type BrandAudience = {
    * comunicação própria, mas NUNCA entra na contagem oficial de públicos.
    */
   parentId?: string;
+  /**
+   * PÚBLICO SÓ MANUAL: fica fora do sorteio da Visão 360°. A arte só nasce
+   * desse recorte quando a pessoa escolhe o público na aba do topo. Serve para
+   * temas muito específicos (ex.: feridas) que, entrando no sorteio, dominam
+   * os lotes seguintes e travam a variedade da marca.
+   */
+  manualOnly?: boolean;
 };
 
 /** Termo que a arte deve gritar para o público se reconhecer. */
@@ -148,6 +155,7 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
         hook: String(row.hook ?? "").trim() || undefined,
         hooks: asStringArray(row.hooks),
         parentId: String(row.parentId ?? row.parent_id ?? "").trim() || undefined,
+        manualOnly: row.manualOnly === true || row.manual_only === true || undefined,
       };
     })
     .filter((a): a is BrandAudience => a !== null);
@@ -169,6 +177,7 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
       ...(a.hook?.trim() ? { hook: a.hook.trim() } : {}),
       ...(a.hooks?.length ? { hooks: a.hooks.map((h) => h.trim()).filter(Boolean) } : {}),
       ...(a.parentId?.trim() ? { parentId: a.parentId.trim() } : {}),
+      ...(a.manualOnly ? { manualOnly: true } : {}),
     }));
 
 /**
