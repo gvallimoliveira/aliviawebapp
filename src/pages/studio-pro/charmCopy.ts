@@ -30,6 +30,7 @@ import { professionFor, wantsProfession } from "./professions";
 
 import { findAliviaCoreCharm, isAliviaCoreBrand, type AliviaCoreCharmRow } from "./aliviaCoreCharm";
 import { matchesVestibular, vestibularLines } from "./vestibularLexicon";
+import { matchesMsk, mskLines } from "./mskLexicon";
 
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
