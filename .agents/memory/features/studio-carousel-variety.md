@@ -12,5 +12,6 @@ O bloco de carrossel escolhe o roteiro por índice de grupo (`carousels[group % 
 - Quando um público tem 4+ roteiros próprios, o acervo genérico não é misturado: assunto selecionado permanece dirigido.
 - Histórias também nascem das dores, desejos e provas do público, com cena, virada e conclusão de valor.
 - Todo carrossel usa na capa um gancho ativo da Biblioteca de Ganchos da marca, escolhido por afinidade com a tese do roteiro e sem repetir no lote. A capa preserva a tese como ponte, o miolo mantém o raciocínio original e o último slide converte o desejo do público no CTA configurado pela marca. A potencialização nunca altera a quantidade de slides.
+- A capa é deliberadamente clean: manchete completa de até 56 caracteres e um único apoio de até 72. Nunca juntar gancho + explicação + tese, nem repartir uma mesma frase entre título e apoio. Em fundo escuro, destaque de palavra somente com chip de contraste semântico garantido.
 
 Nunca reduzir o repertório a um roteiro só, remover os IDs ou ignorar a memória na escolha: o sintoma volta como "carrosséis iguais repetidas vezes". Testes guarda: `src/test/studio-carousel-variety.test.ts` e `src/test/studio-director.test.ts`.
