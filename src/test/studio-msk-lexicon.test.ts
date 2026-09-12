@@ -33,7 +33,7 @@ describe("léxico musculoesquelético", () => {
       ["Paciente em pós-operatório de ombro", "manguito"],
       ["Paciente com dor crônica no joelho", "patelofemoral"],
     ].forEach(([who]) => {
-      const out = applyCharm(WORLDS.paciente, "vender", relation(who as string, who as string), "Marca Teste");
+      const out = applyCharm(WORLDS.paciente, "venda", relation(who as string, who as string), "Marca Teste");
       const text = [...out.subs, ...out.headlines.map((h) => `${h.strong}${h.rest}`), ...out.lists.flatMap((l) => l.items)]
         .join(" ")
         .toLowerCase();
