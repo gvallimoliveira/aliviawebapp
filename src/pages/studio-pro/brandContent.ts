@@ -23,7 +23,7 @@ import { applyTerminology, patientVoiceFor } from "@/pages/studio/terminology";
 import { marketStatsFor } from "@/pages/studio/marketFacts";
 
 import { condensePhrase } from "./textFit";
-import { sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
+import { editorialAudience, sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 import { applyFormatInsights, readFormatInsights } from "./formatInsights";
 
@@ -168,10 +168,13 @@ const ingredientsOf = (
   const briefPains = dna?.pain ? [dna.pain] : [];
   const briefDesires = dna?.desire ? [dna.desire] : [];
   const briefSolutions = [dna?.belief, dna?.offer].filter(Boolean) as string[];
+  const clinical = /fisioter|cl[ií]nic|paciente|reabilita|terapia/i.test(
+    [kit.niche, kit.description, dna?.presentation, dna?.offer].filter(Boolean).join(" "),
+  );
   return {
     brand,
     niche,
-    audience: audience?.label.trim() || dna?.primaryAudience,
+    audience: audience?.label.trim() || editorialAudience(dna?.primaryAudience, { clinical, fallback: niche }),
     pains: [...briefPains, ...collect((a) => a.pains)],
     desires: [...briefDesires, ...collect((a) => a.desires)],
     solutions: [...briefSolutions, ...collect((a) => a.proof)],

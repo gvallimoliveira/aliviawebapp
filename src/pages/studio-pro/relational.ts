@@ -14,6 +14,7 @@ import { audienceHooks, audienceKeyword, type BrandAudience, type ContentAngle }
 import type { BrandDna } from "./brandDnaKit";
 import { buildNarrativeRoutes, type NarrativeRoute } from "./synapses";
 import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
+import { editorialAudience } from "@/pages/studio/typographyGuards";
 
 export type Relation = {
   audience?: BrandAudience;
@@ -102,13 +103,17 @@ export const pickRelation = ({
     ? audienceHooks(audience)
     : [strip(dna.presentation) || `Você que acompanha ${brand}`].filter(Boolean);
 
+  const clinical = /fisioter|cl[ií]nic|paciente|reabilita|terapia/i.test(
+    [dna.niche, dna.description, dna.presentation, dna.offer].filter(Boolean).join(" "),
+  );
+  const primaryAudience = editorialAudience(dna.primaryAudience, { clinical, fallback: clinical ? "Paciente" : dna.niche });
   const keyword = audience
     ? audienceKeyword(audience)
-    : strip(dna.primaryAudience) || strip(dna.niche) || brand;
+    : strip(primaryAudience) || strip(dna.niche) || brand;
 
   return {
     audience,
-    who: audience?.label.trim() || strip(dna.primaryAudience) || keyword,
+    who: audience?.label.trim() || strip(primaryAudience) || keyword,
     keyword,
     hook: rotate(hooks, shift)[0] ?? `Você que busca ${keyword.toLowerCase()}`,
     hooks: rotate(hooks, shift),

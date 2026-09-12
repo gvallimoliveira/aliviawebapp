@@ -85,6 +85,8 @@ describe("motor textual relacional", () => {
       variationSeed: "texto-enxuto",
     });
     expect(content.sales.audience.length).toBeLessThanOrEqual(40);
+    expect(allText(content)).not.toMatch(/adulto|rio de janeiro|zona sul|barra|recreio/);
+    expect(allText(content)).toContain("paciente com dor persistente");
     content.sales.objections.forEach((item) => expect(item.length).toBeLessThanOrEqual(96));
   });
 

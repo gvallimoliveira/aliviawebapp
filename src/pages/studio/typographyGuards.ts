@@ -25,12 +25,37 @@ import { condensePhrase } from "@/pages/studio-pro/textFit";
 const AUDIENCE_BREAK = /\s*(?:[;•·|]|\/|\be\s+perfil\b|\bou\s+perfil\b)\s*/i;
 
 /**
+ * Público declarado no briefing pode conter segmentação de mídia (idade e
+ * praça), mas isso não é uma chamada editorial. Remove esse cabeçalho antes de
+ * qualquer texto da arte; em marcas clínicas, preserva o motivo relevante.
+ */
+export const editorialAudience = (
+  raw: string | null | undefined,
+  options: { clinical?: boolean; fallback?: string } = {},
+): string => {
+  const clean = (raw ?? "").replace(/\s+/g, " ").trim();
+  if (!clean) return options.fallback ?? "";
+  const withoutParens = clean.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
+  const isMediaTarget =
+    /^(?:pessoas?\s+)?adultos?\b/i.test(withoutParens) ||
+    /\b(?:rio de janeiro|zona sul|barra(?: da tijuca)?|recreio)\b/i.test(withoutParens);
+  if (!isMediaTarget) return withoutParens;
+
+  const context = withoutParens.match(/\bcom\s+(.+)$/i)?.[1]
+    ?.split(AUDIENCE_BREAK)[0]
+    ?.replace(/[,:;.!?]+$/, "")
+    .trim();
+  const noun = options.clinical ? "Paciente" : "Pessoa";
+  return context ? `${noun} com ${context}` : options.fallback ?? noun;
+};
+
+/**
  * Rótulo curto para a linha de chamada (kicker/tag).
  * "Adulto do Rio de Janeiro (Zona Sul, Barra e Recreio) com dor persistente,
  *  pós-operatório ou meta esportiva; e perfil 60+..." → "ADULTO COM DOR PERSISTENTE".
  */
 export const shortKicker = (raw: string | null | undefined, max = 30): string => {
-  const base = (raw ?? "").replace(/\s+/g, " ").trim();
+  const base = editorialAudience(raw).replace(/\s+/g, " ").trim();
   if (!base) return "";
   const noParens = base.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
   const single = noParens.split(AUDIENCE_BREAK)[0]?.trim() ?? noParens;
