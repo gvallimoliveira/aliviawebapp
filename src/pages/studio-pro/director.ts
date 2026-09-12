@@ -419,9 +419,20 @@ export const planBatch = (input: {
       voice,
       salt: `group:${block.slide.group}:script:${block.slide.script}`,
     });
+    const scriptWords = selected
+      ? normalize(flatten(selected)).split(/[^a-z0-9]+/).filter((word) => word.length > 4)
+      : [];
     const selectedHook = carouselHookStream.take({
       axis: groupAxis,
-      extra: [...extra, ...normalize(`${relation?.pain ?? ""} ${relation?.desire ?? ""} ${relation?.proof ?? ""}`).split(/[^a-z0-9]+/).filter((word) => word.length > 4)],
+      // O gancho precisa combinar com a tese do roteiro, não apenas pertencer à
+      // marca. Palavras do próprio carrossel pesam junto com dor/desejo/prova.
+      extra: [
+        ...extra,
+        ...scriptWords,
+        ...normalize(`${relation?.pain ?? ""} ${relation?.desire ?? ""} ${relation?.proof ?? ""}`)
+          .split(/[^a-z0-9]+/)
+          .filter((word) => word.length > 4),
+      ],
       voice,
       salt: `group:${block.slide.group}:hook`,
     });
