@@ -417,6 +417,36 @@ export const planBatch = (input: {
   const relText = (relation?.axis === "desire" ? relation?.desire : relation?.pain || relation?.desire) ?? "";
 
   /**
+   * VOCABULÁRIO DE NICHO (tontura e musculoesquelético): antes, o acervo do
+   * léxico entrava no fim da fila e quase nunca era sorteado. Agora o diretor
+   * o consulta direto e coloca essas frases NA FRENTE da arte, uma dupla por
+   * peça, rotativa pela semente — é isso que faz o vocabulário aparecer.
+   */
+  const lexProbe = [
+    (relation as Relation | undefined)?.keyword,
+    (relation as Relation | undefined)?.who,
+    (relation as Relation | undefined)?.audience?.label,
+    (relation as Relation | undefined)?.audience?.description,
+    (relation as Relation | undefined)?.hook,
+    relText,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const lexiconFor = (index: number) => {
+    if (!lexProbe) return undefined;
+    const salt = `${seed}:lex:${index}`;
+    if (matchesVestibular(lexProbe)) {
+      const lines = vestibularLines(salt);
+      return { ...lines, heading: "Tontura: o que é o quê" };
+    }
+    if (!matchesMsk(lexProbe)) return undefined;
+    const lines = mskLines(lexProbe, salt);
+    if (!lines) return undefined;
+    return { ...lines, heading: `${lines.topic.glossary[0]?.term ?? "Lesão"}: o que é o quê` };
+  };
+
+
+  /**
    * Reserva UM roteiro distinto por grupo de carrossel. Todos os slides daquele
    * grupo recebem o mesmo roteiro; o grupo seguinte obrigatoriamente recebe
    * outro enquanto houver repertório. Antes, o índice visual era usado para
