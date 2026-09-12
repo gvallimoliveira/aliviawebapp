@@ -177,6 +177,7 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
       ...(a.hook?.trim() ? { hook: a.hook.trim() } : {}),
       ...(a.hooks?.length ? { hooks: a.hooks.map((h) => h.trim()).filter(Boolean) } : {}),
       ...(a.parentId?.trim() ? { parentId: a.parentId.trim() } : {}),
+      ...(a.manualOnly ? { manualOnly: true } : {}),
     }));
 
 /**
