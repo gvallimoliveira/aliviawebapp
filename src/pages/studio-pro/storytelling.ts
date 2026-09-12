@@ -177,7 +177,7 @@ export const composeRouteCopy = (
     };
     collect(content);
     const freshness = signatures.length
-      ? signatures.reduce((sum, signature) => sum + options.weightOf?.(signature), 0) / signatures.length
+      ? signatures.reduce((sum, signature) => sum + (options.weightOf?.(signature) ?? 1), 0) / signatures.length
       : 0;
     return { content, freshness, order };
   });
