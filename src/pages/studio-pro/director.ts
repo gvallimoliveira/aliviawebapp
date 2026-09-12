@@ -40,6 +40,8 @@ import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typograph
 import type { BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
+import { matchesVestibular, vestibularLines } from "./vestibularLexicon";
+import { matchesMsk, mskLines } from "./mskLexicon";
 
 
 export const DIRECTOR_AXES = [
