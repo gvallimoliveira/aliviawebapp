@@ -47,6 +47,16 @@ describe("motor textual relacional", () => {
     expect(dna.forbidden).toContain("cura");
   });
 
+  it("separa desejo de objeção quando ambos vieram no mesmo campo", () => {
+    const dna = buildBrandDna({
+      briefAnswers: {
+        desejo: "Desejo: voltar a correr sem medo; Objeções mais comuns: acha que vai demorar",
+      },
+    });
+    expect(dna.desire).toBe("voltar a correr sem medo");
+    expect(dna.objection).toBe("acha que vai demorar");
+  });
+
   it("escreve a partir do manual, não do acervo genérico", () => {
     const content = buildSegmentContent({
       kit,

@@ -152,6 +152,17 @@ describe("Diretor criativo", () => {
     expect(directed.cta.sub).toBe("Conheça o raciocínio clínico");
   });
 
+  it("não promove rótulo editorial como fecho do carrossel", () => {
+    const carousel = WORLDS.pro.carousels[0];
+    const directed = directCarouselWithHook(
+      carousel,
+      { hook: "Gancho", strong: "Uma decisão muda o caminho", rest: "." },
+      { desire: "Objeções mais comuns:", cta: "Agendar avaliação" },
+    );
+    expect(directed.cta.title).toBe(carousel.cta.title);
+    expect(`${directed.cta.title} ${directed.cta.sub}`).not.toMatch(/objeções mais comuns/i);
+  });
+
   it("mantém a capa curta e não separa uma frase entre título e apoio", () => {
     const directed = directCarouselWithHook(
       WORLDS.pro.carousels[0],

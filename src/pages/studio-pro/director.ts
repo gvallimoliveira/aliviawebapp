@@ -126,7 +126,9 @@ export const directCarouselWithHook = (
      ponte única; detalhes do gancho permanecem para a legenda e o miolo. */
   const cover = carouselCoverCopy(titleSource, originalThesis || hook.sub || carousel.coverSub);
 
-  const desire = stripEnd(relation?.desire);
+  const desireCandidate = stripEnd(relation?.desire);
+  const editorialLabel = /^(?:obje(?:ç|c)(?:ão|oes|ões)(?:\s+mais\s+comuns?)?|desejo|dor|medo|público(?:\s+alvo)?|perfil)\s*:?$/i;
+  const desire = editorialLabel.test(desireCandidate) ? "" : desireCandidate;
   const action = stripEnd(hook.cta) || stripEnd(relation?.cta) || stripEnd(carousel.cta.sub);
   const desireTitle = desire ? `Quer ${lowerFirst(desire)}?` : carousel.cta.title;
 

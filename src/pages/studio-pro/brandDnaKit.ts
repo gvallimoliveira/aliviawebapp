@@ -27,8 +27,10 @@ export type BrandDna = {
   profile?: string;
   /** Maior dor declarada no briefing. */
   pain?: string;
-  /** Maior desejo (e objeção) declarado no briefing. */
+  /** Maior desejo declarado no briefing. */
   desire?: string;
+  /** Objeção separada do desejo; nunca deve virar benefício ou fecho. */
+  objection?: string;
   /** CTA preferido da marca. */
   cta?: string;
   /** Tom declarado (diretriz, nunca renderizado). */
@@ -46,6 +48,21 @@ export type BrandDna = {
 };
 
 const clean = (value?: string | null) => (value ?? "").trim().replace(/\s+/g, " ");
+
+/** Separa os dois assuntos reunidos pelo campo histórico "desejo e objeção". */
+const splitDesireAndObjection = (value?: string): { desire?: string; objection?: string } => {
+  const source = clean(value);
+  if (!source) return {};
+
+  const desireLabel = /(?:^|[;|•·])\s*(?:maior\s+)?desejo\s*:\s*/i;
+  const objectionLabel = /(?:^|[;|•·])\s*obje(?:ç|c)(?:ão|oes|ões)(?:\s+mais\s+comuns?)?\s*:\s*/i;
+  const objectionAt = source.search(objectionLabel);
+  if (objectionAt < 0) return { desire: source.replace(desireLabel, "").trim() || undefined };
+
+  const desire = source.slice(0, objectionAt).replace(desireLabel, "").replace(/[;|•·\s]+$/, "").trim();
+  const objection = source.slice(objectionAt).replace(objectionLabel, "").trim();
+  return { desire: desire || undefined, objection: objection || undefined };
+};
 
 /** Quebra "cura, milagre; garantia de resultado" em termos individuais. */
 const splitTerms = (value?: string | null): string[] =>
@@ -71,6 +88,7 @@ export type BrandDnaInput = {
 export const buildBrandDna = (input: BrandDnaInput): BrandDna => {
   const brief: BriefAnswers = readBriefAnswers(input.briefAnswers);
   const pick = (id: string) => clean(brief[id]) || undefined;
+  const desire = splitDesireAndObjection(pick("desejo"));
 
   return {
     presentation: pick("apresentacao"),
@@ -80,7 +98,8 @@ export const buildBrandDna = (input: BrandDnaInput): BrandDna => {
     primaryAudience: pick("publico_primario"),
     profile: pick("perfil"),
     pain: pick("dor"),
-    desire: pick("desejo"),
+    desire: desire.desire,
+    objection: desire.objection,
     cta: pick("cta"),
     tone: pick("tom") || clean(input.tone) || undefined,
     technicalLevel: pick("nivel_tecnico"),
