@@ -59,8 +59,36 @@ describe("Regra 1 — autoavaliação no mundo do paciente", () => {
     expect(isPatientVoice("Esportista amador")).toBe(true);
     expect(isPatientVoice("Dono de clínica de fisioterapia")).toBe(false);
     expect(isPatientVoice("Fisioterapeuta autônomo")).toBe(false);
+    expect(isPatientVoice("Clínica que atende dor crônica")).toBe(false);
+    expect(isPatientVoice("Professor com alunos que tratam dor lombar")).toBe(false);
+  });
+
+  it("frase com ator profissional nunca vira autoavaliação", () => {
+    const clinic = "Clínica que não padroniza avaliação não escala";
+    expect(selfAssessmentTerms(clinic)).toBe(clinic);
+    expect(applyTerms(clinic, { patientVoice: true })).toBe(clinic);
+    const pro = "Fisioterapeuta que repete a mesma avaliação em todo paciente";
+    expect(applyTerms(pro, { patientVoice: true })).toBe(pro);
   });
 });
+
+describe("Regra 3 — link enviado ao paciente é pré-avaliação", () => {
+  it("usa pré-avaliação quando fala do link/convite", () => {
+    expect(preAssessmentTerms("Envie o link de avaliação antes da consulta")).toBe(
+      "Envie o link de pré-avaliação antes da consulta",
+    );
+    expect(applyTerms("O paciente chega preenchido: avaliação enviada por link")).toBe(
+      "O paciente chega preenchido: pré-avaliação enviada por link",
+    );
+  });
+
+  it("não toca avaliação comum nem reavaliação", () => {
+    expect(preAssessmentTerms("Avaliação padronizada da equipe")).toBe("Avaliação padronizada da equipe");
+    expect(preAssessmentTerms("Reavaliação enviada por link")).toBe("Reavaliação enviada por link");
+    expect(preAssessmentTerms("Link do plano de exercícios")).toBe("Link do plano de exercícios");
+  });
+});
+
 
 describe("Regra 2 — a marca nunca afirma ter protocolo", () => {
   it("troca afirmação por alternativa aprovada", () => {
