@@ -514,7 +514,7 @@ const finish = (
     const slides = carousels[script].slides.length;
     // Exatamente capa + miolo + CTA. Forçar mínimo de quatro criava um slide
     // vazio quando o roteiro tinha apenas um miolo e também confundia a memória.
-    const total = Math.min(6, Math.max(3, slides + 2));
+    const total = Math.min(7, Math.max(3, slides + 2));
     for (let i = 0; i < total; i += 1) {
       expanded.push({ ...block, slide: { index: i, total, group, script } });
     }
