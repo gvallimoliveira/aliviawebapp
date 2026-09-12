@@ -514,6 +514,24 @@ export const planBatch = (input: {
       });
     }
 
+    /**
+     * A rota narrativa passa a ESCREVER, não só a pesar a escolha: as frases
+     * compostas com a tensão/entrega/prova/desejo desta arte entram na frente
+     * do acervo. Frase já muito usada pela marca (memória) é descartada.
+     */
+    if (!carousel && shotRoute) {
+      const fresh = (text: string) => (weightOf?.(phraseSignature(text)) ?? 1) > 0.25;
+      const composed = composeRouteCopy(shotRoute);
+      (Object.keys(composed) as (keyof typeof composed)[]).forEach((slot) => {
+        const items = (composed[slot] ?? []) as unknown[];
+        const kept = items.filter((item) => fresh(flatten(item)));
+        if (!kept.length) return;
+        const current = ((reserved as Record<string, unknown>)[slot] as unknown[] | undefined) ?? [];
+        (reserved as Record<string, unknown>)[slot] = [...kept, ...current];
+      });
+    }
+
+
     let sales: WorldSales | undefined;
     if (content.sales && !carousel) {
       sales = { ...content.sales };
