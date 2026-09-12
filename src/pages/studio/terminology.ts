@@ -34,6 +34,24 @@ const THIRD_PARTY_AFTER =
 /** Trechos antes de "avaliação" que também indicam terceiro conduzindo. */
 const THIRD_PARTY_BEFORE = /(procurar|buscar|marcar|agendar|indicar|encaminhar)\s+(uma\s+|a\s+)?$/i;
 
+/**
+ * ATOR PROFISSIONAL NA FRASE — a autoavaliação é um fluxo só entre paciente e
+ * Aliv.iA. Se a frase fala de clínica, fisioterapeuta, equipe, secretária,
+ * acadêmico etc., NÃO é autoavaliação: lá existe profissional envolvido e o
+ * termo correto é "avaliação"/"reavaliação" (ou "pré-avaliação" quando é o
+ * link enviado ao paciente antes da consulta).
+ */
+const PRO_ACTOR =
+  /cl[íi]nic|fisioterapeut|profissional|profissionai|secret[áa]ri|recep[çc]|equipe|time\s+cl[íi]nico|consult[óo]rio|acad[êe]mic|professor|docent|estudante|aluno|supervis|preparador|terapeut|especialista|m[ée]dic/i;
+
+/**
+ * O LINK ENVIADO PELO PROFISSIONAL É PRÉ-AVALIAÇÃO — quando a frase fala do
+ * link/convite que a clínica, o profissional ou o acadêmico manda ao paciente
+ * antes da consulta, o termo é "pré-avaliação".
+ */
+const PRE_ASSESSMENT_CONTEXT =
+  /(link|convite|envi(a|o|ar|ada|ado)|manda(r|o)|antes\s+d(a|o)\s+(primeira\s+)?(consulta|sess[ãa]o|atendimento)|chega\s+preenchid|preenchid[ao]\s+antes)/i;
+
 const keepCase = (sample: string, word: string) => {
   if (sample === sample.toUpperCase() && /[A-ZÁ-Ú]/.test(sample)) return word.toUpperCase();
   if (sample[0] === sample[0]?.toUpperCase()) return word.charAt(0).toUpperCase() + word.slice(1);
@@ -42,21 +60,39 @@ const keepCase = (sample: string, word: string) => {
 
 /**
  * Troca "avaliação(ões)" por "autoavaliação(ões)" preservando capitalização.
- * "reavaliação", "autoavaliação" e avaliações de terceiro ficam intactas.
+ * "reavaliação", "autoavaliação", "pré-avaliação" e avaliações de terceiro
+ * ficam intactas; frases com ator profissional também.
  */
 export const selfAssessmentTerms = (text: string): string => {
   if (!text) return text;
+  if (PRO_ACTOR.test(text)) return text;
   return text.replace(/(\w*?)(avalia[çc](?:[ãa]o|[õo]es))/gi, (match, prefix: string, word: string, offset: number) => {
     // já é auto/re-avaliação, ou parte de outra palavra (ex. "reavaliação")
     if (prefix) return match;
     const before = text.slice(Math.max(0, offset - 24), offset);
-    if (/\b(auto|re)\s*$/i.test(before)) return match;
+    if (/\b(auto|re|pr[ée])[\s-]*$/i.test(before)) return match;
     if (THIRD_PARTY_BEFORE.test(before)) return match;
     const after = text.slice(offset + word.length);
     if (THIRD_PARTY_AFTER.test(after)) return match;
     return keepCase(word, `auto${word.toLowerCase()}`);
   });
 };
+
+/**
+ * Troca "avaliação" por "pré-avaliação" quando a frase fala do link/convite
+ * que o profissional envia ao paciente antes do atendimento.
+ */
+export const preAssessmentTerms = (text: string): string => {
+  if (!text || !/avalia[çc](?:[ãa]o|[õo]es)/i.test(text)) return text;
+  if (!PRE_ASSESSMENT_CONTEXT.test(text)) return text;
+  return text.replace(/(\w*?)(avalia[çc](?:[ãa]o|[õo]es))/gi, (match, prefix: string, word: string, offset: number) => {
+    if (prefix) return match;
+    const before = text.slice(Math.max(0, offset - 24), offset);
+    if (/\b(auto|re|pr[ée])[\s-]*$/i.test(before)) return match;
+    return keepCase(word, `pré-${word.toLowerCase()}`);
+  });
+};
+
 
 /* ------------------------------------------------------------------ *
  * REGRA 2 — nada de "protocolo"
@@ -103,8 +139,11 @@ export type TerminologyOptions = {
 /** Aplica as regras a uma string solta (usado também nos testes). */
 export const applyTerms = (text: string, options: TerminologyOptions = {}): string => {
   const out = deprotocol(text);
-  return options.patientVoice ? selfAssessmentTerms(out) : out;
+  // Voz de paciente: fluxo direto com a Aliv.iA — nunca é o link do profissional.
+  return options.patientVoice ? selfAssessmentTerms(out) : preAssessmentTerms(out);
 };
+
+
 
 /**
  * Varredura barata: só reconstrói o nó quando alguma string realmente mudou —
@@ -162,8 +201,17 @@ export const applyTerminology = (content: WorldContent, options: TerminologyOpti
 const PATIENT_AUDIENCE =
   /paciente|dor\b|dor\s+cr[oô]nica|dor\s+persistente|lombar|coluna|joelho|ombro|les[ãa]o|p[oó]s[-\s]?operat[oó]rio|p[oó]s[-\s]?cir[uú]rgic|60\s*\+|idos[oa]|terceira idade|esportista|atleta|corredor|corrida|praticante/i;
 
-/** A relação da arte fala com paciente? (aceita rótulo, palavra-chave, gancho) */
-export const isPatientVoice = (probe: string): boolean => PATIENT_AUDIENCE.test(probe ?? "");
+/**
+ * A relação da arte fala com paciente? (aceita rótulo, palavra-chave, gancho)
+ * Público com ator profissional (clínica, fisioterapeuta, equipe, acadêmico)
+ * NUNCA é voz de paciente — ali não existe autoavaliação.
+ */
+export const isPatientVoice = (probe: string): boolean => {
+  const text = probe ?? "";
+  if (PRO_ACTOR.test(text)) return false;
+  return PATIENT_AUDIENCE.test(text);
+};
+
 
 /**
  * Decide o modo "autoavaliação" de uma arte: só vale para a marca clínica dona
