@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it } from "vitest";
 import CarouselBlock from "@/pages/studio/blocks/CarouselBlock";
 import { WORLDS } from "@/pages/studio/content";
+import { buildCoverage } from "@/pages/studio/coverage";
 import { createPicker } from "@/pages/studio/picker";
 import { createRng } from "@/pages/studio/rng";
 import { personaForSeed } from "@/pages/studio/personas";
@@ -20,12 +21,13 @@ const carousel = {
 
 const content = { ...WORLDS.pro, carousels: [carousel] };
 const persona = personaForSeed("fio-teste");
-const picker = createPicker();
+const picker = createPicker(buildCoverage("pro", content, {}), () => {});
 
 beforeAll(() => {
   class IntersectionObserverMock implements IntersectionObserver {
     readonly root = null;
     readonly rootMargin = "0px";
+    readonly scrollMargin = "0px";
     readonly thresholds = [0];
     disconnect() {}
     observe() {}
