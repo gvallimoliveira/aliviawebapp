@@ -105,6 +105,10 @@ export const CAROUSEL_SUPPORT_MAX = 72;
 const DANGLING_CAROUSEL_END =
   /\b(?:e|ou|mas|que|de|da|do|das|dos|em|no|na|nos|nas|com|sem|por|para|se|como|quando|onde|um|uma|me)$/i;
 
+/** Comandos que anunciam uma ação, mas ainda não dizem qual é a ação. */
+const ORPHAN_CAROUSEL_COMMAND =
+  /^(?:pare|deixe|evite|comece|continue|aprenda|descubra|entenda|veja)\s+(?:de|a|com|por|para)?[.!?…“”\"]*$/i;
+
 const closeThought = (raw: string, max: number): string => {
   const clean = raw.replace(/\s+/g, " ").trim();
   if (!clean) return "";
@@ -124,9 +128,14 @@ const closeThought = (raw: string, max: number): string => {
 
   /* Um corte nunca pode reduzir uma chamada a um comando órfão ("Pare de"). */
   const words = fitted.split(/\s+/).filter(Boolean);
-  if (words.length < 3 || /^(?:pare|deixe|evite|comece)\s+(?:de|a|com)$/i.test(fitted)) {
+  if (words.length < 3 || ORPHAN_CAROUSEL_COMMAND.test(fitted)) {
     fitted = beforeDanglingTrim;
   }
+
+  /* `condensePhrase` também pode ter recebido somente o fragmento original.
+     Nesse caso não existe pensamento para salvar: devolvemos vazio e o diretor
+     mantém a tese completa do roteiro como capa. */
+  if (ORPHAN_CAROUSEL_COMMAND.test(fitted)) return "";
 
   /* Aspas sem par não atravessam a fronteira entre título e apoio. */
   const quoteCount = (fitted.match(/[“”\"]/g) ?? []).length;
