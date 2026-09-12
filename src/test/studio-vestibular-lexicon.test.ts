@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { VESTIBULAR_TERMS, matchesVestibular, vestibularLines } from "@/pages/studio-pro/vestibularLexicon";
+import { VESTIBULAR_SYMPTOMS, VESTIBULAR_TERMS, matchesVestibular, vestibularLines } from "@/pages/studio-pro/vestibularLexicon";
 import { applyCharm, findSubNicheCharm } from "@/pages/studio-pro/charmCopy";
 import { WORLDS } from "@/pages/studio/content";
 import type { Relation } from "@/pages/studio-pro/relational";
@@ -48,6 +48,19 @@ describe("léxico vestibular", () => {
         .toLowerCase();
       expect(text).toContain("vppb");
       expect(out.lists[0].items.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("não apresenta dor como sintoma vestibular", () => {
+    expect(VESTIBULAR_SYMPTOMS.join(" ").toLowerCase()).toMatch(/vertigem|instabilidade|desequilíbrio|mundo rodar/);
+    ["informar", "dor", "vender"].forEach((angle) => {
+      const out = applyCharm(base, angle as never, relation, "Guilherme Vallim Fisioterapia");
+      const priorityCopy = [
+        ...out.headlines.slice(0, 3).map((h) => `${h.strong}${h.rest}`),
+        ...out.subs.slice(0, 3),
+        ...out.closings.slice(0, 2).flatMap((closing) => [closing.title, closing.sub]),
+      ].join(" ");
+      expect(priorityCopy).not.toMatch(/\bdores?\b/i);
     });
   });
 });

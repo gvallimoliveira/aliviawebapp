@@ -134,6 +134,7 @@ export const findSubNicheCharm = (relation?: Relation): SubNicheCharm | undefine
   ]
     .filter(Boolean)
     .join(" · ");
+  const vestibular = matchesVestibular(probe);
   if (!probe.trim()) return undefined;
   return SUBNICHE_CHARM.find((row) => row.match.test(probe));
 };
@@ -219,7 +220,7 @@ export const applyCharm = (
    * cristais/otocônias, canais semicirculares, avaliação e manobras posicionais
    * corretivas) em qualquer ângulo — inclusive "informar".
    */
-  const base = matchesVestibular(probe)
+  const base = vestibular
     ? (() => {
         const lines = vestibularLines(`${brand ?? "marca"}:${probe}:${angle}`);
         return {
@@ -243,7 +244,7 @@ export const applyCharm = (
    * tornozelo). Vale para qualquer ângulo, inclusive "informar".
    */
   const withMsk = (() => {
-    if (matchesVestibular(probe) || !matchesMsk(probe)) return base;
+    if (vestibular || !matchesMsk(probe)) return base;
     const lines = mskLines(probe, `${brand ?? "marca"}:${probe}:${angle}`);
     if (!lines) return base;
     return {
@@ -282,7 +283,11 @@ export const applyCharm = (
 
   const row: SubNicheCharm | StudioSelfCharmRow | AliviaCoreCharmRow | undefined =
     selfRow ?? coreRow ?? findSubNicheCharm(relation);
-  const frames = relation ? charmFrames(relation, angle) : { headlines: [], subs: [], closings: [] };
+  // O molde do ângulo "dor" usa a palavra dor literalmente. Em vestibular,
+  // preservamos a intenção (nomear o incômodo), mas só com o léxico específico.
+  const frames = relation && !vestibular
+    ? charmFrames(relation, angle)
+    : { headlines: [], subs: [], closings: [] };
   const cta = charmCta(relation?.cta ?? "");
 
   /**

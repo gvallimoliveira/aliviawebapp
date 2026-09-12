@@ -21,6 +21,20 @@ export const VESTIBULAR_MATCH = /vestibular|tontur|vertig|labirintit|otoc[oô]ni
 
 export const matchesVestibular = (probe?: string) => Boolean(probe && VESTIBULAR_MATCH.test(probe));
 
+/**
+ * Em comunicação vestibular, "dor" não é usada como sintoma nem como rótulo
+ * genérico do problema. O desconforto é descrito pelo que de fato acontece:
+ * vertigem, instabilidade, desequilíbrio ou sensação de giro.
+ */
+export const mentionsPainAsSymptom = (text?: string) => /\bdores?\b/i.test(text ?? "");
+
+export const VESTIBULAR_SYMPTOMS = [
+  "Vertigem ao mudar de posição",
+  "Sensação de o mundo rodar",
+  "Instabilidade ao caminhar",
+  "Desequilíbrio nas atividades do dia a dia",
+] as const;
+
 /** Termo → explicação em linguagem de leigo (usada nas artes de informar). */
 export const VESTIBULAR_TERMS: { term: string; plain: string }[] = [
   { term: "Labirintite", plain: "é o apelido popular: virou nome para toda tontura, e quase nunca é o que está acontecendo." },
@@ -38,6 +52,9 @@ const HEADLINES: { strong: string; rest: string }[] = [
   { strong: "Antes da manobra", rest: ", vem a avaliação de VPPB." },
   { strong: "Existe teste para isso", rest: ": a avaliação diz qual canal está envolvido." },
   { strong: "Tontura tem endereço", rest: ": canais semicirculares, cristais, posição." },
+  { strong: "Instabilidade não é dor", rest: ". É um sinal do sistema vestibular." },
+  { strong: "Quando o mundo parece rodar", rest: ", o sintoma é vertigem." },
+  { strong: "Desequilíbrio e sensação de giro", rest: " pedem avaliação vestibular." },
 ];
 
 const SUBS: string[] = [
@@ -46,6 +63,7 @@ const SUBS: string[] = [
   "Chamar tudo de labirintite atrasa o cuidado. Um sinal claro é a vertigem que começa ao virar na cama.",
   "As manobras posicionais corretivas não são exercício de força: são movimentos guiados para reposicionar os cristais.",
   "A investigação começa pela pergunta certa: o giro aparece na posição ou o desequilíbrio é constante?",
+  "Vertigem, instabilidade e desequilíbrio descrevem melhor esses quadros — dor não é o sintoma vestibular.",
 ];
 
 const QUOTES: string[] = [

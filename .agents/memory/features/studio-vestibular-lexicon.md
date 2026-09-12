@@ -18,6 +18,7 @@ Teste: `src/test/studio-vestibular-lexicon.test.ts`.
 
 ## Regras
 - Nunca prometer cura, nem autonomia da IA, nem usar "protocolo".
+- Nunca considerar ou apresentar dor como sintoma vestibular. Descrever o quadro como disfunção vestibular, vertigem, instabilidade, desequilíbrio ou sensação de o mundo rodar.
 - Manobra nunca aparece antes da avaliação na mesma frase.
 - Escolha por semente (`marca:probe:ângulo`): mesma combinação, mesmo texto.
 - A linha `vestibular` de `SUBNICHE_CHARM` também usa esse vocabulário (não voltar ao "Tontura e vertigem não devem ditar o seu ritmo").
