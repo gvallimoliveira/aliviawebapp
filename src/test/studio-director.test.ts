@@ -196,7 +196,7 @@ describe("Diretor criativo", () => {
 
     expect(covers.length).toBeGreaterThan(0);
     expect(new Set(covers).size).toBe(covers.length);
-    covers.forEach((title) => expect(WORLDS.pro.hooks?.some((hook) => title === `${hook.strong}${hook.rest}`)).toBe(true));
+    covers.forEach((title) => expect(WORLDS.pro.hooks?.some((hook) => title === hook.strong)).toBe(true));
   });
 });
 
