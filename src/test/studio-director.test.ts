@@ -12,7 +12,7 @@ import { directCarouselWithHook, planBatch } from "@/pages/studio-pro/director";
 import { composePage } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
-import { CAROUSEL_SUPPORT_MAX, CAROUSEL_TITLE_MAX } from "@/pages/studio/typographyGuards";
+import { carouselCoverCopy, CAROUSEL_SUPPORT_MAX, CAROUSEL_TITLE_MAX } from "@/pages/studio/typographyGuards";
 
 const plan = (seed: string, count = 8) =>
   planBatch({ content: WORLDS.pro, count, seed, relation: { pain: "dor que trava", axis: "pain" } });
@@ -196,7 +196,9 @@ describe("Diretor criativo", () => {
 
     expect(covers.length).toBeGreaterThan(0);
     expect(new Set(covers).size).toBe(covers.length);
-    covers.forEach((title) => expect(WORLDS.pro.hooks?.some((hook) => title === hook.strong)).toBe(true));
+    covers.forEach((title) =>
+      expect(WORLDS.pro.hooks?.some((hook) => title === carouselCoverCopy(hook.strong, hook.sub).title)).toBe(true),
+    );
   });
 });
 
