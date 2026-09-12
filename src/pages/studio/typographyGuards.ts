@@ -111,6 +111,20 @@ export const carouselCoverCopy = (
   support: closeThought(support ?? "", CAROUSEL_SUPPORT_MAX),
 });
 
+/**
+ * Texto de um slide no tratamento "fio de posts". Cada parte fecha uma ideia
+ * por conta própria: o título introduz o ponto e o apoio o desenvolve, sem
+ * reticências nem palavra de ligação pendurada. O roteiro continua responsável
+ * pelo começo, desenvolvimento e conclusão da sequência.
+ */
+export const carouselTweetCopy = (
+  title: string | null | undefined,
+  support: string | null | undefined,
+): { title: string; support: string } => ({
+  title: closeThought(title ?? "", 64),
+  support: closeThought(support ?? "", 116),
+});
+
 /* -------------------------------------------------------------------------- */
 /* 4. Palavra-cartaz                                                          */
 /* -------------------------------------------------------------------------- */

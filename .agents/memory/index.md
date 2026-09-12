@@ -39,6 +39,7 @@ Créditos de IA: após CADA etapa do plano de créditos, rodar o double-check pa
 Studio: manual da marca em PDF e questionário valem IGUAL — marca com só o manual não perde qualidade; a IA responde o questionário a partir dele.
 
 ## Memories
+- [Studio Tweet Carousel](mem://features/studio-tweet-carousel) — Tratamento opcional de carrossel como fio coerente de posts curtos, da tese ao fechamento.
 - [Studio Manual = Questionário](mem://features/studio-manual-equals-questionnaire) — Manual em PDF e questionário com peso igual; IA preenche o questionário a partir do manual sem sobrescrever resposta escrita à mão.
 - [Assessment Addenda](mem://features/assessment-addenda) — Informações adicionais em avaliação concluída: adendo manual, link /adendo/:token e reinterpretação opcional da IA.
 - [Credits Phase Double-check](mem://process/credits-phase-doublecheck) — Revisão adversarial obrigatória ao fim de cada etapa do sistema de créditos de IA (bypass, paridade SQL, fail-open, trava dupla, relato).

@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest";
 import { WORLDS } from "@/pages/studio/content";
 import { directCarouselWithHook, planBatch } from "@/pages/studio-pro/director";
-import { composePage } from "@/pages/studio/composePage";
+import { composePage, TREATMENT_COUNT } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import { carouselCoverCopy, CAROUSEL_SUPPORT_MAX, CAROUSEL_TITLE_MAX } from "@/pages/studio/typographyGuards";
@@ -18,6 +18,10 @@ const plan = (seed: string, count = 8) =>
   planBatch({ content: WORLDS.pro, count, seed, relation: { pain: "dor que trava", axis: "pain" } });
 
 describe("Diretor criativo", () => {
+  it("oferece o fio de posts como sétimo tratamento de carrossel", () => {
+    expect(TREATMENT_COUNT.carousel).toBe(7);
+  });
+
   it("mesma seed devolve o mesmo roteiro", () => {
     expect(plan("lote-1").shots.map((s) => s.copy.join("|"))).toEqual(
       plan("lote-1").shots.map((s) => s.copy.join("|")),
