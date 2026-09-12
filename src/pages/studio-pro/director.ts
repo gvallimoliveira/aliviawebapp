@@ -39,6 +39,8 @@ import { phraseSignature } from "@/pages/studio/picker";
 import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typographyGuards";
 import type { BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
+import { composeRouteCopy } from "./storytelling";
+
 
 export const DIRECTOR_AXES = [
   "quem-sou",
