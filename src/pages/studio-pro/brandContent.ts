@@ -1322,6 +1322,101 @@ const applyAudience = (
           cta: { title: "Pergunte o que quiser", sub: cta },
         }]
       : []),
+
+    /**
+     * QUATRO ROTEIROS DE RACIOCÍNIO CONTINUADO (fidelidade capa → miolo → CTA).
+     *
+     * Os roteiros acima são temáticos; estes quatro carregam UMA tese da capa e
+     * a desdobram slide a slide, cada slide retomando explicitamente a tese.
+     * Servem qualquer público de qualquer marca porque nascem do próprio kit
+     * (medos, desejos, provas, gancho, CTA).
+     */
+    ...(painNoms.length >= 1
+      ? [{
+          id: "audience-thesis-decisions",
+          kicker: `${KEY} · DECISÕES`,
+          title: `${key}: o resultado vem de 3 decisões, não de sorte`,
+          coverSub: `A tese deste carrossel: ${lower1(nomPain(0, "o improviso"))} não se resolve por tentativa.`,
+          slides: [
+            {
+              heading: "Decisão 1 — entender antes de agir",
+              body: `${sentence(pains[0] ?? key)} Sem ler o cenário inteiro, qualquer conduta é aposta.`,
+              topic: topicAt(0),
+            },
+            {
+              heading: "Decisão 2 — escolher o caminho certo",
+              body: proof[0] ? `${proof[0]}. É aqui que a tese se sustenta.` : "O caminho é escolhido pelo caso, não pelo protocolo da moda.",
+              topic: topicAt(1),
+            },
+            {
+              heading: "Decisão 3 — sustentar o que funcionou",
+              body: desires[0]
+                ? `${sentence(desires[0])} Só continua de pé quando cabe na rotina.`
+                : "O ganho só continua quando o plano cabe na rotina real.",
+              topic: topicAt(2),
+            },
+          ],
+          cta: { title: "Três decisões, uma conversa", sub: cta },
+        }]
+      : []),
+    ...(painNoms.length >= 2
+      ? [{
+          id: "audience-costly-mistakes",
+          kicker: `${KEY} · O QUE CUSTA TEMPO`,
+          title: `${key}: 3 erros que atrasam o resultado`,
+          coverSub: "Nenhum deles é falta de esforço. Todos são falta de direção.",
+          slides: [
+            { heading: "Erro 1 — esperar passar", body: `${sentence(painNoms[0])} O tempo sozinho não organiza nada.`, topic: topicAt(1) },
+            { heading: "Erro 2 — copiar o caso do outro", body: `${sentence(painNoms[1])} O que serviu para alguém pode não servir para você.`, topic: topicAt(2) },
+            {
+              heading: "Erro 3 — parar no primeiro alívio",
+              body: desireNoms[0] ? `${sentence(desireNoms[0])} exige continuidade, não um bom dia isolado.` : "Alívio não é alta: sem continuidade, volta.",
+              topic: topicAt(3),
+            },
+          ],
+          cta: { title: "Corrigir a direção é mais rápido", sub: cta },
+        }]
+      : []),
+    ...(pains.length >= 1
+      ? [{
+          id: "audience-self-check",
+          kicker: `${KEY} · AUTOTESTE`,
+          title: `${key}: responda 3 perguntas e leia o veredito`,
+          coverSub: "Duas respostas “sim” já mudam a conversa.",
+          slides: [
+            { heading: "Pergunta 1", body: `${sentence(pains[0])} Isso acontece toda semana?`, topic: topicAt(0) },
+            {
+              heading: "Pergunta 2",
+              body: pains[1] ? `${sentence(pains[1])} Você já mudou sua rotina por causa disso?` : "Você já deixou de fazer algo por causa disso?",
+              topic: topicAt(1),
+            },
+            {
+              heading: "Veredito",
+              body: proof[0] ? `${proof[0]}. É por aí que a gente começa.` : "Dois “sim” indicam um caso que pede avaliação, não paciência.",
+              topic: topicAt(2),
+            },
+          ],
+          cta: { title: "Fez dois “sim”?", sub: cta },
+        }]
+      : []),
+    ...(desires.length >= 1
+      ? [{
+          id: "audience-day-in-life",
+          kicker: `${KEY} · UM DIA DEPOIS`,
+          title: `${key}: como fica um dia comum quando o plano funciona`,
+          coverSub: "Mesma vida, outras escolhas — sem promessa de milagre.",
+          slides: [
+            { heading: "Manhã", body: `${sentence(pains[0] ?? key)} deixa de decidir o começo do dia.`, topic: topicAt(0) },
+            {
+              heading: "Meio do dia",
+              body: proof[0] ? `${proof[0]}. Você sabe o que fazer e por quê.` : "Cada tarefa tem um porquê, e você sabe qual é o próximo passo.",
+              topic: topicAt(1),
+            },
+            { heading: "Fim do dia", body: `${sentence(desires[0])} Sem contar as horas até melhorar.`, topic: topicAt(2) },
+          ],
+          cta: { title: "Quer esse dia comum?", sub: cta },
+        }]
+      : []),
   ];
 
 
