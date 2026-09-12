@@ -195,6 +195,17 @@ describe("Diretor criativo", () => {
     expect(directed.title).not.toMatch(/\b(?:e|de|da|do|que|para|me)$/i);
   });
 
+  it("não reduz uma chamada imperativa a Pare de", () => {
+    const carousel = WORLDS.pro.carousels[0];
+    const directed = directCarouselWithHook(carousel, {
+      hook: "Provocação",
+      strong: "Pare de decidir com uma visão incompleta do caso clínico e sem comparar os sinais importantes",
+      rest: ".",
+    });
+    expect(directed.title).not.toBe("Pare de");
+    expect(directed.title.split(/\s+/).length).toBeGreaterThanOrEqual(3);
+  });
+
   it("usa ganchos diferentes nos carrosséis do mesmo lote", () => {
     const blocks = composePage(createRng("carrosseis-com-ganchos"), undefined, undefined, WORLDS.pro.carousels, 0, ["carousel"]);
     const direction = planBatch({

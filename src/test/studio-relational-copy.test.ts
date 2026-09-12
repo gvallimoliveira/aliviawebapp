@@ -69,6 +69,25 @@ describe("motor textual relacional", () => {
     expect(text).toMatch(/causa da dor|reavalia|teste/);
   });
 
+  it("encurta público e objeções antes de renderizar", () => {
+    const content = buildSegmentContent({
+      kit: {
+        ...kit,
+        briefAnswers: {
+          ...brief,
+          publico_primario: "Adulto do Rio de Janeiro (Zona Sul, Barra e Recreio) com dor persistente",
+          dor: "Uma descrição muito extensa da tentativa anterior que acumula detalhes demais para caber com boa leitura dentro de uma única arte",
+        },
+      },
+      audiences: [],
+      segment: GLOBAL_SEGMENT,
+      angle: "dor",
+      variationSeed: "texto-enxuto",
+    });
+    expect(content.sales.audience.length).toBeLessThanOrEqual(40);
+    content.sales.objections.forEach((item) => expect(item.length).toBeLessThanOrEqual(96));
+  });
+
   it("não deixa vício de linguagem herdado sair do motor", () => {
     for (const seed of ["a", "b", "c", "d", "e"]) {
       for (const segment of [GLOBAL_SEGMENT, "corredor"]) {
