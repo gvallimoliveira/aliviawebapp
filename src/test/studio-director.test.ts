@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 import { WORLDS } from "@/pages/studio/content";
-import { planBatch } from "@/pages/studio-pro/director";
+import { directCarouselWithHook, planBatch } from "@/pages/studio-pro/director";
 import { composePage } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
@@ -126,6 +126,47 @@ describe("Diretor criativo", () => {
     });
     const secondTitle = second.shots.find((shot) => shot.reserved.carousels?.length)?.reserved.carousels?.[0]?.title;
     expect(secondTitle).not.toBe(firstTitle);
+  });
+
+  it("conduz o carrossel do gancho ativo ao desejo e CTA sem mudar a quantidade", () => {
+    const carousel = WORLDS.pro.carousels[0];
+    const directed = directCarouselWithHook(
+      carousel,
+      {
+        hook: "Gancho aprovado",
+        strong: "Você ainda decide sem enxergar o caso inteiro",
+        rest: "?",
+        sub: "O problema não é falta de esforço",
+        cta: "Conheça o raciocínio clínico",
+      },
+      { desire: "conduzir com mais segurança", cta: "Começar agora" },
+    );
+
+    expect(directed.title).toBe("Você ainda decide sem enxergar o caso inteiro?");
+    expect(directed.coverSub).toContain(carousel.title);
+    expect(directed.slides).toEqual(carousel.slides);
+    expect(directed.slides).toHaveLength(carousel.slides.length);
+    expect(directed.cta.title).toBe("Quer conduzir com mais segurança?");
+    expect(directed.cta.sub).toBe("Conheça o raciocínio clínico");
+  });
+
+  it("usa ganchos diferentes nos carrosséis do mesmo lote", () => {
+    const blocks = composePage(createRng("carrosseis-com-ganchos"), undefined, undefined, WORLDS.pro.carousels, 0, ["carousel"]);
+    const direction = planBatch({
+      content: WORLDS.pro,
+      count: blocks.length,
+      blocks,
+      seed: "carrosseis-com-ganchos",
+      relation: { desire: "avaliar com mais clareza", cta: "Conhecer o Aliv.iA", axis: "desire" },
+    });
+    const covers = blocks
+      .map((block, index) => ({ block, carousel: direction.contentFor(index).carousels[0] }))
+      .filter(({ block }) => block.kind === "carousel" && block.slide?.index === 0)
+      .map(({ carousel }) => carousel.title);
+
+    expect(covers.length).toBeGreaterThan(0);
+    expect(new Set(covers).size).toBe(covers.length);
+    covers.forEach((title) => expect(WORLDS.pro.hooks?.some((hook) => title === `${hook.strong}${hook.rest}`)).toBe(true));
   });
 });
 
