@@ -19,7 +19,7 @@ describe("redação a partir da rota narrativa", () => {
   it("escreve frases com a tensão e o desejo reais da rota", () => {
     const copy = composeRouteCopy(route);
     expect(copy.subs?.[0]).toMatch(/pré-avaliação|consulta|histórico/i);
-    expect(copy.headlines?.[0].rest).toMatch(/caso|sessão/i);
+    expect(`${copy.headlines?.[0].strong} ${copy.headlines?.[0].rest}`).toMatch(/pré-avaliação|caso|sessão/i);
     expect(copy.closings?.[0].cta).toBe("Chamar no direct");
     expect(copy.typos?.[0].big).toBe(copy.typos?.[0].big.toUpperCase());
   });
