@@ -375,7 +375,7 @@ export const planBatch = (input: {
   const preferred = (brief?.angles ?? [])
     .map((angle) => DIRECTOR_AXES.find((a) => normalize(AXIS_LABEL[a]).includes(normalize(angle)) || a === angle))
     .filter((a): a is DirectorAxis => Boolean(a));
-  const routeAxes: Record<NonNullable<typeof route>["kind"], DirectorAxis[]> = {
+  const routeAxes: Record<NonNullable<Relation["route"]>["kind"], DirectorAxis[]> = {
     "pain-to-desire": ["dor", "como-trabalho", "desejo", "convite"],
     "desire-through-proof": ["desejo", "prova", "como-trabalho", "convite"],
     "feature-to-human": ["como-trabalho", "prova", "desejo", "convite"],

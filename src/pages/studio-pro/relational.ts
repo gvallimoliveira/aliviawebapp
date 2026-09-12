@@ -35,7 +35,7 @@ export type Relation = {
   /** Eixo dominante desta arte, derivado do ângulo do lote. */
   axis: "pain" | "desire";
   /** Rota coerente que liga fatos reais da marca antes de escolher a redação. */
-  route: NarrativeRoute;
+  route?: NarrativeRoute;
 };
 
 const strip = (text?: string) => (text ?? "").trim().replace(/\s*[.!?]+$/, "");
@@ -110,7 +110,7 @@ export const pickRelation = ({
 
 /** Termos que a arte precisa tocar para provar que fala da relação escolhida. */
 export const relationVocabulary = (relation: Relation): string[] => {
-  const text = [relation.keyword, relation.pain, relation.desire, relation.proof, relation.hook, ...relation.route.vocabulary]
+  const text = [relation.keyword, relation.pain, relation.desire, relation.proof, relation.hook, ...(relation.route?.vocabulary ?? [])]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
