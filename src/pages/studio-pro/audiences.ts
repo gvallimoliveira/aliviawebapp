@@ -155,6 +155,7 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
         hook: String(row.hook ?? "").trim() || undefined,
         hooks: asStringArray(row.hooks),
         parentId: String(row.parentId ?? row.parent_id ?? "").trim() || undefined,
+        manualOnly: row.manualOnly === true || row.manual_only === true || undefined,
       };
     })
     .filter((a): a is BrandAudience => a !== null);
