@@ -200,12 +200,6 @@ export const applyCharm = (
   relation?: Relation,
   brand?: string,
 ): WorldContent => {
-  if (angle === "informar") return content;
-
-  /**
-   * Marca do próprio produto: o guia de copy do manual do Aliv.iA Studio tem
-   * precedência sobre a tabela de sub-nichos clínicos (que fala de paciente).
-   */
   const probe = [
     relation?.keyword,
     relation?.who,
@@ -216,9 +210,40 @@ export const applyCharm = (
     .filter(Boolean)
     .join(" · ");
 
+  /**
+   * TONTURA: o público vestibular ganha o vocabulário real (labirintite, VPPB,
+   * cristais/otocônias, canais semicirculares, avaliação e manobras posicionais
+   * corretivas) em qualquer ângulo — inclusive "informar".
+   */
+  const base = matchesVestibular(probe)
+    ? (() => {
+        const lines = vestibularLines(`${brand ?? "marca"}:${probe}:${angle}`);
+        return {
+          ...content,
+          headlines: [...lines.headlines, ...content.headlines],
+          subs: [...lines.subs, ...content.subs],
+          quotes: [...lines.quotes, ...content.quotes],
+          lists: [
+            { heading: "Tontura: o que é o quê", items: lines.glossary, closing: lines.ctas[0] },
+            ...content.lists,
+          ],
+          sales: { ...content.sales, ctas: [...new Set([...lines.ctas, ...content.sales.ctas])] },
+        };
+      })()
+    : content;
+
+  if (angle === "informar") return base;
+
+  content = base;
+
+  /**
+   * Marca do próprio produto: o guia de copy do manual do Aliv.iA Studio tem
+   * precedência sobre a tabela de sub-nichos clínicos (que fala de paciente).
+   */
   const selfRow: StudioSelfCharmRow | undefined = isStudioSelfBrand(brand ?? "")
     ? findStudioSelfCharm(probe)
     : undefined;
+
 
   /**
    * Marca Aliv.iA (app clínico): acervo próprio dos 6 públicos do guia
