@@ -23,7 +23,7 @@ import { applyTerminology, patientVoiceFor } from "@/pages/studio/terminology";
 import { marketStatsFor } from "@/pages/studio/marketFacts";
 
 import { condensePhrase } from "./textFit";
-import { sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
+import { editorialAudience, sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 import { applyFormatInsights, readFormatInsights } from "./formatInsights";
 
@@ -168,10 +168,13 @@ const ingredientsOf = (
   const briefPains = dna?.pain ? [dna.pain] : [];
   const briefDesires = dna?.desire ? [dna.desire] : [];
   const briefSolutions = [dna?.belief, dna?.offer].filter(Boolean) as string[];
+  const clinical = /fisioter|cl[ií]nic|paciente|reabilita|terapia/i.test(
+    [kit.niche, kit.description, dna?.presentation, dna?.offer].filter(Boolean).join(" "),
+  );
   return {
     brand,
     niche,
-    audience: audience?.label.trim() || dna?.primaryAudience,
+    audience: audience?.label.trim() || editorialAudience(dna?.primaryAudience, { clinical, fallback: niche }),
     pains: [...briefPains, ...collect((a) => a.pains)],
     desires: [...briefDesires, ...collect((a) => a.desires)],
     solutions: [...briefSolutions, ...collect((a) => a.proof)],
@@ -284,7 +287,12 @@ const buildFromDna = (
   const offer = briefPhrases(dna.offer, 3);
   const pain = briefPhrases(dna.pain, 2);
   const desire = briefPhrases(dna.desire, 2);
-  const who = dna.primaryAudience?.trim() || niche;
+  const who = editorialAudience(dna.primaryAudience, {
+    clinical: /fisioter|cl[ií]nic|paciente|reabilita|terapia/i.test(
+      [niche, dna.description, dna.presentation, dna.offer].filter(Boolean).join(" "),
+    ),
+    fallback: niche,
+  });
   /** Vocabulário de oferta: "produto" só quando a marca vende produto. */
   const offerVoice = offerWords(dna, brand);
   const cta = dna.cta?.trim() || "Chamar no direct";
@@ -1078,7 +1086,12 @@ export const buildBrandContent = (
       ...composeHooks({
         brand,
         niche,
-        audience: dna.primaryAudience || audiences[0]?.label,
+        audience: editorialAudience(dna.primaryAudience, {
+          clinical: /fisioter|cl[ií]nic|paciente|reabilita|terapia/i.test(
+            [niche, dna.description, dna.presentation, dna.offer].filter(Boolean).join(" "),
+          ),
+          fallback: audiences[0]?.label || niche,
+        }),
         pain: dna.pain || audiences[0]?.pains?.[0],
         desire: dna.desire || audiences[0]?.desires?.[0],
         offer: dna.offer,

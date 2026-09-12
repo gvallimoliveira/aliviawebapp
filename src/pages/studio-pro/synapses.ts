@@ -9,6 +9,7 @@ import { createRng } from "@/pages/studio/rng";
 import type { BrandAudience } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
 import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
+import { editorialAudience } from "@/pages/studio/typographyGuards";
 
 export type NarrativeRouteKind =
   | "pain-to-desire"
@@ -152,7 +153,14 @@ export const buildNarrativeRoute = ({
   return {
     kind,
     audienceId: audience?.id,
-    audienceLabel: clean(audience?.label) || clean(dna.primaryAudience) || clean(dna.niche) || "marca",
+    audienceLabel:
+      clean(audience?.label) ||
+      editorialAudience(dna.primaryAudience, {
+        clinical: /fisioter|cl[ií]nic|paciente|reabilita|terapia/i.test(
+          [dna.niche, dna.description, dna.presentation, dna.offer].filter(Boolean).join(" "),
+        ),
+        fallback: clean(dna.niche) || "marca",
+      }),
     tension,
     feature,
     proof,
