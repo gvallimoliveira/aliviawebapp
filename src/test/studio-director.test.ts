@@ -271,6 +271,19 @@ describe("Diretor criativo", () => {
     expect(directed.title.split(/\s+/).length).toBeGreaterThanOrEqual(3);
   });
 
+  it("descarta um gancho já recebido como Pare de e preserva a tese do carrossel", () => {
+    const carousel = WORLDS.pro.carousels[0];
+    const directed = directCarouselWithHook(carousel, {
+      hook: "Provocação",
+      strong: "Pare de",
+      rest: "",
+    });
+
+    expect(directed.title).toBe(carousel.title);
+    expect(directed.title).not.toMatch(/^(?:pare|deixe|evite|comece)\s+(?:de|a|com)?$/i);
+    expect(directed.coverSub.length).toBeGreaterThan(0);
+  });
+
   it("usa ganchos diferentes nos carrosséis do mesmo lote", () => {
     const blocks = composePage(createRng("carrosseis-com-ganchos"), undefined, undefined, WORLDS.pro.carousels, 0, ["carousel"]);
     const direction = planBatch({
