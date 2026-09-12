@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import CarouselBlock from "@/pages/studio/blocks/CarouselBlock";
 import { WORLDS } from "@/pages/studio/content";
 import { createPicker } from "@/pages/studio/picker";
@@ -21,6 +21,20 @@ const carousel = {
 const content = { ...WORLDS.pro, carousels: [carousel] };
 const persona = personaForSeed("fio-teste");
 const picker = createPicker();
+
+beforeAll(() => {
+  class IntersectionObserverMock implements IntersectionObserver {
+    readonly root = null;
+    readonly rootMargin = "0px";
+    readonly thresholds = [0];
+    disconnect() {}
+    observe() {}
+    takeRecords() { return []; }
+    unobserve() {}
+  }
+  window.IntersectionObserver = IntersectionObserverMock;
+  globalThis.IntersectionObserver = IntersectionObserverMock;
+});
 
 const renderSlide = (index: number) => render(
   <CarouselBlock
