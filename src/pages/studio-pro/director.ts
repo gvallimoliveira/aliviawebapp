@@ -129,9 +129,8 @@ export const directCarouselWithHook = (
 
   return {
     ...carousel,
-    // A identidade editorial continua sendo a do roteiro, acrescida da capa:
-    // dois ganchos diferentes não colidem na memória entre gerações.
-    id: `${carousel.id ?? phraseSignature(carousel)}:hook:${phraseSignature(hookTitle)}`,
+    // A identidade editorial continua sendo a do roteiro. O gancho já deixa sua
+    // própria assinatura em `copy`, portanto ambos perdem prioridade separados.
     kicker: cleanLine(hook.hook) || carousel.kicker,
     title: hookTitle,
     coverSub: coverSub || carousel.coverSub,
