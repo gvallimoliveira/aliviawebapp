@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { applyTerms, deprotocol, isPatientVoice, selfAssessmentTerms } from "@/pages/studio/terminology";
+import {
+  applyTerms,
+  deprotocol,
+  isPatientVoice,
+  preAssessmentTerms,
+  selfAssessmentTerms,
+} from "@/pages/studio/terminology";
+
 import { WORLDS } from "@/pages/studio/content";
 import type { WorldContent } from "@/pages/studio/content";
 
