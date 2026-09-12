@@ -429,6 +429,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
       String(40 + (baseCount % 430)),
       `${1 + (baseCount % 8)},${1 + (index % 8)} mil`,
     ];
+    const hour = `${8 + (baseCount % 12)}:${String(10 + (baseCount % 48)).padStart(2, "0")}`;
 
     return (
       <section
@@ -470,7 +471,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
             </div>
 
             <p className="text-xs md:text-sm" style={{ color: meta }}>
-              Fio {index + 1}/{total} · {isCta ? "Conclusão" : isCover ? "Ideia central" : carousel.kicker}
+              {hour} · Fio {index + 1}/{total} · {isCta ? "Conclusão" : isCover ? "Ideia central" : carousel.kicker}
             </p>
             <div aria-hidden className="my-4 h-px w-full" style={{ backgroundColor: hair }} />
             <div className="flex items-center justify-between" style={{ color: meta }}>
