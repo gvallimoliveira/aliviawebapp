@@ -19,7 +19,14 @@ const SKINS = [
   { bg: "bg-foreground", ink: "text-background", line: "hsl(var(--background)/0.55)", accent: "hsl(var(--primary))" },
 ] as const;
 
-const PATH = "M 30 300 L 70 190 L 100 250 L 140 130 L 175 200 L 215 60 L 245 105 L 275 140 L 320 25";
+/**
+ * Traçado sem a ponta final: a seta é desenhada como triângulo explícito,
+ * alinhado ao último segmento. Marcador SVG escalava com a espessura do traço
+ * (ficava gigante) e desaparecia junto com a animação na exportação.
+ */
+const PATH = "M 24 296 L 68 196 L 100 250 L 142 132 L 176 200 L 216 70 L 246 112 L 274 146 L 306 46";
+/** Ponta da seta: mesma direção do último segmento (274,146 → 306,46). */
+const ARROW = "M 322 20 L 312 62 L 288 40 Z";
 
 const TrendBlock = ({ content, rng, treatment, format }: BlockProps) => {
   const skin = SKINS[treatment % SKINS.length];
