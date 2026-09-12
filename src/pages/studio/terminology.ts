@@ -138,9 +138,10 @@ export type TerminologyOptions = {
 
 /** Aplica as regras a uma string solta (usado também nos testes). */
 export const applyTerms = (text: string, options: TerminologyOptions = {}): string => {
-  const out = deprotocol(text);
+  const out = preAssessmentTerms(deprotocol(text));
   return options.patientVoice ? selfAssessmentTerms(out) : out;
 };
+
 
 /**
  * Varredura barata: só reconstrói o nó quando alguma string realmente mudou —
