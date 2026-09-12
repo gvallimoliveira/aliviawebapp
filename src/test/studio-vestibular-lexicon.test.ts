@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesVestibular, vestibularLines } from "@/pages/studio-pro/vestibularLexicon";
+import { VESTIBULAR_TERMS, matchesVestibular, vestibularLines } from "@/pages/studio-pro/vestibularLexicon";
 import { applyCharm, findSubNicheCharm } from "@/pages/studio-pro/charmCopy";
 import { WORLDS } from "@/pages/studio/content";
 import type { Relation } from "@/pages/studio-pro/relational";
@@ -15,7 +15,7 @@ const relation = {
   audience: { id: "tontura", label: "Paciente com tontura", pains: [], desires: [] },
 } as unknown as Relation;
 
-const base = WORLDS.patient;
+const base = WORLDS.paciente;
 
 describe("léxico vestibular", () => {
   it("reconhece o público de tontura", () => {
@@ -28,9 +28,15 @@ describe("léxico vestibular", () => {
     const a = vestibularLines("marca:tontura:vender");
     const b = vestibularLines("marca:tontura:vender");
     expect(a).toEqual(b);
-    const text = [...a.subs, ...a.glossary, ...a.headlines.map((h) => `${h.strong}${h.rest}`)].join(" ").toLowerCase();
+    const pool = [
+      ...VESTIBULAR_TERMS.map((row) => `${row.term} ${row.plain}`),
+      ...a.subs,
+      ...a.headlines.map((h) => `${h.strong}${h.rest}`),
+    ]
+      .join(" ")
+      .toLowerCase();
     ["labirintite", "vppb", "otocôni", "canais semicirculares", "manobras posicionais corretivas"].forEach((term) => {
-      expect(text).toContain(term);
+      expect(pool).toContain(term);
     });
   });
 
