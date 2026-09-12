@@ -115,9 +115,10 @@ describe("Regra 2 — a marca nunca afirma ter protocolo", () => {
   });
 
   it("applyTerms sem patientVoice não mexe em avaliação", () => {
-    expect(applyTerms("Avaliação padronizada da equipe")).toBe("Avaliação padronizada da equipe");
-    expect(applyTerms("Avaliação padronizada da equipe", { patientVoice: true })).toBe(
-      "Autoavaliação padronizada da equipe",
+    expect(applyTerms("Avaliação guiada em minutos")).toBe("Avaliação guiada em minutos");
+    expect(applyTerms("Avaliação guiada em minutos", { patientVoice: true })).toBe(
+      "Autoavaliação guiada em minutos",
     );
   });
+
 });
