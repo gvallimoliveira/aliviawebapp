@@ -29,6 +29,8 @@ import { findStudioSelfCharm, type StudioSelfCharmRow } from "./studioSelfCharm"
 import { professionFor, wantsProfession } from "./professions";
 
 import { findAliviaCoreCharm, isAliviaCoreBrand, type AliviaCoreCharmRow } from "./aliviaCoreCharm";
+import { matchesVestibular, vestibularLines } from "./vestibularLexicon";
+
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const noDot = (text?: string) => clean(text).replace(/\s*[.!?…]+$/, "");
@@ -99,12 +101,13 @@ export const SUBNICHE_CHARM: SubNicheCharm[] = [
     match: /vestibular|tontura|vertigem|labirintite|equil[ií]brio corporal/i,
     cold: "Tratamento eficaz para labirintite e tontura. Entre em contato com a clínica.",
     headline: {
-      strong: "Tontura e vertigem",
-      rest: " não devem ditar o seu ritmo.",
+      strong: "Nem toda tontura é labirintite",
+      rest: ". Muitas vezes é um cristal no canal errado.",
     },
-    sub: "Com avaliação estruturada, o problema é investigado e tratado direto na causa.",
-    cta: "Recuperar o meu equilíbrio",
+    sub: "A avaliação de VPPB mostra qual canal semicircular está envolvido; as manobras posicionais corretivas vêm depois disso.",
+    cta: "Investigar a minha tontura",
   },
+
   {
     id: "feridas",
     match: /ferida|[uú]lcera|cicatriza[çc][ãa]o|curativo|les[ãa]o de pele/i,
@@ -200,12 +203,6 @@ export const applyCharm = (
   relation?: Relation,
   brand?: string,
 ): WorldContent => {
-  if (angle === "informar") return content;
-
-  /**
-   * Marca do próprio produto: o guia de copy do manual do Aliv.iA Studio tem
-   * precedência sobre a tabela de sub-nichos clínicos (que fala de paciente).
-   */
   const probe = [
     relation?.keyword,
     relation?.who,
@@ -216,9 +213,40 @@ export const applyCharm = (
     .filter(Boolean)
     .join(" · ");
 
+  /**
+   * TONTURA: o público vestibular ganha o vocabulário real (labirintite, VPPB,
+   * cristais/otocônias, canais semicirculares, avaliação e manobras posicionais
+   * corretivas) em qualquer ângulo — inclusive "informar".
+   */
+  const base = matchesVestibular(probe)
+    ? (() => {
+        const lines = vestibularLines(`${brand ?? "marca"}:${probe}:${angle}`);
+        return {
+          ...content,
+          headlines: [...lines.headlines, ...content.headlines],
+          subs: [...lines.subs, ...content.subs],
+          quotes: [...lines.quotes, ...content.quotes],
+          lists: [
+            { heading: "Tontura: o que é o quê", items: lines.glossary, closing: lines.ctas[0] },
+            ...content.lists,
+          ],
+          sales: { ...content.sales, ctas: [...new Set([...lines.ctas, ...content.sales.ctas])] },
+        };
+      })()
+    : content;
+
+  if (angle === "informar") return base;
+
+  content = base;
+
+  /**
+   * Marca do próprio produto: o guia de copy do manual do Aliv.iA Studio tem
+   * precedência sobre a tabela de sub-nichos clínicos (que fala de paciente).
+   */
   const selfRow: StudioSelfCharmRow | undefined = isStudioSelfBrand(brand ?? "")
     ? findStudioSelfCharm(probe)
     : undefined;
+
 
   /**
    * Marca Aliv.iA (app clínico): acervo próprio dos 6 públicos do guia

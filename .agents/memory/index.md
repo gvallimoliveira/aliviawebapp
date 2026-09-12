@@ -173,3 +173,4 @@ Studio: manual da marca em PDF e questionário valem IGUAL — marca com só o m
 - [Studio Creative Learning Loop](mem://features/studio-creative-learning) — Correções de texto viram regra da marca, memória entre lotes, briefing de IA guardado (vale com IA off) e coleta de resultados por geração.
 - [Studio Format Insights](mem://features/studio-format-insights) — Campo "Insights de formatos" no kit: diálogo pronto (título | falas | fecho) que vira cartaz, lista, história e carrossel.
 - [Studio Manual-Only Audience](mem://features/studio-manual-only-audience) — Público `manualOnly` fica fora do sorteio da Visão 360° e só gera arte quando selecionado na aba do topo (caso "feridas" da Guilherme Vallim).
+- [Studio Vestibular Lexicon](mem://features/studio-vestibular-lexicon) — Vocabulário de tontura (labirintite, VPPB, otocônias, canais semicirculares, avaliação antes da manobra) nas artes do público vestibular.
