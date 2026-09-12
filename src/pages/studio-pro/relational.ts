@@ -12,6 +12,7 @@
 import { createRng } from "@/pages/studio/rng";
 import { audienceHooks, audienceKeyword, type BrandAudience, type ContentAngle } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
+import { buildNarrativeRoute, type NarrativeRoute } from "./synapses";
 
 export type Relation = {
   audience?: BrandAudience;
@@ -33,6 +34,8 @@ export type Relation = {
   cta: string;
   /** Eixo dominante desta arte, derivado do ângulo do lote. */
   axis: "pain" | "desire";
+  /** Rota coerente que liga fatos reais da marca antes de escolher a redação. */
+  route: NarrativeRoute;
 };
 
 const strip = (text?: string) => (text ?? "").trim().replace(/\s*[.!?]+$/, "");
@@ -47,18 +50,21 @@ const rotate = <T,>(values: T[], i: number): T[] =>
  */
 export const pickRelation = ({
   audience,
+  audiences,
   dna,
   brand,
   angle,
   seed,
 }: {
   audience?: BrandAudience;
+  audiences?: BrandAudience[];
   dna: BrandDna;
   brand: string;
   angle: ContentAngle;
   seed?: string;
 }): Relation => {
   const rng = createRng(`relation:${seed ?? "static"}:${audience?.id ?? "brand"}:${angle}`);
+  const route = buildNarrativeRoute({ audience, audiences, dna, seed: seed ?? "static" });
 
   const pains = audience ? list(audience.pains) : list(dna.pain ? [dna.pain] : []);
   const desires = audience ? list(audience.desires) : list(dna.desire ? [dna.desire] : []);
@@ -98,12 +104,13 @@ export const pickRelation = ({
     proof: proofPool[0],
     cta: strip(audience?.cta) || strip(dna.cta) || "Chamar no direct",
     axis: axis === "pain" && !painPool.length ? "desire" : axis,
+    route,
   };
 };
 
 /** Termos que a arte precisa tocar para provar que fala da relação escolhida. */
 export const relationVocabulary = (relation: Relation): string[] => {
-  const text = [relation.keyword, relation.pain, relation.desire, relation.proof, relation.hook]
+  const text = [relation.keyword, relation.pain, relation.desire, relation.proof, relation.hook, ...relation.route.vocabulary]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();

@@ -1800,7 +1800,7 @@ export const buildSegmentContent = ({
   });
   const root = base ?? buildBrandContent(kit, variation, audiences);
   const relationFor = (audience?: BrandAudience) =>
-    pickRelation({ audience, dna, brand, angle, seed: variationSeed });
+    pickRelation({ audience, audiences, dna, brand, angle, seed: variationSeed });
 
   /**
    * INSIGHTS DE FORMATOS: entram por ÚLTIMO, já no topo dos acervos, para não
@@ -1913,7 +1913,7 @@ export const relationForSegment = ({
     briefAnswers: kit.briefAnswers,
   });
   const audience = segment === GLOBAL_SEGMENT ? undefined : resolveAudience(audiences, segment);
-  return pickRelation({ audience, dna, brand, angle, seed: variationSeed });
+  return pickRelation({ audience, audiences, dna, brand, angle, seed: variationSeed });
 };
 
 

@@ -38,6 +38,7 @@ import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import { carouselCoverCopy } from "@/pages/studio/typographyGuards";
 import type { BrandDna } from "./brandDnaKit";
+import type { Relation } from "./relational";
 
 export const DIRECTOR_AXES = [
   "quem-sou",
@@ -295,6 +296,8 @@ export type ArtShot = {
   closings: WorldContent["closings"];
   typos: WorldContent["typos"];
   quotes: WorldContent["quotes"];
+  /** Conexão editorial usada; entra na memória para variar também o raciocínio. */
+  routeSignature?: string;
 };
 
 export type BrandBrief = {
@@ -350,7 +353,7 @@ export const planBatch = (input: {
   /** Estrutura visual do lote, necessária para tratar um carrossel como grupo. */
   blocks?: ComposedBlock[];
   seed: string;
-  relation?: { pain?: string; desire?: string; proof?: string; cta?: string; axis?: "pain" | "desire" };
+  relation?: Relation | { pain?: string; desire?: string; proof?: string; cta?: string; axis?: "pain" | "desire" };
   dna?: BrandDna;
   brief?: BrandBrief;
   /** Memória da marca: peso 1 = frase inédita, perto de 0 = muito usada. */
@@ -360,7 +363,10 @@ export const planBatch = (input: {
 }): BatchDirection => {
   const { content, count, blocks, seed, relation, dna, brief, weightOf, learnedVoice } = input;
   const rng = createRng(`${seed}:director`);
-  const extra = brandVocabulary(dna, brief);
+  const route = "route" in (relation ?? {}) ? (relation as Relation).route : undefined;
+  const routeFresh = route && weightOf ? weightOf(phraseSignature(`route:${route.signature}`)) : 1;
+  const routeWords = route?.vocabulary ?? [];
+  const extra = [...brandVocabulary(dna, brief), ...routeWords].slice(0, 92);
   const voice = (learnedVoice ?? [])
     .flatMap((v) => normalize(v).split(/[^a-z0-9]+/))
     .filter((w) => w.length > 4)
