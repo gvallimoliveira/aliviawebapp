@@ -58,8 +58,12 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
   const index = slide?.index ?? 0;
   const carousel = pickCarousel(content.carousels, slide?.script ?? group);
 
-  // Roteiro: capa = 0, miolo = 1..slides.length, CTA = slides.length + 1.
-  const total = carousel.slides.length + 2;
+  /**
+   * Roteiro: capa = 0, miolo = 1..n, CTA = último. O total precisa ser o MESMO
+   * que a composição expandiu (`slide.total`); calcular pelo roteiro fazia a
+   * arte anunciar 7 peças quando o scroll entregava 6.
+   */
+  const total = slide?.total ?? carousel.slides.length + 2;
   const isCover = index === 0;
   const isCta = index === total - 1;
   const middle = !isCover && !isCta ? carousel.slides[index - 1] : undefined;
