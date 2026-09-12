@@ -94,15 +94,18 @@ export const buildNarrativeRoute = ({
   dna,
   brand,
   seed,
+  variant = 0,
 }: {
   audience?: BrandAudience;
   audiences?: BrandAudience[];
   dna: BrandDna;
   brand?: string;
   seed: string;
+  variant?: number;
 }): NarrativeRoute => {
-  const rng = createRng(`narrative-route:${seed}:${audience?.id ?? "brand"}`);
-  const neighbor = neighborFor(audience, audiences ?? [], seed);
+  const routeSeed = `${seed}:v${variant}`;
+  const rng = createRng(`narrative-route:${routeSeed}:${audience?.id ?? "brand"}`);
+  const neighbor = neighborFor(audience, audiences ?? [], routeSeed);
   const pains = [...first(audience?.pains), clean(dna.pain)].filter(Boolean);
   const desires = [...first(audience?.desires), clean(dna.desire)].filter(Boolean);
   const proofs = [...first(audience?.proof), clean(dna.belief)].filter(Boolean);
@@ -150,4 +153,11 @@ export const buildNarrativeRoute = ({
     signature,
     vocabulary,
   };
+};
+
+/** Repertório de rotas do lote; a memória decide qual delas merece circular. */
+export const buildNarrativeRoutes = (input: Omit<Parameters<typeof buildNarrativeRoute>[0], "variant">, count = 7) => {
+  const routes = Array.from({ length: Math.max(1, count) }, (_, variant) => buildNarrativeRoute({ ...input, variant }));
+  const unique = new Map(routes.map((route) => [route.signature, route]));
+  return [...unique.values()];
 };

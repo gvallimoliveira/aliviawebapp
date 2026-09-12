@@ -12,7 +12,7 @@
 import { createRng } from "@/pages/studio/rng";
 import { audienceHooks, audienceKeyword, type BrandAudience, type ContentAngle } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
-import { buildNarrativeRoute, type NarrativeRoute } from "./synapses";
+import { buildNarrativeRoutes, type NarrativeRoute } from "./synapses";
 
 export type Relation = {
   audience?: BrandAudience;
@@ -36,6 +36,8 @@ export type Relation = {
   axis: "pain" | "desire";
   /** Rota coerente que liga fatos reais da marca antes de escolher a redação. */
   route?: NarrativeRoute;
+  /** Alternativas reais para o diretor distribuir sem repetir raciocínio. */
+  routes?: NarrativeRoute[];
 };
 
 const strip = (text?: string) => (text ?? "").trim().replace(/\s*[.!?]+$/, "");
@@ -64,7 +66,8 @@ export const pickRelation = ({
   seed?: string;
 }): Relation => {
   const rng = createRng(`relation:${seed ?? "static"}:${audience?.id ?? "brand"}:${angle}`);
-  const route = buildNarrativeRoute({ audience, audiences, dna, brand, seed: seed ?? "static" });
+  const routes = buildNarrativeRoutes({ audience, audiences, dna, brand, seed: seed ?? "static" });
+  const route = routes[0];
 
   const pains = audience ? list(audience.pains) : list(dna.pain ? [dna.pain] : []);
   const desires = audience ? list(audience.desires) : list(dna.desire ? [dna.desire] : []);
@@ -105,6 +108,7 @@ export const pickRelation = ({
     cta: strip(audience?.cta) || strip(dna.cta) || "Chamar no direct",
     axis: axis === "pain" && !painPool.length ? "desire" : axis,
     route,
+    routes,
   };
 };
 

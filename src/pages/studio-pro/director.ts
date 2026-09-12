@@ -364,7 +364,8 @@ export const planBatch = (input: {
   const { content, count, blocks, seed, relation, dna, brief, weightOf, learnedVoice } = input;
   const rng = createRng(`${seed}:director`);
   const route = "route" in (relation ?? {}) ? (relation as Relation).route : undefined;
-  const routeWords = route?.vocabulary ?? [];
+  const routes = "routes" in (relation ?? {}) ? (relation as Relation).routes ?? (route ? [route] : []) : [];
+  const routeWords = routes.flatMap((item) => item.vocabulary).slice(0, 40);
   const extra = [...brandVocabulary(dna, brief), ...routeWords].slice(0, 92);
   const voice = (learnedVoice ?? [])
     .flatMap((v) => normalize(v).split(/[^a-z0-9]+/))
@@ -394,6 +395,12 @@ export const planBatch = (input: {
     streams.set(key, made);
     return made;
   };
+  const routeStream = createStream(
+    routes,
+    `${seed}:narrative-routes`,
+    weightOf,
+    (item) => phraseSignature(`route:${item.signature}`),
+  );
 
   const relText = (relation?.axis === "desire" ? relation?.desire : relation?.pain || relation?.desire) ?? "";
 
@@ -463,6 +470,8 @@ export const planBatch = (input: {
 
   const shots: ArtShot[] = Array.from({ length: Math.max(0, count) }, (_, index) => {
     const axis = wheel[(index + offset) % wheel.length];
+    const shotRoute = routeStream.take({ axis, extra, voice, salt: `route:${index}` }) ?? route;
+    const shotExtra = [...extra, ...(shotRoute?.vocabulary ?? [])].slice(0, 96);
     const block = blocks?.[index];
     const carousel = block?.kind === "carousel" && block.slide !== undefined
       ? carouselByGroup.get(block.slide.group)
@@ -474,7 +483,7 @@ export const planBatch = (input: {
       const stream = streamFor(key, items);
       const out: unknown[] = [];
       for (let n = 0; n < quota; n += 1) {
-        const item = stream.take({ axis, extra, voice, salt: `${index}:${n}` });
+        const item = stream.take({ axis, extra: shotExtra, voice, salt: `${index}:${n}` });
         if (item !== undefined) out.push(item);
       }
       return out;
@@ -539,7 +548,7 @@ export const planBatch = (input: {
     const affinity = [
       ...AXIS_WORDS[axis],
       ...normalize(relText).split(/[^a-z0-9]+/).filter((w) => w.length > 3),
-      ...routeWords,
+      ...(shotRoute?.vocabulary ?? []),
     ];
 
     return {
@@ -555,7 +564,7 @@ export const planBatch = (input: {
       closings,
       typos,
       quotes,
-      routeSignature: route ? `route:${route.signature}:${axis}` : undefined,
+      routeSignature: shotRoute ? `route:${shotRoute.signature}` : undefined,
     };
   });
 
