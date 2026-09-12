@@ -1752,7 +1752,11 @@ export const pickGlobalAudience = ({
    * Todos os públicos entram no sorteio — matriz E sub-nichos. Antes só os
    * matriz entravam, então sub-nicho cadastrado nunca ganhava arte no 360°.
    */
-  const pool = audiences.filter((a) => a.id);
+  /**
+   * Exceção: públicos marcados como "só manual" (`manualOnly`) ficam fora do
+   * sorteio — só entram quando a pessoa escolhe a aba do público no topo.
+   */
+  const pool = audiences.filter((a) => a.id && !a.manualOnly);
   if (!variationSeed || pool.length === 0) return null;
   const dice = createRng(`360:${variationSeed}`);
   // 2 em 3 lotes falam de um público; o restante fala da marca como um todo.
