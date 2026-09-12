@@ -12,6 +12,7 @@ import { directCarouselWithHook, planBatch } from "@/pages/studio-pro/director";
 import { composePage } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
+import { CAROUSEL_SUPPORT_MAX, CAROUSEL_TITLE_MAX } from "@/pages/studio/typographyGuards";
 
 const plan = (seed: string, count = 8) =>
   planBatch({ content: WORLDS.pro, count, seed, relation: { pain: "dor que trava", axis: "pain" } });
@@ -139,12 +140,44 @@ describe("Diretor criativo", () => {
       { desire: "conduzir com mais segurança", cta: "Começar agora" },
     );
 
-    expect(directed.title).toBe("Você ainda decide sem enxergar o caso inteiro?");
-    expect(directed.coverSub).toContain(carousel.title);
+    expect(directed.title).toBe("Você ainda decide sem enxergar o caso inteiro");
+    expect(directed.coverSub).toBe(carousel.title.replace(/[.!?…]+$/, ""));
     expect(directed.slides).toEqual(carousel.slides);
     expect(directed.slides).toHaveLength(carousel.slides.length);
     expect(directed.cta.title).toBe("Quer conduzir com mais segurança?");
     expect(directed.cta.sub).toBe("Conheça o raciocínio clínico");
+  });
+
+  it("mantém a capa curta e não separa uma frase entre título e apoio", () => {
+    const directed = directCarouselWithHook(
+      WORLDS.pro.carousels[0],
+      {
+        hook: "Relato",
+        strong: 'Se "Faz meses que dói e já tentei de tudo." "Ninguém me',
+        rest: ' explicou de onde vem essa dor."',
+        sub: "Uma explicação longa que não deve disputar atenção com a tese central da capa.",
+        cta: "Converse conosco",
+      },
+    );
+
+    expect(directed.title).toBe("Faz meses que dói e já tentei de tudo.");
+    expect(directed.title).not.toContain("Ninguém me");
+    expect(directed.coverSub).not.toContain("explicou");
+    expect(directed.title.length).toBeLessThanOrEqual(CAROUSEL_TITLE_MAX);
+    expect(directed.coverSub.length).toBeLessThanOrEqual(CAROUSEL_SUPPORT_MAX);
+  });
+
+  it("enxuga também capas sem gancho", () => {
+    const carousel = WORLDS.pro.carousels[0];
+    const directed = directCarouselWithHook({
+      ...carousel,
+      title: "Uma manchete propositalmente longa que ultrapassa o espaço limpo reservado para uma capa de carrossel",
+      coverSub: "Um apoio também propositalmente longo, com explicações demais, detalhes demais e informação que deve ficar nos slides internos.",
+    });
+
+    expect(directed.title.length).toBeLessThanOrEqual(CAROUSEL_TITLE_MAX);
+    expect(directed.coverSub.length).toBeLessThanOrEqual(CAROUSEL_SUPPORT_MAX);
+    expect(directed.title).not.toMatch(/\b(?:e|de|da|do|que|para|me)$/i);
   });
 
   it("usa ganchos diferentes nos carrosséis do mesmo lote", () => {

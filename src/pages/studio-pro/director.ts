@@ -36,6 +36,7 @@ import type { StudioHook } from "@/pages/studio/hooks";
 import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
+import { carouselCoverCopy } from "@/pages/studio/typographyGuards";
 import type { BrandDna } from "./brandDnaKit";
 
 export const DIRECTOR_AXES = [
@@ -110,18 +111,20 @@ export const directCarouselWithHook = (
   hook?: StudioHook,
   relation?: { desire?: string; cta?: string },
 ): StudioCarousel => {
-  if (!hook) return carousel;
+  if (!hook) {
+    const cover = carouselCoverCopy(carousel.title, carousel.coverSub);
+    return { ...carousel, title: cover.title, coverSub: cover.support };
+  }
 
   const hookTitle = cleanLine(`${hook.strong}${hook.rest ?? ""}`);
   if (!hookTitle) return carousel;
 
   const originalThesis = stripEnd(carousel.title);
-  const hookSupport = stripEnd(hook.sub);
-  const coverSub = [hookSupport, originalThesis]
-    .filter(Boolean)
-    .filter((line, index, all) => all.findIndex((item) => normalize(item) === normalize(line)) === index)
-    .map((line) => `${line}.`)
-    .join(" ");
+  const compactStrong = cleanLine(hook.strong);
+  const titleSource = compactStrong.length >= 12 ? compactStrong : hookTitle;
+  /* Uma capa não carrega gancho + explicação + tese. A tese do roteiro é a
+     ponte única; detalhes do gancho permanecem para a legenda e o miolo. */
+  const cover = carouselCoverCopy(titleSource, originalThesis || hook.sub || carousel.coverSub);
 
   const desire = stripEnd(relation?.desire);
   const action = stripEnd(hook.cta) || stripEnd(relation?.cta) || stripEnd(carousel.cta.sub);
@@ -132,8 +135,8 @@ export const directCarouselWithHook = (
     // A identidade editorial continua sendo a do roteiro. O gancho já deixa sua
     // própria assinatura em `copy`, portanto ambos perdem prioridade separados.
     kicker: cleanLine(hook.hook) || carousel.kicker,
-    title: hookTitle,
-    coverSub: coverSub || carousel.coverSub,
+    title: cover.title || carousel.title,
+    coverSub: cover.support || carousel.coverSub,
     cta: {
       title: upperFirst(desireTitle),
       sub: action || carousel.cta.sub,

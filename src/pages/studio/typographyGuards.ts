@@ -71,7 +71,48 @@ export const sentenceLead = (raw: string | null | undefined): string => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* 3. Palavra-cartaz                                                          */
+/* 3. Capa de carrossel                                                        */
+/* -------------------------------------------------------------------------- */
+
+export const CAROUSEL_TITLE_MAX = 56;
+export const CAROUSEL_SUPPORT_MAX = 72;
+
+const DANGLING_CAROUSEL_END =
+  /\b(?:e|ou|mas|que|de|da|do|das|dos|em|no|na|nos|nas|com|sem|por|para|se|como|quando|onde|um|uma|me)$/i;
+
+const closeThought = (raw: string, max: number): string => {
+  const clean = raw.replace(/\s+/g, " ").trim();
+  if (!clean) return "";
+
+  /* Insight colado como `Se "frase completa." "começo solto` vira apenas a
+     frase completa. Nunca promovemos o pedaço órfão para a manchete. */
+  const quoted = [...clean.matchAll(/[“\"]([^”\"]{12,})[”\"]/g)]
+    .map((match) => match[1].trim())
+    .find((part) => part.length <= max);
+  const source = quoted && /^(?:se|quando)\s+[“\"]/i.test(clean) ? quoted : clean;
+  let fitted = source.length <= max ? source : condensePhrase(source, max);
+
+  for (let guard = 0; guard < 5 && DANGLING_CAROUSEL_END.test(fitted.replace(/[.!?…“”\"]+$/g, "")); guard += 1) {
+    fitted = fitted.replace(/\s+\S+[.!?…“”\"]*$/, "").trim();
+  }
+
+  /* Aspas sem par não atravessam a fronteira entre título e apoio. */
+  const quoteCount = (fitted.match(/[“”\"]/g) ?? []).length;
+  if (quoteCount % 2 === 1) fitted = fitted.replace(/[“\"][^“”\"]*$/, "").trim();
+  return fitted.replace(/[,:;—–\s]+$/, "").trim();
+};
+
+/** Capa limpa: uma manchete completa e uma única frase curta de apoio. */
+export const carouselCoverCopy = (
+  title: string | null | undefined,
+  support: string | null | undefined,
+): { title: string; support: string } => ({
+  title: closeThought(title ?? "", CAROUSEL_TITLE_MAX),
+  support: closeThought(support ?? "", CAROUSEL_SUPPORT_MAX),
+});
+
+/* -------------------------------------------------------------------------- */
+/* 4. Palavra-cartaz                                                          */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -121,7 +162,7 @@ export const displayWordStyle = (
 export const displayWordContainer: CSSProperties = { containerType: "inline-size", width: "100%" };
 
 /* -------------------------------------------------------------------------- */
-/* 4. Texto sobre foto                                                        */
+/* 5. Texto sobre foto                                                        */
 /* -------------------------------------------------------------------------- */
 
 /** Tinta clara com sombra de leitura — vale para qualquer texto sobre imagem. */

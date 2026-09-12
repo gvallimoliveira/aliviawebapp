@@ -356,8 +356,11 @@ export const ACCENT_STYLES = [
   "text-transparent [-webkit-text-stroke:0.035em_hsl(var(--foreground))]",
 ] as const;
 
-/** Variantes seguras sobre fundo escuro (chip tinta sumiria no bg-foreground). */
-export const DARK_ACCENT_INDEXES = [0, 1, 3, 4] as const;
+/**
+ * Fundo escuro só recebe o par semântico primary/primary-foreground. Cores de
+ * texto isoladas variavam por marca e podiam virar tinta escura sobre preto.
+ */
+export const DARK_ACCENT_INDEXES = [1] as const;
 
 /**
  * Envolve a palavra mais forte da frase (a mais longa) no estilo de destaque
