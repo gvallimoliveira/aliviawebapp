@@ -1109,6 +1109,8 @@
   "support.pro.tool.hep_templates.desc": "Save exercise programs as custom templates and reuse them for new patients. Includes pre-built templates (e.g., shoulder progression) and your own templates that you create and edit. After applying a template, you can remove individual exercises if they are contraindicated for that patient.",
   "support.pro.tool.studio_carousel.title": "Studio: carousels and post threads",
   "support.pro.tool.studio_carousel.desc": "Studio can also present a carousel as a sequence of short brand posts with a beginning, development, and conclusion. Each slide keeps its own download, save, text editing, and color inversion controls.",
+  "support.pro.tool.studio_creative_network.title": "Studio: your brand's creative network",
+  "support.pro.tool.studio_creative_network.desc": "Before writing, Studio connects audience, pain, desire, feature, proof, and next step. Each artwork keeps one central idea, and carousels follow the same reasoning from cover to closing. Generation is local, considers what the brand has already used, and consumes no extra AI credits.",
   "support.pro.tool.ai_test_suggestions.title": "Test suggestions in manual assessment (AI)",
   "support.pro.tool.ai_test_suggestions.desc": "During the manual assessment, the AI analyzes the anamnesis, pain regions, and questionnaires filled in previous steps and suggests 2 to 6 additional clinical tests (orthopedic, mobility, neurodynamic, or functional). Clicking a suggestion automatically inserts the test into the functional tests field as inspiration for the professional.",
   "support.pro.tool.reassessment.title": "Express Reassessment",

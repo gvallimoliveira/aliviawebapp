@@ -38,6 +38,7 @@ import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import { carouselCoverCopy } from "@/pages/studio/typographyGuards";
 import type { BrandDna } from "./brandDnaKit";
+import type { Relation } from "./relational";
 
 export const DIRECTOR_AXES = [
   "quem-sou",
@@ -295,6 +296,8 @@ export type ArtShot = {
   closings: WorldContent["closings"];
   typos: WorldContent["typos"];
   quotes: WorldContent["quotes"];
+  /** Conexão editorial usada; entra na memória para variar também o raciocínio. */
+  routeSignature?: string;
 };
 
 export type BrandBrief = {
@@ -350,7 +353,7 @@ export const planBatch = (input: {
   /** Estrutura visual do lote, necessária para tratar um carrossel como grupo. */
   blocks?: ComposedBlock[];
   seed: string;
-  relation?: { pain?: string; desire?: string; proof?: string; cta?: string; axis?: "pain" | "desire" };
+  relation?: Relation | { pain?: string; desire?: string; proof?: string; cta?: string; axis?: "pain" | "desire" };
   dna?: BrandDna;
   brief?: BrandBrief;
   /** Memória da marca: peso 1 = frase inédita, perto de 0 = muito usada. */
@@ -360,7 +363,10 @@ export const planBatch = (input: {
 }): BatchDirection => {
   const { content, count, blocks, seed, relation, dna, brief, weightOf, learnedVoice } = input;
   const rng = createRng(`${seed}:director`);
-  const extra = brandVocabulary(dna, brief);
+  const route = "route" in (relation ?? {}) ? (relation as Relation).route : undefined;
+  const routes = "routes" in (relation ?? {}) ? (relation as Relation).routes ?? (route ? [route] : []) : [];
+  const routeWords = routes.flatMap((item) => item.vocabulary).slice(0, 40);
+  const extra = [...brandVocabulary(dna, brief), ...routeWords].slice(0, 92);
   const voice = (learnedVoice ?? [])
     .flatMap((v) => normalize(v).split(/[^a-z0-9]+/))
     .filter((w) => w.length > 4)
@@ -370,7 +376,14 @@ export const planBatch = (input: {
   const preferred = (brief?.angles ?? [])
     .map((angle) => DIRECTOR_AXES.find((a) => normalize(AXIS_LABEL[a]).includes(normalize(angle)) || a === angle))
     .filter((a): a is DirectorAxis => Boolean(a));
-  const wheel: DirectorAxis[] = [...new Set([...preferred, ...DIRECTOR_AXES])];
+  const routeAxes: Record<NonNullable<Relation["route"]>["kind"], DirectorAxis[]> = {
+    "pain-to-desire": ["dor", "como-trabalho", "desejo", "convite"],
+    "desire-through-proof": ["desejo", "prova", "como-trabalho", "convite"],
+    "feature-to-human": ["como-trabalho", "prova", "desejo", "convite"],
+    "journey-bridge": ["quem-sou", "como-trabalho", "no-que-acredito", "desejo"],
+  };
+  const routePreferred = route ? routeAxes[route.kind] : [];
+  const wheel: DirectorAxis[] = [...new Set([...preferred, ...routePreferred, ...DIRECTOR_AXES])];
   const offset = rng.int(wheel.length);
 
   /** Um distribuidor por acervo dirigido. */
@@ -382,6 +395,12 @@ export const planBatch = (input: {
     streams.set(key, made);
     return made;
   };
+  const routeStream = createStream(
+    routes,
+    `${seed}:narrative-routes`,
+    weightOf,
+    (item) => phraseSignature(`route:${item.signature}`),
+  );
 
   const relText = (relation?.axis === "desire" ? relation?.desire : relation?.pain || relation?.desire) ?? "";
 
@@ -451,6 +470,8 @@ export const planBatch = (input: {
 
   const shots: ArtShot[] = Array.from({ length: Math.max(0, count) }, (_, index) => {
     const axis = wheel[(index + offset) % wheel.length];
+    const shotRoute = routeStream.take({ axis, extra, voice, salt: `route:${index}` }) ?? route;
+    const shotExtra = [...extra, ...(shotRoute?.vocabulary ?? [])].slice(0, 96);
     const block = blocks?.[index];
     const carousel = block?.kind === "carousel" && block.slide !== undefined
       ? carouselByGroup.get(block.slide.group)
@@ -462,7 +483,7 @@ export const planBatch = (input: {
       const stream = streamFor(key, items);
       const out: unknown[] = [];
       for (let n = 0; n < quota; n += 1) {
-        const item = stream.take({ axis, extra, voice, salt: `${index}:${n}` });
+        const item = stream.take({ axis, extra: shotExtra, voice, salt: `${index}:${n}` });
         if (item !== undefined) out.push(item);
       }
       return out;
@@ -527,6 +548,7 @@ export const planBatch = (input: {
     const affinity = [
       ...AXIS_WORDS[axis],
       ...normalize(relText).split(/[^a-z0-9]+/).filter((w) => w.length > 3),
+      ...(shotRoute?.vocabulary ?? []),
     ];
 
     return {
@@ -542,6 +564,7 @@ export const planBatch = (input: {
       closings,
       typos,
       quotes,
+      routeSignature: shotRoute ? `route:${shotRoute.signature}` : undefined,
     };
   });
 

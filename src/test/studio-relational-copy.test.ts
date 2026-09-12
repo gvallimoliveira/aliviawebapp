@@ -129,6 +129,60 @@ describe("motor textual relacional", () => {
     expect(wish.desire).toBeTruthy();
   });
 
+  it("cria uma rota narrativa determinística sem misturar a voz dos públicos", () => {
+    const other: BrandAudience = {
+      id: "clinica",
+      label: "Gestor de clínica",
+      keyword: "Clínica",
+      pains: ["Equipe registra cada caso de um jeito"],
+      desires: ["Padronizar a jornada sem perder contexto"],
+      proof: ["Relatórios e evolução compartilhados pela equipe"],
+      cta: "Conhecer a gestão clínica",
+    };
+    const dna = buildBrandDna({ briefAnswers: brief });
+    const a = pickRelation({ audience: audiences[0], audiences: [...audiences, other], dna, brand: kit.name, angle: "dor", seed: "rede" });
+    const b = pickRelation({ audience: audiences[0], audiences: [...audiences, other], dna, brand: kit.name, angle: "dor", seed: "rede" });
+    expect(a.route).toEqual(b.route);
+    expect(a.route.audienceId).toBe("corredor");
+    expect(a.route.signature).toBeTruthy();
+    expect(a.route.audienceLabel).not.toBe(other.label);
+  });
+
+  it("varia conexões entre seeds sem inventar matéria-prima", () => {
+    const dna = buildBrandDna({ briefAnswers: brief });
+    const source = JSON.stringify([brief, audiences]).toLowerCase();
+    const routes = ["rede-a", "rede-b", "rede-c", "rede-d"].map((seed) =>
+      pickRelation({ audience: audiences[0], audiences, dna, brand: kit.name, angle: "informar", seed }).route,
+    );
+    expect(new Set(routes.map((route) => route?.signature)).size).toBeGreaterThan(1);
+    routes.forEach((route) => {
+      [route?.tension, route?.feature, route?.proof, route?.desire]
+        .filter((value): value is string => Boolean(value))
+        .forEach((value) => expect(source).toContain(value.toLowerCase()));
+    });
+  });
+
+  it("não usa público manual como ponte automática", () => {
+    const manual: BrandAudience = {
+      id: "feridas",
+      label: "Cicatrização de feridas",
+      keyword: "Feridas",
+      pains: ["Ferida complexa"],
+      desires: ["Cicatrização acompanhada"],
+      proof: ["Conduta específica para feridas"],
+      manualOnly: true,
+    };
+    const relation = pickRelation({
+      audience: audiences[0],
+      audiences: [...audiences, manual],
+      dna: buildBrandDna({ briefAnswers: brief }),
+      brand: kit.name,
+      angle: "informar",
+      seed: "sem-feridas",
+    });
+    expect(relation.route?.vocabulary.join(" ")).not.toMatch(/ferida|cicatriz/);
+  });
+
   it("o medo eleito lidera os slots do público", () => {
     const relation = pickRelation({
       audience: audiences[0],

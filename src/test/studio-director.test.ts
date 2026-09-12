@@ -13,6 +13,8 @@ import { composePage, TREATMENT_COUNT } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import { carouselCoverCopy, CAROUSEL_SUPPORT_MAX, CAROUSEL_TITLE_MAX } from "@/pages/studio/typographyGuards";
+import { buildBrandDna } from "@/pages/studio-pro/brandDnaKit";
+import { pickRelation } from "@/pages/studio-pro/relational";
 
 const plan = (seed: string, count = 8) =>
   planBatch({ content: WORLDS.pro, count, seed, relation: { pain: "dor que trava", axis: "pain" } });
@@ -46,6 +48,55 @@ describe("Diretor criativo", () => {
       expect(shot.copy.length).toBeGreaterThan(0);
       expect(shot.affinity.length).toBeGreaterThan(0);
     });
+  });
+
+  it("registra rotas distintas por eixo para variar também o raciocínio", () => {
+    const relation = pickRelation({
+      dna: buildBrandDna({
+        niche: "tecnologia para fisioterapia",
+        briefAnswers: {
+          oferta: "Raciocínio clínico, reavaliação e relatórios no mesmo fluxo",
+          dor: "Decidir com informações clínicas espalhadas",
+          desejo: "Conduzir cada caso com clareza",
+          diferencial: "A jornada conecta avaliação e evolução",
+        },
+      }),
+      brand: "Aliv.iA",
+      angle: "informar",
+      seed: "sinapses",
+    });
+    const direction = planBatch({ content: WORLDS.pro, count: 7, seed: "sinapses", relation });
+    const signatures = direction.shots.map((shot) => shot.routeSignature);
+    expect(signatures.every(Boolean)).toBe(true);
+    expect(new Set(signatures).size).toBeGreaterThan(1);
+    direction.shots.forEach((shot) => expect(shot.affinity.length).toBeGreaterThan(10));
+  });
+
+  it("faz uma rota já usada ceder espaço no lote seguinte", () => {
+    const relation = pickRelation({
+      dna: buildBrandDna({
+        briefAnswers: {
+          oferta: "Avaliação, evolução e relatório conectados",
+          dor: "Informações espalhadas durante a jornada",
+          desejo: "Tomar decisões com clareza",
+          diferencial: "Raciocínio clínico especializado em fisioterapia",
+        },
+      }),
+      brand: "Aliv.iA",
+      angle: "informar",
+      seed: "memoria-de-rota",
+    });
+    const first = planBatch({ content: WORLDS.pro, count: 3, seed: "memoria-de-rota", relation });
+    const used = first.shots[0].routeSignature;
+    expect(used).toBeTruthy();
+    const second = planBatch({
+      content: WORLDS.pro,
+      count: 3,
+      seed: "memoria-de-rota",
+      relation,
+      weightOf: (signature) => signature === phraseSignature(used) ? 0.02 : 1,
+    });
+    expect(second.shots[0].routeSignature).not.toBe(used);
   });
 
   it("o conteúdo dirigido só oferece os slots reservados da arte", () => {

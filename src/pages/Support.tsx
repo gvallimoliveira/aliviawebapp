@@ -73,6 +73,7 @@ const proTools = [
   { key: "insights_revenue", icon: BarChart3 },
   { key: "ai_credits", icon: Gauge },
   { key: "studio_carousel", icon: Palette },
+  { key: "studio_creative_network", icon: Brain },
 ];
 
 const patientFaqKeys = ["pf_signup", "pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11", "pf12", "pf13"];
