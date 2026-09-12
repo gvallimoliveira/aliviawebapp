@@ -36,7 +36,7 @@ import type { StudioHook } from "@/pages/studio/hooks";
 import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
-import { carouselCoverCopy } from "@/pages/studio/typographyGuards";
+import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typographyGuards";
 import type { BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 
@@ -114,7 +114,16 @@ export const directCarouselWithHook = (
 ): StudioCarousel => {
   if (!hook) {
     const cover = carouselCoverCopy(carousel.title, carousel.coverSub);
-    return { ...carousel, title: cover.title, coverSub: cover.support };
+    const closing = carouselClosingCopy(carousel.cta.title, carousel.cta.sub);
+    return {
+      ...carousel,
+      title: cover.title,
+      coverSub: cover.support,
+      cta: {
+        title: closing.title || carousel.cta.title,
+        sub: closing.support || carousel.cta.sub,
+      },
+    };
   }
 
   const hookTitle = cleanLine(`${hook.strong}${hook.rest ?? ""}`);
@@ -132,6 +141,7 @@ export const directCarouselWithHook = (
   const desire = editorialLabel.test(desireCandidate) ? "" : desireCandidate;
   const action = stripEnd(hook.cta) || stripEnd(relation?.cta) || stripEnd(carousel.cta.sub);
   const desireTitle = desire ? `Quer ${lowerFirst(desire)}?` : carousel.cta.title;
+  const closing = carouselClosingCopy(desireTitle, action || carousel.cta.sub);
 
   return {
     ...carousel,
@@ -141,8 +151,8 @@ export const directCarouselWithHook = (
     title: cover.title || carousel.title,
     coverSub: cover.support || carousel.coverSub,
     cta: {
-      title: upperFirst(desireTitle),
-      sub: action || carousel.cta.sub,
+      title: upperFirst(closing.title || carousel.cta.title),
+      sub: closing.support || carousel.cta.sub,
     },
   };
 };

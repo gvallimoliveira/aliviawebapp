@@ -214,6 +214,20 @@ describe("Diretor criativo", () => {
     expect(`${directed.cta.title} ${directed.cta.sub}`).not.toMatch(/objeções mais comuns/i);
   });
 
+  it("reduz o fecho a uma intenção curta antes das objeções", () => {
+    const directed = directCarouselWithHook(
+      WORLDS.pro.carousels[0],
+      { hook: "Gancho", strong: "Uma decisão muda o caminho", rest: ".", cta: "Aplicar amanhã" },
+      {
+        desire: "profissional quer receber o paciente com avaliação pronta e decidir alta com critério. Objeções mais comuns: é mais um sistema; não tenho tempo",
+      },
+    );
+
+    expect(directed.cta.title).toMatch(/^Quer /);
+    expect(directed.cta.title.length).toBeLessThanOrEqual(58);
+    expect(`${directed.cta.title} ${directed.cta.sub}`).not.toMatch(/objeç|mais um sistema|não tenho tempo/i);
+  });
+
   it("mantém a capa curta e não separa uma frase entre título e apoio", () => {
     const directed = directCarouselWithHook(
       WORLDS.pro.carousels[0],

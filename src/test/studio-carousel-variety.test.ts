@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildSegmentContent } from "@/pages/studio-pro/brandContent";
-import { carouselTweetCopy } from "@/pages/studio/typographyGuards";
+import { carouselClosingCopy, carouselTweetCopy } from "@/pages/studio/typographyGuards";
 
 const kit = {
   name: "Guilherme Vallim Fisioterapia",
@@ -35,6 +35,15 @@ const contentFor = (seed: string) =>
   });
 
 describe("variedade temática dos carrosséis", () => {
+  it("mantém o fechamento curto e descarta a cauda de objeções", () => {
+    const closing = carouselClosingCopy(
+      "Profissional quer receber o paciente com avaliação pronta e mostrar evolução. Objeções mais comuns: é mais um sistema",
+      "Aplicar no caso de amanhã",
+    );
+    expect(closing.title).toBe("Quer receber o paciente com avaliação pronta?");
+    expect(closing.support).toBe("Aplicar no caso de amanhã");
+  });
+
   it("mantém cada tweet curto, completo e sem conectivo pendurado", () => {
     const post = carouselTweetCopy(
       "Uma provocação objetiva que abre o assunto sem transformar a capa em um parágrafo longo demais",
