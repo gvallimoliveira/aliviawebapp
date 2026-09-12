@@ -29,6 +29,8 @@ import { findStudioSelfCharm, type StudioSelfCharmRow } from "./studioSelfCharm"
 import { professionFor, wantsProfession } from "./professions";
 
 import { findAliviaCoreCharm, isAliviaCoreBrand, type AliviaCoreCharmRow } from "./aliviaCoreCharm";
+import { matchesVestibular, vestibularLines } from "./vestibularLexicon";
+
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const noDot = (text?: string) => clean(text).replace(/\s*[.!?…]+$/, "");
