@@ -67,7 +67,7 @@ export type ComposedBlock = {
  * Quantidade de tratamentos visuais que cada bloco sabe renderizar.
  * Manter sincronizado com os componentes em `blocks/`.
  */
-const TREATMENT_COUNT: Record<BlockKind, number> = {
+export const TREATMENT_COUNT: Record<BlockKind, number> = {
   hero: 5,
   marquee: 4,
   metrics: 4,
@@ -85,7 +85,7 @@ const TREATMENT_COUNT: Record<BlockKind, number> = {
   story: 3,
   list: 3,
   brand: 6,
-  carousel: 6,
+  carousel: 7,
   photoType: 2,
   photoSplit: 2,
   photoPortrait: 2,

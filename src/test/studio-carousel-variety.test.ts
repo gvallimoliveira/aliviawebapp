@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildSegmentContent } from "@/pages/studio-pro/brandContent";
+import { carouselTweetCopy } from "@/pages/studio/typographyGuards";
 
 const kit = {
   name: "Guilherme Vallim Fisioterapia",
@@ -34,6 +35,17 @@ const contentFor = (seed: string) =>
   });
 
 describe("variedade temática dos carrosséis", () => {
+  it("mantém cada tweet curto, completo e sem conectivo pendurado", () => {
+    const post = carouselTweetCopy(
+      "Uma provocação objetiva que abre o assunto sem transformar a capa em um parágrafo longo demais",
+      "A continuação desenvolve uma única ideia com informação suficiente para conduzir ao próximo post e",
+    );
+    expect(post.title.length).toBeLessThanOrEqual(64);
+    expect(post.support.length).toBeLessThanOrEqual(116);
+    expect(post.title).not.toMatch(/\b(?:e|de|da|do|que|para)$/i);
+    expect(post.support).not.toMatch(/\b(?:e|de|da|do|que|para)$/i);
+  });
+
   it("oferece repertório com mais de um roteiro por público", () => {
     expect(contentFor("lote-1").carousels.length).toBeGreaterThanOrEqual(4);
   });

@@ -23,7 +23,7 @@ export const STUDIO_MODELS: StudioModel[] = [
   { id: "letras", label: "Letras grandes", hint: "Tipografia gigante, poucas palavras", kinds: ["typo", "kinetic"] },
   { id: "minimal", label: "Minimalista", hint: "Fundo limpo, uma ideia por arte", kinds: ["mono", "echo"] },
   { id: "citacao", label: "Citação", hint: "Bloco de fala em fundo de destaque", kinds: ["quote"] },
-  { id: "carrossel", label: "Carrossel", hint: "Sequência capa → slides → CTA", kinds: ["carousel"] },
+  { id: "carrossel", label: "Carrossel", hint: "Sequência capa → slides → CTA, inclusive em fio de posts", kinds: ["carousel"] },
   { id: "foto", label: "Foto do acervo", hint: "Suas fotos com tipografia por cima", kinds: ["photoType", "photoSplit", "photoPortrait", "stage"], needsPhoto: true },
   { id: "fotofundo", label: "Foto como plano de fundo", hint: "Sua foto esmaecida atrás do texto, com véu escurecido (substitui a foto em primeira camada)", kinds: ["photoVeil"], needsPhoto: true },
   { id: "numeros", label: "Números / prova", hint: "Métricas e dados em destaque", kinds: ["metrics", "stats"] },

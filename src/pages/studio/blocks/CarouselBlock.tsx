@@ -9,6 +9,7 @@ import {
 } from "./Texture";
 import { imageForTopic, type TopicId } from "../topics";
 import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME } from "../brand";
+import { carouselTweetCopy } from "../typographyGuards";
 
 /**
  * Carousel block — sequência de artes numeradas (capa → miolo → CTA final)
@@ -52,6 +53,22 @@ const SlideImage = ({ topic }: { topic?: TopicId }) => {
     />
   );
 };
+
+const TweetVerified = () => (
+  <svg viewBox="0 0 24 24" aria-hidden className="h-[1em] w-[1em] shrink-0 text-primary">
+    <path
+      fill="currentColor"
+      d="M12 1.5l2.4 1.9 3-.4 1.1 2.9 2.6 1.6-.8 2.9.8 2.9-2.6 1.6-1.1 2.9-3-.4L12 22.5l-2.4-1.9-3 .4-1.1-2.9-2.6-1.6.8-2.9-.8-2.9L5.5 6.9 6.6 4l3 .4L12 1.5zm-1.3 13.6l5.3-5.3-1.3-1.4-4 4-2-2-1.4 1.4 3.4 3.3z"
+    />
+  </svg>
+);
+
+const TWEET_ACTION_PATHS = [
+  "M4 4h16v11H9l-5 4V4z",
+  "M7 7h9l-3-3M17 17H8l3 3M17 7v10M7 17V7",
+  "M12 20s-7-4.35-7-9a4 4 0 017-2.65A4 4 0 0119 11c0 4.65-7 9-7 9z",
+  "M4 20V10M9.3 20V4M14.7 20v-7M20 20V7",
+] as const;
 
 const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: BlockProps) => {
   const group = slide?.group ?? 0;
@@ -383,6 +400,94 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
             <Dots total={total} active={index} dark />
             <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-background/50">
               {counter}
+            </span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (treatment === 6) {
+    /**
+     * Fio de posts: o mesmo roteiro indivisível do carrossel ganha a linguagem
+     * visual do mockup de tweet. Cada slide mantém uma ideia curta e completa;
+     * capa abre a tese, miolo desenvolve e o último post fecha com a ação.
+     */
+    const rawTitle = middle ? middle.heading : isCover ? carousel.title : carousel.cta.title;
+    const rawSupport = middle ? middle.body : isCover ? carousel.coverSub : carousel.cta.sub;
+    const post = carouselTweetCopy(rawTitle, rawSupport);
+    const dark = (group + index) % 2 === 0;
+    const stage = dark ? "hsl(var(--muted))" : "hsl(var(--primary))";
+    const cardBg = dark ? "hsl(var(--foreground))" : "hsl(var(--background))";
+    const cardText = dark ? "hsl(var(--background))" : "hsl(var(--foreground))";
+    const meta = dark ? "hsl(var(--background) / 0.62)" : "hsl(var(--foreground) / 0.58)";
+    const hair = dark ? "hsl(var(--background) / 0.18)" : "hsl(var(--foreground) / 0.14)";
+    const baseCount = post.title.length + post.support.length + group + index * 11;
+    const counts = [
+      String(8 + (baseCount % 37)),
+      String(3 + (baseCount % 19)),
+      String(40 + (baseCount % 430)),
+      `${1 + (baseCount % 8)},${1 + (index % 8)} mil`,
+    ];
+
+    return (
+      <section
+        className={`relative flex ${sectionHeight(format)} items-center justify-center overflow-hidden`}
+        style={{ backgroundColor: stage }}
+      >
+        <TextureLayer persona={persona} index={treatment + group} dark={dark} />
+        <div className="container relative flex h-full flex-col justify-center px-[7%] py-[8%]">
+          <motion.article
+            {...anim}
+            className="mx-auto flex w-full max-w-xl flex-col rounded-[1.6rem] p-[7%] shadow-lg"
+            style={{ backgroundColor: cardBg, color: cardText }}
+          >
+            <header className="flex items-center gap-3">
+              <span
+                className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full md:h-14 md:w-14"
+                style={{ backgroundColor: dark ? "hsl(var(--background) / 0.12)" : "hsl(var(--secondary))" }}
+              >
+                <img src={BRAND_LOGO} alt="" aria-hidden className="h-3/4 w-3/4 object-contain" />
+              </span>
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-base font-bold leading-tight md:text-lg">
+                  <span className="truncate">{BRAND_NAME}</span>
+                  <TweetVerified />
+                </p>
+                <p className="truncate text-sm md:text-base" style={{ color: meta }}>{BRAND_HANDLE}</p>
+              </div>
+            </header>
+
+            <div className="my-auto py-[8%]">
+              <p className="break-words text-xl font-semibold leading-[1.25] [overflow-wrap:anywhere] md:text-3xl">
+                {post.title}
+              </p>
+              {post.support && (
+                <p className="mt-4 break-words text-base leading-[1.45] [overflow-wrap:anywhere] md:text-xl">
+                  {post.support}
+                </p>
+              )}
+            </div>
+
+            <p className="text-xs md:text-sm" style={{ color: meta }}>
+              Fio {index + 1}/{total} · {isCta ? "Conclusão" : isCover ? "Ideia central" : carousel.kicker}
+            </p>
+            <div aria-hidden className="my-4 h-px w-full" style={{ backgroundColor: hair }} />
+            <div className="flex items-center justify-between" style={{ color: meta }}>
+              {TWEET_ACTION_PATHS.map((d, actionIndex) => (
+                <span key={d} className="flex items-center gap-1.5 text-xs md:text-sm">
+                  <svg viewBox="0 0 24 24" aria-hidden className="h-4 w-4 md:h-5 md:w-5">
+                    <path d={d} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {counts[actionIndex]}
+                </span>
+              ))}
+            </div>
+          </motion.article>
+          <div className="mx-auto mt-5 flex w-full max-w-xl items-center justify-between">
+            <Dots total={total} active={index} dark={dark} />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: dark ? cardText : "hsl(var(--primary-foreground))" }}>
+              {isCta ? BRAND_NAME : "continue →"}
             </span>
           </div>
         </div>

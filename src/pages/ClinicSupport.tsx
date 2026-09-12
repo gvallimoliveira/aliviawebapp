@@ -95,8 +95,8 @@ const categories: ToolCategory[] = [
       {
         key: "studio_carousel",
         icon: Palette,
-        title: "Studio: carrosséis com slides independentes",
-        desc: "No Studio, cada slide do carrossel tem seus próprios controles para baixar, salvar, editar texto e inverter cores. Os slides permanecem em ordem no scroll lateral, mas cada um é salvo como uma arte independente na galeria.",
+        title: "Studio: carrosséis e fios de posts",
+        desc: "O Studio também pode apresentar um carrossel como uma sequência de posts curtos da marca, com começo, desenvolvimento e conclusão. Cada slide continua com controles próprios para baixar, salvar, editar texto e inverter cores.",
       },
       {
         key: "voice_notes",
