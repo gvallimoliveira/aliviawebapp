@@ -30,6 +30,7 @@ import { professionFor, wantsProfession } from "./professions";
 
 import { findAliviaCoreCharm, isAliviaCoreBrand, type AliviaCoreCharmRow } from "./aliviaCoreCharm";
 import { matchesVestibular, vestibularLines } from "./vestibularLexicon";
+import { matchesMsk, mskLines } from "./mskLexicon";
 
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
@@ -235,9 +236,32 @@ export const applyCharm = (
       })()
     : content;
 
-  if (angle === "informar") return base;
+  /**
+   * ESPORTISTA / PÓS-OPERATÓRIO / DOR CRÔNICA: vocabulário concreto de lesões
+   * (LCA, menisco, manguito rotador, ombro do arremessador, lesão muscular,
+   * tendinopatias, dor patelofemoral, impactação do quadril, entorse de
+   * tornozelo). Vale para qualquer ângulo, inclusive "informar".
+   */
+  const withMsk = (() => {
+    if (matchesVestibular(probe) || !matchesMsk(probe)) return base;
+    const lines = mskLines(probe, `${brand ?? "marca"}:${probe}:${angle}`);
+    if (!lines) return base;
+    return {
+      ...base,
+      headlines: [...lines.headlines, ...base.headlines],
+      subs: [...lines.subs, ...base.subs],
+      quotes: [...lines.quotes, ...base.quotes],
+      lists: [
+        { heading: `${lines.topic.glossary[0]?.term ?? "Lesão"}: o que é o quê`, items: lines.glossary, closing: lines.ctas[0] },
+        ...base.lists,
+      ],
+      sales: { ...base.sales, ctas: [...new Set([...lines.ctas, ...base.sales.ctas])] },
+    };
+  })();
 
-  content = base;
+  if (angle === "informar") return withMsk;
+
+  content = withMsk;
 
   /**
    * Marca do próprio produto: o guia de copy do manual do Aliv.iA Studio tem
