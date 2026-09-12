@@ -152,6 +152,17 @@ describe("Diretor criativo", () => {
     expect(directed.cta.sub).toBe("Conheça o raciocínio clínico");
   });
 
+  it("não promove rótulo editorial como fecho do carrossel", () => {
+    const carousel = WORLDS.pro.carousels[0];
+    const directed = directCarouselWithHook(
+      carousel,
+      { hook: "Gancho", strong: "Uma decisão muda o caminho", rest: "." },
+      { desire: "Objeções mais comuns:", cta: "Agendar avaliação" },
+    );
+    expect(directed.cta.title).toBe(carousel.cta.title);
+    expect(`${directed.cta.title} ${directed.cta.sub}`).not.toMatch(/objeções mais comuns/i);
+  });
+
   it("mantém a capa curta e não separa uma frase entre título e apoio", () => {
     const directed = directCarouselWithHook(
       WORLDS.pro.carousels[0],
@@ -182,6 +193,17 @@ describe("Diretor criativo", () => {
     expect(directed.title.length).toBeLessThanOrEqual(CAROUSEL_TITLE_MAX);
     expect(directed.coverSub.length).toBeLessThanOrEqual(CAROUSEL_SUPPORT_MAX);
     expect(directed.title).not.toMatch(/\b(?:e|de|da|do|que|para|me)$/i);
+  });
+
+  it("não reduz uma chamada imperativa a Pare de", () => {
+    const carousel = WORLDS.pro.carousels[0];
+    const directed = directCarouselWithHook(carousel, {
+      hook: "Provocação",
+      strong: "Pare de decidir com uma visão incompleta do caso clínico e sem comparar os sinais importantes",
+      rest: ".",
+    });
+    expect(directed.title).not.toBe("Pare de");
+    expect(directed.title.split(/\s+/).length).toBeGreaterThanOrEqual(3);
   });
 
   it("usa ganchos diferentes nos carrosséis do mesmo lote", () => {

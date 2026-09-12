@@ -47,6 +47,16 @@ describe("motor textual relacional", () => {
     expect(dna.forbidden).toContain("cura");
   });
 
+  it("separa desejo de objeção quando ambos vieram no mesmo campo", () => {
+    const dna = buildBrandDna({
+      briefAnswers: {
+        desejo: "Desejo: voltar a correr sem medo; Objeções mais comuns: acha que vai demorar",
+      },
+    });
+    expect(dna.desire).toBe("voltar a correr sem medo");
+    expect(dna.objection).toBe("acha que vai demorar");
+  });
+
   it("escreve a partir do manual, não do acervo genérico", () => {
     const content = buildSegmentContent({
       kit,
@@ -57,6 +67,25 @@ describe("motor textual relacional", () => {
     });
     const text = allText(content);
     expect(text).toMatch(/causa da dor|reavalia|teste/);
+  });
+
+  it("encurta público e objeções antes de renderizar", () => {
+    const content = buildSegmentContent({
+      kit: {
+        ...kit,
+        briefAnswers: {
+          ...brief,
+          publico_primario: "Adulto do Rio de Janeiro (Zona Sul, Barra e Recreio) com dor persistente",
+          dor: "Uma descrição muito extensa da tentativa anterior que acumula detalhes demais para caber com boa leitura dentro de uma única arte",
+        },
+      },
+      audiences: [],
+      segment: GLOBAL_SEGMENT,
+      angle: "dor",
+      variationSeed: "texto-enxuto",
+    });
+    expect(content.sales.audience.length).toBeLessThanOrEqual(40);
+    content.sales.objections.forEach((item) => expect(item.length).toBeLessThanOrEqual(96));
   });
 
   it("não deixa vício de linguagem herdado sair do motor", () => {

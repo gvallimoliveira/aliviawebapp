@@ -91,9 +91,16 @@ const closeThought = (raw: string, max: number): string => {
     .find((part) => part.length <= max);
   const source = quoted && /^(?:se|quando)\s+[“\"]/i.test(clean) ? quoted : clean;
   let fitted = source.length <= max ? source : condensePhrase(source, max);
+  const beforeDanglingTrim = fitted;
 
   for (let guard = 0; guard < 5 && DANGLING_CAROUSEL_END.test(fitted.replace(/[.!?…“”\"]+$/g, "")); guard += 1) {
     fitted = fitted.replace(/\s+\S+[.!?…“”\"]*$/, "").trim();
+  }
+
+  /* Um corte nunca pode reduzir uma chamada a um comando órfão ("Pare de"). */
+  const words = fitted.split(/\s+/).filter(Boolean);
+  if (words.length < 3 || /^(?:pare|deixe|evite|comece)\s+(?:de|a|com)$/i.test(fitted)) {
+    fitted = beforeDanglingTrim;
   }
 
   /* Aspas sem par não atravessam a fronteira entre título e apoio. */

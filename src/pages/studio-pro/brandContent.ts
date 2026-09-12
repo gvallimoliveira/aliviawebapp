@@ -229,6 +229,8 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
   for (const [key, value] of Object.entries(content.sales)) {
     if (Array.isArray(value)) sales[key] = purge(value as unknown[]);
   }
+  sales.audience = shortKicker(content.sales.audience, 40) || content.sales.audience;
+  sales.objections = ((sales.objections as string[] | undefined) ?? []).map((item) => firstSentence(item, 96));
   out.sales = sales;
 
   /**
@@ -251,6 +253,9 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
     ...t,
     lead: sentenceLead(t.lead),
   }));
+  out.marquee = (out.marquee as WorldContent["marquee"]).map((row) =>
+    row.map((item) => shortKicker(item, 40) || item),
+  );
 
   return out as unknown as WorldContent;
 };
