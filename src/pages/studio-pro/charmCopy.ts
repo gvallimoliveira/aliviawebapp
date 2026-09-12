@@ -261,7 +261,7 @@ export const applyCharm = (
 
   if (angle === "informar") return withMsk;
 
-  content = base;
+  content = withMsk;
 
   /**
    * Marca do próprio produto: o guia de copy do manual do Aliv.iA Studio tem
