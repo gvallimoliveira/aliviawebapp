@@ -144,6 +144,9 @@ export const carouselClosingCopy = (
   support: string | null | undefined,
 ): { title: string; support: string } => {
   const withoutEditorialTail = (title ?? "").split(EDITORIAL_TAIL)[0]?.trim() ?? "";
+  const shouldAsk = /^(?:quer\s+|(?:(?:o|a)\s+)?(?:profissional|fisioterapeuta|acadêmico|acadêmica|clínica|equipe)\s+quer\s+)/i.test(
+    withoutEditorialTail,
+  );
   const questionBody = withoutEditorialTail
     .replace(/^quer\s+/i, "")
     .replace(ACTOR_WANTS, "")
@@ -153,7 +156,11 @@ export const carouselClosingCopy = (
   const compactSupport = closeThought((support ?? "").split(EDITORIAL_TAIL)[0] ?? "", 48);
 
   return {
-    title: compactTitle ? `Quer ${compactTitle.charAt(0).toLowerCase()}${compactTitle.slice(1)}?` : "",
+    title: compactTitle
+      ? shouldAsk
+        ? `Quer ${compactTitle.charAt(0).toLowerCase()}${compactTitle.slice(1)}?`
+        : compactTitle
+      : "",
     support: compactSupport,
   };
 };
