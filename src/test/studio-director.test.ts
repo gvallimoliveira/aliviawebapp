@@ -72,6 +72,33 @@ describe("Diretor criativo", () => {
     direction.shots.forEach((shot) => expect(shot.affinity.length).toBeGreaterThan(10));
   });
 
+  it("faz uma rota já usada ceder espaço no lote seguinte", () => {
+    const relation = pickRelation({
+      dna: buildBrandDna({
+        briefAnswers: {
+          oferta: "Avaliação, evolução e relatório conectados",
+          dor: "Informações espalhadas durante a jornada",
+          desejo: "Tomar decisões com clareza",
+          diferencial: "Raciocínio clínico especializado em fisioterapia",
+        },
+      }),
+      brand: "Aliv.iA",
+      angle: "informar",
+      seed: "memoria-de-rota",
+    });
+    const first = planBatch({ content: WORLDS.pro, count: 3, seed: "memoria-de-rota", relation });
+    const used = first.shots[0].routeSignature;
+    expect(used).toBeTruthy();
+    const second = planBatch({
+      content: WORLDS.pro,
+      count: 3,
+      seed: "memoria-de-rota",
+      relation,
+      weightOf: (signature) => signature === phraseSignature(used) ? 0.02 : 1,
+    });
+    expect(second.shots[0].routeSignature).not.toBe(used);
+  });
+
   it("o conteúdo dirigido só oferece os slots reservados da arte", () => {
     const direction = plan("slots", 4);
     const first = direction.contentFor(0);
