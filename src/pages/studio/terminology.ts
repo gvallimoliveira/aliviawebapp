@@ -199,8 +199,17 @@ export const applyTerminology = (content: WorldContent, options: TerminologyOpti
 const PATIENT_AUDIENCE =
   /paciente|dor\b|dor\s+cr[oô]nica|dor\s+persistente|lombar|coluna|joelho|ombro|les[ãa]o|p[oó]s[-\s]?operat[oó]rio|p[oó]s[-\s]?cir[uú]rgic|60\s*\+|idos[oa]|terceira idade|esportista|atleta|corredor|corrida|praticante/i;
 
-/** A relação da arte fala com paciente? (aceita rótulo, palavra-chave, gancho) */
-export const isPatientVoice = (probe: string): boolean => PATIENT_AUDIENCE.test(probe ?? "");
+/**
+ * A relação da arte fala com paciente? (aceita rótulo, palavra-chave, gancho)
+ * Público com ator profissional (clínica, fisioterapeuta, equipe, acadêmico)
+ * NUNCA é voz de paciente — ali não existe autoavaliação.
+ */
+export const isPatientVoice = (probe: string): boolean => {
+  const text = probe ?? "";
+  if (PRO_ACTOR.test(text)) return false;
+  return PATIENT_AUDIENCE.test(text);
+};
+
 
 /**
  * Decide o modo "autoavaliação" de uma arte: só vale para a marca clínica dona
