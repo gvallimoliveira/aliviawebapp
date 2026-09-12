@@ -31,7 +31,8 @@
  * uma vez lido — fica guardado na marca, valendo também com a IA desligada.
  */
 
-import type { WorldContent, WorldSales } from "@/pages/studio/content/types";
+import type { StudioCarousel, WorldContent, WorldSales } from "@/pages/studio/content/types";
+import type { StudioHook } from "@/pages/studio/hooks";
 import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
@@ -89,6 +90,56 @@ const normalize = (text: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+
+const cleanLine = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
+const stripEnd = (text?: string) => cleanLine(text).replace(/\s*[.!?…]+$/, "");
+const lowerFirst = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text);
+const upperFirst = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
+
+/**
+ * Potencializa um roteiro existente sem desmontar o raciocínio dos slides:
+ * - o gancho ATIVO da biblioteca assume a capa;
+ * - a tese original vira a ponte explícita para o desenvolvimento;
+ * - o último slide nomeia o desejo e pede a ação configurada na marca.
+ *
+ * A quantidade de slides não muda, portanto a contagem exibida e o download
+ * continuam correspondendo exatamente ao scroll lateral.
+ */
+export const directCarouselWithHook = (
+  carousel: StudioCarousel,
+  hook?: StudioHook,
+  relation?: { desire?: string; cta?: string },
+): StudioCarousel => {
+  if (!hook) return carousel;
+
+  const hookTitle = cleanLine(`${hook.strong}${hook.rest ?? ""}`);
+  if (!hookTitle) return carousel;
+
+  const originalThesis = stripEnd(carousel.title);
+  const hookSupport = stripEnd(hook.sub);
+  const coverSub = [hookSupport, originalThesis]
+    .filter(Boolean)
+    .filter((line, index, all) => all.findIndex((item) => normalize(item) === normalize(line)) === index)
+    .map((line) => `${line}.`)
+    .join(" ");
+
+  const desire = stripEnd(relation?.desire);
+  const action = stripEnd(hook.cta) || stripEnd(relation?.cta) || stripEnd(carousel.cta.sub);
+  const desireTitle = desire ? `Quer ${lowerFirst(desire)}?` : carousel.cta.title;
+
+  return {
+    ...carousel,
+    // A identidade editorial continua sendo a do roteiro. O gancho já deixa sua
+    // própria assinatura em `copy`, portanto ambos perdem prioridade separados.
+    kicker: cleanLine(hook.hook) || carousel.kicker,
+    title: hookTitle,
+    coverSub: coverSub || carousel.coverSub,
+    cta: {
+      title: upperFirst(desireTitle),
+      sub: action || carousel.cta.sub,
+    },
+  };
+};
 
 /** Similaridade por bigramas de palavra: 1 = praticamente a mesma frase. */
 const similarity = (a: string, b: string): number => {
@@ -294,7 +345,7 @@ export const planBatch = (input: {
   /** Estrutura visual do lote, necessária para tratar um carrossel como grupo. */
   blocks?: ComposedBlock[];
   seed: string;
-  relation?: { pain?: string; desire?: string; axis?: "pain" | "desire" };
+  relation?: { pain?: string; desire?: string; proof?: string; cta?: string; axis?: "pain" | "desire" };
   dna?: BrandDna;
   brief?: BrandBrief;
   /** Memória da marca: peso 1 = frase inédita, perto de 0 = muito usada. */
@@ -337,6 +388,12 @@ export const planBatch = (input: {
    */
   const carouselByGroup = new Map<number, WorldContent["carousels"][number]>();
   const carouselStreams = new Map<number, Stream<WorldContent["carousels"][number]>>();
+  const carouselHookStream = createStream<StudioHook>(
+    content.hooks ?? [],
+    `${seed}:carousel-hooks`,
+    weightOf,
+    (hook) => phraseSignature(`${hook.strong} ${hook.rest ?? ""}`),
+  );
   const carouselStreamFor = (middleSlides: number) => {
     const found = carouselStreams.get(middleSlides);
     if (found) return found;
@@ -355,13 +412,36 @@ export const planBatch = (input: {
     if (block.kind !== "carousel" || block.slide === undefined || carouselByGroup.has(block.slide.group)) return;
     // O roteiro é escolhido pelo diretor, não pelo índice visual: isso aplica a
     // memória entre lotes e ainda mantém roteiros distintos dentro desta leva.
+    const groupAxis = wheel[(block.slide.group + offset) % wheel.length];
     const selected = carouselStreamFor(Math.max(1, block.slide.total - 2)).take({
-      axis: wheel[(block.slide.group + offset) % wheel.length],
+      axis: groupAxis,
       extra,
       voice,
       salt: `group:${block.slide.group}:script:${block.slide.script}`,
     });
-    if (selected) carouselByGroup.set(block.slide.group, selected as WorldContent["carousels"][number]);
+    const scriptWords = selected
+      ? normalize(flatten(selected)).split(/[^a-z0-9]+/).filter((word) => word.length > 4)
+      : [];
+    const selectedHook = carouselHookStream.take({
+      axis: groupAxis,
+      // O gancho precisa combinar com a tese do roteiro, não apenas pertencer à
+      // marca. Palavras do próprio carrossel pesam junto com dor/desejo/prova.
+      extra: [
+        ...extra,
+        ...scriptWords,
+        ...normalize(`${relation?.pain ?? ""} ${relation?.desire ?? ""} ${relation?.proof ?? ""}`)
+          .split(/[^a-z0-9]+/)
+          .filter((word) => word.length > 4),
+      ],
+      voice,
+      salt: `group:${block.slide.group}:hook`,
+    });
+    if (selected) {
+      carouselByGroup.set(
+        block.slide.group,
+        directCarouselWithHook(selected as WorldContent["carousels"][number], selectedHook, relation),
+      );
+    }
   });
 
   const shots: ArtShot[] = Array.from({ length: Math.max(0, count) }, (_, index) => {

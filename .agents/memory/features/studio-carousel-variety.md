@@ -11,5 +11,6 @@ O bloco de carrossel escolhe o roteiro por índice de grupo (`carousels[group % 
 - Roteiros são separados pela quantidade de slides antes da escolha, preservando capa + miolo + CTA sem slides vazios.
 - Quando um público tem 4+ roteiros próprios, o acervo genérico não é misturado: assunto selecionado permanece dirigido.
 - Histórias também nascem das dores, desejos e provas do público, com cena, virada e conclusão de valor.
+- Todo carrossel usa na capa um gancho ativo da Biblioteca de Ganchos da marca, escolhido por afinidade com a tese do roteiro e sem repetir no lote. A capa preserva a tese como ponte, o miolo mantém o raciocínio original e o último slide converte o desejo do público no CTA configurado pela marca. A potencialização nunca altera a quantidade de slides.
 
 Nunca reduzir o repertório a um roteiro só, remover os IDs ou ignorar a memória na escolha: o sintoma volta como "carrosséis iguais repetidas vezes". Testes guarda: `src/test/studio-carousel-variety.test.ts` e `src/test/studio-director.test.ts`.
