@@ -364,7 +364,6 @@ export const planBatch = (input: {
   const { content, count, blocks, seed, relation, dna, brief, weightOf, learnedVoice } = input;
   const rng = createRng(`${seed}:director`);
   const route = "route" in (relation ?? {}) ? (relation as Relation).route : undefined;
-  const routeFresh = route && weightOf ? weightOf(phraseSignature(`route:${route.signature}`)) : 1;
   const routeWords = route?.vocabulary ?? [];
   const extra = [...brandVocabulary(dna, brief), ...routeWords].slice(0, 92);
   const voice = (learnedVoice ?? [])
@@ -376,7 +375,14 @@ export const planBatch = (input: {
   const preferred = (brief?.angles ?? [])
     .map((angle) => DIRECTOR_AXES.find((a) => normalize(AXIS_LABEL[a]).includes(normalize(angle)) || a === angle))
     .filter((a): a is DirectorAxis => Boolean(a));
-  const wheel: DirectorAxis[] = [...new Set([...preferred, ...DIRECTOR_AXES])];
+  const routeAxes: Record<NonNullable<typeof route>["kind"], DirectorAxis[]> = {
+    "pain-to-desire": ["dor", "como-trabalho", "desejo", "convite"],
+    "desire-through-proof": ["desejo", "prova", "como-trabalho", "convite"],
+    "feature-to-human": ["como-trabalho", "prova", "desejo", "convite"],
+    "journey-bridge": ["quem-sou", "como-trabalho", "no-que-acredito", "desejo"],
+  };
+  const routePreferred = route ? routeAxes[route.kind] : [];
+  const wheel: DirectorAxis[] = [...new Set([...preferred, ...routePreferred, ...DIRECTOR_AXES])];
   const offset = rng.int(wheel.length);
 
   /** Um distribuidor por acervo dirigido. */
@@ -533,6 +539,7 @@ export const planBatch = (input: {
     const affinity = [
       ...AXIS_WORDS[axis],
       ...normalize(relText).split(/[^a-z0-9]+/).filter((w) => w.length > 3),
+      ...routeWords,
     ];
 
     return {
@@ -548,6 +555,7 @@ export const planBatch = (input: {
       closings,
       typos,
       quotes,
+      routeSignature: route ? `route:${route.signature}:${axis}` : undefined,
     };
   });
 

@@ -13,6 +13,8 @@ import { composePage, TREATMENT_COUNT } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import { carouselCoverCopy, CAROUSEL_SUPPORT_MAX, CAROUSEL_TITLE_MAX } from "@/pages/studio/typographyGuards";
+import { buildBrandDna } from "@/pages/studio-pro/brandDnaKit";
+import { pickRelation } from "@/pages/studio-pro/relational";
 
 const plan = (seed: string, count = 8) =>
   planBatch({ content: WORLDS.pro, count, seed, relation: { pain: "dor que trava", axis: "pain" } });
@@ -46,6 +48,28 @@ describe("Diretor criativo", () => {
       expect(shot.copy.length).toBeGreaterThan(0);
       expect(shot.affinity.length).toBeGreaterThan(0);
     });
+  });
+
+  it("registra rotas distintas por eixo para variar também o raciocínio", () => {
+    const relation = pickRelation({
+      dna: buildBrandDna({
+        niche: "tecnologia para fisioterapia",
+        briefAnswers: {
+          oferta: "Raciocínio clínico, reavaliação e relatórios no mesmo fluxo",
+          dor: "Decidir com informações clínicas espalhadas",
+          desejo: "Conduzir cada caso com clareza",
+          diferencial: "A jornada conecta avaliação e evolução",
+        },
+      }),
+      brand: "Aliv.iA",
+      angle: "informar",
+      seed: "sinapses",
+    });
+    const direction = planBatch({ content: WORLDS.pro, count: 7, seed: "sinapses", relation });
+    const signatures = direction.shots.map((shot) => shot.routeSignature);
+    expect(signatures.every(Boolean)).toBe(true);
+    expect(new Set(signatures).size).toBe(7);
+    direction.shots.forEach((shot) => expect(shot.affinity.length).toBeGreaterThan(10));
   });
 
   it("o conteúdo dirigido só oferece os slots reservados da arte", () => {

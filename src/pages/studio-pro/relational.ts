@@ -64,7 +64,7 @@ export const pickRelation = ({
   seed?: string;
 }): Relation => {
   const rng = createRng(`relation:${seed ?? "static"}:${audience?.id ?? "brand"}:${angle}`);
-  const route = buildNarrativeRoute({ audience, audiences, dna, seed: seed ?? "static" });
+  const route = buildNarrativeRoute({ audience, audiences, dna, brand, seed: seed ?? "static" });
 
   const pains = audience ? list(audience.pains) : list(dna.pain ? [dna.pain] : []);
   const desires = audience ? list(audience.desires) : list(dna.desire ? [dna.desire] : []);

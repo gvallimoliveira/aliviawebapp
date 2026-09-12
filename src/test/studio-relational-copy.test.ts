@@ -129,6 +129,25 @@ describe("motor textual relacional", () => {
     expect(wish.desire).toBeTruthy();
   });
 
+  it("cria uma rota narrativa determinística sem misturar a voz dos públicos", () => {
+    const other: BrandAudience = {
+      id: "clinica",
+      label: "Gestor de clínica",
+      keyword: "Clínica",
+      pains: ["Equipe registra cada caso de um jeito"],
+      desires: ["Padronizar a jornada sem perder contexto"],
+      proof: ["Relatórios e evolução compartilhados pela equipe"],
+      cta: "Conhecer a gestão clínica",
+    };
+    const dna = buildBrandDna({ briefAnswers: brief });
+    const a = pickRelation({ audience: audiences[0], audiences: [...audiences, other], dna, brand: kit.name, angle: "dor", seed: "rede" });
+    const b = pickRelation({ audience: audiences[0], audiences: [...audiences, other], dna, brand: kit.name, angle: "dor", seed: "rede" });
+    expect(a.route).toEqual(b.route);
+    expect(a.route.audienceId).toBe("corredor");
+    expect(a.route.signature).toBeTruthy();
+    expect(a.route.audienceLabel).not.toBe(other.label);
+  });
+
   it("o medo eleito lidera os slots do público", () => {
     const relation = pickRelation({
       audience: audiences[0],

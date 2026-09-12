@@ -30,6 +30,23 @@ export type NarrativeRoute = {
   vocabulary: string[];
 };
 
+/**
+ * Pontes editoriais do Aliv.iA: só nomes de recursos e consequências já
+ * existentes no produto. Servem como afinidade interna e nunca viram alegação
+ * automática na arte.
+ */
+const ALIVIA_DESIRE_LINKS: string[][] = [
+  ["pré-avaliação por link", "tempo antes da consulta", "acolhimento", "padronização"],
+  ["raciocínio clínico", "segurança", "hipótese", "decisão"],
+  ["programa de exercícios HEP", "continuidade", "adesão", "autonomia do paciente"],
+  ["reavaliação", "evolução", "comparação", "clareza"],
+  ["relatório", "comunicação", "progresso", "valor percebido"],
+  ["nota de voz", "tempo de consulta", "prontuário", "contexto clínico"],
+  ["agente clínico", "evidência", "estudo", "conduta"],
+  ["red flags", "segurança", "triagem", "encaminhamento"],
+  ["gestão da clínica", "equipe", "governança", "padronização"],
+];
+
 const clean = (value?: string) => (value ?? "").trim().replace(/\s+/g, " ").replace(/\s*[.!?]+$/, "");
 const tokens = (...values: Array<string | undefined>) =>
   [...new Set(values.join(" ").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9]+/).filter((word) => word.length > 4))];
@@ -75,11 +92,13 @@ export const buildNarrativeRoute = ({
   audience,
   audiences,
   dna,
+  brand,
   seed,
 }: {
   audience?: BrandAudience;
   audiences?: BrandAudience[];
   dna: BrandDna;
+  brand?: string;
   seed: string;
 }): NarrativeRoute => {
   const rng = createRng(`narrative-route:${seed}:${audience?.id ?? "brand"}`);
@@ -103,7 +122,17 @@ export const buildNarrativeRoute = ({
   // O vizinho fornece apenas afinidade semântica; seu rótulo e sua fala nunca
   // entram na copy do público ativo.
   const bridgeWords = neighbor ? audienceWords(neighbor) : [];
-  const vocabulary = [...new Set([...tokens(tension, desire, proof, feature, dna.positioning), ...bridgeWords.slice(0, 8)])].slice(0, 32);
+  const isAlivia = /aliv\.?i?a/i.test(brand ?? "");
+  const aliviaLinks = isAlivia
+    ? ALIVIA_DESIRE_LINKS
+        .map((link) => ({ link, score: overlap(tokens(tension, desire, proof, feature), tokens(...link)) }))
+        .sort((a, b) => b.score - a.score)[0]?.link ?? []
+    : [];
+  const vocabulary = [...new Set([
+    ...tokens(tension, desire, proof, feature, dna.positioning),
+    ...bridgeWords.slice(0, 8),
+    ...tokens(...aliviaLinks),
+  ])].slice(0, 40);
   const signature = [kind, audience?.id ?? "brand", tension, feature, proof, desire]
     .filter(Boolean)
     .join("|")
