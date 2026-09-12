@@ -568,6 +568,22 @@ export const planBatch = (input: {
       });
     }
 
+    /**
+     * O vocabulário de nicho entra por cima de tudo: destaque, apoio, citação e
+     * o glossário "o que é o quê" desta arte.
+     */
+    const lexicon = carousel ? undefined : lexiconFor(index);
+    if (lexicon) {
+      const put = (slot: string, items: unknown[]) => {
+        if (!items.length) return;
+        const current = ((reserved as Record<string, unknown>)[slot] as unknown[] | undefined) ?? [];
+        (reserved as Record<string, unknown>)[slot] = [...items, ...current];
+      };
+      put("headlines", lexicon.headlines.slice(0, 1));
+      put("subs", lexicon.subs.slice(0, 1));
+      put("quotes", lexicon.quotes.slice(0, 1));
+      put("lists", [{ heading: lexicon.heading, items: lexicon.glossary, closing: lexicon.ctas[0] }]);
+    }
 
     let sales: WorldSales | undefined;
     if (content.sales && !carousel) {
@@ -576,7 +592,9 @@ export const planBatch = (input: {
         const picked = claim(`sales.${slot}`, content.sales?.[slot], SALES_QUOTA[slot]) as string[];
         if (picked.length > 0 && sales) sales[slot] = picked;
       });
+      if (lexicon && sales) sales.ctas = [...new Set([...lexicon.ctas, ...(sales.ctas ?? [])])];
     }
+
 
     const headlines = (carousel ? [] : reserved.headlines ?? content.headlines) as WorldContent["headlines"];
     const subs = (carousel ? [] : reserved.subs ?? content.subs) as WorldContent["subs"];
