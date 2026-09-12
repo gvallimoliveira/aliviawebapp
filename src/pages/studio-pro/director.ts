@@ -40,6 +40,8 @@ import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typograph
 import type { BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
+import { matchesVestibular, vestibularLines } from "./vestibularLexicon";
+import { matchesMsk, mskLines } from "./mskLexicon";
 
 
 export const DIRECTOR_AXES = [
@@ -417,6 +419,36 @@ export const planBatch = (input: {
   const relText = (relation?.axis === "desire" ? relation?.desire : relation?.pain || relation?.desire) ?? "";
 
   /**
+   * VOCABULÁRIO DE NICHO (tontura e musculoesquelético): antes, o acervo do
+   * léxico entrava no fim da fila e quase nunca era sorteado. Agora o diretor
+   * o consulta direto e coloca essas frases NA FRENTE da arte, uma dupla por
+   * peça, rotativa pela semente — é isso que faz o vocabulário aparecer.
+   */
+  const lexProbe = [
+    (relation as Relation | undefined)?.keyword,
+    (relation as Relation | undefined)?.who,
+    (relation as Relation | undefined)?.audience?.label,
+    (relation as Relation | undefined)?.audience?.description,
+    (relation as Relation | undefined)?.hook,
+    relText,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const lexiconFor = (index: number) => {
+    if (!lexProbe) return undefined;
+    const salt = `${seed}:lex:${index}`;
+    if (matchesVestibular(lexProbe)) {
+      const lines = vestibularLines(salt);
+      return { ...lines, heading: "Tontura: o que é o quê" };
+    }
+    if (!matchesMsk(lexProbe)) return undefined;
+    const lines = mskLines(lexProbe, salt);
+    if (!lines) return undefined;
+    return { ...lines, heading: `${lines.topic.glossary[0]?.term ?? "Lesão"}: o que é o quê` };
+  };
+
+
+  /**
    * Reserva UM roteiro distinto por grupo de carrossel. Todos os slides daquele
    * grupo recebem o mesmo roteiro; o grupo seguinte obrigatoriamente recebe
    * outro enquanto houver repertório. Antes, o índice visual era usado para
@@ -536,6 +568,22 @@ export const planBatch = (input: {
       });
     }
 
+    /**
+     * O vocabulário de nicho entra por cima de tudo: destaque, apoio, citação e
+     * o glossário "o que é o quê" desta arte.
+     */
+    const lexicon = carousel ? undefined : lexiconFor(index);
+    if (lexicon) {
+      const put = (slot: string, items: unknown[]) => {
+        if (!items.length) return;
+        const current = ((reserved as Record<string, unknown>)[slot] as unknown[] | undefined) ?? [];
+        (reserved as Record<string, unknown>)[slot] = [...items, ...current];
+      };
+      put("headlines", lexicon.headlines.slice(0, 1));
+      put("subs", lexicon.subs.slice(0, 1));
+      put("quotes", lexicon.quotes.slice(0, 1));
+      put("lists", [{ heading: lexicon.heading, items: lexicon.glossary, closing: lexicon.ctas[0] }]);
+    }
 
     let sales: WorldSales | undefined;
     if (content.sales && !carousel) {
@@ -544,7 +592,9 @@ export const planBatch = (input: {
         const picked = claim(`sales.${slot}`, content.sales?.[slot], SALES_QUOTA[slot]) as string[];
         if (picked.length > 0 && sales) sales[slot] = picked;
       });
+      if (lexicon && sales) sales.ctas = [...new Set([...lexicon.ctas, ...(sales.ctas ?? [])])];
     }
+
 
     const headlines = (carousel ? [] : reserved.headlines ?? content.headlines) as WorldContent["headlines"];
     const subs = (carousel ? [] : reserved.subs ?? content.subs) as WorldContent["subs"];
