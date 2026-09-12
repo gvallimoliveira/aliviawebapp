@@ -72,7 +72,8 @@ const DivergeBlock = ({ content, rng, treatment, format }: BlockProps) => {
           ))}
 
           {/* O desvio: trilha diagonal e avião em cor de marca. */}
-          <motion.line
+          {/* Traço sempre visível: pathLength começa em 1 para não sair vazio. */}
+          <line
             x1="0"
             y1="322"
             x2="150"
@@ -80,10 +81,6 @@ const DivergeBlock = ({ content, rng, treatment, format }: BlockProps) => {
             stroke="hsl(var(--primary))"
             strokeWidth="2"
             strokeDasharray="9 8"
-            initial={{ pathLength: 0 }}
-            whileInView={{ pathLength: 1 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 1.1, ease: "easeOut" }}
           />
           <g transform="rotate(-52 168 62)">
             <Plane x={150} y={50} color="hsl(var(--primary))" scale={1.25} />

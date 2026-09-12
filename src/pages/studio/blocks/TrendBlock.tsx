@@ -19,7 +19,14 @@ const SKINS = [
   { bg: "bg-foreground", ink: "text-background", line: "hsl(var(--background)/0.55)", accent: "hsl(var(--primary))" },
 ] as const;
 
-const PATH = "M 30 300 L 70 190 L 100 250 L 140 130 L 175 200 L 215 60 L 245 105 L 275 140 L 320 25";
+/**
+ * Traçado sem a ponta final: a seta é desenhada como triângulo explícito,
+ * alinhado ao último segmento. Marcador SVG escalava com a espessura do traço
+ * (ficava gigante) e desaparecia junto com a animação na exportação.
+ */
+const PATH = "M 24 296 L 68 196 L 100 250 L 142 132 L 176 200 L 216 70 L 246 112 L 274 146 L 306 46";
+/** Ponta da seta: mesma direção do último segmento (274,146 → 306,46). */
+const ARROW = "M 322 20 L 312 62 L 288 40 Z";
 
 const TrendBlock = ({ content, rng, treatment, format }: BlockProps) => {
   const skin = SKINS[treatment % SKINS.length];
@@ -41,14 +48,14 @@ const TrendBlock = ({ content, rng, treatment, format }: BlockProps) => {
           {rng.pick(content.kickers)}
         </p>
 
-        <svg viewBox="0 0 350 330" className="mx-auto my-4 w-full max-w-sm" role="img" aria-label={headline.strong}>
-          <defs>
-            <marker id="trend-arrow" markerWidth="7" markerHeight="7" refX="3.2" refY="3.5" orient="auto">
-              <polygon points="0 0, 7 3.5, 0 7" fill={skin.accent} />
-            </marker>
-          </defs>
+        <svg viewBox="0 0 340 320" className="mx-auto my-2 w-full max-w-sm" role="img" aria-label={headline.strong}>
           {/* Patamar: onde o nicho estaciona. */}
-          <line x1="10" y1="165" x2="340" y2="165" stroke={skin.line} strokeWidth="1.4" opacity="0.6" />
+          <line x1="8" y1="172" x2="332" y2="172" stroke={skin.line} strokeWidth="1.4" opacity="0.55" />
+          {/*
+            O traçado nasce completo (pathLength = 1): a animação só entra a
+            partir daí. Assim a arte nunca sai vazia — nem no card do Studio,
+            nem no PNG exportado, onde a animação está congelada.
+          */}
           <motion.path
             d={PATH}
             fill="none"
@@ -56,12 +63,10 @@ const TrendBlock = ({ content, rng, treatment, format }: BlockProps) => {
             strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
-            markerEnd="url(#trend-arrow)"
-            initial={{ pathLength: 0 }}
-            whileInView={{ pathLength: 1 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 1.6, ease: "easeInOut" }}
+            initial={{ pathLength: 1, opacity: 1 }}
+            animate={{ pathLength: 1, opacity: 1 }}
           />
+          <path d={ARROW} fill={skin.accent} />
         </svg>
 
         <h2 className={`mt-6 text-2xl font-bold leading-[1.1] md:text-4xl ${skin.ink}`}>
