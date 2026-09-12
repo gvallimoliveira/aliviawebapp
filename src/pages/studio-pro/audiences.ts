@@ -70,6 +70,13 @@ export type BrandAudience = {
    * comunicação própria, mas NUNCA entra na contagem oficial de públicos.
    */
   parentId?: string;
+  /**
+   * PÚBLICO SÓ MANUAL: fica fora do sorteio da Visão 360°. A arte só nasce
+   * desse recorte quando a pessoa escolhe o público na aba do topo. Serve para
+   * temas muito específicos (ex.: feridas) que, entrando no sorteio, dominam
+   * os lotes seguintes e travam a variedade da marca.
+   */
+  manualOnly?: boolean;
 };
 
 /** Termo que a arte deve gritar para o público se reconhecer. */
