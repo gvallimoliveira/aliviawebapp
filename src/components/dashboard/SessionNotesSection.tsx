@@ -271,6 +271,23 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
     }
   };
 
+  /** Salva a edição feita dentro do modal de histórico (com ou sem ditado). */
+  const handleInlineSave = async (id: string, content: string, observation: string) => {
+    if (isDemo) { toast({ title: "Demo: anotações não são salvas" }); return; }
+    try {
+      await (supabase.from("session_notes" as any) as any)
+        .update({ content, observation: observation.trim() || null })
+        .eq("id", id);
+      toast({ title: t("session_notes.updated") });
+      const restore = anchorScroll(() => cardRef.current, 1500);
+      await fetchNotes();
+      restore();
+    } catch {
+      toast({ title: t("session_notes.error"), variant: "destructive" });
+      throw new Error("save failed");
+    }
+  };
+
   const startEdit = (note: SessionNote) => {
     setShowHistory(false);
     setHint(null);
@@ -481,6 +498,8 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
         onDelete={setDeleteId}
         labels={itemLabels}
         authors={clinicId ? authors : undefined}
+        isDemo={isDemo}
+        onSaveEdit={handleInlineSave}
       />
 
       {/* Delete confirmation */}
