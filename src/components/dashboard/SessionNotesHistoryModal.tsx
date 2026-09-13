@@ -33,16 +33,41 @@ const monthLabel = (iso: string) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-const SessionNotesHistoryModal = ({ open, onOpenChange, notes, onEdit, onRepeat, onDelete, labels, authors }: Props) => {
+const SessionNotesHistoryModal = ({ open, onOpenChange, notes, onEdit, onRepeat, onDelete, labels, authors, isDemo, onSaveEdit }: Props) => {
   const [query, setQuery] = useState("");
   const [period, setPeriod] = useState<PeriodKey>("all");
   const [visible, setVisible] = useState(PAGE_SIZE);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftContent, setDraftContent] = useState("");
+  const [draftObservation, setDraftObservation] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const beginEdit = (note: SessionNoteData) => {
+    if (!onSaveEdit) { onEdit(note); return; }
+    setEditingId(note.id);
+    setDraftContent(note.content || "");
+    setDraftObservation(note.observation || "");
+  };
+
+  const commitEdit = async () => {
+    if (!editingId || !onSaveEdit || !draftContent.trim()) return;
+    setSavingEdit(true);
+    try {
+      await onSaveEdit(editingId, draftContent, draftObservation);
+      setEditingId(null);
+    } catch {
+      /* o erro já é comunicado pelo prontuário; mantém a edição aberta */
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   useEffect(() => {
     if (open) {
       setQuery("");
       setPeriod("all");
       setVisible(PAGE_SIZE);
+      setEditingId(null);
     }
   }, [open]);
 
