@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import SessionNoteItem, { SessionNoteData } from "./SessionNoteItem";
 import SessionNotesHistoryModal from "./SessionNotesHistoryModal";
+import DictationBar from "./DictationBar";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
 
 
@@ -384,6 +385,15 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
                   </p>
                 )}
               </div>
+            )}
+
+            {!isDemo && (
+              <DictationBar
+                onAppend={(target, appender) => {
+                  if (target === "content") setFormContent((c) => appender(c));
+                  else setFormObservation((c) => appender(c));
+                }}
+              />
             )}
 
             <div className="space-y-1">
