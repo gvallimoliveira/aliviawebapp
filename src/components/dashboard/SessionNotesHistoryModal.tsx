@@ -3,8 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, History } from "lucide-react";
+import { Search, History, Loader2, NotebookPen } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import SessionNoteItem, { SessionNoteData } from "./SessionNoteItem";
+import DictationBar from "./DictationBar";
 
 const PAGE_SIZE = 20;
 
@@ -20,6 +22,9 @@ interface Props {
   labels: { repeat: string; expand: string; collapse: string };
   /** Mapa professional_id -> nome (modo clínica). */
   authors?: Record<string, string>;
+  isDemo?: boolean;
+  /** Salva a edição feita aqui dentro, sem sair do histórico. */
+  onSaveEdit?: (id: string, content: string, observation: string) => Promise<void>;
 }
 
 const monthLabel = (iso: string) => {
@@ -28,16 +33,41 @@ const monthLabel = (iso: string) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-const SessionNotesHistoryModal = ({ open, onOpenChange, notes, onEdit, onRepeat, onDelete, labels, authors }: Props) => {
+const SessionNotesHistoryModal = ({ open, onOpenChange, notes, onEdit, onRepeat, onDelete, labels, authors, isDemo, onSaveEdit }: Props) => {
   const [query, setQuery] = useState("");
   const [period, setPeriod] = useState<PeriodKey>("all");
   const [visible, setVisible] = useState(PAGE_SIZE);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftContent, setDraftContent] = useState("");
+  const [draftObservation, setDraftObservation] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const beginEdit = (note: SessionNoteData) => {
+    if (!onSaveEdit) { onEdit(note); return; }
+    setEditingId(note.id);
+    setDraftContent(note.content || "");
+    setDraftObservation(note.observation || "");
+  };
+
+  const commitEdit = async () => {
+    if (!editingId || !onSaveEdit || !draftContent.trim()) return;
+    setSavingEdit(true);
+    try {
+      await onSaveEdit(editingId, draftContent, draftObservation);
+      setEditingId(null);
+    } catch {
+      /* o erro já é comunicado pelo prontuário; mantém a edição aberta */
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   useEffect(() => {
     if (open) {
       setQuery("");
       setPeriod("all");
       setVisible(PAGE_SIZE);
+      setEditingId(null);
     }
   }, [open]);
 
@@ -118,15 +148,56 @@ const SessionNotesHistoryModal = ({ open, onOpenChange, notes, onEdit, onRepeat,
                   {g.label}
                 </p>
                 {g.items.map((note) => (
-                  <SessionNoteItem
-                    key={note.id}
-                    note={note}
-                    onEdit={onEdit}
-                    onRepeat={onRepeat}
-                    onDelete={onDelete}
-                    labels={labels}
-                    authorName={authors ? authors[(note as any).professional_id] : undefined}
-                  />
+                  editingId === note.id ? (
+                    <div key={note.id} className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+                      <p className="text-[11px] font-semibold text-foreground">
+                        {new Date(note.session_date + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                      </p>
+                      {!isDemo && (
+                        <DictationBar
+                          onAppend={(target, appender) => {
+                            if (target === "content") setDraftContent((c) => appender(c));
+                            else setDraftObservation((c) => appender(c));
+                          }}
+                        />
+                      )}
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Evolução da sessão</p>
+                        <Textarea
+                          value={draftContent}
+                          onChange={(e) => setDraftContent(e.target.value)}
+                          className="text-xs min-h-[80px] resize-y"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Observação (opcional)</p>
+                        <Textarea
+                          value={draftObservation}
+                          onChange={(e) => setDraftObservation(e.target.value)}
+                          className="text-xs min-h-[50px] resize-y"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="rounded-xl gap-1.5 text-xs" onClick={commitEdit} disabled={savingEdit || !draftContent.trim()}>
+                          {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5" />}
+                          Salvar alterações
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setEditingId(null)} disabled={savingEdit}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <SessionNoteItem
+                      key={note.id}
+                      note={note}
+                      onEdit={beginEdit}
+                      onRepeat={onRepeat}
+                      onDelete={onDelete}
+                      labels={labels}
+                      authorName={authors ? authors[(note as any).professional_id] : undefined}
+                    />
+                  )
                 ))}
               </div>
             ))

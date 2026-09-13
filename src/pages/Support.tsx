@@ -64,6 +64,7 @@ const proTools = [
   { key: "evolution_report", icon: TrendingUp },
   { key: "simulated_env", icon: MonitorPlay },
   { key: "voice_notes", icon: Mic },
+  { key: "session_dictation", icon: Mic },
   { key: "academic_mode", icon: GraduationCap },
   { key: "data_export", icon: Archive },
   { key: "insights_churn", icon: TrendingUp },

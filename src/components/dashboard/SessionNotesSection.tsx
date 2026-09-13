@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import SessionNoteItem, { SessionNoteData } from "./SessionNoteItem";
 import SessionNotesHistoryModal from "./SessionNotesHistoryModal";
+import DictationBar from "./DictationBar";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
 
 
@@ -270,6 +271,23 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
     }
   };
 
+  /** Salva a edição feita dentro do modal de histórico (com ou sem ditado). */
+  const handleInlineSave = async (id: string, content: string, observation: string) => {
+    if (isDemo) { toast({ title: "Demo: anotações não são salvas" }); return; }
+    try {
+      await (supabase.from("session_notes" as any) as any)
+        .update({ content, observation: observation.trim() || null })
+        .eq("id", id);
+      toast({ title: t("session_notes.updated") });
+      const restore = anchorScroll(() => cardRef.current, 1500);
+      await fetchNotes();
+      restore();
+    } catch {
+      toast({ title: t("session_notes.error"), variant: "destructive" });
+      throw new Error("save failed");
+    }
+  };
+
   const startEdit = (note: SessionNote) => {
     setShowHistory(false);
     setHint(null);
@@ -386,6 +404,15 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
               </div>
             )}
 
+            {!isDemo && (
+              <DictationBar
+                onAppend={(target, appender) => {
+                  if (target === "content") setFormContent((c) => appender(c));
+                  else setFormObservation((c) => appender(c));
+                }}
+              />
+            )}
+
             <div className="space-y-1">
               <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Evolução da sessão</p>
               <Textarea
@@ -471,6 +498,8 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
         onDelete={setDeleteId}
         labels={itemLabels}
         authors={clinicId ? authors : undefined}
+        isDemo={isDemo}
+        onSaveEdit={handleInlineSave}
       />
 
       {/* Delete confirmation */}

@@ -111,6 +111,12 @@ const categories: ToolCategory[] = [
         desc: "Durante uma avaliação manual no consultório, um botão flutuante de microfone permite gravar sua narrativa enquanto examina o paciente — sem interromper o atendimento para digitar. O áudio é processado pela IA (Gemini), transcrito e resumido automaticamente em texto clínico estruturado, salvo na avaliação. O áudio bruto é descartado por privacidade — só o texto permanece. Ganhe tempo real de consulta e tenha um prontuário rico mesmo no atendimento mais corrido.",
       },
       {
+        key: "session_dictation",
+        icon: Mic,
+        title: "Ditar a evolução do paciente por voz",
+        desc: "No prontuário, o campo de evolução tem uma barra de gravação anexa: toque em 'Ditar' e fale suas condutas — o texto aparece no campo a cada pausa da fala, exatamente como foi dito. Você escolhe se o ditado entra na evolução ou na observação, pode pausar, continuar e descartar. A mesma barra está disponível ao editar qualquer registro dentro do 'Histórico de evolução'. O áudio nunca é guardado: cada trecho é convertido em texto e descartado, e nada é salvo até você clicar em salvar.",
+      },
+      {
         key: "comparison",
         icon: TrendingUp,
         title: "Comparativo Antes vs. Depois",
