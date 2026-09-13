@@ -148,15 +148,56 @@ const SessionNotesHistoryModal = ({ open, onOpenChange, notes, onEdit, onRepeat,
                   {g.label}
                 </p>
                 {g.items.map((note) => (
-                  <SessionNoteItem
-                    key={note.id}
-                    note={note}
-                    onEdit={onEdit}
-                    onRepeat={onRepeat}
-                    onDelete={onDelete}
-                    labels={labels}
-                    authorName={authors ? authors[(note as any).professional_id] : undefined}
-                  />
+                  editingId === note.id ? (
+                    <div key={note.id} className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+                      <p className="text-[11px] font-semibold text-foreground">
+                        {new Date(note.session_date + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                      </p>
+                      {!isDemo && (
+                        <DictationBar
+                          onAppend={(target, appender) => {
+                            if (target === "content") setDraftContent((c) => appender(c));
+                            else setDraftObservation((c) => appender(c));
+                          }}
+                        />
+                      )}
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Evolução da sessão</p>
+                        <Textarea
+                          value={draftContent}
+                          onChange={(e) => setDraftContent(e.target.value)}
+                          className="text-xs min-h-[80px] resize-y"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Observação (opcional)</p>
+                        <Textarea
+                          value={draftObservation}
+                          onChange={(e) => setDraftObservation(e.target.value)}
+                          className="text-xs min-h-[50px] resize-y"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="rounded-xl gap-1.5 text-xs" onClick={commitEdit} disabled={savingEdit || !draftContent.trim()}>
+                          {savingEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <NotebookPen className="h-3.5 w-3.5" />}
+                          Salvar alterações
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={() => setEditingId(null)} disabled={savingEdit}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <SessionNoteItem
+                      key={note.id}
+                      note={note}
+                      onEdit={beginEdit}
+                      onRepeat={onRepeat}
+                      onDelete={onDelete}
+                      labels={labels}
+                      authorName={authors ? authors[(note as any).professional_id] : undefined}
+                    />
+                  )
                 ))}
               </div>
             ))
