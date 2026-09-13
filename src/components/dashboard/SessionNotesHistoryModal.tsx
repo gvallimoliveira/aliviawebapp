@@ -3,8 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, History } from "lucide-react";
+import { Search, History, Loader2, NotebookPen } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import SessionNoteItem, { SessionNoteData } from "./SessionNoteItem";
+import DictationBar from "./DictationBar";
 
 const PAGE_SIZE = 20;
 
@@ -20,6 +22,9 @@ interface Props {
   labels: { repeat: string; expand: string; collapse: string };
   /** Mapa professional_id -> nome (modo clínica). */
   authors?: Record<string, string>;
+  isDemo?: boolean;
+  /** Salva a edição feita aqui dentro, sem sair do histórico. */
+  onSaveEdit?: (id: string, content: string, observation: string) => Promise<void>;
 }
 
 const monthLabel = (iso: string) => {
