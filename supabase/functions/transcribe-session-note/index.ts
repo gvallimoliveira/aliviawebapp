@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
       const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       shadowLogAiUsage(req, {
         function_name: "transcribe-session-note",
+        credits: 0.01, // trecho curto de ditado
         transcriptions: 1,
         metadata: { bytes: bytes.byteLength },
       }, admin);
