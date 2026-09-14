@@ -44,6 +44,22 @@ export type BrandAudience = {
   desires?: string[];
   /** Provas e diferenciais que convencem esse nicho. */
   proof?: string[];
+  /**
+   * CENAS CONCRETAS do dia a dia desse público — um momento real, com hora,
+   * lugar e gesto ("Levanta da cadeira às 15h e trava a lombar"). É o que faz a
+   * arte abrir com vida em vez de "dores na lombar?".
+   */
+  scenes?: string[];
+  /**
+   * OBJEÇÕES desse público, nas palavras dele ("já tentei fisioterapia e não
+   * resolveu"). O motor responde a objeção — nunca a repete como benefício.
+   */
+  objections?: string[];
+  /**
+   * CONSEQUÊNCIA DE NÃO AGIR: o que continua acontecendo se a pessoa não fizer
+   * nada. Gera urgência sem prometer resultado.
+   */
+  stakes?: string[];
   /** Chamada para ação preferida desse nicho. */
   cta?: string;
   /**
