@@ -25,6 +25,14 @@ export type NarrativeRoute = {
   feature?: string;
   proof?: string;
   desire?: string;
+  /** Cena concreta do cotidiano desse público (abertura viva). */
+  scene?: string;
+  /** Objeção real do público — a arte responde, nunca repete como benefício. */
+  objection?: string;
+  /** O que a marca combate no mercado. */
+  enemy?: string;
+  /** O que continua acontecendo se a pessoa não fizer nada. */
+  stakes?: string;
   cta?: string;
   /** Assinatura persistida junto das frases para a conexão também ganhar frescor. */
   signature: string;
