@@ -377,6 +377,21 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     pains: ["30 minutos de anamnese por consulta", "Prontuário incompleto", "Relatório que ninguém lê"],
     desires: ["Paciente chegando com avaliação pronta", "Relatório profissional em um clique"],
     proof: ["Link de avaliação próprio", "Prontuário com evolução e gráficos", "HEP gerada com raciocínio clínico"],
+    scenes: [
+      "23h, você em casa terminando o prontuário do paciente das 8h",
+      "O paciente senta na maca e você gasta meia hora só para entender a história",
+      "Fim do mês: você sabe que o caso evoluiu, mas não tem número para mostrar",
+    ],
+    objections: [
+      "Vou perder tempo aprendendo a usar mais um sistema",
+      "Meu paciente não vai preencher nada antes da consulta",
+      "IA genérica não entende raciocínio clínico de fisioterapia",
+    ],
+    stakes: [
+      "Você segue levando trabalho para casa toda semana",
+      "O paciente sai da sessão sem enxergar o valor do que você fez",
+      "A evolução do caso continua sem registro que sustente a alta",
+    ],
     cta: "Testar o painel profissional",
   },
   {
