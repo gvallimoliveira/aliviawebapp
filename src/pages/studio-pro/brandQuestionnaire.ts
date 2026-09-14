@@ -94,6 +94,18 @@ export const BRAND_QUESTIONNAIRE: BrandQuestionBlock[] = [
         hint: "Ex.: quer voltar a correr; acha que vai custar caro e demorar.",
         kind: "long",
       },
+      {
+        id: "cena",
+        label: "Descreva uma cena real do dia a dia dele com esse problema",
+        hint: "Um momento concreto, com hora e gesto. Ex.: às 15h ele levanta da cadeira e trava a lombar.",
+        kind: "long",
+      },
+      {
+        id: "consequencia",
+        label: "O que continua acontecendo se ele não fizer nada?",
+        hint: "A consequência real de deixar como está — sem drama e sem promessa de cura.",
+        kind: "long",
+      },
     ],
   },
   {
