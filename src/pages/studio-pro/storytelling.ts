@@ -186,7 +186,7 @@ export const composeRouteCopy = (
     return out;
   };
 
-  const frameCount = 5;
+  const frameCount = Math.max(5, headlinePool.length, extraSubs.length + 5);
   const offset = createRng(`storytelling:${options.seed ?? route.signature}`).int(frameCount);
   const frames = Array.from({ length: frameCount }, (_, index) => (index + offset) % frameCount);
   if (!options.weightOf) return buildFrame(frames[0]);
