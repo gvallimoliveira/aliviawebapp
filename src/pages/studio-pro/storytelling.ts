@@ -155,7 +155,8 @@ export const composeRouteCopy = (
         `Uma jornada coerente liga ${low(lead)} a ${low(gain)}.`,
       ],
     };
-    const sub = subsByKind[route.kind][frame % subsByKind[route.kind].length];
+    const subPool = [...extraSubs, ...subsByKind[route.kind]];
+    const sub = subPool[frame % subPool.length];
     if (usable(sub) && sub.length <= 190) out.subs = [terms(fit(sub, 188))];
 
     if (who) {
