@@ -60,8 +60,15 @@ export type BrandAudience = {
    * nada. Gera urgência sem prometer resultado.
    */
   stakes?: string[];
+  /**
+   * MOMENTOS DE GATILHO: o instante concreto em que essa pessoa procura ajuda
+   * ("laudo na mão", "começo de temporada", "primeiro estágio", "alta do
+   * hospital"). Dá urgência sem apelação, porque nasce da vida real.
+   */
+  triggers?: string[];
   /** Chamada para ação preferida desse nicho. */
   cta?: string;
+
   /**
    * PALAVRA-CHAVE do público — o termo que a arte precisa dizer na cara
    * ("Dor crônica", "Esportista", "Geração 60+"). Sem isso o texto sai
