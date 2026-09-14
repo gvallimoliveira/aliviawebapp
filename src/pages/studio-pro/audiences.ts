@@ -425,6 +425,21 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     pains: ["Decorou testes sem saber interpretar", "Insegurança no primeiro atendimento"],
     desires: ["Raciocinar como fisioterapeuta", "Treinar com casos reais"],
     proof: ["Trilhas com quizzes", "Casos clínicos comentados", "Progresso com XP e selos"],
+    scenes: [
+      "Você sabe o nome de todos os testes e ainda assim congela na frente do paciente",
+      "Estágio: o supervisor pergunta a sua hipótese e você olha para o chão",
+      "Prova passada, e mesmo assim você não sabe o que fazer com o resultado do teste",
+    ],
+    objections: [
+      "Ainda sou estudante, isso é coisa para quem já atende",
+      "Não tenho paciente para treinar",
+      "Vou aprender isso na prática depois de formado",
+    ],
+    stakes: [
+      "Você se forma decorando testes e continua insegura na primeira consulta",
+      "O primeiro paciente vira teste e não atendimento",
+      "A insegurança acompanha você para dentro do consultório",
+    ],
     cta: "Começar minha trilha",
   },
   {
