@@ -9,6 +9,8 @@ import { createRng } from "@/pages/studio/rng";
 import type { BrandAudience } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
 import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
+import { methodPlainLine } from "./methodPlain";
+
 import { editorialAudience } from "@/pages/studio/typographyGuards";
 
 export type NarrativeRouteKind =
