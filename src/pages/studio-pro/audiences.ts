@@ -255,7 +255,7 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
   if (!own) return null;
   const chain = audienceAncestors(list, id);
   if (!chain.length) return own;
-  const inherit = (key: "pains" | "desires" | "proof" | "scenes" | "objections" | "stakes") => {
+  const inherit = (key: "pains" | "desires" | "proof" | "scenes" | "objections" | "stakes" | "triggers") => {
     const merged = [...(own[key] ?? [])];
     for (const parent of chain) for (const item of parent[key] ?? []) if (!merged.includes(item)) merged.push(item);
     return merged.length ? merged : undefined;
