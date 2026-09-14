@@ -584,7 +584,13 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     pains: ["Parar de treinar por causa da lesão", "Voltar cedo demais e recair", "Alta sem critério objetivo"],
     desires: ["Voltar ao esporte com segurança", "Treinar sem dor e sem medo"],
     proof: ["Leitura de dor, inibição, fraqueza e incapacidade (D.I.F.I)", "Plano com progressão de carga documentada", "Reavaliação com critério de retorno"],
+    triggers: [
+      "Começo de temporada e a lesão antiga deu sinal outra vez",
+      "Prova marcada e o treino teve que ser interrompido",
+      "Você voltou a treinar por conta e a dor apareceu no mesmo lugar",
+    ],
     cta: "Quero voltar a treinar",
+
     parentId: "paciente",
   },
   {
