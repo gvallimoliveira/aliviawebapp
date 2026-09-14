@@ -412,7 +412,14 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "O paciente sai da sessão sem enxergar o valor do que você fez",
       "A evolução do caso continua sem registro que sustente a alta",
     ],
+    triggers: [
+      "Chegou um caso mais complexo do que os que você costuma atender",
+      "O paciente pediu um relatório e você travou na hora de escrever",
+      "Você abriu a agenda cheia e viu que a documentação está toda atrasada",
+      "Um convênio ou médico pediu justificativa clínica da conduta",
+    ],
     cta: "Testar o painel profissional",
+
   },
   {
     id: "clinica",
