@@ -57,6 +57,12 @@ export const BRAND_QUESTIONNAIRE: BrandQuestionBlock[] = [
         hint: "Nome ou selo + registro profissional, se houver. Ex.: Guilherme Vallim · CREFITO 359566-F",
         kind: "short",
       },
+      {
+        id: "inimigo",
+        label: "Contra o que a sua marca se posiciona?",
+        hint: "O que você combate no mercado. Ex.: alívio passageiro, protocolo igual para todos, palpite sem avaliação.",
+        kind: "long",
+      },
     ],
   },
   {
