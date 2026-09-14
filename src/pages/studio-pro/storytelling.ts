@@ -104,6 +104,7 @@ export const composeRouteCopy = (
    */
   const headlinePool = [
     ...(scene ? [{ strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
+    ...(trigger ? [{ strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }] : []),
     ...(enemy ? [{ strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }] : []),
     ...(stakes ? [{ strong: fit("Enquanto nada muda", 28), rest: fit(low(stakes), 44) }] : []),
     { strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
@@ -117,9 +118,12 @@ export const composeRouteCopy = (
   const extraSubs = [
     ...(scene ? [`${cap(scene)}. É aí que entra ${low(turn)}.`] : []),
     ...(objection ? [`Você pensa: ${low(objection)}. ${cap(turn)} responde a isso.`] : []),
+    ...(trigger ? [`${cap(trigger)}. Esse é o momento de ${low(turn)}.`] : []),
+    ...(methodPlain ? [`${cap(methodPlain)}. É assim que ${low(turn)} funciona na prática.`] : []),
     ...(stakes ? [`Deixar como está tem preço: ${low(stakes)}.`] : []),
     ...(enemy ? [`Aqui não tem ${low(enemy)}. Tem ${low(turn)}.`] : []),
   ];
+
 
   const buildFrame = (frame: number): Partial<WorldContent> => {
     const out: Partial<WorldContent> = {};
