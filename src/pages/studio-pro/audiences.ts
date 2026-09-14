@@ -566,7 +566,13 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Triagem de sinais de alerta em cada etapa",
       "Relatório em PDF para levar ao cirurgião",
     ],
+    triggers: [
+      "Alta do hospital com uma folha de orientação e mil dúvidas",
+      "Primeira semana em casa e ninguém para dizer o que já pode fazer",
+      "Retorno com o cirurgião marcado e você quer chegar com evolução na mão",
+    ],
     cta: "Quero um plano seguro",
+
     parentId: "paciente",
   },
   {
