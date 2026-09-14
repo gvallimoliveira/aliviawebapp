@@ -33,6 +33,11 @@ export type NarrativeRoute = {
   enemy?: string;
   /** O que continua acontecendo se a pessoa não fizer nada. */
   stakes?: string;
+  /** Momento concreto em que essa pessoa procura ajuda (urgência real). */
+  trigger?: string;
+  /** STEPS/D.I.F.I traduzidos em linguagem de leigo (só marcas Aliv.iA). */
+  methodPlain?: string;
+
   cta?: string;
   /** Assinatura persistida junto das frases para a conexão também ganhar frescor. */
   signature: string;
