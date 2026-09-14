@@ -113,8 +113,10 @@ export type BrandDnaInput = {
 
 export const buildBrandDna = (input: BrandDnaInput): BrandDna => {
   const brief: BriefAnswers = readBriefAnswers(input.briefAnswers);
-  const pick = (id: string) => clean(brief[id]) || undefined;
-  const desire = splitDesireAndObjection(pick("desejo"));
+  /* Nenhum rótulo do formulário entra no motor textual. */
+  const pick = (id: string) => stripFieldLabels(brief[id]) || undefined;
+  const desire = splitDesireAndObjection(clean(brief.desejo));
+
 
   return {
     presentation: pick("apresentacao"),
