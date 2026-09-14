@@ -143,6 +143,9 @@ export const buildNarrativeRoute = ({
   const desire = pick(desires);
   const proof = pick(proofs);
   const feature = pick(features);
+  const scene = pick(scenes);
+  const objection = pick(objections);
+  const stakes = pick(stakesPool);
   // O vizinho fornece apenas afinidade semântica; seu rótulo e sua fala nunca
   // entram na copy do público ativo.
   const bridgeWords = neighbor ? audienceWords(neighbor) : [];
