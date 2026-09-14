@@ -31,6 +31,12 @@ export type BrandDna = {
   desire?: string;
   /** Objeção separada do desejo; nunca deve virar benefício ou fecho. */
   objection?: string;
+  /** Cena concreta do cotidiano do público (abertura viva da arte). */
+  scene?: string;
+  /** O que a marca combate no mercado (inimigo declarado). */
+  enemy?: string;
+  /** Consequência de não agir — urgência sem promessa. */
+  stakes?: string;
   /** CTA preferido da marca. */
   cta?: string;
   /** Tom declarado (diretriz, nunca renderizado). */
