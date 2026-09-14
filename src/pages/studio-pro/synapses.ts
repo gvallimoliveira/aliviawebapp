@@ -127,15 +127,29 @@ export const buildNarrativeRoute = ({
     audience?.description,
     audience?.hook,
   ].filter(Boolean).join(" · "));
-  const rawPains = [...first(audience?.pains), clean(dna.pain)].filter(Boolean);
+  /**
+   * VOZ DO PÚBLICO EM PRIMEIRO LUGAR: quando o público tem o campo próprio, o
+   * campo genérico da marca (que mistura paciente, profissional e clínica na
+   * mesma linha) fica de fora. É o que evita a arte dirigida falar com a voz de
+   * outro público. Sem campo próprio, o genérico segue como rede de segurança.
+   */
+  const ownFirst = (own: string[], generic?: string) => {
+    const list = own.filter(Boolean);
+    if (list.length) return list;
+    const fallback = clean(generic);
+    return fallback ? [fallback] : [];
+  };
+  const rawPains = ownFirst(first(audience?.pains), dna.pain);
   const pains = vestibular ? rawPains.filter((item) => !mentionsPainAsSymptom(item)) : rawPains;
-  const desires = [...first(audience?.desires), clean(dna.desire)].filter(Boolean);
-  const proofs = [...first(audience?.proof), clean(dna.belief)].filter(Boolean);
+  const desires = ownFirst(first(audience?.desires), dna.desire);
+  const proofs = ownFirst(first(audience?.proof), dna.belief);
   const features = [clean(dna.offer), ...proofs].filter(Boolean);
-  const scenes = [...first(audience?.scenes), clean(dna.scene)].filter(Boolean);
-  const objections = [...first(audience?.objections), clean(dna.objection)].filter(Boolean);
-  const stakesPool = [...first(audience?.stakes), clean(dna.stakes)].filter(Boolean);
+  const scenes = ownFirst(first(audience?.scenes), dna.scene);
+  const objections = ownFirst(first(audience?.objections), dna.objection);
+  const stakesPool = ownFirst(first(audience?.stakes), dna.stakes);
+  const triggerPool = first(audience?.triggers);
   const enemy = clean(dna.enemy) || undefined;
+
   const kinds: NarrativeRouteKind[] = [
     "pain-to-desire",
     "desire-through-proof",
