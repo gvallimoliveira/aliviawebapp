@@ -401,6 +401,21 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     pains: ["Cada terapeuta avalia de um jeito", "Sem visão de indicadores", "Alta sem critério"],
     desires: ["Padrão clínico único", "Indicadores da equipe em um painel"],
     proof: ["Link institucional da clínica", "Prontuário compartilhado pela equipe", "Indicadores de adesão e alta"],
+    scenes: [
+      "Dois terapeutas atendem o mesmo diagnóstico e entregam duas condutas diferentes",
+      "Reunião de equipe e ninguém sabe dizer quantos pacientes abandonaram no mês",
+      "Um paciente troca de terapeuta e a história do caso se perde no caminho",
+    ],
+    objections: [
+      "Minha equipe não vai aderir a mais um processo",
+      "Padronizar vai engessar o raciocínio de cada terapeuta",
+      "Já tenho sistema de agenda e financeiro",
+    ],
+    stakes: [
+      "A qualidade da clínica continua dependendo de quem atendeu naquele dia",
+      "Você segue decidindo por percepção, sem indicador na mão",
+      "Paciente insatisfeito sai sem que ninguém perceba o motivo",
+    ],
     cta: "Falar sobre a minha clínica",
   },
   {
