@@ -127,6 +127,10 @@ export const buildNarrativeRoute = ({
   const desires = [...first(audience?.desires), clean(dna.desire)].filter(Boolean);
   const proofs = [...first(audience?.proof), clean(dna.belief)].filter(Boolean);
   const features = [clean(dna.offer), ...proofs].filter(Boolean);
+  const scenes = [...first(audience?.scenes), clean(dna.scene)].filter(Boolean);
+  const objections = [...first(audience?.objections), clean(dna.objection)].filter(Boolean);
+  const stakesPool = [...first(audience?.stakes), clean(dna.stakes)].filter(Boolean);
+  const enemy = clean(dna.enemy) || undefined;
   const kinds: NarrativeRouteKind[] = [
     "pain-to-desire",
     "desire-through-proof",
