@@ -15,7 +15,10 @@
  * própria marca ou de um público qualquer, sorteado a cada lote (quase
  * aleatório, mas determinístico por seed).
  */
+import { stripFieldLabels } from "./brandDnaKit";
+
 export const GLOBAL_SEGMENT = "360";
+
 
 /** Ângulos estratégicos de conteúdo — a "intenção" do post. */
 export type ContentAngle = "informar" | "dor" | "desejo" | "venda";
