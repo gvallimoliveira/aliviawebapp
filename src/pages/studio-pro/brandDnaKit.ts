@@ -55,20 +55,40 @@ export type BrandDna = {
 
 const clean = (value?: string | null) => (value ?? "").trim().replace(/\s+/g, " ");
 
+/**
+ * RÓTULOS DO QUESTIONÁRIO NUNCA VIRAM TEXTO DE ARTE.
+ *
+ * O cliente escreve "…sem medo. Objeções mais comuns: acha que vai demorar" no
+ * mesmo campo. Sem esta limpeza o motor lê o rótulo como frase e a arte sai com
+ * título "Objeções mais comuns: acha". Aqui o rótulo é removido em qualquer
+ * posição (início da resposta, depois de ponto, ponto e vírgula ou marcador).
+ */
+const LABEL_WORDS =
+  "(?:maior\\s+)?(?:desejos?|obje(?:ç|c)(?:ão|ões|oes)(?:\\s+mais\\s+comuns?)?|dores?|cenas?|consequ(?:ê|e)ncias?|inimigos?|ofertas?|diferenciais?|diferencial|apresenta(?:ç|c)ão|p(?:ú|u)blico(?:\\s+prim(?:á|a)rio)?|perfil|cta|chamada)";
+const LABEL_ANYWHERE = new RegExp(`(?:^|(?<=[.!?;|•·—-]))\\s*${LABEL_WORDS}\\s*:\\s*`, "gi");
+
+/** Remove rótulos herdados do formulário sem alterar o conteúdo da resposta. */
+export const stripFieldLabels = (value?: string | null): string =>
+  clean(value).replace(LABEL_ANYWHERE, " ").replace(/\s+/g, " ").replace(/^[-–—•·|;,.\s]+/, "").trim();
+
+const OBJECTION_LABEL = new RegExp(
+  `(?:^|(?<=[.!?;|•·]))\\s*obje(?:ç|c)(?:ão|oes|ões)(?:\\s+mais\\s+comuns?)?\\s*:\\s*`,
+  "i",
+);
+
 /** Separa os dois assuntos reunidos pelo campo histórico "desejo e objeção". */
 const splitDesireAndObjection = (value?: string): { desire?: string; objection?: string } => {
   const source = clean(value);
   if (!source) return {};
 
-  const desireLabel = /(?:^|[;|•·])\s*(?:maior\s+)?desejo\s*:\s*/i;
-  const objectionLabel = /(?:^|[;|•·])\s*obje(?:ç|c)(?:ão|oes|ões)(?:\s+mais\s+comuns?)?\s*:\s*/i;
-  const objectionAt = source.search(objectionLabel);
-  if (objectionAt < 0) return { desire: source.replace(desireLabel, "").trim() || undefined };
+  const objectionAt = source.search(OBJECTION_LABEL);
+  if (objectionAt < 0) return { desire: stripFieldLabels(source) || undefined };
 
-  const desire = source.slice(0, objectionAt).replace(desireLabel, "").replace(/[;|•·\s]+$/, "").trim();
-  const objection = source.slice(objectionAt).replace(objectionLabel, "").trim();
+  const desire = stripFieldLabels(source.slice(0, objectionAt));
+  const objection = stripFieldLabels(source.slice(objectionAt));
   return { desire: desire || undefined, objection: objection || undefined };
 };
+
 
 /** Quebra "cura, milagre; garantia de resultado" em termos individuais. */
 const splitTerms = (value?: string | null): string[] =>
@@ -93,8 +113,10 @@ export type BrandDnaInput = {
 
 export const buildBrandDna = (input: BrandDnaInput): BrandDna => {
   const brief: BriefAnswers = readBriefAnswers(input.briefAnswers);
-  const pick = (id: string) => clean(brief[id]) || undefined;
-  const desire = splitDesireAndObjection(pick("desejo"));
+  /* Nenhum rótulo do formulário entra no motor textual. */
+  const pick = (id: string) => stripFieldLabels(brief[id]) || undefined;
+  const desire = splitDesireAndObjection(clean(brief.desejo));
+
 
   return {
     presentation: pick("apresentacao"),

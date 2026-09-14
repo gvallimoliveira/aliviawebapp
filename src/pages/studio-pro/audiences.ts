@@ -15,7 +15,10 @@
  * própria marca ou de um público qualquer, sorteado a cada lote (quase
  * aleatório, mas determinístico por seed).
  */
+import { stripFieldLabels } from "./brandDnaKit";
+
 export const GLOBAL_SEGMENT = "360";
+
 
 /** Ângulos estratégicos de conteúdo — a "intenção" do post. */
 export type ContentAngle = "informar" | "dor" | "desejo" | "venda";
@@ -153,9 +156,11 @@ export const slugifySegment = (label: string) =>
 
 const asStringArray = (value: unknown): string[] | undefined => {
   if (!Array.isArray(value)) return undefined;
-  const list = value.map((v) => String(v ?? "").trim()).filter(Boolean);
+  /* Rótulo do formulário ("Objeções mais comuns:") nunca vira frase de arte. */
+  const list = value.map((v) => stripFieldLabels(String(v ?? ""))).filter(Boolean);
   return list.length ? list : undefined;
 };
+
 
 /** Lê a coluna `audiences` (jsonb) com tolerância a formatos incompletos. */
 export const readAudiences = (raw: unknown): BrandAudience[] => {
