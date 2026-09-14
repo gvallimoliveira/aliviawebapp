@@ -1307,6 +1307,8 @@ const StudioProBrand = () => {
                         ["scenes", "Cenas do dia a dia (uma por linha)"],
                         ["objections", "Objeções dele (uma por linha)"],
                         ["stakes", "Se não fizer nada… (uma por linha)"],
+                        ["triggers", "Momento em que procura ajuda (uma por linha)"],
+
                       ] as const).map(([field, label]) => (
                         <AudienceListField
                           key={field}
