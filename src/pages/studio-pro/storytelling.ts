@@ -166,7 +166,7 @@ export const composeRouteCopy = (
     }
 
     const closingTitles = [cap(gain), `O próximo passo: ${low(gain)}`, `Agora, ${low(gain)}`, `Pronto para ${low(gain)}?`];
-    const closingSupports = [proof || tension || turn, turn, lead, proof || turn];
+    const closingSupports = [proof || tension || turn, turn, lead, proof || turn, ...(stakes ? [stakes] : [])];
     const closingTitle = fit(closingTitles[frame % closingTitles.length], 52);
     const closingSub = fit(cap(closingSupports[frame % closingSupports.length]), 64);
     if (closingTitle && closingSub && cta) {
