@@ -606,7 +606,13 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Exercícios de estabilidade com pé no solo firme, sem superfície instável",
       "Acompanhamento simples entre as sessões",
     ],
+    triggers: [
+      "Um tropeço em casa que assustou a família",
+      "A filha ou o filho insistiu para você procurar alguém",
+      "Você percebeu que subir a escada ficou mais difícil que no ano passado",
+    ],
     cta: "Cuidar do meu movimento",
+
     parentId: "paciente",
   },
 ];
