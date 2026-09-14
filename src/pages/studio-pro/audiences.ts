@@ -153,9 +153,11 @@ export const slugifySegment = (label: string) =>
 
 const asStringArray = (value: unknown): string[] | undefined => {
   if (!Array.isArray(value)) return undefined;
-  const list = value.map((v) => String(v ?? "").trim()).filter(Boolean);
+  /* Rótulo do formulário ("Objeções mais comuns:") nunca vira frase de arte. */
+  const list = value.map((v) => stripFieldLabels(String(v ?? ""))).filter(Boolean);
   return list.length ? list : undefined;
 };
+
 
 /** Lê a coluna `audiences` (jsonb) com tolerância a formatos incompletos. */
 export const readAudiences = (raw: unknown): BrandAudience[] => {
