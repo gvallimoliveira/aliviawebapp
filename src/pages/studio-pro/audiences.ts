@@ -272,6 +272,8 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
     scenes: inherit("scenes"),
     objections: inherit("objections"),
     stakes: inherit("stakes"),
+    triggers: inherit("triggers"),
+
     hook: own.hook?.trim() || inheritedHooks?.[0],
     hooks: ownHooks.length ? own.hooks : inheritedHooks?.slice(1),
     cta: own.cta?.trim() || chain.find((p) => p.cta?.trim())?.cta,
