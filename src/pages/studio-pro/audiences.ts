@@ -544,7 +544,13 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Plano de exercícios com progressão e vídeo",
       "Diário de dor para ver a evolução dia a dia",
     ],
+    triggers: [
+      "A crise voltou e desta vez atrapalhou o trabalho",
+      "Você saiu da consulta com laudo na mão e sem explicação",
+      "O médico falou em cirurgia e você quer entender as opções antes",
+    ],
     cta: "Fazer minha autoavaliação",
+
     parentId: "paciente",
   },
   {
