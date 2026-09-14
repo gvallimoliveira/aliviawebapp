@@ -381,7 +381,14 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Você vai deixando de fazer o que gosta sem perceber",
       "Mais um ano tomando remédio para aguentar o dia",
     ],
+    triggers: [
+      "A dor amanheceu diferente e você não sabe se é hora de procurar alguém",
+      "O exame ficou pronto e o laudo não explica o que você sente",
+      "O remédio deixou de resolver como resolvia antes",
+      "Você travou fazendo algo simples: calçar o sapato, pegar a criança no colo",
+    ],
     cta: "Fazer minha autoavaliação",
+
   },
   {
     id: "pro",
