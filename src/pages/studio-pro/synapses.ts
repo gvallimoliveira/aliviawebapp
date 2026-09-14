@@ -157,10 +157,11 @@ export const buildNarrativeRoute = ({
     : [];
   const vocabulary = [...new Set([
     ...tokens(tension, desire, proof, feature, dna.positioning),
+    ...tokens(scene, objection, enemy, stakes),
     ...bridgeWords.slice(0, 8),
     ...tokens(...aliviaLinks),
-  ])].slice(0, 40);
-  const signature = [kind, audience?.id ?? "brand", tension, feature, proof, desire]
+  ])].slice(0, 44);
+  const signature = [kind, audience?.id ?? "brand", tension, feature, proof, desire, scene, objection, stakes]
     .filter(Boolean)
     .join("|")
     .toLowerCase();
