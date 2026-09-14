@@ -9,6 +9,8 @@ import { createRng } from "@/pages/studio/rng";
 import type { BrandAudience } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
 import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
+import { methodPlainLine } from "./methodPlain";
+
 import { editorialAudience } from "@/pages/studio/typographyGuards";
 
 export type NarrativeRouteKind =
@@ -33,6 +35,11 @@ export type NarrativeRoute = {
   enemy?: string;
   /** O que continua acontecendo se a pessoa não fizer nada. */
   stakes?: string;
+  /** Momento concreto em que essa pessoa procura ajuda (urgência real). */
+  trigger?: string;
+  /** STEPS/D.I.F.I traduzidos em linguagem de leigo (só marcas Aliv.iA). */
+  methodPlain?: string;
+
   cta?: string;
   /** Assinatura persistida junto das frases para a conexão também ganhar frescor. */
   signature: string;
@@ -122,15 +129,29 @@ export const buildNarrativeRoute = ({
     audience?.description,
     audience?.hook,
   ].filter(Boolean).join(" · "));
-  const rawPains = [...first(audience?.pains), clean(dna.pain)].filter(Boolean);
+  /**
+   * VOZ DO PÚBLICO EM PRIMEIRO LUGAR: quando o público tem o campo próprio, o
+   * campo genérico da marca (que mistura paciente, profissional e clínica na
+   * mesma linha) fica de fora. É o que evita a arte dirigida falar com a voz de
+   * outro público. Sem campo próprio, o genérico segue como rede de segurança.
+   */
+  const ownFirst = (own: string[], generic?: string) => {
+    const list = own.filter(Boolean);
+    if (list.length) return list;
+    const fallback = clean(generic);
+    return fallback ? [fallback] : [];
+  };
+  const rawPains = ownFirst(first(audience?.pains), dna.pain);
   const pains = vestibular ? rawPains.filter((item) => !mentionsPainAsSymptom(item)) : rawPains;
-  const desires = [...first(audience?.desires), clean(dna.desire)].filter(Boolean);
-  const proofs = [...first(audience?.proof), clean(dna.belief)].filter(Boolean);
+  const desires = ownFirst(first(audience?.desires), dna.desire);
+  const proofs = ownFirst(first(audience?.proof), dna.belief);
   const features = [clean(dna.offer), ...proofs].filter(Boolean);
-  const scenes = [...first(audience?.scenes), clean(dna.scene)].filter(Boolean);
-  const objections = [...first(audience?.objections), clean(dna.objection)].filter(Boolean);
-  const stakesPool = [...first(audience?.stakes), clean(dna.stakes)].filter(Boolean);
+  const scenes = ownFirst(first(audience?.scenes), dna.scene);
+  const objections = ownFirst(first(audience?.objections), dna.objection);
+  const stakesPool = ownFirst(first(audience?.stakes), dna.stakes);
+  const triggerPool = first(audience?.triggers);
   const enemy = clean(dna.enemy) || undefined;
+
   const kinds: NarrativeRouteKind[] = [
     "pain-to-desire",
     "desire-through-proof",
@@ -146,6 +167,7 @@ export const buildNarrativeRoute = ({
   const scene = pick(scenes);
   const objection = pick(objections);
   const stakes = pick(stakesPool);
+  const trigger = pick(triggerPool);
   // O vizinho fornece apenas afinidade semântica; seu rótulo e sua fala nunca
   // entram na copy do público ativo.
   const bridgeWords = neighbor ? audienceWords(neighbor) : [];
@@ -155,16 +177,22 @@ export const buildNarrativeRoute = ({
         .map((link) => ({ link, score: overlap(tokens(tension, desire, proof, feature), tokens(...link)) }))
         .sort((a, b) => b.score - a.score)[0]?.link ?? []
     : [];
+  // STEPS e D.I.F.I deixam de ser sigla: entram traduzidos, na voz do público.
+  const methodPlain = isAlivia
+    ? methodPlainLine(`${routeSeed}:${audience?.id ?? "brand"}`, /paciente/i.test(audience?.id ?? "") ? "patient" : "pro")
+    : undefined;
   const vocabulary = [...new Set([
     ...tokens(tension, desire, proof, feature, dna.positioning),
     ...tokens(scene, objection, enemy, stakes),
+    ...tokens(trigger, methodPlain),
     ...bridgeWords.slice(0, 8),
     ...tokens(...aliviaLinks),
   ])].slice(0, 44);
-  const signature = [kind, audience?.id ?? "brand", tension, feature, proof, desire, scene, objection, stakes]
+  const signature = [kind, audience?.id ?? "brand", tension, feature, proof, desire, scene, objection, stakes, trigger]
     .filter(Boolean)
     .join("|")
     .toLowerCase();
+
 
   return {
     kind,
@@ -185,7 +213,10 @@ export const buildNarrativeRoute = ({
     objection,
     enemy,
     stakes,
+    trigger,
+    methodPlain,
     cta: clean(audience?.cta) || clean(dna.cta) || undefined,
+
     signature,
     vocabulary,
   };

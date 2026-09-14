@@ -60,8 +60,15 @@ export type BrandAudience = {
    * nada. Gera urgência sem prometer resultado.
    */
   stakes?: string[];
+  /**
+   * MOMENTOS DE GATILHO: o instante concreto em que essa pessoa procura ajuda
+   * ("laudo na mão", "começo de temporada", "primeiro estágio", "alta do
+   * hospital"). Dá urgência sem apelação, porque nasce da vida real.
+   */
+  triggers?: string[];
   /** Chamada para ação preferida desse nicho. */
   cta?: string;
+
   /**
    * PALAVRA-CHAVE do público — o termo que a arte precisa dizer na cara
    * ("Dor crônica", "Esportista", "Geração 60+"). Sem isso o texto sai
@@ -169,6 +176,8 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
         scenes: asStringArray(row.scenes),
         objections: asStringArray(row.objections),
         stakes: asStringArray(row.stakes),
+        triggers: asStringArray(row.triggers),
+
         cta: String(row.cta ?? "").trim() || undefined,
         keyword: String(row.keyword ?? "").trim() || undefined,
         hook: String(row.hook ?? "").trim() || undefined,
@@ -194,6 +203,8 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
       ...(a.scenes?.length ? { scenes: a.scenes } : {}),
       ...(a.objections?.length ? { objections: a.objections } : {}),
       ...(a.stakes?.length ? { stakes: a.stakes } : {}),
+      ...(a.triggers?.length ? { triggers: a.triggers } : {}),
+
       ...(a.cta?.trim() ? { cta: a.cta.trim() } : {}),
       ...(a.keyword?.trim() ? { keyword: a.keyword.trim() } : {}),
       ...(a.hook?.trim() ? { hook: a.hook.trim() } : {}),
@@ -244,7 +255,7 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
   if (!own) return null;
   const chain = audienceAncestors(list, id);
   if (!chain.length) return own;
-  const inherit = (key: "pains" | "desires" | "proof" | "scenes" | "objections" | "stakes") => {
+  const inherit = (key: "pains" | "desires" | "proof" | "scenes" | "objections" | "stakes" | "triggers") => {
     const merged = [...(own[key] ?? [])];
     for (const parent of chain) for (const item of parent[key] ?? []) if (!merged.includes(item)) merged.push(item);
     return merged.length ? merged : undefined;
@@ -261,6 +272,8 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
     scenes: inherit("scenes"),
     objections: inherit("objections"),
     stakes: inherit("stakes"),
+    triggers: inherit("triggers"),
+
     hook: own.hook?.trim() || inheritedHooks?.[0],
     hooks: ownHooks.length ? own.hooks : inheritedHooks?.slice(1),
     cta: own.cta?.trim() || chain.find((p) => p.cta?.trim())?.cta,
@@ -368,7 +381,14 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Você vai deixando de fazer o que gosta sem perceber",
       "Mais um ano tomando remédio para aguentar o dia",
     ],
+    triggers: [
+      "A dor amanheceu diferente e você não sabe se é hora de procurar alguém",
+      "O exame ficou pronto e o laudo não explica o que você sente",
+      "O remédio deixou de resolver como resolvia antes",
+      "Você travou fazendo algo simples: calçar o sapato, pegar a criança no colo",
+    ],
     cta: "Fazer minha autoavaliação",
+
   },
   {
     id: "pro",
@@ -392,7 +412,14 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "O paciente sai da sessão sem enxergar o valor do que você fez",
       "A evolução do caso continua sem registro que sustente a alta",
     ],
+    triggers: [
+      "Chegou um caso mais complexo do que os que você costuma atender",
+      "O paciente pediu um relatório e você travou na hora de escrever",
+      "Você abriu a agenda cheia e viu que a documentação está toda atrasada",
+      "Um convênio ou médico pediu justificativa clínica da conduta",
+    ],
     cta: "Testar o painel profissional",
+
   },
   {
     id: "clinica",
@@ -416,7 +443,14 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Você segue decidindo por percepção, sem indicador na mão",
       "Paciente insatisfeito sai sem que ninguém perceba o motivo",
     ],
+    triggers: [
+      "Entrou terapeuta novo na equipe e o padrão de avaliação precisa ser o mesmo",
+      "Fechamento do mês e os números de adesão e alta não fecham",
+      "Um paciente reclamou de conduta diferente entre dois profissionais",
+      "Você vai abrir uma segunda unidade e precisa que a qualidade viaje com a marca",
+    ],
     cta: "Falar sobre a minha clínica",
+
   },
   {
     id: "academico",
@@ -441,6 +475,12 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "A insegurança acompanha você para dentro do consultório",
     ],
     cta: "Começar minha trilha",
+    triggers: [
+      "Primeiro dia de estágio, primeiro paciente de verdade na sua frente",
+      "Prova de raciocínio clínico marcada e a teoria não se organiza na cabeça",
+      "O supervisor pediu a sua hipótese e a justificativa dela",
+      "Semana de TCC ou de caso clínico para apresentar",
+    ],
   },
   {
     id: "recem-formado",
@@ -459,9 +499,31 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Relatório e HEP prontos para entregar ao paciente",
       "Prontuário organizado desde o primeiro caso",
     ],
+    scenes: [
+      "Primeiro paciente particular seu: ele conta a história e você não sabe onde começar a escrever",
+      "Você repete o teste três vezes porque não confia no que interpretou",
+      "Depois do atendimento você ainda pesquisa se a conduta foi a certa",
+    ],
+    objections: [
+      "Acabei de me formar, não tenho dinheiro para investir em sistema",
+      "Se eu usar apoio de fora vão achar que não sei atender",
+      "Meu volume de pacientes ainda é pequeno para isso",
+    ],
+    stakes: [
+      "Você começa a carreira insegura e o paciente sente isso na primeira consulta",
+      "Sem registro nem relatório, o seu trabalho parece valer menos do que vale",
+      "Cada caso novo vira improviso em vez de repertório acumulado",
+    ],
+    triggers: [
+      "CREFITO na mão e a primeira agenda para montar",
+      "Chegou o primeiro paciente por indicação e você não pode errar",
+      "Você aceitou um caso pós-cirúrgico e nunca conduziu um sozinho",
+      "Alguém pediu o seu relatório de avaliação pela primeira vez",
+    ],
     cta: "Começar com segurança",
     parentId: "academico",
   },
+
   {
     id: "paciente-dor-cronica",
     keyword: "Dor crônica",
@@ -482,7 +544,13 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Plano de exercícios com progressão e vídeo",
       "Diário de dor para ver a evolução dia a dia",
     ],
+    triggers: [
+      "A crise voltou e desta vez atrapalhou o trabalho",
+      "Você saiu da consulta com laudo na mão e sem explicação",
+      "O médico falou em cirurgia e você quer entender as opções antes",
+    ],
     cta: "Fazer minha autoavaliação",
+
     parentId: "paciente",
   },
   {
@@ -498,7 +566,13 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Triagem de sinais de alerta em cada etapa",
       "Relatório em PDF para levar ao cirurgião",
     ],
+    triggers: [
+      "Alta do hospital com uma folha de orientação e mil dúvidas",
+      "Primeira semana em casa e ninguém para dizer o que já pode fazer",
+      "Retorno com o cirurgião marcado e você quer chegar com evolução na mão",
+    ],
     cta: "Quero um plano seguro",
+
     parentId: "paciente",
   },
   {
@@ -510,7 +584,13 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     pains: ["Parar de treinar por causa da lesão", "Voltar cedo demais e recair", "Alta sem critério objetivo"],
     desires: ["Voltar ao esporte com segurança", "Treinar sem dor e sem medo"],
     proof: ["Leitura de dor, inibição, fraqueza e incapacidade (D.I.F.I)", "Plano com progressão de carga documentada", "Reavaliação com critério de retorno"],
+    triggers: [
+      "Começo de temporada e a lesão antiga deu sinal outra vez",
+      "Prova marcada e o treino teve que ser interrompido",
+      "Você voltou a treinar por conta e a dor apareceu no mesmo lugar",
+    ],
     cta: "Quero voltar a treinar",
+
     parentId: "paciente",
   },
   {
@@ -526,7 +606,13 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Exercícios de estabilidade com pé no solo firme, sem superfície instável",
       "Acompanhamento simples entre as sessões",
     ],
+    triggers: [
+      "Um tropeço em casa que assustou a família",
+      "A filha ou o filho insistiu para você procurar alguém",
+      "Você percebeu que subir a escada ficou mais difícil que no ano passado",
+    ],
     cta: "Cuidar do meu movimento",
+
     parentId: "paciente",
   },
 ];
