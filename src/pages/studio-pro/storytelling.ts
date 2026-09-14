@@ -81,6 +81,11 @@ export const composeRouteCopy = (
   const feature = squash(route.feature);
   const cta = squash(route.cta);
   const who = squash(route.audienceLabel);
+  /** Cena concreta, objeção real, inimigo declarado e preço da inércia. */
+  const scene = squash(route.scene);
+  const objection = squash(route.objection);
+  const enemy = squash(route.enemy);
+  const stakes = squash(route.stakes);
 
   /** Fio da arte: o que dói/o que se quer, o que muda e a prova. */
   const lead = tension || desire || feature;
@@ -88,15 +93,33 @@ export const composeRouteCopy = (
   const gain = desire || proof || feature;
   if (!lead || !turn) return {};
 
+  /**
+   * Molduras de destaque. As quatro primeiras vêm dos campos novos do kit
+   * (cena, inimigo, consequência) — só existem quando o campo foi preenchido,
+   * e é isso que faz a capa abrir com vida em vez de frase de catálogo.
+   */
+  const headlinePool = [
+    ...(scene ? [{ strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
+    ...(enemy ? [{ strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }] : []),
+    ...(stakes ? [{ strong: fit("Enquanto nada muda", 28), rest: fit(low(stakes), 44) }] : []),
+    { strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
+    { strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
+    { strong: fit(`De ${low(lead)}`, 30), rest: fit(`a ${low(gain)}`, 42) },
+    { strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
+    { strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
+  ];
+
+  /** Apoios que respondem à objeção, situam a cena e nomeiam o preço da inércia. */
+  const extraSubs = [
+    ...(scene ? [`${cap(scene)}. É aí que entra ${low(turn)}.`] : []),
+    ...(objection ? [`Você pensa: ${low(objection)}. ${cap(turn)} responde a isso.`] : []),
+    ...(stakes ? [`Deixar como está tem preço: ${low(stakes)}.`] : []),
+    ...(enemy ? [`Aqui não tem ${low(enemy)}. Tem ${low(turn)}.`] : []),
+  ];
+
   const buildFrame = (frame: number): Partial<WorldContent> => {
     const out: Partial<WorldContent> = {};
-    const headlines = [
-      { strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
-      { strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
-      { strong: fit(`De ${low(lead)}`, 30), rest: fit(`a ${low(gain)}`, 42) },
-      { strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
-      { strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
-    ];
+    const headlines = headlinePool;
     const headline = headlines[frame % headlines.length];
     if (usable(`${headline.strong} ${headline.rest}`) && headline.strong && headline.rest) {
       out.headlines = [{ strong: terms(headline.strong), rest: terms(headline.rest) }];
