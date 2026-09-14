@@ -443,7 +443,14 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Você segue decidindo por percepção, sem indicador na mão",
       "Paciente insatisfeito sai sem que ninguém perceba o motivo",
     ],
+    triggers: [
+      "Entrou terapeuta novo na equipe e o padrão de avaliação precisa ser o mesmo",
+      "Fechamento do mês e os números de adesão e alta não fecham",
+      "Um paciente reclamou de conduta diferente entre dois profissionais",
+      "Você vai abrir uma segunda unidade e precisa que a qualidade viaje com a marca",
+    ],
     cta: "Falar sobre a minha clínica",
+
   },
   {
     id: "academico",
