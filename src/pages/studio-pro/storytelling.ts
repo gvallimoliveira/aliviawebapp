@@ -86,6 +86,10 @@ export const composeRouteCopy = (
   const objection = squash(route.objection);
   const enemy = squash(route.enemy);
   const stakes = squash(route.stakes);
+  /** Momento de gatilho e método traduzido em linguagem de leigo. */
+  const trigger = squash(route.trigger);
+  const methodPlain = squash(route.methodPlain);
+
 
   /** Fio da arte: o que dói/o que se quer, o que muda e a prova. */
   const lead = tension || desire || feature;
