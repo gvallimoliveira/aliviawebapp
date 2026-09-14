@@ -211,7 +211,10 @@ export const buildNarrativeRoute = ({
     objection,
     enemy,
     stakes,
+    trigger,
+    methodPlain,
     cta: clean(audience?.cta) || clean(dna.cta) || undefined,
+
     signature,
     vocabulary,
   };
