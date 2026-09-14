@@ -244,7 +244,7 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
   if (!own) return null;
   const chain = audienceAncestors(list, id);
   if (!chain.length) return own;
-  const inherit = (key: "pains" | "desires" | "proof") => {
+  const inherit = (key: "pains" | "desires" | "proof" | "scenes" | "objections" | "stakes") => {
     const merged = [...(own[key] ?? [])];
     for (const parent of chain) for (const item of parent[key] ?? []) if (!merged.includes(item)) merged.push(item);
     return merged.length ? merged : undefined;
@@ -258,6 +258,9 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
     pains: inherit("pains"),
     desires: inherit("desires"),
     proof: inherit("proof"),
+    scenes: inherit("scenes"),
+    objections: inherit("objections"),
+    stakes: inherit("stakes"),
     hook: own.hook?.trim() || inheritedHooks?.[0],
     hooks: ownHooks.length ? own.hooks : inheritedHooks?.slice(1),
     cta: own.cta?.trim() || chain.find((p) => p.cta?.trim())?.cta,
