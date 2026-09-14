@@ -475,6 +475,12 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "A insegurança acompanha você para dentro do consultório",
     ],
     cta: "Começar minha trilha",
+    triggers: [
+      "Primeiro dia de estágio, primeiro paciente de verdade na sua frente",
+      "Prova de raciocínio clínico marcada e a teoria não se organiza na cabeça",
+      "O supervisor pediu a sua hipótese e a justificativa dela",
+      "Semana de TCC ou de caso clínico para apresentar",
+    ],
   },
   {
     id: "recem-formado",
@@ -493,9 +499,31 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
       "Relatório e HEP prontos para entregar ao paciente",
       "Prontuário organizado desde o primeiro caso",
     ],
+    scenes: [
+      "Primeiro paciente particular seu: ele conta a história e você não sabe onde começar a escrever",
+      "Você repete o teste três vezes porque não confia no que interpretou",
+      "Depois do atendimento você ainda pesquisa se a conduta foi a certa",
+    ],
+    objections: [
+      "Acabei de me formar, não tenho dinheiro para investir em sistema",
+      "Se eu usar apoio de fora vão achar que não sei atender",
+      "Meu volume de pacientes ainda é pequeno para isso",
+    ],
+    stakes: [
+      "Você começa a carreira insegura e o paciente sente isso na primeira consulta",
+      "Sem registro nem relatório, o seu trabalho parece valer menos do que vale",
+      "Cada caso novo vira improviso em vez de repertório acumulado",
+    ],
+    triggers: [
+      "CREFITO na mão e a primeira agenda para montar",
+      "Chegou o primeiro paciente por indicação e você não pode errar",
+      "Você aceitou um caso pós-cirúrgico e nunca conduziu um sozinho",
+      "Alguém pediu o seu relatório de avaliação pela primeira vez",
+    ],
     cta: "Começar com segurança",
     parentId: "academico",
   },
+
   {
     id: "paciente-dor-cronica",
     keyword: "Dor crônica",
