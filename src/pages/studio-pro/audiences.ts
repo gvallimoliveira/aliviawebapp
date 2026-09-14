@@ -353,6 +353,21 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     pains: ["Dor que volta sempre", "Diagnóstico vago", "Medo de piorar se se mexer"],
     desires: ["Entender o que está acontecendo", "Um plano claro para seguir em casa"],
     proof: ["Autoavaliação guiada por perguntas objetivas", "Triagem de sinais de alerta", "Plano de exercícios com acompanhamento"],
+    scenes: [
+      "São 22h e você está no Google tentando descobrir se a sua dor é grave",
+      "Você levanta da cadeira depois de horas trabalhando e a lombar trava",
+      "Você deita para dormir e a dor escolhe justo essa hora para aparecer",
+    ],
+    objections: [
+      "Já fiz fisioterapia antes e a dor voltou",
+      "Acho que exercício vai piorar a minha dor",
+      "Não tenho tempo nem dinheiro para começar agora",
+    ],
+    stakes: [
+      "A dor continua voltando no mesmo lugar, cada vez mais fácil",
+      "Você vai deixando de fazer o que gosta sem perceber",
+      "Mais um ano tomando remédio para aguentar o dia",
+    ],
     cta: "Fazer minha autoavaliação",
   },
   {
