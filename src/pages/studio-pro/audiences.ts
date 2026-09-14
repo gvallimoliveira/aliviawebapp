@@ -203,6 +203,8 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
       ...(a.scenes?.length ? { scenes: a.scenes } : {}),
       ...(a.objections?.length ? { objections: a.objections } : {}),
       ...(a.stakes?.length ? { stakes: a.stakes } : {}),
+      ...(a.triggers?.length ? { triggers: a.triggers } : {}),
+
       ...(a.cta?.trim() ? { cta: a.cta.trim() } : {}),
       ...(a.keyword?.trim() ? { keyword: a.keyword.trim() } : {}),
       ...(a.hook?.trim() ? { hook: a.hook.trim() } : {}),
