@@ -165,6 +165,7 @@ export const buildNarrativeRoute = ({
   const scene = pick(scenes);
   const objection = pick(objections);
   const stakes = pick(stakesPool);
+  const trigger = pick(triggerPool);
   // O vizinho fornece apenas afinidade semântica; seu rótulo e sua fala nunca
   // entram na copy do público ativo.
   const bridgeWords = neighbor ? audienceWords(neighbor) : [];
@@ -174,16 +175,22 @@ export const buildNarrativeRoute = ({
         .map((link) => ({ link, score: overlap(tokens(tension, desire, proof, feature), tokens(...link)) }))
         .sort((a, b) => b.score - a.score)[0]?.link ?? []
     : [];
+  // STEPS e D.I.F.I deixam de ser sigla: entram traduzidos, na voz do público.
+  const methodPlain = isAlivia
+    ? methodPlainLine(`${routeSeed}:${audience?.id ?? "brand"}`, /paciente/i.test(audience?.id ?? "") ? "patient" : "pro")
+    : undefined;
   const vocabulary = [...new Set([
     ...tokens(tension, desire, proof, feature, dna.positioning),
     ...tokens(scene, objection, enemy, stakes),
+    ...tokens(trigger, methodPlain),
     ...bridgeWords.slice(0, 8),
     ...tokens(...aliviaLinks),
   ])].slice(0, 44);
-  const signature = [kind, audience?.id ?? "brand", tension, feature, proof, desire, scene, objection, stakes]
+  const signature = [kind, audience?.id ?? "brand", tension, feature, proof, desire, scene, objection, stakes, trigger]
     .filter(Boolean)
     .join("|")
     .toLowerCase();
+
 
   return {
     kind,
