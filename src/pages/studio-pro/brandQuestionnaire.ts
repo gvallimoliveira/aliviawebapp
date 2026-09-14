@@ -57,6 +57,12 @@ export const BRAND_QUESTIONNAIRE: BrandQuestionBlock[] = [
         hint: "Nome ou selo + registro profissional, se houver. Ex.: Guilherme Vallim · CREFITO 359566-F",
         kind: "short",
       },
+      {
+        id: "inimigo",
+        label: "Contra o que a sua marca se posiciona?",
+        hint: "O que você combate no mercado. Ex.: alívio passageiro, protocolo igual para todos, palpite sem avaliação.",
+        kind: "long",
+      },
     ],
   },
   {
@@ -86,6 +92,18 @@ export const BRAND_QUESTIONNAIRE: BrandQuestionBlock[] = [
         id: "desejo",
         label: "Qual é o maior desejo — e a objeção mais comum?",
         hint: "Ex.: quer voltar a correr; acha que vai custar caro e demorar.",
+        kind: "long",
+      },
+      {
+        id: "cena",
+        label: "Descreva uma cena real do dia a dia dele com esse problema",
+        hint: "Um momento concreto, com hora e gesto. Ex.: às 15h ele levanta da cadeira e trava a lombar.",
+        kind: "long",
+      },
+      {
+        id: "consequencia",
+        label: "O que continua acontecendo se ele não fizer nada?",
+        hint: "A consequência real de deixar como está — sem drama e sem promessa de cura.",
         kind: "long",
       },
     ],

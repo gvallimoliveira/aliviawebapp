@@ -31,6 +31,12 @@ export type BrandDna = {
   desire?: string;
   /** Objeção separada do desejo; nunca deve virar benefício ou fecho. */
   objection?: string;
+  /** Cena concreta do cotidiano do público (abertura viva da arte). */
+  scene?: string;
+  /** O que a marca combate no mercado (inimigo declarado). */
+  enemy?: string;
+  /** Consequência de não agir — urgência sem promessa. */
+  stakes?: string;
   /** CTA preferido da marca. */
   cta?: string;
   /** Tom declarado (diretriz, nunca renderizado). */
@@ -100,6 +106,9 @@ export const buildBrandDna = (input: BrandDnaInput): BrandDna => {
     pain: pick("dor"),
     desire: desire.desire,
     objection: desire.objection,
+    scene: pick("cena"),
+    enemy: pick("inimigo"),
+    stakes: pick("consequencia"),
     cta: pick("cta"),
     tone: pick("tom") || clean(input.tone) || undefined,
     technicalLevel: pick("nivel_tecnico"),
@@ -134,6 +143,9 @@ export const dnaDepth = (dna: BrandDna): number =>
     dna.profile,
     dna.pain,
     dna.desire,
+    dna.scene,
+    dna.enemy,
+    dna.stakes,
     dna.cta,
     dna.positioning,
     dna.description,
@@ -149,6 +161,9 @@ export const dnaVocabulary = (dna: BrandDna): string[] => {
     dna.profile,
     dna.pain,
     dna.desire,
+    dna.scene,
+    dna.enemy,
+    dna.stakes,
     dna.positioning,
     dna.description,
     dna.niche,

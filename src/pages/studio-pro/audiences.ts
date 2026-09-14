@@ -44,6 +44,22 @@ export type BrandAudience = {
   desires?: string[];
   /** Provas e diferenciais que convencem esse nicho. */
   proof?: string[];
+  /**
+   * CENAS CONCRETAS do dia a dia desse público — um momento real, com hora,
+   * lugar e gesto ("Levanta da cadeira às 15h e trava a lombar"). É o que faz a
+   * arte abrir com vida em vez de "dores na lombar?".
+   */
+  scenes?: string[];
+  /**
+   * OBJEÇÕES desse público, nas palavras dele ("já tentei fisioterapia e não
+   * resolveu"). O motor responde a objeção — nunca a repete como benefício.
+   */
+  objections?: string[];
+  /**
+   * CONSEQUÊNCIA DE NÃO AGIR: o que continua acontecendo se a pessoa não fizer
+   * nada. Gera urgência sem prometer resultado.
+   */
+  stakes?: string[];
   /** Chamada para ação preferida desse nicho. */
   cta?: string;
   /**
@@ -150,6 +166,9 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
         pains: asStringArray(row.pains),
         desires: asStringArray(row.desires),
         proof: asStringArray(row.proof),
+        scenes: asStringArray(row.scenes),
+        objections: asStringArray(row.objections),
+        stakes: asStringArray(row.stakes),
         cta: String(row.cta ?? "").trim() || undefined,
         keyword: String(row.keyword ?? "").trim() || undefined,
         hook: String(row.hook ?? "").trim() || undefined,
@@ -172,6 +191,9 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
       ...(a.pains?.length ? { pains: a.pains } : {}),
       ...(a.desires?.length ? { desires: a.desires } : {}),
       ...(a.proof?.length ? { proof: a.proof } : {}),
+      ...(a.scenes?.length ? { scenes: a.scenes } : {}),
+      ...(a.objections?.length ? { objections: a.objections } : {}),
+      ...(a.stakes?.length ? { stakes: a.stakes } : {}),
       ...(a.cta?.trim() ? { cta: a.cta.trim() } : {}),
       ...(a.keyword?.trim() ? { keyword: a.keyword.trim() } : {}),
       ...(a.hook?.trim() ? { hook: a.hook.trim() } : {}),
@@ -222,7 +244,7 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
   if (!own) return null;
   const chain = audienceAncestors(list, id);
   if (!chain.length) return own;
-  const inherit = (key: "pains" | "desires" | "proof") => {
+  const inherit = (key: "pains" | "desires" | "proof" | "scenes" | "objections" | "stakes") => {
     const merged = [...(own[key] ?? [])];
     for (const parent of chain) for (const item of parent[key] ?? []) if (!merged.includes(item)) merged.push(item);
     return merged.length ? merged : undefined;
@@ -236,6 +258,9 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
     pains: inherit("pains"),
     desires: inherit("desires"),
     proof: inherit("proof"),
+    scenes: inherit("scenes"),
+    objections: inherit("objections"),
+    stakes: inherit("stakes"),
     hook: own.hook?.trim() || inheritedHooks?.[0],
     hooks: ownHooks.length ? own.hooks : inheritedHooks?.slice(1),
     cta: own.cta?.trim() || chain.find((p) => p.cta?.trim())?.cta,
@@ -328,6 +353,21 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     pains: ["Dor que volta sempre", "Diagnóstico vago", "Medo de piorar se se mexer"],
     desires: ["Entender o que está acontecendo", "Um plano claro para seguir em casa"],
     proof: ["Autoavaliação guiada por perguntas objetivas", "Triagem de sinais de alerta", "Plano de exercícios com acompanhamento"],
+    scenes: [
+      "São 22h e você está no Google tentando descobrir se a sua dor é grave",
+      "Você levanta da cadeira depois de horas trabalhando e a lombar trava",
+      "Você deita para dormir e a dor escolhe justo essa hora para aparecer",
+    ],
+    objections: [
+      "Já fiz fisioterapia antes e a dor voltou",
+      "Acho que exercício vai piorar a minha dor",
+      "Não tenho tempo nem dinheiro para começar agora",
+    ],
+    stakes: [
+      "A dor continua voltando no mesmo lugar, cada vez mais fácil",
+      "Você vai deixando de fazer o que gosta sem perceber",
+      "Mais um ano tomando remédio para aguentar o dia",
+    ],
     cta: "Fazer minha autoavaliação",
   },
   {
@@ -337,6 +377,21 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     pains: ["30 minutos de anamnese por consulta", "Prontuário incompleto", "Relatório que ninguém lê"],
     desires: ["Paciente chegando com avaliação pronta", "Relatório profissional em um clique"],
     proof: ["Link de avaliação próprio", "Prontuário com evolução e gráficos", "HEP gerada com raciocínio clínico"],
+    scenes: [
+      "23h, você em casa terminando o prontuário do paciente das 8h",
+      "O paciente senta na maca e você gasta meia hora só para entender a história",
+      "Fim do mês: você sabe que o caso evoluiu, mas não tem número para mostrar",
+    ],
+    objections: [
+      "Vou perder tempo aprendendo a usar mais um sistema",
+      "Meu paciente não vai preencher nada antes da consulta",
+      "IA genérica não entende raciocínio clínico de fisioterapia",
+    ],
+    stakes: [
+      "Você segue levando trabalho para casa toda semana",
+      "O paciente sai da sessão sem enxergar o valor do que você fez",
+      "A evolução do caso continua sem registro que sustente a alta",
+    ],
     cta: "Testar o painel profissional",
   },
   {
@@ -346,6 +401,21 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     pains: ["Cada terapeuta avalia de um jeito", "Sem visão de indicadores", "Alta sem critério"],
     desires: ["Padrão clínico único", "Indicadores da equipe em um painel"],
     proof: ["Link institucional da clínica", "Prontuário compartilhado pela equipe", "Indicadores de adesão e alta"],
+    scenes: [
+      "Dois terapeutas atendem o mesmo diagnóstico e entregam duas condutas diferentes",
+      "Reunião de equipe e ninguém sabe dizer quantos pacientes abandonaram no mês",
+      "Um paciente troca de terapeuta e a história do caso se perde no caminho",
+    ],
+    objections: [
+      "Minha equipe não vai aderir a mais um processo",
+      "Padronizar vai engessar o raciocínio de cada terapeuta",
+      "Já tenho sistema de agenda e financeiro",
+    ],
+    stakes: [
+      "A qualidade da clínica continua dependendo de quem atendeu naquele dia",
+      "Você segue decidindo por percepção, sem indicador na mão",
+      "Paciente insatisfeito sai sem que ninguém perceba o motivo",
+    ],
     cta: "Falar sobre a minha clínica",
   },
   {
@@ -355,6 +425,21 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     pains: ["Decorou testes sem saber interpretar", "Insegurança no primeiro atendimento"],
     desires: ["Raciocinar como fisioterapeuta", "Treinar com casos reais"],
     proof: ["Trilhas com quizzes", "Casos clínicos comentados", "Progresso com XP e selos"],
+    scenes: [
+      "Você sabe o nome de todos os testes e ainda assim congela na frente do paciente",
+      "Estágio: o supervisor pergunta a sua hipótese e você olha para o chão",
+      "Prova passada, e mesmo assim você não sabe o que fazer com o resultado do teste",
+    ],
+    objections: [
+      "Ainda sou estudante, isso é coisa para quem já atende",
+      "Não tenho paciente para treinar",
+      "Vou aprender isso na prática depois de formado",
+    ],
+    stakes: [
+      "Você se forma decorando testes e continua insegura na primeira consulta",
+      "O primeiro paciente vira teste e não atendimento",
+      "A insegurança acompanha você para dentro do consultório",
+    ],
     cta: "Começar minha trilha",
   },
   {

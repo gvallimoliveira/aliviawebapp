@@ -25,6 +25,14 @@ export type NarrativeRoute = {
   feature?: string;
   proof?: string;
   desire?: string;
+  /** Cena concreta do cotidiano desse público (abertura viva). */
+  scene?: string;
+  /** Objeção real do público — a arte responde, nunca repete como benefício. */
+  objection?: string;
+  /** O que a marca combate no mercado. */
+  enemy?: string;
+  /** O que continua acontecendo se a pessoa não fizer nada. */
+  stakes?: string;
   cta?: string;
   /** Assinatura persistida junto das frases para a conexão também ganhar frescor. */
   signature: string;
@@ -119,6 +127,10 @@ export const buildNarrativeRoute = ({
   const desires = [...first(audience?.desires), clean(dna.desire)].filter(Boolean);
   const proofs = [...first(audience?.proof), clean(dna.belief)].filter(Boolean);
   const features = [clean(dna.offer), ...proofs].filter(Boolean);
+  const scenes = [...first(audience?.scenes), clean(dna.scene)].filter(Boolean);
+  const objections = [...first(audience?.objections), clean(dna.objection)].filter(Boolean);
+  const stakesPool = [...first(audience?.stakes), clean(dna.stakes)].filter(Boolean);
+  const enemy = clean(dna.enemy) || undefined;
   const kinds: NarrativeRouteKind[] = [
     "pain-to-desire",
     "desire-through-proof",
@@ -131,6 +143,9 @@ export const buildNarrativeRoute = ({
   const desire = pick(desires);
   const proof = pick(proofs);
   const feature = pick(features);
+  const scene = pick(scenes);
+  const objection = pick(objections);
+  const stakes = pick(stakesPool);
   // O vizinho fornece apenas afinidade semântica; seu rótulo e sua fala nunca
   // entram na copy do público ativo.
   const bridgeWords = neighbor ? audienceWords(neighbor) : [];
@@ -142,10 +157,11 @@ export const buildNarrativeRoute = ({
     : [];
   const vocabulary = [...new Set([
     ...tokens(tension, desire, proof, feature, dna.positioning),
+    ...tokens(scene, objection, enemy, stakes),
     ...bridgeWords.slice(0, 8),
     ...tokens(...aliviaLinks),
-  ])].slice(0, 40);
-  const signature = [kind, audience?.id ?? "brand", tension, feature, proof, desire]
+  ])].slice(0, 44);
+  const signature = [kind, audience?.id ?? "brand", tension, feature, proof, desire, scene, objection, stakes]
     .filter(Boolean)
     .join("|")
     .toLowerCase();
@@ -165,6 +181,10 @@ export const buildNarrativeRoute = ({
     feature,
     proof,
     desire,
+    scene,
+    objection,
+    enemy,
+    stakes,
     cta: clean(audience?.cta) || clean(dna.cta) || undefined,
     signature,
     vocabulary,
