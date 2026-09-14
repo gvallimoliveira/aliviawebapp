@@ -176,6 +176,8 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
         scenes: asStringArray(row.scenes),
         objections: asStringArray(row.objections),
         stakes: asStringArray(row.stakes),
+        triggers: asStringArray(row.triggers),
+
         cta: String(row.cta ?? "").trim() || undefined,
         keyword: String(row.keyword ?? "").trim() || undefined,
         hook: String(row.hook ?? "").trim() || undefined,
