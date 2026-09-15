@@ -140,7 +140,12 @@ export const directCarouselWithHook = (
      ponte única; detalhes do gancho permanecem para a legenda e o miolo. */
   const cover = carouselCoverCopy(titleSource, originalThesis || hook.sub || carousel.coverSub);
 
-  const desireCandidate = stripEnd(relation?.desire);
+  /**
+   * O campo do kit costuma vir colado ao rótulo ("Desejo: voltar a correr").
+   * `stripFieldLabels` remove o rótulo em qualquer posição — antes só o rótulo
+   * isolado era barrado e o resto virava "Quer desejo: voltar a correr?".
+   */
+  const desireCandidate = stripEnd(stripFieldLabels(stripEnd(relation?.desire)));
   const editorialLabel = /^(?:obje(?:ç|c)(?:ão|oes|ões)(?:\s+mais\s+comuns?)?|desejo|dor|medo|público(?:\s+alvo)?|perfil)\s*:?$/i;
   const desire = editorialLabel.test(desireCandidate) ? "" : desireCandidate;
   const action = stripEnd(hook.cta) || stripEnd(relation?.cta) || stripEnd(carousel.cta.sub);
