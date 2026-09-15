@@ -1063,6 +1063,10 @@ const StudioProCreate = ({
       indexes.forEach((i) => copy.delete(i));
       return copy;
     });
+    // Remonta a arte com o texto ajustado reaplicado: sem isso o React tenta
+    // reaproveitar nós de texto que a digitação já substituiu e o salvamento
+    // falha ("o objeto não pode ser encontrado aqui").
+    setResetTick((n) => n + 1);
     toast.success(
       lessons.length > 0
         ? "Arte ajustada. O motor guardou sua correção para as próximas gerações."
