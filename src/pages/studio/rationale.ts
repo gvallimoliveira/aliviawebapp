@@ -595,7 +595,7 @@ export const explainArt = (
     gaps.push(
       "o contexto da marca não está preenchido (manual da marca ou formulário nos Ajustes) — é o item inegociável da leitura",
     );
-  } else if (read && manualShared.length === 0) {
+  } else if (blind || (read && manualShared.length === 0)) {
     brandOk = false;
     brandRead = `A arte não repete nada do que o manual de ${ctx.brandName} diz sobre ${
       trim(b.niche) || "o negócio"
@@ -623,8 +623,8 @@ export const explainArt = (
   const relWords = new Set(words(relText ?? ""));
   const relShared = [...relWords].filter((w) => artWords.has(w));
   const relDeclared = Boolean(trim(relText ?? ""));
-  const relOk = !relDeclared || !read || relShared.length > 0;
-  const audienceOk = !!keyword && !!hook && (!read || audienceShared.length > 0) && relOk;
+  const relOk = !blind && (!relDeclared || !read || relShared.length > 0);
+  const audienceOk = !blind && !!keyword && !!hook && (!read || audienceShared.length > 0) && relOk;
   const audienceRead = !keyword || !hook
     ? `Este público está incompleto (${!keyword ? "sem palavra-chave" : "sem chamada direta"}), então a arte fala para o vazio: eu não sei quem deveria se reconhecer nela.`
     : !relOk
@@ -670,7 +670,7 @@ export const explainArt = (
   };
   const objective = OBJECTIVE[ctx.angle];
   const objectiveHit = copy.some((t) => objective.probe.test(t)) || (ctx.angle === "venda" && !!trim(ctaSource) && !read);
-  const objectiveOk = objectiveHit || !read;
+  const objectiveOk = !blind && (objectiveHit || !read);
   const objectiveRead = objectiveOk
     ? `O lote está no objetivo "${ctx.angle}" e esta arte serve a ele: ${sense.job}. A intenção é que quem lê ${ANGLE_EFFECT[ctx.angle]}${
         trim(ctaSource) ? `, com o convite "${trim(ctaSource)}"` : ""
