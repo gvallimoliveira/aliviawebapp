@@ -219,7 +219,13 @@ export const composeRouteCopy = (
   };
 
   const frameCount = Math.max(5, headlinePool.length, extraSubs.length + 5);
-  const offset = createRng(`storytelling:${options.seed ?? route.signature}`).int(frameCount);
+  /**
+   * EQUILÍBRIO DENTRO DO LOTE: `rotate` é a posição da arte na leva. Sem ele,
+   * duas artes com acervo parecido caíam no mesmo campo do kit; com ele cada
+   * arte começa a busca em um campo diferente (cena, gatilho, objeção...).
+   */
+  const offset =
+    (createRng(`storytelling:${options.seed ?? route.signature}`).int(frameCount) + (options.rotate ?? 0)) % frameCount;
   const frames = Array.from({ length: frameCount }, (_, index) => (index + offset) % frameCount);
   if (!options.weightOf) return buildFrame(frames[0]);
 
