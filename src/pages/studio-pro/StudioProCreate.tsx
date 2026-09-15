@@ -1010,6 +1010,9 @@ const StudioProCreate = ({
       if (snapshot) restoreArtTextEditSnapshot(node, snapshot);
     });
     setEditing(null);
+    // Remonta a arte: digitar em contentEditable troca os nós de texto e o
+    // React não pode reaproveitá-los na próxima atualização (erro ao salvar).
+    setResetTick((n) => n + 1);
   };
 
   /** Fecha a edição validando a mensagem antes de reenviar a arte para aprovação. */
@@ -1060,6 +1063,10 @@ const StudioProCreate = ({
       indexes.forEach((i) => copy.delete(i));
       return copy;
     });
+    // Remonta a arte com o texto ajustado reaplicado: sem isso o React tenta
+    // reaproveitar nós de texto que a digitação já substituiu e o salvamento
+    // falha ("o objeto não pode ser encontrado aqui").
+    setResetTick((n) => n + 1);
     toast.success(
       lessons.length > 0
         ? "Arte ajustada. O motor guardou sua correção para as próximas gerações."

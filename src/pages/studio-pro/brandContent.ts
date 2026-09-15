@@ -1276,9 +1276,19 @@ const applyAudience = (
           kicker: `${KEY} · SINAIS`,
           title: `3 sinais de que ${lower1(key)} precisa de atenção`,
           coverSub: "Se você reconhecer dois, vale conversar.",
+          /**
+           * Cada sinal fecha com uma leitura PRÓPRIA. Antes todos os slides
+           * terminavam com a mesma frase ("E isso costuma piorar quando fica
+           * sem resposta"), o que soava repetido e frequentemente fora do
+           * assunto do sinal.
+           */
           slides: painNoms.slice(0, 3).map((p, i) => ({
             heading: `Sinal ${i + 1}`,
-            body: `${sentence(p)} E isso costuma piorar quando fica sem resposta.`,
+            body: [
+              `${sentence(p)} Isso não é frescura: é um sinal de que algo precisa ser avaliado.`,
+              `${sentence(p)} Quando isso se repete na semana, deixou de ser um episódio isolado.`,
+              `${sentence(p)} Aqui o ponto não é aguentar mais: é entender o que está por trás.`,
+            ][i] ?? sentence(p),
             topic: topicAt(i),
           })),
           cta: { title: "Reconheceu algum?", sub: cta },

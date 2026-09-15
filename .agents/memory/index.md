@@ -48,6 +48,7 @@ Studio: manual da marca em PDF e questionário valem IGUAL — marca com só o m
 - [Studio Terminology Rules](mem://features/studio-terminology-rules) — "AutoAvaliação" para paciente da marca Aliv.iA e proibição de afirmar "protocolo" (usar método estruturado/direcionamento/raciocínio clínico).
 - [Studio Authorial Mode](mem://features/studio-authorial-mode) — Marcas autorais: Studio só diagrama textos do autor, regras de coerência e fragmentação.
 - [Studio Gallery Edit](mem://features/studio-gallery-edit) — Edição de arte salva usa instantâneo (snapshot) da arte pronta; nunca reconstruir pela receita.
+- [Studio Art Edit Save Safety](mem://features/studio-art-edit-save-safety) — Remontar arte após editar texto (evita erro ao salvar), faixa de tamanho 0,3–4 e carrossel sem frase repetida.
 - [Studio Proofreading](mem://features/studio-proofreading) — Revisor de concordância global e escolha do texto digitado na barra de busca.
 - [Studio Grammar Guard](mem://features/studio-grammar-guard) — Nominalização, portão readsWell, léxico proibido e fim dos tapa-buracos visuais.
 - [AI Credits Period Timezone](mem://business/ai-credits-period-timezone) — Mês de créditos = fuso Brasília via `credit_period_start()`; escudos anti-falha no widget.
