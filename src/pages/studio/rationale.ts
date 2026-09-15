@@ -560,6 +560,14 @@ export const explainArt = (
   const lead = support[0] ?? "";
   const tail = support.length > 1 ? support[support.length - 1] : "";
   const read = copy.length > 0;
+  /**
+   * ARTE SEM TEXTO PREVISTO É DEFEITO, NÃO ISENÇÃO. Quando quem chama declara a
+   * cópia (o diretor sempre declara) e ela vem vazia, as checagens de público,
+   * objetivo e marca precisam REPROVAR — antes elas passavam por omissão e a
+   * arte muda ia ao ar aprovada.
+   */
+  const blind = Array.isArray(detail?.copy) && !read;
+  if (blind) gaps.push("a arte não tem texto previsto: o kit não sustenta nenhuma frase para este formato");
 
   const words = (t: string) =>
     t
