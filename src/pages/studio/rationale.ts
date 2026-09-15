@@ -765,9 +765,11 @@ const FALLBACKS: BlockKind[] = ["typo", "hero", "billboard", "mono", "closing"];
  * FILTRO APLICADO À VERSÃO INTEIRA.
  *
  * Troca cada arte que não passa pelo raciocínio por um formato equivalente que
- * passa, preservando a ordem e a sequência dos carrosséis (slide de carrossel
- * nunca é trocado isoladamente — a sequência é indivisível; se o kit não tem
- * roteiro, o carrossel inteiro já não é composto).
+ * passa, preservando a ordem. O carrossel é indivisível: um slide isolado nunca
+ * é trocado. Mas a sequência TAMBÉM é julgada — quando a capa não fecha, ou
+ * quando dois slides ou mais falham, o carrossel inteiro é desfeito em artes
+ * avulsas que se explicam sozinhas. Antes qualquer slide era devolvido intacto,
+ * então o formato de maior risco era o único sem filtro.
  */
 export const enforceRationale = (
   blocks: ComposedBlock[],
@@ -783,18 +785,38 @@ export const enforceRationale = (
   let fixed = 0;
   const detailFor = (index: number): ArtDetail | undefined => {
     const copy = copyOf?.(index);
-    return copy && copy.length > 0 ? { index, total: blocks.length, copy } : { index, total: blocks.length };
+    return copy ? { index, total: blocks.length, copy } : { index, total: blocks.length };
   };
+
+  /** Sequências de carrossel: início → fim, na ordem em que aparecem. */
+  const runs: number[][] = [];
+  blocks.forEach((block, index) => {
+    if (!block.slide) return;
+    const last = runs[runs.length - 1];
+    if (last && last[last.length - 1] === index - 1 && blocks[index - 1].slide) last.push(index);
+    else runs.push([index]);
+  });
+  /** Índices de carrossel cuja sequência não se sustenta. */
+  const dissolve = new Set<number>();
+  runs.forEach((run) => {
+    const failures = run.filter((index) => !explainArt(blocks[index], ctx, detailFor(index)).ok);
+    const coverFails = failures.some((index) => blocks[index].slide?.index === 0);
+    if (!failures.length || (!coverFails && failures.length < 2)) return;
+    failures.forEach((index) => explainArt(blocks[index], ctx, detailFor(index)).gaps.forEach((g) => gapSet.add(g)));
+    run.forEach((index) => dissolve.add(index));
+  });
 
   const out = blocks.map((block, index) => {
     const detail = detailFor(index);
-    const first = explainArt(block, ctx, detail);
-    if (first.ok || block.slide) return block;
+    const target = dissolve.has(index) ? { ...block, slide: undefined } : block;
+    const first = explainArt(target, ctx, detail);
+    if (first.ok) return target;
+    if (target.slide) return target;
     first.gaps.forEach((g) => gapSet.add(g));
 
-    const replacement = FALLBACKS.map((kind) => ({ ...block, kind, motion: block.motion }))
+    const replacement = FALLBACKS.map((kind) => ({ ...target, kind, motion: target.motion }))
       .find((candidate) => explainArt(candidate, ctx, detail).ok);
-    if (!replacement) return block;
+    if (!replacement) return target;
     fixed += 1;
     return replacement;
   });
