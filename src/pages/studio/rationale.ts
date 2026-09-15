@@ -625,7 +625,9 @@ export const explainArt = (
   const relDeclared = Boolean(trim(relText ?? ""));
   const relOk = !blind && (!relDeclared || !read || relShared.length > 0);
   const audienceOk = !blind && !!keyword && !!hook && (!read || audienceShared.length > 0) && relOk;
-  const audienceRead = !keyword || !hook
+  const audienceRead = blind
+    ? `Esta arte iria ao ar sem texto: nenhuma frase do kit sustenta este formato, então não há como ${audience} se reconhecer nela.`
+    : !keyword || !hook
     ? `Este público está incompleto (${!keyword ? "sem palavra-chave" : "sem chamada direta"}), então a arte fala para o vazio: eu não sei quem deveria se reconhecer nela.`
     : !relOk
       ? `Diz "${keyword}" no rótulo, mas não toca no que move ${audience} agora (${trim(relText ?? "")}). O público lê o nome dele e não encontra o próprio problema no texto.`
