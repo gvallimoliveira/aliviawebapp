@@ -15,6 +15,7 @@ import { phraseSignature } from "@/pages/studio/picker";
 import { carouselCoverCopy, CAROUSEL_SUPPORT_MAX, CAROUSEL_TITLE_MAX } from "@/pages/studio/typographyGuards";
 import { buildBrandDna } from "@/pages/studio-pro/brandDnaKit";
 import { pickRelation } from "@/pages/studio-pro/relational";
+import { enforceRationale, type RationaleContext } from "@/pages/studio/rationale";
 
 const plan = (seed: string, count = 8) =>
   planBatch({ content: WORLDS.pro, count, seed, relation: { pain: "dor que trava", axis: "pain" } });
@@ -163,6 +164,39 @@ describe("Diretor criativo", () => {
       expect(direction.copyOf(index).length).toBeGreaterThan(0);
       expect(direction.shotFor(index)?.headlines).toHaveLength(0);
     });
+  });
+
+  it("redireciona individualmente os slides quando o filtro desfaz um carrossel", () => {
+    const blocks = composePage(createRng("carrossel-reprovado"), undefined, undefined, WORLDS.pro.carousels, 0, ["carousel"]);
+    const draft = planBatch({ content: WORLDS.pro, count: blocks.length, blocks, seed: "carrossel-reprovado" });
+    const ctx: RationaleContext = {
+      content: WORLDS.pro,
+      audienceLabel: "Profissional",
+      keyword: "fisioterapia",
+      hook: "Profissional que quer organizar a decisão clínica",
+      cta: "Conheça o Aliv.iA",
+      angle: "informar",
+      photoCount: 0,
+      brandName: "Aliv.iA",
+      // Força a reprovação da sequência para reproduzir a conversão vista no vídeo.
+      brand: {},
+    };
+    const audit = enforceRationale(blocks, ctx, (index) => draft.copyOf(index));
+    expect(audit.fixed).toBeGreaterThan(0);
+    expect(audit.blocks.every((block) => block.slide === undefined)).toBe(true);
+
+    const redirected = planBatch({
+      content: WORLDS.pro,
+      count: audit.blocks.length,
+      blocks: audit.blocks,
+      seed: "carrossel-reprovado:after-rationale",
+    });
+    const visibleHeadlines = redirected.shots
+      .map((shot) => shot.headlines[0])
+      .filter(Boolean)
+      .map((headline) => `${headline.strong} ${headline.rest}`);
+    expect(visibleHeadlines.length).toBeGreaterThan(1);
+    expect(new Set(visibleHeadlines).size).toBe(visibleHeadlines.length);
   });
 
   it("deixa um roteiro já usado perder prioridade no próximo lote", () => {
