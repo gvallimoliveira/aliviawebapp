@@ -799,10 +799,24 @@ export const enforceRationale = (
   /** Índices de carrossel cuja sequência não se sustenta. */
   const dissolve = new Set<number>();
   runs.forEach((run) => {
-    const failures = run.filter((index) => !explainArt(blocks[index], ctx, detailFor(index)).ok);
-    const coverFails = failures.some((index) => blocks[index].slide?.index === 0);
-    if (!failures.length || (!coverFails && failures.length < 2)) return;
-    failures.forEach((index) => explainArt(blocks[index], ctx, detailFor(index)).gaps.forEach((g) => gapSet.add(g)));
+    /**
+     * Um carrossel é uma peça editorial única. Julgar cada slide contra todas as
+     * exigências da marca fazia o filtro reprovar miolos legítimos (um slide
+     * pode trazer a dor, outro o método e o último a ação) e dissolver a
+     * sequência em várias artes avulsas com a mesma direção. O veredito agora
+     * lê capa + miolo + fecho juntos; ainda reprova sequência vazia ou cuja
+     * leitura total não fecha.
+     */
+    const combinedCopy = run.flatMap((index) => copyOf?.(index) ?? []);
+    const sequence = explainArt(blocks[run[0]], ctx, {
+      index: run[0],
+      total: blocks.length,
+      copy: combinedCopy,
+    });
+    const hasEmptySlide = run.some((index) => (copyOf?.(index) ?? []).every((line) => !trim(line)));
+    if (sequence.ok && !hasEmptySlide) return;
+    sequence.gaps.forEach((g) => gapSet.add(g));
+    if (hasEmptySlide) gapSet.add("o carrossel contém slide sem mensagem");
     run.forEach((index) => dissolve.add(index));
   });
 

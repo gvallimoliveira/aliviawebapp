@@ -670,21 +670,27 @@ const StudioProCreate = ({
    * nenhuma arte da mesma leva repete a frase de outra, e frase muito rodada na
    * marca entra com peso menor também entre lotes.
    */
-  const director = useMemo(
+  const directorRelation = useMemo(
+    () =>
+      relationForSegment({
+        kit: contentKit,
+        audiences,
+        segment: activeSegment,
+        angle,
+        positioning: brand.positioning,
+        variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+      }),
+    [contentKit, audiences, activeSegment, angle, brand.positioning, brand.id, seed],
+  );
+
+  const draftDirector = useMemo(
     () =>
       planBatch({
         content,
         count: composedBlocks.length,
         blocks: composedBlocks,
         seed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
-        relation: relationForSegment({
-          kit: contentKit,
-          audiences,
-          segment: activeSegment,
-          angle,
-          positioning: brand.positioning,
-          variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
-        }),
+        relation: directorRelation,
         dna,
         brief: brief ?? undefined,
         weightOf,
@@ -695,7 +701,7 @@ const StudioProCreate = ({
          */
         learnedVoice: [...learning.voice, ...formatInsightWords(readFormatInsights(brand.format_insights))],
       }),
-    [content, composedBlocks.length, brand.id, brand.positioning, brand.format_insights, seed, activeSegment, angle, contentKit, audiences, dna, brief, weightOf, learning.voice],
+    [content, composedBlocks, brand.id, brand.format_insights, seed, activeSegment, angle, directorRelation, dna, brief, weightOf, learning.voice],
 
   );
 
@@ -781,10 +787,34 @@ const StudioProCreate = ({
 
 
   const audit = useMemo(
-    () => enforceRationale(composedBlocks, rationaleCtx, (index) => director.copyOf(index)),
-    [composedBlocks, rationaleCtx, director],
+    () => enforceRationale(composedBlocks, rationaleCtx, (index) => draftDirector.copyOf(index)),
+    [composedBlocks, rationaleCtx, draftDirector],
   );
   const blocks = audit.blocks;
+
+  /**
+   * Se o filtro desfizer um carrossel, cada slide passa a ser uma arte avulsa.
+   * Essas novas artes precisam de direção própria: reutilizar a direção antiga
+   * fazia todos os slides convertidos herdarem o mesmo título, exatamente como
+   * no vídeo em que “Fisioterapia em domicílio...” apareceu várias vezes.
+   */
+  const director = useMemo(
+    () =>
+      audit.fixed === 0
+        ? draftDirector
+        : planBatch({
+            content,
+            count: blocks.length,
+            blocks,
+            seed: `${brand.id}:${seed}:${activeSegment}:${angle}:after-rationale`,
+            relation: directorRelation,
+            dna,
+            brief: brief ?? undefined,
+            weightOf,
+            learnedVoice: [...learning.voice, ...formatInsightWords(readFormatInsights(brand.format_insights))],
+          }),
+    [audit.fixed, draftDirector, content, blocks, brand.id, brand.format_insights, seed, activeSegment, angle, directorRelation, dna, brief, weightOf, learning.voice],
+  );
 
   /**
    * MEMÓRIA ENTRE LOTES: o que o diretor reservou é o que vai ao ar, então é
