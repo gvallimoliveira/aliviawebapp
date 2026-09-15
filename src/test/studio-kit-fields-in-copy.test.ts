@@ -61,7 +61,7 @@ describe("campos do kit chegam ao texto da arte", () => {
 
   it("rótulo colado ao valor não vaza para o texto", () => {
     const dna = buildBrandDna({
-      name: "Marca Teste",
+      positioning: "reabilitação de corredores",
       niche: "fisioterapia esportiva",
       briefAnswers: { desejo: "Desejo: voltar a correr sem dor;" },
     });
