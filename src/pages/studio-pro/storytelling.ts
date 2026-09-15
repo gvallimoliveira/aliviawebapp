@@ -170,9 +170,26 @@ export const composeRouteCopy = (
         `Uma jornada coerente liga ${low(lead)} a ${low(gain)}.`,
       ],
     };
-    const subPool = [...extraSubs, ...subsByKind[route.kind]];
-    const sub = subPool[frame % subPool.length];
+    /**
+     * PAR OBRIGATÓRIO: o apoio nunca repete o campo que já está no destaque.
+     * Se o destaque abriu com a cena, o apoio entra com objeção, consequência
+     * ou método — e vice-versa. Só quando nenhum campo do kit sobra é que o
+     * apoio cai no acervo de fio narrativo.
+     */
+    const otherFields = extraSubs.filter((item) => item.field !== headline.field);
+    const subPool = [
+      ...otherFields.map((item) => item.text),
+      ...(otherFields.length ? [] : extraSubs.map((item) => item.text)),
+      ...subsByKind[route.kind],
+    ];
+    const sub = otherFields.length
+      ? otherFields[frame % otherFields.length].text
+      : subPool[frame % subPool.length];
     if (usable(sub) && sub.length <= 190) out.subs = [terms(fit(sub, 188))];
+    else {
+      const fallback = subsByKind[route.kind][frame % subsByKind[route.kind].length];
+      if (usable(fallback) && fallback.length <= 190) out.subs = [terms(fit(fallback, 188))];
+    }
 
     if (who) {
       const kickerFrames = [who, `Para ${low(who)}`, `No dia a dia de ${low(who)}`];
