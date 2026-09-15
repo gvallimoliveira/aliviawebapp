@@ -98,30 +98,37 @@ export const composeRouteCopy = (
   if (!lead || !turn) return {};
 
   /**
-   * Molduras de destaque. As quatro primeiras vêm dos campos novos do kit
-   * (cena, inimigo, consequência) — só existem quando o campo foi preenchido,
-   * e é isso que faz a capa abrir com vida em vez de frase de catálogo.
+   * Molduras de destaque, cada uma marcada com o CAMPO do kit que ela leva ao
+   * ar. As primeiras vêm dos campos novos (cena, gatilho, objeção, inimigo,
+   * consequência): é o que faz a capa abrir com vida em vez de frase de
+   * catálogo. A marcação existe para o apoio nunca repetir o mesmo campo do
+   * destaque — assim uma arte carrega dois eixos do kit, não um.
    */
-  const headlinePool = [
-    ...(scene ? [{ strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
-    ...(trigger ? [{ strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }] : []),
-    ...(enemy ? [{ strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }] : []),
-    ...(stakes ? [{ strong: fit("Enquanto nada muda", 28), rest: fit(low(stakes), 44) }] : []),
-    { strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
-    { strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
-    { strong: fit(`De ${low(lead)}`, 30), rest: fit(`a ${low(gain)}`, 42) },
-    { strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
-    { strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
+  type Frame = { field: string; strong: string; rest: string };
+  const headlinePool: Frame[] = [
+    ...(scene ? [{ field: "scene", strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
+    ...(trigger ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }] : []),
+    // A objeção é o ativo mais persuasivo do kit: passa a poder ser TÍTULO,
+    // não só apoio. A resposta vem no complemento, nunca uma promessa nova.
+    ...(objection ? [{ field: "objection", strong: fit(cap(objection), 32), rest: fit(cap(turn), 44) }] : []),
+    ...(objection ? [{ field: "objection", strong: fit(`"${cap(objection)}"`, 34), rest: fit(`E aí entra ${low(turn)}`, 42) }] : []),
+    ...(enemy ? [{ field: "enemy", strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }] : []),
+    ...(stakes ? [{ field: "stakes", strong: fit("Enquanto nada muda", 28), rest: fit(low(stakes), 44) }] : []),
+    { field: "core", strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
+    { field: "core", strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
+    { field: "core", strong: fit(`De ${low(lead)}`, 30), rest: fit(`a ${low(gain)}`, 42) },
+    { field: "core", strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
+    { field: "core", strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
   ];
 
   /** Apoios que respondem à objeção, situam a cena e nomeiam o preço da inércia. */
-  const extraSubs = [
-    ...(scene ? [`${cap(scene)}. É aí que entra ${low(turn)}.`] : []),
-    ...(objection ? [`Você pensa: ${low(objection)}. ${cap(turn)} responde a isso.`] : []),
-    ...(trigger ? [`${cap(trigger)}. Esse é o momento de ${low(turn)}.`] : []),
-    ...(methodPlain ? [`${cap(methodPlain)}. É assim que ${low(turn)} funciona na prática.`] : []),
-    ...(stakes ? [`Deixar como está tem preço: ${low(stakes)}.`] : []),
-    ...(enemy ? [`Aqui não tem ${low(enemy)}. Tem ${low(turn)}.`] : []),
+  const extraSubs: Array<{ field: string; text: string }> = [
+    ...(objection ? [{ field: "objection", text: `Você pensa: ${low(objection)}. ${cap(turn)} responde a isso.` }] : []),
+    ...(stakes ? [{ field: "stakes", text: `Deixar como está tem preço: ${low(stakes)}.` }] : []),
+    ...(scene ? [{ field: "scene", text: `${cap(scene)}. É aí que entra ${low(turn)}.` }] : []),
+    ...(trigger ? [{ field: "trigger", text: `${cap(trigger)}. Esse é o momento de ${low(turn)}.` }] : []),
+    ...(methodPlain ? [{ field: "method", text: `${cap(methodPlain)}. É assim que ${low(turn)} funciona na prática.` }] : []),
+    ...(enemy ? [{ field: "enemy", text: `Aqui não tem ${low(enemy)}. Tem ${low(turn)}.` }] : []),
   ];
 
 
