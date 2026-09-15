@@ -68,6 +68,8 @@ export const composeRouteCopy = (
     patientVoice?: boolean;
     /** Faz a mesma conexão ganhar outro ritmo em cada arte/lote. */
     seed?: string;
+    /** Posição da arte na leva: distribui os campos do kit entre as artes. */
+    rotate?: number;
     /** Memória da marca: permite trocar o molde antes de abandonar a rota. */
     weightOf?: (signature: string) => number;
   } = {},
