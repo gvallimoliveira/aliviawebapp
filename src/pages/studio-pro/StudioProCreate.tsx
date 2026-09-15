@@ -1579,8 +1579,11 @@ const StudioProCreate = ({
         {groups.map((group) => {
           const first = group.items[0];
           const indexes = group.items.map((item) => item.index);
+          {/* A legenda nasce do MESMO texto que o diretor escreveu para a arte.
+              Antes ela sorteava do acervo inteiro e podia falar de outro
+              público, outra dor e outra oferta do que está escrito na imagem. */}
           const caption = buildCaption(
-            content,
+            director.contentFor(first.index),
             first.block.kind,
             createRng(`${brand.id}:${seed}:caption:${first.block.kind}:${first.index}`),
           );
