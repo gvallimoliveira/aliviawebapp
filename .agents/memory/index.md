@@ -158,6 +158,7 @@ Studio: manual da marca em PDF e questionário valem IGUAL — marca com só o m
 - [Studio Matrix Audiences](mem://features/studio-matrix-audiences) — Públicos matriz contam na métrica oficial das artes; sub-nichos (parentId) nunca contam.
 - [Studio Persuasion Layer](mem://features/studio-persuasion-layer) — Diretrizes ago/2026: ponto zero de impacto, jargão proibido, postura padrão, léxico exclusivo do Studio; regras rejeitadas (limite de palavras, mix 4/2/2/2, séries).
 - [Studio Relational Copy](mem://features/studio-relational-copy) — Hierarquia DNA-first (manual/briefing), par relacional obrigatório por arte e vícios de linguagem banidos.
+- [Studio Kit Fields, Caption & Carousel Filter](mem://features/studio-kit-fields-and-caption) — Legenda pelo diretor, filtro de nexo no carrossel, par obrigatório de campos do kit e objeção como título.
 - [Studio Self Charm Copy](mem://features/studio-self-charm-copy) — Copy charmosa exclusiva da marca Aliv.iA Studio (10 públicos do manual v1.0), nunca aplicada a marca de cliente.
 - [Aliv.iA Core Charm Copy](mem://features/alivia-core-charm-copy) — Copy charmosa exclusiva do Aliv.iA app clínico (6 públicos: paciente, autônomo, clínica, estudante, recém-formado, institucional).
 - [Studio Neutral Operation](mem://features/studio-neutral-operation) — Acervo neutro escreve com o vocabulário da operação real da marca (operationWords), sem temática de consultório.
