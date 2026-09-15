@@ -1010,6 +1010,9 @@ const StudioProCreate = ({
       if (snapshot) restoreArtTextEditSnapshot(node, snapshot);
     });
     setEditing(null);
+    // Remonta a arte: digitar em contentEditable troca os nós de texto e o
+    // React não pode reaproveitá-los na próxima atualização (erro ao salvar).
+    setResetTick((n) => n + 1);
   };
 
   /** Fecha a edição validando a mensagem antes de reenviar a arte para aprovação. */
