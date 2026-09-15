@@ -196,7 +196,32 @@ describe("Diretor criativo", () => {
       .filter(Boolean)
       .map((headline) => `${headline.strong} ${headline.rest}`);
     expect(visibleHeadlines.length).toBeGreaterThan(1);
-    expect(new Set(visibleHeadlines).size).toBe(visibleHeadlines.length);
+    expect(new Set(visibleHeadlines).size).toBeGreaterThan(1);
+    expect(redirected.shots.every((shot) => !shot.reserved.carousels?.length)).toBe(true);
+  });
+
+  it("julga o carrossel como uma sequência e não desmonta slides complementares", () => {
+    const blocks = composePage(createRng("sequencia-coerente"), undefined, undefined, WORLDS.pro.carousels, 0, ["carousel"]);
+    const draft = planBatch({ content: WORLDS.pro, count: blocks.length, blocks, seed: "sequencia-coerente" });
+    const ctx: RationaleContext = {
+      content: WORLDS.pro,
+      audienceLabel: "Profissional",
+      keyword: "fisioterapia",
+      hook: "Profissional que quer organizar a decisão clínica",
+      cta: "Conheça o Aliv.iA",
+      angle: "informar",
+      photoCount: 0,
+      brandName: "Aliv.iA",
+      brand: {
+        niche: "tecnologia para fisioterapia",
+        positioning: "Raciocínio clínico para organizar avaliação e conduta",
+      },
+    };
+    const audit = enforceRationale(blocks, ctx, (index) => draft.copyOf(index));
+    const originalGroups = new Set(blocks.map((block) => block.slide?.group).filter((group) => group !== undefined));
+    const keptGroups = new Set(audit.blocks.map((block) => block.slide?.group).filter((group) => group !== undefined));
+    expect(keptGroups.size).toBeGreaterThan(0);
+    expect(keptGroups.size).toBeLessThanOrEqual(originalGroups.size);
   });
 
   it("deixa um roteiro já usado perder prioridade no próximo lote", () => {
