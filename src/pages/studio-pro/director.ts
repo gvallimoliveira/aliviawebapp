@@ -111,11 +111,48 @@ const upperFirst = (text: string) => (text ? text.charAt(0).toUpperCase() + text
  * A quantidade de slides não muda, portanto a contagem exibida e o download
  * continuam correspondendo exatamente ao scroll lateral.
  */
+/**
+ * NENHUMA FRASE REPETIDA DENTRO DO MESMO CARROSSEL.
+ *
+ * Alguns roteiros fechavam todos os slides com a mesma frase de arremate. Lido
+ * em sequência, o carrossel parecia travado e o arremate raramente combinava
+ * com o slide. Aqui cada frase só pode aparecer UMA vez na sequência; se um
+ * slide ficar sem nada, mantém a própria frase de abertura.
+ */
+export const dedupeCarouselSlides = (carousel: StudioCarousel): StudioCarousel => {
+  const seen = new Set<string>();
+  const slides = (carousel.slides ?? []).map((slide) => {
+    const parts = cleanLine(slide.body)
+      .split(/(?<=[.!?…])\s+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const kept = parts.filter((part) => {
+      const key = normalize(part);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    const body = (kept.length ? kept : parts.slice(0, 1)).join(" ");
+    return { ...slide, body };
+  });
+  return { ...carousel, slides };
+};
+
+/**
+ * Potencializa um roteiro existente sem desmontar o raciocínio dos slides:
+ * - o gancho ATIVO da biblioteca assume a capa;
+ * - a tese original vira a ponte explícita para o desenvolvimento;
+ * - o último slide nomeia o desejo e pede a ação configurada na marca.
+ *
+ * A quantidade de slides não muda, portanto a contagem exibida e o download
+ * continuam correspondendo exatamente ao scroll lateral.
+ */
 export const directCarouselWithHook = (
-  carousel: StudioCarousel,
+  input: StudioCarousel,
   hook?: StudioHook,
   relation?: { desire?: string; cta?: string },
 ): StudioCarousel => {
+  const carousel = dedupeCarouselSlides(input);
   if (!hook) {
     const cover = carouselCoverCopy(carousel.title, carousel.coverSub);
     const closing = carouselClosingCopy(carousel.cta.title, carousel.cta.sub);
