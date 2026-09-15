@@ -103,15 +103,6 @@ const lowerFirst = (text: string) => (text ? text.charAt(0).toLowerCase() + text
 const upperFirst = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 
 /**
- * Potencializa um roteiro existente sem desmontar o raciocínio dos slides:
- * - o gancho ATIVO da biblioteca assume a capa;
- * - a tese original vira a ponte explícita para o desenvolvimento;
- * - o último slide nomeia o desejo e pede a ação configurada na marca.
- *
- * A quantidade de slides não muda, portanto a contagem exibida e o download
- * continuam correspondendo exatamente ao scroll lateral.
- */
-/**
  * NENHUMA FRASE REPETIDA DENTRO DO MESMO CARROSSEL.
  *
  * Alguns roteiros fechavam todos os slides com a mesma frase de arremate. Lido
