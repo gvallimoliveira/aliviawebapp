@@ -68,6 +68,8 @@ export const composeRouteCopy = (
     patientVoice?: boolean;
     /** Faz a mesma conexão ganhar outro ritmo em cada arte/lote. */
     seed?: string;
+    /** Posição da arte na leva: distribui os campos do kit entre as artes. */
+    rotate?: number;
     /** Memória da marca: permite trocar o molde antes de abandonar a rota. */
     weightOf?: (signature: string) => number;
   } = {},
@@ -98,30 +100,37 @@ export const composeRouteCopy = (
   if (!lead || !turn) return {};
 
   /**
-   * Molduras de destaque. As quatro primeiras vêm dos campos novos do kit
-   * (cena, inimigo, consequência) — só existem quando o campo foi preenchido,
-   * e é isso que faz a capa abrir com vida em vez de frase de catálogo.
+   * Molduras de destaque, cada uma marcada com o CAMPO do kit que ela leva ao
+   * ar. As primeiras vêm dos campos novos (cena, gatilho, objeção, inimigo,
+   * consequência): é o que faz a capa abrir com vida em vez de frase de
+   * catálogo. A marcação existe para o apoio nunca repetir o mesmo campo do
+   * destaque — assim uma arte carrega dois eixos do kit, não um.
    */
-  const headlinePool = [
-    ...(scene ? [{ strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
-    ...(trigger ? [{ strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }] : []),
-    ...(enemy ? [{ strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }] : []),
-    ...(stakes ? [{ strong: fit("Enquanto nada muda", 28), rest: fit(low(stakes), 44) }] : []),
-    { strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
-    { strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
-    { strong: fit(`De ${low(lead)}`, 30), rest: fit(`a ${low(gain)}`, 42) },
-    { strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
-    { strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
+  type Frame = { field: string; strong: string; rest: string };
+  const headlinePool: Frame[] = [
+    ...(scene ? [{ field: "scene", strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
+    ...(trigger ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }] : []),
+    // A objeção é o ativo mais persuasivo do kit: passa a poder ser TÍTULO,
+    // não só apoio. A resposta vem no complemento, nunca uma promessa nova.
+    ...(objection ? [{ field: "objection", strong: fit(cap(objection), 32), rest: fit(cap(turn), 44) }] : []),
+    ...(objection ? [{ field: "objection", strong: fit(`"${cap(objection)}"`, 34), rest: fit(`E aí entra ${low(turn)}`, 42) }] : []),
+    ...(enemy ? [{ field: "enemy", strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }] : []),
+    ...(stakes ? [{ field: "stakes", strong: fit("Enquanto nada muda", 28), rest: fit(low(stakes), 44) }] : []),
+    { field: "core", strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
+    { field: "core", strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
+    { field: "core", strong: fit(`De ${low(lead)}`, 30), rest: fit(`a ${low(gain)}`, 42) },
+    { field: "core", strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
+    { field: "core", strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
   ];
 
   /** Apoios que respondem à objeção, situam a cena e nomeiam o preço da inércia. */
-  const extraSubs = [
-    ...(scene ? [`${cap(scene)}. É aí que entra ${low(turn)}.`] : []),
-    ...(objection ? [`Você pensa: ${low(objection)}. ${cap(turn)} responde a isso.`] : []),
-    ...(trigger ? [`${cap(trigger)}. Esse é o momento de ${low(turn)}.`] : []),
-    ...(methodPlain ? [`${cap(methodPlain)}. É assim que ${low(turn)} funciona na prática.`] : []),
-    ...(stakes ? [`Deixar como está tem preço: ${low(stakes)}.`] : []),
-    ...(enemy ? [`Aqui não tem ${low(enemy)}. Tem ${low(turn)}.`] : []),
+  const extraSubs: Array<{ field: string; text: string }> = [
+    ...(objection ? [{ field: "objection", text: `Você pensa: ${low(objection)}. ${cap(turn)} responde a isso.` }] : []),
+    ...(stakes ? [{ field: "stakes", text: `Deixar como está tem preço: ${low(stakes)}.` }] : []),
+    ...(scene ? [{ field: "scene", text: `${cap(scene)}. É aí que entra ${low(turn)}.` }] : []),
+    ...(trigger ? [{ field: "trigger", text: `${cap(trigger)}. Esse é o momento de ${low(turn)}.` }] : []),
+    ...(methodPlain ? [{ field: "method", text: `${cap(methodPlain)}. É assim que ${low(turn)} funciona na prática.` }] : []),
+    ...(enemy ? [{ field: "enemy", text: `Aqui não tem ${low(enemy)}. Tem ${low(turn)}.` }] : []),
   ];
 
 
@@ -163,9 +172,26 @@ export const composeRouteCopy = (
         `Uma jornada coerente liga ${low(lead)} a ${low(gain)}.`,
       ],
     };
-    const subPool = [...extraSubs, ...subsByKind[route.kind]];
-    const sub = subPool[frame % subPool.length];
+    /**
+     * PAR OBRIGATÓRIO: o apoio nunca repete o campo que já está no destaque.
+     * Se o destaque abriu com a cena, o apoio entra com objeção, consequência
+     * ou método — e vice-versa. Só quando nenhum campo do kit sobra é que o
+     * apoio cai no acervo de fio narrativo.
+     */
+    const otherFields = extraSubs.filter((item) => item.field !== headline.field);
+    const subPool = [
+      ...otherFields.map((item) => item.text),
+      ...(otherFields.length ? [] : extraSubs.map((item) => item.text)),
+      ...subsByKind[route.kind],
+    ];
+    const sub = otherFields.length
+      ? otherFields[frame % otherFields.length].text
+      : subPool[frame % subPool.length];
     if (usable(sub) && sub.length <= 190) out.subs = [terms(fit(sub, 188))];
+    else {
+      const fallback = subsByKind[route.kind][frame % subsByKind[route.kind].length];
+      if (usable(fallback) && fallback.length <= 190) out.subs = [terms(fit(fallback, 188))];
+    }
 
     if (who) {
       const kickerFrames = [who, `Para ${low(who)}`, `No dia a dia de ${low(who)}`];
@@ -195,7 +221,13 @@ export const composeRouteCopy = (
   };
 
   const frameCount = Math.max(5, headlinePool.length, extraSubs.length + 5);
-  const offset = createRng(`storytelling:${options.seed ?? route.signature}`).int(frameCount);
+  /**
+   * EQUILÍBRIO DENTRO DO LOTE: `rotate` é a posição da arte na leva. Sem ele,
+   * duas artes com acervo parecido caíam no mesmo campo do kit; com ele cada
+   * arte começa a busca em um campo diferente (cena, gatilho, objeção...).
+   */
+  const offset =
+    (createRng(`storytelling:${options.seed ?? route.signature}`).int(frameCount) + (options.rotate ?? 0)) % frameCount;
   const frames = Array.from({ length: frameCount }, (_, index) => (index + offset) % frameCount);
   if (!options.weightOf) return buildFrame(frames[0]);
 

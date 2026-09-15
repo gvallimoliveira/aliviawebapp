@@ -67,9 +67,18 @@ const LABEL_WORDS =
   "(?:maior\\s+)?(?:desejos?|obje(?:ç|c)(?:ão|ões|oes)(?:\\s+mais\\s+comuns?)?|dores?|cenas?|consequ(?:ê|e)ncias?|inimigos?|ofertas?|diferenciais?|diferencial|apresenta(?:ç|c)ão|p(?:ú|u)blico(?:\\s+prim(?:á|a)rio)?|perfil|cta|chamada)";
 const LABEL_ANYWHERE = new RegExp(`(?:^|(?<=[.!?;|•·—-]))\\s*${LABEL_WORDS}\\s*:\\s*`, "gi");
 
-/** Remove rótulos herdados do formulário sem alterar o conteúdo da resposta. */
+/**
+ * Remove rótulos herdados do formulário sem alterar o conteúdo da resposta.
+ * O separador que sobra nas pontas (";", "|", "•", "-") também sai: ele era
+ * herança da colagem, não pontuação da frase, e aparecia na arte.
+ */
 export const stripFieldLabels = (value?: string | null): string =>
-  clean(value).replace(LABEL_ANYWHERE, " ").replace(/\s+/g, " ").replace(/^[-–—•·|;,.\s]+/, "").trim();
+  clean(value)
+    .replace(LABEL_ANYWHERE, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[-–—•·|;,.\s]+/, "")
+    .replace(/[-–—•·|;,\s]+$/, "")
+    .trim();
 
 const OBJECTION_LABEL = new RegExp(
   `(?:^|(?<=[.!?;|•·]))\\s*obje(?:ç|c)(?:ão|oes|ões)(?:\\s+mais\\s+comuns?)?\\s*:\\s*`,

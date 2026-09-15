@@ -37,7 +37,7 @@ import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typographyGuards";
-import type { BrandDna } from "./brandDnaKit";
+import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
@@ -140,7 +140,12 @@ export const directCarouselWithHook = (
      ponte única; detalhes do gancho permanecem para a legenda e o miolo. */
   const cover = carouselCoverCopy(titleSource, originalThesis || hook.sub || carousel.coverSub);
 
-  const desireCandidate = stripEnd(relation?.desire);
+  /**
+   * O campo do kit costuma vir colado ao rótulo ("Desejo: voltar a correr").
+   * `stripFieldLabels` remove o rótulo em qualquer posição — antes só o rótulo
+   * isolado era barrado e o resto virava "Quer desejo: voltar a correr?".
+   */
+  const desireCandidate = stripEnd(stripFieldLabels(stripEnd(relation?.desire)));
   const editorialLabel = /^(?:obje(?:ç|c)(?:ão|oes|ões)(?:\s+mais\s+comuns?)?|desejo|dor|medo|público(?:\s+alvo)?|perfil)\s*:?$/i;
   const desire = editorialLabel.test(desireCandidate) ? "" : desireCandidate;
   const action = stripEnd(hook.cta) || stripEnd(relation?.cta) || stripEnd(carousel.cta.sub);
@@ -563,6 +568,7 @@ export const planBatch = (input: {
       const fresh = (text: string) => (weightOf?.(phraseSignature(text)) ?? 1) > 0.25;
       const composed = composeRouteCopy(shotRoute, {
         seed: `${seed}:art:${index}`,
+        rotate: index,
         weightOf,
       });
       (Object.keys(composed) as (keyof typeof composed)[]).forEach((slot) => {

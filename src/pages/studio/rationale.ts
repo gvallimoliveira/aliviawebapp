@@ -560,6 +560,14 @@ export const explainArt = (
   const lead = support[0] ?? "";
   const tail = support.length > 1 ? support[support.length - 1] : "";
   const read = copy.length > 0;
+  /**
+   * ARTE SEM TEXTO PREVISTO É DEFEITO, NÃO ISENÇÃO. Quando quem chama declara a
+   * cópia (o diretor sempre declara) e ela vem vazia, as checagens de público,
+   * objetivo e marca precisam REPROVAR — antes elas passavam por omissão e a
+   * arte muda ia ao ar aprovada.
+   */
+  const blind = Array.isArray(detail?.copy) && !read;
+  if (blind) gaps.push("a arte não tem texto previsto: o kit não sustenta nenhuma frase para este formato");
 
   const words = (t: string) =>
     t
@@ -587,7 +595,7 @@ export const explainArt = (
     gaps.push(
       "o contexto da marca não está preenchido (manual da marca ou formulário nos Ajustes) — é o item inegociável da leitura",
     );
-  } else if (read && manualShared.length === 0) {
+  } else if (blind || (read && manualShared.length === 0)) {
     brandOk = false;
     brandRead = `A arte não repete nada do que o manual de ${ctx.brandName} diz sobre ${
       trim(b.niche) || "o negócio"
@@ -615,9 +623,11 @@ export const explainArt = (
   const relWords = new Set(words(relText ?? ""));
   const relShared = [...relWords].filter((w) => artWords.has(w));
   const relDeclared = Boolean(trim(relText ?? ""));
-  const relOk = !relDeclared || !read || relShared.length > 0;
-  const audienceOk = !!keyword && !!hook && (!read || audienceShared.length > 0) && relOk;
-  const audienceRead = !keyword || !hook
+  const relOk = !blind && (!relDeclared || !read || relShared.length > 0);
+  const audienceOk = !blind && !!keyword && !!hook && (!read || audienceShared.length > 0) && relOk;
+  const audienceRead = blind
+    ? `Esta arte iria ao ar sem texto: nenhuma frase do kit sustenta este formato, então não há como ${audience} se reconhecer nela.`
+    : !keyword || !hook
     ? `Este público está incompleto (${!keyword ? "sem palavra-chave" : "sem chamada direta"}), então a arte fala para o vazio: eu não sei quem deveria se reconhecer nela.`
     : !relOk
       ? `Diz "${keyword}" no rótulo, mas não toca no que move ${audience} agora (${trim(relText ?? "")}). O público lê o nome dele e não encontra o próprio problema no texto.`
@@ -662,7 +672,7 @@ export const explainArt = (
   };
   const objective = OBJECTIVE[ctx.angle];
   const objectiveHit = copy.some((t) => objective.probe.test(t)) || (ctx.angle === "venda" && !!trim(ctaSource) && !read);
-  const objectiveOk = objectiveHit || !read;
+  const objectiveOk = !blind && (objectiveHit || !read);
   const objectiveRead = objectiveOk
     ? `O lote está no objetivo "${ctx.angle}" e esta arte serve a ele: ${sense.job}. A intenção é que quem lê ${ANGLE_EFFECT[ctx.angle]}${
         trim(ctaSource) ? `, com o convite "${trim(ctaSource)}"` : ""
@@ -755,9 +765,11 @@ const FALLBACKS: BlockKind[] = ["typo", "hero", "billboard", "mono", "closing"];
  * FILTRO APLICADO À VERSÃO INTEIRA.
  *
  * Troca cada arte que não passa pelo raciocínio por um formato equivalente que
- * passa, preservando a ordem e a sequência dos carrosséis (slide de carrossel
- * nunca é trocado isoladamente — a sequência é indivisível; se o kit não tem
- * roteiro, o carrossel inteiro já não é composto).
+ * passa, preservando a ordem. O carrossel é indivisível: um slide isolado nunca
+ * é trocado. Mas a sequência TAMBÉM é julgada — quando a capa não fecha, ou
+ * quando dois slides ou mais falham, o carrossel inteiro é desfeito em artes
+ * avulsas que se explicam sozinhas. Antes qualquer slide era devolvido intacto,
+ * então o formato de maior risco era o único sem filtro.
  */
 export const enforceRationale = (
   blocks: ComposedBlock[],
@@ -773,11 +785,43 @@ export const enforceRationale = (
   let fixed = 0;
   const detailFor = (index: number): ArtDetail | undefined => {
     const copy = copyOf?.(index);
-    return copy && copy.length > 0 ? { index, total: blocks.length, copy } : { index, total: blocks.length };
+    return copy ? { index, total: blocks.length, copy } : { index, total: blocks.length };
   };
+
+  /** Sequências de carrossel: início → fim, na ordem em que aparecem. */
+  const runs: number[][] = [];
+  blocks.forEach((block, index) => {
+    if (!block.slide) return;
+    const last = runs[runs.length - 1];
+    if (last && last[last.length - 1] === index - 1 && blocks[index - 1].slide) last.push(index);
+    else runs.push([index]);
+  });
+  /** Índices de carrossel cuja sequência não se sustenta. */
+  const dissolve = new Set<number>();
+  runs.forEach((run) => {
+    const failures = run.filter((index) => !explainArt(blocks[index], ctx, detailFor(index)).ok);
+    const coverFails = failures.some((index) => blocks[index].slide?.index === 0);
+    if (!failures.length || (!coverFails && failures.length < 2)) return;
+    failures.forEach((index) => explainArt(blocks[index], ctx, detailFor(index)).gaps.forEach((g) => gapSet.add(g)));
+    run.forEach((index) => dissolve.add(index));
+  });
 
   const out = blocks.map((block, index) => {
     const detail = detailFor(index);
+    /**
+     * Carrossel desfeito: o slide deixa de ser slide E deixa de ser formato de
+     * sequência — vira uma arte avulsa de formato de reserva, que se explica
+     * sozinha. Sem trocar o formato, um bloco de carrossel sem sequência não
+     * teria o que renderizar.
+     */
+    if (dissolve.has(index)) {
+      const loose = { ...block, slide: undefined };
+      const solo =
+        FALLBACKS.map((kind) => ({ ...loose, kind }))
+          .find((candidate) => explainArt(candidate, ctx, detail).ok) ?? { ...loose, kind: FALLBACKS[0] };
+      fixed += 1;
+      return solo;
+    }
     const first = explainArt(block, ctx, detail);
     if (first.ok || block.slide) return block;
     first.gaps.forEach((g) => gapSet.add(g));
