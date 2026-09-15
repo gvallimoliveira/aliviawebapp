@@ -1558,28 +1558,6 @@ const StudioProCreate = ({
 
       </div>
 
-      {/* Resultado do filtro interno de nexo, quando ele precisou agir. */}
-      {(audit.fixed > 0 || audit.gaps.length > 0) && (
-        <div className="mt-4 rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
-          <p className="font-semibold text-foreground">
-            <Lightbulb className="mr-1 inline h-3.5 w-3.5" />
-            Filtro de sentido
-            {audit.fixed > 0
-              ? `: ${audit.fixed} ${audit.fixed === 1 ? "arte foi trocada" : "artes foram trocadas"} por um formato que se explica sozinho.`
-              : ": revise os pontos abaixo para as artes ficarem mais claras."}
-          </p>
-          <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
-            {audit.gaps.slice(0, 5).map((gap) => (
-              <li key={gap}>{gap}</li>
-            ))}
-          </ul>
-          <p className="mt-1.5">
-            Toda arte precisa ser explicável para um leigo: o que mostra, o que diz e o que quer despertar.
-            Complete o kit da marca e o motor deixa de recorrer a formatos de reserva.
-          </p>
-        </div>
-      )}
-
       <div ref={wrapper} className="mt-5 flex flex-col items-center gap-6" style={themeStyle}>
         {groups.map((group) => {
           const first = group.items[0];
