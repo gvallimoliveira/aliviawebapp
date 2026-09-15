@@ -1281,7 +1281,12 @@ const StudioProCreate = ({
   const downloadCaptions = () => {
     const text = blocks
       .map(({ kind }, i) => {
-        const caption = buildCaption(content, kind, createRng(`${brand.id}:${seed}:caption:${kind}:${i}`));
+        // Mesma regra do card: legenda escrita a partir do texto dirigido.
+        const caption = buildCaption(
+          director.contentFor(i),
+          kind,
+          createRng(`${brand.id}:${seed}:caption:${kind}:${i}`),
+        );
         return `# ${String(i + 1).padStart(2, "0")} · ${kind}\n${caption}`;
       })
       .join("\n\n---\n\n");
@@ -1579,9 +1584,9 @@ const StudioProCreate = ({
         {groups.map((group) => {
           const first = group.items[0];
           const indexes = group.items.map((item) => item.index);
-          {/* A legenda nasce do MESMO texto que o diretor escreveu para a arte.
-              Antes ela sorteava do acervo inteiro e podia falar de outro
-              público, outra dor e outra oferta do que está escrito na imagem. */}
+          // A legenda nasce do MESMO texto que o diretor escreveu para a arte.
+          // Antes ela sorteava do acervo inteiro e podia falar de outro público,
+          // outra dor e outra oferta do que está escrito na imagem.
           const caption = buildCaption(
             director.contentFor(first.index),
             first.block.kind,
