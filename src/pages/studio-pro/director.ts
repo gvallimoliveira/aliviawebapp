@@ -37,7 +37,7 @@ import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typographyGuards";
-import type { BrandDna } from "./brandDnaKit";
+import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
@@ -568,6 +568,7 @@ export const planBatch = (input: {
       const fresh = (text: string) => (weightOf?.(phraseSignature(text)) ?? 1) > 0.25;
       const composed = composeRouteCopy(shotRoute, {
         seed: `${seed}:art:${index}`,
+        rotate: index,
         weightOf,
       });
       (Object.keys(composed) as (keyof typeof composed)[]).forEach((slot) => {
