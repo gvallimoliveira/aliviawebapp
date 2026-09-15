@@ -34,8 +34,12 @@ const editListeners = new WeakMap<HTMLElement, AbortController>();
 const BASE_SIZE_ATTR = "studioTextBaseSize";
 const ORIGINAL_SIZE_ATTR = "studioTextOriginalSize";
 const EDIT_LAYER_ATTR = "data-studio-text-size-layer";
-const MIN_TEXT_SCALE = 0.55;
-const MAX_TEXT_SCALE = 1.8;
+/**
+ * Faixa de tamanho ampla: a arte da pinça (e outras com muito espaço) precisa
+ * de letra bem maior, e capas densas precisam reduzir mais do que 0,55.
+ */
+const MIN_TEXT_SCALE = 0.3;
+const MAX_TEXT_SCALE = 4;
 const TEXT_SCALE_STEP = 0.1;
 
 const artIdOf = (root: HTMLElement) => root.dataset.studioArtKey || root.id || "art";
@@ -114,7 +118,15 @@ export const applyArtText = (root: HTMLElement, edits?: ArtTextEdits) => {
     const next = edits[i];
     if (typeof next !== "string") return;
     if ((el.textContent ?? "").replace(/\s+/g, " ").trim() === next) return;
-    el.textContent = next;
+    /**
+     * Quando existe um único nó de texto, alteramos o VALOR desse nó em vez de
+     * recriar os filhos. Assim o React continua encontrando os mesmos nós na
+     * próxima atualização — era isso que fazia o salvamento quebrar depois de
+     * uma edição ("o objeto não pode ser encontrado aqui").
+     */
+    const only = el.childNodes.length === 1 ? el.firstChild : null;
+    if (only && only.nodeType === Node.TEXT_NODE) only.nodeValue = next;
+    else el.textContent = next;
     el.dispatchEvent(new Event("input", { bubbles: true }));
   });
 };
