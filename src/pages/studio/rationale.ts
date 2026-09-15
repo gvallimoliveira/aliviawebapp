@@ -808,15 +808,27 @@ export const enforceRationale = (
 
   const out = blocks.map((block, index) => {
     const detail = detailFor(index);
-    const target = dissolve.has(index) ? { ...block, slide: undefined } : block;
-    const first = explainArt(target, ctx, detail);
-    if (first.ok) return target;
-    if (target.slide) return target;
+    /**
+     * Carrossel desfeito: o slide deixa de ser slide E deixa de ser formato de
+     * sequência — vira uma arte avulsa de formato de reserva, que se explica
+     * sozinha. Sem trocar o formato, um bloco de carrossel sem sequência não
+     * teria o que renderizar.
+     */
+    if (dissolve.has(index)) {
+      const loose = { ...block, slide: undefined };
+      const solo =
+        FALLBACKS.map((kind) => ({ ...loose, kind }))
+          .find((candidate) => explainArt(candidate, ctx, detail).ok) ?? { ...loose, kind: FALLBACKS[0] };
+      fixed += 1;
+      return solo;
+    }
+    const first = explainArt(block, ctx, detail);
+    if (first.ok || block.slide) return block;
     first.gaps.forEach((g) => gapSet.add(g));
 
-    const replacement = FALLBACKS.map((kind) => ({ ...target, kind, motion: target.motion }))
+    const replacement = FALLBACKS.map((kind) => ({ ...block, kind, motion: block.motion }))
       .find((candidate) => explainArt(candidate, ctx, detail).ok);
-    if (!replacement) return target;
+    if (!replacement) return block;
     fixed += 1;
     return replacement;
   });
