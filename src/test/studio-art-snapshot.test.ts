@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { sanitizeSnapshotHtml, isArtSnapshot } from "@/pages/studio-pro/artSnapshot";
-import { applyArtText, readArtText } from "@/pages/studio/artTextEdit";
+import { applyArtText, readArtText, setArtEditing } from "@/pages/studio/artTextEdit";
 
 const ART = `<div class="p-6"><h1>O movimento seguinte agora é seu</h1><p>Primeira sessão com plano na mão.</p></div>`;
 
@@ -37,6 +37,48 @@ describe("instantâneo da arte salva", () => {
     expect(after[0]).toBe("Seu próximo movimento começa aqui");
     expect(after[1]).toBe(before[1]);
     expect(root.querySelectorAll("h1, p").length).toBe(2);
+  });
+
+  it("preserva a palavra verde quando o navegador achata a frase durante a edição", () => {
+    const root = mount('<p>Clareza para <span class="text-primary">decidir</span> com segurança.</p>');
+    root.id = "accent-art";
+    setArtEditing(root, true);
+    const paragraph = root.querySelector("p");
+    if (paragraph) paragraph.textContent = "Clareza para decidir com seus próprios dados.";
+    setArtEditing(root, false);
+    expect(root.querySelector(".text-primary")?.textContent).toBe("decidir");
+    expect(paragraph?.textContent).toBe("Clareza para decidir com seus próprios dados.");
+    root.remove();
+  });
+
+  it("mantém o destaque depois da remontagem usada antes de salvar e baixar", () => {
+    const first = mount('<p>Dados que ajudam a <span class="text-primary">decidir</span>.</p>');
+    first.id = "accent-remount";
+    setArtEditing(first, true);
+    const paragraph = first.querySelector("p");
+    if (paragraph) paragraph.textContent = "Métricas que ajudam a decidir melhor.";
+    setArtEditing(first, false);
+    const edited = readArtText(first);
+    first.remove();
+
+    const remounted = mount('<p>Dados que ajudam a <span class="text-primary">decidir</span>.</p>');
+    remounted.id = "accent-remount";
+    applyArtText(remounted, edited);
+    expect(remounted.querySelector(".text-primary")?.textContent).toBe("decidir");
+    expect(remounted.textContent).toBe("Métricas que ajudam a decidir melhor.");
+    remounted.remove();
+  });
+
+  it("move o destaque quando a palavra original é substituída", () => {
+    const root = mount('<p>Clareza para <span class="text-primary">decidir</span>.</p>');
+    root.id = "accent-reword";
+    setArtEditing(root, true);
+    const paragraph = root.querySelector("p");
+    if (paragraph) paragraph.textContent = "Organização clínica sem improviso.";
+    setArtEditing(root, false);
+    expect(root.querySelector(".text-primary")?.textContent).toBe("Organização");
+    expect(paragraph?.textContent).toBe("Organização clínica sem improviso.");
+    root.remove();
   });
 
   it("reconhece só instantâneos com slides", () => {

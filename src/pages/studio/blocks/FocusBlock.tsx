@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { sectionHeight, type BlockProps } from "./shared";
+import { BRAND_MARK } from "../brand";
 
 /**
  * ONDE FOCAR (referência: pedras em perspectiva, "Don't focus here" no topo e
@@ -71,6 +72,17 @@ const FocusBlock = ({ content, rng, treatment, format }: BlockProps) => {
             transition={{ duration: 0.6, delay: 0.35 }}
             style={{ transformOrigin: "128px 244px" }}
           />
+          {BRAND_MARK && (
+            <image
+              href={BRAND_MARK}
+              x={106}
+              y={222}
+              width={44}
+              height={44}
+              preserveAspectRatio="xMidYMid meet"
+              aria-hidden
+            />
+          )}
         </svg>
 
         <p className={`mt-1 text-lg leading-none opacity-70 ${skin.ink}`}>↑</p>
