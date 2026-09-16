@@ -6,3 +6,5 @@
 - [x] Atualizar ajuda nos três idiomas
 - [x] Testar coerência, variedade e determinismo
 - [x] Ampliar moldes textuais e rotatividade entre lotes
+- [x] Sinalizar a solução no modelo dos círculos com o símbolo da marca
+- [x] Preservar destaques visuais ao editar, salvar e baixar artes

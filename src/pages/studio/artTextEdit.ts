@@ -30,6 +30,8 @@ export type ArtTextEditSnapshot = {
 };
 
 const sizeRegistry = new Map<string, number>();
+const markupRegistry = new Map<string, string>();
+const accentTemplates = new WeakMap<HTMLElement, Record<number, AccentTemplate[]>>();
 const editListeners = new WeakMap<HTMLElement, AbortController>();
 const BASE_SIZE_ATTR = "studioTextBaseSize";
 const ORIGINAL_SIZE_ATTR = "studioTextOriginalSize";
@@ -44,6 +46,92 @@ const TEXT_SCALE_STEP = 0.1;
 
 const artIdOf = (root: HTMLElement) => root.dataset.studioArtKey || root.id || "art";
 const sizeKey = (root: HTMLElement, index: number) => `${artIdOf(root)}#${index}`;
+
+type AccentTemplate = { html: string; text: string };
+
+const normalizedText = (value: string) => value.replace(/\s+/g, " ").trim();
+
+/** Elementos que comunicam ênfase editorial, não apenas divisão estrutural. */
+const isVisualAccent = (el: HTMLElement) => {
+  const cls = el.className;
+  const style = el.getAttribute("style") ?? "";
+  return (
+    el.hasAttribute("data-studio-stroke") ||
+    /(?:^|\s)(?:text-primary|text-transparent|underline|bg-primary|bg-accent|bg-foreground)(?:\s|$)/.test(cls) ||
+    /(?:^|;)\s*(?:color|background(?:-color)?|-webkit-text-stroke)\s*:/.test(style)
+  );
+};
+
+const safeAccentHtml = (element: HTMLElement) => {
+  const clone = element.cloneNode(true) as HTMLElement;
+  clone.querySelectorAll("script, iframe, object, embed, link, meta").forEach((node) => node.remove());
+  clone.querySelectorAll<HTMLElement>("*").forEach((node) => {
+    Array.from(node.attributes).forEach((attr) => {
+      const name = attr.name.toLowerCase();
+      if (name.startsWith("on") || name === "contenteditable") node.removeAttribute(attr.name);
+      if (name === "style" && /url\s*\(|expression\s*\(/i.test(attr.value)) node.removeAttribute(attr.name);
+    });
+  });
+  clone.removeAttribute("contenteditable");
+  return clone.outerHTML;
+};
+
+const readAccentTemplates = (el: HTMLElement): AccentTemplate[] =>
+  Array.from(el.querySelectorAll<HTMLElement>("span, strong, em"))
+    .filter(isVisualAccent)
+    .map((candidate) => ({ html: safeAccentHtml(candidate), text: normalizedText(candidate.textContent ?? "") }))
+    .filter((item) => item.text.length > 0);
+
+const longestWordRange = (text: string) => {
+  const matches = Array.from(text.matchAll(/[\p{L}\p{N}][\p{L}\p{N}’'-]*/gu));
+  if (!matches.length) return null;
+  const winner = matches.reduce((best, item) => (item[0].length > best[0].length ? item : best));
+  const start = winner.index ?? 0;
+  return { start, end: start + winner[0].length };
+};
+
+/** Recompõe o destaque que o contentEditable do iPhone pode achatar. */
+const restoreVisualAccents = (el: HTMLElement, templates: AccentTemplate[]) => {
+  if (!templates.length || Array.from(el.querySelectorAll<HTMLElement>("span, strong, em")).some(isVisualAccent)) return;
+  const text = normalizedText(el.textContent ?? "");
+  if (!text) return;
+  const ranges: Array<{ start: number; end: number; template: AccentTemplate }> = [];
+  let cursor = 0;
+  templates.forEach((template) => {
+    const at = text.toLocaleLowerCase("pt-BR").indexOf(template.text.toLocaleLowerCase("pt-BR"), cursor);
+    if (at >= 0) {
+      ranges.push({ start: at, end: at + template.text.length, template });
+      cursor = at + template.text.length;
+    }
+  });
+  if (!ranges.length) {
+    const fallback = longestWordRange(text);
+    if (fallback) ranges.push({ ...fallback, template: templates[0] });
+  }
+  if (!ranges.length) return;
+
+  const fragment = document.createDocumentFragment();
+  let offset = 0;
+  ranges.forEach(({ start, end, template }) => {
+    if (start > offset) fragment.append(document.createTextNode(text.slice(offset, start)));
+    const holder = document.createElement("template");
+    holder.innerHTML = template.html;
+    const accent = holder.content.firstElementChild as HTMLElement | null;
+    if (accent) {
+      accent.textContent = text.slice(start, end);
+      fragment.append(accent);
+    }
+    offset = end;
+  });
+  if (offset < text.length) fragment.append(document.createTextNode(text.slice(offset)));
+  el.replaceChildren(fragment);
+};
+
+const syncMarkupTree = (target: HTMLElement, html: string) => {
+  const holder = document.createElement("template");
+  holder.innerHTML = html;
+  target.replaceChildren(...Array.from(holder.content.childNodes).map((node) => node.cloneNode(true)));
+};
 
 const paintTextSize = (root: HTMLElement, el: HTMLElement, index: number, scale?: number) => {
   if (!el.dataset[BASE_SIZE_ATTR]) {
@@ -118,6 +206,16 @@ export const applyArtText = (root: HTMLElement, edits?: ArtTextEdits) => {
     const next = edits[i];
     if (typeof next !== "string") return;
     if ((el.textContent ?? "").replace(/\s+/g, " ").trim() === next) return;
+    const rich = markupRegistry.get(sizeKey(root, i));
+    if (rich) {
+      const holder = document.createElement("template");
+      holder.innerHTML = rich;
+      if (normalizedText(holder.content.textContent ?? "") === normalizedText(next)) {
+        syncMarkupTree(el, rich);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        return;
+      }
+    }
     /**
      * Quando existe um único nó de texto, alteramos o VALOR desse nó em vez de
      * recriar os filhos. Assim o React continua encontrando os mesmos nós na
@@ -136,7 +234,23 @@ export const setArtEditing = (root: HTMLElement, on: boolean) => {
   editListeners.get(root)?.abort();
   editListeners.delete(root);
   root.querySelectorAll(`[${EDIT_LAYER_ATTR}]`).forEach((el) => el.remove());
-  collectEditableNodes(root).forEach((el) => {
+  const editableNodes = collectEditableNodes(root);
+  if (on) {
+    const templates: Record<number, AccentTemplate[]> = {};
+    editableNodes.forEach((el, index) => {
+      const accents = readAccentTemplates(el);
+      if (accents.length) templates[index] = accents;
+    });
+    accentTemplates.set(root, templates);
+  } else {
+    const templates = accentTemplates.get(root) ?? {};
+    editableNodes.forEach((el, index) => {
+      restoreVisualAccents(el, templates[index] ?? []);
+      if (el.children.length > 0) markupRegistry.set(sizeKey(root, index), el.innerHTML);
+    });
+    accentTemplates.delete(root);
+  }
+  editableNodes.forEach((el) => {
     el.contentEditable = on ? "true" : "false";
     el.spellcheck = false;
     el.style.outline = on ? "1px dashed currentColor" : "";
