@@ -27,7 +27,7 @@ describe("studio learned vocabulary", () => {
     );
     expect(result.content).toEqual({
       title: "Mais tempo para decidir",
-      support: "execução baseada em métricas, evolução visível.",
+      support: "Execução baseada em métricas, evolução visível.",
     });
     expect(result.applied).toBe(2);
   });

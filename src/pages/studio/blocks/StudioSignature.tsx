@@ -32,7 +32,6 @@ const StudioSignature = ({ dark = false, corner = "br", markOnly = false }: Prop
   return (
     <div
       aria-hidden
-      data-studio-no-export="0"
       className={`pointer-events-none absolute z-20 flex items-center gap-2 ${CORNER_CLASS[corner]}`}
     >
       <img

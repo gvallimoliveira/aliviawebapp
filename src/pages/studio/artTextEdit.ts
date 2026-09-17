@@ -19,6 +19,8 @@ const TEXT_TAGS = [
 ];
 
 const SELECTOR = TEXT_TAGS.join(",");
+const SEMANTIC_SELECTOR = "h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption,dt,dd";
+const GENERIC_SELECTOR = "span,strong,em,div,button,a";
 
 /** Texto editado de uma arte: posição do elemento -> texto novo. */
 export type ArtTextEdits = Record<number, string>;
@@ -190,7 +192,12 @@ export const clearArtTextSizes = (root: HTMLElement) => {
 export const collectEditableNodes = (root: HTMLElement): HTMLElement[] =>
   Array.from(root.querySelectorAll<HTMLElement>(SELECTOR)).filter((el) => {
     if (el.closest('[data-studio-no-export="1"], [aria-hidden="true"]')) return false;
-    if (el.querySelector(SELECTOR)) return false;
+    const semantic = el.matches(SEMANTIC_SELECTOR);
+    if (semantic && el.querySelector(SEMANTIC_SELECTOR)) return false;
+    if (!semantic) {
+      if (el.closest(SEMANTIC_SELECTOR)) return false;
+      if (el.querySelector(GENERIC_SELECTOR)) return false;
+    }
     const text = normalizedText(el.textContent ?? "");
     if (!text || /^[+−–—•·|→←↑↓]+$/.test(text)) return false;
     return true;

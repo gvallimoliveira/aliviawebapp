@@ -1077,13 +1077,20 @@ const StudioProCreate = ({
 
 
   const cancelEdit = (indexes: number[]) => {
+    const restoredDrafts = { ...editsRef.current };
     indexes.forEach((i) => {
       const node = artNode(i);
       if (!node) return;
       setArtEditing(node, false);
       const snapshot = editBefore.current[i];
-      if (snapshot) restoreArtTextEditSnapshot(node, snapshot);
+      if (snapshot) {
+        restoreArtTextEditSnapshot(node, snapshot);
+        restoredDrafts[i] = snapshot.text;
+      }
     });
+    editsRef.current = restoredDrafts;
+    setEdits(restoredDrafts);
+    writePersistedEdits(brand.id, seed, restoredDrafts);
     setEditing(null);
     // Remonta a arte: digitar em contentEditable troca os nós de texto e o
     // React não pode reaproveitá-los na próxima atualização (erro ao salvar).
@@ -1113,7 +1120,10 @@ const StudioProCreate = ({
       const node = artNode(i);
       if (node) setArtEditing(node, false);
     });
-    setEdits((prev) => ({ ...prev, ...collected }));
+    const committed = { ...editsRef.current, ...collected };
+    editsRef.current = committed;
+    setEdits(committed);
+    writePersistedEdits(brand.id, seed, committed);
     /**
      * APRENDIZADO: a frase que você escreveu passa a substituir a frase antiga
      * nas próximas gerações desta marca — o motor não volta a oferecê-la.

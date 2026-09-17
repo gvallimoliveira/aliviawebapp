@@ -52,11 +52,12 @@ export const buildVocabularyRewrites = (rows: LearnedRewrite[]): LearnedVocabula
   rows.forEach(({ original, edited }) => {
     const before = original.trim().split(/\s+/);
     const after = edited.trim().split(/\s+/);
+    const explicitPreference = before.length <= 3 && !/[.!?,;:]/.test(original);
     let start = 0;
-    while (start < before.length && start < after.length && learnedKey(before[start]) === learnedKey(after[start])) start += 1;
+    while (!explicitPreference && start < before.length && start < after.length && learnedKey(before[start]) === learnedKey(after[start])) start += 1;
     let beforeEnd = before.length - 1;
     let afterEnd = after.length - 1;
-    while (beforeEnd >= start && afterEnd >= start && learnedKey(before[beforeEnd]) === learnedKey(after[afterEnd])) {
+    while (!explicitPreference && beforeEnd >= start && afterEnd >= start && learnedKey(before[beforeEnd]) === learnedKey(after[afterEnd])) {
       beforeEnd -= 1;
       afterEnd -= 1;
     }
