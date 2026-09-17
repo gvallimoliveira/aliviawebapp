@@ -52,8 +52,8 @@ const academic: WorldContent = {
   carousels: defaultCarousels,
   metrics: [
     [
-      { value: 6, label: "fases do método STEPS" },
-      { value: 4, label: "eixos do D.I.F.I em cada caso" },
+      { value: 6, label: "fases STEPS: dor, reparo, mobilidade, força, função e retorno" },
+      { value: 4, label: "eixos D.I.F.I: dor, inibição, fraqueza e incapacidade" },
       { value: 100, suffix: "%", label: "das trilhas com caso real" },
     ],
     [
@@ -62,8 +62,8 @@ const academic: WorldContent = {
       { value: 1, suffix: " fluxo", label: "igual no simulado e no paciente real" },
     ],
     [
-      { value: 6, label: "fases do método STEPS para treinar" },
-      { value: 4, label: "eixos do D.I.F.I em cada caso" },
+      { value: 6, label: "fases STEPS para progredir sem pular critérios" },
+      { value: 4, label: "eixos D.I.F.I conectando dor, recrutamento, força e função" },
       { value: 1, suffix: " prontuário", label: "por paciente do estágio ou da família" },
     ],
     [
@@ -154,7 +154,7 @@ const academic: WorldContent = {
     ["Trilhas clínicas", "Casos comentados", "PEDro ≥ 7", "Ambiente simulado", "Testes validados"],
     ["Raciocínio clínico", "Red flags", "Questionários", "Mecanismo de dor", "Conduta baseada em evidência"],
     ["Laslett", "McKenzie", "Neurodinâmica", "FABQ-Brasil", "Oswestry"],
-    ["Diferenciais", "STEPS", "D.I.F.I", "Dinamometria", "Relatório para o preceptor"],
+    ["Diferenciais", "STEPS: dor ao retorno", "D.I.F.I: dor à função", "Dinamometria", "Relatório para o preceptor"],
   ],
   closings: [
     { title: "Treine e aplique no estágio", sub: "Plano acadêmico com o fluxo completo de avaliação.", cta: "Ver o Aliv.iA Acadêmico" },
@@ -170,7 +170,7 @@ const academic: WorldContent = {
       "Questionários validados com pontos de corte explicados",
       "Agente clínico para discutir caso na madrugada da prova",
       "Fontes com PEDro ≥ 7 e PMID para citar no TCC",
-      "Treino do método STEPS e do D.I.F.I caso a caso",
+      "STEPS organiza dor, reparo, mobilidade, força, função e retorno; D.I.F.I conecta dor, inibição, fraqueza e incapacidade",
       "Relatórios modelo para aprender a documentar",
       "Triagem de mecanismo de dor com critérios de Kosek e Finnerup",
       "Diferenciais com critério de inclusão e exclusão por escrito",

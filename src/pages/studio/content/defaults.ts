@@ -19,15 +19,15 @@ export const defaultStats: WorldContent["stats"] = [
     heading: "Números que sustentam o discurso",
     items: [
       { value: "100%", label: "dos casos com triagem de red flags", note: "segurança não é opcional" },
-      { value: "4 eixos", label: "avaliados pelo D.I.F.I", note: "dor, inibição, fraqueza e incapacidade" },
+      { value: "4 eixos", label: "conectados pelo D.I.F.I", note: "dor pode inibir; inibição favorece fraqueza; fraqueza limita a função" },
       { value: "1 PDF", label: "resume o caso inteiro", note: "a história clínica não morre na memória" },
     ],
   },
   {
     heading: "O fim do retrabalho",
     items: [
-      { value: "6 fases", label: "do método STEPS em cada caso", note: "a progressão tem trilha" },
-      { value: "4 eixos", label: "avaliados pelo D.I.F.I", note: "dor, inibição, fraqueza e incapacidade" },
+      { value: "6 fases", label: "do método STEPS em cada caso", note: "dor e inflamação → reparo → mobilidade → força → função → retorno" },
+      { value: "4 eixos", label: "conectados pelo D.I.F.I", note: "dor pode inibir; inibição favorece fraqueza; fraqueza limita a função" },
       { value: "24h", label: "de histórico sempre acessível", note: "o caso inteiro, não a última sessão" },
     ],
   },

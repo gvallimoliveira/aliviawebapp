@@ -204,13 +204,13 @@ const professional: WorldContent = {
       items: [
         { value: "5 h/mês", label: "de burocracia devolvidas ao clínico", note: "tempo que volta para o raciocínio" },
         { value: "1 PDF", label: "com a sua marca em cada alta", note: "o paciente leva o seu nome, não o nosso" },
-        { value: "6 fases", label: "do método STEPS em cada caso", note: "a progressão tem trilha" },
+        { value: "6 fases", label: "do método STEPS em cada caso", note: "dor e inflamação → reparo → mobilidade → força → função → retorno" },
       ],
     },
     {
       heading: "A clínica inteira no mesmo raciocínio",
       items: [
-        { value: "4 eixos", label: "avaliados pelo D.I.F.I", note: "dor, inibição, fraqueza e incapacidade" },
+        { value: "4 eixos", label: "conectados pelo D.I.F.I", note: "dor pode inibir; inibição favorece fraqueza; fraqueza limita a função" },
         { value: "15+", label: "questionários validados", note: "ODI, HOOS, DASH e outros com ponto de corte" },
         { value: "24h", label: "de prontuário sempre acessível", note: "a história do caso não morre na memória" },
       ],
@@ -404,7 +404,7 @@ const professional: WorldContent = {
     { text: '"Transcrever não é luxo: é tempo devolvido para o clínico."', topic: "voice-notes" },
   ],
   marquee: [
-    ["Raciocínio clínico", "Red flags", "STEPS", "D.I.F.I", "Evidência PEDro ≥ 7"],
+    ["Raciocínio clínico", "Red flags", "STEPS: dor ao retorno", "D.I.F.I: dor à função", "Evidência PEDro ≥ 7"],
     ["Mapa de dor", "Dinamometria", "Questionários validados", "HEP em vídeo", "Prontuário vivo"],
     ["Laslett", "McKenzie", "HSR", "Neurodinâmica", "Controle motor"],
     ["FABQ-Brasil", "Mecanismo de dor", "Diferenciais", "Saúde geral", "Relatório de alta"],

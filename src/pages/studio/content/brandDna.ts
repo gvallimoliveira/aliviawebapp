@@ -32,7 +32,7 @@ export const BRAND_DNA = {
     claim: "IA especializada em fisioterapia — não é IA genérica.",
     why: [
       "Treinada com o raciocínio clínico do fisioterapeuta, não com respostas de internet",
-      "Integra método próprio: STEPS, D.I.F.I e triagem de sinais de alerta",
+      "Integra método próprio: STEPS organiza da dor ao retorno; D.I.F.I conecta dor, inibição, fraqueza e incapacidade; red flags protegem a triagem",
       "Cada hipótese vem com justificativa clínica, não com texto genérico",
       "Conhece testes, medidas e progressão de carga — vocabulário da profissão",
       "Construída por fisioterapeuta, revisada contra evidência aplicada ao caso",

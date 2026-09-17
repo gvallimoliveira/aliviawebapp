@@ -97,7 +97,7 @@ export const ALIVIA_CORE_CHARM: AliviaCoreCharmRow[] = [
       strong: "Sair da faculdade e encarar o primeiro paciente sozinho",
       rest: " não precisa gerar insegurança.",
     },
-    sub: "Estruture seu atendimento com os métodos STEPS e D.I.F.I. e entregue condutas com o lastro de um veterano.",
+    sub: "Use o STEPS para ordenar da dor ao retorno e o D.I.F.I. para conectar dor, inibição, fraqueza e incapacidade antes de definir a conduta.",
     cta: "Atender com lastro desde o início",
   },
   {
