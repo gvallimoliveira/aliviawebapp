@@ -80,9 +80,9 @@ export const applyLearnedVocabulary = (text: string, vocabulary: LearnedVocabula
   let applied = 0;
   vocabulary.forEach(({ from, to }) => {
     const pattern = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(from).replace(/\\\s+/g, "\\s+")}(?![\\p{L}\\p{N}])`, "giu");
-    next = next.replace(pattern, () => {
+    next = next.replace(pattern, (matched) => {
       applied += 1;
-      return to;
+      return /^[A-ZÀ-Ü]/.test(matched) ? to.charAt(0).toLocaleUpperCase("pt-BR") + to.slice(1) : to;
     });
   });
   return { text: next, applied };
