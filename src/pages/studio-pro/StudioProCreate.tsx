@@ -230,7 +230,7 @@ type PersistedCreateState = {
 
 };
 
-const editsKey = (brandId: string, seed: string) => `studio-pro:edits:${brandId}:${seed}`;
+const editsKey = (brandId: string, seed: string) => `studio-pro:edits:v2:${brandId}:${seed}`;
 const readPersistedEdits = (brandId: string, seed: string): Record<number, ArtTextEdits> => {
   try {
     const parsed = JSON.parse(sessionStorage.getItem(editsKey(brandId, seed)) ?? "{}");

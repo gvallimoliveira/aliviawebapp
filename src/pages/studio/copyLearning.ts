@@ -63,9 +63,12 @@ export const buildVocabularyRewrites = (rows: LearnedRewrite[]): LearnedVocabula
     }
     const from = before.slice(start, beforeEnd + 1).join(" ").replace(/[.,;:!?]+$/, "").trim();
     const to = after.slice(start, afterEnd + 1).join(" ").replace(/[.,;:!?]+$/, "").trim();
-    const key = learnedKey(from);
-    if (!key || !to || key === learnedKey(to) || from.length > 60 || to.length > 90) return;
-    out.set(key, { from, to });
+    const withContext = !explicitPreference && from.split(/\s+/).length === 1 && to.split(/\s+/).length > 1 && start > 0;
+    const contextualFrom = withContext ? `${before[start - 1]} ${from}` : from;
+    const contextualTo = withContext ? `${after[start - 1]} ${to}` : to;
+    const key = learnedKey(contextualFrom);
+    if (!key || !contextualTo || key === learnedKey(contextualTo) || contextualFrom.length > 60 || contextualTo.length > 90) return;
+    out.set(key, { from: contextualFrom, to: contextualTo });
   });
   return [...out.values()].sort((a, b) => b.from.length - a.from.length);
 };

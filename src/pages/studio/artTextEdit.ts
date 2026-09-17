@@ -196,7 +196,7 @@ export const collectEditableNodes = (root: HTMLElement): HTMLElement[] =>
     if (semantic && el.querySelector(SEMANTIC_SELECTOR)) return false;
     if (!semantic) {
       if (el.closest(SEMANTIC_SELECTOR)) return false;
-      if (el.querySelector(GENERIC_SELECTOR)) return false;
+      if (el.querySelector(SELECTOR)) return false;
     }
     const text = normalizedText(el.textContent ?? "");
     if (!text || /^[+−–—•·|→←↑↓]+$/.test(text)) return false;

@@ -32,6 +32,8 @@ import {
 import { applyArtMoves, clearArtMoves, setArtMoving } from "@/pages/studio/artTextMove";
 import { forgetArtLearning, learnArtMoves } from "@/pages/studio/artMoveLearning";
 import { hasBannedJargon } from "@/pages/studio/persuasion";
+import { diffArtText } from "@/pages/studio/copyLearning";
+import { useCopyLearning } from "./useCopyLearning";
 import {
   isArtSnapshot,
   loadArtSnapshot,
@@ -178,6 +180,8 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
   const [moving, setMoving] = useState(false);
   const [busy, setBusy] = useState(false);
   const editBefore = useRef<Record<number, ArtTextEditSnapshot>>({});
+  const textBeforeEdit = useRef<Record<number, ArtTextEdits>>({});
+  const learning = useCopyLearning(brand.id);
 
   /** HTML de cada slide, baixado do instantâneo salvo. */
   useEffect(() => {
@@ -207,6 +211,7 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
     (htmls ?? []).forEach((_, pos) => {
       const node = stageOf(pos);
       if (node) {
+        textBeforeEdit.current[pos] = readArtText(node);
         editBefore.current[pos] = captureArtTextEditSnapshot(node);
         setArtEditing(node, true);
       }
@@ -278,12 +283,17 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
     }
     setEditing(false);
     if (keep) {
+      const lessons = Object.entries(snapshots).flatMap(([pos, text]) =>
+        diffArtText(textBeforeEdit.current[Number(pos)], text),
+      );
+      if (lessons.length > 0) void learning.learn(lessons);
       // Nada a reaplicar: o texto já vive no HTML editado na tela.
       Object.entries(snapshots).forEach(([pos, texts]) => {
         const node = stageOf(Number(pos));
         if (node) applyArtText(node, texts);
       });
     }
+    Object.keys(textBeforeEdit.current).forEach((key) => delete textBeforeEdit.current[Number(key)]);
   };
 
   /** Regrava PNG, miniatura, texto e instantâneo NA MESMA arte da galeria. */
