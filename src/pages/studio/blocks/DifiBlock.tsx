@@ -89,7 +89,7 @@ const DifiBlock = ({ treatment, format }: BlockProps) => {
               <img
                 src={BRAND_MARK}
                 alt={`Símbolo ${BRAND_NAME}`}
-                className="h-10 w-10 object-contain"
+                className="h-12 w-12 scale-125 object-contain"
               />
             </span>
             <span className="mt-1 whitespace-nowrap text-[9px] font-bold text-primary">{BRAND_NAME}</span>

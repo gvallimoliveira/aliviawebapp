@@ -183,7 +183,7 @@ const MethodologySection = () => {
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
                 
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg">
-                  <img src={aliviaMark} alt="Símbolo da Aliv.iA" className="h-10 w-10 object-contain" />
+                  <img src={aliviaMark} alt="Símbolo da Aliv.iA" className="h-12 w-12 scale-125 object-contain" />
                 </div>
                 <span className="mt-1 text-[9px] font-bold text-primary whitespace-nowrap">
                   Aliv.iA
