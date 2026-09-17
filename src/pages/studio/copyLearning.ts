@@ -40,6 +40,54 @@ export const buildRewrites = (rows: LearnedRewrite[]): Map<string, string> => {
   return map;
 };
 
+export type LearnedVocabulary = { from: string; to: string };
+
+/**
+ * Extrai substituições pontuais das correções. Assim “libera prazo” → “libera
+ * tempo” ensina prazo → tempo também para frases novas, não só para a frase
+ * inteira que foi editada.
+ */
+export const buildVocabularyRewrites = (rows: LearnedRewrite[]): LearnedVocabulary[] => {
+  const out = new Map<string, LearnedVocabulary>();
+  rows.forEach(({ original, edited }) => {
+    const before = original.trim().split(/\s+/);
+    const after = edited.trim().split(/\s+/);
+    const explicitPreference = before.length <= 3 && !/[.!?,;:]/.test(original);
+    let start = 0;
+    while (!explicitPreference && start < before.length && start < after.length && learnedKey(before[start]) === learnedKey(after[start])) start += 1;
+    let beforeEnd = before.length - 1;
+    let afterEnd = after.length - 1;
+    while (!explicitPreference && beforeEnd >= start && afterEnd >= start && learnedKey(before[beforeEnd]) === learnedKey(after[afterEnd])) {
+      beforeEnd -= 1;
+      afterEnd -= 1;
+    }
+    const from = before.slice(start, beforeEnd + 1).join(" ").replace(/[.,;:!?]+$/, "").trim();
+    const to = after.slice(start, afterEnd + 1).join(" ").replace(/[.,;:!?]+$/, "").trim();
+    const withContext = !explicitPreference && from.split(/\s+/).length === 1 && to.split(/\s+/).length > 1 && start > 0;
+    const contextualFrom = withContext ? `${before[start - 1]} ${from}` : from;
+    const contextualTo = withContext ? `${after[start - 1]} ${to}` : to;
+    const key = learnedKey(contextualFrom);
+    if (!key || !contextualTo || key === learnedKey(contextualTo) || contextualFrom.length > 60 || contextualTo.length > 90) return;
+    out.set(key, { from: contextualFrom, to: contextualTo });
+  });
+  return [...out.values()].sort((a, b) => b.from.length - a.from.length);
+};
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export const applyLearnedVocabulary = (text: string, vocabulary: LearnedVocabulary[]): { text: string; applied: number } => {
+  let next = text;
+  let applied = 0;
+  vocabulary.forEach(({ from, to }) => {
+    const pattern = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(from).replace(/\\\s+/g, "\\s+")}(?![\\p{L}\\p{N}])`, "giu");
+    next = next.replace(pattern, (matched) => {
+      applied += 1;
+      return /^[A-ZÀ-Ü]/.test(matched) ? to.charAt(0).toLocaleUpperCase("pt-BR") + to.slice(1) : to;
+    });
+  });
+  return { text: next, applied };
+};
+
 /**
  * Reescreve o acervo textual com o que a marca já aprendeu.
  *
@@ -47,18 +95,24 @@ export const buildRewrites = (rows: LearnedRewrite[]): Map<string, string> => {
  * que casam exatamente com uma frase corrigida. Nada mais é tocado, então o
  * layout e a estrutura do acervo continuam idênticos.
  */
-export const applyLearnedCopy = <T>(content: T, rewrites: Map<string, string>): { content: T; applied: number } => {
-  if (rewrites.size === 0) return { content, applied: 0 };
+export const applyLearnedCopy = <T>(
+  content: T,
+  rewrites: Map<string, string>,
+  vocabulary: LearnedVocabulary[] = [],
+): { content: T; applied: number } => {
+  if (rewrites.size === 0 && vocabulary.length === 0) return { content, applied: 0 };
   let applied = 0;
 
   const walk = (value: unknown): unknown => {
     if (typeof value === "string") {
-      const next = rewrites.get(learnedKey(value));
-      if (next && next !== value) {
+      const exact = rewrites.get(learnedKey(value));
+      if (exact && exact !== value) {
         applied += 1;
-        return next;
+        return exact;
       }
-      return value;
+      const learned = applyLearnedVocabulary(value, vocabulary);
+      applied += learned.applied;
+      return learned.text;
     }
     if (Array.isArray(value)) return value.map(walk);
     if (value && typeof value === "object") {

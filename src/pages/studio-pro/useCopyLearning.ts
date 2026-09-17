@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { buildRewrites, learnedKey, type LearnedRewrite } from "@/pages/studio/copyLearning";
+import { buildRewrites, buildVocabularyRewrites, learnedKey, type LearnedRewrite } from "@/pages/studio/copyLearning";
 
 type Row = { signature: string; original_text: string; edited_text: string; uses: number };
 
@@ -53,6 +53,10 @@ export const useCopyLearning = (brandId?: string) => {
     () => buildRewrites(rows.map((r) => ({ original: r.original_text, edited: r.edited_text }))),
     [rows],
   );
+  const vocabulary = useMemo(
+    () => buildVocabularyRewrites(rows.map((r) => ({ original: r.original_text, edited: r.edited_text }))),
+    [rows],
+  );
 
   /** Vocabulário aprendido: as frases que o usuário de fato escreveu. */
   const voice = useMemo(() => rows.map((r) => r.edited_text).slice(0, 80), [rows]);
@@ -64,7 +68,10 @@ export const useCopyLearning = (brandId?: string) => {
       const userId = auth.user?.id;
       if (!userId) return;
       const known = new Map(rows.map((r) => [r.signature, r] as const));
-      const payload = pairs.map((pair) => {
+      const payload = pairs.filter((pair) => {
+        const current = known.get(signatureOf(pair.original));
+        return !current || learnedKey(current.edited_text) !== learnedKey(pair.edited);
+      }).map((pair) => {
         const signature = signatureOf(pair.original);
         return {
           user_id: userId,
@@ -76,6 +83,7 @@ export const useCopyLearning = (brandId?: string) => {
           updated_at: new Date().toISOString(),
         };
       });
+      if (payload.length === 0) return;
       const { error } = await supabase
         .from("studio_copy_learning")
         .upsert(payload, { onConflict: "brand_id,signature" });
@@ -99,5 +107,5 @@ export const useCopyLearning = (brandId?: string) => {
     [brandId, rows],
   );
 
-  return { rewrites, voice, learn, count: rows.length };
+  return { rewrites, vocabulary, voice, learn, count: rows.length };
 };
