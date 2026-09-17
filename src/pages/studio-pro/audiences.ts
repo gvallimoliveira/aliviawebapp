@@ -500,7 +500,7 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     ],
     desires: ["Chegar seguro na conduta", "Parecer profissional desde o primeiro atendimento"],
     proof: [
-      "Raciocínio clínico passo a passo com STEPS e D.I.F.I",
+      "STEPS organiza a progressão em seis degraus; D.I.F.I conecta dor, inibição, fraqueza e incapacidade",
       "Relatório e HEP prontos para entregar ao paciente",
       "Prontuário organizado desde o primeiro caso",
     ],
@@ -588,7 +588,7 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
     description: "Sub-nicho de Paciente: corre, pedala ou treina força e quer voltar ao esporte sem recair na lesão.",
     pains: ["Parar de treinar por causa da lesão", "Voltar cedo demais e recair", "Alta sem critério objetivo"],
     desires: ["Voltar ao esporte com segurança", "Treinar sem dor e sem medo"],
-    proof: ["Leitura de dor, inibição, fraqueza e incapacidade (D.I.F.I)", "Plano com progressão de carga documentada", "Reavaliação com critério de retorno"],
+    proof: ["D.I.F.I mostra como dor, inibição, fraqueza e incapacidade podem alimentar o mesmo ciclo", "Plano com progressão de carga documentada", "Reavaliação com critério de retorno"],
     triggers: [
       "Começo de temporada e a lesão antiga deu sinal outra vez",
       "Prova marcada e o treino teve que ser interrompido",

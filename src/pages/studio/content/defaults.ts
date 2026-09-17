@@ -19,15 +19,15 @@ export const defaultStats: WorldContent["stats"] = [
     heading: "Números que sustentam o discurso",
     items: [
       { value: "100%", label: "dos casos com triagem de red flags", note: "segurança não é opcional" },
-      { value: "4 eixos", label: "avaliados pelo D.I.F.I", note: "dor, inibição, fraqueza e incapacidade" },
+      { value: "4 eixos", label: "conectados pelo D.I.F.I", note: "dor pode inibir; inibição favorece fraqueza; fraqueza limita a função" },
       { value: "1 PDF", label: "resume o caso inteiro", note: "a história clínica não morre na memória" },
     ],
   },
   {
     heading: "O fim do retrabalho",
     items: [
-      { value: "6 fases", label: "do método STEPS em cada caso", note: "a progressão tem trilha" },
-      { value: "4 eixos", label: "avaliados pelo D.I.F.I", note: "dor, inibição, fraqueza e incapacidade" },
+      { value: "6 fases", label: "do método STEPS em cada caso", note: "dor e inflamação → reparo → mobilidade → força → função → retorno" },
+      { value: "4 eixos", label: "conectados pelo D.I.F.I", note: "dor pode inibir; inibição favorece fraqueza; fraqueza limita a função" },
       { value: "24h", label: "de histórico sempre acessível", note: "o caso inteiro, não a última sessão" },
     ],
   },
@@ -136,8 +136,8 @@ export const defaultCarousels: WorldContent["carousels"] = [
     title: "Duas siglas que organizam qualquer caso",
     coverSub: "STEPS e D.I.F.I — o esqueleto do raciocínio Aliv.iA. Arraste.",
     slides: [
-      { heading: "STEPS: seis fases", body: "Da triagem à alta, a progressão tem trilha e critério — ninguém pula etapa.", topic: "steps-method" },
-      { heading: "D.I.F.I: quatro eixos", body: "Dor, inibição, fraqueza e incapacidade avaliados juntos, nunca isolados.", topic: "difi" },
+      { heading: "STEPS: seis degraus", body: "Dor e inflamação → reparo → mobilidade → força → função → retorno. Cada avanço depende de critérios medidos, não só do tempo.", topic: "steps-method" },
+      { heading: "D.I.F.I: quatro eixos", body: "Dor pode gerar inibição; menos recrutamento favorece fraqueza; menos força limita a função. Avaliar os quatro revela onde romper o ciclo.", topic: "difi" },
     ],
     cta: { title: "Conheça o método por dentro", sub: "Link na bio." },
   },

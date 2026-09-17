@@ -212,7 +212,7 @@ const StudioProApp = () => {
           "avaliação",
           "mapa de dor",
           "HEP",
-          "STEPS",
+          "STEPS: dor, reparo, mobilidade, força, função e retorno",
           "prontuário",
           "reabilitação",
           "evidência",
@@ -222,7 +222,7 @@ const StudioProApp = () => {
         positioning:
           "O Aliv.iA transforma a queixa de dor em raciocínio clínico: o paciente entende o que está acontecendo, o profissional recebe avaliação e prontuário prontos, a clínica padroniza a equipe e o estudante treina o raciocínio com casos reais.",
         strategy_notes:
-          "Informar antes de vender: mostrar o método (STEPS, D.I.F.I, triagem de sinais de alerta) e só então o convite. Nomear a dor concreta de cada público, provar com processo e nunca prometer cura.",
+          "Informar antes de vender: explicar que STEPS organiza dor, reparo, mobilidade, força, função e retorno; que D.I.F.I conecta dor, inibição, fraqueza e incapacidade; mostrar a triagem de sinais de alerta e só então convidar. Nomear a dor concreta, provar com processo e nunca prometer cura.",
         audiences: ALIVIA_AUDIENCES,
       });
       if (error) {

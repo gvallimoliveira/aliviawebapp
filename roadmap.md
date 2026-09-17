@@ -11,3 +11,5 @@
 - [x] Preservar rascunhos de texto em qualquer recarregamento da arte
 - [x] Permitir ajuste de todo texto visível sem editar assinatura ou decoração
 - [x] Aprender substituições de vocabulário e reaplicá-las em frases novas
+- [x] Trocar o raio pela mão Aliv.iA no ciclo D.I.F.I. do Studio e da landing page
+- [x] Garantir explicação concreta de STEPS e D.I.F.I. nas artes que citam os métodos
