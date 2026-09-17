@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Camera,
   Check,
@@ -228,6 +228,23 @@ type PersistedCreateState = {
   /** Filtro "fotos do acervo em destaque": metade das artes com foto de fundo. */
   photoFirst?: boolean;
 
+};
+
+const editsKey = (brandId: string, seed: string) => `studio-pro:edits:${brandId}:${seed}`;
+const readPersistedEdits = (brandId: string, seed: string): Record<number, ArtTextEdits> => {
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(editsKey(brandId, seed)) ?? "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+const writePersistedEdits = (brandId: string, seed: string, edits: Record<number, ArtTextEdits>) => {
+  try {
+    sessionStorage.setItem(editsKey(brandId, seed), JSON.stringify(edits));
+  } catch {
+    /* modo privado / cota do navegador — a memória desta montagem continua ativa */
+  }
 };
 
 const readPersisted = (brandId: string): PersistedCreateState => {
@@ -527,7 +544,10 @@ const StudioProCreate = ({
    * reescreveu na arte tomam o lugar das originais. Assim o ajuste vale para
    * sempre naquela marca, em vez de virar retrabalho a cada geração.
    */
-  const learnedContent = useMemo(() => applyLearnedCopy(baseContent, learning.rewrites), [baseContent, learning.rewrites]);
+  const learnedContent = useMemo(
+    () => applyLearnedCopy(baseContent, learning.rewrites, learning.vocabulary),
+    [baseContent, learning.rewrites, learning.vocabulary],
+  );
   const content = learnedContent.content;
 
 
@@ -870,7 +890,8 @@ const StudioProCreate = ({
    * editados ficam guardados por posição e são reaplicados a cada re-render, de
    * modo que o PNG exportado e a arte salva saem já corrigidos.
    */
-  const [edits, setEdits] = useState<Record<number, ArtTextEdits>>({});
+  const [edits, setEdits] = useState<Record<number, ArtTextEdits>>(() => readPersistedEdits(brand.id, seed));
+  const editsRef = useRef<Record<number, ArtTextEdits>>(edits);
   const [editing, setEditing] = useState<number | null>(null);
   /**
    * MOVER TEXTO: modo separado da edição de palavras. Ligado, cada frase da arte
@@ -941,9 +962,20 @@ const StudioProCreate = ({
     });
 
 
-  /** Reaplica as edições e os deslocamentos depois de qualquer re-render das artes. */
   useEffect(() => {
-    Object.entries(edits).forEach(([key, value]) => {
+    const restoredEdits = readPersistedEdits(brand.id, seed);
+    editsRef.current = restoredEdits;
+    setEdits(restoredEdits);
+  }, [brand.id, seed]);
+
+  useEffect(() => {
+    editsRef.current = edits;
+    writePersistedEdits(brand.id, seed, edits);
+  }, [brand.id, seed, edits]);
+
+  /** Reaplica o rascunho após TODO render: nenhum polling/toggle devolve o texto original. */
+  useLayoutEffect(() => {
+    Object.entries(editsRef.current).forEach(([key, value]) => {
       const node = artNode(Number(key));
       if (node) applyArtText(node, value);
     });
@@ -954,7 +986,16 @@ const StudioProCreate = ({
         applyArtMoves(node);
       }
     });
-  }, [edits, blocks, format, seed, content, activePhotos, resetTick, moveTick]);
+  });
+
+  useEffect(() => {
+    void learning.learn([
+      { original: "prazo", edited: "tempo" },
+      { original: "execução medida", edited: "execução baseada em métricas" },
+    ]);
+    // Uma vez por marca; `learn` ignora preferências já existentes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand.id]);
 
   /** Liga/desliga o arraste por alça na arte selecionada. */
   const startMove = (indexes: number[]) => {
@@ -1026,7 +1067,11 @@ const StudioProCreate = ({
       if (!node) return;
       textBeforeEdit.current[i] = readArtText(node);
       editBefore.current[i] = captureArtTextEditSnapshot(node);
-      setArtEditing(node, true);
+      setArtEditing(node, true, (draft) => {
+        const next = { ...editsRef.current, [i]: draft };
+        editsRef.current = next;
+        writePersistedEdits(brand.id, seed, next);
+      });
     });
   };
 
@@ -1110,6 +1155,8 @@ const StudioProCreate = ({
     setEdits((prev) => {
       const copy = { ...prev };
       indexes.forEach((i) => delete copy[i]);
+      editsRef.current = copy;
+      writePersistedEdits(brand.id, seed, copy);
       return copy;
     });
     setApproved((prev) => {

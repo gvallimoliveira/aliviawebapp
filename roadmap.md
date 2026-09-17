@@ -8,3 +8,6 @@
 - [x] Ampliar moldes textuais e rotatividade entre lotes
 - [x] Sinalizar a solução no modelo dos círculos com o símbolo da marca
 - [x] Preservar destaques visuais ao editar, salvar e baixar artes
+- [x] Preservar rascunhos de texto em qualquer recarregamento da arte
+- [x] Permitir ajuste de todo texto visível sem editar assinatura ou decoração
+- [x] Aprender substituições de vocabulário e reaplicá-las em frases novas

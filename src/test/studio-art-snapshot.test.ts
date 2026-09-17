@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { sanitizeSnapshotHtml, isArtSnapshot } from "@/pages/studio-pro/artSnapshot";
-import { applyArtText, readArtText, setArtEditing } from "@/pages/studio/artTextEdit";
+import { applyArtText, collectEditableNodes, readArtText, setArtEditing } from "@/pages/studio/artTextEdit";
 
 const ART = `<div class="p-6"><h1>O movimento seguinte agora é seu</h1><p>Primeira sessão com plano na mão.</p></div>`;
 
@@ -87,5 +87,31 @@ describe("instantâneo da arte salva", () => {
     expect(
       isArtSnapshot({ version: 1, format: "1x1", theme: {}, slides: [{ storage_path: "a", width: 1, height: 1 }] }),
     ).toBe(true);
+  });
+
+  it("permite editar textos em spans e divs sem incluir assinatura ou decoração", () => {
+    const root = mount(`
+      <div><span>01</span><div>Amplifica o que ele já faz bem.</div></div>
+      <span>Teste na sua operação.</span>
+      <div aria-hidden="true"><span>Aliv.iA</span></div>
+      <span>→</span>
+    `);
+    expect(collectEditableNodes(root).map((node) => node.textContent?.trim())).toEqual([
+      "01",
+      "Amplifica o que ele já faz bem.",
+      "Teste na sua operação.",
+    ]);
+    root.remove();
+  });
+
+  it("emite cada rascunho enquanto o usuário digita", () => {
+    const root = mount("<div>Texto original</div>");
+    let draft: Record<number, string> = {};
+    setArtEditing(root, true, (next) => { draft = next; });
+    const text = collectEditableNodes(root)[0];
+    text.textContent = "Texto preservado";
+    text.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(draft[0]).toBe("Texto preservado");
+    root.remove();
   });
 });

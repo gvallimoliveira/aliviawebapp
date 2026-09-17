@@ -12,8 +12,11 @@
  * reaplicados depois de cada re-render.
  */
 
-/** Tags que carregam texto de arte. */
-const TEXT_TAGS = ["h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote", "figcaption", "strong", "em"];
+/** Tags que podem carregar texto visível da arte. */
+const TEXT_TAGS = [
+  "h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote", "figcaption",
+  "strong", "em", "span", "div", "button", "a", "dt", "dd",
+];
 
 const SELECTOR = TEXT_TAGS.join(",");
 
@@ -186,8 +189,11 @@ export const clearArtTextSizes = (root: HTMLElement) => {
  */
 export const collectEditableNodes = (root: HTMLElement): HTMLElement[] =>
   Array.from(root.querySelectorAll<HTMLElement>(SELECTOR)).filter((el) => {
+    if (el.closest('[data-studio-no-export="1"], [aria-hidden="true"]')) return false;
     if (el.querySelector(SELECTOR)) return false;
-    return (el.textContent ?? "").trim().length > 0;
+    const text = normalizedText(el.textContent ?? "");
+    if (!text || /^[+−–—•·|→←↑↓]+$/.test(text)) return false;
+    return true;
   });
 
 /** Lê os textos atuais da arte, na ordem em que aparecem. */
@@ -230,7 +236,7 @@ export const applyArtText = (root: HTMLElement, edits?: ArtTextEdits) => {
 };
 
 /** Liga/desliga a edição direta na arte, com contorno de foco visível. */
-export const setArtEditing = (root: HTMLElement, on: boolean) => {
+export const setArtEditing = (root: HTMLElement, on: boolean, onChange?: (edits: ArtTextEdits) => void) => {
   editListeners.get(root)?.abort();
   editListeners.delete(root);
   root.querySelectorAll(`[${EDIT_LAYER_ATTR}]`).forEach((el) => el.remove());
@@ -346,6 +352,7 @@ export const setArtEditing = (root: HTMLElement, on: boolean) => {
       selected = index;
       place();
     }, { signal: listeners.signal });
+    el.addEventListener("input", () => onChange?.(readArtText(root)), { signal: listeners.signal });
   });
   place();
 
