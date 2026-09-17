@@ -136,8 +136,8 @@ export const defaultCarousels: WorldContent["carousels"] = [
     title: "Duas siglas que organizam qualquer caso",
     coverSub: "STEPS e D.I.F.I — o esqueleto do raciocínio Aliv.iA. Arraste.",
     slides: [
-      { heading: "STEPS: seis fases", body: "Da triagem à alta, a progressão tem trilha e critério — ninguém pula etapa.", topic: "steps-method" },
-      { heading: "D.I.F.I: quatro eixos", body: "Dor, inibição, fraqueza e incapacidade avaliados juntos, nunca isolados.", topic: "difi" },
+      { heading: "STEPS: seis degraus", body: "Dor e inflamação → reparo → mobilidade → força → função → retorno. Cada avanço depende de critérios medidos, não só do tempo.", topic: "steps-method" },
+      { heading: "D.I.F.I: quatro eixos", body: "Dor pode gerar inibição; menos recrutamento favorece fraqueza; menos força limita a função. Avaliar os quatro revela onde romper o ciclo.", topic: "difi" },
     ],
     cta: { title: "Conheça o método por dentro", sub: "Link na bio." },
   },

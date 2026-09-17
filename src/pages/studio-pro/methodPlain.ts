@@ -21,27 +21,37 @@ export type MethodLine = {
   pro: string;
 };
 
-/** As fases do STEPS traduzidas (espelham o macrociclo do produto). */
+/** Os seis degraus do STEPS traduzidos em efeito clínico concreto. */
 export const STEPS_PLAIN: MethodLine[] = [
   {
     tag: "Fase 1",
-    patient: "Primeiro tira a dor do caminho e protege o que está machucado",
-    pro: "Controle de dor e proteção tecidual antes de exigir carga",
+    patient: "Primeiro reduz a irritação e protege o que está sensível",
+    pro: "Controle de dor e inflamação para reduzir irritabilidade antes de exigir carga",
   },
   {
     tag: "Fase 2",
-    patient: "Depois devolve força para a região aguentar o seu dia",
-    pro: "Reconstrução de força e tolerância à carga com progressão registrada",
+    patient: "Depois respeita o reparo e o tempo que o tecido precisa",
+    pro: "Reparo e cicatrização tecidual orientam a dose e o momento de progredir",
   },
   {
     tag: "Fase 3",
-    patient: "Só então treina velocidade e movimento de verdade",
-    pro: "Potência e transição, quando o caso pede alta demanda",
+    patient: "Em seguida recupera o movimento que ficou limitado",
+    pro: "Mobilidade e flexibilidade recuperadas antes de ampliar a demanda",
   },
   {
     tag: "Fase 4",
-    patient: "E a última fase é você voltando ao que gosta com critério, não com achismo",
-    pro: "Retorno à atividade com critérios objetivos de liberação",
+    patient: "Com o movimento disponível, força e resistência voltam a crescer",
+    pro: "Força e resistência progridem com carga, resposta e assimetrias medidas",
+  },
+  {
+    tag: "Fase 5",
+    patient: "A força passa a funcionar nas tarefas e movimentos do seu dia",
+    pro: "Controle motor e função reintegram capacidade à tarefa específica",
+  },
+  {
+    tag: "Fase 6",
+    patient: "A volta ao esporte e à rotina acontece com testes, não no achismo",
+    pro: "Retorno ao esporte e alta dependem de critérios objetivos de prontidão",
   },
 ];
 

@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
-import { Zap } from "lucide-react";
-import { BRAND_NAME } from "../brand";
+import { BRAND_MARK, BRAND_NAME } from "../brand";
 import { sectionHeight, type BlockProps } from "./shared";
 
 /**
@@ -87,15 +86,20 @@ const DifiBlock = ({ treatment, format }: BlockProps) => {
 
           <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg">
-              <Zap className="h-6 w-6 text-primary-foreground" />
+              <img
+                src={BRAND_MARK}
+                alt={`Símbolo ${BRAND_NAME}`}
+                className="h-10 w-10 object-contain"
+              />
             </span>
             <span className="mt-1 whitespace-nowrap text-[9px] font-bold text-primary">{BRAND_NAME}</span>
           </div>
         </div>
 
         <p className={`text-sm leading-relaxed opacity-80 ${skin.ink}`}>
-          Dor inibe o músculo, a inibição gera fraqueza e a fraqueza vira incapacidade — que
-          alimenta mais dor. O plano da {BRAND_NAME} rompe esse ciclo no ponto certo.
+          Dor altera o movimento e pode inibir a ativação muscular. Menos recrutamento favorece
+          fraqueza; menos força limita tarefas e aumenta a incapacidade, que pode alimentar a dor.
+          A {BRAND_NAME} organiza a avaliação e a progressão para romper esse ciclo no ponto certo.
         </p>
       </motion.div>
     </section>

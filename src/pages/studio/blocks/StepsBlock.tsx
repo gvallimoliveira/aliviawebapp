@@ -13,12 +13,12 @@ import { BRAND_NAME } from "../brand";
  * Tratamentos: 0 escada em degraus · 1 lista numerada · 2 grade 2x3 · 3 tinta escura.
  */
 const STEPS = [
-  { icon: Flame, title: "Controle de Dor & Inflamação" },
-  { icon: Wrench, title: "Reparo & Cicatrização Tecidual" },
-  { icon: StretchHorizontal, title: "Mobilidade & Flexibilidade" },
-  { icon: Dumbbell, title: "Força & Resistência" },
-  { icon: Target, title: "Controle Motor & Função" },
-  { icon: Trophy, title: "Retorno ao Esporte & Alta" },
+  { icon: Flame, title: "Controle de Dor & Inflamação", detail: "reduzir irritabilidade e proteger" },
+  { icon: Wrench, title: "Reparo & Cicatrização Tecidual", detail: "respeitar o tempo do tecido" },
+  { icon: StretchHorizontal, title: "Mobilidade & Flexibilidade", detail: "recuperar amplitude útil" },
+  { icon: Dumbbell, title: "Força & Resistência", detail: "progredir carga com critério" },
+  { icon: Target, title: "Controle Motor & Função", detail: "reintegrar movimento e tarefa" },
+  { icon: Trophy, title: "Retorno ao Esporte & Alta", detail: "testar prontidão para voltar" },
 ] as const;
 
 const SKINS = [
@@ -55,7 +55,10 @@ const StepsBlock = ({ treatment, format }: BlockProps) => {
             {STEPS.map((step, i) => (
               <li key={step.title} className={`flex items-center gap-4 border-b pb-3 ${skin.card}`}>
                 <span className={`text-2xl font-black tabular-nums ${skin.accent}`}>{i + 1}</span>
-                <span className={`text-base font-medium leading-tight md:text-lg ${skin.ink}`}>{step.title}</span>
+                <span>
+                  <span className={`block text-base font-medium leading-tight md:text-lg ${skin.ink}`}>{step.title}</span>
+                  <span className={`mt-0.5 block text-xs leading-tight opacity-70 ${skin.ink}`}>{step.detail}</span>
+                </span>
               </li>
             ))}
           </ol>
@@ -77,6 +80,7 @@ const StepsBlock = ({ treatment, format }: BlockProps) => {
                       Step {i + 1}
                     </span>
                     <span className={`block text-sm font-medium leading-tight ${skin.ink}`}>{step.title}</span>
+                    <span className={`mt-0.5 block text-[10px] leading-tight opacity-70 ${skin.ink}`}>{step.detail}</span>
                   </span>
                 </div>
               );
@@ -85,8 +89,8 @@ const StepsBlock = ({ treatment, format }: BlockProps) => {
         )}
 
         <p className={`mt-8 text-sm leading-relaxed opacity-80 ${skin.ink}`}>
-          Cada fase do tratamento é mapeada a esses degraus: sabemos exatamente onde você está e
-          para onde precisa ir.
+          STEPS organiza a reabilitação em seis fases progressivas. O avanço não depende do calendário:
+          depende de dor, mobilidade, força, função e prontidão medidas em cada etapa.
         </p>
       </motion.div>
     </section>
