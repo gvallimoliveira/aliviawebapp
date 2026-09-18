@@ -114,6 +114,15 @@ export const insightsForAudience = (
   });
 };
 
+export const scopedFormatInsights = (
+  insights: FormatInsight[],
+  audience: BrandAudience | undefined,
+  allAudiences: BrandAudience[],
+): FormatInsight[] => {
+  if (audience) return insightsForAudience(insights, audience, allAudiences);
+  return allAudiences.length === 0 ? insights : [];
+};
+
 /**
  * Injeta os insights nos acervos que os blocos consomem. Sem insight declarado,
  * devolve o conteúdo intacto (nenhuma marca é afetada por não usar o campo).

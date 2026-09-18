@@ -14,7 +14,7 @@ import { composeHooks } from "@/pages/studio/hooks";
 import { curatedHooksFor } from "@/pages/studio/hookLibrary";
 import { applyHookPrefs } from "@/pages/studio/hookStore";
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
-import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
+import { lowerInitial, nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
 import { proofread } from "@/pages/studio/agreement";
 import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlogan, sloganList, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
@@ -26,7 +26,7 @@ import { marketStatsFor } from "@/pages/studio/marketFacts";
 import { condensePhrase } from "./textFit";
 import { editorialAudience, sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
-import { applyFormatInsights, insightsForAudience, readFormatInsights } from "./formatInsights";
+import { applyFormatInsights, readFormatInsights, scopedFormatInsights } from "./formatInsights";
 
 
 
@@ -1115,7 +1115,7 @@ export const buildBrandContent = (
 /* ------------------------------------------------------------------------- */
 
 /** Minúscula só na primeira letra, preservando siglas e números (60+). */
-const lower1 = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text);
+const lower1 = lowerInitial;
 const strip = (text: string) => text.trim().replace(/\s*[.!?]+$/, "");
 
 /**
@@ -1834,7 +1834,7 @@ export const buildSegmentContent = ({
    */
   const insights = readFormatInsights(kit.formatInsights);
   const withInsights = (content: WorldContent, audience?: BrandAudience) => {
-    const scoped = audience ? insightsForAudience(insights, audience, audiences) : [];
+    const scoped = scopedFormatInsights(insights, audience, audiences);
     return scoped.length ? applyFormatInsights(content, scoped, brand) : content;
   };
 
@@ -1942,6 +1942,7 @@ export const relationForSegment = ({
   angle,
   positioning,
   variationSeed,
+  segmentWeights,
 }: Omit<SegmentContentInput, "base" | "variationProfile">): Relation => {
   const brand = kit.name.trim() || "Sua marca";
   const dna = buildBrandDna({
@@ -1952,7 +1953,7 @@ export const relationForSegment = ({
     briefAnswers: kit.briefAnswers,
   });
   const audience = segment === GLOBAL_SEGMENT
-    ? pickGlobalAudience({ audiences, variationSeed }) ?? undefined
+    ? pickGlobalAudience({ audiences, variationSeed, segmentWeights }) ?? undefined
     : resolveAudience(audiences, segment) ?? undefined;
   return pickRelation({ audience, audiences, dna, brand, angle, seed: variationSeed });
 };

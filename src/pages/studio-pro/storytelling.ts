@@ -11,6 +11,7 @@
  * Determinístico: mesma rota ⇒ mesmo texto.
  */
 import { isStale } from "@/pages/studio/persuasion";
+import { lowerInitial } from "@/pages/studio/grammar";
 import { phraseSignature } from "@/pages/studio/picker";
 import { createRng } from "@/pages/studio/rng";
 import { applyTerms } from "@/pages/studio/terminology";
@@ -43,7 +44,7 @@ const fit = (raw: string | undefined, max: number): string => {
 const cap = (value?: string) => sentenceLead(squash(value));
 const low = (value?: string) => {
   const text = squash(value);
-  return text ? `${text.charAt(0).toLowerCase()}${text.slice(1)}` : "";
+  return lowerInitial(text);
 };
 
 const usable = (text: string) => text.length > 12 && !isStale(text);

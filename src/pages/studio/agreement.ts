@@ -111,6 +111,7 @@ FORMS.forEach((row) => row.forEach((form) => INDEX.set(form, row)));
 
 /** Modificadores que ficam entre o determinante e o núcleo, e também flexionam. */
 const MODIFIERS = new Set([
+  "o","a","os","as","um","uma","uns","umas","do","da","dos","das","no","na","nos","nas",
   "primeiro","primeira","primeiros","primeiras","segundo","segunda","segundos","segundas",
   "terceiro","terceira","terceiros","terceiras","último","última","últimos","últimas",
   "próprio","própria","próprios","próprias","mesmo","mesma","mesmos","mesmas",

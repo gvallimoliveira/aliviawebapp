@@ -36,6 +36,7 @@ import type { StudioHook } from "@/pages/studio/hooks";
 import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
+import { lowerInitial } from "@/pages/studio/grammar";
 import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typographyGuards";
 import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
@@ -99,7 +100,7 @@ const normalize = (text: string) =>
 
 const cleanLine = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const stripEnd = (text?: string) => cleanLine(text).replace(/\s*[.!?…]+$/, "");
-const lowerFirst = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text);
+const lowerFirst = lowerInitial;
 const upperFirst = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 
 /**
