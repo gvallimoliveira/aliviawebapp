@@ -1,0 +1,117 @@
+/**
+ * ============================================================================
+ * ESCOPO DO PÚBLICO ATIVO (filtro de pertencimento)
+ * ============================================================================
+ *
+ * Uma arte dirigida a UM público não pode citar o assunto de outro. Dois erros
+ * reais motivaram este arquivo:
+ *
+ * 1. arte de tontura/VPPB com lista dos outros públicos da marca
+ *    (dor crônica, pós-operatório, performance esportiva…);
+ * 2. selo de topo "TENDINITE …" numa arte cujo texto falava de labirintite.
+ *
+ * A regra é dura e local: antes de a arte existir, todo texto que carrega
+ * vocabulário de OUTRO público ou de OUTRO tema clínico sai do acervo. Sem
+ * público ativo (leitura institucional da marca), nada é removido.
+ */
+
+import type { BrandAudience } from "./audiences";
+import { MSK_TOPICS, mskContextsFor } from "./mskLexicon";
+import { VESTIBULAR_MATCH, matchesVestibular } from "./vestibularLexicon";
+
+const norm = (text: string) =>
+  text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+const words = (text: string) => norm(text).split(/[^a-z0-9]+/).filter((w) => w.length >= 5);
+
+/** Chaves estruturais: nunca são texto visível de arte. */
+const SKIP_KEYS = new Set(["id", "label", "topic", "topics", "poster", "image", "hashtags", "value", "prefix", "suffix"]);
+
+/** Temas clínicos incompatíveis com o público ativo (por exemplo tendão numa arte de tontura). */
+export const foreignClinicalMatchers = (probe: string): RegExp[] => {
+  const out: RegExp[] = [];
+  if (!matchesVestibular(probe)) out.push(VESTIBULAR_MATCH);
+  const contexts = mskContextsFor(probe);
+  MSK_TOPICS.forEach((topic) => {
+    const compatible = topic.match.test(probe) || topic.contexts.some((c) => contexts.includes(c));
+    if (!compatible) out.push(topic.match);
+  });
+  return out;
+};
+
+/** Palavras que pertencem só aos OUTROS públicos da marca. */
+export const foreignAudienceWords = (audience: BrandAudience, all: BrandAudience[]): string[] => {
+  const own = new Set([...words(audience.label ?? ""), ...words(audience.keyword ?? ""), ...words(audience.description ?? "")]);
+  const foreign = new Set<string>();
+  all
+    .filter((item) => item.id !== audience.id)
+    .forEach((item) => {
+      [...words(item.label ?? ""), ...words(item.keyword ?? "")].forEach((w) => {
+        if (!own.has(w)) foreign.add(w);
+      });
+    });
+  return [...foreign];
+};
+
+export type AudienceScope = {
+  /** Verdadeiro quando o texto pertence a outro público/tema. */
+  foreign: (text: string) => boolean;
+};
+
+export const buildAudienceScope = (audience: BrandAudience, all: BrandAudience[]): AudienceScope => {
+  const probe = [audience.label, audience.keyword, audience.description, audience.hook].filter(Boolean).join(" · ");
+  const clinical = foreignClinicalMatchers(probe);
+  const alien = foreignAudienceWords(audience, all);
+  return {
+    foreign: (text: string) => {
+      if (!text || text.length < 3) return false;
+      if (clinical.some((re) => re.test(text))) return true;
+      const bag = new Set(words(text));
+      return alien.some((w) => bag.has(w));
+    },
+  };
+};
+
+const flatten = (value: unknown): string => {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.map(flatten).join(" ");
+  if (value && typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => !SKIP_KEYS.has(key))
+      .map(([, child]) => flatten(child))
+      .join(" ");
+  }
+  return "";
+};
+
+/**
+ * Remove do acervo tudo que não é do público ativo. Pool que ficaria vazio é
+ * preservado (arte sem texto é pior que arte genérica), exceto os selos de topo,
+ * que caem para a palavra-chave do próprio público.
+ */
+export const enforceAudienceScope = <T,>(content: T, audience: BrandAudience, all: BrandAudience[]): T => {
+  const scope = buildAudienceScope(audience, all);
+  const key = (audience.keyword || audience.label || "").trim();
+
+  const walk = (value: unknown, path = ""): unknown => {
+    if (Array.isArray(value)) {
+      const kept = value.filter((item) => !scope.foreign(flatten(item)));
+      const pool = kept.length ? kept : path === "kickers" && key ? [key.toUpperCase()] : value;
+      return pool.map((item) => walk(item, path));
+    }
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value as Record<string, unknown>).map(([childKey, child]) => [
+          childKey,
+          SKIP_KEYS.has(childKey) ? child : walk(child, childKey),
+        ]),
+      );
+    }
+    return value;
+  };
+
+  return walk(content) as T;
+};
