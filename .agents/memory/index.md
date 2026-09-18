@@ -177,3 +177,4 @@ Studio: manual da marca em PDF e questionário valem IGUAL — marca com só o m
 - [Studio Manual-Only Audience](mem://features/studio-manual-only-audience) — Público `manualOnly` fica fora do sorteio da Visão 360° e só gera arte quando selecionado na aba do topo (caso "feridas" da Guilherme Vallim).
 - [Studio Vestibular Lexicon](mem://features/studio-vestibular-lexicon) — Vocabulário de tontura (labirintite, VPPB, otocônias, canais semicirculares, avaliação antes da manobra) nas artes do público vestibular.
 - [Studio MSK Lexicon](mem://features/studio-msk-lexicon) — Vocabulário de lesões (LCA, menisco, manguito, arremessador, lesão muscular, tendinopatias, dor patelofemoral, quadril, tornozelo) para esportista, pós-op e dor crônica.
+- [Studio Audience Scope](mem://features/studio-audience-scope) — Filtro de pertencimento: arte de um público não cita rótulo de outro nem tema clínico incompatível.
