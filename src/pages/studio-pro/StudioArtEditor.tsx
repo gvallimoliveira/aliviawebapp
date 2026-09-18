@@ -263,10 +263,8 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
       if (keep) {
         const next = readArtText(node);
         const values = Object.values(next);
-        if (values.some((t) => !t)) {
-          toast.error("Há um texto vazio na arte. Preencha antes de concluir.");
-          return;
-        }
+        // Campo esvaziado de propósito sai da arte (fica invisível), sem erro.
+
         const jargon = values.find((t) => hasBannedJargon(t));
         if (jargon) {
           toast.error("Essa frase usa jargão de marketing. Escreva como você falaria com o paciente.");

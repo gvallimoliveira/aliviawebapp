@@ -39,6 +39,17 @@ const markupRegistry = new Map<string, string>();
 const accentTemplates = new WeakMap<HTMLElement, Record<number, AccentTemplate[]>>();
 const editListeners = new WeakMap<HTMLElement, AbortController>();
 const BASE_SIZE_ATTR = "studioTextBaseSize";
+/**
+ * CAMPO ESVAZIADO DE PROPÓSITO.
+ *
+ * Apagar todo o texto de um campo é uma decisão de layout: aquele trecho deve
+ * sair da arte. Em vez de barrar o ajuste, marcamos o elemento e o deixamos
+ * invisível (mantendo o espaço reservado do desenho). Durante a edição ele
+ * reaparece apagado, para você poder escrever ali de novo.
+ */
+const HIDDEN_ATTR = "studioTextHidden";
+/** Marca os campos já reconhecidos como editáveis, para não sairem da lista ao ficarem vazios. */
+const SLOT_ATTR = "studioTextSlot";
 const ORIGINAL_SIZE_ATTR = "studioTextOriginalSize";
 const EDIT_LAYER_ATTR = "data-studio-text-size-layer";
 /**
@@ -198,6 +209,9 @@ export const collectEditableNodes = (root: HTMLElement): HTMLElement[] =>
       if (el.closest(SEMANTIC_SELECTOR)) return false;
       if (el.querySelector(SELECTOR)) return false;
     }
+    // Texto que você esvaziou de propósito continua na lista: é ele que guarda a
+    // posição e permite voltar a escrever ali depois.
+    if (el.dataset[HIDDEN_ATTR] === "1" || el.dataset[SLOT_ATTR] === "1") return true;
     const text = normalizedText(el.textContent ?? "");
     if (!text || /^[+−–—•·|→←↑↓]+$/.test(text)) return false;
     return true;
@@ -212,12 +226,39 @@ export const readArtText = (root: HTMLElement): ArtTextEdits => {
   return out;
 };
 
+/** Deixa o campo esvaziado invisível na arte (e no PNG), sem quebrar o desenho. */
+const paintHidden = (el: HTMLElement, hidden: boolean, editing = false) => {
+  if (hidden) {
+    el.dataset[HIDDEN_ATTR] = "1";
+    el.style.visibility = editing ? "visible" : "hidden";
+    el.style.opacity = editing ? "0.35" : "";
+    el.style.minWidth = editing ? "48px" : "";
+    el.style.minHeight = editing ? "1em" : "";
+    return;
+  }
+  delete el.dataset[HIDDEN_ATTR];
+  el.style.visibility = "";
+  el.style.opacity = "";
+  el.style.minWidth = "";
+  el.style.minHeight = "";
+};
+
 /** Reaplica os textos editados sobre a arte recém-renderizada. */
 export const applyArtText = (root: HTMLElement, edits?: ArtTextEdits) => {
   if (!edits) return;
   collectEditableNodes(root).forEach((el, i) => {
     const next = edits[i];
     if (typeof next !== "string") return;
+    // Campo esvaziado de propósito: fica sem texto e invisível na arte final.
+    if (!next.trim()) {
+      const only = el.childNodes.length === 1 ? el.firstChild : null;
+      if (only && only.nodeType === Node.TEXT_NODE) only.nodeValue = "";
+      else el.textContent = "";
+      paintHidden(el, true);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
+    if (el.dataset[HIDDEN_ATTR] === "1") paintHidden(el, false);
     if ((el.textContent ?? "").replace(/\s+/g, " ").trim() === next) return;
     const rich = markupRegistry.get(sizeKey(root, i));
     if (rich) {
@@ -264,6 +305,12 @@ export const setArtEditing = (root: HTMLElement, on: boolean, onChange?: (edits:
     accentTemplates.delete(root);
   }
   editableNodes.forEach((el) => {
+    el.dataset[SLOT_ATTR] = "1";
+    const empty = !normalizedText(el.textContent ?? "");
+    // Ao editar, o campo esvaziado reaparece apagado (para poder reescrever);
+    // ao concluir, ele simplesmente não aparece mais na arte.
+    if (empty) paintHidden(el, true, on);
+    else paintHidden(el, false);
     el.contentEditable = on ? "true" : "false";
     el.spellcheck = false;
     el.style.outline = on ? "1px dashed currentColor" : "";

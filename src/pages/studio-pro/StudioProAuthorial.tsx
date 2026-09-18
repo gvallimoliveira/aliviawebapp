@@ -345,10 +345,8 @@ const StudioProAuthorial = ({
     const node = nodeOf(artKey, slide);
     if (!node) return;
     const next = readArtText(node);
-    if (Object.values(next).some((text) => !text)) {
-      toast.error("Há um texto vazio na arte. Preencha ou cancele o ajuste.");
-      return;
-    }
+    // Campo esvaziado de propósito fica invisível na arte, sem bloquear o ajuste.
+
     setArtEditing(node, false);
     delete editBefore.current[key];
     setEdits((prev) => ({ ...prev, [key]: next }));
