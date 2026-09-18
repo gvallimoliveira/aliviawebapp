@@ -60,6 +60,7 @@ import { buildBrandDna } from "./brandDnaKit";
 import { useBrandBrief } from "./useBrandBrief";
 import { useCopyLearning } from "./useCopyLearning";
 import { applyLearnedCopy, diffArtText } from "@/pages/studio/copyLearning";
+import { enforceSegmentAudienceScope } from "./audienceScope";
 
 
 
@@ -507,7 +508,12 @@ const StudioProCreate = ({
    * substitui a frase original em todas as gerações seguintes — o motor não
    * volta a oferecer o que você já corrigiu.
    */
-  const learning = useCopyLearning(brand.id);
+  const protectedBrandLiterals = useMemo(() => {
+    const full = brand.name.trim();
+    const withoutBusinessSuffix = full.replace(/\b(?:fisioterapia|cl[ií]nica|studio|consult[oó]rio)\b.*$/i, "").trim();
+    return [...new Set([full, withoutBusinessSuffix].filter((value) => value.length >= 3))];
+  }, [brand.name]);
+  const learning = useCopyLearning(brand.id, protectedBrandLiterals);
 
   const baseContent = useMemo(() => {
 
@@ -544,10 +550,22 @@ const StudioProCreate = ({
    * reescreveu na arte tomam o lugar das originais. Assim o ajuste vale para
    * sempre naquela marca, em vez de virar retrabalho a cada geração.
    */
-  const learnedContent = useMemo(
-    () => applyLearnedCopy(baseContent, learning.rewrites, learning.vocabulary),
-    [baseContent, learning.rewrites, learning.vocabulary],
-  );
+  const learnedContent = useMemo(() => {
+    const learned = applyLearnedCopy(baseContent, learning.rewrites, learning.vocabulary, {
+      protectedLiterals: protectedBrandLiterals,
+    });
+    const globalAudience = activeSegment === GLOBAL_SEGMENT
+      ? pickGlobalAudience({
+          audiences,
+          variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+          segmentWeights: segmentMemory.weights,
+        }) ?? undefined
+      : undefined;
+    return {
+      ...learned,
+      content: enforceSegmentAudienceScope(learned.content, activeSegment, audiences, globalAudience),
+    };
+  }, [baseContent, learning.rewrites, learning.vocabulary, protectedBrandLiterals, activeSegment, audiences, brand.id, seed, angle, segmentMemory.weights]);
   const content = learnedContent.content;
 
 

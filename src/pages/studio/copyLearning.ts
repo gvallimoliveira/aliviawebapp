@@ -29,12 +29,13 @@ export const learnedKey = (text: string): string =>
     .trim();
 
 /** Índice pronto para o motor: chave do texto antigo → texto aprendido. */
-export const buildRewrites = (rows: LearnedRewrite[]): Map<string, string> => {
+export const buildRewrites = (rows: LearnedRewrite[], options: LearnedCopyOptions = {}): Map<string, string> => {
   const map = new Map<string, string>();
   rows.forEach((row) => {
     const from = learnedKey(row.original);
     const to = row.edited.trim();
     if (from.length < 3 || to.length === 0 || learnedKey(to) === from) return;
+    if (containsProtectedLiteral(row.original, options.protectedLiterals)) return;
     map.set(from, to);
   });
   return map;
@@ -42,14 +43,31 @@ export const buildRewrites = (rows: LearnedRewrite[]): Map<string, string> => {
 
 export type LearnedVocabulary = { from: string; to: string };
 
+export type LearnedCopyOptions = {
+  /**
+   * Identidade fixa da marca. Uma edição visual do nome/logo não pode ensinar o
+   * motor a trocar essa identidade por um tema clínico em todas as artes.
+   */
+  protectedLiterals?: string[];
+};
+
+const containsProtectedLiteral = (text: string, literals: string[] = []) => {
+  const key = learnedKey(text);
+  return literals.some((literal) => {
+    const protectedKey = learnedKey(literal);
+    return protectedKey.length >= 3 && (key.includes(protectedKey) || protectedKey.includes(key));
+  });
+};
+
 /**
  * Extrai substituições pontuais das correções. Assim “libera prazo” → “libera
  * tempo” ensina prazo → tempo também para frases novas, não só para a frase
  * inteira que foi editada.
  */
-export const buildVocabularyRewrites = (rows: LearnedRewrite[]): LearnedVocabulary[] => {
+export const buildVocabularyRewrites = (rows: LearnedRewrite[], options: LearnedCopyOptions = {}): LearnedVocabulary[] => {
   const out = new Map<string, LearnedVocabulary>();
   rows.forEach(({ original, edited }) => {
+    if (containsProtectedLiteral(original, options.protectedLiterals)) return;
     const before = original.trim().split(/\s+/);
     const after = edited.trim().split(/\s+/);
     const explicitPreference = before.length <= 3 && !/[.!?,;:]/.test(original);
@@ -99,12 +117,14 @@ export const applyLearnedCopy = <T>(
   content: T,
   rewrites: Map<string, string>,
   vocabulary: LearnedVocabulary[] = [],
+  options: LearnedCopyOptions = {},
 ): { content: T; applied: number } => {
   if (rewrites.size === 0 && vocabulary.length === 0) return { content, applied: 0 };
   let applied = 0;
 
   const walk = (value: unknown): unknown => {
     if (typeof value === "string") {
+      if (containsProtectedLiteral(value, options.protectedLiterals)) return value;
       const exact = rewrites.get(learnedKey(value));
       if (exact && exact !== value) {
         applied += 1;

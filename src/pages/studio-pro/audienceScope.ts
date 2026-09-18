@@ -16,6 +16,7 @@
  */
 
 import type { BrandAudience } from "./audiences";
+import { GLOBAL_SEGMENT, resolveAudience } from "./audiences";
 import { MSK_TOPICS, mskContextsFor } from "./mskLexicon";
 import { VESTIBULAR_MATCH, matchesVestibular } from "./vestibularLexicon";
 
@@ -133,4 +134,19 @@ export const enforceAudienceScope = <T,>(content: T, audience: BrandAudience, al
   };
 
   return walk(content) as T;
+};
+
+/**
+ * Segunda barreira, usada depois de reescritas/aprendizados. O filtro original
+ * roda ao construir o acervo; esta passagem impede que uma transformação
+ * posterior reintroduza um tema estranho ao público já escolhido.
+ */
+export const enforceSegmentAudienceScope = <T,>(
+  content: T,
+  segment: string,
+  audiences: BrandAudience[],
+  globalAudience?: BrandAudience,
+): T => {
+  const audience = segment === GLOBAL_SEGMENT ? globalAudience : resolveAudience(audiences, segment) ?? undefined;
+  return audience ? enforceAudienceScope(content, audience, audiences) : content;
 };

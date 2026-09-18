@@ -26,7 +26,7 @@ const signatureOf = (text: string): string => {
   return (h >>> 0).toString(36);
 };
 
-export const useCopyLearning = (brandId?: string) => {
+export const useCopyLearning = (brandId?: string, protectedLiterals: string[] = []) => {
   const [rows, setRows] = useState<Row[]>([]);
 
   useEffect(() => {
@@ -50,16 +50,28 @@ export const useCopyLearning = (brandId?: string) => {
   }, [brandId]);
 
   const rewrites = useMemo(
-    () => buildRewrites(rows.map((r) => ({ original: r.original_text, edited: r.edited_text }))),
-    [rows],
+    () => buildRewrites(rows.map((r) => ({ original: r.original_text, edited: r.edited_text })), { protectedLiterals }),
+    [rows, protectedLiterals],
   );
   const vocabulary = useMemo(
-    () => buildVocabularyRewrites(rows.map((r) => ({ original: r.original_text, edited: r.edited_text }))),
-    [rows],
+    () => buildVocabularyRewrites(rows.map((r) => ({ original: r.original_text, edited: r.edited_text })), { protectedLiterals }),
+    [rows, protectedLiterals],
   );
 
-  /** Vocabulário aprendido: as frases que o usuário de fato escreveu. */
-  const voice = useMemo(() => rows.map((r) => r.edited_text).slice(0, 80), [rows]);
+  /**
+   * Vocabulário aprendido: exclui edições feitas sobre a assinatura/nome da
+   * marca. Elas são ajustes pontuais de layout, não direção de voz nem tema.
+   */
+  const voice = useMemo(() => {
+    const protectedKeys = protectedLiterals.map(learnedKey).filter((key) => key.length >= 3);
+    return rows
+      .filter((row) => {
+        const original = learnedKey(row.original_text);
+        return !protectedKeys.some((key) => original.includes(key) || key.includes(original));
+      })
+      .map((r) => r.edited_text)
+      .slice(0, 80);
+  }, [rows, protectedLiterals]);
 
   const learn = useCallback(
     async (pairs: LearnedRewrite[]) => {

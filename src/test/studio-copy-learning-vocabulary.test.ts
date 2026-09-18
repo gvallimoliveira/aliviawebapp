@@ -31,4 +31,19 @@ describe("studio learned vocabulary", () => {
     });
     expect(result.applied).toBe(2);
   });
+
+  it("nunca aprende a substituir o nome da marca por um tema", () => {
+    const contaminated: LearnedRewrite[] = [
+      { original: "GUILHERME VALLIM", edited: "Tendinite?" },
+    ];
+    const options = { protectedLiterals: ["Guilherme Vallim Fisioterapia", "Guilherme Vallim"] };
+    const result = applyLearnedCopy(
+      { kicker: "GUILHERME VALLIM", title: "Avaliação baseada em métricas" },
+      buildRewrites(contaminated, options),
+      buildVocabularyRewrites(contaminated, options),
+      options,
+    );
+    expect(result.content.kicker).toBe("GUILHERME VALLIM");
+    expect(result.applied).toBe(0);
+  });
 });

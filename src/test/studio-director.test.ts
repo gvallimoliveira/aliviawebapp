@@ -363,5 +363,33 @@ describe("Diretor criativo", () => {
       expect(WORLDS.pro.hooks?.some((hook) => title === carouselCoverCopy(hook.strong, hook.sub).title)).toBe(true),
     );
   });
+
+  it("não injeta léxico de tendão quando o público ativo é geração 60+", () => {
+    const audience = {
+      id: "geracao-60",
+      label: "Geração 60+",
+      keyword: "Envelhecimento ativo",
+      description: "Pessoas maduras que querem manter autonomia e segurança.",
+    };
+    const direction = planBatch({
+      content: WORLDS.pro,
+      count: 3,
+      seed: "geracao-60-sem-tendinite",
+      relation: {
+        audience,
+        who: audience.label,
+        keyword: audience.keyword,
+        hook: "Você que quer levantar da poltrona com segurança",
+        pain: "A tendinite limita o movimento",
+        desire: "Manter autonomia",
+        axis: "pain",
+      } as Parameters<typeof planBatch>[0]["relation"],
+    });
+
+    const directedHeadings = direction.shots.flatMap((shot) =>
+      (shot.reserved.lists ?? []).map((list) => list.heading),
+    );
+    expect(directedHeadings).not.toEqual(expect.arrayContaining([expect.stringMatching(/tendinit|tend[aã]o|aquiles|patelar/i)]));
+  });
 });
 
