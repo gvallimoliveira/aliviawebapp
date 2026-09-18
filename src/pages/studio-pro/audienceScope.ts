@@ -25,7 +25,17 @@ const norm = (text: string) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-const words = (text: string) => norm(text).split(/[^a-z0-9]+/).filter((w) => w.length >= 5);
+/** Palavras comuns a qualquer público clínico: nunca identificam um recorte. */
+const GENERIC = new Set([
+  "fisioterapia", "fisioterapeuta", "avaliacao", "reavaliacao", "tratamento", "paciente", "pacientes",
+  "plano", "planos", "atendimento", "atendimentos", "clinica", "criterio", "criterios", "reabilitacao",
+  "movimento", "movimentos", "exercicio", "exercicios", "domicilio", "consulta", "cuidado", "saude",
+]);
+
+const words = (text: string) =>
+  norm(text)
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 5 && !GENERIC.has(w));
 
 /** Chaves estruturais: nunca são texto visível de arte. */
 const SKIP_KEYS = new Set(["id", "label", "topic", "topics", "poster", "image", "hashtags", "value", "prefix", "suffix"]);
@@ -33,12 +43,21 @@ const SKIP_KEYS = new Set(["id", "label", "topic", "topics", "poster", "image", 
 /** Temas clínicos incompatíveis com o público ativo (por exemplo tendão numa arte de tontura). */
 export const foreignClinicalMatchers = (probe: string): RegExp[] => {
   const out: RegExp[] = [];
-  if (!matchesVestibular(probe)) out.push(VESTIBULAR_MATCH);
+  const vestibular = matchesVestibular(probe);
+  if (!vestibular) out.push(VESTIBULAR_MATCH);
   const contexts = mskContextsFor(probe);
-  MSK_TOPICS.forEach((topic) => {
-    const compatible = topic.match.test(probe) || topic.contexts.some((c) => contexts.includes(c));
-    if (!compatible) out.push(topic.match);
-  });
+  /**
+   * Público de tontura: nenhum tema musculoesquelético entra. Público de
+   * esporte/pós-operatório/dor crônica: só os temas do próprio contexto. Público
+   * sem contexto clínico declarado: só o léxico vestibular é bloqueado, porque a
+   * anatomia geral (ombro, quadril, joelho) pertence a qualquer recorte.
+   */
+  if (vestibular || contexts.length) {
+    MSK_TOPICS.forEach((topic) => {
+      const compatible = !vestibular && (topic.match.test(probe) || topic.contexts.some((c) => contexts.includes(c)));
+      if (!compatible) out.push(topic.match);
+    });
+  }
   return out;
 };
 
