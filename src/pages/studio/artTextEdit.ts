@@ -303,6 +303,11 @@ export const setArtEditing = (root: HTMLElement, on: boolean, onChange?: (edits:
     accentTemplates.delete(root);
   }
   editableNodes.forEach((el) => {
+    const empty = !normalizedText(el.textContent ?? "");
+    // Ao editar, o campo esvaziado reaparece apagado (para poder reescrever);
+    // ao concluir, ele simplesmente não aparece mais na arte.
+    if (empty) paintHidden(el, true, on);
+    else paintHidden(el, false);
     el.contentEditable = on ? "true" : "false";
     el.spellcheck = false;
     el.style.outline = on ? "1px dashed currentColor" : "";
