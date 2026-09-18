@@ -58,8 +58,20 @@ export const useCopyLearning = (brandId?: string, protectedLiterals: string[] = 
     [rows, protectedLiterals],
   );
 
-  /** Vocabulário aprendido: as frases que o usuário de fato escreveu. */
-  const voice = useMemo(() => rows.map((r) => r.edited_text).slice(0, 80), [rows]);
+  /**
+   * Vocabulário aprendido: exclui edições feitas sobre a assinatura/nome da
+   * marca. Elas são ajustes pontuais de layout, não direção de voz nem tema.
+   */
+  const voice = useMemo(() => {
+    const protectedKeys = protectedLiterals.map(learnedKey).filter((key) => key.length >= 3);
+    return rows
+      .filter((row) => {
+        const original = learnedKey(row.original_text);
+        return !protectedKeys.some((key) => original.includes(key) || key.includes(original));
+      })
+      .map((r) => r.edited_text)
+      .slice(0, 80);
+  }, [rows, protectedLiterals]);
 
   const learn = useCallback(
     async (pairs: LearnedRewrite[]) => {
