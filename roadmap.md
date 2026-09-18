@@ -13,3 +13,4 @@
 - [x] Aprender substituições de vocabulário e reaplicá-las em frases novas
 - [x] Trocar o raio pela mão Aliv.iA no ciclo D.I.F.I. do Studio e da landing page
 - [x] Garantir explicação concreta de STEPS e D.I.F.I. nas artes que citam os métodos
+- [ ] Reforçar coerência, persuasão e revisão textual da marca Guilherme Vallim Fisioterapia
