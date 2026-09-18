@@ -699,8 +699,9 @@ const StudioProCreate = ({
         angle,
         positioning: brand.positioning,
         variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+        segmentWeights: segmentMemory.weights,
       }),
-    [contentKit, audiences, activeSegment, angle, brand.positioning, brand.id, seed],
+    [contentKit, audiences, activeSegment, angle, brand.positioning, brand.id, seed, segmentMemory.weights],
   );
 
   const draftDirector = useMemo(
@@ -761,6 +762,7 @@ const StudioProCreate = ({
       angle,
       positioning: brand.positioning,
       variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+      segmentWeights: segmentMemory.weights,
     });
     return {
       content,
@@ -802,6 +804,7 @@ const StudioProCreate = ({
     brand.positioning,
     brand.topics,
     brand.brief_answers,
+    segmentMemory.weights,
   ]);
 
 

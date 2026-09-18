@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { readFormatInsights } from "@/pages/studio-pro/formatInsights";
+import { readFormatInsights, scopedFormatInsights } from "@/pages/studio-pro/formatInsights";
 import { buildSegmentContent, type BrandKit } from "@/pages/studio-pro/brandContent";
 import { GLOBAL_SEGMENT } from "@/pages/studio-pro/audiences";
 
@@ -41,5 +41,15 @@ describe("Insights de formatos", () => {
     expect(content.carousels[0].id).toBe("insight-o-que-ninguem-explica-sobre-a-sua-dor");
     expect(content.lists[0].items).toHaveLength(2);
     expect(content.stories[0].moral).toContain("Comece pela avaliação");
+  });
+
+  it("não mistura roteiros de públicos no lote institucional", () => {
+    const insights = readFormatInsights("Dor no treino | Voltar ao esporte | Avaliar\nMedo de cair | Ganhar autonomia | Avaliar");
+    const audiences = [
+      { id: "esporte", label: "Esportista", pains: ["dor no treino"], desires: ["voltar ao esporte"] },
+      { id: "sessenta", label: "Geração 60+", pains: ["medo de cair"], desires: ["ganhar autonomia"] },
+    ];
+    expect(scopedFormatInsights(insights, undefined, audiences)).toEqual([]);
+    expect(scopedFormatInsights(insights, audiences[0], audiences).map((i) => i.id)).toEqual(["insight-dor-no-treino"]);
   });
 });

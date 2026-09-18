@@ -19,6 +19,8 @@
  * em tempo de geração, exatamente como `charmCopy` e `persuasion`.
  */
 
+import { lowerInitial } from "./grammar";
+
 /** Um gancho pronto para a arte. */
 export type StudioHook = {
   /** Rótulo do frame viral (documental, também usado como kicker curto). */
@@ -50,7 +52,7 @@ export type HookIngredients = {
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const noDot = (text?: string) => clean(text).replace(/\s*[.!?…]+$/, "");
-const lower1 = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text);
+const lower1 = lowerInitial;
 const upper1 = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 
 export type HookFrame = {
