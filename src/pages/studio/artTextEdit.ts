@@ -48,6 +48,8 @@ const BASE_SIZE_ATTR = "studioTextBaseSize";
  * reaparece apagado, para você poder escrever ali de novo.
  */
 const HIDDEN_ATTR = "studioTextHidden";
+/** Marca os campos já reconhecidos como editáveis, para não sairem da lista ao ficarem vazios. */
+const SLOT_ATTR = "studioTextSlot";
 const ORIGINAL_SIZE_ATTR = "studioTextOriginalSize";
 const EDIT_LAYER_ATTR = "data-studio-text-size-layer";
 /**
@@ -209,7 +211,7 @@ export const collectEditableNodes = (root: HTMLElement): HTMLElement[] =>
     }
     // Texto que você esvaziou de propósito continua na lista: é ele que guarda a
     // posição e permite voltar a escrever ali depois.
-    if (el.dataset[HIDDEN_ATTR] === "1") return true;
+    if (el.dataset[HIDDEN_ATTR] === "1" || el.dataset[SLOT_ATTR] === "1") return true;
     const text = normalizedText(el.textContent ?? "");
     if (!text || /^[+−–—•·|→←↑↓]+$/.test(text)) return false;
     return true;
@@ -303,6 +305,7 @@ export const setArtEditing = (root: HTMLElement, on: boolean, onChange?: (edits:
     accentTemplates.delete(root);
   }
   editableNodes.forEach((el) => {
+    el.dataset[SLOT_ATTR] = "1";
     const empty = !normalizedText(el.textContent ?? "");
     // Ao editar, o campo esvaziado reaparece apagado (para poder reescrever);
     // ao concluir, ele simplesmente não aparece mais na arte.
