@@ -15,6 +15,7 @@ import { curatedHooksFor } from "@/pages/studio/hookLibrary";
 import { applyHookPrefs } from "@/pages/studio/hookStore";
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
+import { proofread } from "@/pages/studio/agreement";
 import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlogan, sloganList, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
@@ -25,7 +26,7 @@ import { marketStatsFor } from "@/pages/studio/marketFacts";
 import { condensePhrase } from "./textFit";
 import { editorialAudience, sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
-import { applyFormatInsights, readFormatInsights } from "./formatInsights";
+import { applyFormatInsights, insightsForAudience, readFormatInsights } from "./formatInsights";
 
 
 
@@ -460,7 +461,9 @@ export const buildBrandContent = (
     forbidden: dna.forbidden,
     intensity: variation?.profile ? intensityFor(variation.profile.headlines) : undefined,
   };
-  const ing = ingredientsOf(kit, brand, niche, audiences, undefined, dna);
+  // O acervo-base representa a MARCA, não a soma dos públicos. Cada público é
+  // aplicado depois, como uma camada isolada, em `applyAudience`.
+  const ing = ingredientsOf(kit, brand, niche, [], undefined, dna);
 
   const composedHeadlines = varyRng ? composeHeadlines(ing, phrasing, varyRng) : [];
   const composedSubs = varyRng ? composeSubs(ing, phrasing, varyRng) : [];
@@ -1162,8 +1165,7 @@ const applyAudience = (
    * Comunicação dirigida: sub-nicho — ou qualquer público com acervo próprio —
    * reduz o acervo neutro a uma cauda curta, para não diluir a mensagem.
    */
-  const focused = Boolean(audience.parentId?.trim()) || pains.length + desires.length >= 2;
-  const tail = <T,>(list: T[]) => (focused ? list.slice(0, 2) : list);
+  const tail = <T,>(list: T[]) => list.slice(0, 1);
 
 
   const headlines = [
@@ -1831,10 +1833,24 @@ export const buildSegmentContent = ({
    * É mais um input do kit — sem o campo preenchido, nada muda.
    */
   const insights = readFormatInsights(kit.formatInsights);
-  const withInsights = (content: WorldContent) =>
-    insights.length ? applyFormatInsights(content, insights, brand) : content;
+  const withInsights = (content: WorldContent, audience?: BrandAudience) => {
+    const scoped = audience ? insightsForAudience(insights, audience, audiences) : [];
+    return scoped.length ? applyFormatInsights(content, scoped, brand) : content;
+  };
 
-  const finish = (content: WorldContent, relation?: Relation) => {
+  const proofreadVisible = (value: unknown, key = ""): unknown => {
+    if (typeof value === "string") {
+      if (["id", "label", "topic", "poster", "image", "hashtags", "value", "prefix", "suffix"].includes(key)) return value;
+      return proofread(value);
+    }
+    if (Array.isArray(value)) return value.map((item) => proofreadVisible(item, key));
+    if (value && typeof value === "object") {
+      return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([childKey, child]) => [childKey, proofreadVisible(child, childKey)]));
+    }
+    return value;
+  };
+
+  const finish = (content: WorldContent, relation?: Relation, audience?: BrandAudience) => {
     /**
      * TERMINOLOGIA DA MARCA (ver `@/pages/studio/terminology`): na marca Aliv.iA,
      * arte dirigida a paciente / sub-nicho clínico diz AUTOavaliação. Em qualquer
@@ -1873,7 +1889,7 @@ export const buildSegmentContent = ({
     const carousels = scripts.length > 1
       ? [...scripts.slice(spin), ...scripts.slice(0, spin)]
       : scripts;
-    return withInsights({ ...done, headlines: [...head, ...picked], carousels });
+    return proofreadVisible(withInsights({ ...done, headlines: [...head, ...picked], carousels }, audience)) as WorldContent;
 
   };
 
@@ -1887,7 +1903,7 @@ export const buildSegmentContent = ({
     const picked = pickGlobalAudience({ audiences, variationSeed, segmentWeights });
     if (picked) {
       const relation = relationFor(picked);
-      return finish(applyAudience(root, brand, picked, relation), relation);
+      return finish(applyAudience(root, brand, picked, relation), relation, picked);
     }
     return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
   }
@@ -1896,7 +1912,7 @@ export const buildSegmentContent = ({
   const audience = resolveAudience(audiences, segment);
   if (!audience) return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
   const relation = relationFor(audience);
-  const built = finish(applyAudience(root, brand, audience, relation), relation);
+  const built = finish(applyAudience(root, brand, audience, relation), relation, audience);
   /**
    * O sub-nicho de slogan é o único caso em que uma frase entra JÁ PRONTA na
    * arte: ela é a assinatura declarada da marca, então passa depois dos filtros
@@ -1935,7 +1951,9 @@ export const relationForSegment = ({
     positioning: positioning ?? kit.positioning,
     briefAnswers: kit.briefAnswers,
   });
-  const audience = segment === GLOBAL_SEGMENT ? undefined : resolveAudience(audiences, segment);
+  const audience = segment === GLOBAL_SEGMENT
+    ? pickGlobalAudience({ audiences, variationSeed }) ?? undefined
+    : resolveAudience(audiences, segment) ?? undefined;
   return pickRelation({ audience, audiences, dna, brand, angle, seed: variationSeed });
 };
 

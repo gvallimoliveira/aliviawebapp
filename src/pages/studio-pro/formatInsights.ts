@@ -27,6 +27,7 @@ import type { WorldContent } from "@/pages/studio/content/types";
 import { condensePhrase } from "./textFit";
 import { shortKicker } from "@/pages/studio/typographyGuards";
 import { sentence } from "@/pages/studio/grammar";
+import type { BrandAudience } from "./audiences";
 
 export type FormatInsight = {
   /** Identidade editorial estável (memória entre lotes). */
@@ -74,6 +75,44 @@ export const readFormatInsights = (raw?: string | null): FormatInsight[] => {
 /** Palavras dos insights — reforçam a atração do diretor criativo. */
 export const formatInsightWords = (insights: FormatInsight[]): string[] =>
   insights.flatMap((i) => [i.title, ...i.beats, i.closing ?? ""]).filter(Boolean);
+
+const meaningfulWords = (text: string): string[] =>
+  text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length >= 5 && !["avaliacao", "fisioterapia", "tratamento", "plano", "criterio", "paciente"].includes(word));
+
+/**
+ * Insights são roteiros prontos e não podem atravessar públicos. Mantemos só
+ * os que compartilham vocabulário específico com o público ativo; linhas
+ * genéricas permanecem disponíveis quando não citam nenhum outro público.
+ */
+export const insightsForAudience = (
+  insights: FormatInsight[],
+  audience: BrandAudience,
+  allAudiences: BrandAudience[],
+): FormatInsight[] => {
+  const textOf = (item: BrandAudience) => [
+    item.label, item.keyword, item.description, item.hook, ...(item.hooks ?? []),
+    ...(item.pains ?? []), ...(item.desires ?? []), ...(item.proof ?? []),
+    ...(item.scenes ?? []), ...(item.objections ?? []), ...(item.stakes ?? []), ...(item.triggers ?? []),
+  ].filter(Boolean).join(" ");
+  const own = new Set(meaningfulWords(textOf(audience)));
+  const foreign = new Set(
+    allAudiences
+      .filter((item) => item.id !== audience.id)
+      .flatMap((item) => meaningfulWords(textOf(item)))
+      .filter((word) => !own.has(word)),
+  );
+  return insights.filter((insight) => {
+    const words = meaningfulWords([insight.title, ...insight.beats, insight.closing ?? ""].join(" "));
+    const ownHits = words.filter((word) => own.has(word)).length;
+    const foreignHits = words.filter((word) => foreign.has(word)).length;
+    return ownHits > 0 && ownHits >= foreignHits;
+  });
+};
 
 /**
  * Injeta os insights nos acervos que os blocos consomem. Sem insight declarado,

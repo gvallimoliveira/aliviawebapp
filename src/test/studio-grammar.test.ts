@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isClause, isNominal, nominal, nominalList, readsWell, sentence, toNominal } from "@/pages/studio/grammar";
+import { isClause, isNominal, lowerInitial, nominal, nominalList, readsWell, sentence, toNominal } from "@/pages/studio/grammar";
 
 describe("guarda de gramática do motor criativo", () => {
   it("separa oração de grupo nominal", () => {
@@ -17,6 +17,7 @@ describe("guarda de gramática do motor criativo", () => {
     );
     expect(toNominal("falta tempo para criar posts")).toBe("a falta de tempo para criar posts");
     expect(toNominal("a dor volta sempre")).toBe("a dor que volta sempre");
+    expect(toNominal("meu problema volta sempre")).toBe("meu problema que volta sempre");
   });
 
   it("usa o fallback da moldura quando não há conversão segura", () => {
@@ -33,9 +34,15 @@ describe("guarda de gramática do motor criativo", () => {
     expect(readsWell("Falta horas de modo a criar posts diariamente. Hoje. Ter")).toBe(false);
     expect(readsWell("Conviver com a pressão de postar todo dia não é economia.")).toBe(true);
     expect(readsWell("O próximo movimento é seu.")).toBe(true);
+    expect(readsWell("Conviver com funciona direito não é economia")).toBe(false);
   });
 
   it("monta frase autônoma sem pontuação duplicada", () => {
     expect(sentence("precisam postar todo dia.")).toBe("Precisam postar todo dia.");
+  });
+
+  it("preserva siglas ao encaixá-las no meio da frase", () => {
+    expect(lowerInitial("VPPB precisa ser testada")).toBe("VPPB precisa ser testada");
+    expect(lowerInitial("Avaliação vem primeiro")).toBe("avaliação vem primeiro");
   });
 });

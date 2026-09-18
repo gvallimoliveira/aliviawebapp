@@ -17,7 +17,7 @@
  */
 
 import type { CopyIngredients } from "./phrasing";
-import { nominal, readsWell, sentence } from "./grammar";
+import { lowerInitial, nominal, readsWell, sentence } from "./grammar";
 
 /** Jargão vazio e promessa irreal — proibidos em qualquer texto de arte. */
 export const BANNED_JARGON: readonly string[] = [
@@ -111,7 +111,7 @@ const clean = (text: string) => text.trim().replace(/\s+/g, " ");
 const noDot = (text: string) => clean(text).replace(/[.!?]+$/, "");
 const lower = (text: string) => {
   const t = noDot(text);
-  return t.charAt(0).toLowerCase() + t.slice(1);
+  return lowerInitial(t);
 };
 const upperFirst = (text: string) => {
   const t = clean(text);

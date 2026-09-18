@@ -30,7 +30,7 @@ const FEM_EXCEPTIONS = new Set([
   "carne","fome","sorte","morte","frente","ponte","dúvida","pele","tarefa",
 ]);
 
-const PLURAL_EXCEPTIONS = new Set(["mês","país","gás","atrás","através","depois","pois","mais","menos","vez","luz","cruz","paz","após","ninguém"]);
+const PLURAL_EXCEPTIONS = new Set(["mês","país","gás","atrás","através","depois","pois","mais","menos","vez","luz","cruz","paz","após","ninguém","lápis","ônibus","vírus","tênis","status","campus","atlas"]);
 
 type Agreement = { gender: "m" | "f"; plural: boolean } | null;
 
@@ -47,6 +47,7 @@ const singularOf = (word: string) => {
   if (w.endsWith("ais")) return `${w.slice(0, -3)}al`;
   if (w.endsWith("eis")) return `${w.slice(0, -3)}el`;
   if (w.endsWith("res") || w.endsWith("ses") || w.endsWith("zes")) return w.slice(0, -2);
+  if (w.endsWith("ns")) return `${w.slice(0, -2)}m`;
   if (w.endsWith("s")) return w.slice(0, -1);
   return w;
 };

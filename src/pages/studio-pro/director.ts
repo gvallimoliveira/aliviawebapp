@@ -301,12 +301,12 @@ type Stream<T> = ReturnType<typeof createStream<T>>;
  * carrossel é indivisível, roteirizado à parte.
  */
 const SLOT_QUOTA = {
-  headlines: 2,
-  subs: 2,
-  kickers: 2,
-  closings: 2,
-  typos: 2,
-  quotes: 2,
+  headlines: 1,
+  subs: 1,
+  kickers: 1,
+  closings: 1,
+  typos: 1,
+  quotes: 1,
   features: 5,
   compare: 2,
   kinetic: 2,
@@ -603,8 +603,9 @@ export const planBatch = (input: {
         const items = (composed[slot] ?? []) as unknown[];
         const kept = items.filter((item) => fresh(flatten(item)));
         if (!kept.length) return;
+        const quota = SLOT_QUOTA[slot as ListSlot] ?? kept.length;
         const current = ((reserved as Record<string, unknown>)[slot] as unknown[] | undefined) ?? [];
-        (reserved as Record<string, unknown>)[slot] = [...kept, ...current];
+        (reserved as Record<string, unknown>)[slot] = [...kept, ...current].slice(0, quota);
       });
     }
 
