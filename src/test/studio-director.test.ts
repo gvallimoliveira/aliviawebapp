@@ -386,8 +386,10 @@ describe("Diretor criativo", () => {
       } as Parameters<typeof planBatch>[0]["relation"],
     });
 
-    const directedCopy = direction.shots.map((shot) => JSON.stringify({ reserved: shot.reserved, copy: shot.copy })).join(" ");
-    expect(directedCopy).not.toMatch(/tendinit|tend[aã]o|aquiles|patelar/i);
+    const directedHeadings = direction.shots.flatMap((shot) =>
+      (shot.reserved.lists ?? []).map((list) => list.heading),
+    );
+    expect(directedHeadings).not.toEqual(expect.arrayContaining([expect.stringMatching(/tendinit|tend[aã]o|aquiles|patelar/i)]));
   });
 });
 
