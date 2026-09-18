@@ -1126,10 +1126,7 @@ const StudioProCreate = ({
       if (!node) continue;
       const next = readArtText(node);
       const texts = Object.values(next);
-      if (texts.some((t) => !t)) {
-        toast.error("Há um texto vazio na arte. Preencha ou desfaça o ajuste.");
-        return;
-      }
+      // Campo esvaziado é decisão de layout: aquele trecho sai da arte.
       const jargon = texts.find((t) => hasBannedJargon(t));
       if (jargon) {
         toast.error("Essa frase usa jargão de marketing. Escreva como você falaria com o paciente.");
