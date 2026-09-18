@@ -36,6 +36,7 @@ import type { StudioHook } from "@/pages/studio/hooks";
 import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
+import { lowerInitial } from "@/pages/studio/grammar";
 import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typographyGuards";
 import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
@@ -99,7 +100,7 @@ const normalize = (text: string) =>
 
 const cleanLine = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const stripEnd = (text?: string) => cleanLine(text).replace(/\s*[.!?…]+$/, "");
-const lowerFirst = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text);
+const lowerFirst = lowerInitial;
 const upperFirst = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 
 /**
@@ -301,12 +302,12 @@ type Stream<T> = ReturnType<typeof createStream<T>>;
  * carrossel é indivisível, roteirizado à parte.
  */
 const SLOT_QUOTA = {
-  headlines: 2,
-  subs: 2,
-  kickers: 2,
-  closings: 2,
-  typos: 2,
-  quotes: 2,
+  headlines: 1,
+  subs: 1,
+  kickers: 1,
+  closings: 1,
+  typos: 1,
+  quotes: 1,
   features: 5,
   compare: 2,
   kinetic: 2,
@@ -603,8 +604,9 @@ export const planBatch = (input: {
         const items = (composed[slot] ?? []) as unknown[];
         const kept = items.filter((item) => fresh(flatten(item)));
         if (!kept.length) return;
+        const quota = SLOT_QUOTA[slot as ListSlot] ?? kept.length;
         const current = ((reserved as Record<string, unknown>)[slot] as unknown[] | undefined) ?? [];
-        (reserved as Record<string, unknown>)[slot] = [...kept, ...current];
+        (reserved as Record<string, unknown>)[slot] = [...kept, ...current].slice(0, quota);
       });
     }
 

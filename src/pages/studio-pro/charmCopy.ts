@@ -21,7 +21,7 @@
 
 import type { WorldContent } from "@/pages/studio/content";
 import { charmCta, charmify, empathyBridge } from "@/pages/studio/charm";
-import { readsWell } from "@/pages/studio/grammar";
+import { lowerInitial, readsWell } from "@/pages/studio/grammar";
 import { isStudioSelfBrand } from "@/pages/studio/persuasion";
 import type { ContentAngle } from "./audiences";
 import type { Relation } from "./relational";
@@ -35,7 +35,7 @@ import { matchesMsk, mskLines } from "./mskLexicon";
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const noDot = (text?: string) => clean(text).replace(/\s*[.!?…]+$/, "");
-const lower1 = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text);
+const lower1 = lowerInitial;
 const upper1 = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 
 export type SubNicheCharm = {

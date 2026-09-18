@@ -9,6 +9,7 @@ describe("revisão de concordância (professor de português)", () => {
     );
     expect(fixAgreement("na primeiro fase")).toBe("na primeira fase");
     expect(fixAgreement("o próxima sessão")).toBe("a próxima sessão");
+    expect(fixAgreement("todo as viagens")).toBe("todas as viagens");
   });
 
   it("corrige possessivo com substantivo masculino terminado em -a", () => {

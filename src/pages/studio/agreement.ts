@@ -30,7 +30,7 @@ const FEM_EXCEPTIONS = new Set([
   "carne","fome","sorte","morte","frente","ponte","dúvida","pele","tarefa",
 ]);
 
-const PLURAL_EXCEPTIONS = new Set(["mês","país","gás","atrás","através","depois","pois","mais","menos","vez","luz","cruz","paz","após","ninguém"]);
+const PLURAL_EXCEPTIONS = new Set(["mês","país","gás","atrás","através","depois","pois","mais","menos","vez","luz","cruz","paz","após","ninguém","lápis","ônibus","vírus","tênis","status","campus","atlas"]);
 
 type Agreement = { gender: "m" | "f"; plural: boolean } | null;
 
@@ -47,6 +47,7 @@ const singularOf = (word: string) => {
   if (w.endsWith("ais")) return `${w.slice(0, -3)}al`;
   if (w.endsWith("eis")) return `${w.slice(0, -3)}el`;
   if (w.endsWith("res") || w.endsWith("ses") || w.endsWith("zes")) return w.slice(0, -2);
+  if (w.endsWith("ns")) return `${w.slice(0, -2)}m`;
   if (w.endsWith("s")) return w.slice(0, -1);
   return w;
 };
@@ -118,6 +119,7 @@ const MODIFIERS = new Set([
   // Possessivos entram na cadeia ("o seu dia", "a sua fase"): flexionam junto com o núcleo.
   "seu","sua","seus","suas","meu","minha","meus","minhas","nosso","nossa","nossos","nossas",
 ]);
+const ARTICLES = new Set(["o","a","os","as","um","uma","uns","umas"]);
 
 const inflect = (form: string, target: Agreement): string => {
   if (!target) return form;
@@ -155,7 +157,11 @@ export const fixAgreement = (text: string): string => {
     // Encontra o núcleo: pula modificadores flexionáveis.
     const chain: number[] = [i];
     let j = i + 2; // +2 por causa do separador de espaço
-    while (j < tokens.length && MODIFIERS.has(wordAt(j).toLowerCase())) {
+    while (
+      j < tokens.length &&
+      (MODIFIERS.has(wordAt(j).toLowerCase()) ||
+        ((key === "todo" || key === "toda" || key === "todos" || key === "todas") && ARTICLES.has(wordAt(j).toLowerCase())))
+    ) {
       chain.push(j);
       j += 2;
     }

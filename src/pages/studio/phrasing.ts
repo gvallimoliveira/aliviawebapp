@@ -12,6 +12,7 @@ import type { Rng } from "./rng";
 import type { VoiceRegister } from "./lexicon";
 import { rephrase } from "./rewrite";
 import { BANNED_JARGON, PERSUASION_FRAMES, persuasionSubs } from "./persuasion";
+import { lowerInitial } from "./grammar";
 
 
 /** Insumos vindos do kit da marca (nunca do campo "tom de voz"). */
@@ -40,7 +41,7 @@ const clean = (text: string) => text.trim().replace(/\s+/g, " ");
 const noDot = (text: string) => clean(text).replace(/[.!?]+$/, "");
 const lower = (text: string) => {
   const t = noDot(text);
-  return t.charAt(0).toLowerCase() + t.slice(1);
+  return lowerInitial(t);
 };
 const upperFirst = (text: string) => {
   const t = clean(text);

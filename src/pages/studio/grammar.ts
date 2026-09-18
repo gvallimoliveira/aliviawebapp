@@ -26,7 +26,14 @@ import { fixAgreement } from "./agreement";
 
 const clean = (text: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const noDot = (text: string) => clean(text).replace(/\s*[.!?…]+$/, "");
-const lower1 = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text);
+/** Minúscula inicial sem corromper siglas como IA, VPPB, LCA ou PDF. */
+export const lowerInitial = (text: string) => {
+  if (!text) return text;
+  const firstWord = text.trim().split(/\s+/)[0]?.replace(/[^A-Za-zÀ-ÿ0-9.]/g, "") ?? "";
+  if (/^[A-ZÀ-Ý][A-ZÀ-Ý0-9.]{1,}$/.test(firstWord)) return text;
+  return text.charAt(0).toLowerCase() + text.slice(1);
+};
+const lower1 = lowerInitial;
 const upper1 = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 
 /**
@@ -67,6 +74,17 @@ const FINITE_VERBS = [
   "abandona","abandonam",
   "desiste","desistem",
   "adia","adiam",
+  "funciona","funcionam",
+  "resolve","resolvem",
+  "ajuda","ajudam",
+  "compra","compram",
+  "chega","chegam",
+  "melhora","melhoram",
+  "continua","continuam",
+  "demora","demoram",
+  "ignora","ignoram",
+  "esquece","esquecem",
+  "procrastina","procrastinam",
 ] as const;
 
 const FINITE_SET = new Set<string>(FINITE_VERBS);
@@ -143,7 +161,7 @@ export const toNominal = (text: string): string | null => {
       const result = clean(out(match));
       // O núcleo nominalizado ("a falta de…") herda a palavra do verbo, então a
       // validação aqui é de LEITURA, não de classe gramatical.
-      if (result && /^(?:o|a|os|as|um|uma)\s/i.test(result) && readsWell(result)) return result;
+      if (result && /^(?:o|a|os|as|um|uma|meu|minha|meus|minhas|seu|sua|seus|suas|este|esta|estes|estas|esse|essa|esses|essas)\s/i.test(result) && readsWell(result)) return result;
     }
   }
   return null;

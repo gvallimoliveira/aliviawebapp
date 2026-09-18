@@ -22,7 +22,7 @@
  * transformação é validada pelo portão de português antes de valer.
  */
 
-import { readsWell } from "./grammar";
+import { lowerInitial, readsWell } from "./grammar";
 import { proofread } from "./agreement";
 
 /** Súplica de venda — proibida em qualquer arte. */
@@ -50,7 +50,7 @@ export const isPleading = (text: string): boolean => {
 
 const clean = (text: string) => (text ?? "").trim().replace(/\s+/g, " ");
 const noDot = (text: string) => clean(text).replace(/\s*[.!?…]+$/, "");
-const lower1 = (text: string) => (text ? text.charAt(0).toLowerCase() + text.slice(1) : text);
+const lower1 = lowerInitial;
 const upper1 = (text: string) => (text ? text.charAt(0).toUpperCase() + text.slice(1) : text);
 const wordCount = (text: string) => clean(text).split(/\s+/).filter(Boolean).length;
 
