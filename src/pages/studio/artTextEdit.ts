@@ -224,12 +224,39 @@ export const readArtText = (root: HTMLElement): ArtTextEdits => {
   return out;
 };
 
+/** Deixa o campo esvaziado invisível na arte (e no PNG), sem quebrar o desenho. */
+const paintHidden = (el: HTMLElement, hidden: boolean, editing = false) => {
+  if (hidden) {
+    el.dataset[HIDDEN_ATTR] = "1";
+    el.style.visibility = editing ? "visible" : "hidden";
+    el.style.opacity = editing ? "0.35" : "";
+    el.style.minWidth = editing ? "48px" : "";
+    el.style.minHeight = editing ? "1em" : "";
+    return;
+  }
+  delete el.dataset[HIDDEN_ATTR];
+  el.style.visibility = "";
+  el.style.opacity = "";
+  el.style.minWidth = "";
+  el.style.minHeight = "";
+};
+
 /** Reaplica os textos editados sobre a arte recém-renderizada. */
 export const applyArtText = (root: HTMLElement, edits?: ArtTextEdits) => {
   if (!edits) return;
   collectEditableNodes(root).forEach((el, i) => {
     const next = edits[i];
     if (typeof next !== "string") return;
+    // Campo esvaziado de propósito: fica sem texto e invisível na arte final.
+    if (!next.trim()) {
+      const only = el.childNodes.length === 1 ? el.firstChild : null;
+      if (only && only.nodeType === Node.TEXT_NODE) only.nodeValue = "";
+      else el.textContent = "";
+      paintHidden(el, true);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      return;
+    }
+    if (el.dataset[HIDDEN_ATTR] === "1") paintHidden(el, false);
     if ((el.textContent ?? "").replace(/\s+/g, " ").trim() === next) return;
     const rich = markupRegistry.get(sizeKey(root, i));
     if (rich) {
