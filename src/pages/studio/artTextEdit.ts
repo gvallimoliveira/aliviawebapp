@@ -39,6 +39,15 @@ const markupRegistry = new Map<string, string>();
 const accentTemplates = new WeakMap<HTMLElement, Record<number, AccentTemplate[]>>();
 const editListeners = new WeakMap<HTMLElement, AbortController>();
 const BASE_SIZE_ATTR = "studioTextBaseSize";
+/**
+ * CAMPO ESVAZIADO DE PROPÓSITO.
+ *
+ * Apagar todo o texto de um campo é uma decisão de layout: aquele trecho deve
+ * sair da arte. Em vez de barrar o ajuste, marcamos o elemento e o deixamos
+ * invisível (mantendo o espaço reservado do desenho). Durante a edição ele
+ * reaparece apagado, para você poder escrever ali de novo.
+ */
+const HIDDEN_ATTR = "studioTextHidden";
 const ORIGINAL_SIZE_ATTR = "studioTextOriginalSize";
 const EDIT_LAYER_ATTR = "data-studio-text-size-layer";
 /**
