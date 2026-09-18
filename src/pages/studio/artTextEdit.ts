@@ -198,6 +198,9 @@ export const collectEditableNodes = (root: HTMLElement): HTMLElement[] =>
       if (el.closest(SEMANTIC_SELECTOR)) return false;
       if (el.querySelector(SELECTOR)) return false;
     }
+    // Texto que você esvaziou de propósito continua na lista: é ele que guarda a
+    // posição e permite voltar a escrever ali depois.
+    if (el.dataset[HIDDEN_ATTR] === "1") return true;
     const text = normalizedText(el.textContent ?? "");
     if (!text || /^[+−–—•·|→←↑↓]+$/.test(text)) return false;
     return true;
