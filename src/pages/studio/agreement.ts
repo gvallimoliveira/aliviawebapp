@@ -111,7 +111,6 @@ FORMS.forEach((row) => row.forEach((form) => INDEX.set(form, row)));
 
 /** Modificadores que ficam entre o determinante e o núcleo, e também flexionam. */
 const MODIFIERS = new Set([
-  "o","a","os","as","um","uma","uns","umas","do","da","dos","das","no","na","nos","nas",
   "primeiro","primeira","primeiros","primeiras","segundo","segunda","segundos","segundas",
   "terceiro","terceira","terceiros","terceiras","último","última","últimos","últimas",
   "próprio","própria","próprios","próprias","mesmo","mesma","mesmos","mesmas",
@@ -120,6 +119,7 @@ const MODIFIERS = new Set([
   // Possessivos entram na cadeia ("o seu dia", "a sua fase"): flexionam junto com o núcleo.
   "seu","sua","seus","suas","meu","minha","meus","minhas","nosso","nossa","nossos","nossas",
 ]);
+const ARTICLES = new Set(["o","a","os","as","um","uma","uns","umas"]);
 
 const inflect = (form: string, target: Agreement): string => {
   if (!target) return form;
@@ -157,7 +157,11 @@ export const fixAgreement = (text: string): string => {
     // Encontra o núcleo: pula modificadores flexionáveis.
     const chain: number[] = [i];
     let j = i + 2; // +2 por causa do separador de espaço
-    while (j < tokens.length && MODIFIERS.has(wordAt(j).toLowerCase())) {
+    while (
+      j < tokens.length &&
+      (MODIFIERS.has(wordAt(j).toLowerCase()) ||
+        ((key === "todo" || key === "toda" || key === "todos" || key === "todas") && ARTICLES.has(wordAt(j).toLowerCase())))
+    ) {
       chain.push(j);
       j += 2;
     }
