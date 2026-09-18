@@ -1889,7 +1889,14 @@ export const buildSegmentContent = ({
     const carousels = scripts.length > 1
       ? [...scripts.slice(spin), ...scripts.slice(0, spin)]
       : scripts;
-    return proofreadVisible(withInsights({ ...done, headlines: [...head, ...picked], carousels }, audience)) as WorldContent;
+    const scoped = withInsights({ ...done, headlines: [...head, ...picked], carousels }, audience);
+    /**
+     * PERTENCIMENTO: arte dirigida não empresta assunto de outro público nem de
+     * outro tema clínico (ver `audienceScope.ts`). Leitura institucional da
+     * marca (sem público ativo) passa intacta.
+     */
+    const owned = audience ? enforceAudienceScope(scoped, audience, audiences) : scoped;
+    return proofreadVisible(owned) as WorldContent;
 
   };
 
