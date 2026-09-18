@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildAudienceScope, enforceAudienceScope } from "@/pages/studio-pro/audienceScope";
+import { buildAudienceScope, enforceAudienceScope, enforceSegmentAudienceScope } from "@/pages/studio-pro/audienceScope";
 import type { BrandAudience } from "@/pages/studio-pro/audiences";
 
 const vestibular: BrandAudience = {
@@ -51,5 +51,15 @@ describe("Studio: escopo do público ativo", () => {
   it("selo sem opção válida cai para a palavra-chave do público", () => {
     const out = enforceAudienceScope({ kickers: ["DOR CRÔNICA"] }, vestibular, outros);
     expect(out.kickers).toEqual(["TONTURA E VERTIGEM"]);
+  });
+
+  it("remove tema reintroduzido depois do filtro inicial", () => {
+    const out = enforceSegmentAudienceScope(
+      { kickers: ["TENDINITE FISIOTERAPIA"], headlines: [{ strong: "Nem toda tontura", rest: "é labirintite" }] },
+      vestibular.id,
+      outros,
+    );
+    expect(out.kickers).toEqual(["TONTURA E VERTIGEM"]);
+    expect(out.headlines[0].strong).toBe("Nem toda tontura");
   });
 });

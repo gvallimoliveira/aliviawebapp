@@ -14,3 +14,4 @@
 - [x] Trocar o raio pela mão Aliv.iA no ciclo D.I.F.I. do Studio e da landing page
 - [x] Garantir explicação concreta de STEPS e D.I.F.I. nas artes que citam os métodos
 - [x] Reforçar coerência, persuasão e revisão textual da marca Guilherme Vallim Fisioterapia
+- [x] Impedir aprendizado textual de substituir a identidade da marca ou reintroduzir temas de outro público

@@ -26,7 +26,7 @@ const signatureOf = (text: string): string => {
   return (h >>> 0).toString(36);
 };
 
-export const useCopyLearning = (brandId?: string) => {
+export const useCopyLearning = (brandId?: string, protectedLiterals: string[] = []) => {
   const [rows, setRows] = useState<Row[]>([]);
 
   useEffect(() => {
@@ -50,12 +50,12 @@ export const useCopyLearning = (brandId?: string) => {
   }, [brandId]);
 
   const rewrites = useMemo(
-    () => buildRewrites(rows.map((r) => ({ original: r.original_text, edited: r.edited_text }))),
-    [rows],
+    () => buildRewrites(rows.map((r) => ({ original: r.original_text, edited: r.edited_text })), { protectedLiterals }),
+    [rows, protectedLiterals],
   );
   const vocabulary = useMemo(
-    () => buildVocabularyRewrites(rows.map((r) => ({ original: r.original_text, edited: r.edited_text }))),
-    [rows],
+    () => buildVocabularyRewrites(rows.map((r) => ({ original: r.original_text, edited: r.edited_text })), { protectedLiterals }),
+    [rows, protectedLiterals],
   );
 
   /** Vocabulário aprendido: as frases que o usuário de fato escreveu. */
