@@ -458,13 +458,21 @@ export const planBatch = (input: {
    * o consulta direto e coloca essas frases NA FRENTE da arte, uma dupla por
    * peça, rotativa pela semente — é isso que faz o vocabulário aparecer.
    */
-  const lexProbe = [
+  const relationAudience = (relation as Relation | undefined)?.audience;
+  /**
+   * Léxico clínico específico só pode nascer do público ativo. Dor/objeção
+   * global (`relText`) pode citar outro tema do kit e, antes, fazia o diretor
+   * injetar tendão em uma arte de envelhecimento ativo depois do filtro.
+   */
+  const audienceLexProbe = [
     (relation as Relation | undefined)?.keyword,
-    (relation as Relation | undefined)?.who,
-    (relation as Relation | undefined)?.audience?.label,
-    (relation as Relation | undefined)?.audience?.description,
+    relationAudience?.label,
+    relationAudience?.description,
     (relation as Relation | undefined)?.hook,
-    relText,
+  ].filter(Boolean);
+  const lexProbe = [
+    ...audienceLexProbe,
+    ...(!relationAudience ? [(relation as Relation | undefined)?.who, relText] : []),
   ]
     .filter(Boolean)
     .join(" · ");
