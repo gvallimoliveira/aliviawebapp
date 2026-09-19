@@ -1712,7 +1712,11 @@ const StudioProCreate = ({
                   style={flipped.has(item.index) ? invertedStyle : undefined}
                 >
 
-                  <ArtworkGuard key={`${item.index}:${resetTick}`} brand={brand.name}>
+                  {/* Congelada por chave: o texto ajustado à mão nunca é reconciliado. */}
+                  <FrozenArt
+                    key={`${brand.id}:${seed}:${format}:${kind}:${item.index}:${resetTick}:${signatureOn ? 1 : 0}`}
+                  >
+                  <ArtworkGuard brand={brand.name}>
                   {/* AutoFit: copy longa encolhe para caber; nunca sai cortada. */}
                   <AutoFit resetKey={`${brand.id}:${seed}:${format}:${frameKey}:${kind}:${item.index}`}>
                   <StudioProSignature
@@ -1738,6 +1742,7 @@ const StudioProCreate = ({
                   </StudioProSignature>
                   </AutoFit>
                   </ArtworkGuard>
+                  </FrozenArt>
                 </div>
               </div>
             );
