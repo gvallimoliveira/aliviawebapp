@@ -89,6 +89,7 @@ const DifiBlock = ({ treatment, format }: BlockProps) => {
               <img
                 src={BRAND_MARK}
                 alt={`Símbolo ${BRAND_NAME}`}
+                data-studio-export-image-layer="foreground"
                 className="h-12 w-12 scale-125 object-contain"
               />
             </span>

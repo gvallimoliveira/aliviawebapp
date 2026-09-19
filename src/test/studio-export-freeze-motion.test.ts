@@ -170,6 +170,20 @@ describe("static export surface", () => {
     expect(first.style.height).toBe("");
     expect(second.style.minHeight).toBe("");
   });
+
+  it("preserva a indicação de logo em primeiro plano no clone exportado", async () => {
+    const root = document.createElement("div");
+    root.style.width = "320px";
+    root.style.height = "480px";
+    root.innerHTML = '<span><img data-studio-export-image-layer="foreground" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="Símbolo da marca"></span>';
+    document.body.appendChild(root);
+
+    const surface = await createStaticExportSurface(root);
+    expect(surface.node.querySelector("img")?.dataset.studioExportImageLayer).toBe("foreground");
+
+    surface.dispose();
+    root.remove();
+  });
 });
 
 describe("stroke text fidelity", () => {
