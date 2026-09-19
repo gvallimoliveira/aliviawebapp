@@ -105,6 +105,7 @@ import StudioProSignature from "./StudioProSignature";
 import AutoFit from "@/pages/studio/AutoFit";
 import { frameStyle } from "@/pages/studio/frame";
 import ArtworkGuard from "@/pages/studio/ArtworkGuard";
+import FrozenArt from "@/pages/studio/FrozenArt";
 import VariationControl from "@/pages/studio/VariationControl";
 import {
   DEFAULT_VARIATION_PROFILE,
