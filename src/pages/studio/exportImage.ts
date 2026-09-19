@@ -166,7 +166,11 @@ const roundedRect = (
  * mas a área da foto fica branca. Desenhar os pixels após a rasterização evita
  * definitivamente esse caminho frágil do navegador.
  */
-const paintImagesOnCanvas = (canvas: HTMLCanvasElement, node: HTMLElement): PaintedRect[] => {
+const paintImagesOnCanvas = (
+  canvas: HTMLCanvasElement,
+  node: HTMLElement,
+  layer: "backdrop" | "foreground" = "backdrop",
+): PaintedRect[] => {
   const painted: PaintedRect[] = [];
   const context = canvas.getContext("2d");
   if (!context) return painted;
@@ -178,6 +182,8 @@ const paintImagesOnCanvas = (canvas: HTMLCanvasElement, node: HTMLElement): Pain
 
   for (const image of Array.from(node.querySelectorAll("img"))) {
     if (image.closest('[data-studio-no-export="1"]')) continue;
+    const isForeground = image.dataset.studioExportImageLayer === "foreground";
+    if ((layer === "foreground") !== isForeground) continue;
     if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) continue;
 
     const rect = image.getBoundingClientRect();
@@ -755,8 +761,15 @@ const renderStaticNodeToBlob = async (
     context.fillStyle = backgroundColor;
     context.fillRect(0, 0, output.width, output.height);
     paintBackdropsOnCanvas(output, node, backdrops);
-    paintImagesOnCanvas(output, node);
+    paintImagesOnCanvas(output, node, "backdrop");
     context.drawImage(raster, 0, 0);
+
+    /*
+     * Símbolos e logos que vivem dentro de uma superfície opaca precisam ficar
+     * ACIMA do raster. Se fossem tratados como foto de fundo, o círculo/tarja
+     * do próprio bloco os cobriria no PNG — exatamente o caso da mão no D.I.F.I.
+     */
+    paintImagesOnCanvas(output, node, "foreground");
 
     paintStrokeTextOnCanvas(output, node, specs);
   } finally {
