@@ -16,6 +16,7 @@ import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
 import StudioPhotos from "@/pages/studio/StudioPhotos";
 import { countPhotos } from "@/pages/studio/photos";
 import AutoFit from "@/pages/studio/AutoFit";
+import FrozenArt from "@/pages/studio/FrozenArt";
 import { frameStyle } from "@/pages/studio/frame";
 import { readColorKit } from "./brandColors";
 import { buildBrandThemeStyle } from "./brandTheme";
@@ -671,6 +672,7 @@ const StudioProAuthorial = ({
                     className="h-full w-full bg-background"
                     style={flipped.has(key) ? invertedStyle : undefined}
                   >
+                    <FrozenArt key={`${brand.id}:${seed}:${format}:${art.key}:${slideIndex}:${resetTick}:${signatureOn ? 1 : 0}`}>
                     <AutoFit resetKey={`${brand.id}:${seed}:${format}:${frameKey}:${slideIndex}:${resetTick}`}>
                       <StudioProSignature
                         artKey={`${brand.id}:${seed}:${art.key}:${slideIndex}`}
@@ -686,6 +688,7 @@ const StudioProAuthorial = ({
                         />
                       </StudioProSignature>
                     </AutoFit>
+                    </FrozenArt>
                   </div>
                 </div>
                 <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-1.5">
