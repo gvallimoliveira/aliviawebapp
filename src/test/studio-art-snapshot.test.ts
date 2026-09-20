@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { sanitizeSnapshotHtml, isArtSnapshot } from "@/pages/studio-pro/artSnapshot";
+import { reflowStaticArtwork } from "@/pages/studio/AutoFit";
 import { applyArtText, collectEditableNodes, readArtText, setArtEditing } from "@/pages/studio/artTextEdit";
 
 const ART = `<div class="p-6"><h1>O movimento seguinte agora é seu</h1><p>Primeira sessão com plano na mão.</p></div>`;
@@ -87,6 +88,41 @@ describe("instantâneo da arte salva", () => {
     expect(
       isArtSnapshot({ version: 1, format: "1x1", theme: {}, slides: [{ storage_path: "a", width: 1, height: 1 }] }),
     ).toBe(true);
+  });
+
+  it("recompõe o HTML salvo no quadro inteiro sem criar bordas de encaixe", () => {
+    const root = mount(`
+      <div data-studio-autofit-frame="1" style="width:320px;height:400px;overflow:hidden">
+        <div data-studio-autofit-content="1" style="width:125%;height:125%;transform:scale(.8)">
+          <section style="width:100%;height:100%"><p>Mesma arte</p></section>
+        </div>
+      </div>
+    `);
+    reflowStaticArtwork(root);
+    const frame = root.querySelector<HTMLElement>('[data-studio-autofit-frame="1"]');
+    const content = root.querySelector<HTMLElement>('[data-studio-autofit-content="1"]');
+    expect(frame?.style.width).toBe("320px");
+    expect(content?.style.transform).toBe("scale(1)");
+    expect(content?.style.width).toBe("100%");
+    expect(root.textContent).toContain("Mesma arte");
+    root.remove();
+  });
+
+  it("recompõe também artes antigas salvas antes dos marcadores do AutoFit", () => {
+    const root = mount(`
+      <div style="width:320px;height:568px;overflow:hidden">
+        <div class="origin-top-left" style="width:166.667%;height:166.667%;transform:scale(.6)">
+          <section style="width:100%;height:100%"><p>Arte antiga preservada</p></section>
+        </div>
+      </div>
+    `);
+    reflowStaticArtwork(root);
+    const content = root.querySelector<HTMLElement>(".origin-top-left");
+    expect(content?.style.width).toBe("100%");
+    expect(content?.style.height).toBe("100%");
+    expect(content?.style.transform).toBe("scale(1)");
+    expect(root.textContent).toContain("Arte antiga preservada");
+    root.remove();
   });
 
   it("permite editar textos em spans e divs sem incluir assinatura ou decoração", () => {

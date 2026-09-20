@@ -1736,7 +1736,7 @@ const StudioProCreate = ({
                         persona={persona}
                         slide={slide}
                         photos={activePhotos}
-                        artKey={`${brand.id}:${seed}:${format}|${kind}:${item.index}`}
+                        artKey={`${brand.id}:${seed}|${kind}:${item.index}`}
 
                       />
                     </StudioMotion>

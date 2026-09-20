@@ -245,6 +245,7 @@ export const saveArtSnapshotHtml = async (
   snapshot: ArtSnapshot,
   htmlBySlide: string[],
   format: string,
+  dimensions?: Array<{ width: number; height: number }>,
 ): Promise<ArtSnapshot> => {
   for (let i = 0; i < snapshot.slides.length; i += 1) {
     const html = htmlBySlide[i];
@@ -257,5 +258,13 @@ export const saveArtSnapshotHtml = async (
       });
     if (error) throw error;
   }
-  return { ...snapshot, format };
+  return {
+    ...snapshot,
+    format,
+    slides: snapshot.slides.map((slide, index) => ({
+      ...slide,
+      width: dimensions?.[index]?.width || slide.width,
+      height: dimensions?.[index]?.height || slide.height,
+    })),
+  };
 };
