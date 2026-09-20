@@ -214,8 +214,9 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
         clearArtMoves(node);
         forgetArtLearning(node);
       } else {
-        // Ao fixar, o motor guarda o ponto escolhido para as próximas artes.
-        learnArtMoves(node);
+        // A galeria exibe HTML já salvo: além de ensinar o motor, mantenha o
+        // deslocamento nesta cópia até “Salvar alterações”.
+        learnArtMoves(node, { preserveCurrentMove: true });
       }
       setArtMoving(node, false);
     });

@@ -18,3 +18,4 @@
 - [x] Preservar conteúdo ao trocar formato e recompor a arte salva em todo o quadro
 - [x] Dobrar e centralizar o símbolo da marca no modelo das pedras
 - [x] Fixar a primeira leva ao trocar formato e impedir palavras com caixa híbrida
+- [x] Manter o texto no ponto escolhido após “Fixar posição” em qualquer arte

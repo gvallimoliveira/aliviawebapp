@@ -290,12 +290,16 @@ const StudioProAuthorial = ({
 
   const finishMove = (artKey: string, slide: number) => {
     const node = nodeOf(artKey, slide);
+    let learned = false;
     if (node) {
       // O motor aprende o ponto escolhido antes de fechar o arraste.
-      if (learnArtMoves(node).length)
+      learned = learnArtMoves(node).length > 0;
+      if (learned)
         toast.success("Posição fixada — o motor vai usar esse ponto nas próximas artes.");
       setArtMoving(node, false);
     }
+    // Recria o desenho com o ponto aprendido antes de reaplicar os ajustes.
+    if (learned) setResetTick((n) => n + 1);
     setMoving(null);
     setMoveTick((n) => n + 1);
     setSaved((prev) => {

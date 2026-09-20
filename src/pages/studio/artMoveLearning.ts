@@ -98,7 +98,10 @@ export const forgetArtLearning = (root: HTMLElement) => {
  * converte o arraste feito pelo dono em correção do modelo e guarda a amostra.
  * Chamado quando o dono confirma o reposicionamento ("Fixar posição").
  */
-export const learnArtMoves = (root: HTMLElement): string[] => {
+export const learnArtMoves = (
+  root: HTMLElement,
+  options: { preserveCurrentMove?: boolean } = {},
+): string[] => {
   const learned: string[] = [];
   const store = read();
   const artRect = root.getBoundingClientRect();
@@ -133,10 +136,12 @@ export const learnArtMoves = (root: HTMLElement): string[] => {
     learned.push(key);
 
     /*
-     * O arraste já virou aprendizado do modelo: zeramos o deslocamento manual
-     * para o texto não sair corrigido duas vezes no próximo render.
+     * Nas artes vivas, o chamador remonta o modelo logo depois e a nova posição
+     * aprendida substitui o deslocamento manual. Uma arte salva, porém, é HTML
+     * estático: nela preservamos o transform atual para a posição não voltar ao
+     * lugar anterior assim que o usuário tocar em “Fixar posição”.
      */
-    clearMoveForNode(root, textEl);
+    if (!options.preserveCurrentMove) clearMoveForNode(root, textEl);
   });
 
   if (learned.length) write(store);
