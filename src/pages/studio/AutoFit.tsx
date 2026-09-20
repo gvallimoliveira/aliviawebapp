@@ -72,6 +72,33 @@ const measureNeeded = (root: HTMLElement) => {
   };
 };
 
+/**
+ * Recalcula um AutoFit já serializado. A galeria abre HTML estático, portanto
+ * não existe componente React para medir novamente quando a proporção muda.
+ * Esta função restaura a superfície para 100%, mede o novo quadro e aplica a
+ * mesma compensação inversa usada na arte viva.
+ */
+export const reflowStaticArtwork = (root: HTMLElement) => {
+  const frames = Array.from(root.querySelectorAll<HTMLElement>('[data-studio-autofit-frame="1"]'));
+  frames.forEach((frame) => {
+    const inner = frame.querySelector<HTMLElement>(':scope > [data-studio-autofit-content="1"]');
+    if (!inner) return;
+    inner.style.width = "100%";
+    inner.style.height = "100%";
+    inner.style.transform = "scale(1)";
+    const needed = measureNeeded(frame);
+    if (!needed) return;
+    const fit = Math.min(
+      needed.occupiedHeight > 0 ? needed.avail.height / needed.occupiedHeight : 1,
+      needed.occupiedWidth > 0 ? needed.avail.width / needed.occupiedWidth : 1,
+    );
+    const scale = Math.max(MIN_SCALE, Math.min(1, Number(fit.toFixed(3))));
+    inner.style.width = `${100 / scale}%`;
+    inner.style.height = `${100 / scale}%`;
+    inner.style.transform = `scale(${scale})`;
+  });
+};
+
 type Props = {
   children: ReactNode;
   /** Muda quando a arte muda: zera a escala antes de medir de novo. */
@@ -179,8 +206,9 @@ const AutoFit = ({ children, resetKey }: Props) => {
 
 
   return (
-    <div ref={frameRef} className="relative h-full w-full overflow-hidden">
+    <div ref={frameRef} data-studio-autofit-frame="1" className="relative h-full w-full overflow-hidden">
       <div
+        data-studio-autofit-content="1"
         className="origin-top-left"
         style={{
           width: `${100 / scale}%`,

@@ -75,10 +75,10 @@ const FocusBlock = ({ content, rng, treatment, format }: BlockProps) => {
           {BRAND_MARK && (
             <image
               href={BRAND_MARK}
-              x={106}
-              y={222}
-              width={44}
-              height={44}
+              x={84}
+              y={200}
+              width={88}
+              height={88}
               preserveAspectRatio="xMidYMid meet"
               aria-hidden
             />

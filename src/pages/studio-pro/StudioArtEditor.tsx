@@ -44,6 +44,7 @@ import {
   type ArtSnapshotSlide,
 } from "./artSnapshot";
 import type { ArtRenderBrand } from "./artRender";
+import { reflowStaticArtwork } from "@/pages/studio/AutoFit";
 
 export type EditableArt = {
   id: string;
@@ -85,12 +86,7 @@ const frameRatio = (format: StudioFormat, slide: ArtSnapshotSlide) => {
   return (slide.width || 1080) / (slide.height || 1350);
 };
 
-/**
- * Um slide do instantâneo dentro da moldura escolhida. A arte principal sempre
- * usa `contain`, portanto nenhum texto ou elemento é cortado. Quando a nova
- * proporção deixa sobra, uma segunda cópia ampliada da própria arte preenche o
- * fundo como textura — nunca uma faixa lisa ou uma cor genérica.
- */
+/** Um slide salvo recomposto dentro de toda a proporção escolhida. */
 const SnapshotSlide = ({
   html,
   slide,
@@ -103,24 +99,24 @@ const SnapshotSlide = ({
   domId: string;
 }) => {
   const frame = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
 
   useLayoutEffect(() => {
     const el = frame.current;
     if (!el) return;
-    const measure = () => setWidth(el.clientWidth);
-    measure();
-    const ro = new ResizeObserver(measure);
+    const reflow = () => {
+      const stage = el.querySelector<HTMLElement>(`#${CSS.escape(domId)}`);
+      if (stage) reflowStaticArtwork(stage);
+    };
+    const first = window.requestAnimationFrame(() => window.requestAnimationFrame(reflow));
+    const ro = new ResizeObserver(reflow);
     ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+    return () => {
+      window.cancelAnimationFrame(first);
+      ro.disconnect();
+    };
+  }, [domId, format, html]);
 
   const ratio = frameRatio(format, slide);
-  const frameHeight = width ? width / ratio : 0;
-  const artWidth = slide.width || 1080;
-  const artHeight = slide.height || 1350;
-  const contain = width ? Math.min(width / artWidth, frameHeight / artHeight) : 0;
-  const cover = width ? Math.max(width / artWidth, frameHeight / artHeight) : 0;
 
   return (
     <div
@@ -128,37 +124,15 @@ const SnapshotSlide = ({
       className="relative w-full overflow-hidden rounded-2xl border border-border"
       style={{ aspectRatio: `${ratio}`, background: "hsl(var(--background))" }}
     >
-      {cover > contain && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 overflow-hidden opacity-35 blur-xl"
-        >
-          <div
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: "50%",
-              width: `${slide.width}px`,
-              height: `${slide.height}px`,
-              transform: `translate(-50%, -50%) scale(${cover * 1.04 || 0.001})`,
-              transformOrigin: "center center",
-            }}
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        </div>
-      )}
       <div
         id={domId}
-        // A arte editável permanece inteira e acima da extensão texturizada.
+        // A estrutura salva recebe as dimensões do novo quadro e reorganiza os
+        // blocos relativos à moldura, em vez de ser tratada como uma imagem.
         style={{
           position: "absolute",
-          left: "50%",
-          top: "50%",
-          width: `${slide.width}px`,
-          height: `${slide.height}px`,
-          transform: `translate(-50%, -50%) scale(${contain || 0.001})`,
-          transformOrigin: "center center",
-          zIndex: 1,
+          inset: 0,
+          width: "100%",
+          height: "100%",
         }}
         dangerouslySetInnerHTML={{ __html: html }}
       />
@@ -354,7 +328,15 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
         }
       }
 
-      const nextSnapshot = await saveArtSnapshotHtml(snapshot, serialized, format);
+      const dimensions = htmls.map((_, pos) => {
+        const frame = frameOf(pos);
+        const rect = frame?.getBoundingClientRect();
+        return {
+          width: Math.round(rect?.width ?? snapshot.slides[pos]?.width ?? 1080),
+          height: Math.round(rect?.height ?? snapshot.slides[pos]?.height ?? 1350),
+        };
+      });
+      const nextSnapshot = await saveArtSnapshotHtml(snapshot, serialized, format, dimensions);
       const headline =
         (stageOf(0)?.querySelector("h1, h2, h3")?.textContent ?? "").trim().slice(0, 140) || art.headline;
 
