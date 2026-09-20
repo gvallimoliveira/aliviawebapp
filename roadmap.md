@@ -17,3 +17,4 @@
 - [x] Impedir aprendizado textual de substituir a identidade da marca ou reintroduzir temas de outro público
 - [x] Preservar conteúdo ao trocar formato e recompor a arte salva em todo o quadro
 - [x] Dobrar e centralizar o símbolo da marca no modelo das pedras
+- [x] Fixar a primeira leva ao trocar formato e impedir palavras com caixa híbrida

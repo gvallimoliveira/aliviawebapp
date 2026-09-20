@@ -28,13 +28,16 @@ const signatureOf = (text: string): string => {
 
 export const useCopyLearning = (brandId?: string, protectedLiterals: string[] = []) => {
   const [rows, setRows] = useState<Row[]>([]);
+  const [ready, setReady] = useState(!brandId);
 
   useEffect(() => {
     if (!brandId) {
       setRows([]);
+      setReady(true);
       return;
     }
     let alive = true;
+    setReady(false);
     void (async () => {
       const { data } = await supabase
         .from("studio_copy_learning")
@@ -42,7 +45,10 @@ export const useCopyLearning = (brandId?: string, protectedLiterals: string[] = 
         .eq("brand_id", brandId)
         .order("updated_at", { ascending: false })
         .limit(600);
-      if (alive) setRows((data as Row[]) ?? []);
+      if (alive) {
+        setRows((data as Row[]) ?? []);
+        setReady(true);
+      }
     })();
     return () => {
       alive = false;
@@ -119,5 +125,5 @@ export const useCopyLearning = (brandId?: string, protectedLiterals: string[] = 
     [brandId, rows],
   );
 
-  return { rewrites, vocabulary, voice, learn, count: rows.length };
+  return { rewrites, vocabulary, voice, learn, count: rows.length, ready };
 };

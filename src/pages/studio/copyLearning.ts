@@ -100,7 +100,16 @@ export const applyLearnedVocabulary = (text: string, vocabulary: LearnedVocabula
     const pattern = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(from).replace(/\\\s+/g, "\\s+")}(?![\\p{L}\\p{N}])`, "giu");
     next = next.replace(pattern, (matched) => {
       applied += 1;
-      return /^[A-ZÀ-Ü]/.test(matched) ? to.charAt(0).toLocaleUpperCase("pt-BR") + to.slice(1) : to;
+      const lower = to.toLocaleLowerCase("pt-BR");
+      // O destino herda a caixa do trecho substituído, não a caixa acidental
+      // capturada durante uma edição no celular. Isso impede palavras híbridas
+      // como "FISIOTERAPeuta" após a remontagem da arte.
+      if (matched === matched.toLocaleUpperCase("pt-BR") && /\p{L}/u.test(matched)) {
+        return lower.toLocaleUpperCase("pt-BR");
+      }
+      return /^[A-ZÀ-Ü]/.test(matched)
+        ? lower.charAt(0).toLocaleUpperCase("pt-BR") + lower.slice(1)
+        : lower;
     });
   });
   return { text: next, applied };

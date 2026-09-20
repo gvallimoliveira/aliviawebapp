@@ -19,6 +19,7 @@ type Row = { signature: string; uses: number; last_used_at: string };
 
 export const usePhraseMemory = (brandId?: string) => {
   const [rows, setRows] = useState<Row[]>([]);
+  const [ready, setReady] = useState(!brandId);
   const pending = useRef<Map<string, number>>(new Map());
   /**
    * DESCONTO IMEDIATO (dentro do mesmo lote). Gravar no banco leva 2,5s, então
@@ -33,9 +34,11 @@ export const usePhraseMemory = (brandId?: string) => {
   useEffect(() => {
     if (!brandId) {
       setRows([]);
+      setReady(true);
       return;
     }
     let alive = true;
+    setReady(false);
     void (async () => {
       const { data } = await supabase
         .from("studio_phrase_memory")
@@ -43,7 +46,10 @@ export const usePhraseMemory = (brandId?: string) => {
         .eq("brand_id", brandId)
         .order("last_used_at", { ascending: false })
         .limit(1500);
-      if (alive) setRows((data as Row[]) ?? []);
+      if (alive) {
+        setRows((data as Row[]) ?? []);
+        setReady(true);
+      }
     })();
     return () => {
       alive = false;
@@ -131,5 +137,5 @@ export const usePhraseMemory = (brandId?: string) => {
     [],
   );
 
-  return memory;
+  return Object.assign(memory, { ready });
 };
