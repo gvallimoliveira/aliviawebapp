@@ -14,6 +14,12 @@ const rect = (left: number, top: number, width: number, height: number): DOMRect
   toJSON: () => ({}),
 });
 
+const pointer = (type: string, x: number, y: number) => {
+  const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: y });
+  Object.defineProperty(event, "pointerId", { value: 1 });
+  return event;
+};
+
 const movedLearningArt = () => {
   const root = document.createElement("div");
   root.dataset.studioArtKey = `learning-${Math.random()}`;
@@ -34,9 +40,9 @@ const movedLearningArt = () => {
   HTMLElement.prototype.releasePointerCapture = () => undefined;
   setArtMoving(root, true);
   const handle = root.querySelector('[aria-label="Arrastar este texto"]') as HTMLButtonElement;
-  handle.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1, clientX: 100, clientY: 100 }));
-  handle.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerId: 1, clientX: 140, clientY: 150 }));
-  handle.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1, clientX: 140, clientY: 150 }));
+  handle.dispatchEvent(pointer("pointerdown", 100, 100));
+  handle.dispatchEvent(pointer("pointermove", 140, 150));
+  handle.dispatchEvent(pointer("pointerup", 140, 150));
   return { root, text };
 };
 
