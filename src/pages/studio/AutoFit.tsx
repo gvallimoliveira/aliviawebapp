@@ -79,9 +79,17 @@ const measureNeeded = (root: HTMLElement) => {
  * mesma compensação inversa usada na arte viva.
  */
 export const reflowStaticArtwork = (root: HTMLElement) => {
-  const frames = Array.from(root.querySelectorAll<HTMLElement>('[data-studio-autofit-frame="1"]'));
+  const marked = Array.from(root.querySelectorAll<HTMLElement>('[data-studio-autofit-frame="1"]'));
+  /** Instantâneos antigos não carregam os marcadores; reconhecemos a estrutura
+   * histórica do AutoFit para que artes já salvas também ocupem o novo quadro. */
+  const legacy = Array.from(root.querySelectorAll<HTMLElement>('.origin-top-left'))
+    .map((inner) => inner.parentElement)
+    .filter((frame): frame is HTMLElement => !!frame && !marked.includes(frame));
+  const frames = [...marked, ...legacy];
   frames.forEach((frame) => {
-    const inner = frame.querySelector<HTMLElement>(':scope > [data-studio-autofit-content="1"]');
+    const inner = frame.querySelector<HTMLElement>(
+      ':scope > [data-studio-autofit-content="1"], :scope > .origin-top-left',
+    );
     if (!inner) return;
     inner.style.width = "100%";
     inner.style.height = "100%";

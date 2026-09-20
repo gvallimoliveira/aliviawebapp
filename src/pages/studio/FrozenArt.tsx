@@ -12,7 +12,8 @@ import { memo, type ReactNode } from "react";
  * Aqui o desenho passa a ser montado UMA vez por chave: nada do lado de fora
  * força uma atualização dentro da arte. Toda mudança real da arte (nova versão,
  * outro formato, desfazer, reaplicar ajuste) troca a `key` e monta de novo,
- * o que é sempre seguro.
+ * o que é sempre seguro. A identidade editorial e as escolhas de foto não
+ * incluem o formato, então essa remontagem só reorganiza a mesma arte.
  */
 const FrozenArt = memo(
   ({ children }: { children: ReactNode }) => <>{children}</>,

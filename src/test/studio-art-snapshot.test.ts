@@ -108,6 +108,23 @@ describe("instantâneo da arte salva", () => {
     root.remove();
   });
 
+  it("recompõe também artes antigas salvas antes dos marcadores do AutoFit", () => {
+    const root = mount(`
+      <div style="width:320px;height:568px;overflow:hidden">
+        <div class="origin-top-left" style="width:166.667%;height:166.667%;transform:scale(.6)">
+          <section style="width:100%;height:100%"><p>Arte antiga preservada</p></section>
+        </div>
+      </div>
+    `);
+    reflowStaticArtwork(root);
+    const content = root.querySelector<HTMLElement>(".origin-top-left");
+    expect(content?.style.width).toBe("100%");
+    expect(content?.style.height).toBe("100%");
+    expect(content?.style.transform).toBe("scale(1)");
+    expect(root.textContent).toContain("Arte antiga preservada");
+    root.remove();
+  });
+
   it("permite editar textos em spans e divs sem incluir assinatura ou decoração", () => {
     const root = mount(`
       <div><span>01</span><div>Amplifica o que ele já faz bem.</div></div>
