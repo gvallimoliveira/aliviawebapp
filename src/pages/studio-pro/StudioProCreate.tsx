@@ -1080,7 +1080,13 @@ const StudioProCreate = ({
       if (learnArtMoves(node).length) learnedAny = true;
       setArtMoving(node, false);
     });
-    if (learnedAny) toast.success("Posição fixada — o motor vai usar esse ponto nas próximas artes.");
+    if (learnedAny) {
+      /* O aprendizado altera o ponto estrutural do modelo. Remontar agora faz a
+         posição escolhida aparecer imediatamente, sem o texto voltar ao lugar
+         antigo entre o clique e a próxima geração/troca de formato. */
+      setResetTick((n) => n + 1);
+      toast.success("Posição fixada — o motor vai usar esse ponto nas próximas artes.");
+    }
     setMoving(null);
     setMoveTick((n) => n + 1);
     // A arte mudou de posição: um salvamento anterior não representa mais a tela.
