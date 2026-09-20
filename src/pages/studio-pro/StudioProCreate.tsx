@@ -608,6 +608,12 @@ const StudioProCreate = ({
 
   /** Memória de frases da marca (na conta): frase recente perde vez no sorteio. */
   const phraseMemory = usePhraseMemory(brand.id);
+  /**
+   * A primeira pintura não pode usar um acervo ainda vazio. Fotos e memórias
+   * chegam de forma assíncrona; mostrar a arte antes disso criava uma composição
+   * provisória que só era revelada como diferente no primeiro clique de formato.
+   */
+  const batchInputsReady = !photosLoading && learning.ready && phraseMemory.ready;
 
   /**
    * Registro de cobertura DURANTE o lote: antes entrava como `() => {}`, então
@@ -628,6 +634,37 @@ const StudioProCreate = ({
         phraseMemory,
       ),
     [content, aliviaWorld, phraseMemory],
+  );
+
+  /**
+   * ESCOLHAS IMUTÁVEIS DA LEVA.
+   *
+   * Os blocos chamam o picker durante a renderização. A memória anti-repetição
+   * muda depois de cada escolha; portanto uma remontagem por formato poderia
+   * escolher outra frase. O cache abaixo fixa o resultado de cada chamada por
+   * arte e por identidade editorial, deixando o formato alterar apenas o quadro.
+   */
+  const pickerChoices = useRef<Map<string, unknown[]>>(new Map());
+  const pickerForArt = useCallback(
+    (artIdentity: string) => {
+      let call = 0;
+      return {
+        pick: <T,>(
+          items: readonly T[],
+          count: number,
+          rng: Parameters<typeof picker.pick<T>>[2],
+          topicsOf: Parameters<typeof picker.pick<T>>[3],
+        ): T[] => {
+          const key = `${artIdentity}:pick:${call++}`;
+          const cached = pickerChoices.current.get(key);
+          if (cached) return cached as T[];
+          const chosen = picker.pick(items, count, rng, topicsOf);
+          pickerChoices.current.set(key, chosen as unknown[]);
+          return chosen;
+        },
+      };
+    },
+    [picker],
   );
 
 
@@ -864,6 +901,7 @@ const StudioProCreate = ({
    * tornava a oferecer as mesmas frases com peso cheio.
    */
   useEffect(() => {
+    if (!batchInputsReady) return;
     const signatures = director.shots.flatMap((shot) => [
       ...shot.copy.map((line) => phraseSignature(line)),
       ...(shot.reserved.carousels ?? []).map((carousel) => phraseSignature(carousel.id ?? carousel)),
@@ -871,7 +909,7 @@ const StudioProCreate = ({
     ]);
     if (signatures.length > 0) phraseMemory.record(signatures);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [director]);
+  }, [batchInputsReady, director]);
 
   /**
    * COLETA DE RESULTADOS: cada geração deixa uma medida simples (quantas artes,
@@ -1672,7 +1710,12 @@ const StudioProCreate = ({
       </div>
 
       <div ref={wrapper} className="mt-5 flex flex-col items-center gap-6" style={themeStyle}>
-        {groups.map((group) => {
+        {!batchInputsReady ? (
+          <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Preparando suas artes…
+          </div>
+        ) : groups.map((group) => {
           const first = group.items[0];
           const indexes = group.items.map((item) => item.index);
           // A legenda nasce do MESMO texto que o diretor escreveu para a arte.
@@ -1732,7 +1775,7 @@ const StudioProCreate = ({
                         rng={createRng(`${brand.id}:${seed}:${kind}:${item.index}`)}
                         treatment={treatment}
                         format={format}
-                        picker={picker}
+                        picker={pickerForArt(`${brand.id}:${seed}:${activeSegment}:${angle}:${kind}:${item.index}`)}
                         persona={persona}
                         slide={slide}
                         photos={activePhotos}

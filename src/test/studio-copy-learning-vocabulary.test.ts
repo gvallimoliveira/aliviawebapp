@@ -46,4 +46,20 @@ describe("studio learned vocabulary", () => {
     expect(result.content.kicker).toBe("GUILHERME VALLIM");
     expect(result.applied).toBe(0);
   });
+
+  it("preserva caixa alta inteira sem criar palavras híbridas", () => {
+    const learned: LearnedRewrite[] = [
+      { original: "profissional", edited: "fisioterapeUta" },
+    ];
+    const result = applyLearnedCopy(
+      { uppercase: "PROFISSIONAL", sentence: "Profissional preparado", lower: "profissional preparado" },
+      buildRewrites([]),
+      buildVocabularyRewrites(learned),
+    );
+    expect(result.content).toEqual({
+      uppercase: "FISIOTERAPEUTA",
+      sentence: "Fisioterapeuta preparado",
+      lower: "fisioterapeuta preparado",
+    });
+  });
 });
