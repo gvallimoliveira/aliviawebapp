@@ -20,3 +20,5 @@
 - [x] Dobrar e centralizar o símbolo da marca no modelo das pedras
 - [x] Fixar a primeira leva ao trocar formato e impedir palavras com caixa híbrida
 - [x] Manter o texto no ponto escolhido após “Fixar posição” em qualquer arte
+
+- [ ] Absorver matrizes de palavras-chave e interligação do manual no Studio; preencher Aliv.iA, Guilherme Vallim e criar Aline Furtado Vet pronta para teste.
