@@ -41,6 +41,8 @@ import { carouselClosingCopy, carouselCoverCopy, joinCopyParts } from "@/pages/s
 import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
+import { buildArc } from "./narrativeArc";
+
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
 import { matchesMsk, mskLines } from "./mskLexicon";
 
