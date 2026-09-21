@@ -288,7 +288,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   }, []);
 
   // Handler for the badge click. If multiple pending → opens picker. If one → navigates and scrolls.
-  const handleAcquireBadgeClick = useCallback((p: { name: string; email: string; assessments: any[] }) => {
+  const handleAcquireBadgeClick = useCallback((p: { name: string; email?: string | null; groupKey?: string; assessments: any[] }) => {
     const pending = getPendingTreatmentAssessments(p.assessments);
     if (pending.length === 0) return;
     if (pending.length > 1) {
@@ -296,9 +296,14 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       return;
     }
     // Single pending → ensure detail view is open then scroll
-    if (selectedEmail !== (p.email || (p as any).groupKey)) {
+    const targetKey = p.email || p.groupKey;
+    if (!targetKey) {
+      setTreatmentPicker({ patientName: p.name, assessments: pending });
+      return;
+    }
+    if (selectedEmail !== targetKey) {
       setPendingScrollToTreatment(true);
-      setSelectedEmail(p.email || (p as any).groupKey);
+      setSelectedEmail(targetKey);
     } else {
       // Already in detail view
       if (!scrollToTreatmentCard()) setPendingScrollToTreatment(true);
