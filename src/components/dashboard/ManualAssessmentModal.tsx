@@ -373,6 +373,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // so the hypothesis is the AI's actual hypothesis, not the first line of a JSON dump
   // or a fallback to the clinical impression text.
   const [aiDiagnosis, setAiDiagnosis] = useState<any | null>(null);
+  // Texto de diagnóstico exatamente como a IA (ou a avaliação salva) deixou no campo.
+  // Se o profissional alterar esse texto, a hipótese dele prevalece no prontuário.
+  const aiDiagnosisBaselineRef = useRef("");
 
   // Tratamento
   const [treatmentText, setTreatmentText] = useState("");
@@ -846,6 +849,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     if (dx.summary && dx.summary !== dx.hypothesis) dxParts.push("", String(dx.summary));
     if (dx.reasoning) dxParts.push("", String(dx.reasoning));
     setDiagnosisText(dx.text || dxParts.join("\n"));
+    aiDiagnosisBaselineRef.current = dx.text || dxParts.join("\n");
     const tx = a.treatment_plan || null;
     setAiTreatment(tx && typeof tx === "object" ? tx : null);
     setTreatmentText(tx?.text || tx?.summary || "");
@@ -931,6 +935,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     if (dx.summary && dx.summary !== dx.hypothesis) dxParts.push("", String(dx.summary));
     if (dx.reasoning) dxParts.push("", String(dx.reasoning));
     setDiagnosisText(dx.text || dxParts.join("\n"));
+    aiDiagnosisBaselineRef.current = dx.text || dxParts.join("\n");
     setAiTreatment(null);
     setTreatmentText("");
     setExternalSource({
@@ -1254,9 +1259,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         if (dx.summary) parts.push("", String(dx.summary));
         if (dx.reasoning) parts.push("", String(dx.reasoning));
         setDiagnosisText(parts.join("\n"));
+        aiDiagnosisBaselineRef.current = parts.join("\n");
       } else {
         setAiDiagnosis(null);
-        setDiagnosisText(typeof dx === "string" ? dx : JSON.stringify(dx, null, 2));
+        const raw = typeof dx === "string" ? dx : JSON.stringify(dx, null, 2);
+        setDiagnosisText(raw);
+        aiDiagnosisBaselineRef.current = raw;
       }
       toast({ title: isPt ? "Diagnóstico gerado!" : "Diagnosis generated!" });
     } catch (err: any) {
@@ -1498,6 +1506,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     }
     setSaving(true);
     try {
+      // O profissional mexeu no texto do diagnóstico depois de gerar a hipótese?
+      const professionalEditedDiagnosis =
+        diagnosisText.trim() !== aiDiagnosisBaselineRef.current.trim() && !!diagnosisText.trim();
+      const editedFirstLine = diagnosisText.split("\n").map((l) => l.trim()).find(Boolean) || "";
+      const editedHypothesis = editedFirstLine.startsWith("{") || editedFirstLine.startsWith("[")
+        ? "" : editedFirstLine;
+
       const row: any = {
         type: "professional",
         status: "completed",
@@ -1546,10 +1561,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             severity: r.severity,
           };
         }),
-        // Diagnosis: prefer the AI-generated hypothesis when available. We must NEVER
-        // fall back to the clinical impression for the hypothesis — the hypothesis is
-        // a distinct clinical concept and using the impression as a stand-in produced
-        // misleading diagnoses in the chart/PDF.
+        // Diagnosis: a hipótese da IA vale como padrão, MAS se o profissional
+        // editou o texto do diagnóstico depois de gerar, a palavra dele prevalece
+        // (prontuário, PDF e WhatsApp) via `hypothesis` + `final_hypothesis`.
         diagnosis: (aiDiagnosis || diagnosisText || clinicalImpression)
           ? (() => {
               const aiHyp = aiDiagnosis?.hypothesis?.toString().trim();
@@ -1557,12 +1571,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               // Avoid leaking raw JSON braces as hypothesis text.
               const cleanFirst = firstLine.startsWith("{") || firstLine.startsWith("[")
                 ? "" : firstLine;
-              const hypothesis = aiHyp || cleanFirst || null;
+              const hypothesis = professionalEditedDiagnosis
+                ? (cleanFirst || aiHyp || null)
+                : (aiHyp || cleanFirst || null);
               return {
                 manual: true,
                 ...(aiDiagnosis || {}),
                 hypothesis: hypothesis ? hypothesis.slice(0, 280) : null,
-                summary: aiDiagnosis?.summary || diagnosisText || clinicalImpression || null,
+                ...(professionalEditedDiagnosis ? { professionalEdited: true } : {}),
+                summary: professionalEditedDiagnosis
+                  ? (diagnosisText || aiDiagnosis?.summary || clinicalImpression || null)
+                  : (aiDiagnosis?.summary || diagnosisText || clinicalImpression || null),
                 text: diagnosisText || null,
                 clinicalImpression: aiClinicalImpression
                   ? aiClinicalImpression
@@ -1572,6 +1591,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               };
             })()
           : null,
+        // Hipótese final definida pelo profissional (sobrescreve a da IA em todo lugar).
+        ...(professionalEditedDiagnosis && editedHypothesis
+          ? {
+              final_hypothesis: editedHypothesis.slice(0, 280),
+              final_hypothesis_by: user?.id || null,
+              final_hypothesis_at: new Date().toISOString(),
+            }
+          : {}),
+
         // Treatment plan: keep the manual flag, the AI structured payload when present,
         // and the free text under both `text` and `summary` so PDF/AssessmentView can render it.
         treatment_plan: (aiTreatment || treatmentText)
@@ -1740,6 +1768,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPendingShareUrl(null); setPendingShareOpen(false); setPendingCount(null);
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
     setDiagnosisText(""); setTreatmentText(""); setAiDiagnosis(null); setAiTreatment(null);
+    aiDiagnosisBaselineRef.current = "";
     setSpecialtyApplied([]);
     setExternalSource(null);
     setAdditionalExternalInfo("");

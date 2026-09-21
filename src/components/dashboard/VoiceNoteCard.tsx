@@ -15,6 +15,7 @@ interface VoiceNote {
   error: string | null;
   duration_seconds: number | null;
   created_at: string;
+  updated_at?: string | null;
   assessment_id?: string | null;
 }
 
@@ -79,32 +80,40 @@ export default function VoiceNoteCard({ assessmentId, assessmentIds, patientId, 
       if (cancelled) return;
 
 
-      // Watchdog: if a note is stuck on "processing" for more than 10 min,
-      // mark it as failed so the user sees a real error and can retry,
-      // instead of an infinite spinner.
-      const STUCK_MS = 10 * 60 * 1000;
+      // Watchdog: só considera travado quando NADA chega há mais de 15 min
+      // (medido pela última atualização, não pelo início da gravação — uma
+      // entrevista longa fica "processando" durante toda a sessão).
+      // E se já existe transcrição parcial, nunca perdemos o texto: a nota vai
+      // para "pronta" em vez de "falhou".
+      const STUCK_MS = 15 * 60 * 1000;
       const now = Date.now();
-      const stuck = (data as VoiceNote[]).filter(
-        (n) => n.status === "processing" && now - new Date(n.created_at).getTime() > STUCK_MS,
-      );
-      if (stuck.length > 0) {
+      const stale = (n: VoiceNote) =>
+        now - new Date(n.updated_at || n.created_at).getTime() > STUCK_MS;
+      const stuck = (data as VoiceNote[]).filter((n) => n.status === "processing" && stale(n));
+      const timedOutMsg = isPt
+        ? "Tempo de processamento excedido. Refaça a gravação (idealmente em trechos menores)."
+        : "Processing timed out. Please retry the recording (ideally in shorter chunks).";
+
+      const rescued = stuck.filter((n) => (n.transcript || "").trim().length > 0);
+      const lost = stuck.filter((n) => !(n.transcript || "").trim());
+
+      if (rescued.length > 0) {
         await supabase
           .from("assessment_voice_notes")
-          .update({
-            status: "failed",
-            error: isPt
-              ? "Tempo de processamento excedido. Refaça a gravação (idealmente em trechos menores)."
-              : "Processing timed out. Please retry the recording (ideally in shorter chunks).",
-          })
-          .in("id", stuck.map((n) => n.id))
+          .update({ status: "ready", error: null })
+          .in("id", rescued.map((n) => n.id))
           .eq("status", "processing");
-        stuck.forEach((n) => {
-          n.status = "failed";
-          n.error = isPt
-            ? "Tempo de processamento excedido. Refaça a gravação (idealmente em trechos menores)."
-            : "Processing timed out. Please retry the recording (ideally in shorter chunks).";
-        });
+        rescued.forEach((n) => { n.status = "ready"; n.error = null; });
       }
+      if (lost.length > 0) {
+        await supabase
+          .from("assessment_voice_notes")
+          .update({ status: "failed", error: timedOutMsg })
+          .in("id", lost.map((n) => n.id))
+          .eq("status", "processing");
+        lost.forEach((n) => { n.status = "failed"; n.error = timedOutMsg; });
+      }
+
 
       setNotes(data as VoiceNote[]);
     };

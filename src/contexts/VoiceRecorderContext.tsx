@@ -24,7 +24,9 @@ import { useToast } from "@/hooks/use-toast";
 
 const CHUNK_DURATION_SEC = 3 * 60;      // rotate every 3 min — keep transcript flowing into the chart
 const MAX_TOTAL_DURATION_SEC = 60 * 60; // hard cap: 1h
-const MAX_INLINE_SIZE = 4 * 1024 * 1024;
+// Áudio acima de 1 MB vai por arquivo temporário. Enviar base64 grande no corpo
+// da chamada era a causa de "Failed to send a request to the Edge Function".
+const MAX_INLINE_SIZE = 1 * 1024 * 1024;
 const MIN_KEEP_SEC = 20;
 
 type State = "idle" | "recording" | "paused" | "uploading";
@@ -211,8 +213,8 @@ const GlobalVoiceRecorderFAB = () => {
       toast({
         title: isPt ? "Gravação iniciada" : "Recording started",
         description: isPt
-          ? "A cada 10 min a transcrição é salva no prontuário, mesmo se a avaliação não for finalizada."
-          : "Every 10 min the transcript is saved to the chart, even if the assessment isn't finalised.",
+          ? "A cada 3 min a transcrição é salva no prontuário, mesmo se a avaliação não for finalizada."
+          : "Every 3 min the transcript is saved to the chart, even if the assessment isn't finalised.",
       });
     } catch (err: any) {
       toast({
@@ -441,23 +443,52 @@ const GlobalVoiceRecorderFAB = () => {
       payload.audio_base64 = btoa(bin);
     }
 
-    supabase.functions
-      .invoke("transcribe-anamnesis", { body: payload })
-      .then(async ({ error }) => {
+    // Envio com até 3 tentativas: falhas de rede/tamanho não devem apagar o
+    // que já foi transcrito nos trechos anteriores.
+    (async () => {
+      let lastError: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { error } = await supabase.functions.invoke("transcribe-anamnesis", { body: payload });
         if (!error) return;
-        console.error("transcribe-anamnesis error:", error);
-        if (isFinal) {
-          await supabase
-            .from("assessment_voice_notes")
-            .update({
-              status: "failed",
-              error: ((error as any)?.message || "Audio processing failed") +
-                (isPt ? " Tente refazer em trechos menores." : " Please retry in shorter chunks."),
-            })
-            .eq("id", voiceNoteId)
-            .eq("status", "processing");
-        }
-      });
+        lastError = error;
+        console.error(`transcribe-anamnesis error (tentativa ${attempt + 1}):`, error);
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      }
+
+      if (!isFinal) return;
+
+      // Trecho final não processou. Se já existe transcrição parcial, nunca
+      // marcamos como falha: pedimos só o resumo do que foi transcrito.
+      const { data: existing } = await supabase
+        .from("assessment_voice_notes")
+        .select("transcript")
+        .eq("id", voiceNoteId)
+        .maybeSingle();
+      const partial = (existing?.transcript || "").trim();
+
+      if (partial) {
+        const { error: sumErr } = await supabase.functions.invoke("transcribe-anamnesis", {
+          body: { voice_note_id: voiceNoteId, language, summary_only: true },
+        });
+        if (!sumErr) return;
+        await supabase
+          .from("assessment_voice_notes")
+          .update({ status: "ready", error: null })
+          .eq("id", voiceNoteId)
+          .eq("status", "processing");
+        return;
+      }
+
+      await supabase
+        .from("assessment_voice_notes")
+        .update({
+          status: "failed",
+          error: ((lastError as any)?.message || "Audio processing failed") +
+            (isPt ? " Tente refazer em trechos menores." : " Please retry in shorter chunks."),
+        })
+        .eq("id", voiceNoteId)
+        .eq("status", "processing");
+    })();
 
     if (isFinal) {
       toast({
