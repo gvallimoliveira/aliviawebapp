@@ -80,7 +80,7 @@ const StudioCapture = ({
     if (!node) return;
     const id = window.setTimeout(() => {
       setDark(isDarkSurface(node));
-      const hasLogo = !!node.querySelector('img[src*="logo-alivia"]');
+      const hasLogo = !!node.querySelector('[data-brand-logo="1"], [data-brand-mark="1"]');
       const hasWordmark = (node.textContent ?? "").includes(BRAND_NAME);
       setSigned(hasLogo || hasWordmark);
     }, 60);

@@ -73,6 +73,47 @@ describe("Diretor criativo", () => {
     direction.shots.forEach((shot) => expect(shot.affinity.length).toBeGreaterThan(10));
   });
 
+  it("preserva título e apoio da mesma rota mesmo quando a memória já viu uma frase", () => {
+    const keywordMatrix = [
+      { id: "otite", term: "Otite externa", perception: "coçar a orelha", audienceIds: ["tutor"], theme: "otite" },
+    ];
+    const reasoningMatrix = [
+      {
+        id: "otite-route",
+        audienceIds: ["tutor"],
+        scene: "O animal chacoalha a cabeça",
+        mechanism: "Agentes diferentes pedem condutas diferentes",
+        bridge: "A lâmina mostra o agente",
+        outcome: "tratar a causa da otite",
+        cta: "Agendar investigação",
+        theme: "otite",
+      },
+    ];
+    const relation = pickRelation({
+      audience: { id: "tutor", label: "Tutor" },
+      audiences: [],
+      dna: buildBrandDna({ niche: "dermatologia veterinária" }),
+      brand: "Marca veterinária",
+      angle: "informar",
+      seed: "rota-atomica",
+      keywordMatrix,
+      reasoningMatrix,
+    });
+    const direction = planBatch({
+      content: WORLDS.pro,
+      count: 1,
+      seed: "rota-atomica",
+      relation,
+      weightOf: () => 0.01,
+    });
+    const directed = direction.contentFor(0);
+    const headline = `${directed.headlines[0].strong} ${directed.headlines[0].rest}`;
+    expect(headline).toContain("Tratar a causa da otite");
+    expect(headline.toLowerCase()).toContain("agentes diferentes pedem");
+    expect(directed.subs[0]).toContain("A lâmina mostra o agente");
+    expect(directed.subs[0]).toContain("tratar a causa da otite");
+  });
+
   it("faz uma rota já usada ceder espaço no lote seguinte", () => {
     const relation = pickRelation({
       dna: buildBrandDna({

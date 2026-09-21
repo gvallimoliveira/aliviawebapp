@@ -94,6 +94,7 @@ export const composeRouteCopy = (
   const methodPlain = squash(route.methodPlain);
   const lexicalTerm = squash(route.lexicalTerm);
   const lexicalPerception = squash(route.lexicalPerception);
+  const completeReasoning = Boolean(scene && feature && proof && desire);
 
 
   /** Fio da arte: o que dói/o que se quer, o que muda e a prova. */
@@ -111,6 +112,12 @@ export const composeRouteCopy = (
    */
   type Frame = { field: string; strong: string; rest: string };
   const headlinePool: Frame[] = [
+    ...(completeReasoning
+      ? [
+          { field: "reasoning", strong: fit(cap(scene), 42), rest: fit(cap(feature), 54) },
+          { field: "reasoning", strong: fit(cap(lexicalPerception || scene), 42), rest: fit(cap(feature), 54) },
+        ]
+      : []),
     ...(scene ? [{ field: "scene", strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
     ...(trigger ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }] : []),
     // A objeção é o ativo mais persuasivo do kit: passa a poder ser TÍTULO,
@@ -128,6 +135,9 @@ export const composeRouteCopy = (
 
   /** Apoios que respondem à objeção, situam a cena e nomeiam o preço da inércia. */
   const extraSubs: Array<{ field: string; text: string }> = [
+    ...(completeReasoning
+      ? [{ field: "reasoning", text: `${cap(proof)}. Isso orienta ${low(desire)}.` }]
+      : []),
     ...(lexicalTerm && lexicalPerception
       ? [{ field: "lexical", text: `${cap(lexicalTerm)} é o nome técnico. Na rotina, pode aparecer como ${low(lexicalPerception)}.` }]
       : []),
@@ -190,12 +200,17 @@ export const composeRouteCopy = (
      * apoio cai no acervo de fio narrativo.
      */
     const otherFields = extraSubs.filter((item) => item.field !== headline.field);
+    const coherentReasoning = completeReasoning
+      ? extraSubs.filter((item) => item.field === "reasoning")
+      : [];
     const subPool = [
       ...otherFields.map((item) => item.text),
       ...(otherFields.length ? [] : extraSubs.map((item) => item.text)),
       ...subsByKind[route.kind],
     ];
-    const sub = otherFields.length
+    const sub = coherentReasoning.length
+      ? coherentReasoning[frame % coherentReasoning.length].text
+      : otherFields.length
       ? otherFields[frame % otherFields.length].text
       : subPool[frame % subPool.length];
     if (usable(sub) && sub.length <= 190) out.subs = [terms(fit(sub, 188))];

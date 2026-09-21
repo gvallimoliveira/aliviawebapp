@@ -11,6 +11,7 @@ import { buildNarrativeRoute } from "@/pages/studio-pro/synapses";
 import { composeRouteCopy } from "@/pages/studio-pro/storytelling";
 import { pickRelation } from "@/pages/studio-pro/relational";
 import { buildBrandDna, operationWords } from "@/pages/studio-pro/brandDnaKit";
+import { buildBrandContent } from "@/pages/studio-pro/brandContent";
 
 const keywordMatrix = [
   { id: "otite", term: "Otite externa", perception: "chacoalhar a cabeça e coçar a orelha", audienceIds: ["tutor-cronico"], theme: "otite" },
@@ -71,6 +72,11 @@ describe("matrizes de conteúdo do Studio", () => {
     expect(visible).toContain("Swab auricular e lâmina mostram o agente");
     expect(copy.features?.length).toBeGreaterThanOrEqual(3);
     expect(copy.lists?.[0]?.items.length).toBeGreaterThanOrEqual(2);
+    const headline = `${copy.headlines?.[0]?.strong} ${copy.headlines?.[0]?.rest}`;
+    expect(headline).toMatch(/Agentes diferentes pedem|O pet chacoalha a cabeça/);
+    expect(headline).toMatch(/tratar a causa da otite|Agentes diferentes pedem/);
+    expect(copy.subs?.[0]).toContain("Swab auricular e lâmina mostram o agente");
+    expect(copy.subs?.[0]).toContain("tratar a causa da otite");
   });
 
   it("prioriza a rota matricial no par relacional da arte", () => {
@@ -94,5 +100,22 @@ describe("matrizes de conteúdo do Studio", () => {
     expect(words.who).toBe("tutor");
     expect(words.firstStep).toBe("primeira consulta");
     expect(`${words.who} ${words.firstStep} ${words.encounterWord}`).not.toMatch(/paciente|sessão|reavaliação/i);
+  });
+
+  it("não completa um briefing real com frases genéricas de outro assunto", () => {
+    const content = buildBrandContent({
+      name: "Marca especialista",
+      niche: "citologia veterinária",
+      description: "Descrição institucional ampla que não deve virar apoio temático.",
+      briefAnswers: {
+        apresentacao: "Médica veterinária especializada em investigação citológica.",
+        oferta: "Citologia para orientar a decisão clínica.",
+      },
+    });
+    expect(content.subs).toEqual([
+      "Médica veterinária especializada em investigação citológica",
+      "Citologia para orientar a decisão clínica",
+    ]);
+    expect(content.subs).not.toContain("Uma decisão bem tomada economiza meses.");
   });
 });
