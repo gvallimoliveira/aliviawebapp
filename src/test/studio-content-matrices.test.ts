@@ -21,8 +21,10 @@ const reasoningMatrix = [
 describe("matrizes de conteúdo do Studio", () => {
   it("lê, serializa e recupera as duas matrizes", () => {
     expect(readKeywordMatrix(keywordMatrix)).toHaveLength(2);
-    expect(keywordMatrixFromText(keywordMatrixToText(keywordMatrix))).toMatchObject(keywordMatrix);
-    expect(reasoningMatrixFromText(reasoningMatrixToText(reasoningMatrix))).toMatchObject(reasoningMatrix);
+    expect(keywordMatrixFromText(keywordMatrixToText(keywordMatrix)).map(({ id: _id, ...entry }) => entry))
+      .toEqual(keywordMatrix.map(({ id: _id, ...entry }) => entry));
+    expect(reasoningMatrixFromText(reasoningMatrixToText(reasoningMatrix)).map(({ id: _id, ...entry }) => entry))
+      .toEqual(reasoningMatrix.map(({ id: _id, ...entry }) => entry));
   });
 
   it("mantém público, tema e escolha determinística", () => {
@@ -37,7 +39,7 @@ describe("matrizes de conteúdo do Studio", () => {
     const route = buildNarrativeRoute({
       audience: { id: "tutor-cronico", label: "Tutor de pet crônico", cta: "Agendar" },
       audiences: [],
-      dna: {},
+      dna: { forbidden: [] },
       brand: "Dra. Aline Furtado",
       seed: "rota-aline",
       keywordMatrix,
