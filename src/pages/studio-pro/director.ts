@@ -758,7 +758,28 @@ export const planBatch = (input: {
         if (accepted.some((previous) => similarity(line, previous) >= TOO_SIMILAR)) repeated += 1;
         else accepted.push(line);
       });
-      return { arts: shots.length, distinct: accepted.length, repeated };
+      /**
+       * COMEÇO, MEIO E FIM: a arte precisa abrir (destaque), sustentar (apoio) e
+       * pedir um passo (fecho). O relatório conta quantas não fecham o arco —
+       * é o guarda-rail do lote, não só a medida de repetição.
+       */
+      const arcIncomplete = shots.filter((shot) => {
+        const headline = shot.headlines?.[0];
+        const closing = shot.closings?.[0];
+        const arc = buildArc({
+          hook: headline ? `${headline.strong} ${headline.rest}` : "",
+          scene: shot.subs?.[0] ?? "",
+          mechanism: closing?.sub ?? shot.quotes?.[0]?.text ?? "",
+          proof: closing?.title ?? "",
+          cta: closing?.cta ?? "",
+        });
+        return !["hook", "tension", "mechanism", "next"].every((step) =>
+          Boolean((arc as Record<string, string | undefined>)[step]?.trim()),
+        );
+      }).length;
+      const dominantRoute = Math.max(0, ...[...routeUse.values()]);
+      return { arts: shots.length, distinct: accepted.length, repeated, arcIncomplete, dominantRoute };
     },
+
   };
 };
