@@ -868,13 +868,13 @@ export const buildBrandContent = (
 
   /**
    * INVERSÃO DE HIERARQUIA: onde o briefing tem material, ele SUBSTITUI o
-   * acervo neutro (o genérico só completa quando sobraria menos de 2 opções).
+   * acervo neutro. Um único item real continua valendo mais do que uma frase
+   * genérica: o diretor pode variar a forma sem trocar o assunto declarado.
    * É essa troca que tira do ar os vícios herdados do Aliv.iA Fisio.
    */
   const prefer = <T,>(fromDna: T[] | undefined, fallback: T[]): T[] => {
     const dnaItems = (fromDna ?? []).filter(Boolean);
-    if (dnaItems.length >= 2) return dnaItems;
-    return [...dnaItems, ...fallback];
+    return dnaItems.length ? dnaItems : fallback;
   };
 
   /**
