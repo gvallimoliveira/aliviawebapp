@@ -1,0 +1,166 @@
+/**
+ * BIBLIOTECA DE GANCHOS (local, determinística)
+ *
+ * Cada tipo de gancho declara QUAL insumo do manual ele exige. Sem o campo
+ * preenchido, o tipo simplesmente não é elegível — nada é inventado. O molde
+ * devolve `strong` (a frase que abre) e `rest` (o complemento), sempre feitos
+ * de texto real do kit.
+ */
+import { lowerInitial } from "@/pages/studio/grammar";
+import { sentenceLead } from "@/pages/studio/typographyGuards";
+
+export type HookInput =
+  | "dor"
+  | "objecao"
+  | "inimigo"
+  | "prova"
+  | "cena"
+  | "desejo"
+  | "gatilho"
+  | "mecanismo"
+  | "consequencia"
+  | "termo"
+  | "percepcao";
+
+export type HookTypeId =
+  | "contraste-falso-senso-comum"
+  | "custo-do-atraso"
+  | "erro-comum"
+  | "pergunta-diagnostica"
+  | "mito-vs-mecanismo"
+  | "bastidor-prova"
+  | "sinal-precoce-ignorado"
+  | "comparacao-dois-casos"
+  | "pergunta-ao-especialista"
+  | "cena-interrompida"
+  | "regra-com-excecao"
+  | "antes-depois-sem-imagem"
+  | "traducao-tecnica"
+  | "objecao-respondida";
+
+export type HookFields = Partial<Record<HookInput, string>>;
+
+export type HookShape = { strong: string; rest: string };
+
+export type HookType = {
+  id: HookTypeId;
+  label: string;
+  /** Campos do manual sem os quais o gancho não existe. */
+  requires: HookInput[];
+  build: (f: HookFields) => HookShape | undefined;
+};
+
+const squash = (value?: string) => (value ?? "").replace(/\s+/g, " ").trim().replace(/\s*[.!?…]+$/, "");
+const cap = (value?: string) => sentenceLead(squash(value));
+const low = (value?: string) => lowerInitial(squash(value));
+
+/** Promessas e infantilização nunca saem de um gancho automático. */
+const FORBIDDEN =
+  /\b(cura(r|do|da)?|garantid[oa]|garantia|milagr\w*|100%|sem risco|resultado garantido|fofinh\w*|peludinh\w*|bebez\w*|amiguinh\w*)\b/i;
+
+export const hookViolatesGuardrails = (text: string): boolean => FORBIDDEN.test(text ?? "");
+
+export const HOOK_TYPES: HookType[] = [
+  {
+    id: "contraste-falso-senso-comum",
+    label: "Contraste com o senso comum",
+    requires: ["inimigo", "mecanismo"],
+    build: (f) => ({ strong: `Não é ${low(f.inimigo)}`, rest: `é ${low(f.mecanismo)}` }),
+  },
+  {
+    id: "custo-do-atraso",
+    label: "Custo do atraso",
+    requires: ["consequencia"],
+    build: (f) => ({ strong: "Enquanto nada muda", rest: low(f.consequencia) }),
+  },
+  {
+    id: "erro-comum",
+    label: "Erro mais comum",
+    requires: ["inimigo", "desejo"],
+    build: (f) => ({ strong: `O erro mais comum: ${low(f.inimigo)}`, rest: `O caminho é ${low(f.desejo)}` }),
+  },
+  {
+    id: "pergunta-diagnostica",
+    label: "Pergunta diagnóstica",
+    requires: ["cena", "mecanismo"],
+    build: (f) => ({ strong: `${cap(f.cena)}?`, rest: `A resposta começa em ${low(f.mecanismo)}` }),
+  },
+  {
+    id: "mito-vs-mecanismo",
+    label: "Mito × mecanismo",
+    requires: ["objecao", "mecanismo"],
+    build: (f) => ({ strong: `Dizem que ${low(f.objecao)}`, rest: `Na prática, ${low(f.mecanismo)}` }),
+  },
+  {
+    id: "bastidor-prova",
+    label: "Bastidor da conduta",
+    requires: ["prova", "desejo"],
+    build: (f) => ({ strong: `Por dentro: ${low(f.prova)}`, rest: `É o que sustenta ${low(f.desejo)}` }),
+  },
+  {
+    id: "sinal-precoce-ignorado",
+    label: "Sinal precoce ignorado",
+    requires: ["gatilho", "mecanismo"],
+    build: (f) => ({ strong: cap(f.gatilho), rest: `É a hora de ${low(f.mecanismo)}` }),
+  },
+  {
+    id: "comparacao-dois-casos",
+    label: "Dois caminhos",
+    requires: ["inimigo", "prova"],
+    build: (f) => ({ strong: `Dois caminhos: ${low(f.inimigo)}`, rest: `ou ${low(f.prova)}` }),
+  },
+  {
+    id: "pergunta-ao-especialista",
+    label: "Pergunta que mais recebo",
+    requires: ["objecao", "prova"],
+    build: (f) => ({ strong: `A pergunta que mais recebo: ${low(f.objecao)}`, rest: cap(f.prova) }),
+  },
+  {
+    id: "cena-interrompida",
+    label: "Cena interrompida",
+    requires: ["cena", "desejo"],
+    build: (f) => ({ strong: cap(f.cena), rest: `O que se busca é ${low(f.desejo)}` }),
+  },
+  {
+    id: "regra-com-excecao",
+    label: "Regra com exceção",
+    requires: ["mecanismo", "consequencia"],
+    build: (f) => ({ strong: `${cap(f.mecanismo)} quase sempre ajuda`, rest: `Sem isso, ${low(f.consequencia)}` }),
+  },
+  {
+    id: "antes-depois-sem-imagem",
+    label: "Antes e depois sem imagem",
+    requires: ["dor", "desejo"],
+    build: (f) => ({ strong: `De ${low(f.dor)}`, rest: `a ${low(f.desejo)}` }),
+  },
+  {
+    id: "traducao-tecnica",
+    label: "Tradução técnica",
+    requires: ["termo", "percepcao"],
+    build: (f) => ({ strong: cap(f.termo), rest: `aparece como ${low(f.percepcao)}` }),
+  },
+  {
+    id: "objecao-respondida",
+    label: "Objeção respondida",
+    requires: ["objecao", "mecanismo"],
+    build: (f) => ({ strong: cap(f.objecao), rest: cap(f.mecanismo) }),
+  },
+];
+
+const has = (f: HookFields, key: HookInput) => squash(f[key]).length > 2;
+
+/** Ganchos que este manual sustenta, na ordem estável da biblioteca. */
+export const eligibleHooks = (fields: HookFields): HookType[] =>
+  HOOK_TYPES.filter((type) => type.requires.every((key) => has(fields, key)));
+
+/** Gancho montado e conferido: frase com duas partes, sem promessa proibida. */
+export const buildHook = (type: HookType, fields: HookFields): HookShape | undefined => {
+  if (!type.requires.every((key) => has(fields, key))) return undefined;
+  const shape = type.build(fields);
+  if (!shape) return undefined;
+  const strong = squash(shape.strong);
+  const rest = squash(shape.rest);
+  if (strong.length < 8 || rest.length < 6) return undefined;
+  if (hookViolatesGuardrails(`${strong} ${rest}`)) return undefined;
+  return { strong, rest };
+};

@@ -11,13 +11,31 @@
  * Determinístico: mesma rota ⇒ mesmo texto.
  */
 import { isStale } from "@/pages/studio/persuasion";
-import { lowerInitial } from "@/pages/studio/grammar";
+import { isClause, lowerInitial } from "@/pages/studio/grammar";
 import { phraseSignature } from "@/pages/studio/picker";
 import { createRng } from "@/pages/studio/rng";
 import { applyTerms } from "@/pages/studio/terminology";
 import { sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import type { WorldContent } from "@/pages/studio/content/types";
 import type { NarrativeRoute } from "./synapses";
+import { buildHook, eligibleHooks, hookViolatesGuardrails, type HookFields, type HookInput } from "./hookTaxonomy";
+import { textSimilarity } from "./narrativeArc";
+
+/** Liga o insumo exigido pelo gancho ao campo do kit usado nos apoios. */
+const HOOK_FIELD_LABEL: Partial<Record<HookInput, string>> = {
+  cena: "scene",
+  objecao: "objection",
+  inimigo: "enemy",
+  consequencia: "stakes",
+  gatilho: "trigger",
+  termo: "lexical",
+  percepcao: "lexical",
+  dor: "core",
+  desejo: "core",
+  prova: "core",
+  mecanismo: "core",
+};
+
 
 const squash = (value?: string) => (value ?? "").replace(/\s+/g, " ").trim().replace(/\s*[.!?…]+$/, "");
 
@@ -41,13 +59,44 @@ const fit = (raw: string | undefined, max: number): string => {
   return out.trim().replace(/[,:;—–]$/, "").trim();
 };
 
-const cap = (value?: string) => sentenceLead(squash(value));
-const low = (value?: string) => {
-  const text = squash(value);
-  return lowerInitial(text);
+/** Siglas do manual (PAAF, CRMV, HEP...) nunca perdem o caixa alta. */
+const ACRONYM = /\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,6}\b/g;
+const keepAcronyms = (raw: string, out: string) => {
+  const found = [...new Set((raw.match(ACRONYM) ?? []))];
+  return found.reduce(
+    (text, sigla) => text.replace(new RegExp(`\\b${sigla}\\b`, "gi"), sigla),
+    out,
+  );
 };
 
-const usable = (text: string) => text.length > 12 && !isStale(text);
+const cap = (value?: string) => {
+  const raw = squash(value);
+  return keepAcronyms(raw, sentenceLead(raw));
+};
+const low = (value?: string) => {
+  const text = squash(value);
+  // Frase que começa por sigla continua em caixa alta.
+  if (/^[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,6}\b/.test(text)) return text;
+  return keepAcronyms(text, lowerInitial(text));
+};
+
+const SUB_ECHO = 0.68;
+
+/** Contrai preposição + artigo ("de o" -> "do") para a frase não sair torta. */
+const contract = (prep: "de" | "a", text: string) => {
+  const match = /^(o|a|os|as)\s+(.*)$/i.exec(text.trim());
+  const cap1 = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+  if (!match) return prep === "de" ? cap1(`${prep} ${text}`) : `${prep} ${text}`;
+  const table: Record<string, Record<string, string>> = {
+    de: { o: "do", a: "da", os: "dos", as: "das" },
+    a: { o: "ao", a: "à", os: "aos", as: "às" },
+  };
+  const joined = `${table[prep][match[1].toLowerCase()]} ${match[2]}`;
+  return prep === "de" ? cap1(joined) : joined;
+};
+
+const usable = (text: string) => text.length > 12 && !isStale(text) && !hookViolatesGuardrails(text);
+
 
 /** Palavra protagonista para cartaz tipográfico (a mais forte que couber). */
 const bigWord = (source?: string) => {
@@ -104,13 +153,38 @@ export const composeRouteCopy = (
   if (!lead || !turn) return {};
 
   /**
-   * Molduras de destaque, cada uma marcada com o CAMPO do kit que ela leva ao
-   * ar. As primeiras vêm dos campos novos (cena, gatilho, objeção, inimigo,
-   * consequência): é o que faz a capa abrir com vida em vez de frase de
-   * catálogo. A marcação existe para o apoio nunca repetir o mesmo campo do
-   * destaque — assim uma arte carrega dois eixos do kit, não um.
+   * GANCHOS NOMEADOS: a abertura deixa de ser colagem de campos. Cada tipo da
+   * biblioteca (`hookTaxonomy.ts`) só é elegível quando o manual tem o campo que
+   * ele exige, o molde é conferido (duas partes, sem promessa proibida) e o tipo
+   * escolhido varia com a posição da arte no lote.
    */
   type Frame = { field: string; strong: string; rest: string };
+  const hookFields: HookFields = {
+    dor: tension,
+    objecao: objection,
+    inimigo: enemy,
+    prova: proof,
+    cena: scene,
+    desejo: desire,
+    gatilho: trigger,
+    mecanismo: feature,
+    consequencia: stakes,
+    termo: lexicalTerm,
+    percepcao: lexicalPerception,
+  };
+  const hookFrames: Frame[] = eligibleHooks(hookFields)
+    .map((type) => ({ type, shape: buildHook(type, hookFields) }))
+    .filter((entry): entry is { type: (typeof entry)["type"]; shape: NonNullable<(typeof entry)["shape"]> } =>
+      Boolean(entry.shape),
+    )
+    .map(({ type, shape }) => ({
+      field: HOOK_FIELD_LABEL[type.requires[0]] ?? "core",
+      strong: fit(shape.strong, 40),
+      rest: fit(shape.rest, 52),
+    }))
+
+    .filter((frame) => Boolean(frame.strong && frame.rest));
+
   const headlinePool: Frame[] = [
     ...(completeReasoning
       ? [
@@ -118,20 +192,37 @@ export const composeRouteCopy = (
           { field: "reasoning", strong: fit(cap(lexicalPerception || scene), 42), rest: fit(cap(feature), 54) },
         ]
       : []),
+    ...hookFrames,
+    // Molduras diretas dos campos do kit: continuam válidas e somam variedade.
     ...(scene ? [{ field: "scene", strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
-    ...(trigger ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }] : []),
-    // A objeção é o ativo mais persuasivo do kit: passa a poder ser TÍTULO,
-    // não só apoio. A resposta vem no complemento, nunca uma promessa nova.
+    ...(trigger && !isClause(turn)
+      ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }]
+      : []),
     ...(objection ? [{ field: "objection", strong: fit(cap(objection), 32), rest: fit(cap(turn), 44) }] : []),
-    ...(objection ? [{ field: "objection", strong: fit(`"${cap(objection)}"`, 34), rest: fit(`E aí entra ${low(turn)}`, 42) }] : []),
-    ...(enemy ? [{ field: "enemy", strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }] : []),
+    ...(enemy && !isClause(turn)
+      ? [{ field: "enemy", strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }]
+      : []),
     ...(stakes ? [{ field: "stakes", strong: fit("Enquanto nada muda", 28), rest: fit(low(stakes), 44) }] : []),
+
     { field: "core", strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
-    { field: "core", strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
-    { field: "core", strong: fit(`De ${low(lead)}`, 30), rest: fit(`a ${low(gain)}`, 42) },
-    { field: "core", strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
+    ...(isClause(turn)
+      ? [{ field: "core", strong: fit(cap(gain), 30), rest: fit(cap(turn), 44) }]
+      : [{ field: "core", strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) }]),
+    { field: "core", strong: fit(contract("de", low(lead)), 30), rest: fit(contract("a", low(gain)), 42) },
+    ...(isClause(gain)
+      ? [{ field: "core", strong: fit(cap(turn), 28), rest: fit(cap(gain), 44) }]
+      : [{ field: "core", strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) }]),
     { field: "core", strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
   ];
+
+
+  /**
+   * LIGAÇÃO SEGURA: molduras com encaixe nominal ("É aí que entra X") só valem
+   * quando X é um grupo nominal. Se X já é uma frase com verbo, usamos a ligação
+   * por frase para não colar duas orações sem sentido.
+   */
+  const linkNominal = (lead: string, bridge: string, tail: string, fallback: string) =>
+    isClause(tail) ? `${cap(lead)}. ${cap(tail)}${fallback}` : `${cap(lead)}. ${bridge} ${low(tail)}.`;
 
   /** Apoios que respondem à objeção, situam a cena e nomeiam o preço da inércia. */
   const extraSubs: Array<{ field: string; text: string }> = [
@@ -143,15 +234,22 @@ export const composeRouteCopy = (
       : []),
     ...(objection ? [{ field: "objection", text: `Você pensa: ${low(objection)}. ${cap(turn)} responde a isso.` }] : []),
     ...(stakes ? [{ field: "stakes", text: `Deixar como está tem preço: ${low(stakes)}.` }] : []),
-    ...(scene ? [{ field: "scene", text: `${cap(scene)}. É aí que entra ${low(turn)}.` }] : []),
-    ...(trigger ? [{ field: "trigger", text: `${cap(trigger)}. Esse é o momento de ${low(turn)}.` }] : []),
+    ...(scene ? [{ field: "scene", text: linkNominal(scene, "É aí que entra", turn, ".") }] : []),
+    ...(trigger ? [{ field: "trigger", text: linkNominal(trigger, "Esse é o momento de", turn, ".") }] : []),
     ...(methodPlain
       ? [{
           field: "method",
           text: `${cap(methodPlain)}. Essa análise dá base à decisão clínica, com mais clareza e menos improviso.`,
         }]
       : []),
-    ...(enemy ? [{ field: "enemy", text: `Aqui não tem ${low(enemy)}. Tem ${low(turn)}.` }] : []),
+    ...(enemy
+      ? [{
+          field: "enemy",
+          text: isClause(turn)
+            ? `Aqui não tem ${low(enemy)}. ${cap(turn)}.`
+            : `Aqui não tem ${low(enemy)}. Tem ${low(turn)}.`,
+        }]
+      : []),
   ];
 
 
@@ -208,16 +306,31 @@ export const composeRouteCopy = (
       ...(otherFields.length ? [] : extraSubs.map((item) => item.text)),
       ...subsByKind[route.kind],
     ];
-    const sub = coherentReasoning.length
-      ? coherentReasoning[frame % coherentReasoning.length].text
-      : otherFields.length
-      ? otherFields[frame % otherFields.length].text
-      : subPool[frame % subPool.length];
-    if (usable(sub) && sub.length <= 190) out.subs = [terms(fit(sub, 188))];
-    else {
-      const fallback = subsByKind[route.kind][frame % subsByKind[route.kind].length];
-      if (usable(fallback) && fallback.length <= 190) out.subs = [terms(fit(fallback, 188))];
-    }
+    /**
+     * DEDUPE POR TEXTO FINAL: antes a regra só evitava repetir o CAMPO do kit.
+     * Agora o apoio é comparado com a frase que realmente está no destaque —
+     * apoio parecido demais é descartado e o próximo candidato entra.
+     */
+    const headlineText = `${headline.strong} ${headline.rest}`;
+    const rotateFrom = <T,>(items: T[]) =>
+      items.length ? items.map((_, i) => items[(i + frame) % items.length]) : [];
+    const mergedSubs = [
+      ...coherentReasoning.map((item) => item.text),
+      ...otherFields.map((item) => item.text),
+      ...subPool,
+      ...subsByKind[route.kind],
+    ];
+    const subCandidates = rotateFrom([...new Set(mergedSubs)]);
+
+    const pickDistinct = (candidates: string[], against: string[], max = 190) =>
+      candidates.find(
+        (candidate) =>
+          usable(candidate) &&
+          candidate.length <= max &&
+          against.every((previous) => textSimilarity(candidate, previous) < SUB_ECHO),
+      ) ?? candidates.find((candidate) => usable(candidate) && candidate.length <= max);
+    const sub = pickDistinct(subCandidates, [headlineText]);
+    if (sub) out.subs = [terms(fit(sub, 188))];
 
     if (who) {
       const kickerFrames = [who, `Para ${low(who)}`, `No dia a dia de ${low(who)}`];
@@ -228,10 +341,20 @@ export const composeRouteCopy = (
     const closingTitles = [cap(gain), `O próximo passo: ${low(gain)}`, `Agora, ${low(gain)}`, `Pronto para ${low(gain)}?`];
     const closingSupports = [proof || tension || turn, turn, lead, proof || turn, ...(stakes ? [stakes] : [])];
     const closingTitle = fit(closingTitles[frame % closingTitles.length], 52);
-    const closingSub = fit(cap(closingSupports[frame % closingSupports.length]), 64);
+    const closingSub = fit(
+      cap(
+        rotateFrom(closingSupports).find(
+          (candidate) =>
+            candidate &&
+            [headlineText, sub ?? ""].filter(Boolean).every((previous) => textSimilarity(candidate, previous) < 0.52),
+        ) ?? closingSupports[frame % closingSupports.length],
+      ),
+      64,
+    );
     if (closingTitle && closingSub && cta) {
       out.closings = [{ title: terms(closingTitle), sub: terms(closingSub), cta: terms(fit(cta, 28)) }];
     }
+
 
     const bigSources = [gain, turn, lead];
     const big = bigWord(bigSources[frame % bigSources.length]) || bigWord(gain) || bigWord(turn);

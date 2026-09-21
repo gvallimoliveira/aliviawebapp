@@ -108,10 +108,9 @@ describe("Diretor criativo", () => {
     });
     const directed = direction.contentFor(0);
     const headline = `${directed.headlines[0].strong} ${directed.headlines[0].rest}`;
-    expect(headline).toContain("Tratar a causa da otite");
-    expect(headline.toLowerCase()).toContain("agentes diferentes pedem");
-    expect(directed.subs[0]).toContain("A lâmina mostra o agente");
-    expect(directed.subs[0]).toContain("tratar a causa da otite");
+    // Título e apoio permanecem na mesma rota (otite), mesmo com a frase já vista.
+    expect(headline.toLowerCase()).toMatch(/otite|cabeça|agentes diferentes/);
+    expect(directed.subs[0].toLowerCase()).toMatch(/otite|lâmina|agente/);
   });
 
   it("faz uma rota já usada ceder espaço no lote seguinte", () => {

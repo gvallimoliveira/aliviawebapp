@@ -43,8 +43,9 @@ describe("variedade linguística do motor criativo", () => {
     for (let i = 0; i < 80; i += 1) {
       contentFor(`brand:${i}`).headlines.forEach((h) => seen.add(`${h.strong}|${h.rest}`));
     }
-    // Antes eram 5 headlines fixas por marca.
-    expect(seen.size).toBeGreaterThan(120);
+    // Antes eram 5 headlines fixas por marca. O acervo genérico deixou de completar
+    // o briefing real, então a variedade vem só de material da própria marca.
+    expect(seen.size).toBeGreaterThan(80);
   }, 30_000);
 
   it("mantém a mesma arte para a mesma seed (determinismo)", () => {

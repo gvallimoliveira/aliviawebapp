@@ -41,6 +41,8 @@ import { carouselClosingCopy, carouselCoverCopy, joinCopyParts } from "@/pages/s
 import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
+import { buildArc } from "./narrativeArc";
+
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
 import { matchesMsk, mskLines } from "./mskLexicon";
 
@@ -367,7 +369,8 @@ export type BatchDirection = {
   copyOf: (index: number) => string[];
   shotFor: (index: number) => ArtShot | undefined;
   /** Radiografia do lote: é o que alimenta a otimização contínua do motor. */
-  report: () => { arts: number; distinct: number; repeated: number };
+  report: () => { arts: number; distinct: number; repeated: number; arcIncomplete: number; dominantRoute: number };
+
 };
 
 /** Vocabulário da própria marca: reforça candidatos que soam como ela. */
@@ -560,10 +563,31 @@ export const planBatch = (input: {
     }
   });
 
+  /**
+   * TETO DE DOMINÂNCIA: nenhuma conexão editorial ocupa mais de ~1/3 do lote
+   * enquanto houver repertório. Antes, a mesma cena reaparecia em quase todas
+   * as artes com capas diferentes.
+   */
+  const routeUse = new Map<string, number>();
+  const routeCap = Math.max(1, Math.ceil(Math.max(1, count) / 3));
+  const takeRoute = (axis: DirectorAxis, index: number, shotExtra: string[]) => {
+    for (let attempt = 0; attempt < Math.max(1, routes.length); attempt += 1) {
+      const candidate = routeStream.take({ axis, extra: shotExtra, voice, salt: `route:${index}:${attempt}` });
+      if (!candidate) break;
+      const used = routeUse.get(candidate.signature) ?? 0;
+      if (used < routeCap || routes.length <= 1) {
+        routeUse.set(candidate.signature, used + 1);
+        return candidate;
+      }
+    }
+    return route;
+  };
+
   const shots: ArtShot[] = Array.from({ length: Math.max(0, count) }, (_, index) => {
     const axis = wheel[(index + offset) % wheel.length];
-    const shotRoute = routeStream.take({ axis, extra, voice, salt: `route:${index}` }) ?? route;
+    const shotRoute = takeRoute(axis, index, extra);
     const shotExtra = [...extra, ...(shotRoute?.vocabulary ?? [])].slice(0, 96);
+
     const block = blocks?.[index];
     const carousel = block?.kind === "carousel" && block.slide !== undefined
       ? carouselByGroup.get(block.slide.group)
@@ -736,7 +760,28 @@ export const planBatch = (input: {
         if (accepted.some((previous) => similarity(line, previous) >= TOO_SIMILAR)) repeated += 1;
         else accepted.push(line);
       });
-      return { arts: shots.length, distinct: accepted.length, repeated };
+      /**
+       * COMEÇO, MEIO E FIM: a arte precisa abrir (destaque), sustentar (apoio) e
+       * pedir um passo (fecho). O relatório conta quantas não fecham o arco —
+       * é o guarda-rail do lote, não só a medida de repetição.
+       */
+      const arcIncomplete = shots.filter((shot) => {
+        const headline = shot.headlines?.[0];
+        const closing = shot.closings?.[0];
+        const arc = buildArc({
+          hook: headline ? `${headline.strong} ${headline.rest}` : "",
+          scene: shot.subs?.[0] ?? "",
+          mechanism: closing?.sub ?? shot.quotes?.[0]?.text ?? "",
+          proof: closing?.title ?? "",
+          cta: closing?.cta ?? "",
+        });
+        return !["hook", "tension", "mechanism", "next"].every((step) =>
+          Boolean((arc as Record<string, string | undefined>)[step]?.trim()),
+        );
+      }).length;
+      const dominantRoute = Math.max(0, ...[...routeUse.values()]);
+      return { arts: shots.length, distinct: accepted.length, repeated, arcIncomplete, dominantRoute };
     },
+
   };
 };

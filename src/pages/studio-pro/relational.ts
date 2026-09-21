@@ -15,6 +15,8 @@ import type { BrandDna } from "./brandDnaKit";
 import { buildNarrativeRoutes, type NarrativeRoute } from "./synapses";
 import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
 import { editorialAudience } from "@/pages/studio/typographyGuards";
+import { rankTopics } from "./topicScore";
+
 
 export type Relation = {
   audience?: BrandAudience;
@@ -73,7 +75,25 @@ export const pickRelation = ({
 }): Relation => {
   const rng = createRng(`relation:${seed ?? "static"}:${audience?.id ?? "brand"}:${angle}`);
   const routes = buildNarrativeRoutes({ audience, audiences, dna, brand, seed: seed ?? "static", keywordMatrix, reasoningMatrix });
-  const route = routes[0];
+  /**
+   * A rota da relação deixa de ser sempre a primeira: o assunto mais vendável
+   * (dor com objeção para derrubar e prova para sustentar) vem na frente, e a
+   * seed decide entre os melhores. Sem isso, um único assunto dominava o lote.
+   */
+  const rankedRoutes = rankTopics(
+    routes.map((item, index) => ({
+      id: `${index}:${item.signature}`,
+      route: item,
+      painFrequency: [item.tension, item.scene, item.stakes].filter(Boolean).length,
+      objectionProximity: item.objection ? 1 : 0,
+      hasProof: Boolean(item.proof || item.feature),
+      specificity:
+        [item.lexicalTerm, item.trigger, item.scene].filter(Boolean).length / 3,
+      coverageUsed: 0,
+    })),
+  ).map((entry) => entry.route);
+  const route = rankedRoutes[seed ? rng.int(Math.max(1, Math.ceil(rankedRoutes.length / 2))) : 0] ?? routes[0];
+
 
   const vestibular = matchesVestibular([
     audience?.label,
@@ -97,10 +117,21 @@ export const pickRelation = ({
   const matrixDesires = list(route?.desire ? [route.desire] : []);
   const matrixProofs = list([route?.proof, route?.feature].filter(Boolean) as string[]);
 
-  const shift = seed ? rng.int(Math.max(1, Math.max(pains.length, desires.length, proofs.length))) : 0;
-  const painPool = [...matrixPains, ...rotate(pains.filter((item) => !matrixPains.includes(item)), shift)];
-  const desirePool = [...matrixDesires, ...rotate(desires.filter((item) => !matrixDesires.includes(item)), shift)];
-  const proofPool = [...matrixProofs, ...rotate(proofs.filter((item) => !matrixProofs.includes(item)), shift)];
+  /**
+   * COBERTURA DO MANUAL: cada acervo recebe um giro PRÓPRIO. Com um único
+   * `shift`, dor, desejo e prova caíam sempre na mesma combinação (índice 0) e
+   * dois terços dos itens do manual nunca chegavam à arte.
+   */
+  const shiftFor = (label: string, size: number) =>
+    seed && size > 1 ? createRng(`relation-pool:${seed}:${audience?.id ?? "brand"}:${label}`).int(size) : 0;
+  const freePains = pains.filter((item) => !matrixPains.includes(item));
+  const freeDesires = desires.filter((item) => !matrixDesires.includes(item));
+  const freeProofs = proofs.filter((item) => !matrixProofs.includes(item));
+  const shift = shiftFor("hook", Math.max(1, pains.length, desires.length, proofs.length));
+  const painPool = [...matrixPains, ...rotate(freePains, shiftFor("pain", freePains.length))];
+  const desirePool = [...matrixDesires, ...rotate(freeDesires, shiftFor("desire", freeDesires.length))];
+  const proofPool = [...matrixProofs, ...rotate(freeProofs, shiftFor("proof", freeProofs.length))];
+
 
   /** O ângulo do lote manda no eixo; "informar"/"venda" alternam pela seed. */
   const axis: "pain" | "desire" =
@@ -124,9 +155,23 @@ export const pickRelation = ({
     ? audienceKeyword(audience)
     : strip(primaryAudience) || strip(dna.niche) || brand;
 
+  /**
+   * UM PÚBLICO POR ARTE: o campo genérico do briefing costuma listar públicos
+   * opostos na mesma linha ("tutores e veterinários"). A arte escolhe UM lado —
+   * falar com os dois na mesma frase é o que fazia o texto soar genérico.
+   */
+  const singleAudience = (label: string) => {
+    const parts = strip(label)
+      .split(/\s*(?:,|;|\/| e | ou )\s*/i)
+      .map(strip)
+      .filter((part) => part.length > 2);
+    if (parts.length < 2) return strip(label);
+    return parts[createRng(`relation-who:${seed ?? "static"}:${audience?.id ?? "brand"}`).int(parts.length)];
+  };
+
   return {
     audience,
-    who: audience?.label.trim() || strip(primaryAudience) || keyword,
+    who: strip(audience?.label) || singleAudience(primaryAudience) || keyword,
     keyword,
     hook: rotate(hooks, shift)[0] ?? `Você que busca ${keyword.toLowerCase()}`,
     hooks: rotate(hooks, shift),
@@ -136,9 +181,11 @@ export const pickRelation = ({
     cta: strip(audience?.cta) || strip(dna.cta) || "Chamar no direct",
     axis: axis === "pain" && !painPool.length ? "desire" : axis,
     route,
-    routes,
+    // O diretor distribui as rotas nesta ordem: assunto mais vendável primeiro.
+    routes: rankedRoutes,
   };
 };
+
 
 /** Termos que a arte precisa tocar para provar que fala da relação escolhida. */
 export const relationVocabulary = (relation: Relation): string[] => {
