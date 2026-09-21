@@ -367,7 +367,8 @@ export type BatchDirection = {
   copyOf: (index: number) => string[];
   shotFor: (index: number) => ArtShot | undefined;
   /** Radiografia do lote: é o que alimenta a otimização contínua do motor. */
-  report: () => { arts: number; distinct: number; repeated: number };
+  report: () => { arts: number; distinct: number; repeated: number; arcIncomplete: number; dominantRoute: number };
+
 };
 
 /** Vocabulário da própria marca: reforça candidatos que soam como ela. */
