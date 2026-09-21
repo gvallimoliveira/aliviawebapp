@@ -92,6 +92,8 @@ export const composeRouteCopy = (
   /** Momento de gatilho e método traduzido em linguagem de leigo. */
   const trigger = squash(route.trigger);
   const methodPlain = squash(route.methodPlain);
+  const lexicalTerm = squash(route.lexicalTerm);
+  const lexicalPerception = squash(route.lexicalPerception);
 
 
   /** Fio da arte: o que dói/o que se quer, o que muda e a prova. */
@@ -126,6 +128,9 @@ export const composeRouteCopy = (
 
   /** Apoios que respondem à objeção, situam a cena e nomeiam o preço da inércia. */
   const extraSubs: Array<{ field: string; text: string }> = [
+    ...(lexicalTerm && lexicalPerception
+      ? [{ field: "lexical", text: `${cap(lexicalTerm)} é o nome técnico. Na rotina, pode aparecer como ${low(lexicalPerception)}.` }]
+      : []),
     ...(objection ? [{ field: "objection", text: `Você pensa: ${low(objection)}. ${cap(turn)} responde a isso.` }] : []),
     ...(stakes ? [{ field: "stakes", text: `Deixar como está tem preço: ${low(stakes)}.` }] : []),
     ...(scene ? [{ field: "scene", text: `${cap(scene)}. É aí que entra ${low(turn)}.` }] : []),
