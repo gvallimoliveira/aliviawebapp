@@ -267,10 +267,19 @@ Deno.serve(async (req) => {
   } catch (err: any) {
     console.error("transcribe-anamnesis error:", err);
     if (voiceNoteId) {
-      await admin.from("assessment_voice_notes").update({
-        status: "failed",
-        error: err?.message || "Unknown error",
-      }).eq("id", voiceNoteId).catch(() => {});
+      // Nunca descartar transcrição parcial já salva: nesse caso a nota fica
+      // pronta com o texto que existe, em vez de virar "falhou".
+      const { data: row } = await admin
+        .from("assessment_voice_notes")
+        .select("transcript")
+        .eq("id", voiceNoteId)
+        .maybeSingle();
+      const partial = (row?.transcript || "").trim();
+      await admin.from("assessment_voice_notes").update(
+        partial
+          ? { status: "ready", error: null }
+          : { status: "failed", error: err?.message || "Unknown error" },
+      ).eq("id", voiceNoteId).catch(() => {});
     }
     return new Response(JSON.stringify({ error: err?.message || "Unknown error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
