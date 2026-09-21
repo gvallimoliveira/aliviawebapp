@@ -1,4 +1,4 @@
-import { BRAND_LOGO, BRAND_NAME } from "../brand";
+import { BRAND_LOGO, BRAND_MARK, BRAND_NAME } from "../brand";
 
 /**
  * ASSINATURA DA MARCA — presente em TODA arte do Studio.
@@ -28,26 +28,22 @@ type Props = {
 };
 
 const StudioSignature = ({ dark = false, corner = "br", markOnly = false }: Props) => {
-  const [name, suffix] = BRAND_NAME.split(".");
   return (
     <div
       aria-hidden
       className={`pointer-events-none absolute z-20 flex items-center gap-2 ${CORNER_CLASS[corner]}`}
     >
       <img
-        src={BRAND_LOGO}
+        src={markOnly ? BRAND_MARK : BRAND_LOGO}
         alt=""
-        className={`h-5 w-5 md:h-6 md:w-6 ${dark ? "opacity-90" : "opacity-80"}`}
+        data-brand-logo={!markOnly ? "1" : undefined}
+        data-brand-mark={markOnly ? "1" : undefined}
+        className={`${
+          markOnly
+            ? "h-6 w-6 md:h-7 md:w-7"
+            : "h-8 w-auto max-w-32 md:h-10 md:max-w-40"
+        } object-contain ${dark ? "opacity-90" : "opacity-80"}`}
       />
-      {!markOnly && (
-        <span
-          className={`text-[11px] font-semibold tracking-tight md:text-xs ${
-            dark ? "text-mono-paper/70" : "text-mono-ink/60"
-          }`}
-        >
-          {name}.<span className="text-primary">{suffix}</span>
-        </span>
-      )}
     </div>
   );
 };

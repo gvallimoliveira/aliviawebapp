@@ -26,4 +26,4 @@
 
 - [x] Corrigir recursão no carregamento de fontes serifadas do Studio e validar a geração da Aline.
 
-- [ ] Separar símbolo isolado e assinatura completa nas artes; preservar proporção das logos.
+- [x] Separar símbolo isolado e assinatura completa nas artes; preservar proporção das logos.
