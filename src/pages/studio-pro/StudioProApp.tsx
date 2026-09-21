@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PRODUCT } from "./product";
 import { PLAN_LABELS } from "./plan";
+import { countOwnBrands, isSharedBrand } from "./brandSharing";
 import { useStudioAccess } from "./useStudioAccess";
 import { useStudioQuota } from "./useStudioQuota";
 import BrandColorFields from "./BrandColorFields";
@@ -41,6 +42,7 @@ import { ALIVIA_AUDIENCES, readAudiences, writeAudiences } from "./audiences";
 import { DEFAULT_COLOR_KIT, writeColorKit, type BrandColorKit } from "./brandColors";
 import { useStudioPwaMeta } from "./useStudioPwaMeta";
 import logoAlivia from "@/assets/logo-alivia.png";
+import { Users } from "lucide-react";
 
 /**
  * HUB DE MARCAS DO STUDIO PÚBLICO
@@ -53,6 +55,8 @@ import logoAlivia from "@/assets/logo-alivia.png";
 
 type Brand = {
   id: string;
+  /** Conta que criou a marca; marcas de outra conta chegam por compartilhamento. */
+  user_id?: string | null;
   name: string;
   niche: string | null;
   tone: string | null;
@@ -162,6 +166,9 @@ const StudioProApp = () => {
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
+    // Convite por e-mail feito antes do cadastro: casa com a conta no 1º acesso.
+    const { error: claimError } = await supabase.rpc("claim_studio_brand_invites");
+    if (claimError) console.error("[studio-pro] claim brand invites", claimError);
     const [{ data: creditRow, error: creditError }, { data: brandRows, error: brandError }, { data: artRows }] =
       await Promise.all([
         supabase.rpc("ensure_studio_credits"),
@@ -193,7 +200,7 @@ const StudioProApp = () => {
    */
   useEffect(() => {
     if (loading || accessLoading || !user || !access.isVip || seeded.current) return;
-    if (brands.length > 0) return;
+    if (countOwnBrands(brands, user.id) > 0) return;
     seeded.current = true;
     void (async () => {
       const { error } = await supabase.from("studio_brands").insert({
@@ -275,7 +282,7 @@ const StudioProApp = () => {
       toast.error("Dê um nome para a marca.");
       return;
     }
-    if (brands.length >= access.brandLimit) {
+    if (countOwnBrands(brands, user.id) >= access.brandLimit) {
       toast.error(`Seu plano permite ${access.brandLimit} marca(s). Faça upgrade para adicionar mais.`);
       return;
     }
@@ -461,7 +468,12 @@ const StudioProApp = () => {
               <Palette className="h-5 w-5 text-primary" />
               Minhas marcas
               <span className="text-sm font-normal text-muted-foreground">
-                {brands.length}/{access.brandLimit}
+                {countOwnBrands(brands, user?.id)}/{access.brandLimit}
+                {brands.length > countOwnBrands(brands, user?.id) && (
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {" "}+ {brands.length - countOwnBrands(brands, user?.id)} compartilhada(s)
+                  </span>
+                )}
               </span>
             </h2>
             <div className="flex items-center gap-2">
@@ -480,7 +492,7 @@ const StudioProApp = () => {
                 size="sm"
                 className="rounded-full"
                 onClick={() => setShowForm((v) => !v)}
-                disabled={brands.length >= access.brandLimit}
+                disabled={countOwnBrands(brands, user?.id) >= access.brandLimit}
               >
                 <Plus className="mr-1.5 h-4 w-4" />
                 Nova marca
@@ -517,18 +529,26 @@ const StudioProApp = () => {
                       <p className="truncate text-xs text-muted-foreground">
                         {brand.niche || "nicho não informado"} · {counts[brand.id] ?? 0} arte(s)
                       </p>
+                      {isSharedBrand(brand, user?.id) && (
+                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                          <Users className="h-3 w-3" />
+                          Compartilhada
+                        </span>
+                      )}
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
                   </Link>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="absolute right-2 top-2 h-7 w-7 p-0 opacity-0 transition group-hover:opacity-100"
-                    onClick={() => setBrandToDelete(brand)}
-                    title="Remover marca"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {!isSharedBrand(brand, user?.id) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="absolute right-2 top-2 h-7 w-7 p-0 opacity-0 transition group-hover:opacity-100"
+                      onClick={() => setBrandToDelete(brand)}
+                      title="Remover marca"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>

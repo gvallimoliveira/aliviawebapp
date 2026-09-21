@@ -8,6 +8,13 @@
       "when": 1790025778233,
       "tag": "0000_add_studio_content_matrices",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790032856890,
+      "tag": "0001_studio_brand_members",
+      "breakpoints": true
     }
   ]
 }

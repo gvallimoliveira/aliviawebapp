@@ -60,7 +60,11 @@ const first = (data: unknown): Row | null => {
  */
 export type ConsumeResult = "allowed" | "exhausted" | "error";
 
-export const useStudioQuota = () => {
+/**
+ * Com `brandId`, a cota lida/debitada é a de quem CRIOU a marca: marca
+ * compartilhada pertence ao criador, então o convidado não precisa de plano.
+ */
+export const useStudioQuota = (brandId?: string) => {
   const { user, loading: authLoading } = useAuth();
   const [quota, setQuota] = useState<StudioQuota | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +76,9 @@ export const useStudioQuota = () => {
       setLoading(false);
       return;
     }
-    const { data, error } = await supabase.rpc("studio_credit_status");
+    const { data, error } = brandId
+      ? await supabase.rpc("studio_brand_credit_status", { p_brand_id: brandId })
+      : await supabase.rpc("studio_credit_status");
     if (error) {
       console.error("[studio-pro] studio_credit_status", error);
       setError(error.message ?? "falha ao ler a cota");
@@ -85,7 +91,7 @@ export const useStudioQuota = () => {
       setError(null);
     }
     setLoading(false);
-  }, [user]);
+  }, [user, brandId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -98,7 +104,9 @@ export const useStudioQuota = () => {
    */
   const consume = useCallback(
     async (amount = STUDIO_GENERATION_COST): Promise<ConsumeResult> => {
-      const { data, error } = await supabase.rpc("consume_studio_generation", { p_amount: amount });
+      const { data, error } = brandId
+        ? await supabase.rpc("consume_studio_generation_for_brand", { p_brand_id: brandId })
+        : await supabase.rpc("consume_studio_generation", { p_amount: amount });
       if (error) {
         console.error("[studio-pro] consume_studio_generation", error);
         setError(error.message ?? "falha ao confirmar a cota");
@@ -110,7 +118,7 @@ export const useStudioQuota = () => {
       setError(null);
       return row.allowed ? "allowed" : "exhausted";
     },
-    [],
+    [brandId],
   );
 
   return { quota, error, loading: loading || authLoading, refresh, consume };
