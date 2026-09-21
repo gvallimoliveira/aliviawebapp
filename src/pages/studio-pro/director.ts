@@ -37,7 +37,7 @@ import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import { lowerInitial } from "@/pages/studio/grammar";
-import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typographyGuards";
+import { carouselClosingCopy, carouselCoverCopy, joinCopyParts } from "@/pages/studio/typographyGuards";
 import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
