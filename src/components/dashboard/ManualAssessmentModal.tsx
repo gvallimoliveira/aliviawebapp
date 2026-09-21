@@ -1506,6 +1506,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     }
     setSaving(true);
     try {
+      // O profissional mexeu no texto do diagnóstico depois de gerar a hipótese?
+      const professionalEditedDiagnosis =
+        diagnosisText.trim() !== aiDiagnosisBaselineRef.current.trim() && !!diagnosisText.trim();
+      const editedFirstLine = diagnosisText.split("\n").map((l) => l.trim()).find(Boolean) || "";
+      const editedHypothesis = editedFirstLine.startsWith("{") || editedFirstLine.startsWith("[")
+        ? "" : editedFirstLine;
+
       const row: any = {
         type: "professional",
         status: "completed",
@@ -1757,6 +1764,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setPendingShareUrl(null); setPendingShareOpen(false); setPendingCount(null);
     setFunctionalTests(""); setClinicalImpression(""); setAiClinicalImpression(null);
     setDiagnosisText(""); setTreatmentText(""); setAiDiagnosis(null); setAiTreatment(null);
+    aiDiagnosisBaselineRef.current = "";
     setSpecialtyApplied([]);
     setExternalSource(null);
     setAdditionalExternalInfo("");
