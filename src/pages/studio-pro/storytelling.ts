@@ -261,16 +261,29 @@ export const composeRouteCopy = (
       ...(otherFields.length ? [] : extraSubs.map((item) => item.text)),
       ...subsByKind[route.kind],
     ];
-    const sub = coherentReasoning.length
-      ? coherentReasoning[frame % coherentReasoning.length].text
-      : otherFields.length
-      ? otherFields[frame % otherFields.length].text
-      : subPool[frame % subPool.length];
-    if (usable(sub) && sub.length <= 190) out.subs = [terms(fit(sub, 188))];
-    else {
-      const fallback = subsByKind[route.kind][frame % subsByKind[route.kind].length];
-      if (usable(fallback) && fallback.length <= 190) out.subs = [terms(fit(fallback, 188))];
-    }
+    /**
+     * DEDUPE POR TEXTO FINAL: antes a regra só evitava repetir o CAMPO do kit.
+     * Agora o apoio é comparado com a frase que realmente está no destaque —
+     * apoio parecido demais é descartado e o próximo candidato entra.
+     */
+    const headlineText = `${headline.strong} ${headline.rest}`;
+    const rotateFrom = <T,>(items: T[]) =>
+      items.length ? items.map((_, i) => items[(i + frame) % items.length]) : [];
+    const subCandidates = [
+      ...rotateFrom(coherentReasoning.map((item) => item.text)),
+      ...rotateFrom(otherFields.map((item) => item.text)),
+      ...rotateFrom(subPool),
+      ...rotateFrom(subsByKind[route.kind]),
+    ];
+    const pickDistinct = (candidates: string[], against: string[], max = 190) =>
+      candidates.find(
+        (candidate) =>
+          usable(candidate) &&
+          candidate.length <= max &&
+          against.every((previous) => textSimilarity(candidate, previous) < 0.52),
+      ) ?? candidates.find((candidate) => usable(candidate) && candidate.length <= max);
+    const sub = pickDistinct(subCandidates, [headlineText]);
+    if (sub) out.subs = [terms(fit(sub, 188))];
 
     if (who) {
       const kickerFrames = [who, `Para ${low(who)}`, `No dia a dia de ${low(who)}`];
@@ -281,10 +294,20 @@ export const composeRouteCopy = (
     const closingTitles = [cap(gain), `O próximo passo: ${low(gain)}`, `Agora, ${low(gain)}`, `Pronto para ${low(gain)}?`];
     const closingSupports = [proof || tension || turn, turn, lead, proof || turn, ...(stakes ? [stakes] : [])];
     const closingTitle = fit(closingTitles[frame % closingTitles.length], 52);
-    const closingSub = fit(cap(closingSupports[frame % closingSupports.length]), 64);
+    const closingSub = fit(
+      cap(
+        rotateFrom(closingSupports).find(
+          (candidate) =>
+            candidate &&
+            [headlineText, sub ?? ""].filter(Boolean).every((previous) => textSimilarity(candidate, previous) < 0.52),
+        ) ?? closingSupports[frame % closingSupports.length],
+      ),
+      64,
+    );
     if (closingTitle && closingSub && cta) {
       out.closings = [{ title: terms(closingTitle), sub: terms(closingSub), cta: terms(fit(cta, 28)) }];
     }
+
 
     const bigSources = [gain, turn, lead];
     const big = bigWord(bigSources[frame % bigSources.length]) || bigWord(gain) || bigWord(turn);
