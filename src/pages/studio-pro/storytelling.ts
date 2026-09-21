@@ -189,7 +189,7 @@ export const composeRouteCopy = (
 
     { field: "core", strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
     { field: "core", strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
-    { field: "core", strong: fit(`De ${low(lead)}`, 30), rest: fit(`a ${low(gain)}`, 42) },
+    { field: "core", strong: fit(contract("de", low(lead)), 30), rest: fit(contract("a", low(gain)), 42) },
     { field: "core", strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
     { field: "core", strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
   ];
