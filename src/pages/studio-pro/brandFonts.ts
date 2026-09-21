@@ -46,6 +46,14 @@ export const STUDIO_FONTS: StudioFont[] = [
   { key: "merriweather", label: "Merriweather (serifada)", stack: "'Merriweather', Georgia, serif", google: "Merriweather:wght@400;700;900" },
 ];
 
+/**
+ * `system-ui, sans-serif` também contém a palavra "serif" dentro de
+ * "sans-serif". Usar `includes("serif")` classificava toda fonte sans como
+ * serifada e fazia `ensureFontLoaded("inter")` chamar a si mesma sem fim.
+ */
+export const isSerifFont = (font: StudioFont): boolean =>
+  /(?:^|,\s*)(?:Georgia|serif)(?:\s*,|$)/i.test(font.stack);
+
 export const findFont = (key?: string | null): StudioFont =>
   STUDIO_FONTS.find((f) => f.key === (key ?? "default")) ?? STUDIO_FONTS[0];
 
@@ -79,7 +87,7 @@ export const ensureFontLoaded = (key?: string | null) => {
   const font = findFont(key);
   if (typeof document === "undefined") return;
   /** Serifadas de destaque sempre ganham uma sans de leitura no mesmo tema. */
-  if (font.stack.includes("serif")) ensureFontLoaded("inter");
+  if (isSerifFont(font) && font.key !== "inter") ensureFontLoaded("inter");
   if (!font.google) return;
   const id = `studio-font-${font.key}`;
   if (document.getElementById(id)) return;

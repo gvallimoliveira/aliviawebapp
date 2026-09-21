@@ -11,7 +11,7 @@
  */
 import type { BrandColorKit } from "./brandColors";
 import { contrastRatio, deepen, isLight, lighten, mix, readableOn, readableThemeTokens } from "./contrast";
-import { findFont } from "./brandFonts";
+import { findFont, isSerifFont } from "./brandFonts";
 
 /** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
 export const hexToHslTriplet = (hex: string): string | null => {
@@ -115,7 +115,7 @@ export const buildBrandThemeStyle = ({ kit, seed, invert }: Args): React.CSSProp
   const brandFont = findFont(kit.font);
   if (brandFont.stack) {
     style["--studio-display-font"] = brandFont.stack;
-    style["--studio-body-font"] = brandFont.stack.includes("serif")
+    style["--studio-body-font"] = isSerifFont(brandFont)
       ? "'Inter', system-ui, sans-serif"
       : brandFont.stack;
     style.fontFamily = "var(--studio-body-font)";

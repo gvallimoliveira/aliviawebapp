@@ -23,3 +23,5 @@
 
 - [x] Absorver matrizes de palavras-chave e interligação do manual no Studio; preencher Aliv.iA, Guilherme Vallim e criar Aline Furtado Vet pronta para teste.
 - [x] Evoluir globalmente paleta, tipografia, matrizes e isolamento de vocabulário do Studio; validar Aline, Aliv.iA e Guilherme Vallim.
+
+- [x] Corrigir recursão no carregamento de fontes serifadas do Studio e validar a geração da Aline.
