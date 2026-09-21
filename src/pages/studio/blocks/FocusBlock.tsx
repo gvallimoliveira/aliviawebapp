@@ -55,13 +55,13 @@ const FocusBlock = ({ content, rng, treatment, format }: BlockProps) => {
         <p className={`text-sm font-medium leading-snug opacity-70 md:text-base ${skin.ink}`}>{away}</p>
         <p className={`mt-1 text-lg leading-none opacity-70 ${skin.ink}`}>↓</p>
 
-        <svg viewBox="0 0 350 260" className="mx-auto w-full max-w-xs" role="img" aria-label={here}>
+        <svg viewBox="0 0 350 282" className="mx-auto w-full max-w-xs" role="img" aria-label={here}>
           {STONES.map((s, i) => (
             <ellipse key={i} cx={s.cx} cy={s.cy} rx={s.rx} ry={s.ry} fill={skin.stone} />
           ))}
           {/* A próxima pedra: a única em cor de marca. */}
           <motion.ellipse
-            cx={128}
+            cx={175}
             cy={244}
             rx={62}
             ry={25}
@@ -70,15 +70,15 @@ const FocusBlock = ({ content, rng, treatment, format }: BlockProps) => {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.6, delay: 0.35 }}
-            style={{ transformOrigin: "128px 244px" }}
+            style={{ transformOrigin: "175px 244px" }}
           />
           {BRAND_MARK && (
             <image
               href={BRAND_MARK}
-              x={84}
-              y={200}
-              width={88}
-              height={88}
+              x={123}
+              y={192}
+              width={104}
+              height={104}
               preserveAspectRatio="xMidYMid meet"
               aria-hidden
             />

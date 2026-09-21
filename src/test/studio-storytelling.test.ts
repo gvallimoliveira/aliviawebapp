@@ -58,4 +58,23 @@ describe("redação a partir da rota narrativa", () => {
     expect(second.headlines?.[0]).not.toEqual(first.headlines?.[0]);
     expect(second.subs?.[0]).not.toEqual(first.subs?.[0]);
   });
+
+  it("explica o método sem conectá-lo a uma funcionalidade aleatória", () => {
+    const withMethod: NarrativeRoute = {
+      ...route,
+      methodPlain: "Onde dói, quando dói e o que faz doer",
+      feature: "Vitrine de fisioterapeutas para continuar o cuidado",
+    };
+    const copies = Array.from({ length: 24 }, (_, index) =>
+      composeRouteCopy(withMethod, { seed: `metodo:${index}`, rotate: index }),
+    );
+    const supports = copies.map((copy) => copy.subs?.[0] ?? "");
+    const methodSupports = supports.filter((support) => /onde dói/i.test(support));
+
+    expect(methodSupports.length).toBeGreaterThan(0);
+    methodSupports.forEach((support) => {
+      expect(support).toMatch(/decisão clínica/i);
+      expect(support).not.toMatch(/é assim que vitrine|vitrine.+funciona na prática/i);
+    });
+  });
 });

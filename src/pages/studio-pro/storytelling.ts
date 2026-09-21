@@ -130,7 +130,12 @@ export const composeRouteCopy = (
     ...(stakes ? [{ field: "stakes", text: `Deixar como está tem preço: ${low(stakes)}.` }] : []),
     ...(scene ? [{ field: "scene", text: `${cap(scene)}. É aí que entra ${low(turn)}.` }] : []),
     ...(trigger ? [{ field: "trigger", text: `${cap(trigger)}. Esse é o momento de ${low(turn)}.` }] : []),
-    ...(methodPlain ? [{ field: "method", text: `${cap(methodPlain)}. É assim que ${low(turn)} funciona na prática.` }] : []),
+    ...(methodPlain
+      ? [{
+          field: "method",
+          text: `${cap(methodPlain)}. Essa análise dá base à decisão clínica, com mais clareza e menos improviso.`,
+        }]
+      : []),
     ...(enemy ? [{ field: "enemy", text: `Aqui não tem ${low(enemy)}. Tem ${low(turn)}.` }] : []),
   ];
 
