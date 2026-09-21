@@ -355,6 +355,22 @@ export type OperationWords = {
 };
 
 export const operationWords = (dna: BrandDna, brandName = ""): OperationWords => {
+  const domain = [dna.niche, dna.description, dna.presentation, dna.offer, brandName]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  /** A operação nasce da vertical declarada, não do antigo padrão humano. */
+  if (/veterin|animal|pet|canin|felin/.test(domain))
+    return {
+      who: "tutor",
+      whoPlural: "tutores",
+      firstStep: "primeira consulta",
+      planWord: "investigação",
+      reviewWord: "acompanhamento",
+      encounterWord: "consulta",
+      deliverable: "orientação clínica",
+      cycleLabel: "por etapa do cuidado",
+    };
   const { kind } = offerWords(dna, brandName);
   if (kind === "atendimento")
     return {

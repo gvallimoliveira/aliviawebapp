@@ -53,9 +53,9 @@ export const isLight = (hex: string) => luminance(hex) > 0.45;
 /** Texto legível (preto suave ou branco) sobre a cor informada. */
 export const readableOn = (hex: string) => (isLight(hex) ? "#111111" : "#FFFFFF");
 
-export const mix = (hex: string, target: [number, number, number], amount: number) => {
+export const mix = (hex: string, target: [number, number, number] | undefined, amount: number) => {
   const rgb = parseHex(hex);
-  if (!rgb) return hex;
+  if (!rgb || !target) return hex;
   return toHex([
     rgb[0] + (target[0] - rgb[0]) * amount,
     rgb[1] + (target[1] - rgb[1]) * amount,

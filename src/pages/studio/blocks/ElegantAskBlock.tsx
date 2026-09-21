@@ -65,7 +65,7 @@ const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos, artK
       ? "hsl(var(--background))"
       : treatment === 3
         ? "hsl(var(--primary))"
-        : "hsl(var(--foreground))";
+        : "hsl(var(--studio-deep-surface, var(--primary)))";
   const ink = onDark || !!photo ? "#f7f5f0" : "hsl(var(--foreground))";
   /**
    * Palavra protagonista: em fundo escuro/foto usa a tinta de destaque JÁ
@@ -79,7 +79,7 @@ const ElegantAskBlock = ({ content, rng, treatment, format, picker, photos, artK
   return (
     <section
       className={`relative flex ${sectionHeight(format)} items-end overflow-hidden`}
-      style={{ backgroundColor: bg ?? "#0c0c12" }}
+      style={{ backgroundColor: bg ?? "hsl(var(--studio-deep-surface, var(--primary)))" }}
     >
       {photo && (
         <>

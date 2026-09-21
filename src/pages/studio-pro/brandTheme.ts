@@ -10,7 +10,7 @@
  * claro — sem gastar geração nem crédito de IA.
  */
 import type { BrandColorKit } from "./brandColors";
-import { lighten, readableThemeTokens } from "./contrast";
+import { contrastRatio, deepen, isLight, lighten, mix, readableOn, readableThemeTokens } from "./contrast";
 import { findFont } from "./brandFonts";
 
 /** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
@@ -67,8 +67,17 @@ export const buildBrandThemeStyle = ({ kit, seed, invert }: Args): React.CSSProp
    * recebe o texto calculado (WCAG 4,5:1). Se o par reprovar, o TEXTO muda —
    * a cor de marca do fundo é preservada.
    */
-  const background = invert ? kit.primary : kit.primary2;
-  const primary = invert ? kit.primary2 : kit.primary;
+  /**
+   * A identidade continua vindo do kit, mas a superfície editorial permanece
+   * clara. Antes o lado B promovia a cor mais escura a fundo de toda a arte e
+   * metade do lote virava uma sequência pesada. A inversão agora troca a nuance
+   * do papel e o acento; chapas profundas ficam reservadas aos poucos modelos
+   * que realmente pedem contraste dramático.
+   */
+  const lightPaper = isLight(kit.primary2) ? kit.primary2 : mix(kit.primary2, [255, 255, 255], 0.9);
+  const warmPaper = mix(lightPaper, (isLight(accent) ? [91, 22, 29] : (undefined)), invert ? 0.08 : 0.025);
+  const background = contrastRatio(warmPaper, readableOn(warmPaper)) >= 4.5 ? warmPaper : lightPaper;
+  const primary = isLight(kit.primary) ? deepen(kit.primary) : kit.primary;
   const tokens = readableThemeTokens({
     background,
     primary,
@@ -81,6 +90,11 @@ export const buildBrandThemeStyle = ({ kit, seed, invert }: Args): React.CSSProp
   });
   const ring = hexToHslTriplet(primary);
   if (ring) style["--ring"] = ring;
+  const deepSurface = deepen(primary, 7);
+  const deepTriplet = hexToHslTriplet(deepSurface);
+  const deepInk = hexToHslTriplet(readableOn(deepSurface));
+  if (deepTriplet) style["--studio-deep-surface"] = deepTriplet;
+  if (deepInk) style["--studio-deep-foreground"] = deepInk;
 
   /**
    * TINTA DE DESTAQUE PARA FUNDO ESCURO / FOTO
@@ -96,8 +110,15 @@ export const buildBrandThemeStyle = ({ kit, seed, invert }: Args): React.CSSProp
     const triplet = hexToHslTriplet(color);
     if (triplet) style[`--brand-extra-${i + 1}`] = triplet;
   });
-  // Tipografia da marca: herdada por todos os blocos da versão.
+  // Títulos preservam a fonte expressiva do kit; textos longos usam uma sans
+  // de leitura. Isso impede uma serifada editorial de dominar selos e apoios.
   const brandFont = findFont(kit.font);
-  if (brandFont.stack) style.fontFamily = brandFont.stack;
+  if (brandFont.stack) {
+    style["--studio-display-font"] = brandFont.stack;
+    style["--studio-body-font"] = brandFont.stack.includes("serif")
+      ? "'Inter', system-ui, sans-serif"
+      : brandFont.stack;
+    style.fontFamily = "var(--studio-body-font)";
+  }
   return Object.keys(style).length ? (style as React.CSSProperties) : undefined;
 };

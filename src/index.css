@@ -125,6 +125,17 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Hierarquia editorial das artes: fonte de marca nos títulos, fonte de
+     leitura nos textos menores. Os tokens são definidos pelo kit ativo. */
+  [data-studio-art-key] {
+    font-family: var(--studio-body-font, inherit);
+  }
+
+  [data-studio-art-key] :is(h1, h2, h3) {
+    font-family: var(--studio-display-font, var(--studio-body-font, inherit));
+    letter-spacing: 0;
+  }
 }
 
 /* CSS-based float animation — cheaper than JS-driven framer-motion */

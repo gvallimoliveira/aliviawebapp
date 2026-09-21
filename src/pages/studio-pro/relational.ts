@@ -88,10 +88,19 @@ export const pickRelation = ({
   const desires = audience ? list(audience.desires) : list(dna.desire ? [dna.desire] : []);
   const proofs = audience ? list(audience.proof) : list([dna.belief, dna.offer].filter(Boolean) as string[]);
 
+  /**
+   * A matriz escreve a relação em vez de apenas servir como vocabulário de
+   * busca. Assim cena, mecanismo, ponte e consequência permanecem conectados
+   * do destaque ao CTA da mesma arte.
+   */
+  const matrixPains = list(route?.tension ? [route.tension] : []);
+  const matrixDesires = list(route?.desire ? [route.desire] : []);
+  const matrixProofs = list([route?.proof, route?.feature].filter(Boolean) as string[]);
+
   const shift = seed ? rng.int(Math.max(1, Math.max(pains.length, desires.length, proofs.length))) : 0;
-  const painPool = rotate(pains, shift);
-  const desirePool = rotate(desires, shift);
-  const proofPool = rotate(proofs, shift);
+  const painPool = [...matrixPains, ...rotate(pains.filter((item) => !matrixPains.includes(item)), shift)];
+  const desirePool = [...matrixDesires, ...rotate(desires.filter((item) => !matrixDesires.includes(item)), shift)];
+  const proofPool = [...matrixProofs, ...rotate(proofs.filter((item) => !matrixProofs.includes(item)), shift)];
 
   /** O ângulo do lote manda no eixo; "informar"/"venda" alternam pela seed. */
   const axis: "pain" | "desire" =
