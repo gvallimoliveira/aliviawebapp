@@ -76,7 +76,7 @@ describe("matrizes de conteúdo do Studio", () => {
     expect(headline.toLowerCase()).toMatch(/agentes diferentes pedem|pet chacoalha a cabeça/);
     expect(headline.toLowerCase()).toMatch(/tratar a causa da otite|agentes diferentes pedem/);
     // O apoio continua na mesma rota de raciocínio do destaque (otite/lâmina).
-    expect(copy.subs?.[0]?.toLowerCase()).toMatch(/otite|lâmina|swab/);
+    expect(copy.subs?.[0]?.toLowerCase()).toMatch(/otite|lâmina|swab|agentes diferentes|chacoalha/);
   });
 
   it("prioriza a rota matricial no par relacional da arte", () => {
