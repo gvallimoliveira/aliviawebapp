@@ -1435,6 +1435,19 @@ const StudioProBrand = () => {
               </div>
             </BrandSection>
 
+            {/* ================= 7. ACESSOS ================= */}
+            {isOwnBrand(brand, user?.id) && (
+              <BrandSection
+                step={7}
+                title="Pessoas com acesso"
+                hint="Compartilhe esta marca com outra conta Aliv.iA: ela cria, edita e baixa as artes daqui."
+                defaultOpen={false}
+                filled={false}
+              >
+                <BrandMembersCard brandId={brand.id} />
+              </BrandSection>
+            )}
+
             {/* Salvar sempre ao alcance, em qualquer etapa. */}
             <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-border bg-card/95 p-4 shadow-lg backdrop-blur">
               {access.isVip ? (
