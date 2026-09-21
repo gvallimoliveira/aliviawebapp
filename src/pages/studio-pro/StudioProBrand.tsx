@@ -44,6 +44,8 @@ import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } fr
 import { matrixAudiences, readAudiences, writeAudiences, type BrandAudience } from "./audiences";
 import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
+import BrandMembersCard from "./BrandMembersCard";
+import { isOwnBrand } from "./brandSharing";
 import StudioArtEditor from "./StudioArtEditor";
 import { isArtSnapshot } from "./artSnapshot";
 import { deliver, deliverMany } from "@/pages/studio/exportImage";
@@ -72,6 +74,8 @@ import {
 
 type Brand = {
   id: string;
+  /** Conta que criou a marca — só ela gerencia acessos e exclui. */
+  user_id?: string | null;
   name: string;
   niche: string | null;
   tone: string | null;
