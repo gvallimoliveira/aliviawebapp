@@ -153,9 +153,23 @@ export const pickRelation = ({
     ? audienceKeyword(audience)
     : strip(primaryAudience) || strip(dna.niche) || brand;
 
+  /**
+   * UM PÚBLICO POR ARTE: o campo genérico do briefing costuma listar públicos
+   * opostos na mesma linha ("tutores e veterinários"). A arte escolhe UM lado —
+   * falar com os dois na mesma frase é o que fazia o texto soar genérico.
+   */
+  const singleAudience = (label: string) => {
+    const parts = strip(label)
+      .split(/\s*(?:,|;|\/| e | ou )\s*/i)
+      .map(strip)
+      .filter((part) => part.length > 2);
+    if (parts.length < 2) return strip(label);
+    return parts[createRng(`relation-who:${seed ?? "static"}:${audience?.id ?? "brand"}`).int(parts.length)];
+  };
+
   return {
     audience,
-    who: audience?.label.trim() || strip(primaryAudience) || keyword,
+    who: strip(audience?.label) || singleAudience(primaryAudience) || keyword,
     keyword,
     hook: rotate(hooks, shift)[0] ?? `Você que busca ${keyword.toLowerCase()}`,
     hooks: rotate(hooks, shift),
@@ -165,9 +179,11 @@ export const pickRelation = ({
     cta: strip(audience?.cta) || strip(dna.cta) || "Chamar no direct",
     axis: axis === "pain" && !painPool.length ? "desire" : axis,
     route,
-    routes,
+    // O diretor distribui as rotas nesta ordem: assunto mais vendável primeiro.
+    routes: rankedRoutes,
   };
 };
+
 
 /** Termos que a arte precisa tocar para provar que fala da relação escolhida. */
 export const relationVocabulary = (relation: Relation): string[] => {
