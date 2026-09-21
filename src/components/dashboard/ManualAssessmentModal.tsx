@@ -1593,7 +1593,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           : null,
         // Hipótese final definida pelo profissional (sobrescreve a da IA em todo lugar).
         ...(professionalEditedDiagnosis && editedHypothesis
-          ? { final_hypothesis: editedHypothesis.slice(0, 280) }
+          ? {
+              final_hypothesis: editedHypothesis.slice(0, 280),
+              final_hypothesis_by: user?.id || null,
+              final_hypothesis_at: new Date().toISOString(),
+            }
           : {}),
 
         // Treatment plan: keep the manual flag, the AI structured payload when present,
