@@ -82,6 +82,19 @@ const low = (value?: string) => {
 
 const SUB_ECHO = 0.68;
 
+/** Contrai preposição + artigo ("de o" -> "do") para a frase não sair torta. */
+const contract = (prep: "de" | "a", text: string) => {
+  const match = /^(o|a|os|as)\s+(.*)$/i.exec(text.trim());
+  const cap1 = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+  if (!match) return cap1(`${prep} ${text}`);
+  const table: Record<string, Record<string, string>> = {
+    de: { o: "do", a: "da", os: "dos", as: "das" },
+    a: { o: "ao", a: "à", os: "aos", as: "às" },
+  };
+  const joined = `${table[prep][match[1].toLowerCase()]} ${match[2]}`;
+  return prep === "de" ? cap1(joined) : joined;
+};
+
 const usable = (text: string) => text.length > 12 && !isStale(text) && !hookViolatesGuardrails(text);
 
 
