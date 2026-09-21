@@ -86,7 +86,7 @@ const SUB_ECHO = 0.68;
 const contract = (prep: "de" | "a", text: string) => {
   const match = /^(o|a|os|as)\s+(.*)$/i.exec(text.trim());
   const cap1 = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
-  if (!match) return cap1(`${prep} ${text}`);
+  if (!match) return prep === "de" ? cap1(`${prep} ${text}`) : `${prep} ${text}`;
   const table: Record<string, Record<string, string>> = {
     de: { o: "do", a: "da", os: "dos", as: "das" },
     a: { o: "ao", a: "à", os: "aos", as: "às" },
