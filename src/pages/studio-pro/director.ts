@@ -560,10 +560,31 @@ export const planBatch = (input: {
     }
   });
 
+  /**
+   * TETO DE DOMINÂNCIA: nenhuma conexão editorial ocupa mais de ~1/3 do lote
+   * enquanto houver repertório. Antes, a mesma cena reaparecia em quase todas
+   * as artes com capas diferentes.
+   */
+  const routeUse = new Map<string, number>();
+  const routeCap = Math.max(1, Math.ceil(Math.max(1, count) / 3));
+  const takeRoute = (axis: DirectorAxis, index: number, shotExtra: string[]) => {
+    for (let attempt = 0; attempt < Math.max(1, routes.length); attempt += 1) {
+      const candidate = routeStream.take({ axis, extra: shotExtra, voice, salt: `route:${index}:${attempt}` });
+      if (!candidate) break;
+      const used = routeUse.get(candidate.signature) ?? 0;
+      if (used < routeCap || routes.length <= 1) {
+        routeUse.set(candidate.signature, used + 1);
+        return candidate;
+      }
+    }
+    return route;
+  };
+
   const shots: ArtShot[] = Array.from({ length: Math.max(0, count) }, (_, index) => {
     const axis = wheel[(index + offset) % wheel.length];
-    const shotRoute = routeStream.take({ axis, extra, voice, salt: `route:${index}` }) ?? route;
+    const shotRoute = takeRoute(axis, index, extra);
     const shotExtra = [...extra, ...(shotRoute?.vocabulary ?? [])].slice(0, 96);
+
     const block = blocks?.[index];
     const carousel = block?.kind === "carousel" && block.slide !== undefined
       ? carouselByGroup.get(block.slide.group)
