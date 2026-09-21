@@ -91,7 +91,7 @@ export const useStudioQuota = (brandId?: string) => {
       setError(null);
     }
     setLoading(false);
-  }, [user]);
+  }, [user, brandId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -104,7 +104,9 @@ export const useStudioQuota = (brandId?: string) => {
    */
   const consume = useCallback(
     async (amount = STUDIO_GENERATION_COST): Promise<ConsumeResult> => {
-      const { data, error } = await supabase.rpc("consume_studio_generation", { p_amount: amount });
+      const { data, error } = brandId
+        ? await supabase.rpc("consume_studio_generation_for_brand", { p_brand_id: brandId })
+        : await supabase.rpc("consume_studio_generation", { p_amount: amount });
       if (error) {
         console.error("[studio-pro] consume_studio_generation", error);
         setError(error.message ?? "falha ao confirmar a cota");
