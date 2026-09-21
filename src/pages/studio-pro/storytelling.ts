@@ -18,6 +18,24 @@ import { applyTerms } from "@/pages/studio/terminology";
 import { sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import type { WorldContent } from "@/pages/studio/content/types";
 import type { NarrativeRoute } from "./synapses";
+import { buildHook, eligibleHooks, hookViolatesGuardrails, type HookFields, type HookInput } from "./hookTaxonomy";
+import { textSimilarity } from "./narrativeArc";
+
+/** Liga o insumo exigido pelo gancho ao campo do kit usado nos apoios. */
+const HOOK_FIELD_LABEL: Partial<Record<HookInput, string>> = {
+  cena: "scene",
+  objecao: "objection",
+  inimigo: "enemy",
+  consequencia: "stakes",
+  gatilho: "trigger",
+  termo: "lexical",
+  percepcao: "lexical",
+  dor: "core",
+  desejo: "core",
+  prova: "core",
+  mecanismo: "core",
+};
+
 
 const squash = (value?: string) => (value ?? "").replace(/\s+/g, " ").trim().replace(/\s*[.!?…]+$/, "");
 
