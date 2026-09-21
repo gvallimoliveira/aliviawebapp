@@ -75,6 +75,7 @@ const FocusBlock = ({ content, rng, treatment, format }: BlockProps) => {
           {BRAND_MARK && (
             <image
               href={BRAND_MARK}
+              data-brand-mark="1"
               x={123}
               y={192}
               width={104}

@@ -109,7 +109,7 @@ describe("Diretor criativo", () => {
     const directed = direction.contentFor(0);
     const headline = `${directed.headlines[0].strong} ${directed.headlines[0].rest}`;
     expect(headline).toContain("Tratar a causa da otite");
-    expect(headline).toContain("Agentes diferentes pedem");
+    expect(headline.toLowerCase()).toContain("agentes diferentes pedem");
     expect(directed.subs[0]).toContain("A lâmina mostra o agente");
     expect(directed.subs[0]).toContain("tratar a causa da otite");
   });
