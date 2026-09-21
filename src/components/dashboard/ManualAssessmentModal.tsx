@@ -373,6 +373,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // so the hypothesis is the AI's actual hypothesis, not the first line of a JSON dump
   // or a fallback to the clinical impression text.
   const [aiDiagnosis, setAiDiagnosis] = useState<any | null>(null);
+  // Texto de diagnóstico exatamente como a IA (ou a avaliação salva) deixou no campo.
+  // Se o profissional alterar esse texto, a hipótese dele prevalece no prontuário.
+  const aiDiagnosisBaselineRef = useRef("");
 
   // Tratamento
   const [treatmentText, setTreatmentText] = useState("");
@@ -846,6 +849,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     if (dx.summary && dx.summary !== dx.hypothesis) dxParts.push("", String(dx.summary));
     if (dx.reasoning) dxParts.push("", String(dx.reasoning));
     setDiagnosisText(dx.text || dxParts.join("\n"));
+    aiDiagnosisBaselineRef.current = dx.text || dxParts.join("\n");
     const tx = a.treatment_plan || null;
     setAiTreatment(tx && typeof tx === "object" ? tx : null);
     setTreatmentText(tx?.text || tx?.summary || "");
@@ -931,6 +935,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     if (dx.summary && dx.summary !== dx.hypothesis) dxParts.push("", String(dx.summary));
     if (dx.reasoning) dxParts.push("", String(dx.reasoning));
     setDiagnosisText(dx.text || dxParts.join("\n"));
+    aiDiagnosisBaselineRef.current = dx.text || dxParts.join("\n");
     setAiTreatment(null);
     setTreatmentText("");
     setExternalSource({
@@ -1254,9 +1259,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         if (dx.summary) parts.push("", String(dx.summary));
         if (dx.reasoning) parts.push("", String(dx.reasoning));
         setDiagnosisText(parts.join("\n"));
+        aiDiagnosisBaselineRef.current = parts.join("\n");
       } else {
         setAiDiagnosis(null);
-        setDiagnosisText(typeof dx === "string" ? dx : JSON.stringify(dx, null, 2));
+        const raw = typeof dx === "string" ? dx : JSON.stringify(dx, null, 2);
+        setDiagnosisText(raw);
+        aiDiagnosisBaselineRef.current = raw;
       }
       toast({ title: isPt ? "Diagnóstico gerado!" : "Diagnosis generated!" });
     } catch (err: any) {
