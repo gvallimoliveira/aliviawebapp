@@ -92,7 +92,7 @@ export const pickRelation = ({
       coverageUsed: 0,
     })),
   ).map((entry) => entry.route);
-  const route = rankedRoutes[seed ? rng.int(Math.min(2, rankedRoutes.length) || 1) : 0] ?? routes[0];
+  const route = rankedRoutes[seed ? rng.int(Math.max(1, Math.ceil(rankedRoutes.length / 2))) : 0] ?? routes[0];
 
 
   const vestibular = matchesVestibular([
