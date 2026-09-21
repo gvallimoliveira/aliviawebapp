@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
+import { joinCopyParts } from "../typographyGuards";
 
 /**
  * ÍNDICE (antigo marquee).
@@ -28,7 +29,7 @@ const MarqueeBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
   const bullet = (treatment + persona.textureShift) % 3;
 
   const head = rng.pick(content.headlines);
-  const statement = `${head.strong}${head.rest}`.trim();
+  const statement = joinCopyParts(head.strong, head.rest);
   const closing =
     content.lists.find((l) => !!l.closing)?.closing ??
     content.closings[0]?.sub ??

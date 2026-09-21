@@ -159,7 +159,7 @@ export const directCarouselWithHook = (
     };
   }
 
-  const hookTitle = cleanLine(`${hook.strong}${hook.rest ?? ""}`);
+  const hookTitle = cleanLine(joinCopyParts(hook.strong, hook.rest));
   if (!hookTitle) return carousel;
 
   const originalThesis = stripEnd(carousel.title);

@@ -25,6 +25,7 @@ import { lowerInitial, readsWell } from "@/pages/studio/grammar";
 import { isStudioSelfBrand } from "@/pages/studio/persuasion";
 import type { ContentAngle } from "./audiences";
 import type { Relation } from "./relational";
+import { joinCopyParts } from "@/pages/studio/typographyGuards";
 import { findStudioSelfCharm, type StudioSelfCharmRow } from "./studioSelfCharm";
 import { professionFor, wantsProfession } from "./professions";
 
@@ -155,7 +156,7 @@ const charmFrames = (
   const subs: string[] = [];
 
   const push = (strong: string, rest: string) => {
-    const full = `${strong}${rest}`;
+    const full = joinCopyParts(strong, rest);
     if (strong && readsWell(full)) headlines.push({ strong, rest });
   };
   const pushSub = (text: string) => {
@@ -186,7 +187,7 @@ const charmFrames = (
 
   const closings = headlines.length
     ? [
-        { title: charmify(`${headlines[0].strong}${headlines[0].rest}`, { role: "title" }), sub: subs[0] ?? "", cta },
+        { title: charmify(joinCopyParts(headlines[0].strong, headlines[0].rest), { role: "title" }), sub: subs[0] ?? "", cta },
         { title: "Descubra o que estava faltando", sub: subs[1] ?? subs[0] ?? "", cta },
       ]
     : [];
@@ -323,7 +324,7 @@ export const applyCharm = (
   ];
 
   const closings = [
-    ...(row ? [{ title: `${row.headline.strong}${row.headline.rest}`, sub: row.sub, cta: row.cta }] : []),
+    ...(row ? [{ title: joinCopyParts(row.headline.strong, row.headline.rest), sub: row.sub, cta: row.cta }] : []),
     ...frames.closings,
     ...content.closings.map((c, i) => ({ ...c, cta: charmCta(c.cta, i) })),
   ];

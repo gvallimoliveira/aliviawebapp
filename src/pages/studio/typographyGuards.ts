@@ -95,6 +95,18 @@ export const sentenceLead = (raw: string | null | undefined): string => {
   return body.charAt(0).toUpperCase() + body.slice(1);
 };
 
+/** Une as duas metades editoriais sem colar palavras nem abrir espaço antes da pontuação. */
+export const joinCopyParts = (
+  strong: string | null | undefined,
+  rest: string | null | undefined,
+): string => {
+  const left = (strong ?? "").trim();
+  const right = (rest ?? "").trim();
+  if (!left) return right;
+  if (!right) return left;
+  return `${left}${/^[,.;:!?…)]/.test(right) ? "" : " "}${right}`;
+};
+
 /* -------------------------------------------------------------------------- */
 /* 3. Capa de carrossel                                                        */
 /* -------------------------------------------------------------------------- */

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { ACCENT_STYLES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
 import { BRAND_LOGO, BRAND_NAME, BRAND_SLOGAN } from "../brand";
+import { joinCopyParts } from "../typographyGuards";
 
 /**
  * Brand block — lockups institucionais: a marca como assunto da arte.
@@ -41,7 +42,7 @@ const BrandBlock = ({ content, rng, treatment, format, persona }: BlockProps) =>
   const statementPool = [
     ...content.closings.map((item) => item.title),
     ...content.subs,
-    ...content.headlines.map((item) => `${item.strong} ${item.rest}`.replace(/\s+/g, " ").trim()),
+    ...content.headlines.map((item) => joinCopyParts(item.strong, item.rest)),
   ].filter(Boolean);
   const statement = rng.pick(statementPool);
   const accentVariant = rng.int(ACCENT_STYLES.length);
