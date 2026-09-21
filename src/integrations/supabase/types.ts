@@ -4112,6 +4112,47 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_brand_members: {
+        Row: {
+          brand_id: string
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          note: string | null
+          revoked_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          note?: string | null
+          revoked_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          note?: string | null
+          revoked_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_brand_members_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "studio_brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       studio_brands: {
         Row: {
           audiences: Json
@@ -4943,16 +4984,31 @@ export type Database = {
         Args: { _patient_id: string; _user_id: string }
         Returns: boolean
       }
+      can_access_studio_brand: { Args: { _brand_id: string }; Returns: boolean }
       can_manage_clinic: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
       }
+      claim_studio_brand_invites: { Args: never; Returns: number }
       clear_assessment_progress: {
         Args: { _scope_key: string }
         Returns: undefined
       }
       consume_studio_generation: {
         Args: { p_amount?: number }
+        Returns: {
+          allowance: number
+          allowed: boolean
+          generations_left: number
+          period_start: string
+          plan: string
+          remaining: number
+          unlimited: boolean
+          used_this_period: number
+        }[]
+      }
+      consume_studio_generation_for_brand: {
+        Args: { p_brand_id: string }
         Returns: {
           allowance: number
           allowed: boolean
@@ -5434,6 +5490,20 @@ export type Database = {
           state: string
         }[]
       }
+      studio_brand_credit_status: {
+        Args: { p_brand_id: string }
+        Returns: {
+          allowance: number
+          batch_size: number
+          generations_left: number
+          period_start: string
+          plan: string
+          remaining: number
+          unlimited: boolean
+          used_this_period: number
+        }[]
+      }
+      studio_brand_owner: { Args: { _brand_id: string }; Returns: string }
       studio_credit_status: {
         Args: never
         Returns: {
@@ -5447,6 +5517,20 @@ export type Database = {
           used_this_period: number
         }[]
       }
+      studio_credit_status_for: {
+        Args: { _user: string }
+        Returns: {
+          allowance: number
+          batch_size: number
+          generations_left: number
+          period_start: string
+          plan: string
+          remaining: number
+          unlimited: boolean
+          used_this_period: number
+        }[]
+      }
+      studio_current_email: { Args: never; Returns: string }
       studio_photo_limit_for: { Args: { _user: string }; Returns: number }
       studio_plan_allowance: { Args: { p_plan: string }; Returns: number }
       try_direct_clinic_add: {
