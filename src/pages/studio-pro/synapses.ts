@@ -235,6 +235,8 @@ export const buildNarrativeRoute = ({
     methodPlain,
     lexicalTerm: matrix.lexical?.term,
     lexicalPerception: matrix.lexical?.perception,
+    profile: clean(dna.profile) || undefined,
+
     cta: clean(matrix.reasoning?.cta) || clean(audience?.cta) || clean(dna.cta) || undefined,
 
     signature,

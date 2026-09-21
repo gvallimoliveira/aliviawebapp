@@ -73,7 +73,25 @@ export const pickRelation = ({
 }): Relation => {
   const rng = createRng(`relation:${seed ?? "static"}:${audience?.id ?? "brand"}:${angle}`);
   const routes = buildNarrativeRoutes({ audience, audiences, dna, brand, seed: seed ?? "static", keywordMatrix, reasoningMatrix });
-  const route = routes[0];
+  /**
+   * A rota da relação deixa de ser sempre a primeira: o assunto mais vendável
+   * (dor com objeção para derrubar e prova para sustentar) vem na frente, e a
+   * seed decide entre os melhores. Sem isso, um único assunto dominava o lote.
+   */
+  const rankedRoutes = rankTopics(
+    routes.map((item, index) => ({
+      id: `${index}:${item.signature}`,
+      route: item,
+      painFrequency: [item.tension, item.scene, item.stakes].filter(Boolean).length,
+      objectionProximity: item.objection ? 1 : 0,
+      hasProof: Boolean(item.proof || item.feature),
+      specificity:
+        [item.lexicalTerm, item.trigger, item.scene].filter(Boolean).length / 3,
+      coverageUsed: 0,
+    })),
+  ).map((entry) => entry.route);
+  const route = rankedRoutes[seed ? rng.int(Math.min(2, rankedRoutes.length) || 1) : 0] ?? routes[0];
+
 
   const vestibular = matchesVestibular([
     audience?.label,
