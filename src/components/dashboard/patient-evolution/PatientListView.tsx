@@ -329,12 +329,12 @@ export default function PatientListView(props: any) {
                                 tabIndex={0}
                                 title={language === "pt" ? "Clique para adquirir o plano de tratamento" : language === "es" ? "Clic para adquirir el plan de tratamiento" : "Click to acquire the treatment plan"}
                                 className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1 cursor-pointer hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
-                                onClick={(e) => { e.stopPropagation(); handleAcquireBadgeClick({ name: p.name, email: p.email, assessments: p.assessments }); }}
+                                onClick={(e) => { e.stopPropagation(); handleAcquireBadgeClick({ name: p.name, email: p.email, groupKey: p.groupKey, assessments: p.assessments }); }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter" || e.key === " ") {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    handleAcquireBadgeClick({ name: p.name, email: p.email, assessments: p.assessments });
+                                    handleAcquireBadgeClick({ name: p.name, email: p.email, groupKey: p.groupKey, assessments: p.assessments });
                                   }
                                 }}
                               >
