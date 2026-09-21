@@ -25,3 +25,5 @@
 - [x] Evoluir globalmente paleta, tipografia, matrizes e isolamento de vocabulário do Studio; validar Aline, Aliv.iA e Guilherme Vallim.
 
 - [x] Corrigir recursão no carregamento de fontes serifadas do Studio e validar a geração da Aline.
+
+- [x] Separar símbolo isolado e assinatura completa nas artes; preservar proporção das logos.

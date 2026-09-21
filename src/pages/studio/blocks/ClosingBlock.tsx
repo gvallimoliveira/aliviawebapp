@@ -32,7 +32,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto flex max-w-xl flex-col items-center gap-5"
           >
-            <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-14 w-14 md:h-16 md:w-16" />
+             <img src={BRAND_LOGO} alt={BRAND_NAME} data-brand-logo="1" className="h-14 w-auto max-w-52 object-contain md:h-16" />
             <h2 className="text-2xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
               {title}
             </h2>
@@ -65,7 +65,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="flex max-w-3xl flex-col items-start gap-6 text-left md:ml-[6%]"
           >
-            <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-12 w-12 md:h-14 md:w-14" />
+             <img src={BRAND_LOGO} alt={BRAND_NAME} data-brand-logo="1" className="h-12 w-auto max-w-48 object-contain md:h-14" />
             <h2 className="text-3xl font-bold leading-tight tracking-tight text-foreground md:text-5xl">
               {title}
             </h2>
@@ -107,7 +107,7 @@ const ClosingBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="mx-auto flex max-w-2xl flex-col items-center gap-6"
         >
-          <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-16 w-16 md:h-20 md:w-20" />
+          <img src={BRAND_LOGO} alt={BRAND_NAME} data-brand-logo="1" className="h-16 w-auto max-w-56 object-contain md:h-20" />
           <h2 className={`text-3xl font-bold leading-tight tracking-tight md:text-5xl ${dark ? "" : "text-foreground"}`}>
             {title}
           </h2>

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { ACCENT_STYLES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
-import { BRAND_LOGO, BRAND_NAME, BRAND_SLOGAN } from "../brand";
+import { BRAND_LOGO, BRAND_MARK, BRAND_NAME, BRAND_SLOGAN } from "../brand";
 import { joinCopyParts } from "../typographyGuards";
 
 /**
@@ -54,9 +54,10 @@ const BrandBlock = ({ content, rng, treatment, format, persona }: BlockProps) =>
         <TextureLayer persona={persona} index={treatment} />
         <GeoOrnament index={treatment + persona.textureShift} />
         <img
-          src={BRAND_LOGO}
-          alt={BRAND_NAME}
-          className="absolute left-6 top-6 h-10 w-10 md:left-10 md:top-10 md:h-12 md:w-12"
+          src={BRAND_MARK}
+          alt=""
+          data-brand-mark="1"
+          className="absolute left-6 top-6 h-10 w-10 object-contain md:left-10 md:top-10 md:h-12 md:w-12"
         />
         <div className="container relative py-20">
           <motion.div
@@ -117,7 +118,7 @@ const BrandBlock = ({ content, rng, treatment, format, persona }: BlockProps) =>
             transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto flex max-w-md flex-col items-center rounded-[2rem] border border-border bg-card px-10 py-12 text-center shadow-sm"
           >
-            <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-20 w-20 md:h-24 md:w-24" />
+            <img src={BRAND_LOGO} alt={BRAND_NAME} data-brand-logo="1" className="h-20 w-auto max-w-64 object-contain md:h-24" />
             <figcaption className="mt-6 text-2xl font-bold tracking-tight text-foreground">{BRAND_NAME}</figcaption>
             <p className="mt-3 text-sm font-medium leading-relaxed text-muted-foreground">{BRAND_SLOGAN}</p>
             <span aria-hidden className="mt-8 h-px w-16 bg-primary/50" />
@@ -171,7 +172,7 @@ const BrandBlock = ({ content, rng, treatment, format, persona }: BlockProps) =>
             transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto flex max-w-2xl flex-col items-center pl-20 pr-4 text-center md:pl-28"
           >
-            <img src={BRAND_LOGO} alt={BRAND_NAME} className="mb-8 h-12 w-12 md:h-14 md:w-14" />
+            <img src={BRAND_MARK} alt="" data-brand-mark="1" className="mb-8 h-12 w-12 object-contain md:h-14 md:w-14" />
             <p className="text-3xl font-bold leading-[1.15] tracking-tight text-foreground md:text-5xl">
               {renderAccent(statement, accentVariant)}
             </p>
@@ -185,10 +186,11 @@ const BrandBlock = ({ content, rng, treatment, format, persona }: BlockProps) =>
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
       <img
-        src={BRAND_LOGO}
+        src={BRAND_MARK}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute -right-16 top-1/2 h-[26rem] w-[26rem] -translate-y-1/2 opacity-[0.07] md:-right-8 md:h-[34rem] md:w-[34rem]"
+        data-brand-mark="1"
+        className="pointer-events-none absolute -right-16 top-1/2 h-[26rem] w-[26rem] -translate-y-1/2 object-contain opacity-[0.07] md:-right-8 md:h-[34rem] md:w-[34rem]"
       />
       <TextureLayer persona={persona} index={treatment} />
       <div className="container relative py-20">
