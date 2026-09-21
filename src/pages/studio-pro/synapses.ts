@@ -43,6 +43,9 @@ export type NarrativeRoute = {
   /** Tradução técnico-perceptiva declarada no kit. */
   lexicalTerm?: string;
   lexicalPerception?: string;
+  /** Perfil do cliente ideal declarado no manual (antes lido e descartado). */
+  profile?: string;
+
 
   cta?: string;
   /** Assinatura persistida junto das frases para a conexão também ganhar frescor. */
