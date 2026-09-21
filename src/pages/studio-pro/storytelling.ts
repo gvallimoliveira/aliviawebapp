@@ -80,6 +80,8 @@ const low = (value?: string) => {
   return keepAcronyms(text, lowerInitial(text));
 };
 
+const SUB_ECHO = 0.68;
+
 const usable = (text: string) => text.length > 12 && !isStale(text) && !hookViolatesGuardrails(text);
 
 
@@ -289,7 +291,7 @@ export const composeRouteCopy = (
         (candidate) =>
           usable(candidate) &&
           candidate.length <= max &&
-          against.every((previous) => textSimilarity(candidate, previous) < 0.52),
+          against.every((previous) => textSimilarity(candidate, previous) < SUB_ECHO),
       ) ?? candidates.find((candidate) => usable(candidate) && candidate.length <= max);
     const sub = pickDistinct(subCandidates, [headlineText]);
     if (sub) out.subs = [terms(fit(sub, 188))];
