@@ -24,7 +24,9 @@ import { useToast } from "@/hooks/use-toast";
 
 const CHUNK_DURATION_SEC = 3 * 60;      // rotate every 3 min — keep transcript flowing into the chart
 const MAX_TOTAL_DURATION_SEC = 60 * 60; // hard cap: 1h
-const MAX_INLINE_SIZE = 4 * 1024 * 1024;
+// Áudio acima de 1 MB vai por arquivo temporário. Enviar base64 grande no corpo
+// da chamada era a causa de "Failed to send a request to the Edge Function".
+const MAX_INLINE_SIZE = 1 * 1024 * 1024;
 const MIN_KEEP_SEC = 20;
 
 type State = "idle" | "recording" | "paused" | "uploading";
