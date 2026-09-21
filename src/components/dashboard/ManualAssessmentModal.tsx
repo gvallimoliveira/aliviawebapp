@@ -1554,10 +1554,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             severity: r.severity,
           };
         }),
-        // Diagnosis: prefer the AI-generated hypothesis when available. We must NEVER
-        // fall back to the clinical impression for the hypothesis — the hypothesis is
-        // a distinct clinical concept and using the impression as a stand-in produced
-        // misleading diagnoses in the chart/PDF.
+        // Diagnosis: a hipótese da IA vale como padrão, MAS se o profissional
+        // editou o texto do diagnóstico depois de gerar, a palavra dele prevalece
+        // (prontuário, PDF e WhatsApp) via `hypothesis` + `final_hypothesis`.
         diagnosis: (aiDiagnosis || diagnosisText || clinicalImpression)
           ? (() => {
               const aiHyp = aiDiagnosis?.hypothesis?.toString().trim();
@@ -1565,12 +1564,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               // Avoid leaking raw JSON braces as hypothesis text.
               const cleanFirst = firstLine.startsWith("{") || firstLine.startsWith("[")
                 ? "" : firstLine;
-              const hypothesis = aiHyp || cleanFirst || null;
+              const hypothesis = professionalEditedDiagnosis
+                ? (cleanFirst || aiHyp || null)
+                : (aiHyp || cleanFirst || null);
               return {
                 manual: true,
                 ...(aiDiagnosis || {}),
                 hypothesis: hypothesis ? hypothesis.slice(0, 280) : null,
-                summary: aiDiagnosis?.summary || diagnosisText || clinicalImpression || null,
+                ...(professionalEditedDiagnosis ? { professionalEdited: true } : {}),
+                summary: professionalEditedDiagnosis
+                  ? (diagnosisText || aiDiagnosis?.summary || clinicalImpression || null)
+                  : (aiDiagnosis?.summary || diagnosisText || clinicalImpression || null),
                 text: diagnosisText || null,
                 clinicalImpression: aiClinicalImpression
                   ? aiClinicalImpression
@@ -1580,6 +1584,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               };
             })()
           : null,
+        // Hipótese final definida pelo profissional (sobrescreve a da IA em todo lugar).
+        ...(professionalEditedDiagnosis && editedHypothesis
+          ? { final_hypothesis: editedHypothesis.slice(0, 280) }
+          : {}),
+
         // Treatment plan: keep the manual flag, the AI structured payload when present,
         // and the free text under both `text` and `summary` so PDF/AssessmentView can render it.
         treatment_plan: (aiTreatment || treatmentText)
