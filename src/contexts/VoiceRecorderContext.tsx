@@ -213,8 +213,8 @@ const GlobalVoiceRecorderFAB = () => {
       toast({
         title: isPt ? "Gravação iniciada" : "Recording started",
         description: isPt
-          ? "A cada 10 min a transcrição é salva no prontuário, mesmo se a avaliação não for finalizada."
-          : "Every 10 min the transcript is saved to the chart, even if the assessment isn't finalised.",
+          ? "A cada 3 min a transcrição é salva no prontuário, mesmo se a avaliação não for finalizada."
+          : "Every 3 min the transcript is saved to the chart, even if the assessment isn't finalised.",
       });
     } catch (err: any) {
       toast({

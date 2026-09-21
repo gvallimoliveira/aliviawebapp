@@ -128,6 +128,43 @@ Deno.serve(async (req) => {
     }
     voiceNoteId = voice_note_id;
 
+    // Resgate: gerar apenas o resumo a partir da transcrição já salva
+    // (usado quando o último trecho de áudio não pôde ser enviado).
+    if (body.summary_only) {
+      const { data: row, error: rowErr } = await admin
+        .from("assessment_voice_notes")
+        .select("transcript")
+        .eq("id", voice_note_id)
+        .single();
+      if (rowErr) throw rowErr;
+      const transcript = (row?.transcript || "").trim();
+      if (!transcript) throw new Error("No transcript to summarize");
+
+      const isPtOnly = (language || "pt") === "pt";
+      const resp = await callAI(LOVABLE_API_KEY, {
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: isPtOnly ? SUMMARY_PROMPT_PT : SUMMARY_PROMPT_EN },
+          { role: "user", content: transcript },
+        ],
+      });
+      let summary: any = {};
+      try {
+        const parsed = extractJson(resp?.choices?.[0]?.message?.content || "");
+        summary = parsed.summary || parsed || {};
+      } catch (e) {
+        console.error("summary_only parse failed:", e);
+      }
+      await admin
+        .from("assessment_voice_notes")
+        .update({ status: "ready", summary, error: null })
+        .eq("id", voice_note_id);
+      return new Response(JSON.stringify({ ok: true, summary_only: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     let audioB64: string | null = audio_base64 || null;
     const audioMime = mime_type || "audio/webm";
 
