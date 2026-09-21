@@ -46,6 +46,8 @@ export type ArtRenderBrand = {
   positioning?: string | null;
   signature_enabled?: boolean | null;
   brief_answers?: unknown;
+  keyword_matrix?: unknown;
+  reasoning_matrix?: unknown;
 };
 
 /** #RRGGBB → "H S% L%" para alimentar os tokens HSL do tema. */
@@ -95,8 +97,10 @@ export const useArtRender = ({ brand, seed, segment, angle, variation }: Args) =
       keywords: brand.topics,
       positioning: brand.positioning,
       briefAnswers: brand.brief_answers,
+      keywordMatrix: brand.keyword_matrix,
+      reasoningMatrix: brand.reasoning_matrix,
     }),
-    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers],
+    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers, brand.keyword_matrix, brand.reasoning_matrix],
   );
 
   const subWorld = useMemo<WorldId | undefined>(() => {

@@ -10,6 +10,7 @@ import type { BrandAudience } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
 import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
 import { methodPlainLine } from "./methodPlain";
+import { pickMatrixContext } from "./contentMatrices";
 
 import { editorialAudience } from "@/pages/studio/typographyGuards";
 
@@ -39,6 +40,9 @@ export type NarrativeRoute = {
   trigger?: string;
   /** STEPS/D.I.F.I traduzidos em linguagem de leigo (só marcas Aliv.iA). */
   methodPlain?: string;
+  /** Tradução técnico-perceptiva declarada no kit. */
+  lexicalTerm?: string;
+  lexicalPerception?: string;
 
   cta?: string;
   /** Assinatura persistida junto das frases para a conexão também ganhar frescor. */
@@ -112,6 +116,8 @@ export const buildNarrativeRoute = ({
   brand,
   seed,
   variant = 0,
+  keywordMatrix,
+  reasoningMatrix,
 }: {
   audience?: BrandAudience;
   audiences?: BrandAudience[];
@@ -119,6 +125,8 @@ export const buildNarrativeRoute = ({
   brand?: string;
   seed: string;
   variant?: number;
+  keywordMatrix?: unknown;
+  reasoningMatrix?: unknown;
 }): NarrativeRoute => {
   const routeSeed = `${seed}:v${variant}`;
   const rng = createRng(`narrative-route:${routeSeed}:${audience?.id ?? "brand"}`);
@@ -151,6 +159,13 @@ export const buildNarrativeRoute = ({
   const stakesPool = ownFirst(first(audience?.stakes), dna.stakes);
   const triggerPool = first(audience?.triggers);
   const enemy = clean(dna.enemy) || undefined;
+  const matrix = pickMatrixContext({
+    keywordMatrix,
+    reasoningMatrix,
+    audienceId: audience?.id,
+    seed: routeSeed,
+    variant,
+  });
 
   const kinds: NarrativeRouteKind[] = [
     "pain-to-desire",
@@ -160,11 +175,11 @@ export const buildNarrativeRoute = ({
   ];
   const kind = kinds[rng.int(kinds.length)];
   const pick = (pool: string[]) => pool.length ? pool[rng.int(pool.length)] : undefined;
-  const tension = pick(pains);
-  const desire = pick(desires);
-  const proof = pick(proofs);
-  const feature = pick(features);
-  const scene = pick(scenes);
+  const tension = clean(matrix.reasoning?.scene) || pick(pains);
+  const desire = clean(matrix.reasoning?.outcome) || pick(desires);
+  const proof = clean(matrix.reasoning?.bridge) || pick(proofs);
+  const feature = clean(matrix.reasoning?.mechanism) || pick(features);
+  const scene = clean(matrix.reasoning?.scene) || pick(scenes);
   const objection = pick(objections);
   const stakes = pick(stakesPool);
   const trigger = pick(triggerPool);
@@ -184,11 +199,11 @@ export const buildNarrativeRoute = ({
   const vocabulary = [...new Set([
     ...tokens(tension, desire, proof, feature, dna.positioning),
     ...tokens(scene, objection, enemy, stakes),
-    ...tokens(trigger, methodPlain),
+    ...tokens(trigger, methodPlain, matrix.lexical?.term, matrix.lexical?.perception, ...(matrix.lexical?.associations ?? [])),
     ...bridgeWords.slice(0, 8),
     ...tokens(...aliviaLinks),
   ])].slice(0, 44);
-  const signature = [kind, audience?.id ?? "brand", tension, feature, proof, desire, scene, objection, stakes, trigger]
+  const signature = [kind, audience?.id ?? "brand", matrix.reasoning?.id, matrix.lexical?.id, tension, feature, proof, desire, scene, objection, stakes, trigger]
     .filter(Boolean)
     .join("|")
     .toLowerCase();
@@ -215,7 +230,9 @@ export const buildNarrativeRoute = ({
     stakes,
     trigger,
     methodPlain,
-    cta: clean(audience?.cta) || clean(dna.cta) || undefined,
+    lexicalTerm: matrix.lexical?.term,
+    lexicalPerception: matrix.lexical?.perception,
+    cta: clean(matrix.reasoning?.cta) || clean(audience?.cta) || clean(dna.cta) || undefined,
 
     signature,
     vocabulary,

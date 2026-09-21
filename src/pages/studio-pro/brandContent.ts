@@ -79,6 +79,9 @@ export type BrandKit = {
    * literalmente no topo dos acervos — ver `formatInsights.ts`.
    */
   formatInsights?: string | null;
+  /** Matrizes estruturadas de linguagem e encadeamento narrativo. */
+  keywordMatrix?: unknown;
+  reasoningMatrix?: unknown;
 };
 
 
@@ -1826,7 +1829,7 @@ export const buildSegmentContent = ({
   });
   const root = base ?? buildBrandContent(kit, variation, audiences);
   const relationFor = (audience?: BrandAudience) =>
-    pickRelation({ audience, audiences, dna, brand, angle, seed: variationSeed });
+    pickRelation({ audience, audiences, dna, brand, angle, seed: variationSeed, keywordMatrix: kit.keywordMatrix, reasoningMatrix: kit.reasoningMatrix });
 
   /**
    * INSIGHTS DE FORMATOS: entram por ÚLTIMO, já no topo dos acervos, para não
@@ -1963,7 +1966,7 @@ export const relationForSegment = ({
   const audience = segment === GLOBAL_SEGMENT
     ? pickGlobalAudience({ audiences, variationSeed, segmentWeights }) ?? undefined
     : resolveAudience(audiences, segment) ?? undefined;
-  return pickRelation({ audience, audiences, dna, brand, angle, seed: variationSeed });
+  return pickRelation({ audience, audiences, dna, brand, angle, seed: variationSeed, keywordMatrix: kit.keywordMatrix, reasoningMatrix: kit.reasoningMatrix });
 };
 
 

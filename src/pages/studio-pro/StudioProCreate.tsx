@@ -151,6 +151,8 @@ type BrandInput = {
   slogan?: string | null;
   /** Insights de formatos: ideias de arte com o diálogo já pronto (uma por linha). */
   format_insights?: string | null;
+  keyword_matrix?: unknown;
+  reasoning_matrix?: unknown;
 
 };
 
@@ -464,8 +466,10 @@ const StudioProCreate = ({
       slogan: brand.slogan,
       /** Insights de formatos: diálogo declarado pelo dono, entra literal na arte. */
       formatInsights: brand.format_insights,
+      keywordMatrix: brand.keyword_matrix,
+      reasoningMatrix: brand.reasoning_matrix,
     }),
-    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers, brand.slogan, brand.format_insights],
+    [brand.name, brand.niche, brand.tone, brand.description, brand.topics, brand.positioning, brand.brief_answers, brand.slogan, brand.format_insights, brand.keyword_matrix, brand.reasoning_matrix],
   );
 
 

@@ -47,6 +47,12 @@ import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
 import StudioArtEditor from "./StudioArtEditor";
 import { isArtSnapshot } from "./artSnapshot";
 import { deliver, deliverMany } from "@/pages/studio/exportImage";
+import {
+  keywordMatrixFromText,
+  keywordMatrixToText,
+  reasoningMatrixFromText,
+  reasoningMatrixToText,
+} from "./contentMatrices";
 
 import {
   answeredCount,
@@ -88,6 +94,8 @@ type Brand = {
   brief_answers?: unknown;
   /** Insights de formatos: ideias de arte com o diálogo já pronto (uma por linha). */
   format_insights?: string | null;
+  keyword_matrix?: unknown;
+  reasoning_matrix?: unknown;
 };
 
 type Creation = {
@@ -237,6 +245,8 @@ const StudioProBrand = () => {
     strategy_notes: "",
     format_insights: "",
     slogan: "",
+    keyword_matrix: "",
+    reasoning_matrix: "",
   });
   /** Nichos da marca — cada um alimenta uma aba de conteúdo no editor. */
   const [audiences, setAudiences] = useState<BrandAudience[]>([]);
@@ -351,6 +361,8 @@ const StudioProBrand = () => {
         strategy_notes: brand.strategy_notes ?? "",
         format_insights: brand.format_insights ?? "",
         slogan: brand.slogan ?? "",
+        keyword_matrix: keywordMatrixToText(brand.keyword_matrix),
+        reasoning_matrix: reasoningMatrixToText(brand.reasoning_matrix),
       });
       setAudiences(readAudiences(brand.audiences));
       setColorKit(readColorKit(brand.colors));
@@ -411,6 +423,8 @@ const StudioProBrand = () => {
         audiences: writeAudiences(audiences),
         signature_enabled: signatureEnabled,
         brief_answers: briefAnswers,
+        keyword_matrix: keywordMatrixFromText(form.keyword_matrix),
+        reasoning_matrix: reasoningMatrixFromText(form.reasoning_matrix),
       })
       .eq("id", brandId);
     setSaving(false);
@@ -1244,9 +1258,43 @@ const StudioProBrand = () => {
               </div>
             </BrandSection>
 
-            {/* ================= 5. PÚBLICOS ================= */}
+            {/* ================= 5. MATRIZES ================= */}
             <BrandSection
               step={5}
+              title="Matrizes de conteúdo"
+              hint="Conecta linguagem técnica, percepção do público e raciocínios completos para as artes."
+              defaultOpen={false}
+              filled={!!form.keyword_matrix.trim() && !!form.reasoning_matrix.trim()}
+            >
+              <div className="grid gap-4">
+                <div>
+                  <Label htmlFor="edit-keyword-matrix">Matriz de palavras</Label>
+                  <Textarea
+                    id="edit-keyword-matrix"
+                    rows={8}
+                    placeholder="Termo técnico | como o público percebe | palavras associadas | públicos | tema"
+                    value={form.keyword_matrix}
+                    onChange={(e) => setForm({ ...form, keyword_matrix: e.target.value })}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">Uma relação por linha. Separe cada parte com | e vários públicos por vírgula.</p>
+                </div>
+                <div>
+                  <Label htmlFor="edit-reasoning-matrix">Matriz de raciocínio</Label>
+                  <Textarea
+                    id="edit-reasoning-matrix"
+                    rows={10}
+                    placeholder="Públicos | cena ou sintoma | mecanismo | prova ou ponte | consequência desejada | CTA | tema"
+                    value={form.reasoning_matrix}
+                    onChange={(e) => setForm({ ...form, reasoning_matrix: e.target.value })}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">Cada linha vira uma sequência completa, usada sem misturar temas ou públicos.</p>
+                </div>
+              </div>
+            </BrandSection>
+
+            {/* ================= 6. PÚBLICOS ================= */}
+            <BrandSection
+              step={6}
               title="Públicos"
 
               hint="Cada público vira uma aba na criação, com dores, desejos, chamada e CTA próprios."

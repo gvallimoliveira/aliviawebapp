@@ -59,6 +59,8 @@ export const pickRelation = ({
   brand,
   angle,
   seed,
+  keywordMatrix,
+  reasoningMatrix,
 }: {
   audience?: BrandAudience;
   audiences?: BrandAudience[];
@@ -66,9 +68,11 @@ export const pickRelation = ({
   brand: string;
   angle: ContentAngle;
   seed?: string;
+  keywordMatrix?: unknown;
+  reasoningMatrix?: unknown;
 }): Relation => {
   const rng = createRng(`relation:${seed ?? "static"}:${audience?.id ?? "brand"}:${angle}`);
-  const routes = buildNarrativeRoutes({ audience, audiences, dna, brand, seed: seed ?? "static" });
+  const routes = buildNarrativeRoutes({ audience, audiences, dna, brand, seed: seed ?? "static", keywordMatrix, reasoningMatrix });
   const route = routes[0];
 
   const vestibular = matchesVestibular([

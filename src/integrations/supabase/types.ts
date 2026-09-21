@@ -4125,11 +4125,13 @@ export type Database = {
           id: string
           instagram_handle: string | null
           is_active: boolean
+          keyword_matrix: Json
           logo_url: string | null
           mark_url: string | null
           name: string
           niche: string | null
           positioning: string | null
+          reasoning_matrix: Json
           signature_enabled: boolean
           slogan: string | null
           source_url: string | null
@@ -4151,11 +4153,13 @@ export type Database = {
           id?: string
           instagram_handle?: string | null
           is_active?: boolean
+          keyword_matrix?: Json
           logo_url?: string | null
           mark_url?: string | null
           name: string
           niche?: string | null
           positioning?: string | null
+          reasoning_matrix?: Json
           signature_enabled?: boolean
           slogan?: string | null
           source_url?: string | null
@@ -4177,11 +4181,13 @@ export type Database = {
           id?: string
           instagram_handle?: string | null
           is_active?: boolean
+          keyword_matrix?: Json
           logo_url?: string | null
           mark_url?: string | null
           name?: string
           niche?: string | null
           positioning?: string | null
+          reasoning_matrix?: Json
           signature_enabled?: boolean
           slogan?: string | null
           source_url?: string | null
