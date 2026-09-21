@@ -49,7 +49,7 @@ const PhotoSplitBlock = ({ content, rng, treatment, format, persona, picker, pho
         >
           {renderAccent(phrase, treatment)}
         </h2>
-        <p className="mt-6 max-w-sm self-end text-right text-[11px] leading-relaxed text-background drop-shadow-[0_1px_6px_hsl(var(--foreground)/0.7)] md:text-sm">
+        <p className="mt-6 max-w-sm self-end rounded-md bg-background/95 px-3 py-2 text-right text-[11px] font-medium leading-relaxed text-foreground shadow-sm md:text-sm">
           {item.description}
         </p>
       </motion.div>

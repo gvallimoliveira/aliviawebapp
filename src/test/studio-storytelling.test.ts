@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { composeRouteCopy } from "@/pages/studio-pro/storytelling";
 import { phraseSignature } from "@/pages/studio/picker";
 import type { NarrativeRoute } from "@/pages/studio-pro/synapses";
+import { joinCopyParts } from "@/pages/studio/typographyGuards";
 
 const route: NarrativeRoute = {
   kind: "pain-to-desire",
@@ -16,6 +17,11 @@ const route: NarrativeRoute = {
 };
 
 describe("redação a partir da rota narrativa", () => {
+  it("une partes editoriais com espaço entre palavras e sem espaço antes da pontuação", () => {
+    expect(joinCopyParts("Carga não é", "achismo")).toBe("Carga não é achismo");
+    expect(joinCopyParts("Não é sorte", ". É critério.")).toBe("Não é sorte. É critério.");
+  });
+
   it("escreve frases com a tensão e o desejo reais da rota", () => {
     const copy = composeRouteCopy(route);
     expect(copy.subs?.[0]).toMatch(/pré-avaliação|consulta|histórico/i);
@@ -57,5 +63,24 @@ describe("redação a partir da rota narrativa", () => {
     });
     expect(second.headlines?.[0]).not.toEqual(first.headlines?.[0]);
     expect(second.subs?.[0]).not.toEqual(first.subs?.[0]);
+  });
+
+  it("explica o método sem conectá-lo a uma funcionalidade aleatória", () => {
+    const withMethod: NarrativeRoute = {
+      ...route,
+      methodPlain: "Onde dói, quando dói e o que faz doer",
+      feature: "Vitrine de fisioterapeutas para continuar o cuidado",
+    };
+    const copies = Array.from({ length: 24 }, (_, index) =>
+      composeRouteCopy(withMethod, { seed: `metodo:${index}`, rotate: index }),
+    );
+    const supports = copies.map((copy) => copy.subs?.[0] ?? "");
+    const methodSupports = supports.filter((support) => /onde dói/i.test(support));
+
+    expect(methodSupports.length).toBeGreaterThan(0);
+    methodSupports.forEach((support) => {
+      expect(support).toMatch(/decisão clínica/i);
+      expect(support).not.toMatch(/é assim que vitrine|vitrine.+funciona na prática/i);
+    });
   });
 });

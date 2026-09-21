@@ -37,7 +37,7 @@ import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import { lowerInitial } from "@/pages/studio/grammar";
-import { carouselClosingCopy, carouselCoverCopy } from "@/pages/studio/typographyGuards";
+import { carouselClosingCopy, carouselCoverCopy, joinCopyParts } from "@/pages/studio/typographyGuards";
 import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
@@ -159,7 +159,7 @@ export const directCarouselWithHook = (
     };
   }
 
-  const hookTitle = cleanLine(`${hook.strong}${hook.rest ?? ""}`);
+  const hookTitle = cleanLine(joinCopyParts(hook.strong, hook.rest));
   if (!hookTitle) return carousel;
 
   const originalThesis = stripEnd(carousel.title);
