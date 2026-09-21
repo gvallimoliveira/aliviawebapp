@@ -40,7 +40,7 @@ const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos, artKe
   return (
     <section
       className={`relative flex ${sectionHeight(format)} ${justify} overflow-hidden`}
-      style={{ backgroundColor: "#0c0c12" }}
+      style={{ backgroundColor: "hsl(var(--studio-deep-surface, var(--primary)))" }}
     >
       {/* Foto sangrada: ocupa o quadro inteiro em qualquer formato. */}
       <div aria-hidden className="pointer-events-none absolute inset-0">

@@ -408,8 +408,10 @@ export const planBatch = (input: {
   weightOf?: (signature: string) => number;
   /** Palavras dos ajustes de texto que o dono da marca já fez. */
   learnedVoice?: string[];
+  /** Contexto declarado da marca; impede léxicos verticais de vazarem. */
+  domain?: string;
 }): BatchDirection => {
-  const { content, count, blocks, seed, relation, dna, brief, weightOf, learnedVoice } = input;
+  const { content, count, blocks, seed, relation, dna, brief, weightOf, learnedVoice, domain } = input;
   const rng = createRng(`${seed}:director`);
   const route = "route" in (relation ?? {}) ? (relation as Relation).route : undefined;
   const routes = "routes" in (relation ?? {}) ? (relation as Relation).routes ?? (route ? [route] : []) : [];
@@ -476,7 +478,10 @@ export const planBatch = (input: {
   ]
     .filter(Boolean)
     .join(" · ");
-  const isVestibular = matchesVestibular(lexProbe);
+  const domainProbe = normalize([domain, dna?.niche, dna?.description, dna?.presentation, dna?.offer].filter(Boolean).join(" · "));
+  const humanClinicalDomain = /fisioter|reabilita|musculoesquel|ortopedi|terapia manual|medicina esportiva/.test(domainProbe)
+    && !/veterin|animal|pet|canin|felin/.test(domainProbe);
+  const isVestibular = humanClinicalDomain && matchesVestibular(lexProbe);
   const lexiconFor = (index: number) => {
     if (!lexProbe) return undefined;
     const salt = `${seed}:lex:${index}`;
@@ -484,7 +489,7 @@ export const planBatch = (input: {
       const lines = vestibularLines(salt);
       return { ...lines, heading: "Tontura: o que é o quê" };
     }
-    if (!matchesMsk(lexProbe)) return undefined;
+    if (!humanClinicalDomain || !matchesMsk(lexProbe)) return undefined;
     const lines = mskLines(lexProbe, salt);
     if (!lines) return undefined;
     return { ...lines, heading: `${lines.topic.glossary[0]?.term ?? "Lesão"}: o que é o quê` };

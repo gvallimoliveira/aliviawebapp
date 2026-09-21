@@ -125,6 +125,27 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Hierarquia editorial das artes: fonte de marca nos títulos, fonte de
+     leitura nos textos menores. Os tokens são definidos pelo kit ativo. */
+  [data-studio-art-key] {
+    font-family: var(--studio-body-font, inherit);
+  }
+
+  [data-studio-art-key] :is(h1, h2, h3) {
+    font-family: var(--studio-display-font, var(--studio-body-font, inherit));
+    letter-spacing: 0;
+  }
+
+  /* Superfícies dramáticas continuam pertencendo à paleta da marca, nunca ao
+     preto neutro do aplicativo. Só aparecem em modelos pontuais do lote. */
+  [data-studio-art-key] .bg-foreground {
+    background-color: hsl(var(--studio-deep-surface, var(--primary)));
+  }
+
+  [data-studio-art-key] .text-background {
+    color: hsl(var(--studio-deep-foreground, var(--primary-foreground)));
+  }
 }
 
 /* CSS-based float animation — cheaper than JS-driven framer-motion */

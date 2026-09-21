@@ -228,6 +228,47 @@ export const composeRouteCopy = (
         out.typos = [{ lead: terms(fit(cap(leads[frame % leads.length]), 26)), big: terms(big).toUpperCase(), tail: terms(tail) }];
       }
     }
+
+    /**
+     * A rota completa também alimenta modelos informativos. Antes só hero,
+     * tipografia e fecho recebiam a matriz; listas, cards e histórias voltavam
+     * ao acervo genérico mesmo quando o manual estava rico.
+     */
+    const routeSteps = [
+      scene ? { title: "O que aparece", description: cap(scene) } : undefined,
+      feature ? { title: "O que pode estar por trás", description: cap(feature) } : undefined,
+      proof ? { title: "O que ajuda a esclarecer", description: cap(proof) } : undefined,
+      desire ? { title: "O que essa decisão protege", description: cap(desire) } : undefined,
+    ].filter((item): item is { title: string; description: string } => Boolean(item));
+    if (routeSteps.length >= 3) {
+      out.features = routeSteps.map((item, index) => ({
+        tag: shortKicker(who || route.audienceLabel || "Entenda", 28),
+        title: terms(fit(item.title, 38)),
+        headline: terms(fit(item.description, 56)),
+        description: terms(fit(item.description, 150)),
+        topic: undefined,
+      }));
+      out.lists = [{
+        heading: terms(fit(scene || lead, 72)),
+        items: routeSteps.slice(1).map((item) => terms(item.description)),
+        closing: terms(fit(proof || cta || gain, 110)),
+      }];
+      out.stories = [{
+        kicker: terms(shortKicker(who || "Leitura clínica", 28)),
+        title: terms(fit(scene || lead, 70)),
+        beats: [feature, proof].filter(Boolean).map((item) => terms(cap(item))),
+        turn: terms(fit(desire || gain, 100)),
+        moral: terms(fit(cta || proof || turn, 100)),
+      }];
+      if (lexicalTerm && lexicalPerception) {
+        out.quotes = [{ text: terms(`${cap(lexicalTerm)} é o termo técnico. Para quem cuida, pode aparecer como ${low(lexicalPerception)}.`) }];
+      }
+      out.kinetic = [{
+        kicker: terms(shortKicker(who || "Decisão", 28)),
+        word: terms(bigWord(lexicalTerm || feature || desire) || "Clareza"),
+        caption: terms(fit(proof || feature, 110)),
+      }];
+    }
     return out;
   };
 

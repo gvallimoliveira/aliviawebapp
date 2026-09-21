@@ -22,3 +22,4 @@
 - [x] Manter o texto no ponto escolhido após “Fixar posição” em qualquer arte
 
 - [x] Absorver matrizes de palavras-chave e interligação do manual no Studio; preencher Aliv.iA, Guilherme Vallim e criar Aline Furtado Vet pronta para teste.
+- [x] Evoluir globalmente paleta, tipografia, matrizes e isolamento de vocabulário do Studio; validar Aline, Aliv.iA e Guilherme Vallim.

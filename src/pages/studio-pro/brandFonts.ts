@@ -77,7 +77,10 @@ export const matchFontKey = (raw?: string | null): string | null => {
 /** Injeta (uma vez) o link do Google Fonts da fonte escolhida. */
 export const ensureFontLoaded = (key?: string | null) => {
   const font = findFont(key);
-  if (!font.google || typeof document === "undefined") return;
+  if (typeof document === "undefined") return;
+  /** Serifadas de destaque sempre ganham uma sans de leitura no mesmo tema. */
+  if (font.stack.includes("serif")) ensureFontLoaded("inter");
+  if (!font.google) return;
   const id = `studio-font-${font.key}`;
   if (document.getElementById(id)) return;
   const link = document.createElement("link");

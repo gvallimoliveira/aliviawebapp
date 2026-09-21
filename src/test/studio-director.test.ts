@@ -391,5 +391,31 @@ describe("Diretor criativo", () => {
     );
     expect(directedHeadings).not.toEqual(expect.arrayContaining([expect.stringMatching(/tendinit|tend[aã]o|aquiles|patelar/i)]));
   });
+
+  it("não injeta léxico musculoesquelético humano numa marca veterinária", () => {
+    const audience = {
+      id: "tutor-animal",
+      label: "Tutor de animal",
+      keyword: "mobilidade do pet",
+      description: "Tutor atento a dor articular e movimento do animal.",
+    };
+    const direction = planBatch({
+      content: WORLDS.pro,
+      count: 3,
+      seed: "vet-sem-lexico-humano",
+      domain: "dermatologia e citologia veterinária para cães e gatos",
+      relation: {
+        audience,
+        who: audience.label,
+        keyword: audience.keyword,
+        hook: "Seu pet mudou a forma de se mover",
+        pain: "dor articular do animal",
+        desire: "investigar com clareza",
+        axis: "pain",
+      } as Parameters<typeof planBatch>[0]["relation"],
+    });
+    const visible = JSON.stringify(direction.shots.map((shot) => shot.reserved));
+    expect(visible).not.toMatch(/aquiles|patelar|manguito|ombro do arremessador|menisco/i);
+  });
 });
 
