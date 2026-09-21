@@ -44,7 +44,7 @@ const cornerFor = (key: string): SignatureCorner => {
  * - uma imagem de logo ou símbolo REALMENTE visível (>= 40px de lado); ou
  * - o nome da marca em tipografia grande (>= 22px), como wordmark do layout.
  */
-const hasOwnLockup = (node: HTMLElement, brandName: string): boolean => {
+export const hasOwnLockup = (node: HTMLElement, brandName: string): boolean => {
   // Modelos que já fecham com logo + @ da marca no pé (ex.: "Frase de impacto")
   // se declaram assinados — assim a arte não sai com duas assinaturas.
   if (node.querySelector('[data-studio-own-lockup="1"]')) return true;
