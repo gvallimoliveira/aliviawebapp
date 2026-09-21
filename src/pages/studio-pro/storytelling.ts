@@ -41,13 +41,29 @@ const fit = (raw: string | undefined, max: number): string => {
   return out.trim().replace(/[,:;—–]$/, "").trim();
 };
 
-const cap = (value?: string) => sentenceLead(squash(value));
-const low = (value?: string) => {
-  const text = squash(value);
-  return lowerInitial(text);
+/** Siglas do manual (PAAF, CRMV, HEP...) nunca perdem o caixa alta. */
+const ACRONYM = /\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,6}\b/g;
+const keepAcronyms = (raw: string, out: string) => {
+  const found = [...new Set((raw.match(ACRONYM) ?? []))];
+  return found.reduce(
+    (text, sigla) => text.replace(new RegExp(`\\b${sigla}\\b`, "gi"), sigla),
+    out,
+  );
 };
 
-const usable = (text: string) => text.length > 12 && !isStale(text);
+const cap = (value?: string) => {
+  const raw = squash(value);
+  return keepAcronyms(raw, sentenceLead(raw));
+};
+const low = (value?: string) => {
+  const text = squash(value);
+  // Frase que começa por sigla continua em caixa alta.
+  if (/^[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,6}\b/.test(text)) return text;
+  return keepAcronyms(text, lowerInitial(text));
+};
+
+const usable = (text: string) => text.length > 12 && !isStale(text) && !hookViolatesGuardrails(text);
+
 
 /** Palavra protagonista para cartaz tipográfico (a mais forte que couber). */
 const bigWord = (source?: string) => {
