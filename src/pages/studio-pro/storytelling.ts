@@ -269,12 +269,14 @@ export const composeRouteCopy = (
     const headlineText = `${headline.strong} ${headline.rest}`;
     const rotateFrom = <T,>(items: T[]) =>
       items.length ? items.map((_, i) => items[(i + frame) % items.length]) : [];
-    const subCandidates = [
-      ...rotateFrom(coherentReasoning.map((item) => item.text)),
-      ...rotateFrom(otherFields.map((item) => item.text)),
-      ...rotateFrom(subPool),
-      ...rotateFrom(subsByKind[route.kind]),
+    const mergedSubs = [
+      ...coherentReasoning.map((item) => item.text),
+      ...otherFields.map((item) => item.text),
+      ...subPool,
+      ...subsByKind[route.kind],
     ];
+    const subCandidates = rotateFrom([...new Set(mergedSubs)]);
+
     const pickDistinct = (candidates: string[], against: string[], max = 190) =>
       candidates.find(
         (candidate) =>
