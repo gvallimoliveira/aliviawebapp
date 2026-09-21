@@ -59,6 +59,8 @@ export const pickRelation = ({
   brand,
   angle,
   seed,
+  keywordMatrix,
+  reasoningMatrix,
 }: {
   audience?: BrandAudience;
   audiences?: BrandAudience[];

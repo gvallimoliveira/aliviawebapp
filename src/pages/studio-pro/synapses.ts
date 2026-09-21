@@ -116,6 +116,8 @@ export const buildNarrativeRoute = ({
   brand,
   seed,
   variant = 0,
+  keywordMatrix,
+  reasoningMatrix,
 }: {
   audience?: BrandAudience;
   audiences?: BrandAudience[];
