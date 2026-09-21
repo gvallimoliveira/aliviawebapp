@@ -115,10 +115,21 @@ export const pickRelation = ({
   const matrixDesires = list(route?.desire ? [route.desire] : []);
   const matrixProofs = list([route?.proof, route?.feature].filter(Boolean) as string[]);
 
-  const shift = seed ? rng.int(Math.max(1, Math.max(pains.length, desires.length, proofs.length))) : 0;
-  const painPool = [...matrixPains, ...rotate(pains.filter((item) => !matrixPains.includes(item)), shift)];
-  const desirePool = [...matrixDesires, ...rotate(desires.filter((item) => !matrixDesires.includes(item)), shift)];
-  const proofPool = [...matrixProofs, ...rotate(proofs.filter((item) => !matrixProofs.includes(item)), shift)];
+  /**
+   * COBERTURA DO MANUAL: cada acervo recebe um giro PRÓPRIO. Com um único
+   * `shift`, dor, desejo e prova caíam sempre na mesma combinação (índice 0) e
+   * dois terços dos itens do manual nunca chegavam à arte.
+   */
+  const shiftFor = (label: string, size: number) =>
+    seed && size > 1 ? createRng(`relation-pool:${seed}:${audience?.id ?? "brand"}:${label}`).int(size) : 0;
+  const freePains = pains.filter((item) => !matrixPains.includes(item));
+  const freeDesires = desires.filter((item) => !matrixDesires.includes(item));
+  const freeProofs = proofs.filter((item) => !matrixProofs.includes(item));
+  const shift = shiftFor("hook", Math.max(1, pains.length, desires.length, proofs.length));
+  const painPool = [...matrixPains, ...rotate(freePains, shiftFor("pain", freePains.length))];
+  const desirePool = [...matrixDesires, ...rotate(freeDesires, shiftFor("desire", freeDesires.length))];
+  const proofPool = [...matrixProofs, ...rotate(freeProofs, shiftFor("proof", freeProofs.length))];
+
 
   /** O ângulo do lote manda no eixo; "informar"/"venda" alternam pela seed. */
   const axis: "pain" | "desire" =
