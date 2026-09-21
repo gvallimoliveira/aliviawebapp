@@ -15,6 +15,8 @@ import type { BrandDna } from "./brandDnaKit";
 import { buildNarrativeRoutes, type NarrativeRoute } from "./synapses";
 import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
 import { editorialAudience } from "@/pages/studio/typographyGuards";
+import { rankTopics } from "./topicScore";
+
 
 export type Relation = {
   audience?: BrandAudience;
