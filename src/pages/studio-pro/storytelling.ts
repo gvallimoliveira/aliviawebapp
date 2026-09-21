@@ -11,7 +11,7 @@
  * Determinístico: mesma rota ⇒ mesmo texto.
  */
 import { isStale } from "@/pages/studio/persuasion";
-import { lowerInitial } from "@/pages/studio/grammar";
+import { isClause, lowerInitial } from "@/pages/studio/grammar";
 import { phraseSignature } from "@/pages/studio/picker";
 import { createRng } from "@/pages/studio/rng";
 import { applyTerms } from "@/pages/studio/terminology";
@@ -195,18 +195,34 @@ export const composeRouteCopy = (
     ...hookFrames,
     // Molduras diretas dos campos do kit: continuam válidas e somam variedade.
     ...(scene ? [{ field: "scene", strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
-    ...(trigger ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }] : []),
+    ...(trigger && !isClause(turn)
+      ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }]
+      : []),
     ...(objection ? [{ field: "objection", strong: fit(cap(objection), 32), rest: fit(cap(turn), 44) }] : []),
-    ...(enemy ? [{ field: "enemy", strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }] : []),
+    ...(enemy && !isClause(turn)
+      ? [{ field: "enemy", strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }]
+      : []),
     ...(stakes ? [{ field: "stakes", strong: fit("Enquanto nada muda", 28), rest: fit(low(stakes), 44) }] : []),
 
     { field: "core", strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
-    { field: "core", strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
+    ...(isClause(turn)
+      ? [{ field: "core", strong: fit(cap(gain), 30), rest: fit(cap(turn), 44) }]
+      : [{ field: "core", strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) }]),
     { field: "core", strong: fit(contract("de", low(lead)), 30), rest: fit(contract("a", low(gain)), 42) },
-    { field: "core", strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
+    ...(isClause(gain)
+      ? [{ field: "core", strong: fit(cap(turn), 28), rest: fit(cap(gain), 44) }]
+      : [{ field: "core", strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) }]),
     { field: "core", strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
   ];
 
+
+  /**
+   * LIGAÇÃO SEGURA: molduras com encaixe nominal ("É aí que entra X") só valem
+   * quando X é um grupo nominal. Se X já é uma frase com verbo, usamos a ligação
+   * por frase para não colar duas orações sem sentido.
+   */
+  const linkNominal = (lead: string, bridge: string, tail: string, fallback: string) =>
+    isClause(tail) ? `${cap(lead)}. ${cap(tail)}${fallback}` : `${cap(lead)}. ${bridge} ${low(tail)}.`;
 
   /** Apoios que respondem à objeção, situam a cena e nomeiam o preço da inércia. */
   const extraSubs: Array<{ field: string; text: string }> = [
@@ -218,15 +234,22 @@ export const composeRouteCopy = (
       : []),
     ...(objection ? [{ field: "objection", text: `Você pensa: ${low(objection)}. ${cap(turn)} responde a isso.` }] : []),
     ...(stakes ? [{ field: "stakes", text: `Deixar como está tem preço: ${low(stakes)}.` }] : []),
-    ...(scene ? [{ field: "scene", text: `${cap(scene)}. É aí que entra ${low(turn)}.` }] : []),
-    ...(trigger ? [{ field: "trigger", text: `${cap(trigger)}. Esse é o momento de ${low(turn)}.` }] : []),
+    ...(scene ? [{ field: "scene", text: linkNominal(scene, "É aí que entra", turn, ".") }] : []),
+    ...(trigger ? [{ field: "trigger", text: linkNominal(trigger, "Esse é o momento de", turn, ".") }] : []),
     ...(methodPlain
       ? [{
           field: "method",
           text: `${cap(methodPlain)}. Essa análise dá base à decisão clínica, com mais clareza e menos improviso.`,
         }]
       : []),
-    ...(enemy ? [{ field: "enemy", text: `Aqui não tem ${low(enemy)}. Tem ${low(turn)}.` }] : []),
+    ...(enemy
+      ? [{
+          field: "enemy",
+          text: isClause(turn)
+            ? `Aqui não tem ${low(enemy)}. ${cap(turn)}.`
+            : `Aqui não tem ${low(enemy)}. Tem ${low(turn)}.`,
+        }]
+      : []),
   ];
 
 
