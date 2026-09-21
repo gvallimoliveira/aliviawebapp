@@ -92,6 +92,25 @@ beforeEach(() => {
 afterEach(() => spy.mockRestore());
 
 describe("slogan em destaque", () => {
+  it("mantém separação entre as partes de toda manchete", () => {
+    const built = buildSegmentContent({
+      kit: KIT as never,
+      audiences: AUDIENCES,
+      segment: SLOGAN_SEGMENT,
+      angle: "informar",
+      positioning: "Caminho claro, focado na causa da dor.",
+      variationSeed: "separacao-de-manchete",
+    });
+
+    built.headlines.forEach((headline) => {
+      const statement = `${headline.strong} ${headline.rest}`.replace(/\s+/g, " ").trim();
+      expect(statement).not.toMatch(/[a-zà-ÿ]\.[A-ZÀ-Ý]/u);
+      if (headline.strong && headline.rest) {
+        expect(statement).toContain(`${headline.strong} ${headline.rest}`);
+      }
+    });
+  });
+
   it("renderiza a leva inteira sem quebrar e sem chave duplicada", () => {
     for (const angle of ["informar", "dor", "desejo", "venda"] as const) {
       for (let s = 0; s < 3; s += 1) {

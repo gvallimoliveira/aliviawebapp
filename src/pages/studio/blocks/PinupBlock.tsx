@@ -22,7 +22,7 @@ const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
       <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
         <div className="container px-8 py-16 text-center">
           <p className="text-4xl font-bold leading-[1.16] text-foreground md:text-6xl">
-            {headline.strong}{headline.rest}
+            {headline.strong} {headline.rest}
           </p>
         </div>
       </section>

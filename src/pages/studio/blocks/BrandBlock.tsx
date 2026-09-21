@@ -41,7 +41,7 @@ const BrandBlock = ({ content, rng, treatment, format, persona }: BlockProps) =>
   const statementPool = [
     ...content.closings.map((item) => item.title),
     ...content.subs,
-    ...content.headlines.map((item) => `${item.strong}${item.rest}`),
+    ...content.headlines.map((item) => `${item.strong} ${item.rest}`.replace(/\s+/g, " ").trim()),
   ].filter(Boolean);
   const statement = rng.pick(statementPool);
   const accentVariant = rng.int(ACCENT_STYLES.length);
