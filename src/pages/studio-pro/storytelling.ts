@@ -120,13 +120,37 @@ export const composeRouteCopy = (
   if (!lead || !turn) return {};
 
   /**
-   * Molduras de destaque, cada uma marcada com o CAMPO do kit que ela leva ao
-   * ar. As primeiras vêm dos campos novos (cena, gatilho, objeção, inimigo,
-   * consequência): é o que faz a capa abrir com vida em vez de frase de
-   * catálogo. A marcação existe para o apoio nunca repetir o mesmo campo do
-   * destaque — assim uma arte carrega dois eixos do kit, não um.
+   * GANCHOS NOMEADOS: a abertura deixa de ser colagem de campos. Cada tipo da
+   * biblioteca (`hookTaxonomy.ts`) só é elegível quando o manual tem o campo que
+   * ele exige, o molde é conferido (duas partes, sem promessa proibida) e o tipo
+   * escolhido varia com a posição da arte no lote.
    */
   type Frame = { field: string; strong: string; rest: string };
+  const hookFields: HookFields = {
+    dor: tension,
+    objecao: objection,
+    inimigo: enemy,
+    prova: proof,
+    cena: scene,
+    desejo: desire,
+    gatilho: trigger,
+    mecanismo: feature,
+    consequencia: stakes,
+    termo: lexicalTerm,
+    percepcao: lexicalPerception,
+  };
+  const hookFrames: Frame[] = eligibleHooks(hookFields)
+    .map((type) => ({ type, shape: buildHook(type, hookFields) }))
+    .filter((entry): entry is { type: (typeof entry)["type"]; shape: NonNullable<(typeof entry)["shape"]> } =>
+      Boolean(entry.shape),
+    )
+    .map(({ type, shape }) => ({
+      field: type.requires[0] ?? "hook",
+      strong: fit(shape.strong, 40),
+      rest: fit(shape.rest, 52),
+    }))
+    .filter((frame) => Boolean(frame.strong && frame.rest));
+
   const headlinePool: Frame[] = [
     ...(completeReasoning
       ? [
@@ -134,20 +158,14 @@ export const composeRouteCopy = (
           { field: "reasoning", strong: fit(cap(lexicalPerception || scene), 42), rest: fit(cap(feature), 54) },
         ]
       : []),
-    ...(scene ? [{ field: "scene", strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
-    ...(trigger ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }] : []),
-    // A objeção é o ativo mais persuasivo do kit: passa a poder ser TÍTULO,
-    // não só apoio. A resposta vem no complemento, nunca uma promessa nova.
-    ...(objection ? [{ field: "objection", strong: fit(cap(objection), 32), rest: fit(cap(turn), 44) }] : []),
-    ...(objection ? [{ field: "objection", strong: fit(`"${cap(objection)}"`, 34), rest: fit(`E aí entra ${low(turn)}`, 42) }] : []),
-    ...(enemy ? [{ field: "enemy", strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }] : []),
-    ...(stakes ? [{ field: "stakes", strong: fit("Enquanto nada muda", 28), rest: fit(low(stakes), 44) }] : []),
+    ...hookFrames,
     { field: "core", strong: fit(cap(lead), 28), rest: fit(cap(gain), 44) },
     { field: "core", strong: fit(cap(gain), 30), rest: fit(`começa com ${low(turn)}`, 42) },
     { field: "core", strong: fit(`De ${low(lead)}`, 30), rest: fit(`a ${low(gain)}`, 42) },
     { field: "core", strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) },
     { field: "core", strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
   ];
+
 
   /** Apoios que respondem à objeção, situam a cena e nomeiam o preço da inércia. */
   const extraSubs: Array<{ field: string; text: string }> = [
