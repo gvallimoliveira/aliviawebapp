@@ -145,10 +145,11 @@ export const composeRouteCopy = (
       Boolean(entry.shape),
     )
     .map(({ type, shape }) => ({
-      field: type.requires[0] ?? "hook",
+      field: HOOK_FIELD_LABEL[type.requires[0]] ?? "core",
       strong: fit(shape.strong, 40),
       rest: fit(shape.rest, 52),
     }))
+
     .filter((frame) => Boolean(frame.strong && frame.rest));
 
   const headlinePool: Frame[] = [
