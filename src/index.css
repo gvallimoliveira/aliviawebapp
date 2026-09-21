@@ -136,6 +136,16 @@ All colors MUST be HSL.
     font-family: var(--studio-display-font, var(--studio-body-font, inherit));
     letter-spacing: 0;
   }
+
+  /* Superfícies dramáticas continuam pertencendo à paleta da marca, nunca ao
+     preto neutro do aplicativo. Só aparecem em modelos pontuais do lote. */
+  [data-studio-art-key] .bg-foreground {
+    background-color: hsl(var(--studio-deep-surface, var(--primary)));
+  }
+
+  [data-studio-art-key] .text-background {
+    color: hsl(var(--studio-deep-foreground, var(--primary-foreground)));
+  }
 }
 
 /* CSS-based float animation — cheaper than JS-driven framer-motion */

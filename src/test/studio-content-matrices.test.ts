@@ -8,6 +8,9 @@ import {
   reasoningMatrixToText,
 } from "@/pages/studio-pro/contentMatrices";
 import { buildNarrativeRoute } from "@/pages/studio-pro/synapses";
+import { composeRouteCopy } from "@/pages/studio-pro/storytelling";
+import { pickRelation } from "@/pages/studio-pro/relational";
+import { buildBrandDna, operationWords } from "@/pages/studio-pro/brandDnaKit";
 
 const keywordMatrix = [
   { id: "otite", term: "Otite externa", perception: "chacoalhar a cabeça e coçar a orelha", audienceIds: ["tutor-cronico"], theme: "otite" },
@@ -50,5 +53,46 @@ describe("matrizes de conteúdo do Studio", () => {
     expect(route.feature).toContain("Agentes diferentes");
     expect(route.proof).toContain("Swab auricular");
     expect(route.cta).toBe("Agendar investigação");
+  });
+
+  it("faz a matriz escrever as artes informativas e não apenas pesar escolhas", () => {
+    const route = buildNarrativeRoute({
+      audience: { id: "tutor-cronico", label: "Tutor de pet crônico", cta: "Agendar" },
+      audiences: [],
+      dna: { forbidden: [] },
+      brand: "Dra. Aline Furtado",
+      seed: "rota-publicavel",
+      keywordMatrix,
+      reasoningMatrix,
+    });
+    const copy = composeRouteCopy(route, { seed: "arte-publicavel" });
+    const visible = JSON.stringify(copy);
+    expect(visible).toContain("Agentes diferentes pedem condutas diferentes");
+    expect(visible).toContain("Swab auricular e lâmina mostram o agente");
+    expect(copy.features?.length).toBeGreaterThanOrEqual(3);
+    expect(copy.lists?.[0]?.items.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("prioriza a rota matricial no par relacional da arte", () => {
+    const relation = pickRelation({
+      audience: { id: "tutor-cronico", label: "Tutor de pet crônico", pains: ["incômodo recorrente"], desires: ["mais conforto"] },
+      audiences: [],
+      dna: buildBrandDna({ niche: "dermatologia veterinária" }),
+      brand: "Dra. Aline Furtado",
+      angle: "informar",
+      seed: "relação-matricial",
+      keywordMatrix,
+      reasoningMatrix,
+    });
+    expect(relation.pain).toBe("O pet chacoalha a cabeça");
+    expect(relation.desire).toBe("tratar a causa da otite");
+    expect(relation.proof).toBe("Swab auricular e lâmina mostram o agente");
+  });
+
+  it("usa vocabulário veterinário sem herdar sessão ou paciente humano", () => {
+    const words = operationWords(buildBrandDna({ niche: "dermatologia e citologia veterinária" }), "Dra. Aline Furtado");
+    expect(words.who).toBe("tutor");
+    expect(words.firstStep).toBe("primeira consulta");
+    expect(`${words.who} ${words.firstStep} ${words.encounterWord}`).not.toMatch(/paciente|sessão|reavaliação/i);
   });
 });
