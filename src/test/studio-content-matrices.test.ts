@@ -71,6 +71,10 @@ describe("matrizes de conteúdo do Studio", () => {
     expect(visible).toContain("Swab auricular e lâmina mostram o agente");
     expect(copy.features?.length).toBeGreaterThanOrEqual(3);
     expect(copy.lists?.[0]?.items.length).toBeGreaterThanOrEqual(2);
+    expect(copy.headlines?.[0]?.strong).toContain("O pet chacoalha a cabeça");
+    expect(copy.headlines?.[0]?.rest).toContain("Agentes diferentes pedem condutas diferentes");
+    expect(copy.subs?.[0]).toContain("Swab auricular e lâmina mostram o agente");
+    expect(copy.subs?.[0]).toContain("tratar a causa da otite");
   });
 
   it("prioriza a rota matricial no par relacional da arte", () => {

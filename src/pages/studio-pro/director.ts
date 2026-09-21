@@ -607,7 +607,6 @@ export const planBatch = (input: {
      * do acervo. Frase já muito usada pela marca (memória) é descartada.
      */
     if (!carousel && shotRoute) {
-      const fresh = (text: string) => (weightOf?.(phraseSignature(text)) ?? 1) > 0.25;
       const composed = composeRouteCopy(shotRoute, {
         seed: `${seed}:art:${index}`,
         rotate: index,
@@ -615,11 +614,14 @@ export const planBatch = (input: {
       });
       (Object.keys(composed) as (keyof typeof composed)[]).forEach((slot) => {
         const items = (composed[slot] ?? []) as unknown[];
-        const kept = items.filter((item) => fresh(flatten(item)));
-        if (!kept.length) return;
-        const quota = SLOT_QUOTA[slot as ListSlot] ?? kept.length;
+        if (!items.length) return;
+        const quota = SLOT_QUOTA[slot as ListSlot] ?? items.length;
         const current = ((reserved as Record<string, unknown>)[slot] as unknown[] | undefined) ?? [];
-        (reserved as Record<string, unknown>)[slot] = [...kept, ...current].slice(0, quota);
+        // A rota é uma unidade editorial: título, apoio e conteúdo informativo
+        // precisam permanecer juntos. A memória já escolheu o melhor molde em
+        // `composeRouteCopy`; filtrar cada frase separadamente aqui desmontava o
+        // raciocínio e reintroduzia descrições genéricas de outros eixos.
+        (reserved as Record<string, unknown>)[slot] = [...items, ...current].slice(0, quota);
       });
     }
 
