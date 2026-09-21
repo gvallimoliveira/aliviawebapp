@@ -340,7 +340,7 @@ const StudioProCreate = ({
     writePersisted(brand.id, { photoFirst });
   }, [brand.id, photoFirst]);
   /** Cota do período: contada em gerações — 1 por clique em "Nova versão". */
-  const { quota, error: quotaError, consume } = useStudioQuota();
+  const { quota, error: quotaError, consume } = useStudioQuota(brand.id);
 
 
 

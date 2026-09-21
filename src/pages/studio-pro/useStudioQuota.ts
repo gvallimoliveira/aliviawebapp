@@ -118,7 +118,7 @@ export const useStudioQuota = (brandId?: string) => {
       setError(null);
       return row.allowed ? "allowed" : "exhausted";
     },
-    [],
+    [brandId],
   );
 
   return { quota, error, loading: loading || authLoading, refresh, consume };
