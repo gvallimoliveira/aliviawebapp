@@ -113,6 +113,23 @@ const bigWord = (source?: string) => {
   return words.sort((a, b) => b.length - a.length)[0] ?? "";
 };
 
+/** Recorta uma frase completa ao redor da palavra de destaque. Assim lead, big
+ * e tail continuam sendo a mesma ideia, em vez de três campos independentes. */
+const typoFromSentence = (sentence: string, preferred?: string) => {
+  const clean = squash(sentence);
+  const word = bigWord(preferred) || bigWord(clean);
+  if (!clean || !word) return undefined;
+  const match = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").exec(clean);
+  if (!match || match.index === undefined) return undefined;
+  const lead = clean.slice(0, match.index).trim();
+  const tail = clean.slice(match.index + match[0].length).trim();
+  return {
+    lead: fit(cap(lead), 64),
+    big: match[0].toUpperCase(),
+    tail: fit(tail, 92),
+  };
+};
+
 /**
  * Frases da rota. Retorna só os acervos que a rota consegue sustentar, para o
  * diretor colocá-los na frente do acervo geral.
@@ -375,15 +392,12 @@ export const composeRouteCopy = (
     }
 
 
-    const bigSources = [gain, turn, lead];
-    const big = bigWord(bigSources[frame % bigSources.length]) || bigWord(gain) || bigWord(turn);
-    if (big) {
-      const leads = [lead, turn, gain];
-      const tails = [turn, gain, lead];
-      const tail = fit(cap(tails[frame % tails.length]), 46);
-      if (tail) {
-        out.typos = [{ lead: terms(fit(cap(leads[frame % leads.length]), 26)), big: terms(big).toUpperCase(), tail: terms(tail) }];
-      }
+    const typoSentence = textSimilarity(turn, gain) >= SUB_ECHO
+      ? `${cap(lead)}. ${cap(turn)} orienta o próximo passo.`
+      : `${cap(lead)}. ${cap(turn)} abre caminho para ${low(gain)}.`;
+    const typo = typoFromSentence(typoSentence, turn);
+    if (typo?.lead && typo.big && typo.tail) {
+      out.typos = [{ lead: terms(typo.lead), big: terms(typo.big), tail: terms(typo.tail) }];
     }
 
     /**

@@ -12,6 +12,34 @@ const ANIMAL_CLINICAL = /\b(?:coceira|prurido|otite|dermatite|piodermite|infec(?
 
 const ALINE_VET = /\b(?:dra\.?\s+)?aline\s+furtado(?:\s+vet(?:erin[aá]ria)?)?\b/i;
 
+const ALINE_SIGNPOSTS = [
+  {
+    title: "Alergia: do descontrole ao cuidado",
+    before: ["Pet com alergia sem manejo, descontrolada"],
+    after: ["Cuidar e devolver qualidade de vida com Dra. Aline Furtado"],
+  },
+  {
+    title: "Da dúvida à identificação",
+    before: ["Dúvida sobre qual infecção está instalada"],
+    after: ["Citologia especializada com Dra. Aline Furtado"],
+  },
+  {
+    title: "Coceira recorrente pede investigação",
+    before: ["Coceira que volta sem uma causa esclarecida"],
+    after: ["Investigar a origem com Dra. Aline Furtado"],
+  },
+  {
+    title: "Otite recorrente não é rotina",
+    before: ["Otite tratada sem identificar o agente"],
+    after: ["Citologia para direcionar o cuidado com Dra. Aline Furtado"],
+  },
+  {
+    title: "Nódulos merecem resposta",
+    before: ["Nódulo observado sem saber o que ele representa"],
+    after: ["Investigação citológica com Dra. Aline Furtado"],
+  },
+];
+
 export const isVeterinaryContext = (...values: unknown[]): boolean =>
   VETERINARY_DOMAIN.test(values.filter((value) => typeof value === "string").join(" · "));
 
@@ -153,6 +181,40 @@ const removeContentEchoes = <T>(value: T): T => {
   return revised as T;
 };
 
+const veterinaryDisplayWord = (word: string, context: string): string => {
+  if (!/^anim(?:al|ais)$/i.test(word.trim())) return word;
+  if (/\b(?:gato|gata|felin)/i.test(context)) return "Gatos";
+  if (/\b(?:c[aã]o|cadela|canin)/i.test(context)) return "Cães";
+  return "Pet";
+};
+
+const refineVeterinaryContent = <T>(value: T, veterinary: boolean, aline: boolean): T => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const content = value as Record<string, unknown>;
+  let revised = { ...content };
+
+  if (veterinary && Array.isArray(content.kinetic)) {
+    revised.kinetic = content.kinetic.map((item) => {
+      if (!item || typeof item !== "object") return item;
+      const kinetic = item as Record<string, unknown>;
+      const word = typeof kinetic.word === "string" ? kinetic.word : "";
+      const context = [kinetic.kicker, kinetic.caption].filter((part) => typeof part === "string").join(" ");
+      return { ...kinetic, word: veterinaryDisplayWord(word, context) };
+    });
+  }
+
+  if (aline) {
+    const current = Array.isArray(revised.compare) ? revised.compare : [];
+    const curatedTitles = new Set(ALINE_SIGNPOSTS.map((pair) => pair.title));
+    const remaining = current.filter((pair) => {
+      if (!pair || typeof pair !== "object") return true;
+      return !curatedTitles.has(String((pair as Record<string, unknown>).title ?? ""));
+    });
+    revised = { ...revised, compare: [...ALINE_SIGNPOSTS, ...remaining] };
+  }
+  return revised as T;
+};
+
 /** Rótulos do editor orientam o motor, mas nunca podem aparecer na peça. */
 const removeInternalEditorialLabels = <T>(value: T, brand?: string, key = ""): T => {
   if (typeof value === "string") {
@@ -178,10 +240,10 @@ const removeInternalEditorialLabels = <T>(value: T, brand?: string, key = ""): T
 export const finalizeBrandVoice = <T>(value: T, context: { brand?: string; domain?: string } = {}): T => {
   const veterinary = isVeterinaryContext(context.brand, context.domain);
   const feminine = isAlineVeterinaryBrand(context.brand);
-  const voiced = removeInternalEditorialLabels(
+  const voiced = refineVeterinaryContent(removeInternalEditorialLabels(
     removeContentEchoes(applyAlineProfessionalVoice(applyVeterinaryVoice(value, veterinary), context.brand)),
     context.brand,
-  );
+  ), veterinary, feminine);
   if (!voiced || typeof voiced !== "object" || Array.isArray(voiced)) return voiced;
 
   const content = voiced as Record<string, unknown>;

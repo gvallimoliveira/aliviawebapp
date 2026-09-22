@@ -53,7 +53,7 @@ const TypoBlock = ({ content, treatment, format, persona }: BlockProps) => {
             <span className={accentClass} data-studio-stroke={isStroke ? "1" : undefined}>
               {typo.big}
             </span>
-            <span>{tail}</span>
+            <span>{/^[.,;:!?]/.test(tail) ? tail : ` ${tail}`}</span>
           </p>
           {closing && (
             <p className="mt-10 text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">

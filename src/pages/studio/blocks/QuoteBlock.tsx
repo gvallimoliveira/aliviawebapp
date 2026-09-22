@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { ACCENT_STYLES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
 import { BRAND_NAME } from "../brand";
+import { quoteCopy } from "../typographyGuards";
 
 /**
  * Typographic manifesto moment — the format that performs best as a still post.
@@ -12,6 +13,7 @@ import { BRAND_NAME } from "../brand";
  */
 const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   const [quote] = picker.pick(content.quotes, 1, rng, (q) => [q.topic]);
+  const text = quoteCopy(quote.text);
   const accentVariant = rng.int(ACCENT_STYLES.length);
 
   if (treatment === 3) {
@@ -34,7 +36,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
             className="ml-0 max-w-3xl text-left md:ml-[6%]"
           >
             <p className="text-3xl font-semibold leading-[1.2] tracking-tight text-foreground md:text-5xl">
-              {renderAccent(quote.text, accentVariant)}
+              {renderAccent(text, accentVariant)}
             </p>
             <footer className="mt-10 flex items-center gap-4">
               <span aria-hidden className="h-px w-14 bg-primary/60" />
@@ -63,7 +65,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
             className="mx-auto max-w-2xl border-t-2 border-primary/40 pt-10 text-center"
           >
             <p className="text-xl font-medium leading-relaxed tracking-tight text-foreground md:text-3xl">
-              {renderAccent(quote.text, accentVariant)}
+              {renderAccent(text, accentVariant)}
             </p>
             <footer className="mt-8 text-[11px] font-medium uppercase tracking-[0.32em] text-muted-foreground">
               {BRAND_NAME} · {content.label}
@@ -89,7 +91,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
           className={`mx-auto max-w-3xl text-center ${treatment === 2 ? "rounded-3xl border border-primary/20 bg-background/70 p-8 md:p-14" : ""}`}
         >
           <p className="text-2xl font-semibold italic leading-snug tracking-tight text-primary md:text-4xl">
-            {quote.text}
+            {text}
           </p>
 
           <footer className="mt-8 text-[11px] font-medium uppercase tracking-[0.32em] text-muted-foreground">

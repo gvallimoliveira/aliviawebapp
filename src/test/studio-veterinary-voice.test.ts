@@ -85,6 +85,25 @@ describe("Studio: tutor leitor e animal paciente", () => {
     ]);
   });
 
+  it("troca animal por um termo natural na palavra-cartaz veterinária", () => {
+    const generic = finalizeBrandVoice({ kinetic: [{ kicker: "Cuidado", word: "ANIMAL", caption: "Saúde do pet" }] }, { domain: "veterinária" });
+    const feline = finalizeBrandVoice({ kinetic: [{ kicker: "Cuidado", word: "ANIMAL", caption: "Dermatologia felina" }] }, { domain: "veterinária" });
+    expect(generic.kinetic[0].word).toBe("Pet");
+    expect(feline.kinetic[0].word).toBe("Gatos");
+  });
+
+  it("oferece pares de placas específicos e coerentes para a Aline", () => {
+    const content = finalizeBrandVoice({ compare: [] as Array<{ title: string; before: string[]; after: string[] }> }, {
+      brand: "Dra. Aline Furtado",
+      domain: "veterinária",
+    });
+    expect(content.compare).toHaveLength(5);
+    expect(content.compare[0].before[0]).toContain("Pet com alergia");
+    expect(content.compare[0].after[0]).toContain("qualidade de vida");
+    expect(content.compare[1].before[0]).toContain("qual infecção");
+    expect(content.compare[1].after[0]).toContain("Citologia especializada");
+  });
+
   it("não altera nenhum texto fora do domínio veterinário", () => {
     const phrase = "Você sente dor no ombro?";
     expect(applyVeterinaryVoice(phrase, false)).toBe(phrase);
