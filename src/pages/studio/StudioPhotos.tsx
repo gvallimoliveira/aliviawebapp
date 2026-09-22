@@ -103,6 +103,10 @@ const StudioPhotos = ({
 
   const handleUpload = async () => {
     if (staged.length === 0) return;
+    if (description.trim().length < 12) {
+      toast.error("Descreva o que aparece e em quais assuntos a foto pode ser usada.");
+      return;
+    }
     setBusy(true);
     try {
       const created: string[] = [];
@@ -214,7 +218,7 @@ const StudioPhotos = ({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                placeholder="Descrição breve: o que aparece e onde usar (ex. avaliação de força com dinamômetro — usar em posts de avaliação e evolução)"
+                placeholder="Obrigatório: o que aparece e em quais assuntos usar (ex. cachorro coçando a orelha — usar em posts de otite e citologia auricular)"
                 className="mb-2 w-full resize-none rounded-lg border border-border bg-card px-2.5 py-2 text-[12px] text-foreground"
               />
               <div className="mb-2 flex flex-wrap gap-1.5">
@@ -235,7 +239,7 @@ const StudioPhotos = ({
 
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || description.trim().length < 12}
                 onClick={() => void handleUpload()}
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[12px] font-semibold text-primary-foreground disabled:opacity-60"
               >
@@ -310,7 +314,7 @@ const StudioPhotos = ({
                       const value = e.target.value.trim();
                       if (value !== photo.description) void onEdit(photo.id, { description: value });
                     }}
-                    placeholder="Descrição / uso desejado"
+                    placeholder="O que aparece e em quais assuntos usar"
                     className="mb-1.5 w-full resize-none rounded-md border border-border bg-card px-2 py-1 text-[10px] leading-snug text-foreground"
                   />
                   <div className="flex items-center justify-between">

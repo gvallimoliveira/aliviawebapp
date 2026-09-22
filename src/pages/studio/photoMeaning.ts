@@ -19,8 +19,7 @@ import type { TopicId } from "./topics";
  *   compatíveis;
  * - o bloco escolhe primeiro a COPY (via `picker`, cobertura editorial) e só
  *   depois a foto com maior afinidade àquele assunto. Sem afinidade nenhuma, a
- *   foto entra apenas como respiro visual (peso baixo), nunca como ilustração
- *   de um assunto que ela não sustenta.
+ *   arte troca para um formato sem foto.
  */
 
 export type PhotoTheme = {
@@ -139,14 +138,6 @@ export const PHOTO_THEMES: PhotoTheme[] = [
   },
 ];
 
-/** Temas padrão por categoria, quando o label não diz nada. */
-const USAGE_THEMES: Record<StudioPhoto["usage"], TopicId[]> = {
-  institucional: BRAND_TOPICS,
-  atendimento: ASSESS_TOPICS,
-  produto: PRODUCT_TOPICS,
-  livre: LOAD_TOPICS,
-};
-
 /**
 
  * FOTOS DE PROCEDIMENTO ESPECÍFICO — LISTA FECHADA.
@@ -178,12 +169,12 @@ export const PHOTO_RESTRICTIONS: PhotoRestriction[] = [
 ];
 
 /**
- * Texto de leitura da foto: rótulo + DESCRIÇÃO escrita pelo usuário + crédito.
+ * Texto de leitura da foto: rótulo + DESCRIÇÃO escrita pelo usuário.
  * A descrição é o que permite dizer "use em contexto de avaliação" sem depender
  * do nome do arquivo. Continua sendo insumo de curadoria, nunca título de arte.
  */
 const readingText = (photo: StudioPhoto): string =>
-  `${photo.label} ${photo.description ?? ""} ${photo.credit ?? ""}`;
+  `${photo.label} ${photo.description ?? ""}`;
 
 const restrictionOf = (photo: StudioPhoto): PhotoRestriction | undefined =>
   PHOTO_RESTRICTIONS.find((r) => r.match.test(readingText(photo)));
@@ -196,7 +187,7 @@ export const photoTopics = (photo: StudioPhoto): TopicId[] => {
   const restriction = restrictionOf(photo);
   if (restriction) return restriction.allow;
   const matched = themesOf(photo).flatMap((t) => t.topics);
-  return matched.length > 0 ? Array.from(new Set(matched)) : USAGE_THEMES[photo.usage];
+  return Array.from(new Set(matched));
 };
 
 /** Leitura em texto — usada como legenda/curadoria interna, nunca como título. */
@@ -238,13 +229,9 @@ const spread = (id: string, salt: number): number => {
 const CIRCULATION_BAND = 0.38;
 
 /**
- * FOTO DE AMPLA APLICAÇÃO: sem restrição de procedimento específico
- * (termografia, laserterapia etc.), a foto é registro de contexto e pode
- * sustentar qualquer assunto da marca. Ganha um bônus para o acervo circular de
- * verdade em vez de só as fotos de afinidade máxima aparecerem.
+ * Fotos só entram quando há afinidade temática ou textual comprovada. A
+ * categoria de uso organiza o acervo, mas não cria nexo por conta própria.
  */
-const BROAD_USE_BONUS = 0.3;
-
 /**
  * Escolhe a foto que sustenta o assunto já decidido pela copy. Determinístico
  * (mesma seed → mesma foto) e com desempate por afinidade, não por sorteio
@@ -293,47 +280,33 @@ export const pickPhotoForTopics = (
   const salt = artKey ? spread(artKey, 7) : index;
 
   const scored = photos
-    .map((photo) => ({
-      photo,
-      score:
-        photoAffinity(photo, topics) +
-        (prefer?.includes(photo.usage) ? 0.35 : 0) +
-        wordAffinity(photo, words) +
-        (restrictionOf(photo) ? 0 : BROAD_USE_BONUS),
-    }))
-    .filter((s) => s.score > 0)
+    .map((photo) => {
+      const semantic = photoAffinity(photo, topics) + wordAffinity(photo, words);
+      return {
+        photo,
+        semantic,
+        score: semantic + (semantic > 0 && prefer?.includes(photo.usage) ? 0.35 : 0),
+      };
+    })
+    .filter((s) => s.semantic > 0)
 
     .sort(
       (a, b) =>
         b.score - a.score || spread(a.photo.id, salt) - spread(b.photo.id, salt),
     );
 
-  if (scored.length === 0) {
-    /**
-     * Sem nexo, só fotos LIVRES de restrição podem entrar como respiro visual.
-     * Foto de procedimento específico (termografia, laserterapia) nunca cai em
-     * assunto alheio — antes o fallback cego colocava termografia em arte de
-     * questionários.
-     */
-    const neutral = photos
-      .filter((p) => !restrictionOf(p))
-      .sort((a, b) => spread(a.id, salt) - spread(b.id, salt));
-    if (neutral.length === 0) return undefined;
-    return claimPhoto(artKey, neutral, photos.length);
-  }
+  if (scored.length === 0) return undefined;
 
   /**
    * CIRCULAÇÃO REAL DO ACERVO.
    *
-   * Duas correções: (1) toda foto de ampla aplicação entra na faixa, mesmo sem
-   * afinidade máxima com o assunto — antes a faixa relativa ao melhor score
-   * derrubava o acervo inteiro e sobravam 3/4 fotos; (2) a escolha não é mais
-   * `index % pool.length` sobre uma lista ordenada por pontuação (o que fazia
-   * as primeiras fotos repetirem), e sim uma PERMUTAÇÃO determinística do pool
+   * A escolha não é `index % pool.length` sobre uma lista ordenada por
+   * pontuação (o que fazia as primeiras fotos repetirem), e sim uma permutação
+   * determinística do pool
    * por arte, filtrada pelo registro de rotatividade do lote.
    */
   const best = scored[0].score;
-  const floor = Math.min(best * CIRCULATION_BAND, BROAD_USE_BONUS);
+  const floor = best * CIRCULATION_BAND;
   const pool = scored
     .filter((s) => s.score >= floor)
     .map((s) => s.photo)

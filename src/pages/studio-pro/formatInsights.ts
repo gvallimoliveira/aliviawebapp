@@ -59,10 +59,7 @@ export const readFormatInsights = (raw?: string | null): FormatInsight[] => {
     .map((line) => clean(line))
     .filter((line) => line.length > 2 && !line.startsWith("#"))
     .map((line) => {
-      const parts = line
-        .split("|")
-        .map(clean)
-        .filter((p) => p.length > 1);
+      const parts = line.split("|").map(clean);
       const title = parts[0] ?? "";
       const rest = parts.slice(1);
       const closing = rest.length >= 2 ? rest[rest.length - 1] : undefined;
@@ -71,6 +68,19 @@ export const readFormatInsights = (raw?: string | null): FormatInsight[] => {
     })
     .filter((insight) => insight.title.length > 2);
 };
+
+/** Mantém o formato legado do banco enquanto a interface edita cada parte separadamente. */
+export const writeFormatInsights = (insights: FormatInsight[]): string =>
+  insights
+    .map((insight) => {
+      const title = clean(insight.title);
+      const beats = insight.beats.map(clean).filter(Boolean);
+      const closing = clean(insight.closing ?? "");
+      if (closing) return [title, ...(beats.length ? beats : [""]), closing].join(" | ");
+      return [title, ...beats].join(" | ");
+    })
+    .filter(Boolean)
+    .join("\n");
 
 /** Palavras dos insights — reforçam a atração do diretor criativo. */
 export const formatInsightWords = (insights: FormatInsight[]): string[] =>
