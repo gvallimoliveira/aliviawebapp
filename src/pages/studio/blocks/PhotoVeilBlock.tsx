@@ -20,14 +20,14 @@ import { onPhotoTextStyle, photoTextPlate } from "../typographyGuards";
  * topo, centro) e a intensidade do véu. A foto é SEMPRE sangrada de borda a
  * borda — é ela a protagonista da arte, como no modo autoral.
  */
-const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos, artKey, shot }: BlockProps) => {
+const PhotoVeilBlock = ({ content, rng, treatment, format, persona, picker, photos, artKey, shot }: BlockProps) => {
   const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic], undefined, artKey, shot?.affinity);
   if (!photo) {
     return (
       <PhotoMissingFallback
         format={format}
-        persona={undefined}
+        persona={persona}
         treatment={treatment}
         tag={item.tag}
         title={item.headline ?? item.title}
