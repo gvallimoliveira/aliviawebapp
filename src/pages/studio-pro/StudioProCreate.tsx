@@ -782,6 +782,7 @@ const StudioProCreate = ({
          */
         learnedVoice: [...learning.voice, ...formatInsightWords(readFormatInsights(brand.format_insights))],
         domain: [brand.niche, brand.description, brand.positioning].filter(Boolean).join(" · "),
+        brandName: brand.name,
       }),
     [content, composedBlocks, brand.id, brand.format_insights, seed, activeSegment, angle, directorRelation, dna, brief, weightOf, learning.voice],
 
@@ -897,6 +898,7 @@ const StudioProCreate = ({
             weightOf,
             learnedVoice: [...learning.voice, ...formatInsightWords(readFormatInsights(brand.format_insights))],
             domain: [brand.niche, brand.description, brand.positioning].filter(Boolean).join(" · "),
+            brandName: brand.name,
           }),
     [audit.fixed, draftDirector, content, blocks, brand.id, brand.format_insights, seed, activeSegment, angle, directorRelation, dna, brief, weightOf, learning.voice],
   );

@@ -31,3 +31,4 @@
 - [x] Corrigir nitidez da logo da Aline e separar tutor leitor do animal paciente em todo conteúdo veterinário.
 - [x] Exigir começo, desenvolvimento e conclusão conectados em toda arte; bloquear títulos pendurados e listas técnicas sem função narrativa.
 - [x] Garantir nexo entre descrição da imagem e assunto; estruturar insights e matrizes por item; ampliar os ganchos da Aline Furtado Vet.
+- [x] Fixar voz tutor/pet, conclusões completas, antirrepetição e gênero feminino na marca Aline Furtado Vet.
