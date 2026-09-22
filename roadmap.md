@@ -32,3 +32,4 @@
 - [x] Exigir começo, desenvolvimento e conclusão conectados em toda arte; bloquear títulos pendurados e listas técnicas sem função narrativa.
 - [x] Garantir nexo entre descrição da imagem e assunto; estruturar insights e matrizes por item; ampliar os ganchos da Aline Furtado Vet.
 - [x] Fixar voz tutor/pet, conclusões completas, antirrepetição e gênero feminino na marca Aline Furtado Vet.
+- [x] Impedir artes vazias quando a foto não combina com o assunto e remover repetição entre título e corpo.

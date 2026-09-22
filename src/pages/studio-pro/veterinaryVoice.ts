@@ -95,11 +95,71 @@ const panelFallback = (line: string, feminine: boolean): string => {
   return "Essencial";
 };
 
+const normalizedWords = (text: string): string[] =>
+  text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .match(/[a-z0-9]+/g) ?? [];
+
+const repeatedOpeningSize = (title: string, description: string): number => {
+  const titleWords = normalizedWords(title);
+  const descriptionWords = normalizedWords(description);
+  const limit = Math.min(titleWords.length, descriptionWords.length);
+  let size = 0;
+  while (size < limit && titleWords[size] === descriptionWords[size]) size += 1;
+  return size;
+};
+
+/**
+ * O corpo não pode recomeçar repetindo o título. Preserva a parte nova e,
+ * quando a frase repetida termina em uma enumeração, cria uma ponte causal.
+ */
+export const removeTitleDescriptionEcho = (title: string, description: string): string => {
+  const openingSize = repeatedOpeningSize(title, description);
+  if (openingSize < 4) return description;
+
+  const rawWords = description.trim().split(/\s+/);
+  const remainder = rawWords.slice(openingSize).join(" ").replace(/^[,;:.!?–—\s]+/, "").trim();
+  if (!remainder) return "Esse conjunto de informações orienta a decisão com mais precisão.";
+
+  const lower = remainder.charAt(0).toLocaleLowerCase("pt-BR") + remainder.slice(1);
+  const adjectiveOpening = /^(?:clar[oa]s?|did[aá]tic[oa]s?|objetiv[oa]s?|precis[oa]s?|segur[oa]s?|complet[oa]s?|personalizad[oa]s?|detalhad[oa]s?|assertiv[oa]s?)\b/i.test(lower);
+  const lastTitleWord = title.trim().match(/[\p{L}\p{N}]+[.!?]?$/u)?.[0]?.replace(/[.!?]$/, "") ?? "";
+  const revised = adjectiveOpening && lastTitleWord
+    ? `${lastTitleWord.charAt(0).toLocaleUpperCase("pt-BR")}${lastTitleWord.slice(1)} ${lower}`
+    : /^(?:e|ou|mas|que|com|por|para|em|do|da|dos|das)\b/i.test(lower)
+    ? `Esses achados se conectam ${lower}.`
+    : `A partir disso, ${lower}`;
+  return revised.replace(/\.\s*\.$/, ".");
+};
+
+const removeContentEchoes = <T>(value: T): T => {
+  if (Array.isArray(value)) return value.map((item) => removeContentEchoes(item)) as T;
+  if (!value || typeof value !== "object") return value;
+
+  const source = value as Record<string, unknown>;
+  const revised = Object.fromEntries(
+    Object.entries(source).map(([key, child]) => [key, removeContentEchoes(child)]),
+  ) as Record<string, unknown>;
+  const title = typeof revised.headline === "string"
+    ? revised.headline
+    : typeof revised.title === "string"
+      ? revised.title
+      : undefined;
+  if (title && typeof revised.description === "string") {
+    revised.description = removeTitleDescriptionEcho(title, revised.description);
+  }
+  return revised as T;
+};
+
 /** Revisão final, aplicada também depois das variações e da direção do lote. */
 export const finalizeBrandVoice = <T>(value: T, context: { brand?: string; domain?: string } = {}): T => {
   const veterinary = isVeterinaryContext(context.brand, context.domain);
   const feminine = isAlineVeterinaryBrand(context.brand);
-  const voiced = applyAlineProfessionalVoice(applyVeterinaryVoice(value, veterinary), context.brand);
+  const voiced = removeContentEchoes(
+    applyAlineProfessionalVoice(applyVeterinaryVoice(value, veterinary), context.brand),
+  );
   if (!voiced || typeof voiced !== "object" || Array.isArray(voiced)) return voiced;
 
   const content = voiced as Record<string, unknown>;

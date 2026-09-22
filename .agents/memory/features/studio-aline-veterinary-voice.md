@@ -9,3 +9,4 @@ type: constraint
 - Ganchos em segunda pessoa devem usar posse ou observação: “Seu pet coça...”, “Você percebeu que seu cão...”, “Ao notar no animal...”.
 - Regra inegociável e exclusiva de contexto veterinário; não alterar a voz das demais marcas.
 - Ao se referir à própria profissional ou a uma qualidade pessoal do trabalho da Aline, usar o gênero feminino: “direta”, “honesta”, “preparada” etc. Não flexionar substantivos masculinos como laudo, exame, método ou atendimento.
+- O texto de apoio nunca reinicia repetindo literalmente o título; deve avançar a explicação, a causa, a prova ou a solução.

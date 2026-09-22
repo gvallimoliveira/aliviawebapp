@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alineProfessionalVoiceText, applyVeterinaryVoice, finalizeBrandVoice, isVeterinaryContext, veterinaryVoiceText } from "@/pages/studio-pro/veterinaryVoice";
+import { alineProfessionalVoiceText, applyVeterinaryVoice, finalizeBrandVoice, isVeterinaryContext, removeTitleDescriptionEcho, veterinaryVoiceText } from "@/pages/studio-pro/veterinaryVoice";
 
 describe("Studio: tutor leitor e animal paciente", () => {
   it("reconhece marcas veterinárias sem ativar a regra em outras áreas", () => {
@@ -54,6 +54,24 @@ describe("Studio: tutor leitor e animal paciente", () => {
       }],
     }, { brand: "Aline Furtado Vet", domain: "dermatologia veterinária" });
     expect(content.triptychs[0].panels.map((panel) => panel.word)).toEqual(["Direta", "Essencial", "Honesta"]);
+  });
+
+  it("não reinicia o corpo repetindo o título da mesma arte", () => {
+    const title = "Investiga a causa raiz com exames microscópicos, laudos";
+    const description = "Investiga a causa raiz com exames microscópicos, laudos claros e explicações didáticas, evitando tentativa e erro sem diagnóstico prévio.";
+    const revised = removeTitleDescriptionEcho(title, description);
+    expect(revised).not.toContain("Investiga a causa raiz");
+    expect(revised).toBe("Laudos claros e explicações didáticas, evitando tentativa e erro sem diagnóstico prévio.");
+  });
+
+  it("aplica a antirrepetição em todos os itens estruturados da arte", () => {
+    const content = finalizeBrandVoice({
+      features: [{
+        title: "Investiga a causa raiz com exames microscópicos, laudos",
+        description: "Investiga a causa raiz com exames microscópicos, laudos claros e explicações didáticas.",
+      }],
+    });
+    expect(content.features[0].description).not.toContain("Investiga a causa raiz");
   });
 
   it("não altera nenhum texto fora do domínio veterinário", () => {
