@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PRODUCT } from "./product";
 import { useStudioAccess } from "./useStudioAccess";
+import { useBrandPhotoLimit } from "./useBrandPhotoLimit";
 import StudioProCreate from "./StudioProCreate";
 import StudioBoundary from "@/pages/studio/StudioBoundary";
 import StudioProAuthorial from "./StudioProAuthorial";
@@ -267,6 +268,8 @@ const StudioProBrand = () => {
   const briefFilled = useMemo(() => answeredCount(briefAnswers), [briefAnswers]);
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
+  /** Marca compartilhada usa o acervo do plano de quem criou a marca. */
+  const photoLimit = useBrandPhotoLimit(brand, access.photoLimit, user?.id);
 
   useEffect(() => {
     if (!authLoading && !user) navigate(`${PRODUCT.base}/entrar`, { replace: true });
@@ -745,7 +748,7 @@ const StudioProBrand = () => {
             folder={folder}
             watermark={access.watermark}
             unlimited={access.unlimited}
-            photoLimit={access.photoLimit}
+            photoLimit={photoLimit}
             onSaved={() => void loadCreations()}
             onOpenBrandSettings={() => setTab("ajustes")}
           />
@@ -762,7 +765,7 @@ const StudioProBrand = () => {
             // VIP recebe a página inteira; planos e acessos concedidos recebem
             // lotes de 6 artes por geração, para render a cota em variedade.
             unlimited={access.unlimited}
-            photoLimit={access.photoLimit}
+            photoLimit={photoLimit}
             // Só a lista de artes é recarregada: a versão em tela não muda.
             onSaved={() => void loadCreations()}
             // O editor do card manda para cá quando falta público, CTA ou kit.

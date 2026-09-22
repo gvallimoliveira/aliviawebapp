@@ -5504,6 +5504,10 @@ export type Database = {
         }[]
       }
       studio_brand_owner: { Args: { _brand_id: string }; Returns: string }
+      studio_brand_photo_limit: {
+        Args: { p_brand_id: string }
+        Returns: number
+      }
       studio_credit_status: {
         Args: never
         Returns: {
