@@ -16,7 +16,7 @@ export const isVeterinaryContext = (...values: unknown[]): boolean =>
 export const veterinaryVoiceText = (input: string): string => {
   if (!ANIMAL_CLINICAL.test(input)) return input;
 
-  return input
+  const revised = input
     .replace(/\bo que voc[eê] sente hoje\b/gi, "o que seu pet apresenta hoje")
     .replace(/\bvoc[eê]\s+(sente|tem|apresenta|est[aá]\s+com|convive\s+com|sofre\s+com)\b/gi, (_all, verb: string) => `seu pet ${verb.toLowerCase()}`)
     .replace(/\b(?:a\s+)?sua\s+(coceira|otite|dermatite|piodermite|infec(?:ç|c)[aã]o|dor|alergia|lambedura|vermelhid[aã]o)\b/gi, (_all, symptom: string) => `a ${symptom.toLowerCase()} do seu pet`)
@@ -24,6 +24,9 @@ export const veterinaryVoiceText = (input: string): string => {
     .replace(/\b(?:os\s+)?seus\s+(sintomas|sinais\s+cl[ií]nicos|exames)\b/gi, (_all, findings: string) => `os ${findings.toLowerCase()} do seu pet`)
     .replace(/o que serviu para algu[eé]m pode n[aã]o servir para voc[eê]/gi, "a conduta que serviu para outro animal pode não servir para o seu pet")
     .replace(/\bquem vive o caso\b/gi, "o animal que apresenta o quadro");
+  return /^[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]/.test(input)
+    ? revised.charAt(0).toLocaleUpperCase("pt-BR") + revised.slice(1)
+    : revised;
 };
 
 export const applyVeterinaryVoice = <T>(value: T, active: boolean, key = ""): T => {
