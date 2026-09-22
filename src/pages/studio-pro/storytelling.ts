@@ -365,16 +365,9 @@ export const composeRouteCopy = (
         : `${cap(turn)}. Assim, a decisão responde a ${low(lead)}.`;
     const closingSupports = [causalClosing, proof || tension || turn, turn, lead, ...(stakes ? [stakes] : [])];
     const closingTitle = fit(closingTitles[frame % closingTitles.length], 52);
-    const closingSub = fit(
-      cap(
-        rotateFrom(closingSupports).find(
-          (candidate) =>
-            candidate &&
-            [headlineText, sub ?? ""].filter(Boolean).every((previous) => textSimilarity(candidate, previous) < 0.52),
-        ) ?? closingSupports[frame % closingSupports.length],
-      ),
-      118,
-    );
+    // O fecho não é mais sorteado como uma terceira frase independente. Ele
+    // sempre explicita como a prova conduz ao benefício/decisão da abertura.
+    const closingSub = fit(cap(causalClosing), 118);
     if (closingTitle && closingSub && cta) {
       out.closings = [{ title: terms(closingTitle), sub: terms(closingSub), cta: terms(fit(cta, 28)) }];
     }
