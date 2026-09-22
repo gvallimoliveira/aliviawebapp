@@ -8,8 +8,8 @@ describe("Studio: tutor leitor e animal paciente", () => {
   });
 
   it("atribui sintomas e achados ao pet, não ao tutor", () => {
-    expect(veterinaryVoiceText("Você sente coceira e tem otite recorrente?")).toBe("seu pet sente coceira e tem otite recorrente?");
-    expect(veterinaryVoiceText("Seus sintomas merecem investigação")).toBe("os sintomas do seu pet merecem investigação");
+    expect(veterinaryVoiceText("Você sente coceira e tem otite recorrente?")).toBe("Seu pet sente coceira e tem otite recorrente?");
+    expect(veterinaryVoiceText("Seus sintomas merecem investigação")).toBe("Os sintomas do seu pet merecem investigação");
     expect(veterinaryVoiceText("A sua dermatite voltou")).toBe("A dermatite do seu pet voltou");
   });
 
@@ -20,7 +20,7 @@ describe("Studio: tutor leitor e animal paciente", () => {
       cta: "Agende a citologia do seu pet",
     }, true);
     expect(content.headline).toBe("Você percebeu coceira no seu cão?");
-    expect(content.clinical).toBe("o que seu pet apresenta hoje orienta o exame");
+    expect(content.clinical).toBe("O que seu pet apresenta hoje orienta o exame");
     expect(content.cta).toBe("Agende a citologia do seu pet");
   });
 
