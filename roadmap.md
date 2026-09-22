@@ -28,3 +28,4 @@
 
 - [x] Separar símbolo isolado e assinatura completa nas artes; preservar proporção das logos.
 - [x] Impedir logo dupla e preservar o raciocínio completo do manual em cada arte.
+- [x] Corrigir nitidez da logo da Aline e separar tutor leitor do animal paciente em todo conteúdo veterinário.
