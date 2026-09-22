@@ -652,6 +652,11 @@ export const planBatch = (input: {
       });
     }
 
+    // Variações e textos escritos pela rota entram depois do acervo-base. A
+    // revisão precisa rodar aqui também para que o texto usado no nexo da foto
+    // seja exatamente o mesmo que chegará à arte.
+    Object.assign(reserved, finalizeBrandVoice(reserved, { brand: brandName, domain }));
+
     /**
      * O vocabulário de nicho entra por cima de tudo: destaque, apoio, citação e
      * o glossário "o que é o quê" desta arte.

@@ -26,7 +26,11 @@ export const veterinaryVoiceText = (input: string): string => {
     .replace(/\bo que avançou fica, o que n[aã]o avançou muda\b/gi, "o que melhorou no seu pet fica; o que não melhorou orienta a mudança")
     .replace(/\bvoc[eê] sem saber onde est[aá]\b/gi, "você sem saber o que acontece com seu pet");
 
-  if (!ANIMAL_CLINICAL.test(revised)) return revised;
+  if (!ANIMAL_CLINICAL.test(revised)) {
+    return /^[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ]/.test(input)
+      ? revised.charAt(0).toLocaleUpperCase("pt-BR") + revised.slice(1)
+      : revised;
+  }
 
   revised = revised
     .replace(/\bo que voc[eê] sente hoje\b/gi, "o que seu pet apresenta hoje")
