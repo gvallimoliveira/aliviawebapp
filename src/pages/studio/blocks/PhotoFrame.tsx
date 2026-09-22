@@ -40,6 +40,7 @@ const PhotoFrame = ({
   return (
     <div
       data-studio-fit-visual="1"
+      data-studio-photo-frame="1"
       className={`relative overflow-hidden ${hasRounded ? "" : "rounded-2xl"} ${className}`}
       style={style}
     >
@@ -49,6 +50,11 @@ const PhotoFrame = ({
         </div>
       ) : (
         <img
+          data-studio-photo="1"
+          data-studio-photo-focus-x={photo.focusX}
+          data-studio-photo-focus-y={photo.focusY}
+          data-studio-photo-rotation={photo.rotation}
+          data-studio-photo-scale={scale}
           src={photo.src}
           alt={photo.description || photo.label || BRAND_NAME}
           loading="eager"

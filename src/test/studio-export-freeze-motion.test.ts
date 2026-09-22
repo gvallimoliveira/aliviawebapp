@@ -1,11 +1,33 @@
 import { describe, expect, it } from "vitest";
 import {
   createStaticExportSurface,
+  calculateCoverCrop,
   freezeMotion,
   lockRenderedTextLines,
   lockUniformHeight,
   readStrokeTextRuns,
 } from "@/pages/studio/exportImage";
+
+describe("photo crop fidelity", () => {
+  it("respeita o foco horizontal em fotos largas", () => {
+    expect(calculateCoverCrop(1600, 900, 400, 500, 0, 50)).toEqual({
+      sx: 0,
+      sy: 0,
+      sw: 720,
+      sh: 900,
+    });
+    expect(calculateCoverCrop(1600, 900, 400, 500, 100, 50).sx).toBe(880);
+  });
+
+  it("respeita o foco vertical em fotos altas", () => {
+    expect(calculateCoverCrop(900, 1600, 500, 400, 50, 100)).toEqual({
+      sx: 0,
+      sy: 880,
+      sw: 900,
+      sh: 720,
+    });
+  });
+});
 
 /**
  * Slides de carrossel fora do centro da tela eram capturados no meio do efeito
@@ -180,6 +202,30 @@ describe("static export surface", () => {
 
     const surface = await createStaticExportSurface(root);
     expect(surface.node.querySelector("img")?.dataset.studioExportImageLayer).toBe("foreground");
+
+    surface.dispose();
+    root.remove();
+  });
+
+  it("preserva os metadados de enquadramento e máscara da foto no clone", async () => {
+    const root = document.createElement("div");
+    root.style.width = "320px";
+    root.style.height = "480px";
+    root.innerHTML = `
+      <div data-studio-photo-mask="popout">
+        <div data-studio-photo-frame="1">
+          <img data-studio-photo="1" data-studio-photo-focus-x="72" data-studio-photo-focus-y="31"
+            data-studio-photo-rotation="12" data-studio-photo-scale="1.4"
+            src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="Foto" />
+        </div>
+      </div>`;
+    document.body.appendChild(root);
+
+    const surface = await createStaticExportSurface(root);
+    const image = surface.node.querySelector<HTMLImageElement>("[data-studio-photo]");
+    expect(image?.dataset.studioPhotoFocusX).toBe("72");
+    expect(image?.dataset.studioPhotoRotation).toBe("12");
+    expect(image?.closest<HTMLElement>("[data-studio-photo-mask]")?.dataset.studioPhotoMask).toBe("popout");
 
     surface.dispose();
     root.remove();
