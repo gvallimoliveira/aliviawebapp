@@ -3,6 +3,7 @@ import { composeHooks, HOOK_FRAMES } from "@/pages/studio/hooks";
 import {
   ALIVIA_PATIENT_HOOKS,
   ALIVIA_PRO_HOOKS,
+  ALINE_VET_HOOKS,
   STUDIO_SELF_HOOKS,
   VALLIM_HOOKS,
   curatedHooksFor,
@@ -15,6 +16,10 @@ describe("biblioteca de ganchos", () => {
     expect(curatedHooksFor("Aliv.iA")).toBe(ALIVIA_PRO_HOOKS);
     expect(curatedHooksFor("Aliv.iA", { patientVoice: true })).toBe(ALIVIA_PATIENT_HOOKS);
     expect(curatedHooksFor("Guilherme Vallim Fisioterapia")).toBe(VALLIM_HOOKS);
+    expect(curatedHooksFor("Aline Furtado Vet")).toBe(ALINE_VET_HOOKS);
+    expect(ALINE_VET_HOOKS).toHaveLength(10);
+    expect(JSON.stringify(ALINE_VET_HOOKS)).toMatch(/cachorro|pet|animal/);
+    expect(JSON.stringify(ALINE_VET_HOOKS)).not.toMatch(/você (se coça|lambe|tem otite)/i);
   });
 
   it("não vaza gancho de marca do dono para marca de cliente", () => {

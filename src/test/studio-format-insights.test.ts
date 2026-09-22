@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { readFormatInsights, scopedFormatInsights } from "@/pages/studio-pro/formatInsights";
+import { readFormatInsights, scopedFormatInsights, writeFormatInsights } from "@/pages/studio-pro/formatInsights";
 import { buildSegmentContent, type BrandKit } from "@/pages/studio-pro/brandContent";
 import { GLOBAL_SEGMENT } from "@/pages/studio-pro/audiences";
 
@@ -24,6 +24,11 @@ describe("Insights de formatos", () => {
 
   it("ignora comentários e linhas vazias", () => {
     expect(readFormatInsights("# só um lembrete\n\nUma ideia real | com fala")).toHaveLength(1);
+  });
+
+  it("preserva o formato existente ao editar os itens separadamente", () => {
+    const source = "Gancho | Primeiro passo | Segundo passo | Agendar";
+    expect(writeFormatInsights(readFormatInsights(source))).toBe(source);
   });
 
   it("campo vazio não altera o acervo", () => {

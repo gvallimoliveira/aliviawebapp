@@ -754,6 +754,81 @@ const isStudioSelf = (name: string) => /aliv\s*\.?\s*ia\s*studio/i.test(name);
 const isAliviaCore = (name: string) => !isStudioSelf(name) && /aliv\s*\.?\s*i\s*a\b/i.test(name);
 /** Detecta a marca pessoal do fisioterapeuta. */
 const isVallim = (name: string) => /guilherme\s+vallim|gvallim/i.test(name);
+/** Detecta apenas a marca veterinária da Dra. Aline, sem contaminar outras marcas. */
+const isAlineVet = (name: string) => /aline\s+furtado.*vet|dra\.?\s+aline\s+furtado/i.test(name);
+
+export const ALINE_VET_HOOKS: StudioHook[] = [
+  {
+    hook: "Coceira que volta",
+    strong: "Se o seu cachorro volta a lamber as patas, não é hora de repetir no escuro",
+    rest: ".",
+    sub: "A citologia ajuda a identificar o agente e a investigar o que mantém a coceira.",
+    cta: "Agendar investigação dermatológica",
+  },
+  {
+    hook: "A noite interrompida tem uma pista",
+    strong: "Seu pet não deixa ninguém dormir porque não consegue parar de se coçar",
+    rest: ".",
+    sub: "Ácaros, leveduras e bactérias podem parecer iguais por fora, mas pedem condutas diferentes.",
+    cta: "Investigar a causa da coceira",
+  },
+  {
+    hook: "Otite recorrente",
+    strong: "A gotinha melhora por alguns dias — e o seu animal volta a chacoalhar a cabeça",
+    rest: ".",
+    sub: "O swab auricular e a leitura da lâmina mostram qual agente está presente.",
+    cta: "Investigar a otite",
+  },
+  {
+    hook: "Cerume também comunica",
+    strong: "Cor, odor e quantidade do cerume são pistas do ouvido do seu pet",
+    rest: ".",
+    sub: "A citologia conecta esses sinais ao agente e dá base à escolha da conduta.",
+    cta: "Agendar citologia auricular",
+  },
+  {
+    hook: "Um carocinho merece resposta",
+    strong: "Apareceu um nódulo no seu animal? O toque sozinho não diz o que ele é",
+    rest: ".",
+    sub: "A PAAF coleta células para uma decisão mais ágil e precisa.",
+    cta: "Agendar avaliação citológica",
+  },
+  {
+    hook: "Pequeno não significa irrelevante",
+    strong: "O tamanho do nódulo do seu pet não revela sozinho o seu comportamento",
+    rest: ".",
+    sub: "Investigar cedo reduz suposições e orienta o próximo passo clínico.",
+    cta: "Investigar o nódulo",
+  },
+  {
+    hook: "Nem toda falha de pelo é alergia",
+    strong: "Falhas de pelo ao redor dos olhos ou cotovelos podem apontar para Demodex",
+    rest: ".",
+    sub: "O raspado cutâneo procura o ácaro antes de uma conduta baseada só na aparência.",
+    cta: "Agendar investigação parasitológica",
+  },
+  {
+    hook: "Tratar o agente não basta",
+    strong: "A levedura pode explicar a crise do seu pet — mas não necessariamente a recorrência",
+    rest: ".",
+    sub: "Correlacionar infecção e doença de base ajuda a quebrar o ciclo da coceira.",
+    cta: "Investigar agente e mecanismo",
+  },
+  {
+    hook: "A lâmina organiza a decisão",
+    strong: "Sinais parecidos no animal podem esconder agentes diferentes",
+    rest: ".",
+    sub: "Ver células, cocos, bastonetes ou leveduras transforma suspeita em direção clínica.",
+    cta: "Agendar avaliação citológica",
+  },
+  {
+    hook: "Parceria entre veterinários",
+    strong: "Um caso dermatológico difícil não precisa ser conduzido com uma leitura isolada",
+    rest: ".",
+    sub: "Laudo descritivo e discussão técnica conectam histórico, lesão e padrão citológico.",
+    cta: "Encaminhar um caso ou discutir a lâmina",
+  },
+];
 
 /**
  * Acervo curado da marca, quando existe. `patientVoice` escolhe a variante de
@@ -768,5 +843,6 @@ export const curatedHooksFor = (
   if (isStudioSelf(name)) return STUDIO_SELF_HOOKS;
   if (isAliviaCore(name)) return opts.patientVoice ? ALIVIA_PATIENT_HOOKS : ALIVIA_PRO_HOOKS;
   if (isVallim(name)) return VALLIM_HOOKS;
+  if (isAlineVet(name)) return ALINE_VET_HOOKS;
   return [];
 };

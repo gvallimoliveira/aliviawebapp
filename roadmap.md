@@ -30,3 +30,4 @@
 - [x] Impedir logo dupla e preservar o raciocínio completo do manual em cada arte.
 - [x] Corrigir nitidez da logo da Aline e separar tutor leitor do animal paciente em todo conteúdo veterinário.
 - [x] Exigir começo, desenvolvimento e conclusão conectados em toda arte; bloquear títulos pendurados e listas técnicas sem função narrativa.
+- [x] Garantir nexo entre descrição da imagem e assunto; estruturar insights e matrizes por item; ampliar os ganchos da Aline Furtado Vet.
