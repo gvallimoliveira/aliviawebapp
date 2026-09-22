@@ -205,7 +205,12 @@ const refineVeterinaryContent = <T>(value: T, veterinary: boolean, aline: boolea
 
   if (aline) {
     const current = Array.isArray(revised.compare) ? revised.compare : [];
-    revised = { ...revised, compare: [...ALINE_SIGNPOSTS, ...current] };
+    const curatedTitles = new Set(ALINE_SIGNPOSTS.map((pair) => pair.title));
+    const remaining = current.filter((pair) => {
+      if (!pair || typeof pair !== "object") return true;
+      return !curatedTitles.has(String((pair as Record<string, unknown>).title ?? ""));
+    });
+    revised = { ...revised, compare: [...ALINE_SIGNPOSTS, ...remaining] };
   }
   return revised as T;
 };
