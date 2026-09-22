@@ -1139,7 +1139,8 @@ const applyAudience = (
   audience: BrandAudience,
   relation?: Relation,
 ): WorldContent => {
-  const who = audience.label.trim();
+  // O nome do recorte de slogan organiza o seletor, mas não é texto da arte.
+  const who = audience.id === SLOGAN_SEGMENT ? brand : audience.label.trim();
   const key = audienceKeyword(audience);
   const KEY = key.toUpperCase();
   const hookList = relation?.hooks?.length ? relation.hooks : audienceHooks(audience);

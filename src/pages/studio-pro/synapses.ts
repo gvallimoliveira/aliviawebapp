@@ -6,7 +6,7 @@
  * prova e desejo. Mesma seed e mesmos dados produzem a mesma rota.
  */
 import { createRng } from "@/pages/studio/rng";
-import type { BrandAudience } from "./audiences";
+import { SLOGAN_SEGMENT, type BrandAudience } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
 import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
 import { methodPlainLine } from "./methodPlain";
@@ -216,7 +216,7 @@ export const buildNarrativeRoute = ({
     kind,
     audienceId: audience?.id,
     audienceLabel:
-      clean(audience?.label) ||
+      (audience?.id === SLOGAN_SEGMENT ? clean(brand) : clean(audience?.label)) ||
       editorialAudience(dna.primaryAudience, {
         clinical: /fisioter|cl[ií]nic|paciente|reabilita|terapia/i.test(
           [dna.niche, dna.description, dna.presentation, dna.offer].filter(Boolean).join(" "),
