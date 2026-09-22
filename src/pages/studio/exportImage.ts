@@ -482,6 +482,7 @@ export const paintStrokeTextOnCanvas = (
   canvas: HTMLCanvasElement,
   node: HTMLElement,
   specs: StrokeSpec[],
+  layout?: LayoutSize,
 ) => {
   if (!specs.length) return;
   const context = canvas.getContext("2d");
@@ -489,8 +490,7 @@ export const paintStrokeTextOnCanvas = (
 
   const rootRect = node.getBoundingClientRect();
   if (!rootRect.width || !rootRect.height) return;
-  const scaleX = canvas.width / rootRect.width;
-  const scaleY = canvas.height / rootRect.height;
+  const { scaleX, scaleY } = canvasScale(canvas, rootRect, layout);
 
   for (const spec of specs) {
     const el = spec.element;
