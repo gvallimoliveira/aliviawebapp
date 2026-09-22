@@ -360,14 +360,14 @@ const paintBackdropsOnCanvas = (
   canvas: HTMLCanvasElement,
   node: HTMLElement,
   backdrops: Backdrop[],
+  layout?: LayoutSize,
 ) => {
   if (!backdrops.length) return;
   const context = canvas.getContext("2d");
   if (!context) return;
   const rootRect = node.getBoundingClientRect();
   if (!rootRect.width || !rootRect.height) return;
-  const scaleX = canvas.width / rootRect.width;
-  const scaleY = canvas.height / rootRect.height;
+  const { scaleX, scaleY } = canvasScale(canvas, rootRect, layout);
 
   for (const backdrop of backdrops) {
     context.save();
