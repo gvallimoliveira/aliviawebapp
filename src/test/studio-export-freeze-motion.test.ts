@@ -206,6 +206,30 @@ describe("static export surface", () => {
     surface.dispose();
     root.remove();
   });
+
+  it("preserva os metadados de enquadramento e máscara da foto no clone", async () => {
+    const root = document.createElement("div");
+    root.style.width = "320px";
+    root.style.height = "480px";
+    root.innerHTML = `
+      <div data-studio-photo-mask="popout">
+        <div data-studio-photo-frame="1">
+          <img data-studio-photo="1" data-studio-photo-focus-x="72" data-studio-photo-focus-y="31"
+            data-studio-photo-rotation="12" data-studio-photo-scale="1.4"
+            src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="Foto" />
+        </div>
+      </div>`;
+    document.body.appendChild(root);
+
+    const surface = await createStaticExportSurface(root);
+    const image = surface.node.querySelector<HTMLImageElement>("[data-studio-photo]");
+    expect(image?.dataset.studioPhotoFocusX).toBe("72");
+    expect(image?.dataset.studioPhotoRotation).toBe("12");
+    expect(image?.closest<HTMLElement>("[data-studio-photo-mask]")?.dataset.studioPhotoMask).toBe("popout");
+
+    surface.dispose();
+    root.remove();
+  });
 });
 
 describe("stroke text fidelity", () => {

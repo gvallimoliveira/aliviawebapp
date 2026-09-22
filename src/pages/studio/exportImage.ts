@@ -195,6 +195,21 @@ const roundedRect = (
   context.closePath();
 };
 
+/** Mesma silhueta proporcional usada pelo palco com foto. */
+const popoutPath = (context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number) => {
+  const px = (value: number) => x + (width * value) / 100;
+  const py = (value: number) => y + (height * value) / 100;
+  context.beginPath();
+  context.moveTo(px(12), py(0));
+  context.lineTo(px(88), py(0));
+  context.quadraticCurveTo(px(100), py(0), px(94.6), py(11.3));
+  context.lineTo(px(55.4), py(88.7));
+  context.quadraticCurveTo(px(50), py(100), px(44.6), py(88.7));
+  context.lineTo(px(5.4), py(11.3));
+  context.quadraticCurveTo(px(0), py(0), px(12), py(0));
+  context.closePath();
+};
+
 /**
  * Recoloca as imagens diretamente no canvas final.
  *
@@ -226,6 +241,7 @@ const paintImagesOnCanvas = (
     const photoFrame = image.dataset.studioPhoto === "1"
       ? image.closest<HTMLElement>('[data-studio-photo-frame="1"]')
       : null;
+    const photoMask = image.closest<HTMLElement>('[data-studio-photo-mask]')?.dataset.studioPhotoMask;
     /* getBoundingClientRect() da imagem já contém zoom/rotação. Para fotos do
        acervo, a referência correta é a janela recortada pelo PhotoFrame. */
     const rect = photoFrame?.getBoundingClientRect() ?? image.getBoundingClientRect();
@@ -256,10 +272,12 @@ const paintImagesOnCanvas = (
       ({ sx, sy, sw, sh } = calculateCoverCrop(sourceWidth, sourceHeight, width, height, focusX, focusY));
     }
 
-    const radius = (Number.parseFloat(style.borderTopLeftRadius) || 0) * Math.min(scaleX, scaleY);
+    const frameStyle = photoFrame ? getComputedStyle(photoFrame) : style;
+    const radius = (Number.parseFloat(frameStyle.borderTopLeftRadius) || 0) * Math.min(scaleX, scaleY);
     context.save();
     context.globalAlpha = Number.parseFloat(style.opacity) || 1;
-    roundedRect(context, x, y, width, height, radius);
+    if (photoMask === "popout") popoutPath(context, x, y, width, height);
+    else roundedRect(context, x, y, width, height, radius);
     context.clip();
 
     /*

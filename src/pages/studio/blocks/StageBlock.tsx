@@ -86,6 +86,7 @@ const StageBlock = ({ content, rng, treatment, format, persona, picker, photos, 
         {/* Palco: imagem "saindo" da tela em triângulo invertido arredondado. */}
         <div className="relative mt-6 w-full">
           <div
+            data-studio-photo-mask="popout"
             className="relative z-20 mx-auto w-[52%]"
             style={{
               ...popoutHeight,
