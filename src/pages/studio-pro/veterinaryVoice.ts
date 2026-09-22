@@ -139,6 +139,41 @@ const repeatedOpeningSize = (title: string, description: string): number => {
   return size;
 };
 
+const stableTextIndex = (text: string, size: number): number => {
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
+  }
+  return size > 0 ? hash % size : 0;
+};
+
+const bridgeDescription = (title: string, remainder: string): string => {
+  const lower = remainder.charAt(0).toLocaleLowerCase("pt-BR") + remainder.slice(1);
+  const lastTitleWord = title.trim().match(/[\p{L}\p{N}]+[.!?]?$/u)?.[0]?.replace(/[.!?]$/, "") ?? "";
+  const capitalizedLastWord = lastTitleWord
+    ? `${lastTitleWord.charAt(0).toLocaleUpperCase("pt-BR")}${lastTitleWord.slice(1)}`
+    : "";
+  const adjectiveOpening = /^(?:clar[oa]s?|did[aá]tic[oa]s?|objetiv[oa]s?|precis[oa]s?|segur[oa]s?|complet[oa]s?|personalizad[oa]s?|detalhad[oa]s?|assertiv[oa]s?)\b/i.test(lower);
+
+  // Quando o corte acontece no meio de uma locução ("qualidade de vida"),
+  // recompõe o núcleo em vez de imprimir uma ponte seguida de "de...".
+  if (/^(?:de|do|da|dos|das)\b/i.test(lower) && capitalizedLastWord) {
+    return `${capitalizedLastWord} ${lower}`;
+  }
+  if (adjectiveOpening && capitalizedLastWord) return `${capitalizedLastWord} ${lower}`;
+  if (/^(?:e|ou|mas|que|com|por|para|em)\b/i.test(lower)) return `Esses elementos se conectam ${lower}.`;
+
+  const bridges = [
+    (text: string) => `Com essa leitura, ${text}`,
+    (text: string) => `Na prática, ${text}`,
+    (text: string) => `Assim, ${text}`,
+    (text: string) => `Esse caminho permite ${text}`,
+    (text: string) => `O resultado é ${text}`,
+    (text: string) => `Dessa forma, ${text}`,
+  ];
+  return bridges[stableTextIndex(`${title}|${remainder}`, bridges.length)](lower);
+};
+
 /**
  * O corpo não pode recomeçar repetindo o título. Preserva a parte nova e,
  * quando a frase repetida termina em uma enumeração, cria uma ponte causal.
@@ -151,14 +186,7 @@ export const removeTitleDescriptionEcho = (title: string, description: string): 
   const remainder = rawWords.slice(openingSize).join(" ").replace(/^[,;:.!?–—\s]+/, "").trim();
   if (!remainder) return "Esse conjunto de informações orienta a decisão com mais precisão.";
 
-  const lower = remainder.charAt(0).toLocaleLowerCase("pt-BR") + remainder.slice(1);
-  const adjectiveOpening = /^(?:clar[oa]s?|did[aá]tic[oa]s?|objetiv[oa]s?|precis[oa]s?|segur[oa]s?|complet[oa]s?|personalizad[oa]s?|detalhad[oa]s?|assertiv[oa]s?)\b/i.test(lower);
-  const lastTitleWord = title.trim().match(/[\p{L}\p{N}]+[.!?]?$/u)?.[0]?.replace(/[.!?]$/, "") ?? "";
-  const revised = adjectiveOpening && lastTitleWord
-    ? `${lastTitleWord.charAt(0).toLocaleUpperCase("pt-BR")}${lastTitleWord.slice(1)} ${lower}`
-    : /^(?:e|ou|mas|que|com|por|para|em|do|da|dos|das)\b/i.test(lower)
-    ? `Esses achados se conectam ${lower}.`
-    : `A partir disso, ${lower}`;
+  const revised = bridgeDescription(title, remainder);
   return revised.replace(/\.\s*\.$/, ".");
 };
 
