@@ -79,7 +79,10 @@ const sentences = (paragraph: string): string[] => {
  * autor), e só parágrafos longos demais para um quadro são abertos em frases.
  */
 export const fragmentsOf = (body: string): string[] => {
-  const paragraphs = body
+  /* Alguns campos persistidos chegam com a sequência textual `\\n`, em vez de
+     uma quebra real. Normalizamos antes de respeitar os parágrafos do autor. */
+  const normalizedBody = body.replace(/\\r\\n|\\n|\\r/g, "\n");
+  const paragraphs = normalizedBody
     .split(/\n\s*\n|\r\n\s*\r\n/)
     .map((p) => p.replace(/\s*\n\s*/g, " ").trim())
     .filter(Boolean);

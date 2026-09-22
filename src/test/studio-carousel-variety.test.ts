@@ -55,6 +55,16 @@ describe("variedade temática dos carrosséis", () => {
     expect(post.support).not.toMatch(/\b(?:e|de|da|do|que|para)$/i);
   });
 
+  it("nunca imprime uma quebra escapada como texto do carrossel", () => {
+    const post = carouselTweetCopy(
+      "Investigue a causa\\nUm nódulo não revela seu nome ao toque.",
+      "A citologia orienta a decisão\\ncom mais clareza.",
+    );
+    expect(post.title).not.toContain("\\n");
+    expect(post.support).not.toContain("\\n");
+    expect(post.title).toContain("causa Um nódulo");
+  });
+
   it("oferece repertório com mais de um roteiro por público", () => {
     expect(contentFor("lote-1").carousels.length).toBeGreaterThanOrEqual(4);
   });

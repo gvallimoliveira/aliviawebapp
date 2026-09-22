@@ -39,3 +39,8 @@
 - [x] Criar variações coerentes para o modelo de placas da Aline.
 - [x] Reduzir citações longas por tema ou grupo relacionado.
 - [x] Corrigir composição textual que une palavras e ideias sem conexão.
+
+## Acabamento A/B e carrossel (22/09)
+- [x] Fazer a inversão A/B trocar visivelmente os papéis das cores da marca.
+- [x] Garantir uma única assinatura nos modelos de citação.
+- [x] Impedir que `\\n` literal apareça em carrosséis sem alterar o roteiro narrativo.

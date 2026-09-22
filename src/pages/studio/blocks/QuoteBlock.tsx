@@ -19,7 +19,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
   if (treatment === 3) {
     // Editorial à esquerda: aspas gigantes como elemento gráfico, sem itálico.
     return (
-      <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
+      <section data-studio-own-lockup="1" className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
         <TextureLayer persona={persona} index={treatment} />
         <span
           aria-hidden
@@ -41,7 +41,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
             <footer className="mt-10 flex items-center gap-4">
               <span aria-hidden className="h-px w-14 bg-primary/60" />
               <span className="text-[11px] font-medium uppercase tracking-[0.32em] text-muted-foreground">
-                {BRAND_NAME} · {content.label}
+                 {BRAND_NAME}
               </span>
             </footer>
           </motion.blockquote>
@@ -53,7 +53,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
   if (treatment === 4) {
     // Minimalista de filete: só tipografia e uma linha de força no topo.
     return (
-      <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
+      <section data-studio-own-lockup="1" className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${personaSurface(persona, treatment)}`}>
         <TextureLayer persona={persona} index={treatment} />
         <GeoOrnament index={treatment + persona.textureShift} />
         <div className="container relative py-20">
@@ -68,7 +68,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
               {renderAccent(text, accentVariant)}
             </p>
             <footer className="mt-8 text-[11px] font-medium uppercase tracking-[0.32em] text-muted-foreground">
-              {BRAND_NAME} · {content.label}
+               {BRAND_NAME}
             </footer>
           </motion.blockquote>
         </div>
@@ -79,7 +79,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
   const surface = treatment === 0 ? "bg-primary/10" : treatment === 1 ? "bg-accent/50" : "bg-secondary/40";
 
   return (
-    <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}>
+    <section data-studio-own-lockup="1" className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}>
       {treatment === 2 && <TextureLayer persona={persona} index={treatment} />}
 
       <div className="container relative py-20">
@@ -95,7 +95,7 @@ const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockP
           </p>
 
           <footer className="mt-8 text-[11px] font-medium uppercase tracking-[0.32em] text-muted-foreground">
-            {BRAND_NAME} · {content.label}
+             {BRAND_NAME}
           </footer>
         </motion.blockquote>
       </div>

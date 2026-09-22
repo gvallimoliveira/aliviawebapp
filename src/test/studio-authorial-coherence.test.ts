@@ -31,6 +31,12 @@ describe("modo autoral", () => {
     frags.forEach((f) => expect(TEXT_A).toContain(f));
   });
 
+  it("normaliza quebras escapadas sem imprimir \\n na arte", () => {
+    const frags = fragmentsOf("Investigue a causa\\nUm nódulo não revela seu nome ao toque.");
+    expect(frags.join(" ")).toBe("Investigue a causa Um nódulo não revela seu nome ao toque.");
+    expect(frags.join(" ")).not.toContain("\\n");
+  });
+
   it("nunca mistura textos nem quebra a ordem/contiguidade", () => {
     for (let s = 0; s < 60; s += 1) {
       const arts = composeAuthorial({

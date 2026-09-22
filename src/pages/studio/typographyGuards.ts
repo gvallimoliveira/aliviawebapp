@@ -17,6 +17,10 @@
 import type { CSSProperties } from "react";
 import { condensePhrase } from "@/pages/studio-pro/textFit";
 
+/** Remove escapes que chegaram como texto visível ("\\n") antes da diagramação. */
+export const normalizeCopyWhitespace = (raw: string | null | undefined): string =>
+  (raw ?? "").replace(/\\[nrt]+/gi, " ").replace(/\s+/g, " ").trim();
+
 /* -------------------------------------------------------------------------- */
 /* 1. Chamada de público                                                      */
 /* -------------------------------------------------------------------------- */
@@ -100,8 +104,8 @@ export const joinCopyParts = (
   strong: string | null | undefined,
   rest: string | null | undefined,
 ): string => {
-  const left = (strong ?? "").trim();
-  const right = (rest ?? "").trim();
+  const left = normalizeCopyWhitespace(strong);
+  const right = normalizeCopyWhitespace(rest);
   if (!left) return right;
   if (!right) return left;
   return `${left}${/^[,.;:!?…)]/.test(right) ? "" : " "}${right}`;
@@ -122,7 +126,7 @@ const ORPHAN_CAROUSEL_COMMAND =
   /^(?:pare|deixe|evite|comece|continue|aprenda|descubra|entenda|veja)\s+(?:de|a|com|por|para)?[.!?…“”\"]*$/i;
 
 const closeThought = (raw: string, max: number): string => {
-  const clean = raw.replace(/\s+/g, " ").trim();
+  const clean = normalizeCopyWhitespace(raw);
   if (!clean) return "";
 
   /* Insight colado como `Se "frase completa." "começo solto` vira apenas a
@@ -170,9 +174,7 @@ export const carouselCoverCopy = (
 /** Citações compactas preservam uma ideia completa e não tentam acomodar vários
  * temas no mesmo quadro. Aspas são normalizadas depois do recorte. */
 export const quoteCopy = (raw: string | null | undefined, max = 132): string => {
-  const clean = (raw ?? "")
-    .replace(/\s+/g, " ")
-    .trim()
+  const clean = normalizeCopyWhitespace(raw)
     .replace(/^["“”'‘’]+|["“”'‘’]+$/g, "")
     .trim();
   if (!clean) return "";

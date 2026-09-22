@@ -46,6 +46,7 @@ const PullQuoteBlock = ({ content, rng, treatment, format, picker }: BlockProps)
 
   return (
     <section
+      data-studio-own-lockup="1"
       className={`relative flex ${sectionHeight(format)} items-center overflow-hidden`}
       style={{ backgroundColor: bg }}
     >
@@ -98,7 +99,7 @@ const PullQuoteBlock = ({ content, rng, treatment, format, picker }: BlockProps)
               className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full md:h-14 md:w-14"
               style={{ border: `1px solid ${accentInk}` }}
             >
-              <img src={BRAND_LOGO} alt="" className="h-full w-full object-contain p-1.5" loading="lazy" />
+              <img src={BRAND_LOGO} alt="" data-brand-logo="1" className="h-full w-full object-contain p-1.5" loading="lazy" />
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-semibold tracking-tight md:text-base">{BRAND_NAME}</span>
