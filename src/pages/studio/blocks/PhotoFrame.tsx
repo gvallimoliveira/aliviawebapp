@@ -50,7 +50,7 @@ const PhotoFrame = ({
       ) : (
         <img
           src={photo.src}
-          alt={photo.label || BRAND_NAME}
+          alt={photo.description || photo.label || BRAND_NAME}
           loading="eager"
           decoding="async"
           onError={() => setFailed(true)}

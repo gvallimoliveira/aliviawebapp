@@ -46,6 +46,7 @@ import { matrixAudiences, readAudiences, writeAudiences, type BrandAudience } fr
 import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
 import BrandMembersCard from "./BrandMembersCard";
+import { FormatInsightsEditor, KeywordMatrixEditor, ReasoningMatrixEditor } from "./StructuredBrandEditors";
 import { isOwnBrand } from "./brandSharing";
 import StudioArtEditor from "./StudioArtEditor";
 import { isArtSnapshot } from "./artSnapshot";
@@ -1246,20 +1247,11 @@ const StudioProBrand = () => {
               filled={!!form.format_insights.trim()}
             >
               <div>
-                <Label htmlFor="edit-format-insights">Uma ideia por linha</Label>
-                <Textarea
-                  id="edit-format-insights"
-                  rows={8}
-                  placeholder={
-                    "Separe as falas por |\n" +
-                    "Ex.: O que ninguém explica sobre a sua dor | Dor não é só lesão | O contexto decide a conduta | Comece pela avaliação"
-                  }
-                  value={form.format_insights}
-                  onChange={(e) => setForm({ ...form, format_insights: e.target.value })}
-                />
+                <Label>Ideias prontas</Label>
+                <FormatInsightsEditor value={form.format_insights} onChange={(format_insights) => setForm({ ...form, format_insights })} />
                 <p className="mt-1 text-xs text-muted-foreground">
                   É o único campo em que você escreve o <strong>diálogo pronto</strong> da arte. Uma
-                  linha com 3 partes ou mais também vira lista, história e carrossel. O texto entra na
+                  ideia com desenvolvimento também vira lista, história e carrossel. O texto entra na
                   arte como você escreveu — nada é reescrito e não gasta crédito.
                 </p>
               </div>
@@ -1275,26 +1267,14 @@ const StudioProBrand = () => {
             >
               <div className="grid gap-4">
                 <div>
-                  <Label htmlFor="edit-keyword-matrix">Matriz de palavras</Label>
-                  <Textarea
-                    id="edit-keyword-matrix"
-                    rows={8}
-                    placeholder="Termo técnico | como o público percebe | palavras associadas | públicos | tema"
-                    value={form.keyword_matrix}
-                    onChange={(e) => setForm({ ...form, keyword_matrix: e.target.value })}
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">Uma relação por linha. Separe cada parte com | e vários públicos por vírgula.</p>
+                  <Label>Matriz de palavras</Label>
+                  <KeywordMatrixEditor value={form.keyword_matrix} onChange={(keyword_matrix) => setForm({ ...form, keyword_matrix })} />
+                  <p className="mt-1 text-xs text-muted-foreground">Cada relação permanece agrupada em um item próprio.</p>
                 </div>
                 <div>
-                  <Label htmlFor="edit-reasoning-matrix">Matriz de raciocínio</Label>
-                  <Textarea
-                    id="edit-reasoning-matrix"
-                    rows={10}
-                    placeholder="Públicos | cena ou sintoma | mecanismo | prova ou ponte | consequência desejada | CTA | tema"
-                    value={form.reasoning_matrix}
-                    onChange={(e) => setForm({ ...form, reasoning_matrix: e.target.value })}
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">Cada linha vira uma sequência completa, usada sem misturar temas ou públicos.</p>
+                  <Label>Matriz de raciocínio</Label>
+                  <ReasoningMatrixEditor value={form.reasoning_matrix} onChange={(reasoning_matrix) => setForm({ ...form, reasoning_matrix })} />
+                  <p className="mt-1 text-xs text-muted-foreground">Cada item é uma sequência completa, usada sem misturar temas ou públicos.</p>
                 </div>
               </div>
             </BrandSection>
