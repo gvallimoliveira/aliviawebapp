@@ -900,7 +900,7 @@ export const exportNodesAsPng = async (
       const surface = surfaces[index];
       try {
         const rect = surface.node.getBoundingClientRect();
-        const ratio = safeRatio(rect.width, Math.max(rect.height, surface.node.scrollHeight), desiredRatio);
+        const ratio = safeRatio(rect.width, rect.height || surface.node.scrollHeight, desiredRatio);
         const blob = await renderStaticNodeToBlob(surface.node, ratio);
         files.push(new File([blob], item.fileName, { type: "image/png" }));
       } catch (error) {
