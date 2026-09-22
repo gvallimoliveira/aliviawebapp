@@ -229,10 +229,8 @@ const spread = (id: string, salt: number): number => {
 const CIRCULATION_BAND = 0.38;
 
 /**
- * FOTO DE AMPLA APLICAÇÃO: sem restrição de procedimento específico
- * (termografia, laserterapia etc.), a foto é registro de contexto e pode
- * sustentar qualquer assunto da marca. Ganha um bônus para o acervo circular de
- * verdade em vez de só as fotos de afinidade máxima aparecerem.
+ * Fotos só entram quando há afinidade temática ou textual comprovada. A
+ * categoria de uso organiza o acervo, mas não cria nexo por conta própria.
  */
 /**
  * Escolhe a foto que sustenta o assunto já decidido pela copy. Determinístico
@@ -302,11 +300,9 @@ export const pickPhotoForTopics = (
   /**
    * CIRCULAÇÃO REAL DO ACERVO.
    *
-   * Duas correções: (1) toda foto de ampla aplicação entra na faixa, mesmo sem
-   * afinidade máxima com o assunto — antes a faixa relativa ao melhor score
-   * derrubava o acervo inteiro e sobravam 3/4 fotos; (2) a escolha não é mais
-   * `index % pool.length` sobre uma lista ordenada por pontuação (o que fazia
-   * as primeiras fotos repetirem), e sim uma PERMUTAÇÃO determinística do pool
+   * A escolha não é `index % pool.length` sobre uma lista ordenada por
+   * pontuação (o que fazia as primeiras fotos repetirem), e sim uma permutação
+   * determinística do pool
    * por arte, filtrada pelo registro de rotatividade do lote.
    */
   const best = scored[0].score;
