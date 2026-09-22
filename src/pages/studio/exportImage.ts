@@ -787,8 +787,8 @@ const renderStaticNodeToBlob = async (
     if (!context) throw new Error("no-2d-context");
     context.fillStyle = backgroundColor;
     context.fillRect(0, 0, output.width, output.height);
-    paintBackdropsOnCanvas(output, node, backdrops);
-    paintImagesOnCanvas(output, node, "backdrop");
+    paintBackdropsOnCanvas(output, node, backdrops, layout);
+    paintImagesOnCanvas(output, node, "backdrop", layout);
     context.drawImage(raster, 0, 0);
 
     /*
@@ -796,9 +796,9 @@ const renderStaticNodeToBlob = async (
      * ACIMA do raster. Se fossem tratados como foto de fundo, o círculo/tarja
      * do próprio bloco os cobriria no PNG — exatamente o caso da mão no D.I.F.I.
      */
-    paintImagesOnCanvas(output, node, "foreground");
+    paintImagesOnCanvas(output, node, "foreground", layout);
 
-    paintStrokeTextOnCanvas(output, node, specs);
+    paintStrokeTextOnCanvas(output, node, specs, layout);
   } finally {
     restoreBackdrops();
     restore();
