@@ -167,6 +167,21 @@ export const carouselCoverCopy = (
   support: closeThought(support ?? "", CAROUSEL_SUPPORT_MAX),
 });
 
+/** Citações compactas preservam uma ideia completa e não tentam acomodar vários
+ * temas no mesmo quadro. Aspas são normalizadas depois do recorte. */
+export const quoteCopy = (raw: string | null | undefined, max = 132): string => {
+  const clean = (raw ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^["“”'‘’]+|["“”'‘’]+$/g, "")
+    .trim();
+  if (!clean) return "";
+  const sentences = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((part) => part.trim()).filter(Boolean) ?? [];
+  const complete = sentences.find((part) => part.length >= 18 && part.length <= max);
+  const fitted = complete ?? closeThought(clean, max);
+  return fitted ? `“${fitted}”` : "";
+};
+
 /**
  * Texto de um slide no tratamento "fio de posts". Cada parte fecha uma ideia
  * por conta própria: o título introduz o ponto e o apoio o desenvolve, sem

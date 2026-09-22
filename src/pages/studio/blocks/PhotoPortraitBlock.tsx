@@ -4,6 +4,7 @@ import PhotoFrame from "./PhotoFrame";
 import PhotoMissingFallback from "./PhotoMissingFallback";
 import { renderAccent, TextureLayer } from "./Texture";
 import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { quoteCopy } from "../typographyGuards";
 
 /**
  * RETRATO EDITORIAL COM DESTAQUE
@@ -31,7 +32,7 @@ const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, picker, 
     );
   }
 
-  const quote = item.text;
+  const quote = quoteCopy(item.text);
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const title = (feature.headline ?? feature.title).toUpperCase();
   // Altura percentual do quadro (antes px/svh: achatava num formato e estourava no outro).

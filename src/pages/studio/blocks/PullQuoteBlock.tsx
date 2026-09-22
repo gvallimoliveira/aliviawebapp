@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME } from "../brand";
 import { blockPadding, sectionHeight, type BlockProps } from "./shared";
+import { quoteCopy } from "../typographyGuards";
 
 /**
  * CITAÇÃO ASSINADA (referência estilística: fundo profundo, aspas gigantes em
@@ -30,7 +31,7 @@ const splitTail = (text: string) => {
 
 const PullQuoteBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
   const [quote] = picker.pick(content.quotes, 1, rng, (q) => [q.topic]);
-  const { head, tail } = splitTail(quote.text);
+  const { head, tail } = splitTail(quoteCopy(quote.text));
 
   const light = treatment === 1;
   const primary = treatment === 2;

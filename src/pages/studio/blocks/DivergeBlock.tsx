@@ -50,6 +50,7 @@ const DivergeBlock = ({ content, rng, treatment, format }: BlockProps) => {
         >
           {/* A ordem da frase NUNCA é invertida: inverter quebra a interpretação. */}
           <span className="font-black uppercase tracking-tight">{headline.strong}</span>
+          {" "}
           <span className="font-light opacity-70">{headline.rest}</span>
 
         </h2>
