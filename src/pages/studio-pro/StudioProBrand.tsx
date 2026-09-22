@@ -267,6 +267,8 @@ const StudioProBrand = () => {
   const briefFilled = useMemo(() => answeredCount(briefAnswers), [briefAnswers]);
 
   const brand = brands.find((b) => b.id === brandId) ?? null;
+  /** Marca compartilhada usa o acervo do plano de quem criou a marca. */
+  const photoLimit = useBrandPhotoLimit(brand, access.photoLimit, user?.id);
 
   useEffect(() => {
     if (!authLoading && !user) navigate(`${PRODUCT.base}/entrar`, { replace: true });
