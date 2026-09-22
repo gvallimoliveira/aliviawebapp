@@ -716,6 +716,9 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   clone.style.width = `${rect.width}px`;
   clone.style.height = `${rect.height}px`;
   clone.style.maxWidth = "none";
+  // O card na tela corta o excedente; a cópia precisa cortar igual para o PNG
+  // sair no mesmo formato mostrado na geração.
+  clone.style.overflow = "hidden";
 
   // Tokens da marca são herdados de wrappers da tela; materialize-os na cópia.
   const computed = getComputedStyle(source);
