@@ -1,3 +1,5 @@
+import { hasDanglingEnding, isBareEnumeration } from "@/pages/studio/grammar";
+
 /**
  * ARCO NARRATIVO DA ARTE (começo, meio e fim)
  *
@@ -55,7 +57,12 @@ export const checkArc = (arc: Partial<NarrativeArc>): ArcCheck => {
   const steps: Array<keyof NarrativeArc> = ["hook", "tension", "mechanism", "proof", "next"];
   steps.forEach((step) => {
     if (!(arc[step] ?? "").trim()) problems.push(`etapa ausente: ${step}`);
+    else if (hasDanglingEnding(arc[step] ?? "")) problems.push(`etapa incompleta: ${step}`);
   });
+
+  if (arc.mechanism && isBareEnumeration(arc.mechanism)) {
+    problems.push("mecanismo é uma lista sem explicação");
+  }
 
   for (let i = 0; i < steps.length; i += 1) {
     for (let j = i + 1; j < steps.length; j += 1) {

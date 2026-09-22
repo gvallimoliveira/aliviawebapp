@@ -83,4 +83,28 @@ describe("redação a partir da rota narrativa", () => {
       expect(support).not.toMatch(/é assim que vitrine|vitrine.+funciona na prática/i);
     });
   });
+
+  it("fecha começo, meio e fim na rota veterinária sem título ou lista pendurados", () => {
+    const veterinary: NarrativeRoute = {
+      ...route,
+      audienceLabel: "Tutor de pet",
+      tension: "Outra noite sem dormir por causa",
+      scene: "O cão sacode a cabeça e não deixa o tutor dormir",
+      trigger: "A otite voltou durante a noite",
+      feature: "ácaros, leveduras, cocos e bastonetes",
+      proof: "Swab auricular e leitura da lâmina identificam o agente presente",
+      desire: "conduzir a otite conforme a causa",
+      cta: "Agende a investigação da otite do seu pet",
+    };
+    const copies = Array.from({ length: 20 }, (_, index) =>
+      composeRouteCopy(veterinary, { seed: `otite:${index}`, rotate: index }),
+    );
+    copies.forEach((copy) => {
+      const headline = `${copy.headlines?.[0]?.strong ?? ""} ${copy.headlines?.[0]?.rest ?? ""}`.trim();
+      expect(headline).not.toMatch(/por causa\s*$/i);
+      expect(headline).not.toMatch(/é (?:a )?hora de ácaros/i);
+      expect(copy.subs?.[0]).toMatch(/cão|otite|agentes|swab|lâmina|investig/i);
+      expect(copy.closings?.[0]?.sub).toMatch(/base|esclarece|decisão/i);
+    });
+  });
 });

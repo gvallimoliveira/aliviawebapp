@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildHook, eligibleHooks, hookViolatesGuardrails, HOOK_TYPES } from "../hookTaxonomy";
+import { hasDanglingEnding, isBareEnumeration } from "@/pages/studio/grammar";
 import { buildArc, checkArc, textSimilarity } from "../narrativeArc";
 import { rankTopics, salesValueScore } from "../topicScore";
 
@@ -34,6 +35,17 @@ describe("biblioteca de ganchos", () => {
   it("bloqueia promessa de cura e infantilização", () => {
     expect(hookViolatesGuardrails("Cura garantida para o seu peludinho")).toBe(true);
   });
+
+  it("transforma lista técnica em ação investigativa, sem deixá-la solta", () => {
+    const type = HOOK_TYPES.find((item) => item.id === "sinal-precoce-ignorado");
+    expect(type).toBeDefined();
+    const hook = type && buildHook(type, {
+      gatilho: "O pet sacode a cabeça durante a noite",
+      mecanismo: "ácaros, leveduras, cocos e bastonetes",
+    });
+    expect(hook?.rest).toBe("É hora de investigar a presença de ácaros, leveduras, cocos e bastonetes");
+    expect(isBareEnumeration("ácaros, leveduras, cocos e bastonetes")).toBe(true);
+  });
 });
 
 describe("arco narrativo", () => {
@@ -63,6 +75,12 @@ describe("arco narrativo", () => {
   it("mede similaridade entre frases", () => {
     expect(textSimilarity("coceira que volta sempre", "coceira que volta sempre")).toBeGreaterThan(0.9);
     expect(textSimilarity("coceira crônica", "nódulo no tórax")).toBeLessThan(0.2);
+  });
+
+  it("recusa título pendurado e mecanismo em forma de lista", () => {
+    expect(hasDanglingEnding("Outra noite sem dormir por causa")).toBe(true);
+    expect(checkArc({ ...arc, hook: "Outra noite sem dormir por causa" }).problems.join(" ")).toMatch(/etapa incompleta/);
+    expect(checkArc({ ...arc, mechanism: "ácaros, leveduras, cocos e bastonetes" }).problems.join(" ")).toMatch(/lista sem explicação/);
   });
 });
 

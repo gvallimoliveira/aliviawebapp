@@ -11,7 +11,7 @@
  * Determinístico: mesma rota ⇒ mesmo texto.
  */
 import { isStale } from "@/pages/studio/persuasion";
-import { isClause, lowerInitial } from "@/pages/studio/grammar";
+import { hasDanglingEnding, isBareEnumeration, isClause, lowerInitial } from "@/pages/studio/grammar";
 import { phraseSignature } from "@/pages/studio/picker";
 import { createRng } from "@/pages/studio/rng";
 import { applyTerms } from "@/pages/studio/terminology";
@@ -52,11 +52,13 @@ const fit = (raw: string | undefined, max: number): string => {
     acc = next;
   }
   let out = acc || words[0] || "";
-  for (let guard = 0; guard < 4; guard += 1) {
-    if (!/\b(?:e|ou|mas|que|de|da|do|das|dos|em|no|na|com|sem|por|para|se|como|quando|um|uma|a|o)$/i.test(out)) break;
-    out = out.replace(/\s+\S+$/, "");
+  for (let guard = 0; guard < 5 && hasDanglingEnding(out); guard += 1) {
+    out = out
+      .replace(/\s+(?:por causa|por conta|em razão|a respeito|graças a|devido a|a partir|junto a|apesar de|antes de|depois de|é hora de|e hora de|para quem|com quem|sem que|assim como)$/i, "")
+      .replace(/\s+\S+$/, "");
   }
-  return out.trim().replace(/[,:;—–]$/, "").trim();
+  const complete = out.trim().replace(/[,:;—–]$/, "").trim();
+  return hasDanglingEnding(complete) ? "" : complete;
 };
 
 /** Siglas do manual (PAAF, CRMV, HEP...) nunca perdem o caixa alta. */
@@ -95,7 +97,11 @@ const contract = (prep: "de" | "a", text: string) => {
   return prep === "de" ? cap1(joined) : joined;
 };
 
-const usable = (text: string) => text.length > 12 && !isStale(text) && !hookViolatesGuardrails(text);
+const usable = (text: string) =>
+  text.length > 12 &&
+  !hasDanglingEnding(text) &&
+  !isStale(text) &&
+  !hookViolatesGuardrails(text);
 
 
 /** Palavra protagonista para cartaz tipográfico (a mais forte que couber). */
@@ -144,6 +150,10 @@ export const composeRouteCopy = (
   const lexicalTerm = squash(route.lexicalTerm);
   const lexicalPerception = squash(route.lexicalPerception);
   const completeReasoning = Boolean(scene && feature && proof && desire);
+  const featureIsList = isBareEnumeration(feature);
+  const mechanismAction = featureIsList
+    ? `investigar a presença de ${low(feature)}`
+    : low(feature);
 
 
   /** Fio da arte: o que dói/o que se quer, o que muda e a prova. */
@@ -188,15 +198,15 @@ export const composeRouteCopy = (
   const headlinePool: Frame[] = [
     ...(completeReasoning
       ? [
-          { field: "reasoning", strong: fit(cap(scene), 42), rest: fit(cap(feature), 54) },
-          { field: "reasoning", strong: fit(cap(lexicalPerception || scene), 42), rest: fit(cap(feature), 54) },
+          { field: "reasoning", strong: fit(cap(scene), 42), rest: fit(cap(featureIsList ? `É hora de ${mechanismAction}` : feature), 54) },
+          { field: "reasoning", strong: fit(cap(lexicalPerception || scene), 42), rest: fit(cap(featureIsList ? `A investigação procura ${low(feature)}` : feature), 54) },
         ]
       : []),
     ...hookFrames,
     // Molduras diretas dos campos do kit: continuam válidas e somam variedade.
     ...(scene ? [{ field: "scene", strong: fit(cap(scene), 30), rest: fit(cap(gain), 44) }] : []),
     ...(trigger && !isClause(turn)
-      ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É a hora de ${low(turn)}`, 42) }]
+      ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É hora de ${featureIsList ? mechanismAction : low(turn)}`, 42) }]
       : []),
     ...(objection ? [{ field: "objection", strong: fit(cap(objection), 32), rest: fit(cap(turn), 44) }] : []),
     ...(enemy && !isClause(turn)
@@ -227,7 +237,12 @@ export const composeRouteCopy = (
   /** Apoios que respondem à objeção, situam a cena e nomeiam o preço da inércia. */
   const extraSubs: Array<{ field: string; text: string }> = [
     ...(completeReasoning
-      ? [{ field: "reasoning", text: `${cap(proof)}. Isso orienta ${low(desire)}.` }]
+      ? [{
+          field: "reasoning",
+          text: featureIsList
+            ? `${cap(scene)} pode envolver agentes diferentes, como ${low(feature)}. ${cap(proof)} ajuda a identificar o que está presente e orienta ${low(desire)}.`
+            : `${cap(scene)}. ${cap(feature)} explica o que precisa ser investigado; ${low(proof)} ajuda a esclarecer e orienta ${low(desire)}.`,
+        }]
       : []),
     ...(lexicalTerm && lexicalPerception
       ? [{ field: "lexical", text: `${cap(lexicalTerm)} é o nome técnico. Na rotina, pode aparecer como ${low(lexicalPerception)}.` }]
@@ -339,7 +354,12 @@ export const composeRouteCopy = (
     }
 
     const closingTitles = [cap(gain), `O próximo passo: ${low(gain)}`, `Agora, ${low(gain)}`, `Pronto para ${low(gain)}?`];
-    const closingSupports = [proof || tension || turn, turn, lead, proof || turn, ...(stakes ? [stakes] : [])];
+    const causalClosing = proof && desire
+      ? `${cap(proof)}. É isso que dá base para ${low(desire)}.`
+      : proof && feature
+        ? `${cap(proof)} esclarece o que ${low(feature)} precisa mostrar.`
+        : `${cap(turn)}. Assim, a decisão responde a ${low(lead)}.`;
+    const closingSupports = [causalClosing, proof || tension || turn, turn, lead, ...(stakes ? [stakes] : [])];
     const closingTitle = fit(closingTitles[frame % closingTitles.length], 52);
     const closingSub = fit(
       cap(
@@ -349,7 +369,7 @@ export const composeRouteCopy = (
             [headlineText, sub ?? ""].filter(Boolean).every((previous) => textSimilarity(candidate, previous) < 0.52),
         ) ?? closingSupports[frame % closingSupports.length],
       ),
-      64,
+      118,
     );
     if (closingTitle && closingSub && cta) {
       out.closings = [{ title: terms(closingTitle), sub: terms(closingSub), cta: terms(fit(cta, 28)) }];

@@ -115,7 +115,7 @@ export const CAROUSEL_TITLE_MAX = 56;
 export const CAROUSEL_SUPPORT_MAX = 72;
 
 const DANGLING_CAROUSEL_END =
-  /\b(?:e|ou|mas|que|de|da|do|das|dos|em|no|na|nos|nas|com|sem|por|para|se|como|quando|onde|um|uma|me)$/i;
+  /(?:\b(?:por causa|por conta|em razão|a respeito|graças a|devido a|a partir|junto a|apesar de|antes de|depois de|é hora de|e hora de|para quem|com quem|sem que|assim como)|\b(?:e|ou|mas|que|de|da|do|das|dos|em|no|na|nos|nas|com|sem|por|para|se|como|quando|onde|um|uma|me))$/i;
 
 /** Comandos que anunciam uma ação, mas ainda não dizem qual é a ação. */
 const ORPHAN_CAROUSEL_COMMAND =
@@ -135,7 +135,10 @@ const closeThought = (raw: string, max: number): string => {
   const beforeDanglingTrim = fitted;
 
   for (let guard = 0; guard < 5 && DANGLING_CAROUSEL_END.test(fitted.replace(/[.!?…“”\"]+$/g, "")); guard += 1) {
-    fitted = fitted.replace(/\s+\S+[.!?…“”\"]*$/, "").trim();
+    fitted = fitted
+      .replace(/\s+(?:por causa|por conta|em razão|a respeito|graças a|devido a|a partir|junto a|apesar de|antes de|depois de|é hora de|e hora de|para quem|com quem|sem que|assim como)[.!?…“”\"]*$/i, "")
+      .replace(/\s+\S+[.!?…“”\"]*$/, "")
+      .trim();
   }
 
   /* Um corte nunca pode reduzir uma chamada a um comando órfão ("Pare de"). */
