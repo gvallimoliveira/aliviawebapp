@@ -34,3 +34,8 @@
 - [x] Fixar voz tutor/pet, conclusões completas, antirrepetição e gênero feminino na marca Aline Furtado Vet.
 - [x] Impedir artes vazias quando a foto não combina com o assunto e remover repetição entre título e corpo.
 - [x] Impedir que o rótulo interno “Slogan em destaque” apareça no texto das artes.
+## Ajustes das artes veterinárias (22/09)
+- [ ] Trocar “animal” repetido por pet/cães/gatos conforme o contexto.
+- [ ] Criar variações coerentes para o modelo de placas da Aline.
+- [ ] Reduzir citações longas por tema ou grupo relacionado.
+- [ ] Corrigir composição textual que une palavras e ideias sem conexão.
