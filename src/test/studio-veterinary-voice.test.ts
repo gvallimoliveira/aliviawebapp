@@ -61,7 +61,7 @@ describe("Studio: tutor leitor e animal paciente", () => {
     const description = "Investiga a causa raiz com exames microscópicos, laudos claros e explicações didáticas, evitando tentativa e erro sem diagnóstico prévio.";
     const revised = removeTitleDescriptionEcho(title, description);
     expect(revised).not.toContain("Investiga a causa raiz");
-    expect(revised).toContain("claros e explicações didáticas");
+    expect(revised).toBe("Laudos claros e explicações didáticas, evitando tentativa e erro sem diagnóstico prévio.");
   });
 
   it("aplica a antirrepetição em todos os itens estruturados da arte", () => {

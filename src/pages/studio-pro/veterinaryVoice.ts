@@ -124,7 +124,11 @@ export const removeTitleDescriptionEcho = (title: string, description: string): 
   if (!remainder) return "Esse conjunto de informações orienta a decisão com mais precisão.";
 
   const lower = remainder.charAt(0).toLocaleLowerCase("pt-BR") + remainder.slice(1);
-  const revised = /^(?:e|ou|mas|que|com|por|para|em|do|da|dos|das)\b/i.test(lower)
+  const adjectiveOpening = /^(?:clar[oa]s?|did[aá]tic[oa]s?|objetiv[oa]s?|precis[oa]s?|segur[oa]s?|complet[oa]s?|personalizad[oa]s?|detalhad[oa]s?|assertiv[oa]s?)\b/i.test(lower);
+  const lastTitleWord = title.trim().match(/[\p{L}\p{N}]+[.!?]?$/u)?.[0]?.replace(/[.!?]$/, "") ?? "";
+  const revised = adjectiveOpening && lastTitleWord
+    ? `${lastTitleWord.charAt(0).toLocaleUpperCase("pt-BR")}${lastTitleWord.slice(1)} ${lower}`
+    : /^(?:e|ou|mas|que|com|por|para|em|do|da|dos|das)\b/i.test(lower)
     ? `Esses achados se conectam ${lower}.`
     : `A partir disso, ${lower}`;
   return revised.replace(/\.\s*\.$/, ".");
