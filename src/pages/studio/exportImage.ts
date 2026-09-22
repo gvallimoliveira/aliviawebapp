@@ -140,6 +140,21 @@ const safeRatio = (width: number, height: number, desired: number) => {
 
 export type ExportResult = { blob: Blob; ratio: number; shared: boolean };
 
+/**
+ * Tamanho de layout usado para rasterizar a arte.
+ *
+ * O canvas final e TODOS os repintes (fotos, fundos, contornos) precisam usar a
+ * mesma referência de medida. Quando o canvas era criado com uma altura
+ * (scrollHeight) e os repintes calculavam a escala por outra (a altura visível),
+ * a foto saía esticada/deslocada e o PNG fugia do formato mostrado na geração.
+ */
+type LayoutSize = { width: number; height: number };
+
+const canvasScale = (canvas: HTMLCanvasElement, rootRect: DOMRect, layout?: LayoutSize) => ({
+  scaleX: canvas.width / (layout?.width || rootRect.width),
+  scaleY: canvas.height / (layout?.height || rootRect.height),
+});
+
 const roundedRect = (
   context: CanvasRenderingContext2D,
   x: number,
@@ -170,6 +185,7 @@ const paintImagesOnCanvas = (
   canvas: HTMLCanvasElement,
   node: HTMLElement,
   layer: "backdrop" | "foreground" = "backdrop",
+  layout?: LayoutSize,
 ): PaintedRect[] => {
   const painted: PaintedRect[] = [];
   const context = canvas.getContext("2d");
@@ -177,8 +193,7 @@ const paintImagesOnCanvas = (
 
   const rootRect = node.getBoundingClientRect();
   if (!rootRect.width || !rootRect.height) return painted;
-  const scaleX = canvas.width / rootRect.width;
-  const scaleY = canvas.height / rootRect.height;
+  const { scaleX, scaleY } = canvasScale(canvas, rootRect, layout);
 
   for (const image of Array.from(node.querySelectorAll("img"))) {
     if (image.closest('[data-studio-no-export="1"]')) continue;
@@ -345,14 +360,14 @@ const paintBackdropsOnCanvas = (
   canvas: HTMLCanvasElement,
   node: HTMLElement,
   backdrops: Backdrop[],
+  layout?: LayoutSize,
 ) => {
   if (!backdrops.length) return;
   const context = canvas.getContext("2d");
   if (!context) return;
   const rootRect = node.getBoundingClientRect();
   if (!rootRect.width || !rootRect.height) return;
-  const scaleX = canvas.width / rootRect.width;
-  const scaleY = canvas.height / rootRect.height;
+  const { scaleX, scaleY } = canvasScale(canvas, rootRect, layout);
 
   for (const backdrop of backdrops) {
     context.save();
@@ -467,6 +482,7 @@ export const paintStrokeTextOnCanvas = (
   canvas: HTMLCanvasElement,
   node: HTMLElement,
   specs: StrokeSpec[],
+  layout?: LayoutSize,
 ) => {
   if (!specs.length) return;
   const context = canvas.getContext("2d");
@@ -474,8 +490,7 @@ export const paintStrokeTextOnCanvas = (
 
   const rootRect = node.getBoundingClientRect();
   if (!rootRect.width || !rootRect.height) return;
-  const scaleX = canvas.width / rootRect.width;
-  const scaleY = canvas.height / rootRect.height;
+  const { scaleX, scaleY } = canvasScale(canvas, rootRect, layout);
 
   for (const spec of specs) {
     const el = spec.element;
@@ -701,6 +716,9 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   clone.style.width = `${rect.width}px`;
   clone.style.height = `${rect.height}px`;
   clone.style.maxWidth = "none";
+  // O card na tela corta o excedente; a cópia precisa cortar igual para o PNG
+  // sair no mesmo formato mostrado na geração.
+  clone.style.overflow = "hidden";
 
   // Tokens da marca são herdados de wrappers da tela; materialize-os na cópia.
   const computed = getComputedStyle(source);
@@ -734,13 +752,25 @@ const renderStaticNodeToBlob = async (
   const { specs, restore } = hideCssStrokes(node);
   const { backdrops, restore: restoreBackdrops } = openPhotoBackdrops(node);
 
+  /*
+   * UMA única medida para tudo. O quadro exportado é exatamente o quadro
+   * mostrado na geração (o excedente já é cortado na tela pelo próprio card),
+   * e os repintes usam a mesma escala do raster — sem foto esticada, deslocada
+   * ou PNG em proporção diferente da prévia.
+   */
+  const rect = node.getBoundingClientRect();
+  const layout: LayoutSize = {
+    width: Math.ceil(rect.width),
+    height: Math.ceil(rect.height || node.scrollHeight),
+  };
+
   let output: HTMLCanvasElement;
   try {
     /* Raster SEM fundo opaco: ele precisa de transparência para que a foto
        possa ser composta por baixo da película já rasterizada. */
     const raster = await toCanvas(node, {
-      width: Math.ceil(node.getBoundingClientRect().width),
-      height: Math.ceil(Math.max(node.scrollHeight, node.getBoundingClientRect().height)),
+      width: layout.width,
+      height: layout.height,
       pixelRatio,
       skipFonts: fontEmbedCSS === null,
       fontEmbedCSS: fontEmbedCSS ?? undefined,
@@ -760,8 +790,8 @@ const renderStaticNodeToBlob = async (
     if (!context) throw new Error("no-2d-context");
     context.fillStyle = backgroundColor;
     context.fillRect(0, 0, output.width, output.height);
-    paintBackdropsOnCanvas(output, node, backdrops);
-    paintImagesOnCanvas(output, node, "backdrop");
+    paintBackdropsOnCanvas(output, node, backdrops, layout);
+    paintImagesOnCanvas(output, node, "backdrop", layout);
     context.drawImage(raster, 0, 0);
 
     /*
@@ -769,9 +799,9 @@ const renderStaticNodeToBlob = async (
      * ACIMA do raster. Se fossem tratados como foto de fundo, o círculo/tarja
      * do próprio bloco os cobriria no PNG — exatamente o caso da mão no D.I.F.I.
      */
-    paintImagesOnCanvas(output, node, "foreground");
+    paintImagesOnCanvas(output, node, "foreground", layout);
 
-    paintStrokeTextOnCanvas(output, node, specs);
+    paintStrokeTextOnCanvas(output, node, specs, layout);
   } finally {
     restoreBackdrops();
     restore();
@@ -870,7 +900,7 @@ export const exportNodesAsPng = async (
       const surface = surfaces[index];
       try {
         const rect = surface.node.getBoundingClientRect();
-        const ratio = safeRatio(rect.width, Math.max(rect.height, surface.node.scrollHeight), desiredRatio);
+        const ratio = safeRatio(rect.width, rect.height || surface.node.scrollHeight, desiredRatio);
         const blob = await renderStaticNodeToBlob(surface.node, ratio);
         files.push(new File([blob], item.fileName, { type: "image/png" }));
       } catch (error) {
