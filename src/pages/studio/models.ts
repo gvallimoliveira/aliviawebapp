@@ -50,7 +50,7 @@ export const STUDIO_MODELS: StudioModel[] = [
   { id: "escolha", label: "Escolha / interruptores", hint: "Dois botões: hábito antigo x novo", kinds: ["toggle"] },
   { id: "progresso", label: "Progresso / gráfico", hint: "Traçado subindo e furando o platô", kinds: ["trend", "focus"] },
   { id: "diferente", label: "Sair da fila", hint: "Desvio da rota e frase fora da caixa", kinds: ["diverge", "outbox"] },
-  { id: "conceitual", label: "Conceitual", hint: "Porta, placas e outdoor", kinds: ["door", "signpost", "billboard"] },
+  { id: "conceitual", label: "Conceitual", hint: "Porta e placas", kinds: ["door", "signpost"] },
   { id: "metodo", label: "Método (STEPS / D.I.F.I.)", hint: "Artes autorais do método Aliv.iA", kinds: ["steps", "difi"], needsBrand: true },
   { id: "cartaz", label: "Cartaz / faixa", hint: "Pin-up e faixa de termos", kinds: ["pinup", "marquee"] },
 ];

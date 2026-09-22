@@ -320,7 +320,6 @@ export const composePage = (
     ["door", 1],
     ["constellation", 1],
     ["signpost", 2],
-    ["billboard", 1],
     ["notify", 2],
     ["toggle", 2],
     ["trend", 2],

@@ -759,7 +759,7 @@ export const rationaleText = (r: ArtRationale): string =>
  * Formatos de reserva: só dependem de frase e assinatura, então fecham o
  * raciocínio em qualquer marca — usados quando a arte sorteada não fecha.
  */
-const FALLBACKS: BlockKind[] = ["typo", "hero", "billboard", "mono", "closing"];
+const FALLBACKS: BlockKind[] = ["typo", "hero", "mono", "closing"];
 
 /**
  * FILTRO APLICADO À VERSÃO INTEIRA.
