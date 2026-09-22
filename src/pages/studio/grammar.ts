@@ -104,6 +104,30 @@ const PREPOSITIONS = [
 
 const DANGLING = [...PREPOSITIONS, "e", "ou", "mas", "que", "se", "quando", "porque", "então", "ainda", "nem"];
 
+/**
+ * Locuções que abrem uma relação, mas não conseguem encerrá-la sozinhas.
+ * O corte por palavras antes só reconhecia a última palavra e deixava passar
+ * títulos como "Outra noite sem dormir por causa".
+ */
+const DANGLING_PHRASE_END =
+  /(?:\b(?:por causa|por conta|em razão|a respeito|graças a|devido a|a partir|junto a|apesar de|antes de|depois de|é hora de|e hora de|para quem|com quem|sem que|assim como)|\b(?:e|ou|mas|que|de|da|do|das|dos|em|no|na|nos|nas|com|sem|por|para|se|como|quando|onde|um|uma|me))\s*[.!?…“”\"]*$/i;
+
+/** True quando a frase termina prometendo um complemento que não veio. */
+export const hasDanglingEnding = (text: string): boolean =>
+  DANGLING_PHRASE_END.test(clean(text));
+
+/**
+ * Lista nominal crua, sem ação ou explicação ("ácaros, leveduras, cocos e
+ * bastonetes"). Ela é um insumo válido, mas não uma conclusão narrativa.
+ */
+export const isBareEnumeration = (text: string): boolean => {
+  const value = noDot(text);
+  if (!value || isClause(value)) return false;
+  const commaParts = value.split(/\s*,\s*/).filter(Boolean);
+  if (commaParts.length >= 3) return true;
+  return commaParts.length >= 2 && /\s+e\s+[^,]+$/i.test(value);
+};
+
 const wordsOf = (text: string) =>
   noDot(text)
     .toLowerCase()

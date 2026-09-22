@@ -41,7 +41,7 @@ import { carouselClosingCopy, carouselCoverCopy, joinCopyParts } from "@/pages/s
 import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
-import { buildArc } from "./narrativeArc";
+import { buildArc, checkArc } from "./narrativeArc";
 
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
 import { matchesMsk, mskLines } from "./mskLexicon";
@@ -775,9 +775,7 @@ export const planBatch = (input: {
           proof: closing?.title ?? "",
           cta: closing?.cta ?? "",
         });
-        return !["hook", "tension", "mechanism", "next"].every((step) =>
-          Boolean((arc as Record<string, string | undefined>)[step]?.trim()),
-        );
+        return !checkArc(arc).complete;
       }).length;
       const dominantRoute = Math.max(0, ...[...routeUse.values()]);
       return { arts: shots.length, distinct: accepted.length, repeated, arcIncomplete, dominantRoute };

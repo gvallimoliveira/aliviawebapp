@@ -6,7 +6,7 @@
  * devolve `strong` (a frase que abre) e `rest` (o complemento), sempre feitos
  * de texto real do kit.
  */
-import { lowerInitial } from "@/pages/studio/grammar";
+import { isBareEnumeration, lowerInitial } from "@/pages/studio/grammar";
 import { sentenceLead } from "@/pages/studio/typographyGuards";
 
 export type HookInput =
@@ -53,6 +53,12 @@ export type HookType = {
 const squash = (value?: string) => (value ?? "").replace(/\s+/g, " ").trim().replace(/\s*[.!?…]+$/, "");
 const cap = (value?: string) => sentenceLead(squash(value));
 const low = (value?: string) => lowerInitial(squash(value));
+const actionableMechanism = (value?: string) => {
+  const mechanism = squash(value);
+  return isBareEnumeration(mechanism)
+    ? `investigar a presença de ${low(mechanism)}`
+    : low(mechanism);
+};
 
 /** Promessas e infantilização nunca saem de um gancho automático. */
 const FORBIDDEN =
@@ -101,7 +107,7 @@ export const HOOK_TYPES: HookType[] = [
     id: "sinal-precoce-ignorado",
     label: "Sinal precoce ignorado",
     requires: ["gatilho", "mecanismo"],
-    build: (f) => ({ strong: cap(f.gatilho), rest: `É a hora de ${low(f.mecanismo)}` }),
+    build: (f) => ({ strong: cap(f.gatilho), rest: `É hora de ${actionableMechanism(f.mecanismo)}` }),
   },
   {
     id: "comparacao-dois-casos",

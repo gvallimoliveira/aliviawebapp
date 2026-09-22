@@ -102,7 +102,7 @@ const categories: ToolCategory[] = [
         key: "studio_creative_network",
         icon: Brain,
         title: "Studio: rede criativa da marca",
-        desc: "O Studio conecta público, dor, desejo, funcionalidade, prova e próximo passo antes de escrever. Assim, cada arte mantém uma ideia central e os carrosséis seguem o mesmo raciocínio da capa ao fechamento. A geração é local, considera o que já foi usado pela marca e não consome créditos extras de IA.",
+        desc: "O Studio conecta público, cena, problema, explicação, prova e próximo passo antes de escrever. Títulos incompletos e listas técnicas soltas são rejeitados; cada arte precisa deixar claro quem vive a situação, por que ela importa e como a solução fecha o raciocínio. A geração é local, considera o que já foi usado pela marca e não consome créditos extras de IA.",
       },
       {
         key: "voice_notes",
