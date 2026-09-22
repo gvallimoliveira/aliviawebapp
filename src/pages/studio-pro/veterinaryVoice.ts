@@ -6,6 +6,9 @@
  * protege qualquer marca veterinária sem contaminar os demais nichos.
  */
 
+import { proofread } from "@/pages/studio/agreement";
+import { closeThought, isOrphanCommand, joinCopyParts } from "@/pages/studio/typographyGuards";
+
 const VETERINARY_DOMAIN = /\b(?:veterin[aá]ri[ao]s?|vet\b|animal(?:is)?|pets?|canin[oa]s?|felin[oa]s?|c[aã]es?|gatos?|citologia\s+veterin[aá]ria)\b/i;
 
 const ANIMAL_CLINICAL = /\b(?:coceira|prurido|otite|dermatite|piodermite|infec(?:ç|c)[aã]o|falha(?:s)?\s+de\s+pelo|queda\s+de\s+pelo|n[oó]dulo|carocinho|les(?:ã|a)o|ferida|sintoma|sinal\s+cl[ií]nico|dor|inc[oô]modo|alergia|secre(?:ç|c)[aã]o|lambedura|vermelhid[aã]o|citologia|paaf|raspado|swab|l[aâ]mina|exame|diagn[oó]stico|tratamento|conduta)\w*/i;
@@ -203,9 +206,60 @@ const removeContentEchoes = <T>(value: T): T => {
     : typeof revised.title === "string"
       ? revised.title
       : undefined;
-  if (title && typeof revised.description === "string") {
-    revised.description = removeTitleDescriptionEcho(title, revised.description);
+  if (title) {
+    ["description", "body", "coverSub", "support", "sub"].forEach((key) => {
+      if (typeof revised[key] === "string") revised[key] = removeTitleDescriptionEcho(title, revised[key] as string);
+    });
   }
+  return revised as T;
+};
+
+const SKIP_TEXT_KEYS = new Set(["id", "label", "topic", "poster", "image", "hashtags", "value", "prefix", "suffix"]);
+
+const firstUsefulThought = (...values: unknown[]) => {
+  for (const value of values) {
+    if (typeof value !== "string") continue;
+    const thought = closeThought(proofread(value), 76);
+    if (thought && !isOrphanCommand(thought)) return thought;
+  }
+  return "";
+};
+
+const proofreadVisibleText = <T>(value: T, key = ""): T => {
+  if (typeof value === "string") {
+    if (SKIP_TEXT_KEYS.has(key)) return value;
+    return proofread(value) as T;
+  }
+  if (Array.isArray(value)) return value.map((item) => proofreadVisibleText(item, key)) as T;
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([childKey, child]) => [childKey, proofreadVisibleText(child, childKey)]),
+    ) as T;
+  }
+  return value;
+};
+
+const repairOrphanStrongRest = <T>(value: T): T => {
+  if (Array.isArray(value)) return value.map((item) => repairOrphanStrongRest(item)) as T;
+  if (!value || typeof value !== "object") return value;
+  const source = value as Record<string, unknown>;
+  const revised = Object.fromEntries(
+    Object.entries(source).map(([key, child]) => [key, repairOrphanStrongRest(child)]),
+  ) as Record<string, unknown>;
+
+  if (typeof revised.strong === "string") {
+    const strong = revised.strong;
+    const rest = typeof revised.rest === "string" ? revised.rest : "";
+    const joined = joinCopyParts(strong, rest);
+    if (isOrphanCommand(strong) || isOrphanCommand(joined)) {
+      const replacement = firstUsefulThought(revised.sub, revised.description, revised.coverSub, revised.title);
+      if (replacement) {
+        revised.strong = replacement;
+        revised.rest = "";
+      }
+    }
+  }
+
   return revised as T;
 };
 
@@ -268,10 +322,10 @@ const removeInternalEditorialLabels = <T>(value: T, brand?: string, key = ""): T
 export const finalizeBrandVoice = <T>(value: T, context: { brand?: string; domain?: string } = {}): T => {
   const veterinary = isVeterinaryContext(context.brand, context.domain);
   const feminine = isAlineVeterinaryBrand(context.brand);
-  const voiced = refineVeterinaryContent(removeInternalEditorialLabels(
-    removeContentEchoes(applyAlineProfessionalVoice(applyVeterinaryVoice(value, veterinary), context.brand)),
+  const voiced = refineVeterinaryContent(removeContentEchoes(repairOrphanStrongRest(proofreadVisibleText(removeInternalEditorialLabels(
+    applyAlineProfessionalVoice(applyVeterinaryVoice(value, veterinary), context.brand),
     context.brand,
-  ), veterinary, feminine);
+  )))), veterinary, feminine);
   if (!voiced || typeof voiced !== "object" || Array.isArray(voiced)) return voiced;
 
   const content = voiced as Record<string, unknown>;

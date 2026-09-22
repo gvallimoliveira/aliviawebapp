@@ -4,6 +4,7 @@ import {
   keywordMatrixToText,
   pickMatrixContext,
   readKeywordMatrix,
+  readReasoningMatrix,
   reasoningMatrixFromText,
   reasoningMatrixToText,
 } from "@/pages/studio-pro/contentMatrices";
@@ -93,6 +94,27 @@ describe("matrizes de conteúdo do Studio", () => {
     expect(relation.pain).toBe("O pet chacoalha a cabeça");
     expect(relation.desire).toBe("tratar a causa da otite");
     expect(relation.proof).toBe("Swab auricular e lâmina mostram o agente");
+  });
+
+  it("não descarta linhas parciais da matriz de raciocínio", () => {
+    const partial = readReasoningMatrix([
+      { id: "escada", audienceIds: ["60mais"], scene: "A escada virou escolha difícil", mechanism: "força e controle precisam ser medidos" },
+    ]);
+    expect(partial).toHaveLength(1);
+    expect(partial[0].scene).toContain("escada");
+    expect(partial[0].outcome).toBe("");
+  });
+
+  it("usa matriz marcada mesmo quando o id do público não bate exatamente", () => {
+    const input = {
+      keywordMatrix: [{ id: "forca", term: "Força", perception: "subir escada com confiança", audienceIds: ["geracao-60"] }],
+      reasoningMatrix: [{ id: "escada", audienceIds: ["geracao-60"], scene: "A escada virou escolha difícil", mechanism: "força e controle precisam ser medidos" }],
+      audienceId: "60mais",
+      seed: "fallback-matriz",
+    };
+    const context = pickMatrixContext(input);
+    expect(context.lexical?.id).toBe("forca");
+    expect(context.reasoning?.id).toBe("escada");
   });
 
   it("usa vocabulário veterinário sem herdar sessão ou paciente humano", () => {

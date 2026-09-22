@@ -126,4 +126,22 @@ describe("Studio: tutor leitor e animal paciente", () => {
     const phrase = "Você sente dor no ombro?";
     expect(applyVeterinaryVoice(phrase, false)).toBe(phrase);
   });
+
+  it("aplica os guardas gerais também em marca não veterinária", () => {
+    const content = finalizeBrandVoice({
+      hooks: [{
+        hook: "Provocação",
+        strong: "Pare de",
+        rest: ".",
+        sub: "SUA escada da sua casa virou escolha difícil.",
+        cta: "Agendar avaliação",
+      }],
+      quotes: [{ text: '"" "Ninguém me explicou de onde vem essa dor."' }],
+    }, { brand: "Guilherme Vallim Fisioterapia", domain: "fisioterapia" });
+
+    expect(content.hooks[0].strong).not.toMatch(/^pare de[.!?]?$/i);
+    expect(`${content.hooks[0].strong} ${content.hooks[0].sub}`).not.toMatch(/\bSUA\b|sua escada da sua casa/i);
+    expect(content.hooks[0].strong).toContain("A escada da sua casa");
+    expect(content.quotes[0].text).not.toMatch(/^["“”]{2}/);
+  });
 });

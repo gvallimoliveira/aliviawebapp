@@ -122,10 +122,13 @@ const DANGLING_CAROUSEL_END =
   /(?:\b(?:por causa|por conta|em razão|a respeito|graças a|devido a|a partir|junto a|apesar de|antes de|depois de|é hora de|e hora de|para quem|com quem|sem que|assim como)|\b(?:e|ou|mas|que|de|da|do|das|dos|em|no|na|nos|nas|com|sem|por|para|se|como|quando|onde|um|uma|me))$/i;
 
 /** Comandos que anunciam uma ação, mas ainda não dizem qual é a ação. */
-const ORPHAN_CAROUSEL_COMMAND =
+export const ORPHAN_CAROUSEL_COMMAND =
   /^(?:pare|deixe|evite|comece|continue|aprenda|descubra|entenda|veja)\s+(?:de|a|com|por|para)?[.!?…“”\"]*$/i;
 
-const closeThought = (raw: string, max: number): string => {
+export const isOrphanCommand = (raw: string | null | undefined): boolean =>
+  ORPHAN_CAROUSEL_COMMAND.test(normalizeCopyWhitespace(raw));
+
+export const closeThought = (raw: string, max: number): string => {
   const clean = normalizeCopyWhitespace(raw);
   if (!clean) return "";
 

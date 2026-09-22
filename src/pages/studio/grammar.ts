@@ -227,6 +227,10 @@ export const readsWell = (text: string): boolean => {
   const core = clean(text);
   if (!core) return false;
 
+  // Aspas vazias no começo ("" "Ninguém...") indicam que duas frases foram
+  // coladas sem revisão; isso nunca deve virar citação visível.
+  if (/^(?:\s*["“”'‘’]){2,}\s*\S/u.test(core)) return false;
+
   const list = wordsOf(core);
   if (!list.length) return false;
 
