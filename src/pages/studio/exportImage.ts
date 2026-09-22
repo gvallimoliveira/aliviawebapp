@@ -140,6 +140,21 @@ const safeRatio = (width: number, height: number, desired: number) => {
 
 export type ExportResult = { blob: Blob; ratio: number; shared: boolean };
 
+/**
+ * Tamanho de layout usado para rasterizar a arte.
+ *
+ * O canvas final e TODOS os repintes (fotos, fundos, contornos) precisam usar a
+ * mesma referência de medida. Quando o canvas era criado com uma altura
+ * (scrollHeight) e os repintes calculavam a escala por outra (a altura visível),
+ * a foto saía esticada/deslocada e o PNG fugia do formato mostrado na geração.
+ */
+type LayoutSize = { width: number; height: number };
+
+const canvasScale = (canvas: HTMLCanvasElement, rootRect: DOMRect, layout?: LayoutSize) => ({
+  scaleX: canvas.width / (layout?.width || rootRect.width),
+  scaleY: canvas.height / (layout?.height || rootRect.height),
+});
+
 const roundedRect = (
   context: CanvasRenderingContext2D,
   x: number,
@@ -170,6 +185,7 @@ const paintImagesOnCanvas = (
   canvas: HTMLCanvasElement,
   node: HTMLElement,
   layer: "backdrop" | "foreground" = "backdrop",
+  layout?: LayoutSize,
 ): PaintedRect[] => {
   const painted: PaintedRect[] = [];
   const context = canvas.getContext("2d");
@@ -177,8 +193,7 @@ const paintImagesOnCanvas = (
 
   const rootRect = node.getBoundingClientRect();
   if (!rootRect.width || !rootRect.height) return painted;
-  const scaleX = canvas.width / rootRect.width;
-  const scaleY = canvas.height / rootRect.height;
+  const { scaleX, scaleY } = canvasScale(canvas, rootRect, layout);
 
   for (const image of Array.from(node.querySelectorAll("img"))) {
     if (image.closest('[data-studio-no-export="1"]')) continue;
