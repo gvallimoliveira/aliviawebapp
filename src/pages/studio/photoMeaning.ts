@@ -234,8 +234,6 @@ const CIRCULATION_BAND = 0.38;
  * sustentar qualquer assunto da marca. Ganha um bônus para o acervo circular de
  * verdade em vez de só as fotos de afinidade máxima aparecerem.
  */
-const BROAD_USE_BONUS = 0.12;
-
 /**
  * Escolhe a foto que sustenta o assunto já decidido pela copy. Determinístico
  * (mesma seed → mesma foto) e com desempate por afinidade, não por sorteio
@@ -284,15 +282,15 @@ export const pickPhotoForTopics = (
   const salt = artKey ? spread(artKey, 7) : index;
 
   const scored = photos
-    .map((photo) => ({
-      photo,
-      score:
-        photoAffinity(photo, topics) +
-        (prefer?.includes(photo.usage) ? 0.35 : 0) +
-        wordAffinity(photo, words) +
-        (photoTopics(photo).length > 0 && !restrictionOf(photo) ? BROAD_USE_BONUS : 0),
-    }))
-    .filter((s) => s.score > 0)
+    .map((photo) => {
+      const semantic = photoAffinity(photo, topics) + wordAffinity(photo, words);
+      return {
+        photo,
+        semantic,
+        score: semantic + (semantic > 0 && prefer?.includes(photo.usage) ? 0.35 : 0),
+      };
+    })
+    .filter((s) => s.semantic > 0)
 
     .sort(
       (a, b) =>
@@ -312,7 +310,7 @@ export const pickPhotoForTopics = (
    * por arte, filtrada pelo registro de rotatividade do lote.
    */
   const best = scored[0].score;
-  const floor = Math.min(best * CIRCULATION_BAND, BROAD_USE_BONUS);
+  const floor = best * CIRCULATION_BAND;
   const pool = scored
     .filter((s) => s.score >= floor)
     .map((s) => s.photo)
