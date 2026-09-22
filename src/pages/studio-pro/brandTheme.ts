@@ -75,14 +75,25 @@ export const buildBrandThemeStyle = ({ kit, seed, invert }: Args): React.CSSProp
    * que realmente pedem contraste dramático.
    */
   const lightPaper = isLight(kit.primary2) ? kit.primary2 : mix(kit.primary2, [255, 255, 255], 0.9);
-  const warmPaper = mix(lightPaper, (isLight(accent) ? [91, 22, 29] : (undefined)), invert ? 0.08 : 0.025);
-  const background = contrastRatio(warmPaper, readableOn(warmPaper)) >= 4.5 ? warmPaper : lightPaper;
-  const primary = isLight(kit.primary) ? deepen(kit.primary) : kit.primary;
+  const warmPaper = mix(lightPaper, isLight(accent) ? [91, 22, 29] : undefined, 0.025);
+  /**
+   * O lado B precisa ser uma composição realmente inversa, não apenas uma
+   * variação quase imperceptível do papel claro. A cor principal vira a
+   * superfície e a antiga superfície clara assume o papel dos elementos.
+   */
+  const invertedSurface = isLight(kit.primary) ? deepen(kit.primary) : kit.primary;
+  const background = invert ? invertedSurface : warmPaper;
+  const primary = invert
+    ? (contrastRatio(background, kit.primary2) >= 3 ? kit.primary2 : readableOn(background))
+    : (isLight(kit.primary) ? deepen(kit.primary) : kit.primary);
+  const themedAccent = invert
+    ? (contrastRatio(background, accent) >= 3 ? accent : lighten(accent, 3))
+    : accent;
   const tokens = readableThemeTokens({
     background,
     primary,
-    accent: invert && accent === kit.primary ? kit.primary2 : accent,
-    secondary: kit.useSecondary ? kit.secondary2 : background,
+    accent: themedAccent,
+    secondary: invert ? mix(background, [255, 255, 255], 0.14) : (kit.useSecondary ? kit.secondary2 : background),
   });
   Object.entries(tokens).forEach(([token, hex]) => {
     const triplet = hexToHslTriplet(hex);
@@ -90,7 +101,7 @@ export const buildBrandThemeStyle = ({ kit, seed, invert }: Args): React.CSSProp
   });
   const ring = hexToHslTriplet(primary);
   if (ring) style["--ring"] = ring;
-  const deepSurface = deepen(primary, 7);
+  const deepSurface = deepen(invert ? background : primary, 7);
   const deepTriplet = hexToHslTriplet(deepSurface);
   const deepInk = hexToHslTriplet(readableOn(deepSurface));
   if (deepTriplet) style["--studio-deep-surface"] = deepTriplet;

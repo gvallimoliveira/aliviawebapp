@@ -12,3 +12,4 @@ type: constraint
 - O texto de apoio nunca reinicia repetindo literalmente o título; deve avançar a explicação, a causa, a prova ou a solução.
 - Em palavras-cartaz e chamadas curtas, preferir “pet”, “cães” ou “gatos” a “animal”; usar “animal” apenas quando a frase clínica realmente exigir o termo genérico.
 - O modelo de placas deve sempre opor uma situação clínica concreta a uma direção de cuidado da Dra. Aline, sem misturar temas diferentes.
+- Artes de citação exibem a identificação da marca uma única vez; escapes como `\\n` nunca podem aparecer impressos no carrossel.

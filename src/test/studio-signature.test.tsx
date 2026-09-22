@@ -21,4 +21,12 @@ describe("assinatura das artes do Studio", () => {
 
     expect(hasOwnLockup(art, "Dra. Aline Furtado")).toBe(true);
   });
+
+  it("respeita modelos que declaram o próprio rodapé de marca", () => {
+    const art = document.createElement("div");
+    const footer = document.createElement("footer");
+    footer.setAttribute("data-studio-own-lockup", "1");
+    art.appendChild(footer);
+    expect(hasOwnLockup(art, "Dra. Aline Furtado")).toBe(true);
+  });
 });
