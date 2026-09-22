@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
+import PhotoMissingFallback from "./PhotoMissingFallback";
 import { blockPadding, sectionHeight, type BlockProps } from "./shared";
 import { onPhotoTextStyle, photoTextPlate } from "../typographyGuards";
 
@@ -22,7 +23,18 @@ import { onPhotoTextStyle, photoTextPlate } from "../typographyGuards";
 const PhotoVeilBlock = ({ content, rng, treatment, format, picker, photos, artKey, shot }: BlockProps) => {
   const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [item.topic], undefined, artKey, shot?.affinity);
-  if (!photo) return null;
+  if (!photo) {
+    return (
+      <PhotoMissingFallback
+        format={format}
+        persona={undefined}
+        treatment={treatment}
+        tag={item.tag}
+        title={item.headline ?? item.title}
+        description={item.description}
+      />
+    );
+  }
 
   /** 0 rodapé, 1 rodapé à esquerda, 2 topo, 3 centro. */
   const anchor = treatment % 4;

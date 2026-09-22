@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { pickPhotoForTopics } from "../photoMeaning";
 import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME, BRAND_SITE } from "../brand";
 import PhotoFrame from "./PhotoFrame";
+import PhotoMissingFallback from "./PhotoMissingFallback";
 import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./shared";
 
 /**
@@ -31,7 +32,18 @@ const POPOUT_TRIANGLE_MASK =
 const StageBlock = ({ content, rng, treatment, format, persona, picker, photos, artKey, shot }: BlockProps) => {
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const photo = pickPhotoForTopics(photos, treatment + rng.int(5), [feature.topic], undefined, artKey, shot?.affinity);
-  if (!photo) return null;
+  if (!photo) {
+    return (
+      <PhotoMissingFallback
+        format={format}
+        persona={persona}
+        treatment={treatment}
+        tag={feature.tag}
+        title={feature.headline ?? feature.title}
+        description={feature.description}
+      />
+    );
+  }
 
   const showSite = treatment % 2 === 1;
   const headline = rng.pick(content.headlines);

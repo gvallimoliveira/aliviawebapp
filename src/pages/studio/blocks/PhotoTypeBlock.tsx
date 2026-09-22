@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
+import PhotoMissingFallback from "./PhotoMissingFallback";
 import { TextureLayer } from "./Texture";
 import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./shared";
 
@@ -18,7 +19,18 @@ import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./s
 const PhotoTypeBlock = ({ content, rng, treatment, format, persona, picker, photos, artKey, shot }: BlockProps) => {
   const [item] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const photo = pickPhotoForTopics(photos, treatment + rng.int(3), [item.topic], undefined, artKey, shot?.affinity);
-  if (!photo) return null;
+  if (!photo) {
+    return (
+      <PhotoMissingFallback
+        format={format}
+        persona={persona}
+        treatment={treatment}
+        tag={item.tag}
+        title={item.headline ?? item.title}
+        description={item.description}
+      />
+    );
+  }
 
   /** Palavra-cartaz: a mais forte do assunto, nunca o nome do que está na foto. */
   const word = [...item.title.split(/\s+/)].sort((a, b) => b.length - a.length)[0]?.toUpperCase() ?? "MARCA";

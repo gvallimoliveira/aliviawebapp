@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { pickPhotoForTopics } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
+import PhotoMissingFallback from "./PhotoMissingFallback";
 import { renderAccent, TextureLayer } from "./Texture";
 import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./shared";
 
@@ -17,7 +18,18 @@ import { frameHeight, personaSurface, sectionHeight, type BlockProps } from "./s
 const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, picker, photos, artKey, shot }: BlockProps) => {
   const [item] = picker.pick(content.quotes, 1, rng, (q) => [q.topic]);
   const photo = pickPhotoForTopics(photos, treatment + rng.int(7), [item.topic], undefined, artKey, shot?.affinity);
-  if (!photo) return null;
+  if (!photo) {
+    return (
+      <PhotoMissingFallback
+        format={format}
+        persona={persona}
+        treatment={treatment}
+        tag={rng.pick(content.kickers)}
+        title={item.text}
+        description={rng.pick(content.subs)}
+      />
+    );
+  }
 
   const quote = item.text;
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
