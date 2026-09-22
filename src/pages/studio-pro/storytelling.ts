@@ -124,9 +124,9 @@ const typoFromSentence = (sentence: string, preferred?: string) => {
   const lead = clean.slice(0, match.index).trim();
   const tail = clean.slice(match.index + match[0].length).trim();
   return {
-    lead: terms(fit(cap(lead), 64)),
-    big: terms(match[0]).toUpperCase(),
-    tail: terms(fit(tail, 92)),
+    lead: fit(cap(lead), 64),
+    big: match[0].toUpperCase(),
+    tail: fit(tail, 92),
   };
 };
 
@@ -396,7 +396,9 @@ export const composeRouteCopy = (
       ? `${cap(lead)}. ${cap(turn)} orienta o próximo passo.`
       : `${cap(lead)}. ${cap(turn)} abre caminho para ${low(gain)}.`;
     const typo = typoFromSentence(typoSentence, turn);
-    if (typo?.lead && typo.big && typo.tail) out.typos = [typo];
+    if (typo?.lead && typo.big && typo.tail) {
+      out.typos = [{ lead: terms(typo.lead), big: terms(typo.big), tail: terms(typo.tail) }];
+    }
 
     /**
      * A rota completa também alimenta modelos informativos. Antes só hero,
