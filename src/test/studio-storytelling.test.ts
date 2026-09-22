@@ -105,6 +105,21 @@ describe("redação a partir da rota narrativa", () => {
       expect(headline).not.toMatch(/é (?:a )?hora de ácaros/i);
       expect(copy.subs?.[0]).toMatch(/cão|otite|agentes|swab|lâmina|investig/i);
       expect(copy.closings?.[0]?.sub).toMatch(/base|esclarece|decisão/i);
+      expect(copy.closings?.[0]?.sub).not.toMatch(/é isso que dá\s*$/i);
+    });
+  });
+
+  it("preserva completo um fechamento causal acima do limite antigo", () => {
+    const longClosing: NarrativeRoute = {
+      ...route,
+      proof: "Laudo descritivo e discussão técnica apoiam a decisão e preservam o vínculo com o clínico de origem",
+      desire: "conduzir o caso complexo com suporte",
+    };
+    const copies = Array.from({ length: 12 }, (_, index) =>
+      composeRouteCopy(longClosing, { seed: `fecho:${index}`, rotate: index }),
+    );
+    copies.forEach((copy) => {
+      expect(copy.closings?.[0]?.sub).toMatch(/dá base para conduzir o caso complexo com suporte/i);
     });
   });
 });

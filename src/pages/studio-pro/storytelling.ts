@@ -363,11 +363,13 @@ export const composeRouteCopy = (
       : proof && feature
         ? `${cap(proof)} esclarece o que ${low(feature)} precisa mostrar.`
         : `${cap(turn)}. Assim, a decisão responde a ${low(lead)}.`;
-    const closingSupports = [causalClosing, proof || tension || turn, turn, lead, ...(stakes ? [stakes] : [])];
     const closingTitle = fit(closingTitles[frame % closingTitles.length], 52);
     // O fecho não é mais sorteado como uma terceira frase independente. Ele
     // sempre explicita como a prova conduz ao benefício/decisão da abertura.
-    const closingSub = fit(cap(causalClosing), 118);
+    // Fechamento é uma unidade de sentido. O limite anterior (118) podia parar
+    // em “É isso que dá”, apagando justamente decisão e benefício. Os blocos de
+    // fecho já reduzem o corpo visualmente; aqui preservamos a conclusão inteira.
+    const closingSub = fit(cap(causalClosing), 168);
     if (closingTitle && closingSub && cta) {
       out.closings = [{ title: terms(closingTitle), sub: terms(closingSub), cta: terms(fit(cta, 28)) }];
     }

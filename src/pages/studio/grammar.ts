@@ -110,7 +110,7 @@ const DANGLING = [...PREPOSITIONS, "e", "ou", "mas", "que", "se", "quando", "por
  * títulos como "Outra noite sem dormir por causa".
  */
 const DANGLING_PHRASE_END =
-  /(?:\b(?:por causa|por conta|em razão|a respeito|graças a|devido a|a partir|junto a|apesar de|antes de|depois de|é hora de|e hora de|para quem|com quem|sem que|assim como)|\b(?:e|ou|mas|que|de|da|do|das|dos|em|no|na|nos|nas|com|sem|por|para|se|como|quando|onde|um|uma|me))\s*[.!?…“”\"]*$/i;
+  /(?:\b(?:por causa|por conta|em razão|a respeito|graças a|devido a|a partir|junto a|apesar de|antes de|depois de|é hora de|e hora de|para quem|com quem|sem que|assim como|é isso que dá|e isso que da|serve para|permite|dá base para|da base para)|\b(?:e|ou|mas|que|de|da|do|das|dos|em|no|na|nos|nas|com|sem|por|para|se|como|quando|onde|um|uma|me))\s*[.!?…“”\"]*$/i;
 
 /** True quando a frase termina prometendo um complemento que não veio. */
 export const hasDanglingEnding = (text: string): boolean =>

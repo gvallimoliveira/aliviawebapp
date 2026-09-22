@@ -42,6 +42,7 @@ import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
 import { buildArc, checkArc } from "./narrativeArc";
+import { finalizeBrandVoice } from "./veterinaryVoice";
 
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
 import { matchesMsk, mskLines } from "./mskLexicon";
@@ -413,8 +414,10 @@ export const planBatch = (input: {
   learnedVoice?: string[];
   /** Contexto declarado da marca; impede léxicos verticais de vazarem. */
   domain?: string;
+  /** Nome usado pela revisão final de voz e gênero da marca. */
+  brandName?: string;
 }): BatchDirection => {
-  const { content, count, blocks, seed, relation, dna, brief, weightOf, learnedVoice, domain } = input;
+  const { content, count, blocks, seed, relation, dna, brief, weightOf, learnedVoice, domain, brandName } = input;
   const rng = createRng(`${seed}:director`);
   const route = "route" in (relation ?? {}) ? (relation as Relation).route : undefined;
   const routes = "routes" in (relation ?? {}) ? (relation as Relation).routes ?? (route ? [route] : []) : [];
@@ -649,6 +652,11 @@ export const planBatch = (input: {
       });
     }
 
+    // Variações e textos escritos pela rota entram depois do acervo-base. A
+    // revisão precisa rodar aqui também para que o texto usado no nexo da foto
+    // seja exatamente o mesmo que chegará à arte.
+    Object.assign(reserved, finalizeBrandVoice(reserved, { brand: brandName, domain }));
+
     /**
      * O vocabulário de nicho entra por cima de tudo: destaque, apoio, citação e
      * o glossário "o que é o quê" desta arte.
@@ -744,11 +752,11 @@ export const planBatch = (input: {
       if (!shot) return content;
       const cached = directed.get(index);
       if (cached) return cached;
-      const next: WorldContent = {
+      const next = finalizeBrandVoice<WorldContent>({
         ...content,
         ...shot.reserved,
         ...(shot.sales ? { sales: shot.sales } : {}),
-      };
+      }, { brand: brandName, domain });
       directed.set(index, next);
       return next;
     },

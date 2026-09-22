@@ -28,7 +28,7 @@ import { editorialAudience, sentenceLead, shortKicker } from "@/pages/studio/typ
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 import { applyFormatInsights, readFormatInsights, scopedFormatInsights } from "./formatInsights";
 import { enforceAudienceScope } from "./audienceScope";
-import { applyVeterinaryVoice, isVeterinaryContext } from "./veterinaryVoice";
+import { finalizeBrandVoice, isVeterinaryContext } from "./veterinaryVoice";
 
 
 
@@ -1910,7 +1910,10 @@ export const buildSegmentContent = ({
       relation?.keyword,
       relation?.who,
     );
-    return proofreadVisible(applyVeterinaryVoice(owned, veterinary)) as WorldContent;
+    return proofreadVisible(finalizeBrandVoice(owned, {
+      brand,
+      domain: veterinary ? "veterinária" : "",
+    })) as WorldContent;
 
   };
 

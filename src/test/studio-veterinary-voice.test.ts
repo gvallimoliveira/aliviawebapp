@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyVeterinaryVoice, isVeterinaryContext, veterinaryVoiceText } from "@/pages/studio-pro/veterinaryVoice";
+import { alineProfessionalVoiceText, applyVeterinaryVoice, finalizeBrandVoice, isVeterinaryContext, veterinaryVoiceText } from "@/pages/studio-pro/veterinaryVoice";
 
 describe("Studio: tutor leitor e animal paciente", () => {
   it("reconhece marcas veterinárias sem ativar a regra em outras áreas", () => {
@@ -22,6 +22,38 @@ describe("Studio: tutor leitor e animal paciente", () => {
     expect(content.headline).toBe("Você percebeu coceira no seu cão?");
     expect(content.clinical).toBe("O que seu pet apresenta hoje orienta o exame");
     expect(content.cta).toBe("Agende a citologia do seu pet");
+  });
+
+  it("mantém o tutor como interlocutor e coloca meta, caso e evolução no pet", () => {
+    expect(veterinaryVoiceText("Entendemos o cenário — o que você quer alcançar.")).toBe(
+      "Entendemos o cenário — o que você observa e busca para seu pet.",
+    );
+    expect(veterinaryVoiceText("O trajeto que faz sentido para o seu caso, por escrito.")).toBe(
+      "O trajeto que faz sentido para o caso do seu pet, por escrito.",
+    );
+    expect(veterinaryVoiceText("O que avançou fica, o que não avançou muda.")).toBe(
+      "O que melhorou no seu pet fica; o que não melhorou orienta a mudança.",
+    );
+  });
+
+  it("usa feminino nas qualidades da profissional Aline", () => {
+    expect(alineProfessionalVoiceText("Direto.")).toBe("Direta.");
+    expect(alineProfessionalVoiceText("Honesto")).toBe("Honesta");
+    expect(alineProfessionalVoiceText("Laudo direto")).toBe("Laudo direto");
+  });
+
+  it("remove palavras repetidas de um mesmo tríptico depois da variação", () => {
+    const content = finalizeBrandVoice({
+      triptychs: [{
+        heading: "O que você pode cobrar",
+        panels: [
+          { word: "Direto", line: "Explicado na sua língua." },
+          { word: "Direto", line: "Uma orientação por vez." },
+          { word: "Honesto", line: "O que não cabe, a gente avisa." },
+        ],
+      }],
+    }, { brand: "Aline Furtado Vet", domain: "dermatologia veterinária" });
+    expect(content.triptychs[0].panels.map((panel) => panel.word)).toEqual(["Direta", "Essencial", "Honesta"]);
   });
 
   it("não altera nenhum texto fora do domínio veterinário", () => {
