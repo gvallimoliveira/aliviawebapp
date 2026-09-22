@@ -150,6 +150,28 @@ export type ExportResult = { blob: Blob; ratio: number; shared: boolean };
  */
 type LayoutSize = { width: number; height: number };
 
+type CoverCrop = { sx: number; sy: number; sw: number; sh: number };
+
+/** Recorte equivalente a object-fit: cover, respeitando o ponto focal. */
+export const calculateCoverCrop = (
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number,
+  targetHeight: number,
+  focusX = 50,
+  focusY = 50,
+): CoverCrop => {
+  const sourceRatio = sourceWidth / sourceHeight;
+  const targetRatio = targetWidth / targetHeight;
+  let sw = sourceWidth;
+  let sh = sourceHeight;
+  if (sourceRatio > targetRatio) sw = sourceHeight * targetRatio;
+  else sh = sourceWidth / targetRatio;
+  const x = Math.max(0, Math.min(100, focusX)) / 100;
+  const y = Math.max(0, Math.min(100, focusY)) / 100;
+  return { sx: (sourceWidth - sw) * x, sy: (sourceHeight - sh) * y, sw, sh };
+};
+
 const canvasScale = (canvas: HTMLCanvasElement, rootRect: DOMRect, layout?: LayoutSize) => ({
   scaleX: canvas.width / (layout?.width || rootRect.width),
   scaleY: canvas.height / (layout?.height || rootRect.height),
@@ -201,7 +223,12 @@ const paintImagesOnCanvas = (
     if ((layer === "foreground") !== isForeground) continue;
     if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) continue;
 
-    const rect = image.getBoundingClientRect();
+    const photoFrame = image.dataset.studioPhoto === "1"
+      ? image.closest<HTMLElement>('[data-studio-photo-frame="1"]')
+      : null;
+    /* getBoundingClientRect() da imagem já contém zoom/rotação. Para fotos do
+       acervo, a referência correta é a janela recortada pelo PhotoFrame. */
+    const rect = photoFrame?.getBoundingClientRect() ?? image.getBoundingClientRect();
     const style = getComputedStyle(image);
     if (!rect.width || !rect.height || style.display === "none" || style.visibility === "hidden") continue;
 
@@ -217,21 +244,16 @@ const paintImagesOnCanvas = (
 
     const sourceWidth = image.naturalWidth;
     const sourceHeight = image.naturalHeight;
-    const sourceRatio = sourceWidth / sourceHeight;
-    const targetRatio = width / height;
     let sx = 0;
     let sy = 0;
     let sw = sourceWidth;
     let sh = sourceHeight;
 
     if (style.objectFit === "cover") {
-      if (sourceRatio > targetRatio) {
-        sw = sourceHeight * targetRatio;
-        sx = (sourceWidth - sw) / 2;
-      } else {
-        sh = sourceWidth / targetRatio;
-        sy = style.objectPosition.includes("top") ? 0 : (sourceHeight - sh) / 2;
-      }
+      const position = style.objectPosition.match(/(-?[\d.]+)%\s+(-?[\d.]+)%/);
+      const focusX = Number(image.dataset.studioPhotoFocusX ?? position?.[1] ?? 50);
+      const focusY = Number(image.dataset.studioPhotoFocusY ?? position?.[2] ?? (style.objectPosition.includes("top") ? 0 : 50));
+      ({ sx, sy, sw, sh } = calculateCoverCrop(sourceWidth, sourceHeight, width, height, focusX, focusY));
     }
 
     const radius = (Number.parseFloat(style.borderTopLeftRadius) || 0) * Math.min(scaleX, scaleY);
@@ -251,12 +273,23 @@ const paintImagesOnCanvas = (
     if (cssFilter && "filter" in context) {
       (context as CanvasRenderingContext2D & { filter: string }).filter = cssFilter;
     }
-    const matrix = style.transform && style.transform !== "none" ? new DOMMatrixReadOnly(style.transform) : null;
-    const flipX = !!matrix && matrix.a < 0;
-    const flipY = !!matrix && matrix.d < 0;
-    if (flipX || flipY) {
-      context.translate(flipX ? x * 2 + width : 0, flipY ? y * 2 + height : 0);
-      context.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+    if (photoFrame) {
+      const rotation = Number(image.dataset.studioPhotoRotation ?? 0);
+      const photoScale = Number(image.dataset.studioPhotoScale ?? 1);
+      const originX = x + width * (Number(image.dataset.studioPhotoFocusX ?? 50) / 100);
+      const originY = y + height * (Number(image.dataset.studioPhotoFocusY ?? 50) / 100);
+      context.translate(originX, originY);
+      context.rotate((rotation * Math.PI) / 180);
+      context.scale(photoScale, photoScale);
+      context.translate(-originX, -originY);
+    } else {
+      const matrix = style.transform && style.transform !== "none" ? new DOMMatrixReadOnly(style.transform) : null;
+      const flipX = !!matrix && matrix.a < 0;
+      const flipY = !!matrix && matrix.d < 0;
+      if (flipX || flipY) {
+        context.translate(flipX ? x * 2 + width : 0, flipY ? y * 2 + height : 0);
+        context.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+      }
     }
 
     if (style.objectFit === "contain") {
@@ -315,7 +348,10 @@ const openPhotoBackdrops = (node: HTMLElement) => {
   for (const image of Array.from(node.querySelectorAll("img"))) {
     if (image.closest('[data-studio-no-export="1"]')) continue;
     if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) continue;
-    const imageRect = image.getBoundingClientRect();
+    const frame = image.dataset.studioPhoto === "1"
+      ? image.closest<HTMLElement>('[data-studio-photo-frame="1"]')
+      : null;
+    const imageRect = frame?.getBoundingClientRect() ?? image.getBoundingClientRect();
     if (!imageRect.width || !imageRect.height) continue;
 
     let ancestor: HTMLElement | null = image.parentElement;
@@ -761,7 +797,7 @@ const renderStaticNodeToBlob = async (
   const rect = node.getBoundingClientRect();
   const layout: LayoutSize = {
     width: Math.ceil(rect.width),
-    height: Math.ceil(rect.height || node.scrollHeight),
+    height: Math.ceil(rect.height),
   };
 
   let output: HTMLCanvasElement;
@@ -900,7 +936,7 @@ export const exportNodesAsPng = async (
       const surface = surfaces[index];
       try {
         const rect = surface.node.getBoundingClientRect();
-        const ratio = safeRatio(rect.width, rect.height || surface.node.scrollHeight, desiredRatio);
+        const ratio = safeRatio(rect.width, rect.height, desiredRatio);
         const blob = await renderStaticNodeToBlob(surface.node, ratio);
         files.push(new File([blob], item.fileName, { type: "image/png" }));
       } catch (error) {

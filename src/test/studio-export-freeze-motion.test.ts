@@ -1,11 +1,33 @@
 import { describe, expect, it } from "vitest";
 import {
   createStaticExportSurface,
+  calculateCoverCrop,
   freezeMotion,
   lockRenderedTextLines,
   lockUniformHeight,
   readStrokeTextRuns,
 } from "@/pages/studio/exportImage";
+
+describe("photo crop fidelity", () => {
+  it("respeita o foco horizontal em fotos largas", () => {
+    expect(calculateCoverCrop(1600, 900, 400, 500, 0, 50)).toEqual({
+      sx: 0,
+      sy: 0,
+      sw: 720,
+      sh: 900,
+    });
+    expect(calculateCoverCrop(1600, 900, 400, 500, 100, 50).sx).toBe(880);
+  });
+
+  it("respeita o foco vertical em fotos altas", () => {
+    expect(calculateCoverCrop(900, 1600, 500, 400, 50, 100)).toEqual({
+      sx: 0,
+      sy: 880,
+      sw: 900,
+      sh: 720,
+    });
+  });
+});
 
 /**
  * Slides de carrossel fora do centro da tela eram capturados no meio do efeito
