@@ -119,11 +119,11 @@ export const TEXTURE_COUNT = TEXTURES.length;
 export const PATTERN_COUNT = TEXTURES.length + BRAND_MARK_TEXTURES.length;
 
 /** Trama da vez: o índice do bloco é deslocado pela mão da persona. */
-export const textureFor = (persona: StudioPersona, index: number): StudioTexture =>
-  TEXTURES[(index + persona.textureShift) % TEXTURES.length];
+export const textureFor = (persona: StudioPersona | undefined, index: number): StudioTexture =>
+  TEXTURES[(index + (persona?.textureShift ?? 0)) % TEXTURES.length];
 
 type TextureLayerProps = {
-  persona: StudioPersona;
+  persona: StudioPersona | undefined;
   index: number;
   /** Versões escuras (kinetic, closing statement) usam tinta clara. */
   dark?: boolean;
@@ -264,7 +264,7 @@ const BrandMarkPattern = ({
 
 /** Camada de fundo pronta: absoluta, inerte e sutil. */
 export const TextureLayer = ({ persona, index, dark = false }: TextureLayerProps) => {
-  const slot = (index + persona.textureShift) % PATTERN_COUNT;
+  const slot = (index + (persona?.textureShift ?? 0)) % PATTERN_COUNT;
   const mark = slot >= TEXTURES.length ? BRAND_MARK_TEXTURES[slot - TEXTURES.length] : null;
 
   if (mark && BRAND_MARK) {
@@ -276,7 +276,7 @@ export const TextureLayer = ({ persona, index, dark = false }: TextureLayerProps
         opacity={mark.opacity}
         dark={dark}
         index={index}
-        geometric={TEXTURES[(index + persona.textureShift) % TEXTURES.length]}
+        geometric={TEXTURES[(index + (persona?.textureShift ?? 0)) % TEXTURES.length]}
       />
     );
   }

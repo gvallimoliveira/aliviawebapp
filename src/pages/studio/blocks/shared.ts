@@ -69,8 +69,8 @@ export const surfaceFor = (index: number) => SURFACES[index % SURFACES.length];
  * de fundos de um jeito diferente, então o mesmo bloco/tratamento nunca cai na
  * mesma cor de fundo entre personas.
  */
-export const personaSurface = (persona: StudioPersona, index: number) =>
-  SURFACES[(index + persona.surfaceShift) % SURFACES.length];
+export const personaSurface = (persona: StudioPersona | undefined, index: number) =>
+  SURFACES[(index + (persona?.surfaceShift ?? 0)) % SURFACES.length];
 
 export const ALIGNMENTS = ["center", "left", "asym"] as const;
 export type Alignment = (typeof ALIGNMENTS)[number];
