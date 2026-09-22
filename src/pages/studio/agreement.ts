@@ -190,18 +190,67 @@ export const fixAgreement = (text: string): string => {
 /** True quando não há erro de concordância detectável no texto. */
 export const agreesWell = (text: string): boolean => fixAgreement(text) === text;
 
+const KNOWN_ACRONYMS = new Set([
+  "IA","PDF","PAAF","CRM","CRMV","CREFITO","DNA","HEP","STEPS","DIFI","D.I.F.I","RLS","LGPD","NPS","ACWR","SRPE",
+]);
+
+const isUpperWord = (word: string) => {
+  const letters = word.replace(/[^A-Za-zÀ-ÿ.]/g, "");
+  return letters.length >= 2 && letters === letters.toLocaleUpperCase("pt-BR");
+};
+
+const restoreCase = (word: string, startOfSentence: boolean) => {
+  const lower = word.toLocaleLowerCase("pt-BR");
+  return startOfSentence ? lower.charAt(0).toLocaleUpperCase("pt-BR") + lower.slice(1) : lower;
+};
+
+/**
+ * Corrige gritos acidentais dentro de frases vindas do kit ("SUA escada...")
+ * sem mexer em siglas reais nem em kickers inteiros escritos em caixa alta.
+ */
+export const fixStrayAllCaps = (text: string): string => {
+  const words = text.match(/[\p{L}.]{2,}/gu) ?? [];
+  if (!words.length) return text;
+  const uppercaseWords = words.filter(isUpperWord);
+  if (uppercaseWords.length === words.length) return text;
+
+  return text.replace(/[\p{L}.]{2,}/gu, (word, offset) => {
+    if (!isUpperWord(word)) return word;
+    const normalized = word.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleUpperCase("pt-BR");
+    if (KNOWN_ACRONYMS.has(word.toLocaleUpperCase("pt-BR")) || KNOWN_ACRONYMS.has(normalized)) return word;
+    if (/\.|\d/.test(word)) return word;
+    const before = text.slice(0, offset);
+    const startOfSentence = /^\s*$/.test(before) || /[.!?]\s*$/.test(before);
+    return restoreCase(word, startOfSentence);
+  });
+};
+
+/** Remove possessivo duplicado que nasce da junção de moldura + fala do kit. */
+export const fixPossessiveEcho = (text: string): string =>
+  text.replace(
+    /\b(?:seu|sua)\s+([a-zà-ÿ][a-zà-ÿ\s-]{1,32}?)\s+d[ao]\s+sua\s+casa\b/gi,
+    (_all, noun: string) => `a ${noun.trim()} da sua casa`,
+  );
+
+const fixDuplicateOpeningQuotes = (text: string): string =>
+  text.replace(/^(?:\s*["“”'‘’]){2,}\s*/u, "");
+
+const fixSentenceStart = (text: string): string =>
+  text.replace(/^([a-zà-ÿ])/, (letter) => letter.toLocaleUpperCase("pt-BR"));
+
 /**
  * Revisor final aplicado a todo texto que vai para a arte: concordância +
  * limpeza de pontuação duplicada e espaços órfãos.
  */
 export const proofread = (text: string): string => {
   if (!text) return text;
-  let out = fixAgreement(text);
+  let out = fixPossessiveEcho(fixAgreement(text));
   out = out
     .replace(/\s+([,.;:!?])/g, "$1")
     .replace(/([,;:])\1+/g, "$1")
     .replace(/\.\.(?!\.)/g, ".")
     .replace(/\s{2,}/g, " ")
     .trim();
+  out = fixSentenceStart(fixStrayAllCaps(fixDuplicateOpeningQuotes(out)));
   return out;
 };

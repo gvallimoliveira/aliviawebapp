@@ -47,3 +47,4 @@
 
 ## Fluidez textual do Studio (22/09)
 - [x] Variar conectores do corpo e impedir frases quebradas após a remoção de repetições do título.
+- [x] Transportar os refinamentos da Aline para guardas globais: título não órfão, aspas limpas, caixa correta, possessivo sem eco e matriz parcial aproveitada.

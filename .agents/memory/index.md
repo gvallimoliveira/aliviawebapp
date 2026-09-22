@@ -39,8 +39,11 @@ Créditos de IA: após CADA etapa do plano de créditos, rodar o double-check pa
 
 Studio: manual da marca em PDF e questionário valem IGUAL — marca com só o manual não perde qualidade; a IA responde o questionário a partir dele.
 
+Studio refinamentos de uma marca viram guardas globais quando forem gramática/coerência; só regras de domínio ficam específicas.
+
 ## Memories
 - [Studio Aline Veterinary Voice](mem://features/studio-aline-veterinary-voice) — Tutor é interlocutor, pet é paciente e referências à profissional Aline usam feminino.
+- [Studio Global Copy Guards](mem://features/studio-global-copy-guards) — Refinamentos de títulos, aspas, caixa, possessivos e matrizes valem para todas as marcas.
 - [Studio Tweet Carousel](mem://features/studio-tweet-carousel) — Tratamento opcional de carrossel como fio coerente de posts curtos, da tese ao fechamento.
 - [Studio Manual = Questionário](mem://features/studio-manual-equals-questionnaire) — Manual em PDF e questionário com peso igual; IA preenche o questionário a partir do manual sem sobrescrever resposta escrita à mão.
 - [Assessment Addenda](mem://features/assessment-addenda) — Informações adicionais em avaliação concluída: adendo manual, link /adendo/:token e reinterpretação opcional da IA.

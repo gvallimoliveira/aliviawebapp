@@ -55,7 +55,7 @@ export const readReasoningMatrix = (raw: unknown): ReasoningMatrixEntry[] => {
     const mechanism = clean(row.mechanism);
     const bridge = clean(row.bridge);
     const outcome = clean(row.outcome);
-    if (!scene || !mechanism || !bridge || !outcome) return [];
+    if ([scene, mechanism, bridge, outcome].filter(Boolean).length < 2) return [];
     return [{
       id: clean(row.id) || `route-${index + 1}`,
       audienceIds: list(row.audienceIds ?? row.audience_ids),
@@ -73,9 +73,14 @@ export const writeKeywordMatrix = (entries: KeywordMatrixEntry[]) => readKeyword
 export const writeReasoningMatrix = (entries: ReasoningMatrixEntry[]) => readReasoningMatrix(entries);
 
 const scoped = <T extends { audienceIds?: string[] }>(entries: T[], audienceId?: string) => {
-  if (!audienceId) return entries.filter((entry) => !(entry.audienceIds ?? []).includes("manual-only"));
+  const available = entries.filter((entry) => !(entry.audienceIds ?? []).includes("manual-only"));
+  if (!audienceId) return available;
   const exact = entries.filter((entry) => (entry.audienceIds ?? []).includes(audienceId));
-  return exact.length ? exact : entries.filter((entry) => !(entry.audienceIds?.length));
+  if (exact.length) return exact;
+  const generic = available.filter((entry) => !(entry.audienceIds?.length));
+  if (generic.length) return generic;
+  const related = available.filter((entry) => (entry.audienceIds ?? []).some((id) => id.includes(audienceId) || audienceId.includes(id)));
+  return related.length ? related : available;
 };
 
 export const pickMatrixContext = ({
@@ -125,6 +130,6 @@ export const keywordMatrixFromText = (text: string): KeywordMatrixEntry[] =>
 export const reasoningMatrixFromText = (text: string): ReasoningMatrixEntry[] =>
   text.split(/\r?\n/).flatMap((line, index) => {
     const [audienceIds, scene, mechanism, bridge, outcome, cta, theme] = line.split("|").map(clean);
-    if (!scene || !mechanism || !bridge || !outcome) return [];
+    if ([scene, mechanism, bridge, outcome].filter(Boolean).length < 2) return [];
     return [{ id: `route-${index + 1}`, audienceIds: list(audienceIds), scene, mechanism, bridge, outcome, cta: cta || undefined, theme: theme || undefined }];
   });
