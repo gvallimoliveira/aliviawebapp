@@ -28,6 +28,7 @@ import { editorialAudience, sentenceLead, shortKicker } from "@/pages/studio/typ
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 import { applyFormatInsights, readFormatInsights, scopedFormatInsights } from "./formatInsights";
 import { enforceAudienceScope } from "./audienceScope";
+import { applyVeterinaryVoice, isVeterinaryContext } from "./veterinaryVoice";
 
 
 
@@ -1900,7 +1901,16 @@ export const buildSegmentContent = ({
      * marca (sem público ativo) passa intacta.
      */
     const owned = audience ? enforceAudienceScope(scoped, audience, audiences) : scoped;
-    return proofreadVisible(owned) as WorldContent;
+    const veterinary = isVeterinaryContext(
+      kit.niche,
+      kit.description,
+      kit.positioning,
+      audience?.label,
+      audience?.description,
+      relation?.keyword,
+      relation?.who,
+    );
+    return proofreadVisible(applyVeterinaryVoice(owned, veterinary)) as WorldContent;
 
   };
 

@@ -38,6 +38,7 @@ const StudioSignature = ({ dark = false, corner = "br", markOnly = false }: Prop
         alt=""
         data-brand-logo={!markOnly ? "1" : undefined}
         data-brand-mark={markOnly ? "1" : undefined}
+        data-studio-export-image-layer="foreground"
         className={`${
           markOnly
             ? "h-6 w-6 md:h-7 md:w-7"
