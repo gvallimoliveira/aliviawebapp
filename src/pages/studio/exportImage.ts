@@ -749,13 +749,25 @@ const renderStaticNodeToBlob = async (
   const { specs, restore } = hideCssStrokes(node);
   const { backdrops, restore: restoreBackdrops } = openPhotoBackdrops(node);
 
+  /*
+   * UMA única medida para tudo. O quadro exportado é exatamente o quadro
+   * mostrado na geração (o excedente já é cortado na tela pelo próprio card),
+   * e os repintes usam a mesma escala do raster — sem foto esticada, deslocada
+   * ou PNG em proporção diferente da prévia.
+   */
+  const rect = node.getBoundingClientRect();
+  const layout: LayoutSize = {
+    width: Math.ceil(rect.width),
+    height: Math.ceil(rect.height || node.scrollHeight),
+  };
+
   let output: HTMLCanvasElement;
   try {
     /* Raster SEM fundo opaco: ele precisa de transparência para que a foto
        possa ser composta por baixo da película já rasterizada. */
     const raster = await toCanvas(node, {
-      width: Math.ceil(node.getBoundingClientRect().width),
-      height: Math.ceil(Math.max(node.scrollHeight, node.getBoundingClientRect().height)),
+      width: layout.width,
+      height: layout.height,
       pixelRatio,
       skipFonts: fontEmbedCSS === null,
       fontEmbedCSS: fontEmbedCSS ?? undefined,
