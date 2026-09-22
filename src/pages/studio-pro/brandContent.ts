@@ -1123,6 +1123,22 @@ export const buildBrandContent = (
 const lower1 = lowerInitial;
 const strip = (text: string) => text.trim().replace(/\s*[.!?]+$/, "");
 
+/** Uma citação defende uma ideia; listas de medos separadas por ponto e vírgula
+ * viram frases independentes em vez de um parágrafo espremido na arte. */
+const quoteThemes = (values: string[]): string[] =>
+  values
+    .flatMap((value) => value.split(/\s*(?:;|\n|[•·])\s*/))
+    .map(strip)
+    .filter((value) => value.length >= 8);
+
+const painQuote = (theme: string): string => {
+  const clean = strip(theme);
+  if (/^(?:conviver|viver|lidar)\s+com\b/i.test(clean)) return `“Achei que ${lower1(clean)} fosse para sempre.”`;
+  if (/^temer\s+que\b/i.test(clean)) return `“${cap(clean)} não precisa fazer parte da rotina.”`;
+  if (/^n[aã]o\s+conseguir\b/i.test(clean)) return `“${cap(clean)} não precisa ser o fim da investigação.”`;
+  return `“${sentence(clean)}”`;
+};
+
 /**
  * Aplica um público (nicho ou sub-nicho) sobre o acervo base.
  *
@@ -1519,7 +1535,7 @@ const applyAudience = (
 
     quotes: [
       ...desires.slice(0, 2).map((d) => ({ text: `“${sentence(d)}”` })),
-      ...(painNoms[0] ? [{ text: `“Achei que ${lower1(painNoms[0])} fosse para sempre.”` }] : []),
+      ...quoteThemes(pains).slice(0, 3).map((theme) => ({ text: painQuote(theme) })),
       ...tail(base.quotes),
     ],
     marquee: [[key, ...painNoms.slice(0, 2), ...desireNoms.slice(0, 2)].filter(Boolean), ...tail(base.marquee)],
