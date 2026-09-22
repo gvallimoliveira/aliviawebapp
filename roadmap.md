@@ -44,3 +44,6 @@
 - [x] Fazer a inversão A/B trocar visivelmente os papéis das cores da marca.
 - [x] Garantir uma única assinatura nos modelos de citação.
 - [x] Impedir que `\\n` literal apareça em carrosséis sem alterar o roteiro narrativo.
+
+## Fluidez textual do Studio (22/09)
+- [x] Variar conectores do corpo e impedir frases quebradas após a remoção de repetições do título.

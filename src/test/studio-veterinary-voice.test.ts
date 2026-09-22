@@ -64,6 +64,24 @@ describe("Studio: tutor leitor e animal paciente", () => {
     expect(revised).toBe("Laudos claros e explicações didáticas, evitando tentativa e erro sem diagnóstico prévio.");
   });
 
+  it("varia os conectores do corpo sem usar a mesma muleta textual", () => {
+    const examples = [
+      removeTitleDescriptionEcho("Investigar antes de tratar", "Investigar antes de tratar reduz tentativas sem direção."),
+      removeTitleDescriptionEcho("Reconhecer o agente muda a escolha", "Reconhecer o agente muda a escolha direciona uma conduta mais precisa."),
+      removeTitleDescriptionEcho("Cada sinal acrescenta uma pista", "Cada sinal acrescenta uma pista organiza a investigação do quadro."),
+      removeTitleDescriptionEcho("A citologia orienta a decisão", "A citologia orienta a decisão evita escolhas feitas no escuro."),
+    ];
+    expect(new Set(examples.map((text) => text.split(",")[0])).size).toBeGreaterThan(1);
+    expect(examples.every((text) => !/^A partir disso/i.test(text))).toBe(true);
+  });
+
+  it("recompõe locuções cortadas entre o título e o corpo", () => {
+    expect(removeTitleDescriptionEcho(
+      "Encontrar a causa com precisão, controlar a qualidade",
+      "Encontrar a causa com precisão, controlar a qualidade de vida do animal e decidir com clareza.",
+    )).toBe("Qualidade de vida do animal e decidir com clareza.");
+  });
+
   it("aplica a antirrepetição em todos os itens estruturados da arte", () => {
     const content = finalizeBrandVoice({
       features: [{
