@@ -72,6 +72,13 @@ export const readFormatInsights = (raw?: string | null): FormatInsight[] => {
     .filter((insight) => insight.title.length > 2);
 };
 
+/** Mantém o formato legado do banco enquanto a interface edita cada parte separadamente. */
+export const writeFormatInsights = (insights: FormatInsight[]): string =>
+  insights
+    .map((insight) => [insight.title, ...insight.beats, insight.closing ?? ""].map(clean).filter(Boolean).join(" | "))
+    .filter(Boolean)
+    .join("\n");
+
 /** Palavras dos insights — reforçam a atração do diretor criativo. */
 export const formatInsightWords = (insights: FormatInsight[]): string[] =>
   insights.flatMap((i) => [i.title, ...i.beats, i.closing ?? ""]).filter(Boolean);
