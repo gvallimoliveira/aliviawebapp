@@ -43,7 +43,7 @@ const squash = (value?: string) => (value ?? "").replace(/\s+/g, " ").trim().rep
 const fit = (raw: string | undefined, max: number): string => {
   const text = squash(raw);
   if (!text) return "";
-  if (text.length <= max) return text;
+  if (text.length <= max) return hasDanglingEnding(text) ? "" : text;
   const words = text.split(" ");
   let acc = "";
   for (const word of words) {
@@ -157,7 +157,9 @@ export const composeRouteCopy = (
 
 
   /** Fio da arte: o que dói/o que se quer, o que muda e a prova. */
-  const lead = tension || desire || feature;
+  // Um campo do manual também pode já chegar incompleto. Ele continua guardado
+  // como dado da marca, mas nunca assume um slot visível sem complemento.
+  const lead = [tension, scene, desire, feature].find((item) => item && !hasDanglingEnding(item)) ?? "";
   const turn = feature || proof || desire;
   const gain = desire || proof || feature;
   if (!lead || !turn) return {};
@@ -223,7 +225,9 @@ export const composeRouteCopy = (
       ? [{ field: "core", strong: fit(cap(turn), 28), rest: fit(cap(gain), 44) }]
       : [{ field: "core", strong: fit(cap(turn), 28), rest: fit(`para ${low(gain)}`, 42) }]),
     { field: "core", strong: fit(`Menos ${low(lead)}`, 30), rest: fit(`mais ${low(gain)}`, 42) },
-  ];
+  ].filter((frame) => Boolean(frame.strong && frame.rest && usable(`${frame.strong} ${frame.rest}`)));
+
+  if (!headlinePool.length) return {};
 
 
   /**
@@ -319,7 +323,7 @@ export const composeRouteCopy = (
     const subPool = [
       ...otherFields.map((item) => item.text),
       ...(otherFields.length ? [] : extraSubs.map((item) => item.text)),
-      ...subsByKind[route.kind],
+      ...subsByKind[route.kind].filter((candidate) => !hasDanglingEnding(candidate)),
     ];
     /**
      * DEDUPE POR TEXTO FINAL: antes a regra só evitava repetir o CAMPO do kit.
@@ -333,7 +337,7 @@ export const composeRouteCopy = (
       ...coherentReasoning.map((item) => item.text),
       ...otherFields.map((item) => item.text),
       ...subPool,
-      ...subsByKind[route.kind],
+      ...subsByKind[route.kind].filter((candidate) => !hasDanglingEnding(candidate)),
     ];
     const subCandidates = rotateFrom([...new Set(mergedSubs)]);
 
