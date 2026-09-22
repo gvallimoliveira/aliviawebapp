@@ -214,15 +214,15 @@ const removeContentEchoes = <T>(value: T): T => {
   return revised as T;
 };
 
-const SKIP_TEXT_KEYS = new Set(["id", "label", "topic", "poster", "image", "hashtags", "value", "prefix", "suffix"]);
+const SKIP_TEXT_KEYS = new Set(["id", "label", "topic", "poster", "image", "hashtags", "value", "prefix", "suffix", "source", "note"]);
 
-const firstUsefulThought = (...values: unknown[]) => {
-  for (const value of values) {
+const firstUsefulThought = (values: Array<{ key: string; value: unknown }>) => {
+  for (const { key, value } of values) {
     if (typeof value !== "string") continue;
     const thought = closeThought(proofread(value), 76);
-    if (thought && !isOrphanCommand(thought)) return thought;
+    if (thought && !isOrphanCommand(thought)) return { key, text: thought };
   }
-  return "";
+  return undefined;
 };
 
 const proofreadVisibleText = <T>(value: T, key = ""): T => {
@@ -252,10 +252,16 @@ const repairOrphanStrongRest = <T>(value: T): T => {
     const rest = typeof revised.rest === "string" ? revised.rest : "";
     const joined = joinCopyParts(strong, rest);
     if (isOrphanCommand(strong) || isOrphanCommand(joined)) {
-      const replacement = firstUsefulThought(revised.sub, revised.description, revised.coverSub, revised.title);
+      const replacement = firstUsefulThought([
+        { key: "sub", value: revised.sub },
+        { key: "description", value: revised.description },
+        { key: "coverSub", value: revised.coverSub },
+        { key: "title", value: revised.title },
+      ]);
       if (replacement) {
-        revised.strong = replacement;
+        revised.strong = replacement.text;
         revised.rest = "";
+        if (replacement.key in revised) revised[replacement.key] = "";
       }
     }
   }
