@@ -74,6 +74,17 @@ describe("Studio: tutor leitor e animal paciente", () => {
     expect(content.features[0].description).not.toContain("Investiga a causa raiz");
   });
 
+  it("não deixa o nome interno do recorte de slogan aparecer na arte", () => {
+    const content = finalizeBrandVoice({
+      kickers: ["SLOGAN EM DESTAQUE", "PARA SLOGAN EM DESTAQUE", "SLOGAN EM DESTAQUE · TESTE"],
+    }, { brand: "Dra. Aline Furtado" });
+    expect(content.kickers).toEqual([
+      "Dra. Aline Furtado",
+      "Dra. Aline Furtado",
+      "Dra. Aline Furtado",
+    ]);
+  });
+
   it("não altera nenhum texto fora do domínio veterinário", () => {
     const phrase = "Você sente dor no ombro?";
     expect(applyVeterinaryVoice(phrase, false)).toBe(phrase);

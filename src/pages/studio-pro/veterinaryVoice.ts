@@ -153,12 +153,34 @@ const removeContentEchoes = <T>(value: T): T => {
   return revised as T;
 };
 
+/** Rótulos do editor orientam o motor, mas nunca podem aparecer na peça. */
+const removeInternalEditorialLabels = <T>(value: T, brand?: string, key = ""): T => {
+  if (typeof value === "string") {
+    if (["id", "topic", "poster", "image", "hashtags", "value", "prefix", "suffix"].includes(key)) return value;
+    if (/^(?:para\s+)?slogan\s+em\s+destaque(?:\s*[·|—-]\s*.+)?$/i.test(value.trim())) {
+      return (brand?.trim() || "A marca") as T;
+    }
+    return value;
+  }
+  if (Array.isArray(value)) return value.map((item) => removeInternalEditorialLabels(item, brand, key)) as T;
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([childKey, child]) => [
+        childKey,
+        removeInternalEditorialLabels(child, brand, childKey),
+      ]),
+    ) as T;
+  }
+  return value;
+};
+
 /** Revisão final, aplicada também depois das variações e da direção do lote. */
 export const finalizeBrandVoice = <T>(value: T, context: { brand?: string; domain?: string } = {}): T => {
   const veterinary = isVeterinaryContext(context.brand, context.domain);
   const feminine = isAlineVeterinaryBrand(context.brand);
-  const voiced = removeContentEchoes(
-    applyAlineProfessionalVoice(applyVeterinaryVoice(value, veterinary), context.brand),
+  const voiced = removeInternalEditorialLabels(
+    removeContentEchoes(applyAlineProfessionalVoice(applyVeterinaryVoice(value, veterinary), context.brand)),
+    context.brand,
   );
   if (!voiced || typeof voiced !== "object" || Array.isArray(voiced)) return voiced;
 

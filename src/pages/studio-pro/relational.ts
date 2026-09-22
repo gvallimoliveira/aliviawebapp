@@ -10,7 +10,7 @@
  */
 
 import { createRng } from "@/pages/studio/rng";
-import { audienceHooks, audienceKeyword, type BrandAudience, type ContentAngle } from "./audiences";
+import { audienceHooks, audienceKeyword, SLOGAN_SEGMENT, type BrandAudience, type ContentAngle } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
 import { buildNarrativeRoutes, type NarrativeRoute } from "./synapses";
 import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
@@ -171,7 +171,9 @@ export const pickRelation = ({
 
   return {
     audience,
-    who: strip(audience?.label) || singleAudience(primaryAudience) || keyword,
+    who: audience?.id === SLOGAN_SEGMENT
+      ? brand
+      : strip(audience?.label) || singleAudience(primaryAudience) || keyword,
     keyword,
     hook: rotate(hooks, shift)[0] ?? `Você que busca ${keyword.toLowerCase()}`,
     hooks: rotate(hooks, shift),
