@@ -203,12 +203,20 @@ describe("Diretor criativo", () => {
       undefined,
       WORLDS.pro.carousels,
       0,
-      ["carousel", "manifesto", "carousel"],
+      ["carousel", "hero", "carousel"],
     );
     const direction = planMultiSegmentBatch({
       sources: [
-        { id: "pre-avaliacao", content: WORLDS.pro, relation: { pain: "coleta demorada", desire: "consulta preparada", axis: "pain" } },
-        { id: "red-flags", content: WORLDS.clinica, relation: { pain: "alerta esquecido", desire: "triagem segura", axis: "desire" } },
+        {
+          id: "pre-avaliacao",
+          content: WORLDS.pro,
+          relation: { who: "fisioterapeuta", keyword: "pré-avaliação", hook: "prepare a consulta", hooks: [], pain: "coleta demorada", desire: "consulta preparada", cta: "testar", axis: "pain" },
+        },
+        {
+          id: "red-flags",
+          content: WORLDS.clinica,
+          relation: { who: "clínica", keyword: "red flags", hook: "não esqueça sinais", hooks: [], pain: "alerta esquecido", desire: "triagem segura", cta: "conhecer", axis: "desire" },
+        },
       ],
       count: blocks.length,
       blocks,
