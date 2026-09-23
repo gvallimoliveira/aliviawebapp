@@ -127,6 +127,68 @@ export const audienceKeyword = (a: BrandAudience): string => {
   );
 };
 
+/**
+ * TERMOS DE DESTAQUE de um recorte editorial (vale para QUALQUER marca).
+ *
+ * Em artes de palavra protagonista só estes termos podem ocupar o centro. Quando
+ * a pessoa não preenche, derivamos do nome/palavra-chave do tema: o termo
+ * inteiro mais as palavras significativas dele. Nunca um adjetivo solto tirado
+ * do texto corrido.
+ */
+const HIGHLIGHT_STOPWORDS = new Set([
+  "de", "da", "do", "das", "dos", "e", "com", "por", "para", "em", "no", "na", "nos", "nas",
+  "a", "o", "as", "os", "um", "uma", "ao", "aos", "que", "sem", "sob", "seu", "sua",
+]);
+
+export const highlightTermsFor = (a: BrandAudience): string[] => {
+  const own = (a.highlightTerms ?? []).map((t) => t.trim()).filter(Boolean);
+  if (own.length) return own;
+  const key = audienceKeyword(a);
+  const derived = [key];
+  key
+    .split(/[\s/·—–-]+/)
+    .map((word) => word.trim())
+    .filter((word) => word.replace(/[^\p{L}\p{N}]/gu, "").length >= 4)
+    .filter((word) => !HIGHLIGHT_STOPWORDS.has(word.toLowerCase()))
+    .forEach((word) => {
+      if (!derived.some((t) => t.toLowerCase() === word.toLowerCase())) derived.push(word);
+    });
+  return derived.slice(0, 4);
+};
+
+/** O recorte é um tema de linha editorial (pacote fechado de um assunto só)? */
+export const isEditorialAudience = (a?: BrandAudience | null): boolean => Boolean(a?.editorialGroup?.trim());
+
+/** Temas irmãos da mesma linha editorial da marca. */
+export const editorialSiblings = (list: BrandAudience[], a: BrandAudience): BrandAudience[] => {
+  const group = a.editorialGroup?.trim();
+  if (!group) return [];
+  return list.filter((item) => item.id !== a.id && item.editorialGroup?.trim() === group);
+};
+
+/** Ids de todos os temas editoriais da marca — usados para seleção múltipla. */
+export const editorialAudienceIds = (list: BrandAudience[]): string[] =>
+  list.filter((a) => a.editorialGroup?.trim()).map((a) => a.id);
+
+/**
+ * SUBSTANTIVO DO TEMA editorial, lido do nome do grupo da marca. Um SaaS fala de
+ * "funcionalidade"; uma clínica fala de "serviço"/"tratamento"; um infoproduto
+ * fala de "produto". Sem isso, a arte de qualquer cliente sairia falando
+ * "funcionalidade", que é vocabulário de software.
+ */
+export const editorialNoun = (a?: BrandAudience | null): string => {
+  const group = (a?.editorialGroup ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  if (/servic/.test(group)) return "serviço";
+  if (/tratament|terapia/.test(group)) return "tratamento";
+  if (/produt/.test(group)) return "produto";
+  if (/program|jornada/.test(group)) return "programa";
+  if (/diferenc|funcional|recurso/.test(group)) return "funcionalidade";
+  return "recurso";
+};
+
 /** Abertura em 2ª pessoa, para chamar o público diretamente na arte. */
 export const audienceHook = (a: BrandAudience): string => audienceHooks(a)[0];
 
@@ -194,6 +256,7 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
 
         cta: String(row.cta ?? "").trim() || undefined,
         keyword: String(row.keyword ?? "").trim() || undefined,
+        highlightTerms: asStringArray(row.highlightTerms ?? row.highlight_terms),
         hook: String(row.hook ?? "").trim() || undefined,
         hooks: asStringArray(row.hooks),
         parentId: String(row.parentId ?? row.parent_id ?? "").trim() || undefined,
@@ -222,6 +285,9 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
 
       ...(a.cta?.trim() ? { cta: a.cta.trim() } : {}),
       ...(a.keyword?.trim() ? { keyword: a.keyword.trim() } : {}),
+      ...(a.highlightTerms?.length
+        ? { highlightTerms: a.highlightTerms.map((t) => t.trim()).filter(Boolean) }
+        : {}),
       ...(a.hook?.trim() ? { hook: a.hook.trim() } : {}),
       ...(a.hooks?.length ? { hooks: a.hooks.map((h) => h.trim()).filter(Boolean) } : {}),
       ...(a.parentId?.trim() ? { parentId: a.parentId.trim() } : {}),
@@ -244,7 +310,12 @@ export const derivedAudiences = (list: BrandAudience[], parentId: string): Brand
   list.filter((a) => a.parentId?.trim() === parentId && a.id !== parentId);
 
 /** Número oficial de públicos da marca — sempre só os matriz. */
-export const officialAudienceCount = (list: BrandAudience[]): number => matrixAudiences(list).length;
+/**
+ * Temas de linha editorial (serviços, diferenciais, produtos) são organização de
+ * assunto, não público: nunca entram na métrica oficial de públicos da marca.
+ */
+export const officialAudienceCount = (list: BrandAudience[]): number =>
+  matrixAudiences(list).filter((a) => !a.editorialGroup?.trim()).length;
 
 /** Cadeia de ancestrais de um público (do pai direto até o matriz). */
 export const audienceAncestors = (list: BrandAudience[], id: string): BrandAudience[] => {

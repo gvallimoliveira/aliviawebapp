@@ -1,6 +1,7 @@
 # Project Memory
 
 ## Core
+Studio linha editorial: qualquer marca cria temas (serviços/produtos/diferenciais) — destaque só com termo canônico do tema, um tema por arte, seleção múltipla só nesses grupos.
 Studio Aline Vet: tutor é o leitor/decisor; sintomas, coceira, citologia e queixas pertencem sempre ao animal (cão/gato/pet), nunca ao tutor.
 Formulários mobile: todo campo de texto/select precisa de fonte >=16px no mobile (padrão `text-base md:text-sm` do Input; Textarea já segue) — fonte menor faz o iOS dar auto-zoom e cortar a tela.
 Studio: painéis de criação ficam dentro de `StudioBoundary` (nunca tela branca; erro vai para app_errors) e blocos NUNCA usam texto como `key` de lista — sempre `${texto}-${i}`.
@@ -42,6 +43,7 @@ Studio: manual da marca em PDF e questionário valem IGUAL — marca com só o m
 Studio refinamentos de uma marca viram guardas globais quando forem gramática/coerência; só regras de domínio ficam específicas.
 
 ## Memories
+- [Studio Editorial Line Any Brand](mem://features/studio-editorial-line-any-brand) — Linha editorial genérica: temas fechados, termos de destaque, seleção múltipla e arco obrigatório.
 - [Studio Aline Veterinary Voice](mem://features/studio-aline-veterinary-voice) — Tutor é interlocutor, pet é paciente e referências à profissional Aline usam feminino.
 - [Studio Global Copy Guards](mem://features/studio-global-copy-guards) — Refinamentos de títulos, aspas, caixa, possessivos e matrizes valem para todas as marcas.
 - [Studio Tweet Carousel](mem://features/studio-tweet-carousel) — Tratamento opcional de carrossel como fio coerente de posts curtos, da tese ao fechamento.

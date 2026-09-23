@@ -82,12 +82,20 @@ describe("sub-nichos no motor criativo", () => {
         variationSeed: `four-pillars:${item.id}`,
       });
       const slides = content.carousels[0]?.slides ?? [];
-      expect(slides.map((slide) => slide.heading)).toEqual([
-        "O que é",
-        "Como funciona",
-        "O benefício no dia a dia",
-        "Sem essa funcionalidade",
-      ]);
+      const headings = slides.map((slide) => slide.heading);
+      // Quatro etapas: o que é → como funciona → ganho → custo de não ter. Os
+      // títulos nomeiam o tema, nunca rótulos soltos como "Benefício".
+      expect(headings).toHaveLength(4);
+      expect(headings).not.toContain("O que é");
+      expect(headings).not.toContain("Benefício");
+      // Todo título nomeia o próprio tema (nome ou um termo canônico dele).
+      const anchors = [item.keyword ?? item.label, item.label, ...(item.highlightTerms ?? [])]
+        .filter(Boolean)
+        .map((text) => String(text).toLowerCase().slice(0, 8));
+      expect(
+        headings.every((heading) => anchors.some((anchor) => heading.toLowerCase().includes(anchor))),
+      ).toBe(true);
+      expect(headings[3]?.toLowerCase().startsWith("sem ")).toBe(true);
       expect(content.compare[0]?.before.length).toBeGreaterThan(0);
       expect(content.compare[0]?.after.length).toBeGreaterThan(0);
       expect(slides[0]?.body.length).toBeGreaterThan(40);

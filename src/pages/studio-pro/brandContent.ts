@@ -16,7 +16,7 @@ import { applyHookPrefs } from "@/pages/studio/hookStore";
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { lowerInitial, nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
 import { proofread } from "@/pages/studio/agreement";
-import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlogan, sloganList, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
+import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, editorialNoun, hasSlogan, highlightTermsFor, sloganList, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
 import { applyCharm } from "./charmCopy";
@@ -227,7 +227,9 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
     return words >= 4 && words <= 22 && !readsWell(raw);
   };
   const preserveEditorialCarousel = (item: unknown) =>
-    typeof item === "object" && item !== null && String((item as { id?: string }).id ?? "").startsWith("differential-");
+    typeof item === "object" &&
+    item !== null &&
+    /^(editorial|differential)-/.test(String((item as { id?: string }).id ?? ""));
   const purge = <T,>(list: T[]): T[] => {
     const kept = list.filter((item) => preserveEditorialCarousel(item) || !bad(textOf(item)));
     return kept.length ? kept : list.slice(0, 1);
@@ -1205,20 +1207,35 @@ const applyAudience = (
    * custo cotidiano de continuar sem ele. Nenhum acervo da marca entra aqui.
    */
   if (audience.editorialGroup) {
+    /**
+     * Vale para QUALQUER marca: termos de destaque do tema (nunca adjetivo
+     * solto) e o substantivo do grupo editorial da própria marca.
+     */
+    const terms = highlightTermsFor(audience);
+    const noun = editorialNoun(audience);
     const mechanisms = proof.length ? proof : [desc ?? key];
     const benefits = desires.length ? desires : [cta];
     const losses = (audience.stakes ?? []).map(strip).filter(Boolean);
     const scenes = (audience.scenes ?? []).map(strip).filter(Boolean);
-    const whatItIs = desc || `${key} é uma funcionalidade do ${brand}.`;
+    const whatItIs = desc || `${key} é ${noun === "produto" ? "um produto" : `uma ${noun}`} de ${brand}.`;
     const benefitAt = (index: number) => benefits[index % benefits.length];
     const lossAt = (index: number) => losses[index % Math.max(1, losses.length)] || pains[index % Math.max(1, pains.length)] || whatItIs;
     const mechanismAt = (index: number) => mechanisms[index % mechanisms.length];
     const sceneAt = (index: number) => scenes[index % Math.max(1, scenes.length)] || pains[index % Math.max(1, pains.length)] || whatItIs;
+    const termAt = (index: number) => terms[index % terms.length];
+    /**
+     * Começo → meio → fim dentro do mesmo assunto. Os títulos dos slides citam o
+     * próprio tema: rótulo solto ("O que é", "Benefício") não vira arte.
+     */
     const carouselSlides = [
-      { heading: "O que é", body: sentence(whatItIs) },
-      { heading: "Como funciona", body: sentence(mechanismAt(0)) },
-      { heading: "O benefício no dia a dia", body: sentence(benefitAt(0)) },
-      { heading: "Sem essa funcionalidade", body: sentence(lossAt(0)) },
+      { heading: condensePhrase(key, 34), body: sentence(whatItIs) },
+      /**
+       * Cada etapa entra com abertura própria: sem isso, mecanismo e definição
+       * podem coincidir e o carrossel perde um slide na deduplicação.
+       */
+      { heading: `Como ${lower1(termAt(0))} funciona`, body: `Funciona assim: ${lower1(mechanismAt(0))}.` },
+      { heading: `Com ${lower1(key)}, na rotina`, body: `Na rotina, ${lower1(benefitAt(0))}.` },
+      { heading: `Sem ${lower1(key)}`, body: `Sem isso, ${lower1(lossAt(0))}.` },
     ];
 
     return {
@@ -1234,49 +1251,49 @@ const applyAudience = (
       subs: [
         whatItIs,
         ...mechanisms.map((item, index) => `${sentence(item)} Na prática, isso permite ${lower1(benefitAt(index))}.`),
-        ...losses.map((item) => `Sem essa funcionalidade, ${lower1(item)}.`),
+        ...losses.map((item) => `Sem ${lower1(key)}, ${lower1(item)}.`),
       ],
       typos: [
-        { lead: "O diferencial", big: condensePhrase(key, 24), tail: sentence(mechanismAt(0)) },
-        { lead: "Sem essa função", big: "prejuízo", tail: sentence(lossAt(0)) },
-        { lead: "Na rotina", big: "benefício", tail: sentence(benefitAt(0)) },
+        { lead: `${key}:`, big: condensePhrase(termAt(0), 24), tail: sentence(mechanismAt(0)) },
+        { lead: `Sem ${lower1(key)},`, big: condensePhrase(termAt(1), 24), tail: sentence(lossAt(0)) },
+        { lead: "Na rotina,", big: condensePhrase(termAt(2), 24), tail: sentence(benefitAt(0)) },
       ],
       kinetic: benefits.slice(0, 3).map((item, index) => ({
         kicker: KEY,
-        word: condensePhrase(index === 0 ? "Funcionalidade" : "Benefício", 20),
+        word: condensePhrase(termAt(index), 20),
         caption: `${sentence(mechanismAt(index))} Isso permite ${lower1(item)}.`,
       })),
       metrics: [],
       stats: [],
       triptychs: [],
       compare: [{
-        title: `${key}: com e sem a funcionalidade`,
+        title: `${key}: com e sem`,
         before: losses.length ? losses : pains,
         after: benefits,
       }],
       journeys: [],
       features: [
-        { tag: KEY, title: "O que é", description: sentence(whatItIs), headline: condensePhrase(key, 36), topic: topicAt(0) },
+        { tag: KEY, title: sentence(whatItIs), description: `É assim que ${lower1(key)} entra na rotina.`, headline: condensePhrase(key, 36), topic: topicAt(0) },
         ...mechanisms.slice(0, 3).map((item, index) => ({ tag: `${KEY} · COMO FUNCIONA`, title: sentence(item), description: `Esse mecanismo permite ${lower1(benefitAt(index))}.`, headline: condensePhrase(item, 36), topic: topicAt(index + 1) })),
-        ...losses.slice(0, 2).map((item, index) => ({ tag: `${KEY} · SEM ESSA FUNÇÃO`, title: sentence(item), description: `Com ${lower1(key)}, o caminho passa a ser ${lower1(benefitAt(index))}.`, headline: condensePhrase(item, 36), topic: topicAt(index + 4) })),
+        ...losses.slice(0, 2).map((item, index) => ({ tag: `${KEY} · SEM ISSO`, title: sentence(item), description: `Com ${lower1(key)}, o caminho passa a ser ${lower1(benefitAt(index))}.`, headline: condensePhrase(item, 36), topic: topicAt(index + 4) })),
       ],
       quotes: benefits.slice(0, 3).map((item, index) => ({ text: `“${sentence(item)} É esse o valor prático de ${lower1(mechanismAt(index))}.”` })),
-      marquee: [[key, "O que é", "Como funciona", "Benefício", "O custo de não ter"]],
+      marquee: [[key, ...terms, "Como funciona", "Na rotina", `Sem ${lower1(key)}`]],
       closings: benefits.slice(0, 3).map((item, index) => ({
         title: sentence(item),
-        sub: `${sentence(mechanismAt(index))} Sem essa funcionalidade, ${lower1(lossAt(index))}.`,
+        sub: `${sentence(mechanismAt(index))} Sem ${lower1(key)}, ${lower1(lossAt(index))}.`,
         cta,
       })),
       stories: scenes.slice(0, 3).map((item, index) => ({
         kicker: `${KEY} · ROTINA REAL`,
         title: sentence(item),
         beats: [sentence(lossAt(index)), sentence(mechanismAt(index))],
-        turn: `Com a funcionalidade, passa a ser possível ${lower1(benefitAt(index))}.`,
+        turn: `Com ${lower1(key)}, passa a ser possível ${lower1(benefitAt(index))}.`,
         moral: `${sentence(benefitAt(index))} Esse é o ganho concreto de ${lower1(key)}.`,
       })),
-      lists: [{ heading: `${key}: o que muda na prática`, items: carouselSlides.map((item) => `${item.heading}: ${item.body}`), closing: cta }],
+      lists: [{ heading: `${key}: o que muda na prática`, items: carouselSlides.map((item) => sentence(item.body)), closing: cta }],
       carousels: [{
-        id: `differential-${audience.id}`,
+        id: `editorial-${audience.id}`,
         kicker: KEY,
         title: `${key}: o que muda na rotina`,
         coverSub: sentence(audience.hook || whatItIs),
@@ -1678,18 +1695,23 @@ const applyAudience = (
 };
 
 /**
- * Recoloca os termos canônicos depois da variação linguística/aprendizado.
- * O texto pode variar, mas a palavra protagonista identifica necessariamente
- * a funcionalidade selecionada e cada peça curta ainda fecha mecanismo → ganho.
+ * FOCO EDITORIAL — vale para QUALQUER marca com linha editorial própria
+ * (diferenciais de um SaaS, serviços de uma clínica, produtos de uma loja).
+ *
+ * Recoloca os termos do tema depois da variação linguística/aprendizado. O texto
+ * pode variar, mas a palavra protagonista identifica necessariamente o tema
+ * escolhido e cada peça curta ainda fecha mecanismo → ganho → custo de não ter.
  */
-export const enforceDifferentialFocus = (
+export const enforceEditorialFocus = (
   content: WorldContent,
-  audience?: BrandAudience,
+  audience?: BrandAudience | null,
 ): WorldContent => {
   if (!audience?.editorialGroup) return content;
   const key = audienceKeyword(audience);
-  // Preserve pontuação significativa de termos canônicos, como "D.I.F.I.".
-  const terms = (audience.highlightTerms ?? [key]).map((term) => term.trim()).filter(Boolean);
+  const noun = editorialNoun(audience);
+  // `highlightTermsFor` preserva pontuação significativa, como "D.I.F.I.", e
+  // deriva termos do nome do tema quando a marca não preencheu a lista.
+  const terms = highlightTermsFor(audience);
   const mechanisms = (audience.proof ?? []).map(strip).filter(Boolean);
   const benefits = (audience.desires ?? []).map(strip).filter(Boolean);
   const losses = (audience.stakes ?? []).map(strip).filter(Boolean);
@@ -1714,16 +1736,19 @@ export const enforceDifferentialFocus = (
     return {
       kicker: key.toUpperCase(),
       word: term,
-      caption: `${sentence(mechanism)} Na prática, ${lower1(benefit)}. Sem a funcionalidade, ${lower1(loss)}.`,
+      caption: `${sentence(mechanism)} Na prática, ${lower1(benefit)}. Sem ${lower1(key)}, ${lower1(loss)}.`,
     };
   });
   return {
     ...content,
     typos,
     kinetic,
-    marquee: [[key, ...terms, "Como funciona", "Benefício prático", "Sem a funcionalidade"]],
+    marquee: [[key, ...terms, "Como funciona", "Benefício prático", `Sem essa ${noun}`]],
   };
 };
+
+/** Nome anterior, mantido para não quebrar chamadas existentes. */
+export const enforceDifferentialFocus = enforceEditorialFocus;
 
 
 /**

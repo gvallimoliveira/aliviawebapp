@@ -52,7 +52,7 @@ import { voiceRegister } from "@/pages/studio/lexicon";
 import { varyContent } from "@/pages/studio/vary";
 import { usePhraseMemory } from "./usePhraseMemory";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
-import { buildSegmentContent, brandSlogan, enforceDifferentialFocus, relationForSegment, pickGlobalAudience } from "./brandContent";
+import { buildSegmentContent, brandSlogan, enforceEditorialFocus, relationForSegment, pickGlobalAudience } from "./brandContent";
 import { useSegmentMemory } from "./useSegmentMemory";
 import { planBatch, planMultiSegmentBatch } from "./director";
 import { formatInsightWords, readFormatInsights } from "./formatInsights";
@@ -79,11 +79,12 @@ import {
   audienceKeyword,
   audiencesWithSlogan,
   buildSegments,
+  editorialAudienceIds,
+  slugifySegment,
   readAudiences,
   resolveAudience,
   type ContentAngle,
 } from "./audiences";
-import { isAliviaDifferential } from "./aliviaDifferentials";
 import { enforceRationale, explainArt, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
 import { hasBannedJargon } from "@/pages/studio/persuasion";
 import {
@@ -445,11 +446,19 @@ const StudioProCreate = ({
     return { regular, grouped: [...grouped.entries()] };
   }, [segments]);
   const [segment, setSegment] = useState<string>(restored.current.segment ?? GLOBAL_SEGMENT);
+  /**
+   * Temas da linha editorial da marca (diferenciais de um SaaS, serviços de uma
+   * clínica, produtos de uma loja). Só aqui a seleção é múltipla.
+   */
+  const editorialIds = useMemo(() => new Set(editorialAudienceIds(audiences)), [audiences]);
+  const editorialIdsRef = useRef(editorialIds);
+  editorialIdsRef.current = editorialIds;
   const [differentialSegments, setDifferentialSegments] = useState<string[]>(() => {
     const saved = restored.current.differentialSegments ?? [];
-    if (saved.length) return saved.filter(isAliviaDifferential);
+    const known = editorialIdsRef.current;
+    if (saved.length) return saved.filter((id) => known.has(id));
     const legacy = restored.current.segment;
-    return legacy && isAliviaDifferential(legacy) ? [legacy] : [];
+    return legacy && known.has(legacy) ? [legacy] : [];
   });
   const [differentialsOpen, setDifferentialsOpen] = useState(restored.current.differentialsOpen ?? true);
   const [angle, setAngle] = useState<ContentAngle>(restored.current.angle ?? "informar");
@@ -478,7 +487,7 @@ const StudioProCreate = ({
     setSegment(id);
   };
   const toggleDifferential = (id: string) => {
-    if (!isAlivia || !isAliviaDifferential(id) || !segments.some((item) => item.id === id)) return;
+    if (!editorialIds.has(id) || !segments.some((item) => item.id === id)) return;
     const next = differentialSegments.includes(id)
       ? differentialSegments.filter((item) => item !== id)
       : [...differentialSegments, id];
@@ -488,9 +497,10 @@ const StudioProCreate = ({
 
   // Se o público ativo deixa de existir (edição do kit), volta para o 360°.
   const activeSegment = segments.some((s) => s.id === segment) ? segment : GLOBAL_SEGMENT;
-  const selectedDifferentials = useMemo(() => isAlivia
-    ? differentialSegments.filter((id) => segments.some((item) => item.id === id) && isAliviaDifferential(id))
-    : [], [isAlivia, differentialSegments, segments]);
+  const selectedDifferentials = useMemo(
+    () => differentialSegments.filter((id) => segments.some((item) => item.id === id) && editorialIds.has(id)),
+    [differentialSegments, segments, editorialIds],
+  );
   const generationSegments = selectedDifferentials.length ? selectedDifferentials : [activeSegment];
   const generationKey = generationSegments.join("+");
 
@@ -634,7 +644,7 @@ const StudioProCreate = ({
     // O aprendizado geral da marca pode mencionar outro recurso. Diferenciais
     // são fechados: preservamos o texto do próprio pacote e recolocamos seus
     // termos canônicos depois da variação.
-    const focused = enforceDifferentialFocus(varied, resolveAudience(audiences, id));
+    const focused = enforceEditorialFocus(varied, resolveAudience(audiences, id));
     return {
       id,
       content: enforceSegmentAudienceScope(focused, id, audiences),
@@ -1662,7 +1672,10 @@ const StudioProCreate = ({
               </Button>
             ))}
           </div>
-          {segmentGroups.grouped.map(([group, items]) => (
+          {segmentGroups.grouped.map(([group, items]) => {
+            const panelId = `studio-editorial-${slugifySegment(group)}`;
+            const chosen = items.filter((item) => selectedDifferentials.includes(item.id)).length;
+            return (
             <div key={group} className="mt-2 border-l-2 border-primary/35 pl-2.5">
               <Button
                 type="button"
@@ -1670,14 +1683,14 @@ const StudioProCreate = ({
                 variant="ghost"
                 className="mb-1 h-7 w-full justify-between px-1 text-[10px] font-semibold uppercase text-muted-foreground"
                 aria-expanded={differentialsOpen}
-                aria-controls="studio-differentials"
+                aria-controls={panelId}
                 onClick={() => setDifferentialsOpen((open) => !open)}
               >
-                <span>{group} <span className="normal-case font-normal">· {selectedDifferentials.length ? `${selectedDifferentials.length} selecionado${selectedDifferentials.length > 1 ? "s" : ""}` : "escolha um ou mais"}</span></span>
+                <span>{group} <span className="normal-case font-normal">· {chosen ? `${chosen} selecionado${chosen > 1 ? "s" : ""}` : "escolha um ou mais"}</span></span>
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${differentialsOpen ? "rotate-180" : ""}`} />
               </Button>
               {differentialsOpen && (
-                <div id="studio-differentials" className="flex flex-wrap gap-1.5">
+                <div id={panelId} className="flex flex-wrap gap-1.5">
                   {items.map((s) => (
                     <Button
                       key={s.id}
@@ -1692,7 +1705,8 @@ const StudioProCreate = ({
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
           {/* Ângulo estratégico: informar (sem dar aula), dor, desejo ou venda. */}
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {ANGLES.map((a) => (

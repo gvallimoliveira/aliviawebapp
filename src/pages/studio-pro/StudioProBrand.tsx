@@ -42,7 +42,11 @@ import type { ComposedBlock } from "@/studio-core";
 import BrandColorFields from "./BrandColorFields";
 import BrandAssetsFields, { type BrandDoc } from "./BrandAssetsFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
-import { matrixAudiences, readAudiences, writeAudiences, type BrandAudience } from "./audiences";
+import { highlightTermsFor, matrixAudiences, readAudiences, writeAudiences, type BrandAudience } from "./audiences";
+
+/** Sugestão de termos de destaque a partir do nome/palavra-chave do tema. */
+const suggestHighlightTerms = (a: BrandAudience): string[] =>
+  highlightTermsFor({ ...a, highlightTerms: undefined });
 import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
 import BrandMembersCard from "./BrandMembersCard";
@@ -1377,6 +1381,46 @@ const StudioProBrand = () => {
                           value={a.hook ?? ""}
                           onChange={(e) => updateAudience(i, { hook: e.target.value })}
                         />
+                      </div>
+                    </div>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <div>
+                        <Label htmlFor={`edit-group-${a.id}`} className="text-[11px]">
+                          Linha editorial (opcional)
+                        </Label>
+                        <Input
+                          id={`edit-group-${a.id}`}
+                          placeholder="Ex.: Serviços da clínica, Tratamentos, Produtos"
+                          value={a.editorialGroup ?? ""}
+                          onChange={(e) => updateAudience(i, { editorialGroup: e.target.value })}
+                        />
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Com um nome aqui, este item deixa de ser público e passa a ser um TEMA: a arte fala só
+                          dele (o que é, como funciona, o ganho e o custo de não ter) e você pode escolher vários
+                          temas do mesmo grupo na geração.
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-highlight-${a.id}`} className="text-[11px]">
+                          Termos de destaque (separados por vírgula)
+                        </Label>
+                        <Input
+                          id={`edit-highlight-${a.id}`}
+                          placeholder={`Ex.: ${suggestHighlightTerms(a).join(", ")}`}
+                          value={(a.highlightTerms ?? []).join(", ")}
+                          onChange={(e) =>
+                            updateAudience(i, {
+                              highlightTerms: e.target.value
+                                .split(",")
+                                .map((term) => term.trim())
+                                .filter(Boolean),
+                            })
+                          }
+                        />
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Só estes termos podem virar a palavra gigante da arte. Em branco, o motor usa o nome do
+                          tema: {suggestHighlightTerms(a).join(" · ")}.
+                        </p>
                       </div>
                     </div>
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">

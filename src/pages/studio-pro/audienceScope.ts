@@ -40,6 +40,15 @@ const words = (text: string) =>
     .split(/[^a-z0-9]+/)
     .filter((w) => w.length >= 5 && !GENERIC.has(w));
 
+/**
+ * Palavras de TEMA editorial: aceitam 4 letras, porque siglas de produto como
+ * "sRPE", "HEP" ou "NPS" identificam um assunto inteiro.
+ */
+const termWords = (text: string) =>
+  norm(text)
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 4 && !GENERIC.has(w));
+
 /** Chaves estruturais: nunca são texto visível de arte. */
 const SKIP_KEYS = new Set(["id", "label", "topic", "topics", "poster", "image", "hashtags", "value", "prefix", "suffix"]);
 
@@ -78,6 +87,32 @@ export const foreignAudienceWords = (audience: BrandAudience, all: BrandAudience
   return [...foreign];
 };
 
+/**
+ * Palavras que identificam os temas IRMÃOS da mesma linha editorial e não
+ * pertencem ao tema ativo. Ex.: numa arte de "Avaliação externa por IA", termos
+ * como "periodização" ou "sRPE" (de outros temas) saem do acervo.
+ */
+export const foreignEditorialWords = (audience: BrandAudience, all: BrandAudience[]): string[] => {
+  const group = audience.editorialGroup?.trim();
+  if (!group) return [];
+  const ownText = [audience.label, audience.keyword, audience.description, ...(audience.highlightTerms ?? [])]
+    .filter(Boolean)
+    .join(" ");
+  const own = new Set(termWords(ownText));
+  const foreign = new Set<string>();
+  all
+    .filter((item) => item.id !== audience.id && item.editorialGroup?.trim() === group)
+    .forEach((item) => {
+      [item.label, item.keyword, ...(item.highlightTerms ?? [])]
+        .filter(Boolean)
+        .flatMap((text) => termWords(String(text)))
+        .forEach((w) => {
+          if (!own.has(w)) foreign.add(w);
+        });
+    });
+  return [...foreign];
+};
+
 export type AudienceScope = {
   /** Verdadeiro quando o texto pertence a outro público/tema. */
   foreign: (text: string) => boolean;
@@ -92,6 +127,18 @@ export const buildAudienceScope = (audience: BrandAudience, all: BrandAudience[]
       if (!text || text.length < 3) return false;
       if (clinical.some((re) => re.test(text))) return true;
       const bag = new Set(words(text));
+      return alien.some((w) => bag.has(w));
+    },
+  };
+};
+
+/** Escopo de um tema editorial: bloqueia só o vocabulário dos temas irmãos. */
+export const buildEditorialScope = (audience: BrandAudience, all: BrandAudience[]): AudienceScope => {
+  const alien = foreignEditorialWords(audience, all);
+  return {
+    foreign: (text: string) => {
+      if (!text || text.length < 3 || !alien.length) return false;
+      const bag = new Set(termWords(text));
       return alien.some((w) => bag.has(w));
     },
   };
@@ -116,16 +163,25 @@ const flatten = (value: unknown): string => {
  */
 export const enforceAudienceScope = <T,>(content: T, audience: BrandAudience, all: BrandAudience[]): T => {
   /**
-   * Diferenciais já nascem de um acervo fechado e compartilham termos de
-   * produto entre si. O filtro lexical de públicos confundia esse vocabulário
-   * comum com vazamento e removia, por exemplo, o slide de benefício.
+   * TEMA EDITORIAL (diferencial de um SaaS, serviço de uma clínica, produto de
+   * uma loja): o acervo já é fechado e os temas irmãos compartilham vocabulário
+   * de produto. Aqui não se aplica o filtro clínico/de públicos — o que se
+   * bloqueia é o vocabulário EXCLUSIVO dos temas irmãos do mesmo grupo, para a
+   * arte de um assunto nunca citar o assunto vizinho.
    */
-  if (audience.editorialGroup) return content;
-  const scope = buildAudienceScope(audience, all);
+  const scope = audience.editorialGroup
+    ? buildEditorialScope(audience, all)
+    : buildAudienceScope(audience, all);
   const key = (audience.keyword || audience.label || "").trim();
 
   const walk = (value: unknown, path = ""): unknown => {
     if (Array.isArray(value)) {
+      /**
+       * Slides de carrossel são o arco (o que é → como funciona → ganho → custo
+       * de não ter). Remover um deles quebraria a progressão, então o arco é
+       * preservado inteiro.
+       */
+      if (path === "slides" || path === "beats") return value.map((item) => walk(item, path));
       const kept = value.filter((item) => !scope.foreign(flatten(item)));
       const pool = kept.length ? kept : path === "kickers" && key ? [key.toUpperCase()] : value;
       return pool.map((item) => walk(item, path));
