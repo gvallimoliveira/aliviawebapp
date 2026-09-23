@@ -41,7 +41,7 @@ import { carouselClosingCopy, carouselCoverCopy, isOrphanCommand, joinCopyParts 
 import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
-import { buildArc, checkArc } from "./narrativeArc";
+import { buildArc, checkArc, textSimilarity } from "./narrativeArc";
 import { finalizeBrandVoice } from "./veterinaryVoice";
 
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
@@ -222,7 +222,10 @@ export const directCarouselWithHook = (
   if (!hookTitle || !usableHook) return carousel;
 
   const originalThesis = stripEnd(carousel.title);
-  const titleSource = hookTitle;
+  // Sem rota estruturada, preserva o comportamento dos acervos legados: a
+  // parte forte é a capa e a tese original faz a ponte para o miolo.
+  const compactStrong = cleanLine(hook.strong);
+  const titleSource = compactStrong.length >= 12 ? compactStrong : hookTitle;
   /* Uma capa não carrega gancho + explicação + tese. A tese do roteiro é a
      ponte única; detalhes do gancho permanecem para a legenda e o miolo. */
   const cover = carouselCoverCopy(titleSource, originalThesis || hook.sub || carousel.coverSub);
