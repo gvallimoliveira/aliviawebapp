@@ -773,7 +773,7 @@ const FALLBACKS: BlockKind[] = ["typo", "hero", "mono", "closing"];
  */
 export const enforceRationale = (
   blocks: ComposedBlock[],
-  ctx: RationaleContext,
+  ctx: RationaleContext | ((index: number) => RationaleContext),
   /**
    * TEXTO PREVISTO DE CADA ARTE (diretor criativo). Com ele o filtro julga a
    * arte COM as frases na mão — antes ele julgava em branco, e as checagens de
@@ -781,6 +781,7 @@ export const enforceRationale = (
    */
   copyOf?: (index: number) => string[],
 ): { blocks: ComposedBlock[]; rationales: ArtRationale[]; fixed: number; gaps: string[] } => {
+  const contextFor = (index: number) => typeof ctx === "function" ? ctx(index) : ctx;
   const gapSet = new Set<string>();
   let fixed = 0;
   const detailFor = (index: number): ArtDetail | undefined => {
@@ -808,7 +809,7 @@ export const enforceRationale = (
      * leitura total não fecha.
      */
     const combinedCopy = run.flatMap((index) => copyOf?.(index) ?? []);
-    const sequence = explainArt(blocks[run[0]], ctx, {
+    const sequence = explainArt(blocks[run[0]], contextFor(run[0]), {
       index: run[0],
       total: blocks.length,
       copy: combinedCopy,
@@ -832,16 +833,16 @@ export const enforceRationale = (
       const loose = { ...block, slide: undefined };
       const solo =
         FALLBACKS.map((kind) => ({ ...loose, kind }))
-          .find((candidate) => explainArt(candidate, ctx, detail).ok) ?? { ...loose, kind: FALLBACKS[0] };
+          .find((candidate) => explainArt(candidate, contextFor(index), detail).ok) ?? { ...loose, kind: FALLBACKS[0] };
       fixed += 1;
       return solo;
     }
-    const first = explainArt(block, ctx, detail);
+    const first = explainArt(block, contextFor(index), detail);
     if (first.ok || block.slide) return block;
     first.gaps.forEach((g) => gapSet.add(g));
 
     const replacement = FALLBACKS.map((kind) => ({ ...block, kind, motion: block.motion }))
-      .find((candidate) => explainArt(candidate, ctx, detail).ok);
+      .find((candidate) => explainArt(candidate, contextFor(index), detail).ok);
     if (!replacement) return block;
     fixed += 1;
     return replacement;
@@ -849,7 +850,7 @@ export const enforceRationale = (
 
   return {
     blocks: out,
-    rationales: out.map((block, index) => explainArt(block, ctx, detailFor(index))),
+    rationales: out.map((block, index) => explainArt(block, contextFor(index), detailFor(index))),
     fixed,
     gaps: [...gapSet],
   };
