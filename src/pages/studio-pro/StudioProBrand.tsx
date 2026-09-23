@@ -42,7 +42,7 @@ import type { ComposedBlock } from "@/studio-core";
 import BrandColorFields from "./BrandColorFields";
 import BrandAssetsFields, { type BrandDoc } from "./BrandAssetsFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
-import { matrixAudiences, readAudiences, writeAudiences, type BrandAudience } from "./audiences";
+import { highlightTermsFor, matrixAudiences, readAudiences, writeAudiences, type BrandAudience } from "./audiences";
 import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
 import BrandMembersCard from "./BrandMembersCard";
