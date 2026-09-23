@@ -263,6 +263,10 @@ export const audienceAncestors = (list: BrandAudience[], id: string): BrandAudie
 export const resolveAudience = (list: BrandAudience[], id: string): BrandAudience | null => {
   const own = list.find((a) => a.id === id);
   if (!own) return null;
+  // Grupos editoriais usam `parentId` apenas para organização e contexto de
+  // produto. Seu repertório é autossuficiente: herdar dores, objeções ou provas
+  // do público matriz mistura funcionalidades diferentes na mesma arte.
+  if (own.editorialGroup) return own;
   const chain = audienceAncestors(list, id);
   if (!chain.length) return own;
   const inherit = (key: "pains" | "desires" | "proof" | "scenes" | "objections" | "stakes" | "triggers") => {

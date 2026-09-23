@@ -1182,13 +1182,17 @@ const applyAudience = (
   const desireNoms = nominalList(desires);
   const nomPain = (i: number, fallback: string) => painNoms[i] ?? nominal(pains[i], fallback);
   const proof = lead(audience.proof ?? [], relation?.proof);
+  const objections = lead(audience.objections ?? [], relation?.route?.objection);
   const cta = relation?.cta || audience.cta?.trim() || "Falar com a gente";
   const desc = audience.description?.trim();
   /**
    * Comunicação dirigida: sub-nicho — ou qualquer público com acervo próprio —
    * reduz o acervo neutro a uma cauda curta, para não diluir a mensagem.
    */
-  const tail = <T,>(list: T[]) => list.slice(0, 1);
+  // Diferenciais editoriais têm repertório canônico completo. Uma cauda do
+  // acervo geral pode introduzir outro recurso na arte; por isso, só públicos
+  // comuns recebem uma pequena sobra genérica para variedade.
+  const tail = <T,>(list: T[]) => audience.editorialGroup ? [] : list.slice(0, 1);
 
 
   const headlines = [
@@ -1557,11 +1561,15 @@ const applyAudience = (
       ...base.sales,
       audience: `${who} (${key})`,
       proofs: proof.length ? proof : base.sales.proofs,
-      objections: pains.length
-        ? [`Você já tentou e não deu certo? O problema era ${lower1(nomPain(0, "o improviso"))}.`, ...base.sales.objections]
-        : base.sales.objections,
-      ctas: [cta, ...base.sales.ctas],
-      hashtags: [...new Set([key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), ...base.sales.hashtags])],
+      objections: audience.editorialGroup
+        ? objections
+        : pains.length
+          ? [`Você já tentou e não deu certo? O problema era ${lower1(nomPain(0, "o improviso"))}.`, ...base.sales.objections]
+          : base.sales.objections,
+      ctas: audience.editorialGroup ? [cta] : [cta, ...base.sales.ctas],
+      hashtags: audience.editorialGroup
+        ? [key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()]
+        : [...new Set([key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase(), ...base.sales.hashtags])],
     },
   };
 };

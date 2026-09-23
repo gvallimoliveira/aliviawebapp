@@ -70,6 +70,7 @@ import { buildBrandThemeStyle } from "./brandTheme";
 import { ensureFontLoaded } from "./brandFonts";
 
 import {
+  ALIVIA_AUDIENCES,
   ANGLES,
   GLOBAL_SEGMENT,
   audienceAncestors,
@@ -424,8 +425,8 @@ const StudioProCreate = ({
    * quando a marca tem slogan preenchido; sem slogan ele fica inativo).
    */
   const audiences = useMemo(
-    () => audiencesWithSlogan(readAudiences(brand.audiences), brand.slogan),
-    [brand.audiences, brand.slogan],
+    () => audiencesWithSlogan(isAlivia ? ALIVIA_AUDIENCES : readAudiences(brand.audiences), brand.slogan),
+    [brand.audiences, brand.slogan, isAlivia],
   );
   const segments = useMemo(() => buildSegments(audiences), [audiences]);
   const segmentGroups = useMemo(() => {

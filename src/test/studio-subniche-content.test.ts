@@ -9,14 +9,16 @@ import {
 } from "@/pages/studio-pro/audiences";
 import { buildSegmentContent } from "@/pages/studio-pro/brandContent";
 import { ALIVIA_DIFFERENTIALS, ALIVIA_DIFFERENTIAL_GROUP } from "@/pages/studio-pro/aliviaDifferentials";
+import { buildNarrativeRoute } from "@/pages/studio-pro/synapses";
+import { buildBrandDna } from "@/pages/studio-pro/brandDnaKit";
 
 const kit = { name: "Aliv.iA", niche: "fisioterapia", tone: "próximo e técnico", description: "", keywords: [] };
 const SUBS = ["paciente-dor-cronica", "paciente-pos-operatorio", "paciente-atleta-amador", "paciente-60-mais"];
 
 describe("sub-nichos no motor criativo", () => {
-  it("mantém quatro públicos oficiais e agrupa os dez diferenciais à parte", () => {
+  it("mantém quatro públicos oficiais e agrupa os doze diferenciais à parte", () => {
     expect(officialAudienceCount(ALIVIA_AUDIENCES)).toBe(4);
-    expect(ALIVIA_DIFFERENTIALS).toHaveLength(10);
+    expect(ALIVIA_DIFFERENTIALS).toHaveLength(12);
     expect(ALIVIA_DIFFERENTIALS.every((item) => item.editorialGroup === ALIVIA_DIFFERENTIAL_GROUP)).toBe(true);
     expect(ALIVIA_DIFFERENTIALS.every((item) => item.parentId === "pro" || item.parentId === "clinica")).toBe(true);
   });
@@ -36,6 +38,8 @@ describe("sub-nichos no motor criativo", () => {
       expect(content.sales.ctas.map((cta) => cta.toLowerCase())).toContain(item.cta!.toLowerCase());
       expect(content.closings.some((closing) => closing.cta.toLowerCase() === item.cta!.toLowerCase())).toBe(true);
       expect(blob).not.toContain("slogan em destaque");
+      expect(blob).not.toContain("vou perder tempo aprendendo a usar mais um sistema");
+      expect(blob).not.toContain("dor mapeada por mecanismo, não só por intensidade");
     }
   });
 
@@ -48,6 +52,40 @@ describe("sub-nichos no motor criativo", () => {
       variationSeed: "hep-fixed",
     };
     expect(buildSegmentContent(input)).toEqual(buildSegmentContent(input));
+  });
+
+  it("mantém segurança e revisão profissional nos dois novos diferenciais", () => {
+    const redFlags = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-red-flags");
+    const external = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-avaliacao-externa-ia");
+
+    expect(redFlags?.description).toContain("sob ressalva");
+    expect(redFlags?.description).toContain("interrompe o fluxo autônomo");
+    expect(JSON.stringify(redFlags)).not.toMatch(/blindagem jurídica|risco zero|garantia/i);
+
+    expect(external?.description).toContain("revisão, edição e confirmação profissional");
+    expect(external?.proof).toContain("Leitura combinada de até cinco PDFs ou imagens");
+    expect(JSON.stringify(external)).not.toMatch(/diagnóstico definitivo|salva automaticamente|sem revisão/i);
+  });
+
+  it("isola diferenciais do repertório genérico da marca", () => {
+    const audience = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-avaliacao-externa-ia");
+    const dna = buildBrandDna({
+      niche: "fisioterapia",
+      tone: "próximo e técnico",
+      description: "Dor mapeada por mecanismo, não só por intensidade",
+      briefAnswers: { objection: "Vou perder tempo aprendendo a usar mais um sistema" },
+    });
+    const route = buildNarrativeRoute({
+      audience,
+      audiences: ALIVIA_AUDIENCES,
+      dna,
+      brand: "Aliv.iA",
+      seed: "external-isolated",
+    });
+
+    expect(route.methodPlain).toBeUndefined();
+    expect(route.feature).not.toMatch(/dor mapeada por mecanismo/i);
+    expect(route.objection).not.toMatch(/vou perder tempo aprendendo/i);
   });
 
   it("resolve herança do público matriz", () => {

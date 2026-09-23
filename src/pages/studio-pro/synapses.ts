@@ -156,12 +156,14 @@ export const buildNarrativeRoute = ({
   const pains = vestibular ? rawPains.filter((item) => !mentionsPainAsSymptom(item)) : rawPains;
   const desires = ownFirst(first(audience?.desires), dna.desire);
   const proofs = ownFirst(first(audience?.proof), dna.belief);
-  const features = [clean(dna.offer), ...proofs].filter(Boolean);
+  const features = audience?.editorialGroup
+    ? proofs
+    : [clean(dna.offer), ...proofs].filter(Boolean);
   const scenes = ownFirst(first(audience?.scenes), dna.scene);
   const objections = ownFirst(first(audience?.objections), dna.objection);
   const stakesPool = ownFirst(first(audience?.stakes), dna.stakes);
   const triggerPool = first(audience?.triggers);
-  const enemy = clean(dna.enemy) || undefined;
+  const enemy = audience?.editorialGroup ? undefined : clean(dna.enemy) || undefined;
   const matrix = pickMatrixContext({
     keywordMatrix,
     reasoningMatrix,
@@ -196,7 +198,7 @@ export const buildNarrativeRoute = ({
         .sort((a, b) => b.score - a.score)[0]?.link ?? []
     : [];
   // STEPS e D.I.F.I deixam de ser sigla: entram traduzidos, na voz do público.
-  const methodPlain = isAlivia
+  const methodPlain = isAlivia && !audience?.editorialGroup
     ? methodPlainLine(`${routeSeed}:${audience?.id ?? "brand"}`, /paciente/i.test(audience?.id ?? "") ? "patient" : "pro")
     : undefined;
   const vocabulary = [...new Set([
