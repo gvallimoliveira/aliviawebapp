@@ -118,6 +118,43 @@ const inlineImages = async (node: HTMLElement) => {
     }),
   );
 
+  // <image> dentro de SVG (ex.: símbolo da marca no modelo das pedras): sem
+  // data URL o canvas fica "contaminado" ou o WebKit aborta a captura.
+  const svgImages = Array.from(node.querySelectorAll("svg image")) as SVGImageElement[];
+  await Promise.all(
+    svgImages.map(async (el) => {
+      const original = el.getAttribute("href") ?? el.getAttribute("xlink:href");
+      if (!original || original.startsWith("data:")) return;
+      let dataUrl = dataUrlCache.get(original);
+      if (!dataUrl) {
+        const controller = new AbortController();
+        const abort = window.setTimeout(() => controller.abort(), 6_000);
+        try {
+          const res = await fetch(original, { cache: "force-cache", signal: controller.signal });
+          if (!res.ok) throw new Error(`image-http-${res.status}`);
+          const blob = await res.blob();
+          dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+          });
+          dataUrlCache.set(original, dataUrl);
+        } catch {
+          // Sem como embutir: remove do clone para não derrubar o download.
+          el.remove();
+          return;
+        } finally {
+          window.clearTimeout(abort);
+        }
+      }
+      el.setAttribute("href", dataUrl);
+      el.removeAttribute("xlink:href");
+      restores.push(() => el.setAttribute("href", original));
+    }),
+  );
+
+
   // Safari precisa de um ciclo de pintura depois da troca do src. Sem isso, o
   // DOM exibe a imagem, mas o foreignObject usado pelo html-to-image a omite.
   await new Promise<void>((resolve) => {
