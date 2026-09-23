@@ -310,7 +310,12 @@ export const derivedAudiences = (list: BrandAudience[], parentId: string): Brand
   list.filter((a) => a.parentId?.trim() === parentId && a.id !== parentId);
 
 /** Número oficial de públicos da marca — sempre só os matriz. */
-export const officialAudienceCount = (list: BrandAudience[]): number => matrixAudiences(list).length;
+/**
+ * Temas de linha editorial (serviços, diferenciais, produtos) são organização de
+ * assunto, não público: nunca entram na métrica oficial de públicos da marca.
+ */
+export const officialAudienceCount = (list: BrandAudience[]): number =>
+  matrixAudiences(list).filter((a) => !a.editorialGroup?.trim()).length;
 
 /** Cadeia de ancestrais de um público (do pai direto até o matriz). */
 export const audienceAncestors = (list: BrandAudience[], id: string): BrandAudience[] => {
