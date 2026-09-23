@@ -7,7 +7,7 @@ import {
   audienceAncestors,
   officialAudienceCount,
 } from "@/pages/studio-pro/audiences";
-import { buildSegmentContent } from "@/pages/studio-pro/brandContent";
+import { buildSegmentContent, enforceDifferentialFocus } from "@/pages/studio-pro/brandContent";
 import { ALIVIA_DIFFERENTIALS, ALIVIA_DIFFERENTIAL_GROUP } from "@/pages/studio-pro/aliviaDifferentials";
 import { buildNarrativeRoute } from "@/pages/studio-pro/synapses";
 import { buildBrandDna } from "@/pages/studio-pro/brandDnaKit";
@@ -93,6 +93,42 @@ describe("sub-nichos no motor criativo", () => {
       expect(slides[0]?.body.length).toBeGreaterThan(40);
       expect(item.stakes!.some((stake) => JSON.stringify(content).toLowerCase().includes(stake.toLowerCase()))).toBe(true);
     }
+  });
+
+  it("usa somente termos canônicos da funcionalidade como palavra protagonista", () => {
+    for (const item of ALIVIA_DIFFERENTIALS) {
+      const content = enforceDifferentialFocus(buildSegmentContent({
+        kit,
+        audiences: ALIVIA_AUDIENCES,
+        segment: item.id,
+        angle: "informar",
+        variationSeed: `highlight:${item.id}`,
+      }), item);
+      const allowed = item.highlightTerms ?? [item.keyword!];
+
+      expect(content.typos.every((entry) => allowed.includes(entry.big))).toBe(true);
+      expect(content.kinetic.every((entry) => allowed.includes(entry.word))).toBe(true);
+      expect(content.typos.map((entry) => entry.big)).not.toContain("Benefício");
+      expect(content.typos.map((entry) => entry.big)).not.toContain("Prejuízo");
+      expect(content.kinetic.map((entry) => entry.word)).not.toContain("Funcionalidade");
+    }
+  });
+
+  it("fecha a explicação curta no mecanismo e benefício do mesmo diferencial", () => {
+    const external = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-avaliacao-externa-ia")!;
+    const content = enforceDifferentialFocus(buildSegmentContent({
+      kit,
+      audiences: ALIVIA_AUDIENCES,
+      segment: external.id,
+      angle: "venda",
+      variationSeed: "external-closed-package",
+    }), external);
+    const blob = JSON.stringify({ typos: content.typos, kinetic: content.kinetic }).toLowerCase();
+
+    expect(blob).toContain("avaliação externa");
+    expect(blob).toContain("pdf");
+    expect(blob).toContain("revis");
+    expect(blob).not.toMatch(/srpe|carga planejada|prontidão|periodização|hep em vídeo/);
   });
 
   it("permanece determinístico para o mesmo diferencial e seed", () => {

@@ -782,7 +782,7 @@ export const planBatch = (input: {
      * O vocabulário de nicho entra por cima de tudo: destaque, apoio, citação e
      * o glossário "o que é o quê" desta arte.
      */
-    const lexicon = carousel ? undefined : lexiconFor(index);
+    const lexicon = carousel || closedEditorial ? undefined : lexiconFor(index);
     if (lexicon) {
       const put = (slot: string, items: unknown[]) => {
         if (!items.length) return;
