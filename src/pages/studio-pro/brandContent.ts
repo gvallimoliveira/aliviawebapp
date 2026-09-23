@@ -1691,18 +1691,23 @@ const applyAudience = (
 };
 
 /**
- * Recoloca os termos canônicos depois da variação linguística/aprendizado.
- * O texto pode variar, mas a palavra protagonista identifica necessariamente
- * a funcionalidade selecionada e cada peça curta ainda fecha mecanismo → ganho.
+ * FOCO EDITORIAL — vale para QUALQUER marca com linha editorial própria
+ * (diferenciais de um SaaS, serviços de uma clínica, produtos de uma loja).
+ *
+ * Recoloca os termos do tema depois da variação linguística/aprendizado. O texto
+ * pode variar, mas a palavra protagonista identifica necessariamente o tema
+ * escolhido e cada peça curta ainda fecha mecanismo → ganho → custo de não ter.
  */
-export const enforceDifferentialFocus = (
+export const enforceEditorialFocus = (
   content: WorldContent,
-  audience?: BrandAudience,
+  audience?: BrandAudience | null,
 ): WorldContent => {
   if (!audience?.editorialGroup) return content;
   const key = audienceKeyword(audience);
-  // Preserve pontuação significativa de termos canônicos, como "D.I.F.I.".
-  const terms = (audience.highlightTerms ?? [key]).map((term) => term.trim()).filter(Boolean);
+  const noun = editorialNoun(audience);
+  // `highlightTermsFor` preserva pontuação significativa, como "D.I.F.I.", e
+  // deriva termos do nome do tema quando a marca não preencheu a lista.
+  const terms = highlightTermsFor(audience);
   const mechanisms = (audience.proof ?? []).map(strip).filter(Boolean);
   const benefits = (audience.desires ?? []).map(strip).filter(Boolean);
   const losses = (audience.stakes ?? []).map(strip).filter(Boolean);
