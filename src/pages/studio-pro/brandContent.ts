@@ -227,7 +227,9 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
     return words >= 4 && words <= 22 && !readsWell(raw);
   };
   const preserveEditorialCarousel = (item: unknown) =>
-    typeof item === "object" && item !== null && String((item as { id?: string }).id ?? "").startsWith("differential-");
+    typeof item === "object" &&
+    item !== null &&
+    /^(editorial|differential)-/.test(String((item as { id?: string }).id ?? ""));
   const purge = <T,>(list: T[]): T[] => {
     const kept = list.filter((item) => preserveEditorialCarousel(item) || !bad(textOf(item)));
     return kept.length ? kept : list.slice(0, 1);
