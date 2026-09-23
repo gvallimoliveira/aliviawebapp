@@ -1194,6 +1194,107 @@ const applyAudience = (
   // comuns recebem uma pequena sobra genérica para variedade.
   const tail = <T,>(list: T[]) => audience.editorialGroup ? [] : list.slice(0, 1);
 
+  /**
+   * DIFERENCIAL É PRODUTO, NÃO "PÚBLICO".
+   *
+   * A moldura genérica de público transformava uma funcionalidade em frases
+   * vagas como "feito para..." ou "pede método". Para um diferencial, todos os
+   * formatos partem da mesma sequência: o que é → como funciona → benefício →
+   * custo cotidiano de continuar sem ele. Nenhum acervo da marca entra aqui.
+   */
+  if (audience.editorialGroup) {
+    const mechanisms = proof.length ? proof : [desc ?? key];
+    const benefits = desires.length ? desires : [cta];
+    const losses = (audience.stakes ?? []).map(strip).filter(Boolean);
+    const scenes = (audience.scenes ?? []).map(strip).filter(Boolean);
+    const whatItIs = desc || `${key} é uma funcionalidade do ${brand}.`;
+    const benefitAt = (index: number) => benefits[index % benefits.length];
+    const lossAt = (index: number) => losses[index % Math.max(1, losses.length)] || pains[index % Math.max(1, pains.length)] || whatItIs;
+    const mechanismAt = (index: number) => mechanisms[index % mechanisms.length];
+    const sceneAt = (index: number) => scenes[index % Math.max(1, scenes.length)] || pains[index % Math.max(1, pains.length)] || whatItIs;
+    const carouselSlides = [
+      { heading: "O que é", body: sentence(whatItIs) },
+      { heading: "Como funciona", body: sentence(mechanismAt(0)) },
+      { heading: "O benefício no dia a dia", body: sentence(benefitAt(0)) },
+      { heading: "Sem essa funcionalidade", body: sentence(lossAt(0)) },
+    ];
+
+    return {
+      ...base,
+      label: `${brand} · ${who}`,
+      kickers: [KEY, `${KEY} · COMO FUNCIONA`, `${KEY} · NO DIA A DIA`],
+      headlines: [
+        { strong: key, rest: `— ${lower1(whatItIs)}` },
+        ...mechanisms.slice(0, 3).map((item) => ({ strong: `${key} na prática`, rest: `— ${lower1(item)}.` })),
+        ...benefits.slice(0, 2).map((item) => ({ strong: `Com ${lower1(key)}`, rest: `, ${lower1(item)}.` })),
+        ...losses.slice(0, 2).map((item) => ({ strong: `Sem ${lower1(key)}`, rest: `, ${lower1(item)}.` })),
+      ],
+      subs: [
+        whatItIs,
+        ...mechanisms.map((item, index) => `${sentence(item)} Na prática, isso permite ${lower1(benefitAt(index))}.`),
+        ...losses.map((item) => `Sem essa funcionalidade, ${lower1(item)}.`),
+      ],
+      typos: [
+        { lead: "O diferencial", big: condensePhrase(key, 24), tail: sentence(mechanismAt(0)) },
+        { lead: "Sem essa função", big: "prejuízo", tail: sentence(lossAt(0)) },
+        { lead: "Na rotina", big: "benefício", tail: sentence(benefitAt(0)) },
+      ],
+      kinetic: benefits.slice(0, 3).map((item, index) => ({
+        kicker: KEY,
+        word: condensePhrase(index === 0 ? "Funcionalidade" : "Benefício", 20),
+        caption: `${sentence(mechanismAt(index))} Isso permite ${lower1(item)}.`,
+      })),
+      metrics: [],
+      stats: [],
+      triptychs: [],
+      compare: [{
+        title: `${key}: com e sem a funcionalidade`,
+        before: losses.length ? losses : pains,
+        after: benefits,
+      }],
+      journeys: [],
+      features: [
+        { tag: KEY, title: "O que é", description: sentence(whatItIs), headline: condensePhrase(key, 36), topic: topicAt(0) },
+        ...mechanisms.slice(0, 3).map((item, index) => ({ tag: `${KEY} · COMO FUNCIONA`, title: sentence(item), description: `Esse mecanismo permite ${lower1(benefitAt(index))}.`, headline: condensePhrase(item, 36), topic: topicAt(index + 1) })),
+        ...losses.slice(0, 2).map((item, index) => ({ tag: `${KEY} · SEM ESSA FUNÇÃO`, title: sentence(item), description: `Com ${lower1(key)}, o caminho passa a ser ${lower1(benefitAt(index))}.`, headline: condensePhrase(item, 36), topic: topicAt(index + 4) })),
+      ],
+      quotes: benefits.slice(0, 3).map((item, index) => ({ text: `“${sentence(item)} É esse o valor prático de ${lower1(mechanismAt(index))}.”` })),
+      marquee: [[key, "O que é", "Como funciona", "Benefício", "O custo de não ter"]],
+      closings: benefits.slice(0, 3).map((item, index) => ({
+        title: sentence(item),
+        sub: `${sentence(mechanismAt(index))} Sem essa funcionalidade, ${lower1(lossAt(index))}.`,
+        cta,
+      })),
+      stories: scenes.slice(0, 3).map((item, index) => ({
+        kicker: `${KEY} · ROTINA REAL`,
+        title: sentence(item),
+        beats: [sentence(lossAt(index)), sentence(mechanismAt(index))],
+        turn: `Com a funcionalidade, passa a ser possível ${lower1(benefitAt(index))}.`,
+        moral: `${sentence(benefitAt(index))} Esse é o ganho concreto de ${lower1(key)}.`,
+      })),
+      lists: [{ heading: `${key}: o que muda na prática`, items: carouselSlides.map((item) => `${item.heading}: ${item.body}`), closing: cta }],
+      carousels: [{
+        id: `differential-${audience.id}`,
+        kicker: KEY,
+        title: `${key}: o que muda na rotina`,
+        coverSub: sentence(audience.hook || whatItIs),
+        slides: carouselSlides,
+        cta: { title: sentence(benefitAt(0)), sub: cta },
+      }],
+      hooks: [],
+      searchQueries: [key, ...mechanisms, ...benefits],
+      sales: {
+        ...base.sales,
+        audience: who,
+        proofs: mechanisms.map((item, index) => `${sentence(item)} Benefício: ${lower1(benefitAt(index))}.`),
+        objections,
+        offers: [],
+        ctas: [cta],
+        hashtags: [key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()],
+      },
+    };
+  }
+
 
   const headlines = [
     ...painNoms.slice(0, 3).map((p) => ({ strong: key, rest: `— ${lower1(p)} não precisa ser a sua rotina.` })),
@@ -1895,8 +1996,9 @@ export const buildSegmentContent = ({
             .filter(Boolean)
             .join(" · "),
         );
+    const angled = audience?.editorialGroup ? content : applyAngle(content, angle, relation, brand);
     const done = applyTerminology(
-      sanitizeContent(applyAngle(content, angle, relation, brand), dna.forbidden),
+      sanitizeContent(angled, dna.forbidden),
       { patientVoice },
     );
 

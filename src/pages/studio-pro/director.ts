@@ -430,6 +430,65 @@ export type BatchDirection = {
   /** Radiografia do lote: é o que alimenta a otimização contínua do motor. */
   report: () => { arts: number; distinct: number; repeated: number; arcIncomplete: number; dominantRoute: number };
 
+  /** Segmento editorial efetivamente usado por uma arte. */
+  segmentFor?: (index: number) => string | undefined;
+
+};
+
+/**
+ * Distribui uma seleção de diferenciais pela geração sem fundir seus acervos.
+ * Cada arte recebe um diretor completo; todos os slides do mesmo carrossel
+ * compartilham a mesma origem editorial.
+ */
+export const planMultiSegmentBatch = (input: {
+  sources: { id: string; content: WorldContent; relation: Relation }[];
+  count: number;
+  blocks?: ComposedBlock[];
+  seed: string;
+  dna?: BrandDna;
+  brief?: BrandBrief;
+  weightOf?: (signature: string) => number;
+  learnedVoice?: string[];
+  domain?: string;
+  brandName?: string;
+}): BatchDirection => {
+  const { sources, count, blocks, seed, ...shared } = input;
+  if (sources.length <= 1) {
+    const source = sources[0];
+    const single = planBatch({ content: source.content, relation: source.relation, count, blocks, seed, ...shared });
+    return { ...single, segmentFor: () => source.id };
+  }
+  const directions = sources.map((source) => ({
+    id: source.id,
+    direction: planBatch({ content: source.content, relation: source.relation, count, blocks, seed: `${seed}:${source.id}`, ...shared }),
+  }));
+  const unitIndex = new Map<string, number>();
+  let nextUnit = 0;
+  const sourceIndexFor = (index: number) => {
+    const block = blocks?.[index];
+    const unit = block?.slide ? `carousel:${block.slide.group}` : `art:${index}`;
+    if (!unitIndex.has(unit)) unitIndex.set(unit, nextUnit++);
+    return (unitIndex.get(unit) ?? index) % sources.length;
+  };
+  const pick = (index: number) => directions[sourceIndexFor(index)] ?? directions[0];
+  const shots = Array.from({ length: Math.max(0, count) }, (_, index) => pick(index).direction.shotFor(index)).filter((shot): shot is ArtShot => Boolean(shot));
+  return {
+    shots,
+    shotFor: (index) => pick(index).direction.shotFor(index),
+    copyOf: (index) => pick(index).direction.copyOf(index),
+    contentFor: (index) => pick(index).direction.contentFor(index),
+    segmentFor: (index) => pick(index).id,
+    report: () => {
+      const reports = directions.map(({ direction }) => direction.report());
+      return reports.reduce((sum, item) => ({
+        arts: sum.arts + item.arts,
+        distinct: sum.distinct + item.distinct,
+        repeated: sum.repeated + item.repeated,
+        arcIncomplete: sum.arcIncomplete + item.arcIncomplete,
+        dominantRoute: Math.max(sum.dominantRoute, item.dominantRoute),
+      }), { arts: 0, distinct: 0, repeated: 0, arcIncomplete: 0, dominantRoute: 0 });
+    },
+  };
 };
 
 /** Vocabulário da própria marca: reforça candidatos que soam como ela. */
