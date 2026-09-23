@@ -64,6 +64,7 @@ const PhotoTypeBlock = ({ content, rng, treatment, format, persona, picker, phot
       >
         <PhotoFrame
           photo={photo}
+          exportLayer="foreground"
           className="w-full max-w-[86%] rounded-[2rem]"
           style={photoHeight}
         />
