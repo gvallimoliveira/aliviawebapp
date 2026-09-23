@@ -113,6 +113,8 @@ describe("static export surface", () => {
     expect(title?.textContent).toBe("Carga Planejada");
     expect(title?.hasAttribute("contenteditable")).toBe(false);
     expect(title?.style.outline).toBe("");
+    expect(title?.style.caretColor).toBe("transparent");
+    expect(title?.style.userSelect).toBe("none");
 
     surface.dispose();
     root.remove();

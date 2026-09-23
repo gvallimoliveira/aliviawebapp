@@ -845,6 +845,9 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
     element.style.outline = "";
     element.style.outlineOffset = "";
     element.style.cursor = "";
+    element.style.setProperty("caret-color", "transparent", "important");
+    element.style.setProperty("user-select", "none", "important");
+    element.style.setProperty("-webkit-user-select", "none", "important");
   });
 
   // Tokens da marca são herdados de wrappers da tela; materialize-os na cópia.
