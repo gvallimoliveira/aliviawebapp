@@ -223,6 +223,9 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
 
       ...(a.cta?.trim() ? { cta: a.cta.trim() } : {}),
       ...(a.keyword?.trim() ? { keyword: a.keyword.trim() } : {}),
+      ...(a.highlightTerms?.length
+        ? { highlightTerms: a.highlightTerms.map((t) => t.trim()).filter(Boolean) }
+        : {}),
       ...(a.hook?.trim() ? { hook: a.hook.trim() } : {}),
       ...(a.hooks?.length ? { hooks: a.hooks.map((h) => h.trim()).filter(Boolean) } : {}),
       ...(a.parentId?.trim() ? { parentId: a.parentId.trim() } : {}),
