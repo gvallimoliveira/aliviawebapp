@@ -176,6 +176,12 @@ export const enforceAudienceScope = <T,>(content: T, audience: BrandAudience, al
 
   const walk = (value: unknown, path = ""): unknown => {
     if (Array.isArray(value)) {
+      /**
+       * Slides de carrossel são o arco (o que é → como funciona → ganho → custo
+       * de não ter). Remover um deles quebraria a progressão, então o arco é
+       * preservado inteiro.
+       */
+      if (path === "slides" || path === "beats") return value.map((item) => walk(item, path));
       const kept = value.filter((item) => !scope.foreign(flatten(item)));
       const pool = kept.length ? kept : path === "kickers" && key ? [key.toUpperCase()] : value;
       return pool.map((item) => walk(item, path));
