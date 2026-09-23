@@ -30,11 +30,25 @@ const MAX_AREA = 12_000_000;
 
 let cachedFontCss: string | null | undefined;
 
+const withTimeout = async <T>(promise: Promise<T>, milliseconds: number, label: string): Promise<T> => {
+  let timer: number | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = window.setTimeout(() => reject(new Error(label)), milliseconds);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) window.clearTimeout(timer);
+  }
+};
+
 /** Embute as fontes uma única vez; se falhar (CORS do Google Fonts), exporta sem elas. */
 const resolveFontCss = async (node: HTMLElement) => {
   if (cachedFontCss !== undefined) return cachedFontCss;
   try {
-    cachedFontCss = await getFontEmbedCSS(node);
+    cachedFontCss = await withTimeout(getFontEmbedCSS(node), 6_000, "font-embed-timeout");
   } catch {
     cachedFontCss = null;
   }
@@ -60,8 +74,11 @@ const inlineImages = async (node: HTMLElement) => {
 
       let dataUrl = dataUrlCache.get(original);
       if (!dataUrl) {
+        const controller = new AbortController();
+        const abort = window.setTimeout(() => controller.abort(), 6_000);
         try {
-          const res = await fetch(original, { cache: "force-cache" });
+          const res = await fetch(original, { cache: "force-cache", signal: controller.signal });
+          if (!res.ok) throw new Error(`image-http-${res.status}`);
           const blob = await res.blob();
           dataUrl = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
@@ -72,6 +89,8 @@ const inlineImages = async (node: HTMLElement) => {
           dataUrlCache.set(original, dataUrl);
         } catch {
           return;
+        } finally {
+          window.clearTimeout(abort);
         }
       }
 
@@ -942,7 +961,6 @@ export const renderNodeToBlob = async (
  */
 export const renderNodeToPngBlob = async (node: HTMLElement, desiredRatio = 3) => {
   await waitForAssets(node);
-  const restoreImages = await inlineImages(node);
 
   const rect = node.getBoundingClientRect();
   const attempts: number[] = [];
@@ -954,18 +972,19 @@ export const renderNodeToPngBlob = async (node: HTMLElement, desiredRatio = 3) =
   }
 
   let lastError: unknown;
-  try {
-    for (const pixelRatio of attempts) {
-      try {
-        const blob = await renderNodeToBlob(node, pixelRatio);
-        if (blob.size < 1024) throw new Error("empty-canvas");
-        return { blob, ratio: pixelRatio };
-      } catch (error) {
-        lastError = error;
-      }
+  for (const pixelRatio of attempts) {
+    try {
+      /* A conversão de imagens acontece somente na superfície estática. Antes,
+         ela também alterava temporariamente os `src` da arte viva; depois de
+         contentEditable isso podia prender o WebKit no estado de edição e o
+         botão PNG ficava carregando indefinidamente. */
+      const blob = await withTimeout(renderNodeToBlob(node, pixelRatio), 20_000, "png-render-timeout");
+      if (blob.size < 1024) throw new Error("empty-canvas");
+      return { blob, ratio: pixelRatio };
+    } catch (error) {
+      lastError = error;
+      if (error instanceof Error && error.message === "png-render-timeout") break;
     }
-  } finally {
-    restoreImages();
   }
 
   throw lastError instanceof Error ? lastError : new Error("export-failed");
