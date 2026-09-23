@@ -127,6 +127,49 @@ export const audienceKeyword = (a: BrandAudience): string => {
   );
 };
 
+/**
+ * TERMOS DE DESTAQUE de um recorte editorial (vale para QUALQUER marca).
+ *
+ * Em artes de palavra protagonista só estes termos podem ocupar o centro. Quando
+ * a pessoa não preenche, derivamos do nome/palavra-chave do tema: o termo
+ * inteiro mais as palavras significativas dele. Nunca um adjetivo solto tirado
+ * do texto corrido.
+ */
+const HIGHLIGHT_STOPWORDS = new Set([
+  "de", "da", "do", "das", "dos", "e", "com", "por", "para", "em", "no", "na", "nos", "nas",
+  "a", "o", "as", "os", "um", "uma", "ao", "aos", "que", "sem", "sob", "seu", "sua",
+]);
+
+export const highlightTermsFor = (a: BrandAudience): string[] => {
+  const own = (a.highlightTerms ?? []).map((t) => t.trim()).filter(Boolean);
+  if (own.length) return own;
+  const key = audienceKeyword(a);
+  const derived = [key];
+  key
+    .split(/[\s/·—–-]+/)
+    .map((word) => word.trim())
+    .filter((word) => word.replace(/[^\p{L}\p{N}]/gu, "").length >= 4)
+    .filter((word) => !HIGHLIGHT_STOPWORDS.has(word.toLowerCase()))
+    .forEach((word) => {
+      if (!derived.some((t) => t.toLowerCase() === word.toLowerCase())) derived.push(word);
+    });
+  return derived.slice(0, 4);
+};
+
+/** O recorte é um tema de linha editorial (pacote fechado de um assunto só)? */
+export const isEditorialAudience = (a?: BrandAudience | null): boolean => Boolean(a?.editorialGroup?.trim());
+
+/** Temas irmãos da mesma linha editorial da marca. */
+export const editorialSiblings = (list: BrandAudience[], a: BrandAudience): BrandAudience[] => {
+  const group = a.editorialGroup?.trim();
+  if (!group) return [];
+  return list.filter((item) => item.id !== a.id && item.editorialGroup?.trim() === group);
+};
+
+/** Ids de todos os temas editoriais da marca — usados para seleção múltipla. */
+export const editorialAudienceIds = (list: BrandAudience[]): string[] =>
+  list.filter((a) => a.editorialGroup?.trim()).map((a) => a.id);
+
 /** Abertura em 2ª pessoa, para chamar o público diretamente na arte. */
 export const audienceHook = (a: BrandAudience): string => audienceHooks(a)[0];
 
