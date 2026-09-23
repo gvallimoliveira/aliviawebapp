@@ -1182,7 +1182,7 @@ const applyAudience = (
   const desireNoms = nominalList(desires);
   const nomPain = (i: number, fallback: string) => painNoms[i] ?? nominal(pains[i], fallback);
   const proof = lead(audience.proof ?? [], relation?.proof);
-  const objections = lead(audience.objections ?? [], relation?.objection);
+  const objections = lead(audience.objections ?? [], relation?.route?.objection);
   const cta = relation?.cta || audience.cta?.trim() || "Falar com a gente";
   const desc = audience.description?.trim();
   /**
