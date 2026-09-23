@@ -111,7 +111,7 @@ describe("static export surface", () => {
     expect(host?.style.left).toBe("0px");
     expect(host?.style.zIndex).toBe("-2147483647");
     expect(title?.textContent).toBe("Carga Planejada");
-    expect(title?.contentEditable).toBe("false");
+    expect(title?.hasAttribute("contenteditable")).toBe(false);
     expect(title?.style.outline).toBe("");
 
     surface.dispose();

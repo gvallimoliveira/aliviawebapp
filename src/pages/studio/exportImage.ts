@@ -813,8 +813,15 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   /* O PNG representa a arte concluída, mesmo se o usuário tocar em baixar com
      Ajustar/Mover texto ainda ativo. Removemos apenas estado transitório do
      editor no clone; conteúdo, tamanho e transformações aprovadas permanecem. */
-  clone.querySelectorAll<HTMLElement>('[contenteditable], [data-studio-text-slot="1"]').forEach((element) => {
-    element.contentEditable = "false";
+  const editableExportNodes = [
+    ...(clone.matches('[contenteditable], [data-studio-text-slot="1"]') ? [clone] : []),
+    ...Array.from(clone.querySelectorAll<HTMLElement>('[contenteditable], [data-studio-text-slot="1"]')),
+  ];
+  editableExportNodes.forEach((element) => {
+    /* Remover é mais seguro que contenteditable="false": o foreignObject do
+       WebKit ainda pode tratar a mera presença do atributo como superfície de
+       edição e omitir sua pintura. */
+    element.removeAttribute("contenteditable");
     element.removeAttribute("spellcheck");
     element.style.outline = "";
     element.style.outlineOffset = "";
