@@ -64,4 +64,4 @@
 ## Diferenciais Aliv.iA no Studio (23/09)
 - [x] Criar categoria editorial separada sem alterar os quatro públicos oficiais.
 - [x] Cadastrar dez recortes com situação, mecanismo, prova, valor e chamada próprios.
-- [ ] Validar foco, isolamento, determinismo e geração visual dos dez diferenciais.
+- [x] Validar foco, isolamento, determinismo e geração visual dos dez diferenciais.
