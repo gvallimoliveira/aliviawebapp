@@ -569,7 +569,7 @@ const StudioProCreate = ({
       angle,
       positioning: aliviaWorld ? null : brand.positioning,
       // Variedade linguística: cada lote reescreve a roupagem das frases.
-      variationSeed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+      variationSeed: `${brand.id}:${seed}:${generationKey}:${angle}`,
       variationProfile: variation,
       segmentWeights: segmentMemory.weights,
     });
@@ -580,11 +580,11 @@ const StudioProCreate = ({
      */
     return varyContent(built, {
       register,
-      seed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+      seed: `${brand.id}:${seed}:${generationKey}:${angle}`,
       forbidden: isAlivia ? [] : ["aliv.ia", "alivia", "fisioterap"],
       profile: variation,
     });
-  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, angle, brand.positioning, brand.id, seed, register, isAlivia, variation, segmentMemory.weights]);
+  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, generationKey, angle, brand.positioning, brand.id, seed, register, isAlivia, variation, segmentMemory.weights]);
 
   /**
    * ACERVO JÁ CORRIGIDO: antes de qualquer sorteio, as frases que você
@@ -609,6 +609,39 @@ const StudioProCreate = ({
   }, [baseContent, learning.rewrites, learning.vocabulary, protectedBrandLiterals, activeSegment, audiences, brand.id, seed, angle, segmentMemory.weights]);
   const content = learnedContent.content;
 
+  /** Um acervo fechado por diferencial: combinar seleções distribui artes, não frases. */
+  const differentialSources = useMemo(() => selectedDifferentials.map((id) => {
+    const parent = audienceAncestors(audiences, id).find((item) => isWorldId(item.id));
+    const world = parent ? (parent.id as WorldId) : "pro";
+    const sourceSeed = `${brand.id}:${seed}:${id}:${angle}`;
+    const built = buildSegmentContent({
+      kit: contentKit,
+      base: WORLDS[world],
+      audiences,
+      segment: id,
+      angle,
+      positioning: null,
+      variationSeed: sourceSeed,
+      variationProfile: variation,
+      segmentWeights: segmentMemory.weights,
+    });
+    const varied = varyContent(built, { register, seed: sourceSeed, forbidden: [], profile: variation });
+    const learned = applyLearnedCopy(varied, learning.rewrites, learning.vocabulary, { protectedLiterals: protectedBrandLiterals });
+    return {
+      id,
+      content: enforceSegmentAudienceScope(learned.content, id, audiences),
+      relation: relationForSegment({
+        kit: contentKit,
+        audiences,
+        segment: id,
+        angle,
+        positioning: brand.positioning,
+        variationSeed: sourceSeed,
+        segmentWeights: segmentMemory.weights,
+      }),
+    };
+  }), [selectedDifferentials, audiences, brand.id, brand.positioning, seed, angle, contentKit, variation, segmentMemory.weights, register, learning.rewrites, learning.vocabulary, protectedBrandLiterals]);
+
 
 
   /**
@@ -616,6 +649,10 @@ const StudioProCreate = ({
    * sorteio do 360°, então os nichos giram de verdade entre gerações.
    */
   useEffect(() => {
+    if (selectedDifferentials.length) {
+      selectedDifferentials.forEach(segmentMemory.record);
+      return;
+    }
     if (activeSegment !== GLOBAL_SEGMENT) {
       segmentMemory.record(activeSegment);
       return;
@@ -626,7 +663,7 @@ const StudioProCreate = ({
       segmentWeights: segmentMemory.weights,
     });
     if (picked) segmentMemory.record(picked.id);
-  }, [activeSegment, audiences, brand.id, seed, angle, segmentMemory]);
+  }, [activeSegment, selectedDifferentials, audiences, brand.id, seed, angle, segmentMemory]);
 
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
@@ -661,7 +698,7 @@ const StudioProCreate = ({
    * diferentes convergiam para o mesmo assunto.
    */
   const exposed = useRef<{ key: string; topics: Set<TopicId> }>({ key: "", topics: new Set() });
-  const batchKey = `${brand.id}:${seed}:${activeSegment}:${angle}`;
+  const batchKey = `${brand.id}:${seed}:${generationKey}:${angle}`;
   if (exposed.current.key !== batchKey) exposed.current = { key: batchKey, topics: new Set() };
   phraseMemory.startBatch?.(batchKey);
 
@@ -735,7 +772,7 @@ const StudioProCreate = ({
   const composedBlocks = useMemo(
     () =>
       composePage(
-        createRng(`${brand.id}:${seed}:${activeSegment}:${angle}:layout`),
+        createRng(`${brand.id}:${seed}:${generationKey}:${angle}:layout`),
         persona,
         // Com modelos escolhidos, a linhagem de favoritos cede lugar à escolha.
         models.length > 0 ? undefined : lineage.blocks,
@@ -745,7 +782,7 @@ const StudioProCreate = ({
         isAlivia,
         photoFirst,
       ),
-    [brand.id, seed, activeSegment, angle, persona, content, lineage, activePhotos.length, models, isAlivia, photoFirst],
+    [brand.id, seed, generationKey, angle, persona, content, lineage, activePhotos.length, models, isAlivia, photoFirst],
 
   );
 
@@ -801,12 +838,25 @@ const StudioProCreate = ({
   );
 
   const draftDirector = useMemo(
-    () =>
-      planBatch({
+    () => differentialSources.length > 1
+      ? planMultiSegmentBatch({
+        sources: differentialSources,
+        content: undefined as never,
+        count: composedBlocks.length,
+        blocks: composedBlocks,
+        seed: `${brand.id}:${seed}:${generationKey}:${angle}`,
+        dna,
+        brief: brief ?? undefined,
+        weightOf,
+        learnedVoice: [...learning.voice, ...formatInsightWords(readFormatInsights(brand.format_insights))],
+        domain: [brand.niche, brand.description, brand.positioning].filter(Boolean).join(" · "),
+        brandName: brand.name,
+      } as Parameters<typeof planMultiSegmentBatch>[0])
+      : planBatch({
         content,
         count: composedBlocks.length,
         blocks: composedBlocks,
-        seed: `${brand.id}:${seed}:${activeSegment}:${angle}`,
+        seed: `${brand.id}:${seed}:${generationKey}:${angle}`,
         relation: directorRelation,
         dna,
         brief: brief ?? undefined,
@@ -820,7 +870,7 @@ const StudioProCreate = ({
         domain: [brand.niche, brand.description, brand.positioning].filter(Boolean).join(" · "),
         brandName: brand.name,
       }),
-    [content, composedBlocks, brand.id, brand.format_insights, seed, activeSegment, angle, directorRelation, dna, brief, weightOf, learning.voice],
+    [content, differentialSources, composedBlocks, brand.id, brand.format_insights, seed, generationKey, angle, directorRelation, dna, brief, weightOf, learning.voice],
 
   );
 
@@ -907,9 +957,25 @@ const StudioProCreate = ({
 
 
 
+  const rationaleContextFor = useCallback((index: number): RationaleContext => {
+    const id = draftDirector.segmentFor?.(index);
+    const source = id ? differentialSources.find((item) => item.id === id) : undefined;
+    const audience = id ? resolveAudience(audiences, id) : undefined;
+    if (!source || !audience) return rationaleCtx;
+    return {
+      ...rationaleCtx,
+      content: source.content,
+      audienceLabel: audience.label,
+      keyword: audienceKeyword(audience),
+      hook: audienceHook(audience),
+      cta: audience.cta ?? rationaleCtx.cta,
+      relation: { pain: source.relation.pain, desire: source.relation.desire, axis: source.relation.axis },
+    };
+  }, [draftDirector, differentialSources, audiences, rationaleCtx]);
+
   const audit = useMemo(
-    () => enforceRationale(composedBlocks, rationaleCtx, (index) => draftDirector.copyOf(index)),
-    [composedBlocks, rationaleCtx, draftDirector],
+    () => enforceRationale(composedBlocks, rationaleContextFor, (index) => draftDirector.copyOf(index)),
+    [composedBlocks, rationaleContextFor, draftDirector],
   );
   const blocks = audit.blocks;
 
@@ -923,11 +989,24 @@ const StudioProCreate = ({
     () =>
       audit.fixed === 0
         ? draftDirector
-        : planBatch({
+        : differentialSources.length > 1
+          ? planMultiSegmentBatch({
+              sources: differentialSources,
+              count: blocks.length,
+              blocks,
+              seed: `${brand.id}:${seed}:${generationKey}:${angle}:after-rationale`,
+              dna,
+              brief: brief ?? undefined,
+              weightOf,
+              learnedVoice: [...learning.voice, ...formatInsightWords(readFormatInsights(brand.format_insights))],
+              domain: [brand.niche, brand.description, brand.positioning].filter(Boolean).join(" · "),
+              brandName: brand.name,
+            })
+          : planBatch({
             content,
             count: blocks.length,
             blocks,
-            seed: `${brand.id}:${seed}:${activeSegment}:${angle}:after-rationale`,
+            seed: `${brand.id}:${seed}:${generationKey}:${angle}:after-rationale`,
             relation: directorRelation,
             dna,
             brief: brief ?? undefined,
@@ -936,7 +1015,7 @@ const StudioProCreate = ({
             domain: [brand.niche, brand.description, brand.positioning].filter(Boolean).join(" · "),
             brandName: brand.name,
           }),
-    [audit.fixed, draftDirector, content, blocks, brand.id, brand.format_insights, seed, activeSegment, angle, directorRelation, dna, brief, weightOf, learning.voice],
+    [audit.fixed, draftDirector, content, differentialSources, blocks, brand.id, brand.format_insights, seed, generationKey, angle, directorRelation, dna, brief, weightOf, learning.voice],
   );
 
   /**
@@ -1449,7 +1528,7 @@ const StudioProCreate = ({
       snapshot,
 
 
-      segment: activeSegment,
+      segment: director.segmentFor?.(index) ?? activeSegment,
       angle,
       folder: folder === "Todas" ? "Geral" : folder,
       watermarked: watermark,
@@ -1562,14 +1641,14 @@ const StudioProCreate = ({
               <Button
                 key={s.id}
                 size="sm"
-                variant={activeSegment === s.id ? "secondary" : "ghost"}
+                variant={!selectedDifferentials.length && activeSegment === s.id ? "secondary" : "ghost"}
                 className="h-7 rounded-full text-[11px]"
                 title={
                   s.id === GLOBAL_SEGMENT
                     ? "Assunto livre: cada lote fala da marca como um todo ou de um público relevante, sorteado"
                     : undefined
                 }
-                onClick={() => setSegment(s.id)}
+                onClick={() => selectRegularSegment(s.id)}
               >
                 {s.label}
               </Button>
@@ -1583,9 +1662,9 @@ const StudioProCreate = ({
                   <Button
                     key={s.id}
                     size="sm"
-                    variant={activeSegment === s.id ? "secondary" : "ghost"}
+                    variant={selectedDifferentials.includes(s.id) ? "secondary" : "ghost"}
                     className="h-7 rounded-full text-[11px]"
-                    onClick={() => setSegment(s.id)}
+                    onClick={() => toggleDifferential(s.id)}
                   >
                     {s.label}
                   </Button>
@@ -1843,7 +1922,7 @@ const StudioProCreate = ({
                         rng={createRng(`${brand.id}:${seed}:${kind}:${item.index}`)}
                         treatment={treatment}
                         format={format}
-                        picker={pickerForArt(`${brand.id}:${seed}:${activeSegment}:${angle}:${kind}:${item.index}`)}
+                        picker={pickerForArt(`${brand.id}:${seed}:${generationKey}:${angle}:${kind}:${item.index}`)}
                         persona={persona}
                         slide={slide}
                         photos={activePhotos}
