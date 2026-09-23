@@ -1229,9 +1229,13 @@ const applyAudience = (
      */
     const carouselSlides = [
       { heading: condensePhrase(key, 34), body: sentence(whatItIs) },
-      { heading: `Como ${lower1(termAt(0))} funciona`, body: sentence(mechanismAt(0)) },
-      { heading: `Com ${lower1(key)}, na rotina`, body: sentence(benefitAt(0)) },
-      { heading: `Sem ${lower1(key)}`, body: sentence(lossAt(0)) },
+      /**
+       * Cada etapa entra com abertura própria: sem isso, mecanismo e definição
+       * podem coincidir e o carrossel perde um slide na deduplicação.
+       */
+      { heading: `Como ${lower1(termAt(0))} funciona`, body: `Funciona assim: ${lower1(mechanismAt(0))}.` },
+      { heading: `Com ${lower1(key)}, na rotina`, body: `Na rotina, ${lower1(benefitAt(0))}.` },
+      { heading: `Sem ${lower1(key)}`, body: `Sem isso, ${lower1(lossAt(0))}.` },
     ];
 
     return {
