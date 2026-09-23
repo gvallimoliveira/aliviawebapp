@@ -1205,6 +1205,12 @@ const applyAudience = (
    * custo cotidiano de continuar sem ele. Nenhum acervo da marca entra aqui.
    */
   if (audience.editorialGroup) {
+    /**
+     * Vale para QUALQUER marca: termos de destaque do tema (nunca adjetivo
+     * solto) e o substantivo do grupo editorial da própria marca.
+     */
+    const terms = highlightTermsFor(audience);
+    const noun = editorialNoun(audience);
     const mechanisms = proof.length ? proof : [desc ?? key];
     const benefits = desires.length ? desires : [cta];
     const losses = (audience.stakes ?? []).map(strip).filter(Boolean);
