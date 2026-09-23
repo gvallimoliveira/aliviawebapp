@@ -36,6 +36,8 @@ describe("sub-nichos no motor criativo", () => {
       expect(content.sales.ctas.map((cta) => cta.toLowerCase())).toContain(item.cta!.toLowerCase());
       expect(content.closings.some((closing) => closing.cta.toLowerCase() === item.cta!.toLowerCase())).toBe(true);
       expect(blob).not.toContain("slogan em destaque");
+      expect(blob).not.toContain("vou perder tempo aprendendo a usar mais um sistema");
+      expect(blob).not.toContain("dor mapeada por mecanismo, não só por intensidade");
     }
   });
 

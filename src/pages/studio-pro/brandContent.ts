@@ -1188,7 +1188,10 @@ const applyAudience = (
    * Comunicação dirigida: sub-nicho — ou qualquer público com acervo próprio —
    * reduz o acervo neutro a uma cauda curta, para não diluir a mensagem.
    */
-  const tail = <T,>(list: T[]) => list.slice(0, 1);
+  // Diferenciais editoriais têm repertório canônico completo. Uma cauda do
+  // acervo geral pode introduzir outro recurso na arte; por isso, só públicos
+  // comuns recebem uma pequena sobra genérica para variedade.
+  const tail = <T,>(list: T[]) => audience.editorialGroup ? [] : list.slice(0, 1);
 
 
   const headlines = [
