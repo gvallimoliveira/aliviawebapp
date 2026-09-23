@@ -1705,7 +1705,8 @@ const StudioProCreate = ({
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
           {/* Ângulo estratégico: informar (sem dar aula), dor, desejo ou venda. */}
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {ANGLES.map((a) => (
