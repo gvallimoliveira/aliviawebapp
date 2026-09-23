@@ -65,3 +65,8 @@
 - [x] Criar categoria editorial separada sem alterar os quatro públicos oficiais.
 - [x] Cadastrar dez recortes com situação, mecanismo, prova, valor e chamada próprios.
 - [x] Validar foco, isolamento, determinismo e geração visual dos dez diferenciais.
+
+## Ampliação dos diferenciais Aliv.iA (23/09)
+- [x] Adicionar triagem de red flags com diferenças corretas entre fluxo autônomo e profissional.
+- [x] Adicionar leitura de avaliação externa por IA com revisão profissional obrigatória.
+- [x] Validar os doze recortes sem alterar os quatro públicos oficiais.

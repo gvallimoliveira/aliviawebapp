@@ -19,7 +19,9 @@ export type AliviaDifferentialId =
   | "diferencial-relatorios"
   | "diferencial-insights"
   | "diferencial-periodizacao"
-  | "diferencial-prontidao-carga";
+  | "diferencial-prontidao-carga"
+  | "diferencial-red-flags"
+  | "diferencial-avaliacao-externa-ia";
 
 export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
   {
@@ -205,6 +207,98 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     stakes: ["A resposta entre sessões continua invisível", "A próxima dose pode repetir uma carga que o paciente não tolerou como esperado"],
     triggers: ["A fadiga mudou de uma semana para outra", "A carga percebida ficou distante da planejada"],
     cta: "Acompanhar prontidão e carga",
+  },
+  {
+    id: "diferencial-red-flags",
+    label: "Triagem de red flags",
+    editorialGroup: ALIVIA_DIFFERENTIAL_GROUP,
+    parentId: "pro",
+    keyword: "Triagem de red flags",
+    hook: "Antes de pensar em conduta, o sistema ajuda a reconhecer quando é preciso parar",
+    hooks: [
+      "Segurança clínica começa pelas perguntas que não podem ser esquecidas",
+      "Um sinal de alerta não pode depender da memória no meio da correria",
+      "A hipótese pode esperar quando a segurança pede prioridade",
+    ],
+    description: "Triagem obrigatória registra perguntas e respostas, sinaliza achados positivos e diferencia a conduta: interrompe o fluxo autônomo do paciente ou mantém a avaliação profissional sob ressalva até liberação médica ou revisão justificada.",
+    pains: [
+      "Perguntas de segurança variando conforme a correria",
+      "Sinal de alerta descoberto depois da conduta",
+      "Decisão importante sem registro do que foi perguntado",
+    ],
+    desires: [
+      "Seguir uma triagem de segurança em toda avaliação",
+      "Saber como conduzir o fluxo diante de um alerta",
+      "Manter perguntas, respostas e decisão documentadas",
+    ],
+    proof: [
+      "Oito perguntas obrigatórias antes da continuidade",
+      "Alerta imediato ao identificar uma resposta positiva",
+      "Hipótese sob ressalva no fluxo profissional até liberação ou revisão justificada",
+    ],
+    scenes: [
+      "No meio da anamnese, uma resposta positiva muda a prioridade antes de qualquer teste",
+      "O profissional revisa o alerta e encontra perguntas, respostas e horário registrados no caso",
+    ],
+    objections: [
+      "Eu já faço essas perguntas de memória",
+      "Uma triagem obrigatória vai interromper todos os atendimentos",
+    ],
+    stakes: [
+      "Uma pergunta essencial pode ficar de fora justamente no dia mais corrido",
+      "A conduta pode avançar sem que o alerta e a decisão profissional fiquem documentados",
+    ],
+    triggers: [
+      "Um relato de trauma, febre ou perda de força aparece durante a anamnese",
+      "A equipe precisa seguir o mesmo critério de segurança em todas as avaliações",
+    ],
+    cta: "Conhecer a triagem de red flags",
+  },
+  {
+    id: "diferencial-avaliacao-externa-ia",
+    label: "Avaliação externa por IA",
+    editorialGroup: ALIVIA_DIFFERENTIAL_GROUP,
+    parentId: "pro",
+    keyword: "Leitura de avaliação externa por IA",
+    hook: "Uma avaliação feita fora do Aliv.iA não precisa continuar presa em arquivos soltos",
+    hooks: [
+      "Do PDF ao prontuário estruturado, sempre com revisão profissional",
+      "Até cinco arquivos podem virar um ponto de partida organizado para a avaliação",
+      "A IA organiza o material externo; você confere cada campo antes de salvar",
+    ],
+    description: "O fisioterapeuta envia até cinco PDFs ou imagens; a IA combina a leitura, distribui os achados nos campos do padrão Aliv.iA e preserva o conteúdo adicional para revisão, edição e confirmação profissional.",
+    pains: [
+      "Avaliação anterior espalhada entre PDFs e fotos",
+      "Digitação manual de informações que já estão documentadas",
+      "Dado importante sem campo claro no novo prontuário",
+    ],
+    desires: [
+      "Trazer uma avaliação externa para o mesmo padrão do prontuário",
+      "Começar a revisão com os campos já organizados",
+      "Manter controle profissional sobre cada informação importada",
+    ],
+    proof: [
+      "Leitura combinada de até cinco PDFs ou imagens",
+      "Campos do formulário manual carregados para revisão e edição",
+      "Informações sem campo correspondente preservadas em um bloco adicional",
+    ],
+    scenes: [
+      "O paciente chega com laudo, fotos e uma avaliação anterior; os arquivos entram juntos para leitura",
+      "Antes de salvar, o fisioterapeuta abre o formulário, revisa os campos e corrige o que for necessário",
+    ],
+    objections: [
+      "A IA pode interpretar um campo errado",
+      "Meu arquivo externo não segue o padrão do Aliv.iA",
+    ],
+    stakes: [
+      "O histórico externo continua separado do raciocínio atual",
+      "A transcrição manual consome tempo e ainda pode deixar informações importantes para trás",
+    ],
+    triggers: [
+      "Um paciente novo trouxe uma avaliação completa de outro serviço",
+      "A migração de prontuário chegou em PDFs, imagens e formatos diferentes",
+    ],
+    cta: "Organizar uma avaliação externa",
   },
 ];
 

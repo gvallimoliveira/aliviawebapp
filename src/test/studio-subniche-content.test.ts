@@ -14,9 +14,9 @@ const kit = { name: "Aliv.iA", niche: "fisioterapia", tone: "próximo e técnico
 const SUBS = ["paciente-dor-cronica", "paciente-pos-operatorio", "paciente-atleta-amador", "paciente-60-mais"];
 
 describe("sub-nichos no motor criativo", () => {
-  it("mantém quatro públicos oficiais e agrupa os dez diferenciais à parte", () => {
+  it("mantém quatro públicos oficiais e agrupa os doze diferenciais à parte", () => {
     expect(officialAudienceCount(ALIVIA_AUDIENCES)).toBe(4);
-    expect(ALIVIA_DIFFERENTIALS).toHaveLength(10);
+    expect(ALIVIA_DIFFERENTIALS).toHaveLength(12);
     expect(ALIVIA_DIFFERENTIALS.every((item) => item.editorialGroup === ALIVIA_DIFFERENTIAL_GROUP)).toBe(true);
     expect(ALIVIA_DIFFERENTIALS.every((item) => item.parentId === "pro" || item.parentId === "clinica")).toBe(true);
   });
@@ -48,6 +48,19 @@ describe("sub-nichos no motor criativo", () => {
       variationSeed: "hep-fixed",
     };
     expect(buildSegmentContent(input)).toEqual(buildSegmentContent(input));
+  });
+
+  it("mantém segurança e revisão profissional nos dois novos diferenciais", () => {
+    const redFlags = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-red-flags");
+    const external = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-avaliacao-externa-ia");
+
+    expect(redFlags?.description).toContain("sob ressalva");
+    expect(redFlags?.description).toContain("interrompe o fluxo autônomo");
+    expect(JSON.stringify(redFlags)).not.toMatch(/blindagem jurídica|risco zero|garantia/i);
+
+    expect(external?.description).toContain("revisão, edição e confirmação profissional");
+    expect(external?.proof).toContain("Leitura combinada de até cinco PDFs ou imagens");
+    expect(JSON.stringify(external)).not.toMatch(/diagnóstico definitivo|salva automaticamente|sem revisão/i);
   });
 
   it("resolve herança do público matriz", () => {
