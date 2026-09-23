@@ -1688,7 +1688,8 @@ export const enforceDifferentialFocus = (
 ): WorldContent => {
   if (!audience?.editorialGroup) return content;
   const key = audienceKeyword(audience);
-  const terms = (audience.highlightTerms ?? [key]).map(strip).filter(Boolean);
+  // Preserve pontuação significativa de termos canônicos, como "D.I.F.I.".
+  const terms = (audience.highlightTerms ?? [key]).map((term) => term.trim()).filter(Boolean);
   const mechanisms = (audience.proof ?? []).map(strip).filter(Boolean);
   const benefits = (audience.desires ?? []).map(strip).filter(Boolean);
   const losses = (audience.stakes ?? []).map(strip).filter(Boolean);
