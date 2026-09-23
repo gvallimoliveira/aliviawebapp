@@ -250,25 +250,21 @@ const StudioProApp = () => {
   const repaired = useRef(false);
   useEffect(() => {
     if (loading || !user || repaired.current) return;
-    const official = brands.find((b) => b.content_source === "alivia");
-    if (!official) return;
-    const current = readAudiences(official.audiences);
-    const canonical = ALIVIA_AUDIENCES.map((a) => {
-      const found = current.find((c) => c.id === a.id);
-      return found ? { ...a, ...found, label: a.label } : a;
-    });
-    const same =
-      current.length === canonical.length &&
-      current.every((c, i) => c.id === canonical[i].id && c.label === canonical[i].label);
-    if (same) return;
+    const officialBrands = brands.filter((b) => b.content_source === "alivia");
+    if (!officialBrands.length) return;
+    const canonical = writeAudiences(ALIVIA_AUDIENCES);
+    const outdated = officialBrands.filter((brand) => JSON.stringify(writeAudiences(readAudiences(brand.audiences))) !== JSON.stringify(canonical));
+    if (!outdated.length) return;
     repaired.current = true;
     void (async () => {
-      const { error } = await supabase
-        .from("studio_brands")
-        .update({ audiences: writeAudiences(canonical) })
-        .eq("id", official.id);
-      if (error) {
-        console.error("[studio-pro] repair alivia audiences", error);
+      const results = await Promise.all(
+        outdated.map((brand) =>
+          supabase.from("studio_brands").update({ audiences: canonical }).eq("id", brand.id),
+        ),
+      );
+      const failed = results.find((result) => result.error);
+      if (failed?.error) {
+        console.error("[studio-pro] repair alivia audiences", failed.error);
         return;
       }
       await load();
