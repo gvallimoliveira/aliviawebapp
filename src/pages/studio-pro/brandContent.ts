@@ -16,7 +16,7 @@ import { applyHookPrefs } from "@/pages/studio/hookStore";
 import { hasBannedJargon, isStale, isStudioSelfBrand, STUDIO_SELF_KEYWORDS } from "@/pages/studio/persuasion";
 import { lowerInitial, nominal, nominalList, readsWell, sentence } from "@/pages/studio/grammar";
 import { proofread } from "@/pages/studio/agreement";
-import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, hasSlogan, sloganList, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
+import { GLOBAL_SEGMENT, SLOGAN_SEGMENT, audienceHooks, audienceKeyword, editorialNoun, hasSlogan, highlightTermsFor, sloganList, matrixAudiences, resolveAudience, type BrandAudience, type ContentAngle } from "./audiences";
 import { buildBrandDna, isDnaEmpty, offerWords, operationWords, type BrandDna } from "./brandDnaKit";
 import { pickRelation, type Relation } from "./relational";
 import { applyCharm } from "./charmCopy";
