@@ -170,6 +170,25 @@ export const editorialSiblings = (list: BrandAudience[], a: BrandAudience): Bran
 export const editorialAudienceIds = (list: BrandAudience[]): string[] =>
   list.filter((a) => a.editorialGroup?.trim()).map((a) => a.id);
 
+/**
+ * SUBSTANTIVO DO TEMA editorial, lido do nome do grupo da marca. Um SaaS fala de
+ * "funcionalidade"; uma clínica fala de "serviço"/"tratamento"; um infoproduto
+ * fala de "produto". Sem isso, a arte de qualquer cliente sairia falando
+ * "funcionalidade", que é vocabulário de software.
+ */
+export const editorialNoun = (a?: BrandAudience | null): string => {
+  const group = (a?.editorialGroup ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  if (/servic/.test(group)) return "serviço";
+  if (/tratament|terapia/.test(group)) return "tratamento";
+  if (/produt/.test(group)) return "produto";
+  if (/program|jornada/.test(group)) return "programa";
+  if (/diferenc|funcional|recurso/.test(group)) return "funcionalidade";
+  return "recurso";
+};
+
 /** Abertura em 2ª pessoa, para chamar o público diretamente na arte. */
 export const audienceHook = (a: BrandAudience): string => audienceHooks(a)[0];
 
