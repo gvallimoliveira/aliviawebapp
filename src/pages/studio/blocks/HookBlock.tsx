@@ -15,6 +15,7 @@ import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./
  */
 
 const HookBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
+  if (!content.headlines?.length || !content.closings?.length) return null;
   const hooks = content.hooks ?? [];
   const fallback = (() => {
     const h = rng.pick(content.headlines);

@@ -10,6 +10,7 @@ import { BRAND_NAME } from "../brand";
  * Treatments: 0 fileiras numeradas, 1 grade de cards, 2 pilha tipográfica.
  */
 const ListBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
+  if (!content.lists?.length) return null;
   const list = rng.pick(content.lists);
   const accentVariant = rng.int(ACCENT_STYLES.length);
 

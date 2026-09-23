@@ -32,6 +32,7 @@ const Bang = ({ bg, fg }: { bg: string; fg: string }) => (
 );
 
 const NoticeBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
+  if (!content.features?.length || !content.closings?.length) return null;
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   const closing = rng.pick(content.closings);
   const title = feature?.headline ?? feature?.title ?? closing.title;

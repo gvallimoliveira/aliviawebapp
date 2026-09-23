@@ -19,6 +19,7 @@ const ACCENTS = [
 ] as const;
 
 const TypoBlock = ({ content, treatment, format, persona }: BlockProps) => {
+  if (!content.typos?.length) return null;
   const typo = content.typos[treatment % content.typos.length];
   /**
    * INÍCIO, MEIO E FIM

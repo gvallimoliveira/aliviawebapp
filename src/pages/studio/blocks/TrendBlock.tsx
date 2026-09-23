@@ -29,6 +29,7 @@ const PATH = "M 24 296 L 68 196 L 100 250 L 142 132 L 176 200 L 216 70 L 246 112
 const ARROW = "M 322 20 L 312 62 L 288 40 Z";
 
 const TrendBlock = ({ content, rng, treatment, format }: BlockProps) => {
+  if (!content.headlines?.length || !content.subs?.length || !content.kickers?.length) return null;
   const skin = SKINS[treatment % SKINS.length];
   const headline = rng.pick(content.headlines);
   const sub = rng.pick(content.subs);

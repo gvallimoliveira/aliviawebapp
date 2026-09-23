@@ -16,6 +16,7 @@ import { joinCopyParts } from "../typographyGuards";
  * embaixo (o que fazer com ela). Sem essas duas linhas a arte não se explica.
  */
 const MarqueeBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
+  if (!content.marquee?.length || !content.kickers?.length || !content.headlines?.length) return null;
   const items = rng.pick(content.marquee);
   const kicker = rng.pick(content.kickers);
   const dark = (treatment + persona.surfaceShift) % 2 === 1;

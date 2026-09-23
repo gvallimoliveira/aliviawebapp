@@ -12,6 +12,7 @@ import { quoteCopy } from "../typographyGuards";
  * contrastante do kit (chip/cor/sublinhado da marca).
  */
 const QuoteBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
+  if (!content.quotes?.length) return null;
   const [quote] = picker.pick(content.quotes, 1, rng, (q) => [q.topic]);
   const text = quoteCopy(quote.text);
   const accentVariant = rng.int(ACCENT_STYLES.length);

@@ -14,6 +14,7 @@ import { BRAND_NAME, BRAND_SITE } from "../brand";
  * tipográfico de verdade: selo, frase grande e a explicação embaixo.
  */
 const PinupBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
+  if (!content.features?.length || !content.headlines?.length) return null;
   const posters = content.features.filter((f) => f.poster);
   const pool = posters.length > 0 ? posters : content.features;
   if (pool.length === 0) {

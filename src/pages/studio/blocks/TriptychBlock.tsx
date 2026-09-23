@@ -9,7 +9,9 @@ import { ACCENT_STYLES, TextureLayer, renderAccent } from "./Texture";
  * 1 cartões com imagem (usa apenas painéis cujo tópico tem screenshot exato).
  */
 const TriptychBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
+  if (!content.triptychs?.length) return null;
   const [triptych] = picker.pick(content.triptychs, 1, rng, (t) => t.panels.map((p) => p.topic));
+  if (!triptych) return null;
   const accentVariant = rng.int(ACCENT_STYLES.length);
   const withImages = treatment === 1 && triptych.panels.every((p) => imageForTopic(p.topic));
 

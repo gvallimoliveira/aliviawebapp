@@ -76,3 +76,8 @@
 - [x] Permitir selecionar vários diferenciais e distribuí-los pela geração sem misturar assuntos na mesma arte.
 - [x] Preservar um único diferencial em todos os slides do carrossel e na arte salva.
 - [x] Validar testes e compilação; a interface responsiva mantém seleção por chips no fluxo móvel.
+
+## Estabilidade e organização dos diferenciais (23/09)
+- [x] Impedir modelos incompatíveis com acervos editoriais parciais de travarem a geração.
+- [x] Proteger os blocos sensíveis contra listas vazias e seleções antigas inválidas.
+- [x] Permitir recolher e reabrir a seção de diferenciais, preservando a preferência durante o uso.

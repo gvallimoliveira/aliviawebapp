@@ -9,6 +9,7 @@ import { BRAND_NAME } from "../brand";
  * Treatments: 0 side-by-side cards, 1 stacked bands, 2 duelo "VS" com selo central.
  */
 const CompareBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
+  if (!content.compare?.length) return null;
   const [compare] = picker.pick(content.compare, 1, rng, (c) => c.topics ?? []);
   const stacked = treatment === 1;
   const versus = treatment === 2;

@@ -17,6 +17,7 @@ import { quoteCopy } from "../typographyGuards";
  * por afinidade extrapolada com esse assunto. O label da foto NUNCA é título.
  */
 const PhotoPortraitBlock = ({ content, rng, treatment, format, persona, picker, photos, artKey, shot }: BlockProps) => {
+  if (!content.quotes?.length || !content.kickers?.length || !content.subs?.length || !content.features?.length) return null;
   const [item] = picker.pick(content.quotes, 1, rng, (q) => [q.topic]);
   const photo = pickPhotoForTopics(photos, treatment + rng.int(7), [item.topic], undefined, artKey, shot?.affinity);
   if (!photo) {

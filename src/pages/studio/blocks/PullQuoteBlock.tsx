@@ -30,6 +30,7 @@ const splitTail = (text: string) => {
 };
 
 const PullQuoteBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
+  if (!content.quotes?.length) return null;
   const [quote] = picker.pick(content.quotes, 1, rng, (q) => [q.topic]);
   const { head, tail } = splitTail(quoteCopy(quote.text));
 

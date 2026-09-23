@@ -8,6 +8,7 @@ import type { BlockProps } from "./shared";
  * pela persona, então o momento cinético muda de textura entre landings.
  */
 const KineticBlock = ({ content, rng, picker, persona }: BlockProps) => {
+  if (!content.kinetic?.length) return null;
   const [item] = picker.pick(content.kinetic, 1, rng, (k) => [k.topic]);
   const texture = textureFor(persona, rng.int(TEXTURE_COUNT));
   return (
