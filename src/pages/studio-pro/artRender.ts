@@ -25,7 +25,7 @@ import { buildSegmentContent, brandSlogan } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { readableThemeTokens } from "./contrast";
 import { ensureFontLoaded, findFont } from "./brandFonts";
-import { GLOBAL_SEGMENT, audienceAncestors, readAudiences, type ContentAngle } from "./audiences";
+import { ALIVIA_AUDIENCES, GLOBAL_SEGMENT, audienceAncestors, readAudiences, type ContentAngle } from "./audiences";
 import { DEFAULT_VARIATION_PROFILE, type VariationProfile } from "@/pages/studio/variation";
 import { usePhraseMemory } from "./usePhraseMemory";
 
@@ -85,7 +85,10 @@ type Args = {
 
 export const useArtRender = ({ brand, seed, segment, angle, variation }: Args) => {
   const isAlivia = brand.content_source === "alivia";
-  const audiences = useMemo(() => readAudiences(brand.audiences), [brand.audiences]);
+  const audiences = useMemo(
+    () => (isAlivia ? ALIVIA_AUDIENCES : readAudiences(brand.audiences)),
+    [brand.audiences, isAlivia],
+  );
   const profile = variation ?? DEFAULT_VARIATION_PROFILE;
 
   const contentKit = useMemo(
