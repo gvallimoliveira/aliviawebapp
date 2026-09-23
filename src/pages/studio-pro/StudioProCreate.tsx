@@ -53,7 +53,7 @@ import { usePhraseMemory } from "./usePhraseMemory";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
 import { buildSegmentContent, brandSlogan, relationForSegment, pickGlobalAudience } from "./brandContent";
 import { useSegmentMemory } from "./useSegmentMemory";
-import { planBatch } from "./director";
+import { planBatch, planMultiSegmentBatch } from "./director";
 import { formatInsightWords, readFormatInsights } from "./formatInsights";
 import type { TopicId } from "@/pages/studio/topics";
 import { buildBrandDna } from "./brandDnaKit";
@@ -82,6 +82,7 @@ import {
   resolveAudience,
   type ContentAngle,
 } from "./audiences";
+import { isAliviaDifferential } from "./aliviaDifferentials";
 import { enforceRationale, explainArt, rationaleText, type RationaleContext } from "@/pages/studio/rationale";
 import { hasBannedJargon } from "@/pages/studio/persuasion";
 import {
@@ -224,6 +225,8 @@ type PersistedCreateState = {
   seed?: string;
   format?: StudioFormat;
   segment?: string;
+  /** Diferenciais podem ser combinados; públicos comuns continuam unitários. */
+  differentialSegments?: string[];
   angle?: ContentAngle;
   /** Modelos escolhidos; vazio = aleatório. */
   models?: string[];
@@ -439,6 +442,12 @@ const StudioProCreate = ({
     return { regular, grouped: [...grouped.entries()] };
   }, [segments]);
   const [segment, setSegment] = useState<string>(restored.current.segment ?? GLOBAL_SEGMENT);
+  const [differentialSegments, setDifferentialSegments] = useState<string[]>(() => {
+    const saved = restored.current.differentialSegments ?? [];
+    if (saved.length) return saved.filter(isAliviaDifferential);
+    const legacy = restored.current.segment;
+    return legacy && isAliviaDifferential(legacy) ? [legacy] : [];
+  });
   const [angle, setAngle] = useState<ContentAngle>(restored.current.angle ?? "informar");
   /**
    * PREFERÊNCIA DE MODELOS.
@@ -457,11 +466,28 @@ const StudioProCreate = ({
     setModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]));
 
   useEffect(() => {
-    writePersisted(brand.id, { segment, angle, models, variation });
-  }, [brand.id, segment, angle, models, variation]);
+    writePersisted(brand.id, { segment, differentialSegments, angle, models, variation });
+  }, [brand.id, segment, differentialSegments, angle, models, variation]);
+
+  const selectRegularSegment = (id: string) => {
+    setDifferentialSegments([]);
+    setSegment(id);
+  };
+  const toggleDifferential = (id: string) => {
+    setDifferentialSegments((current) => {
+      const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+      setSegment(next[0] ?? GLOBAL_SEGMENT);
+      return next;
+    });
+  };
 
   // Se o público ativo deixa de existir (edição do kit), volta para o 360°.
   const activeSegment = segments.some((s) => s.id === segment) ? segment : GLOBAL_SEGMENT;
+  const selectedDifferentials = isAlivia
+    ? differentialSegments.filter((id) => segments.some((item) => item.id === id) && isAliviaDifferential(id))
+    : [];
+  const generationSegments = selectedDifferentials.length ? selectedDifferentials : [activeSegment];
+  const generationKey = generationSegments.join("+");
 
   const contentKit = useMemo(
     () => ({
