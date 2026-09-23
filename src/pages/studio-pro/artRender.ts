@@ -21,7 +21,7 @@ import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { voiceRegister } from "@/pages/studio/lexicon";
 import { varyContent } from "@/pages/studio/vary";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
-import { buildSegmentContent, brandSlogan, enforceDifferentialFocus } from "./brandContent";
+import { buildSegmentContent, brandSlogan, enforceEditorialFocus } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { readableThemeTokens } from "./contrast";
 import { ensureFontLoaded, findFont } from "./brandFonts";
@@ -139,7 +139,7 @@ export const useArtRender = ({ brand, seed, segment, angle, variation }: Args) =
       forbidden: isAlivia ? [] : ["aliv.ia", "alivia", "fisioterap"],
       profile,
     });
-    return enforceDifferentialFocus(varied, resolveAudience(audiences, segment) ?? undefined);
+    return enforceEditorialFocus(varied, resolveAudience(audiences, segment) ?? undefined);
   }, [contentKit, aliviaWorld, audiences, segment, angle, brand.positioning, brand.id, seed, register, isAlivia, profile]);
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
