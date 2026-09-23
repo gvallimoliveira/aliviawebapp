@@ -288,7 +288,15 @@ const paintImagesOnCanvas = (
      */
     if (!imageReady) {
       const frameBackground = photoFrame ? getComputedStyle(photoFrame).backgroundColor : "";
-      context.fillStyle = isOpaqueColor(frameBackground) ? frameBackground : getComputedStyle(node).backgroundColor;
+      const nodeBackground = getComputedStyle(node).backgroundColor;
+      const bodyBackground = getComputedStyle(document.body).backgroundColor;
+      context.fillStyle = isOpaqueColor(frameBackground)
+        ? frameBackground
+        : isOpaqueColor(nodeBackground)
+          ? nodeBackground
+          : isOpaqueColor(bodyBackground)
+            ? bodyBackground
+            : "rgb(255, 255, 255)";
       context.fillRect(x, y, width, height);
       context.restore();
       painted.push({ x, y, width, height });
