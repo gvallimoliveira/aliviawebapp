@@ -474,18 +474,18 @@ const StudioProCreate = ({
     setSegment(id);
   };
   const toggleDifferential = (id: string) => {
-    setDifferentialSegments((current) => {
-      const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
-      setSegment(next[0] ?? GLOBAL_SEGMENT);
-      return next;
-    });
+    const next = differentialSegments.includes(id)
+      ? differentialSegments.filter((item) => item !== id)
+      : [...differentialSegments, id];
+    setDifferentialSegments(next);
+    setSegment(next[0] ?? GLOBAL_SEGMENT);
   };
 
   // Se o público ativo deixa de existir (edição do kit), volta para o 360°.
   const activeSegment = segments.some((s) => s.id === segment) ? segment : GLOBAL_SEGMENT;
-  const selectedDifferentials = isAlivia
+  const selectedDifferentials = useMemo(() => isAlivia
     ? differentialSegments.filter((id) => segments.some((item) => item.id === id) && isAliviaDifferential(id))
-    : [];
+    : [], [isAlivia, differentialSegments, segments]);
   const generationSegments = selectedDifferentials.length ? selectedDifferentials : [activeSegment];
   const generationKey = generationSegments.join("+");
 
@@ -1655,7 +1655,9 @@ const StudioProCreate = ({
           </div>
           {segmentGroups.grouped.map(([group, items]) => (
             <div key={group} className="mt-2 border-l-2 border-primary/35 pl-2.5">
-              <p className="mb-1 text-[10px] font-semibold uppercase text-muted-foreground">{group}</p>
+              <p className="mb-1 text-[10px] font-semibold uppercase text-muted-foreground">
+                {group} <span className="normal-case font-normal">· escolha um ou mais</span>
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {items.map((s) => (
                   <Button
