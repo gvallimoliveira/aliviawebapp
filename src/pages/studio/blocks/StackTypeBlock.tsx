@@ -16,6 +16,7 @@ import { displayWord, displayWordContainer, displayWordStyle } from "../typograp
  */
 
 const StackTypeBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
+  if (!content.headlines?.length || !content.kickers?.length) return null;
   const headline = rng.pick(content.headlines);
   /**
    * REGRA DURA: a palavra-cartaz aparece INTEIRA. Palavra longa não é quebrada

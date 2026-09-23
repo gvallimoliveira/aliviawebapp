@@ -59,6 +59,7 @@ const ScreenUi = ({
 );
 
 const DeviceBlock = ({ content, rng, treatment, format, persona, picker }: BlockProps) => {
+  if (!content.features?.length || !content.kickers?.length || !content.subs?.length) return null;
   const device = DEVICES[treatment % DEVICES.length];
   const features = picker.pick(content.features, 4, rng, (f) => [f.topic]);
   if (features.length < 2) return null;

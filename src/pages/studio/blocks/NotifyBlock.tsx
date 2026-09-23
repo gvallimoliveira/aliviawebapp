@@ -28,6 +28,7 @@ const short = (text: string, max = 58) => condensePhrase(text, max) || text;
 
 
 const NotifyBlock = ({ content, rng, picker, treatment, format }: BlockProps) => {
+  if (!content.features?.length || !content.kickers?.length) return null;
   const skin = SKINS[treatment % SKINS.length];
   const tall = treatment % SKINS.length === 3;
 

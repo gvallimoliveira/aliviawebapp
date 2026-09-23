@@ -17,6 +17,7 @@ import { ACCENT_STYLES, TextureLayer, renderAccent } from "./Texture";
  * têm prioridade sobre os já saturados.
  */
 const FeatureBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
+  if (!content.features?.length) return null;
   const items = picker.pick(content.features, treatment === 2 ? 2 : 1, rng, (f) => [f.topic]);
   const reversed = treatment === 1;
   /**

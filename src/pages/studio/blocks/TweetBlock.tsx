@@ -48,6 +48,7 @@ const numbers = (seedA: number, seedB: number) => [
 ];
 
 const TweetBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
+  if (!content.quotes?.length && !content.headlines?.length) return null;
   const [quote] = picker.pick(content.quotes, 1, rng, (q) => (q.topic ? [q.topic] : []));
   const headline = rng.pick(content.headlines);
   const body = (quote?.text ?? `${headline.strong} ${headline.rest}`).replace(/^["“]|["”]$/g, "").trim();

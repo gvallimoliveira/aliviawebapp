@@ -19,6 +19,7 @@ import { ACCENT_STYLES, GeoOrnament, TextureLayer, renderAccent } from "./Textur
  * e ganha uma palavra em destaque contrastante (chip/cor/sublinhado da marca).
  */
 const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
+  if (!content.headlines?.length || !content.kickers?.length || !content.subs?.length) return null;
   const headline = pickHeadline(rng, content.headlines, persona.headlineTaste);
   const kicker = rng.pick(content.kickers);
   const sub = rng.pick(content.subs);
