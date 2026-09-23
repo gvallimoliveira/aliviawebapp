@@ -98,14 +98,14 @@ export const foreignEditorialWords = (audience: BrandAudience, all: BrandAudienc
   const ownText = [audience.label, audience.keyword, audience.description, ...(audience.highlightTerms ?? [])]
     .filter(Boolean)
     .join(" ");
-  const own = new Set(words(ownText));
+  const own = new Set(termWords(ownText));
   const foreign = new Set<string>();
   all
     .filter((item) => item.id !== audience.id && item.editorialGroup?.trim() === group)
     .forEach((item) => {
       [item.label, item.keyword, ...(item.highlightTerms ?? [])]
         .filter(Boolean)
-        .flatMap((text) => words(String(text)))
+        .flatMap((text) => termWords(String(text)))
         .forEach((w) => {
           if (!own.has(w)) foreign.add(w);
         });
@@ -127,6 +127,18 @@ export const buildAudienceScope = (audience: BrandAudience, all: BrandAudience[]
       if (!text || text.length < 3) return false;
       if (clinical.some((re) => re.test(text))) return true;
       const bag = new Set(words(text));
+      return alien.some((w) => bag.has(w));
+    },
+  };
+};
+
+/** Escopo de um tema editorial: bloqueia só o vocabulário dos temas irmãos. */
+export const buildEditorialScope = (audience: BrandAudience, all: BrandAudience[]): AudienceScope => {
+  const alien = foreignEditorialWords(audience, all);
+  return {
+    foreign: (text: string) => {
+      if (!text || text.length < 3 || !alien.length) return false;
+      const bag = new Set(termWords(text));
       return alien.some((w) => bag.has(w));
     },
   };
