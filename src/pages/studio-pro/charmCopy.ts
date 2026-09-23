@@ -32,6 +32,7 @@ import { professionFor, wantsProfession } from "./professions";
 import { findAliviaCoreCharm, isAliviaCoreBrand, type AliviaCoreCharmRow } from "./aliviaCoreCharm";
 import { matchesVestibular, vestibularLines } from "./vestibularLexicon";
 import { matchesMsk, mskLines } from "./mskLexicon";
+import { isAliviaDifferential } from "./aliviaDifferentials";
 
 
 const clean = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ");
@@ -280,10 +281,14 @@ export const applyCharm = (
    * Nunca vale para o Studio nem para marcas de cliente.
    */
   const coreRow: AliviaCoreCharmRow | undefined =
-    !selfRow && isAliviaCoreBrand(brand ?? "") ? findAliviaCoreCharm(probe) : undefined;
+    !selfRow &&
+    !isAliviaDifferential(relation?.audience?.id ?? "") &&
+    isAliviaCoreBrand(brand ?? "")
+      ? findAliviaCoreCharm(probe)
+      : undefined;
 
   const row: SubNicheCharm | StudioSelfCharmRow | AliviaCoreCharmRow | undefined =
-    selfRow ?? coreRow ?? findSubNicheCharm(relation);
+    selfRow ?? coreRow ?? (isAliviaDifferential(relation?.audience?.id ?? "") ? undefined : findSubNicheCharm(relation));
   // O molde do ângulo "dor" usa a palavra dor literalmente. Em vestibular,
   // preservamos a intenção (nomear o incômodo), mas só com o léxico específico.
   const frames = relation && !vestibular
