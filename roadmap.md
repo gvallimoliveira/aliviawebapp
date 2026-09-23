@@ -60,3 +60,8 @@
 - [x] Fazer comparações destacarem o critério e o benefício, nunca a alternativa genérica.
 - [x] Traduzir termos clínicos em informação útil ao cliente, sem frases enciclopédicas.
 - [x] Exibir nome da marca junto ao símbolo na assinatura discreta de toda arte.
+
+## Diferenciais Aliv.iA no Studio (23/09)
+- [x] Criar categoria editorial separada sem alterar os quatro públicos oficiais.
+- [x] Cadastrar dez recortes com situação, mecanismo, prova, valor e chamada próprios.
+- [ ] Validar foco, isolamento, determinismo e geração visual dos dez diferenciais.
