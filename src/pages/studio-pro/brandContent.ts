@@ -1732,16 +1732,19 @@ export const enforceEditorialFocus = (
     return {
       kicker: key.toUpperCase(),
       word: term,
-      caption: `${sentence(mechanism)} Na prática, ${lower1(benefit)}. Sem a funcionalidade, ${lower1(loss)}.`,
+      caption: `${sentence(mechanism)} Na prática, ${lower1(benefit)}. Sem ${lower1(key)}, ${lower1(loss)}.`,
     };
   });
   return {
     ...content,
     typos,
     kinetic,
-    marquee: [[key, ...terms, "Como funciona", "Benefício prático", "Sem a funcionalidade"]],
+    marquee: [[key, ...terms, "Como funciona", "Benefício prático", `Sem essa ${noun}`]],
   };
 };
+
+/** Nome anterior, mantido para não quebrar chamadas existentes. */
+export const enforceDifferentialFocus = enforceEditorialFocus;
 
 
 /**
