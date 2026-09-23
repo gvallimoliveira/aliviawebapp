@@ -78,6 +78,32 @@ export const foreignAudienceWords = (audience: BrandAudience, all: BrandAudience
   return [...foreign];
 };
 
+/**
+ * Palavras que identificam os temas IRMÃOS da mesma linha editorial e não
+ * pertencem ao tema ativo. Ex.: numa arte de "Avaliação externa por IA", termos
+ * como "periodização" ou "sRPE" (de outros temas) saem do acervo.
+ */
+export const foreignEditorialWords = (audience: BrandAudience, all: BrandAudience[]): string[] => {
+  const group = audience.editorialGroup?.trim();
+  if (!group) return [];
+  const ownText = [audience.label, audience.keyword, audience.description, ...(audience.highlightTerms ?? [])]
+    .filter(Boolean)
+    .join(" ");
+  const own = new Set(words(ownText));
+  const foreign = new Set<string>();
+  all
+    .filter((item) => item.id !== audience.id && item.editorialGroup?.trim() === group)
+    .forEach((item) => {
+      [item.label, item.keyword, ...(item.highlightTerms ?? [])]
+        .filter(Boolean)
+        .flatMap((text) => words(String(text)))
+        .forEach((w) => {
+          if (!own.has(w)) foreign.add(w);
+        });
+    });
+  return [...foreign];
+};
+
 export type AudienceScope = {
   /** Verdadeiro quando o texto pertence a outro público/tema. */
   foreign: (text: string) => boolean;
