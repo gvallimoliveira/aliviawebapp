@@ -88,8 +88,13 @@ describe("sub-nichos no motor criativo", () => {
       expect(headings).toHaveLength(4);
       expect(headings).not.toContain("O que é");
       expect(headings).not.toContain("Benefício");
-      const term = (item.keyword ?? item.label).toLowerCase().slice(0, 8);
-      expect(headings.every((heading) => heading.toLowerCase().includes(term))).toBe(true);
+      // Todo título nomeia o próprio tema (nome ou um termo canônico dele).
+      const anchors = [item.keyword ?? item.label, item.label, ...(item.highlightTerms ?? [])]
+        .filter(Boolean)
+        .map((text) => String(text).toLowerCase().slice(0, 8));
+      expect(
+        headings.every((heading) => anchors.some((anchor) => heading.toLowerCase().includes(anchor))),
+      ).toBe(true);
       expect(headings[3]?.toLowerCase().startsWith("sem ")).toBe(true);
       expect(content.compare[0]?.before.length).toBeGreaterThan(0);
       expect(content.compare[0]?.after.length).toBeGreaterThan(0);
