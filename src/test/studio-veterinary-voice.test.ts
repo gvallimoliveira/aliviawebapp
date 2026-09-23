@@ -146,4 +146,18 @@ describe("Studio: tutor leitor e animal paciente", () => {
     expect(content.hooks[0].sub).toBe("");
     expect(content.quotes[0].text).not.toMatch(/^["“”]{2}/);
   });
+
+  it("remove possessivo duplicado em qualquer texto visível", () => {
+    const content = finalizeBrandVoice({
+      carousels: [{
+        kicker: "Dor persistente",
+        title: "Entenda o sinal",
+        coverSub: "O que ninguém te explicou sobre sua sua dor",
+        slides: [],
+        cta: { title: "Próximo passo", sub: "Agende uma avaliação" },
+      }],
+    }, { brand: "Guilherme Vallim Fisioterapia", domain: "fisioterapia" });
+
+    expect(content.carousels[0].coverSub).toBe("O que ninguém te explicou sobre sua dor");
+  });
 });

@@ -206,6 +206,38 @@ describe("Diretor criativo", () => {
     });
   });
 
+  it("transforma a rota em uma sequência coerente e rejeita gancho órfão ou fora do assunto", () => {
+    const source = WORLDS.pro.carousels[0];
+    const directed = directCarouselWithHook(source, {
+      hook: "Pare imediatamente",
+      strong: "Pare de",
+      rest: ".",
+      sub: "O que ninguém te explicou sobre sua sua dor",
+      cta: "Agende uma avaliação",
+    }, {
+      desire: "subir escadas com confiança",
+      cta: "Agende uma avaliação",
+      route: {
+        kind: "pain-to-desire",
+        audienceLabel: "Paciente com dor no joelho",
+        scene: "A escada da sua casa virou uma escolha difícil",
+        tension: "A dor no joelho limita tarefas simples do dia a dia",
+        feature: "A avaliação identifica o que mantém essa limitação",
+        proof: "A reavaliação mostra o que mudou com o tratamento",
+        desire: "Subir escadas com confiança",
+        cta: "Agende uma avaliação",
+        signature: "escada|dor|avaliacao|reavaliacao|confianca",
+        vocabulary: ["escada", "dor", "joelho", "avaliação", "confiança"],
+      },
+    });
+
+    expect(directed.title).toBe("A escada da sua casa virou uma escolha difícil");
+    expect(directed.title).not.toMatch(/^pare de[.!?]?$/i);
+    expect(directed.coverSub).toMatch(/dor no joelho/i);
+    expect(directed.slides.map((slide) => slide.body).join(" ")).toMatch(/avaliação.*reavaliação.*confiança/i);
+    expect(directed.cta.sub).toBe("Agende uma avaliação");
+  });
+
   it("redireciona individualmente os slides quando o filtro desfaz um carrossel", () => {
     const blocks = composePage(createRng("carrossel-reprovado"), undefined, undefined, WORLDS.pro.carousels, 0, ["carousel"]);
     const draft = planBatch({ content: WORLDS.pro, count: blocks.length, blocks, seed: "carrossel-reprovado" });

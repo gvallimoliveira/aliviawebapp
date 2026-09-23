@@ -227,10 +227,13 @@ export const fixStrayAllCaps = (text: string): string => {
 
 /** Remove possessivo duplicado que nasce da junção de moldura + fala do kit. */
 export const fixPossessiveEcho = (text: string): string =>
-  text.replace(
-    /\b(?:seu|sua)\s+([a-zà-ÿ][a-zà-ÿ\s-]{1,32}?)\s+d[ao]\s+sua\s+casa\b/gi,
-    (_all, noun: string) => `a ${noun.trim()} da sua casa`,
-  );
+  text
+    // Duplicação direta criada ao unir campos: “sobre sua sua dor”.
+    .replace(/\b(seu|sua|seus|suas)\s+\1\b/gi, "$1")
+    .replace(
+      /\b(?:seu|sua)\s+([a-zà-ÿ][a-zà-ÿ\s-]{1,32}?)\s+d[ao]\s+sua\s+casa\b/gi,
+      (_all, noun: string) => `a ${noun.trim()} da sua casa`,
+    );
 
 const fixDuplicateOpeningQuotes = (text: string): string =>
   text.replace(/^(?:\s*["“”'‘’]){2,}\s*/u, "");
