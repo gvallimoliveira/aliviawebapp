@@ -1677,6 +1677,53 @@ const applyAudience = (
   };
 };
 
+/**
+ * Recoloca os termos canônicos depois da variação linguística/aprendizado.
+ * O texto pode variar, mas a palavra protagonista identifica necessariamente
+ * a funcionalidade selecionada e cada peça curta ainda fecha mecanismo → ganho.
+ */
+export const enforceDifferentialFocus = (
+  content: WorldContent,
+  audience?: BrandAudience,
+): WorldContent => {
+  if (!audience?.editorialGroup) return content;
+  const key = audienceKeyword(audience);
+  const terms = (audience.highlightTerms ?? [key]).map(strip).filter(Boolean);
+  const mechanisms = (audience.proof ?? []).map(strip).filter(Boolean);
+  const benefits = (audience.desires ?? []).map(strip).filter(Boolean);
+  const losses = (audience.stakes ?? []).map(strip).filter(Boolean);
+  const at = (values: string[], index: number, fallback: string) =>
+    values[index % Math.max(1, values.length)] || fallback;
+  const amount = Math.max(3, terms.length, mechanisms.length, benefits.length);
+  const typos = Array.from({ length: amount }, (_, index) => {
+    const term = at(terms, index, key);
+    const mechanism = at(mechanisms, index, audience.description ?? key);
+    const benefit = at(benefits, index, audience.cta ?? key);
+    return {
+      lead: index % 2 === 0 ? `${key}:` : "Na rotina,",
+      big: term,
+      tail: `${sentence(mechanism)} Isso permite ${lower1(benefit)}.`,
+    };
+  });
+  const kinetic = Array.from({ length: amount }, (_, index) => {
+    const term = at(terms, index, key);
+    const mechanism = at(mechanisms, index, audience.description ?? key);
+    const benefit = at(benefits, index, audience.cta ?? key);
+    const loss = at(losses, index, audience.pains?.[index % Math.max(1, audience.pains?.length ?? 0)] ?? key);
+    return {
+      kicker: key.toUpperCase(),
+      word: term,
+      caption: `${sentence(mechanism)} Na prática, ${lower1(benefit)}. Sem a funcionalidade, ${lower1(loss)}.`,
+    };
+  });
+  return {
+    ...content,
+    typos,
+    kinetic,
+    marquee: [[key, ...terms, "Como funciona", "Benefício prático", "Sem a funcionalidade"]],
+  };
+};
+
 
 /**
  * Visão 360° — ramo MARCA: leitura ampla do que a marca é e faz.

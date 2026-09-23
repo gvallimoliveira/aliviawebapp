@@ -536,12 +536,13 @@ export const planBatch = (input: {
   brandName?: string;
 }): BatchDirection => {
   const { content, count, blocks, seed, relation, dna, brief, weightOf, learnedVoice, domain, brandName } = input;
+  const closedEditorial = Boolean((relation as Relation | undefined)?.audience?.editorialGroup);
   const rng = createRng(`${seed}:director`);
   const route = "route" in (relation ?? {}) ? (relation as Relation).route : undefined;
   const routes = "routes" in (relation ?? {}) ? (relation as Relation).routes ?? (route ? [route] : []) : [];
   const routeWords = routes.flatMap((item) => item.vocabulary).slice(0, 40);
-  const extra = [...brandVocabulary(dna, brief), ...routeWords].slice(0, 92);
-  const voice = (learnedVoice ?? [])
+  const extra = [...(closedEditorial ? [] : brandVocabulary(dna, brief)), ...routeWords].slice(0, 92);
+  const voice = (closedEditorial ? [] : learnedVoice ?? [])
     .flatMap((v) => normalize(v).split(/[^a-z0-9]+/))
     .filter((w) => w.length > 4)
     .slice(0, 60);
@@ -662,7 +663,7 @@ export const planBatch = (input: {
     const scriptWords = selected
       ? normalize(flatten(selected)).split(/[^a-z0-9]+/).filter((word) => word.length > 4)
       : [];
-    const selectedHook = carouselHookStream.take({
+    const selectedHook = closedEditorial ? undefined : carouselHookStream.take({
       axis: groupAxis,
       // O gancho precisa combinar com a tese do roteiro, não apenas pertencer à
       // marca. Palavras do próprio carrossel pesam junto com dor/desejo/prova.
@@ -679,7 +680,9 @@ export const planBatch = (input: {
     if (selected) {
       carouselByGroup.set(
         block.slide.group,
-        directCarouselWithHook(selected as WorldContent["carousels"][number], selectedHook, relation as Relation | undefined),
+        closedEditorial
+          ? dedupeCarouselSlides(selected as WorldContent["carousels"][number])
+          : directCarouselWithHook(selected as WorldContent["carousels"][number], selectedHook, relation as Relation | undefined),
       );
     }
   });
@@ -751,7 +754,7 @@ export const planBatch = (input: {
      * compostas com a tensão/entrega/prova/desejo desta arte entram na frente
      * do acervo. Frase já muito usada pela marca (memória) é descartada.
      */
-    if (!carousel && shotRoute) {
+    if (!carousel && shotRoute && !closedEditorial) {
       const composed = composeRouteCopy(shotRoute, {
         seed: `${seed}:art:${index}`,
         rotate: index,
