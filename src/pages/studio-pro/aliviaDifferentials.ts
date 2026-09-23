@@ -270,7 +270,7 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     pains: [
       "Avaliação anterior espalhada entre PDFs e fotos",
       "Digitação manual de informações que já estão documentadas",
-      "Dado importante sem campo claro no novo prontuário",
+      "Informação externa sem campo correspondente",
     ],
     desires: [
       "Trazer uma avaliação externa para o mesmo padrão do prontuário",
@@ -287,8 +287,8 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
       "Antes de salvar, o fisioterapeuta abre o formulário, revisa os campos e corrige o que for necessário",
     ],
     objections: [
-      "A IA pode interpretar um campo errado",
-      "Meu arquivo externo não segue o padrão do Aliv.iA",
+      "A IA pode errar a leitura?",
+      "E se o arquivo não seguir o padrão Aliv.iA?",
     ],
     stakes: [
       "O histórico externo continua separado do raciocínio atual",
