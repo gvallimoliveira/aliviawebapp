@@ -132,6 +132,13 @@ type Creation = {
 
 type Tab = "criar" | "artes" | "ajustes";
 
+/** Quantas linhas a marca já escreveu nos campos de lista do público/tema. */
+const listFieldCount = (a: BrandAudience) =>
+  (["pains", "desires", "proof", "scenes", "objections", "stakes", "triggers", "hooks"] as const).reduce(
+    (n, f) => n + (a[f]?.length ?? 0),
+    0,
+  );
+
 /** Campo de lista (uma por linha) com digitação livre: só normaliza ao sair. */
 const AudienceListField = ({
   label,
@@ -517,6 +524,28 @@ const StudioProBrand = () => {
     setAudiences((prev) => prev.filter((_, i) => i !== index));
 
   /**
+   * Separação de leitura: públicos (sem grupo editorial) e temas (com grupo).
+   * Os índices continuam apontando para o array completo.
+   */
+  const audienceItems = audiences
+    .map((a, i) => ({ a, i }))
+    .filter(({ a }) => !(a.editorialGroup ?? "").trim());
+  const editorialItems = audiences
+    .map((a, i) => ({ a, i }))
+    .filter(({ a }) => !!(a.editorialGroup ?? "").trim());
+
+  const addEditorialTheme = () =>
+    setAudiences((prev) => [
+      ...prev,
+      {
+        id: `tema-${prev.length + 1}`,
+        label: "",
+        editorialGroup:
+          prev.find((p) => p.editorialGroup?.trim())?.editorialGroup?.trim() || "Temas",
+      },
+    ]);
+
+  /**
    * Aplica um kit de conteúdo de nicho: preenche os campos vazios da marca e
    * substitui a lista de públicos pelos do modelo. Nada é enviado ao servidor
    * até o usuário salvar.
@@ -684,6 +713,22 @@ const StudioProBrand = () => {
   }
 
   const accent = brand.colors?.primary ?? "hsl(var(--primary))";
+
+  /**
+   * Marca recém-criada, sem nada preenchido: só ela abre a etapa 1 ao entrar.
+   * Marcas com qualquer conteúdo abrem com todas as etapas minimizadas.
+   */
+  const nothingFilled =
+    !brand.logo_url &&
+    !brand.description &&
+    !brand.positioning &&
+    !brand.slogan &&
+    !brand.format_insights &&
+    !brand.keyword_matrix &&
+    !brand.reasoning_matrix &&
+    !(brand.topics ?? []).length &&
+    readAudiences(brand.audiences).length === 0 &&
+    answeredCount(readBriefAnswers(brand.brief_answers)) === 0;
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-background px-5 py-8">
@@ -979,7 +1024,7 @@ const StudioProBrand = () => {
               step={1}
               title="Comece por aqui"
               hint="O que você já tem em mãos: logo, manual da marca — ou o questionário guiado."
-              defaultOpen
+              defaultOpen={nothingFilled}
               filled={!!form.logo_url || !!doc || briefFilled > 0}
             >
               <div className="grid gap-3 sm:grid-cols-2">
@@ -1071,7 +1116,6 @@ const StudioProBrand = () => {
               step={2}
               title="Identidade visual"
               hint="Cores, tipografia e assinatura aplicadas em todas as artes."
-              defaultOpen={!!brand.positioning}
               filled={!!brand.positioning || !!form.logo_url}
             >
               <div className="grid gap-3 sm:grid-cols-2">
@@ -1105,7 +1149,6 @@ const StudioProBrand = () => {
               step={3}
               title="Mensagem"
               hint="O que a marca diz e como fala. Orienta a IA — não aparece dentro da arte."
-              defaultOpen={!!brand.positioning}
               filled={!!form.positioning || !!form.tone}
             >
               <div className="grid gap-3 sm:grid-cols-2">
@@ -1247,7 +1290,6 @@ const StudioProBrand = () => {
               step={4}
               title="Insights de formatos"
               hint="Ideias de arte com o diálogo já escrito: abertura, falas do meio e fecho."
-              defaultOpen={!form.format_insights}
               filled={!!form.format_insights.trim()}
             >
               <div>
@@ -1287,13 +1329,17 @@ const StudioProBrand = () => {
             <BrandSection
               step={6}
               title="Públicos"
-
               hint="Cada público vira uma aba na criação, com dores, desejos, chamada e CTA próprios."
-              defaultOpen={audiences.length > 0}
-              filled={audiences.length > 0}
+              filled={audienceItems.length > 0}
             >
               <div className="space-y-3">
-                {audiences.map((a, i) => (
+                {audienceItems.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum público ainda. Adicione quem vai ler as artes — ou trabalhe por temas na etapa 7
+                    (serviços, diferenciais, produtos).
+                  </p>
+                )}
+                {audienceItems.map(({ a, i }) => (
                   <div key={`${a.id}-${i}`} className="rounded-xl border border-border p-3">
                     <div className="flex items-center gap-2">
                       <Input
@@ -1338,27 +1384,6 @@ const StudioProBrand = () => {
                       value={a.description ?? ""}
                       onChange={(e) => updateAudience(i, { description: e.target.value })}
                     />
-                    <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                      {([
-                        ["pains", "Dores (uma por linha)"],
-                        ["desires", "Desejos (uma por linha)"],
-                        ["proof", "Soluções que ofereço (uma por linha)"],
-                        ["scenes", "Cenas do dia a dia (uma por linha)"],
-                        ["objections", "Objeções dele (uma por linha)"],
-                        ["stakes", "Se não fizer nada… (uma por linha)"],
-                        ["triggers", "Momento em que procura ajuda (uma por linha)"],
-
-                      ] as const).map(([field, label]) => (
-                        <AudienceListField
-                          key={field}
-                          label={label}
-                          value={a[field] ?? []}
-                          onCommit={(lines) =>
-                            updateAudience(i, { [field]: lines } as Partial<BrandAudience>)
-                          }
-                        />
-                      ))}
-                    </div>
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">
                       <div>
                         <Label htmlFor={`edit-keyword-${a.id}`} className="text-[11px]">
@@ -1383,67 +1408,49 @@ const StudioProBrand = () => {
                         />
                       </div>
                     </div>
-                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                      <div>
-                        <Label htmlFor={`edit-group-${a.id}`} className="text-[11px]">
-                          Linha editorial (opcional)
-                        </Label>
-                        <Input
-                          id={`edit-group-${a.id}`}
-                          placeholder="Ex.: Serviços da clínica, Tratamentos, Produtos"
-                          value={a.editorialGroup ?? ""}
-                          onChange={(e) => updateAudience(i, { editorialGroup: e.target.value })}
-                        />
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                          Com um nome aqui, este item deixa de ser público e passa a ser um TEMA: a arte fala só
-                          dele (o que é, como funciona, o ganho e o custo de não ter) e você pode escolher vários
-                          temas do mesmo grupo na geração.
-                        </p>
-                      </div>
-                      <div>
-                        <Label htmlFor={`edit-highlight-${a.id}`} className="text-[11px]">
-                          Termos de destaque (separados por vírgula)
-                        </Label>
-                        <Input
-                          id={`edit-highlight-${a.id}`}
-                          placeholder={`Ex.: ${suggestHighlightTerms(a).join(", ")}`}
-                          value={(a.highlightTerms ?? []).join(", ")}
-                          onChange={(e) =>
-                            updateAudience(i, {
-                              highlightTerms: e.target.value
-                                .split(",")
-                                .map((term) => term.trim())
-                                .filter(Boolean),
-                            })
-                          }
-                        />
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                          Só estes termos podem virar a palavra gigante da arte. Em branco, o motor usa o nome do
-                          tema: {suggestHighlightTerms(a).join(" · ")}.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                      <AudienceListField
-                        label="Outras chamadas (uma por linha)"
-                        value={a.hooks ?? []}
-                        onCommit={(lines) => updateAudience(i, { hooks: lines })}
+                    <div className="mt-2">
+                      <Label htmlFor={`edit-cta-${a.id}`} className="text-[11px]">
+                        Objetivo / CTA deste público
+                      </Label>
+                      <Input
+                        id={`edit-cta-${a.id}`}
+                        placeholder="Ex.: Fazer minha avaliação, Testar o painel profissional"
+                        value={a.cta ?? ""}
+                        onChange={(e) => updateAudience(i, { cta: e.target.value })}
                       />
-                      <div>
-                        <Label htmlFor={`edit-cta-${a.id}`} className="text-[11px]">
-                          Objetivo / CTA deste público
-                        </Label>
-                        <Input
-                          id={`edit-cta-${a.id}`}
-                          placeholder="Ex.: Fazer minha avaliação, Testar o painel profissional"
-                          value={a.cta ?? ""}
-                          onChange={(e) => updateAudience(i, { cta: e.target.value })}
-                        />
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                          O motor alterna entre a chamada principal e as outras para não repetir abertura.
-                        </p>
-                      </div>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        O motor alterna entre a chamada principal e as outras para não repetir abertura.
+                      </p>
                     </div>
+                    <details className="mt-2 rounded-lg border border-border bg-background">
+                      <summary className="cursor-pointer select-none px-3 py-2 text-[11px] font-medium text-muted-foreground">
+                        Campos do raciocínio
+                        {listFieldCount(a) > 0
+                          ? ` · ${listFieldCount(a)} linha${listFieldCount(a) === 1 ? "" : "s"} preenchida${listFieldCount(a) === 1 ? "" : "s"}`
+                          : " (dores, desejos, cenas, objeções…)"}
+                      </summary>
+                      <div className="grid gap-2 p-3 sm:grid-cols-3">
+                        {([
+                          ["pains", "Dores (uma por linha)"],
+                          ["desires", "Desejos (uma por linha)"],
+                          ["proof", "Soluções que ofereço (uma por linha)"],
+                          ["scenes", "Cenas do dia a dia (uma por linha)"],
+                          ["objections", "Objeções dele (uma por linha)"],
+                          ["stakes", "Se não fizer nada… (uma por linha)"],
+                          ["triggers", "Momento em que procura ajuda (uma por linha)"],
+                          ["hooks", "Outras chamadas (uma por linha)"],
+                        ] as const).map(([field, label]) => (
+                          <AudienceListField
+                            key={field}
+                            label={label}
+                            value={a[field] ?? []}
+                            onCommit={(lines) =>
+                              updateAudience(i, { [field]: lines } as Partial<BrandAudience>)
+                            }
+                          />
+                        ))}
+                      </div>
+                    </details>
                   </div>
                 ))}
                 <div className="flex flex-wrap items-center gap-3">
@@ -1462,10 +1469,150 @@ const StudioProBrand = () => {
               </div>
             </BrandSection>
 
+            {/* ================= 7. LINHA EDITORIAL ================= */}
+            <BrandSection
+              step={7}
+              title="Linha editorial (temas)"
+              hint="Serviços, diferenciais ou produtos: cada arte fala de um só tema — o que é, como funciona, o ganho e o custo de não ter."
+              filled={editorialItems.length > 0}
+            >
+              <div className="space-y-3">
+                <p className="rounded-2xl border border-primary/25 bg-primary/5 p-3 text-xs text-muted-foreground">
+                  Temas não entram na contagem de públicos. Na aba <strong>Criar</strong> eles aparecem em um grupo
+                  próprio, com seleção múltipla: cada arte do lote recebe um tema e fala só dele.
+                </p>
+                {editorialItems.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum tema ainda. Adicione o que a marca oferece e quer explicar em artes fechadas — um tema
+                    por item.
+                  </p>
+                )}
+                {editorialItems.map(({ a, i }) => (
+                  <div key={`${a.id}-${i}`} className="rounded-xl border border-primary/25 p-3">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        aria-label={`Nome do tema ${i + 1}`}
+                        placeholder="Nome do tema (ex.: Reavaliação expressa)"
+                        value={a.label}
+                        onChange={(e) => updateAudience(i, { label: e.target.value })}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Remover tema"
+                        onClick={() => removeAudience(i)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <div>
+                        <Label htmlFor={`edit-group-${a.id}`} className="text-[11px]">
+                          Grupo (linha editorial)
+                        </Label>
+                        <Input
+                          id={`edit-group-${a.id}`}
+                          placeholder="Ex.: Diferenciais, Serviços da clínica, Tratamentos"
+                          value={a.editorialGroup ?? ""}
+                          onChange={(e) => updateAudience(i, { editorialGroup: e.target.value })}
+                        />
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Itens com o mesmo nome de grupo aparecem juntos na criação.
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor={`edit-keyword-${a.id}`} className="text-[11px]">
+                          Palavra-chave
+                        </Label>
+                        <Input
+                          id={`edit-keyword-${a.id}`}
+                          placeholder="Ex.: Reavaliação, HEP, sRPE"
+                          value={a.keyword ?? ""}
+                          onChange={(e) => updateAudience(i, { keyword: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <Label htmlFor={`edit-highlight-${a.id}`} className="text-[11px]">
+                        Termos de destaque (separados por vírgula)
+                      </Label>
+                      <Input
+                        id={`edit-highlight-${a.id}`}
+                        placeholder={`Ex.: ${suggestHighlightTerms(a).join(", ")}`}
+                        value={(a.highlightTerms ?? []).join(", ")}
+                        onChange={(e) =>
+                          updateAudience(i, {
+                            highlightTerms: e.target.value
+                              .split(",")
+                              .map((term) => term.trim())
+                              .filter(Boolean),
+                          })
+                        }
+                      />
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Só estes termos podem virar a palavra gigante da arte. Em branco, o motor usa o nome do
+                        tema: {suggestHighlightTerms(a).join(" · ")}.
+                      </p>
+                    </div>
+                    <Textarea
+                      className="mt-2"
+                      rows={2}
+                      placeholder="O que é — explicado em uma frase"
+                      value={a.description ?? ""}
+                      onChange={(e) => updateAudience(i, { description: e.target.value })}
+                    />
+                    <div className="mt-2">
+                      <Label htmlFor={`edit-cta-${a.id}`} className="text-[11px]">
+                        Objetivo / CTA
+                      </Label>
+                      <Input
+                        id={`edit-cta-${a.id}`}
+                        placeholder="Ex.: Conhecer o diferencial, Agendar avaliação"
+                        value={a.cta ?? ""}
+                        onChange={(e) => updateAudience(i, { cta: e.target.value })}
+                      />
+                    </div>
+                    <details className="mt-2 rounded-lg border border-border bg-background">
+                      <summary className="cursor-pointer select-none px-3 py-2 text-[11px] font-medium text-muted-foreground">
+                        Roteiro do tema
+                        {listFieldCount(a) > 0
+                          ? ` · ${listFieldCount(a)} linha${listFieldCount(a) === 1 ? "" : "s"} preenchida${listFieldCount(a) === 1 ? "" : "s"}`
+                          : " (como funciona, ganho, cena, custo…)"}
+                      </summary>
+                      <div className="grid gap-2 p-3 sm:grid-cols-3">
+                        {([
+                          ["proof", "Como funciona / o que entrega (uma por linha)"],
+                          ["desires", "Ganho na rotina (uma por linha)"],
+                          ["scenes", "Cenas do dia a dia (uma por linha)"],
+                          ["pains", "Dores que o tema resolve (uma por linha)"],
+                          ["objections", "Objeções (uma por linha)"],
+                          ["stakes", "Custo de não ter (uma por linha)"],
+                          ["hooks", "Outras chamadas (uma por linha)"],
+                        ] as const).map(([field, label]) => (
+                          <AudienceListField
+                            key={field}
+                            label={label}
+                            value={a[field] ?? []}
+                            onCommit={(lines) =>
+                              updateAudience(i, { [field]: lines } as Partial<BrandAudience>)
+                            }
+                          />
+                        ))}
+                      </div>
+                    </details>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" className="rounded-full" onClick={addEditorialTheme}>
+                  <FolderPlus className="mr-1.5 h-4 w-4" />
+                  Adicionar tema
+                </Button>
+              </div>
+            </BrandSection>
+
             {/* ================= 7. ACESSOS ================= */}
             {isOwnBrand(brand, user?.id) && (
               <BrandSection
-                step={7}
+                step={8}
                 title="Pessoas com acesso"
                 hint="Compartilhe esta marca com outra conta Aliv.iA: ela cria, edita e baixa as artes daqui."
                 defaultOpen={false}
