@@ -55,3 +55,8 @@
 ## Nexo dos carrosséis (22/09)
 - [x] Fazer capa, desenvolvimento e chamada nascerem da mesma rota do manual; rejeitar ganchos órfãos ou sem relação com o assunto.
 - [x] Remover duplicações diretas de possessivo, como “sua sua dor”, na revisão global.
+
+## Valor e assinatura das artes (22/09)
+- [x] Fazer comparações destacarem o critério e o benefício, nunca a alternativa genérica.
+- [x] Traduzir termos clínicos em informação útil ao cliente, sem frases enciclopédicas.
+- [x] Exibir nome da marca junto ao símbolo na assinatura discreta de toda arte.

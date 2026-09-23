@@ -31,7 +31,8 @@ const StudioSignature = ({ dark = false, corner = "br", markOnly = false }: Prop
   return (
     <div
       aria-hidden
-      className={`pointer-events-none absolute z-20 flex items-center gap-2 ${CORNER_CLASS[corner]}`}
+      data-studio-brand-signature="1"
+      className={`pointer-events-none absolute z-20 flex max-w-[46%] items-center gap-2.5 ${CORNER_CLASS[corner]}`}
     >
       <img
         src={markOnly ? BRAND_MARK : BRAND_LOGO}
@@ -45,6 +46,15 @@ const StudioSignature = ({ dark = false, corner = "br", markOnly = false }: Prop
             : "h-8 w-auto max-w-32 md:h-10 md:max-w-40"
         } object-contain ${dark ? "opacity-90" : "opacity-80"}`}
       />
+      {!markOnly && (
+        <span
+          className={`text-[9px] font-semibold uppercase leading-tight tracking-[0.18em] md:text-[11px] ${
+            dark ? "text-background/90" : "text-foreground/80"
+          }`}
+        >
+          {BRAND_NAME}
+        </span>
+      )}
     </div>
   );
 };
