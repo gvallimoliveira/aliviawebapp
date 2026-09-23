@@ -179,6 +179,59 @@ const AudienceListField = ({
   );
 };
 
+/** Campo de termos com digitação livre: vírgula e ponto e vírgula separam só ao sair. */
+const splitHighlightTerms = (text: string): string[] => {
+  const seen = new Set<string>();
+  const terms: string[] = [];
+  text
+    .split(/[;,]/)
+    .map((term) => term.trim())
+    .filter(Boolean)
+    .forEach((term) => {
+      const key = term.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      terms.push(term);
+    });
+  return terms;
+};
+
+const HighlightTermsField = ({
+  id,
+  value,
+  placeholder,
+  onCommit,
+}: {
+  id: string;
+  value: string[];
+  placeholder: string;
+  onCommit: (terms: string[]) => void;
+}) => {
+  const joined = value.join(", ");
+  const [text, setText] = useState(joined);
+  const [focused, setFocused] = useState(false);
+
+  useEffect(() => {
+    if (!focused) setText(joined);
+  }, [joined, focused]);
+
+  return (
+    <Input
+      id={id}
+      placeholder={placeholder}
+      value={text}
+      onFocus={() => setFocused(true)}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={() => {
+        setFocused(false);
+        const terms = splitHighlightTerms(text);
+        setText(terms.join(", "));
+        onCommit(terms);
+      }}
+    />
+  );
+};
+
 /**
  * Etapa recolhível dos ajustes. O fluxo passa a ser numerado (matéria-prima →
  * visual → mensagem → públicos), e cada etapa mostra se já está preenchida.
@@ -1534,20 +1587,13 @@ const StudioProBrand = () => {
                     </div>
                     <div className="mt-2">
                       <Label htmlFor={`edit-highlight-${a.id}`} className="text-[11px]">
-                        Termos de destaque (separados por vírgula)
+                        Termos de destaque (vírgula ou ponto e vírgula)
                       </Label>
-                      <Input
+                      <HighlightTermsField
                         id={`edit-highlight-${a.id}`}
                         placeholder={`Ex.: ${suggestHighlightTerms(a).join(", ")}`}
-                        value={(a.highlightTerms ?? []).join(", ")}
-                        onChange={(e) =>
-                          updateAudience(i, {
-                            highlightTerms: e.target.value
-                              .split(",")
-                              .map((term) => term.trim())
-                              .filter(Boolean),
-                          })
-                        }
+                        value={a.highlightTerms ?? []}
+                        onCommit={(highlightTerms) => updateAudience(i, { highlightTerms })}
                       />
                       <p className="mt-1 text-[11px] text-muted-foreground">
                         Só estes termos podem virar a palavra gigante da arte. Em branco, o motor usa o nome do
