@@ -266,7 +266,12 @@ export const composeRouteCopy = (
         }]
       : []),
     ...(lexicalTerm && lexicalPerception
-      ? [{ field: "lexical", text: `${cap(lexicalTerm)} é o nome técnico. Na rotina, pode aparecer como ${low(lexicalPerception)}.` }]
+      ? [{
+          field: "lexical",
+          text: proof
+            ? `${cap(lexicalPerception)} merece atenção. ${cap(proof)} ajuda a entender o que está acontecendo e orienta o próximo passo.`
+            : `${cap(lexicalPerception)} pode ter relação com ${low(lexicalTerm)} e merece uma avaliação cuidadosa.`,
+        }]
       : []),
     ...(objection ? [{ field: "objection", text: `Você pensa: ${low(objection)}. ${cap(turn)} responde a isso.` }] : []),
     ...(stakes ? [{ field: "stakes", text: `Deixar como está tem preço: ${low(stakes)}.` }] : []),
@@ -432,7 +437,10 @@ export const composeRouteCopy = (
         moral: terms(fit(cta || proof || turn, 100)),
       }];
       if (lexicalTerm && lexicalPerception) {
-        out.quotes = [{ text: terms(`${cap(lexicalTerm)} é o termo técnico. Para quem cuida, pode aparecer como ${low(lexicalPerception)}.`) }];
+        const usefulQuote = proof
+          ? `${cap(lexicalPerception)} não é só um nome. ${cap(proof)} ajuda a entender a causa e escolher o próximo passo.`
+          : `${cap(lexicalPerception)} é um sinal que merece avaliação, não apenas um rótulo técnico.`;
+        out.quotes = [{ text: terms(usefulQuote) }];
       }
       out.kinetic = [{
         kicker: terms(shortKicker(who || "Decisão", 28)),

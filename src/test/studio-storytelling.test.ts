@@ -3,6 +3,7 @@ import { composeRouteCopy } from "@/pages/studio-pro/storytelling";
 import { phraseSignature } from "@/pages/studio/picker";
 import type { NarrativeRoute } from "@/pages/studio-pro/synapses";
 import { joinCopyParts, quoteCopy } from "@/pages/studio/typographyGuards";
+import { buildHook, HOOK_TYPES } from "@/pages/studio-pro/hookTaxonomy";
 
 const route: NarrativeRoute = {
   kind: "pain-to-desire",
@@ -127,5 +128,35 @@ describe("redação a partir da rota narrativa", () => {
     copies.forEach((copy) => {
       expect(copy.closings?.[0]?.sub).toMatch(/dá base para conduzir o caso complexo com suporte/i);
     });
+  });
+
+  it("traduz o léxico clínico em informação útil, sem vender o termo técnico", () => {
+    const clinical: NarrativeRoute = {
+      ...route,
+      lexicalTerm: "Hipofunção vestibular",
+      lexicalPerception: "Tontura ao virar na cama",
+      proof: "Avaliação funcional identifica os movimentos que provocam o sintoma",
+    };
+    const copies = Array.from({ length: 12 }, (_, index) =>
+      composeRouteCopy(clinical, { seed: `lexico:${index}`, rotate: index }),
+    );
+
+    copies.forEach((copy) => {
+      expect(copy.quotes?.[0]?.text).toMatch(/tontura|avaliação|próximo passo/i);
+      expect(copy.quotes?.[0]?.text).not.toMatch(/é o (?:nome|termo) técnico/i);
+    });
+  });
+
+  it("faz a comparação destacar o valor entregue, não a fisioterapia genérica", () => {
+    const type = HOOK_TYPES.find((item) => item.id === "comparacao-dois-casos");
+    expect(type).toBeDefined();
+    if (!type) return;
+    const hook = buildHook(type, {
+      inimigo: "fisioterapia genérica",
+      prova: "Reavaliação de mobilidade, força, carga e função",
+    });
+    expect(hook?.strong).toMatch(/reavaliação/i);
+    expect(hook?.strong).not.toMatch(/genérica/i);
+    expect(hook?.rest).toMatch(/em vez de fisioterapia genérica/i);
   });
 });

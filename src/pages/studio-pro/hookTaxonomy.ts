@@ -113,7 +113,9 @@ export const HOOK_TYPES: HookType[] = [
     id: "comparacao-dois-casos",
     label: "Dois caminhos",
     requires: ["inimigo", "prova"],
-    build: (f) => ({ strong: `Dois caminhos: ${low(f.inimigo)}`, rest: `ou ${low(f.prova)}` }),
+    // A abertura destaca o critério que gera valor. A alternativa genérica fica
+    // apenas como contraste secundário — nunca como protagonista da promessa.
+    build: (f) => ({ strong: cap(f.prova), rest: `em vez de ${low(f.inimigo)}` }),
   },
   {
     id: "pergunta-ao-especialista",
@@ -143,7 +145,9 @@ export const HOOK_TYPES: HookType[] = [
     id: "traducao-tecnica",
     label: "Tradução técnica",
     requires: ["termo", "percepcao"],
-    build: (f) => ({ strong: cap(f.termo), rest: `aparece como ${low(f.percepcao)}` }),
+    // O cliente parte do que sente/percebe; o termo clínico só entra como ponte
+    // para compreender o sinal, nunca como curiosidade técnica sem utilidade.
+    build: (f) => ({ strong: cap(f.percepcao), rest: `pode ter relação com ${low(f.termo)}` }),
   },
   {
     id: "objecao-respondida",
