@@ -164,13 +164,18 @@ export const buildNarrativeRoute = ({
   const stakesPool = ownFirst(first(audience?.stakes), dna.stakes);
   const triggerPool = first(audience?.triggers);
   const enemy = audience?.editorialGroup ? undefined : clean(dna.enemy) || undefined;
-  const matrix = pickMatrixContext({
-    keywordMatrix,
-    reasoningMatrix,
-    audienceId: audience?.id,
-    seed: routeSeed,
-    variant,
-  });
+  // Diferenciais são pacotes editoriais fechados. A matriz geral da marca pode
+  // conter periodização, HEP, sRPE e outros recursos ao mesmo tempo; consultá-la
+  // aqui fazia uma rota de avaliação externa receber o mecanismo de carga.
+  const matrix = audience?.editorialGroup
+    ? { lexical: undefined, reasoning: undefined }
+    : pickMatrixContext({
+        keywordMatrix,
+        reasoningMatrix,
+        audienceId: audience?.id,
+        seed: routeSeed,
+        variant,
+      });
 
   const kinds: NarrativeRouteKind[] = [
     "pain-to-desire",

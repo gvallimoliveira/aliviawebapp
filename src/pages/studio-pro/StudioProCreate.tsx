@@ -52,7 +52,7 @@ import { voiceRegister } from "@/pages/studio/lexicon";
 import { varyContent } from "@/pages/studio/vary";
 import { usePhraseMemory } from "./usePhraseMemory";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
-import { buildSegmentContent, brandSlogan, relationForSegment, pickGlobalAudience } from "./brandContent";
+import { buildSegmentContent, brandSlogan, enforceDifferentialFocus, relationForSegment, pickGlobalAudience } from "./brandContent";
 import { useSegmentMemory } from "./useSegmentMemory";
 import { planBatch, planMultiSegmentBatch } from "./director";
 import { formatInsightWords, readFormatInsights } from "./formatInsights";
@@ -631,10 +631,13 @@ const StudioProCreate = ({
       segmentWeights: segmentMemory.weights,
     });
     const varied = varyContent(built, { register, seed: sourceSeed, forbidden: [], profile: variation });
-    const learned = applyLearnedCopy(varied, learning.rewrites, learning.vocabulary, { protectedLiterals: protectedBrandLiterals });
+    // O aprendizado geral da marca pode mencionar outro recurso. Diferenciais
+    // são fechados: preservamos o texto do próprio pacote e recolocamos seus
+    // termos canônicos depois da variação.
+    const focused = enforceDifferentialFocus(varied, resolveAudience(audiences, id));
     return {
       id,
-      content: enforceSegmentAudienceScope(learned.content, id, audiences),
+      content: enforceSegmentAudienceScope(focused, id, audiences),
       relation: relationForSegment({
         kit: contentKit,
         audiences,

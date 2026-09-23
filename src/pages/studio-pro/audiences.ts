@@ -80,6 +80,12 @@ export type BrandAudience = {
    */
   keyword?: string;
   /**
+   * TERMOS DE DESTAQUE do recorte editorial. Em peças de palavra protagonista,
+   * só estes termos podem ocupar o centro — nunca um adjetivo genérico retirado
+   * ao acaso do texto corrido.
+   */
+  highlightTerms?: string[];
+  /**
    * GANCHO direto, em 2ª pessoa, que abre a frase ("Você que convive com dor
    * há meses"). Fallback derivado do label.
    */

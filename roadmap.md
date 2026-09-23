@@ -81,3 +81,8 @@
 - [x] Impedir modelos incompatíveis com acervos editoriais parciais de travarem a geração.
 - [x] Proteger os blocos sensíveis contra listas vazias e seleções antigas inválidas.
 - [x] Permitir recolher e reabrir a seção de diferenciais, preservando a preferência durante o uso.
+
+## Foco integral dos diferenciais (23/09)
+- [x] Restringir palavras protagonistas aos termos canônicos da funcionalidade selecionada.
+- [x] Bloquear matrizes, aprendizados e rotas gerais que misturem outro diferencial na mesma arte.
+- [x] Manter explicação, mecanismo, benefício e custo de não ter dentro do mesmo pacote editorial.

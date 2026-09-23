@@ -21,11 +21,11 @@ import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { voiceRegister } from "@/pages/studio/lexicon";
 import { varyContent } from "@/pages/studio/vary";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
-import { buildSegmentContent, brandSlogan } from "./brandContent";
+import { buildSegmentContent, brandSlogan, enforceDifferentialFocus } from "./brandContent";
 import { readColorKit } from "./brandColors";
 import { readableThemeTokens } from "./contrast";
 import { ensureFontLoaded, findFont } from "./brandFonts";
-import { ALIVIA_AUDIENCES, GLOBAL_SEGMENT, audienceAncestors, readAudiences, type ContentAngle } from "./audiences";
+import { ALIVIA_AUDIENCES, GLOBAL_SEGMENT, audienceAncestors, readAudiences, resolveAudience, type ContentAngle } from "./audiences";
 import { DEFAULT_VARIATION_PROFILE, type VariationProfile } from "@/pages/studio/variation";
 import { usePhraseMemory } from "./usePhraseMemory";
 
@@ -133,12 +133,13 @@ export const useArtRender = ({ brand, seed, segment, angle, variation }: Args) =
       variationSeed: `${brand.id}:${seed}:${segment}:${angle}`,
       variationProfile: profile,
     });
-    return varyContent(built, {
+    const varied = varyContent(built, {
       register,
       seed: `${brand.id}:${seed}:${segment}:${angle}`,
       forbidden: isAlivia ? [] : ["aliv.ia", "alivia", "fisioterap"],
       profile,
     });
+    return enforceDifferentialFocus(varied, resolveAudience(audiences, segment) ?? undefined);
   }, [contentKit, aliviaWorld, audiences, segment, angle, brand.positioning, brand.id, seed, register, isAlivia, profile]);
 
   const persona = useMemo(() => personaForSeed(`${brand.id}:${seed}`), [brand.id, seed]);
