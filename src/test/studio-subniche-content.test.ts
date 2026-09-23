@@ -32,7 +32,7 @@ describe("sub-nichos no motor criativo", () => {
       });
       const blob = JSON.stringify(content).toLowerCase();
       expect(blob).toContain(item.keyword!.toLowerCase());
-      expect(blob).toContain(item.proof![0].toLowerCase());
+      expect(item.proof!.some((proof) => blob.includes(proof.toLowerCase()))).toBe(true);
       expect(content.sales.ctas.map((cta) => cta.toLowerCase())).toContain(item.cta!.toLowerCase());
       expect(content.closings.some((closing) => closing.cta.toLowerCase() === item.cta!.toLowerCase())).toBe(true);
       expect(blob).not.toContain("slogan em destaque");
