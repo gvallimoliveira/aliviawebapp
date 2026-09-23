@@ -113,6 +113,26 @@ describe("static export surface", () => {
     expect(title?.textContent).toBe("Carga Planejada");
     expect(title?.hasAttribute("contenteditable")).toBe(false);
     expect(title?.style.outline).toBe("");
+    expect(title?.style.caretColor).toBe("transparent");
+    expect(title?.style.userSelect).toBe("none");
+
+    surface.dispose();
+    root.remove();
+  });
+
+  it("não altera o conteúdo editado nem os atributos da arte viva", async () => {
+    const root = document.createElement("div");
+    root.style.width = "320px";
+    root.style.height = "480px";
+    root.innerHTML = '<h2 data-studio-text-slot="1" contenteditable="true">Evolução com métricas de dor</h2>';
+    document.body.appendChild(root);
+
+    const original = root.innerHTML;
+    const surface = await createStaticExportSurface(root);
+
+    expect(root.innerHTML).toBe(original);
+    expect(surface.node.textContent).toContain("Evolução com métricas de dor");
+    expect(surface.node.querySelector("h2")?.hasAttribute("contenteditable")).toBe(false);
 
     surface.dispose();
     root.remove();
