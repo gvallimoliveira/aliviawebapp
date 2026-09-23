@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import {
   Camera,
   Check,
+  ChevronDown,
   Contrast,
 
   Download,
@@ -235,6 +236,8 @@ type PersistedCreateState = {
   pinnedPhotos?: string[];
   /** Filtro "fotos do acervo em destaque": metade das artes com foto de fundo. */
   photoFirst?: boolean;
+  /** Estado da seção extensa de diferenciais. */
+  differentialsOpen?: boolean;
 
 };
 
@@ -448,6 +451,7 @@ const StudioProCreate = ({
     const legacy = restored.current.segment;
     return legacy && isAliviaDifferential(legacy) ? [legacy] : [];
   });
+  const [differentialsOpen, setDifferentialsOpen] = useState(restored.current.differentialsOpen ?? true);
   const [angle, setAngle] = useState<ContentAngle>(restored.current.angle ?? "informar");
   /**
    * PREFERÊNCIA DE MODELOS.
@@ -466,14 +470,15 @@ const StudioProCreate = ({
     setModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]));
 
   useEffect(() => {
-    writePersisted(brand.id, { segment, differentialSegments, angle, models, variation });
-  }, [brand.id, segment, differentialSegments, angle, models, variation]);
+    writePersisted(brand.id, { segment, differentialSegments, differentialsOpen, angle, models, variation });
+  }, [brand.id, segment, differentialSegments, differentialsOpen, angle, models, variation]);
 
   const selectRegularSegment = (id: string) => {
     setDifferentialSegments([]);
     setSegment(id);
   };
   const toggleDifferential = (id: string) => {
+    if (!isAlivia || !isAliviaDifferential(id) || !segments.some((item) => item.id === id)) return;
     const next = differentialSegments.includes(id)
       ? differentialSegments.filter((item) => item !== id)
       : [...differentialSegments, id];
@@ -781,6 +786,7 @@ const StudioProCreate = ({
         kindsForModels(models, activePhotos.length, isAlivia),
         isAlivia,
         photoFirst,
+        content,
       ),
     [brand.id, seed, generationKey, angle, persona, content, lineage, activePhotos.length, models, isAlivia, photoFirst],
 
@@ -1655,22 +1661,33 @@ const StudioProCreate = ({
           </div>
           {segmentGroups.grouped.map(([group, items]) => (
             <div key={group} className="mt-2 border-l-2 border-primary/35 pl-2.5">
-              <p className="mb-1 text-[10px] font-semibold uppercase text-muted-foreground">
-                {group} <span className="normal-case font-normal">· escolha um ou mais</span>
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {items.map((s) => (
-                  <Button
-                    key={s.id}
-                    size="sm"
-                    variant={selectedDifferentials.includes(s.id) ? "secondary" : "ghost"}
-                    className="h-7 rounded-full text-[11px]"
-                    onClick={() => toggleDifferential(s.id)}
-                  >
-                    {s.label}
-                  </Button>
-                ))}
-              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="mb-1 h-7 w-full justify-between px-1 text-[10px] font-semibold uppercase text-muted-foreground"
+                aria-expanded={differentialsOpen}
+                aria-controls="studio-differentials"
+                onClick={() => setDifferentialsOpen((open) => !open)}
+              >
+                <span>{group} <span className="normal-case font-normal">· {selectedDifferentials.length ? `${selectedDifferentials.length} selecionado${selectedDifferentials.length > 1 ? "s" : ""}` : "escolha um ou mais"}</span></span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${differentialsOpen ? "rotate-180" : ""}`} />
+              </Button>
+              {differentialsOpen && (
+                <div id="studio-differentials" className="flex flex-wrap gap-1.5">
+                  {items.map((s) => (
+                    <Button
+                      key={s.id}
+                      size="sm"
+                      variant={selectedDifferentials.includes(s.id) ? "secondary" : "ghost"}
+                      className="h-7 rounded-full text-[11px]"
+                      onClick={() => toggleDifferential(s.id)}
+                    >
+                      {s.label}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
           {/* Ângulo estratégico: informar (sem dar aula), dor, desejo ou venda. */}
