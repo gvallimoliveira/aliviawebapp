@@ -31,6 +31,8 @@ const GENERIC = new Set([
   "fisioterapia", "fisioterapeuta", "avaliacao", "reavaliacao", "tratamento", "paciente", "pacientes",
   "plano", "planos", "atendimento", "atendimentos", "clinica", "criterio", "criterios", "reabilitacao",
   "movimento", "movimentos", "exercicio", "exercicios", "domicilio", "consulta", "cuidado", "saude",
+  "relatorio", "relatorios", "comparacao", "evolucao", "clinico", "clinica", "sistema", "painel", "dados",
+  "carga", "programa", "inteligente", "inteligentes", "guiada", "video", "link", "links",
 ]);
 
 const words = (text: string) =>

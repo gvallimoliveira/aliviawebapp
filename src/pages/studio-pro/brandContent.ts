@@ -1879,12 +1879,14 @@ export const buildSegmentContent = ({
      * arte dirigida a paciente / sub-nicho clínico diz AUTOavaliação. Em qualquer
      * marca, a copy nunca afirma ter "protocolo".
      */
-    const patientVoice = patientVoiceFor(
-      brand,
-      [relation?.keyword, relation?.who, relation?.audience?.label, relation?.audience?.description, relation?.hook]
-        .filter(Boolean)
-        .join(" · "),
-    );
+    const patientVoice = audience?.editorialGroup
+      ? false
+      : patientVoiceFor(
+          brand,
+          [relation?.keyword, relation?.who, relation?.audience?.label, relation?.audience?.description, relation?.hook]
+            .filter(Boolean)
+            .join(" · "),
+        );
     const done = applyTerminology(
       sanitizeContent(applyAngle(content, angle, relation, brand), dna.forbidden),
       { patientVoice },

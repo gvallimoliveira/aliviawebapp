@@ -16,6 +16,7 @@
  * aleatório, mas determinístico por seed).
  */
 import { stripFieldLabels } from "./brandDnaKit";
+import { ALIVIA_DIFFERENTIALS } from "./aliviaDifferentials";
 
 export const GLOBAL_SEGMENT = "360";
 
@@ -103,6 +104,8 @@ export type BrandAudience = {
    * os lotes seguintes e travam a variedade da marca.
    */
   manualOnly?: boolean;
+  /** Grupo apenas visual/editorial; não muda a contagem matriz x sub-nicho. */
+  editorialGroup?: string;
 };
 
 /** Termo que a arte deve gritar para o público se reconhecer. */
@@ -189,6 +192,7 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
         hooks: asStringArray(row.hooks),
         parentId: String(row.parentId ?? row.parent_id ?? "").trim() || undefined,
         manualOnly: row.manualOnly === true || row.manual_only === true || undefined,
+        editorialGroup: String(row.editorialGroup ?? row.editorial_group ?? "").trim() || undefined,
       };
     })
     .filter((a): a is BrandAudience => a !== null);
@@ -216,6 +220,7 @@ export const writeAudiences = (list: BrandAudience[]): BrandAudience[] =>
       ...(a.hooks?.length ? { hooks: a.hooks.map((h) => h.trim()).filter(Boolean) } : {}),
       ...(a.parentId?.trim() ? { parentId: a.parentId.trim() } : {}),
       ...(a.manualOnly ? { manualOnly: true } : {}),
+      ...(a.editorialGroup?.trim() ? { editorialGroup: a.editorialGroup.trim() } : {}),
     }));
 
 /**
@@ -286,7 +291,7 @@ export const resolveAudience = (list: BrandAudience[], id: string): BrandAudienc
   };
 };
 
-export type Segment = { id: string; label: string };
+export type Segment = { id: string; label: string; group?: string };
 
 /**
  * Abas de segmento de uma marca: sempre começa pelo global 360° e depois lista
@@ -294,7 +299,7 @@ export type Segment = { id: string; label: string };
  */
 export const buildSegments = (audiences: BrandAudience[]): Segment[] => [
   { id: GLOBAL_SEGMENT, label: "Visão 360°" },
-  ...audiences.map((a) => ({ id: a.id, label: a.label })),
+  ...audiences.map((a) => ({ id: a.id, label: a.label, group: a.editorialGroup })),
 ];
 
 /* ------------------------------------------------------------------------- */
@@ -620,6 +625,7 @@ export const ALIVIA_AUDIENCES: BrandAudience[] = [
 
     parentId: "paciente",
   },
+  ...ALIVIA_DIFFERENTIALS,
 ];
 
 

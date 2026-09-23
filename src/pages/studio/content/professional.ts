@@ -65,8 +65,8 @@ const professional: WorldContent = {
       rest: "Anamnese, evolução e relatórios saem no horário do atendimento — não depois do jantar.",
     },
     {
-      strong: "Reavaliar não é recomeçar.",
-      rest: "A reavaliação expressa traz o que já sabemos preenchido e destaca só o que mudou desde a última visita.",
+      strong: "Reavaliar não é perguntar apenas se melhorou.",
+      rest: "Dor, questionários, ADM e força voltam à mesma régua para mostrar o que mudou desde a última avaliação.",
     },
     {
       strong: "Laudo de dinamometria não é planilha para você decifrar.",
@@ -78,7 +78,7 @@ const professional: WorldContent = {
     },
     {
       strong: "Nota de evolução às 22h não é dedicação. É retrabalho.",
-      rest: "O Aliv.iA escreve durante a sessão, com pré-preenchimento da evolução anterior.",
+      rest: "Dite a evolução durante a sessão; o Aliv.iA transcreve o registro e descarta o áudio.",
     },
     {
       strong: "Sua concorrência não é o colega. É a desorganização.",
@@ -264,7 +264,7 @@ const professional: WorldContent = {
       after: [
         "Paciente responde antes de chegar",
         "Testes sugeridos por região e suspeita",
-        "Evolução com pré-preenchimento inteligente",
+        "Evolução registrada por voz durante a sessão",
         "PDF clínico pronto em um clique",
       ],
     },
@@ -590,7 +590,7 @@ const professional: WorldContent = {
       coverSub: "Dois retratos da rotina de quem usa o Aliv.iA.",
       slides: [
         { heading: "12 minutos por avaliação", body: "É o tempo devolvido a cada caso que chega respondido por link.", topic: "assessment-link" },
-        { heading: "Fim do prontuário noturno", body: "Evolução escrita durante a sessão, com voz e pré-preenchimento.", topic: "voice-notes" },
+        { heading: "Fim do prontuário noturno", body: "Evolução ditada durante a sessão, transcrita no prontuário e revisada antes de salvar.", topic: "voice-notes" },
       ],
       cta: { title: "Recupere as suas noites", sub: "Link na bio." },
     },

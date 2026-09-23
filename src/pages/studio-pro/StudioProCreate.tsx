@@ -428,6 +428,15 @@ const StudioProCreate = ({
     [brand.audiences, brand.slogan],
   );
   const segments = useMemo(() => buildSegments(audiences), [audiences]);
+  const segmentGroups = useMemo(() => {
+    const regular = segments.filter((item) => !item.group);
+    const grouped = new Map<string, typeof segments>();
+    segments.filter((item) => item.group).forEach((item) => {
+      const key = item.group ?? "";
+      grouped.set(key, [...(grouped.get(key) ?? []), item]);
+    });
+    return { regular, grouped: [...grouped.entries()] };
+  }, [segments]);
   const [segment, setSegment] = useState<string>(restored.current.segment ?? GLOBAL_SEGMENT);
   const [angle, setAngle] = useState<ContentAngle>(restored.current.angle ?? "informar");
   /**
@@ -1520,9 +1529,9 @@ const StudioProCreate = ({
 
 
 
-          {/* Nichos da marca + visão 360° (modo livre: assunto sorteado por lote). */}
+          {/* Públicos da marca + grupos editoriais especializados. */}
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {segments.map((s) => (
+            {segmentGroups.regular.map((s) => (
               <Button
                 key={s.id}
                 size="sm"
@@ -1539,6 +1548,24 @@ const StudioProCreate = ({
               </Button>
             ))}
           </div>
+          {segmentGroups.grouped.map(([group, items]) => (
+            <div key={group} className="mt-2 border-l-2 border-primary/35 pl-2.5">
+              <p className="mb-1 text-[10px] font-semibold uppercase text-muted-foreground">{group}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {items.map((s) => (
+                  <Button
+                    key={s.id}
+                    size="sm"
+                    variant={activeSegment === s.id ? "secondary" : "ghost"}
+                    className="h-7 rounded-full text-[11px]"
+                    onClick={() => setSegment(s.id)}
+                  >
+                    {s.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ))}
           {/* Ângulo estratégico: informar (sem dar aula), dor, desejo ou venda. */}
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {ANGLES.map((a) => (
