@@ -11,11 +11,40 @@ import { buildSegmentContent } from "@/pages/studio-pro/brandContent";
 import { ALIVIA_DIFFERENTIALS, ALIVIA_DIFFERENTIAL_GROUP } from "@/pages/studio-pro/aliviaDifferentials";
 import { buildNarrativeRoute } from "@/pages/studio-pro/synapses";
 import { buildBrandDna } from "@/pages/studio-pro/brandDnaKit";
+import { blockKindSupported, composePage } from "@/pages/studio/composePage";
+import { createRng } from "@/pages/studio/rng";
 
 const kit = { name: "Aliv.iA", niche: "fisioterapia", tone: "próximo e técnico", description: "", keywords: [] };
 const SUBS = ["paciente-dor-cronica", "paciente-pos-operatorio", "paciente-atleta-amador", "paciente-60-mais"];
 
 describe("sub-nichos no motor criativo", () => {
+  it("não escala modelos que exigem coleções vazias nos diferenciais", () => {
+    const content = buildSegmentContent({
+      kit,
+      audiences: ALIVIA_AUDIENCES,
+      segment: ALIVIA_DIFFERENTIALS[0].id,
+      angle: "informar",
+      variationSeed: "partial-content-layout",
+    });
+    const blocks = composePage(
+      createRng("partial-content-layout"),
+      undefined,
+      undefined,
+      content.carousels,
+      0,
+      undefined,
+      true,
+      false,
+      content,
+    );
+
+    expect(blockKindSupported("metrics", content)).toBe(false);
+    expect(blockKindSupported("stats", content)).toBe(false);
+    expect(blockKindSupported("journey", content)).toBe(false);
+    expect(blockKindSupported("triptych", content)).toBe(false);
+    expect(blocks.every((block) => blockKindSupported(block.kind, content))).toBe(true);
+  });
+
   it("mantém quatro públicos oficiais e agrupa os doze diferenciais à parte", () => {
     expect(officialAudienceCount(ALIVIA_AUDIENCES)).toBe(4);
     expect(ALIVIA_DIFFERENTIALS).toHaveLength(12);
