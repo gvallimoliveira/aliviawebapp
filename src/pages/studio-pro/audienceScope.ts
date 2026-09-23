@@ -116,12 +116,15 @@ const flatten = (value: unknown): string => {
  */
 export const enforceAudienceScope = <T,>(content: T, audience: BrandAudience, all: BrandAudience[]): T => {
   /**
-   * Diferenciais já nascem de um acervo fechado e compartilham termos de
-   * produto entre si. O filtro lexical de públicos confundia esse vocabulário
-   * comum com vazamento e removia, por exemplo, o slide de benefício.
+   * TEMA EDITORIAL (diferencial de um SaaS, serviço de uma clínica, produto de
+   * uma loja): o acervo já é fechado e os temas irmãos compartilham vocabulário
+   * de produto. Aqui não se aplica o filtro clínico/de públicos — o que se
+   * bloqueia é o vocabulário EXCLUSIVO dos temas irmãos do mesmo grupo, para a
+   * arte de um assunto nunca citar o assunto vizinho.
    */
-  if (audience.editorialGroup) return content;
-  const scope = buildAudienceScope(audience, all);
+  const scope = audience.editorialGroup
+    ? buildEditorialScope(audience, all)
+    : buildAudienceScope(audience, all);
   const key = (audience.keyword || audience.label || "").trim();
 
   const walk = (value: unknown, path = ""): unknown => {
