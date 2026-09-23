@@ -781,9 +781,22 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   host.dataset.studioExportSurface = "1";
   Object.assign(host.style, {
     position: "fixed",
-    left: "-100000px",
+    /*
+     * Não envie a superfície para coordenadas extremas. O WebKit/iOS pode
+     * descartar a pintura de texto de uma árvore tão distante da viewport; o
+     * html-to-image recebe então apenas o fundo, enquanto logos/fotos ainda
+     * reaparecem porque são repintados manualmente no canvas. Isso acontecia
+     * sobretudo depois de contentEditable/movimentação de texto.
+     *
+     * Atrás da página, mas em coordenadas reais, o clone continua participando
+     * da pintura e não interfere visualmente nem no toque.
+     */
+    left: "0",
     top: "0",
     width: `${rect.width}px`,
+    height: `${rect.height}px`,
+    overflow: "hidden",
+    contain: "strict",
     pointerEvents: "none",
     zIndex: "-2147483647",
   });
@@ -796,6 +809,17 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   // O card na tela corta o excedente; a cópia precisa cortar igual para o PNG
   // sair no mesmo formato mostrado na geração.
   clone.style.overflow = "hidden";
+
+  /* O PNG representa a arte concluída, mesmo se o usuário tocar em baixar com
+     Ajustar/Mover texto ainda ativo. Removemos apenas estado transitório do
+     editor no clone; conteúdo, tamanho e transformações aprovadas permanecem. */
+  clone.querySelectorAll<HTMLElement>('[contenteditable], [data-studio-text-slot="1"]').forEach((element) => {
+    element.contentEditable = "false";
+    element.removeAttribute("spellcheck");
+    element.style.outline = "";
+    element.style.outlineOffset = "";
+    element.style.cursor = "";
+  });
 
   // Tokens da marca são herdados de wrappers da tela; materialize-os na cópia.
   const computed = getComputedStyle(source);

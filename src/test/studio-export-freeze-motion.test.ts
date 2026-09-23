@@ -97,6 +97,27 @@ describe("static export surface", () => {
     root.remove();
   });
 
+  it("mantém o clone em coordenadas pintáveis no iPhone e limpa o estado transitório da edição", async () => {
+    const root = document.createElement("div");
+    root.style.width = "320px";
+    root.style.height = "480px";
+    root.innerHTML = '<h2 data-studio-text-slot="1" contenteditable="true" spellcheck="false" style="outline:1px dashed currentColor;cursor:text">Carga Planejada</h2>';
+    document.body.appendChild(root);
+
+    const surface = await createStaticExportSurface(root);
+    const host = surface.node.parentElement;
+    const title = surface.node.querySelector<HTMLElement>("h2");
+
+    expect(host?.style.left).toBe("0px");
+    expect(host?.style.zIndex).toBe("-2147483647");
+    expect(title?.textContent).toBe("Carga Planejada");
+    expect(title?.contentEditable).toBe("false");
+    expect(title?.style.outline).toBe("");
+
+    surface.dispose();
+    root.remove();
+  });
+
   it("engessa no clone as linhas vistas sem alterar a arte original", () => {
     const source = document.createElement("div");
     source.innerHTML = '<p style="display:block">O prontuário contou por ela.</p>';
