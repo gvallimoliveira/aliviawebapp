@@ -40,6 +40,15 @@ const words = (text: string) =>
     .split(/[^a-z0-9]+/)
     .filter((w) => w.length >= 5 && !GENERIC.has(w));
 
+/**
+ * Palavras de TEMA editorial: aceitam 4 letras, porque siglas de produto como
+ * "sRPE", "HEP" ou "NPS" identificam um assunto inteiro.
+ */
+const termWords = (text: string) =>
+  norm(text)
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 4 && !GENERIC.has(w));
+
 /** Chaves estruturais: nunca são texto visível de arte. */
 const SKIP_KEYS = new Set(["id", "label", "topic", "topics", "poster", "image", "hashtags", "value", "prefix", "suffix"]);
 
