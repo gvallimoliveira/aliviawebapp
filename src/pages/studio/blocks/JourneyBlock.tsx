@@ -12,6 +12,7 @@ import { TextureLayer } from "./Texture";
  * possui screenshot exato. Nada de screenshot genérico ilustrando a jornada.
  */
 const JourneyBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
+  if (!content.journeys?.length) return null;
   const [journey] = picker.pick(content.journeys, 1, rng, (j) => j.steps.map((s) => s.topic));
   const steps = journey.steps.slice(0, 4);
   const shotStep = steps.find((s) => imageForTopic(s.topic));

@@ -71,6 +71,7 @@ const TWEET_ACTION_PATHS = [
 ] as const;
 
 const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: BlockProps) => {
+  if (!content.carousels?.length) return null;
   const group = slide?.group ?? 0;
   const index = slide?.index ?? 0;
   const carousel = pickCarousel(content.carousels, slide?.script ?? group);

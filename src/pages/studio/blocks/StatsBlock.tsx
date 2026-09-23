@@ -9,6 +9,7 @@ import { ACCENT_STYLES, TextureLayer, renderAccent } from "./Texture";
  * Ambos recebem trama geométrica da persona e o heading ganha palavra-destaque.
  */
 const StatsBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
+  if (!content.stats?.length) return null;
   const stats = rng.pick(content.stats);
   const accentVariant = rng.int(ACCENT_STYLES.length);
 

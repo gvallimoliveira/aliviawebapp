@@ -69,6 +69,7 @@ const SpotMetric = ({ metric }: { metric: StudioMetric }) => {
  * (números gigantes em fileira, sem cards), 3 spotlight (um protagonista + apoio).
  */
 const MetricsBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
+  if (!content.metrics?.length) return null;
   const metrics = rng.pick(content.metrics);
   const heading = rng.pick(HEADINGS);
   const stacked = treatment === 1;

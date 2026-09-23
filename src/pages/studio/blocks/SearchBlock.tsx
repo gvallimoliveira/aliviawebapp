@@ -63,6 +63,7 @@ const asQuery = (raw: string) =>
     .slice(0, 48);
 
 const SearchBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
+  if (!content.closings?.length) return null;
   /* Só entram termos de busca reais (dores, diagnósticos, desejos do nicho).
      Nada de headline/frase institucional: ninguém digita isso no Google. */
   const pool = (content.searchQueries ?? [])

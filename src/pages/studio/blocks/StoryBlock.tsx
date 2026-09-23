@@ -10,6 +10,7 @@ import { BRAND_NAME } from "../brand";
  * 2 tipografia corrida com virada em chip.
  */
 const StoryBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
+  if (!content.stories?.length) return null;
   const [story] = picker.pick(content.stories, 1, rng, (s) => [s.topic]);
   const accentVariant = rng.int(ACCENT_STYLES.length);
 
