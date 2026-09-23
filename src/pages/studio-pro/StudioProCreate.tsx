@@ -841,7 +841,6 @@ const StudioProCreate = ({
     () => differentialSources.length > 1
       ? planMultiSegmentBatch({
         sources: differentialSources,
-        content: undefined as never,
         count: composedBlocks.length,
         blocks: composedBlocks,
         seed: `${brand.id}:${seed}:${generationKey}:${angle}`,
@@ -851,7 +850,7 @@ const StudioProCreate = ({
         learnedVoice: [...learning.voice, ...formatInsightWords(readFormatInsights(brand.format_insights))],
         domain: [brand.niche, brand.description, brand.positioning].filter(Boolean).join(" · "),
         brandName: brand.name,
-      } as Parameters<typeof planMultiSegmentBatch>[0])
+      })
       : planBatch({
         content,
         count: composedBlocks.length,

@@ -455,6 +455,7 @@ export const planMultiSegmentBatch = (input: {
   const { sources, count, blocks, seed, ...shared } = input;
   if (sources.length <= 1) {
     const source = sources[0];
+    if (!source) throw new Error("planMultiSegmentBatch requer ao menos um diferencial");
     const single = planBatch({ content: source.content, relation: source.relation, count, blocks, seed, ...shared });
     return { ...single, segmentFor: () => source.id };
   }
