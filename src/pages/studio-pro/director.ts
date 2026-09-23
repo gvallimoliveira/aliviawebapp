@@ -145,7 +145,7 @@ export const dedupeCarouselSlides = (carousel: StudioCarousel): StudioCarousel =
 export const directCarouselWithHook = (
   input: StudioCarousel,
   hook?: StudioHook,
-  relation?: Pick<Relation, "desire" | "cta" | "route">,
+  relation?: Partial<Pick<Relation, "desire" | "cta" | "route">>,
 ): StudioCarousel => {
   const carousel = dedupeCarouselSlides(input);
   if (!hook) {
