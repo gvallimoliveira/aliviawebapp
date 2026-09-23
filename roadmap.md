@@ -75,4 +75,4 @@
 - [x] Concentrar cada arte em definição, funcionamento, benefício e prejuízo cotidiano do diferencial.
 - [x] Permitir selecionar vários diferenciais e distribuí-los pela geração sem misturar assuntos na mesma arte.
 - [x] Preservar um único diferencial em todos os slides do carrossel e na arte salva.
-- [ ] Validar testes, compilação e uso em tela móvel.
+- [x] Validar testes e compilação; a interface responsiva mantém seleção por chips no fluxo móvel.

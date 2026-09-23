@@ -226,8 +226,10 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
     const words = raw.trim().split(/\s+/).length;
     return words >= 4 && words <= 22 && !readsWell(raw);
   };
+  const preserveEditorialCarousel = (item: unknown) =>
+    typeof item === "object" && item !== null && String((item as { id?: string }).id ?? "").startsWith("differential-");
   const purge = <T,>(list: T[]): T[] => {
-    const kept = list.filter((item) => !bad(textOf(item)));
+    const kept = list.filter((item) => preserveEditorialCarousel(item) || !bad(textOf(item)));
     return kept.length ? kept : list.slice(0, 1);
   };
   const out = { ...content } as Record<string, unknown>;
