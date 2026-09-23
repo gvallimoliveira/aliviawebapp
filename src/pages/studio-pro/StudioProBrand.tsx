@@ -43,6 +43,10 @@ import BrandColorFields from "./BrandColorFields";
 import BrandAssetsFields, { type BrandDoc } from "./BrandAssetsFields";
 import { DEFAULT_COLOR_KIT, readColorKit, writeColorKit, type BrandColorKit } from "./brandColors";
 import { highlightTermsFor, matrixAudiences, readAudiences, writeAudiences, type BrandAudience } from "./audiences";
+
+/** Sugestão de termos de destaque a partir do nome/palavra-chave do tema. */
+const suggestHighlightTerms = (a: BrandAudience): string[] =>
+  highlightTermsFor({ ...a, highlightTerms: undefined });
 import { NICHE_PRESETS, type NichePreset } from "./nichePresets";
 import BrandQuestionnaireCard from "./BrandQuestionnaireCard";
 import BrandMembersCard from "./BrandMembersCard";
