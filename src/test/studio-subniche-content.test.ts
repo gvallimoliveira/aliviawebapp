@@ -43,6 +43,29 @@ describe("sub-nichos no motor criativo", () => {
     }
   });
 
+  it("estrutura cada diferencial em definição, funcionamento, benefício e prejuízo de não ter", () => {
+    for (const item of ALIVIA_DIFFERENTIALS) {
+      const content = buildSegmentContent({
+        kit,
+        audiences: ALIVIA_AUDIENCES,
+        segment: item.id,
+        angle: "informar",
+        variationSeed: `four-pillars:${item.id}`,
+      });
+      const slides = content.carousels[0]?.slides ?? [];
+      expect(slides.map((slide) => slide.heading)).toEqual([
+        "O que é",
+        "Como funciona",
+        "O benefício no dia a dia",
+        "Sem essa funcionalidade",
+      ]);
+      expect(content.compare[0]?.before.length).toBeGreaterThan(0);
+      expect(content.compare[0]?.after.length).toBeGreaterThan(0);
+      expect(JSON.stringify(content).toLowerCase()).toContain(item.description!.toLowerCase());
+      expect(item.stakes!.some((stake) => JSON.stringify(content).toLowerCase().includes(stake.toLowerCase()))).toBe(true);
+    }
+  });
+
   it("permanece determinístico para o mesmo diferencial e seed", () => {
     const input = {
       kit,

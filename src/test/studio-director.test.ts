@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 import { WORLDS } from "@/pages/studio/content";
-import { directCarouselWithHook, planBatch } from "@/pages/studio-pro/director";
+import { directCarouselWithHook, planBatch, planMultiSegmentBatch } from "@/pages/studio-pro/director";
 import { composePage, TREATMENT_COUNT } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
@@ -194,6 +194,36 @@ describe("Diretor criativo", () => {
     });
     expect(new Set(titles.values()).size).toBe(titles.size);
     expect(titles.size).toBeLessThanOrEqual(WORLDS.pro.carousels.length);
+  });
+
+  it("distribui diferenciais por peça e mantém um só diferencial no carrossel inteiro", () => {
+    const blocks = composePage(
+      createRng("multi-differentials"),
+      undefined,
+      undefined,
+      WORLDS.pro.carousels,
+      0,
+      ["carousel", "manifesto", "carousel"],
+    );
+    const direction = planMultiSegmentBatch({
+      sources: [
+        { id: "pre-avaliacao", content: WORLDS.pro, relation: { pain: "coleta demorada", desire: "consulta preparada", axis: "pain" } },
+        { id: "red-flags", content: WORLDS.clinica, relation: { pain: "alerta esquecido", desire: "triagem segura", axis: "desire" } },
+      ],
+      count: blocks.length,
+      blocks,
+      seed: "multi-differentials",
+    });
+    const groups = new Map<number, string>();
+    blocks.forEach((block, index) => {
+      const segment = direction.segmentFor?.(index);
+      expect(segment).toBeTruthy();
+      if (!block.slide) return;
+      const previous = groups.get(block.slide.group);
+      if (previous) expect(segment).toBe(previous);
+      else groups.set(block.slide.group, segment!);
+    });
+    expect(new Set(Array.from({ length: blocks.length }, (_, index) => direction.segmentFor?.(index))).size).toBe(2);
   });
 
   it("inclui o texto visível dos carrosséis na memória do lote", () => {

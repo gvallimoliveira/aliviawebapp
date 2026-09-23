@@ -838,7 +838,7 @@ const StudioProCreate = ({
   );
 
   const draftDirector = useMemo(
-    () => differentialSources.length > 1
+    () => differentialSources.length > 0
       ? planMultiSegmentBatch({
         sources: differentialSources,
         count: composedBlocks.length,
@@ -988,7 +988,7 @@ const StudioProCreate = ({
     () =>
       audit.fixed === 0
         ? draftDirector
-        : differentialSources.length > 1
+        : differentialSources.length > 0
           ? planMultiSegmentBatch({
               sources: differentialSources,
               count: blocks.length,
