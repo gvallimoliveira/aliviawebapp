@@ -194,6 +194,7 @@ export const readAudiences = (raw: unknown): BrandAudience[] => {
 
         cta: String(row.cta ?? "").trim() || undefined,
         keyword: String(row.keyword ?? "").trim() || undefined,
+        highlightTerms: asStringArray(row.highlightTerms ?? row.highlight_terms),
         hook: String(row.hook ?? "").trim() || undefined,
         hooks: asStringArray(row.hooks),
         parentId: String(row.parentId ?? row.parent_id ?? "").trim() || undefined,
