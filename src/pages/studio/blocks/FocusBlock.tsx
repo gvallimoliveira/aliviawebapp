@@ -52,8 +52,8 @@ const FocusBlock = ({ content, rng, treatment, format }: BlockProps) => {
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 w-full max-w-md pb-20 text-center"
       >
-        <p className={`text-sm font-medium leading-snug opacity-70 md:text-base ${skin.ink}`}>{away}</p>
-        <p className={`mt-1 text-lg leading-none opacity-70 ${skin.ink}`}>↓</p>
+        <p style={{ textAlign: "center" }} className={`text-center text-sm font-medium leading-snug opacity-70 md:text-base ${skin.ink}`}>{away}</p>
+        <p style={{ textAlign: "center" }} className={`mt-1 text-center text-lg leading-none opacity-70 ${skin.ink}`}>↓</p>
 
         <svg viewBox="0 0 350 282" className="mx-auto w-full max-w-xs" role="img" aria-label={here}>
           {STONES.map((s, i) => (
@@ -65,12 +65,11 @@ const FocusBlock = ({ content, rng, treatment, format }: BlockProps) => {
             cy={244}
             rx={62}
             ry={25}
-            fill="hsl(var(--primary))"
             initial={{ opacity: 0, scale: 0.85 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.6, delay: 0.35 }}
-            style={{ transformOrigin: "175px 244px" }}
+            style={{ transformOrigin: "175px 244px", fill: "hsl(var(--primary))" }}
           />
           {BRAND_MARK && (
             <image
@@ -86,8 +85,8 @@ const FocusBlock = ({ content, rng, treatment, format }: BlockProps) => {
           )}
         </svg>
 
-        <p className={`mt-1 text-lg leading-none opacity-70 ${skin.ink}`}>↑</p>
-        <p className={`mt-1 text-lg font-bold leading-snug md:text-2xl ${skin.ink}`}>{here}</p>
+        <p style={{ textAlign: "center" }} className={`mt-1 text-center text-lg leading-none opacity-70 ${skin.ink}`}>↑</p>
+        <p style={{ textAlign: "center" }} className={`mt-1 text-center text-lg font-bold leading-snug md:text-2xl ${skin.ink}`}>{here}</p>
       </motion.div>
     </section>
   );
