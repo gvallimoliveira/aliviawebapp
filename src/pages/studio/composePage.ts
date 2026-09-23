@@ -1,7 +1,7 @@
 import type { Rng } from "./rng";
 import { MOTION_KINDS, type MotionKind } from "./blocks/StudioMotion";
 import type { StudioPersona } from "./personas";
-import type { StudioCarousel } from "./content/types";
+import type { StudioCarousel, WorldContent } from "./content/types";
 
 export type BlockKind =
   | "hero"
@@ -61,6 +61,53 @@ export type ComposedBlock = {
   motion?: MotionKind;
   /** Posição dentro de uma sequência de carrossel (só em blocos `carousel`). */
   slide?: { index: number; total: number; group: number; script: number };
+};
+
+/** Só permite formatos cujo conteúdo obrigatório existe no acervo atual. */
+export const blockKindSupported = (kind: BlockKind, content?: WorldContent): boolean => {
+  if (!content) return true;
+  const has = (items: unknown[]) => items.length > 0;
+  switch (kind) {
+    case "metrics": return has(content.metrics);
+    case "stats": return has(content.stats);
+    case "journey": return has(content.journeys);
+    case "triptych": return has(content.triptychs);
+    case "compare": return has(content.compare);
+    case "feature":
+    case "photoType":
+    case "photoSplit":
+    case "photoVeil":
+    case "stage":
+    case "askbox":
+    case "elegantAsk":
+    case "notice": return has(content.features);
+    case "promoPhone":
+    case "device": return content.features.length >= 2;
+    case "phoneSide": return has(content.features) && has(content.closings);
+    case "quote":
+    case "pullQuote":
+    case "tweet":
+    case "photoPortrait": return has(content.quotes);
+    case "kinetic":
+    case "echo":
+    case "mono": return has(content.kinetic);
+    case "typo": return has(content.typos);
+    case "story": return has(content.stories);
+    case "list": return has(content.lists);
+    case "marquee": return has(content.marquee);
+    case "carousel": return has(content.carousels);
+    case "search": return (content.searchQueries?.length ?? 0) >= 3 && has(content.closings);
+    case "percent": return content.stats.some((set) => set.items.some((item) => item.source === "market" && /%/.test(item.value)))
+      || content.metrics.some((set) => set.some((item) => item.source === "market" && item.suffix?.includes("%")));
+    case "hook": return has(content.hooks ?? []) || (has(content.headlines) && has(content.subs) && has(content.closings));
+    case "hero":
+    case "pinup":
+    case "stackType":
+    case "trend":
+    case "diverge": return has(content.headlines);
+    case "closing": return has(content.closings);
+    default: return true;
+  }
 };
 
 /**
@@ -258,12 +305,15 @@ export const composePage = (
    * camada.
    */
   photoFirst = false,
+  /** Acervo efetivo, usado para excluir modelos incompatíveis com conteúdo parcial. */
+  content?: WorldContent,
 ): ComposedBlock[] => {
   const allowed = (kinds: BlockKind[]) =>
-    exclusive ? kinds : kinds.filter((k) => k !== "steps" && k !== "difi");
+    (exclusive ? kinds : kinds.filter((k) => k !== "steps" && k !== "difi"))
+      .filter((kind) => blockKindSupported(kind, content));
   if (only && only.length > 0) {
     const pool = allowed(only);
-    if (pool.length === 0) return finish(rng, [{ kind: "hero", treatment: treatmentFor(rng, "hero", persona) }], persona, carousels);
+    if (pool.length === 0) return finish(rng, [{ kind: "hero", treatment: treatmentFor(rng, "hero", persona) }], persona, carousels, content);
     const desiredCount = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
     /**
      * Um bloco `carousel` vira uma sequência inteira de 4–6 artes. Quando ele é
@@ -278,7 +328,7 @@ export const composePage = (
       kind,
       treatment: treatmentFor(rng, kind, persona),
     }));
-    return finish(rng, chosen, persona, carousels);
+    return finish(rng, chosen, persona, carousels, content);
   }
 
   /**
@@ -333,7 +383,9 @@ export const composePage = (
     ? persona.favoriteBlocks.map((kind) => [kind, 2] as [BlockKind, number])
     : [];
   const count = persona ? persona.densityBase + rng.int(persona.densityVariance) : 9 + rng.int(4);
-  const middle = pickKinds(rng, [...baseWeighted, ...favorites], count);
+  const availableWeighted = [...baseWeighted, ...favorites].filter(([kind]) => blockKindSupported(kind, content));
+  const safeWeighted = availableWeighted.length > 0 ? availableWeighted : ([["typo", 1]] as [BlockKind, number][]);
+  const middle = pickKinds(rng, safeWeighted, count);
 
   // Momentos kinéticos distribuídos em terços diferentes do miolo.
   const withKinetic: BlockKind[] = [...middle];
@@ -409,7 +461,7 @@ export const composePage = (
      * Linhagem de favorito: mantém ~60% da composição aprovada (mesma seção e
      * tratamento, na mesma posição) e sorteia o restante como novidade.
      */
-    const base = inspiration;
+    const base = inspiration.filter((block) => blockKindSupported(block.kind, content));
     const length = Math.max(base.length, fresh.length);
     const out: ComposedBlock[] = [];
 
@@ -452,7 +504,7 @@ export const composePage = (
       })
     : result;
 
-  return finish(rng, withQuota, persona, carousels);
+  return finish(rng, withQuota, persona, carousels, content);
 
 };
 
@@ -465,14 +517,19 @@ const finish = (
   result: ComposedBlock[],
   persona?: StudioPersona,
   carousels?: StudioCarousel[],
+  content?: WorldContent,
 ): ComposedBlock[] => {
+  const fallbackKind: BlockKind = blockKindSupported("typo", content) ? "typo" : "hero";
+  const safeResult = result.map((block) => blockKindSupported(block.kind, content)
+    ? block
+    : { ...block, kind: fallbackKind, treatment: block.treatment % TREATMENT_COUNT[fallbackKind] });
   // Animações com a assinatura da persona, sem repetir efeito em sequência.
   const taste = persona && persona.motionTaste.length > 0 ? persona.motionTaste : MOTION_KINDS;
   const density = persona?.motionDensity ?? 0.5;
   let previous: MotionKind | undefined;
-  const withMotion = result.map((block, i) => {
+  const withMotion = safeResult.map((block, i) => {
     // hero e closing sempre ganham um movimento de abertura/fecho.
-    const animate = i === 0 || i === result.length - 1 || rng.chance(density);
+    const animate = i === 0 || i === safeResult.length - 1 || rng.chance(density);
     if (!animate) {
       previous = undefined;
       return { ...block, motion: "none" as MotionKind };
