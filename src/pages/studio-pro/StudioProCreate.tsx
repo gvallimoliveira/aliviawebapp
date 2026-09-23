@@ -80,6 +80,7 @@ import {
   audiencesWithSlogan,
   buildSegments,
   editorialAudienceIds,
+  slugifySegment,
   readAudiences,
   resolveAudience,
   type ContentAngle,
@@ -1671,7 +1672,10 @@ const StudioProCreate = ({
               </Button>
             ))}
           </div>
-          {segmentGroups.grouped.map(([group, items]) => (
+          {segmentGroups.grouped.map(([group, items]) => {
+            const panelId = `studio-editorial-${slugifySegment(group)}`;
+            const chosen = items.filter((item) => selectedDifferentials.includes(item.id)).length;
+            return (
             <div key={group} className="mt-2 border-l-2 border-primary/35 pl-2.5">
               <Button
                 type="button"
@@ -1679,14 +1683,14 @@ const StudioProCreate = ({
                 variant="ghost"
                 className="mb-1 h-7 w-full justify-between px-1 text-[10px] font-semibold uppercase text-muted-foreground"
                 aria-expanded={differentialsOpen}
-                aria-controls="studio-differentials"
+                aria-controls={panelId}
                 onClick={() => setDifferentialsOpen((open) => !open)}
               >
-                <span>{group} <span className="normal-case font-normal">· {selectedDifferentials.length ? `${selectedDifferentials.length} selecionado${selectedDifferentials.length > 1 ? "s" : ""}` : "escolha um ou mais"}</span></span>
+                <span>{group} <span className="normal-case font-normal">· {chosen ? `${chosen} selecionado${chosen > 1 ? "s" : ""}` : "escolha um ou mais"}</span></span>
                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${differentialsOpen ? "rotate-180" : ""}`} />
               </Button>
               {differentialsOpen && (
-                <div id="studio-differentials" className="flex flex-wrap gap-1.5">
+                <div id={panelId} className="flex flex-wrap gap-1.5">
                   {items.map((s) => (
                     <Button
                       key={s.id}
