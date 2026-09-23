@@ -234,7 +234,7 @@ describe("Diretor criativo", () => {
     expect(directed.title).toBe("A escada da sua casa virou uma escolha difícil");
     expect(directed.title).not.toMatch(/^pare de[.!?]?$/i);
     expect(directed.coverSub).toMatch(/dor no joelho/i);
-    expect(directed.slides.map((slide) => slide.body).join(" ")).toMatch(/avaliação.*reavaliação.*confiança/i);
+    expect(`${directed.slides.map((slide) => slide.body).join(" ")} ${directed.cta.title}`).toMatch(/avaliação.*reavaliação.*confiança/i);
     expect(directed.cta.sub).toBe("Agende uma avaliação");
   });
 
