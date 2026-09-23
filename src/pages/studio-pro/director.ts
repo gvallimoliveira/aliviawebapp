@@ -37,11 +37,11 @@ import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
 import { phraseSignature } from "@/pages/studio/picker";
 import { lowerInitial } from "@/pages/studio/grammar";
-import { carouselClosingCopy, carouselCoverCopy, joinCopyParts } from "@/pages/studio/typographyGuards";
+import { carouselClosingCopy, carouselCoverCopy, isOrphanCommand, joinCopyParts } from "@/pages/studio/typographyGuards";
 import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
 import type { Relation } from "./relational";
 import { composeRouteCopy } from "./storytelling";
-import { buildArc, checkArc } from "./narrativeArc";
+import { buildArc, checkArc, textSimilarity } from "./narrativeArc";
 import { finalizeBrandVoice } from "./veterinaryVoice";
 
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
@@ -145,7 +145,7 @@ export const dedupeCarouselSlides = (carousel: StudioCarousel): StudioCarousel =
 export const directCarouselWithHook = (
   input: StudioCarousel,
   hook?: StudioHook,
-  relation?: { desire?: string; cta?: string },
+  relation?: Partial<Pick<Relation, "desire" | "cta" | "route">>,
 ): StudioCarousel => {
   const carousel = dedupeCarouselSlides(input);
   if (!hook) {
@@ -163,9 +163,67 @@ export const directCarouselWithHook = (
   }
 
   const hookTitle = cleanLine(joinCopyParts(hook.strong, hook.rest));
-  if (!hookTitle) return carousel;
+  const route = relation?.route;
+  const significantWords = (text: string) =>
+    normalize(text)
+      .split(/[^a-z0-9]+/)
+      .filter((word) => word.length > 4 && !["sobre", "entre", "quando", "ainda", "depois", "antes"].includes(word));
+  const routeText = route
+    ? [route.scene, route.tension, route.feature, route.proof, route.desire, ...(route.vocabulary ?? [])].filter(Boolean).join(" ")
+    : "";
+  const routeWords = new Set(significantWords(routeText));
+  const hookMatchesRoute = !route || significantWords(hookTitle).some((word) => routeWords.has(word));
+
+  /** Um gancho curto/incompleto ou sem nenhuma palavra do assunto não pode
+   * substituir a tese do carrossel. Foi assim que “Pare de” caiu sobre um
+   * roteiro de dor sem construir a ideia prometida. */
+  const usableHook = !isOrphanCommand(hookTitle) && hookTitle.length >= 12 && hookMatchesRoute;
+
+  if (route) {
+    const routeIdeas = [
+      { heading: "O que está acontecendo", body: route.scene || route.tension || "" },
+      { heading: "O que precisa ser compreendido", body: route.feature || "" },
+      { heading: "O que orienta a decisão", body: route.proof || "" },
+      { heading: "A direção do cuidado", body: route.desire || "" },
+    ].filter((item, index, items) => {
+      const body = cleanLine(item.body);
+      return body.length >= 12 && items.findIndex((candidate) => normalize(candidate.body) === normalize(body)) === index;
+    });
+    if (routeIdeas.length >= 3) {
+      const desiredSlides = Math.max(1, carousel.slides.length);
+      const slides = Array.from({ length: desiredSlides }, (_, index) => {
+        const idea = routeIdeas[index % routeIdeas.length];
+        return { heading: idea.heading, body: upperFirst(cleanLine(idea.body)) };
+      });
+      const routeTitle = cleanLine(route.scene || route.tension || route.desire);
+      const title = usableHook ? hookTitle : routeTitle;
+      const supportCandidates = [route.tension, route.feature, route.proof]
+        .map(cleanLine)
+        .filter((candidate) => candidate && textSimilarity(candidate, title) < TOO_SIMILAR);
+      const cover = carouselCoverCopy(title, supportCandidates[0] || route.feature || route.proof);
+      const closing = carouselClosingCopy(
+        route.desire ? `Quer ${lowerFirst(stripEnd(route.desire))}?` : carousel.cta.title,
+        stripEnd(hook.cta) || stripEnd(relation?.cta) || route.cta || carousel.cta.sub,
+      );
+      return {
+        ...carousel,
+        kicker: cleanLine(hook.hook) || carousel.kicker,
+        title: cover.title || routeTitle,
+        coverSub: cover.support,
+        slides,
+        cta: {
+          title: upperFirst(closing.title || carousel.cta.title),
+          sub: closing.support || carousel.cta.sub,
+        },
+      };
+    }
+  }
+
+  if (!hookTitle || !usableHook) return carousel;
 
   const originalThesis = stripEnd(carousel.title);
+  // Sem rota estruturada, preserva o comportamento dos acervos legados: a
+  // parte forte é a capa e a tese original faz a ponte para o miolo.
   const compactStrong = cleanLine(hook.strong);
   const titleSource = compactStrong.length >= 12 ? compactStrong : hookTitle;
   /* Uma capa não carrega gancho + explicação + tese. A tese do roteiro é a
@@ -561,7 +619,7 @@ export const planBatch = (input: {
     if (selected) {
       carouselByGroup.set(
         block.slide.group,
-        directCarouselWithHook(selected as WorldContent["carousels"][number], selectedHook, relation),
+        directCarouselWithHook(selected as WorldContent["carousels"][number], selectedHook, relation as Relation | undefined),
       );
     }
   });

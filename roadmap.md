@@ -51,3 +51,7 @@
 
 ## Download de artes com fotos (22/09)
 - [x] Manter no PNG o formato visível, foco, zoom, rotação, recorte, cantos e máscaras das fotos do acervo em downloads individuais, lotes e carrosséis.
+
+## Nexo dos carrosséis (22/09)
+- [x] Fazer capa, desenvolvimento e chamada nascerem da mesma rota do manual; rejeitar ganchos órfãos ou sem relação com o assunto.
+- [x] Remover duplicações diretas de possessivo, como “sua sua dor”, na revisão global.
