@@ -20,11 +20,18 @@ const PhotoFrame = ({
   className = "",
   imgClassName = "",
   style,
+  exportLayer = "backdrop",
 }: {
   photo: StudioPhoto;
   className?: string;
   imgClassName?: string;
   style?: CSSProperties;
+  /**
+   * Fotos normalmente são recompostas atrás do raster para preservar películas
+   * e textos. Use `foreground` quando a própria foto cobre um elemento gráfico
+   * no layout (como a palavra-cartaz do modelo tipográfico).
+   */
+  exportLayer?: "backdrop" | "foreground";
 }) => {
   const [failed, setFailed] = useState(false);
   const rad = (photo.rotation * Math.PI) / 180;
@@ -51,6 +58,7 @@ const PhotoFrame = ({
       ) : (
         <img
           data-studio-photo="1"
+          data-studio-export-image-layer={exportLayer}
           data-studio-photo-focus-x={photo.focusX}
           data-studio-photo-focus-y={photo.focusY}
           data-studio-photo-rotation={photo.rotation}

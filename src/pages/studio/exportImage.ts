@@ -236,7 +236,7 @@ const paintImagesOnCanvas = (
     if (image.closest('[data-studio-no-export="1"]')) continue;
     const isForeground = image.dataset.studioExportImageLayer === "foreground";
     if ((layer === "foreground") !== isForeground) continue;
-    if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0) continue;
+    const imageReady = image.complete && image.naturalWidth > 0 && image.naturalHeight > 0;
 
     const photoFrame = image.dataset.studioPhoto === "1"
       ? image.closest<HTMLElement>('[data-studio-photo-frame="1"]')
@@ -279,6 +279,29 @@ const paintImagesOnCanvas = (
     if (photoMask === "popout") popoutPath(context, x, y, width, height);
     else roundedRect(context, x, y, width, height, radius);
     context.clip();
+
+    /*
+     * Em iPhones, uma foto grande pode ultrapassar o tempo de decodificação do
+     * WebKit. O foreignObject também pode omiti-la. Nesse caso, não deixamos o
+     * quadro transparente: uma superfície opaca impede que tipografia e outros
+     * elementos posicionados atrás da foto apareçam indevidamente no PNG.
+     */
+    if (!imageReady) {
+      const frameBackground = photoFrame ? getComputedStyle(photoFrame).backgroundColor : "";
+      const nodeBackground = getComputedStyle(node).backgroundColor;
+      const bodyBackground = getComputedStyle(document.body).backgroundColor;
+      context.fillStyle = isOpaqueColor(frameBackground)
+        ? frameBackground
+        : isOpaqueColor(nodeBackground)
+          ? nodeBackground
+          : isOpaqueColor(bodyBackground)
+            ? bodyBackground
+            : "rgb(255, 255, 255)";
+      context.fillRect(x, y, width, height);
+      context.restore();
+      painted.push({ x, y, width, height });
+      continue;
+    }
 
     /*
      * O repinte tem de reproduzir o MESMO tratamento visual da tela. Sem isso a

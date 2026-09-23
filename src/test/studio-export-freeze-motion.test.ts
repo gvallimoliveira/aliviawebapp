@@ -230,6 +230,25 @@ describe("static export surface", () => {
     surface.dispose();
     root.remove();
   });
+
+  it("preserva a camada de exportação da foto que cobre tipografia de fundo", async () => {
+    const root = document.createElement("div");
+    root.style.width = "320px";
+    root.style.height = "480px";
+    root.innerHTML = `
+      <span aria-hidden="true">PALAVRA</span>
+      <div data-studio-photo-frame="1">
+        <img data-studio-photo="1" data-studio-export-image-layer="foreground"
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="Foto" />
+      </div>`;
+    document.body.appendChild(root);
+
+    const surface = await createStaticExportSurface(root);
+    expect(surface.node.querySelector("img")?.dataset.studioExportImageLayer).toBe("foreground");
+
+    surface.dispose();
+    root.remove();
+  });
 });
 
 describe("stroke text fidelity", () => {
