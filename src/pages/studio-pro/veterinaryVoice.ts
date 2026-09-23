@@ -269,6 +269,37 @@ const repairOrphanStrongRest = <T>(value: T): T => {
   return revised as T;
 };
 
+/**
+ * Carrosséis usam `title/coverSub` e `heading/body`, não `strong/rest`.
+ * Esta barreira final impede que um comando órfão sobreviva em qualquer slide,
+ * inclusive em roteiros antigos que não passaram pelo diretor de rotas.
+ */
+const repairOrphanCarouselText = <T>(value: T): T => {
+  if (Array.isArray(value)) return value.map((item) => repairOrphanCarouselText(item)) as T;
+  if (!value || typeof value !== "object") return value;
+  const source = value as Record<string, unknown>;
+  const revised = Object.fromEntries(
+    Object.entries(source).map(([key, child]) => [key, repairOrphanCarouselText(child)]),
+  ) as Record<string, unknown>;
+
+  const pairs: Array<["title" | "heading", "coverSub" | "body"]> = [
+    ["title", "coverSub"],
+    ["heading", "body"],
+  ];
+  pairs.forEach(([leadKey, supportKey]) => {
+    const lead = typeof revised[leadKey] === "string" ? revised[leadKey] as string : "";
+    if (!lead || !isOrphanCommand(lead)) return;
+    const support = typeof revised[supportKey] === "string" ? revised[supportKey] as string : "";
+    const replacement = closeThought(proofread(support), leadKey === "title" ? 56 : 64);
+    if (replacement && !isOrphanCommand(replacement)) {
+      revised[leadKey] = replacement;
+      revised[supportKey] = "";
+    }
+  });
+
+  return revised as T;
+};
+
 const veterinaryDisplayWord = (word: string, context: string): string => {
   if (!/^anim(?:al|ais)$/i.test(word.trim())) return word;
   if (/\b(?:gato|gata|felin)/i.test(context)) return "Gatos";
@@ -328,10 +359,10 @@ const removeInternalEditorialLabels = <T>(value: T, brand?: string, key = ""): T
 export const finalizeBrandVoice = <T>(value: T, context: { brand?: string; domain?: string } = {}): T => {
   const veterinary = isVeterinaryContext(context.brand, context.domain);
   const feminine = isAlineVeterinaryBrand(context.brand);
-  const voiced = refineVeterinaryContent(removeContentEchoes(repairOrphanStrongRest(proofreadVisibleText(removeInternalEditorialLabels(
+  const voiced = refineVeterinaryContent(removeContentEchoes(repairOrphanCarouselText(repairOrphanStrongRest(proofreadVisibleText(removeInternalEditorialLabels(
     applyAlineProfessionalVoice(applyVeterinaryVoice(value, veterinary), context.brand),
     context.brand,
-  )))), veterinary, feminine);
+  ))))), veterinary, feminine);
   if (!voiced || typeof voiced !== "object" || Array.isArray(voiced)) return voiced;
 
   const content = voiced as Record<string, unknown>;

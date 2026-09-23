@@ -160,4 +160,19 @@ describe("Studio: tutor leitor e animal paciente", () => {
 
     expect(content.carousels[0].coverSub).toBe("O que ninguém te explicou sobre sua dor");
   });
+
+  it("repara comando órfão também em slide interno de carrossel antigo", () => {
+    const content = finalizeBrandVoice({
+      carousels: [{
+        kicker: "Dor persistente",
+        title: "Uma escolha difícil",
+        coverSub: "Entenda o que mantém a limitação",
+        slides: [{ heading: "Pare de", body: "A avaliação identifica o que mantém essa limitação" }],
+        cta: { title: "Próximo passo", sub: "Agende uma avaliação" },
+      }],
+    }, { brand: "Guilherme Vallim Fisioterapia", domain: "fisioterapia" });
+
+    expect(content.carousels[0].slides[0].heading).toBe("A avaliação identifica o que mantém essa limitação");
+    expect(content.carousels[0].slides[0].body).toBe("");
+  });
 });
