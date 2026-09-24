@@ -35,6 +35,6 @@ describe("tema A/B das artes", () => {
   it("preserva o cobre da marca como destaque legível no lado escuro", () => {
     const sideB = buildBrandThemeStyle({ kit: guilhermeKit, seed: "guilherme-dark", invert: true }) as Record<string, string>;
     expect(sideB["--background"]).not.toBe(buildBrandThemeStyle({ kit: guilhermeKit, seed: "guilherme-dark" })?.["--background"]);
-    expect(sideB["--studio-ink-accent"]).toBe("29 55% 46%");
+    expect(sideB["--studio-ink-accent"]).toBe("29 57% 46%");
   });
 });

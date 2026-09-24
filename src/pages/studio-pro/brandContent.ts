@@ -24,7 +24,7 @@ import { applyTerminology, patientVoiceFor } from "@/pages/studio/terminology";
 import { marketStatsFor } from "@/pages/studio/marketFacts";
 
 import { condensePhrase } from "./textFit";
-import { editorialAudience, sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
+import { editorialAudience, removeLeadingHighlightEcho, sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 import { applyFormatInsights, readFormatInsights, scopedFormatInsights } from "./formatInsights";
 import { enforceAudienceScope } from "./audienceScope";
