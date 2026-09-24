@@ -159,4 +159,36 @@ describe("redação a partir da rota narrativa", () => {
     expect(hook?.strong).not.toMatch(/genérica/i);
     expect(hook?.rest).toMatch(/em vez de fisioterapia genérica/i);
   });
+
+  it("responde à objeção destacando a solução, nunca a alternativa rejeitada", () => {
+    const type = HOOK_TYPES.find((item) => item.id === "objecao-respondida");
+    expect(type).toBeDefined();
+    if (!type) return;
+    const hook = buildHook(type, {
+      objecao: "IA genérica não entende fisioterapia",
+      mecanismo: "IA especializada com raciocínio clínico de fisioterapeuta",
+    });
+    expect(hook?.strong).toMatch(/IA especializada/i);
+    expect(hook?.strong).not.toMatch(/genérica/i);
+    expect(hook?.rest).toMatch(/em vez de IA genérica/i);
+  });
+
+  it("não promove IA genérica ao destaque em nenhuma variação da rota", () => {
+    const specialized: NarrativeRoute = {
+      ...route,
+      objection: "IA genérica não entende fisioterapia",
+      feature: "IA especializada com raciocínio clínico de fisioterapeuta",
+      proof: "IA treinada com competências do fisioterapeuta",
+      desire: "Discutir o caso com contexto clínico",
+    };
+    const copies = Array.from({ length: 20 }, (_, index) =>
+      composeRouteCopy(specialized, { seed: `ia-especializada:${index}`, rotate: index }),
+    );
+
+    copies.forEach((copy) => {
+      copy.headlines?.forEach((headline) => {
+        expect(headline.strong).not.toMatch(/IA genérica/i);
+      });
+    });
+  });
 });
