@@ -131,11 +131,16 @@ export const removeLeadingHighlightEcho = (
 
   const boundary = Math.min(words.length, 6);
   let removed = false;
-  const revised = words.filter((word, index) => {
-    if (index >= boundary || !highlighted.has(normalizedWord(word))) return true;
+  const removedIndexes = new Set<number>();
+  words.forEach((word, index) => {
+    if (index >= boundary || !highlighted.has(normalizedWord(word))) return;
     removed = true;
-    return false;
+    removedIndexes.add(index);
+    // Se o eco vinha como complemento nominal ("o pescoço", "a tensão"),
+    // o artigo também precisa sair para a frase continuar gramatical.
+    if (index > 0 && /^(?:o|a|os|as)$/i.test(words[index - 1])) removedIndexes.add(index - 1);
   });
+  const revised = words.filter((_, index) => !removedIndexes.has(index));
   return removed && revised.length ? revised.join(" ") : normalizeCopyWhitespace(tail);
 };
 
