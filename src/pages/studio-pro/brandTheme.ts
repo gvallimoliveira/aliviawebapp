@@ -114,7 +114,11 @@ export const buildBrandThemeStyle = ({ kit, seed, invert }: Args): React.CSSProp
    * ele desaparece. Aqui a mesma cor é clareada até ter contraste de leitura,
    * então o destaque continua sendo a cor da marca — só legível.
    */
-  const inkAccent = hexToHslTriplet(lighten(accent, 6));
+  // O destaque do lado escuro mantém o matiz real do kit (ex.: cobre), em vez
+  // de clarear até virar bege. Só elevamos a luminosidade quando o contraste
+  // mínimo para tipografia grande não é atingido.
+  const darkAccent = contrastRatio(invertedSurface, accent) >= 3 ? accent : lighten(accent, 3);
+  const inkAccent = hexToHslTriplet(darkAccent);
   if (inkAccent) style["--studio-ink-accent"] = inkAccent;
 
   accents.forEach((color, i) => {

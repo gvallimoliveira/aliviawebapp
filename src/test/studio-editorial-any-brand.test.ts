@@ -124,4 +124,19 @@ describe("linha editorial em qualquer marca", () => {
     expect(content.headlines.every((headline) => target.highlightTerms?.includes(headline.strong))).toBe(true);
     expect(content.sales.objections).toEqual(target.objections);
   });
+
+  it("não repete a palavra em destaque na abertura do corpo tipográfico", () => {
+    const target: BrandAudience = {
+      ...audiences[1],
+      highlightTerms: ["Pescoço"],
+      desires: ["Virar o pescoço sem medo e sem estalo de alívio forçado"],
+    };
+    const content = enforceEditorialFocus(
+      buildSegmentContent({ kit, audiences: [target], segment: target.id, angle: "venda", variationSeed: "sem-eco" }),
+      target,
+    );
+    const matching = content.typos.find((entry) => entry.big === "Pescoço" && /virar/i.test(entry.tail));
+    expect(matching?.tail).toMatch(/^Virar sem medo/i);
+    expect(matching?.tail).not.toMatch(/virar o pescoço/i);
+  });
 });

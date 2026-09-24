@@ -24,7 +24,7 @@ import { applyTerminology, patientVoiceFor } from "@/pages/studio/terminology";
 import { marketStatsFor } from "@/pages/studio/marketFacts";
 
 import { condensePhrase } from "./textFit";
-import { editorialAudience, sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
+import { editorialAudience, removeLeadingHighlightEcho, sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 import { applyFormatInsights, readFormatInsights, scopedFormatInsights } from "./formatInsights";
 import { enforceAudienceScope } from "./audienceScope";
@@ -266,6 +266,7 @@ export const sanitizeContent = (content: WorldContent, forbidden: string[] = [])
   out.typos = (out.typos as WorldContent["typos"]).map((t) => ({
     ...t,
     lead: sentenceLead(t.lead),
+    tail: removeLeadingHighlightEcho(t.big, t.tail),
   }));
   out.marquee = (out.marquee as WorldContent["marquee"]).map((row) =>
     row.map((item) => shortKicker(item, 40) || item),
@@ -1776,11 +1777,15 @@ export const enforceEditorialFocus = (
     `${sentence(mechanismAt(0))} Com isso, ${lower1(benefitAt(0))}.`,
     frameEditorialLoss(lossAt(0)),
   ];
-  const typos = content.typos.map((entry, index) => ({
+  const typos = content.typos.map((entry, index) => {
+    const big = termAt(index);
+    const rawTail = sentence(index % 3 === 0 ? mechanismAt(index) : index % 3 === 1 ? benefitAt(index) : lossAt(index));
+    return {
     lead: index % 3 === 0 ? `${key}:` : index % 3 === 1 ? "Na prática," : "O que muda:",
-    big: termAt(index),
-    tail: sentence(index % 3 === 0 ? mechanismAt(index) : index % 3 === 1 ? benefitAt(index) : lossAt(index)),
-  }));
+      big,
+      tail: removeLeadingHighlightEcho(big, rawTail),
+    };
+  });
   const kinetic = content.kinetic.map((entry, index) => ({
     ...entry,
     kicker: key.toUpperCase(),
