@@ -52,11 +52,12 @@ describe("campos do kit chegam ao texto da arte", () => {
     expect(fields.filter(Boolean).length).toBeGreaterThanOrEqual(3);
   });
 
-  it("a objeção pode virar título, não só apoio", () => {
+  it("a objeção pode entrar no título apenas como contraste subordinado", () => {
     const headlines = Array.from({ length: 14 }, (_, index) =>
-      `${composeRouteCopy(route, { seed: "titulo", rotate: index }).headlines?.[0]?.strong ?? ""}`.toLowerCase(),
+      composeRouteCopy(route, { seed: "titulo", rotate: index }).headlines?.[0],
     );
-    expect(headlines.some((h) => h.includes("descansar"))).toBe(true);
+    expect(headlines.some((headline) => headline?.rest.toLowerCase().includes("descansar"))).toBe(true);
+    expect(headlines.every((headline) => !headline?.strong.toLowerCase().includes("descansar"))).toBe(true);
   });
 
   it("rótulo colado ao valor não vaza para o texto", () => {

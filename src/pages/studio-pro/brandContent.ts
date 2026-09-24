@@ -1741,28 +1741,124 @@ export const enforceEditorialFocus = (
     cta: audience.cta,
     fallback: key,
   });
-  // O foco tardio só restaura a palavra protagonista. Recriar a legenda aqui
-  // repetia mecanismo e ganho que já tinham sido escritos no primeiro passe.
+  const termAt = (index: number) => terms[index % terms.length] || key;
+  const mechanisms = [progression.mechanism, ...(audience.proof ?? [])]
+    .map(strip)
+    .filter(Boolean);
+  const benefits = [progression.benefit, ...(audience.desires ?? [])]
+    .map(strip)
+    .filter(Boolean);
+  const losses = [progression.loss, ...(audience.stakes ?? []), ...(audience.pains ?? [])]
+    .map(strip)
+    .filter(Boolean);
+  const scenes = [progression.scene, ...(audience.scenes ?? [])]
+    .map(strip)
+    .filter(Boolean);
+  const mechanismAt = (index: number) => mechanisms.length ? mechanisms[index % mechanisms.length] : progression.definition;
+  const benefitAt = (index: number) => benefits.length ? benefits[index % benefits.length] : progression.benefit;
+  const lossAt = (index: number) => losses.length ? losses[index % losses.length] : progression.loss;
+  const sceneAt = (index: number) => scenes.length ? scenes[index % scenes.length] : progression.definition;
+  const cta = audience.cta?.trim() || content.sales.ctas[0] || "Saiba mais";
+
+  /**
+   * Barreira final do CORE. A variação de voz pode mudar o ritmo, mas nunca o
+   * protagonista, a hierarquia persuasiva ou a sequência do tema. Recompomos
+   * todos os formatos que exibem copy a partir do mesmo pacote canônico.
+   */
+  const headlines: WorldContent["headlines"] = [
+    { strong: termAt(0), rest: `— ${lower1(progression.definition)}.` },
+    { strong: termAt(1), rest: `— ${lower1(mechanismAt(0))}.` },
+    { strong: termAt(2), rest: `— ${lower1(benefitAt(0))}.` },
+    { strong: termAt(0), rest: `— ${lower1(frameEditorialLoss(lossAt(0)))}` },
+  ];
+  const subs = [
+    sentence(progression.definition),
+    `${sentence(mechanismAt(0))} Com isso, ${lower1(benefitAt(0))}.`,
+    frameEditorialLoss(lossAt(0)),
+  ];
   const typos = content.typos.map((entry, index) => ({
-    ...entry,
-    big: terms[index % terms.length] || key,
+    lead: index % 3 === 0 ? `${key}:` : index % 3 === 1 ? "Na prática," : "O que muda:",
+    big: termAt(index),
+    tail: sentence(index % 3 === 0 ? mechanismAt(index) : index % 3 === 1 ? benefitAt(index) : lossAt(index)),
   }));
   const kinetic = content.kinetic.map((entry, index) => ({
     ...entry,
     kicker: key.toUpperCase(),
-    word: terms[index % terms.length] || key,
+    word: termAt(index),
+    caption: `${sentence(mechanismAt(index))} Com isso, ${lower1(benefitAt(index))}.`,
+  }));
+  const features = content.features.map((entry, index) => ({
+    ...entry,
+    tag: key.toUpperCase(),
+    title: sentence(index % 3 === 0 ? progression.definition : mechanismAt(index)),
+    description: index % 3 === 2
+      ? frameEditorialLoss(lossAt(index))
+      : `Na rotina, isso permite ${lower1(benefitAt(index))}.`,
+    headline: termAt(index),
+  }));
+  const quotes = content.quotes.map((entry, index) => ({
+    ...entry,
+    text: `“${sentence(benefitAt(index))} É esse o valor de ${lower1(mechanismAt(index))}.”`,
+  }));
+  const closings = content.closings.map((entry, index) => ({
+    ...entry,
+    title: sentence(benefitAt(index)),
+    sub: frameEditorialLoss(lossAt(index)),
+    cta,
+  }));
+  const stories = content.stories.map((entry, index) => ({
+    ...entry,
+    kicker: `${key.toUpperCase()} · ROTINA REAL`,
+    title: sentence(sceneAt(index)),
+    beats: [sentence(sceneAt(index)), sentence(mechanismAt(index))],
+    turn: `Com ${lower1(key)}, passa a ser possível ${lower1(benefitAt(index))}.`,
+    moral: frameEditorialLoss(lossAt(index)),
+  }));
+  const carouselSlides = [
+    { heading: condensePhrase(key, 34), body: sentence(progression.definition) },
+    { heading: `${key}: ${condensePhrase(mechanismAt(0), 34)}`, body: `Na prática, ${lower1(mechanismAt(0))}.` },
+    { heading: `${key}: ${condensePhrase(benefitAt(0), 34)}`, body: `Com isso, ${lower1(benefitAt(0))}.` },
+    { heading: `${key}: ${condensePhrase(lossAt(0), 34)}`, body: frameEditorialLoss(lossAt(0)) },
+  ];
+  const carousels = content.carousels.map((entry) => ({
+    ...entry,
+    kicker: key.toUpperCase(),
+    title: `${key}: o que muda na rotina`,
+    coverSub: sentence(audience.hook || progression.definition),
+    slides: carouselSlides,
+    cta: { title: sentence(benefitAt(0)), sub: cta },
   }));
   return {
     ...content,
+    kickers: [key.toUpperCase(), `${key.toUpperCase()} · COMO FUNCIONA`, `${key.toUpperCase()} · NO DIA A DIA`],
+    headlines,
+    subs,
     typos,
     kinetic,
+    compare: [{ title: `${key}: com e sem`, before: losses, after: benefits }],
+    features,
+    quotes,
     marquee: [[
-      terms[0] || key,
-      terms[1] || key,
+      termAt(0),
+      termAt(1),
       condensePhrase(progression.mechanism, 54),
       condensePhrase(progression.benefit, 54),
       condensePhrase(progression.loss, 54),
     ]],
+    closings,
+    stories,
+    lists: [{ heading: `${key}: o que muda na prática`, items: carouselSlides.map((item) => sentence(item.body)), closing: cta }],
+    carousels,
+    searchQueries: [key, ...mechanisms, ...benefits],
+    sales: {
+      ...content.sales,
+      audience: audience.label,
+      proofs: mechanisms.map((item, index) => `${sentence(item)} Com isso, ${lower1(benefitAt(index))}.`),
+      objections: audience.objections ?? [],
+      offers: [],
+      ctas: [cta],
+      hashtags: [key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()],
+    },
   };
 };
 

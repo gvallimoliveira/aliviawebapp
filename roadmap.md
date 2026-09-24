@@ -95,3 +95,8 @@
 ## Posicionamento da IA especializada (24/09)
 - [x] Impedir que objeções e alternativas genéricas ocupem o destaque principal das artes.
 - [x] Reforçar IA treinada, especialização em fisioterapia e alma de fisioterapeuta no Agente Clínico.
+
+## Refinamentos editoriais universais (24/09)
+- [x] Reaplicar foco, protagonista e progressão depois de toda variação textual em qualquer marca.
+- [x] Fechar títulos, apoios, citações, histórias, comparações e carrosséis no mesmo tema editorial.
+- [x] Manter objeções subordinadas e impedir mistura entre temas irmãos.
