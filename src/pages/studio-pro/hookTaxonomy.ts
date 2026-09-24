@@ -153,7 +153,10 @@ export const HOOK_TYPES: HookType[] = [
     id: "objecao-respondida",
     label: "Objeção respondida",
     requires: ["objecao", "mecanismo"],
-    build: (f) => ({ strong: cap(f.objecao), rest: cap(f.mecanismo) }),
+    // A objeção é o contraste que a marca supera, nunca a promessa do cartaz.
+    // O mecanismo verdadeiro ocupa o destaque; a alternativa rejeitada fica
+    // explicitamente subordinada para não virar a palavra protagonista.
+    build: (f) => ({ strong: cap(f.mecanismo), rest: `em vez de ${low(f.objecao)}` }),
   },
 ];
 

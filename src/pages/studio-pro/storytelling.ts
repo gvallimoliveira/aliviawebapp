@@ -227,7 +227,10 @@ export const composeRouteCopy = (
     ...(trigger && !isClause(turn)
       ? [{ field: "trigger", strong: fit(cap(trigger), 32), rest: fit(`É hora de ${featureIsList ? mechanismAction : low(turn)}`, 42) }]
       : []),
-    ...(objection ? [{ field: "objection", strong: fit(cap(objection), 32), rest: fit(cap(turn), 44) }] : []),
+    // Objeção é contraste, não promessa: o mecanismo/virada ocupa o destaque.
+    // Isso impede alternativas rejeitadas ("IA genérica", "tentativa e erro")
+    // de virarem a palavra-cartaz do modelo tipográfico.
+    ...(objection ? [{ field: "objection", strong: fit(cap(turn), 32), rest: fit(`Em vez de ${low(objection)}`, 44) }] : []),
     ...(enemy && !isClause(turn)
       ? [{ field: "enemy", strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }]
       : []),

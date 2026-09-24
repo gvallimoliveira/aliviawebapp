@@ -140,6 +140,23 @@ describe("sub-nichos no motor criativo", () => {
     expect(blob).not.toMatch(/srpe|carga planejada|prontidão|periodização|hep em vídeo/);
   });
 
+  it("apresenta o agente como IA especializada com alma de fisioterapeuta", () => {
+    const agent = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-agente-clinico")!;
+    const content = enforceDifferentialFocus(buildSegmentContent({
+      kit,
+      audiences: ALIVIA_AUDIENCES,
+      segment: agent.id,
+      angle: "venda",
+      variationSeed: "agent-specialized-positioning",
+    }), agent);
+    const blob = JSON.stringify(content);
+
+    expect(agent.highlightTerms).toContain("IA especializada");
+    expect(blob).toMatch(/IA especializada em fisioterapia/i);
+    expect(blob).toMatch(/alma de fisioterapeuta/i);
+    expect(content.headlines.every((headline) => !/IA genérica/i.test(headline.strong))).toBe(true);
+  });
+
   it("permanece determinístico para o mesmo diferencial e seed", () => {
     const input = {
       kit,

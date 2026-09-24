@@ -91,3 +91,7 @@
 - [x] Separar definição, funcionamento, ganho e perda concreta sem repetição semântica.
 - [x] Remover rótulos internos e transformar prejuízos em problemas percebidos na rotina.
 - [x] Aplicar a progressão a todos os formatos editoriais e validar HEP em vídeo e marca genérica.
+
+## Posicionamento da IA especializada (24/09)
+- [x] Impedir que objeções e alternativas genéricas ocupem o destaque principal das artes.
+- [x] Reforçar IA treinada, especialização em fisioterapia e alma de fisioterapeuta no Agente Clínico.
