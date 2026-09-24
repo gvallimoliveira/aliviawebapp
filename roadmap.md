@@ -100,3 +100,7 @@
 - [x] Reaplicar foco, protagonista e progressão depois de toda variação textual em qualquer marca.
 - [x] Fechar títulos, apoios, citações, histórias, comparações e carrosséis no mesmo tema editorial.
 - [x] Manter objeções subordinadas e impedir mistura entre temas irmãos.
+
+## Alinhamento universal do modelo das pedras (24/09)
+- [x] Prender as duas setas, o caminho e os textos ao mesmo eixo central em qualquer marca.
+- [x] Proteger a regra compartilhada contra regressões específicas de marca.
