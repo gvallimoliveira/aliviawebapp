@@ -1,5 +1,9 @@
 # Roadmap
 
+## Contraste A/B e antirrepetição tipográfica (24/09)
+- [x] Diferenciar claramente os lados claro e escuro e preservar o cobre como destaque no tema escuro.
+- [x] Remover do corpo a repetição imediata da palavra já destacada na arte, para todas as marcas.
+
 - [x] Criar rede editorial e rotas narrativas locais
 - [x] Corrigir alinhamento da mão, nexo textual e contraste nas artes do Studio
 - [x] Integrar direção, memória e compositores

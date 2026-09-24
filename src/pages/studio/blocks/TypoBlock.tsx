@@ -11,9 +11,9 @@ import { sentenceLead } from "../typographyGuards";
  */
 const ACCENTS = [
   "text-primary",
-  "text-transparent [-webkit-text-stroke:2px_hsl(var(--primary))]",
-  "text-foreground underline decoration-primary decoration-[6px] underline-offset-8",
-  "relative inline-block rounded-2xl bg-primary px-[0.25em] py-[0.08em] leading-[1.05] text-primary-foreground box-decoration-clone",
+  "text-transparent [-webkit-text-stroke:2px_hsl(var(--studio-ink-accent,var(--primary)))]",
+  "text-foreground underline decoration-[hsl(var(--studio-ink-accent,var(--primary)))] decoration-[6px] underline-offset-8",
+  "relative inline-block rounded-2xl bg-[hsl(var(--studio-ink-accent,var(--primary)))] px-[0.25em] py-[0.08em] leading-[1.05] text-accent-foreground box-decoration-clone",
   "relative inline-block rounded-2xl bg-foreground px-[0.25em] py-[0.08em] leading-[1.05] text-background box-decoration-clone",
   "relative inline-block rounded-2xl bg-accent px-[0.25em] py-[0.08em] leading-[1.05] text-accent-foreground box-decoration-clone",
 ] as const;
@@ -33,7 +33,9 @@ const TypoBlock = ({ content, treatment, format, persona }: BlockProps) => {
   const tail = hasTail ? typo.tail : ".";
   const closing = content.sales.ctas[0] ?? content.closings[0]?.title ?? "";
   const accentIndex = treatment % ACCENTS.length;
-  const accentClass = ACCENTS[accentIndex];
+  const accentClass = accentIndex === 0 && treatment % 2 === 1
+    ? "text-[hsl(var(--studio-ink-accent,var(--primary)))]"
+    : ACCENTS[accentIndex];
   // Contorno vazado (índice 1): marcado para ser repintado no export de imagem.
   const isStroke = accentIndex === 1;
 

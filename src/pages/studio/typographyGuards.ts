@@ -111,6 +111,34 @@ export const joinCopyParts = (
   return `${left}${/^[,.;:!?…)]/.test(right) ? "" : " "}${right}`;
 };
 
+const normalizedWord = (word: string) =>
+  word.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+
+/**
+ * Evita que a palavra em destaque reapareça logo na abertura do complemento.
+ * Atua por palavra inteira e preserva o restante da frase: "Pescoço Virar o
+ * pescoço sem medo" vira "Pescoço Virar sem medo" em qualquer marca.
+ */
+export const removeLeadingHighlightEcho = (
+  highlight: string | null | undefined,
+  tail: string | null | undefined,
+): string => {
+  const highlighted = new Set(
+    normalizeCopyWhitespace(highlight).split(/\s+/).map(normalizedWord).filter((word) => word.length >= 3),
+  );
+  const words = normalizeCopyWhitespace(tail).split(/\s+/).filter(Boolean);
+  if (!highlighted.size || !words.length) return normalizeCopyWhitespace(tail);
+
+  const boundary = Math.min(words.length, 6);
+  let removed = false;
+  const revised = words.filter((word, index) => {
+    if (index >= boundary || !highlighted.has(normalizedWord(word))) return true;
+    removed = true;
+    return false;
+  });
+  return removed && revised.length ? revised.join(" ") : normalizeCopyWhitespace(tail);
+};
+
 /* -------------------------------------------------------------------------- */
 /* 3. Capa de carrossel                                                        */
 /* -------------------------------------------------------------------------- */
