@@ -93,7 +93,7 @@ describe("linha editorial em qualquer marca", () => {
     const varied = varyContent(built, {
       register: "direto",
       seed: "depois-da-variacao",
-      profile: { headlines: "alta", support: "alta", actions: "alta" },
+      profile: { headlines: "high", support: "high", actions: "high" },
     });
     const content = enforceEditorialFocus(varied, target);
     const allowed = highlightTermsFor(target);
