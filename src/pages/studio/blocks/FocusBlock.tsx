@@ -50,12 +50,26 @@ const FocusBlock = ({ content, rng, treatment, format }: BlockProps) => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.25 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 w-full max-w-md pb-20 text-center"
+        className="relative z-10 grid w-full max-w-md justify-items-center pb-20 text-center"
+        data-studio-focus-axis="1"
       >
-        <p style={{ textAlign: "center" }} className={`text-center text-sm font-medium leading-snug opacity-70 md:text-base ${skin.ink}`}>{away}</p>
-        <p style={{ textAlign: "center" }} className={`mt-1 text-center text-lg leading-none opacity-70 ${skin.ink}`}>↓</p>
+        <p style={{ textAlign: "center", width: "100%" }} className={`text-center text-sm font-medium leading-snug opacity-70 md:text-base ${skin.ink}`}>{away}</p>
+        <span
+          aria-hidden="true"
+          data-studio-focus-arrow="top"
+          style={{ display: "flex", width: "100%", justifyContent: "center", alignItems: "center", textAlign: "center" }}
+          className={`mt-1 text-lg leading-none opacity-70 ${skin.ink}`}
+        >
+          ↓
+        </span>
 
-        <svg viewBox="0 0 350 282" className="mx-auto w-full max-w-xs" role="img" aria-label={here}>
+        <svg
+          viewBox="0 0 350 282"
+          data-studio-focus-path="1"
+          className="mx-auto block w-full max-w-xs justify-self-center"
+          role="img"
+          aria-label={here}
+        >
           {STONES.map((s, i) => (
             <ellipse key={i} cx={s.cx} cy={s.cy} rx={s.rx} ry={s.ry} fill={skin.stone} />
           ))}
@@ -85,8 +99,15 @@ const FocusBlock = ({ content, rng, treatment, format }: BlockProps) => {
           )}
         </svg>
 
-        <p style={{ textAlign: "center" }} className={`mt-1 text-center text-lg leading-none opacity-70 ${skin.ink}`}>↑</p>
-        <p style={{ textAlign: "center" }} className={`mt-1 text-center text-lg font-bold leading-snug md:text-2xl ${skin.ink}`}>{here}</p>
+        <span
+          aria-hidden="true"
+          data-studio-focus-arrow="bottom"
+          style={{ display: "flex", width: "100%", justifyContent: "center", alignItems: "center", textAlign: "center" }}
+          className={`mt-1 text-lg leading-none opacity-70 ${skin.ink}`}
+        >
+          ↑
+        </span>
+        <p style={{ textAlign: "center", width: "100%" }} className={`mt-1 text-center text-lg font-bold leading-snug md:text-2xl ${skin.ink}`}>{here}</p>
       </motion.div>
     </section>
   );
