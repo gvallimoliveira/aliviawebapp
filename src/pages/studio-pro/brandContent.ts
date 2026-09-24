@@ -29,6 +29,7 @@ import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
 import { applyFormatInsights, readFormatInsights, scopedFormatInsights } from "./formatInsights";
 import { enforceAudienceScope } from "./audienceScope";
 import { finalizeBrandVoice, isVeterinaryContext } from "./veterinaryVoice";
+import { buildEditorialProgression, frameEditorialLoss } from "./narrativeArc";
 
 
 
@@ -1213,11 +1214,24 @@ const applyAudience = (
      */
     const terms = highlightTermsFor(audience);
     const noun = editorialNoun(audience);
-    const mechanisms = proof.length ? proof : [desc ?? key];
-    const benefits = desires.length ? desires : [cta];
-    const losses = (audience.stakes ?? []).map(strip).filter(Boolean);
+    const rawMechanisms = proof.length ? proof : [desc ?? key];
+    const rawBenefits = desires.length ? desires : [cta];
+    const rawLosses = (audience.stakes ?? []).map(strip).filter(Boolean);
     const scenes = (audience.scenes ?? []).map(strip).filter(Boolean);
-    const whatItIs = desc || `${key} é ${noun === "produto" ? "um produto" : `uma ${noun}`} de ${brand}.`;
+    const progression = buildEditorialProgression({
+      definition: desc,
+      mechanisms: rawMechanisms,
+      benefits: rawBenefits,
+      losses: rawLosses,
+      pains,
+      scenes,
+      cta,
+      fallback: key,
+    });
+    const whatItIs = progression.definition || `${key} é ${noun === "produto" ? "um produto" : `uma ${noun}`} de ${brand}.`;
+    const mechanisms = [progression.mechanism, ...rawMechanisms.filter((item) => item !== progression.mechanism)].filter(Boolean);
+    const benefits = [progression.benefit, ...rawBenefits.filter((item) => item !== progression.benefit)].filter(Boolean);
+    const losses = [progression.loss, ...rawLosses.filter((item) => item !== progression.loss)].filter(Boolean);
     const benefitAt = (index: number) => benefits[index % benefits.length];
     const lossAt = (index: number) => losses[index % Math.max(1, losses.length)] || pains[index % Math.max(1, pains.length)] || whatItIs;
     const mechanismAt = (index: number) => mechanisms[index % mechanisms.length];
@@ -1233,9 +1247,9 @@ const applyAudience = (
        * Cada etapa entra com abertura própria: sem isso, mecanismo e definição
        * podem coincidir e o carrossel perde um slide na deduplicação.
        */
-      { heading: `Como ${lower1(termAt(0))} funciona`, body: `Funciona assim: ${lower1(mechanismAt(0))}.` },
-      { heading: `Com ${lower1(key)}, na rotina`, body: `Na rotina, ${lower1(benefitAt(0))}.` },
-      { heading: `Sem ${lower1(key)}`, body: `Sem isso, ${lower1(lossAt(0))}.` },
+      { heading: `${key}: ${condensePhrase(mechanismAt(0), 34)}`, body: `Na prática, ${lower1(mechanismAt(0))}.` },
+      { heading: `${key}: ${condensePhrase(benefitAt(0), 34)}`, body: `Com isso, ${lower1(benefitAt(0))}.` },
+      { heading: `${key}: ${condensePhrase(lossAt(0), 34)}`, body: frameEditorialLoss(lossAt(0)) },
     ];
 
     return {
@@ -1246,22 +1260,22 @@ const applyAudience = (
         { strong: key, rest: `— ${lower1(whatItIs)}` },
         ...mechanisms.slice(0, 3).map((item) => ({ strong: `${key} na prática`, rest: `— ${lower1(item)}.` })),
         ...benefits.slice(0, 2).map((item) => ({ strong: `Com ${lower1(key)}`, rest: `, ${lower1(item)}.` })),
-        ...losses.slice(0, 2).map((item) => ({ strong: `Sem ${lower1(key)}`, rest: `, ${lower1(item)}.` })),
+        ...losses.slice(0, 2).map((item) => ({ strong: `${key}: o custo na rotina`, rest: `— ${lower1(item)}.` })),
       ],
       subs: [
         whatItIs,
-        ...mechanisms.map((item, index) => `${sentence(item)} Na prática, isso permite ${lower1(benefitAt(index))}.`),
-        ...losses.map((item) => `Sem ${lower1(key)}, ${lower1(item)}.`),
+        ...mechanisms.map((item, index) => `${sentence(item)} Com isso, ${lower1(benefitAt(index))}.`),
+        ...losses.map((item) => frameEditorialLoss(item)),
       ],
       typos: [
         { lead: `${key}:`, big: condensePhrase(termAt(0), 24), tail: sentence(mechanismAt(0)) },
-        { lead: `Sem ${lower1(key)},`, big: condensePhrase(termAt(1), 24), tail: sentence(lossAt(0)) },
-        { lead: "Na rotina,", big: condensePhrase(termAt(2), 24), tail: sentence(benefitAt(0)) },
+        { lead: "Na rotina,", big: condensePhrase(termAt(1), 24), tail: sentence(benefitAt(0)) },
+        { lead: "O custo precisa ficar visível:", big: condensePhrase(termAt(2), 24), tail: sentence(lossAt(0)) },
       ],
       kinetic: benefits.slice(0, 3).map((item, index) => ({
         kicker: KEY,
         word: condensePhrase(termAt(index), 20),
-        caption: `${sentence(mechanismAt(index))} Isso permite ${lower1(item)}.`,
+        caption: `${sentence(mechanismAt(index))} Com isso, ${lower1(item)}.`,
       })),
       metrics: [],
       stats: [],
@@ -1275,21 +1289,27 @@ const applyAudience = (
       features: [
         { tag: KEY, title: sentence(whatItIs), description: `É assim que ${lower1(key)} entra na rotina.`, headline: condensePhrase(key, 36), topic: topicAt(0) },
         ...mechanisms.slice(0, 3).map((item, index) => ({ tag: `${KEY} · COMO FUNCIONA`, title: sentence(item), description: `Esse mecanismo permite ${lower1(benefitAt(index))}.`, headline: condensePhrase(item, 36), topic: topicAt(index + 1) })),
-        ...losses.slice(0, 2).map((item, index) => ({ tag: `${KEY} · SEM ISSO`, title: sentence(item), description: `Com ${lower1(key)}, o caminho passa a ser ${lower1(benefitAt(index))}.`, headline: condensePhrase(item, 36), topic: topicAt(index + 4) })),
+        ...losses.slice(0, 2).map((item, index) => ({ tag: `${KEY} · CUSTO NA ROTINA`, title: sentence(item), description: `O que se perde é concreto. Com ${lower1(key)}, passa a ser possível ${lower1(benefitAt(index))}.`, headline: condensePhrase(item, 36), topic: topicAt(index + 4) })),
       ],
       quotes: benefits.slice(0, 3).map((item, index) => ({ text: `“${sentence(item)} É esse o valor prático de ${lower1(mechanismAt(index))}.”` })),
-      marquee: [[key, ...terms, "Como funciona", "Na rotina", `Sem ${lower1(key)}`]],
+      marquee: [[
+        termAt(0),
+        termAt(1),
+        condensePhrase(mechanismAt(0), 54),
+        condensePhrase(benefitAt(0), 54),
+        condensePhrase(lossAt(0), 54),
+      ]],
       closings: benefits.slice(0, 3).map((item, index) => ({
         title: sentence(item),
-        sub: `${sentence(mechanismAt(index))} Sem ${lower1(key)}, ${lower1(lossAt(index))}.`,
+        sub: frameEditorialLoss(lossAt(index)),
         cta,
       })),
       stories: scenes.slice(0, 3).map((item, index) => ({
         kicker: `${KEY} · ROTINA REAL`,
         title: sentence(item),
-        beats: [sentence(lossAt(index)), sentence(mechanismAt(index))],
+        beats: [sentence(item), sentence(mechanismAt(index))],
         turn: `Com ${lower1(key)}, passa a ser possível ${lower1(benefitAt(index))}.`,
-        moral: `${sentence(benefitAt(index))} Esse é o ganho concreto de ${lower1(key)}.`,
+        moral: frameEditorialLoss(lossAt(index)),
       })),
       lists: [{ heading: `${key}: o que muda na prática`, items: carouselSlides.map((item) => sentence(item.body)), closing: cta }],
       carousels: [{
@@ -1708,42 +1728,41 @@ export const enforceEditorialFocus = (
 ): WorldContent => {
   if (!audience?.editorialGroup) return content;
   const key = audienceKeyword(audience);
-  const noun = editorialNoun(audience);
   // `highlightTermsFor` preserva pontuação significativa, como "D.I.F.I.", e
   // deriva termos do nome do tema quando a marca não preencheu a lista.
   const terms = highlightTermsFor(audience);
-  const mechanisms = (audience.proof ?? []).map(strip).filter(Boolean);
-  const benefits = (audience.desires ?? []).map(strip).filter(Boolean);
-  const losses = (audience.stakes ?? []).map(strip).filter(Boolean);
-  const at = (values: string[], index: number, fallback: string) =>
-    values[index % Math.max(1, values.length)] || fallback;
-  const amount = Math.max(3, terms.length, mechanisms.length, benefits.length);
-  const typos = Array.from({ length: amount }, (_, index) => {
-    const term = at(terms, index, key);
-    const mechanism = at(mechanisms, index, audience.description ?? key);
-    const benefit = at(benefits, index, audience.cta ?? key);
-    return {
-      lead: index % 2 === 0 ? `${key}:` : "Na rotina,",
-      big: term,
-      tail: `${sentence(mechanism)} Isso permite ${lower1(benefit)}.`,
-    };
+  const progression = buildEditorialProgression({
+    definition: audience.description,
+    mechanisms: audience.proof,
+    benefits: audience.desires,
+    losses: audience.stakes,
+    pains: audience.pains,
+    scenes: audience.scenes,
+    cta: audience.cta,
+    fallback: key,
   });
-  const kinetic = Array.from({ length: amount }, (_, index) => {
-    const term = at(terms, index, key);
-    const mechanism = at(mechanisms, index, audience.description ?? key);
-    const benefit = at(benefits, index, audience.cta ?? key);
-    const loss = at(losses, index, audience.pains?.[index % Math.max(1, audience.pains?.length ?? 0)] ?? key);
-    return {
-      kicker: key.toUpperCase(),
-      word: term,
-      caption: `${sentence(mechanism)} Na prática, ${lower1(benefit)}. Sem ${lower1(key)}, ${lower1(loss)}.`,
-    };
-  });
+  // O foco tardio só restaura a palavra protagonista. Recriar a legenda aqui
+  // repetia mecanismo e ganho que já tinham sido escritos no primeiro passe.
+  const typos = content.typos.map((entry, index) => ({
+    ...entry,
+    big: terms[index % terms.length] || key,
+  }));
+  const kinetic = content.kinetic.map((entry, index) => ({
+    ...entry,
+    kicker: key.toUpperCase(),
+    word: terms[index % terms.length] || key,
+  }));
   return {
     ...content,
     typos,
     kinetic,
-    marquee: [[key, ...terms, "Como funciona", "Benefício prático", `Sem essa ${noun}`]],
+    marquee: [[
+      terms[0] || key,
+      terms[1] || key,
+      condensePhrase(progression.mechanism, 54),
+      condensePhrase(progression.benefit, 54),
+      condensePhrase(progression.loss, 54),
+    ]],
   };
 };
 

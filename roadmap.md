@@ -86,3 +86,8 @@
 - [x] Restringir palavras protagonistas aos termos canônicos da funcionalidade selecionada.
 - [x] Bloquear matrizes, aprendizados e rotas gerais que misturem outro diferencial na mesma arte.
 - [x] Manter explicação, mecanismo, benefício e custo de não ter dentro do mesmo pacote editorial.
+
+## Progressão editorial global (24/09)
+- [x] Separar definição, funcionamento, ganho e perda concreta sem repetição semântica.
+- [x] Remover rótulos internos e transformar prejuízos em problemas percebidos na rotina.
+- [x] Aplicar a progressão a todos os formatos editoriais e validar HEP em vídeo e marca genérica.

@@ -7,6 +7,7 @@ import {
   officialAudienceCount,
   type BrandAudience,
 } from "@/pages/studio-pro/audiences";
+import { frameEditorialLoss, textSimilarity } from "@/pages/studio-pro/narrativeArc";
 
 const kit = { name: "Clínica Vértice", niche: "fisioterapia", tone: "próximo", description: "", keywords: [] };
 
@@ -64,5 +65,24 @@ describe("linha editorial em qualquer marca", () => {
     const blob = JSON.stringify(content).toLowerCase();
     expect(blob).toContain("pilates");
     expect(blob).not.toContain("drenagem");
+  });
+
+  it("faz cada etapa somar informação e converte o prejuízo em problema concreto", () => {
+    const target = audiences[1];
+    const content = enforceEditorialFocus(
+      buildSegmentContent({ kit, audiences, segment: target.id, angle: "informar", variationSeed: "progressao-pilates" }),
+      target,
+    );
+    const slides = content.carousels[0]?.slides ?? [];
+    const bodies = slides.map((slide) => slide.body);
+
+    expect(slides).toHaveLength(4);
+    expect(JSON.stringify(content.marquee)).not.toMatch(/como funciona|benefício prático|sem essa (?:funcionalidade|serviço|produto|recurso)/i);
+    expect(bodies[3]).toBe(frameEditorialLoss(target.stakes?.[0] ?? ""));
+    for (let i = 0; i < bodies.length; i += 1) {
+      for (let j = i + 1; j < bodies.length; j += 1) {
+        expect(textSimilarity(bodies[i], bodies[j])).toBeLessThan(0.52);
+      }
+    }
   });
 });

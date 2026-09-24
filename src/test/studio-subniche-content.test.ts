@@ -95,7 +95,8 @@ describe("sub-nichos no motor criativo", () => {
       expect(
         headings.every((heading) => anchors.some((anchor) => heading.toLowerCase().includes(anchor))),
       ).toBe(true);
-      expect(headings[3]?.toLowerCase().startsWith("sem ")).toBe(true);
+      expect(headings[3]?.toLowerCase()).toContain((item.keyword ?? item.label).toLowerCase());
+      expect(slides[3]?.body.toLowerCase()).toContain("o custo aparece na rotina");
       expect(content.compare[0]?.before.length).toBeGreaterThan(0);
       expect(content.compare[0]?.after.length).toBeGreaterThan(0);
       expect(slides[0]?.body.length).toBeGreaterThan(40);
@@ -148,6 +149,26 @@ describe("sub-nichos no motor criativo", () => {
       variationSeed: "hep-fixed",
     };
     expect(buildSegmentContent(input)).toEqual(buildSegmentContent(input));
+  });
+
+  it("HEP em vídeo progride sem rótulos internos nem prejuízo colado à explicação", () => {
+    const hep = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-hep-video")!;
+    const content = enforceDifferentialFocus(buildSegmentContent({
+      kit,
+      audiences: ALIVIA_AUDIENCES,
+      segment: hep.id,
+      angle: "informar",
+      variationSeed: "hep-progressao-editorial",
+    }), hep);
+    const slides = content.carousels[0]?.slides ?? [];
+    const blob = JSON.stringify(content).toLowerCase();
+
+    expect(slides).toHaveLength(4);
+    expect(slides[0]?.body).toContain("Programa de exercícios enviado por link");
+    expect(slides[1]?.body).toContain("Biblioteca de exercícios com vídeos");
+    expect(slides[2]?.body).toContain("consultar no celular");
+    expect(slides[3]?.body).toBe("O custo aparece na rotina: a execução em casa continua dependendo da memória da sessão.");
+    expect(blob).not.toMatch(/benefício prático|sem essa funcionalidade/);
   });
 
   it("mantém segurança e revisão profissional nos dois novos diferenciais", () => {
