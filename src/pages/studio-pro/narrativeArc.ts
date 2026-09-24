@@ -38,6 +38,55 @@ export const textSimilarity = (a: string, b: string): number => {
 
 export const ARC_TOO_SIMILAR = 0.52;
 
+export type EditorialProgression = {
+  definition: string;
+  mechanism: string;
+  benefit: string;
+  loss: string;
+  scene: string;
+};
+
+const cleanStage = (text?: string) => (text ?? "").trim().replace(/\s+/g, " ").replace(/[.!?]+$/, "");
+
+/**
+ * Escolhe uma ideia nova para cada etapa editorial. Campos muito parecidos com
+ * os já usados cedem lugar ao próximo item do kit, em vez de reaparecerem com
+ * outro conector.
+ */
+const distinctStage = (candidates: Array<string | undefined>, used: string[], fallback: string) => {
+  const clean = candidates.map(cleanStage).filter(Boolean);
+  const novel = clean.find((candidate) => used.every((previous) => textSimilarity(candidate, previous) < ARC_TOO_SIMILAR));
+  const picked = novel || clean[0] || cleanStage(fallback);
+  if (picked) used.push(picked);
+  return picked;
+};
+
+/** Organiza os campos de qualquer tema editorial em papéis não redundantes. */
+export const buildEditorialProgression = (fields: {
+  definition?: string;
+  mechanisms?: string[];
+  benefits?: string[];
+  losses?: string[];
+  pains?: string[];
+  scenes?: string[];
+  cta?: string;
+  fallback: string;
+}): EditorialProgression => {
+  const used: string[] = [];
+  const definition = distinctStage([fields.definition], used, fields.fallback);
+  const mechanism = distinctStage(fields.mechanisms ?? [], used, definition);
+  const benefit = distinctStage([...(fields.benefits ?? []), fields.cta], used, fields.cta || mechanism);
+  const loss = distinctStage([...(fields.losses ?? []), ...(fields.pains ?? [])], used, fields.fallback);
+  const scene = distinctStage(fields.scenes ?? [], used, fields.fallback);
+  return { definition, mechanism, benefit, loss, scene };
+};
+
+/** Converte um prejuízo solto em consequência concreta, sem rótulo interno. */
+export const frameEditorialLoss = (loss: string) => {
+  const clean = cleanStage(loss);
+  return clean ? `O custo aparece na rotina: ${clean.charAt(0).toLowerCase()}${clean.slice(1)}.` : "";
+};
+
 export type NarrativeArc = {
   hook: string;
   tension: string;
