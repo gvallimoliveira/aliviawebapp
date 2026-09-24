@@ -1754,10 +1754,10 @@ export const enforceEditorialFocus = (
   const scenes = [progression.scene, ...(audience.scenes ?? [])]
     .map(strip)
     .filter(Boolean);
-  const mechanismAt = (index: number) => mechanisms[index % mechanisms.length] || progression.definition;
-  const benefitAt = (index: number) => benefits[index % benefits.length] || progression.benefit;
-  const lossAt = (index: number) => losses[index % losses.length] || progression.loss;
-  const sceneAt = (index: number) => scenes[index % scenes.length] || progression.definition;
+  const mechanismAt = (index: number) => mechanisms.length ? mechanisms[index % mechanisms.length] : progression.definition;
+  const benefitAt = (index: number) => benefits.length ? benefits[index % benefits.length] : progression.benefit;
+  const lossAt = (index: number) => losses.length ? losses[index % losses.length] : progression.loss;
+  const sceneAt = (index: number) => scenes.length ? scenes[index % scenes.length] : progression.definition;
   const cta = audience.cta?.trim() || content.sales.ctas[0] || "Saiba mais";
 
   /**
