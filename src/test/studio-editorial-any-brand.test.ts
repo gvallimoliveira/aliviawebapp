@@ -8,6 +8,7 @@ import {
   type BrandAudience,
 } from "@/pages/studio-pro/audiences";
 import { frameEditorialLoss, textSimilarity } from "@/pages/studio-pro/narrativeArc";
+import { varyContent } from "@/pages/studio/vary";
 
 const kit = { name: "Clínica Vértice", niche: "fisioterapia", tone: "próximo", description: "", keywords: [] };
 
@@ -84,5 +85,43 @@ describe("linha editorial em qualquer marca", () => {
         expect(textSimilarity(bodies[i], bodies[j])).toBeLessThan(0.52);
       }
     }
+  });
+
+  it("reaplica o foco completo depois da variação em qualquer marca", () => {
+    const target = audiences[1];
+    const built = buildSegmentContent({ kit, audiences, segment: target.id, angle: "venda", variationSeed: "antes-da-variacao" });
+    const varied = varyContent(built, {
+      register: "direto",
+      seed: "depois-da-variacao",
+      profile: { headlines: "alta", support: "alta", actions: "alta" },
+    });
+    const content = enforceEditorialFocus(varied, target);
+    const allowed = highlightTermsFor(target);
+    const blob = JSON.stringify(content).toLowerCase();
+
+    expect(content.headlines.every((headline) => allowed.includes(headline.strong))).toBe(true);
+    expect(content.headlines.every((headline) => !/drenagem/i.test(`${headline.strong} ${headline.rest}`))).toBe(true);
+    expect(content.typos.every((entry) => allowed.includes(entry.big))).toBe(true);
+    expect(content.kinetic.every((entry) => allowed.includes(entry.word))).toBe(true);
+    expect(content.carousels[0]?.slides).toHaveLength(4);
+    expect(content.carousels[0]?.slides[3]?.body).toBe(frameEditorialLoss(target.stakes?.[0] ?? ""));
+    expect(blob).not.toMatch(/benefício prático|sem essa (?:funcionalidade|serviço|produto|recurso)/i);
+    expect(blob).not.toContain("drenagem");
+  });
+
+  it("mantém objeções subordinadas e nunca as promove a palavra protagonista", () => {
+    const target: BrandAudience = {
+      ...audiences[1],
+      highlightTerms: ["Pilates clínico", "Movimento", "Força"],
+      objections: ["Pilates é só alongamento"],
+    };
+    const content = enforceEditorialFocus(
+      buildSegmentContent({ kit, audiences: [audiences[0], target, audiences[2]], segment: target.id, angle: "venda", variationSeed: "objecao-subordinada" }),
+      target,
+    );
+
+    expect(content.headlines.every((headline) => !/só alongamento/i.test(headline.strong))).toBe(true);
+    expect(content.headlines.every((headline) => target.highlightTerms?.includes(headline.strong))).toBe(true);
+    expect(content.sales.objections).toEqual(target.objections);
   });
 });
