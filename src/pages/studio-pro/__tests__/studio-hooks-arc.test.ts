@@ -27,7 +27,9 @@ describe("biblioteca de ganchos", () => {
       inimigo: "antibiótico e corticoide sem exame",
       mecanismo: "citologia cutânea antes da conduta",
     });
-    expect(hook?.strong).toContain("Não é");
+    expect(hook?.strong).toContain("Citologia cutânea");
+    expect(hook?.strong).not.toContain("antibiótico");
+    expect(hook?.rest).toContain("não antibiótico");
     expect(hook?.rest.length).toBeGreaterThan(6);
     expect(hookViolatesGuardrails(`${hook?.strong} ${hook?.rest}`)).toBe(false);
   });

@@ -71,7 +71,7 @@ export const HOOK_TYPES: HookType[] = [
     id: "contraste-falso-senso-comum",
     label: "Contraste com o senso comum",
     requires: ["inimigo", "mecanismo"],
-    build: (f) => ({ strong: `Não é ${low(f.inimigo)}`, rest: `é ${low(f.mecanismo)}` }),
+    build: (f) => ({ strong: cap(f.mecanismo), rest: `não ${low(f.inimigo)}` }),
   },
   {
     id: "custo-do-atraso",
@@ -83,7 +83,7 @@ export const HOOK_TYPES: HookType[] = [
     id: "erro-comum",
     label: "Erro mais comum",
     requires: ["inimigo", "desejo"],
-    build: (f) => ({ strong: `O erro mais comum: ${low(f.inimigo)}`, rest: `O caminho é ${low(f.desejo)}` }),
+    build: (f) => ({ strong: cap(f.desejo), rest: `em vez de ${low(f.inimigo)}` }),
   },
   {
     id: "pergunta-diagnostica",
@@ -95,7 +95,7 @@ export const HOOK_TYPES: HookType[] = [
     id: "mito-vs-mecanismo",
     label: "Mito × mecanismo",
     requires: ["objecao", "mecanismo"],
-    build: (f) => ({ strong: `Dizem que ${low(f.objecao)}`, rest: `Na prática, ${low(f.mecanismo)}` }),
+    build: (f) => ({ strong: cap(f.mecanismo), rest: `ao contrário de ${low(f.objecao)}` }),
   },
   {
     id: "bastidor-prova",
@@ -121,7 +121,7 @@ export const HOOK_TYPES: HookType[] = [
     id: "pergunta-ao-especialista",
     label: "Pergunta que mais recebo",
     requires: ["objecao", "prova"],
-    build: (f) => ({ strong: `A pergunta que mais recebo: ${low(f.objecao)}`, rest: cap(f.prova) }),
+    build: (f) => ({ strong: cap(f.prova), rest: `responde à dúvida: ${low(f.objecao)}` }),
   },
   {
     id: "cena-interrompida",

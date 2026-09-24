@@ -232,7 +232,7 @@ export const composeRouteCopy = (
     // de virarem a palavra-cartaz do modelo tipográfico.
     ...(objection ? [{ field: "objection", strong: fit(cap(turn), 32), rest: fit(`Em vez de ${low(objection)}`, 44) }] : []),
     ...(enemy && !isClause(turn)
-      ? [{ field: "enemy", strong: fit(`Não é ${low(enemy)}`, 30), rest: fit(`é ${low(turn)}`, 42) }]
+      ? [{ field: "enemy", strong: fit(cap(turn), 30), rest: fit(`Não ${low(enemy)}`, 42) }]
       : []),
     ...(stakes ? [{ field: "stakes", strong: fit("Enquanto nada muda", 28), rest: fit(low(stakes), 44) }] : []),
 
