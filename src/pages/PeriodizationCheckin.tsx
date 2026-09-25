@@ -146,8 +146,9 @@ interface Info {
 }
 
 
-const PeriodizationCheckin = () => {
-  const { token } = useParams<{ token: string }>();
+const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; embedded?: boolean }) => {
+  const params = useParams<{ token: string }>();
+  const token = tokenProp ?? params.token;
   const [state, setState] = useState<State>("loading");
   const [info, setInfo] = useState<Info | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
@@ -333,9 +334,8 @@ const PeriodizationCheckin = () => {
     ? new Date(`${info.today}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
     : "";
 
-  return (
-    <main className="min-h-screen bg-background flex items-start justify-center px-4 py-8">
-      <div className="w-full max-w-lg space-y-4">
+  const content = (
+      <div className={embedded ? "w-full space-y-4" : "w-full max-w-lg space-y-4"}>
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-xl flex items-center gap-2">
@@ -705,6 +705,12 @@ const PeriodizationCheckin = () => {
           Estes registros ajudam seu fisioterapeuta a ajustar a carga. Não substituem avaliação presencial.
         </p>
       </div>
+  );
+
+  if (embedded) return content;
+  return (
+    <main className="min-h-screen bg-background flex items-start justify-center px-4 py-8">
+      {content}
     </main>
   );
 };
