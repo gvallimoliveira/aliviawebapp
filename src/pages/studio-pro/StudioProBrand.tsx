@@ -447,8 +447,14 @@ const StudioProBrand = () => {
   const folders = useMemo(() => {
     const set = new Set<string>(["Geral"]);
     creations.forEach((c) => set.add(c.folder || "Geral"));
-    return Array.from(set);
-  }, [creations]);
+    // Pasta recém-criada (ainda vazia) continua visível para receber artes.
+    if (folder !== "Todas") set.add(folder);
+    const [first, ...rest] = Array.from(set);
+    return [first, ...rest.sort((a, b) => a.localeCompare(b, "pt-BR"))];
+  }, [creations, folder]);
+
+  const folderCount = (f: string) =>
+    f === "Todas" ? creations.length : creations.filter((c) => (c.folder || "Geral") === f).length;
 
   const shown = folder === "Todas" ? creations : creations.filter((c) => (c.folder || "Geral") === folder);
 
@@ -740,10 +746,69 @@ const StudioProBrand = () => {
 
 
   const newFolder = async () => {
-    const name = window.prompt("Nome da nova pasta");
+    const name = window.prompt("Nome da nova pasta (ex.: um tema)");
     if (!name?.trim()) return;
     setFolder(name.trim());
     toast.info("Pasta criada. Mova artes para ela pelo menu de cada arte.");
+  };
+
+  /** Nome do tema/público que originou a arte (segmento salvo). */
+  const themeOf = (art: { segment: string | null }) => {
+    const raw = art.segment ?? "";
+    const ids = raw.split(/[,|+]/).map((s) => s.trim()).filter(Boolean);
+    const labels = ids.map((id) => audiences.find((a) => a.id === id)?.label).filter(Boolean) as string[];
+    return labels.length === 1 ? labels[0] : null;
+  };
+
+  /** Move artes que estão em "Geral" para pastas com o nome do tema de cada uma. */
+  const organizeByTheme = async () => {
+    const targets = creations
+      .filter((c) => (c.folder || "Geral") === "Geral")
+      .map((c) => ({ id: c.id, theme: themeOf(c) }))
+      .filter((t): t is { id: string; theme: string } => !!t.theme);
+    if (targets.length === 0) {
+      toast.info("Nenhuma arte em Geral com tema identificado.");
+      return;
+    }
+    const byTheme = new Map<string, string[]>();
+    targets.forEach((t) => byTheme.set(t.theme, [...(byTheme.get(t.theme) ?? []), t.id]));
+    for (const [theme, ids] of byTheme) {
+      const { error } = await supabase.from("studio_creations").update({ folder: theme }).in("id", ids);
+      if (error) {
+        toast.error("Não foi possível organizar todas as artes.");
+        return;
+      }
+    }
+    setCreations((prev) =>
+      prev.map((c) => {
+        const t = targets.find((x) => x.id === c.id);
+        return t ? { ...c, folder: t.theme } : c;
+      }),
+    );
+    toast.success(`${targets.length} artes organizadas em ${byTheme.size} pastas por tema.`);
+  };
+
+  const renameFolder = async (from: string) => {
+    const name = window.prompt("Novo nome da pasta", from)?.trim();
+    if (!name || name === from) return;
+    const ids = creations.filter((c) => (c.folder || "Geral") === from).map((c) => c.id);
+    if (ids.length) {
+      const { error } = await supabase.from("studio_creations").update({ folder: name }).in("id", ids);
+      if (error) return void toast.error("Não foi possível renomear.");
+    }
+    setCreations((prev) => prev.map((c) => ((c.folder || "Geral") === from ? { ...c, folder: name } : c)));
+    setFolder(name);
+  };
+
+  const deleteFolder = async (name: string) => {
+    if (!window.confirm(`Excluir a pasta "${name}"? As artes voltam para Geral (nada é apagado).`)) return;
+    const ids = creations.filter((c) => c.folder === name).map((c) => c.id);
+    if (ids.length) {
+      const { error } = await supabase.from("studio_creations").update({ folder: "Geral" }).in("id", ids);
+      if (error) return void toast.error("Não foi possível excluir a pasta.");
+    }
+    setCreations((prev) => prev.map((c) => (c.folder === name ? { ...c, folder: "Geral" } : c)));
+    setFolder("Todas");
   };
 
   if (authLoading || accessLoading || loading) {
@@ -893,15 +958,30 @@ const StudioProBrand = () => {
                     className="h-8 rounded-full text-xs"
                     onClick={() => setFolder(f)}
                   >
-                    {f}
+                    {f} <span className="ml-1 text-muted-foreground">{folderCount(f)}</span>
                   </Button>
                 ))}
               </div>
-              <Button size="sm" variant="outline" className="rounded-full" onClick={newFolder}>
-                <FolderPlus className="mr-1.5 h-4 w-4" />
-                Nova pasta
-              </Button>
+              <div className="flex flex-wrap gap-1.5">
+                <Button size="sm" variant="outline" className="rounded-full" onClick={() => void organizeByTheme()}>
+                  Organizar por tema
+                </Button>
+                <Button size="sm" variant="outline" className="rounded-full" onClick={newFolder}>
+                  <FolderPlus className="mr-1.5 h-4 w-4" />
+                  Nova pasta
+                </Button>
+              </div>
             </div>
+            {folder !== "Todas" && folder !== "Geral" && (
+              <div className="mt-2 flex gap-1.5">
+                <Button size="sm" variant="ghost" className="h-7 rounded-full text-[11px]" onClick={() => void renameFolder(folder)}>
+                  Renomear pasta
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 rounded-full text-[11px]" onClick={() => void deleteFolder(folder)}>
+                  Excluir pasta
+                </Button>
+              </div>
+            )}
 
             {shown.length === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">
