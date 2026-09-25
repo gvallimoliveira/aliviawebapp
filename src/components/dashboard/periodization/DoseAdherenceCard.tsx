@@ -283,7 +283,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                     da dose. Ajuste a prescrição.
                   </p>
                 )}
-                <p className="text-[10px] opacity-80">Leitura automática. A decisão é sempre sua.</p>
+                <p className="text-[10px] opacity-80">Dose certa = ±10% do planejado (Gabbett, BJSM 2016; ACWR seguro 0,8–1,3, Hulin et al., BJSM 2016). Leitura automática. A decisão é sempre sua.</p>
               </div>
             )}
 

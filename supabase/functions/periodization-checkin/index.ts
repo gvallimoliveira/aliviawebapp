@@ -396,8 +396,8 @@ async function maybeAlert(
     });
     Object.entries(plannedByTrack).forEach(([t, target]) => {
       const ratio = (realByTrack[t] || 0) / target;
-      if (ratio < 0.85) reasons.push(`${TRACK_PT[t] || t} subdosada (${ratio.toFixed(2)} do planejado)`);
-      else if (ratio > 1.15) reasons.push(`${TRACK_PT[t] || t} superdosada (${ratio.toFixed(2)} do planejado)`);
+      if (ratio < 0.9) reasons.push(`${TRACK_PT[t] || t} subdosada (${ratio.toFixed(2)} do planejado)`);
+      else if (ratio > 1.1) reasons.push(`${TRACK_PT[t] || t} superdosada (${ratio.toFixed(2)} do planejado)`);
     });
 
     if (!reasons.length) return;
