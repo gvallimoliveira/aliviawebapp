@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Gauge, Link2, Loader2, Plus } from "lucide-react";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { useToast } from "@/hooks/use-toast";
-import { anchorScrollById } from "@/hooks/useScrollAnchor";
+import { anchorScroll } from "@/hooks/useScrollAnchor";
 import { supabase } from "@/integrations/supabase/client";
 import {
   PeriodizationCycle,
@@ -144,13 +144,26 @@ const PeriodizationSection = ({
     }
   };
 
+  const loadedOnceRef = useRef(false);
+  const lastTouchedRef = useRef<HTMLElement | null>(null);
+  const anchorTarget = useCallback((): HTMLElement | null => {
+    const el = lastTouchedRef.current;
+    if (el && el.isConnected) return el;
+    return document.getElementById("sec-periodizacao");
+  }, []);
+
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!patientId || isDemo) { setLoading(false); return; }
 
     // Recarregar depois de um registro não deve colapsar a seção em um spinner
     // nem mover a página: guardamos a rolagem e restauramos após o re-render.
-    const keepScroll = opts?.silent ? window.scrollY : null;
-    if (!opts?.silent) setLoading(true);
+    // Só a PRIMEIRA carga mostra o spinner. Qualquer recarga posterior (links,
+    // macrociclo, realtime) é silenciosa e ancorada no último ponto tocado, para
+    // a página nunca "pular para o topo".
+    const silent = opts?.silent || loadedOnceRef.current;
+    const keepAnchored = silent ? anchorScroll(anchorTarget, 2200) : null;
+    keepAnchored?.();
+    if (!silent) setLoading(true);
     const since = new Date();
     since.setUTCDate(since.getUTCDate() - 90);
     const sinceISO = since.toISOString().slice(0, 10);
@@ -179,14 +192,10 @@ const PeriodizationSection = ({
       setRestrictions(re);
     } else {
     }
+    loadedOnceRef.current = true;
     setLoading(false);
-    if (keepScroll !== null) {
-      requestAnimationFrame(() => {
-        if (Math.abs(window.scrollY - keepScroll) > 4) window.scrollTo({ top: keepScroll, behavior: "auto" });
-      });
-    }
 
-  }, [patientId, isDemo]);
+  }, [patientId, isDemo, anchorTarget]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -209,8 +218,6 @@ const PeriodizationSection = ({
    * empurra mais a página para o topo.
    */
   const refresh = useCallback(() => {
-    const keepAnchored = anchorScrollById("sec-periodizacao", 1800);
-    keepAnchored();
     void load({ silent: true });
   }, [load]);
 
@@ -301,7 +308,14 @@ const PeriodizationSection = ({
   }
 
   return (
-    <div className="space-y-3">
+    <div
+      className="space-y-3"
+      onPointerDownCapture={(e) => {
+        const t = e.target as HTMLElement;
+        lastTouchedRef.current =
+          (t.closest("[data-periodization-block]") as HTMLElement | null) ?? t.closest("button,a,[role='button']") ?? t;
+      }}
+    >
       {/* Ordem definida: links de check-in → carga/prontidão → dose → microciclo → macrociclo. */}
       <PeriodizationCollapsible title="Links de check-in" icon={<Link2 className="h-4 w-4 text-primary" />}>
         <BridgeCard
