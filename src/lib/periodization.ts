@@ -323,12 +323,18 @@ export const MESO_BLOCKS: Array<{ key: string; name: string; goal: string }> = [
 
 export type DoseVerdict = "under" | "on_target" | "over";
 
-/** Faixa considerada "dose certa" por sessão. */
+/**
+ * Faixa ÚNICA de "dose certa" (±10% do alvo), igual para sessão, frente e
+ * semana — a mesma carga nunca recebe duas leituras diferentes.
+ * Respaldo: variações de carga semanal acima de ~10% elevam o risco de lesão
+ * (Gabbett, Br J Sports Med 2016;50:273-280) e o ACWR seguro fica em
+ * 0,8–1,3 (Hulin et al., Br J Sports Med 2016;50:231-236). Desvios >10% do
+ * planejado alimentam a carga aguda além do que a crônica sustenta.
+ */
 export const DOSE_ON_TARGET_MIN = 0.9;
 export const DOSE_ON_TARGET_MAX = 1.1;
-/** Faixa considerada "dose certa" no fechamento da semana (mais tolerante). */
-export const DOSE_WEEK_ON_TARGET_MIN = 0.85;
-export const DOSE_WEEK_ON_TARGET_MAX = 1.15;
+export const DOSE_WEEK_ON_TARGET_MIN = DOSE_ON_TARGET_MIN;
+export const DOSE_WEEK_ON_TARGET_MAX = DOSE_ON_TARGET_MAX;
 
 export interface PlannedDoseLike {
   id?: string;
