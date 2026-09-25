@@ -28,6 +28,7 @@ import SoloUpgradeBanner from "@/components/dashboard/SoloUpgradeBanner";
 import ClinicTrialBanner, { ClinicTrialBlockOverlay, useClinicTrial } from "@/components/dashboard/ClinicTrialBanner";
 // Lazy — only rendered when the corresponding tab/section opens
 const PainDiary = lazy(() => import("@/components/dashboard/PainDiary"));
+const PatientCheckinCard = lazy(() => import("@/components/dashboard/PatientCheckinCard"));
 const ExerciseChecklist = lazy(() => import("@/components/dashboard/ExerciseChecklist"));
 const EvolutionSummary = lazy(() => import("@/components/dashboard/EvolutionSummary"));
 const AdaptiveProgressionCard = lazy(() => import("@/components/dashboard/AdaptiveProgressionCard"));
@@ -711,6 +712,9 @@ const Dashboard = () => {
           <PainDiary conditions={conditions} activeConditionKey={conditionFocusKey} />
         </div>
       )}
+
+      {/* Check-in de carga: aparece quando o e-mail da conta é paciente de um fisio/clínica */}
+      <PatientCheckinCard />
       {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
         <AssessmentComparison assessments={conditionAssessments} />
       )}
