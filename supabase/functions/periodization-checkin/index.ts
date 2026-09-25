@@ -36,14 +36,52 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { action, token } = body ?? {};
-    if (!token || typeof token !== "string" || token.length < 8) {
-      return json({ error: "invalid_token" }, 400);
-    }
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
+
+    // Ação autenticada: o paciente logado recebe (ou cria) o próprio link de
+    // check-in, localizado pelo e-mail da conta. Assim a página pessoal dele
+    // mostra o mesmo conteúdo do link público, sem precisar do token na URL.
+    if (action === "my_link") {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const jwt = authHeader.replace(/^Bearer\s+/i, "");
+      if (!jwt) return json({ error: "unauthorized" }, 401);
+      const { data: userData, error: userErr } = await supabase.auth.getUser(jwt);
+      const email = userData?.user?.email?.toLowerCase().trim();
+      if (userErr || !email) return json({ error: "unauthorized" }, 401);
+
+      const { data: patientRow } = await supabase
+        .from("patients")
+        .select("id")
+        .ilike("email", email)
+        .limit(1)
+        .maybeSingle();
+      if (!patientRow) return json({ error: "no_patient" }, 404);
+
+      const { data: existing } = await supabase
+        .from("periodization_links")
+        .select("token")
+        .eq("patient_id", patientRow.id)
+        .eq("audience", "patient")
+        .eq("active", true)
+        .limit(1)
+        .maybeSingle();
+      if (existing?.token) return json({ token: existing.token });
+
+      const newToken = crypto.randomUUID();
+      const { error: insertErr } = await supabase
+        .from("periodization_links")
+        .insert({ patient_id: patientRow.id, plan_id: null, audience: "patient", token: newToken, active: true });
+      if (insertErr) return json({ error: "link_create_failed" }, 500);
+      return json({ token: newToken });
+    }
+
+    if (!token || typeof token !== "string" || token.length < 8) {
+      return json({ error: "invalid_token" }, 400);
+    }
 
     const { data: link } = await supabase
       .from("periodization_links")
