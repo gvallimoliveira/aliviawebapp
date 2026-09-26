@@ -1,5 +1,11 @@
 # Roadmap
 
+## Fidelidade do PNG do Studio (26/09)
+- [x] Impedir que o Safari descarte toda a camada textual da superfície de exportação.
+- [x] Isolar o cache de fontes por famílias usadas em cada arte e marca.
+- [x] Preservar linhas editadas sem cortar a palavra final quando a métrica variar no PNG.
+- [ ] Validar testes, compilação e comparação visual entre prévia e PNG.
+
 ## Contraste A/B e antirrepetição tipográfica (24/09)
 - [x] Diferenciar claramente os lados claro e escuro e preservar o cobre como destaque no tema escuro.
 - [x] Remover do corpo a repetição imediata da palavra já destacada na arte, para todas as marcas.
