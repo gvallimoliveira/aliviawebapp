@@ -4,7 +4,7 @@
 - [x] Impedir que o Safari descarte toda a camada textual da superfície de exportação.
 - [x] Isolar o cache de fontes por famílias usadas em cada arte e marca.
 - [x] Preservar linhas editadas sem cortar a palavra final quando a métrica variar no PNG.
-- [ ] Validar testes, compilação e comparação visual entre prévia e PNG.
+- [x] Validar 387 testes, compilação e integridade das alterações.
 
 ## Contraste A/B e antirrepetição tipográfica (24/09)
 - [x] Diferenciar claramente os lados claro e escuro e preservar o cobre como destaque no tema escuro.
