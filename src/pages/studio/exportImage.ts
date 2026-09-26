@@ -28,7 +28,23 @@ export const lockUniformHeight = (nodes: HTMLElement[]) => {
 };
 const MAX_AREA = 12_000_000;
 
-let cachedFontCss: string | null | undefined;
+/**
+ * O CSS embutido depende das famílias usadas pela arte. Um único cache global
+ * fazia a primeira marca exportada "emprestar" suas fontes às seguintes; o SVG
+ * então recalculava a quebra com fallback e o texto crescia ou saía do quadro.
+ */
+const fontCssCache = new Map<string, string | null>();
+let exportSurfaceLeases = 0;
+let appRootOriginalStyle: string | null | undefined;
+
+const fontCacheKey = (node: HTMLElement) => {
+  const families = new Set<string>();
+  [node, ...Array.from(node.querySelectorAll<HTMLElement>("*"))].forEach((element) => {
+    const style = getComputedStyle(element);
+    if (style.display !== "none" && style.fontFamily) families.add(style.fontFamily);
+  });
+  return Array.from(families).sort().join("|") || "document";
+};
 
 const withTimeout = async <T>(promise: Promise<T>, milliseconds: number, label: string): Promise<T> => {
   let timer: number | undefined;
@@ -46,13 +62,16 @@ const withTimeout = async <T>(promise: Promise<T>, milliseconds: number, label: 
 
 /** Embute as fontes uma única vez; se falhar (CORS do Google Fonts), exporta sem elas. */
 const resolveFontCss = async (node: HTMLElement) => {
-  if (cachedFontCss !== undefined) return cachedFontCss;
+  const key = fontCacheKey(node);
+  if (fontCssCache.has(key)) return fontCssCache.get(key) ?? null;
   try {
-    cachedFontCss = await withTimeout(getFontEmbedCSS(node), 6_000, "font-embed-timeout");
+    const css = await withTimeout(getFontEmbedCSS(node), 6_000, "font-embed-timeout");
+    fontCssCache.set(key, css);
+    return css;
   } catch {
-    cachedFontCss = null;
+    fontCssCache.set(key, null);
+    return null;
   }
-  return cachedFontCss;
 };
 
 const dataUrlCache = new Map<string, string>();
@@ -777,7 +796,7 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
 
     const characters = Array.from(raw);
     if (!characters.length) return;
-    const lines: Array<{ top: number; text: string }> = [];
+    const lines: Array<{ top: number; left: number; right: number; text: string }> = [];
 
     let offset = 0;
     characters.forEach((character) => {
@@ -790,8 +809,13 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
       range.detach?.();
       if (!rect.width && !rect.height) return;
       const line = lines.find((item) => Math.abs(item.top - rect.top) < 2);
-      if (line) line.text += character;
-      else lines.push({ top: rect.top, text: character });
+      if (line) {
+        line.text += character;
+        line.left = Math.min(line.left, rect.left);
+        line.right = Math.max(line.right, rect.right);
+      } else {
+        lines.push({ top: rect.top, left: rect.left, right: rect.right, text: character });
+      }
     });
 
     if (!lines.length) return;
@@ -812,14 +836,34 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
       ...lines.map((line) => {
         const span = document.createElement("span");
         span.dataset.studioExportLine = "1";
+        span.dataset.studioExportLineWidth = String(Math.max(1, line.right - line.left));
         span.style.display = "block";
         span.style.setProperty("white-space", "pre", "important");
         span.style.setProperty("width", "max-content", "important");
-        span.style.setProperty("max-width", "100%", "important");
+        /* Não limite a linha a 100%: se a métrica da fonte variar uma fração no
+           foreignObject, max-width corta justamente a palavra final ("Com" no
+           caso reportado). A largura visual é estabilizada abaixo. */
+        span.style.setProperty("max-width", "none", "important");
         span.textContent = line.text.trim();
         return span;
       }),
     );
+  });
+};
+
+/**
+ * Compara a linha recriada no clone com a largura efetivamente vista na arte.
+ * Se o navegador substituiu a fonte e a deixou maior, comprime somente no eixo
+ * horizontal pela diferença mínima necessária, preservando posição e altura.
+ */
+export const stabilizeLockedTextMetrics = (clone: HTMLElement) => {
+  clone.querySelectorAll<HTMLElement>('[data-studio-export-line="1"]').forEach((line) => {
+    const expected = Number(line.dataset.studioExportLineWidth ?? 0);
+    const actual = line.getBoundingClientRect().width;
+    if (!expected || !actual || actual <= expected + 0.5) return;
+    const scale = Math.max(0.75, Math.min(1, expected / actual));
+    line.style.setProperty("transform-origin", "left top", "important");
+    line.style.setProperty("transform", `scaleX(${scale})`, "important");
   });
 };
 
@@ -834,6 +878,7 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   await settleLayout();
   const rect = source.getBoundingClientRect();
   const host = document.createElement("div");
+  const appRoot = document.getElementById("root");
   host.dataset.studioExportSurface = "1";
   Object.assign(host.style, {
     position: "fixed",
@@ -854,7 +899,11 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
     overflow: "hidden",
     contain: "strict",
     pointerEvents: "none",
-    zIndex: "-2147483647",
+    /* Um z-index negativo pode fazer o WebKit podar os glifos. A camada fica em
+       zero e a aplicação sobe temporariamente para 1: o clone continua pintável
+       para o rasterizador, mas nunca pisca por cima da tela do usuário. */
+    zIndex: "0",
+    isolation: "isolate",
   });
 
   const clone = source.cloneNode(true) as HTMLElement;
@@ -895,16 +944,34 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   }
 
   host.appendChild(clone);
-  document.body.appendChild(host);
+  if (appRoot) {
+    if (exportSurfaceLeases === 0) appRootOriginalStyle = appRoot.getAttribute("style");
+    exportSurfaceLeases += 1;
+    appRoot.style.position = appRoot.style.position || "relative";
+    appRoot.style.zIndex = "1";
+  }
+  document.body.insertBefore(host, document.body.firstChild);
   freezeMotion(clone);
   await waitForAssets(clone);
   await settleLayout();
   lockRenderedTextLines(source, clone);
   await settleLayout();
+  stabilizeLockedTextMetrics(clone);
+  await settleLayout();
 
   return {
     node: clone,
-    dispose: () => host.remove(),
+    dispose: () => {
+      host.remove();
+      if (appRoot) {
+        exportSurfaceLeases = Math.max(0, exportSurfaceLeases - 1);
+        if (exportSurfaceLeases === 0) {
+          if (appRootOriginalStyle == null) appRoot.removeAttribute("style");
+          else appRoot.setAttribute("style", appRootOriginalStyle);
+          appRootOriginalStyle = undefined;
+        }
+      }
+    },
   };
 };
 

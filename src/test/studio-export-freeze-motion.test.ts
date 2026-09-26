@@ -6,6 +6,7 @@ import {
   lockRenderedTextLines,
   lockUniformHeight,
   readStrokeTextRuns,
+  stabilizeLockedTextMetrics,
 } from "@/pages/studio/exportImage";
 
 describe("photo crop fidelity", () => {
@@ -109,7 +110,8 @@ describe("static export surface", () => {
     const title = surface.node.querySelector<HTMLElement>("h2");
 
     expect(host?.style.left).toBe("0px");
-    expect(host?.style.zIndex).toBe("-2147483647");
+    expect(host?.style.zIndex).toBe("0");
+    expect(host?.style.isolation).toBe("isolate");
     expect(title?.textContent).toBe("Carga Planejada");
     expect(title?.hasAttribute("contenteditable")).toBe(false);
     expect(title?.style.outline).toBe("");
@@ -136,6 +138,34 @@ describe("static export surface", () => {
 
     surface.dispose();
     root.remove();
+  });
+
+  it("restaura a página somente depois que todas as exportações paralelas terminam", async () => {
+    const appRoot = document.createElement("div");
+    appRoot.id = "root";
+    appRoot.setAttribute("style", "color: red;");
+    const first = document.createElement("div");
+    const second = document.createElement("div");
+    first.style.width = second.style.width = "320px";
+    first.style.height = second.style.height = "480px";
+    first.textContent = "Primeira arte";
+    second.textContent = "Segunda arte";
+    document.body.append(appRoot, first, second);
+
+    const [surfaceA, surfaceB] = await Promise.all([
+      createStaticExportSurface(first),
+      createStaticExportSurface(second),
+    ]);
+    expect(appRoot.style.zIndex).toBe("1");
+
+    surfaceA.dispose();
+    expect(appRoot.style.zIndex).toBe("1");
+    surfaceB.dispose();
+    expect(appRoot.getAttribute("style")).toBe("color: red;");
+
+    appRoot.remove();
+    first.remove();
+    second.remove();
   });
 
   it("engessa no clone as linhas vistas sem alterar a arte original", () => {
@@ -180,7 +210,23 @@ describe("static export surface", () => {
     expect(lines[1]?.textContent).toBe("ela.");
     expect(clone.querySelector("p")?.style.width).toBe("240px");
     expect(lines[0]?.style.whiteSpace).toBe("pre");
+    expect(lines[0]?.style.maxWidth).toBe("none");
     expect(source.querySelector("[data-studio-export-line='1']")).toBeNull();
+  });
+
+  it("não corta a última palavra quando a fonte do clone fica ligeiramente maior", () => {
+    const clone = document.createElement("div");
+    clone.innerHTML = '<span data-studio-export-line="1" data-studio-export-line-width="180">Transcrição — resumo estruturado. Com</span>';
+    const line = clone.querySelector<HTMLElement>("span");
+    if (!line) throw new Error("Linha de teste ausente");
+    Object.defineProperty(line, "getBoundingClientRect", {
+      value: () => ({ width: 192, height: 24, top: 0, left: 0, right: 192, bottom: 24, x: 0, y: 0, toJSON: () => ({}) }),
+    });
+
+    stabilizeLockedTextMetrics(clone);
+
+    expect(line.style.transform).toBe("scaleX(0.9375)");
+    expect(line.style.transformOrigin).toBe("left top");
   });
 
   it("mantém a largura e a quebra do título longo do modelo com foto", () => {
