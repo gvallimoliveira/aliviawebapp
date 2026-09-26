@@ -140,6 +140,34 @@ describe("static export surface", () => {
     root.remove();
   });
 
+  it("restaura a página somente depois que todas as exportações paralelas terminam", async () => {
+    const appRoot = document.createElement("div");
+    appRoot.id = "root";
+    appRoot.setAttribute("style", "color: red;");
+    const first = document.createElement("div");
+    const second = document.createElement("div");
+    first.style.width = second.style.width = "320px";
+    first.style.height = second.style.height = "480px";
+    first.textContent = "Primeira arte";
+    second.textContent = "Segunda arte";
+    document.body.append(appRoot, first, second);
+
+    const [surfaceA, surfaceB] = await Promise.all([
+      createStaticExportSurface(first),
+      createStaticExportSurface(second),
+    ]);
+    expect(appRoot.style.zIndex).toBe("1");
+
+    surfaceA.dispose();
+    expect(appRoot.style.zIndex).toBe("1");
+    surfaceB.dispose();
+    expect(appRoot.getAttribute("style")).toBe("color: red;");
+
+    appRoot.remove();
+    first.remove();
+    second.remove();
+  });
+
   it("engessa no clone as linhas vistas sem alterar a arte original", () => {
     const source = document.createElement("div");
     source.innerHTML = '<p style="display:block">O prontuário contou por ela.</p>';

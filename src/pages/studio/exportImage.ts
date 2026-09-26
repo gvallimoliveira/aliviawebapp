@@ -34,6 +34,8 @@ const MAX_AREA = 12_000_000;
  * então recalculava a quebra com fallback e o texto crescia ou saía do quadro.
  */
 const fontCssCache = new Map<string, string | null>();
+let exportSurfaceLeases = 0;
+let appRootOriginalStyle: string | null | undefined;
 
 const fontCacheKey = (node: HTMLElement) => {
   const families = new Set<string>();
@@ -877,7 +879,6 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   const rect = source.getBoundingClientRect();
   const host = document.createElement("div");
   const appRoot = document.getElementById("root");
-  const appRootStyle = appRoot?.getAttribute("style") ?? null;
   host.dataset.studioExportSurface = "1";
   Object.assign(host.style, {
     position: "fixed",
@@ -944,6 +945,8 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
 
   host.appendChild(clone);
   if (appRoot) {
+    if (exportSurfaceLeases === 0) appRootOriginalStyle = appRoot.getAttribute("style");
+    exportSurfaceLeases += 1;
     appRoot.style.position = appRoot.style.position || "relative";
     appRoot.style.zIndex = "1";
   }
@@ -961,8 +964,12 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
     dispose: () => {
       host.remove();
       if (appRoot) {
-        if (appRootStyle === null) appRoot.removeAttribute("style");
-        else appRoot.setAttribute("style", appRootStyle);
+        exportSurfaceLeases = Math.max(0, exportSurfaceLeases - 1);
+        if (exportSurfaceLeases === 0) {
+          if (appRootOriginalStyle == null) appRoot.removeAttribute("style");
+          else appRoot.setAttribute("style", appRootOriginalStyle);
+          appRootOriginalStyle = undefined;
+        }
       }
     },
   };
