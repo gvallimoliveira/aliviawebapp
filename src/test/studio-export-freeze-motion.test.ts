@@ -110,7 +110,7 @@ describe("static export surface", () => {
     const title = surface.node.querySelector<HTMLElement>("h2");
 
     expect(host?.style.left).toBe("0px");
-    expect(host?.style.zIndex).toBe("2147483646");
+    expect(host?.style.zIndex).toBe("0");
     expect(host?.style.isolation).toBe("isolate");
     expect(title?.textContent).toBe("Carga Planejada");
     expect(title?.hasAttribute("contenteditable")).toBe(false);

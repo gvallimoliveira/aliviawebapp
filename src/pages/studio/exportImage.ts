@@ -876,6 +876,8 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   await settleLayout();
   const rect = source.getBoundingClientRect();
   const host = document.createElement("div");
+  const appRoot = document.getElementById("root");
+  const appRootStyle = appRoot?.getAttribute("style") ?? null;
   host.dataset.studioExportSurface = "1";
   Object.assign(host.style, {
     position: "fixed",
@@ -896,10 +898,10 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
     overflow: "hidden",
     contain: "strict",
     pointerEvents: "none",
-    /* Um z-index negativo põe a árvore atrás do canvas do documento. O WebKit
-       pode então podar todos os glifos e ainda manter só fundo/imagens. Mantê-la
-       numa camada pintável (sem interação) evita o PNG verde sem textos. */
-    zIndex: "2147483646",
+    /* Um z-index negativo pode fazer o WebKit podar os glifos. A camada fica em
+       zero e a aplicação sobe temporariamente para 1: o clone continua pintável
+       para o rasterizador, mas nunca pisca por cima da tela do usuário. */
+    zIndex: "0",
     isolation: "isolate",
   });
 
@@ -941,7 +943,11 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   }
 
   host.appendChild(clone);
-  document.body.appendChild(host);
+  if (appRoot) {
+    appRoot.style.position = appRoot.style.position || "relative";
+    appRoot.style.zIndex = "1";
+  }
+  document.body.insertBefore(host, document.body.firstChild);
   freezeMotion(clone);
   await waitForAssets(clone);
   await settleLayout();
@@ -952,7 +958,13 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
 
   return {
     node: clone,
-    dispose: () => host.remove(),
+    dispose: () => {
+      host.remove();
+      if (appRoot) {
+        if (appRootStyle === null) appRoot.removeAttribute("style");
+        else appRoot.setAttribute("style", appRootStyle);
+      }
+    },
   };
 };
 
