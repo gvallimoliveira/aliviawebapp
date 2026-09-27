@@ -18,7 +18,7 @@ import { Check, Loader2, Move, PencilLine, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { renderNodeToBlob, type StudioFormat } from "@/studio-core";
+import { publicationPixelRatio, renderNodeToBlob, type StudioFormat } from "@/studio-core";
 import {
   applyArtTextSizes,
   applyArtText,
@@ -316,7 +316,7 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
           }
         }
         try {
-          const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
+          const ratio = publicationPixelRatio(rect.width, rect.height);
           const png = await renderNodeToBlob(frame, ratio, "image/png");
           const path = `${auth.user.id}/${brand.id}/edit-${art.id}-${stamp}-${String(pos + 1).padStart(2, "0")}.png`;
           const { error: upErr } = await supabase.storage

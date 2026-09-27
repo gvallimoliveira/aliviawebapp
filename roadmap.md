@@ -1,5 +1,10 @@
 # Roadmap
 
+## Compartilhamento HD e proporção multimarca (27/09)
+- [x] Padronizar downloads individuais, lotes e artes salvas em PNG mestre de 2160 px.
+- [x] Preservar a proporção real do quadro em toda marca, inclusive Aline Furtado Vet.
+- [ ] Validar testes, compilação e um PNG 9:16 real no preview.
+
 ## Fidelidade do PNG do Studio (26/09)
 - [x] Impedir que o Safari descarte toda a camada textual da superfície de exportação.
 - [x] Isolar o cache de fontes por famílias usadas em cada arte e marca.

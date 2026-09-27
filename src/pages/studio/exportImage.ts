@@ -27,6 +27,14 @@ export const lockUniformHeight = (nodes: HTMLElement[]) => {
   return () => restores.forEach((fn) => fn());
 };
 const MAX_AREA = 12_000_000;
+/**
+ * Largura mestre dos PNGs de publicação.
+ *
+ * 2160 px (2x o padrão das redes) deixa margem para a recompressão do WhatsApp
+ * sem alterar o enquadramento aprovado. A altura continua vindo exclusivamente
+ * da proporção real do quadro; nunca é recalculada por marca ou formato.
+ */
+export const PUBLICATION_WIDTH = 2160;
 
 /**
  * O CSS embutido depende das famílias usadas pela arte. Um único cache global
@@ -211,6 +219,12 @@ const safeRatio = (width: number, height: number, desired: number) => {
   const byDimension = MAX_DIMENSION / Math.max(width, height);
   const byArea = Math.sqrt(MAX_AREA / (width * height));
   return Math.max(1, Math.min(desired, byDimension, byArea));
+};
+
+/** Escala que leva qualquer quadro à largura mestre, respeitando o limite do aparelho. */
+export const publicationPixelRatio = (width: number, height: number) => {
+  if (!width || !height) return 1;
+  return safeRatio(width, height, PUBLICATION_WIDTH / width);
 };
 
 export type ExportResult = { blob: Blob; ratio: number; shared: boolean };
@@ -1066,12 +1080,14 @@ export const renderNodeToBlob = async (
  * espera fontes/imagens, embute as fotos e faz downscale progressivo quando o
  * canvas estoura (comum no iPhone).
  */
-export const renderNodeToPngBlob = async (node: HTMLElement, desiredRatio = 3) => {
+export const renderNodeToPngBlob = async (node: HTMLElement, desiredRatio?: number) => {
   await waitForAssets(node);
 
   const rect = node.getBoundingClientRect();
   const attempts: number[] = [];
-  let ratio = safeRatio(rect.width, rect.height, desiredRatio);
+  let ratio = desiredRatio === undefined
+    ? publicationPixelRatio(rect.width, rect.height)
+    : safeRatio(rect.width, rect.height, desiredRatio);
   while (ratio >= 1) {
     attempts.push(Number(ratio.toFixed(2)));
     if (ratio <= 1) break;
@@ -1101,7 +1117,7 @@ export const renderNodeToPngBlob = async (node: HTMLElement, desiredRatio = 3) =
  * Exporta um elemento em PNG de alta resolução e entrega o arquivo ao usuário.
  * Usa Web Share no mobile, onde `<a download>` costuma ser ignorado.
  */
-export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desiredRatio = 3): Promise<ExportResult> => {
+export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desiredRatio?: number): Promise<ExportResult> => {
   const { blob, ratio } = await renderNodeToPngBlob(node, desiredRatio);
   const shared = await deliver(blob, fileName);
   return { blob, ratio, shared };
@@ -1119,7 +1135,7 @@ export const exportNodeAsPng = async (node: HTMLElement, fileName: string, desir
  */
 export const exportNodesAsPng = async (
   items: Array<{ node: HTMLElement; fileName: string }>,
-  desiredRatio = 3,
+  desiredRatio?: number,
 ): Promise<{ delivered: number; shared: boolean }> => {
   const files: File[] = [];
   const surfaces = await Promise.all(items.map((item) => createStaticExportSurface(item.node)));
@@ -1134,7 +1150,9 @@ export const exportNodesAsPng = async (
       const surface = surfaces[index];
       try {
         const rect = surface.node.getBoundingClientRect();
-        const ratio = safeRatio(rect.width, rect.height, desiredRatio);
+        const ratio = desiredRatio === undefined
+          ? publicationPixelRatio(rect.width, rect.height)
+          : safeRatio(rect.width, rect.height, desiredRatio);
         const blob = await renderStaticNodeToBlob(surface.node, ratio);
         files.push(new File([blob], item.fileName, { type: "image/png" }));
       } catch (error) {

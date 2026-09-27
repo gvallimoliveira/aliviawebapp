@@ -37,6 +37,7 @@ import {
   exportNodeAsPng,
   exportTextFile,
   personaForSeed,
+  publicationPixelRatio,
   randomSeed,
   renderNodeToBlob,
   type ComposedBlock,
@@ -1501,9 +1502,9 @@ const StudioProCreate = ({
       } catch (error) {
         console.warn("[studio-pro] thumb", error);
       }
-      // PNG de publicação guardado na conta: 1440px de largura (nitidez de feed/story).
+      // PNG mestre guardado na conta: 2160px, com a proporção exata do quadro.
       try {
-        const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
+        const ratio = publicationPixelRatio(rect.width, rect.height);
         const png = await renderNodeToBlob(node, ratio, "image/png");
         const path = `${auth.user.id}/${brand.id}/${seed}-${String(index + 1).padStart(2, "0")}-${kind}${side}.png`;
         const { error: upErr } = await supabase.storage
