@@ -5,6 +5,8 @@ import {
   freezeMotion,
   lockRenderedTextLines,
   lockUniformHeight,
+  PUBLICATION_WIDTH,
+  publicationPixelRatio,
   readStrokeTextRuns,
   stabilizeLockedTextMetrics,
 } from "@/pages/studio/exportImage";
@@ -27,6 +29,21 @@ describe("photo crop fidelity", () => {
       sw: 900,
       sh: 720,
     });
+  });
+});
+
+describe("publication PNG quality", () => {
+  it("gera 2160 px de largura sem alterar a proporção do quadro da marca", () => {
+    const ratio = publicationPixelRatio(360, 640);
+    expect(PUBLICATION_WIDTH).toBe(2160);
+    expect(Math.round(360 * ratio)).toBe(2160);
+    expect(Math.round(640 * ratio)).toBe(3840);
+  });
+
+  it("reduz somente quando o limite seguro do aparelho exige", () => {
+    const ratio = publicationPixelRatio(320, 1000);
+    expect(Math.round(1000 * ratio)).toBeLessThanOrEqual(4096);
+    expect(320 / 1000).toBeCloseTo((320 * ratio) / (1000 * ratio), 8);
   });
 });
 

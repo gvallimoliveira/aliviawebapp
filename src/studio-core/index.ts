@@ -64,6 +64,8 @@ export {
   exportNodesAsPng,
   renderNodeToBlob,
   renderNodeToPngBlob,
+  publicationPixelRatio,
+  PUBLICATION_WIDTH,
   freezeMotion,
   lockUniformHeight,
   deliver,

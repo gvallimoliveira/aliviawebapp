@@ -7,6 +7,7 @@ import {
   deliver,
   exportNodeAsPng,
   exportTextFile,
+  publicationPixelRatio,
   randomSeed,
   renderNodeToBlob,
   type StudioFormat,
@@ -454,7 +455,7 @@ const StudioProAuthorial = ({
         }
       }
       try {
-        const ratio = Math.max(1, Math.min(4, 1440 / (rect.width || 1440)));
+        const ratio = publicationPixelRatio(rect.width, rect.height);
         const png = await renderNodeToBlob(node, ratio, "image/png");
         // Não terminar em "-NN.png": a galeria usa esse padrão apenas para
         // reconhecer carrosséis legados agrupados e baixar seus arquivos irmãos.
