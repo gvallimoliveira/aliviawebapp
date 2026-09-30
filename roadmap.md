@@ -4,7 +4,7 @@
 - [x] Vincular cada print oficial ao diferencial clínico correspondente.
 - [x] Ilustrar artes individuais de ecossistema quando a cadeia tiver uma tela oficial compatível.
 - [x] Ilustrar cada slide de carrossel quando houver nexo, preservando o enquadramento da biblioteca.
-- [ ] Validar testes, compilação e prévia visual dos formatos.
+- [x] Validar testes, compilação e renderização dos formatos ilustrados.
 
 ## Prints oficiais no acervo Aliv.iA (30/09)
 - [x] Disponibilizar os 10 prints na biblioteca exclusiva da marca Aliv.iA, sem consumir cota.
