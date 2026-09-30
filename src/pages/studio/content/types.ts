@@ -81,6 +81,22 @@ export type StudioCarousel = {
   cta: { title: string; sub: string };
 };
 
+/**
+ * Cadeia integrada de funcionalidades: uma única promessa entregue por 3–5
+ * recursos em ordem. Diferente de uma lista, cada etapa recebe a anterior e
+ * prepara a seguinte.
+ */
+export type StudioEcosystem = {
+  id: string;
+  kicker: string;
+  title: string;
+  promise: string;
+  audience: string;
+  steps: { id: string; label: string; body: string; topic?: TopicId }[];
+  closing: string;
+  cta: string;
+};
+
 
 export type WorldContent = {
   id: WorldId;
@@ -118,6 +134,8 @@ export type WorldContent = {
   lists: StudioList[];
   /** Sequências de artes para carrossel (CarouselBlock). */
   carousels: StudioCarousel[];
+  /** Jornadas que conectam funcionalidades complementares numa só entrega. */
+  ecosystems?: StudioEcosystem[];
   /**
    * BIBLIOTECA DE GANCHOS: frases de parada de scroll adaptadas à marca
    * (acervo curado + mecanismo de `hooks.ts`). Usada pelo bloco `hook`.

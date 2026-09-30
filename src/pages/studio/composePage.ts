@@ -22,6 +22,7 @@ export type BlockKind =
   | "list"
   | "brand"
   | "carousel"
+  | "ecosystem"
   | "photoType"
   | "photoSplit"
   | "photoPortrait"
@@ -96,6 +97,7 @@ export const blockKindSupported = (kind: BlockKind, content?: WorldContent): boo
     case "list": return has(content.lists);
     case "marquee": return has(content.marquee);
     case "carousel": return has(content.carousels);
+    case "ecosystem": return has(content.ecosystems ?? []);
     case "search": return (content.searchQueries?.length ?? 0) >= 3 && has(content.closings);
     case "percent": return content.stats.some((set) => set.items.some((item) => item.source === "market" && /%/.test(item.value)))
       || content.metrics.some((set) => set.some((item) => item.source === "market" && item.suffix?.includes("%")));
@@ -133,6 +135,7 @@ export const TREATMENT_COUNT: Record<BlockKind, number> = {
   list: 3,
   brand: 6,
   carousel: 7,
+  ecosystem: 2,
   photoType: 2,
   photoSplit: 2,
   photoPortrait: 2,
@@ -320,10 +323,15 @@ export const composePage = (
      * o único modelo escolhido, repetir o bloco além do número de roteiros
      * disponíveis só poderia duplicar conteúdo dentro da mesma geração.
      */
+    const ecosystemSet = pool.includes("ecosystem") && pool.every((kind) => kind === "ecosystem" || kind === "carousel");
     const count = pool.every((kind) => kind === "carousel")
       ? Math.max(1, Math.min(desiredCount, carousels?.length ?? 1))
+      : ecosystemSet
+        ? pool.length
       : desiredCount;
-    const picked = enforcePhotoFirst(rng, spread(rng, pool, Math.max(2, count)), photoCount, photoFirst);
+    const picked = ecosystemSet
+      ? pool
+      : enforcePhotoFirst(rng, spread(rng, pool, Math.max(2, count)), photoCount, photoFirst);
     const chosen: ComposedBlock[] = picked.map((kind) => ({
       kind,
       treatment: treatmentFor(rng, kind, persona),

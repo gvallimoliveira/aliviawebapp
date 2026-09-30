@@ -105,6 +105,12 @@ const categories: ToolCategory[] = [
         desc: "O Studio conecta público, cena, problema, explicação, prova e próximo passo antes de escrever. Títulos incompletos, conclusões cortadas, listas técnicas soltas e destaques repetidos são rejeitados. Nos Diferenciais Aliv.iA, cada arte permanece em uma única funcionalidade: o destaque usa o nome ou termo próprio do recurso, enquanto o texto explica funcionamento, benefício prático e o custo cotidiano de não ter. Em marcas veterinárias, o texto fala com o tutor, mas mantém o pet como centro da queixa, investigação e evolução. Qualquer marca pode criar a própria linha editorial (serviços, tratamentos, produtos) com temas selecionáveis em conjunto. A geração é local, considera o que já foi usado pela marca e não consome créditos extras de IA.",
       },
       {
+        key: "studio_ecosystem",
+        icon: Layers,
+        title: "Studio: Ecossistema de soluções",
+        desc: "Na marca Aliv.iA, selecione o modelo Ecossistema de soluções para conectar de três a cinco funcionalidades em uma única jornada. Escolha uma cadeia pronta, ajuste as etapas e a ordem; o Studio entrega uma arte integrada e um carrossel com o mesmo público, promessa e conclusão.",
+      },
+      {
         key: "voice_notes",
         icon: Mic,
         title: "Notas de voz na avaliação manual (IA)",

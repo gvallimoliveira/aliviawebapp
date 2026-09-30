@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Camera,
+  ArrowDown,
+  ArrowUp,
   Check,
   ChevronDown,
   Contrast,
@@ -106,6 +108,14 @@ import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { markWelcomeBatchUsed, welcomeBatchUsed } from "./welcomeBatch";
 import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
+import {
+  ALIVIA_ECOSYSTEM_RECIPES,
+  buildAliviaEcosystem,
+  ecosystemRecipe,
+  withAliviaEcosystem,
+  type AliviaEcosystemRecipeId,
+} from "./aliviaEcosystems";
+import { ALIVIA_DIFFERENTIALS } from "./aliviaDifferentials";
 import StudioProSignature from "./StudioProSignature";
 import AutoFit from "@/pages/studio/AutoFit";
 import { frameStyle } from "@/pages/studio/frame";
@@ -240,6 +250,8 @@ type PersistedCreateState = {
   photoFirst?: boolean;
   /** Estado da seção extensa de diferenciais. */
   differentialsOpen?: boolean;
+  ecosystemRecipe?: AliviaEcosystemRecipeId;
+  ecosystemIds?: string[];
 
 };
 
@@ -472,16 +484,43 @@ const StudioProCreate = ({
    */
   const [models, setModels] = useState<string[]>(restored.current.models ?? []);
   const [modelsOpen, setModelsOpen] = useState(false);
+  const initialEcosystemRecipe = ecosystemRecipe(restored.current.ecosystemRecipe);
+  const [ecosystemRecipeId, setEcosystemRecipeId] = useState<AliviaEcosystemRecipeId>(initialEcosystemRecipe.id);
+  const [ecosystemIds, setEcosystemIds] = useState<string[]>(restored.current.ecosystemIds ?? initialEcosystemRecipe.ids);
   const [variation, setVariation] = useState<VariationProfile>(() =>
     normalizeVariationProfile(restored.current.variation ?? DEFAULT_VARIATION_PROFILE),
   );
 
   const toggleModel = (id: string) =>
-    setModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]));
+    setModels((prev) => {
+      if (prev.includes(id)) return prev.filter((model) => model !== id);
+      return id === "ecossistema" ? [id] : [...prev.filter((model) => model !== "ecossistema"), id];
+    });
+
+  const chooseEcosystemRecipe = (id: AliviaEcosystemRecipeId) => {
+    const recipe = ecosystemRecipe(id);
+    setEcosystemRecipeId(recipe.id);
+    setEcosystemIds(recipe.ids);
+  };
+  const toggleEcosystemStep = (id: string) => {
+    setEcosystemIds((previous) => {
+      if (previous.includes(id)) return previous.length > 3 ? previous.filter((item) => item !== id) : previous;
+      return previous.length < 5 ? [...previous, id] : previous;
+    });
+  };
+  const moveEcosystemStep = (index: number, direction: -1 | 1) => {
+    setEcosystemIds((previous) => {
+      const target = index + direction;
+      if (target < 0 || target >= previous.length) return previous;
+      const next = [...previous];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
 
   useEffect(() => {
-    writePersisted(brand.id, { segment, differentialSegments, differentialsOpen, angle, models, variation });
-  }, [brand.id, segment, differentialSegments, differentialsOpen, angle, models, variation]);
+    writePersisted(brand.id, { segment, differentialSegments, differentialsOpen, angle, models, variation, ecosystemRecipe: ecosystemRecipeId, ecosystemIds });
+  }, [brand.id, segment, differentialSegments, differentialsOpen, angle, models, variation, ecosystemRecipeId, ecosystemIds]);
 
   const selectRegularSegment = (id: string) => {
     setDifferentialSegments([]);
@@ -623,10 +662,16 @@ const StudioProCreate = ({
       content: enforceSegmentAudienceScope(learned.content, activeSegment, audiences, globalAudience),
     };
   }, [baseContent, learning.rewrites, learning.vocabulary, protectedBrandLiterals, activeSegment, audiences, brand.id, seed, angle, segmentMemory.weights]);
-  const content = learnedContent.content;
+  const ecosystemMode = isAlivia && models.includes("ecossistema");
+  const content = useMemo(
+    () => ecosystemMode
+      ? withAliviaEcosystem(learnedContent.content, ecosystemRecipeId, ecosystemIds)
+      : learnedContent.content,
+    [learnedContent.content, ecosystemMode, ecosystemRecipeId, ecosystemIds],
+  );
 
   /** Um acervo fechado por diferencial: combinar seleções distribui artes, não frases. */
-  const differentialSources = useMemo(() => selectedDifferentials.map((id) => {
+  const differentialSources = useMemo(() => (ecosystemMode ? [] : selectedDifferentials).map((id) => {
     const parent = audienceAncestors(audiences, id).find((item) => isWorldId(item.id));
     const world = parent ? (parent.id as WorldId) : "pro";
     const sourceSeed = `${brand.id}:${seed}:${id}:${angle}`;
@@ -659,7 +704,7 @@ const StudioProCreate = ({
         segmentWeights: segmentMemory.weights,
       }),
     };
-  }), [selectedDifferentials, audiences, brand.id, brand.positioning, seed, angle, contentKit, variation, segmentMemory.weights, register, learning.rewrites, learning.vocabulary, protectedBrandLiterals]);
+  }), [ecosystemMode, selectedDifferentials, audiences, brand.id, brand.positioning, seed, angle, contentKit, variation, segmentMemory.weights, register, learning.rewrites, learning.vocabulary, protectedBrandLiterals]);
 
 
 
@@ -903,7 +948,8 @@ const StudioProCreate = ({
    * local e determinístico (mesma seed → mesma arte, zero crédito de IA).
    */
   const rationaleCtx = useMemo<RationaleContext>(() => {
-    const audience = activeSegment === GLOBAL_SEGMENT ? null : resolveAudience(audiences, activeSegment);
+    const ecosystem = ecosystemMode ? buildAliviaEcosystem(ecosystemRecipeId, ecosystemIds) : null;
+    const audience = ecosystem ? null : activeSegment === GLOBAL_SEGMENT ? null : resolveAudience(audiences, activeSegment);
     const matrix = audiences.find((a) => !a.parentId && (a.keyword || a.hook || (a.hooks ?? []).length > 0));
     const keyword =
       (audience ? audienceKeyword(audience) : "") ||
@@ -933,10 +979,10 @@ const StudioProCreate = ({
     });
     return {
       content,
-      audienceLabel: audience?.label ?? (activeSegment === GLOBAL_SEGMENT ? "assunto livre da marca (360°)" : activeSegment),
-      keyword,
-      hook,
-      cta,
+      audienceLabel: ecosystem?.audience ?? audience?.label ?? (activeSegment === GLOBAL_SEGMENT ? "assunto livre da marca (360°)" : activeSegment),
+      keyword: ecosystem?.title ?? keyword,
+      hook: ecosystem?.promise ?? hook,
+      cta: ecosystem?.cta ?? cta,
       angle,
       photoCount: activePhotos.length,
       brandName: brand.name,
@@ -972,6 +1018,9 @@ const StudioProCreate = ({
     brand.topics,
     brand.brief_answers,
     segmentMemory.weights,
+    ecosystemMode,
+    ecosystemRecipeId,
+    ecosystemIds,
   ]);
 
 
@@ -1790,6 +1839,69 @@ const StudioProCreate = ({
                 <p className="mt-2 text-[11px] text-muted-foreground">
                   Trocar modelos não consome cota — só "Nova versão" gera um lote novo.
                 </p>
+              </div>
+            )}
+            {ecosystemMode && (
+              <div className="mt-3 border-l-2 border-primary/35 pl-3">
+                <p className="text-[10px] font-semibold uppercase text-muted-foreground">Cadeia de funcionalidades</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {ALIVIA_ECOSYSTEM_RECIPES.map((recipe) => (
+                    <Button
+                      key={recipe.id}
+                      type="button"
+                      size="sm"
+                      variant={ecosystemRecipeId === recipe.id ? "secondary" : "outline"}
+                      className="h-7 rounded-full text-[11px]"
+                      onClick={() => chooseEcosystemRecipe(recipe.id)}
+                    >
+                      {recipe.label}
+                    </Button>
+                  ))}
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Escolha de 3 a 5 funcionalidades. Use as setas para definir a ordem da jornada.
+                </p>
+                <div className="mt-2 space-y-1.5">
+                  {ecosystemIds.map((id, index) => {
+                    const differential = ALIVIA_DIFFERENTIALS.find((item) => item.id === id);
+                    if (!differential) return null;
+                    return (
+                      <div key={id} className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-2 py-1.5">
+                        <span className="w-5 text-[10px] font-bold text-primary">{index + 1}</span>
+                        <span className="min-w-0 flex-1 text-[11px] font-medium text-foreground">{differential.label}</span>
+                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" disabled={index === 0} onClick={() => moveEcosystemStep(index, -1)} title="Mover para cima">
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" disabled={index === ecosystemIds.length - 1} onClick={() => moveEcosystemStep(index, 1)} title="Mover para baixo">
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {ALIVIA_DIFFERENTIALS.filter((item) => !ecosystemIds.includes(item.id)).map((item) => (
+                    <Button
+                      key={item.id}
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 rounded-full text-[10px]"
+                      disabled={ecosystemIds.length >= 5}
+                      onClick={() => toggleEcosystemStep(item.id)}
+                    >
+                      + {item.label}
+                    </Button>
+                  ))}
+                  {ecosystemIds.length > 3 && ecosystemIds.map((id) => {
+                    const item = ALIVIA_DIFFERENTIALS.find((entry) => entry.id === id);
+                    return item ? (
+                      <Button key={`remove-${id}`} type="button" size="sm" variant="ghost" className="h-7 rounded-full text-[10px] text-muted-foreground" onClick={() => toggleEcosystemStep(id)}>
+                        − {item.label}
+                      </Button>
+                    ) : null;
+                  })}
+                </div>
               </div>
             )}
           </div>

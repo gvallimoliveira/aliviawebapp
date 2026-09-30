@@ -229,6 +229,13 @@ const SENSE: Record<BlockKind, Sense> = {
     needs: (c) => some(c.carousels),
     needsLabel: "roteiros de carrossel",
   },
+  ecosystem: {
+    format: "ecossistema de soluções",
+    sees: "uma cadeia de funcionalidades ligadas do começo ao resultado",
+    job: "mostrar como recursos complementares resolvem uma jornada inteira para um público específico",
+    needs: (c) => some(c.ecosystems),
+    needsLabel: "uma cadeia de três a cinco funcionalidades",
+  },
   photoType: {
     format: "foto com frase",
     sees: "uma foto sua com uma frase por cima",

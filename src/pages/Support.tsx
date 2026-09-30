@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SupportContactForm from "@/components/support/SupportContactForm";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, NotebookPen, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, Video, FileEdit, Stamp, Lock, Mic, Archive, Activity, Gauge, FileText, Lightbulb, GraduationCap, Bell } from "lucide-react";
+import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, NotebookPen, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, Video, FileEdit, Stamp, Lock, Mic, Archive, Activity, Gauge, FileText, Lightbulb, GraduationCap, Bell, Layers } from "lucide-react";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,6 +75,7 @@ const proTools = [
   { key: "ai_credits", icon: Gauge },
   { key: "studio_carousel", icon: Palette },
   { key: "studio_creative_network", icon: Brain },
+  { key: "studio_ecosystem", icon: Layers },
 ];
 
 const patientFaqKeys = ["pf_signup", "pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11", "pf12", "pf13"];
