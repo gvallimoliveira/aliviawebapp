@@ -1859,7 +1859,7 @@ const StudioProCreate = ({
                   ))}
                 </div>
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  Escolha de 3 a 5 funcionalidades. Use as setas para definir a ordem da jornada.
+                  Escolha de 3 a 5 funcionalidades. A leva traz seis argumentos visuais e um carrossel completo; use as setas para definir a ordem da jornada.
                 </p>
                 <div className="mt-2 space-y-1.5">
                   {ecosystemIds.map((id, index) => {
