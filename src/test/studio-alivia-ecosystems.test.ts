@@ -47,7 +47,21 @@ describe("Ecossistema de soluções Aliv.iA", () => {
     expect(security.steps.find((step) => step.id === "diferencial-red-flags")?.photoIds)
       .toEqual(["official:alivia:express-reassessment-tools"]);
     expect(buildAliviaEcosystem("recem-formado").steps.find((step) => step.id === "diferencial-agente-clinico")?.photoIds)
-      .toEqual(["official:alivia:clinical-agent"]);
+      .toEqual([
+        "official:alivia:clinical-agent",
+        "official:alivia:evidence-library",
+        "official:alivia:clinical-agent-case",
+      ]);
+    expect(buildAliviaEcosystem("gestao-da-clinica").steps.find((step) => step.id === "diferencial-clinica-agenda")?.photoIds)
+      .toEqual(["official:alivia:agenda"]);
+    expect(buildAliviaEcosystem("gestao-da-clinica").steps.find((step) => step.id === "diferencial-insights")?.photoIds)
+      .toEqual(["official:alivia:insights", "official:alivia:professional-dashboard"]);
+    expect(security.steps.find((step) => step.id === "diferencial-relatorios")?.photoIds)
+      .toEqual([
+        "official:alivia:record-pain-map",
+        "official:alivia:record-questionnaires",
+        "official:alivia:record-health-conditions",
+      ]);
     expect(buildAliviaEcosystem("periodizacao").steps.every((step) => !step.photoIds?.length)).toBe(true);
   });
 

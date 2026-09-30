@@ -21,11 +21,11 @@ const asPhoto = (id: string): StudioPhoto => ({
 });
 
 describe("catálogo oficial Aliv.iA", () => {
-  it("mantém dez imagens sintéticas fora dos IDs do banco", () => {
+  it("mantém dezoito imagens sintéticas fora dos IDs do banco", () => {
     const definitions = officialPhotoDefinitions();
-    expect(officialAliviaPhotoCount).toBe(10);
-    expect(definitions).toHaveLength(10);
-    expect(new Set(definitions.map((item) => item.id)).size).toBe(10);
+    expect(officialAliviaPhotoCount).toBe(18);
+    expect(definitions).toHaveLength(18);
+    expect(new Set(definitions.map((item) => item.id)).size).toBe(18);
     expect(definitions.every((item) => item.id.startsWith(OFFICIAL_PHOTO_PREFIX))).toBe(true);
     expect(definitions.every((item) => item.assetUrl.startsWith("/__l5e/assets-v1/"))).toBe(true);
   });
@@ -40,5 +40,10 @@ describe("catálogo oficial Aliv.iA", () => {
     expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}manual-pain-map`))).toEqual(["pain-map"]);
     expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}manual-dynamometry`))).toEqual(["dynamometry"]);
     expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}clinical-agent`))).toEqual(["clinical-agent", "evidence-library"]);
+    expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}evidence-library`))).toEqual(["clinical-agent", "evidence-library"]);
+    expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}agenda`))).toEqual(["agenda"]);
+    expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}record-pain-map`))).toEqual(["pain-map", "report", "clinical-impression"]);
+    expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}record-questionnaires`))).toEqual(["questionnaires", "report", "clinical-impression"]);
+    expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}record-health-conditions`))).toEqual(["health-general", "report", "safety"]);
   });
 });
