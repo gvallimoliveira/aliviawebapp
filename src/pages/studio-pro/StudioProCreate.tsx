@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Camera,
+  ArrowDown,
+  ArrowUp,
   Check,
   ChevronDown,
   Contrast,
@@ -106,6 +108,14 @@ import { STUDIO_GENERATION_COST, useStudioQuota } from "./useStudioQuota";
 import { markWelcomeBatchUsed, welcomeBatchUsed } from "./welcomeBatch";
 import { captureArtSnapshot } from "./artSnapshot";
 import { STUDIO_MODELS, kindsForModels } from "@/pages/studio/models";
+import {
+  ALIVIA_ECOSYSTEM_RECIPES,
+  buildAliviaEcosystem,
+  ecosystemRecipe,
+  withAliviaEcosystem,
+  type AliviaEcosystemRecipeId,
+} from "./aliviaEcosystems";
+import { ALIVIA_DIFFERENTIALS } from "./aliviaDifferentials";
 import StudioProSignature from "./StudioProSignature";
 import AutoFit from "@/pages/studio/AutoFit";
 import { frameStyle } from "@/pages/studio/frame";
@@ -240,6 +250,8 @@ type PersistedCreateState = {
   photoFirst?: boolean;
   /** Estado da seção extensa de diferenciais. */
   differentialsOpen?: boolean;
+  ecosystemRecipe?: AliviaEcosystemRecipeId;
+  ecosystemIds?: string[];
 
 };
 
@@ -472,16 +484,22 @@ const StudioProCreate = ({
    */
   const [models, setModels] = useState<string[]>(restored.current.models ?? []);
   const [modelsOpen, setModelsOpen] = useState(false);
+  const initialEcosystemRecipe = ecosystemRecipe(restored.current.ecosystemRecipe);
+  const [ecosystemRecipeId, setEcosystemRecipeId] = useState<AliviaEcosystemRecipeId>(initialEcosystemRecipe.id);
+  const [ecosystemIds, setEcosystemIds] = useState<string[]>(restored.current.ecosystemIds ?? initialEcosystemRecipe.ids);
   const [variation, setVariation] = useState<VariationProfile>(() =>
     normalizeVariationProfile(restored.current.variation ?? DEFAULT_VARIATION_PROFILE),
   );
 
   const toggleModel = (id: string) =>
-    setModels((prev) => (prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]));
+    setModels((prev) => {
+      if (prev.includes(id)) return prev.filter((model) => model !== id);
+      return id === "ecossistema" ? [id] : [...prev, id];
+    });
 
   useEffect(() => {
-    writePersisted(brand.id, { segment, differentialSegments, differentialsOpen, angle, models, variation });
-  }, [brand.id, segment, differentialSegments, differentialsOpen, angle, models, variation]);
+    writePersisted(brand.id, { segment, differentialSegments, differentialsOpen, angle, models, variation, ecosystemRecipe: ecosystemRecipeId, ecosystemIds });
+  }, [brand.id, segment, differentialSegments, differentialsOpen, angle, models, variation, ecosystemRecipeId, ecosystemIds]);
 
   const selectRegularSegment = (id: string) => {
     setDifferentialSegments([]);
@@ -623,7 +641,13 @@ const StudioProCreate = ({
       content: enforceSegmentAudienceScope(learned.content, activeSegment, audiences, globalAudience),
     };
   }, [baseContent, learning.rewrites, learning.vocabulary, protectedBrandLiterals, activeSegment, audiences, brand.id, seed, angle, segmentMemory.weights]);
-  const content = learnedContent.content;
+  const ecosystemMode = isAlivia && models.includes("ecossistema");
+  const content = useMemo(
+    () => ecosystemMode
+      ? withAliviaEcosystem(learnedContent.content, ecosystemRecipeId, ecosystemIds)
+      : learnedContent.content,
+    [learnedContent.content, ecosystemMode, ecosystemRecipeId, ecosystemIds],
+  );
 
   /** Um acervo fechado por diferencial: combinar seleções distribui artes, não frases. */
   const differentialSources = useMemo(() => selectedDifferentials.map((id) => {

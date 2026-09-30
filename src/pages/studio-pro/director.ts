@@ -378,6 +378,7 @@ const SLOT_QUOTA = {
   stories: 2,
   triptychs: 2,
   hooks: 2,
+  ecosystems: 1,
 } as const;
 
 type ListSlot = keyof typeof SLOT_QUOTA;
@@ -836,6 +837,13 @@ export const planBatch = (input: {
       ...((reserved.features ?? []) as WorldContent["features"]).map((f) => `${f.title} ${f.description}`),
       ...(sales?.ctas ?? []),
       ...carouselCopy,
+      ...((reserved.ecosystems ?? []) as NonNullable<WorldContent["ecosystems"]>).flatMap((ecosystem) => [
+        ecosystem.title,
+        ecosystem.promise,
+        ...ecosystem.steps.flatMap((step) => [step.label, step.body]),
+        ecosystem.closing,
+        ecosystem.cta,
+      ]),
     ].filter((t) => t.trim().length > 0);
 
     const affinity = [
