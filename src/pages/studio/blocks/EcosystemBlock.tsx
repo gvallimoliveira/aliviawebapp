@@ -5,10 +5,12 @@ import { TextureLayer } from "./Texture";
 
 /** Uma cadeia de 3–5 funcionalidades em um único quadro, sem virar lista solta. */
 const EcosystemBlock = ({ content, treatment, format, persona }: BlockProps) => {
-  const ecosystem = content.ecosystems?.[0];
+  const ecosystems = content.ecosystems ?? [];
+  const ecosystem = ecosystems[treatment % Math.max(1, ecosystems.length)];
   if (!ecosystem) return null;
   const dark = treatment % 2 === 1;
   const surface = dark ? "bg-foreground text-background" : personaSurface(persona, treatment);
+  const layout = treatment % 3;
 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}>
@@ -30,18 +32,25 @@ const EcosystemBlock = ({ content, treatment, format, persona }: BlockProps) => 
             {ecosystem.promise}
           </p>
 
-          <ol className={`relative mt-7 border-l ${dark ? "border-background/20" : "border-primary/30"}`}>
+          <ol className={`relative mt-7 ${layout === 0 ? `border-l ${dark ? "border-background/20" : "border-primary/30"}` : layout === 1 ? "grid grid-cols-2 gap-2 md:gap-3" : "flex flex-col gap-2"}`}>
             {ecosystem.steps.map((step, index) => (
-              <li key={step.id} className="relative pb-4 pl-7 last:pb-0">
-                <span className="absolute -left-3 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              <li
+                key={step.id}
+                className={`relative ${layout === 0 ? "pb-4 pl-7 last:pb-0" : layout === 1 ? `border p-3 ${dark ? "border-background/20" : "border-border"}` : `flex items-start gap-3 border-b pb-3 last:border-0 ${dark ? "border-background/20" : "border-border"}`}`}
+              >
+                <span className={`${layout === 0 ? "absolute -left-3 top-0" : "shrink-0"} flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground`}>
                   {index + 1}
                 </span>
-                <h3 className={`text-sm font-bold leading-tight md:text-lg ${dark ? "text-background" : "text-foreground"}`}>
-                  {step.label}
-                </h3>
-                <p className={`mt-1 max-w-3xl text-xs leading-relaxed md:text-sm ${dark ? "text-background/70" : "text-muted-foreground"}`}>
-                  {step.body}
-                </p>
+                <div>
+                  <h3 className={`text-sm font-bold leading-tight md:text-lg ${dark ? "text-background" : "text-foreground"}`}>
+                    {step.label}
+                  </h3>
+                  {layout !== 1 && (
+                    <p className={`mt-1 max-w-3xl text-xs leading-relaxed md:text-sm ${dark ? "text-background/70" : "text-muted-foreground"}`}>
+                      {step.body}
+                    </p>
+                  )}
+                </div>
               </li>
             ))}
           </ol>
