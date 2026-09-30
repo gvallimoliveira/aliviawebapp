@@ -17,6 +17,7 @@ import StoryBlock from "@/pages/studio/blocks/StoryBlock";
 import ListBlock from "@/pages/studio/blocks/ListBlock";
 import BrandBlock from "@/pages/studio/blocks/BrandBlock";
 import CarouselBlock from "@/pages/studio/blocks/CarouselBlock";
+import EcosystemBlock from "@/pages/studio/blocks/EcosystemBlock";
 import PhotoTypeBlock from "@/pages/studio/blocks/PhotoTypeBlock";
 import PhotoSplitBlock from "@/pages/studio/blocks/PhotoSplitBlock";
 import PhotoPortraitBlock from "@/pages/studio/blocks/PhotoPortraitBlock";
@@ -76,6 +77,7 @@ export const STUDIO_BLOCKS = {
   list: ListBlock,
   brand: BrandBlock,
   carousel: CarouselBlock,
+  ecosystem: EcosystemBlock,
   photoType: PhotoTypeBlock,
   photoSplit: PhotoSplitBlock,
   photoPortrait: PhotoPortraitBlock,

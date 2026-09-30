@@ -192,6 +192,13 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
       [...car.slides.map((s) => `${s.heading} — ${s.body}`), "", `${car.cta.title}. ${car.cta.sub}`].join("\n"),
     ];
   },
+  ecosystem: (c, rng) => {
+    const ecosystem = rng.pick(c.ecosystems ?? []);
+    return [
+      ecosystem.title,
+      [ecosystem.promise, ...ecosystem.steps.map((step) => `${step.label}: ${step.body}`), ecosystem.closing].join("\n"),
+    ];
+  },
   compare: (c, rng) => {
     const cmp = rng.pick(c.compare);
     return [cmp.title, `Antes: ${cmp.before[0]}. Depois: ${cmp.after[0]}.`];
