@@ -10,6 +10,9 @@ import {
 import { imageForTopic, type TopicId } from "../topics";
 import { BRAND_HANDLE, BRAND_LOGO, BRAND_NAME } from "../brand";
 import { carouselTweetCopy } from "../typographyGuards";
+import { pickPhotoForTopics } from "../photoMeaning";
+import type { StudioPhoto } from "../photos";
+import PhotoFrame from "./PhotoFrame";
 
 /**
  * Carousel block — sequência de artes numeradas (capa → miolo → CTA final)
@@ -42,7 +45,16 @@ const Dots = ({ total, active, dark }: { total: number; active: number; dark?: b
   </div>
 );
 
-const SlideImage = ({ topic }: { topic?: TopicId }) => {
+const SlideImage = ({ topic, photo, dark = false, compact = false }: { topic?: TopicId; photo?: StudioPhoto; dark?: boolean; compact?: boolean }) => {
+  if (photo) {
+    return (
+      <PhotoFrame
+        photo={photo}
+        className={`${compact ? "mt-4 h-[18vh]" : "mt-6 h-[24vh]"} w-full max-w-md border ${dark ? "border-background/20" : "border-border"}`}
+        imgClassName="object-cover"
+      />
+    );
+  }
   const src = topic ? imageForTopic(topic) : undefined;
   if (!src) return null;
   return (
@@ -70,7 +82,7 @@ const TWEET_ACTION_PATHS = [
   "M4 20V10M9.3 20V4M14.7 20v-7M20 20V7",
 ] as const;
 
-const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: BlockProps) => {
+const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos, artKey }: BlockProps) => {
   if (!content.carousels?.length) return null;
   const group = slide?.group ?? 0;
   const index = slide?.index ?? 0;
@@ -85,6 +97,15 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
   const isCover = index === 0;
   const isCta = index === total - 1;
   const middle = !isCover && !isCta ? carousel.slides[index - 1] : undefined;
+  const explicitPhotos = middle?.photoIds
+    ?.map((photoId) => photos?.find((photo) => photo.id === photoId))
+    .filter((photo): photo is StudioPhoto => Boolean(photo));
+  const explicitPhoto = explicitPhotos?.length
+    ? explicitPhotos[(index + (slide?.script ?? group)) % explicitPhotos.length]
+    : undefined;
+  const slidePhoto = explicitPhoto ?? (middle?.topic
+    ? pickPhotoForTopics(photos, index, [middle.topic], ["produto"], artKey)
+    : undefined);
 
   // Identidade visual estável por grupo: mesmo treatment + mesmo acento.
   const accentPool = treatment === 1 ? DARK_ACCENT_INDEXES : ACCENT_STYLES.map((_, i) => i);
@@ -131,7 +152,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
                 </h2>
                 <p className="max-w-xl text-base leading-relaxed text-background/75 md:text-lg">{middle.body}</p>
                 <div className="[&_img]:border-background/20">
-                  <SlideImage topic={middle.topic} />
+                  <SlideImage topic={middle.topic} photo={slidePhoto} dark />
                 </div>
               </>
             )}
@@ -184,7 +205,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
                   {renderAccent(middle.heading, accentVariant)}
                 </h2>
                 <p className="text-base leading-relaxed text-muted-foreground md:text-lg">{middle.body}</p>
-                <SlideImage topic={middle.topic} />
+                <SlideImage topic={middle.topic} photo={slidePhoto} />
               </>
             )}
             {isCta && (
@@ -238,7 +259,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
                   {renderAccent(middle.heading, accentVariant)}
                 </h2>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">{middle.body}</p>
-                <SlideImage topic={middle.topic} />
+                <SlideImage topic={middle.topic} photo={slidePhoto} />
               </>
             )}
             {isCta && (
@@ -324,6 +345,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
                     {label}
                   </span>
                   <p className="mt-6 text-sm leading-relaxed opacity-80 md:text-base">{body}</p>
+                   {middle && <SlideImage topic={middle.topic} photo={slidePhoto} dark={inverted} compact />}
                   {isCta && (
                     <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.24em] opacity-70">{BRAND_NAME}</p>
                   )}
@@ -380,6 +402,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
                 {renderAccent(middle.heading, accentVariant)}
               </h2>
               <p className="mt-5 max-w-md text-sm leading-relaxed text-background/75 md:text-base">{middle.body}</p>
+              <SlideImage topic={middle.topic} photo={slidePhoto} dark compact />
             </motion.div>
           )}
 
@@ -469,6 +492,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
                   {post.support}
                 </p>
               )}
+              {middle && <SlideImage topic={middle.topic} photo={slidePhoto} dark={dark} compact />}
             </div>
 
             <p className="text-xs md:text-sm" style={{ color: meta }}>
@@ -525,7 +549,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide }: Bloc
                 {renderAccent(middle.heading, accentVariant)}
               </h2>
               <p className="max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">{middle.body}</p>
-              <SlideImage topic={middle.topic} />
+              <SlideImage topic={middle.topic} photo={slidePhoto} />
             </>
           )}
           {isCta && (

@@ -40,6 +40,23 @@ describe("Ecossistema de soluções Aliv.iA", () => {
     ]);
   });
 
+  it("atrela os prints oficiais somente às funcionalidades correspondentes", () => {
+    const security = buildAliviaEcosystem("seguranca-clinica");
+    expect(security.steps.find((step) => step.id === "diferencial-avaliacao-externa-ia")?.photoIds)
+      .toEqual(["official:alivia:external-upload"]);
+    expect(security.steps.find((step) => step.id === "diferencial-red-flags")?.photoIds)
+      .toEqual(["official:alivia:express-reassessment-tools"]);
+    expect(buildAliviaEcosystem("recem-formado").steps.find((step) => step.id === "diferencial-agente-clinico")?.photoIds)
+      .toEqual(["official:alivia:clinical-agent"]);
+    expect(buildAliviaEcosystem("periodizacao").steps.every((step) => !step.photoIds?.length)).toBe(true);
+  });
+
+  it("leva o vínculo de imagem para o slide correspondente do carrossel", () => {
+    const carousel = withAliviaEcosystem(WORLDS.pro, "seguranca-clinica").carousels[0];
+    expect(carousel.slides.find((slide) => slide.topic === "external-upload")?.photoIds)
+      .toEqual(["official:alivia:external-upload"]);
+  });
+
   it("gera seis argumentos autônomos para a mesma cadeia", () => {
     const set = buildAliviaEcosystemSet("rotina-clinica");
     expect(set).toHaveLength(6);

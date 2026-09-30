@@ -67,7 +67,8 @@ export type StudioList = {
  * Carrossel: sequência de artes (capa + miolo + CTA) sobre um mesmo assunto,
  * para explicar uma funcionalidade, vender ou posicionar a marca.
  * O miolo pode declarar tópico (alimenta a cobertura editorial), mas o
- * carrossel é sempre tipográfico — nunca carrega imagem.
+ * o carrossel pode receber uma imagem do acervo quando houver nexo exato com
+ * a funcionalidade explicada naquele slide.
  */
 export type StudioCarousel = {
   /** Identidade editorial estável; sobrevive à variação linguística entre lotes. */
@@ -77,7 +78,7 @@ export type StudioCarousel = {
   title: string;
   coverSub: string;
   /** 1-4 slides de miolo; o total de artes exportadas é slides + capa + CTA. */
-  slides: { heading: string; body: string; topic?: TopicId }[];
+  slides: { heading: string; body: string; topic?: TopicId; photoIds?: string[] }[];
   cta: { title: string; sub: string };
 };
 
@@ -92,7 +93,7 @@ export type StudioEcosystem = {
   title: string;
   promise: string;
   audience: string;
-  steps: { id: string; label: string; body: string; topic?: TopicId }[];
+  steps: { id: string; label: string; body: string; topic?: TopicId; photoIds?: string[] }[];
   closing: string;
   cta: string;
 };

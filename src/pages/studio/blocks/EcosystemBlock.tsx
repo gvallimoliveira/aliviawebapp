@@ -2,15 +2,24 @@ import { motion } from "framer-motion";
 import { BRAND_NAME } from "../brand";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
+import PhotoFrame from "./PhotoFrame";
 
 /** Uma cadeia de 3–5 funcionalidades em um único quadro, sem virar lista solta. */
-const EcosystemBlock = ({ content, treatment, format, persona }: BlockProps) => {
+const EcosystemBlock = ({ content, treatment, format, persona, photos }: BlockProps) => {
   const ecosystems = content.ecosystems ?? [];
   const ecosystem = ecosystems[treatment % Math.max(1, ecosystems.length)];
   if (!ecosystem) return null;
   const dark = treatment % 2 === 1;
   const surface = dark ? "bg-foreground text-background" : personaSurface(persona, treatment);
   const layout = treatment % 3;
+  const illustratedSteps = ecosystem.steps.filter((step) =>
+    step.photoIds?.some((photoId) => photos?.some((photo) => photo.id === photoId)),
+  );
+  const illustratedStep = illustratedSteps[treatment % Math.max(1, illustratedSteps.length)];
+  const availablePhotos = illustratedStep?.photoIds
+    ?.map((photoId) => photos?.find((photo) => photo.id === photoId))
+    .filter((photo) => Boolean(photo));
+  const featuredPhoto = availablePhotos?.[treatment % Math.max(1, availablePhotos.length)];
 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}>
@@ -32,7 +41,20 @@ const EcosystemBlock = ({ content, treatment, format, persona }: BlockProps) => 
             {ecosystem.promise}
           </p>
 
-          <ol className={`relative mt-7 ${layout === 0 ? `border-l ${dark ? "border-background/20" : "border-primary/30"}` : layout === 1 ? "grid grid-cols-2 gap-2 md:gap-3" : "flex flex-col gap-2"}`}>
+           {featuredPhoto && illustratedStep && (
+             <div className="relative mt-5 h-[20%] min-h-0 w-full md:h-[24%]">
+               <PhotoFrame
+                 photo={featuredPhoto}
+                 className={`h-full w-full border ${dark ? "border-background/20" : "border-border"}`}
+                 imgClassName="object-cover"
+               />
+               <span className="absolute bottom-2 left-2 max-w-[85%] rounded bg-background/90 px-2 py-1 text-[10px] font-bold uppercase text-foreground">
+                 {illustratedStep.label}
+               </span>
+             </div>
+           )}
+
+          <ol className={`relative ${featuredPhoto ? "mt-4" : "mt-7"} ${layout === 0 ? `border-l ${dark ? "border-background/20" : "border-primary/30"}` : layout === 1 ? "grid grid-cols-2 gap-2 md:gap-3" : "flex flex-col gap-2"}`}>
             {ecosystem.steps.map((step, index) => (
               <li
                 key={step.id}
