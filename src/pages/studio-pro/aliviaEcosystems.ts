@@ -7,7 +7,11 @@ export type AliviaEcosystemRecipeId =
   | "periodizacao"
   | "recem-formado"
   | "seguranca-clinica"
-  | "adesao-e-evolucao";
+  | "adesao-e-evolucao"
+  | "reavaliacao-que-convence"
+  | "menos-digitador"
+  | "gestao-da-clinica"
+  | "jornada-do-paciente";
 
 type Recipe = {
   id: AliviaEcosystemRecipeId;
@@ -89,6 +93,10 @@ export const ALIVIA_ECOSYSTEM_RECIPES: Recipe[] = [
     gain: "O fisioterapeuta orienta com clareza, registra sem atraso e recebe sinais que ajudam a ajustar o plano com contexto.",
     loss: "Sem esse retorno, a adesão vira suposição e a próxima decisão depende mais da memória do que do que aconteceu entre as sessões.",
   },
+  { id: "reavaliacao-que-convence", label: "Reavaliação que convence", audience: "fisioterapeuta que precisa mostrar evolução e justificar a continuidade do tratamento", title: "Evolução que o paciente enxerga é tratamento que ele continua", promise: "O Aliv.iA transforma a reavaliação em prova visível: o antes, o depois e o próximo passo no mesmo documento.", ids: ["diferencial-avaliacao-manual", "diferencial-reavaliacao", "diferencial-relatorios"], closing: "Quando a melhora aparece comparada, a continuidade deixa de ser pedido e vira decisão compartilhada.", cta: "Mostrar a evolução com o Aliv.iA", problem: "O paciente melhora, mas sem comparação ele não percebe o quanto avançou e abandona antes da hora.", gain: "A reavaliação resgata a avaliação inicial, compara os achados e gera um relatório que o paciente entende.", loss: "Sem prova de evolução, a conversa sobre continuidade vira argumento de venda e o paciente decide pela sensação do dia." },
+  { id: "menos-digitador", label: "Menos digitador, mais fisioterapeuta", audience: "fisioterapeuta que perde tempo com registro e burocracia depois da sessão", title: "Seu tempo é de fisioterapeuta, não de digitador", promise: "O Aliv.iA registra, organiza e documenta para o prontuário ficar pronto sem roubar o fim do seu dia.", ids: ["diferencial-evolucao-voz", "diferencial-avaliacao-externa-ia", "diferencial-relatorios"], closing: "Falar, revisar e gerar o documento: o registro acompanha o ritmo da clínica.", cta: "Registrar menos e atender mais", problem: "Depois da última sessão, ainda sobra uma pilha de evoluções, laudos e documentos para digitar.", gain: "A voz vira evolução, o PDF externo vira campo preenchido para revisão e o relatório sai com o que já foi registrado.", loss: "Sem apoio no registro, o prontuário atrasa, os detalhes se perdem e o cansaço entra na conta do atendimento." },
+  { id: "gestao-da-clinica", label: "Gestão da clínica com método", audience: "gestor de clínica que quer padrão, controle e experiência medida em toda a equipe", title: "Uma clínica que funciona igual, com qualquer profissional e em qualquer horário", promise: "O Aliv.iA une método único, acessos por função, agenda, indicadores e satisfação em uma só gestão.", ids: ["diferencial-clinica-padronizacao", "diferencial-clinica-permissoes", "diferencial-clinica-agenda", "diferencial-insights", "diferencial-clinica-nps"], closing: "Padrão na avaliação, ordem na agenda, controle de acesso e números que mostram onde agir.", cta: "Conhecer o Aliv.iA para clínicas", problem: "Quando cada fisioterapeuta trabalha de um jeito, a gestão depende de impressões e o paciente sente a diferença.", gain: "A equipe avalia pelo mesmo método, cada função acessa o que precisa e a clínica mede adesão e satisfação.", loss: "Sem padrão e sem indicador, a qualidade varia por profissional e a insatisfação só aparece quando o paciente já saiu." },
+  { id: "jornada-do-paciente", label: "Da dor ao cuidado certo (paciente)", audience: "pessoa com dor que quer entender o que sente e saber o que fazer", title: "Da primeira dúvida sobre a sua dor até o cuidado certo", promise: "O Aliv.iA acompanha você: entende a dor, explica o que pode estar acontecendo, orienta o tratamento e conecta você a um fisioterapeuta.", ids: ["diferencial-paciente-autoavaliacao", "diferencial-paciente-premium", "diferencial-paciente-relatorio", "diferencial-paciente-plano", "diferencial-paciente-fisioterapeuta"], closing: "Cada passo usa o que você já respondeu, e sua dor nunca precisa ser explicada do zero.", cta: "Começar pela autoavaliação gratuita", problem: "Com dor, é comum pular entre buscas, vídeos e opiniões sem entender o que está acontecendo.", gain: "Você entende a dor, recebe um relatório, segue um plano guiado e chega ao fisioterapeuta com tudo organizado.", loss: "Sem um caminho, a dor fica sem direção e cada tentativa aleatória adia a melhora." },
 ];
 
 const TOPIC_BY_ID: Partial<Record<AliviaDifferentialId, TopicId>> = {

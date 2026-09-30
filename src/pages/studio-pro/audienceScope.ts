@@ -78,7 +78,8 @@ export const foreignAudienceWords = (audience: BrandAudience, all: BrandAudience
   const own = new Set([...words(audience.label ?? ""), ...words(audience.keyword ?? ""), ...words(audience.description ?? "")]);
   const foreign = new Set<string>();
   all
-    .filter((item) => item.id !== audience.id)
+    // Temas editoriais são assuntos, não públicos: seus nomes não podem vetar a voz de um público.
+    .filter((item) => item.id !== audience.id && !item.editorialGroup)
     .forEach((item) => {
       [...words(item.label ?? ""), ...words(item.keyword ?? "")].forEach((w) => {
         if (!own.has(w)) foreign.add(w);

@@ -47,9 +47,9 @@ describe("sub-nichos no motor criativo", () => {
 
   it("mantém quatro públicos oficiais e agrupa os doze diferenciais à parte", () => {
     expect(officialAudienceCount(ALIVIA_AUDIENCES)).toBe(4);
-    expect(ALIVIA_DIFFERENTIALS).toHaveLength(12);
+    expect(ALIVIA_DIFFERENTIALS).toHaveLength(21);
     expect(ALIVIA_DIFFERENTIALS.every((item) => item.editorialGroup === ALIVIA_DIFFERENTIAL_GROUP)).toBe(true);
-    expect(ALIVIA_DIFFERENTIALS.every((item) => item.parentId === "pro" || item.parentId === "clinica")).toBe(true);
+    expect(ALIVIA_DIFFERENTIALS.every((item) => ["pro", "clinica", "paciente"].includes(String(item.parentId)))).toBe(true);
   });
 
   it("gera cada diferencial a partir do próprio problema, prova e chamada", () => {

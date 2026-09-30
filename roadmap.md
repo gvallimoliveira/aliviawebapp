@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Ecossistema de soluções no Studio Aliv.iA (30/09)
-- [x] Criar cinco cadeias recomendadas ligando público, promessa e 3–5 funcionalidades.
+- [x] Criar nove cadeias recomendadas (profissional, clínica e paciente) ligando público, promessa e 3–5 funcionalidades.
 - [x] Permitir ajustar, remover, adicionar e reordenar etapas.
 - [x] Entregar seis argumentos integrados e um carrossel coeso no mesmo modelo selecionável.
 - [x] Validar testes, compilação e uso na tela do Studio.
