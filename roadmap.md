@@ -4,7 +4,7 @@
 - [x] Adicionar oito novos prints oficiais sem consumir a cota de uploads.
 - [x] Vincular biblioteca e caso de estudo ao Agente Clínico; agenda e insights à gestão.
 - [x] Vincular mapa de dor, questionários e condições de saúde ao prontuário e aos relatórios.
-- [ ] Validar testes, compilação e carregamento dos novos assets.
+- [x] Validar testes, compilação e carregamento dos novos assets.
 
 ## Prints oficiais nos ecossistemas Aliv.iA (30/09)
 - [x] Vincular cada print oficial ao diferencial clínico correspondente.
