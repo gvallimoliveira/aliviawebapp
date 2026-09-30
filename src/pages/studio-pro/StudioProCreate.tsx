@@ -494,8 +494,29 @@ const StudioProCreate = ({
   const toggleModel = (id: string) =>
     setModels((prev) => {
       if (prev.includes(id)) return prev.filter((model) => model !== id);
-      return id === "ecossistema" ? [id] : [...prev, id];
+      return id === "ecossistema" ? [id] : [...prev.filter((model) => model !== "ecossistema"), id];
     });
+
+  const chooseEcosystemRecipe = (id: AliviaEcosystemRecipeId) => {
+    const recipe = ecosystemRecipe(id);
+    setEcosystemRecipeId(recipe.id);
+    setEcosystemIds(recipe.ids);
+  };
+  const toggleEcosystemStep = (id: string) => {
+    setEcosystemIds((previous) => {
+      if (previous.includes(id)) return previous.length > 3 ? previous.filter((item) => item !== id) : previous;
+      return previous.length < 5 ? [...previous, id] : previous;
+    });
+  };
+  const moveEcosystemStep = (index: number, direction: -1 | 1) => {
+    setEcosystemIds((previous) => {
+      const target = index + direction;
+      if (target < 0 || target >= previous.length) return previous;
+      const next = [...previous];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
 
   useEffect(() => {
     writePersisted(brand.id, { segment, differentialSegments, differentialsOpen, angle, models, variation, ecosystemRecipe: ecosystemRecipeId, ecosystemIds });
@@ -1814,6 +1835,69 @@ const StudioProCreate = ({
                 <p className="mt-2 text-[11px] text-muted-foreground">
                   Trocar modelos não consome cota — só "Nova versão" gera um lote novo.
                 </p>
+              </div>
+            )}
+            {ecosystemMode && (
+              <div className="mt-3 border-l-2 border-primary/35 pl-3">
+                <p className="text-[10px] font-semibold uppercase text-muted-foreground">Cadeia de funcionalidades</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {ALIVIA_ECOSYSTEM_RECIPES.map((recipe) => (
+                    <Button
+                      key={recipe.id}
+                      type="button"
+                      size="sm"
+                      variant={ecosystemRecipeId === recipe.id ? "secondary" : "outline"}
+                      className="h-7 rounded-full text-[11px]"
+                      onClick={() => chooseEcosystemRecipe(recipe.id)}
+                    >
+                      {recipe.label}
+                    </Button>
+                  ))}
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Escolha de 3 a 5 funcionalidades. Use as setas para definir a ordem da jornada.
+                </p>
+                <div className="mt-2 space-y-1.5">
+                  {ecosystemIds.map((id, index) => {
+                    const differential = ALIVIA_DIFFERENTIALS.find((item) => item.id === id);
+                    if (!differential) return null;
+                    return (
+                      <div key={id} className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-2 py-1.5">
+                        <span className="w-5 text-[10px] font-bold text-primary">{index + 1}</span>
+                        <span className="min-w-0 flex-1 text-[11px] font-medium text-foreground">{differential.label}</span>
+                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" disabled={index === 0} onClick={() => moveEcosystemStep(index, -1)} title="Mover para cima">
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6" disabled={index === ecosystemIds.length - 1} onClick={() => moveEcosystemStep(index, 1)} title="Mover para baixo">
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {ALIVIA_DIFFERENTIALS.filter((item) => !ecosystemIds.includes(item.id)).map((item) => (
+                    <Button
+                      key={item.id}
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 rounded-full text-[10px]"
+                      disabled={ecosystemIds.length >= 5}
+                      onClick={() => toggleEcosystemStep(item.id)}
+                    >
+                      + {item.label}
+                    </Button>
+                  ))}
+                  {ecosystemIds.length > 3 && ecosystemIds.map((id) => {
+                    const item = ALIVIA_DIFFERENTIALS.find((entry) => entry.id === id);
+                    return item ? (
+                      <Button key={`remove-${id}`} type="button" size="sm" variant="ghost" className="h-7 rounded-full text-[10px] text-muted-foreground" onClick={() => toggleEcosystemStep(id)}>
+                        − {item.label}
+                      </Button>
+                    ) : null;
+                  })}
+                </div>
               </div>
             )}
           </div>
