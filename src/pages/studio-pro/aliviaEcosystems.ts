@@ -7,7 +7,11 @@ export type AliviaEcosystemRecipeId =
   | "periodizacao"
   | "recem-formado"
   | "seguranca-clinica"
-  | "adesao-e-evolucao";
+  | "adesao-e-evolucao"
+  | "reavaliacao-que-convence"
+  | "menos-digitador"
+  | "gestao-da-clinica"
+  | "jornada-do-paciente";
 
 type Recipe = {
   id: AliviaEcosystemRecipeId;
