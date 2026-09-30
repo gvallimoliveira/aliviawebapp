@@ -1,6 +1,7 @@
 import type { StudioPhoto } from "./photos";
 import { claimPhoto } from "./photoLedger";
 import type { TopicId } from "./topics";
+import { OFFICIAL_PHOTO_PREFIX } from "./officialPhotos";
 
 /**
  * ============================================================================
@@ -184,6 +185,20 @@ const themesOf = (photo: StudioPhoto): PhotoTheme[] =>
 
 /** Tópicos que a foto consegue sustentar (extrapolação, não literalidade). */
 export const photoTopics = (photo: StudioPhoto): TopicId[] => {
+  const officialTopicMap: Record<string, TopicId[]> = {
+    [`${OFFICIAL_PHOTO_PREFIX}external-upload`]: ["external-upload"],
+    [`${OFFICIAL_PHOTO_PREFIX}express-reassessment-steps`]: ["express-reassessment", "anamnesis"],
+    [`${OFFICIAL_PHOTO_PREFIX}express-reassessment-tools`]: ["express-reassessment", "questionnaires", "functional-tests", "fabq", "red-flags"],
+    [`${OFFICIAL_PHOTO_PREFIX}manual-anamnesis`]: ["anamnesis"],
+    [`${OFFICIAL_PHOTO_PREFIX}manual-pain-map`]: ["pain-map"],
+    [`${OFFICIAL_PHOTO_PREFIX}manual-pain-mechanism`]: ["pain-mechanism"],
+    [`${OFFICIAL_PHOTO_PREFIX}manual-clinical-notes`]: ["clinical-impression", "hypothesis"],
+    [`${OFFICIAL_PHOTO_PREFIX}manual-mobility`]: ["functional-tests"],
+    [`${OFFICIAL_PHOTO_PREFIX}manual-dynamometry`]: ["dynamometry"],
+    [`${OFFICIAL_PHOTO_PREFIX}clinical-agent`]: ["clinical-agent", "evidence-library"],
+  };
+  const official = officialTopicMap[photo.id];
+  if (official) return official;
   const restriction = restrictionOf(photo);
   if (restriction) return restriction.allow;
   const matched = themesOf(photo).flatMap((t) => t.topics);

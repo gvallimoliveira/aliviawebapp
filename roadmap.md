@@ -1,5 +1,11 @@
 # Roadmap
 
+## Prints oficiais no acervo Aliv.iA (30/09)
+- [x] Disponibilizar os 10 prints na biblioteca exclusiva da marca Aliv.iA, sem consumir cota.
+- [x] Manter fixação, zoom, posição, rotação e área segura com metadados oficiais protegidos.
+- [x] Restringir cada print aos diferenciais e etapas clínicas semanticamente correspondentes.
+- [ ] Validar testes, compilação, biblioteca e exportação visual.
+
 ## Ecossistema de soluções no Studio Aliv.iA (30/09)
 - [x] Criar nove cadeias recomendadas (profissional, clínica e paciente) ligando público, promessa e 3–5 funcionalidades.
 - [x] Permitir ajustar, remover, adicionar e reordenar etapas.

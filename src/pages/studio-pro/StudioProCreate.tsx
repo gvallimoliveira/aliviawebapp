@@ -320,7 +320,7 @@ const StudioProCreate = ({
     add: addPhoto,
     edit: editPhoto,
     remove: removePhoto,
-  } = useStudioPhotos(true, brand.id);
+  } = useStudioPhotos(true, brand.id, brand.content_source === "alivia");
   const [photosOpen, setPhotosOpen] = useState(false);
   /**
    * O acervo é separado por marca, mas o TETO do plano é da conta: soma as
