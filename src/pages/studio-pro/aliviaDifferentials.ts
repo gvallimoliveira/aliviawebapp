@@ -478,7 +478,7 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     label: "Encontrar um fisioterapeuta",
     editorialGroup: ALIVIA_DIFFERENTIAL_GROUP,
     parentId: "paciente",
-    keyword: "Encontrar um fisioterapeuta",
+    keyword: "Encontrar fisioterapeuta",
     highlightTerms: ["Fisioterapeuta", "Encontrar"],
     hook: "Quando é hora de ser atendido, você não precisa procurar no escuro",
     hooks: ["Encontre um fisioterapeuta que já recebe sua avaliação organizada", "Do diagnóstico online ao atendimento presencial, sem recomeçar"],
@@ -490,7 +490,7 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     objections: ["Como sei que o profissional é bom?", "Posso continuar usando o Aliv.iA com ele?"],
     stakes: ["A escolha do profissional fica no acaso", "A primeira consulta gasta tempo refazendo o que você já respondeu"],
     triggers: ["A avaliação indicou que você precisa de atendimento", "Você quer ajuda presencial para a sua dor"],
-    cta: "Encontrar um fisioterapeuta",
+    cta: "Buscar fisioterapeuta no Aliv.iA",
   },
 ];
 

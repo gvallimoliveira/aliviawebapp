@@ -97,7 +97,7 @@ const neighborFor = (active: BrandAudience | undefined, audiences: BrandAudience
   if (!active) return undefined;
   const own = audienceWords(active);
   const candidates = audiences
-    .filter((candidate) => candidate.id !== active.id && !candidate.manualOnly)
+    .filter((candidate) => candidate.id !== active.id && !candidate.manualOnly && Boolean(candidate.editorialGroup) === Boolean(active.editorialGroup))
     .map((candidate) => ({
       candidate,
       score:
