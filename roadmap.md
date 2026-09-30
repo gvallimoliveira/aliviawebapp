@@ -4,7 +4,7 @@
 - [x] Criar três cadeias recomendadas ligando público, promessa e 3–5 funcionalidades.
 - [x] Permitir ajustar, remover, adicionar e reordenar etapas.
 - [x] Entregar arte integrada e carrossel coeso no mesmo modelo selecionável.
-- [ ] Validar testes, compilação e uso na tela do Studio.
+- [x] Validar testes, compilação e uso na tela do Studio.
 
 ## Compartilhamento HD e proporção multimarca (27/09)
 - [x] Padronizar downloads individuais, lotes e artes salvas em PNG mestre de 2160 px.
