@@ -49,6 +49,7 @@ import { phraseSignature } from "@/pages/studio/picker";
 import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
 
 import { countPhotos } from "@/pages/studio/photos";
+import { isOfficialPhoto } from "@/pages/studio/officialPhotos";
 import StudioPhotos from "@/pages/studio/StudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { voiceRegister } from "@/pages/studio/lexicon";
@@ -327,6 +328,8 @@ const StudioProCreate = ({
    * fotos de todas as marcas. Recontado sempre que o acervo da marca muda.
    */
   const [photosTotal, setPhotosTotal] = useState(0);
+  const officialPhotosTotal = photos.filter(isOfficialPhoto).length;
+  const uploadedPhotosTotal = photos.length - officialPhotosTotal;
   useEffect(() => {
     let alive = true;
     countPhotos()
@@ -1959,7 +1962,7 @@ const StudioProCreate = ({
           <p className="mt-1 text-[11px] text-muted-foreground">
             {photos.length === 0
               ? "Nenhuma foto nesta marca — clique para enviar as suas."
-              : `${photos.length} foto(s) nesta marca${photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}${pinnedPhotos.length > 0 ? ` · ${pinnedPhotos.length} fixada(s) para a próxima geração` : " · fixe uma foto ali para usá-la obrigatoriamente"}.`}
+              : `${uploadedPhotosTotal} foto(s) enviada(s) nesta marca${officialPhotosTotal > 0 ? ` + ${officialPhotosTotal} oficiais` : ""}${photoLimit > 0 ? ` · ${photosTotal} de ${photoLimit} no plano` : ""}${pinnedPhotos.length > 0 ? ` · ${pinnedPhotos.length} fixada(s) para a próxima geração` : " · fixe uma foto ali para usá-la obrigatoriamente"}.`}
             {photos.length > 0 &&
               (photoFirst
                 ? " Filtro ligado: metade das artes deste lote usa foto do acervo como plano de fundo."
