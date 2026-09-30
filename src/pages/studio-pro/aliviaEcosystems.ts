@@ -111,6 +111,29 @@ const TOPIC_BY_ID: Partial<Record<AliviaDifferentialId, TopicId>> = {
   "diferencial-avaliacao-externa-ia": "external-upload",
 };
 
+/**
+ * Prints oficiais ligados à funcionalidade, não apenas a palavras parecidas.
+ * A avaliação manual tem vários momentos reais; os tratamentos alternam entre
+ * eles sem permitir que uma tela seja usada para ilustrar outra função.
+ */
+const OFFICIAL_PHOTOS_BY_ID: Partial<Record<AliviaDifferentialId, string[]>> = {
+  "diferencial-avaliacao-externa-ia": ["official:alivia:external-upload"],
+  "diferencial-reavaliacao": [
+    "official:alivia:express-reassessment-steps",
+    "official:alivia:express-reassessment-tools",
+  ],
+  "diferencial-avaliacao-manual": [
+    "official:alivia:manual-anamnesis",
+    "official:alivia:manual-pain-map",
+    "official:alivia:manual-pain-mechanism",
+    "official:alivia:manual-clinical-notes",
+    "official:alivia:manual-mobility",
+    "official:alivia:manual-dynamometry",
+  ],
+  "diferencial-agente-clinico": ["official:alivia:clinical-agent"],
+  "diferencial-red-flags": ["official:alivia:express-reassessment-tools"],
+};
+
 export const ecosystemRecipe = (id?: string) =>
   ALIVIA_ECOSYSTEM_RECIPES.find((recipe) => recipe.id === id) ?? ALIVIA_ECOSYSTEM_RECIPES[0];
 
@@ -144,6 +167,7 @@ export const buildAliviaEcosystem = (recipeId?: string, selectedIds?: string[]):
       label: item.keyword ?? item.label,
       body: `${transition(index, stages.length)}: ${String(item.description ?? "").replace(/^./, (letter) => letter.toLowerCase())}`,
       topic: TOPIC_BY_ID[item.id as AliviaDifferentialId],
+      photoIds: OFFICIAL_PHOTOS_BY_ID[item.id as AliviaDifferentialId],
     })),
     closing: recipe.closing,
     cta: recipe.cta,
@@ -212,6 +236,7 @@ export const ecosystemCarousel = (ecosystem: StudioEcosystem): StudioCarousel =>
     heading: `${String(index + 1).padStart(2, "0")} · ${step.label}`,
     body: step.body,
     topic: step.topic,
+    photoIds: step.photoIds,
   })),
   cta: { title: ecosystem.closing, sub: ecosystem.cta },
 });
