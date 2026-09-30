@@ -135,7 +135,7 @@ export const TREATMENT_COUNT: Record<BlockKind, number> = {
   list: 3,
   brand: 6,
   carousel: 7,
-  ecosystem: 2,
+  ecosystem: 6,
   photoType: 2,
   photoSplit: 2,
   photoPortrait: 2,
@@ -327,14 +327,14 @@ export const composePage = (
     const count = pool.every((kind) => kind === "carousel")
       ? Math.max(1, Math.min(desiredCount, carousels?.length ?? 1))
       : ecosystemSet
-        ? pool.length
+        ? 7
       : desiredCount;
     const picked = ecosystemSet
-      ? pool
+      ? ([...Array.from({ length: 6 }, () => "ecosystem" as BlockKind), "carousel"] as BlockKind[])
       : enforcePhotoFirst(rng, spread(rng, pool, Math.max(2, count)), photoCount, photoFirst);
-    const chosen: ComposedBlock[] = picked.map((kind) => ({
+    const chosen: ComposedBlock[] = picked.map((kind, index) => ({
       kind,
-      treatment: treatmentFor(rng, kind, persona),
+      treatment: ecosystemSet && kind === "ecosystem" ? index : treatmentFor(rng, kind, persona),
     }));
     return finish(rng, chosen, persona, carousels, content);
   }
