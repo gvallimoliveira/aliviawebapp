@@ -490,7 +490,7 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     objections: ["Como sei que o profissional é bom?", "Posso continuar usando o Aliv.iA com ele?"],
     stakes: ["A escolha do profissional fica no acaso", "A primeira consulta gasta tempo refazendo o que você já respondeu"],
     triggers: ["A avaliação indicou que você precisa de atendimento", "Você quer ajuda presencial para a sua dor"],
-    cta: "Buscar fisioterapeuta no Aliv.iA",
+    cta: "Buscar fisioterapeuta pelo app",
   },
 ];
 
