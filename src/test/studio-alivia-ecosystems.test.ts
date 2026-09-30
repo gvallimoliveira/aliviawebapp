@@ -13,9 +13,9 @@ import { ALIVIA_DIFFERENTIALS } from "@/pages/studio-pro/aliviaDifferentials";
 import { WORLDS } from "@/pages/studio/content";
 
 describe("Ecossistema de soluções Aliv.iA", () => {
-  it("mantém cinco cadeias recomendadas com 3–5 funcionalidades canônicas", () => {
+  it("mantém nove cadeias recomendadas com 3–5 funcionalidades canônicas", () => {
     const canonical = new Set(ALIVIA_DIFFERENTIALS.map((item) => item.id));
-    expect(ALIVIA_ECOSYSTEM_RECIPES).toHaveLength(5);
+    expect(ALIVIA_ECOSYSTEM_RECIPES).toHaveLength(9);
     ALIVIA_ECOSYSTEM_RECIPES.forEach((recipe) => {
       expect(recipe.ids.length).toBeGreaterThanOrEqual(3);
       expect(recipe.ids.length).toBeLessThanOrEqual(5);

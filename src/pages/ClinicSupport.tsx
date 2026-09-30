@@ -108,7 +108,7 @@ const categories: ToolCategory[] = [
         key: "studio_ecosystem",
         icon: Layers,
         title: "Studio: Ecossistema de soluções",
-        desc: "Na marca Aliv.iA, selecione o modelo Ecossistema de soluções para conectar de três a cinco funcionalidades em uma única jornada. Escolha entre cinco cadeias prontas ou ajuste etapas e ordem; o Studio entrega seis argumentos visuais e um carrossel completo com o mesmo público, promessa e conclusão.",
+        desc: "Na marca Aliv.iA, selecione o modelo Ecossistema de soluções para conectar de três a cinco funcionalidades em uma única jornada. Escolha entre nove cadeias prontas (profissional, clínica e paciente) ou ajuste etapas e ordem; o Studio entrega seis argumentos visuais e um carrossel completo com o mesmo público, promessa e conclusão.",
       },
       {
         key: "voice_notes",
