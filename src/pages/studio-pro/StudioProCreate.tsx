@@ -671,7 +671,7 @@ const StudioProCreate = ({
   );
 
   /** Um acervo fechado por diferencial: combinar seleções distribui artes, não frases. */
-  const differentialSources = useMemo(() => selectedDifferentials.map((id) => {
+  const differentialSources = useMemo(() => (ecosystemMode ? [] : selectedDifferentials).map((id) => {
     const parent = audienceAncestors(audiences, id).find((item) => isWorldId(item.id));
     const world = parent ? (parent.id as WorldId) : "pro";
     const sourceSeed = `${brand.id}:${seed}:${id}:${angle}`;
@@ -704,7 +704,7 @@ const StudioProCreate = ({
         segmentWeights: segmentMemory.weights,
       }),
     };
-  }), [selectedDifferentials, audiences, brand.id, brand.positioning, seed, angle, contentKit, variation, segmentMemory.weights, register, learning.rewrites, learning.vocabulary, protectedBrandLiterals]);
+  }), [ecosystemMode, selectedDifferentials, audiences, brand.id, brand.positioning, seed, angle, contentKit, variation, segmentMemory.weights, register, learning.rewrites, learning.vocabulary, protectedBrandLiterals]);
 
 
 
@@ -948,7 +948,8 @@ const StudioProCreate = ({
    * local e determinístico (mesma seed → mesma arte, zero crédito de IA).
    */
   const rationaleCtx = useMemo<RationaleContext>(() => {
-    const audience = activeSegment === GLOBAL_SEGMENT ? null : resolveAudience(audiences, activeSegment);
+    const ecosystem = ecosystemMode ? buildAliviaEcosystem(ecosystemRecipeId, ecosystemIds) : null;
+    const audience = ecosystem ? null : activeSegment === GLOBAL_SEGMENT ? null : resolveAudience(audiences, activeSegment);
     const matrix = audiences.find((a) => !a.parentId && (a.keyword || a.hook || (a.hooks ?? []).length > 0));
     const keyword =
       (audience ? audienceKeyword(audience) : "") ||
@@ -978,10 +979,10 @@ const StudioProCreate = ({
     });
     return {
       content,
-      audienceLabel: audience?.label ?? (activeSegment === GLOBAL_SEGMENT ? "assunto livre da marca (360°)" : activeSegment),
-      keyword,
-      hook,
-      cta,
+      audienceLabel: ecosystem?.audience ?? audience?.label ?? (activeSegment === GLOBAL_SEGMENT ? "assunto livre da marca (360°)" : activeSegment),
+      keyword: ecosystem?.title ?? keyword,
+      hook: ecosystem?.promise ?? hook,
+      cta: ecosystem?.cta ?? cta,
       angle,
       photoCount: activePhotos.length,
       brandName: brand.name,
@@ -1017,6 +1018,9 @@ const StudioProCreate = ({
     brand.topics,
     brand.brief_answers,
     segmentMemory.weights,
+    ecosystemMode,
+    ecosystemRecipeId,
+    ecosystemIds,
   ]);
 
 

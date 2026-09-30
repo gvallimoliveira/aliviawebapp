@@ -91,7 +91,7 @@ export const buildAliviaEcosystem = (recipeId?: string, selectedIds?: string[]):
     steps: stages.map((item, index) => ({
       id: item.id,
       label: item.keyword ?? item.label,
-      body: `${transition(index, stages.length)}, ${String(item.description ?? "").replace(/^./, (letter) => letter.toLowerCase())}`,
+      body: `${transition(index, stages.length)}: ${String(item.description ?? "").replace(/^./, (letter) => letter.toLowerCase())}`,
       topic: TOPIC_BY_ID[item.id as AliviaDifferentialId],
     })),
     closing: recipe.closing,
