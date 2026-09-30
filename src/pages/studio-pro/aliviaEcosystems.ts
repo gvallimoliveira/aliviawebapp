@@ -109,6 +109,9 @@ const TOPIC_BY_ID: Partial<Record<AliviaDifferentialId, TopicId>> = {
   "diferencial-relatorios": "report",
   "diferencial-red-flags": "red-flags",
   "diferencial-avaliacao-externa-ia": "external-upload",
+  "diferencial-insights": "clinical-impression",
+  "diferencial-clinica-agenda": "agenda",
+  "diferencial-clinica-padronizacao": "shared-record",
 };
 
 /**
@@ -130,8 +133,23 @@ const OFFICIAL_PHOTOS_BY_ID: Partial<Record<AliviaDifferentialId, string[]>> = {
     "official:alivia:manual-mobility",
     "official:alivia:manual-dynamometry",
   ],
-  "diferencial-agente-clinico": ["official:alivia:clinical-agent"],
+  "diferencial-agente-clinico": [
+    "official:alivia:clinical-agent",
+    "official:alivia:evidence-library",
+    "official:alivia:clinical-agent-case",
+  ],
   "diferencial-red-flags": ["official:alivia:express-reassessment-tools"],
+  "diferencial-relatorios": [
+    "official:alivia:record-pain-map",
+    "official:alivia:record-questionnaires",
+    "official:alivia:record-health-conditions",
+  ],
+  "diferencial-insights": [
+    "official:alivia:insights",
+    "official:alivia:professional-dashboard",
+  ],
+  "diferencial-clinica-agenda": ["official:alivia:agenda"],
+  "diferencial-clinica-padronizacao": ["official:alivia:professional-dashboard"],
 };
 
 export const ecosystemRecipe = (id?: string) =>

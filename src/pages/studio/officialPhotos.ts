@@ -8,6 +8,14 @@ import alivia1950 from "@/assets/studio-official/alivia-1950.jpeg.asset.json";
 import alivia1951 from "@/assets/studio-official/alivia-1951.jpeg.asset.json";
 import alivia1953 from "@/assets/studio-official/alivia-1953.jpeg.asset.json";
 import alivia1954 from "@/assets/studio-official/alivia-1954.jpeg.asset.json";
+import alivia1955 from "@/assets/studio-official/alivia-1955.jpeg.asset.json";
+import alivia1956 from "@/assets/studio-official/alivia-1956.jpeg.asset.json";
+import alivia1957 from "@/assets/studio-official/alivia-1957.jpeg.asset.json";
+import alivia1958 from "@/assets/studio-official/alivia-1958.jpeg.asset.json";
+import alivia1959 from "@/assets/studio-official/alivia-1959.jpeg.asset.json";
+import alivia1960 from "@/assets/studio-official/alivia-1960.jpeg.asset.json";
+import alivia1961 from "@/assets/studio-official/alivia-1961.jpeg.asset.json";
+import alivia1962 from "@/assets/studio-official/alivia-1962.jpeg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DEFAULT_FRAMING,
@@ -23,6 +31,70 @@ type OfficialDefinition = Pick<StudioPhoto, "id" | "label" | "description" | "us
 };
 
 const DEFINITIONS: OfficialDefinition[] = [
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}evidence-library`,
+    assetUrl: alivia1955.url,
+    label: "Agente Clínico — biblioteca de evidências",
+    description: "Tela oficial da biblioteca de artigos verificados, associada ao Agente de Raciocínio Clínico.",
+    usage: "produto",
+    sortOrder: -18,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}clinical-agent-case`,
+    assetUrl: alivia1956.url,
+    label: "Agente Clínico — caso de estudo",
+    description: "Tela oficial de um caso clínico de estudo criado pelo Agente de Raciocínio Clínico.",
+    usage: "produto",
+    sortOrder: -17,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}agenda`,
+    assetUrl: alivia1957.url,
+    label: "Agenda profissional e da clínica",
+    description: "Tela oficial da agenda semanal com horários, profissionais, serviços e novos agendamentos.",
+    usage: "produto",
+    sortOrder: -16,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}insights`,
+    assetUrl: alivia1958.url,
+    label: "Insights inteligentes",
+    description: "Tela oficial de insights sobre evasão, altas, ocupação, faltas e cancelamentos.",
+    usage: "produto",
+    sortOrder: -15,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}professional-dashboard`,
+    assetUrl: alivia1959.url,
+    label: "Painel profissional",
+    description: "Tela inicial oficial do profissional com pacientes, avaliações, evolução e acesso ao prontuário.",
+    usage: "produto",
+    sortOrder: -14,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}record-pain-map`,
+    assetUrl: alivia1960.url,
+    label: "Prontuário — mapa de dor comparativo",
+    description: "Tela oficial do prontuário comparando mapa, intensidade e evolução da dor por região.",
+    usage: "produto",
+    sortOrder: -13,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}record-questionnaires`,
+    assetUrl: alivia1961.url,
+    label: "Prontuário — evolução dos questionários",
+    description: "Tela oficial do prontuário com gráfico longitudinal de questionários e registros de evolução.",
+    usage: "produto",
+    sortOrder: -12,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}record-health-conditions`,
+    assetUrl: alivia1962.url,
+    label: "Prontuário — condições de saúde",
+    description: "Tela oficial do prontuário com condição de saúde, alerta clínico, ajuste de dosagem e linha do tempo.",
+    usage: "produto",
+    sortOrder: -11,
+  },
   {
     id: `${OFFICIAL_PHOTO_PREFIX}external-upload`,
     assetUrl: alivia1943.url,

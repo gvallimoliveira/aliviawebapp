@@ -196,6 +196,14 @@ export const photoTopics = (photo: StudioPhoto): TopicId[] => {
     [`${OFFICIAL_PHOTO_PREFIX}manual-mobility`]: ["functional-tests"],
     [`${OFFICIAL_PHOTO_PREFIX}manual-dynamometry`]: ["dynamometry"],
     [`${OFFICIAL_PHOTO_PREFIX}clinical-agent`]: ["clinical-agent", "evidence-library"],
+    [`${OFFICIAL_PHOTO_PREFIX}evidence-library`]: ["clinical-agent", "evidence-library"],
+    [`${OFFICIAL_PHOTO_PREFIX}clinical-agent-case`]: ["clinical-agent", "hypothesis", "differential"],
+    [`${OFFICIAL_PHOTO_PREFIX}agenda`]: ["agenda"],
+    [`${OFFICIAL_PHOTO_PREFIX}insights`]: ["clinical-impression", "agenda", "report"],
+    [`${OFFICIAL_PHOTO_PREFIX}professional-dashboard`]: ["clinical-impression", "report", "shared-record"],
+    [`${OFFICIAL_PHOTO_PREFIX}record-pain-map`]: ["pain-map", "report", "clinical-impression"],
+    [`${OFFICIAL_PHOTO_PREFIX}record-questionnaires`]: ["questionnaires", "report", "clinical-impression"],
+    [`${OFFICIAL_PHOTO_PREFIX}record-health-conditions`]: ["health-general", "report", "safety"],
   };
   const official = officialTopicMap[photo.id];
   if (official) return official;
