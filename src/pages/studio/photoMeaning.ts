@@ -204,6 +204,13 @@ export const photoTopics = (photo: StudioPhoto): TopicId[] => {
     [`${OFFICIAL_PHOTO_PREFIX}record-pain-map`]: ["pain-map", "report", "clinical-impression"],
     [`${OFFICIAL_PHOTO_PREFIX}record-questionnaires`]: ["questionnaires", "report", "clinical-impression"],
     [`${OFFICIAL_PHOTO_PREFIX}record-health-conditions`]: ["health-general", "report", "safety"],
+    [`${OFFICIAL_PHOTO_PREFIX}red-flags-positive`]: ["red-flags", "safety"],
+    [`${OFFICIAL_PHOTO_PREFIX}red-flags-screening`]: ["red-flags", "safety"],
+    [`${OFFICIAL_PHOTO_PREFIX}pre-assessment-start`]: ["assessment-link"],
+    [`${OFFICIAL_PHOTO_PREFIX}record-summary-details`]: ["report", "clinical-impression", "questionnaires", "functional-tests"],
+    [`${OFFICIAL_PHOTO_PREFIX}record-summary-hypothesis`]: ["report", "clinical-impression", "hypothesis", "red-flags"],
+    [`${OFFICIAL_PHOTO_PREFIX}hep-exercise-list`]: ["hep"],
+    [`${OFFICIAL_PHOTO_PREFIX}hep-exercise-video`]: ["hep"],
   };
   const official = officialTopicMap[photo.id];
   if (official) return official;

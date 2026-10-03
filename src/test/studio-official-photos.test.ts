@@ -21,11 +21,11 @@ const asPhoto = (id: string): StudioPhoto => ({
 });
 
 describe("catálogo oficial Aliv.iA", () => {
-  it("mantém dezoito imagens sintéticas fora dos IDs do banco", () => {
+  it("mantém vinte e cinco imagens sintéticas fora dos IDs do banco", () => {
     const definitions = officialPhotoDefinitions();
-    expect(officialAliviaPhotoCount).toBe(18);
-    expect(definitions).toHaveLength(18);
-    expect(new Set(definitions.map((item) => item.id)).size).toBe(18);
+    expect(officialAliviaPhotoCount).toBe(25);
+    expect(definitions).toHaveLength(25);
+    expect(new Set(definitions.map((item) => item.id)).size).toBe(25);
     expect(definitions.every((item) => item.id.startsWith(OFFICIAL_PHOTO_PREFIX))).toBe(true);
     expect(definitions.every((item) => item.assetUrl.startsWith("/__l5e/assets-v1/"))).toBe(true);
   });
@@ -45,5 +45,9 @@ describe("catálogo oficial Aliv.iA", () => {
     expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}record-pain-map`))).toEqual(["pain-map", "report", "clinical-impression"]);
     expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}record-questionnaires`))).toEqual(["questionnaires", "report", "clinical-impression"]);
     expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}record-health-conditions`))).toEqual(["health-general", "report", "safety"]);
+    expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}red-flags-screening`))).toEqual(["red-flags", "safety"]);
+    expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}pre-assessment-start`))).toEqual(["assessment-link"]);
+    expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}record-summary-hypothesis`))).toEqual(["report", "clinical-impression", "hypothesis", "red-flags"]);
+    expect(photoTopics(asPhoto(`${OFFICIAL_PHOTO_PREFIX}hep-exercise-video`))).toEqual(["hep"]);
   });
 });

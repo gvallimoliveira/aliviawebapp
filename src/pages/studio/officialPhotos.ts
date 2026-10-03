@@ -16,6 +16,13 @@ import alivia1959 from "@/assets/studio-official/alivia-1959.jpeg.asset.json";
 import alivia1960 from "@/assets/studio-official/alivia-1960.jpeg.asset.json";
 import alivia1961 from "@/assets/studio-official/alivia-1961.jpeg.asset.json";
 import alivia1962 from "@/assets/studio-official/alivia-1962.jpeg.asset.json";
+import alivia1963 from "@/assets/studio-official/alivia-1963.jpeg.asset.json";
+import alivia1964 from "@/assets/studio-official/alivia-1964.jpeg.asset.json";
+import alivia1965 from "@/assets/studio-official/alivia-1965.jpeg.asset.json";
+import alivia1966 from "@/assets/studio-official/alivia-1966.jpeg.asset.json";
+import alivia1967 from "@/assets/studio-official/alivia-1967.jpeg.asset.json";
+import alivia1968 from "@/assets/studio-official/alivia-1968.jpeg.asset.json";
+import alivia1969 from "@/assets/studio-official/alivia-1969.jpeg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DEFAULT_FRAMING,
@@ -31,6 +38,62 @@ type OfficialDefinition = Pick<StudioPhoto, "id" | "label" | "description" | "us
 };
 
 const DEFINITIONS: OfficialDefinition[] = [
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}red-flags-positive`,
+    assetUrl: alivia1963.url,
+    label: "Red flags — sinais identificados",
+    description: "Tela oficial da triagem de segurança com respostas positivas destacadas para revisão clínica.",
+    usage: "produto",
+    sortOrder: -25,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}red-flags-screening`,
+    assetUrl: alivia1964.url,
+    label: "Red flags — triagem de segurança",
+    description: "Tela oficial do questionário inicial de red flags antes da avaliação.",
+    usage: "produto",
+    sortOrder: -24,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}pre-assessment-start`,
+    assetUrl: alivia1965.url,
+    label: "Pré-avaliação — início pelo link",
+    description: "Tela oficial de abertura da pré-avaliação enviada pelo fisioterapeuta ao paciente.",
+    usage: "produto",
+    sortOrder: -23,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}record-summary-details`,
+    assetUrl: alivia1966.url,
+    label: "Prontuário — resumo e relatório",
+    description: "Tela oficial do resumo do prontuário com anamnese, mobilidade, questionários e ações de relatório.",
+    usage: "produto",
+    sortOrder: -22,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}record-summary-hypothesis`,
+    assetUrl: alivia1967.url,
+    label: "Prontuário — hipótese e métricas",
+    description: "Tela oficial do resumo da avaliação com hipótese diagnóstica, red flags e métricas principais.",
+    usage: "produto",
+    sortOrder: -21,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}hep-exercise-list`,
+    assetUrl: alivia1968.url,
+    label: "HEP — programa de exercícios",
+    description: "Tela oficial do programa domiciliar com exercícios, séries, repetições e frequência.",
+    usage: "produto",
+    sortOrder: -20,
+  },
+  {
+    id: `${OFFICIAL_PHOTO_PREFIX}hep-exercise-video`,
+    assetUrl: alivia1969.url,
+    label: "HEP — exercícios com vídeo",
+    description: "Tela oficial do programa domiciliar organizado por objetivo, com orientação e vídeo demonstrativo.",
+    usage: "produto",
+    sortOrder: -19,
+  },
   {
     id: `${OFFICIAL_PHOTO_PREFIX}evidence-library`,
     assetUrl: alivia1955.url,

@@ -1,5 +1,11 @@
 # Roadmap
 
+## Novas telas oficiais Aliv.iA (03/10)
+- [x] Adicionar sete telas sem consumir a cota de uploads.
+- [x] Categorizar red flags, pré-avaliação, resumo do prontuário e HEP.
+- [x] Vincular cada tela somente ao diferencial, ecossistema e slide compatíveis.
+- [x] Validar testes, compilação e carregamento dos novos assets.
+
 ## Acabamento da imagem inserida (03/10)
 - [x] Mostrar pontos de ajuste somente ao selecionar a imagem e ocultá-los ao tocar fora.
 - [x] Remover contorno/sombra de edição do PNG final.
