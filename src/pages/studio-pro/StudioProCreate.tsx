@@ -21,7 +21,9 @@ import {
   Settings2,
   Sparkles,
   Type,
+  ImagePlus,
 } from "lucide-react";
+import { ArtPhotoSwapDialog, applyArtPhotoSwaps, artPhotoSlots, type ArtPhotoSwaps, type SwapPhoto } from "@/pages/studio/artPhotoSwap";
 import { Link } from "react-router-dom";
 import { PRODUCT } from "./product";
 import { toast } from "sonner";
@@ -1164,6 +1166,23 @@ const StudioProCreate = ({
   const [edits, setEdits] = useState<Record<number, ArtTextEdits>>(() => readPersistedEdits(brand.id, seed));
   const editsRef = useRef<Record<number, ArtTextEdits>>(edits);
   const [editing, setEditing] = useState<number | null>(null);
+  /** Troca de imagem por arte (posição da foto -> imagem). Zera a cada nova versão. */
+  const [photoSwaps, setPhotoSwaps] = useState<ArtPhotoSwaps>({});
+  const [swapTarget, setSwapTarget] = useState<{ index: number; slots: number } | null>(null);
+  useEffect(() => setPhotoSwaps({}), [brand.id, seed]);
+  useEffect(() => {
+    Object.entries(photoSwaps).forEach(([i, m]) =>
+      applyArtPhotoSwaps(document.getElementById(`studio-pro-block-${i}`), m),
+    );
+  });
+  const openPhotoSwap = (index: number) => {
+    const slots = artPhotoSlots(document.getElementById(`studio-pro-block-${index}`)).length;
+    if (slots === 0) {
+      toast.info("Esta arte não tem imagem. Gere um modelo com foto para trocar a imagem.");
+      return;
+    }
+    setSwapTarget({ index, slots });
+  };
   /**
    * MOVER TEXTO: modo separado da edição de palavras. Ligado, cada frase da arte
    * ganha uma alça redonda — só por ela o texto se move, para ninguém arrastar
@@ -2186,6 +2205,10 @@ const StudioProCreate = ({
                     Ajustar texto
                   </Button>
                 )}
+                <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => openPhotoSwap(item.index)}>
+                  <ImagePlus className="mr-1.5 h-3.5 w-3.5" />
+                  Trocar imagem
+                </Button>
                 {/* MOVER TEXTO: arraste só pela alça de cada frase. */}
                 {moving === item.index ? (
                   <>
@@ -2336,6 +2359,10 @@ const StudioProCreate = ({
                     Ajustar texto
                   </Button>
                 )}
+                <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => openPhotoSwap(first.index)}>
+                  <ImagePlus className="mr-1.5 h-3.5 w-3.5" />
+                  Trocar imagem
+                </Button>
                 {/* MOVER TEXTO: arraste só pela alça de cada frase. */}
                 {moving === first.index ? (
                   <>
@@ -2561,6 +2588,18 @@ const StudioProCreate = ({
       </div>
 
 
+      <ArtPhotoSwapDialog
+        open={swapTarget !== null}
+        onOpenChange={(v) => !v && setSwapTarget(null)}
+        slotCount={swapTarget?.slots ?? 0}
+        photos={photos as SwapPhoto[]}
+        allowDevice={canUseBrief}
+        onPick={(slot, photo) => {
+          if (!swapTarget) return;
+          const i = swapTarget.index;
+          setPhotoSwaps((prev) => ({ ...prev, [i]: { ...(prev[i] ?? {}), [slot]: photo } }));
+        }}
+      />
       {photosOpen && (
         <StudioPhotos
           photos={photos}
