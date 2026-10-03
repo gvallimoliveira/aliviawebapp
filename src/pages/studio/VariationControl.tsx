@@ -10,7 +10,7 @@ import {
   type VariationProfile,
 } from "./variation";
 
-type VariationKey = keyof VariationProfile;
+type VariationKey = "headlines" | "support" | "actions";
 
 const ROWS: { key: VariationKey; label: string; sample: string }[] = [
   { key: "headlines", label: "Títulos", sample: "Clareza gera resultado de verdade." },
