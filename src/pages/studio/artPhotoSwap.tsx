@@ -123,7 +123,6 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
       y: number;
       width: number;
     } | null = null;
-    const controls: HTMLButtonElement[] = [];
     const begin = (event: PointerEvent, kind: "move" | "resize", corner?: ResizeCorner) => {
       event.preventDefault();
       event.stopPropagation();
@@ -166,7 +165,6 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
       control.addEventListener("pointermove", drag);
       control.addEventListener("pointerup", end);
       control.addEventListener("pointercancel", end);
-      controls.push(control);
       layer.appendChild(control);
     };
     const baseControl = () => {
