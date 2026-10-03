@@ -90,6 +90,7 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
   img.dataset.studioPhotoRotation = String(insertion.photo.rotation);
   img.dataset.studioPhotoScale = String(scaleOf(insertion.photo));
   img.src = insertion.photo.src;
+  img.crossOrigin = "anonymous";
   img.alt = insertion.photo.label ?? "Imagem inserida";
   img.style.width = "100%";
   img.style.height = "100%";
@@ -129,7 +130,7 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
       layer.style.left = `${insertion.x * 100}%`;
       layer.style.top = `${insertion.y * 100}%`;
       layer.style.width = `${insertion.width * 100}%`;
-      layer.style.aspectRatio = "1 / 1";
+      layer.style.height = `${frameHeight() * 100}%`;
       layer.style.zIndex = "30";
       layer.style.borderRadius = "12px";
     };

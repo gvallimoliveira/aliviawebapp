@@ -1184,7 +1184,7 @@ const StudioProCreate = ({
       applyArtPhotoSwaps(document.getElementById(`studio-pro-block-${i}`), m),
     );
     blocks.forEach((_, i) => applyInsertedArtImage(artNode(i), imageInsertions[i]));
-  });
+  }, [blocks, photoSwaps, imageInsertions]);
   const openPhotoSwap = (index: number) => {
     const slots = artPhotoSlots(document.getElementById(`studio-pro-block-${index}`)).length;
     setSwapTarget({ index, slots });

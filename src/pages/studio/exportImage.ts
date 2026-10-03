@@ -958,6 +958,9 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
     layer.style.setProperty("outline", "none", "important");
     layer.style.setProperty("outline-offset", "0", "important");
     layer.style.setProperty("box-shadow", "none", "important");
+    layer.querySelectorAll<HTMLElement>("*").forEach((child) => {
+      child.style.setProperty("box-shadow", "none", "important");
+    });
   });
 
   // Tokens da marca são herdados de wrappers da tela; materialize-os na cópia.
