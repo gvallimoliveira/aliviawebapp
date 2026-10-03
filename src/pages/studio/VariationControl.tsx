@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { VoiceRegister } from "./lexicon";
-import { rephrase } from "./rewrite";
+import { rephrase, type Naturalness } from "./rewrite";
 import {
   VARIATION_LEVELS,
   intensityFor,
@@ -10,7 +10,7 @@ import {
   type VariationProfile,
 } from "./variation";
 
-type VariationKey = keyof VariationProfile;
+type VariationKey = "headlines" | "support" | "actions";
 
 const ROWS: { key: VariationKey; label: string; sample: string }[] = [
   { key: "headlines", label: "Títulos", sample: "Clareza gera resultado de verdade." },
@@ -23,6 +23,12 @@ const HINTS: Record<VariationLevel, string> = {
   medium: "Releitura parcial: conectivos e construção mudam.",
   high: "Releitura completa: nova construção e enquadramento.",
 };
+
+const NATURAL: { id: Naturalness; label: string; hint: string }[] = [
+  { id: "natural", label: "Natural", hint: "Escrita de gente: sem bordões, perguntas de efeito ou antíteses em série." },
+  { id: "balanced", label: "Equilibrada", hint: "Algumas viradas retóricas, com limite por lote." },
+  { id: "expressive", label: "Expressiva", hint: "Mais enquadramentos e perguntas — pode soar mais publicitária." },
+];
 
 type Props = {
   value: VariationProfile;
@@ -44,6 +50,7 @@ const VariationControl = ({ value, onChange, register, previewSeed, compact = fa
               register,
               seed: `${previewSeed}:preview:${row.key}:${value[row.key]}:${i}`,
               intensity: intensityFor(value[row.key]),
+              naturalness: value.naturalness ?? "natural",
             }),
           ),
         ]),
@@ -63,11 +70,33 @@ const VariationControl = ({ value, onChange, register, previewSeed, compact = fa
         aria-expanded={open}
       >
         <Languages className="h-3.5 w-3.5" />
-        Variação linguística
+        Escrita · {NATURAL.find((n) => n.id === (value.naturalness ?? "natural"))?.label}
         <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
       </Button>
       {open && (
         <div className="mt-2 grid gap-3 rounded-2xl border border-border bg-muted/30 p-3 text-left">
+          <div className="grid gap-1.5 sm:grid-cols-[8rem_1fr] sm:items-start">
+            <p className="pt-1 text-[11px] font-semibold text-foreground">Naturalidade</p>
+            <div>
+              <div className="flex flex-wrap gap-1">
+                {NATURAL.map((n) => (
+                  <Button
+                    key={n.id}
+                    type="button"
+                    size="sm"
+                    variant={(value.naturalness ?? "natural") === n.id ? "secondary" : "ghost"}
+                    className="h-7 rounded-full px-2.5 text-[11px]"
+                    onClick={() => onChange({ ...value, naturalness: n.id })}
+                  >
+                    {n.label}
+                  </Button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[10px] text-muted-foreground">
+                {NATURAL.find((n) => n.id === (value.naturalness ?? "natural"))?.hint}
+              </p>
+            </div>
+          </div>
           {ROWS.map((row) => (
             <div key={row.key} className="grid gap-1.5 sm:grid-cols-[8rem_1fr] sm:items-start">
               <p className="pt-1 text-[11px] font-semibold text-foreground">{row.label}</p>

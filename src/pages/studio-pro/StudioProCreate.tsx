@@ -490,6 +490,8 @@ const StudioProCreate = ({
   const initialEcosystemRecipe = ecosystemRecipe(restored.current.ecosystemRecipe);
   const [ecosystemRecipeId, setEcosystemRecipeId] = useState<AliviaEcosystemRecipeId>(initialEcosystemRecipe.id);
   const [ecosystemIds, setEcosystemIds] = useState<string[]>(restored.current.ecosystemIds ?? initialEcosystemRecipe.ids);
+  const [directionOpen, setDirectionOpen] = useState(() => (restored.current.models?.length ?? 0) > 0);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [variation, setVariation] = useState<VariationProfile>(() =>
     normalizeVariationProfile(restored.current.variation ?? DEFAULT_VARIATION_PROFILE),
   );
@@ -1775,29 +1777,22 @@ const StudioProCreate = ({
               </Button>
             ))}
           </div>
-          {/*
-            LEITURA DE IA DO KIT (só conta admin). Desligado, o diretor criativo
-            trabalha 100% local e sem consumo de crédito — o padrão de todos.
-          */}
-          {canUseBrief && (
-            <div className="mt-2">
-              <button
-                type="button"
-                onClick={toggleBrief}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground underline-offset-2 hover:underline"
-              >
-                <Sparkles className="h-3 w-3" />
-                Direção com IA: {briefOn ? (briefLoading ? "lendo o kit…" : "ligada") : "desligada"}
-              </button>
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                {briefLearned
-                  ? "Leitura do kit guardada: continua valendo com a IA desligada."
-                  : "Ligue uma vez para a IA ler o kit; o aprendizado fica guardado na marca."}
-                {learning.count > 0 ? ` ${learning.count} correção(ões) de texto aprendidas.` : ""}
-              </p>
-            </div>
+          {segments.length === 1 && (
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Cadastre os públicos da marca em Ajustes para gerar conteúdo por nicho.
+            </p>
           )}
-
+          {/* Camada 2 — direção criativa (modelos e cadeias). */}
+          <button
+            type="button"
+            onClick={() => setDirectionOpen((v) => !v)}
+            aria-expanded={directionOpen}
+            className="mt-3 flex w-full items-center justify-between rounded-xl border border-border bg-muted/20 px-3 py-2 text-left text-[11px] font-semibold text-foreground"
+          >
+            <span>Direção criativa <span className="font-normal text-muted-foreground">· modelos: {models.length === 0 ? "aleatório" : models.length}{ecosystemMode ? " · ecossistema" : ""}</span></span>
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${directionOpen ? "rotate-180" : ""}`} />
+          </button>
+          {directionOpen && <div className="pl-1">
           {/* Modelos de arte: aleatório por padrão, ou seleção manual de tipos. */}
           <div className="mt-2">
 
@@ -1908,17 +1903,47 @@ const StudioProCreate = ({
               </div>
             )}
           </div>
+          </div>}
+          {/* Camada 3 — avançado (escrita, IA do kit, aprendizado). */}
+          <button
+            type="button"
+            onClick={() => setAdvancedOpen((v) => !v)}
+            aria-expanded={advancedOpen}
+            className="mt-2 flex w-full items-center justify-between rounded-xl border border-border bg-muted/20 px-3 py-2 text-left text-[11px] font-semibold text-foreground"
+          >
+            <span>Avançado <span className="font-normal text-muted-foreground">· escrita {(variation.naturalness ?? "natural") === "natural" ? "natural" : (variation.naturalness === "balanced" ? "equilibrada" : "expressiva")}</span></span>
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+          </button>
+          {advancedOpen && <div className="pl-1">
           <VariationControl
             value={variation}
             onChange={setVariation}
             register={register}
             previewSeed={`${brand.id}:${seed}`}
           />
-          {segments.length === 1 && (
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Cadastre os públicos da marca em Ajustes para gerar conteúdo por nicho.
-            </p>
+          {/*
+            LEITURA DE IA DO KIT (só conta admin). Desligado, o diretor criativo
+            trabalha 100% local e sem consumo de crédito — o padrão de todos.
+          */}
+          {canUseBrief && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={toggleBrief}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground underline-offset-2 hover:underline"
+              >
+                <Sparkles className="h-3 w-3" />
+                Direção com IA: {briefOn ? (briefLoading ? "lendo o kit…" : "ligada") : "desligada"}
+              </button>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {briefLearned
+                  ? "Leitura do kit guardada: continua valendo com a IA desligada."
+                  : "Ligue uma vez para a IA ler o kit; o aprendizado fica guardado na marca."}
+                {learning.count > 0 ? ` ${learning.count} correção(ões) de texto aprendidas.` : ""}
+              </p>
+            </div>
           )}
+
           {/* Transparência da linhagem: o usuário vê quando a versão herdou favorito. */}
           <p className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Sparkles className="h-3 w-3" />
@@ -1934,6 +1959,7 @@ const StudioProCreate = ({
                 : ` · ${photos.length} fotos do acervo em uso`)}
           </p>
 
+          </div>}
           {/* Acervo privado de fotos: envio, enquadramento e fixação. */}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <Button
