@@ -43,7 +43,7 @@ describe("imagem inserida em arte textual", () => {
     applyInsertedArtImage(root, insertion("composition"));
     const image = root.querySelector<HTMLImageElement>("[data-studio-inserted-image] img");
     const handle = root.querySelector<HTMLElement>("[data-studio-image-move-handle='1']");
-    document.getElementById("outside")?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    document.getElementById("outside")?.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     expect(handle?.style.display).toBe("none");
     image?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(handle?.style.display).toBe("flex");

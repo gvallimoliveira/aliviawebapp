@@ -108,7 +108,7 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
     Array.from(surface.children).forEach((child) => {
       if (!(child instanceof HTMLElement)) return;
       if (getComputedStyle(child).position === "static") child.style.position = "relative";
-      if (getComputedStyle(child).zIndex === "auto") child.style.zIndex = "1";
+      if (!getComputedStyle(child).zIndex || getComputedStyle(child).zIndex === "auto") child.style.zIndex = "1";
     });
     surface.prepend(layer);
   } else {
