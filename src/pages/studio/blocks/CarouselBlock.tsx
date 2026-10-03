@@ -103,7 +103,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos
   const explicitPhoto = explicitPhotos?.length
     ? explicitPhotos[(index + (slide?.script ?? group)) % explicitPhotos.length]
     : undefined;
-  const slidePhoto = explicitPhoto ?? (middle?.topic
+  const slidePhoto = explicitPhoto ?? (carousel.imagePolicy !== "explicit-only" && middle?.topic
     ? pickPhotoForTopics(photos, index, [middle.topic], ["produto"], artKey)
     : undefined);
 

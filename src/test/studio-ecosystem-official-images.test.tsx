@@ -27,9 +27,9 @@ const photo = (id: string, label: string): StudioPhoto => ({
 });
 
 const photos = [
-  photo("official:alivia:express-reassessment-tools", "Triagem de red flags"),
   photo("official:alivia:external-upload", "Upload de avaliação externa"),
   photo("official:alivia:manual-anamnesis", "Avaliação manual"),
+  photo("laser-generico", "Aplicação de laserterapia"),
 ];
 const content = withAliviaEcosystem(WORLDS.pro, "seguranca-clinica");
 const persona = personaForSeed("ecossistema-com-prints");
@@ -51,7 +51,7 @@ beforeAll(() => {
 });
 
 describe("prints oficiais nos ecossistemas Aliv.iA", () => {
-  it("ilustra a arte integrada com uma tela oficial da própria cadeia", () => {
+  it("ilustra a arte integrada somente com uma tela oficial da própria cadeia", () => {
     render(
       <EcosystemBlock
         content={content}
@@ -64,8 +64,8 @@ describe("prints oficiais nos ecossistemas Aliv.iA", () => {
       />,
     );
 
-    const image = screen.getByRole("img", { name: /triagem de red flags/i });
-    expect(image).toHaveAttribute("src", expect.stringContaining("official:alivia:express-reassessment-tools"));
+    const image = screen.getByRole("img", { name: /upload de avaliação externa/i });
+    expect(image).toHaveAttribute("src", expect.stringContaining("official:alivia:external-upload"));
   });
 
   it("usa no carrossel o print explicitamente ligado ao diferencial do slide", () => {
@@ -85,5 +85,25 @@ describe("prints oficiais nos ecossistemas Aliv.iA", () => {
 
     const image = screen.getByRole("img", { name: /upload de avaliação externa/i });
     expect(image).toHaveAttribute("src", expect.stringContaining("official:alivia:external-upload"));
+  });
+
+  it("não usa foto genérica quando o slide não possui print oficial vinculado", () => {
+    const hepContent = withAliviaEcosystem(WORLDS.pro, "periodizacao");
+    const hepPicker = createPicker(buildCoverage("pro", hepContent, {}), () => {});
+    render(
+      <CarouselBlock
+        content={hepContent}
+        rng={createRng("carrossel-hep")}
+        treatment={6}
+        format="1x1"
+        picker={hepPicker}
+        persona={persona}
+        photos={[photo("laser-generico", "Aplicação de laserterapia no atendimento")]}
+        artKey="lote|hep"
+        slide={{ index: 2, total: 5, group: 0, script: 0 }}
+      />,
+    );
+
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 });
