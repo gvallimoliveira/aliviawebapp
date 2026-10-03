@@ -1152,6 +1152,42 @@ const StudioProBrand = () => {
 
         {tab === "ajustes" && (
           <div className="mt-5 space-y-4 pb-24">
+            {(() => {
+              /* Indicador global: o que já está preenchido e o quanto cada lacuna pesa nas artes. */
+              const checks = [
+                { label: "Logo e identidade", ok: !!form.logo_url, impact: "assinatura em todas as artes" },
+                { label: "Posicionamento e tom", ok: !!form.positioning || !!form.tone, impact: "voz e promessa dos títulos" },
+                { label: "Públicos", ok: audienceItems.length > 0, impact: "dores, ganchos e chamadas por público" },
+                { label: "Linha editorial", ok: editorialItems.length > 0, impact: "artes focadas em um tema" },
+                { label: "Matrizes", ok: !!form.keyword_matrix.trim() && !!form.reasoning_matrix.trim(), impact: "palavras de destaque e progressão do texto" },
+                { label: "Insights de formato", ok: !!form.format_insights.trim(), impact: "frases reais da marca nas artes" },
+              ];
+              const done = checks.filter((c) => c.ok).length;
+              const pct = Math.round((done / checks.length) * 100);
+              const missing = checks.filter((c) => !c.ok);
+              return (
+                <div className="rounded-2xl border border-border bg-card p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold text-foreground">Completude da marca</p>
+                    <span className="text-xs font-semibold text-primary">{pct}%</span>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                  </div>
+                  {missing.length === 0 ? (
+                    <p className="mt-2 text-[11px] text-muted-foreground">Tudo preenchido: as artes usam o kit completo.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-1">
+                      {missing.map((c) => (
+                        <li key={c.label} className="text-[11px] text-muted-foreground">
+                          <span className="font-semibold text-foreground">{c.label}</span> · melhora {c.impact}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })()}
             {/* ================= 1. COMECE POR AQUI ================= */}
             <BrandSection
               step={1}
