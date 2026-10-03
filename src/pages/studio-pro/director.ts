@@ -274,7 +274,43 @@ const similarity = (a: string, b: string): number => {
   A.forEach((g) => {
     if (B.has(g)) shared += 1;
   });
-  return shared / Math.min(A.size, B.size);
+  const literal = shared / Math.min(A.size, B.size);
+  return Math.max(literal, semanticSimilarity(a, b));
+};
+
+/**
+ * Repetição de IDEIA, não só de palavra: radical das palavras de conteúdo +
+ * famílias de sinônimos. "Sua dor volta sempre" ≈ "O incômodo retorna toda vez".
+ */
+const SYNONYM_FAMILIES: string[][] = [
+  ["dor", "doi", "incomod", "descon", "sofri"],
+  ["volt", "retorn", "reapar", "recai", "repet"],
+  ["sempr", "toda vez", "constan", "frequen"],
+  ["result", "evolu", "progres", "melhor", "ganho"],
+  ["tempo", "minut", "hora", "agil", "rapid"],
+  ["clar", "entend", "compreen", "transpar"],
+  ["medo", "receio", "insegur", "ansied"],
+  ["trein", "exerci", "program", "carga"],
+  ["avali", "diagnost", "examin", "triag"],
+  ["confi", "segur", "tranquil"],
+  ["pacient", "tutor", "client", "aluno"],
+  ["plano", "conduta", "tratament", "protocol"],
+];
+const STOP = new Set(["para", "com", "sem", "que", "uma", "um", "por", "mais", "menos", "como", "isso", "esse", "essa", "este", "esta", "seu", "sua", "voce", "nao", "dos", "das", "nos", "nas", "pelo", "pela", "quando", "onde", "tem", "ter", "ser", "esta", "sao", "foi", "vai"]);
+const conceptOf = (word: string) => {
+  const family = SYNONYM_FAMILIES.findIndex((fam) => fam.some((root) => word.startsWith(root)));
+  return family >= 0 ? `@${family}` : word.slice(0, 5);
+};
+const concepts = (t: string) =>
+  new Set(normalize(t).split(/[^a-z0-9]+/).filter((w) => w.length > 2 && !STOP.has(w)).map(conceptOf));
+const semanticSimilarity = (a: string, b: string): number => {
+  const A = concepts(a);
+  const B = concepts(b);
+  if (A.size < 3 || B.size < 3) return 0;
+  let shared = 0;
+  A.forEach((c) => { if (B.has(c)) shared += 1; });
+  // Jaccard sobre conceitos, levemente descontado: igualdade semântica exige quase tudo igual.
+  return (shared / (A.size + B.size - shared)) * 0.95;
 };
 
 /** Frase parecida demais com algo que já foi ao ar neste lote. */

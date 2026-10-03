@@ -3,6 +3,7 @@ import { ChevronDown, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { VoiceRegister } from "./lexicon";
 import { rephrase, type Naturalness } from "./rewrite";
+import type { BrandStyle } from "./style";
 import {
   VARIATION_LEVELS,
   intensityFor,
@@ -36,9 +37,12 @@ type Props = {
   register: VoiceRegister;
   previewSeed: string;
   compact?: boolean;
+  /** Frases reais da marca para a prévia (título, apoio, chamada). */
+  samples?: Partial<Record<VariationKey, string>>;
+  style?: BrandStyle | null;
 };
 
-const VariationControl = ({ value, onChange, register, previewSeed, compact = false }: Props) => {
+const VariationControl = ({ value, onChange, register, previewSeed, compact = false, samples, style }: Props) => {
   const [open, setOpen] = useState(false);
   const examples = useMemo(
     () =>
@@ -46,7 +50,8 @@ const VariationControl = ({ value, onChange, register, previewSeed, compact = fa
         ROWS.map((row) => [
           row.key,
           Array.from({ length: 3 }, (_, i) =>
-            rephrase(row.sample, {
+            rephrase(samples?.[row.key]?.trim() || row.sample, {
+              style,
               register,
               seed: `${previewSeed}:preview:${row.key}:${value[row.key]}:${i}`,
               intensity: intensityFor(value[row.key]),
@@ -55,7 +60,7 @@ const VariationControl = ({ value, onChange, register, previewSeed, compact = fa
           ),
         ]),
       ) as Record<VariationKey, string[]>,
-    [previewSeed, register, value],
+    [previewSeed, register, value, samples, style],
   );
 
 
@@ -130,7 +135,10 @@ const VariationControl = ({ value, onChange, register, previewSeed, compact = fa
               </div>
             </div>
           ))}
-          <p className="text-[10px] text-muted-foreground">A prévia é local e não consome gerações.</p>
+          <p className="text-[10px] text-muted-foreground">
+            {samples && Object.values(samples).some(Boolean) ? "Prévia feita com frases reais da sua marca." : "Prévia com frases de exemplo."}{" "}
+            {style ? `Cadência aprendida: ~${Math.round(style.avgWords)} palavras por frase.` : ""} Local, não consome gerações.
+          </p>
         </div>
       )}
     </div>

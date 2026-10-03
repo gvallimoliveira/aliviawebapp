@@ -13,6 +13,7 @@ import type { WorldContent } from "./content/types";
 import type { VoiceRegister } from "./lexicon";
 import { budgetFor, rephrase, type FormulaBudget } from "./rewrite";
 
+import type { BrandStyle } from "./style";
 import { DEFAULT_VARIATION_PROFILE, intensityFor, type VariationProfile } from "./variation";
 
 const SKIP_KEYS = new Set(["id", "label", "topic", "topics", "poster", "image", "hashtags", "value", "prefix", "suffix", "tag"]);
@@ -25,6 +26,7 @@ export type VaryOptions = {
   forbidden?: string[];
   intensity?: number;
   profile?: VariationProfile;
+  style?: BrandStyle | null;
 };
 
 const intensityForPath = (key: string, path: string, options: VaryOptions) => {
@@ -45,6 +47,7 @@ const varyValue = (value: unknown, key: string, options: VaryOptions, path: stri
       forbidden: options.forbidden,
       naturalness: (options.profile ?? DEFAULT_VARIATION_PROFILE).naturalness ?? "natural",
       budget,
+      style: options.style,
     });
   }
 

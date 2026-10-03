@@ -17,6 +17,7 @@ import { createRng, type Rng } from "./rng";
 import { applyLexicon, type VoiceRegister } from "./lexicon";
 import { readsWell } from "./grammar";
 import { proofread } from "./agreement";
+import { fitsStyle, type BrandStyle } from "./style";
 
 export type RewriteMode = "light" | "partial" | "full";
 
@@ -226,6 +227,8 @@ export type RewriteOptions = {
   forbidden?: string[];
   naturalness?: Naturalness;
   budget?: FormulaBudget;
+  /** Cadência aprendida da marca: reescrita que foge dela é descartada. */
+  style?: BrandStyle | null;
 };
 
 /**
@@ -234,7 +237,7 @@ export type RewriteOptions = {
  */
 export const rephrase = (text: string, options: RewriteOptions): string => {
   if (!text || !text.trim()) return text;
-  const { register, seed, intensity = 0.58, forbidden = [], naturalness = "expressive", budget } = options;
+  const { register, seed, intensity = 0.58, forbidden = [], naturalness = "expressive", budget, style } = options;
   const mode = modeForIntensity(intensity);
 
   text = tameFormulas(text, budget);
@@ -250,8 +253,14 @@ export const rephrase = (text: string, options: RewriteOptions): string => {
       if (!sentence) return "";
       const rng = createRng(`rw:${seed}:${i}:${sentence.length}`);
       let out = applyConnectors(sentence, rng, naturalness);
-      if (isSentence(out) || mode === "full") out = restructure(out, rng, naturalness, budget);
-      if (mode === "full" && isSentence(out)) out = frame(out, register, rng, naturalness, budget);
+      if (isSentence(out) || mode === "full") {
+        const next = restructure(out, rng, naturalness, budget);
+        if (fitsStyle(next, out, style)) out = next;
+      }
+      if (mode === "full" && isSentence(out)) {
+        const next = frame(out, register, rng, naturalness, budget);
+        if (fitsStyle(next, out, style)) out = next;
+      }
       return clean(out);
     })
     .filter(Boolean)
