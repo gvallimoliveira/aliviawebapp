@@ -54,6 +54,7 @@ import StudioPhotos from "@/pages/studio/StudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { voiceRegister } from "@/pages/studio/lexicon";
 import { varyContent } from "@/pages/studio/vary";
+import { learnStyle } from "@/pages/studio/style";
 import { usePhraseMemory } from "./usePhraseMemory";
 import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/content";
 import { buildSegmentContent, brandSlogan, enforceEditorialFocus, relationForSegment, pickGlobalAudience } from "./brandContent";
@@ -615,6 +616,19 @@ const StudioProCreate = ({
     return [...new Set([full, withoutBusinessSuffix].filter((value) => value.length >= 3))];
   }, [brand.name]);
   const learning = useCopyLearning(brand.id, protectedBrandLiterals);
+  /** Cadência da marca: frases aprovadas/editadas pelo dono + textos declarados. */
+  const brandStyle = useMemo(
+    () => learnStyle([...learning.voice, brand.description, brand.positioning, typeof brand.format_insights === "string" ? brand.format_insights : null]),
+    [learning.voice, brand.description, brand.positioning, brand.format_insights],
+  );
+  const variationSamples = useMemo(() => {
+    const first = (t?: string | null) => (t ?? "").match(/[^.!?\n]{12,140}[.!?]?/)?.[0]?.trim();
+    return {
+      headlines: first(brand.slogan) || first(brand.positioning),
+      support: first(brand.description),
+      actions: learning.voice.find((v) => v.length > 14 && v.length < 120),
+    };
+  }, [brand.slogan, brand.positioning, brand.description, learning.voice]);
 
   const baseContent = useMemo(() => {
 
@@ -643,8 +657,9 @@ const StudioProCreate = ({
       seed: `${brand.id}:${seed}:${generationKey}:${angle}`,
       forbidden: isAlivia ? [] : ["aliv.ia", "alivia", "fisioterap"],
       profile: variation,
+      style: brandStyle,
     });
-  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, generationKey, angle, brand.positioning, brand.id, seed, register, isAlivia, variation, segmentMemory.weights]);
+  }, [contentKit, aliviaWorld, subWorld, audiences, activeSegment, generationKey, angle, brand.positioning, brand.id, seed, register, isAlivia, variation, segmentMemory.weights, brandStyle]);
 
   /**
    * ACERVO JÁ CORRIGIDO: antes de qualquer sorteio, as frases que você
@@ -691,7 +706,7 @@ const StudioProCreate = ({
       variationProfile: variation,
       segmentWeights: segmentMemory.weights,
     });
-    const varied = varyContent(built, { register, seed: sourceSeed, forbidden: [], profile: variation });
+    const varied = varyContent(built, { register, seed: sourceSeed, forbidden: [], profile: variation, style: brandStyle });
     // O aprendizado geral da marca pode mencionar outro recurso. Diferenciais
     // são fechados: preservamos o texto do próprio pacote e recolocamos seus
     // termos canônicos depois da variação.
@@ -709,7 +724,7 @@ const StudioProCreate = ({
         segmentWeights: segmentMemory.weights,
       }),
     };
-  }), [ecosystemMode, selectedDifferentials, audiences, brand.id, brand.positioning, seed, angle, contentKit, variation, segmentMemory.weights, register, learning.rewrites, learning.vocabulary, protectedBrandLiterals]);
+  }), [ecosystemMode, selectedDifferentials, audiences, brand.id, brand.positioning, seed, angle, contentKit, variation, segmentMemory.weights, register, learning.rewrites, learning.vocabulary, protectedBrandLiterals, brandStyle]);
 
 
 
@@ -1920,6 +1935,8 @@ const StudioProCreate = ({
             onChange={setVariation}
             register={register}
             previewSeed={`${brand.id}:${seed}`}
+            samples={variationSamples}
+            style={brandStyle}
           />
           {/*
             LEITURA DE IA DO KIT (só conta admin). Desligado, o diretor criativo
