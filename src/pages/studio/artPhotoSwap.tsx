@@ -199,7 +199,9 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
       const vertical = corner.startsWith("n") ? "top" : "bottom";
       const horizontal = corner.endsWith("w") ? "left" : "right";
       Object.assign(handle.style, {
-        [vertical]: "-16px", [horizontal]: "-16px", width: "28px", height: "28px",
+        // Inteiro dentro do recorte da foto: no celular o centro do toque não
+        // pode cair na área cortada, senão o navegador ignora o arraste.
+        [vertical]: "3px", [horizontal]: "3px", width: "32px", height: "32px",
         cursor: corner === "nw" || corner === "se" ? "nwse-resize" : "nesw-resize",
       });
       handle.addEventListener("pointerdown", (event) => begin(event, "resize", corner));
