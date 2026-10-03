@@ -102,7 +102,7 @@ const categories: ToolCategory[] = [
         key: "studio_creative_network",
         icon: Brain,
         title: "Studio: rede criativa da marca",
-        desc: "O Studio conecta público, cena, problema, explicação, prova e próximo passo antes de escrever. Títulos incompletos, conclusões cortadas, listas técnicas soltas e destaques repetidos são rejeitados. Nos Diferenciais Aliv.iA, cada arte permanece em uma única funcionalidade: o destaque usa o nome ou termo próprio do recurso, enquanto o texto explica funcionamento, benefício prático e o custo cotidiano de não ter. Em marcas veterinárias, o texto fala com o tutor, mas mantém o pet como centro da queixa, investigação e evolução. Qualquer marca pode criar a própria linha editorial (serviços, tratamentos, produtos) com temas selecionáveis em conjunto. A geração é local, considera o que já foi usado pela marca e não consome créditos extras de IA.",
+        desc: "O Studio conecta público, cena, problema, explicação, prova e próximo passo antes de escrever. Nos Diferenciais Aliv.iA, cada arte permanece em uma única funcionalidade e reaproveita automaticamente argumentos validados das páginas da marca — como continuidade sem retrabalho, segurança, entregáveis e conexão com o fisioterapeuta — sem criar novos controles. Títulos incompletos, conclusões cortadas, listas técnicas soltas e destaques repetidos são rejeitados. Em marcas veterinárias, o texto fala com o tutor, mas mantém o pet como centro da queixa, investigação e evolução. Qualquer marca pode criar a própria linha editorial com temas selecionáveis em conjunto. A geração é local e não consome créditos extras de IA.",
       },
       {
         key: "studio_ecosystem",

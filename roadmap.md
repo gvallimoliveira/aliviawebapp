@@ -1,5 +1,12 @@
 # Roadmap
 
+## Repertório das landings no Studio (03/10)
+- [x] Incorporar argumentos das landings nos diferenciais canônicos por público.
+- [x] Refinar a jornada básica → premium → relatório → plano → fisioterapeuta.
+- [x] Preservar um tema por arte e os vínculos cirúrgicos com imagens oficiais.
+- [x] Manter o menu inalterado e atualizar a ajuda em português, inglês e espanhol.
+- [ ] Validar testes focados e compilação.
+
 ## Novas telas oficiais Aliv.iA (03/10)
 - [x] Adicionar sete telas sem consumir a cota de uploads.
 - [x] Categorizar red flags, pré-avaliação, resumo do prontuário e HEP.
