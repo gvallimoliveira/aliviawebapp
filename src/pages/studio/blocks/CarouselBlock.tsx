@@ -103,9 +103,11 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos
   const explicitPhoto = explicitPhotos?.length
     ? explicitPhotos[(index + (slide?.script ?? group)) % explicitPhotos.length]
     : undefined;
-  const slidePhoto = explicitPhoto ?? (middle?.topic
+  const exactImagesOnly = carousel.imagePolicy === "explicit-only";
+  const slidePhoto = explicitPhoto ?? (!exactImagesOnly && middle?.topic
     ? pickPhotoForTopics(photos, index, [middle.topic], ["produto"], artKey)
     : undefined);
+  const slideImageTopic = exactImagesOnly ? undefined : middle?.topic;
 
   // Identidade visual estável por grupo: mesmo treatment + mesmo acento.
   const accentPool = treatment === 1 ? DARK_ACCENT_INDEXES : ACCENT_STYLES.map((_, i) => i);
@@ -152,7 +154,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos
                 </h2>
                 <p className="max-w-xl text-base leading-relaxed text-background/75 md:text-lg">{middle.body}</p>
                 <div className="[&_img]:border-background/20">
-                  <SlideImage topic={middle.topic} photo={slidePhoto} dark />
+                  <SlideImage topic={slideImageTopic} photo={slidePhoto} dark />
                 </div>
               </>
             )}
@@ -205,7 +207,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos
                   {renderAccent(middle.heading, accentVariant)}
                 </h2>
                 <p className="text-base leading-relaxed text-muted-foreground md:text-lg">{middle.body}</p>
-                <SlideImage topic={middle.topic} photo={slidePhoto} />
+                <SlideImage topic={slideImageTopic} photo={slidePhoto} />
               </>
             )}
             {isCta && (
@@ -259,7 +261,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos
                   {renderAccent(middle.heading, accentVariant)}
                 </h2>
                 <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">{middle.body}</p>
-                <SlideImage topic={middle.topic} photo={slidePhoto} />
+                <SlideImage topic={slideImageTopic} photo={slidePhoto} />
               </>
             )}
             {isCta && (
@@ -345,7 +347,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos
                     {label}
                   </span>
                   <p className="mt-6 text-sm leading-relaxed opacity-80 md:text-base">{body}</p>
-                   {middle && <SlideImage topic={middle.topic} photo={slidePhoto} dark={inverted} compact />}
+                   {middle && <SlideImage topic={slideImageTopic} photo={slidePhoto} dark={inverted} compact />}
                   {isCta && (
                     <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.24em] opacity-70">{BRAND_NAME}</p>
                   )}
@@ -402,7 +404,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos
                 {renderAccent(middle.heading, accentVariant)}
               </h2>
               <p className="mt-5 max-w-md text-sm leading-relaxed text-background/75 md:text-base">{middle.body}</p>
-              <SlideImage topic={middle.topic} photo={slidePhoto} dark compact />
+              <SlideImage topic={slideImageTopic} photo={slidePhoto} dark compact />
             </motion.div>
           )}
 
@@ -492,7 +494,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos
                   {post.support}
                 </p>
               )}
-              {middle && <SlideImage topic={middle.topic} photo={slidePhoto} dark={dark} compact />}
+              {middle && <SlideImage topic={slideImageTopic} photo={slidePhoto} dark={dark} compact />}
             </div>
 
             <p className="text-xs md:text-sm" style={{ color: meta }}>
@@ -549,7 +551,7 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos
                 {renderAccent(middle.heading, accentVariant)}
               </h2>
               <p className="max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">{middle.body}</p>
-              <SlideImage topic={middle.topic} photo={slidePhoto} />
+              <SlideImage topic={slideImageTopic} photo={slidePhoto} />
             </>
           )}
           {isCta && (

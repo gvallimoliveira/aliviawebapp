@@ -77,6 +77,11 @@ export type StudioCarousel = {
   /** Headline da capa. */
   title: string;
   coverSub: string;
+  /**
+   * `explicit-only` proíbe aproximações semânticas: cada slide só pode usar
+   * uma imagem declarada em `photoIds`. Sem essa imagem, o slide fica sem foto.
+   */
+  imagePolicy?: "semantic" | "explicit-only";
   /** 1-4 slides de miolo; o total de artes exportadas é slides + capa + CTA. */
   slides: { heading: string; body: string; topic?: TopicId; photoIds?: string[] }[];
   cta: { title: string; sub: string };

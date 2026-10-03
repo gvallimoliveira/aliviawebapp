@@ -138,7 +138,6 @@ const OFFICIAL_PHOTOS_BY_ID: Partial<Record<AliviaDifferentialId, string[]>> = {
     "official:alivia:evidence-library",
     "official:alivia:clinical-agent-case",
   ],
-  "diferencial-red-flags": ["official:alivia:express-reassessment-tools"],
   "diferencial-relatorios": [
     "official:alivia:record-pain-map",
     "official:alivia:record-questionnaires",
@@ -250,6 +249,7 @@ export const ecosystemCarousel = (ecosystem: StudioEcosystem): StudioCarousel =>
   kicker: ecosystem.kicker,
   title: ecosystem.title,
   coverSub: `${ecosystem.promise} Para ${ecosystem.audience}.`,
+  imagePolicy: "explicit-only",
   slides: ecosystem.steps.map((step, index) => ({
     heading: `${String(index + 1).padStart(2, "0")} · ${step.label}`,
     body: step.body,

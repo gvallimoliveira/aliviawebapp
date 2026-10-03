@@ -45,7 +45,7 @@ describe("Ecossistema de soluções Aliv.iA", () => {
     expect(security.steps.find((step) => step.id === "diferencial-avaliacao-externa-ia")?.photoIds)
       .toEqual(["official:alivia:external-upload"]);
     expect(security.steps.find((step) => step.id === "diferencial-red-flags")?.photoIds)
-      .toEqual(["official:alivia:express-reassessment-tools"]);
+      .toBeUndefined();
     expect(buildAliviaEcosystem("recem-formado").steps.find((step) => step.id === "diferencial-agente-clinico")?.photoIds)
       .toEqual([
         "official:alivia:clinical-agent",
@@ -67,6 +67,7 @@ describe("Ecossistema de soluções Aliv.iA", () => {
 
   it("leva o vínculo de imagem para o slide correspondente do carrossel", () => {
     const carousel = withAliviaEcosystem(WORLDS.pro, "seguranca-clinica").carousels[0];
+    expect(carousel.imagePolicy).toBe("explicit-only");
     expect(carousel.slides.find((slide) => slide.topic === "external-upload")?.photoIds)
       .toEqual(["official:alivia:external-upload"]);
   });
