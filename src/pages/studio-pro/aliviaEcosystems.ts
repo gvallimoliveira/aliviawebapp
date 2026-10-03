@@ -1,5 +1,4 @@
 import type { StudioCarousel, StudioEcosystem } from "@/pages/studio/content/types";
-import type { TopicId } from "@/pages/studio/topics";
 import { ALIVIA_DIFFERENTIALS, type AliviaDifferentialId } from "./aliviaDifferentials";
 import { officialPhotoIdsForDifferential, topicForDifferential } from "./aliviaOfficialMedia";
 
@@ -215,5 +214,6 @@ export const withAliviaEcosystem = <T extends { ecosystems?: StudioEcosystem[]; 
   selectedIds?: string[],
 ): T => {
   const ecosystems = buildAliviaEcosystemSet(recipeId, selectedIds);
-  return { ...content, ecosystems, carousels: [ecosystemCarousel(ecosystems[0])] };
+  const officialPhotoIds = [...new Set(ecosystems[0].steps.flatMap((step) => step.photoIds ?? []))];
+  return { ...content, officialPhotoIds, ecosystems, carousels: [ecosystemCarousel(ecosystems[0])] };
 };

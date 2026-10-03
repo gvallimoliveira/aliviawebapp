@@ -1,5 +1,11 @@
 # Roadmap
 
+## Acoplamento global entre imagem e texto (03/10)
+- [x] Centralizar os vínculos entre diferenciais Aliv.iA, tópicos e prints oficiais.
+- [x] Aplicar a mesma lista fechada em artes individuais, ecossistemas e carrosséis.
+- [x] Manter a troca manual global e ordenar o acervo pelo nexo da arte.
+- [ ] Validar testes, compilação e geração real no Studio.
+
 ## Acoplamento cirúrgico de imagens nos ecossistemas (03/10)
 - [x] Impedir fallback por afinidade em slides de ecossistema sem print oficial vinculado.
 - [x] Remover o vínculo indevido entre red flags e a tela de reavaliação expressa.

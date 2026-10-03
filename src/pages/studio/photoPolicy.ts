@@ -41,6 +41,11 @@ export const curatePhotosForContent = (
   return photos.filter((photo) => !isOfficialPhoto(photo) || allowed.has(photo.id));
 };
 
+export const officialPhotoIsAllowed = (
+  photo: StudioPhoto,
+  content: Pick<WorldContent, "officialPhotoIds">,
+): boolean => !isOfficialPhoto(photo) || (content.officialPhotoIds ?? []).includes(photo.id);
+
 /** Ordena a troca manual pelo assunto atual sem esconder o restante do acervo. */
 export const rankPhotosForSwap = (
   photos: readonly StudioPhoto[] | undefined,
