@@ -29,8 +29,11 @@ describe("imagem inserida em arte textual", () => {
     applyInsertedArtImage(root, insertion("composition"));
     const layer = root.querySelector<HTMLElement>("[data-studio-inserted-image]");
     expect(layer?.style.zIndex).toBe("30");
+    expect(layer?.style.pointerEvents).toBe("none");
     expect(layer?.querySelector("img")?.getAttribute("data-studio-export-image-layer")).toBe("foreground");
-    expect(layer?.querySelector("[data-studio-no-export='1']")).not.toBeNull();
+    expect(layer?.querySelectorAll("[data-studio-no-export='1']")).toHaveLength(5);
+    expect(layer?.querySelector("[data-studio-image-move-handle='1']")).not.toBeNull();
+    expect(layer?.querySelectorAll("[data-studio-image-resize-handle]")).toHaveLength(4);
   });
 
   it("remove a inserção anterior ao trocar ou apagar", () => {

@@ -9,7 +9,7 @@
 import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Layers3, Upload } from "lucide-react";
+import { ImageIcon, Layers3, Move, Upload } from "lucide-react";
 import type { PhotoFraming } from "./photos";
 
 export type SwapPhoto = PhotoFraming & { src: string; label?: string };
@@ -92,6 +92,10 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
     img.style.filter = "brightness(0.42) saturate(0.82)";
     node.prepend(layer);
   } else {
+    const frameHeight = () => {
+      const rect = node.getBoundingClientRect();
+      return rect.height ? insertion.width * (rect.width / rect.height) : insertion.width;
+    };
     const paint = () => {
       layer.style.left = `${insertion.x * 100}%`;
       layer.style.top = `${insertion.y * 100}%`;
@@ -102,47 +106,107 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
     };
     paint();
 
-    const handle = document.createElement("button");
-    handle.type = "button";
-    handle.dataset.studioNoExport = "1";
-    handle.setAttribute("aria-label", "Redimensionar imagem");
-    handle.textContent = "↘";
-    Object.assign(handle.style, {
-      position: "absolute", right: "4px", bottom: "4px", width: "28px", height: "28px",
-      borderRadius: "999px", border: "1px solid currentColor", background: "var(--background)",
-      color: "var(--foreground)", cursor: "nwse-resize", touchAction: "none", zIndex: "2",
-    });
-    layer.appendChild(handle);
+    // A superfície da foto nunca captura o gesto: a página continua rolando.
+    // Mover e redimensionar acontecem somente pelos cinco pontos visíveis.
+    layer.style.pointerEvents = "none";
+    layer.style.outline = "1px dashed rgba(255,255,255,0.9)";
+    layer.style.outlineOffset = "2px";
+    img.style.pointerEvents = "none";
 
-    let action: { kind: "move" | "resize"; px: number; py: number; x: number; y: number; width: number } | null = null;
-    const begin = (event: PointerEvent, kind: "move" | "resize") => {
+    type ResizeCorner = "nw" | "ne" | "sw" | "se";
+    let action: {
+      kind: "move" | "resize";
+      corner?: ResizeCorner;
+      px: number;
+      py: number;
+      x: number;
+      y: number;
+      width: number;
+    } | null = null;
+    const begin = (event: PointerEvent, kind: "move" | "resize", corner?: ResizeCorner) => {
       event.preventDefault();
       event.stopPropagation();
-      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-      action = { kind, px: event.clientX, py: event.clientY, x: insertion.x, y: insertion.y, width: insertion.width };
+      const target = event.currentTarget as HTMLElement;
+      target.setPointerCapture(event.pointerId);
+      target.style.cursor = kind === "move" ? "grabbing" : target.style.cursor;
+      action = { kind, corner, px: event.clientX, py: event.clientY, x: insertion.x, y: insertion.y, width: insertion.width };
     };
-    layer.addEventListener("pointerdown", (event) => {
-      if (event.target === handle) return;
-      begin(event, "move");
-    });
-    handle.addEventListener("pointerdown", (event) => begin(event, "resize"));
-    layer.addEventListener("pointermove", (event) => {
+
+    const drag = (event: PointerEvent) => {
       if (!action) return;
+      event.preventDefault();
       const rect = node.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       if (action.kind === "move") {
         insertion.x = Math.max(0, Math.min(1 - insertion.width, action.x + (event.clientX - action.px) / rect.width));
-        insertion.y = Math.max(0, Math.min(1 - insertion.width, action.y + (event.clientY - action.py) / rect.height));
+        insertion.y = Math.max(0, Math.min(1 - frameHeight(), action.y + (event.clientY - action.py) / rect.height));
       } else {
-        insertion.width = Math.max(0.18, Math.min(0.9, action.width + (event.clientX - action.px) / rect.width));
-        insertion.x = Math.min(insertion.x, 1 - insertion.width);
-        insertion.y = Math.min(insertion.y, 1 - insertion.width);
+        const corner = action.corner ?? "se";
+        const directionX = corner.endsWith("e") ? 1 : -1;
+        const directionY = corner.startsWith("s") ? 1 : -1;
+        const dx = ((event.clientX - action.px) / rect.width) * directionX;
+        const dy = ((event.clientY - action.py) / rect.width) * directionY;
+        const delta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+        insertion.width = Math.max(0.18, Math.min(0.9, action.width + delta));
+        if (corner.endsWith("w")) insertion.x = action.x + action.width - insertion.width;
+        if (corner.startsWith("n")) insertion.y = action.y + (action.width - insertion.width) * (rect.width / rect.height);
+        insertion.x = Math.max(0, Math.min(1 - insertion.width, insertion.x));
+        insertion.y = Math.max(0, Math.min(1 - frameHeight(), insertion.y));
       }
       paint();
+    };
+    const end = (event: PointerEvent) => {
+      action = null;
+      const target = event.currentTarget as HTMLElement;
+      if (target.hasPointerCapture(event.pointerId)) target.releasePointerCapture(event.pointerId);
+      if (target.dataset.studioImageMoveHandle === "1") target.style.cursor = "grab";
+    };
+    const wire = (control: HTMLButtonElement) => {
+      control.addEventListener("pointermove", drag);
+      control.addEventListener("pointerup", end);
+      control.addEventListener("pointercancel", end);
+      layer.appendChild(control);
+    };
+    const baseControl = () => {
+      const control = document.createElement("button");
+      control.type = "button";
+      control.dataset.studioNoExport = "1";
+      Object.assign(control.style, {
+        position: "absolute", width: "32px", height: "32px", borderRadius: "999px",
+        border: "2px solid rgba(255,255,255,0.95)", background: "rgba(17,17,17,0.88)",
+        color: "#fff", touchAction: "none", zIndex: "2", pointerEvents: "auto",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.38)",
+      });
+      return control;
+    };
+
+    const moveHandle = baseControl();
+    moveHandle.dataset.studioImageMoveHandle = "1";
+    moveHandle.setAttribute("aria-label", "Mover imagem");
+    moveHandle.title = "Arraste este ponto para mover a imagem";
+    moveHandle.innerHTML = '<span aria-hidden="true" style="font-size:16px;line-height:1">✥</span>';
+    Object.assign(moveHandle.style, { left: "50%", top: "50%", transform: "translate(-50%, -50%)", cursor: "grab" });
+    moveHandle.addEventListener("pointerdown", (event) => begin(event, "move"));
+    wire(moveHandle);
+
+    (["nw", "ne", "sw", "se"] as ResizeCorner[]).forEach((corner) => {
+      const handle = baseControl();
+      handle.dataset.studioImageResizeHandle = corner;
+      handle.setAttribute("aria-label", `Redimensionar imagem pelo canto ${corner}`);
+      handle.title = "Arraste para aumentar ou reduzir";
+      handle.textContent = "";
+      const vertical = corner.startsWith("n") ? "top" : "bottom";
+      const horizontal = corner.endsWith("w") ? "left" : "right";
+      Object.assign(handle.style, {
+        // Inteiro dentro do recorte da foto: no celular o centro do toque não
+        // pode cair na área cortada, senão o navegador ignora o arraste.
+        [vertical]: "3px", [horizontal]: "3px", width: "32px", height: "32px",
+        cursor: corner === "nw" || corner === "se" ? "nwse-resize" : "nesw-resize",
+      });
+      handle.addEventListener("pointerdown", (event) => begin(event, "resize", corner));
+      wire(handle);
     });
-    const end = () => { action = null; };
-    layer.addEventListener("pointerup", end);
-    layer.addEventListener("pointercancel", end);
     node.appendChild(layer);
   }
 };
