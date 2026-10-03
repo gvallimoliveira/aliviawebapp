@@ -1,15 +1,19 @@
+import type { Naturalness } from "./rewrite";
 export type VariationLevel = "low" | "medium" | "high";
 
 export type VariationProfile = {
   headlines: VariationLevel;
   support: VariationLevel;
   actions: VariationLevel;
+  /** Quanto de fórmula retórica o lote aceita. Padrão: natural. */
+  naturalness?: Naturalness;
 };
 
 export const DEFAULT_VARIATION_PROFILE: VariationProfile = {
   headlines: "medium",
   support: "medium",
   actions: "medium",
+  naturalness: "natural",
 };
 
 export const VARIATION_LEVELS: { id: VariationLevel; label: string; intensity: number }[] = [
@@ -31,5 +35,7 @@ export const normalizeVariationProfile = (value: unknown): VariationProfile => {
     headlines: isVariationLevel(candidate.headlines) ? candidate.headlines : "medium",
     support: isVariationLevel(candidate.support) ? candidate.support : "medium",
     actions: isVariationLevel(candidate.actions) ? candidate.actions : "medium",
+    naturalness:
+      candidate.naturalness === "balanced" || candidate.naturalness === "expressive" ? candidate.naturalness : "natural",
   };
 };

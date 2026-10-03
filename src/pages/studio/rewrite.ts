@@ -140,9 +140,10 @@ const isSentence = (text: string) => {
   return words(t).length >= 4;
 };
 
-const applyConnectors = (text: string, rng: Rng) => {
+const applyConnectors = (text: string, rng: Rng, naturalness: Naturalness = "expressive") => {
   let out = text;
-  CONNECTORS.forEach(([re, list], idx) => {
+  CONNECTORS.forEach(([re, all], idx) => {
+    const list = naturalness === "natural" ? all.filter((c) => !STIFF_CONNECTORS.has(c)) : all;
     out = out.replace(re, (match) => {
       const pick = list[createRng(`${rng.int(9999)}:conn:${idx}:${match}`).int(list.length)];
       if (!pick || pick.toLowerCase() === match.toLowerCase()) return match;
@@ -152,21 +153,69 @@ const applyConnectors = (text: string, rng: Rng) => {
   return out;
 };
 
-const restructure = (sentence: string, rng: Rng): string => {
+const restructure = (sentence: string, rng: Rng, naturalness: Naturalness = "expressive", budget?: FormulaBudget): string => {
   const core = noDot(sentence);
   const candidates = PATTERNS.map((p) => ({ p, m: core.match(p.re) })).filter((c) => c.m);
   if (!candidates.length) return sentence;
   const chosen = candidates[rng.int(candidates.length)];
-  const out = chosen.p.outs[rng.int(chosen.p.outs.length)](chosen.m as RegExpMatchArray);
-  return clean(out);
+  let outs = chosen.p.outs.map((fn, i) => ({ fn, i }));
+  if (naturalness === "natural") outs = outs.filter(({ i }) => !(STIFF_OUTS[chosen.p.id] ?? []).includes(i));
+  if (!outs.length) return sentence;
+  const pick = outs[rng.int(outs.length)];
+  if ((ANTITHESIS_OUTS[chosen.p.id] ?? []).includes(pick.i) && !spend(budget, "antithesis")) return sentence;
+  return clean(pick.fn(chosen.m as RegExpMatchArray));
 };
 
-const frame = (sentence: string, register: VoiceRegister, rng: Rng): string => {
+/** Naturalidade: quanto de "fórmula" (prefixos, bordões, perguntas, antíteses) é permitido. */
+export type Naturalness = "natural" | "balanced" | "expressive";
+
+/** Orçamento de fórmulas compartilhado por um lote inteiro (determinístico pela ordem). */
+export type FormulaBudget = { prefix: number; suffix: number; question: number; antithesis: number };
+
+export const budgetFor = (n: Naturalness): FormulaBudget =>
+  n === "natural"
+    ? { prefix: 1, suffix: 1, question: 0, antithesis: 1 }
+    : n === "balanced"
+      ? { prefix: 3, suffix: 2, question: 1, antithesis: 2 }
+      : { prefix: 99, suffix: 99, question: 99, antithesis: 99 };
+
+const spend = (budget: FormulaBudget | undefined, key: keyof FormulaBudget) => {
+  if (!budget) return true;
+  if (budget[key] <= 0) return false;
+  budget[key] -= 1;
+  return true;
+};
+
+/** Saídas com cara de fórmula; em modo natural só ficam as construções neutras. */
+const STIFF_OUTS: Record<string, number[]> = {
+  gera: [1, 2],
+  "nao-e-e": [0, 1, 2],
+  transforma: [2],
+  "e-adjetivo": [0, 1, 2],
+  "duas-oracoes": [],
+  subordinada: [],
+};
+const ANTITHESIS_OUTS: Record<string, number[]> = { gera: [1], "nao-e-e": [0, 1, 2], "e-adjetivo": [2] };
+const STIFF_CONNECTORS = new Set(["invariavelmente", "a fim de", "igualmente", "do mesmo jeito", "e ainda assim", "uma vez que"]);
+
+const ALL_PREFIXES = Array.from(new Set(Object.values(PREFIXES).flat()));
+const PREFIX_RE = new RegExp(`^(${ALL_PREFIXES.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\s+`, "i");
+
+/** Remove bordão de abertura ("Na prática:", "Olha só:") quando o lote já gastou a cota. */
+export const tameFormulas = (text: string, budget?: FormulaBudget): string => {
+  if (!budget || !text) return text;
+  const m = text.match(PREFIX_RE);
+  if (m && !spend(budget, "prefix")) return upperFirst(text.slice(m[0].length));
+  return text;
+};
+
+const frame = (sentence: string, register: VoiceRegister, rng: Rng, naturalness: Naturalness, budget?: FormulaBudget): string => {
   const core = noDot(sentence);
   const roll = rng.int(10);
-  if (roll < 3) return `${PREFIXES[register][rng.int(PREFIXES[register].length)]} ${lower(core)}.`;
-  if (roll < 5 && core.length <= 80) return `${core}.${SUFFIXES[register][rng.int(SUFFIXES[register].length)]}`;
-  if (roll < 6 && core.length <= 70 && !/[—:–]/.test(core)) return QUESTIONS[rng.int(QUESTIONS.length)](core);
+  const scale = naturalness === "natural" ? 0.34 : naturalness === "balanced" ? 0.67 : 1;
+  if (roll < 3 * scale && spend(budget, "prefix")) return `${PREFIXES[register][rng.int(PREFIXES[register].length)]} ${lower(core)}.`;
+  if (roll >= 3 && roll < 3 + 2 * scale && core.length <= 80 && spend(budget, "suffix")) return `${core}.${SUFFIXES[register][rng.int(SUFFIXES[register].length)]}`;
+  if (naturalness !== "natural" && roll === 5 && core.length <= 70 && !/[—:–]/.test(core) && spend(budget, "question")) return QUESTIONS[rng.int(QUESTIONS.length)](core);
   return sentence;
 };
 
@@ -175,6 +224,8 @@ export type RewriteOptions = {
   seed: string;
   intensity?: number;
   forbidden?: string[];
+  naturalness?: Naturalness;
+  budget?: FormulaBudget;
 };
 
 /**
@@ -183,9 +234,10 @@ export type RewriteOptions = {
  */
 export const rephrase = (text: string, options: RewriteOptions): string => {
   if (!text || !text.trim()) return text;
-  const { register, seed, intensity = 0.58, forbidden = [] } = options;
+  const { register, seed, intensity = 0.58, forbidden = [], naturalness = "expressive", budget } = options;
   const mode = modeForIntensity(intensity);
 
+  text = tameFormulas(text, budget);
   const lexedRaw = applyLexicon(text, { register, seed, intensity: LEX_INTENSITY[mode], forbidden });
   // Troca de palavra que estraga a concordância é descartada na origem.
   const lexed = proofread(readsWell(lexedRaw) || !readsWell(text) ? lexedRaw : text);
@@ -197,9 +249,9 @@ export const rephrase = (text: string, options: RewriteOptions): string => {
       const sentence = clean(raw);
       if (!sentence) return "";
       const rng = createRng(`rw:${seed}:${i}:${sentence.length}`);
-      let out = applyConnectors(sentence, rng);
-      if (isSentence(out) || mode === "full") out = restructure(out, rng);
-      if (mode === "full" && isSentence(out)) out = frame(out, register, rng);
+      let out = applyConnectors(sentence, rng, naturalness);
+      if (isSentence(out) || mode === "full") out = restructure(out, rng, naturalness, budget);
+      if (mode === "full" && isSentence(out)) out = frame(out, register, rng, naturalness, budget);
       return clean(out);
     })
     .filter(Boolean)
