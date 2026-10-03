@@ -3,7 +3,7 @@
 ## Acoplamento cirúrgico de imagens nos ecossistemas (03/10)
 - [x] Impedir fallback por afinidade em slides de ecossistema sem print oficial vinculado.
 - [x] Remover o vínculo indevido entre red flags e a tela de reavaliação expressa.
-- [ ] Validar testes, compilação e prévia sem erros.
+- [x] Validar testes, compilação e prévia sem erros.
 
 ## Ampliação do acervo oficial Aliv.iA (30/09)
 - [x] Adicionar oito novos prints oficiais sem consumir a cota de uploads.
