@@ -202,6 +202,23 @@ describe("sub-nichos no motor criativo", () => {
     expect(JSON.stringify(external)).not.toMatch(/diagnóstico definitivo|salva automaticamente|sem revisão/i);
   });
 
+  it("reaproveita a jornada das landings sem confundir orientação com diagnóstico", () => {
+    const basic = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-paciente-autoavaliacao");
+    const premium = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-paciente-premium");
+    const report = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-paciente-relatorio");
+    const plan = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-paciente-plano");
+    const professional = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-paciente-fisioterapeuta");
+    const journey = JSON.stringify([basic, premium, report, plan, professional]);
+
+    expect(basic?.proof).toContain("Anamnese preenchida pela própria pessoa");
+    expect(premium?.proof).toContain("Dados da autoavaliação básica transferidos automaticamente");
+    expect(JSON.stringify(premium)).toMatch(/KOOS.*SPADI.*ODI.*VISA-A/);
+    expect(JSON.stringify(report)).toMatch(/mapa corporal.*sinais de alerta.*mecanismo provável/i);
+    expect(JSON.stringify(plan)).toMatch(/vídeo.*séries.*repetições.*frequência/i);
+    expect(JSON.stringify(professional)).toMatch(/consulta presencial/i);
+    expect(journey).not.toMatch(/diagnóstico online|diagnóstico médico|substitui a consulta/i);
+  });
+
   it("isola diferenciais do repertório genérico da marca", () => {
     const audience = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-avaliacao-externa-ia");
     const dna = buildBrandDna({

@@ -116,6 +116,22 @@ describe("Ecossistema de soluções Aliv.iA", () => {
     expect(ecosystem.closing).toMatch(/planejada.*percebida/i);
   });
 
+  it("leva a jornada da landing ao ecossistema do paciente sem criar outra cadeia", () => {
+    const journey = ALIVIA_ECOSYSTEM_RECIPES.find((recipe) => recipe.id === "jornada-do-paciente");
+    const ecosystem = buildAliviaEcosystem("jornada-do-paciente");
+
+    expect(ALIVIA_ECOSYSTEM_RECIPES).toHaveLength(9);
+    expect(ecosystem.steps.map((step) => step.id)).toEqual([
+      "diferencial-paciente-autoavaliacao",
+      "diferencial-paciente-premium",
+      "diferencial-paciente-relatorio",
+      "diferencial-paciente-plano",
+      "diferencial-paciente-fisioterapeuta",
+    ]);
+    expect(JSON.stringify(journey)).toMatch(/sem recomeçar|sem retrabalho/i);
+    expect(JSON.stringify(journey)).not.toMatch(/diagnóstico online|cura|resolver a dor/i);
+  });
+
   it("entrega seis artes integradas e um carrossel indivisível", () => {
     const content = withAliviaEcosystem(WORLDS.pro, "recem-formado");
     const blocks = composePage(
