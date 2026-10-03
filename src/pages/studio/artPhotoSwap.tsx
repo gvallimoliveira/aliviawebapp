@@ -76,6 +76,9 @@ export const ArtPhotoSwapDialog = ({ open, onOpenChange, slotCount, photos, allo
         <DialogHeader>
           <DialogTitle>Trocar imagem da arte</DialogTitle>
         </DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          As imagens mais relacionadas ao assunto aparecem primeiro. Sua escolha manual substitui a curadoria automática nesta arte.
+        </p>
         {slotCount > 1 && (
           <div className="flex flex-wrap gap-1.5">
             {Array.from({ length: slotCount }, (_, i) => (

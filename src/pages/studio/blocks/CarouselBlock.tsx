@@ -13,6 +13,7 @@ import { carouselTweetCopy } from "../typographyGuards";
 import { pickPhotoForTopics } from "../photoMeaning";
 import type { StudioPhoto } from "../photos";
 import PhotoFrame from "./PhotoFrame";
+import { carouselSlide, pickExplicitPhoto } from "../photoPolicy";
 
 /**
  * Carousel block — sequência de artes numeradas (capa → miolo → CTA final)
@@ -96,13 +97,8 @@ const CarouselBlock = ({ content, rng, treatment, format, persona, slide, photos
   const total = slide?.total ?? carousel.slides.length + 2;
   const isCover = index === 0;
   const isCta = index === total - 1;
-  const middle = !isCover && !isCta ? carousel.slides[index - 1] : undefined;
-  const explicitPhotos = middle?.photoIds
-    ?.map((photoId) => photos?.find((photo) => photo.id === photoId))
-    .filter((photo): photo is StudioPhoto => Boolean(photo));
-  const explicitPhoto = explicitPhotos?.length
-    ? explicitPhotos[(index + (slide?.script ?? group)) % explicitPhotos.length]
-    : undefined;
+  const middle = !isCover && !isCta ? carouselSlide(carousel, index) : undefined;
+  const explicitPhoto = pickExplicitPhoto(middle?.photoIds, photos, index + (slide?.script ?? group));
   const exactImagesOnly = carousel.imagePolicy === "explicit-only";
   const slidePhoto = explicitPhoto ?? (!exactImagesOnly && middle?.topic
     ? pickPhotoForTopics(photos, index, [middle.topic], ["produto"], artKey)
