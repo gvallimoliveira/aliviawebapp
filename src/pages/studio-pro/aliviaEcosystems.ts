@@ -1,6 +1,6 @@
 import type { StudioCarousel, StudioEcosystem } from "@/pages/studio/content/types";
-import type { TopicId } from "@/pages/studio/topics";
 import { ALIVIA_DIFFERENTIALS, type AliviaDifferentialId } from "./aliviaDifferentials";
+import { officialPhotoIdsForDifferential, topicForDifferential } from "./aliviaOfficialMedia";
 
 export type AliviaEcosystemRecipeId =
   | "rotina-clinica"
@@ -99,58 +99,6 @@ export const ALIVIA_ECOSYSTEM_RECIPES: Recipe[] = [
   { id: "jornada-do-paciente", label: "Da dor ao cuidado certo (paciente)", audience: "pessoa com dor que quer entender o que sente e saber o que fazer", title: "Da primeira dúvida sobre a sua dor até o cuidado certo", promise: "O Aliv.iA acompanha você: entende a dor, explica o que pode estar acontecendo, orienta o tratamento e conecta você a um fisioterapeuta.", ids: ["diferencial-paciente-autoavaliacao", "diferencial-paciente-premium", "diferencial-paciente-relatorio", "diferencial-paciente-plano", "diferencial-paciente-fisioterapeuta"], closing: "Cada passo usa o que você já respondeu, e sua dor nunca precisa ser explicada do zero.", cta: "Começar pela autoavaliação gratuita", problem: "Com dor, é comum pular entre buscas, vídeos e opiniões sem entender o que está acontecendo.", gain: "Você entende a dor, recebe um relatório, segue um plano guiado e chega ao fisioterapeuta com tudo organizado.", loss: "Sem um caminho, a dor fica sem direção e cada tentativa aleatória adia a melhora." },
 ];
 
-const TOPIC_BY_ID: Partial<Record<AliviaDifferentialId, TopicId>> = {
-  "diferencial-pre-avaliacao": "assessment-link",
-  "diferencial-avaliacao-manual": "steps-method",
-  "diferencial-reavaliacao": "express-reassessment",
-  "diferencial-agente-clinico": "clinical-agent",
-  "diferencial-evolucao-voz": "voice-notes",
-  "diferencial-hep-video": "hep",
-  "diferencial-relatorios": "report",
-  "diferencial-red-flags": "red-flags",
-  "diferencial-avaliacao-externa-ia": "external-upload",
-  "diferencial-insights": "clinical-impression",
-  "diferencial-clinica-agenda": "agenda",
-  "diferencial-clinica-padronizacao": "shared-record",
-};
-
-/**
- * Prints oficiais ligados à funcionalidade, não apenas a palavras parecidas.
- * A avaliação manual tem vários momentos reais; os tratamentos alternam entre
- * eles sem permitir que uma tela seja usada para ilustrar outra função.
- */
-const OFFICIAL_PHOTOS_BY_ID: Partial<Record<AliviaDifferentialId, string[]>> = {
-  "diferencial-avaliacao-externa-ia": ["official:alivia:external-upload"],
-  "diferencial-reavaliacao": [
-    "official:alivia:express-reassessment-steps",
-    "official:alivia:express-reassessment-tools",
-  ],
-  "diferencial-avaliacao-manual": [
-    "official:alivia:manual-anamnesis",
-    "official:alivia:manual-pain-map",
-    "official:alivia:manual-pain-mechanism",
-    "official:alivia:manual-clinical-notes",
-    "official:alivia:manual-mobility",
-    "official:alivia:manual-dynamometry",
-  ],
-  "diferencial-agente-clinico": [
-    "official:alivia:clinical-agent",
-    "official:alivia:evidence-library",
-    "official:alivia:clinical-agent-case",
-  ],
-  "diferencial-relatorios": [
-    "official:alivia:record-pain-map",
-    "official:alivia:record-questionnaires",
-    "official:alivia:record-health-conditions",
-  ],
-  "diferencial-insights": [
-    "official:alivia:insights",
-    "official:alivia:professional-dashboard",
-  ],
-  "diferencial-clinica-agenda": ["official:alivia:agenda"],
-  "diferencial-clinica-padronizacao": ["official:alivia:professional-dashboard"],
-};
-
 export const ecosystemRecipe = (id?: string) =>
   ALIVIA_ECOSYSTEM_RECIPES.find((recipe) => recipe.id === id) ?? ALIVIA_ECOSYSTEM_RECIPES[0];
 
@@ -179,12 +127,13 @@ export const buildAliviaEcosystem = (recipeId?: string, selectedIds?: string[]):
     title: recipe.title,
     promise: recipe.promise,
     audience: recipe.audience,
+    imagePolicy: "explicit-only",
     steps: stages.map((item, index) => ({
       id: item.id,
       label: item.keyword ?? item.label,
       body: `${transition(index, stages.length)}: ${String(item.description ?? "").replace(/^./, (letter) => letter.toLowerCase())}`,
-      topic: TOPIC_BY_ID[item.id as AliviaDifferentialId],
-      photoIds: OFFICIAL_PHOTOS_BY_ID[item.id as AliviaDifferentialId],
+      topic: topicForDifferential(item.id as AliviaDifferentialId),
+      photoIds: officialPhotoIdsForDifferential(item.id as AliviaDifferentialId),
     })),
     closing: recipe.closing,
     cta: recipe.cta,
@@ -265,5 +214,6 @@ export const withAliviaEcosystem = <T extends { ecosystems?: StudioEcosystem[]; 
   selectedIds?: string[],
 ): T => {
   const ecosystems = buildAliviaEcosystemSet(recipeId, selectedIds);
-  return { ...content, ecosystems, carousels: [ecosystemCarousel(ecosystems[0])] };
+  const officialPhotoIds = [...new Set(ecosystems[0].steps.flatMap((step) => step.photoIds ?? []))];
+  return { ...content, officialPhotoIds, ecosystems, carousels: [ecosystemCarousel(ecosystems[0])] };
 };

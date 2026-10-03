@@ -1,5 +1,6 @@
 import type { TopicId } from "../topics";
 import type { StudioHook } from "../hooks";
+import type { ImagePolicy } from "../photoPolicy";
 
 export type WorldId = "pro" | "academico" | "paciente" | "clinica";
 
@@ -81,7 +82,7 @@ export type StudioCarousel = {
    * `explicit-only` proíbe aproximações semânticas: cada slide só pode usar
    * uma imagem declarada em `photoIds`. Sem essa imagem, o slide fica sem foto.
    */
-  imagePolicy?: "semantic" | "explicit-only";
+  imagePolicy?: ImagePolicy;
   /** 1-4 slides de miolo; o total de artes exportadas é slides + capa + CTA. */
   slides: { heading: string; body: string; topic?: TopicId; photoIds?: string[] }[];
   cta: { title: string; sub: string };
@@ -98,6 +99,8 @@ export type StudioEcosystem = {
   title: string;
   promise: string;
   audience: string;
+  /** Ecossistemas Aliv.iA só aceitam o print explicitamente ligado à etapa. */
+  imagePolicy?: ImagePolicy;
   steps: { id: string; label: string; body: string; topic?: TopicId; photoIds?: string[] }[];
   closing: string;
   cta: string;
@@ -107,6 +110,8 @@ export type StudioEcosystem = {
 export type WorldContent = {
   id: WorldId;
   label: string;
+  /** Lista fechada de prints oficiais permitidos neste pacote editorial. */
+  officialPhotoIds?: string[];
   kickers: string[];
   /** Headline em duas partes: destaque + complemento */
   headlines: { strong: string; rest: string }[];

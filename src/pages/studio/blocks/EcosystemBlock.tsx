@@ -3,6 +3,7 @@ import { BRAND_NAME } from "../brand";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
 import PhotoFrame from "./PhotoFrame";
+import { pickExplicitPhoto } from "../photoPolicy";
 
 /** Uma cadeia de 3–5 funcionalidades em um único quadro, sem virar lista solta. */
 const EcosystemBlock = ({ content, treatment, format, persona, photos }: BlockProps) => {
@@ -12,14 +13,9 @@ const EcosystemBlock = ({ content, treatment, format, persona, photos }: BlockPr
   const dark = treatment % 2 === 1;
   const surface = dark ? "bg-foreground text-background" : personaSurface(persona, treatment);
   const layout = treatment % 3;
-  const illustratedSteps = ecosystem.steps.filter((step) =>
-    step.photoIds?.some((photoId) => photos?.some((photo) => photo.id === photoId)),
-  );
+  const illustratedSteps = ecosystem.steps.filter((step) => pickExplicitPhoto(step.photoIds, photos, treatment));
   const illustratedStep = illustratedSteps[treatment % Math.max(1, illustratedSteps.length)];
-  const availablePhotos = illustratedStep?.photoIds
-    ?.map((photoId) => photos?.find((photo) => photo.id === photoId))
-    .filter((photo) => Boolean(photo));
-  const featuredPhoto = availablePhotos?.[treatment % Math.max(1, availablePhotos.length)];
+  const featuredPhoto = pickExplicitPhoto(illustratedStep?.photoIds, photos, treatment);
 
   return (
     <section className={`relative flex ${sectionHeight(format)} items-center overflow-hidden ${surface}`}>

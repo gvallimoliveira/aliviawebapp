@@ -52,6 +52,7 @@ import { useStudioPhotos } from "@/pages/studio/useStudioPhotos";
 
 import { countPhotos } from "@/pages/studio/photos";
 import { isOfficialPhoto } from "@/pages/studio/officialPhotos";
+import { curatePhotosForContent, rankPhotosForSwap } from "@/pages/studio/photoPolicy";
 import StudioPhotos from "@/pages/studio/StudioPhotos";
 import { applyStudioBrandTheme } from "@/pages/studio/brand";
 import { voiceRegister } from "@/pages/studio/lexicon";
@@ -120,6 +121,7 @@ import {
   type AliviaEcosystemRecipeId,
 } from "./aliviaEcosystems";
 import { ALIVIA_DIFFERENTIALS } from "./aliviaDifferentials";
+import { officialPhotoIdsForDifferential } from "./aliviaOfficialMedia";
 import StudioProSignature from "./StudioProSignature";
 import AutoFit from "@/pages/studio/AutoFit";
 import { frameStyle } from "@/pages/studio/frame";
@@ -713,9 +715,15 @@ const StudioProCreate = ({
     // são fechados: preservamos o texto do próprio pacote e recolocamos seus
     // termos canônicos depois da variação.
     const focused = enforceEditorialFocus(varied, resolveAudience(audiences, id));
+    const officialPhotoIds = isAlivia
+      ? officialPhotoIdsForDifferential(id as Parameters<typeof officialPhotoIdsForDifferential>[0])
+      : undefined;
     return {
       id,
-      content: enforceSegmentAudienceScope(focused, id, audiences),
+      content: {
+        ...enforceSegmentAudienceScope(focused, id, audiences),
+        officialPhotoIds,
+      },
       relation: relationForSegment({
         kit: contentKit,
         audiences,
@@ -726,7 +734,7 @@ const StudioProCreate = ({
         segmentWeights: segmentMemory.weights,
       }),
     };
-  }), [ecosystemMode, selectedDifferentials, audiences, brand.id, brand.positioning, seed, angle, contentKit, variation, segmentMemory.weights, register, learning.rewrites, learning.vocabulary, protectedBrandLiterals, brandStyle]);
+  }), [ecosystemMode, selectedDifferentials, audiences, brand.id, brand.positioning, seed, angle, contentKit, variation, segmentMemory.weights, register, learning.rewrites, learning.vocabulary, protectedBrandLiterals, brandStyle, isAlivia]);
 
 
 
@@ -1183,6 +1191,11 @@ const StudioProCreate = ({
     }
     setSwapTarget({ index, slots });
   };
+  const swapPhotos = useMemo(() => {
+    if (!swapTarget) return photos;
+    const artContent = director.contentFor(swapTarget.index);
+    return rankPhotosForSwap(photos, { officialPhotoIds: artContent.officialPhotoIds });
+  }, [director, photos, swapTarget]);
   /**
    * MOVER TEXTO: modo separado da edição de palavras. Ligado, cada frase da arte
    * ganha uma alça redonda — só por ela o texto se move, para ninguém arrastar
@@ -2138,7 +2151,7 @@ const StudioProCreate = ({
                         picker={pickerForArt(`${brand.id}:${seed}:${generationKey}:${angle}:${kind}:${item.index}`)}
                         persona={persona}
                         slide={slide}
-                        photos={activePhotos}
+                        photos={curatePhotosForContent(activePhotos, director.contentFor(item.index))}
                         artKey={`${brand.id}:${seed}|${kind}:${item.index}`}
 
                       />
@@ -2592,7 +2605,7 @@ const StudioProCreate = ({
         open={swapTarget !== null}
         onOpenChange={(v) => !v && setSwapTarget(null)}
         slotCount={swapTarget?.slots ?? 0}
-        photos={photos as SwapPhoto[]}
+        photos={swapPhotos as SwapPhoto[]}
         allowDevice={canUseBrief}
         onPick={(slot, photo) => {
           if (!swapTarget) return;
