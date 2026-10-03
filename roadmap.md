@@ -1,5 +1,11 @@
 # Roadmap
 
+## Inserção livre de imagens nas artes (03/10)
+- [x] Permitir adicionar imagens também em artes originalmente textuais.
+- [x] Oferecer fundo escurecido ou composição em primeiro plano.
+- [x] Permitir arrastar e redimensionar a composição diretamente na arte.
+- [x] Validar prévia, PNG e arte salva nos dois modos.
+
 ## Acoplamento global entre imagem e texto (03/10)
 - [x] Centralizar os vínculos entre diferenciais Aliv.iA, tópicos e prints oficiais.
 - [x] Aplicar a mesma lista fechada em artes individuais, ecossistemas e carrosséis.

@@ -23,7 +23,7 @@ import {
   Type,
   ImagePlus,
 } from "lucide-react";
-import { ArtPhotoSwapDialog, applyArtPhotoSwaps, artPhotoSlots, type ArtPhotoSwaps, type SwapPhoto } from "@/pages/studio/artPhotoSwap";
+import { ArtPhotoSwapDialog, applyArtPhotoSwaps, applyInsertedArtImage, artPhotoSlots, type ArtImageInsertions, type ArtPhotoSwaps, type InsertedImageMode, type SwapPhoto } from "@/pages/studio/artPhotoSwap";
 import { Link } from "react-router-dom";
 import { PRODUCT } from "./product";
 import { toast } from "sonner";
@@ -1176,19 +1176,17 @@ const StudioProCreate = ({
   const [editing, setEditing] = useState<number | null>(null);
   /** Troca de imagem por arte (posição da foto -> imagem). Zera a cada nova versão. */
   const [photoSwaps, setPhotoSwaps] = useState<ArtPhotoSwaps>({});
+  const [imageInsertions, setImageInsertions] = useState<ArtImageInsertions>({});
   const [swapTarget, setSwapTarget] = useState<{ index: number; slots: number } | null>(null);
-  useEffect(() => setPhotoSwaps({}), [brand.id, seed]);
+  useEffect(() => { setPhotoSwaps({}); setImageInsertions({}); }, [brand.id, seed]);
   useEffect(() => {
     Object.entries(photoSwaps).forEach(([i, m]) =>
       applyArtPhotoSwaps(document.getElementById(`studio-pro-block-${i}`), m),
     );
+    blocks.forEach((_, i) => applyInsertedArtImage(artNode(i), imageInsertions[i]));
   });
   const openPhotoSwap = (index: number) => {
     const slots = artPhotoSlots(document.getElementById(`studio-pro-block-${index}`)).length;
-    if (slots === 0) {
-      toast.info("Esta arte não tem imagem. Gere um modelo com foto para trocar a imagem.");
-      return;
-    }
     setSwapTarget({ index, slots });
   };
   const swapPhotos = useMemo(() => {
@@ -2220,7 +2218,7 @@ const StudioProCreate = ({
                 )}
                 <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => openPhotoSwap(item.index)}>
                   <ImagePlus className="mr-1.5 h-3.5 w-3.5" />
-                  Trocar imagem
+                  Imagem
                 </Button>
                 {/* MOVER TEXTO: arraste só pela alça de cada frase. */}
                 {moving === item.index ? (
@@ -2374,7 +2372,7 @@ const StudioProCreate = ({
                 )}
                 <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => openPhotoSwap(first.index)}>
                   <ImagePlus className="mr-1.5 h-3.5 w-3.5" />
-                  Trocar imagem
+                  Imagem
                 </Button>
                 {/* MOVER TEXTO: arraste só pela alça de cada frase. */}
                 {moving === first.index ? (
@@ -2607,10 +2605,31 @@ const StudioProCreate = ({
         slotCount={swapTarget?.slots ?? 0}
         photos={swapPhotos as SwapPhoto[]}
         allowDevice={canUseBrief}
-        onPick={(slot, photo) => {
+        hasInsertion={swapTarget ? Boolean(imageInsertions[swapTarget.index]) : false}
+        onRemoveInsertion={() => {
           if (!swapTarget) return;
           const i = swapTarget.index;
-          setPhotoSwaps((prev) => ({ ...prev, [i]: { ...(prev[i] ?? {}), [slot]: photo } }));
+          setImageInsertions((prev) => {
+            const next = { ...prev };
+            delete next[i];
+            return next;
+          });
+          applyInsertedArtImage(artNode(i));
+          setSaved((prev) => { const next = new Set(prev); next.delete(i); return next; });
+        }}
+        onPick={(slot, photo, mode) => {
+          if (!swapTarget) return;
+          const i = swapTarget.index;
+          if (mode === "replace") {
+            setPhotoSwaps((prev) => ({ ...prev, [i]: { ...(prev[i] ?? {}), [slot]: photo } }));
+          } else {
+            const insertedMode: InsertedImageMode = mode;
+            setImageInsertions((prev) => ({
+              ...prev,
+              [i]: { photo, mode: insertedMode, x: 0.52, y: 0.52, width: 0.42 },
+            }));
+          }
+          setSaved((prev) => { const next = new Set(prev); next.delete(i); return next; });
         }}
       />
       {photosOpen && (

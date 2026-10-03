@@ -1,0 +1,43 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { applyInsertedArtImage, type InsertedArtImage } from "@/pages/studio/artPhotoSwap";
+
+const insertion = (mode: "background" | "composition"): InsertedArtImage => ({
+  mode,
+  x: 0.5,
+  y: 0.5,
+  width: 0.4,
+  photo: { src: "data:image/png;base64,test", label: "Teste", focusX: 50, focusY: 50, zoom: 1, rotation: 0, safeArea: "none" },
+});
+
+describe("imagem inserida em arte textual", () => {
+  afterEach(() => { document.body.innerHTML = ""; });
+
+  it("cria um fundo escurecido atrás do texto", () => {
+    document.body.innerHTML = '<div id="art"><h2>Texto</h2></div>';
+    const root = document.getElementById("art") as HTMLElement;
+    applyInsertedArtImage(root, insertion("background"));
+    const layer = root.querySelector<HTMLElement>("[data-studio-inserted-image]");
+    const image = layer?.querySelector<HTMLImageElement>("img");
+    expect(root.firstElementChild).toBe(layer);
+    expect(image?.dataset.studioExportImageLayer).toBe("backdrop");
+    expect(image?.style.filter).toContain("brightness");
+  });
+
+  it("cria composição exportável acima do texto com alça removida do PNG", () => {
+    document.body.innerHTML = '<div id="art"><h2>Texto</h2></div>';
+    const root = document.getElementById("art") as HTMLElement;
+    applyInsertedArtImage(root, insertion("composition"));
+    const layer = root.querySelector<HTMLElement>("[data-studio-inserted-image]");
+    expect(layer?.style.zIndex).toBe("30");
+    expect(layer?.querySelector("img")?.getAttribute("data-studio-export-image-layer")).toBe("foreground");
+    expect(layer?.querySelector("[data-studio-no-export='1']")).not.toBeNull();
+  });
+
+  it("remove a inserção anterior ao trocar ou apagar", () => {
+    document.body.innerHTML = '<div id="art"><h2>Texto</h2></div>';
+    const root = document.getElementById("art") as HTMLElement;
+    applyInsertedArtImage(root, insertion("composition"));
+    applyInsertedArtImage(root);
+    expect(root.querySelector("[data-studio-inserted-image]")).toBeNull();
+  });
+});
