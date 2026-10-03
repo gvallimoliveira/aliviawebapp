@@ -950,6 +950,16 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
     element.style.setProperty("-webkit-user-select", "none", "important");
   });
 
+  /* Contorno e sombras pertencem somente à edição da imagem livre. Mesmo com
+     os botões filtrados, o WebKit podia rasterizar o outline do contêiner como
+     uma faixa sombreada ao lado direito do PNG. */
+  clone.querySelectorAll<HTMLElement>('[data-studio-inserted-image="1"]').forEach((layer) => {
+    layer.dataset.studioImageSelected = "0";
+    layer.style.setProperty("outline", "none", "important");
+    layer.style.setProperty("outline-offset", "0", "important");
+    layer.style.setProperty("box-shadow", "none", "important");
+  });
+
   // Tokens da marca são herdados de wrappers da tela; materialize-os na cópia.
   const computed = getComputedStyle(source);
   for (let i = 0; i < computed.length; i += 1) {

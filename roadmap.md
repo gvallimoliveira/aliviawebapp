@@ -1,5 +1,11 @@
 # Roadmap
 
+## Acabamento da imagem inserida (03/10)
+- [x] Mostrar pontos de ajuste somente ao selecionar a imagem e ocultá-los ao tocar fora.
+- [x] Remover contorno/sombra de edição do PNG final.
+- [x] Fazer a imagem de fundo aparecer dentro da superfície visual, atrás do texto.
+- [x] Manter exclusão explícita da imagem inserida.
+
 ## Inserção livre de imagens nas artes (03/10)
 - [x] Permitir adicionar imagens também em artes originalmente textuais.
 - [x] Oferecer fundo escurecido ou composição em primeiro plano.

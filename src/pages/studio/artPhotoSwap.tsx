@@ -9,7 +9,7 @@
 import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Layers3, Move, Upload } from "lucide-react";
+import { ImageIcon, Layers3, Trash2, Upload } from "lucide-react";
 import type { PhotoFraming } from "./photos";
 
 export type SwapPhoto = PhotoFraming & { src: string; label?: string };
@@ -55,13 +55,26 @@ export const applyArtPhotoSwaps = (node: HTMLElement | null, swaps?: Record<numb
 };
 
 const INSERT_ATTR = "data-studio-inserted-image";
+const insertionListeners = new WeakMap<HTMLElement, AbortController>();
+
+const insertionSurface = (node: HTMLElement) => {
+  const sections = Array.from(node.querySelectorAll<HTMLElement>("section"));
+  const rootRect = node.getBoundingClientRect();
+  return sections.find((section) => {
+    const rect = section.getBoundingClientRect();
+    return Math.abs(rect.width - rootRect.width) < 2 && Math.abs(rect.height - rootRect.height) < 2;
+  }) ?? sections[0] ?? node;
+};
 
 /** Insere imagem em qualquer arte, inclusive nas que nasceram somente com texto. */
 export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: InsertedArtImage) => {
   if (!node) return;
+  insertionListeners.get(node)?.abort();
+  insertionListeners.delete(node);
   node.querySelector(`[${INSERT_ATTR}]`)?.remove();
   if (!insertion) return;
 
+  const surface = insertionSurface(node);
   const layer = document.createElement("div");
   layer.setAttribute(INSERT_ATTR, "1");
   layer.dataset.studioPhotoFrame = "1";
@@ -86,15 +99,31 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
   img.style.transformOrigin = `${insertion.photo.focusX}% ${insertion.photo.focusY}%`;
   layer.appendChild(img);
 
-  if (getComputedStyle(node).position === "static") node.style.position = "relative";
+  if (getComputedStyle(surface).position === "static") surface.style.position = "relative";
   if (insertion.mode === "background") {
+    /* A camada entra dentro da superfície visual, não atrás do bloco opaco. O
+       texto continua acima porque os filhos originais recebem um plano próprio. */
     Object.assign(layer.style, { inset: "0", zIndex: "0", borderRadius: "inherit" });
     img.style.filter = "brightness(0.42) saturate(0.82)";
-    node.prepend(layer);
+    Array.from(surface.children).forEach((child) => {
+      if (!(child instanceof HTMLElement)) return;
+      if (getComputedStyle(child).position === "static") child.style.position = "relative";
+      if (getComputedStyle(child).zIndex === "auto") child.style.zIndex = "1";
+    });
+    surface.prepend(layer);
   } else {
     const frameHeight = () => {
       const rect = node.getBoundingClientRect();
       return rect.height ? insertion.width * (rect.width / rect.height) : insertion.width;
+    };
+    let selected = true;
+    const controls: HTMLButtonElement[] = [];
+    const showControls = (value: boolean) => {
+      selected = value;
+      layer.dataset.studioImageSelected = value ? "1" : "0";
+      layer.style.outline = value ? "1px dashed rgba(255,255,255,0.9)" : "none";
+      layer.style.outlineOffset = value ? "2px" : "0";
+      controls.forEach((control) => { control.style.display = value ? "flex" : "none"; });
     };
     const paint = () => {
       layer.style.left = `${insertion.x * 100}%`;
@@ -109,9 +138,13 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
     // A superfície da foto nunca captura o gesto: a página continua rolando.
     // Mover e redimensionar acontecem somente pelos cinco pontos visíveis.
     layer.style.pointerEvents = "none";
-    layer.style.outline = "1px dashed rgba(255,255,255,0.9)";
-    layer.style.outlineOffset = "2px";
-    img.style.pointerEvents = "none";
+    layer.style.boxShadow = "none";
+    img.style.pointerEvents = "auto";
+    img.style.touchAction = "pan-y";
+    img.addEventListener("click", (event) => {
+      event.stopPropagation();
+      showControls(true);
+    });
 
     type ResizeCorner = "nw" | "ne" | "sw" | "se";
     let action: {
@@ -165,6 +198,7 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
       control.addEventListener("pointermove", drag);
       control.addEventListener("pointerup", end);
       control.addEventListener("pointercancel", end);
+      controls.push(control);
       layer.appendChild(control);
     };
     const baseControl = () => {
@@ -207,7 +241,14 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
       handle.addEventListener("pointerdown", (event) => begin(event, "resize", corner));
       wire(handle);
     });
-    node.appendChild(layer);
+    surface.appendChild(layer);
+    showControls(selected);
+
+    const controller = new AbortController();
+    insertionListeners.set(node, controller);
+    document.addEventListener("pointerdown", (event) => {
+      if (!layer.contains(event.target as Node)) showControls(false);
+    }, { signal: controller.signal });
   }
 };
 
@@ -272,8 +313,8 @@ export const ArtPhotoSwapDialog = ({ open, onOpenChange, slotCount, photos, allo
           </div>
         )}
         {hasInsertion && (
-          <Button variant="ghost" className="w-full" onClick={() => { onRemoveInsertion(); onOpenChange(false); }}>
-            Remover imagem inserida
+          <Button variant="destructive" className="w-full" onClick={() => { onRemoveInsertion(); onOpenChange(false); }}>
+            <Trash2 className="mr-2 h-4 w-4" /> Excluir imagem inserida
           </Button>
         )}
         {allowDevice && (

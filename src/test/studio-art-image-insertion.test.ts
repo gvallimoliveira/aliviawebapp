@@ -13,14 +13,15 @@ describe("imagem inserida em arte textual", () => {
   afterEach(() => { document.body.innerHTML = ""; });
 
   it("cria um fundo escurecido atrás do texto", () => {
-    document.body.innerHTML = '<div id="art"><h2>Texto</h2></div>';
+    document.body.innerHTML = '<div id="art"><section><h2>Texto</h2></section></div>';
     const root = document.getElementById("art") as HTMLElement;
     applyInsertedArtImage(root, insertion("background"));
     const layer = root.querySelector<HTMLElement>("[data-studio-inserted-image]");
     const image = layer?.querySelector<HTMLImageElement>("img");
-    expect(root.firstElementChild).toBe(layer);
+    expect(root.querySelector("section")?.firstElementChild).toBe(layer);
     expect(image?.dataset.studioExportImageLayer).toBe("backdrop");
     expect(image?.style.filter).toContain("brightness");
+    expect(root.querySelector("h2")?.style.zIndex).toBe("1");
   });
 
   it("cria composição exportável acima do texto com alça removida do PNG", () => {
@@ -34,6 +35,18 @@ describe("imagem inserida em arte textual", () => {
     expect(layer?.querySelectorAll("[data-studio-no-export='1']")).toHaveLength(5);
     expect(layer?.querySelector("[data-studio-image-move-handle='1']")).not.toBeNull();
     expect(layer?.querySelectorAll("[data-studio-image-resize-handle]")).toHaveLength(4);
+  });
+
+  it("mostra os controles ao tocar na imagem e esconde ao tocar fora", () => {
+    document.body.innerHTML = '<div id="outside"></div><div id="art"><section><h2>Texto</h2></section></div>';
+    const root = document.getElementById("art") as HTMLElement;
+    applyInsertedArtImage(root, insertion("composition"));
+    const image = root.querySelector<HTMLImageElement>("[data-studio-inserted-image] img");
+    const handle = root.querySelector<HTMLElement>("[data-studio-image-move-handle='1']");
+    document.getElementById("outside")?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    expect(handle?.style.display).toBe("none");
+    image?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(handle?.style.display).toBe("flex");
   });
 
   it("remove a inserção anterior ao trocar ou apagar", () => {
