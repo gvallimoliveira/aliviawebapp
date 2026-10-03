@@ -950,6 +950,19 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
     element.style.setProperty("-webkit-user-select", "none", "important");
   });
 
+  /* Contorno e sombras pertencem somente à edição da imagem livre. Mesmo com
+     os botões filtrados, o WebKit podia rasterizar o outline do contêiner como
+     uma faixa sombreada ao lado direito do PNG. */
+  clone.querySelectorAll<HTMLElement>('[data-studio-inserted-image="1"]').forEach((layer) => {
+    layer.dataset.studioImageSelected = "0";
+    layer.style.setProperty("outline", "none", "important");
+    layer.style.setProperty("outline-offset", "0", "important");
+    layer.style.setProperty("box-shadow", "none", "important");
+    layer.querySelectorAll<HTMLElement>("*").forEach((child) => {
+      child.style.setProperty("box-shadow", "none", "important");
+    });
+  });
+
   // Tokens da marca são herdados de wrappers da tela; materialize-os na cópia.
   const computed = getComputedStyle(source);
   for (let i = 0; i < computed.length; i += 1) {
@@ -999,6 +1012,10 @@ const renderStaticNodeToBlob = async (
   const backgroundColor = getComputedStyle(document.body).backgroundColor || "#ffffff";
   const { specs, restore } = hideCssStrokes(node);
   const { backdrops, restore: restoreBackdrops } = openPhotoBackdrops(node);
+  const insertedImages = Array.from(
+    node.querySelectorAll<HTMLImageElement>('[data-studio-inserted-image="1"] img[data-studio-photo="1"]'),
+  );
+  const insertedVisibility = insertedImages.map((image) => image.style.visibility);
 
   /*
    * UMA única medida para tudo. O quadro exportado é exatamente o quadro
@@ -1014,6 +1031,10 @@ const renderStaticNodeToBlob = async (
 
   let output: HTMLCanvasElement;
   try {
+    /* A imagem inserida é repintada diretamente no canvas. Retirá-la apenas do
+       raster evita a duplicação/subpixel que o WebKit mostrava como uma faixa
+       sombreada à direita da composição. */
+    insertedImages.forEach((image) => { image.style.visibility = "hidden"; });
     /* Raster SEM fundo opaco: ele precisa de transparência para que a foto
        possa ser composta por baixo da película já rasterizada. */
     const raster = await toCanvas(node, {
@@ -1024,6 +1045,7 @@ const renderStaticNodeToBlob = async (
       fontEmbedCSS: fontEmbedCSS ?? undefined,
       filter: (child) => !(child instanceof HTMLElement && child.dataset.studioNoExport === "1"),
     });
+    insertedImages.forEach((image, index) => { image.style.visibility = insertedVisibility[index] ?? ""; });
 
     /*
      * Montagem final, na MESMA ordem da tela:
@@ -1051,6 +1073,7 @@ const renderStaticNodeToBlob = async (
 
     paintStrokeTextOnCanvas(output, node, specs, layout);
   } finally {
+    insertedImages.forEach((image, index) => { image.style.visibility = insertedVisibility[index] ?? ""; });
     restoreBackdrops();
     restore();
   }
