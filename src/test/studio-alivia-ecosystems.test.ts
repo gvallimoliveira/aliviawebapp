@@ -45,7 +45,7 @@ describe("Ecossistema de soluções Aliv.iA", () => {
     expect(security.steps.find((step) => step.id === "diferencial-avaliacao-externa-ia")?.photoIds)
       .toEqual(["official:alivia:external-upload"]);
     expect(security.steps.find((step) => step.id === "diferencial-red-flags")?.photoIds)
-      .toBeUndefined();
+      .toEqual(["official:alivia:red-flags-screening", "official:alivia:red-flags-positive"]);
     expect(buildAliviaEcosystem("recem-formado").steps.find((step) => step.id === "diferencial-agente-clinico")?.photoIds)
       .toEqual([
         "official:alivia:clinical-agent",
@@ -58,11 +58,16 @@ describe("Ecossistema de soluções Aliv.iA", () => {
       .toEqual(["official:alivia:insights", "official:alivia:professional-dashboard"]);
     expect(security.steps.find((step) => step.id === "diferencial-relatorios")?.photoIds)
       .toEqual([
+        "official:alivia:record-summary-hypothesis",
+        "official:alivia:record-summary-details",
         "official:alivia:record-pain-map",
         "official:alivia:record-questionnaires",
         "official:alivia:record-health-conditions",
       ]);
-    expect(buildAliviaEcosystem("periodizacao").steps.every((step) => !step.photoIds?.length)).toBe(true);
+    expect(buildAliviaEcosystem("periodizacao").steps.find((step) => step.id === "diferencial-hep-video")?.photoIds)
+      .toEqual(["official:alivia:hep-exercise-list", "official:alivia:hep-exercise-video"]);
+    expect(buildAliviaEcosystem("rotina-clinica").steps.find((step) => step.id === "diferencial-pre-avaliacao")?.photoIds)
+      .toEqual(["official:alivia:pre-assessment-start"]);
   });
 
   it("leva o vínculo de imagem para o slide correspondente do carrossel", () => {
