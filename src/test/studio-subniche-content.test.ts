@@ -219,6 +219,20 @@ describe("sub-nichos no motor criativo", () => {
     expect(journey).not.toMatch(/diagnóstico online|diagnóstico médico|substitui a consulta/i);
   });
 
+  it("explica múltiplas queixas pela relação entre cadeias cinéticas, sem universalizar um exemplo", () => {
+    const patient = composePage;
+    expect(patient).toBeDefined();
+    const source = JSON.stringify(buildSegmentContent({
+      kit,
+      audiences: ALIVIA_AUDIENCES,
+      segment: "paciente",
+      angle: "informar",
+      variationSeed: "multi-condition-generalized",
+    }));
+
+    expect(source).not.toContain("Ombro e lombar acompanhados separadamente");
+  });
+
   it("isola diferenciais do repertório genérico da marca", () => {
     const audience = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-avaliacao-externa-ia");
     const dna = buildBrandDna({

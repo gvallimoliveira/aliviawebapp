@@ -1,5 +1,11 @@
 # Roadmap
 
+## Clareza e generalização clínica do repertório (04/10)
+- [x] Remover a construção abstrata “responde à dúvida” dos ganchos automáticos.
+- [x] Impedir que frases completas sejam encaixadas depois de “efeito humano de”.
+- [x] Generalizar múltiplas queixas pela relação entre cadeias cinéticas, mantendo ombro e lombar apenas como exemplo.
+- [ ] Validar testes focados e compilação.
+
 ## Coerência textual global das artes (04/10)
 - [x] Remover repetição literal e semântica entre título, apoio, corpo e slides.
 - [x] Parear título e apoio pelo mesmo núcleo de sentido em todos os níveis de escrita.

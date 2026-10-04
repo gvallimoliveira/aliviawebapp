@@ -48,6 +48,18 @@ describe("biblioteca de ganchos", () => {
     expect(hook?.rest).toBe("É hora de investigar a presença de ácaros, leveduras, cocos e bastonetes");
     expect(isBareEnumeration("ácaros, leveduras, cocos e bastonetes")).toBe(true);
   });
+
+  it("subordina a objeção sem formar 'prova responde à dúvida'", () => {
+    const type = HOOK_TYPES.find((item) => item.id === "pergunta-ao-especialista");
+    expect(type).toBeDefined();
+    const hook = type && buildHook(type, {
+      prova: "História prévia, transcrição e evolução reunidas no prontuário",
+      objecao: "É mais um sistema para alimentar",
+    });
+    expect(hook?.strong).toMatch(/História prévia/i);
+    expect(hook?.rest).toBe("Isso responde a uma preocupação comum: mais um sistema para alimentar");
+    expect(`${hook?.strong} ${hook?.rest}`).not.toMatch(/responde à dúvida/i);
+  });
 });
 
 describe("arco narrativo", () => {

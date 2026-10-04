@@ -60,6 +60,13 @@ const actionableMechanism = (value?: string) => {
     : low(mechanism);
 };
 
+const subordinateObjection = (value?: string) => {
+  const objection = squash(value)
+    .replace(/^(?:é|seria)\s+/i, "")
+    .replace(/^(?:acho que|tenho receio de que)\s+/i, "");
+  return objection ? `Isso responde a uma preocupação comum: ${low(objection)}` : "Veja como isso funciona na prática";
+};
+
 /** Promessas e infantilização nunca saem de um gancho automático. */
 const FORBIDDEN =
   /\b(cura(r|do|da)?|garantid[oa]|garantia|milagr\w*|100%|sem risco|resultado garantido|fofinh\w*|peludinh\w*|bebez\w*|amiguinh\w*)\b/i;
@@ -121,7 +128,9 @@ export const HOOK_TYPES: HookType[] = [
     id: "pergunta-ao-especialista",
     label: "Pergunta que mais recebo",
     requires: ["objecao", "prova"],
-    build: (f) => ({ strong: cap(f.prova), rest: `responde à dúvida: ${low(f.objecao)}` }),
+    // A prova abre a mensagem; a objeção aparece como preocupação subordinada,
+    // nunca colada à prova por uma construção abstrata ou gramaticalmente frágil.
+    build: (f) => ({ strong: cap(f.prova), rest: subordinateObjection(f.objecao) }),
   },
   {
     id: "cena-interrompida",
