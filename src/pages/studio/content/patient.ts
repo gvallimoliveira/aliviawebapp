@@ -19,7 +19,7 @@ const patient: WorldContent = {
     { strong: "Você já gastou mais com pomada do que com uma avaliação séria.", rest: "Uma avaliação guiada custa menos que um mês tentando adivinhar sozinho." },
     { strong: "Pare de pesquisar sintoma no Google.", rest: "Responda no seu ritmo e receba uma explicação feita por fisioterapeuta." },
     { strong: "Seu exercício errado pode estar mantendo a dor.", rest: "Programa em vídeo escolhido para o seu quadro, com progressão respeitosa." },
-    { strong: "Dói no ombro e na lombar? São dois casos, não um.", rest: "Cada condição com seu próprio histórico, seu próprio plano e sua própria curva." },
+    { strong: "Mais de uma queixa não precisa virar um caso só.", rest: "Queixas relacionadas podem seguir juntas; condições de cadeias cinéticas diferentes mantêm históricos e planos próprios." },
     { strong: "Nem toda dor é a mesma dor.", rest: "A triagem identifica se o padrão é nociceptivo, neuropático ou nociplástico — e isso muda o plano." },
     { strong: "Responder é simples: você escolhe no toque.", rest: "Perguntas objetivas e mapa de dor no celular — sem termos técnicos, sem formulário infinito." },
     { strong: "Três meses de dor não se resolvem em três minutos de consulta.", rest: "Chegue com o seu caso organizado e ganhe tempo de verdade com o profissional." },
@@ -95,8 +95,8 @@ const patient: WorldContent = {
     {
       title: "Duas formas de lidar com mais de uma dor",
       topics: ["multi-condition", "pain-map", "marketplace"],
-      before: ["Tudo tratado como “dor nas costas”", "Um plano só para queixas diferentes", "Sem saber a quem recorrer"],
-      after: ["Ombro e lombar com históricos separados", "Um plano por condição", "Vitrine de profissionais para continuar"],
+      before: ["Queixas diferentes tratadas como um caso só", "Um plano único sem considerar a relação entre as regiões", "Sem saber a quem recorrer"],
+      after: ["Queixas relacionadas agrupadas pela cadeia cinética", "Condições sem relação acompanhadas separadamente", "Vitrine de profissionais para continuar"],
     },
   ],
 
@@ -139,7 +139,7 @@ const patient: WorldContent = {
     { tag: "DIÁRIO DE DOR", title: "Sua evolução em uma linha", description: "Registro diário simples que mostra se o plano está funcionando.", topic: "pain-diary" },
     { tag: "PROGRAMA", title: "Exercícios em vídeo para casa", description: "Selecionados para o seu quadro, com progressão respeitosa.", topic: "hep" },
     { tag: "RELATÓRIO", title: "Um documento para mostrar ao profissional", description: "Sua história, seus testes e sua evolução organizados em PDF.", topic: "report" },
-    { tag: "MAIS DE UMA DOR", title: "Ombro e lombar acompanhados separadamente", description: "Cada condição com seu próprio histórico e seu próprio plano.", topic: "multi-condition" },
+    { tag: "MAIS DE UMA DOR", title: "Mais de uma queixa, sem misturar os casos", description: "A relação entre as regiões orienta o caminho: a mesma cadeia cinética pode ser analisada em conjunto; condições distintas seguem separadamente.", topic: "multi-condition" },
     { tag: "PROFISSIONAIS", title: "Encontre um fisioterapeuta perto de você", description: "Vitrine de profissionais que já trabalham com o método.", topic: "marketplace" },
     { tag: "TIPO DE DOR", title: "Nem toda dor vem do mesmo lugar", description: "A triagem indica se o padrão é nociceptivo, neuropático ou nociplástico.", topic: "pain-mechanism" },
     { tag: "SUA HISTÓRIA", title: "Perguntas simples, resposta organizada", description: "Início, intensidade, o que piora e o que alivia — no seu ritmo.", topic: "anamnesis" },
@@ -200,14 +200,14 @@ const patient: WorldContent = {
     },
     {
       kicker: "CASO REAL, NOME PROTEGIDO",
-      title: "Ombro e lombar não são “dor no corpo todo”",
+      title: "Quando duas dores não contam a mesma história",
       beats: [
         "Ela chegou dizendo que doía tudo.",
-        "Cada região ganhou a própria avaliação.",
-        "Duas condições, dois planos, duas curvas.",
+        "Ombro e lombar eram um exemplo de regiões sem relação clínica direta.",
+        "Cada condição ganhou histórico, plano e acompanhamento próprios.",
       ],
-      turn: "O que parecia um caso impossível eram dois casos tratáveis.",
-      moral: "Cada dor merece o próprio histórico.",
+      turn: "A cadeia cinética mostrou o que fazia sentido analisar junto e o que precisava ser separado.",
+      moral: "Mais de uma queixa exige relação clínica, não mistura.",
       topic: "multi-condition",
     },
     {
@@ -340,7 +340,7 @@ const patient: WorldContent = {
       "Diário de dor com a curva da sua evolução",
       "Relatório em PDF para levar ao fisioterapeuta ou médico",
       "Vitrine de profissionais para continuar o cuidado",
-      "Mais de uma dor acompanhada em paralelo, sem misturar",
+      "Mais de uma queixa organizada pela relação entre cadeias cinéticas",
       "Triagem do tipo de dor: nociceptiva, neuropática ou nociplástica",
     ],
     objections: [

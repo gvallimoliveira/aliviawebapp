@@ -320,13 +320,19 @@ export const composeRouteCopy = (
         `${cap(gain)} ganha forma quando existe ${low(proof || turn)}.`,
         `A diferença entre desejar e avançar: ${low(proof || turn)}.`,
       ],
-      "feature-to-human": [
-        `${cap(turn)}. Na prática, ${low(gain)}.`,
-        `${cap(gain)} é o efeito humano de ${low(turn)}.`,
-        `${cap(turn)} existe para tornar possível ${low(gain)}.`,
-        `Por trás de ${low(gain)}, existe ${low(turn)}.`,
-        `${cap(turn)} no processo. ${cap(gain)} na experiência.`,
-      ],
+      "feature-to-human": isClause(turn)
+        ? [
+            `${cap(turn)}. Na prática, ${low(gain)}.`,
+            `${cap(turn)}. Isso abre espaço para ${low(gain)}.`,
+            `${cap(turn)}. Assim, ${low(gain)}.`,
+            `${cap(turn)}. O resultado é ${low(gain)}.`,
+          ]
+        : [
+            `${cap(turn)}. Na prática, ${low(gain)}.`,
+            `Com ${low(turn)}, fica possível ${low(gain)}.`,
+            `${cap(turn)} existe para tornar possível ${low(gain)}.`,
+            `${cap(gain)} começa com ${low(turn)}.`,
+          ],
       "journey-bridge": [
         `${cap(turn)} do começo ao fim: ${low(gain)}.`,
         `${cap(lead)} é o início. ${cap(gain)} é a direção.`,

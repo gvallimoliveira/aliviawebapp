@@ -13,6 +13,7 @@ import { buildNarrativeRoute } from "@/pages/studio-pro/synapses";
 import { buildBrandDna } from "@/pages/studio-pro/brandDnaKit";
 import { blockKindSupported, composePage } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
+import { WORLDS } from "@/pages/studio/content";
 
 const kit = { name: "Aliv.iA", niche: "fisioterapia", tone: "próximo e técnico", description: "", keywords: [] };
 const SUBS = ["paciente-dor-cronica", "paciente-pos-operatorio", "paciente-atleta-amador", "paciente-60-mais"];
@@ -217,6 +218,14 @@ describe("sub-nichos no motor criativo", () => {
     expect(JSON.stringify(plan)).toMatch(/vídeo.*séries.*repetições.*frequência/i);
     expect(JSON.stringify(professional)).toMatch(/consulta presencial/i);
     expect(journey).not.toMatch(/diagnóstico online|diagnóstico médico|substitui a consulta/i);
+  });
+
+  it("explica múltiplas queixas pela relação entre cadeias cinéticas, sem universalizar um exemplo", () => {
+    const source = JSON.stringify(WORLDS.paciente);
+
+    expect(source).toMatch(/cadeia cinética/i);
+    expect(source).toMatch(/condições (?:distintas|sem relação).*separad/i);
+    expect(source).not.toContain("Ombro e lombar acompanhados separadamente");
   });
 
   it("isola diferenciais do repertório genérico da marca", () => {
