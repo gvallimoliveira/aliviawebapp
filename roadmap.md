@@ -4,7 +4,7 @@
 - [x] Remover repetição literal e semântica entre título, apoio, corpo e slides.
 - [x] Parear título e apoio pelo mesmo núcleo de sentido em todos os níveis de escrita.
 - [x] Bloquear títulos pendurados em auxiliares e comparações incompletas.
-- [ ] Validar testes focados e compilação.
+- [x] Validar testes focados e compilação.
 
 ## Repertório das landings no Studio (03/10)
 - [x] Incorporar argumentos das landings nos diferenciais canônicos por público.
