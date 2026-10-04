@@ -144,6 +144,36 @@ const repeatedOpeningSize = (title: string, description: string): number => {
   return size;
 };
 
+/**
+ * Detecta quando o corpo repete uma expressão que aparece mais adiante no
+ * título (comum em "Tema: respostas conectadas" + "Na prática, respostas...").
+ */
+const containedOpeningSize = (title: string, description: string): number => {
+  const titleWords = normalizedWords(title);
+  const descriptionWords = normalizedWords(description);
+  let best = 0;
+  for (let start = 0; start < titleWords.length; start += 1) {
+    let size = 0;
+    while (
+      start + size < titleWords.length &&
+      size < descriptionWords.length &&
+      titleWords[start + size] === descriptionWords[size]
+    ) size += 1;
+    if (size > best) best = size;
+  }
+  return best;
+};
+
+const trimDanglingTitle = (text: string): string => {
+  let revised = text.trim();
+  for (let guard = 0; guard < 5 && hasDanglingEnding(revised); guard += 1) {
+    const shorter = revised.replace(/\s+\S+[.!?…“”\"]*$/, "").trim();
+    if (shorter.split(/\s+/).length < 3) break;
+    revised = shorter;
+  }
+  return revised;
+};
+
 const stableTextIndex = (text: string, size: number): number => {
   let hash = 0;
   for (let index = 0; index < text.length; index += 1) {
@@ -186,7 +216,10 @@ const bridgeDescription = (title: string, remainder: string): string => {
 export const removeTitleDescriptionEcho = (title: string, description: string): string => {
   const prefix = description.match(/^\s*(?:na prática|com isso|por isso|assim|dessa forma|desse modo|em resumo|o resultado é)\s*[,;:]?\s*/i)?.[0] ?? "";
   const comparable = description.slice(prefix.length);
-  const openingSize = repeatedOpeningSize(title, comparable);
+  const openingSize = Math.max(
+    repeatedOpeningSize(title, comparable),
+    containedOpeningSize(title, comparable),
+  );
   if (openingSize < 4) return description;
 
   const rawWords = comparable.trim().split(/\s+/);
@@ -221,7 +254,7 @@ const removeContentEchoes = <T>(value: T): T => {
   if (typeof revised.strong === "string" && typeof revised.rest === "string") {
     const joined = joinCopyParts(revised.strong, revised.rest);
     if (hasDanglingEnding(joined)) {
-      const repaired = closeThought(joined, Math.max(42, joined.length));
+      const repaired = trimDanglingTitle(joined);
       if (repaired && !hasDanglingEnding(repaired)) {
         revised.strong = repaired;
         revised.rest = "";

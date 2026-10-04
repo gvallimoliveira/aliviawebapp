@@ -1248,9 +1248,9 @@ const applyAudience = (
        * Cada etapa entra com abertura própria: sem isso, mecanismo e definição
        * podem coincidir e o carrossel perde um slide na deduplicação.
        */
-      { heading: `${key}: ${condensePhrase(mechanismAt(0), 34)}`, body: `Na prática, ${lower1(mechanismAt(0))}.` },
-      { heading: `${key}: ${condensePhrase(benefitAt(0), 34)}`, body: `Com isso, ${lower1(benefitAt(0))}.` },
-      { heading: `${key}: ${condensePhrase(lossAt(0), 34)}`, body: frameEditorialLoss(lossAt(0)) },
+      { heading: `${key}: como funciona`, body: `Na prática, ${lower1(mechanismAt(0))}.` },
+      { heading: `${key}: ganho na rotina`, body: `Com isso, ${lower1(benefitAt(0))}.` },
+      { heading: `${key}: o que se perde`, body: frameEditorialLoss(lossAt(0)) },
     ];
 
     return {
@@ -1821,9 +1821,9 @@ export const enforceEditorialFocus = (
   }));
   const carouselSlides = [
     { heading: condensePhrase(key, 34), body: sentence(progression.definition) },
-    { heading: `${key}: ${condensePhrase(mechanismAt(0), 34)}`, body: `Na prática, isso permite ${lower1(benefitAt(0))}.` },
-    { heading: `${key}: ${condensePhrase(benefitAt(0), 34)}`, body: sentence(sceneAt(0)) },
-    { heading: `${key}: ${condensePhrase(lossAt(0), 34)}`, body: `${frameEditorialLoss(lossAt(0))} ${cta}.` },
+    { heading: `${key}: como funciona`, body: `Na prática, ${lower1(mechanismAt(0))}.` },
+    { heading: `${key}: ganho na rotina`, body: `Com isso, ${lower1(benefitAt(0))}.` },
+    { heading: `${key}: o que se perde`, body: frameEditorialLoss(lossAt(0)) },
   ];
   const carousels = content.carousels.map((entry) => ({
     ...entry,
