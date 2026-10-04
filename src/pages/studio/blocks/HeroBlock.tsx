@@ -5,6 +5,7 @@ import {
   alignClasses,
   personaSurface,
   pickHeadline,
+  pickCoherentSupport,
   sectionHeight,
   type BlockProps,
 } from "./shared";
@@ -22,7 +23,7 @@ const HeroBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
   if (!content.headlines?.length || !content.kickers?.length || !content.subs?.length) return null;
   const headline = pickHeadline(rng, content.headlines, persona.headlineTaste);
   const kicker = rng.pick(content.kickers);
-  const sub = rng.pick(content.subs);
+  const sub = pickCoherentSupport(rng, content.subs, `${headline.strong} ${headline.rest}`);
   const surface = personaSurface(persona, treatment);
   const accentVariant = rng.int(ACCENT_STYLES.length);
   const strong = renderAccent(headline.strong, accentVariant);

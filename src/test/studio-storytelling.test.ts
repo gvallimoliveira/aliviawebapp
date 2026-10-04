@@ -4,6 +4,8 @@ import { phraseSignature } from "@/pages/studio/picker";
 import type { NarrativeRoute } from "@/pages/studio-pro/synapses";
 import { joinCopyParts, quoteCopy } from "@/pages/studio/typographyGuards";
 import { buildHook, HOOK_TYPES } from "@/pages/studio-pro/hookTaxonomy";
+import { createRng } from "@/pages/studio/rng";
+import { pickCoherentSupport } from "@/pages/studio/blocks/shared";
 
 const route: NarrativeRoute = {
   kind: "pain-to-desire",
@@ -21,6 +23,15 @@ describe("redação a partir da rota narrativa", () => {
   it("une partes editoriais com espaço entre palavras e sem espaço antes da pontuação", () => {
     expect(joinCopyParts("Carga não é", "achismo")).toBe("Carga não é achismo");
     expect(joinCopyParts("Não é sorte", ". É critério.")).toBe("Não é sorte. É critério.");
+  });
+
+  it("escolhe apoio conectado ao título sem repetir a mesma informação", () => {
+    const support = pickCoherentSupport(createRng("apoio"), [
+      "Painéis pro e Clínico cruzam adesão, faltas, evolução e agenda; o clínico também acompanha pesquisa de satisfação e NPS.",
+      "A leitura reúne os sinais que ajudam a clínica a decidir o próximo passo.",
+    ], "Insights inteligentes — painéis pro e Clínico cruzam adesão, faltas, evolução e agenda; o clínico também acompanha pesquisa de satisfação e NPS");
+    expect(support).toMatch(/próximo passo/i);
+    expect(support).not.toMatch(/painéis pro/i);
   });
 
   it("mantém uma única ideia completa nas artes de citação", () => {

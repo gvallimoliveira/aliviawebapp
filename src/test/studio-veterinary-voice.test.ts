@@ -92,6 +92,32 @@ describe("Studio: tutor leitor e animal paciente", () => {
     expect(content.features[0].description).not.toContain("Investiga a causa raiz");
   });
 
+  it("remove eco depois de conectores e também nos slides de carrossel", () => {
+    const content = finalizeBrandVoice({
+      carousels: [{
+        title: "NPS da clínica",
+        coverSub: "A pesquisa acompanha a experiência.",
+        slides: [{
+          heading: "NPS da clínica: respostas conectadas ao chat",
+          body: "Na prática, respostas conectadas ao chat com o paciente.",
+        }],
+      }],
+    });
+    expect(content.carousels[0].slides[0].body).not.toMatch(/respostas conectadas ao chat/i);
+    expect(content.carousels[0].slides[0].body).toMatch(/paciente/i);
+  });
+
+  it("fecha títulos que terminam em auxiliar ou comparação sem segundo termo", () => {
+    const content = finalizeBrandVoice({
+      headlines: [
+        { strong: "A melhora da dor não responde sozinha se o paciente está", rest: "" },
+        { strong: "Por dentro: sRPE, dose planejada versus", rest: "" },
+      ],
+    });
+    expect(content.headlines[0].strong).not.toMatch(/\bestá$/i);
+    expect(content.headlines[1].strong).not.toMatch(/\bversus$/i);
+  });
+
   it("não deixa o nome interno do recorte de slogan aparecer na arte", () => {
     const content = finalizeBrandVoice({
       kickers: ["SLOGAN EM DESTAQUE", "PARA SLOGAN EM DESTAQUE", "SLOGAN EM DESTAQUE · TESTE"],

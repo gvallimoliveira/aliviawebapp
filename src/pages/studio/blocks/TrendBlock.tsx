@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { sectionHeight, type BlockProps } from "./shared";
+import { pickCoherentSupport, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * LINHA DE PROGRESSO (referência: traçado em zigue-zague cruzando a linha
@@ -32,7 +32,7 @@ const TrendBlock = ({ content, rng, treatment, format }: BlockProps) => {
   if (!content.headlines?.length || !content.subs?.length || !content.kickers?.length) return null;
   const skin = SKINS[treatment % SKINS.length];
   const headline = rng.pick(content.headlines);
-  const sub = rng.pick(content.subs);
+  const sub = pickCoherentSupport(rng, content.subs, `${headline.strong} ${headline.rest}`);
 
   return (
     <section

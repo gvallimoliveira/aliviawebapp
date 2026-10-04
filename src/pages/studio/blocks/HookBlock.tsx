@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { BRAND_HANDLE, BRAND_NAME } from "../brand";
-import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./shared";
+import { blockPadding, personaSurface, pickCoherentSupport, sectionHeight, type BlockProps } from "./shared";
 
 /**
  * GANCHO (biblioteca de frases virais adaptadas à marca)
@@ -19,7 +19,13 @@ const HookBlock = ({ content, rng, treatment, format, persona }: BlockProps) => 
   const hooks = content.hooks ?? [];
   const fallback = (() => {
     const h = rng.pick(content.headlines);
-    return { hook: "Olha isso", strong: h.strong, rest: h.rest, sub: rng.pick(content.subs), cta: rng.pick(content.closings).cta };
+    return {
+      hook: "Olha isso",
+      strong: h.strong,
+      rest: h.rest,
+      sub: pickCoherentSupport(rng, content.subs, `${h.strong} ${h.rest}`),
+      cta: rng.pick(content.closings).cta,
+    };
   })();
   const hook = hooks.length > 0 ? rng.pick(hooks) : fallback;
   const strong = (hook.strong ?? "").trim();

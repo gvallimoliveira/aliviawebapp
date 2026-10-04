@@ -8,6 +8,8 @@
 
 import { proofread } from "@/pages/studio/agreement";
 import { closeThought, isOrphanCommand, joinCopyParts } from "@/pages/studio/typographyGuards";
+import { hasDanglingEnding } from "@/pages/studio/grammar";
+import { ARC_TOO_SIMILAR, textSimilarity } from "./narrativeArc";
 
 const VETERINARY_DOMAIN = /\b(?:veterin[aá]ri[ao]s?|vet\b|animal(?:is)?|pets?|canin[oa]s?|felin[oa]s?|c[aã]es?|gatos?|citologia\s+veterin[aá]ria)\b/i;
 
@@ -142,6 +144,36 @@ const repeatedOpeningSize = (title: string, description: string): number => {
   return size;
 };
 
+/**
+ * Detecta quando o corpo repete uma expressão que aparece mais adiante no
+ * título (comum em "Tema: respostas conectadas" + "Na prática, respostas...").
+ */
+const containedOpeningSize = (title: string, description: string): number => {
+  const titleWords = normalizedWords(title);
+  const descriptionWords = normalizedWords(description);
+  let best = 0;
+  for (let start = 0; start < titleWords.length; start += 1) {
+    let size = 0;
+    while (
+      start + size < titleWords.length &&
+      size < descriptionWords.length &&
+      titleWords[start + size] === descriptionWords[size]
+    ) size += 1;
+    if (size > best) best = size;
+  }
+  return best;
+};
+
+const trimDanglingTitle = (text: string): string => {
+  let revised = text.trim();
+  for (let guard = 0; guard < 5 && hasDanglingEnding(revised); guard += 1) {
+    const shorter = revised.replace(/\s+\S+[.!?…“”\"]*$/, "").trim();
+    if (shorter.split(/\s+/).length < 3) break;
+    revised = shorter;
+  }
+  return revised;
+};
+
 const stableTextIndex = (text: string, size: number): number => {
   let hash = 0;
   for (let index = 0; index < text.length; index += 1) {
@@ -182,12 +214,17 @@ const bridgeDescription = (title: string, remainder: string): string => {
  * quando a frase repetida termina em uma enumeração, cria uma ponte causal.
  */
 export const removeTitleDescriptionEcho = (title: string, description: string): string => {
-  const openingSize = repeatedOpeningSize(title, description);
+  const prefix = description.match(/^\s*(?:na prática|com isso|por isso|assim|dessa forma|desse modo|em resumo|o resultado é)\s*[,;:]?\s*/i)?.[0] ?? "";
+  const comparable = description.slice(prefix.length);
+  const openingSize = Math.max(
+    repeatedOpeningSize(title, comparable),
+    containedOpeningSize(title, comparable),
+  );
   if (openingSize < 4) return description;
 
-  const rawWords = description.trim().split(/\s+/);
+  const rawWords = comparable.trim().split(/\s+/);
   const remainder = rawWords.slice(openingSize).join(" ").replace(/^[,;:.!?–—\s]+/, "").trim();
-  if (!remainder) return "Esse conjunto de informações orienta a decisão com mais precisão.";
+  if (!remainder) return "Esse ponto ganha sentido quando orienta a próxima decisão.";
 
   const revised = bridgeDescription(title, remainder);
   return revised.replace(/\.\s*\.$/, ".");
@@ -205,10 +242,34 @@ const removeContentEchoes = <T>(value: T): T => {
     ? revised.headline
     : typeof revised.title === "string"
       ? revised.title
+      : typeof revised.heading === "string"
+        ? revised.heading
       : undefined;
   if (title) {
     ["description", "body", "coverSub", "support", "sub"].forEach((key) => {
       if (typeof revised[key] === "string") revised[key] = removeTitleDescriptionEcho(title, revised[key] as string);
+    });
+  }
+
+  if (typeof revised.strong === "string" && typeof revised.rest === "string") {
+    const joined = joinCopyParts(revised.strong, revised.rest);
+    if (hasDanglingEnding(joined)) {
+      const repaired = trimDanglingTitle(joined);
+      if (repaired && !hasDanglingEnding(repaired)) {
+        revised.strong = repaired;
+        revised.rest = "";
+      }
+    }
+  }
+
+  if (title) {
+    ["description", "body", "coverSub", "support", "sub"].forEach((key) => {
+      const support = typeof revised[key] === "string" ? revised[key] as string : "";
+      if (!support) return;
+      const withoutPrefix = support.replace(/^\s*(?:na prática|com isso|por isso|assim|dessa forma|desse modo)\s*[,;:]?\s*/i, "");
+      if (textSimilarity(title, withoutPrefix) >= ARC_TOO_SIMILAR) {
+        revised[key] = removeTitleDescriptionEcho(title, support);
+      }
     });
   }
   return revised as T;
