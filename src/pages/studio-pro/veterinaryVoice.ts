@@ -8,6 +8,8 @@
 
 import { proofread } from "@/pages/studio/agreement";
 import { closeThought, isOrphanCommand, joinCopyParts } from "@/pages/studio/typographyGuards";
+import { hasDanglingEnding } from "@/pages/studio/grammar";
+import { ARC_TOO_SIMILAR, textSimilarity } from "./narrativeArc";
 
 const VETERINARY_DOMAIN = /\b(?:veterin[aá]ri[ao]s?|vet\b|animal(?:is)?|pets?|canin[oa]s?|felin[oa]s?|c[aã]es?|gatos?|citologia\s+veterin[aá]ria)\b/i;
 
@@ -182,12 +184,14 @@ const bridgeDescription = (title: string, remainder: string): string => {
  * quando a frase repetida termina em uma enumeração, cria uma ponte causal.
  */
 export const removeTitleDescriptionEcho = (title: string, description: string): string => {
-  const openingSize = repeatedOpeningSize(title, description);
+  const prefix = description.match(/^\s*(?:na prática|com isso|por isso|assim|dessa forma|desse modo|em resumo|o resultado é)\s*[,;:]?\s*/i)?.[0] ?? "";
+  const comparable = description.slice(prefix.length);
+  const openingSize = repeatedOpeningSize(title, comparable);
   if (openingSize < 4) return description;
 
-  const rawWords = description.trim().split(/\s+/);
+  const rawWords = comparable.trim().split(/\s+/);
   const remainder = rawWords.slice(openingSize).join(" ").replace(/^[,;:.!?–—\s]+/, "").trim();
-  if (!remainder) return "Esse conjunto de informações orienta a decisão com mais precisão.";
+  if (!remainder) return "Esse ponto ganha sentido quando orienta a próxima decisão.";
 
   const revised = bridgeDescription(title, remainder);
   return revised.replace(/\.\s*\.$/, ".");
@@ -205,10 +209,34 @@ const removeContentEchoes = <T>(value: T): T => {
     ? revised.headline
     : typeof revised.title === "string"
       ? revised.title
+      : typeof revised.heading === "string"
+        ? revised.heading
       : undefined;
   if (title) {
     ["description", "body", "coverSub", "support", "sub"].forEach((key) => {
       if (typeof revised[key] === "string") revised[key] = removeTitleDescriptionEcho(title, revised[key] as string);
+    });
+  }
+
+  if (typeof revised.strong === "string" && typeof revised.rest === "string") {
+    const joined = joinCopyParts(revised.strong, revised.rest);
+    if (hasDanglingEnding(joined)) {
+      const repaired = closeThought(joined, Math.max(42, joined.length));
+      if (repaired && !hasDanglingEnding(repaired)) {
+        revised.strong = repaired;
+        revised.rest = "";
+      }
+    }
+  }
+
+  if (title) {
+    ["description", "body", "coverSub", "support", "sub"].forEach((key) => {
+      const support = typeof revised[key] === "string" ? revised[key] as string : "";
+      if (!support) return;
+      const withoutPrefix = support.replace(/^\s*(?:na prática|com isso|por isso|assim|dessa forma|desse modo)\s*[,;:]?\s*/i, "");
+      if (textSimilarity(title, withoutPrefix) >= ARC_TOO_SIMILAR) {
+        revised[key] = removeTitleDescriptionEcho(title, support);
+      }
     });
   }
   return revised as T;

@@ -4,6 +4,7 @@ import type { WorldContent } from "../content";
 import type { StudioPicker } from "../picker";
 import type { StudioPersona } from "../personas";
 import type { StudioPhoto } from "../photos";
+import { ARC_TOO_SIMILAR, meaningOverlap, textSimilarity } from "@/pages/studio-pro/narrativeArc";
 
 export type StudioFormat = "9x16" | "4x5" | "1x1" | "free";
 
@@ -111,6 +112,25 @@ export const pickHeadline = <T extends { strong: string; rest: string }>(
   const half = Math.ceil(sorted.length / 2);
   const pool = taste === "curta" ? sorted.slice(0, half) : sorted.slice(-half);
   return rng.pick(pool);
+};
+
+/**
+ * Escolhe um apoio que continue o título sem repeti-lo. O maior vínculo de
+ * vocabulário vence; ecos literais ou semânticos são sempre descartados.
+ */
+export const pickCoherentSupport = (
+  rng: Rng,
+  candidates: readonly string[],
+  title: string,
+): string => {
+  const valid = candidates
+    .map((text, index) => ({ text, index, overlap: meaningOverlap(title, text) }))
+    .filter(({ text }) => text.trim() && textSimilarity(title, text) < ARC_TOO_SIMILAR)
+    .sort((a, b) => b.overlap - a.overlap || a.index - b.index);
+  if (!valid.length) return "";
+  const bestScore = valid[0].overlap;
+  const best = valid.filter((item) => item.overlap === bestScore).map((item) => item.text);
+  return rng.pick(best);
 };
 
 /**

@@ -15,6 +15,30 @@ const normalize = (text: string) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
+const MEANING_STOPWORDS = new Set([
+  "com", "sem", "para", "por", "uma", "uns", "umas", "que", "isso", "essa", "esse",
+  "esta", "este", "como", "mais", "menos", "muito", "muita", "ainda", "tambem", "sobre",
+  "entre", "quando", "onde", "cada", "pratica", "rotina", "partir", "dessa", "desse",
+]);
+
+/** Palavras de conteúdo usadas para amarrar duas partes visíveis da mesma arte. */
+export const meaningWords = (text: string): string[] =>
+  normalize(text)
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length > 3 && !MEANING_STOPWORDS.has(word));
+
+/** Mede se o apoio continua o assunto do título sem exigir que repita a frase. */
+export const meaningOverlap = (a: string, b: string): number => {
+  const A = new Set(meaningWords(a));
+  const B = new Set(meaningWords(b));
+  if (!A.size || !B.size) return 0;
+  let shared = 0;
+  A.forEach((word) => {
+    if (B.has(word)) shared += 1;
+  });
+  return shared / Math.min(A.size, B.size);
+};
+
 /** Similaridade por bigramas de palavra: 1 = praticamente a mesma frase. */
 export const textSimilarity = (a: string, b: string): number => {
   const grams = (t: string) => {

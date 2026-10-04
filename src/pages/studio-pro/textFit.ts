@@ -12,6 +12,7 @@ const FILLER = new Set([
   "de", "da", "do", "das", "dos", "e", "ou", "em", "no", "na", "nos", "nas",
   "para", "por", "com", "sem", "a", "o", "as", "os", "um", "uma", "que", "ao", "aos",
   "à", "às", "sobre", "entre", "como", "mais", "muito", "muita", "seu", "sua", "seus", "suas",
+  "versus", "vs", "está", "estão", "era", "eram", "foi", "foram", "ser", "sendo", "fica", "ficam",
 ]);
 
 const normalize = (text: string) => text.replace(/\s+/g, " ").trim();
