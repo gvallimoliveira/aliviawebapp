@@ -231,3 +231,21 @@ describe("dose planejada x percebida", () => {
     expect(summary.total.verdict).toBeNull();
   });
 });
+
+import { restingHrStatus as _hr } from "@/lib/periodization";
+describe("restingHrStatus", () => {
+  it("precisa de 3 registros anteriores", () => {
+    expect(_hr([{ checkin_date: "2026-10-01", resting_hr: 60 }]).level).toBe("insufficient");
+  });
+  it("+7 bpm acima da base = danger", () => {
+    const r = _hr([
+      { checkin_date: "2026-10-01", resting_hr: 55 },
+      { checkin_date: "2026-10-02", resting_hr: 56 },
+      { checkin_date: "2026-10-03", resting_hr: 57 },
+      { checkin_date: "2026-10-04", resting_hr: 63 },
+    ]);
+    expect(r.baseline).toBe(56);
+    expect(r.delta).toBe(7);
+    expect(r.level).toBe("danger");
+  });
+});
