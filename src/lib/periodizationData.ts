@@ -534,12 +534,29 @@ export async function fetchLinks(patientId: string): Promise<PeriodizationLink[]
   return (data || []) as PeriodizationLink[];
 }
 
+/**
+ * One active link per patient + audience. Without `renew`, an existing active
+ * link is reused; with `renew`, previous active links are deactivated first.
+ */
 export async function createLink(opts: {
   patientId: string;
   planId?: string | null;
   audience: "patient" | "coach";
   label?: string | null;
+  renew?: boolean;
 }): Promise<PeriodizationLink> {
+  const { data: existing } = await supabase
+    .from("periodization_links")
+    .select("*")
+    .eq("patient_id", opts.patientId)
+    .eq("audience", opts.audience)
+    .eq("active", true)
+    .order("created_at", { ascending: false });
+  if (!opts.renew && existing && existing.length > 0) return existing[0] as PeriodizationLink;
+  if (existing && existing.length > 0) {
+    await supabase.from("periodization_links").update({ active: false })
+      .in("id", existing.map((l: any) => l.id));
+  }
   const { data: userData } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from("periodization_links")
