@@ -27,7 +27,7 @@ export default function PatientPainEvolution({ assessments }: { assessments: Reg
           <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
           <XAxis dataKey="date" tickFormatter={date} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} minTickGap={24} />
           <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-          <Tooltip labelFormatter={value => new Date(String(value)).toLocaleDateString(locale)} formatter={(value: number, name: string) => [`${value}/10`, name]} contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }} />
+          <Tooltip labelFormatter={value => new Date(String(value)).toLocaleDateString(locale)} formatter={(value: number, name: string) => [`${value}/10`, name]} contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))", maxWidth: 240, whiteSpace: "normal" }} />
           {series.map((s, i) => <Line key={s.key} dataKey={s.key} name={regionalPainLabel(s.regionId, language, t)} hide={hidden.includes(s.key)} stroke={`hsl(var(--chart-${i % 6 + 1}))`} strokeDasharray={i >= 6 ? "5 3" : undefined} type="linear" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} isAnimationActive={false} />)}
         </LineChart></ResponsiveContainer>
       </div>

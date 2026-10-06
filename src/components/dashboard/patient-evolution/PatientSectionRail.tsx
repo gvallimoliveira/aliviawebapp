@@ -100,7 +100,15 @@ const PatientSectionRail = ({ riskLevel }: Props) => {
   const goTo = useCallback((id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start", inline: "nearest" });
+    const behavior = prefersReducedMotion() ? "auto" : "smooth";
+    const row = el.closest<HTMLElement>("[data-patient-horizontal-row]");
+    const item = el.closest<HTMLElement>("[data-patient-horizontal-item]");
+    if (row && item) {
+      row.scrollTo({ left: row.scrollLeft + item.getBoundingClientRect().left - row.getBoundingClientRect().left, behavior });
+      window.scrollBy({ top: el.getBoundingClientRect().top - 96, behavior });
+    } else {
+      el.scrollIntoView({ behavior, block: "start", inline: "nearest" });
+    }
     setActiveId(id);
     setMobileOpen(false);
     setExpanded(false);

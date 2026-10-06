@@ -44,7 +44,7 @@ export function buildRegionalPainEvolution(assessments: RegionalPainAssessment[]
   });
   // Explicit nulls stop lines at assessments that did not measure this region.
   for (const point of points) for (const item of series) if (!(item.key in point)) point[item.key] = null;
-  return { series, points: points.filter(p => series.some(s => p[s.key] != null)) };
+  return { series, points };
 }
 
 export function regionalPainLabel(id: string, language: string, translate: (key: string) => string) {
