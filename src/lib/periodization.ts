@@ -1,3 +1,5 @@
+import { acwrZone } from "./cardioSafety";
+
 /**
  * Cálculos determinísticos de carga de treino (sem IA, sem crédito).
  *
@@ -99,13 +101,9 @@ export function acwr(entries: SrpeEntryLike[], ref: Date = new Date()): number |
 }
 
 
-/** Zona de risco a partir do ACWR. */
-export function loadZone(ratio: number | null): LoadZone | null {
-  if (ratio === null) return null;
-  if (ratio < 0.8) return "undertraining";
-  if (ratio <= 1.3) return "optimal";
-  if (ratio <= 1.5) return "caution";
-  return "danger";
+/** Zona de risco a partir do ACWR — delega à régua única por perfil (cardioSafety). */
+export function loadZone(ratio: number | null, profile?: string | null): LoadZone | null {
+  return acwrZone(ratio, profile);
 }
 
 export interface WeeklyLoadPoint {

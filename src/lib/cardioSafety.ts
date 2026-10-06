@@ -27,6 +27,21 @@ export function profileRule(p?: string | null) {
   return CARDIO_PROFILES.find((x) => x.key === p) ?? CARDIO_PROFILES[1];
 }
 
+export type AcwrZone = "undertraining" | "optimal" | "caution" | "danger";
+
+/**
+ * Zona de risco do ACWR com a régua do perfil — fonte única para força e cardio.
+ * Sem perfil, usa "Saudável / ativo" (0,8–1,3 ideal; até 1,5 atenção).
+ */
+export function acwrZone(ratio: number | null, profile?: string | null): AcwrZone | null {
+  if (ratio === null) return null;
+  const r = profileRule(profile);
+  if (ratio < 0.8) return "undertraining";
+  if (ratio <= r.acwrMax) return "optimal";
+  if (ratio <= r.acwrAlert) return "caution";
+  return "danger";
+}
+
 export function ageFromBirth(birth?: string | null, today = new Date()): number | null {
   if (!birth) return null;
   const b = new Date(birth + "T00:00:00Z");
