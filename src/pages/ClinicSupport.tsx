@@ -69,6 +69,12 @@ const categories: ToolCategory[] = [
     icon: FileText,
     items: [
       {
+        key: "compact_record",
+        icon: Layers,
+        title: "Prontuário compacto e dor por região",
+        desc: "Anamnese e saúde geral ficam na mesma faixa; documentos e fotos também. No celular, as faixas deslizam lateralmente, mantendo os atalhos para cada seção. Os mapas de avaliações aparecem lado a lado. A evolução da dor reúne as medidas por região, a legenda e a comparação inicial → atual em um único bloco. Pontuações gerais compartilhadas por várias regiões permanecem identificadas como dor geral, sem inventar medidas regionais.",
+      },
+      {
         key: "patient_files",
         icon: ImageIcon,
         title: "Upload de laudos, exames e fotos",

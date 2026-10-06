@@ -100,7 +100,7 @@ const PatientSectionRail = ({ riskLevel }: Props) => {
   const goTo = useCallback((id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    el.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start", inline: "nearest" });
     setActiveId(id);
     setMobileOpen(false);
     setExpanded(false);
