@@ -76,11 +76,11 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
       <CardContent className="space-y-4">
         {!readOnly && (
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => makeLink("patient")} disabled={creating !== null}>
+             <Button type="button" size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => makeLink("patient")} disabled={creating !== null}>
               {creating === "patient" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserRound className="h-3.5 w-3.5" />}
               Link do paciente
             </Button>
-            <Button size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => makeLink("coach")} disabled={creating !== null}>
+             <Button type="button" size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => makeLink("coach")} disabled={creating !== null}>
               {creating === "coach" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Dumbbell className="h-3.5 w-3.5" />}
               Link do preparador
             </Button>
@@ -99,7 +99,7 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
                 {!readOnly && (
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={async () => { await revokeLink(l.id); onChanged(); }}>
+                   <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label="Desativar link" title="Desativar link" onClick={async () => { await revokeLink(l.id); onChanged(); }}>
                     <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                   </Button>
                 )}
@@ -128,9 +128,9 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
               </Badge>
               <span className="text-xs text-foreground flex-1">{r.text}</span>
               {!readOnly && (
-                <button onClick={async () => { await deleteRestriction(r.id); onChanged(); }}>
+                 <Button type="button" size="icon" variant="ghost" className="h-7 w-7 shrink-0" aria-label="Excluir orientação" onClick={async () => { await deleteRestriction(r.id); onChanged(); }}>
                   <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
+                 </Button>
               )}
             </div>
           ))}
@@ -138,6 +138,7 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
           {!readOnly && planId && (
             <div className="flex gap-2">
               <Button
+                type="button"
                 size="sm"
                 variant="outline"
                 className="rounded-xl text-[11px] shrink-0"
@@ -150,9 +151,9 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Ex.: evitar salto unipodal até 8 semanas"
                 className="text-sm"
-                onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void submit(); } }}
               />
-              <Button size="icon" className="rounded-xl shrink-0" onClick={submit} disabled={saving || text.trim().length < 3}>
+               <Button type="button" size="icon" className="rounded-xl shrink-0" onClick={submit} disabled={saving || text.trim().length < 3}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               </Button>
             </div>
