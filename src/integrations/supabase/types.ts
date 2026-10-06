@@ -3039,10 +3039,12 @@ export type Database = {
       periodization_plans: {
         Row: {
           assessment_id: string | null
+          cardio_profile: string | null
           clinic_id: string | null
           created_at: string
           created_by: string | null
           end_date: string | null
+          hr_ceiling_override: number | null
           id: string
           injured_limb: string | null
           notes: string | null
@@ -3056,10 +3058,12 @@ export type Database = {
         }
         Insert: {
           assessment_id?: string | null
+          cardio_profile?: string | null
           clinic_id?: string | null
           created_at?: string
           created_by?: string | null
           end_date?: string | null
+          hr_ceiling_override?: number | null
           id?: string
           injured_limb?: string | null
           notes?: string | null
@@ -3073,10 +3077,12 @@ export type Database = {
         }
         Update: {
           assessment_id?: string | null
+          cardio_profile?: string | null
           clinic_id?: string | null
           created_at?: string
           created_by?: string | null
           end_date?: string | null
+          hr_ceiling_override?: number | null
           id?: string
           injured_limb?: string | null
           notes?: string | null
@@ -3761,12 +3767,14 @@ export type Database = {
           note: string | null
           pain: number | null
           patient_id: string
+          peak_hr: number | null
           plan_id: string | null
           readiness: number | null
           resting_hr: number | null
           sleep: number | null
           soreness: number | null
           source: string
+          spo2: number | null
           stress: number | null
           updated_at: string
         }
@@ -3778,12 +3786,14 @@ export type Database = {
           note?: string | null
           pain?: number | null
           patient_id: string
+          peak_hr?: number | null
           plan_id?: string | null
           readiness?: number | null
           resting_hr?: number | null
           sleep?: number | null
           soreness?: number | null
           source?: string
+          spo2?: number | null
           stress?: number | null
           updated_at?: string
         }
@@ -3795,12 +3805,14 @@ export type Database = {
           note?: string | null
           pain?: number | null
           patient_id?: string
+          peak_hr?: number | null
           plan_id?: string | null
           readiness?: number | null
           resting_hr?: number | null
           sleep?: number | null
           soreness?: number | null
           source?: string
+          spo2?: number | null
           stress?: number | null
           updated_at?: string
         }
