@@ -1,5 +1,10 @@
 # Roadmap
 
+## Sigla HEP e consequências naturais no Studio (06/10)
+- [ ] Explicar HEP no texto das artes sem transformar a sigla em título longo.
+- [ ] Variar consequências globalmente, preservando sentido e determinismo.
+- [ ] Validar os formatos e o repertório com testes.
+
 ## HEP e controle de carga no repertório Aliv.iA (06/10)
 - [x] Refinar kit, diferenciais e ecossistemas com benefícios concretos e limites do cálculo.
 - [x] Incorporar domínio da sessão, ponderação por objetivo e atualização ao editar sem novos controles.
