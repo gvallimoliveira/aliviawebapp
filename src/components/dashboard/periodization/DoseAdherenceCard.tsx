@@ -13,6 +13,7 @@ import {
   pairSessionsWithSrpe,
   plannedLoad,
   repeatedDoseDeviation,
+  localISODate,
   weekStartOf,
 } from "@/lib/periodization";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
