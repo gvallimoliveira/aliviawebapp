@@ -147,7 +147,7 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
               </div>
             )}
             {!readOnly && (
-              <Button size="sm" className="rounded-xl" onClick={save} disabled={saving}>
+              <Button type="button" size="sm" className="rounded-xl" onClick={save} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Salvar perfil
               </Button>
             )}

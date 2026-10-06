@@ -28,7 +28,9 @@ const clampScale = (v: unknown): number | null => {
   return Math.min(10, Math.max(1, Math.round(n)));
 };
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+// Data do dia no fuso do Brasil: depois das 21h (UTC-3) a data UTC já é o dia seguinte
+// e o check-in caía na data errada.
+const todayISO = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
 
 
 // Leitura de print de monitor cardíaco: usada pelo link do paciente e pelo profissional no prontuário.
@@ -218,7 +220,7 @@ serve(async (req) => {
       // inteira poderia enviesar o sRPE que ele vai relatar.
       let weekSessions: Array<Record<string, unknown>> | undefined;
       if (link.audience === "coach") {
-        const now = new Date();
+        const now = new Date(`${todayISO()}T12:00:00Z`);
         const dow = (now.getUTCDay() + 6) % 7; // segunda = 0
         const monday = new Date(now.getTime());
         monday.setUTCDate(monday.getUTCDate() - dow);
@@ -366,7 +368,7 @@ serve(async (req) => {
       // paciente na mesma sessão, sem contar duas vezes na carga.
       const { data: proRow } = await supabase.from("srpe_entries")
         .select("id, notes").eq("patient_id", patient.id).eq("session_date", sessionDate)
-        .eq("track", track).eq("source", "professional").not("monitor_source", "is", null).limit(1).maybeSingle();
+        .eq("track", track).eq("source", "professional").limit(1).maybeSingle();
       if (proRow) {
         const pn = typeof e.notes === "string" && e.notes.trim() ? `Paciente: ${e.notes.slice(0, 900)}` : null;
         await supabase.from("srpe_entries").update({
@@ -652,7 +654,7 @@ async function maybeAlert(
       .select("session_date, track, planned_duration_min, planned_rpe")
       .eq("patient_id", ctx.patientId)
       .gte("session_date", weekISO);
-    const TRACK_PT: Record<string, string> = { physio: "fisioterapia", gym: "academia", sport: "campo/esporte", cardio: "cardio" };
+    const TRACK_PT: Record<string, string> = { physio: "fisioterapia", gym: "academia", sport: "outro esporte", cardio: "cardio" };
     const plannedByTrack: Record<string, number> = {};
     (planned || []).forEach((s: { track: string; planned_duration_min: number | null; planned_rpe: number | null }) => {
       const load = Number(s.planned_duration_min || 0) * Number(s.planned_rpe || 0);

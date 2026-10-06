@@ -13,6 +13,7 @@ import {
   pairSessionsWithSrpe,
   plannedLoad,
   repeatedDoseDeviation,
+  localISODate,
   weekStartOf,
 } from "@/lib/periodization";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
@@ -94,7 +95,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
   // Prescrição de dose
   const [open, setOpen] = useState(false);
   const [track, setTrack] = useState("gym");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => localISODate());
   const [duration, setDuration] = useState("");
   const [rpe, setRpe] = useState(7);
   const [title, setTitle] = useState("");
@@ -143,19 +144,19 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
             </p>
           </div>
           <div className="flex items-center gap-1">
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, -7))}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-[11px] text-muted-foreground whitespace-nowrap">
               {shortDate(summary.weekStart)} → {shortDate(summary.weekEnd)}
             </span>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, 7))}>
               <ChevronRight className="h-4 w-4" />
             </Button>
             {!readOnly && (
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="gap-1 rounded-xl text-xs ml-1">
+                  <Button type="button" size="sm" variant="outline" className="gap-1 rounded-xl text-xs ml-1">
                     <ClipboardList className="h-3.5 w-3.5" /> Prescrever
                   </Button>
                 </DialogTrigger>
@@ -164,7 +165,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                   <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-2">
                       {Object.entries(TRACK_LABEL).map(([key, label]) => (
-                        <Button
+                        <Button type="button"
                           key={key}
                           size="sm"
                           variant={track === key ? "default" : "outline"}
@@ -196,7 +197,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                         Carga alvo: <strong>{plannedLoad(Number(duration), rpe)}</strong> unidades.
                       </p>
                     )}
-                    <Button className="w-full rounded-xl gap-2" onClick={submit} disabled={saving}>
+                    <Button type="button" className="w-full rounded-xl gap-2" onClick={submit} disabled={saving}>
                       {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                       Prescrever dose
                     </Button>

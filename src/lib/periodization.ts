@@ -38,12 +38,18 @@ export function trainingLoad(durationMin: number, rpe: number): number {
 
 const toDate = (iso: string): Date => new Date(`${iso.slice(0, 10)}T12:00:00Z`);
 
+/** Data local (YYYY-MM-DD) do aparelho. Nunca usar toISOString para "hoje": à noite no Brasil ela já é amanhã. */
+export function localISODate(d: Date = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 const daysBetween = (from: Date, to: Date): number =>
   Math.round((to.getTime() - from.getTime()) / 86400000);
 
 /** Soma das cargas dentro de uma janela de N dias terminando em `ref` (inclusive). */
 export function loadInWindow(entries: SrpeEntryLike[], days: number, ref: Date = new Date()): number {
-  const end = toDate(ref.toISOString());
+  const end = toDate(localISODate(ref));
   return entries.reduce((sum, e) => {
     const diff = daysBetween(toDate(e.session_date), end);
     if (diff < 0 || diff >= days) return sum;
@@ -71,7 +77,7 @@ export const CHRONIC_MIN_SESSIONS = 4;
  * artificialmente baixa e o ACWR dispara um "risco" que não existe.
  */
 export function chronicBaselineReady(entries: SrpeEntryLike[], ref: Date = new Date()): boolean {
-  const end = toDate(ref.toISOString());
+  const end = toDate(localISODate(ref));
   const inWindow = entries.filter((e) => {
     const diff = daysBetween(toDate(e.session_date), end);
     return diff >= 0 && diff < 28 && trainingLoad(e.duration_min, e.rpe) > 0;
@@ -410,7 +416,7 @@ const normalizeTrack = (t?: string | null): LoadTrack =>
 
 /** Segunda-feira (YYYY-MM-DD) da semana da data informada. */
 export function weekStartOf(ref: Date = new Date()): string {
-  return mondayOf(toDate(ref.toISOString()));
+  return mondayOf(toDate(localISODate(ref)));
 }
 
 const addIsoDays = (iso: string, n: number): string => {

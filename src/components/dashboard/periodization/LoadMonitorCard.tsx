@@ -11,9 +11,9 @@ import {
 } from "recharts";
 import { Activity, HeartPulse, Loader2, Plus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { loadStatus, readinessScore, restingHrStatus, trainingLoad } from "@/lib/periodization";
+import { loadStatus, localISODate, readinessScore, restingHrStatus, trainingLoad } from "@/lib/periodization";
 import type { ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
-import { addSrpe, saveCheckin } from "@/lib/periodizationData";
+import { saveProfessionalSession, saveCheckin } from "@/lib/periodizationData";
 import { CHECKIN_ITEMS, LEVEL_CLASS, TRACK_LABEL, ZONE_LABEL } from "./scales";
 
 interface Props {
@@ -72,14 +72,14 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
   const [track, setTrack] = useState("physio");
   const [duration, setDuration] = useState("");
   const [rpe, setRpe] = useState(5);
-  const [srpeDate, setSrpeDate] = useState(new Date().toISOString().slice(0, 10));
+  const [srpeDate, setSrpeDate] = useState(localISODate());
   const [savingSrpe, setSavingSrpe] = useState(false);
 
   // Formulário de check-in manual (fisio registrando pelo paciente)
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [values, setValues] = useState<Record<string, number>>({});
   const [note, setNote] = useState("");
-  const [checkinDate, setCheckinDate] = useState(new Date().toISOString().slice(0, 10));
+  const [checkinDate, setCheckinDate] = useState(localISODate());
   const [savingCheckin, setSavingCheckin] = useState(false);
 
   const submitSrpe = async () => {
@@ -90,7 +90,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
     }
     setSavingSrpe(true);
     try {
-      await addSrpe({ patientId, planId, sessionDate: srpeDate, track, durationMin: min, rpe });
+      await saveProfessionalSession({ patientId, planId, sessionDate: srpeDate, track, durationMin: min, rpe });
       setDuration("");
       setSrpeOpen(false);
       onChanged();
@@ -134,7 +134,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
             <div className="flex gap-2">
               <Dialog open={srpeOpen} onOpenChange={setSrpeOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
+                  <Button type="button" size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
                     <Activity className="h-3.5 w-3.5" /> sRPE
                   </Button>
                 </DialogTrigger>
@@ -143,7 +143,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {Object.entries(TRACK_LABEL).map(([key, label]) => (
-                        <Button
+                        <Button type="button"
                           key={key}
                           variant={track === key ? "default" : "outline"}
                           size="sm"
@@ -174,7 +174,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
                         Carga: <strong>{trainingLoad(Number(duration), rpe)}</strong>
                       </p>
                     )}
-                    <Button className="w-full rounded-xl gap-2" onClick={submitSrpe} disabled={savingSrpe}>
+                    <Button type="button" className="w-full rounded-xl gap-2" onClick={submitSrpe} disabled={savingSrpe}>
                       {savingSrpe ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                       Registrar
                     </Button>
@@ -184,7 +184,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
 
               <Dialog open={checkinOpen} onOpenChange={setCheckinOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
+                  <Button type="button" size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
                     <HeartPulse className="h-3.5 w-3.5" /> Check-in
                   </Button>
                 </DialogTrigger>
@@ -209,7 +209,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
                       </div>
                     ))}
                     <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Observação (opcional)" className="text-sm" />
-                    <Button className="w-full rounded-xl gap-2" onClick={submitCheckin} disabled={savingCheckin}>
+                    <Button type="button" className="w-full rounded-xl gap-2" onClick={submitCheckin} disabled={savingCheckin}>
                       {savingCheckin ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                       Salvar check-in
                     </Button>

@@ -5,8 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Activity, AlertTriangle, ImageUp, Loader2, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { PeriodizationPlan, SrpeEntry } from "@/lib/periodizationData";
+import { saveProfessionalSession, type PeriodizationPlan, type SrpeEntry } from "@/lib/periodizationData";
+import { CARDIO_PRINT_ERR } from "@/components/periodization/CardioPrintReader";
+import { TRACK_LABEL } from "./scales";
 import { SPO2_ALERT, ageFromBirth, hrCeiling } from "@/lib/cardioSafety";
+import { localISODate } from "@/lib/periodization";
 import { monitorFlags, sanitizeZones, srpeLoad, trimp } from "@/lib/cardioLoad";
 
 // Entrada do profissional: sessão medida com monitor cardíaco (cinta, relógio
@@ -14,12 +17,7 @@ import { monitorFlags, sanitizeZones, srpeLoad, trimp } from "@/lib/cardioLoad";
 // na mesma sessão: monitor + PSE do profissional valem; a PSE do paciente fica
 // guardada como percepção dele. Uma sessão só, sem dupla contagem no ACWR.
 
-const TRACKS = [
-  { v: "physio", l: "Fisioterapia" },
-  { v: "gym", l: "Academia / força" },
-  { v: "sport", l: "Outro esporte" },
-  { v: "cardio", l: "Cardio / corrida" },
-];
+const TRACKS = Object.entries(TRACK_LABEL).map(([v, l]) => ({ v, l }));
 
 interface Props {
   patientId: string;
@@ -28,7 +26,7 @@ interface Props {
   onChanged: () => void;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localISODate();
 const num = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
 
 const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props) => {
@@ -64,7 +62,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
   const existing = entries.find((e) => e.session_date === date && e.track === track);
 
   const monitored = useMemo(
-    () => (entries as any[]).filter((e) => e.monitor_source).slice(-6).reverse(),
+    () => entries.filter((e) => e.monitor_source).slice(-6).reverse(),
     [entries],
   );
 
@@ -86,7 +84,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
       const { data, error } = await supabase.functions.invoke("periodization-checkin", {
         body: { action: "pro_parse_cardio_print", patient_id: patientId, image_base64: b64, mime_type: file.type },
       });
-      if (error || !data?.reading) throw new Error(data?.error || "falha");
+      if (error || !data?.reading) throw new Error(data?.error || (error as any)?.context?.error || "falha");
       const x = data.reading;
       const s = (v: number | null) => (v == null ? "" : String(v));
       if (x.duration_min != null) setDuration(s(Math.round(x.duration_min)));
@@ -98,8 +96,8 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
       if (x.summary && !notes) setNotes(x.summary);
       setSource("print");
       toast({ title: "Print lido", description: "Confira os números antes de salvar." });
-    } catch {
-      toast({ title: "Não consegui ler o print", description: "Preencha os campos manualmente.", variant: "destructive" });
+    } catch (e: any) {
+      toast({ title: "Não consegui ler o print", description: CARDIO_PRINT_ERR[e?.message] ?? "Preencha os campos manualmente.", variant: "destructive" });
     } finally {
       setReading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -110,28 +108,18 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
     if (!(d > 0 && d <= 600)) { toast({ title: "Informe a duração", variant: "destructive" }); return; }
     if (r == null || r < 0 || r > 10) { toast({ title: "Informe a PSE (0–10)", variant: "destructive" }); return; }
     setSaving(true);
-    const sb = supabase as any;
     const ri = (v: string) => { const n = num(v); return n == null ? null : Math.round(n); };
-    const monitor = {
-      hr_avg: ri(hrAvg), hr_max: ri(hrMax), spo2_min: ri(spo2),
-      zone_minutes: z, trimp: t.value, monitor_source: source,
-    };
-    let error: any = null;
-    if (existing) {
-      const patientRpe = existing.source === "patient" ? existing.rpe : (existing as any).patient_rpe ?? null;
-      ({ error } = await sb.from("srpe_entries").update({
-        ...monitor, duration_min: Math.round(d), rpe: r, patient_rpe: patientRpe, source: "professional",
-        notes: [existing.notes, notes.trim() || null].filter(Boolean).join("\n") || null,
-      }).eq("id", existing.id));
-    } else {
-      ({ error } = await sb.from("srpe_entries").insert({
-        ...monitor, patient_id: patientId, plan_id: plan?.id ?? null, session_date: date, track,
-        duration_min: Math.round(d), rpe: r, notes: notes.trim() || null, source: "professional",
+    let merged = false;
+    let error: unknown = null;
+    try {
+      ({ merged } = await saveProfessionalSession({
+        patientId, planId: plan?.id ?? null, sessionDate: date, track, durationMin: d, rpe: r, notes,
+        monitor: { hr_avg: ri(hrAvg), hr_max: ri(hrMax), spo2_min: ri(spo2), zone_minutes: z, trimp: t.value, monitor_source: source },
       }));
-    }
+    } catch (e) { error = e; }
     setSaving(false);
     if (error) { toast({ title: "Não foi possível salvar", variant: "destructive" }); return; }
-    toast({ title: existing ? "Sessão unida ao check-in do paciente" : "Sessão monitorada salva" });
+    toast({ title: merged ? "Sessão unida ao check-in do paciente" : "Sessão monitorada salva" });
     reset(); setOpen(false); onChanged();
   };
 
@@ -226,7 +214,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
 
       {monitored.length > 0 && (
         <ul className="space-y-1 text-xs">
-          {monitored.map((e: any) => (
+          {monitored.map((e) => (
             <li key={e.id} className="flex flex-wrap justify-between gap-x-3 rounded-md bg-background px-2 py-1">
               <span>{e.session_date.split("-").reverse().join("/")} · {TRACKS.find((x) => x.v === e.track)?.l ?? e.track}</span>
               <span className="text-muted-foreground">

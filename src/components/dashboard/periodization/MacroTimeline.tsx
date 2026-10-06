@@ -96,7 +96,7 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
                   </p>
                 )}
                 {!readOnly && planId && !m.is_current && !isPast && (
-                  <Button
+                  <Button type="button"
                     size="sm"
                     variant="outline"
                     className="w-full mt-2 h-7 rounded-xl gap-1 text-[10px]"

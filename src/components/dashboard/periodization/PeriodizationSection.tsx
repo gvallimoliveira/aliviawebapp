@@ -285,11 +285,11 @@ const PeriodizationSection = ({
           </p>
           {!readOnly && (
             <div className="flex flex-wrap justify-center gap-2">
-              <Button className="rounded-xl gap-1" onClick={activateAndCreateLink} disabled={resolving}>
+              <Button type="button" className="rounded-xl gap-1" onClick={activateAndCreateLink} disabled={resolving}>
                 {resolving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
                 Gerar link de check-in
               </Button>
-              <Button variant="outline" className="rounded-xl gap-1" onClick={async () => { const id = await ensurePatientRecord(); if (id) load(); }} disabled={resolving}>
+              <Button type="button" variant="outline" className="rounded-xl gap-1" onClick={async () => { const id = await ensurePatientRecord(); if (id) load(); }} disabled={resolving}>
                 <Plus className="h-4 w-4" />
                 Ativar sem link
               </Button>
@@ -405,7 +405,7 @@ const PeriodizationSection = ({
                 placeholder="Esporte ou atividade (opcional)"
                 className="text-sm"
               />
-              <Button className="rounded-xl gap-1 shrink-0" onClick={createPlan} disabled={creating}>
+              <Button type="button" className="rounded-xl gap-1 shrink-0" onClick={createPlan} disabled={creating}>
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 Criar
               </Button>

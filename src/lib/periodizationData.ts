@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { CLEARANCE_TEMPLATE, MACRO_PHASES } from "@/lib/periodization";
+import { CLEARANCE_TEMPLATE, MACRO_PHASES, localISODate } from "@/lib/periodization";
 
 export interface PeriodizationPlan {
   id: string;
@@ -66,6 +66,13 @@ export interface SrpeEntry {
   source: string;
   notes: string | null;
   session_id: string | null;
+  patient_rpe?: number | null;
+  hr_avg?: number | null;
+  hr_max?: number | null;
+  spo2_min?: number | null;
+  zone_minutes?: number[] | null;
+  trimp?: number | null;
+  monitor_source?: string | null;
 }
 
 export interface ReadinessCheckin {
@@ -160,7 +167,7 @@ export async function createPlanWithTemplate(opts: {
   startDate?: string;
 }): Promise<PeriodizationPlan> {
   const { data: userData } = await supabase.auth.getUser();
-  const start = opts.startDate || new Date().toISOString().slice(0, 10);
+  const start = opts.startDate || localISODate();
 
   const { data: plan, error } = await supabase
     .from("periodization_plans")
@@ -258,7 +265,7 @@ export async function setCurrentMacroPhase(
   const idx = macros.findIndex((c) => c.id === cycleId);
   if (idx < 0) return;
 
-  const start = fromDate || new Date().toISOString().slice(0, 10);
+  const start = fromDate || localISODate();
   const { error: clearError } = await sb
     .from("periodization_cycles")
     .update({ is_current: false, marked_current_at: null })
@@ -364,7 +371,25 @@ export async function fetchSrpe(patientId: string, sinceDate?: string): Promise<
   return (data || []) as SrpeEntry[];
 }
 
-export async function addSrpe(entry: {
+/** Dados do monitor cardíaco (cinta, relógio ou oxímetro) lançados pelo profissional. */
+export interface MonitorData {
+  hr_avg: number | null;
+  hr_max: number | null;
+  spo2_min: number | null;
+  zone_minutes: number[] | null;
+  trimp: number | null;
+  monitor_source: "manual" | "print";
+}
+
+const VALID_TRACKS = ["physio", "gym", "sport", "cardio"];
+
+/**
+ * Único caminho de gravação de sessão pelo profissional. Uma sessão por data +
+ * frente: se o paciente já relatou pelo check-in, junta no mesmo registro (a
+ * PSE dele fica em `patient_rpe`) para nunca contar duas vezes no ACWR/dose.
+ * Também vincula a sessão planejada do microciclo (`session_id`).
+ */
+export async function saveProfessionalSession(entry: {
   patientId: string;
   planId?: string | null;
   sessionDate: string;
@@ -372,23 +397,49 @@ export async function addSrpe(entry: {
   durationMin: number;
   rpe: number;
   notes?: string | null;
-  source?: string;
-}): Promise<void> {
-  const { error } = await supabase.from("srpe_entries").insert({
+  monitor?: MonitorData | null;
+}): Promise<{ merged: boolean }> {
+  const track = VALID_TRACKS.includes(entry.track) ? entry.track : "physio";
+  const sb = supabase as any;
+  const [{ data: existing }, { data: planned }] = await Promise.all([
+    sb.from("srpe_entries").select("id, rpe, source, notes, patient_rpe, session_id")
+      .eq("patient_id", entry.patientId).eq("session_date", entry.sessionDate).eq("track", track)
+      .order("created_at", { ascending: true }).limit(1).maybeSingle(),
+    sb.from("periodization_sessions").select("id")
+      .eq("patient_id", entry.patientId).eq("session_date", entry.sessionDate).eq("track", track)
+      .limit(1).maybeSingle(),
+  ]);
+  const base = {
+    duration_min: Math.round(entry.durationMin),
+    rpe: entry.rpe,
+    source: "professional",
+    ...(entry.monitor ?? {}),
+  };
+  if (existing) {
+    const patientRpe = existing.source === "patient" ? existing.rpe : existing.patient_rpe ?? null;
+    const notes = [existing.notes, entry.notes?.trim() || null].filter(Boolean).join("\n") || null;
+    const { error } = await sb.from("srpe_entries").update({
+      ...base, patient_rpe: patientRpe, notes, session_id: existing.session_id ?? planned?.id ?? null,
+    }).eq("id", existing.id);
+    if (error) throw error;
+    return { merged: true };
+  }
+  const { error } = await sb.from("srpe_entries").insert({
+    ...base,
     patient_id: entry.patientId,
     plan_id: entry.planId ?? null,
     session_date: entry.sessionDate,
-    track: entry.track,
-    duration_min: entry.durationMin,
-    rpe: entry.rpe,
-    notes: entry.notes ?? null,
-    source: entry.source ?? "professional",
+    track,
+    session_id: planned?.id ?? null,
+    notes: entry.notes?.trim() || null,
   });
   if (error) throw error;
+  return { merged: false };
 }
 
 export async function deleteSrpe(id: string): Promise<void> {
-  await supabase.from("srpe_entries").delete().eq("id", id);
+  const { error } = await supabase.from("srpe_entries").delete().eq("id", id);
+  if (error) throw error;
 }
 
 /* --------------------------------------------------------------- checkins */
