@@ -1,5 +1,7 @@
 # Architecture decisions
 
+- Cardiovascular views use `usePatientBirthDate` to refresh demographics after patient record edits and on refocus; age-dependent estimates must not remain stale or reset unsaved session inputs.
+
 - Periodization link actions must explicitly use button type="button"; these controls can be embedded inside patient-record forms and must never submit them.
 
 - Studio copy lists use the shared `listCoherence.ts` guard at final voice review and rendering; semantic deduplication keeps original complementary arguments without padding or modifying media metadata.
