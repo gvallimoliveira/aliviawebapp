@@ -111,6 +111,7 @@ const regionLabels: Record<string, Record<string, string>> = {
   knee: { pt: "Joelho", en: "Knee", es: "Rodilla" },
   shoulder: { pt: "Ombro", en: "Shoulder", es: "Hombro" },
   spine: { pt: "Coluna", en: "Spine", es: "Columna" },
+  core: { pt: "Tronco/Core", en: "Trunk/Core", es: "Tronco/Core" },
   ankle: { pt: "Tornozelo", en: "Ankle", es: "Tobillo" },
   cervical: { pt: "Cervical", en: "Cervical", es: "Cervical" },
   wrist: { pt: "Punho", en: "Wrist", es: "Muñeca" },
