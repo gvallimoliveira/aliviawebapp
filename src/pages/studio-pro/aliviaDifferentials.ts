@@ -143,7 +143,7 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     highlightTerms: ["HEP", "Vídeos", "Templates"],
     hook: "O exercício de casa precisa chegar claro o bastante para ser feito",
     hooks: ["Uma lista de nomes não ensina o movimento", "Prescrever de novo não significa montar tudo de novo", "O paciente consulta o exercício no celular quando a dúvida aparece em casa"],
-    description: "O paciente abre o link e consulta vídeos, séries, repetições e frequência. Você reaproveita templates, ajusta a prescrição ao caso e acompanha a estimativa de carga enquanto monta o programa.",
+    description: "No Programa de exercícios domiciliares (HEP), o paciente abre o link e consulta vídeos, séries, repetições e frequência. Você reaproveita templates, ajusta a prescrição ao caso e acompanha a estimativa de carga enquanto monta o programa.",
     pains: ["Exercício enviado por mensagem sem demonstração", "Programa remontado do zero a cada paciente", "Dificuldade para ajustar dose e restrições com clareza"],
     desires: ["Entregar um programa que o paciente consiga consultar no celular", "Reaproveitar estruturas sem copiar uma prescrição inteira", "Ajustar exercício e dose ao caso", "Deixar execução e frequência claras fora da sessão"],
     proof: ["Biblioteca de exercícios com vídeos", "Séries, repetições e frequência definidas no programa", "Templates próprios e pré-construídos editáveis antes do envio", "Link do programa disponível no celular do paciente", "Programa manual ou criado pelo Agente, revisável pelo fisioterapeuta"],
@@ -224,7 +224,7 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
       "O programa de exercícios também faz parte da carga da semana",
       "Você prescreve. O Aliv.iA organiza a estimativa de dose",
     ],
-    description: "Ao criar ou editar o HEP, você vê volume por região e intensidade estimada. As séries semanais contam força por inteiro, estabilização pela metade e deixam mobilidade e flexibilidade fora dessa conta; ao salvar, a dose planejada atualiza as sessões futuras do microciclo vinculado.",
+    description: "Ao criar ou editar o Programa de exercícios domiciliares (HEP), você vê volume por região e intensidade estimada. As séries semanais contam força por inteiro, estabilização pela metade e deixam mobilidade e flexibilidade fora dessa conta; ao salvar, a dose planejada atualiza as sessões futuras do microciclo vinculado.",
     pains: ["Somar alongamento e força como se exigissem o mesmo esforço", "Refazer contas depois de cada ajuste do programa", "Prescrição atualizada com a semana ainda mostrando a dose antiga"],
     desires: ["Entender o peso dos exercícios antes de enviar o programa", "Ver a carga por região sem uma planilha paralela", "Revisar a prescrição com o planejamento já alinhado"],
     proof: [
