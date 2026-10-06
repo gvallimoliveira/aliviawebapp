@@ -4046,47 +4046,68 @@ export type Database = {
         Row: {
           created_at: string
           duration_min: number
+          hr_avg: number | null
+          hr_max: number | null
           id: string
+          monitor_source: string | null
           notes: string | null
           patient_id: string
+          patient_rpe: number | null
           plan_id: string | null
           rpe: number
           session_date: string
           session_id: string | null
           source: string
+          spo2_min: number | null
           track: string
           training_load: number | null
+          trimp: number | null
           updated_at: string
+          zone_minutes: Json | null
         }
         Insert: {
           created_at?: string
           duration_min: number
+          hr_avg?: number | null
+          hr_max?: number | null
           id?: string
+          monitor_source?: string | null
           notes?: string | null
           patient_id: string
+          patient_rpe?: number | null
           plan_id?: string | null
           rpe: number
           session_date?: string
           session_id?: string | null
           source?: string
+          spo2_min?: number | null
           track?: string
           training_load?: number | null
+          trimp?: number | null
           updated_at?: string
+          zone_minutes?: Json | null
         }
         Update: {
           created_at?: string
           duration_min?: number
+          hr_avg?: number | null
+          hr_max?: number | null
           id?: string
+          monitor_source?: string | null
           notes?: string | null
           patient_id?: string
+          patient_rpe?: number | null
           plan_id?: string | null
           rpe?: number
           session_date?: string
           session_id?: string | null
           source?: string
+          spo2_min?: number | null
           track?: string
           training_load?: number | null
+          trimp?: number | null
           updated_at?: string
+          zone_minutes?: Json | null
         }
         Relationships: [
           {
