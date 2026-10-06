@@ -12,6 +12,7 @@ import { CheckCircle2, Loader2, Activity, HeartPulse, ShieldAlert, CalendarDays,
 import { setSeo } from "@/lib/seo";
 import { CHECKIN_ITEMS, TRACK_LABEL } from "@/components/dashboard/periodization/scales";
 import { plannedLoad, trainingLoad, loadLevelFromRpe } from "@/lib/periodization";
+import CardioPrintReader from "@/components/periodization/CardioPrintReader";
 import ExternalWorkoutImport from "@/components/periodization/ExternalWorkoutImport";
 
 const LEVEL_BADGE: Record<string, { label: string; className: string }> = {
@@ -708,6 +709,19 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
 
 
 
+                      {track === "cardio" && token && (
+                        <CardioPrintReader
+                          token={token}
+                          onApply={(r) => {
+                            if (r.duration_min) setDuration(String(Math.round(r.duration_min)));
+                            if (r.suggested_rpe !== null) setRpe(Math.round(r.suggested_rpe));
+                            if (r.max_hr) setPeakHr(String(Math.round(r.max_hr)));
+                            if (r.spo2) setSpo2(String(Math.round(r.spo2)));
+                            const parts = [r.distance_km && `${r.distance_km} km`, r.avg_hr && `FC média ${r.avg_hr}`, r.max_hr && `FC máx. ${r.max_hr}`, r.spo2 && `SpO₂ ${r.spo2}%`].filter(Boolean);
+                            if (parts.length) setSrpeNotes((n) => [n, `Print: ${parts.join(", ")}`].filter(Boolean).join(" · "));
+                          }}
+                        />
+                      )}
                       <div className="space-y-1.5">
                         <span className="text-sm font-medium text-foreground">
                           Duração real (minutos){!freeMode && selectedSessionId ? " — ajuste se foi diferente" : ""}

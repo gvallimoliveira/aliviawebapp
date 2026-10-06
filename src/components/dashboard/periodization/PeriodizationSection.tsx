@@ -32,6 +32,7 @@ import MicroWeekGrid from "./MicroWeekGrid";
 // Critérios de liberação desativados por ora (componente mantido no projeto).
 import BridgeCard from "./BridgeCard";
 import CardioSafetyCard from "./CardioSafetyCard";
+import AutoPlanCard from "./AutoPlanCard";
 import { HeartPulse } from "lucide-react";
 import PeriodizationCollapsible from "./PeriodizationCollapsible";
 
@@ -358,6 +359,9 @@ const PeriodizationSection = ({
 
       {plan && (
         <>
+          <PeriodizationCollapsible title="Planejamento automático" icon={<Plus className="h-4 w-4 text-primary" />}>
+            <AutoPlanCard patientId={patientId} plan={plan} entries={entries} checkins={checkins} sessions={sessions} onChanged={refresh} readOnly={readOnly} />
+          </PeriodizationCollapsible>
           <PeriodizationCollapsible title="Microciclo da semana" icon={<Plus className="h-4 w-4 text-primary" />}>
             <MicroWeekGrid
               planId={plan.id}
