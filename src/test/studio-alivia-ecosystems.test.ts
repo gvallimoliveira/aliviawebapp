@@ -28,7 +28,7 @@ describe("Ecossistema de soluções Aliv.iA", () => {
   it("mantém as frentes e a atualização futura na cadeia de periodização", () => {
     const ecosystem = buildAliviaEcosystem("periodizacao");
     const text = JSON.stringify(ecosystem);
-    expect(text).toMatch(/fisioterapia, academia ou campo\/esporte/);
+    expect(text).toMatch(/fisioterapia, academia ou outro esporte/);
     expect(text).toMatch(/sessões futuras/);
     expect(ecosystem.promise).toMatch(/estimativa de dose/);
     expect(ecosystem.closing).toMatch(/edições do programa/);
