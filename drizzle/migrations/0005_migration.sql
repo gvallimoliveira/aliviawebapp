@@ -1,0 +1,1 @@
+ALTER TABLE public.readiness_checkins ADD COLUMN IF NOT EXISTS resting_hr smallint CHECK (resting_hr IS NULL OR (resting_hr BETWEEN 25 AND 140));

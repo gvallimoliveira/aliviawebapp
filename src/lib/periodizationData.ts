@@ -77,6 +77,7 @@ export interface ReadinessCheckin {
   fatigue: number | null;
   readiness: number | null;
   pain: number | null;
+  resting_hr?: number | null;
   note: string | null;
   source: string;
 }

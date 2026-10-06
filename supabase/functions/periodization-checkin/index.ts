@@ -140,7 +140,7 @@ serve(async (req) => {
     if (action === "load") {
       const { data: existing } = await supabase
         .from("readiness_checkins")
-        .select("soreness, sleep, stress, fatigue, readiness, pain, note")
+        .select("soreness, sleep, stress, fatigue, readiness, pain, resting_hr, note")
         .eq("patient_id", patient.id)
         .eq("checkin_date", todayISO())
         .maybeSingle();
@@ -212,10 +212,14 @@ serve(async (req) => {
         fatigue: clampScale(v.fatigue),
         readiness: clampScale(v.readiness),
         pain: clampScale(v.pain),
+        resting_hr: (() => {
+          const n = Math.round(Number(v.resting_hr));
+          return Number.isFinite(n) && n >= 25 && n <= 140 ? n : null;
+        })(),
         note: typeof v.note === "string" ? v.note.slice(0, 1000) : null,
         source: link.audience === "coach" ? "coach" : "patient",
       };
-      const answered = [payload.soreness, payload.sleep, payload.stress, payload.fatigue, payload.readiness, payload.pain]
+      const answered = [payload.soreness, payload.sleep, payload.stress, payload.fatigue, payload.readiness, payload.pain, payload.resting_hr]
         .filter((x) => x !== null).length;
       if (answered === 0) return json({ error: "empty_checkin" }, 400);
 
@@ -246,7 +250,7 @@ serve(async (req) => {
       const rpe = Number(e.rpe);
       if (!Number.isFinite(duration) || duration <= 0 || duration > 600) return json({ error: "invalid_duration" }, 400);
       if (!Number.isFinite(rpe) || rpe < 0 || rpe > 10) return json({ error: "invalid_rpe" }, 400);
-      let track = ["physio", "gym", "sport"].includes(e.track) ? e.track : "physio";
+      let track = ["physio", "gym", "sport", "cardio"].includes(e.track) ? e.track : "physio";
       const sessionDate = typeof e.session_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.session_date)
         ? e.session_date
         : todayISO();
@@ -311,7 +315,7 @@ serve(async (req) => {
       const rpe = Number(p.planned_rpe);
       if (!Number.isFinite(duration) || duration <= 0 || duration > 600) return json({ error: "invalid_duration" }, 400);
       if (!Number.isFinite(rpe) || rpe < 0 || rpe > 10) return json({ error: "invalid_rpe" }, 400);
-      const track = ["physio", "gym", "sport"].includes(p.track) ? p.track : "gym";
+      const track = ["physio", "gym", "sport", "cardio"].includes(p.track) ? p.track : "gym";
       const sessionDate = typeof p.session_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(p.session_date)
         ? p.session_date
         : todayISO();
@@ -448,7 +452,7 @@ serve(async (req) => {
           patient_id: patient.id,
           plan_id: link.plan_id,
           session_date: p.session_date,
-          track: ["physio", "gym", "sport"].includes(p.track) ? p.track : "gym",
+          track: ["physio", "gym", "sport", "cardio"].includes(p.track) ? p.track : "gym",
           planned_load: ["low", "moderate", "high"].includes(p.planned_load) ? p.planned_load : "moderate",
           planned_duration_min: Math.round(duration),
           planned_rpe: rpe,

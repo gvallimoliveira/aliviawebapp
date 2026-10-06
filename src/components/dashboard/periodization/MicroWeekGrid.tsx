@@ -265,7 +265,7 @@ const MicroWeekGrid = ({
           <DialogContent className="max-w-sm">
             <DialogHeader><DialogTitle className="text-base">Sessão planejada</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {Object.entries(TRACK_LABEL).map(([key, label]) => (
                   <Button key={key} size="sm" variant={track === key ? "default" : "outline"} className="text-[11px] rounded-xl" onClick={() => setTrack(key)}>
                     {label}

@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { Activity, HeartPulse, Loader2, Plus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { loadStatus, readinessScore, trainingLoad } from "@/lib/periodization";
+import { loadStatus, readinessScore, restingHrStatus, trainingLoad } from "@/lib/periodization";
 import type { ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
 import { addSrpe, saveCheckin } from "@/lib/periodizationData";
 import { CHECKIN_ITEMS, LEVEL_CLASS, TRACK_LABEL, ZONE_LABEL } from "./scales";
@@ -38,6 +38,7 @@ const shortDate = (iso: string) =>
 const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
   const status = useMemo(() => loadStatus(entries, checkins), [entries, checkins]);
+  const hr = useMemo(() => restingHrStatus(checkins), [checkins]);
 
   // Detalhamento da prontidão: check-ins da data que forma o score exibido
   const [readinessOpen, setReadinessOpen] = useState(false);
@@ -140,7 +141,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
                 <DialogContent className="max-w-sm">
                   <DialogHeader><DialogTitle className="text-base">Registrar sessão (sRPE)</DialogTitle></DialogHeader>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {Object.entries(TRACK_LABEL).map(([key, label]) => (
                         <Button
                           key={key}
@@ -221,6 +222,22 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* FC de repouso matinal (módulo cardiovascular — fase 1) */}
+        {hr.latest !== null && (
+          <div className={`rounded-xl border p-2 text-xs ${hr.level === "insufficient" ? "border-border text-muted-foreground" : LEVEL_CLASS[hr.level]}`}>
+            <span className="font-semibold">FC ao acordar: {hr.latest} bpm</span>
+            {hr.latestDate ? <> · {shortDate(hr.latestDate)}</> : null}
+            {hr.baseline !== null && hr.delta !== null ? (
+              <> · base {hr.baseline} bpm ({hr.delta > 0 ? "+" : ""}{hr.delta})
+                {hr.level === "danger" && " — recuperação insuficiente provável; considere reduzir a carga de hoje."}
+                {hr.level === "caution" && " — acima do habitual; acompanhe com sono e fadiga."}
+              </>
+            ) : (
+              <> · linha de base com 3+ registros anteriores</>
+            )}
+          </div>
+        )}
+
         {/* Números-chave */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div className="rounded-xl border border-border p-2">

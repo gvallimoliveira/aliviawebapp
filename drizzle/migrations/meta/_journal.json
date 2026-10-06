@@ -36,6 +36,13 @@
       "when": 1791260148615,
       "tag": "0004_add_domain_to_exercise_programs",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791322076430,
+      "tag": "0005_migration",
+      "breakpoints": true
     }
   ]
 }

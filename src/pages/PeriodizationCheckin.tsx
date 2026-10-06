@@ -155,6 +155,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
   const [errorMsg, setErrorMsg] = useState("");
   const [values, setValues] = useState<Record<string, number>>({});
   const [note, setNote] = useState("");
+  const [restingHr, setRestingHr] = useState("");
   const [savingCheckin, setSavingCheckin] = useState(false);
   const [checkinDone, setCheckinDone] = useState(false);
 
@@ -229,6 +230,8 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
           if (typeof v === "number") preset[item.key] = v;
         });
         setValues(preset);
+        const hr = loaded.today_checkin?.resting_hr;
+        if (typeof hr === "number") setRestingHr(String(hr));
       }
       setState("ready");
 
@@ -237,14 +240,19 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
 
 
   const submitCheckin = async () => {
-    if (Object.keys(values).length === 0) {
+    const hrNum = restingHr ? Number(restingHr) : null;
+    if (hrNum !== null && (!Number.isFinite(hrNum) || hrNum < 25 || hrNum > 140)) {
+      setErrorMsg("FC ao acordar deve ficar entre 25 e 140 bpm.");
+      return;
+    }
+    if (Object.keys(values).length === 0 && hrNum === null) {
       setErrorMsg("Responda pelo menos uma escala.");
       return;
     }
     setErrorMsg("");
     setSavingCheckin(true);
     const { data, error } = await supabase.functions.invoke("periodization-checkin", {
-      body: { action: "submit_checkin", token, values: { ...values, note } },
+      body: { action: "submit_checkin", token, values: { ...values, resting_hr: restingHr ? Number(restingHr) : null, note } },
     });
     setSavingCheckin(false);
     if (error || !data?.ok) { setErrorMsg("Não foi possível enviar agora. Tente novamente."); return; }
@@ -418,6 +426,28 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           </div>
                         </div>
                       ))}
+                      <div className="space-y-1.5 rounded-xl border border-border p-3">
+                        <label htmlFor="resting-hr" className="text-sm font-medium text-foreground">
+                          Frequência cardíaca ao acordar (opcional)
+                        </label>
+                        <p className="text-[11px] text-muted-foreground">
+                          Meça em repouso, antes de levantar (relógio, cinta ou 60 s no pulso). Subir 5–7 bpm acima do seu normal pode indicar recuperação incompleta.
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="resting-hr"
+                            type="number"
+                            inputMode="numeric"
+                            min={25}
+                            max={140}
+                            value={restingHr}
+                            onChange={(e) => setRestingHr(e.target.value)}
+                            placeholder="ex.: 58"
+                            className="w-28"
+                          />
+                          <span className="text-xs text-muted-foreground">bpm</span>
+                        </div>
+                      </div>
                       <Textarea
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
@@ -457,7 +487,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                       <>
                         <div className="space-y-1.5">
                           <span className="text-sm font-medium text-foreground">Frente de trabalho</span>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {Object.entries(TRACK_LABEL).map(([key, label]) => (
                               <Button
                                 key={key}
@@ -616,7 +646,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                       ) : (
                         <div className="space-y-1.5">
                           <span className="text-sm font-medium text-foreground">Tipo de sessão</span>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {Object.entries(TRACK_LABEL).map(([key, label]) => (
                               <Button
                                 key={key}

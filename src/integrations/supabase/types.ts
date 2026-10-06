@@ -3763,6 +3763,7 @@ export type Database = {
           patient_id: string
           plan_id: string | null
           readiness: number | null
+          resting_hr: number | null
           sleep: number | null
           soreness: number | null
           source: string
@@ -3779,6 +3780,7 @@ export type Database = {
           patient_id: string
           plan_id?: string | null
           readiness?: number | null
+          resting_hr?: number | null
           sleep?: number | null
           soreness?: number | null
           source?: string
@@ -3795,6 +3797,7 @@ export type Database = {
           patient_id?: string
           plan_id?: string | null
           readiness?: number | null
+          resting_hr?: number | null
           sleep?: number | null
           soreness?: number | null
           source?: string
