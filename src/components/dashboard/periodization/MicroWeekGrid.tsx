@@ -155,15 +155,15 @@ const MicroWeekGrid = ({
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-1">
             <CalendarDays className="h-4 w-4 text-primary" />
-            <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Semana anterior" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label="Semana anterior" onClick={() => setWeekStart(addDays(weekStart, -7))}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-xs font-semibold text-foreground whitespace-nowrap">{weekLabel}</span>
-            <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Próxima semana" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label="Próxima semana" onClick={() => setWeekStart(addDays(weekStart, 7))}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <Button
+          <Button type="button"
             size="sm"
             variant="outline"
             className="rounded-xl gap-1 h-8 text-[11px]"
@@ -248,15 +248,15 @@ const MicroWeekGrid = ({
 
         {/* Navegação explícita de semanas: permite planejar semanas futuras (ex.: no sábado, montar a próxima). */}
         <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-border/60">
-          <Button size="sm" variant="outline" className="rounded-xl gap-1 h-8 text-[11px]" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+          <Button type="button" size="sm" variant="outline" className="rounded-xl gap-1 h-8 text-[11px]" onClick={() => setWeekStart(addDays(weekStart, -7))}>
             <ChevronLeft className="h-3.5 w-3.5" /> Semana anterior
           </Button>
           {weekStart !== mondayOf(new Date()) && (
-            <Button size="sm" variant="ghost" className="h-8 text-[11px]" onClick={() => setWeekStart(mondayOf(new Date()))}>
+            <Button type="button" size="sm" variant="ghost" className="h-8 text-[11px]" onClick={() => setWeekStart(mondayOf(new Date()))}>
               Semana atual
             </Button>
           )}
-          <Button size="sm" variant="outline" className="rounded-xl gap-1 h-8 text-[11px]" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+          <Button type="button" size="sm" variant="outline" className="rounded-xl gap-1 h-8 text-[11px]" onClick={() => setWeekStart(addDays(weekStart, 7))}>
             Próxima semana <ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -267,7 +267,7 @@ const MicroWeekGrid = ({
             <div className="space-y-3">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {Object.entries(TRACK_LABEL).map(([key, label]) => (
-                  <Button key={key} size="sm" variant={track === key ? "default" : "outline"} className="text-[11px] rounded-xl" onClick={() => setTrack(key)}>
+                  <Button type="button" key={key} size="sm" variant={track === key ? "default" : "outline"} className="text-[11px] rounded-xl" onClick={() => setTrack(key)}>
                     {label}
                   </Button>
                 ))}
@@ -306,7 +306,7 @@ const MicroWeekGrid = ({
                 </p>
               </div>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Descrição curta (opcional)" />
-              <Button className="w-full rounded-xl gap-2" onClick={add} disabled={saving}>
+              <Button type="button" className="w-full rounded-xl gap-2" onClick={add} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 Adicionar
               </Button>

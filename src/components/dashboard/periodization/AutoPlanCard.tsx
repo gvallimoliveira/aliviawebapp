@@ -84,7 +84,7 @@ const AutoPlanCard = ({ patientId, plan, entries, checkins, sessions, onChanged,
               Hoje ({TRACK_LABEL[s.track] ?? s.track}): {adj!.reason}. Sugestão: {adj!.duration} min, esforço até {adj!.rpe} — ou trocar por descanso ativo.
             </p>
             {!readOnly && (
-              <Button size="sm" variant="outline" className="rounded-xl h-7" onClick={() => applyAdjust(s, adj!.duration, adj!.rpe)}>Aplicar ajuste</Button>
+              <Button type="button" size="sm" variant="outline" className="rounded-xl h-7" onClick={() => applyAdjust(s, adj!.duration, adj!.rpe)}>Aplicar ajuste</Button>
             )}
           </div>
         ))}
@@ -93,7 +93,7 @@ const AutoPlanCard = ({ patientId, plan, entries, checkins, sessions, onChanged,
           Sugere a próxima semana por frente a partir da carga das últimas 4 semanas: progride até 10%, respeita a faixa do perfil cardiovascular e alterna dias duros e leves. Você edita tudo antes de salvar.
         </p>
         {!readOnly && !rows && (
-          <Button size="sm" className="rounded-xl gap-1" onClick={suggest}><Sparkles className="h-4 w-4" /> Sugerir próxima semana</Button>
+          <Button type="button" size="sm" className="rounded-xl gap-1" onClick={suggest}><Sparkles className="h-4 w-4" /> Sugerir próxima semana</Button>
         )}
 
         {rows && rows.length > 0 && (
@@ -109,16 +109,16 @@ const AutoPlanCard = ({ patientId, plan, entries, checkins, sessions, onChanged,
                 <span className="text-[11px] text-muted-foreground">min</span>
                 <Input type="number" min={0} max={10} value={r.rpe} onChange={(e) => upd(i, { rpe: Math.max(0, Math.min(10, Number(e.target.value) || 0)) })} className="h-8 w-16 text-xs" aria-label="Esforço" />
                 <span className="text-[11px] text-muted-foreground">esforço · {dayLabel(r.date)} · {r.kind === "hard" ? "dia duro" : "dia leve"}</span>
-                <Button size="icon" variant="ghost" className="h-7 w-7 ml-auto" onClick={() => setRows((rs) => rs && rs.filter((_, j) => j !== i))} aria-label="Remover">
+                <Button type="button" size="icon" variant="ghost" className="h-7 w-7 ml-auto" onClick={() => setRows((rs) => rs && rs.filter((_, j) => j !== i))} aria-label="Remover">
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             ))}
             <div className="flex gap-2">
-              <Button size="sm" className="rounded-xl" onClick={save} disabled={saving}>
+              <Button type="button" size="sm" className="rounded-xl" onClick={save} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Salvar no microciclo
               </Button>
-              <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => setRows(null)}>Descartar</Button>
+              <Button type="button" size="sm" variant="ghost" className="rounded-xl" onClick={() => setRows(null)}>Descartar</Button>
             </div>
           </div>
         )}

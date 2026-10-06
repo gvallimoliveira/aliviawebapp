@@ -102,7 +102,7 @@ const ExternalWorkoutImport = ({ token, track, onSaved }: Props) => {
           <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
         </label>
         {err && <p className="text-xs text-destructive">{err}</p>}
-        <Button className="w-full rounded-xl gap-2" onClick={read} disabled={busy}>
+        <Button type="button" className="w-full rounded-xl gap-2" onClick={read} disabled={busy}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Ler treino
         </Button>
       </div>
@@ -117,7 +117,7 @@ const ExternalWorkoutImport = ({ token, track, onSaved }: Props) => {
           <div key={i} className="rounded-xl border border-border p-2 space-y-1.5">
             <div className="flex gap-2">
               <Input value={r.name} onChange={(e) => upd(i, "name", e.target.value)} className="h-8 text-xs" />
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setRows(rows.filter((_, j) => j !== i))} aria-label="Remover exercício">
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setRows(rows.filter((_, j) => j !== i))} aria-label="Remover exercício">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
@@ -136,7 +136,7 @@ const ExternalWorkoutImport = ({ token, track, onSaved }: Props) => {
             </div>
           </div>
         ))}
-        <Button variant="outline" size="sm" className="w-full rounded-xl gap-1 text-xs"
+        <Button type="button" variant="outline" size="sm" className="w-full rounded-xl gap-1 text-xs"
           onClick={() => setRows([...rows, { name: "", sets: "3", reps: "10", region: "general", category: "strengthening", load_kg: null }])}>
           <Plus className="h-3.5 w-3.5" /> Adicionar exercício
         </Button>
@@ -175,8 +175,8 @@ const ExternalWorkoutImport = ({ token, track, onSaved }: Props) => {
 
       {err && <p className="text-xs text-destructive">{err}</p>}
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="outline" className="rounded-xl" onClick={() => setRows(null)} disabled={busy}>Voltar</Button>
-        <Button className="rounded-xl gap-2" onClick={save} disabled={busy}>
+        <Button type="button" variant="outline" className="rounded-xl" onClick={() => setRows(null)} disabled={busy}>Voltar</Button>
+        <Button type="button" className="rounded-xl gap-2" onClick={save} disabled={busy}>
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Salvar no microciclo
         </Button>
       </div>

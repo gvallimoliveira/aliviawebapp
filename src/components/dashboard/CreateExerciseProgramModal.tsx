@@ -1481,7 +1481,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               <SelectContent>
                 <SelectItem value="physio">{language === "en" ? "Physiotherapy" : "Fisioterapia"}</SelectItem>
                 <SelectItem value="gym">{language === "en" ? "Gym / strength" : "Academia / força"}</SelectItem>
-                <SelectItem value="sport">{language === "en" ? "Field / sport" : "Campo / esporte"}</SelectItem>
+                <SelectItem value="sport">{language === "en" ? "Other sport" : "Outro esporte"}</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-[10px] text-muted-foreground">

@@ -134,7 +134,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
             <div className="flex gap-2">
               <Dialog open={srpeOpen} onOpenChange={setSrpeOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
+                  <Button type="button" size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
                     <Activity className="h-3.5 w-3.5" /> sRPE
                   </Button>
                 </DialogTrigger>
@@ -143,7 +143,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {Object.entries(TRACK_LABEL).map(([key, label]) => (
-                        <Button
+                        <Button type="button"
                           key={key}
                           variant={track === key ? "default" : "outline"}
                           size="sm"
@@ -174,7 +174,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
                         Carga: <strong>{trainingLoad(Number(duration), rpe)}</strong>
                       </p>
                     )}
-                    <Button className="w-full rounded-xl gap-2" onClick={submitSrpe} disabled={savingSrpe}>
+                    <Button type="button" className="w-full rounded-xl gap-2" onClick={submitSrpe} disabled={savingSrpe}>
                       {savingSrpe ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                       Registrar
                     </Button>
@@ -184,7 +184,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
 
               <Dialog open={checkinOpen} onOpenChange={setCheckinOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
+                  <Button type="button" size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
                     <HeartPulse className="h-3.5 w-3.5" /> Check-in
                   </Button>
                 </DialogTrigger>
@@ -209,7 +209,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
                       </div>
                     ))}
                     <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Observação (opcional)" className="text-sm" />
-                    <Button className="w-full rounded-xl gap-2" onClick={submitCheckin} disabled={savingCheckin}>
+                    <Button type="button" className="w-full rounded-xl gap-2" onClick={submitCheckin} disabled={savingCheckin}>
                       {savingCheckin ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                       Salvar check-in
                     </Button>
