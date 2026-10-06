@@ -1,5 +1,10 @@
 # Roadmap
 
+## Ícones preservados nas listas (06/10)
+- [x] Editar apenas o texto do item, preservando os ícones de comparação.
+- [x] Impedir que textos antigos sejam reaplicados em posições erradas após remover duplicações.
+- [x] Validar edição, remontagem e ícones com 14 testes e verificação isolada no navegador.
+
 ## Listas complementares no Studio (06/10)
 - [x] Remover argumentos repetidos na construção e na revisão final de todas as marcas.
 - [x] Proteger listas e comparações renderizadas, inclusive conteúdo legado, sem preencher com temas alheios.

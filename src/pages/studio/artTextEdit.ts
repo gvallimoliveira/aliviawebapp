@@ -212,9 +212,17 @@ export const collectEditableNodes = (root: HTMLElement): HTMLElement[] =>
     // Texto que você esvaziou de propósito continua na lista: é ele que guarda a
     // posição e permite voltar a escrever ali depois.
     if (el.dataset[HIDDEN_ATTR] === "1" || el.dataset[SLOT_ATTR] === "1") return true;
+    if (el.matches("li") && el.querySelector('svg') && el.querySelector('[data-studio-text-hidden="1"], [data-studio-text-slot="1"]')) return true;
     const text = normalizedText(el.textContent ?? "");
     if (!text || /^[+−–—•·|→←↑↓]+$/.test(text)) return false;
     return true;
+  }).map((el) => {
+    // A list row owns its icon; only the text leaf may be edited/replaced.
+    if (el.matches("li") && el.querySelector("svg")) {
+      const leaf = Array.from(el.children).find((child) => child.matches("span") && !child.querySelector("svg"));
+      if (leaf instanceof HTMLElement) return leaf;
+    }
+    return el;
   });
 
 /** Lê os textos atuais da arte, na ordem em que aparecem. */
@@ -246,7 +254,13 @@ const paintHidden = (el: HTMLElement, hidden: boolean, editing = false) => {
 /** Reaplica os textos editados sobre a arte recém-renderizada. */
 export const applyArtText = (root: HTMLElement, edits?: ArtTextEdits) => {
   if (!edits) return;
-  collectEditableNodes(root).forEach((el, i) => {
+  const nodes = collectEditableNodes(root);
+  const positions = Object.keys(edits).map(Number).sort((a, b) => a - b);
+  const completeSnapshot = positions.every((position, index) => position === index);
+  // Removing duplicate rows changes positional slots. Never replay an old full
+  // snapshot onto a shorter/different list: it would move bullets into labels.
+  if (completeSnapshot && positions.length !== nodes.length) return;
+  nodes.forEach((el, i) => {
     const next = edits[i];
     if (typeof next !== "string") return;
     // Campo esvaziado de propósito: fica sem texto e invisível na arte final.
