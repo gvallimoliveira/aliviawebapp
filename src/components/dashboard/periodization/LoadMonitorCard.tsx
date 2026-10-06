@@ -13,7 +13,7 @@ import { Activity, HeartPulse, Loader2, Plus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { loadStatus, localISODate, readinessScore, restingHrStatus, trainingLoad } from "@/lib/periodization";
 import type { ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
-import { addSrpe, saveCheckin } from "@/lib/periodizationData";
+import { saveProfessionalSession, saveCheckin } from "@/lib/periodizationData";
 import { CHECKIN_ITEMS, LEVEL_CLASS, TRACK_LABEL, ZONE_LABEL } from "./scales";
 
 interface Props {
@@ -90,7 +90,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
     }
     setSavingSrpe(true);
     try {
-      await addSrpe({ patientId, planId, sessionDate: srpeDate, track, durationMin: min, rpe });
+      await saveProfessionalSession({ patientId, planId, sessionDate: srpeDate, track, durationMin: min, rpe });
       setDuration("");
       setSrpeOpen(false);
       onChanged();
