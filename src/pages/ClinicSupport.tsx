@@ -312,7 +312,7 @@ const categories: ToolCategory[] = [
         key: "exercise_program",
         icon: Sparkles,
         title: "Programa de exercícios em casa (HEP)",
-        desc: "Monte um programa com vídeos, séries e repetições. O paciente acessa por link, marca o que fez, e você vê a aderência em tempo real.",
+        desc: "Monte ou revise o HEP proposto pelo Agente com vídeos, séries, repetições e frequência. O resumo estima intensidade e séries semanais efetivas por região: força ×1, estabilização/propriocepção ×0,5; mobilidade/flexibilidade não entram nessa conta. Escolha fisioterapia, academia ou campo/esporte. Ao salvar, a dose planejada atualiza as sessões futuras do microciclo vinculado; sessões passadas são preservadas. O esforço alvo é estimado, entre 5 e 9: a resposta real vem do paciente pelo check-in. A decisão de ajustar continua com o fisioterapeuta.",
       },
       {
         key: "white_label_brand",
