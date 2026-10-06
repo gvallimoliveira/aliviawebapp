@@ -8,6 +8,7 @@ const TOPICS: Partial<Record<AliviaDifferentialId, TopicId>> = {
   "diferencial-agente-clinico": "clinical-agent",
   "diferencial-evolucao-voz": "voice-notes",
   "diferencial-hep-video": "hep",
+  "diferencial-hep-dose": "hep",
   "diferencial-relatorios": "report",
   "diferencial-red-flags": "red-flags",
   "diferencial-avaliacao-externa-ia": "external-upload",
@@ -20,6 +21,7 @@ const PHOTOS: Partial<Record<AliviaDifferentialId, string[]>> = {
   "diferencial-pre-avaliacao": ["official:alivia:pre-assessment-start"],
   "diferencial-red-flags": ["official:alivia:red-flags-screening", "official:alivia:red-flags-positive"],
   "diferencial-hep-video": ["official:alivia:hep-exercise-list", "official:alivia:hep-exercise-video"],
+  "diferencial-hep-dose": ["official:alivia:hep-exercise-list", "official:alivia:hep-exercise-video"],
   "diferencial-avaliacao-externa-ia": ["official:alivia:external-upload"],
   "diferencial-reavaliacao": ["official:alivia:express-reassessment-steps", "official:alivia:express-reassessment-tools"],
   "diferencial-avaliacao-manual": [
