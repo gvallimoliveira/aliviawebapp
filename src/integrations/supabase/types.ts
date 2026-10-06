@@ -1842,11 +1842,14 @@ export type Database = {
       }
       exercise_program_items: {
         Row: {
+          body_region: string | null
           custom_name: string | null
           custom_video_url: string | null
           exercise_id: string | null
           frequency: string
           id: string
+          load_kg: number | null
+          load_type: string | null
           observations: string | null
           program_id: string
           reps: string
@@ -1854,11 +1857,14 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          body_region?: string | null
           custom_name?: string | null
           custom_video_url?: string | null
           exercise_id?: string | null
           frequency?: string
           id?: string
+          load_kg?: number | null
+          load_type?: string | null
           observations?: string | null
           program_id: string
           reps?: string
@@ -1866,11 +1872,14 @@ export type Database = {
           sort_order?: number
         }
         Update: {
+          body_region?: string | null
           custom_name?: string | null
           custom_video_url?: string | null
           exercise_id?: string | null
           frequency?: string
           id?: string
+          load_kg?: number | null
+          load_type?: string | null
           observations?: string | null
           program_id?: string
           reps?: string
