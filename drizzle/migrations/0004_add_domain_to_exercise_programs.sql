@@ -1,0 +1,2 @@
+ALTER TABLE public.exercise_programs ADD COLUMN domain TEXT NOT NULL DEFAULT 'physio';
+COMMENT ON COLUMN public.exercise_programs.domain IS 'Domínio da sessão no microciclo: physio | gym | sport. Define a classificação da dose planejada do HEP.';

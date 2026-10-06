@@ -10,3 +10,5 @@ Séries semanais por região no HEP (função `weeklyRegionVolume` de `src/lib/h
 
 Ponderação de objetivo na conta de carga: mobilidade/flexibilidade = 0; estabilização/propriocepção = 0,5; força = 1.
 Esforço percebido alvo sempre entre 5 e 9: até 6 leve, até 7,5 moderado, até 9 intenso (RPE leve 5,5 · moderado 7 · intenso 8,5).
+
+- Domínio da sessão (physio/gym/sport) é escolhido no modal do HEP (`exercise_programs.domain`, default physio) e classifica a dose planejada no microciclo; edição recarrega e regrava com o domínio escolhido.

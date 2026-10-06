@@ -132,6 +132,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const [selected, setSelected] = useState<SelectedExercise[]>([]);
   const [customExercises, setCustomExercises] = useState<CustomExercise[]>([]);
   const [notes, setNotes] = useState("");
+  const [domain, setDomain] = useState("physio");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const isEditing = !!editProgramId;
@@ -224,10 +225,11 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       if (editProgramId) {
         const { data: program } = await (supabase as any)
           .from("exercise_programs")
-          .select("notes")
+          .select("notes, domain")
           .eq("id", editProgramId)
           .single();
         if (program?.notes) setNotes(program.notes);
+        if (program?.domain) setDomain(program.domain);
 
         const { data: items } = await (supabase as any)
           .from("exercise_program_items")
@@ -540,7 +542,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       patient_id: pt.id,
       plan_id: plan?.id ?? null,
       session_date: d,
-      track: "physio",
+      track: domain,
       planned_load: level,
       planned_duration_min: loadSummary.durationMin,
       planned_rpe: loadSummary.targetRpe,
@@ -739,7 +741,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       if (isEditing && editProgramId) {
         // Update existing program
         programId = editProgramId;
-        await (supabase as any).from("exercise_programs").update({ notes: notes || null }).eq("id", editProgramId);
+        await (supabase as any).from("exercise_programs").update({ notes: notes || null, domain }).eq("id", editProgramId);
         // Delete old items and re-insert
         await (supabase as any).from("exercise_program_items").delete().eq("program_id", editProgramId);
         // Get token
@@ -754,6 +756,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
             assessment_id: assessmentId || null,
             patient_name: patientName,
             notes: notes || null,
+            domain,
           })
           .select("id, token")
           .single();
@@ -1468,6 +1471,24 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
               editProgramId={editProgramId}
             />
           )}
+
+          {/* Domínio no microciclo */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">{language === "en" ? "Session domain in the microcycle" : "Domínio da sessão no microciclo"}</Label>
+            <Select value={domain} onValueChange={setDomain}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="physio">{language === "en" ? "Physiotherapy" : "Fisioterapia"}</SelectItem>
+                <SelectItem value="gym">{language === "en" ? "Gym / strength" : "Academia / força"}</SelectItem>
+                <SelectItem value="sport">{language === "en" ? "Field / sport" : "Campo / esporte"}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground">
+              {language === "en"
+                ? "The planned dose sent to the microcycle will be classified with this domain."
+                : "A dose planejada enviada ao microciclo será classificada com este domínio."}
+            </p>
+          </div>
 
           {/* Notes */}
           <div className="space-y-1.5">
