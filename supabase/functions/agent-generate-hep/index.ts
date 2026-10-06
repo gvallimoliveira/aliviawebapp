@@ -332,6 +332,7 @@ Responda APENAS em JSON válido no formato:
     }
 
     const regionById = new Map(lib.map((e: any) => [e.id, e.body_region || "general"]));
+    const categoryById = new Map(lib.map((e: any) => [e.id, String(e.category || "strengthening")]));
     const itemsToInsert = items.map((it: any, idx: number) => ({
       program_id: program.id,
       exercise_id: it.exercise_id,
@@ -366,13 +367,15 @@ Responda APENAS em JSON válido no formato:
       for (const it of itemsToInsert) {
         const setsN = Math.max(0, Math.round(numOf(it.sets) || 0));
         if (!setsN) continue;
+        const cat = (categoryById.get(it.exercise_id) || "").toLowerCase();
+        const weight = /mobil|stretch|flexib/.test(cat) ? 0 : /stabil|propriocep/.test(cat) ? 0.5 : 1;
         const s = it.reps.toLowerCase();
         const n = numOf(s);
         const hold = n != null && /min/.test(s) ? n * 60 : n != null && /(\d\s*s\b|seg|sec|''|")/.test(s) ? n : null;
         const reps = hold == null ? n : null;
         const intensity = hold != null ? (hold <= 6 ? "high" : hold <= 15 ? "moderate" : "light")
           : reps != null ? (reps <= 4 ? "high" : reps <= 12 ? "moderate" : "light") : null;
-        if (intensity) setsByInt[intensity] += setsN;
+        if (intensity) setsByInt[intensity] += setsN * weight;
         const work = reps != null ? setsN * reps * 3 : setsN * (hold || 0);
         const rest = intensity ? Math.max(0, setsN - 1) * REST[intensity] : 0;
         totalMin += (work + rest) / 60;
@@ -380,9 +383,9 @@ Responda APENAS em JSON válido no formato:
       }
       const totalSets = setsByInt.light + setsByInt.moderate + setsByInt.high;
       if (totalSets > 0 && sessionsPerWeek > 0) {
-        const targetRpe = Math.round(((setsByInt.light * 4 + setsByInt.moderate * 6 + setsByInt.high * 8) / totalSets) * 2) / 2;
+        const targetRpe = Math.min(9, Math.max(5, Math.round(((setsByInt.light * 5.5 + setsByInt.moderate * 7 + setsByInt.high * 8.5) / totalSets) * 2) / 2));
         const durationMin = Math.max(5, Math.round(totalMin + 5));
-        const level = targetRpe >= 7 ? "high" : targetRpe >= 5 ? "moderate" : "low";
+        const level = targetRpe <= 6 ? "low" : targetRpe <= 7.5 ? "moderate" : "high";
         const { data: plan } = await adminClient
           .from("periodization_plans").select("id")
           .eq("patient_id", patient.id).order("created_at", { ascending: false }).limit(1).maybeSingle();

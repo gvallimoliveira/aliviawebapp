@@ -15,6 +15,8 @@ export interface HepLoadItem {
   frequency: string;
   loadKg?: number | null;
   loadType?: string | null; // "kg" | "bodyweight" | "band"
+  /** Objetivo da biblioteca: strengthening | stabilization | proprioception | mobility | stretching */
+  category?: string | null;
 }
 
 export interface ParsedItem extends HepLoadItem {
@@ -28,8 +30,10 @@ export interface ParsedItem extends HepLoadItem {
   tutLoad: number; // séries × segundos × kg
   intensity: Intensity | null;
   volume: VolumeLevel | null;
-  weeklySets: number;
+  weeklySets: number; // séries semanais EFETIVAS (já ponderadas pelo objetivo)
   durationMin: number;
+  loadWeight: number; // 1 força, 0,5 estabilização, 0 mobilidade/flexibilidade
+  effectiveSets: number;
 }
 
 const num = (v: string) => {
@@ -81,8 +85,23 @@ export function weeklyRegionVolume(sets: number): VolumeLevel {
   return sets < 6 ? "low" : sets <= 12 ? "moderate" : "high";
 }
 
+/** Peso do objetivo na conta de carga: mobilidade/flexibilidade não contam; estabilização vale 0,5. */
+export function loadWeightOf(category?: string | null): number {
+  const c = (category || "").toLowerCase();
+  if (/mobil|stretch|flexib|along/.test(c)) return 0;
+  if (/stabil|estabil|propriocep/.test(c)) return 0.5;
+  return 1;
+}
+
+/** Esforço alvo (sRPE) na faixa 5–9: leve ≤6, moderada ≤7,5, intensa ≤9. */
+export const RPE_BY_INTENSITY: Record<Intensity, number> = { light: 5.5, moderate: 7, high: 8.5 };
+
+/** Nível do microciclo a partir do esforço alvo. */
+export function loadLevelFromTargetRpe(rpe: number): "low" | "moderate" | "high" {
+  return rpe <= 6 ? "low" : rpe <= 7.5 ? "moderate" : "high";
+}
+
 const REST_S: Record<Intensity, number> = { high: 120, moderate: 60, light: 45 };
-export const RPE_BY_INTENSITY: Record<Intensity, number> = { light: 4, moderate: 6, high: 8 };
 
 export function parseItem(it: HepLoadItem): ParsedItem {
   const setsN = parseSets(it.sets);
@@ -94,6 +113,8 @@ export function parseItem(it: HepLoadItem): ParsedItem {
   const intensity = intensityOf(reps, hold);
   const work = reps != null ? setsN * reps * 3 : tut;
   const rest = intensity ? Math.max(0, setsN - 1) * REST_S[intensity] : 0;
+  const loadWeight = loadWeightOf(it.category);
+  const effectiveSets = setsN * loadWeight;
   return {
     ...it,
     setsN,
@@ -106,8 +127,10 @@ export function parseItem(it: HepLoadItem): ParsedItem {
     tutLoad: Math.round(tut * kg),
     intensity,
     volume: volumeOf(totalReps, setsN, hold != null),
-    weeklySets: setsN * perWeek,
+    weeklySets: effectiveSets * perWeek,
     durationMin: (work + rest) / 60,
+    loadWeight,
+    effectiveSets,
   };
 }
 
@@ -136,9 +159,10 @@ export function summarizeHep(items: HepLoadItem[]): HepLoadSummary {
     r.tut += p.tut;
     r.weeklySets += p.weeklySets;
     map.set(p.region, r);
-    if (p.intensity) setsByInt[p.intensity] += p.setsN;
+    if (p.intensity) setsByInt[p.intensity] += p.effectiveSets;
   }
   const byRegion = [...map.values()]
+    .filter((r) => r.weeklySets > 0)
     .map((r) => ({ ...r, volume: weeklyRegionVolume(r.weeklySets) }))
     .sort((a, b) => b.weeklySets - a.weeklySets);
   const totalSets = setsByInt.light + setsByInt.moderate + setsByInt.high;
@@ -146,8 +170,8 @@ export function summarizeHep(items: HepLoadItem[]): HepLoadSummary {
   let targetRpe: number | null = null;
   if (totalSets > 0) {
     predominant = (["high", "moderate", "light"] as Intensity[]).reduce((a, b) => (setsByInt[b] > setsByInt[a] ? b : a));
-    const w = (setsByInt.light * 4 + setsByInt.moderate * 6 + setsByInt.high * 8) / totalSets;
-    targetRpe = Math.round(w * 2) / 2;
+    const w = (setsByInt.light * RPE_BY_INTENSITY.light + setsByInt.moderate * RPE_BY_INTENSITY.moderate + setsByInt.high * RPE_BY_INTENSITY.high) / totalSets;
+    targetRpe = Math.min(9, Math.max(5, Math.round(w * 2) / 2));
   }
   const sessionsPerWeek = parsed.length ? Math.max(...parsed.map((p) => p.perWeek)) : 0;
   const durationMin = parsed.length ? Math.max(5, Math.round(parsed.reduce((s, p) => s + p.durationMin, 0) + 5)) : 0;

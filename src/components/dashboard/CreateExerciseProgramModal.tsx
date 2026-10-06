@@ -23,7 +23,7 @@ import { HEP_TEMPLATES, type HepTemplate } from "@/data/hepTemplates";
 import { openWhatsAppDeferred } from "@/lib/whatsappShare";
 import { useAuth } from "@/contexts/AuthContext";
 import { isFallbackVip } from "@/lib/vipEmails";
-import { summarizeHep, spreadSessionDates } from "@/lib/hepLoad";
+import { summarizeHep, spreadSessionDates, loadLevelFromTargetRpe } from "@/lib/hepLoad";
 import HepLoadPanel from "./HepLoadPanel";
 
 interface SavedTemplate {
@@ -493,7 +493,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const totalCount = selected.length + customExercises.filter(c => c.name.trim()).length;
 
   const loadSummary = useMemo(() => summarizeHep([
-    ...selected.map((s) => ({ name: s.exercise.name_pt, region: s.region || s.exercise.body_region || "general", sets: s.sets, reps: s.reps, frequency: s.frequency, loadType: s.loadType, loadKg: s.loadKg ? Number(String(s.loadKg).replace(",", ".")) : null })),
+    ...selected.map((s) => ({ name: s.exercise.name_pt, region: s.region || s.exercise.body_region || "general", sets: s.sets, reps: s.reps, frequency: s.frequency, loadType: s.loadType, category: s.exercise.category, loadKg: s.loadKg ? Number(String(s.loadKg).replace(",", ".")) : null })),
     ...customExercises.filter((c) => c.name.trim()).map((c) => ({ name: c.name, region: c.region || "general", sets: c.sets, reps: c.reps, frequency: c.frequency, loadType: c.loadType, loadKg: c.loadKg ? Number(String(c.loadKg).replace(",", ".")) : null })),
   ]), [selected, customExercises]);
 
@@ -535,7 +535,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     const { data: plan } = await sb.from("periodization_plans").select("id").eq("patient_id", pt.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
     const today = spreadSessionDates(1)[0];
     await sb.from("periodization_sessions").delete().eq("exercise_program_id", programId).gte("session_date", today);
-    const level = loadSummary.targetRpe >= 7 ? "high" : loadSummary.targetRpe >= 5 ? "moderate" : "low";
+    const level = loadLevelFromTargetRpe(loadSummary.targetRpe);
     const rows = spreadSessionDates(loadSummary.sessionsPerWeek).map((d) => ({
       patient_id: pt.id,
       plan_id: plan?.id ?? null,

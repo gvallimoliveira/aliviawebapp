@@ -45,8 +45,8 @@ const HepLoadPanel = ({ summary, regionLabel, professionalId, patientName, editP
         const { data: progs } = await q;
         const prev = (progs || []).find((p: any) => p.id !== editProgramId);
         if (prev) {
-          const { data: items } = await sb.from("exercise_program_items").select("sets, reps, frequency").eq("program_id", prev.id);
-          const s = summarizeHep((items || []).map((i: any) => ({ name: "", region: "x", sets: i.sets, reps: i.reps, frequency: i.frequency })));
+          const { data: items } = await sb.from("exercise_program_items").select("sets, reps, frequency, exercise:exercise_library(category)").eq("program_id", prev.id);
+          const s = summarizeHep((items || []).map((i: any) => ({ name: "", region: "x", sets: i.sets, reps: i.reps, frequency: i.frequency, category: i.exercise?.category })));
           if (alive) setPrevSets(s.weeklySets);
         }
       } catch (e) {
@@ -78,7 +78,7 @@ const HepLoadPanel = ({ summary, regionLabel, professionalId, patientName, editP
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-[11px] font-medium text-muted-foreground">Séries semanais por região</p>
+        <p className="text-[11px] font-medium text-muted-foreground">Séries semanais efetivas por região (força ×1 · estabilização ×0,5 · mobilidade fora)</p>
         {summary.byRegion.map((r) => (
           <div key={r.region} className="flex items-center gap-2 text-xs">
             <span className="w-20 shrink-0 truncate">{regionLabel(r.region)}</span>
@@ -103,6 +103,8 @@ const HepLoadPanel = ({ summary, regionLabel, professionalId, patientName, editP
               </span>
               {p.intensity && <Badge className={`${TONE[p.intensity]} border-0 text-[10px]`}>{INT_LABEL[p.intensity]}</Badge>}
               {p.volume && <Badge variant="outline" className="text-[10px]">vol. {VOL_LABEL[p.volume].toLowerCase()}</Badge>}
+              {p.loadWeight === 0 && <Badge variant="outline" className="text-[10px]">mobilidade · fora da carga</Badge>}
+              {p.loadWeight === 0.5 && <Badge variant="outline" className="text-[10px]">estabilização · conta ×0,5</Badge>}
             </div>
           ))}
         </div>
@@ -113,6 +115,7 @@ const HepLoadPanel = ({ summary, regionLabel, professionalId, patientName, editP
           <CalendarCheck className="h-4 w-4 mt-0.5 text-primary shrink-0" />
           <p>
             Dose planejada: <b>{summary.sessionsPerWeek}×/semana</b>, ~<b>{summary.durationMin} min</b> com esforço alvo <b>{summary.targetRpe}/10</b> = <b>{Math.round(summary.durationMin * summary.targetRpe)}</b> por sessão.{" "}
+            <span className="text-muted-foreground">Esforço alvo = média das séries efetivas (leve 5,5 · moderada 7 · intensa 8,5; faixa 5–9).</span>{" "}
             {linked === false
               ? <span className="text-muted-foreground">Paciente sem cadastro: a dose não vai para o microciclo.</span>
               : <span className="text-muted-foreground">Vai automaticamente para o microciclo (Fisioterapia) dos próximos 7 dias ao salvar.</span>}
