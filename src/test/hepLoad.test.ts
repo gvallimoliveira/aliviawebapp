@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { weeklyRegionVolume } from "@/lib/hepLoad";
+import { parseItem, summarizeHep, parseReps, parseFrequency, weeklyRegionVolume } from "@/lib/hepLoad";
 
 const base = { name: "x", region: "knee", frequency: "3x/semana" };
 
