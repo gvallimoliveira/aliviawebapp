@@ -57,7 +57,15 @@ interface Exercise {
   video_url: string | null;
 }
 
-interface SelectedExercise {
+interface LoadFields {
+  /** Região de trabalho (vem da biblioteca, editável). */
+  region?: string;
+  /** "kg" | "bodyweight" | "band" */
+  loadType?: string;
+  loadKg?: string;
+}
+
+interface SelectedExercise extends LoadFields {
   exercise: Exercise;
   sets: string;
   reps: string;
@@ -65,7 +73,7 @@ interface SelectedExercise {
   observations: string;
 }
 
-interface CustomExercise {
+interface CustomExercise extends LoadFields {
   tempId: string;
   name: string;
   sets: string;
@@ -238,6 +246,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                   reps: item.reps || "10",
                   frequency: item.frequency || "3x/semana",
                   observations: item.observations || "",
+                  region: item.body_region || ex.body_region || "general",
+                  loadType: item.load_type || "bodyweight",
+                  loadKg: item.load_kg != null ? String(item.load_kg) : "",
                 });
               }
             } else if (item.custom_name) {
@@ -249,6 +260,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 frequency: item.frequency || "3x/semana",
                 observations: item.observations || "",
                 videoUrl: item.custom_video_url || "",
+                region: item.body_region || "general",
+                loadType: item.load_type || "bodyweight",
+                loadKg: item.load_kg != null ? String(item.load_kg) : "",
               });
             }
           }
@@ -282,7 +296,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
     if (isSelected(ex.id)) {
       setSelected(selected.filter((s) => s.exercise.id !== ex.id));
     } else {
-      setSelected([...selected, { exercise: ex, sets: "3", reps: "10", frequency: "3x/semana", observations: "" }]);
+      setSelected([...selected, { exercise: ex, sets: "3", reps: "10", frequency: "3x/semana", observations: "", region: ex.body_region || "general", loadType: "bodyweight", loadKg: "" }]);
     }
   };
 
@@ -303,6 +317,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       frequency: "3x/semana",
       observations: "",
       videoUrl: "",
+      region: "general",
+      loadType: "bodyweight",
+      loadKg: "",
     }]);
   };
 
@@ -686,6 +703,12 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       const items: any[] = [];
       let sortOrder = 0;
 
+      const loadCols = (x: LoadFields) => ({
+        load_kg: x.loadType === "kg" && x.loadKg ? Number(String(x.loadKg).replace(",", ".")) || null : null,
+        load_type: x.loadType || null,
+        body_region: x.region || null,
+      });
+
       selected.forEach((s) => {
         items.push({
           program_id: programId,
@@ -695,6 +718,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           frequency: s.frequency,
           observations: s.observations || null,
           sort_order: sortOrder++,
+          ...loadCols(s),
         });
       });
 
@@ -710,6 +734,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           frequency: c.frequency,
           observations: c.observations || null,
           sort_order: sortOrder++,
+          ...loadCols(c),
         });
       });
 
@@ -718,6 +743,13 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           .from("exercise_program_items")
           .insert(items);
         if (itemsError) throw itemsError;
+      }
+
+      // Dose planejada automática no microciclo (próximos 7 dias)
+      try {
+        await syncPlannedDose(programId);
+      } catch (err) {
+        console.warn("[hep] planned dose sync failed", err);
       }
 
       const link = `${window.location.origin}/hep/${programToken}`;
@@ -1267,7 +1299,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                         <Input value={c.sets} onChange={(e) => updateCustom(c.tempId, "sets", e.target.value)} className="h-8 text-xs" />
                       </div>
                       <div>
-                        <Label className="text-[10px]">Repetições</Label>
+                        <Label className="text-[10px]">Repetições ou tempo (ex.: 30s)</Label>
                         <Input value={c.reps} onChange={(e) => updateCustom(c.tempId, "reps", e.target.value)} className="h-8 text-xs" />
                       </div>
                       <div>
@@ -1275,6 +1307,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                         <Input value={c.frequency} onChange={(e) => updateCustom(c.tempId, "frequency", e.target.value)} className="h-8 text-xs" />
                       </div>
                     </div>
+                    {renderLoadFields(c, (f, v) => updateCustom(c.tempId, f as keyof CustomExercise, v))}
                     <Input
                       placeholder="Link de vídeo (opcional)"
                       value={c.videoUrl}
@@ -1343,7 +1376,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                         <Input value={s.sets} onChange={(e) => updateSelected(s.exercise.id, "sets", e.target.value)} className="h-8 text-xs" />
                       </div>
                       <div>
-                        <Label className="text-[10px]">Repetições</Label>
+                        <Label className="text-[10px]">Repetições ou tempo (ex.: 30s)</Label>
                         <Input value={s.reps} onChange={(e) => updateSelected(s.exercise.id, "reps", e.target.value)} className="h-8 text-xs" />
                       </div>
                       <div>
@@ -1351,6 +1384,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                         <Input value={s.frequency} onChange={(e) => updateSelected(s.exercise.id, "frequency", e.target.value)} className="h-8 text-xs" />
                       </div>
                     </div>
+                    {renderLoadFields(s, (f, v) => updateSelected(s.exercise.id, f, v))}
                     <Input
                       placeholder="Observações (opcional)"
                       value={s.observations}
@@ -1361,6 +1395,16 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
                 </Card>
               ))}
             </div>
+          )}
+
+          {totalCount > 0 && (
+            <HepLoadPanel
+              summary={loadSummary}
+              regionLabel={(r) => regionLabels[r]?.[language] || regionLabels[r]?.pt || r}
+              professionalId={professionalId}
+              patientName={patientName}
+              editProgramId={editProgramId}
+            />
           )}
 
           {/* Notes */}
