@@ -336,6 +336,134 @@ serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (action === "parse_external_workout") {
+      // Treinador traz treino externo (texto e/ou print); IA só extrai a lista.
+      // A dose é calculada no cliente pela régua única do HEP (hepLoad.ts).
+      if (link.audience !== "coach") return json({ error: "planning_is_coach_only" }, 403);
+      const text = typeof body.text === "string" ? body.text.slice(0, 6000).trim() : "";
+      const img = typeof body.image_base64 === "string" ? body.image_base64 : "";
+      const mime = typeof body.mime_type === "string" && /^image\/(png|jpe?g|webp)$/.test(body.mime_type) ? body.mime_type : "image/png";
+      if (!text && !img) return json({ error: "empty_input" }, 400);
+      if (img.length > 7_000_000) return json({ error: "image_too_large" }, 400);
+      const key = Deno.env.get("LOVABLE_API_KEY");
+      if (!key) return json({ error: "ai_not_configured" }, 500);
+
+      const REGIONS = ["hip", "knee", "shoulder", "spine", "core", "ankle", "cervical", "wrist", "elbow", "foot", "general"];
+      const CATS = ["strengthening", "stabilization", "proprioception", "mobility", "stretching"];
+      const schema = {
+        type: "object", additionalProperties: false, required: ["items"],
+        properties: {
+          items: {
+            type: "array",
+            items: {
+              type: "object", additionalProperties: false,
+              required: ["name", "sets", "reps", "region", "category", "load_kg"],
+              properties: {
+                name: { type: "string" },
+                sets: { type: "string" },
+                reps: { type: "string", description: "Repetições (ex.: '10' ou '8-12') ou isometria com unidade (ex.: '30s')" },
+                region: { type: "string", enum: REGIONS },
+                category: { type: "string", enum: CATS },
+                load_kg: { type: ["number", "null"] },
+              },
+            },
+          },
+        },
+      };
+      const instructions = `Você extrai exercícios de um treino de academia/campo/fisioterapia. Para cada exercício devolva nome em português, séries, repetições (ou segundos de isometria com 's'), região predominante (core = tronco: pranchas, bird dog, dead bug, abdominais, carregamentos; spine = coluna/costas como remadas e puxadas), categoria (força = strengthening; estabilização; propriocepção; mobilidade; alongamento) e carga em kg se informada. Ignore aquecimento cardiovascular sem séries. Não invente exercícios.`;
+      const content: any[] = [];
+      if (text) content.push({ type: "input_text", text });
+      else content.push({ type: "input_text", text: "Extraia os exercícios da imagem." });
+      if (img) content.push({ type: "input_image", image_url: `data:${mime};base64,${img}` });
+
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Lovable-API-Key": key, Authorization: `Bearer ${key}`, "X-Lovable-AIG-SDK": "fetch" },
+        body: JSON.stringify({
+          model: "openai/gpt-6-astra",
+          instructions,
+          input: [{ role: "user", content }],
+          reasoning: { effort: "low" },
+          store: false,
+          stream: true,
+          text: { format: { type: "json_schema", name: "workout", strict: true, schema } },
+        }),
+      });
+      if (!resp.ok || !resp.body) {
+        const t = await resp.text().catch(() => "");
+        console.error("parse_external_workout ai", resp.status, t.slice(0, 400));
+        return json({ error: resp.status === 402 ? "ai_credits" : resp.status === 429 ? "ai_rate_limited" : "ai_failed" }, resp.status === 402 || resp.status === 429 ? resp.status : 502);
+      }
+      const reader = resp.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "", out = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const ln of lines) {
+          if (!ln.startsWith("data:")) continue;
+          const d = ln.slice(5).trim();
+          if (!d || d === "[DONE]") continue;
+          try {
+            const ev = JSON.parse(d);
+            if (ev.type === "response.output_text.delta" && typeof ev.delta === "string") out += ev.delta;
+          } catch { /* ignore */ }
+        }
+      }
+      let items: any[] = [];
+      try { items = JSON.parse(out).items || []; } catch { return json({ error: "ai_unreadable" }, 502); }
+
+      // Biblioteca tem prioridade na região/objetivo quando o nome bate.
+      const { data: lib } = await supabase.from("exercise_library").select("name_pt, body_region, category");
+      const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+      const libMap = new Map((lib || []).map((e: any) => [norm(e.name_pt), e]));
+      const clean = items.slice(0, 40).map((it: any) => {
+        const hit: any = libMap.get(norm(String(it.name || "")));
+        return {
+          name: String(it.name || "").slice(0, 120),
+          sets: String(it.sets || "").slice(0, 20),
+          reps: String(it.reps || "").slice(0, 20),
+          region: hit?.body_region || (REGIONS.includes(it.region) ? it.region : "general"),
+          category: hit?.category || (CATS.includes(it.category) ? it.category : "strengthening"),
+          load_kg: typeof it.load_kg === "number" && it.load_kg > 0 && it.load_kg < 1000 ? it.load_kg : null,
+        };
+      }).filter((it) => it.name);
+      return json({ items: clean });
+    }
+
+    if (action === "submit_planned_batch") {
+      if (link.audience !== "coach") return json({ error: "planning_is_coach_only" }, 403);
+      const list = Array.isArray(body.sessions) ? body.sessions.slice(0, 14) : [];
+      const rows = [];
+      for (const p of list) {
+        const duration = Number(p.planned_duration_min);
+        const rpe = Number(p.planned_rpe);
+        if (!Number.isFinite(duration) || duration <= 0 || duration > 600) return json({ error: "invalid_duration" }, 400);
+        if (!Number.isFinite(rpe) || rpe < 0 || rpe > 10) return json({ error: "invalid_rpe" }, 400);
+        if (typeof p.session_date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(p.session_date)) return json({ error: "invalid_date" }, 400);
+        rows.push({
+          patient_id: patient.id,
+          plan_id: link.plan_id,
+          session_date: p.session_date,
+          track: ["physio", "gym", "sport"].includes(p.track) ? p.track : "gym",
+          planned_load: ["low", "moderate", "high"].includes(p.planned_load) ? p.planned_load : "moderate",
+          planned_duration_min: Math.round(duration),
+          planned_rpe: rpe,
+          title: typeof p.title === "string" ? p.title.slice(0, 200) : null,
+          notes: typeof p.notes === "string" ? p.notes.slice(0, 2000) : null,
+          created_source: "coach",
+        });
+      }
+      if (!rows.length) return json({ error: "empty" }, 400);
+      const { error } = await supabase.from("periodization_sessions").insert(rows);
+      if (error) { console.error("batch insert failed", error); return json({ error: "save_failed" }, 500); }
+      await supabase.from("periodization_links").update({ last_used_at: new Date().toISOString() }).eq("id", link.id);
+      return json({ ok: true, count: rows.length });
+    }
+
     return json({ error: "unknown_action" }, 400);
   } catch (err) {
     console.error("periodization-checkin error:", err);
