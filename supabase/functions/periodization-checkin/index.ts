@@ -140,7 +140,7 @@ serve(async (req) => {
     if (action === "load") {
       const { data: existing } = await supabase
         .from("readiness_checkins")
-        .select("soreness, sleep, stress, fatigue, readiness, pain, resting_hr, note")
+        .select("soreness, sleep, stress, fatigue, readiness, pain, resting_hr, peak_hr, spo2, note")
         .eq("patient_id", patient.id)
         .eq("checkin_date", todayISO())
         .maybeSingle();
@@ -174,8 +174,23 @@ serve(async (req) => {
         weekSessions = (week || []) as Array<Record<string, unknown>>;
       }
 
+      // Teto de FC (Fase 2D): perfil definido pelo fisio no plano mais recente.
+      const PCT: Record<string, number> = { athletic: 0.85, healthy: 0.8, sedentary: 0.75, hypertensive: 0.7, cardiac: 0.65 };
+      const { data: cp } = await supabase.from("periodization_plans")
+        .select("cardio_profile, hr_ceiling_override").eq("patient_id", patient.id)
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      const { data: pb } = await supabase.from("patients").select("birth_date").eq("id", patient.id).maybeSingle();
+      let hrCeiling: number | null = cp?.hr_ceiling_override ?? null;
+      if (!hrCeiling && pb?.birth_date) {
+        const b = new Date(pb.birth_date + "T00:00:00Z"); const n = new Date();
+        let age = n.getUTCFullYear() - b.getUTCFullYear();
+        if (n.getUTCMonth() < b.getUTCMonth() || (n.getUTCMonth() === b.getUTCMonth() && n.getUTCDate() < b.getUTCDate())) age--;
+        if (age >= 5 && age <= 110) hrCeiling = Math.round((207 - 0.7 * age) * (PCT[cp?.cardio_profile ?? "healthy"] ?? 0.8));
+      }
+
       return json({
         info: {
+          hr_ceiling: hrCeiling,
           patient_name: patient.full_name ?? null,
           professional_name: professionalName,
           audience: link.audience,
@@ -216,10 +231,18 @@ serve(async (req) => {
           const n = Math.round(Number(v.resting_hr));
           return Number.isFinite(n) && n >= 25 && n <= 140 ? n : null;
         })(),
+        peak_hr: (() => {
+          const n = Math.round(Number(v.peak_hr));
+          return v.peak_hr != null && Number.isFinite(n) && n >= 40 && n <= 240 ? n : null;
+        })(),
+        spo2: (() => {
+          const n = Math.round(Number(v.spo2));
+          return v.spo2 != null && Number.isFinite(n) && n >= 70 && n <= 100 ? n : null;
+        })(),
         note: typeof v.note === "string" ? v.note.slice(0, 1000) : null,
         source: link.audience === "coach" ? "coach" : "patient",
       };
-      const answered = [payload.soreness, payload.sleep, payload.stress, payload.fatigue, payload.readiness, payload.pain, payload.resting_hr]
+      const answered = [payload.soreness, payload.sleep, payload.stress, payload.fatigue, payload.readiness, payload.pain, payload.resting_hr, payload.peak_hr, payload.spo2]
         .filter((x) => x !== null).length;
       if (answered === 0) return json({ error: "empty_checkin" }, 400);
 
