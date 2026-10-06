@@ -26,7 +26,7 @@ Objetivo: incluir no cálculo de carga a fadiga de corrida, ciclismo, esteira, c
      - Sequência dentro do microciclo: evita dois dias seguidos de alto estresse no membro acometido e distribui dias duros/leves/descanso.
      - Ajuste dinâmico pelo check-in do dia: FCR ≥+7 bpm ou prontidão baixa sugere reduzir a sessão (−50% duração ou PSE ≤4) ou trocar por descanso ativo; quadrante da matriz define o tipo de ajuste.
      - Coerência com a fase marcada do macrociclo (STEPS) e com o domínio de cada frente.
-   - **2D — Segurança para populações clínicas (requisito essencial):**
+   - **2D — Segurança para populações clínicas (feito):**
      - Público: não só atletas — hipertensos, sedentários que começam força/circuito e cardiopatas em reabilitação. Força também é gatilho cardiovascular (picos pressóricos); o sRPE (duração × PSE) já equaliza essa carga.
      - Perfil cardiovascular definido **manualmente pelo fisioterapeuta** no prontuário, em 5 níveis: **Atlético**, **Saudável/ativo** (padrão para quem treina sem diagnóstico), **Sedentário**, **Hipertenso controlado**, **Cardiopata sob restrição**. As comorbidades da anamnese podem aparecer como lembrete, nunca classificam sozinhas.
      - FC máx. estimada (Gellish): 207 − 0,7 × idade. Teto de FC por perfil: atlético 85%, saudável/ativo 80%, sedentário 75%, hipertenso controlado 70%, cardiopata 65% da FC máx. O fisio pode ajustar o teto manualmente (ex.: valor do teste ergométrico).
