@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Sessões monitoradas e idade atualizada (06/10)
-- [ ] Corrigir sobreposição dos campos e conferir apresentação em tela estreita.
-- [ ] Usar idade incluída posteriormente nos cálculos cardiovasculares e validar atualização.
+- [x] Corrigir sobreposição dos campos e conferir apresentação isolada em largura de 390 px.
+- [x] Usar idade incluída posteriormente nos cálculos cardiovasculares; 11 testes passaram, preservando campos digitados e teto manual.
 
 ## Organização do check-in (06/10)
 - [x] Trocar Campo / esporte por Outro esporte e separar seleção de frente do modo de planejamento.
