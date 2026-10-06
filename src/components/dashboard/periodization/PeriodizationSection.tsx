@@ -31,6 +31,8 @@ import MacroTimeline from "./MacroTimeline";
 import MicroWeekGrid from "./MicroWeekGrid";
 // Critérios de liberação desativados por ora (componente mantido no projeto).
 import BridgeCard from "./BridgeCard";
+import CardioSafetyCard from "./CardioSafetyCard";
+import { HeartPulse } from "lucide-react";
 import PeriodizationCollapsible from "./PeriodizationCollapsible";
 
 interface Props {
@@ -337,6 +339,10 @@ const PeriodizationSection = ({
           onChanged={refresh}
           readOnly={readOnly}
         />
+      </PeriodizationCollapsible>
+
+      <PeriodizationCollapsible title="Teto de frequência cardíaca" icon={<HeartPulse className="h-4 w-4 text-primary" />}>
+        <CardioSafetyCard patientId={patientId} plan={plan} checkins={checkins} onChanged={refresh} readOnly={readOnly} />
       </PeriodizationCollapsible>
 
       <PeriodizationCollapsible title="Dose planejada x percebida" icon={<Gauge className="h-4 w-4 text-primary" />}>

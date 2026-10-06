@@ -156,6 +156,8 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
   const [values, setValues] = useState<Record<string, number>>({});
   const [note, setNote] = useState("");
   const [restingHr, setRestingHr] = useState("");
+  const [peakHr, setPeakHr] = useState("");
+  const [spo2, setSpo2] = useState("");
   const [savingCheckin, setSavingCheckin] = useState(false);
   const [checkinDone, setCheckinDone] = useState(false);
 
@@ -232,6 +234,9 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
         setValues(preset);
         const hr = loaded.today_checkin?.resting_hr;
         if (typeof hr === "number") setRestingHr(String(hr));
+        const tc = loaded.today_checkin as any;
+        if (typeof tc?.peak_hr === "number") setPeakHr(String(tc.peak_hr));
+        if (typeof tc?.spo2 === "number") setSpo2(String(tc.spo2));
       }
       setState("ready");
 
@@ -245,14 +250,18 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
       setErrorMsg("FC ao acordar deve ficar entre 25 e 140 bpm.");
       return;
     }
-    if (Object.keys(values).length === 0 && hrNum === null) {
+    const peakNum = peakHr ? Number(peakHr) : null;
+    const spoNum = spo2 ? Number(spo2) : null;
+    if (peakNum !== null && (peakNum < 40 || peakNum > 240)) { setErrorMsg("FC no esforço deve ficar entre 40 e 240 bpm."); return; }
+    if (spoNum !== null && (spoNum < 70 || spoNum > 100)) { setErrorMsg("SpO₂ deve ficar entre 70 e 100%."); return; }
+    if (Object.keys(values).length === 0 && hrNum === null && peakNum === null && spoNum === null) {
       setErrorMsg("Responda pelo menos uma escala.");
       return;
     }
     setErrorMsg("");
     setSavingCheckin(true);
     const { data, error } = await supabase.functions.invoke("periodization-checkin", {
-      body: { action: "submit_checkin", token, values: { ...values, resting_hr: restingHr ? Number(restingHr) : null, note } },
+      body: { action: "submit_checkin", token, values: { ...values, resting_hr: restingHr ? Number(restingHr) : null, peak_hr: peakNum, spo2: spoNum, note } },
     });
     setSavingCheckin(false);
     if (error || !data?.ok) { setErrorMsg("Não foi possível enviar agora. Tente novamente."); return; }
@@ -447,6 +456,29 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           />
                           <span className="text-xs text-muted-foreground">bpm</span>
                         </div>
+                      </div>
+                      <div className="space-y-1.5 rounded-xl border border-border p-3">
+                        <p className="text-sm font-medium text-foreground">Coração no treino (opcional)</p>
+                        {(info as any)?.hr_ceiling ? (
+                          <p className="text-[11px] text-foreground">
+                            Seu teto de batimentos: <strong>{(info as any).hr_ceiling} bpm</strong>. Se tiver monitor cardíaco com alarme, configure o aviso nesse valor. Passou dele, reduza o ritmo.
+                          </p>
+                        ) : null}
+                        <p className="text-[11px] text-muted-foreground">
+                          Sem monitor cardíaco (cinta, relógio ou pulseira)? Use um oxímetro de dedo: meça em repouso, ao fim da série ou bloco e após 2–3 min de recuperação.
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Input type="number" inputMode="numeric" value={peakHr} onChange={(e) => setPeakHr(e.target.value)} placeholder="FC mais alta" className="w-32" aria-label="FC mais alta no treino" />
+                          <span className="text-xs text-muted-foreground">bpm</span>
+                          <Input type="number" inputMode="numeric" value={spo2} onChange={(e) => setSpo2(e.target.value)} placeholder="SpO₂" className="w-24" aria-label="SpO2" />
+                          <span className="text-xs text-muted-foreground">%</span>
+                        </div>
+                        {peakHr && (info as any)?.hr_ceiling && Number(peakHr) > (info as any).hr_ceiling && (
+                          <p className="text-[11px] text-amber-700 dark:text-amber-400">Acima do seu teto. Seu fisioterapeuta será avisado.</p>
+                        )}
+                        {spo2 && Number(spo2) < 92 && (
+                          <p className="text-[11px] text-amber-700 dark:text-amber-400">Oxigenação abaixo de 92%. Descanse e avise seu fisioterapeuta; se tiver falta de ar ou dor no peito, procure atendimento.</p>
+                        )}
                       </div>
                       <Textarea
                         value={note}

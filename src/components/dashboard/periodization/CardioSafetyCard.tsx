@@ -1,0 +1,147 @@
+import { useEffect, useMemo, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { HeartPulse, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { PeriodizationPlan, ReadinessCheckin } from "@/lib/periodizationData";
+import {
+  CARDIO_PROFILES, DEFAULT_CARDIO_PROFILE, OXIMETER_GUIDE, SPO2_ALERT,
+  ageFromBirth, checkinSafetyFlags, comorbidityHint, hrCeiling, profileRule,
+} from "@/lib/cardioSafety";
+
+interface Props {
+  patientId: string;
+  plan: PeriodizationPlan | null;
+  checkins: ReadinessCheckin[];
+  onChanged: () => void;
+  readOnly?: boolean;
+}
+
+const CardioSafetyCard = ({ patientId, plan, checkins, onChanged, readOnly }: Props) => {
+  const { toast } = useToast();
+  const [birth, setBirth] = useState<string | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
+  const [profile, setProfile] = useState<string>(plan?.cardio_profile ?? DEFAULT_CARDIO_PROFILE);
+  const [override, setOverride] = useState(plan?.hr_ceiling_override ? String(plan.hr_ceiling_override) : "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setProfile(plan?.cardio_profile ?? DEFAULT_CARDIO_PROFILE);
+    setOverride(plan?.hr_ceiling_override ? String(plan.hr_ceiling_override) : "");
+  }, [plan?.cardio_profile, plan?.hr_ceiling_override]);
+
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      const sb = supabase as any;
+      const { data: p } = await sb.from("patients").select("birth_date, email").eq("id", patientId).maybeSingle();
+      if (off) return;
+      setBirth(p?.birth_date ?? null);
+      if (p?.email) {
+        const { data: rec } = await sb.from("patient_health_records").select("*").eq("patient_email", p.email).limit(1).maybeSingle();
+        if (!off && rec) setHint(comorbidityHint(JSON.stringify(rec)));
+      }
+    })();
+    return () => { off = true; };
+  }, [patientId]);
+
+  const age = ageFromBirth(birth);
+  const ceil = hrCeiling({ profile, age, override: override ? Number(override) : null });
+  const rule = profileRule(profile);
+
+  const flagged = useMemo(
+    () => checkins
+      .map((c) => ({ c, flags: checkinSafetyFlags(c, ceil.ceiling) }))
+      .filter((x) => x.flags.length)
+      .sort((a, b) => b.c.checkin_date.localeCompare(a.c.checkin_date))
+      .slice(0, 5),
+    [checkins, ceil.ceiling],
+  );
+
+  const save = async () => {
+    if (!plan) return;
+    const ov = override ? Math.round(Number(override)) : null;
+    if (ov !== null && (ov < 60 || ov > 230)) { toast({ title: "Teto manual entre 60 e 230 bpm", variant: "destructive" }); return; }
+    setSaving(true);
+    const { error } = await (supabase as any).from("periodization_plans")
+      .update({ cardio_profile: profile, hr_ceiling_override: ov }).eq("id", plan.id);
+    setSaving(false);
+    if (error) { toast({ title: "Não foi possível salvar", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Perfil cardiovascular salvo" });
+    onChanged();
+  };
+
+  return (
+    <Card data-periodization-block>
+      <CardContent className="pt-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <HeartPulse className="h-4 w-4 text-primary" />
+          <p className="text-sm font-medium text-foreground">Teto de frequência cardíaca</p>
+        </div>
+        {!plan ? (
+          <p className="text-xs text-muted-foreground">Estruture a periodização para definir o perfil cardiovascular.</p>
+        ) : (
+          <>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Perfil (definido pelo fisioterapeuta)</label>
+                <Select value={profile} onValueChange={setProfile} disabled={readOnly}>
+                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CARDIO_PROFILES.map((p) => (
+                      <SelectItem key={p.key} value={p.key}>{p.label} · {Math.round(p.ceilingPct * 100)}%</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Teto manual (ex.: teste ergométrico)</label>
+                <Input type="number" inputMode="numeric" value={override} onChange={(e) => setOverride(e.target.value)} placeholder="opcional, bpm" className="h-9 text-sm" disabled={readOnly} />
+              </div>
+            </div>
+            {hint && <p className="text-xs text-amber-700 dark:text-amber-400">{hint}</p>}
+            <div className="rounded-xl border border-border p-3 text-sm">
+              {ceil.ceiling ? (
+                <p>
+                  Teto: <strong>{ceil.ceiling} bpm</strong>{" "}
+                  <span className="text-xs text-muted-foreground">
+                    {ceil.source === "manual" ? "(manual)" : `(${Math.round(ceil.pct * 100)}% de ${ceil.maxHr} bpm — 207 − 0,7 × ${age} anos)`}
+                  </span>
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Sem data de nascimento no cadastro: informe o teto manual.</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Régua deste perfil: ACWR ideal 0,8–{rule.acwrMax.toLocaleString("pt-BR")}, alerta acima de {rule.acwrAlert.toLocaleString("pt-BR")} ou FC ao acordar +{rule.rhrAlert} bpm. SpO₂ abaixo de {SPO2_ALERT}% gera atenção.
+              </p>
+            </div>
+            <p className="text-[11px] text-muted-foreground">{OXIMETER_GUIDE} Com betabloqueador, use o esforço percebido como guia principal.</p>
+            {flagged.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-foreground">Atenção nos check-ins</p>
+                {flagged.map(({ c, flags }) => (
+                  <p key={c.id} className="text-xs text-rose-700 dark:text-rose-400">
+                    {new Date(`${c.checkin_date}T12:00:00Z`).toLocaleDateString("pt-BR")}:{" "}
+                    {flags.includes("hr_above_ceiling") && `FC ${c.peak_hr} bpm acima do teto. `}
+                    {flags.includes("spo2_low") && `SpO₂ ${c.spo2}%.`}
+                  </p>
+                ))}
+                <p className="text-[11px] text-muted-foreground">Sugestão de conferência, não diagnóstico.</p>
+              </div>
+            )}
+            {!readOnly && (
+              <Button size="sm" className="rounded-xl" onClick={save} disabled={saving}>
+                {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Salvar perfil
+              </Button>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default CardioSafetyCard;
