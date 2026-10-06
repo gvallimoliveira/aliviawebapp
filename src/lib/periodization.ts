@@ -1,3 +1,5 @@
+import { acwrZone } from "./cardioSafety";
+
 /**
  * Cálculos determinísticos de carga de treino (sem IA, sem crédito).
  *
