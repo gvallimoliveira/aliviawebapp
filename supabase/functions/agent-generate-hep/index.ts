@@ -331,6 +331,7 @@ Responda APENAS em JSON válido no formato:
       });
     }
 
+    const regionById = new Map(lib.map((e: any) => [e.id, e.body_region || "general"]));
     const itemsToInsert = items.map((it: any, idx: number) => ({
       program_id: program.id,
       exercise_id: it.exercise_id,
@@ -339,8 +340,77 @@ Responda APENAS em JSON válido no formato:
       frequency: String(it.frequency || "3x/semana"),
       observations: it.observations ? String(it.observations).slice(0, 240) : null,
       sort_order: idx,
+      body_region: String(regionById.get(it.exercise_id) || "general"),
+      load_type: "bodyweight",
     }));
     await adminClient.from("exercise_program_items").insert(itemsToInsert);
+
+    // Dose planejada automática no microciclo (mesma regra determinística do modal manual)
+    try {
+      const numOf = (v: string) => {
+        const nums = (v || "").replace(",", ".").match(/\d+(\.\d+)?/g)?.map(Number) || [];
+        if (!nums.length) return null;
+        return nums.length >= 2 ? (nums[0] + nums[1]) / 2 : nums[0];
+      };
+      const parseFreq = (v: string) => {
+        const s = (v || "").toLowerCase();
+        if (/di[aá]ri|todos os dias|daily|7x/.test(s)) return 7;
+        const n = numOf(s);
+        if (n == null) return 3;
+        return Math.max(1, Math.min(7, Math.round(n)));
+      };
+      const REST: Record<string, number> = { high: 120, moderate: 60, light: 45 };
+      let setsByInt: Record<string, number> = { light: 0, moderate: 0, high: 0 };
+      let sessionsPerWeek = 0;
+      let totalMin = 0;
+      for (const it of itemsToInsert) {
+        const setsN = Math.max(0, Math.round(numOf(it.sets) || 0));
+        if (!setsN) continue;
+        const s = it.reps.toLowerCase();
+        const n = numOf(s);
+        const hold = n != null && /min/.test(s) ? n * 60 : n != null && /(\d\s*s\b|seg|sec|''|")/.test(s) ? n : null;
+        const reps = hold == null ? n : null;
+        const intensity = hold != null ? (hold <= 6 ? "high" : hold <= 15 ? "moderate" : "light")
+          : reps != null ? (reps <= 4 ? "high" : reps <= 12 ? "moderate" : "light") : null;
+        if (intensity) setsByInt[intensity] += setsN;
+        const work = reps != null ? setsN * reps * 3 : setsN * (hold || 0);
+        const rest = intensity ? Math.max(0, setsN - 1) * REST[intensity] : 0;
+        totalMin += (work + rest) / 60;
+        sessionsPerWeek = Math.max(sessionsPerWeek, parseFreq(it.frequency));
+      }
+      const totalSets = setsByInt.light + setsByInt.moderate + setsByInt.high;
+      if (totalSets > 0 && sessionsPerWeek > 0) {
+        const targetRpe = Math.round(((setsByInt.light * 4 + setsByInt.moderate * 6 + setsByInt.high * 8) / totalSets) * 2) / 2;
+        const durationMin = Math.max(5, Math.round(totalMin + 5));
+        const level = targetRpe >= 7 ? "high" : targetRpe >= 5 ? "moderate" : "low";
+        const { data: plan } = await adminClient
+          .from("periodization_plans").select("id")
+          .eq("patient_id", patient.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+        const today = new Date();
+        const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        await adminClient.from("periodization_sessions").delete()
+          .eq("exercise_program_id", program.id).gte("session_date", iso(today));
+        const k = Math.max(0, Math.min(7, sessionsPerWeek));
+        const rows = Array.from({ length: k }, (_, i) => {
+          const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + Math.floor((i * 7) / k));
+          return {
+            patient_id: patient.id,
+            plan_id: plan?.id ?? null,
+            session_date: iso(d),
+            track: "physio",
+            planned_load: level,
+            planned_duration_min: durationMin,
+            planned_rpe: targetRpe,
+            exercise_program_id: program.id,
+            title: "Programa de exercícios (HEP)",
+            created_source: "hep",
+          };
+        });
+        if (rows.length) await adminClient.from("periodization_sessions").insert(rows);
+      }
+    } catch (doseErr) {
+      console.error("[agent-hep] planned dose sync", doseErr);
+    }
 
     const hepUrl = `/hep/${program.token}`;
 
