@@ -132,6 +132,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const [selected, setSelected] = useState<SelectedExercise[]>([]);
   const [customExercises, setCustomExercises] = useState<CustomExercise[]>([]);
   const [notes, setNotes] = useState("");
+  const [domain, setDomain] = useState("physio");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const isEditing = !!editProgramId;
@@ -224,10 +225,11 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       if (editProgramId) {
         const { data: program } = await (supabase as any)
           .from("exercise_programs")
-          .select("notes")
+          .select("notes, domain")
           .eq("id", editProgramId)
           .single();
         if (program?.notes) setNotes(program.notes);
+        if (program?.domain) setDomain(program.domain);
 
         const { data: items } = await (supabase as any)
           .from("exercise_program_items")
