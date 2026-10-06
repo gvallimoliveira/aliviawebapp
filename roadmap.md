@@ -1,5 +1,9 @@
 # Roadmap
 
+## Sessões monitoradas e idade atualizada (06/10)
+- [ ] Corrigir sobreposição dos campos e conferir apresentação em tela estreita.
+- [ ] Usar idade incluída posteriormente nos cálculos cardiovasculares e validar atualização.
+
 ## Organização do check-in (06/10)
 - [x] Trocar Campo / esporte por Outro esporte e separar seleção de frente do modo de planejamento.
 - [x] Impedir submissão do prontuário ao copiar links; 25 testes passaram e seleção/modos conferidos no navegador.

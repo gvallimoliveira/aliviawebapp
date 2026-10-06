@@ -125,9 +125,9 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
 
   return (
     <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Activity className="h-4 w-4 text-primary" /> Sessões monitoradas
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2 text-sm font-medium">
+          <Activity className="h-4 w-4 shrink-0 text-primary" /> Sessões monitoradas
         </div>
         <Button type="button" size="sm" variant={open ? "ghost" : "outline"} onClick={() => setOpen((o) => !o)}>
           {open ? <><X className="h-4 w-4 mr-1" />Fechar</> : <><Plus className="h-4 w-4 mr-1" />Lançar sessão monitorada</>}
@@ -139,21 +139,21 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
           <p className="text-xs text-muted-foreground">
             Dados do monitor cardíaco (cinta, relógio ou oxímetro). Envie um print do app ou digite os números.
           </p>
-          <div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
               onChange={(e) => e.target.files?.[0] && readPrint(e.target.files[0])} />
             <Button type="button" size="sm" variant="secondary" disabled={reading} onClick={() => fileRef.current?.click()}>
               {reading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ImageUp className="h-4 w-4 mr-1" />}
               Ler print do monitor
             </Button>
-            <span className="ml-2 text-[11px] text-muted-foreground">usa créditos de IA só nesta leitura</span>
+            <span className="text-[11px] text-muted-foreground">usa créditos de IA só nesta leitura</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <label className="text-xs space-y-1">Data<Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
-            <label className="text-xs space-y-1">Frente
+          <div className="grid grid-cols-2 gap-x-3 gap-y-3 [&>label]:block [&>label]:min-w-0 [&_input]:min-w-0 [&_input]:max-w-full">
+            <label className="col-span-2 block min-w-0 space-y-1 text-xs sm:col-span-1">Data<Input className="block w-full min-w-0 appearance-none" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
+            <label className="col-span-2 block min-w-0 space-y-1 text-xs sm:col-span-1">Frente
               <Select value={track} onValueChange={setTrack}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full min-w-0 [&>span]:truncate"><SelectValue /></SelectTrigger>
                 <SelectContent>{TRACKS.map((x) => <SelectItem key={x.v} value={x.v}>{x.l}</SelectItem>)}</SelectContent>
               </Select>
             </label>
@@ -164,9 +164,9 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
             <label className="text-xs space-y-1 col-span-2">SpO₂ mínima (%) — opcional<Input inputMode="numeric" value={spo2} onChange={(e) => setSpo2(e.target.value)} /></label>
           </div>
 
-          <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
             <div className="text-xs">Minutos por zona de FC (opcional)</div>
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-5 gap-1.5 [&_input]:min-w-0 [&_input]:px-2">
               {zones.map((v, i) => (
                 <Input key={i} aria-label={`Zona ${i + 1}`} placeholder={`Z${i + 1}`} inputMode="numeric" value={v}
                   onChange={(e) => setZones((zs) => zs.map((x, j) => (j === i ? e.target.value : x)))} />
