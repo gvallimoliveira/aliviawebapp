@@ -29,6 +29,13 @@
       "when": 1791257313119,
       "tag": "0003_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791260148615,
+      "tag": "0004_add_domain_to_exercise_programs",
+      "breakpoints": true
     }
   ]
 }

@@ -1907,6 +1907,7 @@ export type Database = {
         Row: {
           assessment_id: string | null
           created_at: string
+          domain: string
           expires_at: string
           id: string
           notes: string | null
@@ -1917,6 +1918,7 @@ export type Database = {
         Insert: {
           assessment_id?: string | null
           created_at?: string
+          domain?: string
           expires_at?: string
           id?: string
           notes?: string | null
@@ -1927,6 +1929,7 @@ export type Database = {
         Update: {
           assessment_id?: string | null
           created_at?: string
+          domain?: string
           expires_at?: string
           id?: string
           notes?: string | null
