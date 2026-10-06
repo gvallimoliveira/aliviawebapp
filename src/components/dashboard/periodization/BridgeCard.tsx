@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
-import { Copy, Link2, Loader2, Plus, ShieldAlert, Trash2, UserRound, Dumbbell } from "lucide-react";
+import { Copy, Link2, Loader2, Plus, RefreshCw, ShieldAlert, Trash2, UserRound, Dumbbell } from "lucide-react";
 import type { PeriodizationLink, PlanRestriction } from "@/lib/periodizationData";
 import { addRestriction, createLink, deleteRestriction, revokeLink } from "@/lib/periodizationData";
 
@@ -41,14 +41,15 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
     }
   };
 
-  const makeLink = async (audience: "patient" | "coach") => {
+  const makeLink = async (audience: "patient" | "coach", renew = false) => {
+    if (renew && !window.confirm("Gerar um novo link? O link atual deixará de funcionar.")) return;
     setCreating(audience);
     try {
-      const link = await createLink({ patientId, planId, audience });
+      const link = await createLink({ patientId, planId, audience, renew });
       await navigator.clipboard.writeText(linkUrl(link.token)).catch(() => undefined);
       onChanged();
       toast({
-        title: audience === "coach" ? "Link do preparador criado" : "Link do paciente criado",
+        title: renew ? "Novo link gerado" : audience === "coach" ? "Link do preparador pronto" : "Link do paciente pronto",
         description: "Link copiado para a área de transferência.",
       });
     } catch (e: any) {
@@ -63,7 +64,12 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
     toast({ title: "Link copiado" });
   };
 
-  const activeLinks = links.filter((l) => l.active);
+  // Um link por público: mostra só o mais recente ativo de cada.
+  const activeLinks = (["patient", "coach"] as const)
+    .map((a) => links.filter((l) => l.active && l.audience === a)
+      .sort((x: any, y: any) => String(y.created_at ?? "").localeCompare(String(x.created_at ?? "")))[0])
+    .filter(Boolean) as PeriodizationLink[];
+  const has = (a: "patient" | "coach") => activeLinks.some((l) => l.audience === a);
 
   return (
     <Card>
@@ -76,14 +82,14 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
       <CardContent className="space-y-4">
         {!readOnly && (
           <div className="flex flex-wrap gap-2">
-             <Button type="button" size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => makeLink("patient")} disabled={creating !== null}>
+             {!has("patient") && <Button type="button" size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => makeLink("patient")} disabled={creating !== null}>
               {creating === "patient" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserRound className="h-3.5 w-3.5" />}
               Link do paciente
-            </Button>
-             <Button type="button" size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => makeLink("coach")} disabled={creating !== null}>
+            </Button>}
+             {!has("coach") && <Button type="button" size="sm" variant="outline" className="rounded-xl gap-1 text-xs" onClick={() => makeLink("coach")} disabled={creating !== null}>
               {creating === "coach" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Dumbbell className="h-3.5 w-3.5" />}
               Link do preparador
-            </Button>
+            </Button>}
           </div>
         )}
 
@@ -98,6 +104,11 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label="Copiar link de check-in" title="Copiar link de check-in" onClick={() => copy(l.token)}>
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
+                {!readOnly && (
+                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label="Gerar novo link" title="Gerar novo link (desativa o atual)" disabled={creating !== null} onClick={() => makeLink(l.audience as "patient" | "coach", true)}>
+                    {creating === l.audience ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  </Button>
+                )}
                 {!readOnly && (
                    <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label="Desativar link" title="Desativar link" onClick={async () => { await revokeLink(l.id); onChanged(); }}>
                     <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
