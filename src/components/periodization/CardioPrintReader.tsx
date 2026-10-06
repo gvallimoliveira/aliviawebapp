@@ -13,7 +13,7 @@ export interface CardioReading {
   summary: string;
 }
 
-const ERR: Record<string, string> = {
+export const CARDIO_PRINT_ERR: Record<string, string> = {
   ai_credits: "Leitura indisponível no momento. Preencha manualmente.",
   ai_rate_limited: "Muitas leituras seguidas. Tente em instantes.",
   image_too_large: "Imagem grande demais. Envie um print menor.",
@@ -38,7 +38,7 @@ const CardioPrintReader = ({ token, onApply }: { token: string; onApply: (r: Car
       const { data, error } = await supabase.functions.invoke("periodization-checkin", {
         body: { action: "parse_cardio_print", token, image_base64: b64, mime_type: file.type },
       });
-      if (error || !data?.reading) { setMsg(ERR[data?.error] || "Não consegui ler o print. Preencha manualmente."); return; }
+      if (error || !data?.reading) { setMsg(CARDIO_PRINT_ERR[data?.error] || "Não consegui ler o print. Preencha manualmente."); return; }
       setReading(data.reading);
     } finally { setBusy(false); if (input.current) input.current.value = ""; }
   };
