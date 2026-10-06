@@ -176,6 +176,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
   const [planTitle, setPlanTitle] = useState("");
   const [savingPlan, setSavingPlan] = useState(false);
   const [planDone, setPlanDone] = useState(false);
+  const [importMode, setImportMode] = useState(false);
 
 
   useEffect(() => {
