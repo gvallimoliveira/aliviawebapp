@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseItem, summarizeHep, parseReps, parseFrequency } from "@/lib/hepLoad";
+import { weeklyRegionVolume } from "@/lib/hepLoad";
 
 const base = { name: "x", region: "knee", frequency: "3x/semana" };
 
@@ -29,10 +29,16 @@ describe("hepLoad", () => {
     ]);
     expect(s.volumeLoad).toBe(600);
     expect(s.byRegion.find((r) => r.region === "hip")!.weeklySets).toBe(14);
-    expect(s.byRegion.find((r) => r.region === "knee")!.volume).toBe("moderate");
+    expect(s.byRegion.find((r) => r.region === "knee")!.volume).toBe("low");
     expect(s.sessionsPerWeek).toBe(7);
     expect(parseFrequency("2x/semana")).toBe(2);
   });
+
+  it("faixa de séries semanais por região: leve até 15, moderada 16-29, alta a partir de 30", () => {
+    expect(weeklyRegionVolume(15)).toBe("low");
+    expect(weeklyRegionVolume(16)).toBe("moderate");
+    expect(weeklyRegionVolume(29)).toBe("moderate");
+    expect(weeklyRegionVolume(30)).toBe("high");
 
   it("objetivo pondera a carga e esforço fica entre 5 e 9", () => {
     const s = summarizeHep([
