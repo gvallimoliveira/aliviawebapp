@@ -575,7 +575,7 @@ async function maybeAlert(
       .select("session_date, track, planned_duration_min, planned_rpe")
       .eq("patient_id", ctx.patientId)
       .gte("session_date", weekISO);
-    const TRACK_PT: Record<string, string> = { physio: "fisioterapia", gym: "academia", sport: "campo/esporte" };
+    const TRACK_PT: Record<string, string> = { physio: "fisioterapia", gym: "academia", sport: "campo/esporte", cardio: "cardio" };
     const plannedByTrack: Record<string, number> = {};
     (planned || []).forEach((s: { track: string; planned_duration_min: number | null; planned_rpe: number | null }) => {
       const load = Number(s.planned_duration_min || 0) * Number(s.planned_rpe || 0);
@@ -592,6 +592,50 @@ async function maybeAlert(
       if (ratio < 0.9) reasons.push(`${TRACK_PT[t] || t} subdosada (${ratio.toFixed(2)} do planejado)`);
       else if (ratio > 1.1) reasons.push(`${TRACK_PT[t] || t} superdosada (${ratio.toFixed(2)} do planejado)`);
     });
+
+    // Fase 2B/2D — alertas cardiovasculares com régua do perfil definido pelo fisio.
+    const RULES: Record<string, { pct: number; acwr: number; rhr: number }> = {
+      athletic: { pct: 0.85, acwr: 1.5, rhr: 7 }, healthy: { pct: 0.8, acwr: 1.5, rhr: 7 },
+      sedentary: { pct: 0.75, acwr: 1.4, rhr: 6 }, hypertensive: { pct: 0.7, acwr: 1.3, rhr: 5 },
+      cardiac: { pct: 0.65, acwr: 1.3, rhr: 5 },
+    };
+    const { data: cp } = await supabase.from("periodization_plans")
+      .select("cardio_profile, hr_ceiling_override").eq("patient_id", ctx.patientId)
+      .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const rule = RULES[cp?.cardio_profile ?? "healthy"] ?? RULES.healthy;
+    const { data: pb } = await supabase.from("patients").select("birth_date").eq("id", ctx.patientId).maybeSingle();
+    let ceiling: number | null = cp?.hr_ceiling_override ?? null;
+    if (!ceiling && pb?.birth_date) {
+      const age = Math.floor((Date.now() - new Date(pb.birth_date + "T00:00:00Z").getTime()) / (365.25 * 86400000));
+      if (age >= 5 && age <= 110) ceiling = Math.round((207 - 0.7 * age) * rule.pct);
+    }
+    // ACWR cardio isolado.
+    let cAcute = 0, cChronic = 0, cSessions = 0, cOldest = 0;
+    (entries || []).forEach((e: { session_date: string; training_load: number; track?: string }) => {
+      if (e.track !== "cardio") return;
+      const diff = Math.round((now - new Date(`${e.session_date}T12:00:00Z`).getTime()) / 86400000);
+      const load = Number(e.training_load) || 0;
+      if (diff >= 0 && diff < 28 && load > 0) { cChronic += load; cSessions++; cOldest = Math.max(cOldest, diff); }
+      if (diff >= 0 && diff < 7) cAcute += load;
+    });
+    const cardioRatio = cSessions >= 4 && cOldest >= 14 && cChronic > 0 ? cAcute / (cChronic / 4) : null;
+    if (cardioRatio !== null && cardioRatio > rule.acwr) reasons.push(`ACWR cardio ${cardioRatio.toFixed(2)}`);
+    const { data: hrRows } = await supabase.from("readiness_checkins")
+      .select("checkin_date, resting_hr, peak_hr, spo2").eq("patient_id", ctx.patientId)
+      .gte("checkin_date", sinceISO).order("checkin_date", { ascending: true });
+    const hrs = (hrRows || []) as Array<{ checkin_date: string; resting_hr: number | null; peak_hr: number | null; spo2: number | null }>;
+    const last = hrs[hrs.length - 1];
+    const todayIso = new Date().toISOString().slice(0, 10);
+    if (last && last.checkin_date === todayIso) {
+      const prior = hrs.slice(0, -1).filter((h) => typeof h.resting_hr === "number");
+      if (typeof last.resting_hr === "number" && prior.length >= 3) {
+        const base = prior.reduce((a, h) => a + (h.resting_hr as number), 0) / prior.length;
+        const d = last.resting_hr - base;
+        if (d >= rule.rhr) reasons.push(`FC ao acordar +${Math.round(d)} bpm`);
+      }
+      if (ceiling && typeof last.peak_hr === "number" && last.peak_hr > ceiling) reasons.push(`FC ${last.peak_hr} bpm acima do teto (${ceiling})`);
+      if (typeof last.spo2 === "number" && last.spo2 < 92) reasons.push(`SpO₂ ${last.spo2}%`);
+    }
 
     if (!reasons.length) return;
 

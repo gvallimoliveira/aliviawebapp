@@ -6,21 +6,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { HeartPulse, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { PeriodizationPlan, ReadinessCheckin } from "@/lib/periodizationData";
+import type { PeriodizationPlan, ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
+import { acwr, restingHrStatus } from "@/lib/periodization";
 import {
   CARDIO_PROFILES, DEFAULT_CARDIO_PROFILE, OXIMETER_GUIDE, SPO2_ALERT,
-  ageFromBirth, checkinSafetyFlags, comorbidityHint, hrCeiling, profileRule,
+  ageFromBirth, cardioMatrix, checkinSafetyFlags, comorbidityHint, hrCeiling, profileRule,
 } from "@/lib/cardioSafety";
 
 interface Props {
   patientId: string;
   plan: PeriodizationPlan | null;
   checkins: ReadinessCheckin[];
+  entries: SrpeEntry[];
   onChanged: () => void;
   readOnly?: boolean;
 }
 
-const CardioSafetyCard = ({ patientId, plan, checkins, onChanged, readOnly }: Props) => {
+const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
   const [birth, setBirth] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
@@ -51,6 +53,10 @@ const CardioSafetyCard = ({ patientId, plan, checkins, onChanged, readOnly }: Pr
   const age = ageFromBirth(birth);
   const ceil = hrCeiling({ profile, age, override: override ? Number(override) : null });
   const rule = profileRule(profile);
+
+  const cardioRatio = useMemo(() => acwr(entries.filter((e: any) => e.track === "cardio") as any), [entries]);
+  const rhr = useMemo(() => restingHrStatus(checkins), [checkins]);
+  const matrix = cardioMatrix(cardioRatio, rhr.delta, profile);
 
   const flagged = useMemo(
     () => checkins
@@ -117,6 +123,14 @@ const CardioSafetyCard = ({ patientId, plan, checkins, onChanged, readOnly }: Pr
               <p className="text-xs text-muted-foreground mt-1">
                 Régua deste perfil: ACWR ideal 0,8–{rule.acwrMax.toLocaleString("pt-BR")}, alerta acima de {rule.acwrAlert.toLocaleString("pt-BR")} ou FC ao acordar +{rule.rhrAlert} bpm. SpO₂ abaixo de {SPO2_ALERT}% gera atenção.
               </p>
+            </div>
+            <div className="rounded-xl border border-border p-3 text-sm space-y-1">
+              <p className="text-xs font-medium text-foreground">Leitura do momento (ACWR cardio × FC ao acordar)</p>
+              <p className="text-xs text-muted-foreground">
+                ACWR cardio: {cardioRatio !== null ? cardioRatio.toFixed(2).replace(".", ",") : "—"} · FC ao acordar: {rhr.delta !== null ? `${rhr.delta > 0 ? "+" : ""}${rhr.delta} bpm` : "—"}
+              </p>
+              <p className={`text-xs ${matrix.quadrant === "optimal" || matrix.quadrant === "insufficient" ? "text-foreground" : "text-amber-700 dark:text-amber-400"}`}>{matrix.text}</p>
+              <p className="text-[11px] text-muted-foreground">Sugestão, não diagnóstico. Um aviso por paciente por dia vai para o seu celular.</p>
             </div>
             <p className="text-[11px] text-muted-foreground">{OXIMETER_GUIDE} Com betabloqueador, use o esforço percebido como guia principal.</p>
             {flagged.length > 0 && (
