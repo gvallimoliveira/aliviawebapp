@@ -6,3 +6,5 @@
 - Official Aliv.iA Studio screenshots are synthetic library assets resolved by the shared `photoPolicy` from canonical differential mappings, never `studio_photos` rows; every format renders no official image without an exact declared match, preventing semantic fallback mismatches while preserving quota-free local framing.
 - User-inserted Studio images are DOM layers on the shared art surface: background insertions stay behind text with reduced brightness, while composition insertions remain foreground, movable, resizable, and export through the same PNG pipeline.
 - Studio cross-field copy coherence must be enforced by the shared final voice guard and shared block support picker; one global gate prevents brand- or layout-specific repetition and dangling titles.
+- Patient record paired sections use the shared native horizontal row; this preserves form behavior and lets section shortcuts reveal horizontally hidden content.
+- Patient regional pain charts and comparisons share one chronological data helper; explicit regional measurements must never be replaced by an invented regional score from a multi-region global average.

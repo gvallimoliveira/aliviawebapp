@@ -40,10 +40,9 @@ export const PATIENT_SECTIONS: PatientSectionDef[] = [
   { id: "sec-anamnese", icon: ClipboardList, label: { pt: "Anamnese", en: "Anamnesis", es: "Anamnesis" } },
   { id: "saude-geral", icon: HeartPulse, label: { pt: "Saúde geral", en: "General health", es: "Salud general" } },
   { id: "sec-timeline", icon: History, label: { pt: "Linha do tempo", en: "Timeline", es: "Línea de tiempo" } },
-  { id: "sec-evolucao-dor", icon: Activity, label: { pt: "Evolução da dor", en: "Pain evolution", es: "Evolución del dolor" } },
+   { id: "sec-evolucao-dor", icon: Activity, label: { pt: "Dor por região", en: "Pain by region", es: "Dolor por región" } },
   { id: "sec-mecanismo-dor", icon: TrendingUp, label: { pt: "Mecanismo de dor", en: "Pain mechanism", es: "Mecanismo de dolor" } },
   { id: "sec-mapa-dor", icon: Map, label: { pt: "Mapa de dor", en: "Pain map", es: "Mapa de dolor" } },
-  { id: "sec-regioes-dor", icon: ListChecks, label: { pt: "Comparativo por região", en: "Region comparison", es: "Comparativo por región" } },
   { id: "sec-questionarios", icon: FileText, label: { pt: "Questionários", en: "Questionnaires", es: "Cuestionarios" } },
   { id: "sec-especializados", icon: Brain, label: { pt: "Questionários complementares", en: "Complementary questionnaires", es: "Cuestionarios complementarios" } },
 

@@ -20,7 +20,8 @@ import PatientStrengthSection from "./PatientStrengthSection";
 import PatientRomSection from "./PatientRomSection";
 import PatientPhotosSection from "../PatientPhotosSection";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
-import RegionPainComparison from "../RegionPainComparison";
+import PatientPainEvolution from "./PatientPainEvolution";
+import PatientHorizontalRow from "./PatientHorizontalRow";
 import SessionNotesSection from "../SessionNotesSection";
 import VoiceNoteCard from "../VoiceNoteCard";
 import PeriodizationSection from "../periodization/PeriodizationSection";
@@ -33,7 +34,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Gauge, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
-import { Bar, BarChart, CartesianGrid, LabelList, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Area, AreaChart } from "recharts";
+import { Bar, BarChart, CartesianGrid, LabelList, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessmentLinks";
 import ReassessmentConfigDialog from "./ReassessmentConfigDialog";
 import type { ReassessStepId } from "@/lib/reassessmentSteps";
@@ -267,7 +268,6 @@ export default function PatientDetailView(props: any) {
     getPendingTreatmentAssessments,
     latestAnamnesisFields,
     latestAssessment,
-    painData,
     selectedEmail,
     questionnaireEvolution,
     assessmentRefreshTick,
@@ -637,7 +637,7 @@ export default function PatientDetailView(props: any) {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
       <PatientSectionRail riskLevel={healthRisk?.level ?? null} />
       <div className="flex items-center justify-between">
 
@@ -1302,6 +1302,7 @@ export default function PatientDetailView(props: any) {
       })()}
 
 
+      <PatientHorizontalRow label={language === "pt" ? "Anamnese e saúde geral" : language === "es" ? "Anamnesis y salud general" : "Anamnesis and general health"}>
       {/* Anamnese resumida da última avaliação — colapsável (Extra C: atalho ver completa) */}
       {latestAnamnesisFields.length > 0 && (
         <Card id="sec-anamnese" className="scroll-mt-24">
@@ -1311,7 +1312,7 @@ export default function PatientDetailView(props: any) {
               storageKey={`patient:${patient.groupKey || patient.email}:anamnese`}
               defaultOpen
               header={
-                <div className="flex items-start justify-between gap-2 pr-2">
+                <div className="flex flex-wrap items-start justify-between gap-2 pr-2">
                   <div>
                     <div className="text-base font-semibold flex items-center gap-2"><ClipboardList className="h-4 w-4 text-primary" />Anamnese — Última Avaliação</div>
                     <div className="text-xs text-muted-foreground mt-0.5">{new Date(latestAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</div>
@@ -1330,6 +1331,19 @@ export default function PatientDetailView(props: any) {
           </CardContent>
         </Card>
       )}
+
+      <HealthGeneralCard
+        assessments={patient.assessments}
+        patientId={patient.patientRecord?.id || null}
+        patientEmail={patient.email || null}
+        patientName={patient.name || null}
+        clinicId={clinicId || null}
+        readOnly={readOnly || isDemo}
+        isDemo={isDemo}
+        onRiskChange={setHealthRisk}
+
+      />
+      </PatientHorizontalRow>
 
       <Separator className="opacity-40" />
 
@@ -1350,36 +1364,22 @@ export default function PatientDetailView(props: any) {
       )}
 
       {/* Linha do tempo das avaliações (visão longitudinal sobe acima dos gráficos detalhados) */}
-      <HealthGeneralCard
-        assessments={patient.assessments}
-        patientId={patient.patientRecord?.id || null}
-        patientEmail={patient.email || null}
-        patientName={patient.name || null}
-        clinicId={clinicId || null}
-        readOnly={readOnly || isDemo}
-        isDemo={isDemo}
-        onRiskChange={setHealthRisk}
 
-      />
 
 
       <div id="sec-timeline" className="scroll-mt-24"><AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} /></div>
 
-      {/* Gráfico de evolução de dor */}
-      <div id="sec-evolucao-dor" className="scroll-mt-24">
-      {painData.length > 1 ? <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />{t("pro.pain_evolution")}</CardTitle></CardHeader><CardContent><div className="h-56"><ResponsiveContainer width="100%" height="100%"><AreaChart data={painData}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} /><Area type="monotone" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4 }} name="Dor" /></AreaChart></ResponsiveContainer></div></CardContent></Card> : painData.length === 1 ? <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />{t("pro.pain_evolution")}</CardTitle></CardHeader><CardContent><div className="h-32"><ResponsiveContainer width="100%" height="100%"><BarChart data={painData}><CartesianGrid strokeDasharray="3 3" className="stroke-border" /><XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" /><YAxis domain={[0, 10]} tick={{ fontSize: 11 }} className="fill-muted-foreground" /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} /><Bar dataKey="score" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Dor" /></BarChart></ResponsiveContainer></div></CardContent></Card> : null}
-      </div>
+      <div id="sec-evolucao-dor" className="scroll-mt-24"><PatientPainEvolution assessments={patient.assessments} /></div>
 
       {/* Passo F1 — evolução longitudinal do mecanismo de dor */}
       <div id="sec-mecanismo-dor" className="scroll-mt-24"><MechanismEvolutionCard assessments={patient.assessments} /></div>
 
       {/* Mapa de Dor comparativo (agrupa logo após a linha do tempo) */}
       <div id="sec-mapa-dor" className="scroll-mt-24">
-      {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Stethoscope className="h-4 w-4 text-primary" />Mapa de Dor — Comparativo</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{patient.assessments.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => <div key={a.id} className="text-center space-y-2"><p className="text-xs font-medium text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}{a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}</p><PainMapView painRegions={a.pain_regions} compact /></div>)}</div></CardContent></Card>}
+      {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Stethoscope className="h-4 w-4 text-primary" />Mapa de Dor — Comparativo</CardTitle></CardHeader><CardContent><div className="flex items-start gap-4 overflow-x-auto overscroll-x-contain snap-x snap-mandatory pb-2 [scrollbar-width:thin]">{patient.assessments.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => <div key={a.id} className="w-56 max-w-[85%] shrink-0 snap-start text-center space-y-2"><p className="text-xs font-medium text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}{a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}</p><PainMapView painRegions={a.pain_regions} compact /></div>)}</div></CardContent></Card>}
       </div>
 
-      {/* Comparação detalhada por região */}
-      <div id="sec-regioes-dor" className="scroll-mt-24"><RegionPainComparison assessments={patient.assessments} /></div>
+
 
       {/* Evolução de questionários funcionais */}
       <div id="sec-questionarios" className="scroll-mt-24 space-y-5">
@@ -1515,9 +1515,11 @@ export default function PatientDetailView(props: any) {
 
 
       {/* Arquivos e fotos (bloco documental) */}
-      <div id="sec-arquivos" className="scroll-mt-24 space-y-5">
+      <div id="sec-arquivos" className="scroll-mt-24 min-w-0">
+      <PatientHorizontalRow label={language === "pt" ? "Documentos e fotos do paciente" : language === "es" ? "Documentos y fotos del paciente" : "Patient documents and photos"}>
       {selectedEmail && <PatientFilesSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} isDemo={isDemo} />}
       {selectedEmail && !isDemo && <PatientPhotosSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} />}
+      </PatientHorizontalRow>
       </div>
 
       {/* Programas de exercícios enviados (ferramenta — desce após o bloco clínico) */}
