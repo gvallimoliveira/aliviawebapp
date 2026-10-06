@@ -1,5 +1,7 @@
 # Architecture decisions
 
+- Periodization link actions must explicitly use button type="button"; these controls can be embedded inside patient-record forms and must never submit them.
+
 - Studio copy lists use the shared `listCoherence.ts` guard at final voice review and rendering; semantic deduplication keeps original complementary arguments without padding or modifying media metadata.
 - Studio list editing targets the text leaf rather than the icon-bearing row and rejects positional snapshots with mismatched slot counts; this preserves icons and prevents stale edits shifting into labels after deduplication.
 

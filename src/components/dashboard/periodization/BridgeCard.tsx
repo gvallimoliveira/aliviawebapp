@@ -95,7 +95,7 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
                   {l.audience === "coach" ? "Preparador" : "Paciente"}
                 </Badge>
                 <span className="text-[11px] text-muted-foreground truncate flex-1">{linkUrl(l.token)}</span>
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => copy(l.token)}>
+                 <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label="Copiar link de check-in" title="Copiar link de check-in" onClick={() => copy(l.token)}>
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
                 {!readOnly && (
