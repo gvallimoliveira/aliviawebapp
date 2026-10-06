@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,7 +33,7 @@ const num = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", "."))
 const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [birth, setBirth] = useState<string | null>(null);
+  const birth = usePatientBirthDate(patientId, open);
   const [date, setDate] = useState(today());
   const [track, setTrack] = useState("cardio");
   const [duration, setDuration] = useState("");
@@ -46,11 +47,6 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
   const [reading, setReading] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    (supabase as any).from("patients").select("birth_date").eq("id", patientId).maybeSingle()
-      .then(({ data }: any) => setBirth(data?.birth_date ?? null));
-  }, [patientId]);
 
   const ceil = hrCeiling({ profile: plan?.cardio_profile, age: ageFromBirth(birth), override: plan?.hr_ceiling_override ?? null });
   const z = sanitizeZones(zones.map((x) => num(x)));

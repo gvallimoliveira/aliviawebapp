@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { HeartPulse, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
 import type { PeriodizationPlan, ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
 import { acwr, restingHrStatus } from "@/lib/periodization";
 import {
@@ -24,7 +25,7 @@ interface Props {
 
 const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
-  const [birth, setBirth] = useState<string | null>(null);
+  const birth = usePatientBirthDate(patientId);
   const [hint, setHint] = useState<string | null>(null);
   const [profile, setProfile] = useState<string>(plan?.cardio_profile ?? DEFAULT_CARDIO_PROFILE);
   const [override, setOverride] = useState(plan?.hr_ceiling_override ? String(plan.hr_ceiling_override) : "");
@@ -39,9 +40,8 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
     let off = false;
     (async () => {
       const sb = supabase as any;
-      const { data: p } = await sb.from("patients").select("birth_date, email").eq("id", patientId).maybeSingle();
+      const { data: p } = await sb.from("patients").select("email").eq("id", patientId).maybeSingle();
       if (off) return;
-      setBirth(p?.birth_date ?? null);
       if (p?.email) {
         const { data: rec } = await sb.from("patient_health_records").select("*").eq("patient_email", p.email).limit(1).maybeSingle();
         if (!off && rec) setHint(comorbidityHint(JSON.stringify(rec)));
