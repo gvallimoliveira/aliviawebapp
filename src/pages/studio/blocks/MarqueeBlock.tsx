@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
 import { joinCopyParts } from "../typographyGuards";
+import { distinctListItems } from "../listCoherence";
 
 /**
  * ÍNDICE (antigo marquee).
@@ -23,7 +24,7 @@ const MarqueeBlock = ({ content, rng, treatment, format, persona }: BlockProps) 
   // O nome da marca já está na assinatura: repetido como item do índice, vira
   // ruído ("01 Nome da Marca") e rouba a linha de um tópico de verdade.
   const label = content.label.toLowerCase();
-  const rows = [...new Set(items.map((t) => t.trim()).filter(Boolean))]
+  const rows = distinctListItems(items)
     .filter((t) => t.length > 2 && !label.includes(t.toLowerCase()))
     .slice(0, 5);
 

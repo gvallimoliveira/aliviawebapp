@@ -3,6 +3,7 @@ import { Check, X } from "lucide-react";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
 import { BRAND_NAME } from "../brand";
+import { finalizeListCoherence } from "../listCoherence";
 
 /**
  * Before / after columns.
@@ -10,7 +11,9 @@ import { BRAND_NAME } from "../brand";
  */
 const CompareBlock = ({ content, rng, treatment, format, picker, persona }: BlockProps) => {
   if (!content.compare?.length) return null;
-  const [compare] = picker.pick(content.compare, 1, rng, (c) => c.topics ?? []);
+  const [selected] = picker.pick(content.compare, 1, rng, (c) => c.topics ?? []);
+  if (!selected) return null;
+  const compare = finalizeListCoherence(selected);
   const stacked = treatment === 1;
   const versus = treatment === 2;
 
