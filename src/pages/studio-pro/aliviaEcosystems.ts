@@ -1,6 +1,7 @@
 import type { StudioCarousel, StudioEcosystem } from "@/pages/studio/content/types";
 import { ALIVIA_DIFFERENTIALS, type AliviaDifferentialId } from "./aliviaDifferentials";
 import { officialPhotoIdsForDifferential, topicForDifferential } from "./aliviaOfficialMedia";
+import { clarifyStudioCopy } from "./contextualCopy";
 
 export type AliviaEcosystemRecipeId =
   | "rotina-clinica"
@@ -121,7 +122,7 @@ export const buildAliviaEcosystem = (recipeId?: string, selectedIds?: string[]):
     .map((id) => ALIVIA_DIFFERENTIALS.find((item) => item.id === id))
     .filter((item): item is (typeof ALIVIA_DIFFERENTIALS)[number] => Boolean(item));
 
-  return {
+  return clarifyStudioCopy({
     id: `ecossistema-${recipe.id}-${ids.join("-")}`,
     kicker: "ECOSSISTEMA DE SOLUÇÕES",
     title: recipe.title,
@@ -137,7 +138,7 @@ export const buildAliviaEcosystem = (recipeId?: string, selectedIds?: string[]):
     })),
     closing: recipe.closing,
     cta: recipe.cta,
-  };
+  });
 };
 
 /**

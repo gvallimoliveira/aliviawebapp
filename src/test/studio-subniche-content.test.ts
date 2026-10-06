@@ -97,7 +97,7 @@ describe("sub-nichos no motor criativo", () => {
         headings.every((heading) => anchors.some((anchor) => heading.toLowerCase().includes(anchor))),
       ).toBe(true);
       expect(headings[3]?.toLowerCase()).toContain((item.keyword ?? item.label).toLowerCase());
-      expect(slides[3]?.body.toLowerCase()).toContain("o custo aparece na rotina");
+      expect(slides[3]?.body.toLowerCase()).not.toContain("o custo aparece na rotina");
       expect(content.compare[0]?.before.length).toBeGreaterThan(0);
       expect(content.compare[0]?.after.length).toBeGreaterThan(0);
       expect(slides[0]?.body.length).toBeGreaterThan(40);
@@ -186,7 +186,7 @@ describe("sub-nichos no motor criativo", () => {
     expect(hep.proof?.some((item) => slides[1]?.body.includes(item.toLowerCase()))).toBe(true);
     expect(hep.desires?.some((item) => slides[2]?.body.includes(item.toLowerCase()))).toBe(true);
     expect(hep.stakes?.some((item) => slides[3]?.body.toLowerCase().includes(item.toLowerCase()))).toBe(true);
-    expect(slides[3]?.body).toMatch(/^O custo aparece na rotina:/);
+    expect(slides[3]?.body).not.toMatch(/O custo aparece na rotina:/i);
     expect(blob).not.toMatch(/benefício prático|sem essa funcionalidade/);
   });
 

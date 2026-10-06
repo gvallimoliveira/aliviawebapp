@@ -107,8 +107,15 @@ export const buildEditorialProgression = (fields: {
 
 /** Converte um prejuízo solto em consequência concreta, sem rótulo interno. */
 export const frameEditorialLoss = (loss: string) => {
-  const clean = cleanStage(loss);
-  return clean ? `O custo aparece na rotina: ${clean.charAt(0).toLowerCase()}${clean.slice(1)}.` : "";
+  const clean = cleanStage(loss).replace(/^(?:e\s+)?o custo aparece [nm]a rotina\s*:\s*/i, "");
+  if (!clean) return "";
+  // Uma consequência já contextualizada não precisa de outra moldura.
+  if (/^(?:sem\b|quando\b|se\b|ao\b|deixar\b)/i.test(clean)) {
+    return `${clean.charAt(0).toUpperCase()}${clean.slice(1)}.`;
+  }
+  const transitions = ["Na prática,", "No dia a dia,", "O resultado:", "E então,"];
+  const hash = [...clean].reduce((sum, letter) => (sum * 31 + letter.charCodeAt(0)) >>> 0, 0);
+  return `${transitions[hash % transitions.length]} ${clean.charAt(0).toLowerCase()}${clean.slice(1)}.`;
 };
 
 export type NarrativeArc = {
