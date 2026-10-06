@@ -22,8 +22,9 @@ describe("listas com argumentos complementares", () => {
   it("reproduz e corrige a comparação da imagem, independentemente da marca", () => {
     for (const brand of ["Aliv.iA", "Guilherme Vallim Fisioterapia", "Aline Furtado Vet"]) {
       const out = finalizeBrandVoice({ compare: [{ title: "Dose calculada: com e sem", before, after }] }, { brand });
-      expect(out.compare[0].before).toHaveLength(3);
-      expect(out.compare[0].after).toHaveLength(3);
+      const comparison = out.compare.find((pair) => pair.title.startsWith("Dose calculada"));
+      expect(comparison?.before).toHaveLength(3);
+      expect(comparison?.after).toHaveLength(3);
     }
   });
 
