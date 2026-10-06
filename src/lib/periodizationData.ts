@@ -160,7 +160,7 @@ export async function createPlanWithTemplate(opts: {
   startDate?: string;
 }): Promise<PeriodizationPlan> {
   const { data: userData } = await supabase.auth.getUser();
-  const start = opts.startDate || new Date().toISOString().slice(0, 10);
+  const start = opts.startDate || localISODate();
 
   const { data: plan, error } = await supabase
     .from("periodization_plans")
@@ -258,7 +258,7 @@ export async function setCurrentMacroPhase(
   const idx = macros.findIndex((c) => c.id === cycleId);
   if (idx < 0) return;
 
-  const start = fromDate || new Date().toISOString().slice(0, 10);
+  const start = fromDate || localISODate();
   const { error: clearError } = await sb
     .from("periodization_cycles")
     .update({ is_current: false, marked_current_at: null })

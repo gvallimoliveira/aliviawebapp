@@ -94,7 +94,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
   // Prescrição de dose
   const [open, setOpen] = useState(false);
   const [track, setTrack] = useState("gym");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => localISODate());
   const [duration, setDuration] = useState("");
   const [rpe, setRpe] = useState(7);
   const [title, setTitle] = useState("");

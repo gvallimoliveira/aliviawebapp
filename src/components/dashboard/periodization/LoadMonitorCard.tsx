@@ -72,14 +72,14 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
   const [track, setTrack] = useState("physio");
   const [duration, setDuration] = useState("");
   const [rpe, setRpe] = useState(5);
-  const [srpeDate, setSrpeDate] = useState(new Date().toISOString().slice(0, 10));
+  const [srpeDate, setSrpeDate] = useState(localISODate());
   const [savingSrpe, setSavingSrpe] = useState(false);
 
   // Formulário de check-in manual (fisio registrando pelo paciente)
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [values, setValues] = useState<Record<string, number>>({});
   const [note, setNote] = useState("");
-  const [checkinDate, setCheckinDate] = useState(new Date().toISOString().slice(0, 10));
+  const [checkinDate, setCheckinDate] = useState(localISODate());
   const [savingCheckin, setSavingCheckin] = useState(false);
 
   const submitSrpe = async () => {

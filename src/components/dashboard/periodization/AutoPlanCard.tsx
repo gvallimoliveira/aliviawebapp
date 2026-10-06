@@ -28,7 +28,7 @@ const AutoPlanCard = ({ patientId, plan, entries, checkins, sessions, onChanged,
   const { toast } = useToast();
   const [rows, setRows] = useState<SuggestedSession[] | null>(null);
   const [saving, setSaving] = useState(false);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localISODate();
 
   const todayAdjust = useMemo(
     () => sessions.filter((s) => s.session_date === today)

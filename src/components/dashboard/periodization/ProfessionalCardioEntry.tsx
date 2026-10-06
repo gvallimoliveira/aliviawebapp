@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { PeriodizationPlan, SrpeEntry } from "@/lib/periodizationData";
 import { SPO2_ALERT, ageFromBirth, hrCeiling } from "@/lib/cardioSafety";
+import { localISODate } from "@/lib/periodization";
 import { monitorFlags, sanitizeZones, srpeLoad, trimp } from "@/lib/cardioLoad";
 
 // Entrada do profissional: sessão medida com monitor cardíaco (cinta, relógio
@@ -28,7 +29,7 @@ interface Props {
   onChanged: () => void;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localISODate();
 const num = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
 
 const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props) => {

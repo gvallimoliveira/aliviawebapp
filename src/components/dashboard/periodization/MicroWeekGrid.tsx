@@ -178,7 +178,7 @@ const MicroWeekGrid = ({
           {days.map((date, i) => {
             const items = byDay.get(date) || [];
             const isFlagged = flagged.has(date);
-            const isToday = date === new Date().toISOString().slice(0, 10);
+            const isToday = date === localISODate();
             return (
               <div
                 key={date}
