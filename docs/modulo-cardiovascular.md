@@ -38,3 +38,14 @@ Objetivo: incluir no cálculo de carga a fadiga de corrida, ciclismo, esteira, c
 
 Sem integrações pagas com fabricantes até validar o uso.
 
+## Referências
+- Foster C, et al. A new approach to monitoring exercise training. J Strength Cond Res. 2001;15(1):109-115.
+- Gellish RL, et al. Longitudinal modeling of the relationship between age and maximal heart rate. Med Sci Sports Exerc. 2007;39(5):822-829.
+- American College of Sports Medicine. ACSM's Guidelines for Exercise Testing and Prescription. 11ª ed. Wolters Kluwer; 2021.
+- Carvalho T, et al. Diretriz Brasileira de Reabilitação Cardiovascular – 2020. Arq Bras Cardiol. 2020;114(5):943-987.
+- Gabbett TJ. The training-injury prevention paradox. Br J Sports Med. 2016;50(5):273-280.
+- Hulin BT, et al. The acute:chronic workload ratio predicts injury. Br J Sports Med. 2016;50(4):231-236.
+- Buchheit M. Monitoring training status with HR measures. Front Physiol. 2014;5:73.
+
+Ressalvas: equações etárias têm desvio de ±8–12 bpm; betabloqueadores achatam a resposta da FC (usar PSE/Borg como guia principal). O teto é parapeito de monitoramento, não diagnóstico.
+
