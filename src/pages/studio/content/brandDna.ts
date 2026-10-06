@@ -60,11 +60,13 @@ export const BRAND_DNA = {
         "Sensação de desvalorização: paciente compara preço, não método",
         "Medo silencioso de errar a conduta sem segunda opinião",
         "Paciente que abandona o plano por não entender o próprio caso",
+        "Programa de exercícios alterado sem atualizar o planejamento da semana",
       ],
       desires: [
         "Atender mais sem abrir mão do raciocínio",
         "Ser percebido (e pago) como profissional de método",
         "Documentação que protege juridicamente e impressiona o paciente",
+        "Prescrever exercícios e enxergar a carga sem refazer lançamentos",
       ],
       promise: "A papelada sai durante a sessão; a decisão clínica continua sua.",
     },

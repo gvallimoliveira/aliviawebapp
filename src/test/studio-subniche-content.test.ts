@@ -182,7 +182,7 @@ describe("sub-nichos no motor criativo", () => {
     const blob = JSON.stringify(content).toLowerCase();
 
     expect(slides).toHaveLength(4);
-    expect(slides[0]?.body).toContain("Programa de exercícios enviado por link");
+    expect(slides[0]?.body).toContain(hep.description);
     expect(hep.proof?.some((item) => slides[1]?.body.includes(item.toLowerCase()))).toBe(true);
     expect(hep.desires?.some((item) => slides[2]?.body.includes(item.toLowerCase()))).toBe(true);
     expect(hep.stakes?.some((item) => slides[3]?.body.toLowerCase().includes(item.toLowerCase()))).toBe(true);

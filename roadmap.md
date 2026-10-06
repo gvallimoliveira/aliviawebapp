@@ -1,5 +1,10 @@
 # Roadmap
 
+## HEP e controle de carga no repertório Aliv.iA (06/10)
+- [x] Refinar kit, diferenciais e ecossistemas com benefícios concretos e limites do cálculo.
+- [x] Incorporar domínio da sessão, ponderação por objetivo e atualização ao editar sem novos controles.
+- [x] Validar repertório, isolamento da marca e ajuda.
+
 ## Prontuário compacto (06/10)
 - [x] Agrupar anamnese/saúde geral e documentos/fotos em faixas laterais.
 - [x] Unificar evolução e comparação da dor com uma série por região.

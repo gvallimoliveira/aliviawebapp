@@ -56,6 +56,7 @@ const proTools = [
   { key: "video_call", icon: Video },
   { key: "clinical_impression", icon: Brain },
   { key: "differential_diagnosis", icon: Brain },
+  // HEP/load guidance is localized under support.pro.tool.hep.desc.
   { key: "hep", icon: Dumbbell },
   { key: "hep_templates", icon: FileText },
   { key: "ai_test_suggestions", icon: Lightbulb },
