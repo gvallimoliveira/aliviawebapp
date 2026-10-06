@@ -32,6 +32,7 @@ import MicroWeekGrid from "./MicroWeekGrid";
 // Critérios de liberação desativados por ora (componente mantido no projeto).
 import BridgeCard from "./BridgeCard";
 import CardioSafetyCard from "./CardioSafetyCard";
+import ProfessionalCardioEntry from "./ProfessionalCardioEntry";
 import AutoPlanCard from "./AutoPlanCard";
 import { HeartPulse } from "lucide-react";
 import PeriodizationCollapsible from "./PeriodizationCollapsible";
@@ -340,6 +341,11 @@ const PeriodizationSection = ({
           onChanged={refresh}
           readOnly={readOnly}
         />
+        {!readOnly && (
+          <div className="mt-3">
+            <ProfessionalCardioEntry patientId={patientId} plan={plan} entries={entries} onChanged={refresh} />
+          </div>
+        )}
       </PeriodizationCollapsible>
 
       <PeriodizationCollapsible title="Teto de frequência cardíaca" icon={<HeartPulse className="h-4 w-4 text-primary" />}>
