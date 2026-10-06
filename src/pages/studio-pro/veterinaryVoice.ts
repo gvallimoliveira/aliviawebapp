@@ -11,6 +11,7 @@ import { closeThought, isOrphanCommand, joinCopyParts } from "@/pages/studio/typ
 import { hasDanglingEnding } from "@/pages/studio/grammar";
 import { ARC_TOO_SIMILAR, textSimilarity } from "./narrativeArc";
 import { clarifyStudioCopy } from "./contextualCopy";
+import { finalizeListCoherence } from "@/pages/studio/listCoherence";
 
 const VETERINARY_DOMAIN = /\b(?:veterin[aá]ri[ao]s?|vet\b|animal(?:is)?|pets?|canin[oa]s?|felin[oa]s?|c[aã]es?|gatos?|citologia\s+veterin[aá]ria)\b/i;
 
@@ -421,10 +422,10 @@ const removeInternalEditorialLabels = <T>(value: T, brand?: string, key = ""): T
 export const finalizeBrandVoice = <T>(value: T, context: { brand?: string; domain?: string } = {}): T => {
   const veterinary = isVeterinaryContext(context.brand, context.domain);
   const feminine = isAlineVeterinaryBrand(context.brand);
-  const voiced = clarifyStudioCopy(refineVeterinaryContent(removeContentEchoes(repairOrphanCarouselText(repairOrphanStrongRest(proofreadVisibleText(removeInternalEditorialLabels(
+  const voiced = finalizeListCoherence(clarifyStudioCopy(refineVeterinaryContent(removeContentEchoes(repairOrphanCarouselText(repairOrphanStrongRest(proofreadVisibleText(removeInternalEditorialLabels(
     applyAlineProfessionalVoice(applyVeterinaryVoice(value, veterinary), context.brand),
     context.brand,
-  ))))), veterinary, feminine));
+  ))))), veterinary, feminine)));
   if (!voiced || typeof voiced !== "object" || Array.isArray(voiced)) return voiced;
 
   const content = voiced as Record<string, unknown>;

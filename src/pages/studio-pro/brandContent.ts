@@ -30,6 +30,7 @@ import { applyFormatInsights, readFormatInsights, scopedFormatInsights } from ".
 import { enforceAudienceScope } from "./audienceScope";
 import { finalizeBrandVoice, isVeterinaryContext } from "./veterinaryVoice";
 import { buildEditorialProgression, frameEditorialLoss } from "./narrativeArc";
+import { distinctListItems } from "@/pages/studio/listCoherence";
 
 
 
@@ -1743,15 +1744,15 @@ export const enforceEditorialFocus = (
     fallback: key,
   });
   const termAt = (index: number) => terms[index % terms.length] || key;
-  const mechanisms = [progression.mechanism, ...(audience.proof ?? [])]
+  const mechanisms = distinctListItems([progression.mechanism, ...(audience.proof ?? [])]
     .map(strip)
-    .filter(Boolean);
-  const benefits = [progression.benefit, ...(audience.desires ?? [])]
+    .filter(Boolean));
+  const benefits = distinctListItems([progression.benefit, ...(audience.desires ?? [])]
     .map(strip)
-    .filter(Boolean);
-  const losses = [progression.loss, ...(audience.stakes ?? []), ...(audience.pains ?? [])]
+    .filter(Boolean));
+  const losses = distinctListItems([progression.loss, ...(audience.stakes ?? []), ...(audience.pains ?? [])]
     .map(strip)
-    .filter(Boolean);
+    .filter(Boolean));
   const scenes = [progression.scene, ...(audience.scenes ?? [])]
     .map(strip)
     .filter(Boolean);

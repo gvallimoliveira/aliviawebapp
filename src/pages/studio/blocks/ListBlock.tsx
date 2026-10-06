@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { blockPadding, personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { ACCENT_STYLES, GeoOrnament, TextureLayer, renderAccent } from "./Texture";
 import { BRAND_NAME } from "../brand";
+import { finalizeListCoherence } from "../listCoherence";
 
 /**
  * List block — lista editorial de valor puro ("4 sinais de que...",
@@ -11,7 +12,7 @@ import { BRAND_NAME } from "../brand";
  */
 const ListBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
   if (!content.lists?.length) return null;
-  const list = rng.pick(content.lists);
+  const list = finalizeListCoherence(rng.pick(content.lists));
   const accentVariant = rng.int(ACCENT_STYLES.length);
 
   if (treatment === 1) {
