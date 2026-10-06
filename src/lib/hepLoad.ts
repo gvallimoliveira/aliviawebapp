@@ -80,9 +80,9 @@ export function volumeOf(totalReps: number, sets: number, isHold: boolean): Volu
   return totalReps <= 20 ? "low" : totalReps <= 45 ? "moderate" : "high";
 }
 
-/** Séries semanais por região. */
+/** Séries semanais por região: leve até 15, moderada de 16 a 29, alta a partir de 30. */
 export function weeklyRegionVolume(sets: number): VolumeLevel {
-  return sets < 6 ? "low" : sets <= 12 ? "moderate" : "high";
+  return sets < 16 ? "low" : sets < 30 ? "moderate" : "high";
 }
 
 /** Peso do objetivo na conta de carga: mobilidade/flexibilidade não contam; estabilização vale 0,5. */
