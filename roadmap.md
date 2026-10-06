@@ -1,5 +1,9 @@
 # Roadmap
 
+## Organização do check-in (06/10)
+- [x] Trocar Campo / esporte por Outro esporte e separar seleção de frente do modo de planejamento.
+- [x] Impedir submissão do prontuário ao copiar links; 25 testes passaram e seleção/modos conferidos no navegador.
+
 ## Ícones preservados nas listas (06/10)
 - [x] Editar apenas o texto do item, preservando os ícones de comparação.
 - [x] Impedir que textos antigos sejam reaplicados em posições erradas após remover duplicações.

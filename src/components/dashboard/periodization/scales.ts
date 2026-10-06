@@ -18,7 +18,7 @@ export const CHECKIN_ITEMS: Array<{
 export const TRACK_LABEL: Record<string, string> = {
   physio: "Fisioterapia",
   gym: "Academia / força",
-  sport: "Campo / esporte",
+  sport: "Outro esporte",
   cardio: "Cardio / corrida",
 };
 

@@ -7,6 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle2, Loader2, Activity, HeartPulse, ShieldAlert, CalendarDays, ChevronDown } from "lucide-react";
 import { setSeo } from "@/lib/seo";
@@ -519,35 +520,29 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                     ) : (
                       <>
                         <div className="space-y-1.5">
-                          <span className="text-sm font-medium text-foreground">Frente de trabalho</span>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                            {Object.entries(TRACK_LABEL).map(([key, label]) => (
-                              <Button
-                                key={key}
-                                type="button"
-                                variant={track === key ? "default" : "outline"}
-                                size="sm"
-                                className="text-xs rounded-xl"
-                                onClick={() => setTrack(key)}
-                              >
-                                {label}
-                              </Button>
-                            ))}
-                          </div>
+                          <label htmlFor="coach-track" className="text-sm font-medium text-foreground">Frente de trabalho</label>
+                          <Select value={track} onValueChange={setTrack}>
+                            <SelectTrigger id="coach-track" className="h-11 rounded-lg">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(TRACK_LABEL).map(([key, label]) => (
+                                <SelectItem key={key} value={key}>{label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button type="button" size="sm" variant={!importMode ? "default" : "outline"} className="rounded-xl text-xs" onClick={() => setImportMode(false)}>
-                            Duração e esforço
-                          </Button>
-                          <Button type="button" size="sm" variant={importMode ? "default" : "outline"} className="rounded-xl text-xs" onClick={() => setImportMode(true)}>
-                            Importar treino
-                          </Button>
-                        </div>
+                        <Tabs value={importMode ? "import" : "manual"} onValueChange={(value) => setImportMode(value === "import")} className="border-t border-border pt-4">
+                          <TabsList className="grid h-11 w-full grid-cols-2 rounded-lg">
+                            <TabsTrigger value="manual" className="h-9 text-xs">Duração e esforço</TabsTrigger>
+                            <TabsTrigger value="import" className="h-9 text-xs">Importar treino</TabsTrigger>
+                          </TabsList>
+                        </Tabs>
 
                         {importMode ? (
                           <ExternalWorkoutImport
-                            token={token!}
+                            token={token ?? ""}
                             track={track}
                             onSaved={async () => {
                               setPlanDone(true);
