@@ -130,7 +130,7 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
                 ACWR cardio: {cardioRatio !== null ? cardioRatio.toFixed(2).replace(".", ",") : "—"} · FC ao acordar: {rhr.delta !== null ? `${rhr.delta > 0 ? "+" : ""}${rhr.delta} bpm` : "—"}
               </p>
               <p className={`text-xs ${matrix.quadrant === "optimal" || matrix.quadrant === "insufficient" ? "text-foreground" : "text-amber-700 dark:text-amber-400"}`}>{matrix.text}</p>
-              <p className="text-[11px] text-muted-foreground">Sugestão, não diagnóstico. Um aviso por paciente por dia vai para o seu celular.</p>
+              <p className="text-[11px] text-muted-foreground">Sugestão, não diagnóstico.</p>
             </div>
             <p className="text-[11px] text-muted-foreground">{OXIMETER_GUIDE} Com betabloqueador, use o esforço percebido como guia principal.</p>
             {flagged.length > 0 && (
