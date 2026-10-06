@@ -22,7 +22,7 @@ describe("ícones de listagem durante edição", () => {
     expect(root.querySelector("li span")?.textContent).toBe("Novo argumento");
     setArtEditing(root, true);
     expect(root.querySelector("li")?.getAttribute("contenteditable")).toBeNull();
-    expect(root.querySelector("li span")?.getAttribute("contenteditable")).toBe("true");
+    expect(root.querySelector<HTMLElement>("li span")?.contentEditable).toBe("true");
     setArtEditing(root, false);
     root.remove();
   });
