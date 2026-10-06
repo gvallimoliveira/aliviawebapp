@@ -1,5 +1,11 @@
 # Roadmap
 
+## Prontuário compacto (06/10)
+- [ ] Agrupar anamnese/saúde geral e documentos/fotos em faixas laterais.
+- [ ] Unificar evolução e comparação da dor com uma série por região.
+- [ ] Exibir mapas lado a lado e preservar atalhos, ajuda e navegação.
+- [ ] Validar dados e apresentação em telas largas e estreitas.
+
 ## Clareza e generalização clínica do repertório (04/10)
 - [x] Remover a construção abstrata “responde à dúvida” dos ganchos automáticos.
 - [x] Impedir que frases completas sejam encaixadas depois de “efeito humano de”.
