@@ -19,6 +19,7 @@ export type AliviaDifferentialId =
   | "diferencial-relatorios"
   | "diferencial-insights"
   | "diferencial-periodizacao"
+  | "diferencial-hep-dose"
   | "diferencial-prontidao-carga"
   | "diferencial-red-flags"
   | "diferencial-avaliacao-externa-ia"
@@ -208,6 +209,29 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     stakes: ["A progressão continua reagindo apenas ao que aconteceu na última sessão", "A carga pode subir sem considerar a resposta acumulada"],
     triggers: ["O paciente entrou na fase de força e precisa de progressão clara", "O retorno ao esporte exige que cada sessão responda ao objetivo da fase"],
     cta: "Planejar a próxima fase",
+  },
+  {
+    id: "diferencial-hep-dose",
+    label: "Dose calculada na criação do HEP",
+    editorialGroup: ALIVIA_DIFFERENTIAL_GROUP,
+    parentId: "pro",
+    keyword: "Dose do HEP calculada",
+    highlightTerms: ["Dose", "Intensidade", "Volume semanal"],
+    hook: "A carga do programa de casa já nasce calculada, não descoberta depois",
+    hooks: [
+      "Cada exercício entra no programa já com intensidade e volume classificados",
+      "O painel de carga do paciente começa cheio: a dose planejada chega sozinha ao microciclo",
+      "Séries, repetições e isometrias viram leitura de carga enquanto você monta o programa",
+    ],
+    description: "Ao montar o HEP, cada exercício mostra intensidade (pelas repetições ou tempo de isometria) e volume; o painel resume a dose planejada por região e envia automaticamente ao microciclo do paciente para comparar com a resposta percebida.",
+    pains: ["Descobrir a carga do programa só depois dos check-ins", "Dose de casa prescrita sem parâmetro de volume e intensidade", "Microciclo preenchido à mão com os dados do HEP"],
+    desires: ["Ver a dose do programa enquanto monta a lista de exercícios", "Classificar intensidade e volume sem planilha paralela", "Ter o microciclo alimentado automaticamente pelo programa salvo"],
+    proof: ["Intensidade classificada por repetições por série ou tempo de isometria", "Volume por exercício e séries semanais por região", "Dose planejada enviada ao microciclo ao salvar o programa", "Comparação direta entre dose planejada e percebida"],
+    scenes: ["Você ajusta de 3x10 para 10x3 e vê a intensidade subir na hora", "O programa é salvo e o microciclo da semana já mostra a dose planejada por região"],
+    objections: ["Classificar carga de exercício é subjetivo demais", "Isso vai engessar minha prescrição"],
+    stakes: ["A dose de casa continua invisível até o paciente responder", "A progressão semanal pode repetir um volume que já estava acima do planejado"],
+    triggers: ["O paciente entrou em fase de ganho de força e a dose precisa subir com critério", "O check-in mostrou resposta diferente do que o programa previa"],
+    cta: "Montar um HEP com dose calculada",
   },
   {
     id: "diferencial-prontidao-carga",
