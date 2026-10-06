@@ -39,6 +39,7 @@ describe("hepLoad", () => {
     expect(weeklyRegionVolume(16)).toBe("moderate");
     expect(weeklyRegionVolume(29)).toBe("moderate");
     expect(weeklyRegionVolume(30)).toBe("high");
+  });
 
   it("objetivo pondera a carga e esforço fica entre 5 e 9", () => {
     const s = summarizeHep([
