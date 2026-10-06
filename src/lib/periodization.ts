@@ -9,7 +9,7 @@
  * - Escalas subjetivas: 1-10 (prontidão: 10 = ótimo; fadiga/dor/estresse: 10 = pior).
  */
 
-export type LoadTrack = "physio" | "gym" | "sport";
+export type LoadTrack = "physio" | "gym" | "sport" | "cardio";
 export type PlannedLoad = "rest" | "low" | "moderate" | "high";
 export type LoadZone = "undertraining" | "optimal" | "caution" | "danger";
 
@@ -403,10 +403,10 @@ export interface DoseAdherenceSummary {
   total: TrackAdherence;
 }
 
-const TRACKS: LoadTrack[] = ["physio", "gym", "sport"];
+const TRACKS: LoadTrack[] = ["physio", "gym", "sport", "cardio"];
 
 const normalizeTrack = (t?: string | null): LoadTrack =>
-  t === "gym" || t === "sport" ? t : "physio";
+  t === "gym" || t === "sport" || t === "cardio" ? t : "physio";
 
 /** Segunda-feira (YYYY-MM-DD) da semana da data informada. */
 export function weekStartOf(ref: Date = new Date()): string {
@@ -436,10 +436,10 @@ export function adherenceByTrack(
     return d >= weekStart && d <= weekEnd;
   };
 
-  const planned: Record<LoadTrack, number> = { physio: 0, gym: 0, sport: 0 };
-  const real: Record<LoadTrack, number> = { physio: 0, gym: 0, sport: 0 };
-  const plannedParts: Record<LoadTrack, string[]> = { physio: [], gym: [], sport: [] };
-  const realParts: Record<LoadTrack, string[]> = { physio: [], gym: [], sport: [] };
+  const planned: Record<LoadTrack, number> = { physio: 0, gym: 0, sport: 0, cardio: 0 };
+  const real: Record<LoadTrack, number> = { physio: 0, gym: 0, sport: 0, cardio: 0 };
+  const plannedParts: Record<LoadTrack, string[]> = { physio: [], gym: [], sport: [], cardio: [] };
+  const realParts: Record<LoadTrack, string[]> = { physio: [], gym: [], sport: [], cardio: [] };
 
   sessions.forEach((s) => {
     if (!inWeek(s.session_date)) return;
@@ -457,7 +457,8 @@ export function adherenceByTrack(
   });
 
   const bounds = { min: DOSE_WEEK_ON_TARGET_MIN, max: DOSE_WEEK_ON_TARGET_MAX };
-  const byTrack: TrackAdherence[] = TRACKS.map((track) => {
+  // Cardio só aparece quando há dose planejada ou relatada (frente opcional).
+  const byTrack: TrackAdherence[] = TRACKS.filter((t) => t !== "cardio" || planned[t] > 0 || real[t] > 0).map((track) => {
     const ratio = doseAdherence(real[track], planned[track]);
     return {
       track,
@@ -553,3 +554,44 @@ export const CLEARANCE_TEMPLATE: Array<{ item_key: string; label: string }> = [
   { item_key: "psych_readiness", label: "Prontidão psicológica (TSK / ACL-RSI)" },
   { item_key: "sport_specific", label: "Gestos específicos do esporte com controle" },
 ];
+
+/* ------------------------------------------------------------------ */
+/* Módulo cardiovascular — Fase 1: FC de repouso (FCR) matinal          */
+/* ------------------------------------------------------------------ */
+
+export interface RestingHrLike {
+  checkin_date: string;
+  resting_hr?: number | null;
+}
+
+export interface RestingHrStatus {
+  latest: number | null;
+  latestDate: string | null;
+  baseline: number | null;
+  /** latest − baseline (bpm). */
+  delta: number | null;
+  level: "ok" | "caution" | "danger" | "insufficient";
+}
+
+/**
+ * Desvio da FCR matinal frente à linha de base pessoal: média dos registros
+ * anteriores nos 28 dias que antecedem o último (mínimo 3). +5 bpm = atenção,
+ * +7 bpm = sinal de recuperação insuficiente (hiperativação simpática,
+ * sono/estresse ruins ou início infeccioso). Sempre sugestão, nunca decisão.
+ */
+export function restingHrStatus(checkins: RestingHrLike[]): RestingHrStatus {
+  const valid = checkins
+    .filter((c) => typeof c.resting_hr === "number" && c.resting_hr! > 0)
+    .sort((a, b) => a.checkin_date.localeCompare(b.checkin_date));
+  if (valid.length === 0) return { latest: null, latestDate: null, baseline: null, delta: null, level: "insufficient" };
+  const last = valid[valid.length - 1];
+  const from = addIsoDays(last.checkin_date.slice(0, 10), -28);
+  const prior = valid.slice(0, -1).filter((c) => c.checkin_date.slice(0, 10) >= from);
+  if (prior.length < 3) {
+    return { latest: last.resting_hr!, latestDate: last.checkin_date, baseline: null, delta: null, level: "insufficient" };
+  }
+  const baseline = Math.round((prior.reduce((a, c) => a + c.resting_hr!, 0) / prior.length) * 10) / 10;
+  const delta = Math.round((last.resting_hr! - baseline) * 10) / 10;
+  const level = delta >= 7 ? "danger" : delta >= 5 ? "caution" : "ok";
+  return { latest: last.resting_hr!, latestDate: last.checkin_date, baseline, delta, level };
+}

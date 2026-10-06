@@ -140,7 +140,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
                 <DialogContent className="max-w-sm">
                   <DialogHeader><DialogTitle className="text-base">Registrar sessão (sRPE)</DialogTitle></DialogHeader>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {Object.entries(TRACK_LABEL).map(([key, label]) => (
                         <Button
                           key={key}

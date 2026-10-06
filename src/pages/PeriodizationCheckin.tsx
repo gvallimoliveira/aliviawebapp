@@ -457,7 +457,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                       <>
                         <div className="space-y-1.5">
                           <span className="text-sm font-medium text-foreground">Frente de trabalho</span>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {Object.entries(TRACK_LABEL).map(([key, label]) => (
                               <Button
                                 key={key}
@@ -616,7 +616,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                       ) : (
                         <div className="space-y-1.5">
                           <span className="text-sm font-medium text-foreground">Tipo de sessão</span>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {Object.entries(TRACK_LABEL).map(([key, label]) => (
                               <Button
                                 key={key}

@@ -19,6 +19,7 @@ export const TRACK_LABEL: Record<string, string> = {
   physio: "Fisioterapia",
   gym: "Academia / força",
   sport: "Campo / esporte",
+  cardio: "Cardio / corrida",
 };
 
 export const PLANNED_LOAD_LABEL: Record<string, string> = {
