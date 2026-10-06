@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Listas complementares no Studio (06/10)
-- [ ] Remover argumentos repetidos na construção e na revisão final de todas as marcas.
-- [ ] Proteger listas e comparações renderizadas, inclusive conteúdo legado, sem preencher com temas alheios.
-- [ ] Validar repetição literal, ideias semelhantes e preservação de argumentos complementares.
+- [x] Remover argumentos repetidos na construção e na revisão final de todas as marcas.
+- [x] Proteger listas e comparações renderizadas, inclusive conteúdo legado, sem preencher com temas alheios.
+- [x] Validar repetição literal, ideias semelhantes e preservação de argumentos complementares (48 testes passaram).
 
 ## Sigla HEP e consequências naturais no Studio (06/10)
 - [x] Explicar HEP no texto das artes sem transformar a sigla em título longo.
