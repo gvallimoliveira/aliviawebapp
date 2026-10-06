@@ -8,6 +8,8 @@ export interface PeriodizationPlan {
   clinic_id: string | null;
   assessment_id: string | null;
   title: string;
+  cardio_profile?: string | null;
+  hr_ceiling_override?: number | null;
   sport: string | null;
   injured_limb: string | null;
   start_date: string;
@@ -78,6 +80,8 @@ export interface ReadinessCheckin {
   readiness: number | null;
   pain: number | null;
   resting_hr?: number | null;
+  peak_hr?: number | null;
+  spo2?: number | null;
   note: string | null;
   source: string;
 }
