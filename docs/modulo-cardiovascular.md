@@ -20,7 +20,7 @@ Objetivo: incluir no cálculo de carga a fadiga de corrida, ciclismo, esteira, c
 1. **MVP (feito)** — frente "Cardio / corrida" no check-in do paciente, no link do preparador, no microciclo e na aderência de dose; campo opcional "FC ao acordar" (25–140 bpm) no check-in; desvio vs. linha de base (média dos registros dos 28 dias anteriores, mínimo 3) no Monitor de carga: +5 atenção, +7 alerta.
 2. **Leitura, alertas e planejamento automático**
    - **2A — Captura e leitura:** ler print de monitor cardíaco, relógio, esteira, app de treino ou oxímetro com IA (duração, distância, FC média/máx., SpO₂, PSE sugerida), sempre com revisão antes de salvar; ACWR cardio separado do ACWR total.
-   - **2B — Alertas:** push quando ACWR cardio >1,5 ou FCR ≥+7 bpm (mesma regra de 1 alerta/paciente/dia); matriz acima exibida no prontuário com a leitura do momento.
+   - **2B — Alertas (feito):** push quando ACWR cardio >1,5 ou FCR ≥+7 bpm (mesma regra de 1 alerta/paciente/dia); matriz acima exibida no prontuário com a leitura do momento.
    - **2C — Planejamento e sequência de treinos (automação):**
      - Sugestão da semana seguinte por frente (fisio, academia, campo, cardio), calculada localmente a partir da carga crônica, mantendo o salto semanal ≤10% e ACWR alvo 0,8–1,3.
      - Sequência dentro do microciclo: evita dois dias seguidos de alto estresse no membro acometido e distribui dias duros/leves/descanso.
