@@ -33,4 +33,16 @@ describe("hepLoad", () => {
     expect(s.sessionsPerWeek).toBe(7);
     expect(parseFrequency("2x/semana")).toBe(2);
   });
+
+  it("objetivo pondera a carga e esforço fica entre 5 e 9", () => {
+    const s = summarizeHep([
+      { ...base, sets: "3", reps: "10", category: "strengthening" },
+      { ...base, sets: "4", reps: "10", category: "stabilization" },
+      { ...base, sets: "3", reps: "30s", category: "mobility" },
+    ]);
+    expect(s.weeklySets).toBe(15);
+    expect(s.targetRpe).toBe(7);
+    const l = summarizeHep([{ ...base, sets: "2", reps: "20", category: "strengthening" }]);
+    expect(l.targetRpe).toBe(5.5);
+  });
 });
