@@ -12,3 +12,5 @@ Ponderação de objetivo na conta de carga: mobilidade/flexibilidade = 0; estabi
 Esforço percebido alvo sempre entre 5 e 9: até 6 leve, até 7,5 moderado, até 9 intenso (RPE leve 5,5 · moderado 7 · intenso 8,5).
 
 - Domínio da sessão (physio/gym/sport) é escolhido no modal do HEP (`exercise_programs.domain`, default physio) e classifica a dose planejada no microciclo; edição recarrega e regrava com o domínio escolhido.
+
+Studio Aliv.iA: comunicar HEP e controle de carga com objetividade e venda natural, pelo benefício concreto; distinguir estimativa de esforço alvo da resposta real do paciente. Reaproveitar kit, diferenciais e ecossistemas sem novos controles.

@@ -208,7 +208,7 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     objections: ["Vou precisar lançar o mesmo programa duas vezes", "Meu paciente treina fora da fisioterapia"],
     stakes: ["Uma sessão classificada na frente errada distorce a leitura da semana", "O planejamento fica desatualizado quando a prescrição muda"],
     triggers: ["O paciente combina reabilitação e treino de força", "Chegou a hora de ajustar a próxima semana"],
-    cta: "Conhecer o planejamento de carga no Aliv.iA",
+    cta: "Conhecer o planejamento de carga",
   },
   {
     id: "diferencial-hep-dose",
