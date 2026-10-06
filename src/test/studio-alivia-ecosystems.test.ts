@@ -13,6 +13,29 @@ import { ALIVIA_DIFFERENTIALS } from "@/pages/studio-pro/aliviaDifferentials";
 import { WORLDS } from "@/pages/studio/content";
 
 describe("Ecossistema de soluções Aliv.iA", () => {
+  it("explica a estimativa de HEP sem confundir esforço alvo com resposta real", () => {
+    const dose = ALIVIA_DIFFERENTIALS.find((item) => item.id === "diferencial-hep-dose");
+    const text = JSON.stringify(dose);
+    expect(text).toMatch(/força ×1/);
+    expect(text).toMatch(/propriocepção ×0,5/);
+    expect(text).toMatch(/mobilidade e flexibilidade fora/);
+    expect(text).toMatch(/esforço percebido real vem do paciente/);
+    expect(text).toMatch(/preservando as sessões passadas/);
+    expect(text).toMatch(/criado pelo Agente/);
+    expect(text).not.toMatch(/começa cheio|dose planejada por região|chega sozinha/);
+  });
+
+  it("mantém as frentes e a atualização futura na cadeia de periodização", () => {
+    const ecosystem = buildAliviaEcosystem("periodizacao");
+    const text = JSON.stringify(ecosystem);
+    expect(text).toMatch(/fisioterapia, academia ou campo\/esporte/);
+    expect(text).toMatch(/sessões futuras/);
+    expect(ecosystem.promise).toMatch(/estimativa de dose/);
+    expect(ecosystem.closing).toMatch(/edições do programa/);
+    const carousel = withAliviaEcosystem(WORLDS.pro, "periodizacao").carousels[0];
+    expect(carousel.slides.find((slide) => slide.topic === "hep")?.body).toMatch(/estabilização/);
+  });
+
   it("mantém nove cadeias recomendadas com 3–5 funcionalidades canônicas", () => {
     const canonical = new Set(ALIVIA_DIFFERENTIALS.map((item) => item.id));
     expect(ALIVIA_ECOSYSTEM_RECIPES).toHaveLength(9);
