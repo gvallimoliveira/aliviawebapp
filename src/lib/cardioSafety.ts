@@ -80,3 +80,18 @@ export function comorbidityHint(text?: string | null): string | null {
 
 export const OXIMETER_GUIDE =
   "Sem monitor cardíaco (cinta, relógio ou pulseira)? Use um oxímetro de dedo: meça em repouso, ao fim da série ou bloco e após 2–3 min de recuperação.";
+
+export type CardioQuadrant = "optimal" | "msk_spike" | "overreaching" | "extra_stress" | "detraining" | "insufficient";
+
+/** Matriz ACWR cardio × desvio da FC de repouso, com a régua do perfil. Sempre sugestão. */
+export function cardioMatrix(ratio: number | null, rhrDelta: number | null, profile?: string | null): { quadrant: CardioQuadrant; text: string } {
+  const r = profileRule(profile);
+  if (ratio === null) return { quadrant: "insufficient", text: "Histórico de cardio insuficiente (mínimo 4 sessões em 14 dias)." };
+  const hrHigh = rhrDelta !== null && rhrDelta >= r.rhrAlert;
+  if (ratio > r.acwrAlert && hrHigh) return { quadrant: "overreaching", text: "Possível overreaching não funcional: sugere deload (−50% da duração ou PSE ≤4)." };
+  if (ratio > r.acwrAlert) return { quadrant: "msk_spike", text: "Pico agudo de carga: sugere reduzir o impacto." };
+  if (ratio < 0.8 && hrHigh) return { quadrant: "extra_stress", text: "Estresse fora do treino (sono, emocional ou início de infecção): investigue." };
+  if (ratio < 0.8) return { quadrant: "detraining", text: "Destreino ou polimento." };
+  if (ratio <= r.acwrMax) return { quadrant: "optimal", text: "Adaptação aeróbia na faixa ideal." };
+  return { quadrant: "msk_spike", text: "Carga cardio acima da faixa ideal do perfil: atenção." };
+}
