@@ -12,6 +12,7 @@ import { CheckCircle2, Loader2, Activity, HeartPulse, ShieldAlert, CalendarDays,
 import { setSeo } from "@/lib/seo";
 import { CHECKIN_ITEMS, TRACK_LABEL } from "@/components/dashboard/periodization/scales";
 import { plannedLoad, trainingLoad, loadLevelFromRpe } from "@/lib/periodization";
+import ExternalWorkoutImport from "@/components/periodization/ExternalWorkoutImport";
 
 const LEVEL_BADGE: Record<string, { label: string; className: string }> = {
   rest: { label: "Descanso", className: "bg-muted text-muted-foreground" },
@@ -471,6 +472,28 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           </div>
                         </div>
 
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button type="button" size="sm" variant={!importMode ? "default" : "outline"} className="rounded-xl text-xs" onClick={() => setImportMode(false)}>
+                            Duração e esforço
+                          </Button>
+                          <Button type="button" size="sm" variant={importMode ? "default" : "outline"} className="rounded-xl text-xs" onClick={() => setImportMode(true)}>
+                            Importar treino
+                          </Button>
+                        </div>
+
+                        {importMode ? (
+                          <ExternalWorkoutImport
+                            token={token!}
+                            track={track}
+                            onSaved={async () => {
+                              setPlanDone(true);
+                              const refreshed = await fetchInfo();
+                              if (refreshed) setInfo(refreshed);
+                            }}
+                          />
+                        ) : (<>
+
+
                         <div className="space-y-1.5">
                           <span className="text-sm font-medium text-foreground">Data da sessão</span>
                           <Input type="date" value={sessionDate} onChange={(e) => setSessionDate(e.target.value)} />
@@ -523,6 +546,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           {savingPlan ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                           Salvar dose planejada
                         </Button>
+                        </>)}
                       </>
                     )
                   ) : srpeDone ? (
