@@ -33,10 +33,10 @@ describe("Ecossistema de soluções Aliv.iA", () => {
     ]);
     expect(buildAliviaEcosystem("adesao-e-evolucao").steps.map((step) => step.id)).toEqual([
       "diferencial-hep-video",
+      "diferencial-hep-dose",
       "diferencial-evolucao-voz",
       "diferencial-prontidao-carga",
       "diferencial-reavaliacao",
-      "diferencial-relatorios",
     ]);
   });
 
@@ -108,6 +108,7 @@ describe("Ecossistema de soluções Aliv.iA", () => {
     expect(ecosystem.audience).toMatch(/fisioterapeuta/i);
     expect(ecosystem.steps.map((step) => step.label)).toEqual([
       "Periodização de carga",
+      "Dose do HEP calculada",
       "HEP em vídeo",
       "Prontidão e carga percebida",
     ]);
