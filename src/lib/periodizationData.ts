@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { CLEARANCE_TEMPLATE, MACRO_PHASES } from "@/lib/periodization";
+import { CLEARANCE_TEMPLATE, MACRO_PHASES, localISODate } from "@/lib/periodization";
 
 export interface PeriodizationPlan {
   id: string;

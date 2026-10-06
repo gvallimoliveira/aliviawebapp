@@ -7,7 +7,7 @@ import { Loader2, Sparkles, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { PeriodizationPlan, PeriodizationSession, ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
 import { saveSession } from "@/lib/periodizationData";
-import { loadLevelFromRpe } from "@/lib/periodization";
+import { loadLevelFromRpe, localISODate } from "@/lib/periodization";
 import { adjustToday, suggestNextWeek, type SuggestedSession } from "@/lib/autoPlan";
 import { TRACK_LABEL } from "./scales";
 
