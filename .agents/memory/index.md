@@ -187,3 +187,4 @@ Studio refinamentos de uma marca viram guardas globais quando forem gramática/c
 - [Studio MSK Lexicon](mem://features/studio-msk-lexicon) — Vocabulário de lesões (LCA, menisco, manguito, arremessador, lesão muscular, tendinopatias, dor patelofemoral, quadril, tornozelo) para esportista, pós-op e dor crônica.
 - [Studio Audience Scope](mem://features/studio-audience-scope) — Filtro de pertencimento: arte de um público não cita rótulo de outro nem tema clínico incompatível.
 - [Studio Brand Sharing](mem://features/studio-brand-sharing) — Compartilhar marca do Studio com outra conta: membros por e-mail, acesso total, cota do criador.
+- [Cardio Module](mem://features/cardio-module) — Perfil CV manual pelo fisio, teto Gellish, sem citar marcas, caminho com oxímetro.
