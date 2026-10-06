@@ -145,7 +145,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
             <span className="text-[11px] text-muted-foreground">usa créditos de IA só nesta leitura</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-3 gap-y-3 [&>label]:block [&>label]:min-w-0 [&_input]:min-w-0 [&_input]:max-w-full">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-3 [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:min-w-0 [&_input]:min-w-0 [&_input]:max-w-full">
             <label className="col-span-2 block min-w-0 space-y-1 text-xs sm:col-span-1">Data<Input className="block w-full min-w-0 appearance-none" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
             <label className="col-span-2 block min-w-0 space-y-1 text-xs sm:col-span-1">Frente
               <Select value={track} onValueChange={setTrack}>
