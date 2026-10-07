@@ -150,9 +150,28 @@ const PeriodizationSection = ({
 
   const loadedOnceRef = useRef(false);
   const lastTouchedRef = useRef<HTMLElement | null>(null);
+  const viewAnchorRef = useRef<HTMLElement | null>(null);
+  // Elemento estável perto do centro da tela, usado quando o botão tocado
+  // desaparece após salvar (ex.: "Link do paciente" some quando o link existe).
+  const pickViewportAnchor = (): HTMLElement | null => {
+    const section = document.getElementById("sec-periodizacao");
+    if (!section) return null;
+    const mid = window.innerHeight / 2;
+    let best: HTMLElement | null = null;
+    let bestDist = Infinity;
+    section.querySelectorAll<HTMLElement>("h3, h4, [data-periodization-block], .rounded-xl").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.height === 0 || r.height > window.innerHeight) return;
+      const d = Math.abs(r.top + r.height / 2 - mid);
+      if (d < bestDist) { bestDist = d; best = el; }
+    });
+    return best;
+  };
   const anchorTarget = useCallback((): HTMLElement | null => {
     const el = lastTouchedRef.current;
     if (el && el.isConnected) return el;
+    const v = viewAnchorRef.current;
+    if (v && v.isConnected) return v;
     return document.getElementById("sec-periodizacao");
   }, []);
 
@@ -316,8 +335,11 @@ const PeriodizationSection = ({
       className="space-y-3"
       onPointerDownCapture={(e) => {
         const t = e.target as HTMLElement;
+        // Toques dentro de diálogos (portal) não servem de âncora: somem ao fechar.
+        if (t.closest("[role='dialog'],[role='alertdialog']")) return;
         lastTouchedRef.current =
           (t.closest("[data-periodization-block]") as HTMLElement | null) ?? t.closest("button,a,[role='button']") ?? t;
+        viewAnchorRef.current = pickViewportAnchor();
       }}
     >
       {/* Ordem do fluxo: macrociclo → links → sessão monitorada → carga+teto FC → dose+planejamento automático → microciclo. */}
