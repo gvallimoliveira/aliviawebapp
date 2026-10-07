@@ -42,7 +42,17 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
   const { toast } = useToast();
   const status = useMemo(() => loadStatus(entries, checkins), [entries, checkins]);
   const hr = useMemo(() => restingHrStatus(checkins), [checkins]);
+  // Prontidão do check-in é a base; a FC ao acordar, quando existe, tem prioridade (vale a mais cautelosa).
   const recovery = useMemo(() => recoverySignal(checkins as any), [checkins]);
+  const advice = useMemo(() => {
+    const out = [...status.messages];
+    const hrDriven = (recovery.source === "resting_hr" || recovery.source === "both") && recovery.strained && (hr.level === "caution" || hr.level === "danger");
+    if (hrDriven) out.unshift(hr.level === "danger"
+      ? `FC ao acordar +${hr.delta} bpm da base: recuperação comprometida, considere reduzir a carga de hoje.`
+      : `FC ao acordar +${hr.delta} bpm da base: acima do habitual, acompanhe sono e fadiga.`);
+    return out;
+  }, [status.messages, recovery, hr]);
+  const adviceLevel = recovery.level === "danger" ? "danger" : status.level === "ok" && recovery.level === "caution" ? "caution" : status.level;
 
   // Detalhamento da prontidão: check-ins da data que forma o score exibido
   const [readinessOpen, setReadinessOpen] = useState(false);
@@ -228,32 +238,6 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* FC de repouso matinal (módulo cardiovascular — fase 1) */}
-        {hr.latest !== null && (
-          <div className={`rounded-xl border p-2 text-xs ${hr.level === "insufficient" ? "border-border text-muted-foreground" : LEVEL_CLASS[hr.level]}`}>
-            <span className="font-semibold">FC ao acordar: {hr.latest} bpm</span>
-            {hr.latestDate ? <> · {shortDate(hr.latestDate)}</> : null}
-            {hr.baseline !== null && hr.delta !== null ? (
-              <> · base {hr.baseline} bpm ({hr.delta > 0 ? "+" : ""}{hr.delta})
-                {hr.level === "danger" && " — recuperação insuficiente provável; considere reduzir a carga de hoje."}
-                {hr.level === "caution" && " — acima do habitual; acompanhe com sono e fadiga."}
-              </>
-            ) : (
-              <> · linha de base com 3+ registros anteriores</>
-            )}
-          </div>
-        )}
-
-        {/* Recuperação: prontidão do check-in é a base; FC ao acordar, quando existe, tem prioridade */}
-        {recovery.source !== "none" && (
-          <div className={`rounded-xl border p-2 text-xs ${recovery.level === "ok" ? "border-border text-foreground" : LEVEL_CLASS[recovery.level as "caution" | "danger"]}`}>
-            <span className="font-semibold">Recuperação: </span>{recovery.text}
-            <span className="block text-[10px] opacity-80">
-              {recovery.source === "readiness" ? "Baseada no check-in de prontidão. A FC ao acordar é opcional e, se registrada, passa a ter prioridade." : "FC ao acordar com prioridade; prontidão do check-in como confirmação."}
-            </span>
-          </div>
-        )}
-
         {/* Números-chave */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div className="rounded-xl border border-border p-2">
@@ -282,15 +266,22 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
             className="rounded-xl border border-border p-2 text-left transition hover:bg-accent/50 disabled:cursor-default disabled:hover:bg-transparent"
           >
             <p className="text-[10px] text-muted-foreground">Prontidão</p>
-            <p className="text-lg font-semibold text-foreground">{status.readiness !== null ? `${status.readiness}%` : "—"}</p>
+            <p className={`text-lg font-semibold ${recovery.level === "danger" ? "text-rose-700 dark:text-rose-400" : recovery.level === "caution" ? "text-amber-700 dark:text-amber-400" : "text-foreground"}`}>
+              {status.readiness !== null ? `${status.readiness}%` : "—"}
+            </p>
+            {hr.latest !== null && (
+              <p className="text-[10px] text-muted-foreground">
+                FC ao acordar {hr.latest} bpm{hr.delta !== null ? ` (${hr.delta > 0 ? "+" : ""}${hr.delta})` : ""}
+              </p>
+            )}
             {readinessDetail && <p className="text-[10px] text-primary">Toque para ver as respostas</p>}
           </button>
         </div>
 
         {/* Sugestões */}
-        {status.messages.length > 0 && (
-          <div className={`rounded-xl border px-3 py-2 space-y-1 ${LEVEL_CLASS[status.level]}`}>
-            {status.messages.map((m, i) => (
+        {advice.length > 0 && (
+          <div className={`rounded-xl border px-3 py-2 space-y-1 ${LEVEL_CLASS[adviceLevel]}`}>
+            {advice.map((m, i) => (
               <p key={i} className="text-xs">{m}</p>
             ))}
             <p className="text-[10px] opacity-80">Sugestões automáticas. A decisão clínica é sempre sua.</p>
