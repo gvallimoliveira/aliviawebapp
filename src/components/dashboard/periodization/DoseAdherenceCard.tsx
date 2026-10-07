@@ -15,8 +15,10 @@ import {
   trainingLoad,
   repeatedDoseDeviation,
   localISODate,
-  weekStartOf,
 } from "@/lib/periodization";
+import { CHART_WINDOW_DAYS, TEXT_WINDOW_DAYS, groupByDay, inWindow, recentDaysWindow } from "@/lib/loadWindows";
+import DayGroupList, { type DayGroup } from "./DayGroupList";
+import LoadHistoryDialog from "./LoadHistoryDialog";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
 import { savePlannedDose } from "@/lib/periodizationData";
 import { DOSE_CLASS, DOSE_LABEL, TRACK_LABEL } from "./scales";
@@ -202,13 +204,13 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
             </p>
           </div>
           <div className="flex items-center gap-1">
-            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setShift((v) => v - 1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-[11px] text-muted-foreground whitespace-nowrap">
               {shortDate(summary.weekStart)} → {shortDate(summary.weekEnd)}
             </span>
-            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setShift((v) => Math.min(0, v + 1))} disabled={shift === 0}>
               <ChevronRight className="h-4 w-4" />
             </Button>
             {!readOnly && (
@@ -270,7 +272,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
       <CardContent className="space-y-3">
         {!hasTarget ? (
           <p className="text-xs text-muted-foreground">
-            Nenhuma dose planejada nesta semana. Prescreva duração e esforço alvo por frente (fisioterapia, academia,
+            Nenhuma dose planejada neste período de 7 dias. Prescreva duração e esforço alvo por frente (fisioterapia, academia,
             campo) para saber se o trabalho ficou na dose certa, subdosado ou superdosado.
           </p>
         ) : (
