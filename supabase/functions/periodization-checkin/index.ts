@@ -31,6 +31,13 @@ const clampScale = (v: unknown): number | null => {
 // Data do dia no fuso do Brasil: depois das 21h (UTC-3) a data UTC já é o dia seguinte
 // e o check-in caía na data errada.
 const todayISO = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+/** Janela retroativa do sRPE do paciente: hoje e os 7 dias anteriores (horário de Brasília). */
+const SRPE_BACKFILL_DAYS = 7;
+const isoMinusDays = (iso: string, n: number) => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+};
 
 
 // Leitura de print de monitor cardíaco: usada pelo link do paciente e pelo profissional no prontuário.
@@ -218,6 +225,33 @@ serve(async (req) => {
       // Visão do microciclo para o preparador: toda a semana (seg→dom), todas as
       // frentes, somente leitura. O paciente NÃO recebe isso — ver a semana
       // inteira poderia enviesar o sRPE que ele vai relatar.
+      // Sessões dos últimos 7 dias ainda sem sRPE (só para o paciente).
+      let pendingSessions: Array<Record<string, unknown>> = [];
+      if (link.audience !== "coach") {
+        const from = isoMinusDays(todayISO(), SRPE_BACKFILL_DAYS);
+        const yesterday = isoMinusDays(todayISO(), 1);
+        const [{ data: past }, { data: pastEntries }] = await Promise.all([
+          supabase.from("periodization_sessions")
+            .select("id, session_date, track, planned_duration_min, planned_rpe, title")
+            .eq("patient_id", patient.id).gte("session_date", from).lte("session_date", yesterday)
+            .order("session_date", { ascending: false }),
+          supabase.from("srpe_entries")
+            .select("session_id, session_date, track, source, patient_rpe")
+            .eq("patient_id", patient.id).gte("session_date", from).lte("session_date", yesterday),
+        ]);
+        const answered = (s: Record<string, unknown>) => (pastEntries || []).some((e: Record<string, unknown>) =>
+          (e.session_id && e.session_id === s.id) ||
+          (e.session_date === s.session_date && e.track === s.track &&
+            (e.source !== "professional" || e.patient_rpe !== null)));
+        pendingSessions = (past || [])
+          .filter((s: Record<string, unknown>) => Number(s.planned_duration_min || 0) * Number(s.planned_rpe || 0) > 0)
+          .filter((s: Record<string, unknown>) => !answered(s))
+          .map((s: Record<string, unknown>) => ({
+            id: s.id, session_date: s.session_date, track: s.track,
+            planned_duration_min: s.planned_duration_min, title: s.title,
+          }));
+      }
+
       let weekSessions: Array<Record<string, unknown>> | undefined;
       if (link.audience === "coach") {
         const now = new Date(`${todayISO()}T12:00:00Z`);
@@ -272,6 +306,8 @@ serve(async (req) => {
             already_reported: reportedIds.has(s.id as string),
           })),
           week_sessions: weekSessions,
+          pending_sessions: pendingSessions,
+          backfill_from: isoMinusDays(todayISO(), SRPE_BACKFILL_DAYS),
         },
       });
     }
@@ -339,6 +375,9 @@ serve(async (req) => {
       const sessionDate = typeof e.session_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.session_date)
         ? e.session_date
         : todayISO();
+      // Paciente pode informar sessões de hoje e dos 7 dias anteriores; nunca futuro.
+      if (sessionDate > todayISO()) return json({ error: "future_date" }, 400);
+      if (sessionDate < isoMinusDays(todayISO(), SRPE_BACKFILL_DAYS)) return json({ error: "too_old" }, 400);
 
       // Vínculo explícito: o paciente confirmou uma sessão planejada do microciclo.
       let linkedId: string | null = null;
@@ -377,6 +416,19 @@ serve(async (req) => {
         }).eq("id", proRow.id);
         await supabase.from("periodization_links").update({ last_used_at: new Date().toISOString() }).eq("id", link.id);
         return json({ ok: true, merged: true });
+      }
+
+      // Uma sessão por data e frente: reenvio do paciente atualiza o registro.
+      const { data: ownRow } = await supabase.from("srpe_entries")
+        .select("id").eq("patient_id", patient.id).eq("session_date", sessionDate)
+        .eq("track", track).eq("source", "patient").limit(1).maybeSingle();
+      if (ownRow) {
+        await supabase.from("srpe_entries").update({
+          duration_min: Math.round(duration), rpe, session_id: linkedId,
+          notes: typeof e.notes === "string" ? e.notes.slice(0, 1000) : null,
+        }).eq("id", ownRow.id);
+        await supabase.from("periodization_links").update({ last_used_at: new Date().toISOString() }).eq("id", link.id);
+        return json({ ok: true, updated: true });
       }
 
       const { error } = await supabase.from("srpe_entries").insert({
@@ -645,32 +697,8 @@ async function maybeAlert(
     }
     if (current !== null && current < 40) reasons.push(`prontidão baixa (${current}/100)`);
 
-    // Dose planejada x percebida nos últimos 7 dias, por frente.
-    const weekAgo = new Date();
-    weekAgo.setUTCDate(weekAgo.getUTCDate() - 6);
-    const weekISO = weekAgo.toISOString().slice(0, 10);
-    const { data: planned } = await supabase
-      .from("periodization_sessions")
-      .select("session_date, track, planned_duration_min, planned_rpe")
-      .eq("patient_id", ctx.patientId)
-      .gte("session_date", weekISO);
-    const TRACK_PT: Record<string, string> = { physio: "fisioterapia", gym: "academia", sport: "outro esporte", cardio: "cardio" };
-    const plannedByTrack: Record<string, number> = {};
-    (planned || []).forEach((s: { track: string; planned_duration_min: number | null; planned_rpe: number | null }) => {
-      const load = Number(s.planned_duration_min || 0) * Number(s.planned_rpe || 0);
-      if (load > 0) plannedByTrack[s.track] = (plannedByTrack[s.track] || 0) + load;
-    });
-    const realByTrack: Record<string, number> = {};
-    (entries || []).forEach((e: { session_date: string; training_load: number; track?: string }) => {
-      if (e.session_date < weekISO) return;
-      const t = e.track || "physio";
-      realByTrack[t] = (realByTrack[t] || 0) + (Number(e.training_load) || 0);
-    });
-    Object.entries(plannedByTrack).forEach(([t, target]) => {
-      const ratio = (realByTrack[t] || 0) / target;
-      if (ratio < 0.9) reasons.push(`${TRACK_PT[t] || t} subdosada (${ratio.toFixed(2)} do planejado)`);
-      else if (ratio > 1.1) reasons.push(`${TRACK_PT[t] || t} superdosada (${ratio.toFixed(2)} do planejado)`);
-    });
+    // Dose planejada x percebida NÃO gera notificação (decisão do usuário):
+    // fica só no prontuário, onde sessões sem resposta e futuras ficam à parte.
 
     // Alertas cardiovasculares NÃO vão para o celular (decisão do usuário): só leitura no prontuário.
     if (!reasons.length) return;
