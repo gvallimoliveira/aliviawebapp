@@ -9,12 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import {
   Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine,
 } from "recharts";
-import { Activity, HeartPulse, Loader2, Plus, TrendingUp } from "lucide-react";
+import { HeartPulse, Loader2, Plus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { loadStatus, localISODate, readinessScore, recoverySignal, restingHrStatus, trainingLoad } from "@/lib/periodization";
+import { loadStatus, localISODate, readinessScore, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import type { ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
-import { saveProfessionalSession, saveCheckin } from "@/lib/periodizationData";
-import { CHECKIN_ITEMS, LEVEL_CLASS, TRACK_LABEL, ZONE_LABEL } from "./scales";
+import { saveCheckin } from "@/lib/periodizationData";
+import { CHECKIN_ITEMS, LEVEL_CLASS, ZONE_LABEL } from "./scales";
 import { CHART_WINDOW_DAYS, inWindow, recentDaysWindow, rollingDailySeries } from "@/lib/loadWindows";
 import DailyLoadChart from "./DailyLoadChart";
 import LoadHistoryDialog from "./LoadHistoryDialog";
@@ -83,40 +83,12 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
     [checkins, chartWindow],
   );
 
-  // Formulário de sRPE
-  const [srpeOpen, setSrpeOpen] = useState(false);
-  const [track, setTrack] = useState("physio");
-  const [duration, setDuration] = useState("");
-  const [rpe, setRpe] = useState(5);
-  const [srpeDate, setSrpeDate] = useState(localISODate());
-  const [savingSrpe, setSavingSrpe] = useState(false);
-
   // Formulário de check-in manual (fisio registrando pelo paciente)
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [values, setValues] = useState<Record<string, number>>({});
   const [note, setNote] = useState("");
   const [checkinDate, setCheckinDate] = useState(localISODate());
   const [savingCheckin, setSavingCheckin] = useState(false);
-
-  const submitSrpe = async () => {
-    const min = Number(duration);
-    if (!Number.isFinite(min) || min <= 0) {
-      toast({ title: "Informe a duração da sessão", variant: "destructive" });
-      return;
-    }
-    setSavingSrpe(true);
-    try {
-      await saveProfessionalSession({ patientId, planId, sessionDate: srpeDate, track, durationMin: min, rpe });
-      setDuration("");
-      setSrpeOpen(false);
-      onChanged();
-      toast({ title: "Sessão registrada", description: `Carga: ${trainingLoad(min, rpe)} unidades.` });
-    } catch (e: any) {
-      toast({ title: "Não foi possível registrar", description: e?.message, variant: "destructive" });
-    } finally {
-      setSavingSrpe(false);
-    }
-  };
 
   const submitCheckin = async () => {
     if (Object.keys(values).length === 0) {
@@ -148,56 +120,6 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
           </CardTitle>
           {!readOnly && (
             <div className="flex gap-2">
-              <Dialog open={srpeOpen} onOpenChange={setSrpeOpen}>
-                <DialogTrigger asChild>
-                  <Button type="button" size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
-                    <Activity className="h-3.5 w-3.5" /> sRPE
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-sm">
-                  <DialogHeader><DialogTitle className="text-base">Registrar sessão (sRPE)</DialogTitle></DialogHeader>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {Object.entries(TRACK_LABEL).map(([key, label]) => (
-                        <Button type="button"
-                          key={key}
-                          variant={track === key ? "default" : "outline"}
-                          size="sm"
-                          className="text-[11px] rounded-xl"
-                          onClick={() => setTrack(key)}
-                        >
-                          {label}
-                        </Button>
-                      ))}
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-xs text-muted-foreground">Data</span>
-                      <Input type="date" value={srpeDate} onChange={(e) => setSrpeDate(e.target.value)} />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-xs text-muted-foreground">Duração (min)</span>
-                      <Input type="number" min={1} max={600} value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="50" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">RPE (0-10)</span>
-                        <Badge variant="outline" className="text-xs">{rpe}</Badge>
-                      </div>
-                      <Slider min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => setRpe(v)} />
-                    </div>
-                    {Number(duration) > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        Carga: <strong>{trainingLoad(Number(duration), rpe)}</strong>
-                      </p>
-                    )}
-                    <Button type="button" className="w-full rounded-xl gap-2" onClick={submitSrpe} disabled={savingSrpe}>
-                      {savingSrpe ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                      Registrar
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
               <Dialog open={checkinOpen} onOpenChange={setCheckinOpen}>
                 <DialogTrigger asChild>
                   <Button type="button" size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
@@ -292,7 +214,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-foreground">
-              Carga dos últimos 7 dias <span className="font-normal text-muted-foreground">· {chartWindow.total} sRPE</span>
+              Carga total dos últimos 7 dias <span className="font-normal text-muted-foreground">· todas as frentes · {chartWindow.total} sRPE</span>
             </p>
             <LoadHistoryDialog patientId={patientId} />
           </div>

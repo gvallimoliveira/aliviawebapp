@@ -404,7 +404,7 @@ const PeriodizationSection = ({
         </div>
       </PeriodizationCollapsible>
 
-      <CardioAnalysisDialog patientId={patientId} plan={plan} entries={entries} patientName={patientName} professionalName={proName} clinicId={clinicId} />
+      {entries.some((e: any) => e.hr_avg || e.hr_max || e.zone_minutes || e.trimp) && <CardioAnalysisDialog patientId={patientId} plan={plan} entries={entries} patientName={patientName} professionalName={proName} clinicId={clinicId} />}
 
       <PeriodizationCollapsible title="Dose planejada e percebida · Planejamento automático de dose de trabalho (sRPE)" icon={<Gauge className="h-4 w-4 text-primary" />}>
         <DoseAdherenceCard
