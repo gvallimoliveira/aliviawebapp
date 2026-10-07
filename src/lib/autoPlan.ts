@@ -1,7 +1,7 @@
 /**
  * Planejamento automático (Fase 2C) — 100% local, sem IA. Sempre sugestão editável.
  * Regras: salto semanal ≤10%, ACWR alvo dentro da faixa do perfil, sem dois dias
- * duros seguidos, ajuste do dia pela FC ao acordar / prontidão.
+ * intensos seguidos, ajuste do dia pela FC ao acordar / prontidão.
  */
 import { profileRule } from "./cardioSafety";
 import { readinessScore, restingHrStatus } from "./periodization";
@@ -20,7 +20,7 @@ export function nextMonday(ref = new Date()): Date {
   return d;
 }
 
-/** Dias da semana (0=seg) espalhados, sem dois "duros" seguidos. */
+/** Dias da semana (0=seg) espalhados, sem dois "intensos" seguidos. */
 export function spreadDays(n: number): Array<{ day: number; kind: "hard" | "light" }> {
   const patterns: Record<number, number[]> = { 1: [2], 2: [1, 4], 3: [0, 2, 4], 4: [0, 1, 3, 5], 5: [0, 1, 3, 4, 6], 6: [0, 1, 2, 3, 4, 5] };
   const days = patterns[Math.max(1, Math.min(6, n))];
