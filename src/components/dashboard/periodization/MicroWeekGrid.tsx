@@ -129,6 +129,60 @@ const MicroWeekGrid = ({
     onChanged();
   };
 
+  /** Sessão planejada elegível ao registro monitorado: hoje ou até 7 dias atrás. */
+  const canMonitor = (s: PeriodizationSession): boolean => {
+    if (readOnly || !s.id) return false;
+    const d = s.session_date.slice(0, 10);
+    const todayIso = localISODate();
+    return d <= todayIso && d >= addDays(todayIso, -7);
+  };
+
+  const openMonitoring = (s: PeriodizationSession) => {
+    setMonitoring(s);
+    setMonDuration(s.planned_duration_min > 0 ? String(s.planned_duration_min) : "");
+    setMonRpe(s.planned_rpe > 0 ? String(s.planned_rpe) : "");
+    setMonHrAvg("");
+    setMonHrMax("");
+    setMonSpo2("");
+    setMonNotes(s.title ?? "");
+  };
+
+  const saveMonitoring = async () => {
+    if (!monitoring) return;
+    const d = Number(monDuration);
+    const r = Number(monRpe.replace(",", "."));
+    if (!(d > 0 && d <= 600)) { toast({ title: "Informe a duração", variant: "destructive" }); return; }
+    if (!(r >= 0 && r <= 10)) { toast({ title: "Informe a PSE (0–10)", variant: "destructive" }); return; }
+    setMonSaving(true);
+    const ri = (v: string) => { const n = v.trim() === "" ? null : Number(v); return n == null ? null : Math.round(n); };
+    let merged = false;
+    let error: unknown = null;
+    try {
+      ({ merged } = await saveProfessionalSession({
+        patientId,
+        planId,
+        sessionDate: monitoring.session_date.slice(0, 10),
+        track: monitoring.track,
+        durationMin: d,
+        rpe: r,
+        notes: monNotes,
+        monitor: {
+          hr_avg: ri(monHrAvg),
+          hr_max: ri(monHrMax),
+          spo2_min: ri(monSpo2),
+          zone_minutes: [null, null, null, null, null],
+          trimp: null,
+          monitor_source: "manual",
+        },
+      }));
+    } catch (e) { error = e; }
+    setMonSaving(false);
+    if (error) { toast({ title: "Não foi possível salvar", variant: "destructive" }); return; }
+    toast({ title: merged ? "Sessão unida ao check-in do paciente" : "Sessão monitorada salva" });
+    setMonitoring(null);
+    onChanged();
+  };
+
   const weekLabel = `${new Date(`${weekStart}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} → ${new Date(`${addDays(weekStart, 6)}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`;
 
   /** PDF do plano da semana, para alinhar com o paciente. */
