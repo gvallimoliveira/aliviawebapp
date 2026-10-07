@@ -32,6 +32,9 @@ export function spreadDays(n: number): Array<{ day: number; kind: "hard" | "ligh
   });
 }
 
+/** Faixa usual de duração por frente (min). Fora dela, a dose é ajustada pelo esforço. */
+export const TRACK_DURATION: Record<string, [number, number]> = { physio: [50, 60], gym: [45, 60] };
+
 export interface PlannedLike { session_date: string; track?: string | null; planned_duration_min?: number | null; planned_rpe?: number | null }
 
 /**
@@ -96,9 +99,15 @@ export function suggestNextWeek(
     const wSum = weights.reduce((a, b) => a + b, 0);
     slots.forEach((s, i) => {
       const load = (target * weights[i]) / wSum;
-      const rpe = s.kind === "hard" ? intenseRpe : lightRpe;
+      let rpe = s.kind === "hard" ? intenseRpe : lightRpe;
+      let duration = Math.max(10, Math.round(load / rpe / 5) * 5);
+      const range = TRACK_DURATION[track];
+      if (range) {
+        duration = Math.max(range[0], Math.min(range[1], duration));
+        rpe = Math.max(1, Math.min(10, Math.round(load / duration)));
+      }
       const d = new Date(monday); d.setUTCDate(d.getUTCDate() + s.day);
-      out.push({ date: iso(d), track, rpe, duration: Math.max(10, Math.round(load / rpe / 5) * 5), kind: s.kind });
+      out.push({ date: iso(d), track, rpe, duration, kind: s.kind });
     });
   }
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.track.localeCompare(b.track));

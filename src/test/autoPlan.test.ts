@@ -29,5 +29,6 @@ describe("autoPlan", () => {
     const total = s.reduce((a, x) => a + x.duration * x.rpe, 0);
     expect(total).toBeGreaterThanOrEqual(750);
     expect(total).toBeLessThanOrEqual(850);
+    s.forEach((x) => { expect(x.duration).toBeGreaterThanOrEqual(50); expect(x.duration).toBeLessThanOrEqual(60); });
   });
 });

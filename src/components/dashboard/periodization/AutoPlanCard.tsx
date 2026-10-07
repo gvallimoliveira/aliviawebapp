@@ -91,7 +91,7 @@ const AutoPlanCard = ({ patientId, plan, entries, checkins, sessions, onChanged,
 
         <p className="text-xs font-medium text-foreground">Planejamento automático de dose de trabalho (sRPE)</p>
         <p className="text-xs text-muted-foreground">
-          O cálculo é do envelope de dose (sRPE = duração × esforço percebido), não da prescrição de exercícios: sugere a próxima semana por frente partindo da dose planejada da semana atual (ou, sem planejamento, da carga real recente), progride até 10% só quando as sessões respondidas ficaram na dose certa, respeita a faixa do perfil cardiovascular quando há 3+ semanas de histórico e alterna dias intensos e leves. Você edita tudo antes de salvar.
+          O cálculo é do envelope de dose (sRPE = duração × esforço percebido), não da prescrição de exercícios: sugere a próxima semana por frente partindo da dose planejada da semana atual (ou, sem planejamento, da carga real recente), progride até 10% só quando as sessões respondidas ficaram na dose certa, respeita a faixa do perfil cardiovascular quando há 3+ semanas de histórico alterna dias intensos e leves e mantém a duração usual da frente (fisioterapia 50–60 min, academia 45–60 min), ajustando a dose pelo esforço. Você edita tudo antes de salvar.
         </p>
         {!readOnly && !rows && (
           <Button type="button" size="sm" className="rounded-xl gap-1" onClick={suggest}><Sparkles className="h-4 w-4" /> Sugerir próxima semana</Button>
