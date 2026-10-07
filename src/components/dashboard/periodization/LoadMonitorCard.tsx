@@ -250,7 +250,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
             <p className="text-lg font-semibold text-foreground">{status.acuteLoad}</p>
           </div>
           <div className="rounded-xl border border-border p-2">
-            <p className="text-[10px] text-muted-foreground">Crônica (semanal)</p>
+            <p className="text-[10px] text-muted-foreground">Crônica (28d · média semanal)</p>
             <p className="text-lg font-semibold text-foreground">
               {status.baselineReady ? status.chronicLoad : "—"}
             </p>
