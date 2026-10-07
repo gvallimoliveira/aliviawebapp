@@ -15,8 +15,10 @@ import {
   trainingLoad,
   repeatedDoseDeviation,
   localISODate,
-  weekStartOf,
 } from "@/lib/periodization";
+import { CHART_WINDOW_DAYS, TEXT_WINDOW_DAYS, groupByDay, inWindow, recentDaysWindow } from "@/lib/loadWindows";
+import DayGroupList, { type DayGroup } from "./DayGroupList";
+import LoadHistoryDialog from "./LoadHistoryDialog";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
 import { savePlannedDose } from "@/lib/periodizationData";
 import { DOSE_CLASS, DOSE_LABEL, TRACK_LABEL } from "./scales";
@@ -71,12 +73,52 @@ const DoseTooltip = ({ active, payload, label }: any) => {
 
 const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
-  const [weekStart, setWeekStart] = useState(() => weekStartOf());
+  const today = localISODate();
+  // Janela padrão: 7 dias corridos terminando hoje (ou nos últimos dias com dado).
+  const defaultWindow = useMemo(() => recentDaysWindow(
+    [...entries.map((e) => e.session_date), ...sessions.filter((s) => plannedLoad(s.planned_duration_min, s.planned_rpe) > 0).map((s) => s.session_date)],
+    CHART_WINDOW_DAYS, today,
+  ), [entries, sessions, today]);
+  const [shift, setShift] = useState(0);
+  const weekStart = addDays(defaultWindow.from, shift * 7);
+  const windowFallback = shift === 0 && defaultWindow.fallback;
 
   const summary = useMemo(() => adherenceByTrack(entries, sessions, weekStart), [entries, sessions, weekStart]);
   const pairs = useMemo(() => pairSessionsWithSrpe(sessions, entries), [sessions, entries]);
   const repeated = useMemo(() => repeatedDoseDeviation(pairs), [pairs]);
-  const today = localISODate();
+
+  const upcomingNext = useMemo(() => {
+    const until = addDays(today, 7);
+    const next = sessions.filter((s) => s.session_date.slice(0, 10) > today && s.session_date.slice(0, 10) <= until)
+      .map((s) => plannedLoad(s.planned_duration_min, s.planned_rpe)).filter((l) => l > 0);
+    return { count: next.length, load: next.reduce((a, l) => a + l, 0) };
+  }, [sessions, today]);
+
+  // Lista em texto: últimos 3 dias da janela exibida, agrupada por dia.
+  const recentGroups = useMemo(() => {
+    const end = summary.weekEnd < today ? summary.weekEnd : today;
+    const relevant = pairs.filter((p) => p.plannedLoad > 0 && p.session.session_date.slice(0, 10) <= end);
+    const w = recentDaysWindow(relevant.map((p) => p.session.session_date), TEXT_WINDOW_DAYS, end);
+    const groups: DayGroup[] = groupByDay(relevant.filter((p) => inWindow(p.session.session_date, w)), (p) => p.session.session_date)
+      .map((g) => {
+        const answered = g.items.filter((p) => p.ratio !== null);
+        const pending = g.items.length - answered.length;
+        return {
+          date: g.date,
+          summary: [
+            `${g.items.length} ${g.items.length === 1 ? "sessão" : "sessões"}`,
+            `alvo ${g.items.reduce((a, p) => a + p.plannedLoad, 0)} → ${answered.reduce((a, p) => a + p.realLoad, 0)}`,
+            pending ? `${pending} sem resposta` : null,
+          ].filter(Boolean).join(" · "),
+          rows: g.items.map((p, i) => ({
+            key: p.session.id || String(i),
+            left: `${TRACK_LABEL[p.session.track as string] || p.session.track}${p.session.title ? ` · ${p.session.title}` : ""}`,
+            right: `${p.plannedLoad} → ${p.ratio !== null ? p.realLoad : "sem resposta"}${p.verdict ? ` · ${DOSE_LABEL[p.verdict]}` : ""}`,
+          })),
+        };
+      });
+    return { groups, fallback: w.fallback };
+  }, [pairs, summary.weekEnd, today]);
   const weekly = useMemo(() => {
     const inWeek = (date: string) => date >= summary.weekStart && date <= summary.weekEnd;
     const plannedPairs = pairs.filter((p) => inWeek(p.session.session_date) && p.plannedLoad > 0);
@@ -162,13 +204,13 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
             </p>
           </div>
           <div className="flex items-center gap-1">
-            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setShift((v) => v - 1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-[11px] text-muted-foreground whitespace-nowrap">
               {shortDate(summary.weekStart)} → {shortDate(summary.weekEnd)}
             </span>
-            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+            <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setShift((v) => Math.min(0, v + 1))} disabled={shift === 0}>
               <ChevronRight className="h-4 w-4" />
             </Button>
             {!readOnly && (
@@ -230,37 +272,40 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
       <CardContent className="space-y-3">
         {!hasTarget ? (
           <p className="text-xs text-muted-foreground">
-            Nenhuma dose planejada nesta semana. Prescreva duração e esforço alvo por frente (fisioterapia, academia,
+            Nenhuma dose planejada neste período de 7 dias. Prescreva duração e esforço alvo por frente (fisioterapia, academia,
             campo) para saber se o trabalho ficou na dose certa, subdosado ou superdosado.
           </p>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3 border-b border-border pb-3">
               <div>
-                <p className="text-[11px] text-muted-foreground">Total planejado da semana</p>
+                <p className="text-[11px] text-muted-foreground">Planejado no período</p>
                 <p className="text-lg font-semibold text-foreground">{weekly.total.planned} <span className="text-xs font-normal text-muted-foreground">sRPE</span></p>
               </div>
               <div>
-                <p className="text-[11px] text-muted-foreground">Total real registrado até hoje</p>
+                <p className="text-[11px] text-muted-foreground">Real registrado no período</p>
                 <p className="text-lg font-semibold text-foreground">{weekly.total.real} <span className="text-xs font-normal text-muted-foreground">sRPE</span></p>
               </div>
             </div>
-            <div className="space-y-1.5">
+            {windowFallback && (
+              <p className="text-[10px] text-muted-foreground">Sem registros nos últimos 7 dias — exibindo os mais recentes.</p>
+            )}
+            <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 sm:grid sm:grid-cols-2 sm:overflow-visible">
               {[...summary.byTrack.filter((t) => weekly.byTrack[t.track]?.scheduled > 0 || weekly.byTrack[t.track]?.real > 0), summary.total].map((t, i, arr) => {
                 const isTotal = i === arr.length - 1;
                 const week = isTotal ? weekly.total : weekly.byTrack[t.track];
                 return (
                   <div
                     key={isTotal ? "total" : t.track}
-                    className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 ${
-                      isTotal ? "border-primary/40 bg-muted/40" : "border-border"
+                    className={`flex min-w-[78%] snap-start flex-col justify-between gap-2 rounded-xl border px-3 py-2 sm:min-w-0 ${
+                      isTotal ? "border-primary/40 bg-muted/40 sm:col-span-2" : "border-border"
                     }`}
                   >
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground">
                         {isTotal ? "Comparação das sessões respondidas" : TRACK_LABEL[t.track]}
                       </p>
-                      {!isTotal && <p className="text-[10px] text-muted-foreground">Semana: planejado {week.planned} · Real {week.real}</p>}
+                      {!isTotal && <p className="text-[10px] text-muted-foreground">Período: planejado {week.planned} · Real {week.real}</p>}
                       <p className="text-[10px] text-muted-foreground">
                         Respondidas: alvo {t.planned} · Percebido {t.real}
                       </p>
@@ -271,10 +316,10 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                       </span>
                       {t.verdict && (
                         <Badge variant="outline" className={`text-[10px] whitespace-normal border-0 ${DOSE_CLASS[t.verdict]}`}>
-                          {DOSE_LABEL[t.verdict]} ({week.answered}/{week.scheduled} sessões semanais)
+                          {DOSE_LABEL[t.verdict]} ({week.answered}/{week.scheduled} sessões no período)
                         </Badge>
                       )}
-                      {!t.verdict && <span className="text-[10px] text-muted-foreground">Sem comparação ({week.answered}/{week.scheduled} sessões semanais)</span>}
+                      {!t.verdict && <span className="text-[10px] text-muted-foreground">Sem comparação ({week.answered}/{week.scheduled} sessões no período)</span>}
                     </div>
                   </div>
                 );
@@ -304,7 +349,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                   .map((t) => (
                     <p key={t.track} className="text-xs text-amber-800 dark:text-amber-300">
                       {TRACK_LABEL[t.track]}: {t.verdict === "under" ? "estímulo abaixo" : "estímulo acima"} do planejado
-                      ({t.ratio?.toFixed(2)}; {weekly.byTrack[t.track].answered}/{weekly.byTrack[t.track].scheduled} sessões semanais). {t.verdict === "under"
+                      ({t.ratio?.toFixed(2)}; {weekly.byTrack[t.track].answered}/{weekly.byTrack[t.track].scheduled} sessões no período). {t.verdict === "under"
                         ? "Revise a dose das próximas sessões desta frente, conforme a tolerância e a prontidão."
                         : "Considere reduzir a próxima sessão desta frente."}
                     </p>
@@ -328,25 +373,23 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
               </p>
             )}
 
-            {pairs.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-foreground">Sessão por sessão</p>
-                {pairs
-                  .filter((p) => p.session.session_date >= summary.weekStart && p.session.session_date <= summary.weekEnd)
-                  .map((p, i) => (
-                    <div key={p.session.id || i} className="flex items-center justify-between gap-2 text-[11px]">
-                      <span className="text-muted-foreground truncate">
-                        {shortDate(p.session.session_date)} · {TRACK_LABEL[p.session.track as string] || p.session.track}
-                        {p.session.title ? ` · ${p.session.title}` : ""}
-                      </span>
-                      <span className="text-foreground whitespace-nowrap">
-                        {p.plannedLoad} → {p.ratio !== null ? p.realLoad : p.session.session_date > today ? "a realizar" : "sem resposta"}
-                        {p.verdict ? ` · ${DOSE_LABEL[p.verdict]}` : ""}
-                      </span>
-                    </div>
-                  ))}
-              </div>
+            {upcomingNext.count > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Próximos 7 dias: {upcomingNext.count} {upcomingNext.count === 1 ? "sessão a realizar" : "sessões a realizar"} · alvo {upcomingNext.load} sRPE.
+              </p>
             )}
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-foreground">
+                  Sessão por sessão <span className="font-normal text-muted-foreground">· {recentGroups.fallback ? "dias mais recentes com registro" : "últimos 3 dias"}</span>
+                </p>
+                <LoadHistoryDialog patientId={patientId} />
+              </div>
+              {recentGroups.groups.length ? <DayGroupList groups={recentGroups.groups} /> : (
+                <p className="text-[11px] text-muted-foreground">Nenhuma sessão planejada nos últimos 3 dias.</p>
+              )}
+            </div>
           </>
         )}
       </CardContent>

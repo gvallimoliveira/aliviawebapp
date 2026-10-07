@@ -15,6 +15,9 @@ import { loadStatus, localISODate, readinessScore, restingHrStatus, trainingLoad
 import type { ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
 import { saveProfessionalSession, saveCheckin } from "@/lib/periodizationData";
 import { CHECKIN_ITEMS, LEVEL_CLASS, TRACK_LABEL, ZONE_LABEL } from "./scales";
+import { CHART_WINDOW_DAYS, inWindow, recentDaysWindow, rollingDailySeries } from "@/lib/loadWindows";
+import DailyLoadChart from "./DailyLoadChart";
+import LoadHistoryDialog from "./LoadHistoryDialog";
 
 interface Props {
   patientId: string;
@@ -54,17 +57,19 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
     };
   }, [checkins, status.readiness]);
 
-  const weeklyData = useMemo(
-    () => status.weekly.map((w) => ({ week: shortDate(w.weekStart), Carga: w.load, spike: w.spikePct })),
-    [status.weekly],
-  );
+  const chartWindow = useMemo(() => {
+    const w = recentDaysWindow([...entries.map((e) => e.session_date), ...checkins.map((c) => c.checkin_date)], CHART_WINDOW_DAYS, localISODate());
+    const series = rollingDailySeries(entries, w.from, w.to);
+    return { ...w, series, total: series.reduce((a, d) => a + d.total, 0) };
+  }, [entries, checkins]);
 
   const readinessData = useMemo(
     () =>
       checkins
+        .filter((c) => inWindow(c.checkin_date, chartWindow))
         .map((c) => ({ date: shortDate(c.checkin_date), Prontidão: readinessScore(c) }))
         .filter((d) => d.Prontidão !== null),
-    [checkins],
+    [checkins, chartWindow],
   );
 
   // Formulário de sRPE
@@ -281,23 +286,19 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
           </div>
         )}
 
-        {/* Carga semanal */}
-        {weeklyData.length > 0 && (
-          <div>
-            <p className="text-xs font-medium text-foreground mb-1">Carga semanal</p>
-            <div className="h-40">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="week" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                  <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Area type="monotone" dataKey="Carga" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.2)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+        {/* Carga dos últimos 7 dias corridos */}
+        <div>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <p className="text-xs font-medium text-foreground">
+              Carga dos últimos 7 dias <span className="font-normal text-muted-foreground">· {chartWindow.total} sRPE</span>
+            </p>
+            <LoadHistoryDialog patientId={patientId} />
           </div>
-        )}
+          {chartWindow.fallback && (
+            <p className="mb-1 text-[10px] text-muted-foreground">Sem registros nos últimos 7 dias — exibindo os mais recentes.</p>
+          )}
+          <DailyLoadChart data={chartWindow.series} />
+        </div>
 
         {/* Prontidão */}
         {readinessData.length > 1 && (

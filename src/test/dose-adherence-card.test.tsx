@@ -27,25 +27,26 @@ function show(rpe = 8, extras = false) {
   render(<DoseAdherenceCard patientId="test" sessions={sessions as any} entries={entries as any} onChanged={vi.fn()} readOnly />);
 }
 
-describe("weekly totals versus partial dose comparison", () => {
-  it("shows full targets, 1/2 track coverage and keeps the chart at 400 versus 400", () => {
+describe("rolling 7-day dose window", () => {
+  it("compares only the last 7 days and lists upcoming sessions apart", () => {
     show();
-    expect(screen.getByText("Semana: planejado 750 · Real 400")).toBeInTheDocument();
-    expect(screen.getByText("Dose certa (1/2 sessões semanais)")).toBeInTheDocument();
-    expect(screen.getByText("Dose certa (1/3 sessões semanais)")).toBeInTheDocument();
+    expect(screen.getByText("Período: planejado 400 · Real 400")).toBeInTheDocument();
+    expect(screen.getByText("Dose certa (1/1 sessões no período)")).toBeInTheDocument();
+    expect(screen.getByText("Dose certa (1/2 sessões no período)")).toBeInTheDocument();
+    expect(screen.getByText("Sem comparação (0/1 sessões no período)")).toBeInTheDocument();
     expect(screen.getByTestId("dose-chart").textContent).toContain('"Planejado":400,"Percebido":400');
-    expect(screen.getByText("Sem comparação (0/1 sessões semanais)")).toBeInTheDocument();
-    expect(screen.getByText("Total planejado da semana").parentElement?.textContent).toContain("930");
+    expect(screen.getByText(/Próximos 7 dias: 1 sessão a realizar · alvo 350 sRPE/)).toBeInTheDocument();
+    expect(screen.getByText("Planejado no período").parentElement?.textContent).toContain("580");
   });
-  it("labels partial underdose without treating upcoming sessions as zero", () => {
+  it("labels underdose without treating upcoming sessions as zero", () => {
     show(6);
-    expect(screen.getByText("Subdosado (1/2 sessões semanais)")).toBeInTheDocument();
+    expect(screen.getByText("Subdosado (1/1 sessões no período)")).toBeInTheDocument();
     expect(screen.getByTestId("dose-chart").textContent).toContain('"Planejado":400,"Percebido":300');
   });
-  it("includes extra real work only in the weekly total, not the comparison", () => {
+  it("includes extra real work only in the period total, not the comparison", () => {
     show(8, true);
-    expect(screen.getByText("Semana: planejado 750 · Real 500")).toBeInTheDocument();
-    expect(screen.getByText("Total real registrado até hoje").parentElement?.textContent).toContain("500");
+    expect(screen.getByText("Período: planejado 400 · Real 500")).toBeInTheDocument();
+    expect(screen.getByText("Real registrado no período").parentElement?.textContent).toContain("500");
     expect(screen.getByTestId("dose-chart").textContent).toContain('"Planejado":400,"Percebido":400');
   });
 });
