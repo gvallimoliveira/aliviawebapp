@@ -155,7 +155,8 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setMemberships([]);
     }
     setLoading(false);
-  }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   useEffect(() => {
     setContextDismissed(false);

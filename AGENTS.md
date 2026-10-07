@@ -25,3 +25,4 @@
 - Patient record content must inset by at least the viewport-fixed `PatientSectionRail` width wherever it renders; container-only spacing leaves titles covered.
 - Cardiovascular analysis (session metrics, weekly goals, intensity distribution, trends, readings) and both cardiovascular PDF reports derive only from the pure rule-based `cardioAnalysis.ts`; one deterministic source keeps panel, technical report and patient report consistent without AI credits.
 - Cardiovascular analysis mounts only inside the opened `CardioAnalysisDialog`; a compact trigger avoids inline charts and defers period fetching.
+- Prontuário e painel recarregam dados só quando muda a conta logada (`user?.id`), nunca na renovação de sessão ao voltar ao app; mesma regra do agente clínico, evita reset de tela.
