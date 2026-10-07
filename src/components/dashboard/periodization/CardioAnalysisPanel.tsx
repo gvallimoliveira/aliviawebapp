@@ -73,7 +73,7 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
   const matrixText = useMemo(() => {
     if (!data) return null;
     const ratio = acwr(data.srpe.filter((e) => e.track === "cardio") as any);
-    return ratio === null ? null : cardioMatrix(ratio, restingHrStatus(data.checkins).delta, profile).text;
+    return ratio === null ? null : cardioMatrix(ratio, restingHrStatus(data.checkins).delta, profile, recoverySignal(data.checkins as any, profileRule(profile).rhrAlert).strained).text;
   }, [data, profile]);
   const readings = useMemo(() => analysis ? periodReadings(analysis, ctx, { matrixText }) : [], [analysis, ctx, matrixText]);
   const monitored = useMemo(() => analysis ? [...analysis.sessions].reverse().filter((s) => s.hrAvg !== null || s.hrMax !== null || s.zones !== null) : [], [analysis]);
