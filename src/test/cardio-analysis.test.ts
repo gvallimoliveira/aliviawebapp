@@ -65,12 +65,37 @@ describe("analyzePeriod", () => {
     const p = analyzePeriod({ entries, checkins: [], ctx: ctx(), weeks: 4, today: "2026-10-07" });
     expect(periodReadings(p, ctx())).toEqual(periodReadings(p, ctx()));
     expect(periodReadings(p, ctx())[0]).toContain("1 de 4 semanas");
-    expect(patientReadings(p, ctx())[0]).toContain("1 de 4 semanas");
+    expect(patientReadings(p, ctx()).join(" ")).toContain("1 de 4 semanas");
   });
   it("tendência de recuperação", () => {
     const rec = [10, 12, 18, 22].map((d, i) => ({ ...base, id: `r${i}`, session_date: `2026-10-0${i + 1}`, hr_max: 150, hr_recovery_1min: 150 - d }));
     const p = analyzePeriod({ entries: rec, checkins: [], ctx: ctx(), weeks: 4, today: "2026-10-07" });
     expect(p.recoveryTrend).toMatchObject({ first: 11, last: 20 });
     expect(patientReadings(p, ctx()).join(" ")).toContain("recuperando mais rápido");
+  });
+  it("valoriza atividade leve abaixo da OMS sem inventar melhora ou segurança sem monitor", () => {
+    const p = analyzePeriod({ entries: [{ ...base, rpe: 2, duration_min: 20 }], checkins: [], ctx: ctx(), weeks: 4, today: "2026-10-07" });
+    const patient = patientReadings(p, ctx()).join(" ");
+    expect(p.whoWeeksMet).toBe(0);
+    expect(patientReadings(p, ctx())[0]).toContain("20 minutos");
+    expect(patient).toContain("Seu esforço conta");
+    expect(patient).toContain("próximo passo");
+    expect(patient).not.toContain("dentro do limite combinado");
+    expect(patient).not.toContain("condicionamento está melhorando");
+    expect(periodReadings(p, ctx()).join(" ")).toContain("Trabalho realizado");
+  });
+  it("preserva alerta de recuperação baixa mesmo com tendência positiva", () => {
+    const entries = [10, 12, 18, 22].map((drop, i) => ({ ...base, id: `r${i}`, session_date: `2026-10-0${i + 1}`, hr_max: 150, hr_recovery_1min: 150 - drop, spo2_min: 90 }));
+    const p = analyzePeriod({ entries, checkins: [], ctx: ctx(), weeks: 4, today: "2026-10-07" });
+    const readings = patientReadings(p, ctx()).join(" ");
+    expect(readings).toContain("recuperando mais rápido");
+    expect(readings).toContain("acompanhar esses episódios");
+    expect(readings).toContain("oxigenação ficou baixa");
+    expect(readings).toContain("passou do limite combinado");
+  });
+  it("sem registros não presume inatividade ou conquistas", () => {
+    const p = analyzePeriod({ entries: [], checkins: [], ctx: ctx(), weeks: 4, today: "2026-10-07" });
+    expect(patientReadings(p, ctx()).join(" ")).toContain("não significa que você não se movimentou");
+    expect(patientReadings(p, ctx()).join(" ")).not.toContain("você registrou");
   });
 });

@@ -500,6 +500,9 @@ export function periodReadings(p: PeriodAnalysis, ctx: AnalysisContext, extra?: 
     return out;
   }
   out.push(`Meta da OMS (≥${WHO_MODERATE_MIN} min moderados equivalentes por semana) cumprida em ${p.whoWeeksMet} de ${n} semanas; média de ${p.avgEquivalent} min/semana.`);
+  const totalMinutes = p.sessions.filter((s) => s.aerobic).reduce((sum, s) => sum + s.durationMin, 0);
+  out.push(`Trabalho realizado: ${plural(p.aerobicSessions, "sessão aeróbia", "sessões aeróbias")} e ${fmtNum(totalMinutes)} minutos registrados no período, incluindo atividade leve. Esse esforço deve ser valorizado mesmo abaixo da referência da OMS; os registros não representam necessariamente toda a atividade realizada.`);
+  if (p.whoWeeksMet < n) out.push("Próximo passo: revisar frequência e duração com progressão individualizada conforme tolerância e perfil, sem compensar a meta com intensidade acima do teto. Semanas sem registro não comprovam inatividade.");
   if (ctx.ceiling.ceiling && p.monitoredSessions > 0) {
     out.push(p.counts.aboveCeiling > 0
       ? `${p.counts.aboveCeiling} de ${plural(p.monitoredSessions, "sessão monitorada", "sessões monitoradas")} passaram do teto de ${ctx.ceiling.ceiling} bpm.`
@@ -544,22 +547,31 @@ export function periodReadings(p: PeriodAnalysis, ctx: AnalysisContext, extra?: 
 export function patientReadings(p: PeriodAnalysis, ctx: AnalysisContext): string[] {
   const out: string[] = [];
   const n = p.weeks.length;
-  if (p.aerobicSessions === 0) return ["Ainda não há treinos aeróbios registrados neste período."];
+  if (p.aerobicSessions === 0) return ["Ainda não há treinos aeróbios registrados neste período. Isso não significa que você não se movimentou; registrar suas atividades ajuda a reconhecer seu esforço e combinar os próximos passos."];
+  const totalMinutes = p.sessions.filter((s) => s.aerobic).reduce((sum, s) => sum + s.durationMin, 0);
+  out.push(`Seu esforço conta: você registrou ${plural(p.aerobicSessions, "treino", "treinos")} e ${fmtNum(totalMinutes)} minutos de atividade neste período, incluindo os momentos mais leves. Cada atividade realizada merece ser reconhecida, mesmo quando a meta ainda não foi alcançada.`);
   out.push(p.whoWeeksMet === n
     ? `Você atingiu a meta de atividade física em todas as ${n} semanas. Excelente!`
-    : `Você atingiu a meta de atividade física em ${p.whoWeeksMet} de ${n} semanas. A meta é somar pelo menos ${WHO_MODERATE_MIN} minutos de atividade moderada por semana.`);
-  if (ctx.ceiling.ceiling) {
+    : p.whoWeeksMet > 0
+      ? `Você atingiu a referência da OMS em ${p.whoWeeksMet} de ${n} semanas registradas. Essa conquista vale ser celebrada; nas demais semanas, a atividade realizada também conta.`
+      : "Nos registros deste período, você ainda não atingiu a referência semanal da OMS. Isso não apaga o que você já fez: atividade abaixo dessa referência também conta.");
+  if (p.whoWeeksMet < n) out.push(`Como próximo passo, combine com seu fisioterapeuta uma frequência e uma duração possíveis para sua rotina, aumentando aos poucos conforme sua tolerância. Os ${WHO_MODERATE_MIN} minutos moderados por semana são uma referência geral, não uma cobrança nem uma autorização para ultrapassar seu limite. Semanas sem registro não significam semanas sem atividade.`);
+  if (ctx.ceiling.ceiling && p.monitoredSessions > 0) {
     out.push(p.counts.aboveCeiling > 0
       ? `Em ${plural(p.counts.aboveCeiling, "treino", "treinos")} seu coração passou do limite combinado (${ctx.ceiling.ceiling} batimentos por minuto). Vale reduzir o ritmo quando chegar perto dele.`
       : `Seu coração ficou dentro do limite combinado (${ctx.ceiling.ceiling} batimentos por minuto) em todos os treinos medidos.`);
   }
-  if (p.recoveryTrend && p.recoveryTrend.last > p.recoveryTrend.first) out.push("Seu coração está se recuperando mais rápido depois do esforço, um ótimo sinal de condicionamento.");
-  else if (p.counts.recoveryLow > 0) out.push("Em alguns treinos o coração demorou a desacelerar depois do esforço. Seu fisioterapeuta vai acompanhar isso de perto.");
-  if (p.efficiencyTrend && p.efficiencyTrend.changePct >= 3) out.push("Você está fazendo o mesmo esforço com menos batimentos: seu condicionamento está melhorando.");
-  if (p.distribution?.status === "excess") out.push("A maior parte dos seus treinos está forte demais. Treinos mais leves também fazem você evoluir, e com menos risco.");
+  if (p.recoveryTrend && p.recoveryTrend.last > p.recoveryTrend.first) out.push("Nos registros, seu coração está se recuperando mais rápido depois do esforço. É um ponto positivo para acompanhar com seu fisioterapeuta, comparando treinos em condições semelhantes.");
+  if (p.recoveryTrend && p.recoveryTrend.last < p.recoveryTrend.first) out.push("Nos registros mais recentes, os batimentos diminuíram menos no primeiro minuto após o esforço. Vale revisar com seu fisioterapeuta a recuperação e as condições dos treinos.");
+  if (p.counts.recoveryLow > 0) out.push("Em alguns treinos o coração demorou a desacelerar depois do esforço. Mesmo que a média tenha melhorado, seu fisioterapeuta deve acompanhar esses episódios de perto.");
+  if (p.efficiencyTrend && p.efficiencyTrend.changePct >= 3) out.push("Você percorreu mais metros por batimento nos registros recentes. É um resultado encorajador; compare treinos em condições semelhantes antes de concluir que o condicionamento melhorou.");
+  if (p.efficiencyTrend && p.efficiencyTrend.changePct <= -3) out.push("Nos registros recentes, você percorreu menos metros por batimento. Converse com seu fisioterapeuta sobre ritmo, recuperação e condições dos treinos antes de aumentar a carga.");
+  if (p.distribution?.status === "balanced") out.push("Sua distribuição de intensidade está coerente com a referência usada nesta análise, com espaço para os treinos mais leves.");
+  if (p.distribution?.status === "excess") out.push("Uma parcela maior que a referência do seu tempo de treino foi intensa. Vale abrir mais espaço para atividades leves, sem desvalorizar os treinos já feitos.");
+  if (p.distribution?.status === "low_stimulus") out.push("Seus registros têm pouco tempo de treino intenso para a referência esportiva. Seu fisioterapeuta pode revisar se isso corresponde à fase atual do seu treino; não aumente a intensidade por conta própria.");
   if (p.prescribed) out.push(p.prescribed.pct >= 80
     ? "Você treinou na intensidade combinada na maior parte das vezes. Continue assim!"
-    : "Alguns treinos ficaram mais fortes do que o combinado. Tente manter o esforço entre leve e moderado.");
+    : "Parte dos treinos ficou fora da faixa combinada de esforço ou batimentos. Revise com seu fisioterapeuta como ajustar a intensidade ao seu momento.");
   if (p.counts.spo2Low > 0) out.push("Em algum treino a oxigenação ficou baixa. Se sentir falta de ar, tontura ou dor no peito, pare e avise seu profissional.");
   if (ctx.betaBlocker) out.push("Como você usa um remédio que deixa os batimentos mais baixos, guie-se principalmente pela sensação de esforço.");
   return out;

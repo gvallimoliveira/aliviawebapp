@@ -127,7 +127,7 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
   };
 
   return (
-    <div className="space-y-4 rounded-xl border border-border bg-card p-3 sm:p-4">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="min-w-0 text-xs text-muted-foreground">
           Perfil <strong className="text-foreground">{profileRule(profile).label}</strong>
@@ -136,10 +136,9 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
         </p>
         <div className="flex rounded-lg border border-border p-0.5" role="group" aria-label="Período da análise">
           {PERIODS.map((w) => (
-            <button key={w} type="button" aria-pressed={weeks === w} onClick={() => setWeeks(w)}
-              className={`rounded-md px-2.5 py-1 text-xs transition ${weeks === w ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+            <Button key={w} type="button" variant={weeks === w ? "default" : "ghost"} size="sm" aria-pressed={weeks === w} onClick={() => setWeeks(w)} className="h-7 rounded-md px-2.5 text-xs">
               {w} sem.
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -260,7 +259,7 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
           </>)}
 
           <div className="space-y-1">
-            <p className="text-xs font-medium text-foreground">Leituras do período</p>
+            <p className="text-xs font-medium text-foreground">Conquistas e pontos a acompanhar</p>
             <ul className="space-y-1">
               {readings.map((r) => <li key={r} className="flex gap-1.5 text-xs text-foreground"><span className="shrink-0 text-primary">•</span><span>{r}</span></li>)}
             </ul>

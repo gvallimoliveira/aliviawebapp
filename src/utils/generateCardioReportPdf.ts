@@ -148,7 +148,7 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
         o.ceiling.ceiling
           ? `Seu limite de batimentos nos treinos: ${o.ceiling.ceiling} batimentos por minuto. Se o monitor mostrar mais que isso, diminua o ritmo.`
           : "Seu limite de batimentos será definido pelo seu fisioterapeuta.",
-        `Sua meta: ${goal.weekly.replace(/\(.*?\)/g, "").trim()}.`,
+        `Referência para construir com seu fisioterapeuta: ${goal.weekly.replace(/\(.*?\)/g, "").trim()}. Atividades abaixo dessa referência também contam; a progressão deve respeitar sua tolerância.`,
         ...(o.betaBlocker ? ["Como você usa um remédio que deixa os batimentos mais baixos, guie-se principalmente pela sensação de esforço."] : []),
       ];
   font(8.5);
@@ -165,6 +165,13 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
     ly += lines.length * 4;
   });
   y += profH + 4;
+
+  // Valorizar o trabalho realizado antes da comparação gráfica na versão do paciente.
+  if (!tech) {
+    section("Seu esforço, suas conquistas e próximos passos", bulletsHeight(o.readings));
+    bullets(o.readings);
+    y += 3;
+  }
 
   // ── Indicadores ────────────────────────────────────────────────────────
   const kpis: Array<[string, string, boolean?]> = [
@@ -291,9 +298,11 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
   }
 
   // ── Leituras ───────────────────────────────────────────────────────────
-  section(tech ? "Leituras do período" : "O que os seus números mostram", bulletsHeight(o.readings));
-  bullets(o.readings);
-  y += 3;
+  if (tech) {
+    section("Trabalho realizado e pontos a acompanhar", bulletsHeight(o.readings));
+    bullets(o.readings);
+    y += 3;
+  }
 
   // ── Sessões (técnica) ──────────────────────────────────────────────────
   if (tech && p.sessions.length) {
