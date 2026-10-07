@@ -90,7 +90,8 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
     [summary],
   );
 
-  const hasTarget = summary.byTrack.some((t) => t.planned > 0);
+  const hasTarget = summary.byTrack.some((t) => t.planned > 0) || summary.unanswered.length > 0 || summary.upcoming.length > 0;
+  const today = localISODate();
 
   // Prescrição de dose
   const [open, setOpen] = useState(false);
@@ -288,6 +289,15 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
               </div>
             )}
 
+            {(summary.unanswered.length > 0 || summary.upcoming.length > 0 || summary.extras.length > 0) && (
+              <p className="text-[11px] text-muted-foreground">
+                A comparação usa só sessões já realizadas e com resposta.
+                {summary.unanswered.length > 0 && ` ${summary.unanswered.length} sem resposta (o paciente pode informar até 7 dias depois pelo link).`}
+                {summary.upcoming.length > 0 && ` ${summary.upcoming.length} a realizar.`}
+                {summary.extras.length > 0 && ` ${summary.extras.length} treino(s) extra(s) fora do planejado.`}
+              </p>
+            )}
+
             {pairs.length > 0 && (
               <div className="space-y-1">
                 <p className="text-xs font-medium text-foreground">Sessão por sessão</p>
@@ -300,7 +310,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                         {p.session.title ? ` · ${p.session.title}` : ""}
                       </span>
                       <span className="text-foreground whitespace-nowrap">
-                        {p.plannedLoad} → {p.ratio === null ? "sem resposta" : p.realLoad}
+                        {p.plannedLoad} → {p.ratio !== null ? p.realLoad : p.session.session_date > today ? "a realizar" : "sem resposta"}
                         {p.verdict ? ` · ${DOSE_LABEL[p.verdict]}` : ""}
                       </span>
                     </div>

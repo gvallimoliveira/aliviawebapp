@@ -405,6 +405,12 @@ export interface DoseAdherenceSummary {
   weekEnd: string;
   byTrack: TrackAdherence[];
   total: TrackAdherence;
+  /** Sessões passadas sem sRPE: ficam à parte, nunca contam como subdose. */
+  unanswered: PlannedDoseLike[];
+  /** Sessões futuras da semana: fora da soma até acontecerem. */
+  upcoming: PlannedDoseLike[];
+  /** Treinos relatados sem sessão planejada correspondente. */
+  extras: SrpeEntryLike[];
 }
 
 const TRACKS: LoadTrack[] = ["physio", "gym", "sport", "cardio"];
@@ -430,9 +436,10 @@ const addIsoDays = (iso: string, n: number): string => {
  * subdose em uma e superdose em outra.
  */
 export function adherenceByTrack(
-  entries: SrpeEntryLike[],
+  entries: Array<SrpeEntryLike & { session_id?: string | null }>,
   sessions: PlannedDoseLike[],
   weekStart: string = weekStartOf(),
+  today: string = localISODate(),
 ): DoseAdherenceSummary {
   const weekEnd = addIsoDays(weekStart, 6);
   const inWeek = (iso: string) => {
@@ -444,21 +451,38 @@ export function adherenceByTrack(
   const real: Record<LoadTrack, number> = { physio: 0, gym: 0, sport: 0, cardio: 0 };
   const plannedParts: Record<LoadTrack, string[]> = { physio: [], gym: [], sport: [], cardio: [] };
   const realParts: Record<LoadTrack, string[]> = { physio: [], gym: [], sport: [], cardio: [] };
+  const unanswered: PlannedDoseLike[] = [];
+  const upcoming: PlannedDoseLike[] = [];
 
+  // Regra única: só entram na comparação sessões já realizadas (data ≤ hoje)
+  // E com resposta (sRPE do paciente ou do profissional). Sessão passada sem
+  // nota fica "sem resposta" e sessão futura fica "a realizar" — nenhuma das
+  // duas vira subdose.
+  const weekEntries = entries.filter((e) => inWeek(e.session_date));
+  const used = new Set<SrpeEntryLike>();
   sessions.forEach((s) => {
     if (!inWeek(s.session_date)) return;
-    const track = normalizeTrack(s.track);
     const load = plannedLoad(s.planned_duration_min, s.planned_rpe);
+    if (load <= 0) return;
+    if (s.session_date.slice(0, 10) > today) { upcoming.push(s); return; }
+    const matched = weekEntries.filter((e) => !used.has(e) && (
+      s.id && e.session_id
+        ? e.session_id === s.id
+        : e.session_date.slice(0, 10) === s.session_date.slice(0, 10) && normalizeTrack(e.track) === normalizeTrack(s.track)
+    ));
+    if (!matched.length) { unanswered.push(s); return; }
+    const track = normalizeTrack(s.track);
     planned[track] += load;
-    if (load > 0) plannedParts[track].push(`${s.planned_duration_min}×${s.planned_rpe} = ${load}`);
+    plannedParts[track].push(`${s.planned_duration_min}×${s.planned_rpe} = ${load}`);
+    matched.forEach((e) => {
+      used.add(e);
+      const r = trainingLoad(e.duration_min, e.rpe);
+      real[track] += r;
+      if (r > 0) realParts[track].push(`${e.duration_min}×${e.rpe} = ${r}`);
+    });
   });
-  entries.forEach((e) => {
-    if (!inWeek(e.session_date)) return;
-    const track = normalizeTrack(e.track);
-    const load = trainingLoad(e.duration_min, e.rpe);
-    real[track] += load;
-    if (load > 0) realParts[track].push(`${e.duration_min}×${e.rpe} = ${load}`);
-  });
+  // Treinos extras (sem sessão planejada) aparecem à parte, fora da razão.
+  const extras = weekEntries.filter((e) => !used.has(e) && trainingLoad(e.duration_min, e.rpe) > 0);
 
   const bounds = { min: DOSE_WEEK_ON_TARGET_MIN, max: DOSE_WEEK_ON_TARGET_MAX };
   // Cardio só aparece quando há dose planejada ou relatada (frente opcional).
@@ -491,6 +515,9 @@ export function adherenceByTrack(
       plannedParts: TRACKS.flatMap((t) => plannedParts[t]),
       realParts: TRACKS.flatMap((t) => realParts[t]),
     },
+    unanswered,
+    upcoming,
+    extras,
   };
 }
 

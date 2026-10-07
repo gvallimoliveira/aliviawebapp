@@ -221,6 +221,21 @@ describe("dose planejada x percebida", () => {
     expect(repeatedDoseDeviation(pairs)).toEqual([{ track: "gym", verdict: "under" }]);
   });
 
+  it("sessão passada sem nota e sessão futura não viram subdose", () => {
+    const sessions = [
+      { id: "ontem", session_date: "2026-10-06", track: "physio", planned_duration_min: 50, planned_rpe: 8 },
+      { id: "quinta", session_date: "2026-10-08", track: "physio", planned_duration_min: 50, planned_rpe: 7 },
+    ];
+    const summary = adherenceByTrack([], sessions, "2026-10-05", "2026-10-07");
+    expect(summary.total.planned).toBe(0);
+    expect(summary.total.verdict).toBeNull();
+    expect(summary.unanswered.map((s) => s.id)).toEqual(["ontem"]);
+    expect(summary.upcoming.map((s) => s.id)).toEqual(["quinta"]);
+    const answered = adherenceByTrack(
+      [{ session_date: "2026-10-06", track: "physio", duration_min: 50, rpe: 8 }], sessions, "2026-10-05", "2026-10-07");
+    expect(answered.total.verdict).toBe("on_target");
+  });
+
   it("sem alvo prescrito não há veredito", () => {
     const summary = adherenceByTrack(
       [{ session_date: "2026-09-01", track: "physio", duration_min: 40, rpe: 6 }],

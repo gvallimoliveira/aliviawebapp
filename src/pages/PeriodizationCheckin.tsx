@@ -146,7 +146,15 @@ interface Info {
     already_reported?: boolean;
   }>;
   week_sessions?: WeekSession[];
+  /** Sessões planejadas dos últimos 7 dias ainda sem sRPE. */
+  pending_sessions?: Array<{ id: string; session_date: string; track: string; planned_duration_min: number | null; title: string | null }>;
+  backfill_from?: string;
 }
+
+const shortBr = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" });
+const lastDays = (today: string, n: number) => Array.from({ length: n + 1 }, (_, i) => {
+  const d = new Date(`${today}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - i); return d.toISOString().slice(0, 10);
+});
 
 
 const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; embedded?: boolean }) => {
@@ -300,6 +308,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
 
   const pickSession = (t: NonNullable<Info["today_targets"]>[number]) => {
     if (t.already_reported) return;
+    setSessionDate("");
     setSelectedSessionId(t.id);
     setTrack(t.track);
     setDuration(t.planned_duration_min ? String(t.planned_duration_min) : "");
@@ -307,9 +316,19 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
     setErrorMsg("");
   };
 
+  const pickPastSession = (t: NonNullable<Info["pending_sessions"]>[number]) => {
+    setSelectedSessionId(t.id);
+    setTrack(t.track);
+    setDuration(t.planned_duration_min ? String(t.planned_duration_min) : "");
+    setSessionDate(t.session_date);
+    setFreeMode(false);
+    setErrorMsg("");
+  };
+
   const submitSrpe = async () => {
     const pendingTargets = (info?.today_targets || []).filter((t) => !t.already_reported);
-    if (!freeMode && pendingTargets.length > 0 && !selectedSessionId) {
+    const isPast = !!sessionDate && sessionDate !== info?.today;
+    if (!isPast && !freeMode && pendingTargets.length > 0 && !selectedSessionId) {
       setErrorMsg("Escolha qual sessão de hoje você fez.");
       return;
     }
@@ -340,6 +359,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
     setSrpeNotes("");
     setRpe(5);
     setSelectedSessionId(null);
+    setSessionDate("");
     // Recarrega os alvos para marcar a sessão como já relatada.
     const refreshed = await fetchInfo();
     if (refreshed) {
@@ -351,6 +371,8 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
 
   const isCoach = info?.audience === "coach";
   const todayTargets = info?.today_targets || [];
+  const pastPending = info?.pending_sessions || [];
+  const answeringPast = !!sessionDate && sessionDate !== info?.today;
   const dateLabel = info?.today
     ? new Date(`${info.today}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
     : "";
@@ -618,6 +640,27 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                     </div>
                   ) : (
                     <>
+                      {pastPending.length > 0 && (
+                        <div className="space-y-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
+                          <span className="text-sm font-medium text-foreground">Sessões dos últimos dias sem resposta</span>
+                          <p className="text-[11px] text-muted-foreground">Você pode informar como foram até 7 dias depois.</p>
+                          <div className="space-y-1.5">
+                            {pastPending.map((t) => {
+                              const active = selectedSessionId === t.id;
+                              return (
+                                <button key={t.id} type="button" onClick={() => pickPastSession(t)}
+                                  className={`w-full text-left rounded-xl border px-3 py-2 transition ${active ? "border-primary bg-primary/5" : "border-border bg-background hover:border-primary/60"}`}>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-medium text-foreground capitalize">{shortBr(t.session_date)} · {TRACK_LABEL[t.track] || t.track}</span>
+                                    {active ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <span className="text-[11px] text-primary">Responder</span>}
+                                  </div>
+                                  {t.title && <p className="text-[11px] text-muted-foreground">{t.title}</p>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                       {todayTargets.length > 0 && !freeMode ? (
                         <div className="space-y-2">
                           <span className="text-sm font-medium text-foreground">Suas sessões de hoje</span>
@@ -668,12 +711,25 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                             onClick={() => { setFreeMode(true); setSelectedSessionId(null); setDuration(""); }}
                             className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-primary"
                           >
-                            Fiz outra atividade não planejada
+                            Registrar treino extra (hoje ou até 7 dias atrás)
                           </button>
                         </div>
                       ) : (
                         <div className="space-y-1.5">
-                          <span className="text-sm font-medium text-foreground">Tipo de sessão</span>
+                          <span className="text-sm font-medium text-foreground">Dia da sessão</span>
+                          {info?.today && (
+                            <select
+                              value={sessionDate || info.today}
+                              onChange={(e) => { setSessionDate(e.target.value === info.today ? "" : e.target.value); setSelectedSessionId(null); }}
+                              className="w-full h-9 rounded-xl border border-input bg-background px-3 text-sm capitalize"
+                              aria-label="Dia da sessão"
+                            >
+                              {lastDays(info.today, 7).map((d, i) => (
+                                <option key={d} value={d}>{i === 0 ? "Hoje" : i === 1 ? "Ontem" : shortBr(d)}</option>
+                              ))}
+                            </select>
+                          )}
+                          <span className="text-sm font-medium text-foreground pt-1 block">Tipo de sessão</span>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {Object.entries(TRACK_LABEL).map(([key, label]) => (
                               <Button
@@ -716,6 +772,9 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                             if (parts.length) setSrpeNotes((n) => [n, `Print: ${parts.join(", ")}`].filter(Boolean).join(" · "));
                           }}
                         />
+                      )}
+                      {answeringPast && !freeMode && (
+                        <p className="text-xs font-medium text-primary">Respondendo a sessão de {shortBr(sessionDate)}</p>
                       )}
                       <div className="space-y-1.5">
                         <span className="text-sm font-medium text-foreground">
