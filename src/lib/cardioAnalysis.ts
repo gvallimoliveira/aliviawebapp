@@ -508,7 +508,7 @@ export function periodReadings(p: PeriodAnalysis, ctx: AnalysisContext, extra?: 
   if (p.counts.spo2Low > 0) out.push(`${plural(p.counts.spo2Low, "sessão", "sessões")} com SpO₂ abaixo de ${SPO2_ALERT}%: conferir sintomas e considerar avaliação médica.`);
   if (p.recoveryTrend) {
     const better = p.recoveryTrend.last > p.recoveryTrend.first;
-    out.push(`Recuperação da FC no 1º minuto ${better ? "melhorou" : p.recoveryTrend.last < p.recoveryTrend.first ? "piorou" : "ficou estável"}: média de ${fmtNum(p.recoveryTrend.first)} → ${fmtNum(p.recoveryTrend.last)} bpm.`);
+    out.push(`Recuperação da FC no 1º minuto ${better ? "melhorou" : p.recoveryTrend.last < p.recoveryTrend.first ? "piorou" : "ficou estável"}: média de ${Math.round(p.recoveryTrend.first)} → ${Math.round(p.recoveryTrend.last)} bpm.`);
   } else if (p.avgRecovery !== null) {
     out.push(`Recuperação média da FC no 1º minuto: ${p.avgRecovery} bpm.`);
   }
@@ -534,7 +534,7 @@ export function periodReadings(p: PeriodAnalysis, ctx: AnalysisContext, extra?: 
     const t = p.powerTrend;
     out.push(`Eficiência na bicicleta (W por bpm): ${fmtNum(t.first)} → ${fmtNum(t.last)} (${t.changePct > 0 ? "+" : ""}${t.changePct}%).`);
   }
-  if (p.restingTrend) out.push(`FC ao acordar (média semanal): ${fmtNum(p.restingTrend.first)} → ${fmtNum(p.restingTrend.last)} bpm.`);
+  if (p.restingTrend) out.push(`FC ao acordar (média semanal): ${fmtNum(Math.round(p.restingTrend.first * 10) / 10)} → ${fmtNum(Math.round(p.restingTrend.last * 10) / 10)} bpm.`);
   if (extra?.matrixText) out.push(`Leitura do momento (ACWR cardio × FC ao acordar): ${extra.matrixText}`);
   if (ctx.betaBlocker) out.push("Paciente em uso de betabloqueador: intensidade avaliada pela PSE; FC usada só como apoio.");
   return out;
