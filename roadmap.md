@@ -234,3 +234,9 @@
 ## Controle de carga: leitura e legibilidade (07/10)
 - [x] Manter o card de teto de frequência cardíaca recolhido por padrão, com resumo de teto e atenções no cabeçalho.
 - [x] Impedir que a trilha lateral de atalhos cubra títulos dos cards do prontuário em telas largas.
+
+## Análise cardiovascular e relatório (07/10)
+- [x] Campos opcionais na sessão monitorada: FC 1 min após, distância e potência; betabloqueador no card do teto.
+- [x] Painel "Análise cardiovascular e relatório" (4/8/12 semanas): meta OMS, zonas, teto, recuperação, coerência, eficiência, distribuição/zona prescrita, análise por sessão.
+- [x] Relatório em PDF técnico e versão do paciente, com envio pelo celular.
+- [x] Suporte profissional e da clínica (pt/en/es).
