@@ -1,5 +1,10 @@
 # Roadmap
 
+## Relatório positivo e análise em janela separada (07/10)
+- [ ] Reconhecer esforço abaixo da meta OMS e equilibrar conquistas com próximos passos sem ocultar alertas.
+- [ ] Abrir análise e relatórios em modal, com apenas acesso compacto no prontuário.
+- [ ] Atualizar ajuda e validar textos, PDFs e abertura/fechamento da janela.
+
 ## Leitura parcial e totais da dose semanal (07/10)
 - [x] Separar total planejado semanal e real registrado da comparação respondida.
 - [x] Mostrar sessões respondidas/previstas na classificação, preservando o gráfico e os cálculos.
