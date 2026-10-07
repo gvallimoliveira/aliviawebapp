@@ -230,3 +230,7 @@
 ## Alinhamento universal do modelo das pedras (24/09)
 - [x] Prender as duas setas, o caminho e os textos ao mesmo eixo central em qualquer marca.
 - [x] Proteger a regra compartilhada contra regressões específicas de marca.
+
+## Controle de carga: leitura e legibilidade (07/10)
+- [x] Manter o card de teto de frequência cardíaca recolhido por padrão, com resumo de teto e atenções no cabeçalho.
+- [x] Impedir que a trilha lateral de atalhos cubra títulos dos cards do prontuário em telas largas.
