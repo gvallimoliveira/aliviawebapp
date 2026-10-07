@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
 import { fetchCheckins, fetchSrpe, type PeriodizationPlan, type ReadinessCheckin, type SrpeEntry } from "@/lib/periodizationData";
-import { acwr, localISODate, restingHrStatus } from "@/lib/periodization";
+import { acwr, localISODate, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import { DEFAULT_CARDIO_PROFILE, ageFromBirth, cardioMatrix, hrCeiling, profileRule } from "@/lib/cardioSafety";
 import {
   CARDIO_REFERENCES, WHO_MODERATE_MIN, addIsoDays, analyzePeriod, fmtNum, patientReadings, periodReadings, profileGoal, shortDate,
@@ -73,7 +73,7 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
   const matrixText = useMemo(() => {
     if (!data) return null;
     const ratio = acwr(data.srpe.filter((e) => e.track === "cardio") as any);
-    return ratio === null ? null : cardioMatrix(ratio, restingHrStatus(data.checkins).delta, profile).text;
+    return ratio === null ? null : cardioMatrix(ratio, restingHrStatus(data.checkins).delta, profile, recoverySignal(data.checkins as any, profileRule(profile).rhrAlert).strained).text;
   }, [data, profile]);
   const readings = useMemo(() => analysis ? periodReadings(analysis, ctx, { matrixText }) : [], [analysis, ctx, matrixText]);
   const monitored = useMemo(() => analysis ? [...analysis.sessions].reverse().filter((s) => s.hrAvg !== null || s.hrMax !== null || s.zones !== null) : [], [analysis]);

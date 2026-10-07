@@ -98,15 +98,27 @@ export const OXIMETER_GUIDE =
 
 export type CardioQuadrant = "optimal" | "msk_spike" | "overreaching" | "extra_stress" | "detraining" | "insufficient";
 
-/** Matriz ACWR cardio × desvio da FC de repouso, com a régua do perfil. Sempre sugestão. */
-export function cardioMatrix(ratio: number | null, rhrDelta: number | null, profile?: string | null): { quadrant: CardioQuadrant; text: string } {
+/**
+ * Matriz ACWR cardio × recuperação, com a régua do perfil. Sempre sugestão.
+ * Recuperação: FC ao acordar (prioritária, quando há linha de base) ou, na
+ * falta dela, a prontidão do check-in (`readinessStrained`).
+ */
+export function cardioMatrix(
+  ratio: number | null,
+  rhrDelta: number | null,
+  profile?: string | null,
+  readinessStrained = false,
+): { quadrant: CardioQuadrant; text: string } {
   const r = profileRule(profile);
   if (ratio === null) return { quadrant: "insufficient", text: "Histórico de cardio insuficiente (mínimo 4 sessões em 14 dias)." };
   const hrHigh = rhrDelta !== null && rhrDelta >= r.rhrAlert;
-  if (ratio > r.acwrAlert && hrHigh) return { quadrant: "overreaching", text: "Possível overreaching não funcional: sugere deload (−50% da duração ou PSE ≤4)." };
-  if (ratio > r.acwrAlert) return { quadrant: "msk_spike", text: "Pico agudo de carga: sugere reduzir o impacto." };
-  if (ratio < 0.8 && hrHigh) return { quadrant: "extra_stress", text: "Estresse fora do treino (sono, emocional ou início de infecção): investigue." };
-  if (ratio < 0.8) return { quadrant: "detraining", text: "Destreino ou polimento." };
+  const strained = hrHigh || readinessStrained;
+  const why = hrHigh ? "FC ao acordar elevada" : "prontidão baixa no check-in";
+  if (ratio > r.acwrAlert && strained) return { quadrant: "overreaching", text: `Carga alta com ${why}: possível overreaching não funcional. Sugere deload (−50% da duração ou PSE ≤4).` };
+  if (ratio > r.acwrAlert) return { quadrant: "msk_spike", text: "Pico agudo de carga com recuperação preservada: segure novos incrementos e reduza o impacto." };
+  if (ratio < 0.8 && strained) return { quadrant: "extra_stress", text: `Carga baixa com ${why}: provável estresse fora do treino (sono, emocional, início de infecção). Investigue antes de progredir.` };
+  if (ratio < 0.8) return { quadrant: "detraining", text: "Carga abaixo do habitual com boa recuperação: há espaço para progredir até 10%." };
+  if (strained) return { quadrant: "extra_stress", text: `Carga na faixa, mas ${why}: mantenha a dose e acompanhe o próximo check-in.` };
   if (ratio <= r.acwrMax) return { quadrant: "optimal", text: "Adaptação aeróbia na faixa ideal." };
   return { quadrant: "msk_spike", text: "Carga cardio acima da faixa ideal do perfil: atenção." };
 }

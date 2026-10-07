@@ -4,7 +4,7 @@
  * intensos seguidos, ajuste do dia pela FC ao acordar / prontidão.
  */
 import { profileRule } from "./cardioSafety";
-import { readinessScore, restingHrStatus } from "./periodization";
+import { readinessDrop, readinessScore, restingHrStatus } from "./periodization";
 
 export interface PlanEntry { session_date: string; training_load: number; track?: string | null }
 export interface SuggestedSession { date: string; track: string; duration: number; rpe: number; kind: "hard" | "light" }
@@ -126,14 +126,16 @@ export function adjustToday(
   const today = checkins.find((c) => c.checkin_date === todayISO);
   if (!today) return null;
   const hr = restingHrStatus(checkins as any);
+  // FC ao acordar é opcional e prioritária; a prontidão do check-in é a base universal.
   const hrHigh = hr.latestDate === todayISO && hr.delta !== null && hr.delta >= rule.rhrAlert;
   const score = readinessScore(today as any);
-  const low = score !== null && score < 40;
+  const drop = readinessDrop(checkins as any);
+  const low = (score !== null && score < 40) || (drop !== null && drop.current === score);
   if (!hrHigh && !low) return null;
   const dur = session.planned_duration_min ?? 0;
   const rpe = session.planned_rpe ?? 0;
   return {
-    reason: hrHigh ? `FC ao acordar +${hr.delta} bpm` : `prontidão baixa (${score}/100)`,
+    reason: hrHigh ? `FC ao acordar +${hr.delta} bpm` : drop && (score ?? 100) >= 40 ? `queda de ${drop.drop} pontos na prontidão (${score}/100)` : `prontidão baixa (${score}/100)`,
     duration: Math.max(10, Math.round(dur / 2)),
     rpe: Math.min(rpe || 4, 4),
   };

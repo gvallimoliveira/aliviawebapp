@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
 import type { PeriodizationPlan, ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
-import { acwr, restingHrStatus } from "@/lib/periodization";
+import { acwr, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import {
   CARDIO_PROFILES, DEFAULT_CARDIO_PROFILE, OXIMETER_GUIDE, SPO2_ALERT,
   ageFromBirth, cardioMatrix, checkinSafetyFlags, comorbidityHint, hrCeiling, profileRule,
@@ -61,7 +61,8 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
 
   const cardioRatio = useMemo(() => acwr(entries.filter((e: any) => e.track === "cardio") as any), [entries]);
   const rhr = useMemo(() => restingHrStatus(checkins), [checkins]);
-  const matrix = cardioMatrix(cardioRatio, rhr.delta, profile);
+  const recovery = useMemo(() => recoverySignal(checkins as any, profileRule(profile).rhrAlert), [checkins, profile]);
+  const matrix = cardioMatrix(cardioRatio, rhr.delta, profile, recovery.strained);
 
   const flagged = useMemo(
     () => checkins

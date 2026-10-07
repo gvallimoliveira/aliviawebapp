@@ -20,3 +20,23 @@ describe("cardioMatrix", () => {
     expect(cardioMatrix(0.6, 6, "cardiac").quadrant).toBe("extra_stress");
   });
 });
+
+import { recoverySignal } from "@/lib/periodization";
+describe("recoverySignal", () => {
+  const ck = (d: string, readiness: number, extra: Record<string, number> = {}) => ({ checkin_date: d, readiness, sleep: readiness, ...extra });
+  it("usa a prontidão quando não há FC matinal", () => {
+    const s = recoverySignal([ck("2026-10-01", 8), ck("2026-10-02", 8), ck("2026-10-03", 8), ck("2026-10-04", 2)]);
+    expect(s.source).toBe("readiness");
+    expect(s.strained).toBe(true);
+  });
+  it("FC matinal elevada prevalece mesmo com prontidão boa", () => {
+    const rows = [55, 56, 55, 64].map((hr, i) => ck(`2026-10-0${i + 1}`, 8, { resting_hr: hr }));
+    const s = recoverySignal(rows);
+    expect(s.source).toBe("both");
+    expect(s.level).toBe("danger");
+  });
+  it("matriz usa prontidão como fallback", () => {
+    expect(cardioMatrix(1.6, null, "healthy", true).quadrant).toBe("overreaching");
+    expect(cardioMatrix(1.6, null, "healthy", false).quadrant).toBe("msk_spike");
+  });
+});
