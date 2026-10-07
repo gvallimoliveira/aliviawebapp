@@ -637,7 +637,9 @@ export default function PatientDetailView(props: any) {
   };
 
   return (
-    <div className="min-w-0 space-y-5">
+    // lg:pl-[68px] abre espaço para a trilha fixa de atalhos (left-2 + w-[52px]),
+    // que de outra forma cobriria a primeira letra dos títulos dos cards.
+    <div className="min-w-0 space-y-5 lg:pl-[68px]">
       <PatientSectionRail riskLevel={healthRisk?.level ?? null} />
       <div className="flex items-center justify-between">
 
