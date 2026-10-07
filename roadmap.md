@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Leitura parcial e totais da dose semanal (07/10)
-- [ ] Separar total planejado semanal e real registrado da comparação respondida.
-- [ ] Mostrar sessões respondidas/previstas na classificação, preservando o gráfico e os cálculos.
-- [ ] Atualizar ajuda e validar o exemplo 400 respondido / 750 planejado.
+- [x] Separar total planejado semanal e real registrado da comparação respondida.
+- [x] Mostrar sessões respondidas/previstas na classificação, preservando o gráfico e os cálculos.
+- [x] Atualizar ajuda e validar o exemplo 400 respondido / 750 planejado em testes e tela isolada, incluindo largura de 390 px.
 
 ## Sessões monitoradas e idade atualizada (06/10)
 - [x] Corrigir sobreposição dos campos e conferir apresentação isolada em largura de 390 px.
