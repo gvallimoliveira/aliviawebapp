@@ -2,7 +2,7 @@
 
 - Cardiovascular views use `usePatientBirthDate` to refresh demographics after patient record edits and on refocus; age-dependent estimates must not remain stale or reset unsaved session inputs.
 
-- Periodization link actions must explicitly use button type="button"; these controls can be embedded inside patient-record forms and must never submit them.
+- Periodization buttons use type="button"; they sit inside patient-record forms.
 
 - Studio copy lists use the shared `listCoherence.ts` guard at final voice review and rendering; semantic deduplication keeps original complementary arguments without padding or modifying media metadata.
 - Studio list editing targets the text leaf rather than the icon-bearing row and rejects positional snapshots with mismatched slot counts; this preserves icons and prevents stale edits shifting into labels after deduplication.
@@ -22,6 +22,7 @@
 - Weekly dose display derives full-week targets and recorded-to-date totals separately from answered-session adherence, with answered/scheduled counts per track; this preserves partial comparison and chart semantics without turning future or unanswered work into underdose.
 - Microcycle planned sessions from today or the previous 7 days open a pre-filled monitored-session dialog on click (MicroWeekGrid → saveProfessionalSession); future sessions stay read-only and the trash action must stopPropagation.
 - Load-control front views show text lists for the last 3 days (grouped by day) and charts for the last 7 rolling days via `loadWindows.ts`, falling back to the most recent days with data; full history is fetched on demand in `LoadHistoryDialog` and never deleted. Risk math (acute/chronic/ACWR, auto plan) ignores these display windows.
-- Patient record content must inset by at least the viewport-fixed `PatientSectionRail` width wherever it renders; container-only spacing leaves titles covered.
+- Patient record content insets by the fixed `PatientSectionRail` width; avoids covered titles.
 - Cardiovascular analysis (session metrics, weekly goals, intensity distribution, trends, readings) and both cardiovascular PDF reports derive only from the pure rule-based `cardioAnalysis.ts`; one deterministic source keeps panel, technical report and patient report consistent without AI credits.
-- Cardiovascular analysis mounts only inside the opened `CardioAnalysisDialog`; a compact trigger avoids inline charts and defers period fetching.
+- Cardio analysis mounts only inside `CardioAnalysisDialog`; keeps the record light.
+- Dashboard/clinic data effects depend on `user?.id`, never the `user` object; token refresh on app return must not reset open screens.
