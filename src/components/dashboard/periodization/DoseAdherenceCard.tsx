@@ -12,6 +12,7 @@ import {
   adherenceByTrack,
   pairSessionsWithSrpe,
   plannedLoad,
+  trainingLoad,
   repeatedDoseDeviation,
   localISODate,
   weekStartOf,
@@ -75,6 +76,23 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
   const summary = useMemo(() => adherenceByTrack(entries, sessions, weekStart), [entries, sessions, weekStart]);
   const pairs = useMemo(() => pairSessionsWithSrpe(sessions, entries), [sessions, entries]);
   const repeated = useMemo(() => repeatedDoseDeviation(pairs), [pairs]);
+  const today = localISODate();
+  const weekly = useMemo(() => {
+    const inWeek = (date: string) => date >= summary.weekStart && date <= summary.weekEnd;
+    const plannedPairs = pairs.filter((p) => inWeek(p.session.session_date) && p.plannedLoad > 0);
+    const actualEntries = entries.filter((e) => inWeek(e.session_date) && e.session_date <= today);
+    const totalsFor = (track?: string) => {
+      const selected = plannedPairs.filter((p) => !track || (p.session.track || "physio") === track);
+      return {
+        planned: selected.reduce((sum, p) => sum + p.plannedLoad, 0),
+        real: actualEntries.filter((e) => !track || (e.track || "physio") === track)
+          .reduce((sum, e) => sum + trainingLoad(e.duration_min, e.rpe), 0),
+        scheduled: selected.length,
+        answered: selected.filter((p) => p.session.session_date <= today && p.ratio !== null).length,
+      };
+    };
+    return { total: totalsFor(), byTrack: Object.fromEntries(summary.byTrack.map((t) => [t.track, totalsFor(t.track)])) };
+  }, [pairs, entries, summary, today]);
 
   const chartData = useMemo(
     () =>
@@ -90,8 +108,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
     [summary],
   );
 
-  const hasTarget = summary.byTrack.some((t) => t.planned > 0) || summary.unanswered.length > 0 || summary.upcoming.length > 0;
-  const today = localISODate();
+  const hasTarget = weekly.total.planned > 0 || weekly.total.real > 0;
 
   // Prescrição de dose
   const [open, setOpen] = useState(false);
@@ -218,33 +235,46 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
           </p>
         ) : (
           <>
+            <div className="grid grid-cols-2 gap-3 border-b border-border pb-3">
+              <div>
+                <p className="text-[11px] text-muted-foreground">Total planejado da semana</p>
+                <p className="text-lg font-semibold text-foreground">{weekly.total.planned} <span className="text-xs font-normal text-muted-foreground">sRPE</span></p>
+              </div>
+              <div>
+                <p className="text-[11px] text-muted-foreground">Total real registrado até hoje</p>
+                <p className="text-lg font-semibold text-foreground">{weekly.total.real} <span className="text-xs font-normal text-muted-foreground">sRPE</span></p>
+              </div>
+            </div>
             <div className="space-y-1.5">
-              {[...summary.byTrack.filter((t) => t.planned > 0 || t.real > 0), summary.total].map((t, i, arr) => {
+              {[...summary.byTrack.filter((t) => weekly.byTrack[t.track]?.scheduled > 0 || weekly.byTrack[t.track]?.real > 0), summary.total].map((t, i, arr) => {
                 const isTotal = i === arr.length - 1;
+                const week = isTotal ? weekly.total : weekly.byTrack[t.track];
                 return (
                   <div
                     key={isTotal ? "total" : t.track}
-                    className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 ${
+                    className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 ${
                       isTotal ? "border-primary/40 bg-muted/40" : "border-border"
                     }`}
                   >
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground">
-                        {isTotal ? "Total da semana" : TRACK_LABEL[t.track]}
+                        {isTotal ? "Comparação das sessões respondidas" : TRACK_LABEL[t.track]}
                       </p>
+                      {!isTotal && <p className="text-[10px] text-muted-foreground">Semana: planejado {week.planned} · Real {week.real}</p>}
                       <p className="text-[10px] text-muted-foreground">
-                        Alvo {t.planned} · Percebido {t.real}
+                        Respondidas: alvo {t.planned} · Percebido {t.real}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 min-w-0">
                       <span className="text-sm font-semibold text-foreground">
                         {t.ratio !== null ? t.ratio.toFixed(2) : "—"}
                       </span>
                       {t.verdict && (
-                        <Badge variant="outline" className={`text-[10px] border-0 ${DOSE_CLASS[t.verdict]}`}>
-                          {DOSE_LABEL[t.verdict]}
+                        <Badge variant="outline" className={`text-[10px] whitespace-normal border-0 ${DOSE_CLASS[t.verdict]}`}>
+                          {DOSE_LABEL[t.verdict]} ({week.answered}/{week.scheduled} sessões semanais)
                         </Badge>
                       )}
+                      {!t.verdict && <span className="text-[10px] text-muted-foreground">Sem comparação ({week.answered}/{week.scheduled} sessões semanais)</span>}
                     </div>
                   </div>
                 );
@@ -274,8 +304,8 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                   .map((t) => (
                     <p key={t.track} className="text-xs text-amber-800 dark:text-amber-300">
                       {TRACK_LABEL[t.track]}: {t.verdict === "under" ? "estímulo abaixo" : "estímulo acima"} do planejado
-                      ({t.ratio?.toFixed(2)}). {t.verdict === "under"
-                        ? "Considere aumentar duração ou intensidade alvo."
+                      ({t.ratio?.toFixed(2)}; {weekly.byTrack[t.track].answered}/{weekly.byTrack[t.track].scheduled} sessões semanais). {t.verdict === "under"
+                        ? "Revise a dose das próximas sessões desta frente, conforme a tolerância e a prontidão."
                         : "Considere reduzir a próxima sessão desta frente."}
                     </p>
                   ))}
