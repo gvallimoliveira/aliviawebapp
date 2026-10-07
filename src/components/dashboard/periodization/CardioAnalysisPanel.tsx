@@ -162,6 +162,11 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
             ))}
           </div>
 
+          {analysis.aerobicSessions === 0 ? (
+            <p className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+              Ainda não há sessões aeróbias neste período. Os gráficos aparecem quando houver sessão de cardio/corrida, outro esporte ou qualquer sessão com FC do monitor. Tente um período maior ou lance uma sessão monitorada.
+            </p>
+          ) : (<>
           <div>
             <p className="text-xs font-medium text-foreground">Minutos aeróbios por semana × meta da OMS</p>
             <p className="mb-1 text-[11px] text-muted-foreground">Vigoroso conta em dobro (1 min vigoroso = 2 moderados). Semanas móveis de 7 dias.</p>
@@ -251,6 +256,8 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
               </div>
             )}
           </div>
+
+          </>)}
 
           <div className="space-y-1">
             <p className="text-xs font-medium text-foreground">Leituras do período</p>
