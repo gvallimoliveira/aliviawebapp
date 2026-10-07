@@ -32,35 +32,72 @@ export function spreadDays(n: number): Array<{ day: number; kind: "hard" | "ligh
   });
 }
 
-export function suggestNextWeek(entries: PlanEntry[], profile?: string | null, ref = new Date()): SuggestedSession[] {
+export interface PlannedLike { session_date: string; track?: string | null; planned_duration_min?: number | null; planned_rpe?: number | null }
+
+/**
+ * Sugere a próxima semana por frente.
+ * Referência: a dose planejada da semana atual (o que o profissional prescreveu);
+ * sem prescrição, a carga real da última semana. Progride 10% só quando as
+ * sessões já respondidas da semana ficaram na dose certa; senão mantém.
+ * O teto de ACWR do perfil só limita quando há ≥3 semanas de histórico real —
+ * com histórico curto a "carga crônica" é artificialmente baixa (ex.: 1 sessão
+ * ÷ 4 semanas) e esmagaria a sugestão.
+ */
+export function suggestNextWeek(
+  entries: PlanEntry[],
+  profile?: string | null,
+  ref = new Date(),
+  planned: PlannedLike[] = [],
+): SuggestedSession[] {
   const rule = profileRule(profile);
-  const hardRpe = profile === "hypertensive" || profile === "cardiac" ? 6 : profile === "sedentary" ? 6 : 7;
+  const intenseRpe = profile === "hypertensive" || profile === "cardiac" ? 6 : profile === "sedentary" ? 6 : 7;
   const lightRpe = 4;
   const monday = nextMonday(ref);
-  const tracks = Array.from(new Set(entries.map((e) => e.track || "physio")));
+  const thisMonday = new Date(monday); thisMonday.setUTCDate(thisMonday.getUTCDate() - 7);
+  const thisMon = iso(thisMonday);
+  const thisSun = iso(new Date(monday.getTime() - 86400000));
+  const todayIso = iso(new Date(Date.UTC(ref.getUTCFullYear(), ref.getUTCMonth(), ref.getUTCDate(), 12)));
+  const tr = (t?: string | null) => t || "physio";
+  const pLoad = (s: PlannedLike) => Math.max(0, Number(s.planned_duration_min || 0) * Number(s.planned_rpe || 0));
+  const tracks = Array.from(new Set([...entries.map((e) => tr(e.track)), ...planned.map((s) => tr(s.track))]));
   const out: SuggestedSession[] = [];
-  const usedDay = new Map<number, number>();
 
   for (const track of tracks) {
-    const rows = entries.filter((e) => (e.track || "physio") === track && daysAgo(e.session_date, ref) >= 0 && daysAgo(e.session_date, ref) < 28);
-    if (!rows.length) continue;
-    const chronicWeekly = rows.reduce((a, e) => a + (Number(e.training_load) || 0), 0) / 4;
+    const rows = entries.filter((e) => tr(e.track) === track && daysAgo(e.session_date, ref) >= 0 && daysAgo(e.session_date, ref) < 28);
+    const weekPlan = planned.filter((s) => tr(s.track) === track && s.session_date >= thisMon && s.session_date <= thisSun && pLoad(s) > 0);
+    if (!rows.length && !weekPlan.length) continue;
+
+    const oldest = rows.reduce((m, e) => Math.max(m, daysAgo(e.session_date, ref)), 0);
+    const realWeeks = rows.length ? Math.max(1, Math.min(4, Math.ceil((oldest + 1) / 7))) : 0;
+    const chronicWeekly = realWeeks ? rows.reduce((a, e) => a + (Number(e.training_load) || 0), 0) / realWeeks : 0;
     const lastWeek = rows.filter((e) => daysAgo(e.session_date, ref) < 7).reduce((a, e) => a + (Number(e.training_load) || 0), 0);
-    const base = lastWeek > 0 ? lastWeek : chronicWeekly;
-    // Meta: progredir até 10%, sem ultrapassar o teto de ACWR do perfil nem cair abaixo de 0,8.
-    let target = Math.min(base * 1.1, chronicWeekly * rule.acwrMax);
-    target = Math.max(target, chronicWeekly * 0.8);
+    const plannedWeek = weekPlan.reduce((a, s) => a + pLoad(s), 0);
+
+    // Aderência das sessões já realizadas e respondidas desta semana.
+    let pDone = 0, rDone = 0;
+    weekPlan.filter((s) => s.session_date <= todayIso).forEach((s) => {
+      const real = rows.filter((e) => e.session_date === s.session_date).reduce((a, e) => a + (Number(e.training_load) || 0), 0);
+      if (real > 0) { pDone += pLoad(s); rDone += real; }
+    });
+    const ratio = pDone > 0 ? rDone / pDone : null;
+    const progress = ratio !== null && ratio >= 0.9 && ratio <= 1.1 ? 1.1 : 1;
+
+    const base = plannedWeek > 0 ? plannedWeek : lastWeek > 0 ? lastWeek : chronicWeekly;
+    let target = base * progress;
+    if (realWeeks >= 3 && chronicWeekly > 0) {
+      target = Math.min(target, chronicWeekly * rule.acwrMax);
+      target = Math.max(target, chronicWeekly * 0.8);
+    }
     if (target <= 0) continue;
-    const perWeek = Math.max(1, Math.min(6, Math.round(rows.filter((e) => e.training_load > 0).length / 4)));
+
+    const perWeek = Math.max(1, Math.min(6, weekPlan.length || Math.round(rows.filter((e) => e.training_load > 0).length / Math.max(1, realWeeks))));
     const slots = spreadDays(perWeek);
-    const weights = slots.map((s) => (s.kind === "hard" ? hardRpe : lightRpe));
+    const weights = slots.map((s) => (s.kind === "hard" ? intenseRpe : lightRpe));
     const wSum = weights.reduce((a, b) => a + b, 0);
     slots.forEach((s, i) => {
       const load = (target * weights[i]) / wSum;
-      const rpe = s.kind === "hard" ? hardRpe : lightRpe;
-      const day = (s.day + (usedDay.get(s.day) ? 0 : 0));
-      usedDay.set(day, (usedDay.get(day) || 0) + 1);
-      const d = new Date(monday); d.setUTCDate(d.getUTCDate() + day);
+      const rpe = s.kind === "hard" ? intenseRpe : lightRpe;
+      const d = new Date(monday); d.setUTCDate(d.getUTCDate() + s.day);
       out.push({ date: iso(d), track, rpe, duration: Math.max(10, Math.round(load / rpe / 5) * 5), kind: s.kind });
     });
   }
