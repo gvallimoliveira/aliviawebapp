@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { HeartPulse, Loader2, Plus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { loadStatus, localISODate, readinessScore, recoverySignal, restingHrStatus, trainingLoad } from "@/lib/periodization";
+import { loadStatus, localISODate, readinessScore, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import type { ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
 import { saveCheckin } from "@/lib/periodizationData";
 import { CHECKIN_ITEMS, LEVEL_CLASS, ZONE_LABEL } from "./scales";
