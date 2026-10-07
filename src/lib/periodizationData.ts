@@ -10,6 +10,8 @@ export interface PeriodizationPlan {
   title: string;
   cardio_profile?: string | null;
   hr_ceiling_override?: number | null;
+  /** Usa betabloqueador: análise cardiovascular guia pela PSE. */
+  beta_blocker?: boolean | null;
   sport: string | null;
   injured_limb: string | null;
   start_date: string;
@@ -73,6 +75,10 @@ export interface SrpeEntry {
   zone_minutes?: number[] | null;
   trimp?: number | null;
   monitor_source?: string | null;
+  /** FC 1 min após o fim do esforço (recuperação = hr_max − este valor). */
+  hr_recovery_1min?: number | null;
+  distance_km?: number | null;
+  avg_power_w?: number | null;
 }
 
 export interface ReadinessCheckin {
@@ -379,6 +385,9 @@ export interface MonitorData {
   zone_minutes: number[] | null;
   trimp: number | null;
   monitor_source: "manual" | "print";
+  hr_recovery_1min?: number | null;
+  distance_km?: number | null;
+  avg_power_w?: number | null;
 }
 
 const VALID_TRACKS = ["physio", "gym", "sport", "cardio"];

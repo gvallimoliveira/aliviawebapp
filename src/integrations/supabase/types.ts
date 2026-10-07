@@ -3039,6 +3039,7 @@ export type Database = {
       periodization_plans: {
         Row: {
           assessment_id: string | null
+          beta_blocker: boolean
           cardio_profile: string | null
           clinic_id: string | null
           created_at: string
@@ -3058,6 +3059,7 @@ export type Database = {
         }
         Insert: {
           assessment_id?: string | null
+          beta_blocker?: boolean
           cardio_profile?: string | null
           clinic_id?: string | null
           created_at?: string
@@ -3077,6 +3079,7 @@ export type Database = {
         }
         Update: {
           assessment_id?: string | null
+          beta_blocker?: boolean
           cardio_profile?: string | null
           clinic_id?: string | null
           created_at?: string
@@ -4044,10 +4047,13 @@ export type Database = {
       }
       srpe_entries: {
         Row: {
+          avg_power_w: number | null
           created_at: string
+          distance_km: number | null
           duration_min: number
           hr_avg: number | null
           hr_max: number | null
+          hr_recovery_1min: number | null
           id: string
           monitor_source: string | null
           notes: string | null
@@ -4066,10 +4072,13 @@ export type Database = {
           zone_minutes: Json | null
         }
         Insert: {
+          avg_power_w?: number | null
           created_at?: string
+          distance_km?: number | null
           duration_min: number
           hr_avg?: number | null
           hr_max?: number | null
+          hr_recovery_1min?: number | null
           id?: string
           monitor_source?: string | null
           notes?: string | null
@@ -4088,10 +4097,13 @@ export type Database = {
           zone_minutes?: Json | null
         }
         Update: {
+          avg_power_w?: number | null
           created_at?: string
+          distance_km?: number | null
           duration_min?: number
           hr_avg?: number | null
           hr_max?: number | null
+          hr_recovery_1min?: number | null
           id?: string
           monitor_source?: string | null
           notes?: string | null

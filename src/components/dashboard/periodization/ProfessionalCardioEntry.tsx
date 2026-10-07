@@ -44,6 +44,9 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
   const [hrAvg, setHrAvg] = useState("");
   const [hrMax, setHrMax] = useState("");
   const [spo2, setSpo2] = useState("");
+  const [hrRec, setHrRec] = useState("");
+  const [distance, setDistance] = useState("");
+  const [power, setPower] = useState("");
   const [zones, setZones] = useState(["", "", "", "", ""]);
   const [notes, setNotes] = useState("");
   const [source, setSource] = useState<"manual" | "print">("manual");
@@ -59,6 +62,9 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
   const t = trimp({ zones: z, durationMin: d, hrAvg: num(hrAvg), hrMax: ceil.maxHr });
   const flags = monitorFlags({ hrMax: num(hrMax), spo2Min: num(spo2) }, ceil.ceiling, SPO2_ALERT);
   const existing = entries.find((e) => e.session_date === date && e.track === track);
+  const recDrop = num(hrMax) && num(hrRec) && num(hrRec)! < num(hrMax)! ? Math.round(num(hrMax)! - num(hrRec)!) : null;
+  const dist = num(distance);
+  const pace = dist && dist > 0 && d > 0 ? d / dist : null;
 
   const monitored = useMemo(() => {
     const list = entries.filter((e) => e.monitor_source);
@@ -77,6 +83,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
 
   const reset = () => {
     setDuration(""); setRpe(""); setHrAvg(""); setHrMax(""); setSpo2(""); setZones(["", "", "", "", ""]);
+    setHrRec(""); setDistance(""); setPower("");
     setNotes(""); setSource("manual");
   };
 
@@ -100,6 +107,9 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
       if (x.avg_hr != null) setHrAvg(s(Math.round(x.avg_hr)));
       if (x.max_hr != null) setHrMax(s(Math.round(x.max_hr)));
       if (x.spo2 != null) setSpo2(s(Math.round(x.spo2)));
+      if (x.hr_1min_after != null) setHrRec(s(Math.round(x.hr_1min_after)));
+      if (x.distance_km != null) setDistance(s(x.distance_km).replace(".", ","));
+      if (x.avg_power_w != null) setPower(s(Math.round(x.avg_power_w)));
       if (Array.isArray(x.zone_minutes)) setZones(x.zone_minutes.map((m: number) => (m ? String(m) : "")));
       if (x.suggested_rpe != null && !rpe) setRpe(s(x.suggested_rpe));
       if (x.summary && !notes) setNotes(x.summary);
@@ -116,6 +126,11 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
   const save = async () => {
     if (!(d > 0 && d <= 600)) { toast({ title: "Informe a duração", variant: "destructive" }); return; }
     if (r == null || r < 0 || r > 10) { toast({ title: "Informe a PSE (0–10)", variant: "destructive" }); return; }
+    const rec = num(hrRec);
+    if (rec != null && (rec < 30 || rec > 240 || (num(hrMax) != null && rec >= num(hrMax)!))) { toast({ title: "FC 1 min após deve ser menor que a FC máxima", variant: "destructive" }); return; }
+    if (dist != null && !(dist > 0 && dist <= 500)) { toast({ title: "Distância inválida", variant: "destructive" }); return; }
+    const pw = num(power);
+    if (pw != null && !(pw >= 1 && pw <= 2500)) { toast({ title: "Potência inválida", variant: "destructive" }); return; }
     setSaving(true);
     const ri = (v: string) => { const n = num(v); return n == null ? null : Math.round(n); };
     let merged = false;
@@ -123,7 +138,8 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
     try {
       ({ merged } = await saveProfessionalSession({
         patientId, planId: plan?.id ?? null, sessionDate: date, track, durationMin: d, rpe: r, notes,
-        monitor: { hr_avg: ri(hrAvg), hr_max: ri(hrMax), spo2_min: ri(spo2), zone_minutes: z, trimp: t.value, monitor_source: source },
+        monitor: { hr_avg: ri(hrAvg), hr_max: ri(hrMax), spo2_min: ri(spo2), zone_minutes: z, trimp: t.value, monitor_source: source,
+          hr_recovery_1min: ri(hrRec), distance_km: dist != null ? Math.round(dist * 100) / 100 : null, avg_power_w: ri(power) },
       }));
     } catch (e) { error = e; }
     setSaving(false);
@@ -170,8 +186,17 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
             <label className="text-xs space-y-1">PSE do paciente (0–10)<Input inputMode="decimal" value={rpe} onChange={(e) => setRpe(e.target.value)} /></label>
             <label className="text-xs space-y-1">FC média (bpm)<Input inputMode="numeric" value={hrAvg} onChange={(e) => setHrAvg(e.target.value)} /></label>
             <label className="text-xs space-y-1">FC máxima (bpm)<Input inputMode="numeric" value={hrMax} onChange={(e) => setHrMax(e.target.value)} /></label>
-            <label className="text-xs space-y-1 col-span-2">SpO₂ mínima (%) — opcional<Input inputMode="numeric" value={spo2} onChange={(e) => setSpo2(e.target.value)} /></label>
+            <label className="text-xs space-y-1">FC 1 min após o esforço (bpm)<Input inputMode="numeric" value={hrRec} onChange={(e) => setHrRec(e.target.value)} placeholder="opcional" /></label>
+            <label className="text-xs space-y-1">SpO₂ mínima (%)<Input inputMode="numeric" value={spo2} onChange={(e) => setSpo2(e.target.value)} placeholder="opcional" /></label>
+            <label className="text-xs space-y-1">Distância (km)<Input inputMode="decimal" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder="opcional" /></label>
+            <label className="text-xs space-y-1">Potência média (W)<Input inputMode="numeric" value={power} onChange={(e) => setPower(e.target.value)} placeholder="bicicleta, opcional" /></label>
           </div>
+          {(recDrop !== null || pace !== null) && (
+            <p className="text-[11px] text-muted-foreground">
+              {recDrop !== null && <>Recuperação no 1º minuto: <strong className={recDrop <= 12 ? "text-destructive" : "text-foreground"}>{recDrop} bpm</strong>{recDrop <= 12 ? " (atenção: ≤12)" : ""}. </>}
+              {pace !== null && <>Ritmo: <strong className="text-foreground">{Math.floor(pace)}:{String(Math.round((pace % 1) * 60)).padStart(2, "0")} min/km</strong>.</>}
+            </p>
+          )}
 
           <div className="min-w-0 space-y-1">
             <div className="text-xs">Minutos por zona de FC (opcional)</div>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown, HeartPulse, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,7 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
   const [hint, setHint] = useState<string | null>(null);
   const [profile, setProfile] = useState<string>(plan?.cardio_profile ?? DEFAULT_CARDIO_PROFILE);
   const [override, setOverride] = useState(plan?.hr_ceiling_override ? String(plan.hr_ceiling_override) : "");
+  const [betaBlocker, setBetaBlocker] = useState(!!plan?.beta_blocker);
   const [saving, setSaving] = useState(false);
   // Recolhido por padrão: a linha-resumo do cabeçalho já traz o teto e as atenções.
   const [open, setOpen] = useState(false);
@@ -36,7 +38,8 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
   useEffect(() => {
     setProfile(plan?.cardio_profile ?? DEFAULT_CARDIO_PROFILE);
     setOverride(plan?.hr_ceiling_override ? String(plan.hr_ceiling_override) : "");
-  }, [plan?.cardio_profile, plan?.hr_ceiling_override]);
+    setBetaBlocker(!!plan?.beta_blocker);
+  }, [plan?.cardio_profile, plan?.hr_ceiling_override, plan?.beta_blocker]);
 
   useEffect(() => {
     let off = false;
@@ -75,7 +78,7 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
     if (ov !== null && (ov < 60 || ov > 230)) { toast({ title: "Teto manual entre 60 e 230 bpm", variant: "destructive" }); return; }
     setSaving(true);
     const { error } = await (supabase as any).from("periodization_plans")
-      .update({ cardio_profile: profile, hr_ceiling_override: ov }).eq("id", plan.id);
+      .update({ cardio_profile: profile, hr_ceiling_override: ov, beta_blocker: betaBlocker }).eq("id", plan.id);
     setSaving(false);
     if (error) { toast({ title: "Não foi possível salvar", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Perfil cardiovascular salvo" });
@@ -134,6 +137,13 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
                 <Input type="number" inputMode="numeric" value={override} onChange={(e) => setOverride(e.target.value)} placeholder="opcional, bpm" className="h-9 text-sm" disabled={readOnly} />
               </div>
             </div>
+            <label className="flex items-start gap-3 rounded-xl border border-border p-3">
+              <Switch checked={betaBlocker} onCheckedChange={setBetaBlocker} disabled={readOnly} aria-label="Usa betabloqueador" />
+              <span className="min-w-0 text-xs">
+                <span className="block font-medium text-foreground">Usa betabloqueador</span>
+                <span className="block text-muted-foreground">A análise cardiovascular passa a usar o esforço percebido (PSE/Borg) como guia principal; a FC fica como apoio.</span>
+              </span>
+            </label>
             {hint && <p className="text-xs text-amber-700 dark:text-amber-400">{hint}</p>}
             <div className="rounded-xl border border-border p-3 text-sm">
               {ceil.ceiling ? (

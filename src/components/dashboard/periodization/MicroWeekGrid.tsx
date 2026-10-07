@@ -71,6 +71,8 @@ const MicroWeekGrid = ({
   const [monHrAvg, setMonHrAvg] = useState("");
   const [monHrMax, setMonHrMax] = useState("");
   const [monSpo2, setMonSpo2] = useState("");
+  const [monHrRec, setMonHrRec] = useState("");
+  const [monDistance, setMonDistance] = useState("");
   const [monNotes, setMonNotes] = useState("");
   const [monSaving, setMonSaving] = useState(false);
 
@@ -144,6 +146,8 @@ const MicroWeekGrid = ({
     setMonHrAvg("");
     setMonHrMax("");
     setMonSpo2("");
+    setMonHrRec("");
+    setMonDistance("");
     setMonNotes(s.title ?? "");
   };
 
@@ -153,6 +157,11 @@ const MicroWeekGrid = ({
     const r = Number(monRpe.replace(",", "."));
     if (!(d > 0 && d <= 600)) { toast({ title: "Informe a duração", variant: "destructive" }); return; }
     if (!(r >= 0 && r <= 10)) { toast({ title: "Informe a PSE (0–10)", variant: "destructive" }); return; }
+    const rec = monHrRec.trim() === "" ? null : Number(monHrRec);
+    const hmax = monHrMax.trim() === "" ? null : Number(monHrMax);
+    if (rec != null && (!(rec >= 30 && rec <= 240) || (hmax != null && rec >= hmax))) { toast({ title: "FC 1 min após deve ser menor que a FC máxima", variant: "destructive" }); return; }
+    const dist = monDistance.trim() === "" ? null : Number(monDistance.replace(",", "."));
+    if (dist != null && !(dist > 0 && dist <= 500)) { toast({ title: "Distância inválida", variant: "destructive" }); return; }
     setMonSaving(true);
     const ri = (v: string) => { const n = v.trim() === "" ? null : Number(v); return n == null ? null : Math.round(n); };
     let merged = false;
@@ -173,6 +182,8 @@ const MicroWeekGrid = ({
           zone_minutes: null,
           trimp: null,
           monitor_source: "manual",
+          hr_recovery_1min: ri(monHrRec),
+          distance_km: dist != null ? Math.round(dist * 100) / 100 : null,
         },
       }));
     } catch (e) { error = e; }
@@ -404,7 +415,9 @@ const MicroWeekGrid = ({
                   <label className="text-xs space-y-1">PSE do paciente (0–10)<Input inputMode="decimal" value={monRpe} onChange={(e) => setMonRpe(e.target.value)} /></label>
                   <label className="text-xs space-y-1">FC média (bpm)<Input inputMode="numeric" value={monHrAvg} onChange={(e) => setMonHrAvg(e.target.value)} /></label>
                   <label className="text-xs space-y-1">FC máxima (bpm)<Input inputMode="numeric" value={monHrMax} onChange={(e) => setMonHrMax(e.target.value)} /></label>
-                  <label className="text-xs space-y-1 col-span-2">SpO₂ mínima (%) — opcional<Input inputMode="numeric" value={monSpo2} onChange={(e) => setMonSpo2(e.target.value)} /></label>
+                  <label className="text-xs space-y-1">FC 1 min após (bpm)<Input inputMode="numeric" value={monHrRec} onChange={(e) => setMonHrRec(e.target.value)} placeholder="opcional" /></label>
+                  <label className="text-xs space-y-1">SpO₂ mínima (%)<Input inputMode="numeric" value={monSpo2} onChange={(e) => setMonSpo2(e.target.value)} placeholder="opcional" /></label>
+                  <label className="text-xs space-y-1 col-span-2">Distância (km)<Input inputMode="decimal" value={monDistance} onChange={(e) => setMonDistance(e.target.value)} placeholder="opcional" /></label>
                 </div>
                 <Input placeholder="Observação (opcional)" value={monNotes} onChange={(e) => setMonNotes(e.target.value)} />
                 <p className="text-[11px] text-muted-foreground">
