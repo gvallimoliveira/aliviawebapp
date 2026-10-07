@@ -1,5 +1,10 @@
 # Roadmap
 
+## Leitura parcial e totais da dose semanal (07/10)
+- [ ] Separar total planejado semanal e real registrado da comparação respondida.
+- [ ] Mostrar sessões respondidas/previstas na classificação, preservando o gráfico e os cálculos.
+- [ ] Atualizar ajuda e validar o exemplo 400 respondido / 750 planejado.
+
 ## Sessões monitoradas e idade atualizada (06/10)
 - [x] Corrigir sobreposição dos campos e conferir apresentação isolada em largura de 390 px.
 - [x] Usar idade incluída posteriormente nos cálculos cardiovasculares; 11 testes passaram, preservando campos digitados e teto manual.
