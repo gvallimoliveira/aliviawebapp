@@ -8,7 +8,7 @@ import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, FileDown, Loade
 import { useToast } from "@/hooks/use-toast";
 import { backToBackHighDays, loadLevelFromRpe, localISODate, pairSessionsWithSrpe, plannedLoad } from "@/lib/periodization";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
-import { deleteSession, savePlannedDose } from "@/lib/periodizationData";
+import { deleteSession, savePlannedDose, saveProfessionalSession } from "@/lib/periodizationData";
 import { DOSE_CLASS, DOSE_LABEL, PLANNED_LOAD_CLASS, PLANNED_LOAD_LABEL, TRACK_LABEL } from "./scales";
 import { Slider } from "@/components/ui/slider";
 
@@ -63,6 +63,16 @@ const MicroWeekGrid = ({
   const [plannedRpe, setPlannedRpe] = useState(7);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  // Atalho: clicar numa sessão planejada (hoje ou até 7 dias atrás) abre o
+  // registro de sessão monitorada já preenchido com data, frente e dose alvo.
+  const [monitoring, setMonitoring] = useState<PeriodizationSession | null>(null);
+  const [monDuration, setMonDuration] = useState("");
+  const [monRpe, setMonRpe] = useState("");
+  const [monHrAvg, setMonHrAvg] = useState("");
+  const [monHrMax, setMonHrMax] = useState("");
+  const [monSpo2, setMonSpo2] = useState("");
+  const [monNotes, setMonNotes] = useState("");
+  const [monSaving, setMonSaving] = useState(false);
 
   // Selo de dose por sessão (alvo prescrito x sRPE relatado pelo paciente).
   const doseBySession = useMemo(() => {
