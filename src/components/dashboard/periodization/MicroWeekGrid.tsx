@@ -386,6 +386,37 @@ const MicroWeekGrid = ({
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Atalho: sessão monitorada a partir da sessão planejada clicada. */}
+        <Dialog open={!!monitoring} onOpenChange={(o) => !o && setMonitoring(null)}>
+          <DialogContent className="max-w-sm" onCloseAutoFocus={(e) => e.preventDefault()}>
+            <DialogHeader><DialogTitle className="text-base">Sessão monitorada</DialogTitle></DialogHeader>
+            {monitoring && (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  {monitoring.session_date.slice(0, 10).split("-").reverse().join("/")} · {TRACK_LABEL[monitoring.track] || monitoring.track}
+                  {plannedLoad(monitoring.planned_duration_min, monitoring.planned_rpe) > 0 && (
+                    <> — alvo {monitoring.planned_duration_min}&apos; @{monitoring.planned_rpe} = {plannedLoad(monitoring.planned_duration_min, monitoring.planned_rpe)}</>
+                  )}
+                </p>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-3 [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:min-w-0 [&_input]:min-w-0 [&_input]:max-w-full">
+                  <label className="text-xs space-y-1">Duração (min)<Input inputMode="numeric" value={monDuration} onChange={(e) => setMonDuration(e.target.value)} /></label>
+                  <label className="text-xs space-y-1">PSE do paciente (0–10)<Input inputMode="decimal" value={monRpe} onChange={(e) => setMonRpe(e.target.value)} /></label>
+                  <label className="text-xs space-y-1">FC média (bpm)<Input inputMode="numeric" value={monHrAvg} onChange={(e) => setMonHrAvg(e.target.value)} /></label>
+                  <label className="text-xs space-y-1">FC máxima (bpm)<Input inputMode="numeric" value={monHrMax} onChange={(e) => setMonHrMax(e.target.value)} /></label>
+                  <label className="text-xs space-y-1 col-span-2">SpO₂ mínima (%) — opcional<Input inputMode="numeric" value={monSpo2} onChange={(e) => setMonSpo2(e.target.value)} /></label>
+                </div>
+                <Input placeholder="Observação (opcional)" value={monNotes} onChange={(e) => setMonNotes(e.target.value)} />
+                <p className="text-[11px] text-muted-foreground">
+                  Para ler um print do monitor com IA ou informar minutos por zona, use o bloco &quot;Sessões monitoradas&quot;.
+                </p>
+                <Button type="button" className="w-full rounded-xl" disabled={monSaving} onClick={saveMonitoring}>
+                  {monSaving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Salvar sessão
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
