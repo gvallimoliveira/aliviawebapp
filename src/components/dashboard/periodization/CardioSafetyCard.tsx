@@ -87,9 +87,7 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
           <HeartPulse className="h-4 w-4 text-primary" />
           <p className="text-sm font-medium text-foreground">Teto de frequência cardíaca</p>
         </div>
-        {!plan ? (
-          <p className="text-xs text-muted-foreground">Estruture a periodização para definir o perfil cardiovascular.</p>
-        ) : (
+        {(
           <>
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="space-y-1">
@@ -146,11 +144,13 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
                 <p className="text-[11px] text-muted-foreground">Sugestão de conferência, não diagnóstico.</p>
               </div>
             )}
-            {!readOnly && (
+            {!readOnly && (plan ? (
               <Button type="button" size="sm" className="rounded-xl" onClick={save} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Salvar perfil
               </Button>
-            )}
+            ) : (
+              <p className="text-[11px] text-muted-foreground">Estimativa com o perfil escolhido. Para salvar perfil e teto manual, estruture a periodização.</p>
+            ))}
           </>
         )}
       </CardContent>
