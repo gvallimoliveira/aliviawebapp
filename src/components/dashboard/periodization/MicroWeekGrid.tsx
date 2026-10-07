@@ -8,7 +8,7 @@ import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, FileDown, Loade
 import { useToast } from "@/hooks/use-toast";
 import { backToBackHighDays, loadLevelFromRpe, localISODate, pairSessionsWithSrpe, plannedLoad } from "@/lib/periodization";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
-import { deleteSession, savePlannedDose } from "@/lib/periodizationData";
+import { deleteSession, savePlannedDose, saveProfessionalSession } from "@/lib/periodizationData";
 import { DOSE_CLASS, DOSE_LABEL, PLANNED_LOAD_CLASS, PLANNED_LOAD_LABEL, TRACK_LABEL } from "./scales";
 import { Slider } from "@/components/ui/slider";
 
@@ -63,6 +63,16 @@ const MicroWeekGrid = ({
   const [plannedRpe, setPlannedRpe] = useState(7);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  // Atalho: clicar numa sessão planejada (hoje ou até 7 dias atrás) abre o
+  // registro de sessão monitorada já preenchido com data, frente e dose alvo.
+  const [monitoring, setMonitoring] = useState<PeriodizationSession | null>(null);
+  const [monDuration, setMonDuration] = useState("");
+  const [monRpe, setMonRpe] = useState("");
+  const [monHrAvg, setMonHrAvg] = useState("");
+  const [monHrMax, setMonHrMax] = useState("");
+  const [monSpo2, setMonSpo2] = useState("");
+  const [monNotes, setMonNotes] = useState("");
+  const [monSaving, setMonSaving] = useState(false);
 
   // Selo de dose por sessão (alvo prescrito x sRPE relatado pelo paciente).
   const doseBySession = useMemo(() => {
@@ -116,6 +126,60 @@ const MicroWeekGrid = ({
 
   const remove = async (id: string) => {
     await deleteSession(id);
+    onChanged();
+  };
+
+  /** Sessão planejada elegível ao registro monitorado: hoje ou até 7 dias atrás. */
+  const canMonitor = (s: PeriodizationSession): boolean => {
+    if (readOnly || !s.id) return false;
+    const d = s.session_date.slice(0, 10);
+    const todayIso = localISODate();
+    return d <= todayIso && d >= addDays(todayIso, -7);
+  };
+
+  const openMonitoring = (s: PeriodizationSession) => {
+    setMonitoring(s);
+    setMonDuration(s.planned_duration_min > 0 ? String(s.planned_duration_min) : "");
+    setMonRpe(s.planned_rpe > 0 ? String(s.planned_rpe) : "");
+    setMonHrAvg("");
+    setMonHrMax("");
+    setMonSpo2("");
+    setMonNotes(s.title ?? "");
+  };
+
+  const saveMonitoring = async () => {
+    if (!monitoring) return;
+    const d = Number(monDuration);
+    const r = Number(monRpe.replace(",", "."));
+    if (!(d > 0 && d <= 600)) { toast({ title: "Informe a duração", variant: "destructive" }); return; }
+    if (!(r >= 0 && r <= 10)) { toast({ title: "Informe a PSE (0–10)", variant: "destructive" }); return; }
+    setMonSaving(true);
+    const ri = (v: string) => { const n = v.trim() === "" ? null : Number(v); return n == null ? null : Math.round(n); };
+    let merged = false;
+    let error: unknown = null;
+    try {
+      ({ merged } = await saveProfessionalSession({
+        patientId,
+        planId,
+        sessionDate: monitoring.session_date.slice(0, 10),
+        track: monitoring.track,
+        durationMin: d,
+        rpe: r,
+        notes: monNotes,
+        monitor: {
+          hr_avg: ri(monHrAvg),
+          hr_max: ri(monHrMax),
+          spo2_min: ri(monSpo2),
+          zone_minutes: null,
+          trimp: null,
+          monitor_source: "manual",
+        },
+      }));
+    } catch (e) { error = e; }
+    setMonSaving(false);
+    if (error) { toast({ title: "Não foi possível salvar", variant: "destructive" }); return; }
+    toast({ title: merged ? "Sessão unida ao check-in do paciente" : "Sessão monitorada salva" });
+    setMonitoring(null);
     onChanged();
   };
 
@@ -194,14 +258,22 @@ const MicroWeekGrid = ({
                   {isFlagged && <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />}
                 </div>
                 {items.map((s) => (
-                  <div key={s.id} className="group rounded-lg bg-muted/60 px-1.5 py-1">
+                  <div
+                    key={s.id}
+                    role={canMonitor(s) ? "button" : undefined}
+                    tabIndex={canMonitor(s) ? 0 : undefined}
+                    onClick={() => canMonitor(s) && openMonitoring(s)}
+                    onKeyDown={(e) => { if (canMonitor(s) && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openMonitoring(s); } }}
+                    title={canMonitor(s) ? "Registrar sessão monitorada" : undefined}
+                    className={`group rounded-lg bg-muted/60 px-1.5 py-1 ${canMonitor(s) ? "cursor-pointer hover:bg-muted transition" : ""}`}
+                  >
                     <div className="flex items-start justify-between gap-1">
                       <div className="min-w-0">
                         <p className="text-[10px] font-medium text-foreground truncate">{TRACK_LABEL[s.track] || s.track}</p>
                         {s.title && <p className="text-[10px] text-muted-foreground truncate">{s.title}</p>}
                       </div>
                       {!readOnly && (
-                        <button onClick={() => remove(s.id)} className="opacity-0 group-hover:opacity-100 transition">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); remove(s.id); }} className="opacity-0 group-hover:opacity-100 transition">
                           <Trash2 className="h-3 w-3 text-muted-foreground" />
                         </button>
                       )}
@@ -312,6 +384,37 @@ const MicroWeekGrid = ({
                 Adicionar
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Atalho: sessão monitorada a partir da sessão planejada clicada. */}
+        <Dialog open={!!monitoring} onOpenChange={(o) => !o && setMonitoring(null)}>
+          <DialogContent className="max-w-sm" onCloseAutoFocus={(e) => e.preventDefault()}>
+            <DialogHeader><DialogTitle className="text-base">Sessão monitorada</DialogTitle></DialogHeader>
+            {monitoring && (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  {monitoring.session_date.slice(0, 10).split("-").reverse().join("/")} · {TRACK_LABEL[monitoring.track] || monitoring.track}
+                  {plannedLoad(monitoring.planned_duration_min, monitoring.planned_rpe) > 0 && (
+                    <> — alvo {monitoring.planned_duration_min}&apos; @{monitoring.planned_rpe} = {plannedLoad(monitoring.planned_duration_min, monitoring.planned_rpe)}</>
+                  )}
+                </p>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-3 [&>label]:flex [&>label]:flex-col [&>label]:gap-1 [&>label]:min-w-0 [&_input]:min-w-0 [&_input]:max-w-full">
+                  <label className="text-xs space-y-1">Duração (min)<Input inputMode="numeric" value={monDuration} onChange={(e) => setMonDuration(e.target.value)} /></label>
+                  <label className="text-xs space-y-1">PSE do paciente (0–10)<Input inputMode="decimal" value={monRpe} onChange={(e) => setMonRpe(e.target.value)} /></label>
+                  <label className="text-xs space-y-1">FC média (bpm)<Input inputMode="numeric" value={monHrAvg} onChange={(e) => setMonHrAvg(e.target.value)} /></label>
+                  <label className="text-xs space-y-1">FC máxima (bpm)<Input inputMode="numeric" value={monHrMax} onChange={(e) => setMonHrMax(e.target.value)} /></label>
+                  <label className="text-xs space-y-1 col-span-2">SpO₂ mínima (%) — opcional<Input inputMode="numeric" value={monSpo2} onChange={(e) => setMonSpo2(e.target.value)} /></label>
+                </div>
+                <Input placeholder="Observação (opcional)" value={monNotes} onChange={(e) => setMonNotes(e.target.value)} />
+                <p className="text-[11px] text-muted-foreground">
+                  Para ler um print do monitor com IA ou informar minutos por zona, use o bloco &quot;Sessões monitoradas&quot;.
+                </p>
+                <Button type="button" className="w-full rounded-xl" disabled={monSaving} onClick={saveMonitoring}>
+                  {monSaving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Salvar sessão
+                </Button>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </CardContent>
