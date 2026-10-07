@@ -320,83 +320,19 @@ const PeriodizationSection = ({
           (t.closest("[data-periodization-block]") as HTMLElement | null) ?? t.closest("button,a,[role='button']") ?? t;
       }}
     >
-      {/* Ordem definida: links de check-in → carga/prontidão → dose → microciclo → macrociclo. */}
-      <PeriodizationCollapsible title="Links de check-in" icon={<Link2 className="h-4 w-4 text-primary" />}>
-        <BridgeCard
-          patientId={patientId}
-          planId={plan?.id ?? null}
-          restrictions={restrictions}
-          links={links}
-          onChanged={refresh}
-          readOnly={readOnly}
-        />
-      </PeriodizationCollapsible>
-
-      <PeriodizationCollapsible title="Carga e prontidão" icon={<Gauge className="h-4 w-4 text-primary" />}>
-        <LoadMonitorCard
-          patientId={patientId}
-          planId={plan?.id ?? null}
-          entries={entries}
-          checkins={checkins}
-          onChanged={refresh}
-          readOnly={readOnly}
-        />
-        {!readOnly && (
-          <div className="mt-3">
-            <ProfessionalCardioEntry patientId={patientId} plan={plan} entries={entries} onChanged={refresh} />
-          </div>
-        )}
-      </PeriodizationCollapsible>
-
-      <PeriodizationCollapsible title="Teto de frequência cardíaca" icon={<HeartPulse className="h-4 w-4 text-primary" />}>
-        <CardioSafetyCard patientId={patientId} plan={plan} checkins={checkins} entries={entries} onChanged={refresh} readOnly={readOnly} />
-      </PeriodizationCollapsible>
-
-      <PeriodizationCollapsible title="Dose planejada x percebida" icon={<Gauge className="h-4 w-4 text-primary" />}>
-        <DoseAdherenceCard
-          patientId={patientId}
-          planId={plan?.id ?? null}
-          sessions={sessions}
-          entries={entries}
-          onChanged={refresh}
-          readOnly={readOnly}
-        />
-      </PeriodizationCollapsible>
-
-      {plan && (
-        <>
-          <PeriodizationCollapsible title="Planejamento automático" icon={<Plus className="h-4 w-4 text-primary" />}>
-            <AutoPlanCard patientId={patientId} plan={plan} entries={entries} checkins={checkins} sessions={sessions} onChanged={refresh} readOnly={readOnly} />
-          </PeriodizationCollapsible>
-          <PeriodizationCollapsible title="Microciclo da semana" icon={<Plus className="h-4 w-4 text-primary" />}>
-            <MicroWeekGrid
-              planId={plan.id}
-              patientId={patientId}
-              sessions={sessions}
-              entries={entries}
-              onChanged={refresh}
-              readOnly={readOnly}
-              patientName={patientName}
-              professionalName={proName}
-
-              sport={plan.sport}
-              currentPhase={cycles.find((c) => c.level === "macro" && c.is_current)?.name ?? null}
-            />
-          </PeriodizationCollapsible>
-          <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
-            <MacroTimeline cycles={cycles} planId={plan.id} onChanged={refresh} readOnly={readOnly} />
-          </PeriodizationCollapsible>
-        </>
-      )}
-
-      {!plan && !readOnly && (
+      {/* Ordem do fluxo: macrociclo → links → sessão monitorada → carga+teto FC → dose+planejamento automático → microciclo. */}
+      {plan ? (
+        <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
+          <MacroTimeline cycles={cycles} planId={plan.id} onChanged={refresh} readOnly={readOnly} />
+        </PeriodizationCollapsible>
+      ) : !readOnly && (
         <Card className="border-dashed">
           <CardContent className="py-6 space-y-3 text-center">
             <Gauge className="h-6 w-6 text-primary/60 mx-auto" />
             <p className="text-sm text-foreground font-medium">Estruturar periodização</p>
             <p className="text-xs text-muted-foreground max-w-md mx-auto">
               Cria o macrociclo a partir das fases do STEPS (cicatrização → força → potência → retorno ao esporte)
-              e os mesociclos do primeiro bloco.
+              e os mesociclos do primeiro bloco. O teto de FC e a carga já funcionam sem isso.
             </p>
             <div className="flex gap-2 max-w-sm mx-auto">
               <Input
@@ -412,6 +348,70 @@ const PeriodizationSection = ({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      <PeriodizationCollapsible title="Links de check-in" icon={<Link2 className="h-4 w-4 text-primary" />}>
+        <BridgeCard
+          patientId={patientId}
+          planId={plan?.id ?? null}
+          restrictions={restrictions}
+          links={links}
+          onChanged={refresh}
+          readOnly={readOnly}
+        />
+      </PeriodizationCollapsible>
+
+      {!readOnly && (
+        <PeriodizationCollapsible title="Sessão monitorada" icon={<HeartPulse className="h-4 w-4 text-primary" />}>
+          <ProfessionalCardioEntry patientId={patientId} plan={plan} entries={entries} onChanged={refresh} />
+        </PeriodizationCollapsible>
+      )}
+
+      <PeriodizationCollapsible title="Carga, prontidão e teto de FC" icon={<Gauge className="h-4 w-4 text-primary" />}>
+        <LoadMonitorCard
+          patientId={patientId}
+          planId={plan?.id ?? null}
+          entries={entries}
+          checkins={checkins}
+          onChanged={refresh}
+          readOnly={readOnly}
+        />
+        <div className="mt-3">
+          <CardioSafetyCard patientId={patientId} plan={plan} checkins={checkins} entries={entries} onChanged={refresh} readOnly={readOnly} />
+        </div>
+      </PeriodizationCollapsible>
+
+      <PeriodizationCollapsible title="Dose e planejamento automático" icon={<Gauge className="h-4 w-4 text-primary" />}>
+        <DoseAdherenceCard
+          patientId={patientId}
+          planId={plan?.id ?? null}
+          sessions={sessions}
+          entries={entries}
+          onChanged={refresh}
+          readOnly={readOnly}
+        />
+        {plan && (
+          <div className="mt-3">
+            <AutoPlanCard patientId={patientId} plan={plan} entries={entries} checkins={checkins} sessions={sessions} onChanged={refresh} readOnly={readOnly} />
+          </div>
+        )}
+      </PeriodizationCollapsible>
+
+      {plan && (
+        <PeriodizationCollapsible title="Microciclo da semana" icon={<Plus className="h-4 w-4 text-primary" />}>
+          <MicroWeekGrid
+            planId={plan.id}
+            patientId={patientId}
+            sessions={sessions}
+            entries={entries}
+            onChanged={refresh}
+            readOnly={readOnly}
+            patientName={patientName}
+            professionalName={proName}
+            sport={plan.sport}
+            currentPhase={cycles.find((c) => c.level === "macro" && c.is_current)?.name ?? null}
+          />
+        </PeriodizationCollapsible>
       )}
     </div>
   );
