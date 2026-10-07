@@ -405,6 +405,12 @@ export interface DoseAdherenceSummary {
   weekEnd: string;
   byTrack: TrackAdherence[];
   total: TrackAdherence;
+  /** Sessões passadas sem sRPE: ficam à parte, nunca contam como subdose. */
+  unanswered: PlannedDoseLike[];
+  /** Sessões futuras da semana: fora da soma até acontecerem. */
+  upcoming: PlannedDoseLike[];
+  /** Treinos relatados sem sessão planejada correspondente. */
+  extras: SrpeEntryLike[];
 }
 
 const TRACKS: LoadTrack[] = ["physio", "gym", "sport", "cardio"];
@@ -509,6 +515,9 @@ export function adherenceByTrack(
       plannedParts: TRACKS.flatMap((t) => plannedParts[t]),
       realParts: TRACKS.flatMap((t) => realParts[t]),
     },
+    unanswered,
+    upcoming,
+    extras,
   };
 }
 
