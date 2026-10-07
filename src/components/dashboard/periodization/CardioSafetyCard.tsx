@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { HeartPulse, Loader2 } from "lucide-react";
+import { ChevronDown, HeartPulse, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
@@ -30,6 +30,8 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
   const [profile, setProfile] = useState<string>(plan?.cardio_profile ?? DEFAULT_CARDIO_PROFILE);
   const [override, setOverride] = useState(plan?.hr_ceiling_override ? String(plan.hr_ceiling_override) : "");
   const [saving, setSaving] = useState(false);
+  // Recolhido por padrão: a linha-resumo do cabeçalho já traz o teto e as atenções.
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     setProfile(plan?.cardio_profile ?? DEFAULT_CARDIO_PROFILE);
@@ -82,13 +84,39 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
 
   return (
     <Card data-periodization-block>
-      <CardContent className="pt-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <HeartPulse className="h-4 w-4 text-primary" />
-          <p className="text-sm font-medium text-foreground">Teto de frequência cardíaca</p>
-        </div>
-        {(
-          <>
+      <CardContent className="p-0">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+          className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left transition hover:bg-muted/50"
+        >
+          <HeartPulse className="h-4 w-4 shrink-0 text-primary" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium text-foreground">Teto de frequência cardíaca</span>
+            {!open && (
+              <span className="block truncate text-xs text-muted-foreground">
+                {ceil.ceiling ? (
+                  <>
+                    <span className="font-medium text-foreground">{ceil.ceiling} bpm</span>{" "}
+                    <span>{ceil.source === "manual" ? "(manual)" : `(${Math.round(ceil.pct * 100)}%)`}</span>
+                  </>
+                ) : (
+                  "sem data de nascimento no cadastro"
+                )}
+                {flagged.length > 0 && (
+                  <span className="text-rose-700 dark:text-rose-400">
+                    {" "}· {flagged.length} {flagged.length === 1 ? "check-in em atenção" : "check-ins em atenção"}
+                  </span>
+                )}
+              </span>
+            )}
+          </span>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+
+        {open && (
+          <div className="px-4 pb-4 space-y-3">
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">Perfil (definido pelo fisioterapeuta)</label>
@@ -151,7 +179,7 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
             ) : (
               <p className="text-[11px] text-muted-foreground">Estimativa com o perfil escolhido. Para salvar perfil e teto manual, estruture a periodização.</p>
             ))}
-          </>
+          </div>
         )}
       </CardContent>
     </Card>
