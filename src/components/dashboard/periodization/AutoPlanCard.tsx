@@ -89,8 +89,9 @@ const AutoPlanCard = ({ patientId, plan, entries, checkins, sessions, onChanged,
           </div>
         ))}
 
+        <p className="text-xs font-medium text-foreground">Planejamento automático de dose de trabalho (sRPE)</p>
         <p className="text-xs text-muted-foreground">
-          Sugere a próxima semana por frente a partir da carga das últimas 4 semanas: progride até 10%, respeita a faixa do perfil cardiovascular e alterna dias duros e leves. Você edita tudo antes de salvar.
+          O cálculo é do envelope de dose (sRPE = duração × esforço percebido), não da prescrição de exercícios: sugere a próxima semana por frente a partir da carga das últimas 4 semanas, progride até 10%, respeita a faixa do perfil cardiovascular e alterna dias duros e leves. Você edita tudo antes de salvar.
         </p>
         {!readOnly && !rows && (
           <Button type="button" size="sm" className="rounded-xl gap-1" onClick={suggest}><Sparkles className="h-4 w-4" /> Sugerir próxima semana</Button>
