@@ -626,3 +626,52 @@ export function restingHrStatus(checkins: RestingHrLike[]): RestingHrStatus {
   const level = delta >= 7 ? "danger" : delta >= 5 ? "caution" : "ok";
   return { latest: last.resting_hr!, latestDate: last.checkin_date, baseline, delta, level };
 }
+
+/* ------------------------------------------------------------------ */
+/* Sinal de recuperação: prontidão universal + FC matinal prioritária  */
+/* ------------------------------------------------------------------ */
+
+export interface RecoverySignal {
+  /** Fonte que decidiu o sinal. */
+  source: "resting_hr" | "readiness" | "both" | "none";
+  level: "ok" | "caution" | "danger" | "insufficient";
+  /** Recuperação comprometida (atenção ou alerta). */
+  strained: boolean;
+  text: string;
+}
+
+const RANK = { insufficient: 0, ok: 1, caution: 2, danger: 3 } as const;
+
+/**
+ * Hierarquia de recuperação: a prontidão do check-in é a base universal
+ * (quase todo paciente responde); a FC ao acordar é opcional e, quando existe
+ * com linha de base e é recente, tem prioridade. Com as duas, vale a mais
+ * conservadora. Sempre sugestão ao fisioterapeuta.
+ */
+export function recoverySignal(checkins: Array<ReadinessLike & RestingHrLike>, rhrAlert = 7): RecoverySignal {
+  const sorted = [...checkins].sort((a, b) => a.checkin_date.localeCompare(b.checkin_date));
+  const scored = sorted.filter((c) => readinessScore(c) !== null);
+  const last = scored[scored.length - 1];
+  const score = last ? readinessScore(last) : null;
+  const drop = readinessDrop(sorted);
+  const rLevel: RecoverySignal["level"] = score === null ? "insufficient" : drop ? "danger" : score < 40 ? "caution" : "ok";
+
+  const hr = restingHrStatus(sorted);
+  const lastDate = sorted[sorted.length - 1]?.checkin_date.slice(0, 10);
+  const fresh = hr.latestDate !== null && lastDate !== undefined && hr.latestDate.slice(0, 10) >= addIsoDays(lastDate, -2);
+  const hLevel: RecoverySignal["level"] = !fresh || hr.delta === null
+    ? "insufficient"
+    : hr.delta >= rhrAlert ? "danger" : hr.delta >= 5 ? "caution" : "ok";
+
+  const hasR = rLevel !== "insufficient";
+  const hasH = hLevel !== "insufficient";
+  if (!hasR && !hasH) return { source: "none", level: "insufficient", strained: false, text: "Sem check-in recente de prontidão." };
+
+  const level = RANK[hLevel] >= RANK[rLevel] ? hLevel : rLevel;
+  const source = hasH && hasR ? "both" : hasH ? "resting_hr" : "readiness";
+  const parts: string[] = [];
+  if (hasH) parts.push(`FC ao acordar ${hr.delta! > 0 ? "+" : ""}${hr.delta} bpm da base`);
+  if (hasR) parts.push(drop ? `prontidão caiu ${drop.drop} pontos (${score}%)` : `prontidão ${score}%`);
+  const tail = level === "danger" ? " — recuperação comprometida." : level === "caution" ? " — recuperação abaixo do habitual." : " — recuperação preservada.";
+  return { source, level, strained: level === "caution" || level === "danger", text: parts.join(" · ") + tail };
+}
