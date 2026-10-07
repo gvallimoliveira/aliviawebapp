@@ -381,7 +381,7 @@ const PeriodizationSection = ({
         </div>
       </PeriodizationCollapsible>
 
-      <PeriodizationCollapsible title="Dose e planejamento automático" icon={<Gauge className="h-4 w-4 text-primary" />}>
+      <PeriodizationCollapsible title="Dose planejada e percebida · Planejamento automático de dose de trabalho (sRPE)" icon={<Gauge className="h-4 w-4 text-primary" />}>
         <DoseAdherenceCard
           patientId={patientId}
           planId={plan?.id ?? null}
