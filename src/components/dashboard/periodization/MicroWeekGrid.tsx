@@ -170,7 +170,7 @@ const MicroWeekGrid = ({
           hr_avg: ri(monHrAvg),
           hr_max: ri(monHrMax),
           spo2_min: ri(monSpo2),
-          zone_minutes: [null, null, null, null, null],
+          zone_minutes: null,
           trimp: null,
           monitor_source: "manual",
         },
