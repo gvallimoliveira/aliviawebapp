@@ -491,7 +491,7 @@ const Dashboard = () => {
     return () => {
       cancelled = true;
     };
-  }, [authReady, user, navigate, tabFromUrl]);
+  }, [authReady, user?.id, navigate, tabFromUrl]);
 
   // Reset tab on context change or URL params — but preserve the current
   // tab (from URL or sessionStorage) when it's still valid for the new
@@ -608,7 +608,7 @@ const Dashboard = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [authReady, user]);
+  }, [authReady, user?.id]);
 
   // Fetch all conversation IDs for the global video call listener
   useEffect(() => {
@@ -624,7 +624,7 @@ const Dashboard = () => {
       .on("postgres_changes", { event: "*", schema: "public", table: "conversations" }, () => loadConvIds())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [authReady, user]);
+  }, [authReady, user?.id]);
 
   const handleVideoCallNavigateToChat = useCallback((convId: string) => {
     setActiveTab("messages");
