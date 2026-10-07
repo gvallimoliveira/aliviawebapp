@@ -104,8 +104,9 @@ const MicroWeekGrid = ({
       });
       setTitle("");
       setPlannedMin("");
-      setEditing(null);
+      (document.activeElement as HTMLElement | null)?.blur?.();
       onChanged();
+      setEditing(null);
     } catch (e: any) {
       toast({ title: "Não foi possível salvar", description: e?.message, variant: "destructive" });
     } finally {
@@ -262,7 +263,7 @@ const MicroWeekGrid = ({
         </div>
 
         <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-          <DialogContent className="max-w-sm">
+          <DialogContent className="max-w-sm" onCloseAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader><DialogTitle className="text-base">Sessão planejada</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
