@@ -711,7 +711,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                             onClick={() => { setFreeMode(true); setSelectedSessionId(null); setDuration(""); }}
                             className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-primary"
                           >
-                            Fiz outra atividade não planejada
+                            Registrar treino extra (hoje ou até 7 dias atrás)
                           </button>
                         </div>
                       ) : (
