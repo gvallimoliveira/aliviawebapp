@@ -327,6 +327,10 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
             </div>
 
             {chartData.length > 0 && (
+              <>
+              <p className="text-xs font-medium text-foreground">
+                Planejado × percebido por frente <span className="font-normal text-muted-foreground">· semana atual, até hoje</span>
+              </p>
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData}>
@@ -340,6 +344,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              </>
             )}
 
             {summary.byTrack.some((t) => t.verdict === "under" || t.verdict === "over") && (

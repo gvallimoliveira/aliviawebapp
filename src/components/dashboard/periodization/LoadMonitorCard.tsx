@@ -148,56 +148,6 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
           </CardTitle>
           {!readOnly && (
             <div className="flex gap-2">
-              <Dialog open={srpeOpen} onOpenChange={setSrpeOpen}>
-                <DialogTrigger asChild>
-                  <Button type="button" size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
-                    <Activity className="h-3.5 w-3.5" /> sRPE
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-sm">
-                  <DialogHeader><DialogTitle className="text-base">Registrar sessão (sRPE)</DialogTitle></DialogHeader>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {Object.entries(TRACK_LABEL).map(([key, label]) => (
-                        <Button type="button"
-                          key={key}
-                          variant={track === key ? "default" : "outline"}
-                          size="sm"
-                          className="text-[11px] rounded-xl"
-                          onClick={() => setTrack(key)}
-                        >
-                          {label}
-                        </Button>
-                      ))}
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-xs text-muted-foreground">Data</span>
-                      <Input type="date" value={srpeDate} onChange={(e) => setSrpeDate(e.target.value)} />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-xs text-muted-foreground">Duração (min)</span>
-                      <Input type="number" min={1} max={600} value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="50" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">RPE (0-10)</span>
-                        <Badge variant="outline" className="text-xs">{rpe}</Badge>
-                      </div>
-                      <Slider min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => setRpe(v)} />
-                    </div>
-                    {Number(duration) > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        Carga: <strong>{trainingLoad(Number(duration), rpe)}</strong>
-                      </p>
-                    )}
-                    <Button type="button" className="w-full rounded-xl gap-2" onClick={submitSrpe} disabled={savingSrpe}>
-                      {savingSrpe ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                      Registrar
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
               <Dialog open={checkinOpen} onOpenChange={setCheckinOpen}>
                 <DialogTrigger asChild>
                   <Button type="button" size="sm" variant="outline" className="gap-1 rounded-xl text-xs">
@@ -292,7 +242,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-foreground">
-              Carga dos últimos 7 dias <span className="font-normal text-muted-foreground">· {chartWindow.total} sRPE</span>
+              Carga total dos últimos 7 dias <span className="font-normal text-muted-foreground">· todas as frentes · {chartWindow.total} sRPE</span>
             </p>
             <LoadHistoryDialog patientId={patientId} />
           </div>
