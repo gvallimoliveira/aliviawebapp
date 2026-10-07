@@ -162,9 +162,9 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
               </p>
             </div>
             <div className="rounded-xl border border-border p-3 text-sm space-y-1">
-              <p className="text-xs font-medium text-foreground">Leitura do momento (ACWR cardio × FC ao acordar)</p>
+              <p className="text-xs font-medium text-foreground">Leitura do momento (ACWR cardio × recuperação)</p>
               <p className="text-xs text-muted-foreground">
-                ACWR cardio: {cardioRatio !== null ? cardioRatio.toFixed(2).replace(".", ",") : "—"} · FC ao acordar: {rhr.delta !== null ? `${rhr.delta > 0 ? "+" : ""}${rhr.delta} bpm` : "—"}
+                ACWR cardio: {cardioRatio !== null ? cardioRatio.toFixed(2).replace(".", ",") : "—"} · Recuperação: {rhr.delta !== null ? `FC ao acordar ${rhr.delta > 0 ? "+" : ""}${rhr.delta} bpm` : recovery.source === "none" ? "sem check-in" : "pela prontidão do check-in"}
               </p>
               <p className={`text-xs ${matrix.quadrant === "optimal" || matrix.quadrant === "insufficient" ? "text-foreground" : "text-amber-700 dark:text-amber-400"}`}>{matrix.text}</p>
               <p className="text-[11px] text-muted-foreground">Sugestão, não diagnóstico.</p>
