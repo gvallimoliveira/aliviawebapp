@@ -12,6 +12,9 @@ import { TRACK_LABEL } from "./scales";
 import { SPO2_ALERT, ageFromBirth, hrCeiling } from "@/lib/cardioSafety";
 import { localISODate } from "@/lib/periodization";
 import { monitorFlags, sanitizeZones, srpeLoad, trimp } from "@/lib/cardioLoad";
+import { TEXT_WINDOW_DAYS, groupByDay, inWindow, recentDaysWindow } from "@/lib/loadWindows";
+import DayGroupList, { type DayGroup } from "./DayGroupList";
+import LoadHistoryDialog from "./LoadHistoryDialog";
 
 // Entrada do profissional: sessão medida com monitor cardíaco (cinta, relógio
 // ou oxímetro). Se já houver check-in do paciente da mesma data e frente, junta
@@ -57,10 +60,20 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
   const flags = monitorFlags({ hrMax: num(hrMax), spo2Min: num(spo2) }, ceil.ceiling, SPO2_ALERT);
   const existing = entries.find((e) => e.session_date === date && e.track === track);
 
-  const monitored = useMemo(
-    () => entries.filter((e) => e.monitor_source).slice(-6).reverse(),
-    [entries],
-  );
+  const monitored = useMemo(() => {
+    const list = entries.filter((e) => e.monitor_source);
+    const w = recentDaysWindow(list.map((e) => e.session_date), TEXT_WINDOW_DAYS, today());
+    const groups: DayGroup[] = groupByDay(list.filter((e) => inWindow(e.session_date, w)), (e) => e.session_date).map((g) => ({
+      date: g.date,
+      summary: `${g.items.length} ${g.items.length === 1 ? "sessão" : "sessões"} · sRPE ${g.items.reduce((a, e) => a + (e.training_load ?? Math.round(e.duration_min * e.rpe)), 0)}`,
+      rows: g.items.map((e) => ({
+        key: e.id,
+        left: TRACKS.find((x) => x.v === e.track)?.l ?? e.track,
+        right: `sRPE ${e.training_load ?? Math.round(e.duration_min * e.rpe)} · TRIMP ${e.trimp ?? "—"}${e.hr_avg ? ` · FC ${e.hr_avg}/${e.hr_max ?? "—"}` : ""}${e.patient_rpe != null ? ` · PSE paciente ${e.patient_rpe}` : ""}`,
+      })),
+    }));
+    return { groups, fallback: w.fallback };
+  }, [entries]);
 
   const reset = () => {
     setDuration(""); setRpe(""); setHrAvg(""); setHrMax(""); setSpo2(""); setZones(["", "", "", "", ""]);
@@ -208,20 +221,19 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
         </div>
       )}
 
-      {monitored.length > 0 && (
-        <ul className="space-y-1 text-xs">
-          {monitored.map((e) => (
-            <li key={e.id} className="flex flex-wrap justify-between gap-x-3 rounded-md bg-background px-2 py-1">
-              <span>{e.session_date.split("-").reverse().join("/")} · {TRACKS.find((x) => x.v === e.track)?.l ?? e.track}</span>
-              <span className="text-muted-foreground">
-                sRPE {e.training_load ?? Math.round(e.duration_min * e.rpe)} · TRIMP {e.trimp ?? "—"}
-                {e.hr_avg ? ` · FC ${e.hr_avg}/${e.hr_max ?? "—"}` : ""}
-                {e.patient_rpe != null ? ` · PSE paciente ${e.patient_rpe}` : ""}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] text-muted-foreground">
+            {monitored.groups.length === 0
+              ? "Nenhuma sessão monitorada ainda."
+              : monitored.fallback
+                ? "Sem registros nos últimos 3 dias — exibindo os mais recentes."
+                : "Últimos 3 dias"}
+          </p>
+          <LoadHistoryDialog patientId={patientId} />
+        </div>
+        <DayGroupList groups={monitored.groups} />
+      </div>
     </div>
   );
 };
