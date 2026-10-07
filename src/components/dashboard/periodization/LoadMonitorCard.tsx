@@ -9,12 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import {
   Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine,
 } from "recharts";
-import { Activity, HeartPulse, Loader2, Plus, TrendingUp } from "lucide-react";
+import { HeartPulse, Loader2, Plus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { loadStatus, localISODate, readinessScore, recoverySignal, restingHrStatus, trainingLoad } from "@/lib/periodization";
 import type { ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
-import { saveProfessionalSession, saveCheckin } from "@/lib/periodizationData";
-import { CHECKIN_ITEMS, LEVEL_CLASS, TRACK_LABEL, ZONE_LABEL } from "./scales";
+import { saveCheckin } from "@/lib/periodizationData";
+import { CHECKIN_ITEMS, LEVEL_CLASS, ZONE_LABEL } from "./scales";
 import { CHART_WINDOW_DAYS, inWindow, recentDaysWindow, rollingDailySeries } from "@/lib/loadWindows";
 import DailyLoadChart from "./DailyLoadChart";
 import LoadHistoryDialog from "./LoadHistoryDialog";
@@ -83,40 +83,12 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
     [checkins, chartWindow],
   );
 
-  // Formulário de sRPE
-  const [srpeOpen, setSrpeOpen] = useState(false);
-  const [track, setTrack] = useState("physio");
-  const [duration, setDuration] = useState("");
-  const [rpe, setRpe] = useState(5);
-  const [srpeDate, setSrpeDate] = useState(localISODate());
-  const [savingSrpe, setSavingSrpe] = useState(false);
-
   // Formulário de check-in manual (fisio registrando pelo paciente)
   const [checkinOpen, setCheckinOpen] = useState(false);
   const [values, setValues] = useState<Record<string, number>>({});
   const [note, setNote] = useState("");
   const [checkinDate, setCheckinDate] = useState(localISODate());
   const [savingCheckin, setSavingCheckin] = useState(false);
-
-  const submitSrpe = async () => {
-    const min = Number(duration);
-    if (!Number.isFinite(min) || min <= 0) {
-      toast({ title: "Informe a duração da sessão", variant: "destructive" });
-      return;
-    }
-    setSavingSrpe(true);
-    try {
-      await saveProfessionalSession({ patientId, planId, sessionDate: srpeDate, track, durationMin: min, rpe });
-      setDuration("");
-      setSrpeOpen(false);
-      onChanged();
-      toast({ title: "Sessão registrada", description: `Carga: ${trainingLoad(min, rpe)} unidades.` });
-    } catch (e: any) {
-      toast({ title: "Não foi possível registrar", description: e?.message, variant: "destructive" });
-    } finally {
-      setSavingSrpe(false);
-    }
-  };
 
   const submitCheckin = async () => {
     if (Object.keys(values).length === 0) {
