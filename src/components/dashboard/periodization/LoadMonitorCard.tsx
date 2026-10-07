@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { Activity, HeartPulse, Loader2, Plus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { loadStatus, localISODate, readinessScore, restingHrStatus, trainingLoad } from "@/lib/periodization";
+import { loadStatus, localISODate, readinessScore, recoverySignal, restingHrStatus, trainingLoad } from "@/lib/periodization";
 import type { ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
 import { saveProfessionalSession, saveCheckin } from "@/lib/periodizationData";
 import { CHECKIN_ITEMS, LEVEL_CLASS, TRACK_LABEL, ZONE_LABEL } from "./scales";
@@ -42,6 +42,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
   const { toast } = useToast();
   const status = useMemo(() => loadStatus(entries, checkins), [entries, checkins]);
   const hr = useMemo(() => restingHrStatus(checkins), [checkins]);
+  const recovery = useMemo(() => recoverySignal(checkins as any), [checkins]);
 
   // Detalhamento da prontidão: check-ins da data que forma o score exibido
   const [readinessOpen, setReadinessOpen] = useState(false);
@@ -240,6 +241,16 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
             ) : (
               <> · linha de base com 3+ registros anteriores</>
             )}
+          </div>
+        )}
+
+        {/* Recuperação: prontidão do check-in é a base; FC ao acordar, quando existe, tem prioridade */}
+        {recovery.source !== "none" && (
+          <div className={`rounded-xl border p-2 text-xs ${recovery.level === "ok" ? "border-border text-foreground" : LEVEL_CLASS[recovery.level as "caution" | "danger"]}`}>
+            <span className="font-semibold">Recuperação: </span>{recovery.text}
+            <span className="block text-[10px] opacity-80">
+              {recovery.source === "readiness" ? "Baseada no check-in de prontidão. A FC ao acordar é opcional e, se registrada, passa a ter prioridade." : "FC ao acordar com prioridade; prontidão do check-in como confirmação."}
+            </span>
           </div>
         )}
 

@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
 import { fetchCheckins, fetchSrpe, type PeriodizationPlan, type ReadinessCheckin, type SrpeEntry } from "@/lib/periodizationData";
-import { acwr, localISODate, restingHrStatus } from "@/lib/periodization";
+import { acwr, localISODate, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import { DEFAULT_CARDIO_PROFILE, ageFromBirth, cardioMatrix, hrCeiling, profileRule } from "@/lib/cardioSafety";
 import {
   CARDIO_REFERENCES, WHO_MODERATE_MIN, addIsoDays, analyzePeriod, fmtNum, patientReadings, periodReadings, profileGoal, shortDate,
