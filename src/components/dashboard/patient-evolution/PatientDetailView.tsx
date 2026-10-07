@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { usePreserveScrollOnResume } from "@/hooks/usePreserveScrollOnResume";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -219,6 +220,7 @@ const GenerateHypothesisCard = ({ assessment, isDemo, onGenerated }: GenerateHyp
 
 export default function PatientDetailView(props: any) {
   const navigate = useNavigate();
+  usePreserveScrollOnResume();
   const { hasAccess: hasAgentAccess } = useClinicalAgentAccess();
   const { isClinicMode, canManageClinic } = useClinic();
   // Regra de permissão para Dados Cadastrais:

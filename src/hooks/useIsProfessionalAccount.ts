@@ -46,7 +46,8 @@ export function useIsProfessionalAccount() {
     return () => {
       active = false;
     };
-  }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   return isProfessional;
 }
