@@ -53,10 +53,10 @@ async function readCardioPrint(body: any): Promise<Response> {
   const num = { type: ["number", "null"] };
   const schema = {
     type: "object", additionalProperties: false,
-    required: ["duration_min", "distance_km", "avg_hr", "max_hr", "spo2", "suggested_rpe", "zone_minutes", "summary"],
-    properties: { duration_min: num, distance_km: num, avg_hr: num, max_hr: num, spo2: num, suggested_rpe: num, zone_minutes: { type: ["array", "null"], items: { type: "number" } }, summary: { type: "string" } },
+    required: ["duration_min", "distance_km", "avg_hr", "max_hr", "hr_1min_after", "avg_power_w", "spo2", "suggested_rpe", "zone_minutes", "summary"],
+    properties: { duration_min: num, distance_km: num, avg_hr: num, max_hr: num, hr_1min_after: num, avg_power_w: num, spo2: num, suggested_rpe: num, zone_minutes: { type: ["array", "null"], items: { type: "number" } }, summary: { type: "string" } },
   };
-  const instructions = "Você lê prints de monitor cardíaco, relógio, esteira, bicicleta, app de treino ou oxímetro. Extraia apenas o que estiver visível: duração total em minutos, distância em km, FC média e máxima (bpm), SpO2 (%) e minutos em cada zona de FC Z1..Z5 (array de 5 números, ou null se não houver zonas visíveis). Sugira PSE 0-10 só se houver base (zonas, FC relativa ou esforço informado), senão null. summary: uma frase curta em português sem citar marcas. Nunca invente valores.";
+  const instructions = "Você lê prints de monitor cardíaco, relógio, esteira, bicicleta, app de treino ou oxímetro. Extraia apenas o que estiver visível: duração total em minutos, distância em km, FC média e máxima (bpm), FC 1 minuto após o fim do esforço / recuperação (bpm, só se aparecer como valor absoluto), potência média em watts (bicicleta/ergômetro), SpO2 (%) e minutos em cada zona de FC Z1..Z5 (array de 5 números, ou null se não houver zonas visíveis). Sugira PSE 0-10 só se houver base (zonas, FC relativa ou esforço informado), senão null. summary: uma frase curta em português sem citar marcas. Nunca invente valores.";
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Lovable-API-Key": key, Authorization: `Bearer ${key}`, "X-Lovable-AIG-SDK": "fetch" },
@@ -80,7 +80,8 @@ async function readCardioPrint(body: any): Promise<Response> {
   const rng = (v: unknown, lo: number, hi: number) => (typeof v === "number" && v >= lo && v <= hi ? Math.round(v * 10) / 10 : null);
   return json({ reading: {
     duration_min: rng(r.duration_min, 1, 600), distance_km: rng(r.distance_km, 0.1, 400),
-    avg_hr: rng(r.avg_hr, 40, 240), max_hr: rng(r.max_hr, 40, 240), spo2: rng(r.spo2, 70, 100),
+    avg_hr: rng(r.avg_hr, 40, 240), max_hr: rng(r.max_hr, 40, 240),
+    hr_1min_after: rng(r.hr_1min_after, 30, 240), avg_power_w: rng(r.avg_power_w, 1, 2500), spo2: rng(r.spo2, 70, 100),
     suggested_rpe: rng(r.suggested_rpe, 0, 10),
     zone_minutes: Array.isArray(r.zone_minutes) && r.zone_minutes.length === 5 ? r.zone_minutes.map((m: unknown) => rng(m, 0, 600) ?? 0) : null, summary: String(r.summary || "").slice(0, 200),
   } });

@@ -8,3 +8,4 @@ type: feature
 - Nunca citar marcas de equipamento; dizer "monitor cardíaco (cinta, relógio ou pulseira)".
 - Sempre prever caminho sem monitor: oxímetro de dedo (FC + SpO₂).
 - Plano completo em docs/modulo-cardiovascular.md.
+- Análise cardiovascular e relatório: interpretação só por regras fixas (sem créditos de IA); período escolhido na hora (4/8/12 semanas); duas versões do PDF (técnica e paciente); campos extras FC 1 min após, distância/ritmo/potência e betabloqueador.

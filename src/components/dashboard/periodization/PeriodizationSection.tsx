@@ -33,6 +33,7 @@ import MicroWeekGrid from "./MicroWeekGrid";
 import BridgeCard from "./BridgeCard";
 import CardioSafetyCard from "./CardioSafetyCard";
 import ProfessionalCardioEntry from "./ProfessionalCardioEntry";
+import CardioAnalysisPanel from "./CardioAnalysisPanel";
 import AutoPlanCard from "./AutoPlanCard";
 import { HeartPulse } from "lucide-react";
 import PeriodizationCollapsible from "./PeriodizationCollapsible";
@@ -401,6 +402,10 @@ const PeriodizationSection = ({
         <div className="mt-3">
           <CardioSafetyCard patientId={patientId} plan={plan} checkins={checkins} entries={entries} onChanged={refresh} readOnly={readOnly} />
         </div>
+      </PeriodizationCollapsible>
+
+      <PeriodizationCollapsible title="Análise cardiovascular e relatório" icon={<HeartPulse className="h-4 w-4 text-primary" />} defaultOpen={false}>
+        <CardioAnalysisPanel patientId={patientId} plan={plan} entries={entries} patientName={patientName} professionalName={proName} clinicId={clinicId} />
       </PeriodizationCollapsible>
 
       <PeriodizationCollapsible title="Dose planejada e percebida · Planejamento automático de dose de trabalho (sRPE)" icon={<Gauge className="h-4 w-4 text-primary" />}>

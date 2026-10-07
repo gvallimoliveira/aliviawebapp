@@ -34,6 +34,7 @@ Objetivo: incluir no cálculo de carga a fadiga de corrida, ciclismo, esteira, c
      - Card "Teto de frequência cardíaca" no **prontuário do fisioterapeuta** e orientação ao **paciente no painel e no check-in**.
      - Comunicação abrangente e **sem citar marcas**: "monitor cardíaco (cinta, relógio ou pulseira)". Quem tem monitor com alarme recebe instrução genérica para configurar o alerta no teto calculado.
      - Caminho sem monitor: **oxímetro de dedo** (FC + SpO₂). Orientar medir em repouso, ao fim da série/bloco e após 2–3 min de recuperação; registrar FC e SpO₂ opcionais no check-in. FC acima do teto ou SpO₂ < 92% gera atenção ao fisio (sempre sugestão, nunca diagnóstico).
+   - **2E — Análise cardiovascular e relatório especial (feito):** painel recolhido no prontuário (4/8/12 semanas) com minutos aeróbios semanais × meta da OMS 2020, tempo por zona, sessões acima do teto, recuperação da FC no 1º min (≤12 bpm atenção, Cole 1999), coerência TRIMP × PSE, eficiência (m/batimento ou W/bpm), FC ao acordar e distribuição 80/20 (atleta/saudável) ou % na zona prescrita (perfis clínicos). Campos opcionais: FC 1 min após, distância, potência; "Usa betabloqueador" no plano faz a intensidade seguir a PSE. Relatório em PDF técnico e versão do paciente; leituras por regras fixas, sem IA.
 3. **Studio** — linha editorial "monitorar coração e carga sem equipamento caro (até com oxímetro)" e planejamento automático da semana. Sem citar marcas.
 
 Sem integrações pagas com fabricantes até validar o uso.
