@@ -272,7 +272,7 @@ serve(async (req) => {
       }
 
       // Teto de FC (Fase 2D): perfil definido pelo fisio no plano mais recente.
-      const PCT: Record<string, number> = { athletic: 0.85, healthy: 0.8, sedentary: 0.75, hypertensive: 0.7, cardiac: 0.65 };
+      const PCT: Record<string, number> = { athletic: 0.9, healthy: 0.85, sedentary: 0.75, hypertensive: 0.7, cardiac: 0.65, pulmonary: 0.7 };
       const { data: cp } = await supabase.from("periodization_plans")
         .select("cardio_profile, hr_ceiling_override").eq("patient_id", patient.id)
         .order("created_at", { ascending: false }).limit(1).maybeSingle();
@@ -282,7 +282,7 @@ serve(async (req) => {
         const b = new Date(pb.birth_date + "T00:00:00Z"); const n = new Date();
         let age = n.getUTCFullYear() - b.getUTCFullYear();
         if (n.getUTCMonth() < b.getUTCMonth() || (n.getUTCMonth() === b.getUTCMonth() && n.getUTCDate() < b.getUTCDate())) age--;
-        if (age >= 5 && age <= 110) hrCeiling = Math.round((207 - 0.7 * age) * (PCT[cp?.cardio_profile ?? "healthy"] ?? 0.8));
+        if (age >= 5 && age <= 110) hrCeiling = Math.round((207 - 0.7 * age) * (PCT[cp?.cardio_profile ?? "healthy"] ?? 0.85));
       }
 
       return json({

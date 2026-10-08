@@ -3,7 +3,7 @@ import { analyzePeriod, analyzeSession, patientReadings, periodReadings, perceiv
 import { hrCeiling } from "@/lib/cardioSafety";
 
 const ctx = (profile: any = "healthy", betaBlocker = false) => ({ profile, betaBlocker, ceiling: hrCeiling({ profile, age: 50 }) });
-// idade 50 → FCmáx 172; teto saudável 80% = 138; hipertenso 70% = 120
+// idade 50 → FCmáx 172; teto saudável 85% = 146; hipertenso 70% = 120
 
 const base = { id: "a", session_date: "2026-10-05", track: "cardio", duration_min: 40, rpe: 5 };
 
@@ -13,7 +13,8 @@ describe("analyzeSession", () => {
     expect(s.intensity).toMatchObject({ light: 5, moderate: 25, vigorous: 10, source: "zones" });
     expect(s.trimp).toBe(5 + 20 + 45 + 40);
     expect(s.aboveCeiling).toBe(true);
-    expect(s.minutesAboveCeiling).toBeGreaterThan(9);
+    expect(s.minutesAboveCeiling).toBeGreaterThan(5);
+    expect(s.minutesAboveCeiling).toBeLessThan(6);
     expect(s.flags).toContain("hr_above_ceiling");
   });
   it("sem FC usa a PSE (OMS: 5–6 moderado, ≥7 vigoroso)", () => {
@@ -43,6 +44,16 @@ describe("analyzeSession", () => {
   it("zona prescrita nos perfis clínicos", () => {
     expect(analyzeSession({ ...base, rpe: 4, hr_max: 115 }, ctx("hypertensive")).inPrescribedZone).toBe(true);
     expect(analyzeSession({ ...base, rpe: 4, hr_max: 130 }, ctx("hypertensive")).inPrescribedZone).toBe(false);
+  });
+  it("pneumopata não confirma prescrição respiratória sem dispneia específica", () => {
+    const s = analyzeSession({ ...base, rpe: 4, hr_max: 115, spo2_min: 90 }, ctx("pulmonary"));
+    expect(s.inPrescribedZone).toBeNull();
+    expect(s.flags).toContain("spo2_low");
+    const p = analyzePeriod({ entries: [{ ...base, hr_max: 115 }], checkins: [], ctx: ctx("pulmonary"), weeks: 4, today: "2026-10-07" });
+    expect(p.distribution).toBeNull();
+    expect(p.prescribed).toBeNull();
+    expect(periodReadings(p, ctx("pulmonary")).join(" ")).toContain("dispneia");
+    expect(patientReadings(p, ctx("pulmonary")).join(" ")).toContain("Seu esforço");
   });
 });
 
