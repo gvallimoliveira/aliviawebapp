@@ -14,6 +14,7 @@ import {
   type AnalysisContext,
 } from "@/lib/cardioAnalysis";
 import { cardioReportFileName, generateCardioReportPdfBlob, type BrandLogo } from "@/utils/generateCardioReportPdf";
+import { TEST_INFO, analyzeFunctionalTest, type FunctionalTestData, type FunctionalTestType } from "@/lib/cardioFunctionalTests";
 import CardioSessionAnalysis from "./CardioSessionAnalysis";
 import { TRACK_LABEL } from "./scales";
 
@@ -101,8 +102,15 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
           logoUrl = (pro as { logo_url?: string | null } | null)?.logo_url ?? null;
         }
       }
+      const { data: ft } = await supabase.from("cardio_functional_tests").select("test_date,test_type,data")
+        .eq("patient_id", patientId).gte("test_date", analysis.from).lte("test_date", analysis.to).order("test_date");
+      const functionalTests = ((ft ?? []) as unknown as { test_date: string; test_type: FunctionalTestType; data: FunctionalTestData }[]).map((r) => {
+        const rep = analyzeFunctionalTest(r.test_type, r.data);
+        return { date: r.test_date, label: TEST_INFO[r.test_type].label, result: `${r.data.result ?? "—"} ${TEST_INFO[r.test_type].unit}`,
+          percent: rep.percentPredicted, patterns: rep.patterns.map((x) => x.title), alerts: rep.alerts };
+      });
       const opts = {
-        variant, period: analysis, ceiling: ctx.ceiling, profile, betaBlocker: ctx.betaBlocker, age,
+        variant, functionalTests, period: analysis, ceiling: ctx.ceiling, profile, betaBlocker: ctx.betaBlocker, age,
         readings: variant === "technical" ? readings : patientReadings(analysis, ctx),
         patientName, professionalName, logo: await loadLogo(logoUrl),
       };
