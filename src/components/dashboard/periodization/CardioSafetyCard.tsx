@@ -8,6 +8,7 @@ import { ChevronDown, HeartPulse, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
+import { CEILING_GUIDANCE, ISCHEMIC_GUIDANCE, PULMONARY_GUIDANCE } from "@/lib/cardioEducation";
 import type { PeriodizationPlan, ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
 import { acwr, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import {
@@ -138,6 +139,9 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
                 <Input type="number" inputMode="numeric" value={override} onChange={(e) => setOverride(e.target.value)} placeholder="opcional, bpm" className="h-9 text-sm" disabled={readOnly} />
               </div>
             </div>
+            <p className="text-[11px] leading-relaxed text-muted-foreground">{CEILING_GUIDANCE}</p>
+            {profile === "cardiac" && <p className="text-xs leading-relaxed text-muted-foreground">{ISCHEMIC_GUIDANCE}</p>}
+            {profile === "pulmonary" && <p className="text-xs leading-relaxed text-muted-foreground">{PULMONARY_GUIDANCE}</p>}
             <label className="flex items-start gap-3 rounded-xl border border-border p-3">
               <Switch checked={betaBlocker} onCheckedChange={setBetaBlocker} disabled={readOnly} aria-label="Usa betabloqueador" />
               <span className="min-w-0 text-xs">

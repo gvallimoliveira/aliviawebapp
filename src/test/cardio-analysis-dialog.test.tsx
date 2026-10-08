@@ -14,6 +14,13 @@ describe("cardiovascular dialog", () => {
     fireEvent.click(trigger);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("Gráficos cardiovasculares")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Informações educativas cardiovasculares" }));
+    expect(screen.getByText("Guia de intensidade cardiovascular")).toBeInTheDocument();
+    expect(screen.getByText(/Pneumopata \/ DPOC · 70%/)).toBeInTheDocument();
+    expect(screen.getByText(/Atlético · 90%/)).toBeInTheDocument();
+    expect(screen.getByText(/Saudável \/ ativo · 85%/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.getByText("Gráficos cardiovasculares")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();

@@ -1,0 +1,3 @@
+ALTER TABLE public.periodization_plans DROP CONSTRAINT periodization_plans_cardio_profile_chk;
+ALTER TABLE public.periodization_plans ADD CONSTRAINT periodization_plans_cardio_profile_chk CHECK (cardio_profile IS NULL OR cardio_profile IN ('athletic', 'healthy', 'sedentary', 'hypertensive', 'cardiac', 'pulmonary'));
+COMMENT ON COLUMN public.periodization_plans.cardio_profile IS 'Manually selected clinical profile; profile HR percentages are operational estimates, not universal safety limits. Includes pulmonary rehabilitation.';

@@ -3,6 +3,7 @@ import { HeartPulse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import CardioAnalysisPanel from "./CardioAnalysisPanel";
+import CardioEducationDialog from "./CardioEducationDialog";
 
 /** Só monta e busca o período quando a janela abre. */
 const CardioAnalysisDialog = (props: ComponentProps<typeof CardioAnalysisPanel>) => {
@@ -20,7 +21,10 @@ const CardioAnalysisDialog = (props: ComponentProps<typeof CardioAnalysisPanel>)
         trigger.current?.focus({ preventScroll: true });
       }}>
         <DialogHeader className="shrink-0 border-b border-border px-4 py-4 pr-12 text-left">
-          <DialogTitle className="leading-snug tracking-normal">Análise cardiovascular e relatório</DialogTitle>
+          <div className="flex items-center gap-2">
+            <DialogTitle className="min-w-0 flex-1 leading-snug tracking-normal">Análise cardiovascular e relatório</DialogTitle>
+            <CardioEducationDialog />
+          </div>
           <DialogDescription>{props.patientName || "Paciente"} · acompanhamento cardiovascular</DialogDescription>
         </DialogHeader>
         <div className="min-h-0 overflow-y-auto overscroll-contain px-4 pb-4">

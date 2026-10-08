@@ -5,6 +5,9 @@ describe("cardioSafety", () => {
     expect(estimatedMaxHr(50)).toBe(172);
     expect(hrCeiling({ profile: "hypertensive", age: 50 }).ceiling).toBe(120);
     expect(hrCeiling({ profile: "cardiac", age: 50, override: 110 }).ceiling).toBe(110);
+    expect(hrCeiling({ profile: "athletic", age: 50 }).ceiling).toBe(155);
+    expect(hrCeiling({ profile: "healthy", age: 50 }).ceiling).toBe(146);
+    expect(hrCeiling({ profile: "pulmonary", age: 50 }).ceiling).toBe(120);
   });
   it("flags", () => {
     expect(checkinSafetyFlags({ peak_hr: 130, spo2: 90 }, 120)).toEqual(["hr_above_ceiling", "spo2_low"]);

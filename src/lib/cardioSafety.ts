@@ -3,7 +3,7 @@
  * régua de alerta por perfil. Tudo é sugestão ao fisioterapeuta, nunca diagnóstico.
  * Refs: Gellish 2007 (FC máx.), ACSM 2021, Diretriz SBC Reabilitação 2020.
  */
-export type CardioProfile = "athletic" | "healthy" | "sedentary" | "hypertensive" | "cardiac";
+export type CardioProfile = "athletic" | "healthy" | "sedentary" | "hypertensive" | "cardiac" | "pulmonary";
 
 export const CARDIO_PROFILES: Array<{
   key: CardioProfile;
@@ -13,11 +13,12 @@ export const CARDIO_PROFILES: Array<{
   acwrAlert: number;
   rhrAlert: number;
 }> = [
-  { key: "athletic", label: "Atlético", ceilingPct: 0.85, acwrMax: 1.3, acwrAlert: 1.5, rhrAlert: 7 },
-  { key: "healthy", label: "Saudável / ativo", ceilingPct: 0.8, acwrMax: 1.3, acwrAlert: 1.5, rhrAlert: 7 },
+  { key: "athletic", label: "Atlético", ceilingPct: 0.9, acwrMax: 1.3, acwrAlert: 1.5, rhrAlert: 7 },
+  { key: "healthy", label: "Saudável / ativo", ceilingPct: 0.85, acwrMax: 1.3, acwrAlert: 1.5, rhrAlert: 7 },
   { key: "sedentary", label: "Sedentário", ceilingPct: 0.75, acwrMax: 1.25, acwrAlert: 1.4, rhrAlert: 6 },
   { key: "hypertensive", label: "Hipertenso controlado", ceilingPct: 0.7, acwrMax: 1.2, acwrAlert: 1.3, rhrAlert: 5 },
   { key: "cardiac", label: "Cardiopata sob restrição", ceilingPct: 0.65, acwrMax: 1.2, acwrAlert: 1.3, rhrAlert: 5 },
+  { key: "pulmonary", label: "Pneumopata / DPOC", ceilingPct: 0.7, acwrMax: 1.2, acwrAlert: 1.3, rhrAlert: 5 },
 ];
 
 export const DEFAULT_CARDIO_PROFILE: CardioProfile = "healthy";
@@ -88,6 +89,7 @@ export function checkinSafetyFlags(c: { peak_hr?: number | null; spo2?: number |
 export function comorbidityHint(text?: string | null): string | null {
   if (!text) return null;
   const t = text.toLowerCase();
+  if (/(dpoc|pneumopat|enfisema|doen[cç]a pulmonar)/.test(t)) return "A anamnese cita condição pulmonar — confira o perfil e as restrições respiratórias.";
   if (/(cardiopat|infarto|insufici[eê]ncia card|arritmi|stent|angina|marca-?passo)/.test(t)) return "A anamnese cita condição cardíaca — confira o perfil.";
   if (/(hipertens|press[aã]o alta)/.test(t)) return "A anamnese cita hipertensão — confira o perfil.";
   return null;

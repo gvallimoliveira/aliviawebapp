@@ -6,6 +6,7 @@ import {
 } from "@/lib/cardioAnalysis";
 import { OXIMETER_GUIDE, profileRule, type HrCeiling } from "@/lib/cardioSafety";
 import { TRACK_LABEL } from "@/components/dashboard/periodization/scales";
+import { profileEducation, CARDIO_EDUCATION } from "@/lib/cardioEducation";
 
 /**
  * Relatório cardiovascular especial — duas versões a partir da mesma análise
@@ -146,7 +147,7 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
       ]
     : [
         o.ceiling.ceiling
-          ? `Seu limite de batimentos nos treinos: ${o.ceiling.ceiling} batimentos por minuto. Se o monitor mostrar mais que isso, diminua o ritmo.`
+          ? `Referência superior de batimentos nos treinos: ${o.ceiling.ceiling} batimentos por minuto ${o.ceiling.source === "manual" ? "(ajustada pelo profissional)" : "(estimativa pela idade)"}. Se o monitor mostrar mais que isso, diminua o ritmo e converse com seu fisioterapeuta.`
           : "Seu limite de batimentos será definido pelo seu fisioterapeuta.",
         `Referência para construir com seu fisioterapeuta: ${goal.weekly.replace(/\(.*?\)/g, "").trim()}. Atividades abaixo dessa referência também contam; a progressão deve respeitar sua tolerância.`,
         ...(o.betaBlocker ? ["Como você usa um remédio que deixa os batimentos mais baixos, guie-se principalmente pela sensação de esforço."] : []),
@@ -165,6 +166,12 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
     ly += lines.length * 4;
   });
   y += profH + 4;
+
+  const education = profileEducation(o.profile, !tech);
+  if (tech) education.push(CARDIO_EDUCATION[1].text, CARDIO_EDUCATION[3].text);
+  section(tech ? "Prescrição individual e interpretação das intensidades" : "Entendendo seu treino", bulletsHeight(education));
+  bullets(education);
+  y += 3;
 
   // Valorizar o trabalho realizado antes da comparação gráfica na versão do paciente.
   if (!tech) {
