@@ -243,9 +243,8 @@ export function analyzeSession(e: CardioEntryLike, ctx: AnalysisContext): Sessio
   }
 
   // TRIMP: usa o salvo; se faltar, recalcula com zonas ou FC média.
-  let trimpValue: number | null = isNum(e.trimp) ? e.trimp : null;
-  if (trimpValue === null && zones) trimpValue = Math.round(zones.reduce((s, m, i) => s + m * (i + 1), 0));
-  if (trimpValue === null && hrAvg && maxHr && dur > 0) trimpValue = Math.round(dur * edwardsZone(hrAvg, maxHr));
+  let trimpValue: number | null = null;
+  if (zones) trimpValue = Math.round(zones.reduce((s, m, i) => s + m * (i + 1), 0));
 
   const aboveCeiling = !!(ceiling && hrMax && hrMax > ceiling);
   const minutesAboveCeiling = zones && ceiling && maxHr ? minutesAbove(zones, ceiling, maxHr) : null;
@@ -255,7 +254,7 @@ export function analyzeSession(e: CardioEntryLike, ctx: AnalysisContext): Sessio
   const spo2Low = spo2Min !== null && spo2Min < SPO2_ALERT;
 
   let coherence: SessionAnalysis["coherence"] = null;
-  if (trimpValue !== null && dur > 0 && (zones || (hrAvg && maxHr))) {
+  if (trimpValue !== null && dur > 0 && zones) {
     const hrZone = round1(trimpValue / dur);
     const pz = perceivedZone(rpe);
     const diff = round1(hrZone - pz);

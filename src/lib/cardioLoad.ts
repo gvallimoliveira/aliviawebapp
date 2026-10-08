@@ -4,7 +4,7 @@
 // - sRPE (Foster): duração × PSE.
 // - TRIMP de Edwards: soma de minutos em cada zona × peso (Z1=1 … Z5=5), com
 //   zonas em % da FC máxima (50–60, 60–70, 70–80, 80–90, 90–100).
-//   Sem minutos por zona, estimamos com a FC média na zona correspondente.
+//   Só é calculado com minutos por zona; sem eles, TRIMP fica vazio.
 
 export type ZoneMinutes = [number, number, number, number, number];
 
@@ -36,15 +36,12 @@ export function trimp(opts: {
   durationMin?: number | null;
   hrAvg?: number | null;
   hrMax?: number | null; // FC máxima do paciente (estimada ou medida)
-}): { value: number | null; method: "zones" | "avg_hr" | null } {
+}): { value: number | null; method: "zones" | null } {
   if (opts.zones) {
     const v = opts.zones.reduce((s, m, i) => s + m * (i + 1), 0);
     return { value: Math.round(v), method: "zones" };
   }
-  if (opts.durationMin && opts.hrAvg && opts.hrMax) {
-    const z = edwardsZone(opts.hrAvg, opts.hrMax);
-    return { value: Math.round(opts.durationMin * z), method: "avg_hr" };
-  }
+  // Sem minutos por zona não há TRIMP: estimar pela FC média não é fidedigno.
   return { value: null, method: null };
 }
 
