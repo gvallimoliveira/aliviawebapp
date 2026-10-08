@@ -5,7 +5,7 @@
  * 4) tendência (ACWR, só com histórico). Funciona já com 1 check-in ou 1 sessão.
  * Sempre sugestão ao fisioterapeuta, nunca decisão. Sem IA.
  */
-import { localISODate, recoverySignal, acwr, addIsoDaysSafe, trainingLoad } from "./periodizationConductDeps";
+import { localISODate, recoverySignal, acwr, addIsoDays as addIsoDaysSafe, trainingLoad } from "./periodization";
 import { acwrZone, SPO2_ALERT } from "./cardioSafety";
 
 export type ConductTone = "stop" | "reduce" | "hold" | "go" | "info";

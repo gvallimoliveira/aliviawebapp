@@ -423,7 +423,7 @@ export function weekStartOf(ref: Date = new Date()): string {
   return mondayOf(toDate(localISODate(ref)));
 }
 
-const addIsoDays = (iso: string, n: number): string => {
+export const addIsoDays = (iso: string, n: number): string => {
   const d = toDate(iso);
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
