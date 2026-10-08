@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { edwardsZone, monitorFlags, sanitizeZones, srpeLoad, trimp } from "@/lib/cardioLoad";
+import { edwardsZone, formatZoneMinutes, monitorFlags, parseZoneMinutes, sanitizeZones, srpeLoad, trimp } from "@/lib/cardioLoad";
 
 describe("cardioLoad", () => {
   it("sRPE = duração × PSE", () => {
