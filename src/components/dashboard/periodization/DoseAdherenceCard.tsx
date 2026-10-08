@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Plus, Target } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   adherenceByTrack,
