@@ -260,9 +260,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
             )}
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-3">
         {!hasTarget ? (
           <p className="text-xs text-muted-foreground">
             Nenhuma dose planejada neste período de 7 dias. Prescreva duração e esforço alvo por frente (fisioterapia, academia,
