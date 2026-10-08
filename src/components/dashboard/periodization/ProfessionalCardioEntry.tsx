@@ -11,7 +11,7 @@ import { CARDIO_PRINT_ERR } from "@/components/periodization/CardioPrintReader";
 import { TRACK_LABEL } from "./scales";
 import { SPO2_ALERT, ageFromBirth, hrCeiling } from "@/lib/cardioSafety";
 import { localISODate } from "@/lib/periodization";
-import { monitorFlags, sanitizeZones, srpeLoad, trimp } from "@/lib/cardioLoad";
+import { formatZoneMinutes, monitorFlags, parseZoneMinutes, sanitizeZones, srpeLoad, trimp } from "@/lib/cardioLoad";
 import { TEXT_WINDOW_DAYS, groupByDay, inWindow, recentDaysWindow } from "@/lib/loadWindows";
 import DayGroupList, { type DayGroup } from "./DayGroupList";
 import LoadHistoryDialog from "./LoadHistoryDialog";
@@ -57,7 +57,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
   const fileRef = useRef<HTMLInputElement>(null);
 
   const ceil = hrCeiling({ profile: plan?.cardio_profile, age: ageFromBirth(birth), override: plan?.hr_ceiling_override ?? null });
-  const z = sanitizeZones(zones.map((x) => num(x)));
+  const z = sanitizeZones(zones.map((x) => parseZoneMinutes(x)));
   const d = num(duration) ?? 0;
   const r = num(rpe);
   const sload = r != null ? srpeLoad(d, r) : null;
@@ -102,7 +102,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
     setSpo2(s(e.spo2_min)); setHrRec(s(e.hr_recovery_1min)); setDistance(s(e.distance_km).replace(".", ","));
     setPower(s(e.avg_power_w)); setNotes(e.notes ?? "");
     const zs = Array.isArray(e.zone_minutes) ? e.zone_minutes : [];
-    setZones([0, 1, 2, 3, 4].map((i) => (zs[i] ? String(zs[i]) : "")));
+    setZones([0, 1, 2, 3, 4].map((i) => formatZoneMinutes(zs[i])));
     setSource((e.monitor_source as "manual" | "print") ?? "manual"); setReadCount(0);
     setOpen(true);
   };
@@ -149,7 +149,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
       if (x.distance_km != null) put("di", s(x.distance_km).replace(".", ","), setDistance);
       if (x.avg_power_w != null) put("pw", s(Math.round(x.avg_power_w)), setPower);
       if (Array.isArray(x.zone_minutes) && x.zone_minutes.some((m: number) => m > 0) && !filled.z) {
-        filled.z = true; setZones([0, 1, 2, 3, 4].map((i) => (x.zone_minutes[i] ? String(x.zone_minutes[i]) : "")));
+        filled.z = true; setZones([0, 1, 2, 3, 4].map((i) => formatZoneMinutes(x.zone_minutes[i])));
       }
       if (x.suggested_rpe != null && !rpe && !filled.r) { filled.r = true; setRpe(s(x.suggested_rpe)); }
       if (x.summary && !notes) setNotes((n) => (n ? `${n} ${x.summary}` : x.summary));
@@ -239,13 +239,14 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
           )}
 
           <div className="min-w-0 space-y-1">
-            <div className="text-xs">Minutos por zona de FC (opcional)</div>
+            <div className="text-xs">Tempo por zona de FC (opcional)</div>
             <div className="grid grid-cols-5 gap-1.5 [&_input]:min-w-0 [&_input]:px-2">
               {zones.map((v, i) => (
                 <Input key={i} aria-label={`Zona ${i + 1}`} placeholder={`Z${i + 1}`} inputMode="numeric" value={v}
                   onChange={(e) => setZones((zs) => zs.map((x, j) => (j === i ? e.target.value : x)))} />
               ))}
             </div>
+            <p className="text-[10px] text-muted-foreground">Aceita minutos (12 ou 12,5) ou minutos e segundos (12:30).</p>
           </div>
 
           <Input placeholder="Observação (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
