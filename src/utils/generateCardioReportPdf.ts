@@ -49,6 +49,8 @@ export interface CardioReportOptions {
   patientName?: string | null;
   professionalName?: string | null;
   logo?: BrandLogo | null;
+  /** Testes funcionais do período (TSL, TC6M, degrau), já interpretados por regras fixas. */
+  functionalTests?: { date: string; label: string; result: string; percent: number | null; patterns: string[]; alerts: string[] }[];
 }
 
 /** A fonte embutida cobre Latim + pontuação; troca símbolos matemáticos por texto. */
@@ -352,6 +354,19 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
       y += rowH;
     });
     y += 4;
+  }
+
+  // ── Testes funcionais ─────────────────────────────────────────────────
+  if (o.functionalTests?.length) {
+    const items = o.functionalTests.map((t) => {
+      const base = `${fmtDate(t.date)} · ${t.label}: ${t.result}${t.percent != null ? ` (${t.percent}% do previsto)` : ""}`;
+      if (!tech) return t.percent != null ? `${base}. Este número serve de ponto de partida para comparar sua evolução.` : `${base}.`;
+      const extra = [...t.patterns, ...t.alerts.map((a) => `Alerta: ${a}`)];
+      return extra.length ? `${base}. ${extra.join(" ")}` : base;
+    });
+    section(tech ? "Testes funcionais cardiorrespiratórios" : "Seus testes de capacidade", bulletsHeight(items));
+    bullets(items);
+    y += 3;
   }
 
   // ── Orientações / ressalvas ────────────────────────────────────────────

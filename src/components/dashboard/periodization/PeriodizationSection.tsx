@@ -397,7 +397,7 @@ const PeriodizationSection = ({
           <ProfessionalCardioEntry patientId={patientId} plan={plan} entries={entries} onChanged={refresh} />
         </PeriodizationCollapsible>
         <PeriodizationCollapsible title="Avaliação cardiorrespiratória (testes funcionais)" icon={<HeartPulse className="h-4 w-4 text-primary" />} defaultOpen={false}>
-          <CardioFunctionalTestsCard patientId={patientId} />
+          <CardioFunctionalTestsCard patientId={patientId} entries={entries} />
         </PeriodizationCollapsible>
       </>)}
 

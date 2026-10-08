@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
 import { localISODate } from "@/lib/periodization";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import type { SrpeEntry } from "@/lib/periodizationData";
 import { analyzeFunctionalTest, TEST_INFO, type FunctionalTestData, type FunctionalTestType } from "@/lib/cardioFunctionalTests";
 
 interface Row { id: string; test_date: string; test_type: FunctionalTestType; data: FunctionalTestData; notes: string | null }
@@ -46,7 +47,7 @@ const NumField = ({ label, value, onChange }: { label: string; value: number | n
   </div>
 );
 
-const CardioFunctionalTestsCard = ({ patientId }: { patientId: string }) => {
+const CardioFunctionalTestsCard = ({ patientId, entries = [] }: { patientId: string; entries?: SrpeEntry[] }) => {
   const birth = usePatientBirthDate(patientId);
   const [rows, setRows] = useState<Row[]>([]);
   const [open, setOpen] = useState(false);
@@ -64,6 +65,14 @@ const CardioFunctionalTestsCard = ({ patientId }: { patientId: string }) => {
   useEffect(() => { void load(); }, [load]);
 
   const set = (patch: Partial<FunctionalTestData>) => setD((p) => ({ ...p, ...patch }));
+  // Reaproveita o que já foi lido (print/manual) na sessão monitorada: sem redigitar.
+  const monitored = useMemo(() => entries.filter((e) => e.monitor_source && (e.hr_max || e.spo2_min || e.hr_recovery_1min)).sort((a, b) => b.session_date.localeCompare(a.session_date)).slice(0, 10), [entries]);
+  const importSession = (id: string) => {
+    const e = monitored.find((x) => x.id === id); if (!e) return;
+    setDate(e.session_date);
+    set({ hrPeak: e.hr_max ?? d.hrPeak ?? null, spo2Min: e.spo2_min ?? d.spo2Min ?? null, hrRecovery1: e.hr_recovery_1min ?? d.hrRecovery1 ?? null });
+    toast({ title: "Dados da sessão monitorada aplicados", description: "Confira e complete repouso, Borg e resultado." });
+  };
   const report = useMemo(() => analyzeFunctionalTest(type, d), [type, d]);
 
   const startNew = () => {
@@ -148,6 +157,17 @@ const CardioFunctionalTestsCard = ({ patientId }: { patientId: string }) => {
                 </button>
               ))}
             </div>
+
+            {monitored.length > 0 && !editId && (
+              <div className="space-y-1 rounded-lg border border-dashed border-border p-3">
+                <Label className="text-xs">Já lançou o teste como sessão monitorada? Use os dados dela</Label>
+                <select className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm" defaultValue="" onChange={(e) => importSession(e.target.value)}>
+                  <option value="" disabled>Escolher sessão…</option>
+                  {monitored.map((e) => <option key={e.id} value={e.id}>{e.session_date.split("-").reverse().join("/")} · FC máx {e.hr_max ?? "—"} · SpO₂ {e.spo2_min ?? "—"}</option>)}
+                </select>
+                <p className="text-[11px] text-muted-foreground">Não é preciso lançar o teste também como sessão: ele não entra na carga semanal.</p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="space-y-1"><Label className="text-xs">Data</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
