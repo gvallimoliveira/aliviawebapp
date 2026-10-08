@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Plus, Target } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   adherenceByTrack,
@@ -194,17 +194,8 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
 
   return (
     <Card>
-      <CardHeader className="pb-2 periodization-card-header">
-        <div className="flex items-start justify-between gap-2 flex-wrap">
-          <div>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Target className="h-4 w-4 text-primary" />
-              Dose planejada x percebida
-            </CardTitle>
-            <p className="text-[11px] text-muted-foreground pt-1">
-              O sRPE é sempre do paciente. Aqui ele é comparado com a dose que você (ou o preparador) planejou.
-            </p>
-          </div>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1">
             <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setShift((v) => v - 1)}>
               <ChevronLeft className="h-4 w-4" />
@@ -269,9 +260,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
             )}
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-3">
         {!hasTarget ? (
           <p className="text-xs text-muted-foreground">
             Nenhuma dose planejada neste período de 7 dias. Prescreva duração e esforço alvo por frente (fisioterapia, academia,
