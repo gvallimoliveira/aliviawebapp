@@ -38,6 +38,7 @@ import AutoPlanCard from "./AutoPlanCard";
 import DailyConductCard from "./DailyConductCard";
 import { HeartPulse } from "lucide-react";
 import PeriodizationCollapsible from "./PeriodizationCollapsible";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   /** Id do registro em `patients`, quando o prontuário já o conhece. */
@@ -63,6 +64,9 @@ const PeriodizationSection = ({
   isDemo,
 }: Props) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  // Planejamento automático: restrito ao admin por ora.
+  const isAdmin = user?.email === "gvallimoliveira@gmail.com";
   const [patientId, setPatientId] = useState<string | null>(patientIdProp ?? null);
   const [resolving, setResolving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -409,7 +413,7 @@ const PeriodizationSection = ({
 
       {entries.some((e: any) => e.hr_avg || e.hr_max || e.zone_minutes || e.trimp) && <CardioAnalysisDialog patientId={patientId} plan={plan} entries={entries} patientName={patientName} professionalName={proName} clinicId={clinicId} />}
 
-      <PeriodizationCollapsible title="Dose planejada e percebida · Planejamento automático de dose de trabalho (sRPE)" icon={<Gauge className="h-4 w-4 text-primary" />}>
+      <PeriodizationCollapsible title={isAdmin ? "Dose planejada e percebida · Planejamento automático de dose de trabalho (sRPE)" : "Dose planejada e percebida"} icon={<Gauge className="h-4 w-4 text-primary" />}>
         <DoseAdherenceCard
           patientId={patientId}
           planId={plan?.id ?? null}
@@ -418,17 +422,17 @@ const PeriodizationSection = ({
           onChanged={refresh}
           readOnly={readOnly}
         />
-        {plan && (
+        {plan && isAdmin && (
           <div className="mt-3">
             <AutoPlanCard patientId={patientId} plan={plan} entries={entries} checkins={checkins} sessions={sessions} onChanged={refresh} readOnly={readOnly} />
           </div>
         )}
       </PeriodizationCollapsible>
 
-      {plan && (
+      {(
         <PeriodizationCollapsible title="Microciclo da semana" icon={<Plus className="h-4 w-4 text-primary" />}>
           <MicroWeekGrid
-            planId={plan.id}
+            planId={plan?.id ?? null}
             patientId={patientId}
             sessions={sessions}
             entries={entries}
@@ -436,7 +440,7 @@ const PeriodizationSection = ({
             readOnly={readOnly}
             patientName={patientName}
             professionalName={proName}
-            sport={plan.sport}
+            sport={plan?.sport ?? null}
             currentPhase={cycles.find((c) => c.level === "macro" && c.is_current)?.name ?? null}
           />
         </PeriodizationCollapsible>

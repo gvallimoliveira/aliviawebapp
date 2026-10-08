@@ -126,6 +126,20 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
     }
   };
 
+  const reportButtons = (
+  <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" className="rounded-xl" disabled={!!busy} onClick={() => report("technical")}>
+              {busy === "technical" ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileDown className="mr-1 h-4 w-4" />}Relatório técnico (PDF)
+            </Button>
+            <Button type="button" size="sm" variant="outline" className="rounded-xl" disabled={!!busy} onClick={() => report("patient")}>
+              {busy === "patient" ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileDown className="mr-1 h-4 w-4" />}Versão do paciente (PDF)
+            </Button>
+            <Button type="button" size="sm" variant="ghost" className="rounded-xl" disabled={!!busy} onClick={() => report("patient", true)}>
+              <Share2 className="mr-1 h-4 w-4" />Enviar ao paciente
+            </Button>
+          </div>
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -147,6 +161,7 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
         <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Carregando análise…</div>
       ) : (
         <>
+          {reportButtons}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {([
               ["Meta OMS atingida", `${analysis.whoWeeksMet}/${analysis.weeks.length} sem.`, false],
@@ -294,17 +309,7 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
             </div>
           </details>
 
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" size="sm" className="rounded-xl" disabled={!!busy} onClick={() => report("technical")}>
-              {busy === "technical" ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileDown className="mr-1 h-4 w-4" />}Relatório técnico (PDF)
-            </Button>
-            <Button type="button" size="sm" variant="outline" className="rounded-xl" disabled={!!busy} onClick={() => report("patient")}>
-              {busy === "patient" ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <FileDown className="mr-1 h-4 w-4" />}Versão do paciente (PDF)
-            </Button>
-            <Button type="button" size="sm" variant="ghost" className="rounded-xl" disabled={!!busy} onClick={() => report("patient", true)}>
-              <Share2 className="mr-1 h-4 w-4" />Enviar ao paciente
-            </Button>
-          </div>
+          {reportButtons}
         </>
       )}
     </div>

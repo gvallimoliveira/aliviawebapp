@@ -15,6 +15,7 @@ import {
   trainingLoad,
   repeatedDoseDeviation,
   localISODate,
+  loadLevelFromRpe,
 } from "@/lib/periodization";
 import { CHART_WINDOW_DAYS, TEXT_WINDOW_DAYS, groupByDay, inWindow, recentDaysWindow } from "@/lib/loadWindows";
 import DayGroupList, { type DayGroup } from "./DayGroupList";
@@ -176,6 +177,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
         track,
         plannedDurationMin: min,
         plannedRpe: rpe,
+        plannedLoad: loadLevelFromRpe(rpe, min),
         title: title.trim() || null,
       });
       setDuration("");
@@ -217,7 +219,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                   <Button type="button" size="sm" variant="outline" className="gap-1 rounded-xl text-xs ml-1">
-                    <ClipboardList className="h-3.5 w-3.5" /> Prescrever
+                    <ClipboardList className="h-3.5 w-3.5" /> Registrar sessão planejada
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-sm">

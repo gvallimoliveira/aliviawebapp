@@ -13,7 +13,7 @@ import { DOSE_CLASS, DOSE_LABEL, PLANNED_LOAD_CLASS, PLANNED_LOAD_LABEL, TRACK_L
 import { Slider } from "@/components/ui/slider";
 
 interface Props {
-  planId: string;
+  planId?: string | null;
   patientId: string;
   sessions: PeriodizationSession[];
   /** sRPE relatado pelo paciente, para o selo de aderência de dose. */
