@@ -365,7 +365,8 @@ export async function savePlannedDose(opts: {
 }
 
 export async function deleteSession(id: string): Promise<void> {
-  await supabase.from("periodization_sessions").delete().eq("id", id);
+  const { error } = await supabase.from("periodization_sessions").delete().eq("id", id);
+  if (error) throw error;
 }
 
 /* ------------------------------------------------------------------- srpe */
@@ -503,6 +504,12 @@ export async function saveCheckin(entry: {
       },
       { onConflict: "patient_id,checkin_date" },
     );
+  if (error) throw error;
+}
+
+/** Exclui um registro de prontidão; sai de prontidão, conduta, recuperação e relatórios. */
+export async function deleteCheckin(id: string): Promise<void> {
+  const { error } = await supabase.from("readiness_checkins").delete().eq("id", id);
   if (error) throw error;
 }
 

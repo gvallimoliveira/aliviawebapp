@@ -127,8 +127,14 @@ const MicroWeekGrid = ({
   };
 
   const remove = async (id: string) => {
-    await deleteSession(id);
-    onChanged();
+    if (!window.confirm("Excluir esta dose planejada? Ela sai do microciclo e da comparação planejado × percebido. Registros de sessões realizadas são mantidos.")) return;
+    try {
+      await deleteSession(id);
+      onChanged();
+      toast({ title: "Dose planejada excluída" });
+    } catch (e: any) {
+      toast({ title: "Não foi possível excluir", description: e?.message, variant: "destructive" });
+    }
   };
 
   /** Sessão planejada elegível ao registro monitorado: hoje ou até 7 dias atrás. */
@@ -284,7 +290,7 @@ const MicroWeekGrid = ({
                         {s.title && <p className="text-[10px] text-muted-foreground truncate">{s.title}</p>}
                       </div>
                       {!readOnly && (
-                        <button type="button" onClick={(e) => { e.stopPropagation(); remove(s.id); }} className="opacity-0 group-hover:opacity-100 transition">
+                        <button type="button" aria-label="Excluir dose planejada" onClick={(e) => { e.stopPropagation(); remove(s.id); }} onKeyDown={(e) => e.stopPropagation()} className="shrink-0 p-0.5 opacity-70 hover:opacity-100 transition">
                           <Trash2 className="h-3 w-3 text-muted-foreground" />
                         </button>
                       )}
