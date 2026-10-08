@@ -11,7 +11,7 @@ import { CARDIO_PRINT_ERR } from "@/components/periodization/CardioPrintReader";
 import { TRACK_LABEL } from "./scales";
 import { SPO2_ALERT, ageFromBirth, hrCeiling } from "@/lib/cardioSafety";
 import { localISODate } from "@/lib/periodization";
-import { monitorFlags, sanitizeZones, srpeLoad, trimp } from "@/lib/cardioLoad";
+import { formatZoneMinutes, monitorFlags, parseZoneMinutes, sanitizeZones, srpeLoad, trimp } from "@/lib/cardioLoad";
 import { TEXT_WINDOW_DAYS, groupByDay, inWindow, recentDaysWindow } from "@/lib/loadWindows";
 import DayGroupList, { type DayGroup } from "./DayGroupList";
 import LoadHistoryDialog from "./LoadHistoryDialog";
@@ -57,7 +57,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
   const fileRef = useRef<HTMLInputElement>(null);
 
   const ceil = hrCeiling({ profile: plan?.cardio_profile, age: ageFromBirth(birth), override: plan?.hr_ceiling_override ?? null });
-  const z = sanitizeZones(zones.map((x) => num(x)));
+  const z = sanitizeZones(zones.map((x) => parseZoneMinutes(x)));
   const d = num(duration) ?? 0;
   const r = num(rpe);
   const sload = r != null ? srpeLoad(d, r) : null;
@@ -149,7 +149,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
       if (x.distance_km != null) put("di", s(x.distance_km).replace(".", ","), setDistance);
       if (x.avg_power_w != null) put("pw", s(Math.round(x.avg_power_w)), setPower);
       if (Array.isArray(x.zone_minutes) && x.zone_minutes.some((m: number) => m > 0) && !filled.z) {
-        filled.z = true; setZones([0, 1, 2, 3, 4].map((i) => (x.zone_minutes[i] ? String(x.zone_minutes[i]) : "")));
+        filled.z = true; setZones([0, 1, 2, 3, 4].map((i) => formatZoneMinutes(x.zone_minutes[i])));
       }
       if (x.suggested_rpe != null && !rpe && !filled.r) { filled.r = true; setRpe(s(x.suggested_rpe)); }
       if (x.summary && !notes) setNotes((n) => (n ? `${n} ${x.summary}` : x.summary));
