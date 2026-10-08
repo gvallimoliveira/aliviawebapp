@@ -26,6 +26,7 @@ import { LANDING_LAYOUT } from "@/lib/landingLayout";
 
 const Gateway = lazy(() => import("./pages/Gateway"));
 const Auth = lazy(() => import("./pages/Auth"));
+const CardioTestSheet = lazy(() => import("./pages/CardioTestSheet"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const PatientLanding = lazy(() => import("./pages/PatientLanding"));
@@ -131,6 +132,7 @@ const App = () => {
                       </DashboardErrorBoundary>
                     )}
                   />
+                  <Route path="/teste-cardio/:type" element={<CardioTestSheet />} />
                   <Route path="/assessment/view/:id" element={<AssessmentView />} />
                   <Route path="/assessment/:type" element={<Assessment />} />
                   <Route path="/payment-success" element={<PaymentSuccess />} />

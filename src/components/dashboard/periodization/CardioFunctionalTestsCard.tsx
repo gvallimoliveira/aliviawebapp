@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
-import { localISODate } from "@/lib/periodizationData";
+import { localISODate } from "@/lib/periodization";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { analyzeFunctionalTest, TEST_INFO, type FunctionalTestData, type FunctionalTestType } from "@/lib/cardioFunctionalTests";
 
