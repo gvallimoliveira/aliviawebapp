@@ -194,17 +194,8 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
 
   return (
     <Card>
-      <CardHeader className="pb-2 periodization-card-header">
-        <div className="flex items-start justify-between gap-2 flex-wrap">
-          <div>
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Target className="h-4 w-4 text-primary" />
-              Dose planejada x percebida
-            </CardTitle>
-            <p className="text-[11px] text-muted-foreground pt-1">
-              O sRPE é sempre do paciente. Aqui ele é comparado com a dose que você (ou o preparador) planejou.
-            </p>
-          </div>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1">
             <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setShift((v) => v - 1)}>
               <ChevronLeft className="h-4 w-4" />
