@@ -1,5 +1,10 @@
 # Roadmap
 
+## Perfis e educação cardiovascular (08/10)
+- [ ] Atualizar tetos, incluir pneumopata e sincronizar check-in e gravação do perfil.
+- [ ] Incluir resumo educativo pelo ícone i e revisar ambos os relatórios.
+- [ ] Atualizar suporte e documentação; validar perfis, resumo e PDFs.
+
 ## Relatório positivo e análise em janela separada (07/10)
 - [x] Reconhecer esforço abaixo da meta OMS e equilibrar conquistas com próximos passos sem ocultar alertas.
 - [x] Abrir análise e relatórios em modal, com apenas acesso compacto no prontuário.

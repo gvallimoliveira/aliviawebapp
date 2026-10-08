@@ -53,9 +53,17 @@ export const RECOVERY_LOW = 12;
 export const RECOVERY_GOOD = 20;
 
 export const CARDIO_GOALS: Record<CardioProfile, CardioGoal> = {
+  pulmonary: {
+    title: "Pneumopata / DPOC",
+    intensity: "Esforço global individualizado, com dispneia e SpO₂ acompanhadas separadamente; FC complementar",
+    weekly: "Construir atividade regular conforme tolerância e avaliação respiratória; 150 min/semana é referência geral, não obrigação clínica imediata",
+    distribution: "prescribed",
+    rpeRange: [3, 5],
+    source: "ATS 2023; ATS/ERS 2013; OMS 2020",
+  },
   cardiac: {
     title: "Cardiopata sob restrição",
-    intensity: "Moderada, PSE 3–5 (Borg 11–13), sempre abaixo do teto de FC",
+    intensity: "Esforço global inicial PSE 3–5, individualizado pelo teste, sintomas e medicação; Borg 6–20 é escala distinta",
     weekly: "Referência de 150 min/semana, construída aos poucos (3–5 sessões de 30–60 min)",
     distribution: "prescribed",
     rpeRange: [3, 5],
@@ -106,6 +114,8 @@ export const CARDIO_REFERENCES = [
   "Foster C, et al. A new approach to monitoring exercise training. J Strength Cond Res. 2001;15(1):109-115.",
   "Gellish RL, et al. Longitudinal modeling of the relationship between age and maximal heart rate. Med Sci Sports Exerc. 2007;39(5):822-829.",
   "Gabbett TJ. The training-injury prevention paradox. Br J Sports Med. 2016;50(5):273-280.",
+  "Rochester CL, et al. Pulmonary Rehabilitation for Adults with Chronic Respiratory Disease: An Official ATS Clinical Practice Guideline. Am J Respir Crit Care Med. 2023;208:e7-e26.",
+  "Spruit MA, et al. An Official ATS/ERS Statement: Key Concepts and Advances in Pulmonary Rehabilitation. Am J Respir Crit Care Med. 2013;188:e13-e64.",
 ];
 
 export const CARDIO_CAVEATS = [
@@ -113,6 +123,9 @@ export const CARDIO_CAVEATS = [
   "Betabloqueadores achatam a resposta da FC: nesses casos o esforço percebido (PSE/Borg) é o guia principal.",
   "As zonas são calculadas em % da FC máxima (modelo de Edwards); o limite entre moderado (Z2–Z3) e vigoroso (Z4–Z5) é aproximado.",
   "Esta análise é um apoio ao acompanhamento e não substitui avaliação médica.",
+  "Os tetos por perfil são referências operacionais, não limites universais de segurança. Em pneumopatas, a FC não substitui dispneia, sintomas e alvo individual de SpO₂.",
+  "PSE global 0–10, Borg CR10 e Borg 6–20 não têm conversão exata. Zonas Edwards e equivalência OMS são aproximações; o app não mede VO₂máx nem adaptações mitocondriais.",
+  "Recuperação da FC depende do protocolo: pico menos FC após 1 minuto é uma aproximação, não substitui teste padronizado.",
 ];
 
 /* ------------------------------------------------------------- helpers */
@@ -269,7 +282,9 @@ export function analyzeSession(e: CardioEntryLike, ctx: AnalysisContext): Sessio
   if (goal.distribution === "prescribed" && aerobic) {
     const rpeOk = rpe >= goal.rpeRange[0] && rpe <= goal.rpeRange[1];
     const hrOk = ctx.betaBlocker || !hrMax || !ceiling || hrMax <= ceiling;
-    inPrescribedZone = rpeOk && hrOk;
+    // Pulmonary tolerance also needs dyspnea and an individualized saturation target,
+    // which are not captured as structured fields: never claim full adherence.
+    inPrescribedZone = ctx.profile === "pulmonary" ? null : rpeOk && hrOk;
   }
 
   const flags: SessionFlag[] = [];
@@ -538,7 +553,8 @@ export function periodReadings(p: PeriodAnalysis, ctx: AnalysisContext, extra?: 
     out.push(`Eficiência na bicicleta (W por bpm): ${fmtNum(t.first)} → ${fmtNum(t.last)} (${t.changePct > 0 ? "+" : ""}${t.changePct}%).`);
   }
   if (p.restingTrend) out.push(`FC ao acordar (média semanal): ${fmtNum(Math.round(p.restingTrend.first * 10) / 10)} → ${fmtNum(Math.round(p.restingTrend.last * 10) / 10)} bpm.`);
-  if (extra?.matrixText) out.push(`Leitura do momento (ACWR cardio × FC ao acordar): ${extra.matrixText}`);
+  if (extra?.matrixText) out.push(`Leitura do momento (ACWR cardio × prontidão/FC ao acordar): ${extra.matrixText}`);
+  if (ctx.profile === "pulmonary") out.push("Perfil pneumopata: revisar dispneia, sintomas e alvo individual de SpO₂ junto da carga. Sem registro específico de dispneia, não é possível confirmar adesão à prescrição respiratória pela FC/PSE global isoladas.");
   if (ctx.betaBlocker) out.push("Paciente em uso de betabloqueador: intensidade avaliada pela PSE; FC usada só como apoio.");
   return out;
 }
@@ -574,6 +590,7 @@ export function patientReadings(p: PeriodAnalysis, ctx: AnalysisContext): string
     : "Parte dos treinos ficou fora da faixa combinada de esforço ou batimentos. Revise com seu fisioterapeuta como ajustar a intensidade ao seu momento.");
   if (p.counts.spo2Low > 0) out.push("Em algum treino a oxigenação ficou baixa. Se sentir falta de ar, tontura ou dor no peito, pare e avise seu profissional.");
   if (ctx.betaBlocker) out.push("Como você usa um remédio que deixa os batimentos mais baixos, guie-se principalmente pela sensação de esforço.");
+  if (ctx.profile === "pulmonary") out.push("Seu esforço merece ser reconhecido também quando a falta de ar limita o ritmo. Combine pausas e intensidade com seu fisioterapeuta; batimentos e nota de esforço não contam sozinhos toda a resposta respiratória.");
   return out;
 }
 
