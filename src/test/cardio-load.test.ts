@@ -20,6 +20,19 @@ describe("cardioLoad", () => {
     expect(trimp({ durationMin: 30, hrAvg: 150, hrMax: 200 })).toEqual({ value: null, method: null });
     expect(trimp({ durationMin: 30 }).value).toBeNull();
   });
+  it("tempo por zona aceita minutos, decimais e mm:ss", () => {
+    expect(parseZoneMinutes("12")).toBe(12);
+    expect(parseZoneMinutes("12,5")).toBe(12.5);
+    expect(parseZoneMinutes("12:30")).toBe(12.5);
+    expect(parseZoneMinutes("0:45")).toBe(0.75);
+    expect(parseZoneMinutes("12:75")).toBeNull();
+    expect(parseZoneMinutes("abc")).toBeNull();
+    expect(parseZoneMinutes("")).toBeNull();
+    expect(formatZoneMinutes(12.5)).toBe("12:30");
+    expect(formatZoneMinutes(0.75)).toBe("0:45");
+    expect(formatZoneMinutes(0)).toBe("");
+    expect(formatZoneMinutes(null)).toBe("");
+  });
   it("zonas vazias viram null", () => {
     expect(sanitizeZones([0, 0, null, undefined, 0])).toBeNull();
   });
