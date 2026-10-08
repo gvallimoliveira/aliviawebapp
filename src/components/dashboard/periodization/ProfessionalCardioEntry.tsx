@@ -102,7 +102,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
     setSpo2(s(e.spo2_min)); setHrRec(s(e.hr_recovery_1min)); setDistance(s(e.distance_km).replace(".", ","));
     setPower(s(e.avg_power_w)); setNotes(e.notes ?? "");
     const zs = Array.isArray(e.zone_minutes) ? e.zone_minutes : [];
-    setZones([0, 1, 2, 3, 4].map((i) => (zs[i] ? String(zs[i]) : "")));
+    setZones([0, 1, 2, 3, 4].map((i) => formatZoneMinutes(zs[i])));
     setSource((e.monitor_source as "manual" | "print") ?? "manual"); setReadCount(0);
     setOpen(true);
   };
@@ -239,13 +239,14 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
           )}
 
           <div className="min-w-0 space-y-1">
-            <div className="text-xs">Minutos por zona de FC (opcional)</div>
+            <div className="text-xs">Tempo por zona de FC (opcional)</div>
             <div className="grid grid-cols-5 gap-1.5 [&_input]:min-w-0 [&_input]:px-2">
               {zones.map((v, i) => (
                 <Input key={i} aria-label={`Zona ${i + 1}`} placeholder={`Z${i + 1}`} inputMode="numeric" value={v}
                   onChange={(e) => setZones((zs) => zs.map((x, j) => (j === i ? e.target.value : x)))} />
               ))}
             </div>
+            <p className="text-[10px] text-muted-foreground">Aceita minutos (12 ou 12,5) ou minutos e segundos (12:30).</p>
           </div>
 
           <Input placeholder="Observação (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
