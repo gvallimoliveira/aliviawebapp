@@ -206,7 +206,10 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="min-w-0">
-              <p className="mb-1 text-xs font-medium text-foreground">Carga por FC (TRIMP) semanal{hasRhr ? " e FC ao acordar" : ""}</p>
+              <p className="text-xs font-medium text-foreground">Carga por FC (TRIMP) semanal{hasRhr ? " e FC ao acordar" : ""}</p>
+              <p className="mb-1 text-[11px] text-muted-foreground">
+                TRIMP = minutos de cada sessão ponderados pela zona de FC (Z1×1 a Z5×5) — é a carga do treino, não uma frequência cardíaca. A FC ao acordar mede a recuperação: não há fórmula entre as duas; juntas mostram se o corpo acompanha a carga (carga subindo com FC ao acordar acima do habitual sugere má assimilação).
+              </p>
               <div style={{ height: 150 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={weekly}>
