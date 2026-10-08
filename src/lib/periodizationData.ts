@@ -407,9 +407,21 @@ export async function saveProfessionalSession(entry: {
   rpe: number;
   notes?: string | null;
   monitor?: MonitorData | null;
+  /** Edição de um registro já salvo: substitui os dados dele (sem juntar notas). */
+  entryId?: string | null;
 }): Promise<{ merged: boolean }> {
   const track = VALID_TRACKS.includes(entry.track) ? entry.track : "physio";
   const sb = supabase as any;
+  if (entry.entryId) {
+    const { data: planned } = await sb.from("periodization_sessions").select("id")
+      .eq("patient_id", entry.patientId).eq("session_date", entry.sessionDate).eq("track", track).limit(1).maybeSingle();
+    const { error } = await sb.from("srpe_entries").update({
+      duration_min: Math.round(entry.durationMin), rpe: entry.rpe, source: "professional", ...(entry.monitor ?? {}),
+      session_date: entry.sessionDate, track, session_id: planned?.id ?? null, notes: entry.notes?.trim() || null,
+    }).eq("id", entry.entryId);
+    if (error) throw error;
+    return { merged: false };
+  }
   const [{ data: existing }, { data: planned }] = await Promise.all([
     sb.from("srpe_entries").select("id, rpe, source, notes, patient_rpe, session_id")
       .eq("patient_id", entry.patientId).eq("session_date", entry.sessionDate).eq("track", track)
