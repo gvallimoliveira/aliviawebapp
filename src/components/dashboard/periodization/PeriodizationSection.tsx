@@ -35,6 +35,7 @@ import CardioSafetyCard from "./CardioSafetyCard";
 import ProfessionalCardioEntry from "./ProfessionalCardioEntry";
 import CardioAnalysisDialog from "./CardioAnalysisDialog";
 import AutoPlanCard from "./AutoPlanCard";
+import DailyConductCard from "./DailyConductCard";
 import { HeartPulse } from "lucide-react";
 import PeriodizationCollapsible from "./PeriodizationCollapsible";
 
@@ -344,6 +345,8 @@ const PeriodizationSection = ({
       }}
     >
       {/* Ordem do fluxo: macrociclo → links → sessão monitorada → carga+teto FC → dose+planejamento automático → microciclo. */}
+      <DailyConductCard patientId={patientId} plan={plan} entries={entries} checkins={checkins} sessions={sessions} />
+
       {plan ? (
         <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
           <MacroTimeline cycles={cycles} planId={plan.id} onChanged={refresh} readOnly={readOnly} />

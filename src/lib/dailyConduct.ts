@@ -78,7 +78,7 @@ export function dailyConduct(opts: {
 
   // Fallbacks positivos / falta de dado
   if (items.length === 0) {
-    if (rec.level === "ok" && (zone === "detraining" || zone === "undertraining")) items.push({ tone: "go", action: "Pode progredir até 10%", why: `Recuperação boa e carga abaixo do habitual. ${rec.text}` });
+    if (rec.level === "ok" && zone === "undertraining") items.push({ tone: "go", action: "Pode progredir até 10%", why: `Recuperação boa e carga abaixo do habitual. ${rec.text}` });
     else if (rec.level === "ok") items.push({ tone: "go", action: todayPlan.length ? "Siga o planejado para hoje" : "Liberado para o planejamento habitual", why: rec.text });
     else items.push({ tone: "info", action: "Peça um check-in rápido antes da sessão", why: "Sem check-in recente, a decisão de hoje fica sem a voz do paciente." });
   }
