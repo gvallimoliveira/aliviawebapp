@@ -33,6 +33,7 @@ import MicroWeekGrid from "./MicroWeekGrid";
 import BridgeCard from "./BridgeCard";
 import CardioSafetyCard from "./CardioSafetyCard";
 import ProfessionalCardioEntry from "./ProfessionalCardioEntry";
+import CardioFunctionalTestsCard from "./CardioFunctionalTestsCard";
 import CardioAnalysisDialog from "./CardioAnalysisDialog";
 import AutoPlanCard from "./AutoPlanCard";
 import DailyConductCard from "./DailyConductCard";
@@ -391,11 +392,14 @@ const PeriodizationSection = ({
         />
       </PeriodizationCollapsible>
 
-      {!readOnly && (
+      {!readOnly && (<>
         <PeriodizationCollapsible title="Sessão monitorada" icon={<HeartPulse className="h-4 w-4 text-primary" />}>
           <ProfessionalCardioEntry patientId={patientId} plan={plan} entries={entries} onChanged={refresh} />
         </PeriodizationCollapsible>
-      )}
+        <PeriodizationCollapsible title="Avaliação cardiorrespiratória (testes funcionais)" icon={<HeartPulse className="h-4 w-4 text-primary" />} defaultOpen={false}>
+          <CardioFunctionalTestsCard patientId={patientId} />
+        </PeriodizationCollapsible>
+      </>)}
 
       <PeriodizationCollapsible title="Carga, prontidão e teto de FC" icon={<Gauge className="h-4 w-4 text-primary" />}>
         <LoadMonitorCard

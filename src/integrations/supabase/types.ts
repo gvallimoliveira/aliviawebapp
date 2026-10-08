@@ -1191,6 +1191,42 @@ export type Database = {
         }
         Relationships: []
       }
+      cardio_functional_tests: {
+        Row: {
+          created_at: string
+          created_by: string
+          data: Json
+          id: string
+          notes: string | null
+          patient_id: string
+          test_date: string
+          test_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          data?: Json
+          id?: string
+          notes?: string | null
+          patient_id: string
+          test_date: string
+          test_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          data?: Json
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          test_date?: string
+          test_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clearance_items: {
         Row: {
           created_at: string

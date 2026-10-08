@@ -71,6 +71,13 @@
       "when": 1791429805098,
       "tag": "0009_add_pulmonary_cardio_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791502231138,
+      "tag": "0010_migration",
+      "breakpoints": true
     }
   ]
 }
