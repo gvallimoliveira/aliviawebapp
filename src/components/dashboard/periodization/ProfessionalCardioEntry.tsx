@@ -242,7 +242,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
             <div className="text-xs">Tempo por zona de FC (opcional)</div>
             <div className="grid grid-cols-5 gap-1.5 [&_input]:min-w-0 [&_input]:px-2">
               {zones.map((v, i) => (
-                <Input key={i} aria-label={`Zona ${i + 1}`} placeholder={`Z${i + 1}`} inputMode="numeric" value={v}
+                <Input key={i} aria-label={`Zona ${i + 1}`} placeholder={`Z${i + 1}`} type="text" autoComplete="off" value={v}
                   onChange={(e) => setZones((zs) => zs.map((x, j) => (j === i ? e.target.value : x)))} />
               ))}
             </div>
