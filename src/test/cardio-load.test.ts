@@ -16,8 +16,8 @@ describe("cardioLoad", () => {
     const z = sanitizeZones([10, 10, 10, 5, 0]);
     expect(trimp({ zones: z, durationMin: 35, hrAvg: 150, hrMax: 190 })).toEqual({ value: 80, method: "zones" });
   });
-  it("TRIMP estimado pela FC média", () => {
-    expect(trimp({ durationMin: 30, hrAvg: 150, hrMax: 200 })).toEqual({ value: 90, method: "avg_hr" });
+  it("sem zonas não há TRIMP", () => {
+    expect(trimp({ durationMin: 30, hrAvg: 150, hrMax: 200 })).toEqual({ value: null, method: null });
     expect(trimp({ durationMin: 30 }).value).toBeNull();
   });
   it("zonas vazias viram null", () => {

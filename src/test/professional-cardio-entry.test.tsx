@@ -17,13 +17,12 @@ describe("monitor session demographics", () => {
     fireEvent.click(screen.getByRole("button", { name: "Lançar sessão monitorada" }));
     fireEvent.change(screen.getByLabelText("Duração (min)"), { target: { value: "30" } });
     fireEvent.change(screen.getByLabelText("FC média (bpm)"), { target: { value: "120" } });
-    await screen.findByText("precisa de zonas (sem idade cadastrada)");
+    await screen.findByText("só com minutos por zona");
     patient.birth = "1960-01-01";
     act(() => { window.dispatchEvent(new CustomEvent("reload-pro-patients")); });
-    await screen.findByText("estimada pela FC média");
+    await screen.findByText("só com minutos por zona");
     expect(screen.getByLabelText("Duração (min)")).toHaveValue("30");
     expect(screen.getByLabelText("FC média (bpm)")).toHaveValue("120");
-    expect(screen.queryByText("precisa de zonas (sem idade cadastrada)")).not.toBeInTheDocument();
     for (const button of screen.getAllByRole("button")) expect(button).toHaveAttribute("type", "button");
   });
   it("updates the cardiovascular ceiling too, preserving a manual override", async () => {

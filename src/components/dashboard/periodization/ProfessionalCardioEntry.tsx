@@ -219,7 +219,7 @@ const ProfessionalCardioEntry = ({ patientId, plan, entries, onChanged }: Props)
               <div className="text-[11px] text-muted-foreground">Carga por FC (TRIMP)</div>
               <div className="text-lg font-semibold">{t.value ?? "—"}</div>
               <div className="text-[10px] text-muted-foreground">
-                {t.method === "zones" ? "pelas zonas" : t.method === "avg_hr" ? "estimada pela FC média" : ceil.maxHr ? "informe zonas ou FC média" : "precisa de zonas (sem idade cadastrada)"}
+                {t.method === "zones" ? "pelas zonas" : "só com minutos por zona"}
               </div>
             </div>
           </div>
