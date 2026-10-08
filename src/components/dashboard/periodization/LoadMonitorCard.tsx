@@ -56,6 +56,17 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
 
   // Detalhamento da prontidão: check-ins da data que forma o score exibido
   const [readinessOpen, setReadinessOpen] = useState(false);
+  const removeCheckin = async (id: string) => {
+    if (!window.confirm("Excluir este registro de prontidão? Ele sai da prontidão, da conduta do dia, da FC ao acordar e dos relatórios.")) return;
+    try {
+      await deleteCheckin(id);
+      setReadinessOpen(false);
+      onChanged?.();
+      toast({ title: "Registro de prontidão excluído" });
+    } catch (e: any) {
+      toast({ title: "Não foi possível excluir", description: e?.message, variant: "destructive" });
+    }
+  };
   const readinessDetail = useMemo(() => {
     if (status.readiness === null) return null;
     const dated = checkins.filter((c) => readinessScore(c) !== null);
