@@ -28,8 +28,8 @@ Objetivo: incluir no cálculo de carga a fadiga de corrida, ciclismo, esteira, c
      - Coerência com a fase marcada do macrociclo (STEPS) e com o domínio de cada frente.
    - **2D — Segurança para populações clínicas (feito):**
      - Público: não só atletas — hipertensos, sedentários que começam força/circuito e cardiopatas em reabilitação. Força também é gatilho cardiovascular (picos pressóricos); o sRPE (duração × PSE) já equaliza essa carga.
-     - Perfil cardiovascular definido **manualmente pelo fisioterapeuta** no prontuário, em 5 níveis: **Atlético**, **Saudável/ativo** (padrão para quem treina sem diagnóstico), **Sedentário**, **Hipertenso controlado**, **Cardiopata sob restrição**. As comorbidades da anamnese podem aparecer como lembrete, nunca classificam sozinhas.
-     - FC máx. estimada (Gellish): 207 − 0,7 × idade. Teto de FC por perfil: atlético 85%, saudável/ativo 80%, sedentário 75%, hipertenso controlado 70%, cardiopata 65% da FC máx. O fisio pode ajustar o teto manualmente (ex.: valor do teste ergométrico).
+     - Perfil cardiovascular definido **manualmente pelo fisioterapeuta** no prontuário, em 6 níveis: **Atlético**, **Saudável/ativo** (padrão para quem treina sem diagnóstico), **Sedentário**, **Hipertenso controlado**, **Cardiopata sob restrição** e **Pneumopata / DPOC**. As comorbidades da anamnese podem aparecer como lembrete, nunca classificam sozinhas.
+     - FC máx. estimada (Gellish): 207 − 0,7 × idade. Teto de FC por perfil: atlético 90%, saudável/ativo 85%, sedentário 75%, hipertenso controlado 70%, cardiopata 65%, pneumopata 70% da FC máx. O fisio pode ajustar o teto manualmente (ex.: valor do teste ergométrico).
      - Régua adaptativa de ACWR por perfil: atlético e saudável/ativo mantêm 0,8–1,3 / alerta >1,5 e FCR +7 bpm; sedentário usa faixa intermediária 0,8–1,25 / alerta >1,4 e FCR +6 bpm; hipertenso controlado e cardiopata usam 0,8–1,2 / alerta >1,3 ou FCR ≥+5 bpm (sugere reduzir tempo ou PSE ≤4).
      - Card "Teto de frequência cardíaca" no **prontuário do fisioterapeuta** e orientação ao **paciente no painel e no check-in**.
      - Comunicação abrangente e **sem citar marcas**: "monitor cardíaco (cinta, relógio ou pulseira)". Quem tem monitor com alarme recebe instrução genérica para configurar o alerta no teto calculado.
@@ -50,3 +50,12 @@ Sem integrações pagas com fabricantes até validar o uso.
 
 Ressalvas: equações etárias têm desvio de ±8–12 bpm; betabloqueadores achatam a resposta da FC (usar PSE/Borg como guia principal). O teto é parapeito de monitoramento, não diagnóstico.
 
+
+## Educação e revisão dos perfis (08/10/2026)
+
+Abra o ícone i no cabeçalho da análise para consultar públicos, FC máxima, teto versus zona-alvo, PSE/RPE e escalas Borg, metas e adaptações (VO₂máx e mitocôndrias). Referências iniciais do app: atleta 90%, saudável/ativo 85%, sedentário 75%, hipertenso controlado 70%, cardiopata 65% e pneumopata/DPOC 70% da FC máxima estimada. Não são limites universais de segurança nem metas a alcançar; tetos manuais são preservados. Em isquemia documentada no teste, considerar pelo menos 10 bpm abaixo do limiar, respeitando o laudo. Em pneumopatas, dispneia e alvo individual de SpO₂ são essenciais: FC e PSE global não confirmam sozinhas a prescrição respiratória. Os relatórios incluem essas ressalvas e orientações por perfil; não medem VO₂máx ou mitocôndrias.
+
+- A régua de carga do pneumopata usa a referência operacional conservadora dos perfis clínicos (ACWR 0,8–1,2, atenção >1,3; FC ao acordar +5 bpm), não um limiar validado específico para DPOC.
+- Dispneia não é inferida da PSE geral. Sem dados respiratórios específicos e alvo individual de saturação, o painel não confirma percentual de adesão à prescrição respiratória.
+- Borg CR10, Borg 6–20 e esforço global 0–10 são explicitamente diferenciados; modelos de intensidade Edwards/OMS são aproximações.
+- Referências adicionais: ATS 2023 (reabilitação pulmonar), ATS/ERS 2013; regra de isquemia conforme avaliação individual, não aplicada automaticamente a arritmia/angina sem laudo.
