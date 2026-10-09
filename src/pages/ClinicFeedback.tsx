@@ -80,13 +80,10 @@ const ClinicFeedback = () => {
 
   useEffect(() => {
     if (!clinicId) return;
-    supabase
-      .from("clinics")
-      .select("id, name, logo_url, brand_color")
-      .eq("id", clinicId)
-      .single()
-      .then(({ data }) => {
-        setClinic(data);
+    (supabase as any)
+      .rpc("get_clinics_public", { _ids: [clinicId] })
+      .then(({ data }: any) => {
+        setClinic(data?.[0] ?? null);
         setLoading(false);
       });
   }, [clinicId]);

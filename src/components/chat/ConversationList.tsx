@@ -338,7 +338,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, 
         const [{ data: profile }, { data: clinic }] = await Promise.all([
           supabase.from("profiles").select("full_name").eq("user_id", conv.recipient_user_id).maybeSingle(),
           conv.clinic_id
-            ? supabase.from("clinics").select("name").eq("id", conv.clinic_id).maybeSingle()
+            ? (supabase as any).rpc("get_clinics_public", { _ids: [conv.clinic_id] }).then((r: any) => ({ data: r.data?.[0] ?? null }))
             : Promise.resolve({ data: null as { name: string } | null }),
         ]);
         const clinicName = clinic?.name;
@@ -496,10 +496,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, 
       const recipientIds = [...new Set(clinicConvs.map((c: any) => c.recipient_user_id).filter(Boolean))] as string[];
 
       if (clinicIds.length > 0) {
-        const { data: clinics } = await supabase
-          .from("clinics")
-          .select("id, name")
-          .in("id", clinicIds);
+        const { data: clinics } = await (supabase as any).rpc("get_clinics_public", { _ids: clinicIds });
         for (const cl of clinics || []) clinicNamesMap[cl.id] = cl.name;
       }
       if (recipientIds.length > 0) {

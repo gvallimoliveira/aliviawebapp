@@ -114,11 +114,8 @@ const ExerciseProgram = () => {
         return;
       }
 
-      const { data: prog, error } = await (supabase as any)
-        .from("exercise_programs")
-        .select("id, patient_name, notes, created_at, expires_at, professional:professionals(full_name, logo_url, clinic_name, is_student, active_profile_mode, student_institution, student_period)")
-        .eq("token", token)
-        .maybeSingle();
+      const { data: progData, error } = await (supabase as any).rpc("get_exercise_program_by_token", { _token: token });
+      const prog: any = progData;
 
       if (error || !prog) {
         setNotFound(true);
@@ -143,13 +140,7 @@ const ExerciseProgram = () => {
 
       setProgram(resolved);
 
-      const { data: exerciseItems } = await (supabase as any)
-        .from("exercise_program_items")
-        .select("id, sets, reps, frequency, observations, sort_order, custom_name, custom_video_url, exercise:exercise_library(name_pt, name_en, name_es, description_pt, description_en, description_es, body_region, category, video_url, difficulty)")
-        .eq("program_id", prog.id)
-        .order("sort_order", { ascending: true });
-
-      setItems(exerciseItems || []);
+      setItems(prog.items || []);
       setLoading(false);
     };
     load();
