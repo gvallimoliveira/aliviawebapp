@@ -1083,13 +1083,20 @@ ${SECURITY_POLICY}`;
         pedro_score: e.pedro_score, doi: e.doi, source_url: e.source_url,
       }));
 
-    await adminClient.from("agent_messages").insert({
-      thread_id, role: "assistant",
-      parts: [{ type: "text", text: assistantText }],
-      citations: citations.length ? citations : null,
-      tokens_in: aiJson.usage?.prompt_tokens,
-      tokens_out: aiJson.usage?.completion_tokens,
+    const baseTs = Date.now();
+    const rows = bubbles.map((text, i) => {
+      const last = i === bubbles.length - 1;
+      return {
+        thread_id, role: "assistant",
+        parts: [{ type: "text", text }],
+        citations: last && citations.length ? citations : null,
+        tokens_in: i === 0 ? aiJson.usage?.prompt_tokens : null,
+        tokens_out: last ? tokensOut : null,
+        created_at: new Date(baseTs + i * 10).toISOString(),
+      };
     });
+    const { error: insErr } = await adminClient.from("agent_messages").insert(rows);
+    if (insErr) console.error("[agent] insert assistant failed", insErr);
 
     // Touch thread + auto-title after 2nd assistant turn
     await adminClient.from("agent_threads")
