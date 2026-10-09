@@ -21,6 +21,9 @@ export type AliviaDifferentialId =
   | "diferencial-periodizacao"
   | "diferencial-hep-dose"
   | "diferencial-prontidao-carga"
+  | "diferencial-cardio-monitorizacao"
+  | "diferencial-cardio-testes"
+  | "diferencial-cardio-relatorio"
   | "diferencial-red-flags"
   | "diferencial-avaliacao-externa-ia"
   | "diferencial-clinica-padronizacao"
@@ -34,6 +37,63 @@ export type AliviaDifferentialId =
   | "diferencial-paciente-fisioterapeuta";
 
 export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
+  {
+    id: "diferencial-cardio-monitorizacao",
+    label: "Monitorização cardiovascular com aparelhos",
+    editorialGroup: ALIVIA_DIFFERENTIAL_GROUP,
+    parentId: "pro",
+    keyword: "Monitorização cardiovascular",
+    highlightTerms: ["Monitorização", "Frequência cardíaca", "Esforço percebido"],
+    hook: "O aparelho registra o esforço. Você dá contexto clínico aos números",
+    hooks: ["O resumo do relógio não precisa ficar fora do prontuário", "Pulso e percepção de esforço contam partes diferentes da mesma sessão", "Da cinta ao registro clínico, sem copiar cada número à mão", "Seu paciente treina com relógio. Esses dados podem ajudar na próxima conversa"],
+    description: "Registre dados de pulseira, relógio, cinta peitoral ou oxímetro por digitação ou prints, conforme as medidas disponíveis. A IA lê os prints para revisão profissional; frequência cardíaca, saturação, recuperação e esforço percebido ganham contexto no acompanhamento, sem conexão automática com o aparelho.",
+    pains: ["Resumo do treino preso no aplicativo do aparelho", "Redigitar dados que já aparecem nos prints", "Olhar a frequência cardíaca sem saber como a sessão foi percebida", "Confundir o número do relógio com uma conclusão clínica"],
+    desires: ["Trazer os dados do aparelho para o acompanhamento clínico", "Revisar os campos lidos antes de salvar", "Relacionar o esforço relatado às medidas disponíveis", "Acompanhar a resposta ao exercício sem depender de um aparelho específico"],
+    proof: ["Leitura de até seis prints com campos revisáveis", "Registro manual para quem usa oxímetro ou não tem resumo digital", "FC média, pico, recuperação e saturação quando informados", "Carga pela FC (TRIMP) somente com tempos por zona; nunca inferida da FC média", "Cada aparelho contribui apenas com as medidas que realmente fornece"],
+    scenes: ["Depois do treino, você recebe dois prints do relógio e confere os campos antes de salvar", "No consultório, o oxímetro fornece pulso e saturação; você registra as leituras e pergunta como o esforço foi sentido", "O paciente traz os dados da cinta, e você os lê junto com a percepção de esforço da sessão"],
+    objections: ["Preciso conectar meu relógio ao Aliv.iA?", "A leitura do print dispensa conferir os dados?", "Meu paciente só tem oxímetro"],
+    stakes: ["Os dados continuam em outro aplicativo e precisam ser reconstruídos na consulta", "Uma medida isolada pode ganhar mais significado do que realmente tem"],
+    triggers: ["O paciente começou a trazer prints do treino", "Você quer documentar a resposta ao exercício além da nota de esforço"],
+    cta: "Conhecer a monitorização cardiovascular no Aliv.iA",
+  },
+  {
+    id: "diferencial-cardio-testes",
+    label: "Avaliação funcional cardiorrespiratória",
+    editorialGroup: ALIVIA_DIFFERENTIAL_GROUP,
+    parentId: "pro",
+    keyword: "Avaliação cardiorrespiratória",
+    highlightTerms: ["Testes funcionais", "Borg", "Resposta ao esforço"],
+    hook: "Quanto fez, como respirou e como recuperou: o teste precisa contar essa história",
+    hooks: ["A distância sozinha não explica como o paciente tolerou o teste", "Falta de ar e cansaço nas pernas merecem registros separados", "Uma avaliação funcional reúne desempenho, sinais e percepção", "O print do monitor pode entrar direto na avaliação, sem lançar uma sessão antes"],
+    description: "Aplique testes supervisionados de sentar e levantar em 1 minuto, caminhada de 6 minutos ou degrau de 6 minutos. Reúna desempenho, FC, SpO₂, pressão arterial e Borg de dispneia e de pernas; envie prints diretamente no teste e revise a leitura, sem criar uma sessão de treino para isso.",
+    pains: ["Registrar só repetições ou metros e perder a resposta ao esforço", "Misturar falta de ar com fadiga nas pernas em uma única nota", "Lançar os mesmos dados como treino e como avaliação", "Comparar resultados sem documentar o protocolo e a referência"],
+    desires: ["Avaliar capacidade funcional com medidas e percepção juntas", "Registrar dados do monitor dentro do próprio teste", "Ter uma base documentada para a próxima avaliação", "Interpretar os achados com protocolos e referências explícitos"],
+    proof: ["TSL 1 min, caminhada de 6 min e degrau de 6 min com fichas de aplicação supervisionada", "Borg de falta de ar e fadiga de pernas registrados separadamente", "Pressão arterial opcional em repouso e após o esforço", "TC6M com previsto pela equação brasileira; TSL e degrau com referência informada pelo profissional", "Interpretação por regras fundamentadas em protocolos e referências, não por geração de IA", "Teste funcional separado da carga semanal, sem lançamento duplicado"],
+    scenes: ["Na caminhada de seis minutos, você anota a distância, a saturação e o que limitou o esforço", "Ao terminar o teste com a cinta, os prints entram no próprio formulário; você completa Borg e desempenho", "Na reavaliação, o protocolo e os achados anteriores dão contexto ao novo resultado"],
+    objections: ["O teste pode ser feito sozinho pelo paciente?", "O sistema determina a causa da limitação?", "Todo teste tem valor previsto automático?"],
+    stakes: ["Uma melhora nos metros pode esconder uma resposta ao esforço diferente", "Sem o contexto do protocolo, comparar dois resultados pode induzir a uma conclusão apressada"],
+    triggers: ["Você precisa documentar tolerância ao esforço antes de progredir", "Chegou a hora de reavaliar a capacidade funcional"],
+    cta: "Conhecer os testes cardiorrespiratórios do Aliv.iA",
+  },
+  {
+    id: "diferencial-cardio-relatorio",
+    label: "Análise e relatório cardiorrespiratório",
+    editorialGroup: ALIVIA_DIFFERENTIAL_GROUP,
+    parentId: "pro",
+    keyword: "Relatório cardiorrespiratório",
+    highlightTerms: ["Relatório", "Resposta ao esforço", "Evolução funcional"],
+    hook: "Os dados do esforço ganham valor quando você consegue explicar o que mostram",
+    hooks: ["Um documento técnico para o profissional. Uma leitura clara para o paciente", "Do teste ao relatório, sem reconstruir os achados em uma folha em branco", "Mostre o que foi medido, reconheça o esforço e documente o próximo passo", "A resposta ao exercício merece mais do que um print guardado"],
+    description: "A análise reúne registros cardiovasculares e testes funcionais do período em relatórios técnico e do paciente. Regras explícitas organizam medidas, tendências e alertas para apoiar a interpretação profissional; lacunas continuam visíveis, sem inventar resultados ou substituir o diagnóstico clínico.",
+    pains: ["Dados do monitor e do teste difíceis de explicar ao paciente", "Relatório montado à mão com números espalhados", "Tratar semanas sem registro como falta de exercício", "Apresentar uma hipótese automática como diagnóstico confirmado"],
+    desires: ["Comunicar a resposta ao exercício com um documento organizado", "Mostrar resultados funcionais com contexto e limites", "Compartilhar uma versão clara com o paciente", "Sustentar o próximo passo com os achados disponíveis"],
+    proof: ["Versões técnica e do paciente em PDF", "Testes funcionais do período incluídos nos relatórios", "Análise por regras e referências sem créditos de IA", "TRIMP apenas quando existem tempos por zona", "Sem medir VO₂máx, sem diagnosticar pelo wearable e sem presumir inatividade por ausência de registros", "Alertas e padrões sugeridos para revisão, com decisão final do fisioterapeuta"],
+    scenes: ["Depois da reavaliação, você entrega os resultados do teste em uma versão que o paciente consegue entender", "Na conversa com outro profissional, o relatório reúne medidas e ressalvas em vez de prints soltos", "Antes de ajustar a progressão, você revisa o período e explica o que está documentado"],
+    objections: ["O relatório é um laudo diagnóstico automático?", "Vou gastar créditos de IA para cada análise?", "E quando faltam medidas no registro?"],
+    stakes: ["O paciente recebe números sem entender o que significam no acompanhamento", "Sem distinguir medidas de hipóteses, o documento pode transmitir uma certeza que os dados não sustentam"],
+    triggers: ["O paciente pediu um resumo para levar a outro profissional", "Você quer documentar uma avaliação e discutir a continuidade do acompanhamento"],
+    cta: "Conhecer os relatórios cardiorrespiratórios do Aliv.iA",
+  },
   {
     id: "diferencial-pre-avaliacao",
     label: "Pré-avaliação por link",
