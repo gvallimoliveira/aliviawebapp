@@ -177,6 +177,36 @@ const AdminVideoAudit = () => {
     setPending((prev) => prev.filter((p) => p.id !== item.id));
   };
 
+  const saveNewName = async (item: PendingVideo) => {
+    const name = (newName[item.id] || "").trim();
+    if (name.length < 3) {
+      toast({
+        title: "Nome muito curto",
+        description: "Digite o novo nome do exercício (mínimo 3 letras).",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSavingId(item.id);
+    const { error } = await supabase
+      .from("exercise_library")
+      .update({
+        name_pt: name,
+        video_status: "approved",
+        video_check_note: `Renomeado para combinar com o vídeo em ${new Date().toLocaleDateString("pt-BR")}`,
+        video_checked_at: new Date().toISOString(),
+      })
+      .eq("id", item.id);
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Não foi possível renomear", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Exercício renomeado e aprovado", description: name });
+    setNewName((prev) => ({ ...prev, [item.id]: "" }));
+    setPending((prev) => prev.filter((p) => p.id !== item.id));
+  };
+
 
   useEffect(() => {
     load();
