@@ -5085,6 +5085,10 @@ export type Database = {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
       }
+      can_read_exercise_program: {
+        Args: { _program_id: string }
+        Returns: boolean
+      }
       claim_studio_brand_invites: { Args: never; Returns: number }
       clear_assessment_progress: {
         Args: { _scope_key: string }
@@ -5266,6 +5270,16 @@ export type Database = {
         Args: { _clinic_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["clinic_role"]
       }
+      get_clinics_public: {
+        Args: { _ids: string[] }
+        Returns: {
+          brand_color: string
+          id: string
+          logo_url: string
+          name: string
+          owner_user_id: string
+        }[]
+      }
       get_discharge_predictions: {
         Args: { _clinic_id?: string; _professional_id?: string }
         Returns: {
@@ -5304,6 +5318,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_exercise_program_by_token: { Args: { _token: string }; Returns: Json }
       get_hep_professional: {
         Args: { _token: string }
         Returns: {
@@ -5551,6 +5566,7 @@ export type Database = {
           year: number
         }[]
       }
+      referral_code_exists: { Args: { _code: string }; Returns: boolean }
       reset_chat_addon_period_if_needed: {
         Args: { _user_id: string }
         Returns: undefined
