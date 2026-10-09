@@ -127,7 +127,7 @@ const CardioFunctionalTestsCard = ({ patientId, entries = [] }: { patientId: str
     setD({ age: ageFrom(birth), sex: last?.sex ?? null, heightCm: last?.heightCm ?? null, weightKg: last?.weightKg ?? null, betaBlocker: last?.betaBlocker ?? false });
     setOpen(true);
   };
-  const startEdit = (r: Row) => { setEditId(r.id); setType(r.test_type); setDate(r.test_date); setD(r.data); setNotes(r.notes ?? ""); setOpen(true); };
+  const startEdit = (r: Row) => { setReadCount(0); setEditId(r.id); setType(r.test_type); setDate(r.test_date); setD(r.data); setNotes(r.notes ?? ""); setOpen(true); };
 
   const save = async () => {
     if (d.result == null) { toast({ title: "Informe o resultado do teste", variant: "destructive" }); return; }
