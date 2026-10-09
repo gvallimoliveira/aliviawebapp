@@ -349,7 +349,7 @@ const PeriodizationSection = ({
         viewAnchorRef.current = pickViewportAnchor();
       }}
     >
-      {/* Ordem do fluxo: macrociclo → links → sessão monitorada → carga+teto FC → dose+planejamento automático → microciclo. */}
+      {/* Ordem do fluxo: macrociclo → links → sessão monitorada → teto FC → testes → análise → carga/prontidão → dose → microciclo. */}
       <DailyConductCard patientId={patientId} plan={plan} entries={entries} checkins={checkins} sessions={sessions} />
 
       {plan ? (
@@ -392,16 +392,23 @@ const PeriodizationSection = ({
         />
       </PeriodizationCollapsible>
 
-      {!readOnly && (<>
+      {!readOnly && (
         <PeriodizationCollapsible title="Sessão monitorada" icon={<HeartPulse className="h-4 w-4 text-primary" />}>
           <ProfessionalCardioEntry patientId={patientId} plan={plan} entries={entries} onChanged={refresh} />
         </PeriodizationCollapsible>
+      )}
+
+      <CardioSafetyCard patientId={patientId} plan={plan} checkins={checkins} entries={entries} onChanged={refresh} readOnly={readOnly} />
+
+      {!readOnly && (
         <PeriodizationCollapsible title="Avaliação cardiorrespiratória (testes funcionais)" icon={<HeartPulse className="h-4 w-4 text-primary" />} defaultOpen={false}>
           <CardioFunctionalTestsCard patientId={patientId} entries={entries} />
         </PeriodizationCollapsible>
-      </>)}
+      )}
 
-      <PeriodizationCollapsible title="Carga, prontidão e teto de FC" icon={<Gauge className="h-4 w-4 text-primary" />}>
+      {entries.some((e: any) => e.hr_avg || e.hr_max || e.zone_minutes || e.trimp) && <CardioAnalysisDialog patientId={patientId} plan={plan} entries={entries} patientName={patientName} professionalName={proName} clinicId={clinicId} />}
+
+      <PeriodizationCollapsible title="Carga e prontidão" icon={<Gauge className="h-4 w-4 text-primary" />}>
         <LoadMonitorCard
           patientId={patientId}
           planId={plan?.id ?? null}
@@ -410,12 +417,7 @@ const PeriodizationSection = ({
           onChanged={refresh}
           readOnly={readOnly}
         />
-        <div className="mt-3">
-          <CardioSafetyCard patientId={patientId} plan={plan} checkins={checkins} entries={entries} onChanged={refresh} readOnly={readOnly} />
-        </div>
       </PeriodizationCollapsible>
-
-      {entries.some((e: any) => e.hr_avg || e.hr_max || e.zone_minutes || e.trimp) && <CardioAnalysisDialog patientId={patientId} plan={plan} entries={entries} patientName={patientName} professionalName={proName} clinicId={clinicId} />}
 
       <PeriodizationCollapsible title={isAdmin ? "Dose planejada e percebida · Planejamento automático de dose de trabalho (sRPE)" : "Dose planejada e percebida"} icon={<Gauge className="h-4 w-4 text-primary" />}>
         <DoseAdherenceCard
