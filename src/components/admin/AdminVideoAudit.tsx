@@ -82,6 +82,7 @@ const AdminVideoAudit = () => {
   const [running, setRunning] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [newUrl, setNewUrl] = useState<Record<string, string>>({});
+  const [newName, setNewName] = useState<Record<string, string>>({});
 
 
   const load = useCallback(async () => {
