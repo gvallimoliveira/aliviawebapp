@@ -997,7 +997,7 @@ ${SECURITY_POLICY}`;
       { role: "user", content: userMsg },
     ];
 
-    const aiResp = await callAiWithFallback(LOVABLE_API_KEY, { messages }, undefined, { functionName: "clinical-agent-chat", maxTokens: 1200 });
+    const aiResp = await callAiWithFallback(LOVABLE_API_KEY, { messages }, undefined, { functionName: "clinical-agent-chat", maxTokens: 4000 });
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();
@@ -1018,7 +1018,53 @@ ${SECURITY_POLICY}`;
     }
 
     const aiJson = await aiResp.json();
-    const assistantText = aiJson.choices?.[0]?.message?.content || "";
+    let assistantText: string = aiJson.choices?.[0]?.message?.content || "";
+    let finishReason: string | undefined = aiJson.choices?.[0]?.finish_reason;
+    let tokensOut = aiJson.usage?.completion_tokens || 0;
+
+    // If the model hit the output cap, ask it to continue exactly where it
+    // stopped (up to 2 extra rounds) so long answers are never left cut.
+    for (let round = 0; round < 2 && (finishReason === "length" || finishReason === "max_tokens"); round++) {
+      const contResp = await callAiWithFallback(LOVABLE_API_KEY, {
+        messages: [
+          ...messages,
+          { role: "assistant", content: assistantText },
+          { role: "user", content: "Continue exatamente de onde parou, sem repetir nada do que já escreveu e sem introdução. Conclua a resposta." },
+        ],
+      }, undefined, { functionName: "clinical-agent-chat", maxTokens: 4000 });
+      if (!contResp.ok) break;
+      const cj = await contResp.json();
+      const more = cj.choices?.[0]?.message?.content || "";
+      if (!more.trim()) break;
+      const joiner = /\s$/.test(assistantText) || /^\s/.test(more) ? "" : " ";
+      assistantText += joiner + more;
+      finishReason = cj.choices?.[0]?.finish_reason;
+      tokensOut += cj.usage?.completion_tokens || 0;
+    }
+
+    // Split long answers into several chat bubbles at paragraph boundaries,
+    // never inside a table or code block.
+    const splitIntoBubbles = (text: string, max = 3500): string[] => {
+      if (text.length <= max) return [text];
+      const blocks = text.split(/\n{2,}/);
+      const out: string[] = [];
+      let cur = "";
+      let inFence = false;
+      for (const b of blocks) {
+        const fences = (b.match(/```/g) || []).length;
+        const candidate = cur ? cur + "\n\n" + b : b;
+        if (cur && candidate.length > max && !inFence && !/^\s*\|/.test(b)) {
+          out.push(cur);
+          cur = b;
+        } else {
+          cur = candidate;
+        }
+        if (fences % 2 === 1) inFence = !inFence;
+      }
+      if (cur.trim()) out.push(cur);
+      return out;
+    };
+    const bubbles = splitIntoBubbles(assistantText);
 
     // Only attach citations actually referenced in the assistant text.
     // Heuristic: match by first author surname + year, or title fragment.
@@ -1037,13 +1083,20 @@ ${SECURITY_POLICY}`;
         pedro_score: e.pedro_score, doi: e.doi, source_url: e.source_url,
       }));
 
-    await adminClient.from("agent_messages").insert({
-      thread_id, role: "assistant",
-      parts: [{ type: "text", text: assistantText }],
-      citations: citations.length ? citations : null,
-      tokens_in: aiJson.usage?.prompt_tokens,
-      tokens_out: aiJson.usage?.completion_tokens,
+    const baseTs = Date.now();
+    const rows = bubbles.map((text, i) => {
+      const last = i === bubbles.length - 1;
+      return {
+        thread_id, role: "assistant",
+        parts: [{ type: "text", text }],
+        citations: last && citations.length ? citations : null,
+        tokens_in: i === 0 ? aiJson.usage?.prompt_tokens : null,
+        tokens_out: last ? tokensOut : null,
+        created_at: new Date(baseTs + i * 10).toISOString(),
+      };
     });
+    const { error: insErr } = await adminClient.from("agent_messages").insert(rows);
+    if (insErr) console.error("[agent] insert assistant failed", insErr);
 
     // Touch thread + auto-title after 2nd assistant turn
     await adminClient.from("agent_threads")
