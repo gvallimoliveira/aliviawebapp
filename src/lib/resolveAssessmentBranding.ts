@@ -28,11 +28,8 @@ export async function resolveAssessmentBranding(opts: {
   // ── Clinic branding (logo + name) ──
   if (opts.clinicId) {
     try {
-      const { data: c } = await supabase
-        .from("clinics")
-        .select("logo_url, name, owner_user_id")
-        .eq("id", opts.clinicId)
-        .maybeSingle();
+      const { data: rows } = await (supabase as any).rpc("get_clinics_public", { _ids: [opts.clinicId] });
+      const c: any = rows?.[0];
       if (c?.logo_url) out.clinicLogoUrl = c.logo_url as string;
       if (c?.name) out.clinicName = c.name as string;
     } catch {

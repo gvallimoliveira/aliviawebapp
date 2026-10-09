@@ -117,11 +117,8 @@ export async function resolveResponsibleProfessional(opts: {
   if (!resolved) {
     let ownerUserId = opts.clinicOwnerUserId || null;
     if (!ownerUserId && opts.clinicId) {
-      const { data: clinic } = await supabase
-        .from("clinics")
-        .select("owner_user_id")
-        .eq("id", opts.clinicId)
-        .maybeSingle();
+      const { data: rows } = await (supabase as any).rpc("get_clinics_public", { _ids: [opts.clinicId] });
+      const clinic: any = rows?.[0];
       ownerUserId = clinic?.owner_user_id || null;
     }
     if (ownerUserId) {

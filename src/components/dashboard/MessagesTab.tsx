@@ -50,10 +50,7 @@ const MessagesTab = ({
         if (!cancelled) setPatientClinics([]);
         return;
       }
-      const { data: clinics } = await supabase
-        .from("clinics")
-        .select("id, name")
-        .in("id", ids);
+      const { data: clinics } = await (supabase as any).rpc("get_clinics_public", { _ids: ids });
       if (!cancelled) setPatientClinics((clinics || []) as { id: string; name: string }[]);
     })();
     return () => { cancelled = true; };
