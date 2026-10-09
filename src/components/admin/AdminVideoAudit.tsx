@@ -29,6 +29,7 @@ import {
   ThumbsUp,
   Replace,
   Save,
+  Pencil,
 } from "lucide-react";
 
 interface AuditIssue {
@@ -82,6 +83,7 @@ const AdminVideoAudit = () => {
   const [running, setRunning] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [newUrl, setNewUrl] = useState<Record<string, string>>({});
+  const [newName, setNewName] = useState<Record<string, string>>({});
 
 
   const load = useCallback(async () => {
@@ -173,6 +175,36 @@ const AdminVideoAudit = () => {
     }
     toast({ title: "Vídeo substituído", description: item.name_pt });
     setNewUrl((prev) => ({ ...prev, [item.id]: "" }));
+    setPending((prev) => prev.filter((p) => p.id !== item.id));
+  };
+
+  const saveNewName = async (item: PendingVideo) => {
+    const name = (newName[item.id] || "").trim();
+    if (name.length < 3) {
+      toast({
+        title: "Nome muito curto",
+        description: "Digite o novo nome do exercício (mínimo 3 letras).",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSavingId(item.id);
+    const { error } = await supabase
+      .from("exercise_library")
+      .update({
+        name_pt: name,
+        video_status: "approved",
+        video_check_note: `Renomeado para combinar com o vídeo em ${new Date().toLocaleDateString("pt-BR")}`,
+        video_checked_at: new Date().toISOString(),
+      })
+      .eq("id", item.id);
+    setSavingId(null);
+    if (error) {
+      toast({ title: "Não foi possível renomear", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Exercício renomeado e aprovado", description: name });
+    setNewName((prev) => ({ ...prev, [item.id]: "" }));
     setPending((prev) => prev.filter((p) => p.id !== item.id));
   };
 
@@ -347,6 +379,24 @@ const AdminVideoAudit = () => {
                     >
                       <Save className="h-4 w-4 mr-1" />
                       Salvar novo link
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      value={newName[item.id] ?? item.name_pt}
+                      onChange={(e) => setNewName((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                      placeholder="Renomear o exercício para combinar com o vídeo"
+                      className="sm:flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy || !(newName[item.id] || "").trim() || (newName[item.id] || "").trim() === item.name_pt}
+                      onClick={() => saveNewName(item)}
+                    >
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Renomear e aprovar
                     </Button>
                   </div>
                 </div>
