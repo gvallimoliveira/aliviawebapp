@@ -1,9 +1,15 @@
-import { profileRule } from "./cardioSafety";
+import { OXIMETER_GUIDE, profileRule } from "./cardioSafety";
 
 /** Educational copy shared by the information dialog and both PDF variants. */
 export const ISCHEMIC_GUIDANCE = "Se o teste documentar limiar isquêmico, considerar teto pelo menos 10 bpm abaixo desse limiar. Angina, arritmias e outras restrições exigem individualização pelo laudo e pela equipe médica; não aplicar a regra de 10 bpm indiscriminadamente.";
 export const PULMONARY_GUIDANCE = "Na pneumopatia/DPOC, a FC é complementar: acompanhar dispneia (Borg CR10, frequentemente 3–5 em reabilitação supervisionada), fadiga de pernas, sintomas e SpO₂. A PSE geral registrada no app não é uma medida específica de dispneia. O alvo de saturação e eventual oxigênio devem seguir a prescrição; o aviso de SpO₂ <92% do app é triagem, não indicação automática de oxigênio.";
 export const CEILING_GUIDANCE = "Os percentuais por perfil são referências iniciais do Aliv.iA para acompanhamento, não limites universais de segurança nem metas a atingir. FC abaixo do teto não exclui risco. Teste, sintomas, pressão arterial, medicação e restrições individuais prevalecem; cardiopatas e pneumopatas precisam de avaliação e liberação apropriadas.";
+
+/** One-line versions for compact UI (the ceiling card); full text stays in the guide. */
+export const CEILING_SHORT = "Percentual é referência inicial, não limite de segurança: teste, sintomas e medicação prevalecem.";
+export const ISCHEMIC_SHORT = "Limiar isquêmico documentado: teto pelo menos 10 bpm abaixo.";
+export const PULMONARY_SHORT = "Guie-se por dispneia e SpO₂; a FC é complementar.";
+export const BETA_BLOCKER_SHORT = "FC passa a ser apoio; o guia é PSE/Borg.";
 
 export const CARDIO_EDUCATION = [
   { title: "FC máxima, teto e zona-alvo são diferentes", text: "FC máxima estimada: Gellish, 207 − 0,7 × idade, com variabilidade individual. O teto é uma referência superior ajustável pelo fisioterapeuta; a zona-alvo é a faixa de esforço desejada para a sessão e costuma ficar abaixo dele. Um teste pode individualizar a prescrição. % da FC máxima não é % da reserva de FC: pela reserva, FC-alvo = FC de repouso + fração × (FC máxima − FC de repouso). Não intercambiar os percentuais." },
