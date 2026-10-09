@@ -258,6 +258,8 @@ const CardioFunctionalTestsCard = ({ patientId, entries = [] }: { patientId: str
               <div className="grid grid-cols-2 gap-3">
                 <NumField label="FC repouso (bpm)" value={d.hrRest} onChange={(v) => set({ hrRest: v })} />
                 <NumField label="SpO₂ repouso (%)" value={d.spo2Rest} onChange={(v) => set({ spo2Rest: v })} />
+                <NumField label="PA repouso sistólica (mmHg)" value={d.bpRestSys} onChange={(v) => set({ bpRestSys: v })} />
+                <NumField label="PA repouso diastólica (mmHg)" value={d.bpRestDia} onChange={(v) => set({ bpRestDia: v })} />
               </div>
               <Borg label="Borg dispneia (falta de ar)" value={d.borgDyspneaRest} onChange={(v) => set({ borgDyspneaRest: v })} />
               <Borg label="Borg fadiga nas pernas" value={d.borgLegsRest} onChange={(v) => set({ borgLegsRest: v })} />
@@ -268,6 +270,8 @@ const CardioFunctionalTestsCard = ({ patientId, entries = [] }: { patientId: str
               <div className="grid grid-cols-2 gap-3">
                 <NumField label="FC pico (bpm)" value={d.hrPeak} onChange={(v) => set({ hrPeak: v })} />
                 <NumField label="SpO₂ mínima (%)" value={d.spo2Min} onChange={(v) => set({ spo2Min: v })} />
+                <NumField label="PA pico sistólica (mmHg)" value={d.bpPeakSys} onChange={(v) => set({ bpPeakSys: v })} />
+                <NumField label="PA pico diastólica (mmHg)" value={d.bpPeakDia} onChange={(v) => set({ bpPeakDia: v })} />
               </div>
               <Borg label="Borg dispneia (falta de ar)" value={d.borgDyspneaPeak} onChange={(v) => set({ borgDyspneaPeak: v })} />
               <Borg label="Borg fadiga nas pernas" value={d.borgLegsPeak} onChange={(v) => set({ borgLegsPeak: v })} />
