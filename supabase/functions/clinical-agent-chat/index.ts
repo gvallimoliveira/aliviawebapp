@@ -1018,7 +1018,53 @@ ${SECURITY_POLICY}`;
     }
 
     const aiJson = await aiResp.json();
-    const assistantText = aiJson.choices?.[0]?.message?.content || "";
+    let assistantText: string = aiJson.choices?.[0]?.message?.content || "";
+    let finishReason: string | undefined = aiJson.choices?.[0]?.finish_reason;
+    let tokensOut = aiJson.usage?.completion_tokens || 0;
+
+    // If the model hit the output cap, ask it to continue exactly where it
+    // stopped (up to 2 extra rounds) so long answers are never left cut.
+    for (let round = 0; round < 2 && (finishReason === "length" || finishReason === "max_tokens"); round++) {
+      const contResp = await callAiWithFallback(LOVABLE_API_KEY, {
+        messages: [
+          ...messages,
+          { role: "assistant", content: assistantText },
+          { role: "user", content: "Continue exatamente de onde parou, sem repetir nada do que já escreveu e sem introdução. Conclua a resposta." },
+        ],
+      }, undefined, { functionName: "clinical-agent-chat", maxTokens: 4000 });
+      if (!contResp.ok) break;
+      const cj = await contResp.json();
+      const more = cj.choices?.[0]?.message?.content || "";
+      if (!more.trim()) break;
+      const joiner = /\s$/.test(assistantText) || /^\s/.test(more) ? "" : " ";
+      assistantText += joiner + more;
+      finishReason = cj.choices?.[0]?.finish_reason;
+      tokensOut += cj.usage?.completion_tokens || 0;
+    }
+
+    // Split long answers into several chat bubbles at paragraph boundaries,
+    // never inside a table or code block.
+    const splitIntoBubbles = (text: string, max = 3500): string[] => {
+      if (text.length <= max) return [text];
+      const blocks = text.split(/\n{2,}/);
+      const out: string[] = [];
+      let cur = "";
+      let inFence = false;
+      for (const b of blocks) {
+        const fences = (b.match(/```/g) || []).length;
+        const candidate = cur ? cur + "\n\n" + b : b;
+        if (cur && candidate.length > max && !inFence && !/^\s*\|/.test(b)) {
+          out.push(cur);
+          cur = b;
+        } else {
+          cur = candidate;
+        }
+        if (fences % 2 === 1) inFence = !inFence;
+      }
+      if (cur.trim()) out.push(cur);
+      return out;
+    };
+    const bubbles = splitIntoBubbles(assistantText);
 
     // Only attach citations actually referenced in the assistant text.
     // Heuristic: match by first author surname + year, or title fragment.
