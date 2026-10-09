@@ -29,6 +29,7 @@ import {
   ThumbsUp,
   Replace,
   Save,
+  Pencil,
 } from "lucide-react";
 
 interface AuditIssue {
@@ -378,6 +379,24 @@ const AdminVideoAudit = () => {
                     >
                       <Save className="h-4 w-4 mr-1" />
                       Salvar novo link
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      value={newName[item.id] ?? item.name_pt}
+                      onChange={(e) => setNewName((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                      placeholder="Renomear o exercício para combinar com o vídeo"
+                      className="sm:flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy || !(newName[item.id] || "").trim() || (newName[item.id] || "").trim() === item.name_pt}
+                      onClick={() => saveNewName(item)}
+                    >
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Renomear e aprovar
                     </Button>
                   </div>
                 </div>
