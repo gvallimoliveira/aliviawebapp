@@ -118,6 +118,7 @@ const regionLabels: Record<string, Record<string, string>> = {
   wrist: { pt: "Punho", en: "Wrist", es: "Muñeca" },
   elbow: { pt: "Cotovelo", en: "Elbow", es: "Codo" },
   foot: { pt: "Pé", en: "Foot", es: "Pie" },
+  vestibular: { pt: "Vestibular/Equilíbrio", en: "Vestibular/Balance", es: "Vestibular/Equilibrio" },
   general: { pt: "Geral", en: "General", es: "General" },
 };
 
