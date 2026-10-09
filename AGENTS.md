@@ -6,6 +6,7 @@
 
 
 - Aliv.iA solution ecosystems must reference the canonical differential IDs in `aliviaDifferentials.ts`; one source prevents feature copy and product promises from drifting.
+- Ecosystem recipes may provide per-differential transition copy; this explains clinical handoffs without duplicating the canonical feature repertoire or implying duplicate data entry.
 - Aliv.iA landing-page messages must feed Studio through the canonical differential repertoire, never through new UI controls; this keeps audience promises synchronized without crowding creation settings.
 - Patient record paired sections use the shared native horizontal row; this preserves form behavior and lets section shortcuts reveal horizontally hidden content.
 - Patient regional pain charts and comparisons share one chronological data helper; explicit regional measurements must never be replaced by an invented regional score from a multi-region global average.- HEP load metrics (volume, intensity, weekly sets per region, planned dose) are computed only by the shared `hepLoad.ts` helper; one deterministic source keeps the HEP panel and the microcycle dose consistent.

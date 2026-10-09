@@ -36,9 +36,9 @@ describe("Ecossistema de soluções Aliv.iA", () => {
     expect(carousel.slides.find((slide) => slide.topic === "hep")?.body).toMatch(/estabilização/);
   });
 
-  it("mantém nove cadeias recomendadas com 3–5 funcionalidades canônicas", () => {
+  it("mantém dez cadeias recomendadas com 3–5 funcionalidades canônicas", () => {
     const canonical = new Set(ALIVIA_DIFFERENTIALS.map((item) => item.id));
-    expect(ALIVIA_ECOSYSTEM_RECIPES).toHaveLength(9);
+    expect(ALIVIA_ECOSYSTEM_RECIPES).toHaveLength(10);
     ALIVIA_ECOSYSTEM_RECIPES.forEach((recipe) => {
       expect(recipe.ids.length).toBeGreaterThanOrEqual(3);
       expect(recipe.ids.length).toBeLessThanOrEqual(5);
@@ -144,7 +144,7 @@ describe("Ecossistema de soluções Aliv.iA", () => {
     const journey = ALIVIA_ECOSYSTEM_RECIPES.find((recipe) => recipe.id === "jornada-do-paciente");
     const ecosystem = buildAliviaEcosystem("jornada-do-paciente");
 
-    expect(ALIVIA_ECOSYSTEM_RECIPES).toHaveLength(9);
+    expect(ALIVIA_ECOSYSTEM_RECIPES).toHaveLength(10);
     expect(ecosystem.steps.map((step) => step.id)).toEqual([
       "diferencial-paciente-autoavaliacao",
       "diferencial-paciente-premium",

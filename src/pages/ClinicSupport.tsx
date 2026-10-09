@@ -114,7 +114,13 @@ const categories: ToolCategory[] = [
         key: "studio_ecosystem",
         icon: Layers,
         title: "Studio: Ecossistema de soluções",
-        desc: "Na marca Aliv.iA, selecione o modelo Ecossistema de soluções para conectar de três a cinco funcionalidades em uma única jornada. Escolha entre nove cadeias prontas (profissional, clínica e paciente) ou ajuste etapas e ordem; o Studio entrega seis argumentos visuais e um carrossel completo com o mesmo público, promessa e conclusão.",
+        desc: "Na marca Aliv.iA, selecione o modelo Ecossistema de soluções para conectar de três a cinco funcionalidades em uma única jornada. Escolha entre dez cadeias prontas, incluindo monitorização → avaliação funcional → relatório cardiorrespiratório, ou ajuste etapas e ordem. O Studio entrega seis argumentos visuais e um carrossel completo com o mesmo público, promessa e conclusão.",
+      },
+      {
+        key: "studio_cardiorespiratory",
+        icon: Activity,
+        title: "Studio: jornada cardiorrespiratória",
+        desc: "A marca Aliv.iA tem três diferenciais: monitorização com aparelhos, avaliação funcional e análise/relatório. O ecossistema conecta os três com protocolos e referências explícitos. Os textos distinguem envio de prints de conexão automática, reservam a decisão clínica ao fisioterapeuta e explicam que o teste não duplica a carga semanal. Use o novo recorte nos Diferenciais ou escolha a jornada no modelo Ecossistema de soluções.",
       },
       {
         key: "voice_notes",
@@ -534,11 +540,11 @@ const ClinicSupport = () => {
                               <AccordionTrigger className="text-left text-base font-medium text-foreground gap-3">
                                 <span className="flex items-center gap-3">
                                   <ItemIcon className="h-4 w-4 text-primary shrink-0" />
-                                  {item.title}
+                                  {item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
                                 </span>
                               </AccordionTrigger>
                               <AccordionContent className="text-muted-foreground leading-relaxed pl-7">
-                                {item.desc}
+                                {item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
                               </AccordionContent>
                             </AccordionItem>
                           );
