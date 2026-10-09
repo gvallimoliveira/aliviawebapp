@@ -10,6 +10,10 @@ export interface FunctionalTestData {
   predictedManual?: number | null; // previsto informado (tabela de referência)
   hrRest?: number | null;
   hrPeak?: number | null;
+  bpRestSys?: number | null;
+  bpRestDia?: number | null;
+  bpPeakSys?: number | null;
+  bpPeakDia?: number | null;
   hrRecovery1?: number | null;
   recoveryActive?: boolean;
   spo2Rest?: number | null;
@@ -87,6 +91,12 @@ export function analyzeFunctionalTest(type: FunctionalTestType, d: FunctionalTes
 
   const alerts: string[] = [];
   if (num(d.spo2Min) && d.spo2Min < 92) alerts.push(`SpO₂ mínima de ${d.spo2Min}% (abaixo de 92%): sinal de triagem — investigar dessaturação ao esforço.`);
+  if (num(d.bpRestSys) && num(d.bpRestDia) && (d.bpRestSys >= 140 || d.bpRestDia >= 90)) alerts.push(`PA de repouso de ${d.bpRestSys}×${d.bpRestDia} mmHg (≥ 140×90): valor elevado — confirmar medida e considerar avaliação médica antes de intensidades altas.`);
+  if (num(d.bpPeakSys) && num(d.bpRestSys) && d.bpPeakSys < d.bpRestSys) alerts.push(`Queda da PAS ao esforço (${d.bpRestSys} → ${d.bpPeakSys} mmHg): resposta hipotensiva — sinal de alerta, investigar.`);
+  if (num(d.bpPeakSys)) {
+    const cut = d.sex === "F" ? 190 : 210;
+    if (d.bpPeakSys >= cut) alerts.push(`PAS de pico de ${d.bpPeakSys} mmHg (≥ ${cut}): resposta pressórica exagerada ao esforço.`);
+  }
   if (spo2Drop != null && spo2Drop >= 4) alerts.push(`Queda de SpO₂ de ${spo2Drop} pontos (≥ 4): dessaturação induzida pelo esforço.`);
   if (hrRecoveryDrop != null) {
     const cut = d.recoveryActive ? 12 : 18;
