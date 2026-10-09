@@ -670,7 +670,11 @@ const ClinicalAgent = () => {
     // Scroll to the START of the newest assistant message so the user can read
     // it from the top — avoid auto-jumping to the bottom of long responses.
     setTimeout(() => {
-      const lastAssistant = [...(msgs || [])].reverse().find((m: any) => m.role === "assistant") as any;
+      const list = (msgs || []) as any[];
+      let lastUserIdx = -1;
+      list.forEach((m, i) => { if (m.role === "user") lastUserIdx = i; });
+      const lastAssistant = list.slice(lastUserIdx + 1).find((m: any) => m.role === "assistant")
+        || [...list].reverse().find((m: any) => m.role === "assistant");
       if (lastAssistant?.id) {
         const el = document.getElementById(`msg-${lastAssistant.id}`);
         if (el) {

@@ -997,7 +997,7 @@ ${SECURITY_POLICY}`;
       { role: "user", content: userMsg },
     ];
 
-    const aiResp = await callAiWithFallback(LOVABLE_API_KEY, { messages }, undefined, { functionName: "clinical-agent-chat", maxTokens: 1200 });
+    const aiResp = await callAiWithFallback(LOVABLE_API_KEY, { messages }, undefined, { functionName: "clinical-agent-chat", maxTokens: 4000 });
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();
