@@ -104,6 +104,7 @@ const categoryLabels: Record<string, Record<string, string>> = {
   stretching: { pt: "Alongamento", en: "Stretching", es: "Estiramiento" },
   mobility: { pt: "Mobilidade", en: "Mobility", es: "Movilidad" },
   proprioception: { pt: "Propriocepção", en: "Proprioception", es: "Propiocepción" },
+  vestibular: { pt: "Vestibular", en: "Vestibular", es: "Vestibular" },
 };
 
 const regionLabels: Record<string, Record<string, string>> = {
@@ -117,6 +118,7 @@ const regionLabels: Record<string, Record<string, string>> = {
   wrist: { pt: "Punho", en: "Wrist", es: "Muñeca" },
   elbow: { pt: "Cotovelo", en: "Elbow", es: "Codo" },
   foot: { pt: "Pé", en: "Foot", es: "Pie" },
+  vestibular: { pt: "Vestibular/Equilíbrio", en: "Vestibular/Balance", es: "Vestibular/Equilibrio" },
   general: { pt: "Geral", en: "General", es: "General" },
 };
 
