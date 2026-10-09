@@ -19,6 +19,10 @@ export interface FunctionalTestData {
   borgLegsRest?: number | null;
   borgLegsPeak?: number | null;
   betaBlocker?: boolean;
+  hrAvg?: number | null; // lida do monitor (informativa)
+  durationMin?: number | null;
+  distanceKm?: number | null;
+  zoneMinutes?: number[] | null; // minutos Z1..Z5 do monitor
 }
 
 export const TEST_INFO: Record<FunctionalTestType, { label: string; unit: string; reference: string; setup: string }> = {

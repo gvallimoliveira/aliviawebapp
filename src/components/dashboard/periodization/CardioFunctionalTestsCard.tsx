@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Trash2, Link2, AlertTriangle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Pencil, Plus, Trash2, Link2, AlertTriangle, ImageUp, Loader2 } from "lucide-react";
+import { CARDIO_PRINT_ERR } from "@/components/periodization/CardioPrintReader";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,15 +74,60 @@ const CardioFunctionalTestsCard = ({ patientId, entries = [] }: { patientId: str
     set({ hrPeak: e.hr_max ?? d.hrPeak ?? null, spo2Min: e.spo2_min ?? d.spo2Min ?? null, hrRecovery1: e.hr_recovery_1min ?? d.hrRecovery1 ?? null });
     toast({ title: "Dados da sessão monitorada aplicados", description: "Confira e complete repouso, Borg e resultado." });
   };
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [reading, setReading] = useState(false);
+  const [readCount, setReadCount] = useState(0);
+  // Prints do monitor lidos direto no teste: cada print completa o que faltou; nada vai para a carga semanal.
+  const readPrints = async (files: File[]) => {
+    setReading(true);
+    let ok = 0;
+    const patch: Partial<FunctionalTestData> = {};
+    const put = <K extends keyof FunctionalTestData>(k: K, v: FunctionalTestData[K]) => { if (patch[k] == null) patch[k] = v; };
+    let note = "";
+    for (const file of files.slice(0, 6)) {
+      if (file.size > 5_000_000) { toast({ title: `${file.name}: imagem muito grande (máx. 5 MB)`, variant: "destructive" }); continue; }
+      try {
+        const b64 = await new Promise<string>((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1] ?? ""); fr.onerror = rej; fr.readAsDataURL(file); });
+        const { data, error } = await supabase.functions.invoke("periodization-checkin", { body: { action: "pro_parse_cardio_print", patient_id: patientId, image_base64: b64, mime_type: file.type } });
+        if (error || !data?.reading) throw new Error(data?.error || (error as any)?.context?.error || "falha");
+        const x = data.reading;
+        const r = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v) : null);
+        if (r(x.avg_hr) != null) put("hrAvg", r(x.avg_hr));
+        if (r(x.max_hr) != null) put("hrPeak", r(x.max_hr));
+        if (r(x.spo2) != null) put("spo2Min", r(x.spo2));
+        if (r(x.hr_1min_after) != null) put("hrRecovery1", r(x.hr_1min_after));
+        if (typeof x.duration_min === "number") put("durationMin", Math.round(x.duration_min * 10) / 10);
+        if (typeof x.distance_km === "number" && x.distance_km > 0) put("distanceKm", Math.round(x.distance_km * 1000) / 1000);
+        if (Array.isArray(x.zone_minutes) && x.zone_minutes.some((m: number) => m > 0)) put("zoneMinutes", [0, 1, 2, 3, 4].map((i) => Number(x.zone_minutes[i]) || 0));
+        if (x.summary) note = note ? `${note} ${x.summary}` : x.summary;
+        ok++;
+      } catch (e: any) {
+        toast({ title: `Não consegui ler ${file.name}`, description: CARDIO_PRINT_ERR[e?.message] ?? "Preencha os campos manualmente.", variant: "destructive" });
+      }
+    }
+    setReading(false);
+    if (fileRef.current) fileRef.current.value = "";
+    if (!ok) return;
+    setD((p) => {
+      const n = { ...p };
+      (Object.keys(patch) as (keyof FunctionalTestData)[]).forEach((k) => { if (n[k] == null) (n as any)[k] = patch[k]; });
+      // TC6M: a distância do relógio vira o resultado (em metros) se ainda vazio.
+      if (type === "tc6m" && n.result == null && patch.distanceKm) n.result = Math.round(patch.distanceKm * 1000);
+      return n;
+    });
+    if (note && !notes) setNotes(note);
+    setReadCount((c) => c + ok);
+    toast({ title: ok === 1 ? "Print lido" : `${ok} prints lidos`, description: "Confira os números e complete repouso, Borg e resultado." });
+  };
   const report = useMemo(() => analyzeFunctionalTest(type, d), [type, d]);
 
   const startNew = () => {
     const last = rows[0]?.data;
-    setEditId(null); setType("tsl1"); setDate(localISODate()); setNotes("");
+    setEditId(null); setType("tsl1"); setDate(localISODate()); setNotes(""); setReadCount(0);
     setD({ age: ageFrom(birth), sex: last?.sex ?? null, heightCm: last?.heightCm ?? null, weightKg: last?.weightKg ?? null, betaBlocker: last?.betaBlocker ?? false });
     setOpen(true);
   };
-  const startEdit = (r: Row) => { setEditId(r.id); setType(r.test_type); setDate(r.test_date); setD(r.data); setNotes(r.notes ?? ""); setOpen(true); };
+  const startEdit = (r: Row) => { setReadCount(0); setEditId(r.id); setType(r.test_type); setDate(r.test_date); setD(r.data); setNotes(r.notes ?? ""); setOpen(true); };
 
   const save = async () => {
     if (d.result == null) { toast({ title: "Informe o resultado do teste", variant: "destructive" }); return; }
@@ -156,6 +202,26 @@ const CardioFunctionalTestsCard = ({ patientId, entries = [] }: { patientId: str
                   {t === "tsl1" ? "TSL 1-min" : t === "tc6m" ? "TC6M" : "Degrau 6 min"}
                 </button>
               ))}
+            </div>
+
+            <div className="space-y-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <input ref={fileRef} type="file" multiple accept="image/png,image/jpeg,image/webp" className="hidden"
+                  onChange={(e) => e.target.files?.length && readPrints(Array.from(e.target.files))} />
+                <Button type="button" size="sm" variant="secondary" disabled={reading} onClick={() => fileRef.current?.click()}>
+                  {reading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ImageUp className="h-4 w-4 mr-1" />}
+                  {readCount ? "Adicionar outro print" : "Ler prints do monitor"}
+                </Button>
+                <span className="text-[11px] text-muted-foreground">até 6 por vez{readCount ? ` · ${readCount} lido(s)` : ""} · usa créditos de IA só nesta leitura</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Prints da cinta, relógio ou oxímetro preenchem FC média e pico, SpO₂, FC 1 min após, duração, distância e zonas. Não vira sessão monitorada nem entra na carga.</p>
+              {(d.hrAvg != null || d.durationMin != null || d.distanceKm != null || d.zoneMinutes) && (
+                <p className="text-xs text-foreground">
+                  {[d.hrAvg != null && `FC média ${d.hrAvg} bpm`, d.durationMin != null && `${d.durationMin} min`, d.distanceKm != null && `${Math.round(d.distanceKm * 1000)} m`,
+                    d.zoneMinutes && `Zonas ${d.zoneMinutes.map((m, i) => `Z${i + 1} ${Math.round(m * 10) / 10}`).join(" · ")} min`].filter(Boolean).join(" · ")}
+                  <button type="button" className="ml-2 text-muted-foreground underline" onClick={() => set({ hrAvg: null, durationMin: null, distanceKm: null, zoneMinutes: null })}>limpar</button>
+                </p>
+              )}
             </div>
 
             {monitored.length > 0 && !editId && (
