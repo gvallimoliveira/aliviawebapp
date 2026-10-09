@@ -54,7 +54,7 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     objections: ["Preciso conectar meu relógio ao Aliv.iA?", "A leitura do print dispensa conferir os dados?", "Meu paciente só tem oxímetro"],
     stakes: ["Os dados continuam em outro aplicativo e precisam ser reconstruídos na consulta", "Uma medida isolada pode ganhar mais significado do que realmente tem"],
     triggers: ["O paciente começou a trazer prints do treino", "Você quer documentar a resposta ao exercício além da nota de esforço"],
-    cta: "Conhecer a monitorização cardiovascular no Aliv.iA",
+    cta: "Conhecer a monitorização cardiovascular",
   },
   {
     id: "diferencial-cardio-testes",
@@ -73,7 +73,7 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     objections: ["O teste pode ser feito sozinho pelo paciente?", "O sistema determina a causa da limitação?", "Todo teste tem valor previsto automático?"],
     stakes: ["Uma melhora nos metros pode esconder uma resposta ao esforço diferente", "Sem o contexto do protocolo, comparar dois resultados pode induzir a uma conclusão apressada"],
     triggers: ["Você precisa documentar tolerância ao esforço antes de progredir", "Chegou a hora de reavaliar a capacidade funcional"],
-    cta: "Conhecer os testes cardiorrespiratórios do Aliv.iA",
+    cta: "Conhecer os testes cardiorrespiratórios",
   },
   {
     id: "diferencial-cardio-relatorio",
@@ -92,7 +92,7 @@ export const ALIVIA_DIFFERENTIALS: BrandAudience[] = [
     objections: ["O relatório é um laudo diagnóstico automático?", "Vou gastar créditos de IA para cada análise?", "E quando faltam medidas no registro?"],
     stakes: ["O paciente recebe números sem entender o que significam no acompanhamento", "Sem distinguir medidas de hipóteses, o documento pode transmitir uma certeza que os dados não sustentam"],
     triggers: ["O paciente pediu um resumo para levar a outro profissional", "Você quer documentar uma avaliação e discutir a continuidade do acompanhamento"],
-    cta: "Conhecer os relatórios cardiorrespiratórios do Aliv.iA",
+    cta: "Conhecer o relatório cardiorrespiratório",
   },
   {
     id: "diferencial-pre-avaliacao",

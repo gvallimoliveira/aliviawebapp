@@ -6,7 +6,7 @@ import {
   ClipboardList, AlertTriangle, FileText, Image as ImageIcon, Brain,
   MessageCircle, Video, Bell, BookOpen, TrendingUp, Shield, CreditCard,
   UserCog, Stethoscope, FileCheck, Sparkles, Heart, Layers, Mic, Archive,
-  Lightbulb, GraduationCap,
+  Lightbulb, GraduationCap, Activity,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -17,6 +17,7 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { setSeo } from "@/lib/seo";
 import InstallAppCard from "@/components/InstallAppCard";
 
@@ -444,6 +445,7 @@ const faqKeys = [
 
 const ClinicSupport = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [openCategory, setOpenCategory] = useState<string | null>(categories[0].title);
 
