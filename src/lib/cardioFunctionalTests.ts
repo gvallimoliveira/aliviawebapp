@@ -10,6 +10,10 @@ export interface FunctionalTestData {
   predictedManual?: number | null; // previsto informado (tabela de referência)
   hrRest?: number | null;
   hrPeak?: number | null;
+  bpRestSys?: number | null;
+  bpRestDia?: number | null;
+  bpPeakSys?: number | null;
+  bpPeakDia?: number | null;
   hrRecovery1?: number | null;
   recoveryActive?: boolean;
   spo2Rest?: number | null;
