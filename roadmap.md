@@ -1,5 +1,10 @@
 # Roadmap
 
+## Repertório cardiorrespiratório no Studio (09/10)
+- [x] Integrar monitorização, testes e relatórios nos diferenciais exclusivos da marca Aliv.iA.
+- [x] Criar ecossistema com narrativa comercial precisa, sem prometer integração automática com aparelhos.
+- [x] Atualizar ajuda pt/en/es e validar foco, determinismo e isolamento da marca: 47 testes passaram; compilação sem erros. Sem vincular prints de funcionalidades diferentes.
+
 ## Perfis e educação cardiovascular (08/10)
 - [x] Atualizar tetos, incluir pneumopata e sincronizar check-in e gravação do perfil; migração aplicada e função implantada.
 - [x] Incluir resumo educativo pelo ícone i e revisar ambos os relatórios, sem inferir dispneia ou medir VO₂máx.

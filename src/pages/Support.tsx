@@ -79,6 +79,7 @@ const proTools = [
   { key: "studio_carousel", icon: Palette },
   { key: "studio_creative_network", icon: Brain },
   { key: "studio_ecosystem", icon: Layers },
+  { key: "studio_cardiorespiratory", icon: Activity },
 ];
 
 const patientFaqKeys = ["pf_signup", "pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11", "pf12", "pf13"];

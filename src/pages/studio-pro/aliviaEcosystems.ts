@@ -6,6 +6,7 @@ import { clarifyStudioCopy } from "./contextualCopy";
 export type AliviaEcosystemRecipeId =
   | "rotina-clinica"
   | "periodizacao"
+  | "jornada-cardiorrespiratoria"
   | "recem-formado"
   | "seguranca-clinica"
   | "adesao-e-evolucao"
@@ -26,9 +27,28 @@ type Recipe = {
   problem: string;
   gain: string;
   loss: string;
+  stepBodies?: Partial<Record<AliviaDifferentialId, string>>;
 };
 
 export const ALIVIA_ECOSYSTEM_RECIPES: Recipe[] = [
+  {
+    id: "jornada-cardiorrespiratoria",
+    label: "Monitorizar, avaliar e explicar o esforço",
+    audience: "fisioterapeuta que acompanha a capacidade funcional e a resposta ao exercício",
+    title: "Do dado do aparelho à avaliação que orienta sua próxima decisão",
+    promise: "No Aliv.iA, dados do monitor, testes supervisionados e relatórios fazem parte do mesmo acompanhamento, com protocolos e referências explícitos e revisão profissional.",
+    ids: ["diferencial-cardio-monitorizacao", "diferencial-cardio-testes", "diferencial-cardio-relatorio"],
+    closing: "O aparelho mede, o teste dá contexto e o relatório ajuda a explicar. Quem interpreta e decide é o fisioterapeuta.",
+    cta: "Conhecer a jornada cardiorrespiratória do Aliv.iA",
+    problem: "O relógio mostra o esforço. Mas como transformar esse resumo em acompanhamento clínico?",
+    gain: "Dados revisados, capacidade funcional documentada e um relatório compreensível dão contexto à próxima decisão.",
+    loss: "Quando prints, testes e relatórios ficam separados, você refaz registros e o paciente recebe números sem contexto.",
+    stepBodies: {
+      "diferencial-cardio-monitorizacao": "Comece pelos dados disponíveis de pulseira, relógio, cinta peitoral ou oxímetro. Digite ou envie prints e revise os campos: não há conexão automática com o aparelho.",
+      "diferencial-cardio-testes": "Dê contexto às medidas com TSL 1 min, caminhada ou degrau de 6 min supervisionados. Prints entram direto no teste; complete desempenho, Borg, saturação e pressão arterial quando medidos, sem duplicar a carga semanal.",
+      "diferencial-cardio-relatorio": "Leve os achados do período às versões técnica e do paciente. Protocolos e referências apoiam a leitura, com hipóteses e lacunas explícitas: a interpretação e a conduta continuam suas.",
+    },
+  },
   {
     id: "rotina-clinica",
     label: "Rotina clínica completa",
@@ -132,7 +152,7 @@ export const buildAliviaEcosystem = (recipeId?: string, selectedIds?: string[]):
     steps: stages.map((item, index) => ({
       id: item.id,
       label: item.keyword ?? item.label,
-      body: `${transition(index, stages.length)}: ${String(item.description ?? "").replace(/^./, (letter) => letter.toLowerCase())}`,
+      body: recipe.stepBodies?.[item.id as AliviaDifferentialId] ?? `${transition(index, stages.length)}: ${String(item.description ?? "").replace(/^./, (letter) => letter.toLowerCase())}`,
       topic: topicForDifferential(item.id as AliviaDifferentialId),
       photoIds: officialPhotoIdsForDifferential(item.id as AliviaDifferentialId),
     })),
