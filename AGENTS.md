@@ -1,5 +1,7 @@
 # Architecture decisions
 
+- AgentMessageInput autosizes mobile drafts within the visible viewport; empty fields collapse to preserve chat space, without changing other textareas.
+
 - Cardiovascular views use `usePatientBirthDate` to refresh demographics after patient record edits and on refocus; age-dependent estimates must not remain stale or reset unsaved session inputs.
 
 - Periodization buttons use type="button"; they sit inside patient-record forms.

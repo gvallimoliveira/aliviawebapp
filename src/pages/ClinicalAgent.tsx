@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useClinicalAgentAccess } from "@/hooks/useClinicalAgentAccess";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { AgentMessageInput } from "@/components/agent/AgentMessageInput";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
@@ -1314,13 +1314,14 @@ const ClinicalAgent = () => {
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
-              <Textarea
+              <AgentMessageInput
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
                 }}
                 placeholder={attachments.some(a => a.status === "ready") ? "Adicione uma pergunta ou envie só o anexo…" : "Pergunte ao agente…"}
+                aria-label="Mensagem ao agente"
                 className="min-h-[44px] max-h-[160px] resize-none rounded-xl"
                 style={{ fontSize: "16px" }}
                 rows={1}
