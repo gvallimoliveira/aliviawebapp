@@ -35,7 +35,7 @@ interface VipUser {
 const Admin = () => {
   const { user, session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { language } = useLanguage();
 
   const [vipUsers, setVipUsers] = useState<VipUser[]>([]);
@@ -45,7 +45,15 @@ const Admin = () => {
   const [newNotes, setNewNotes] = useState("");
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTabState] = useState(() => searchParams.get("tab") || sessionStorage.getItem("alivia:admin-tab") || "dashboard");
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    try { sessionStorage.setItem("alivia:admin-tab", tab); } catch { /* noop */ }
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", tab);
+    setSearchParams(next, { replace: true });
+  };
+  const [loadedOnce, setLoadedOnce] = useState(false);
   const [pendingPros, setPendingPros] = useState(0);
   const [openTickets, setOpenTickets] = useState(0);
 
@@ -89,18 +97,20 @@ const Admin = () => {
   // Sync active tab with URL ?tab= parameter
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
-    const validTabs = ["dashboard", "users", "professionals", "content", "support", "leads", "agent", "ai-usage", "patients", "lgpd"];
+    const validTabs = ["dashboard", "users", "professionals", "content", "support", "leads", "agent", "ai-usage", "patients", "lgpd", "videos"];
     if (tabFromUrl && validTabs.includes(tabFromUrl)) {
-      setActiveTab(tabFromUrl);
+      setActiveTabState(tabFromUrl);
     }
   }, [searchParams]);
 
   useEffect(() => {
-    if (session) {
+    if (user?.id) {
       fetchVipUsers();
       fetchBadgeCounts();
     }
-  }, [session]);
+    // Depend on user id only: token refresh on return must not reload/remount the panel.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const fetchBadgeCounts = async () => {
     try {
@@ -116,7 +126,7 @@ const Admin = () => {
   };
 
   const fetchVipUsers = async () => {
-    setLoading(true);
+    if (!loadedOnce) setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("manage-vip-users", {
         body: { action: "list_vip" },
@@ -137,6 +147,7 @@ const Admin = () => {
       setVipUsers([]);
     } finally {
       setLoading(false);
+      setLoadedOnce(true);
     }
   };
 
@@ -186,7 +197,7 @@ const Admin = () => {
     }
   };
 
-  if (authLoading || loading) {
+  if (!loadedOnce && (authLoading || loading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

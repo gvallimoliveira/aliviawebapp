@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,12 +82,36 @@ const AdminVideoAudit = () => {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [newUrl, setNewUrl] = useState<Record<string, string>>({});
-  const [newName, setNewName] = useState<Record<string, string>>({});
+  const readDraft = (k: string): Record<string, string> => {
+    try { return JSON.parse(sessionStorage.getItem(k) || "{}"); } catch { return {}; }
+  };
+  const [newUrl, setNewUrl] = useState<Record<string, string>>(() => readDraft("alivia:video-audit:urls"));
+  const [newName, setNewName] = useState<Record<string, string>>(() => readDraft("alivia:video-audit:names"));
+  const [lastOpened, setLastOpened] = useState<string | null>(() => sessionStorage.getItem("alivia:video-audit:last"));
+  const loadedRef = useRef(false);
+
+  useEffect(() => {
+    try { sessionStorage.setItem("alivia:video-audit:urls", JSON.stringify(newUrl)); } catch { /* noop */ }
+  }, [newUrl]);
+  useEffect(() => {
+    try { sessionStorage.setItem("alivia:video-audit:names", JSON.stringify(newName)); } catch { /* noop */ }
+  }, [newName]);
+  const markOpened = (id: string) => {
+    setLastOpened(id);
+    try { sessionStorage.setItem("alivia:video-audit:last", id); } catch { /* noop */ }
+  };
+  // Back from YouTube: bring the last opened exercise into view once after first load.
+  useEffect(() => {
+    if (loading || !lastOpened || loadedRef.current) return;
+    loadedRef.current = true;
+    requestAnimationFrame(() => {
+      document.getElementById(`video-audit-${lastOpened}`)?.scrollIntoView({ block: "center" });
+    });
+  }, [loading, lastOpened]);
 
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     const [{ data, error }, { data: pend, error: pendError }] = await Promise.all([
       supabase
         .from("exercise_video_audit_runs")
@@ -224,7 +248,7 @@ const AdminVideoAudit = () => {
         title: "Auditoria concluída",
         description: `${data?.checked_count ?? 0} vídeos verificados · ${data?.broken_count ?? 0} fora do ar · ${data?.mismatch_count ?? 0} divergentes`,
       });
-      await load();
+      await load(true);
     } catch (e) {
       toast({
         title: "Falha na auditoria",
@@ -322,7 +346,7 @@ const AdminVideoAudit = () => {
               const runIssue = issues.find((i) => i.id === item.id);
               const busy = savingId === item.id;
               return (
-                <div key={item.id} className="rounded-lg border p-3 space-y-3">
+                <div key={item.id} id={`video-audit-${item.id}`} className={`rounded-lg border p-3 space-y-3 scroll-mt-24 ${lastOpened === item.id ? "border-primary ring-1 ring-primary/40" : ""}`}>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-medium">{item.name_pt}</p>
@@ -339,7 +363,7 @@ const AdminVideoAudit = () => {
                   <div className="flex flex-wrap items-center gap-2">
                     {item.video_url && (
                       <Button variant="outline" size="sm" asChild>
-                        <a href={item.video_url} target="_blank" rel="noreferrer">
+                        <a href={item.video_url} target="_blank" rel="noreferrer" onClick={() => markOpened(item.id)}>
                           <ExternalLink className="h-4 w-4 mr-1" />
                           Ver vídeo
                         </a>
