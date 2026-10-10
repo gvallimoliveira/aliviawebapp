@@ -346,7 +346,7 @@ const AdminVideoAudit = () => {
               const runIssue = issues.find((i) => i.id === item.id);
               const busy = savingId === item.id;
               return (
-                <div key={item.id} className="rounded-lg border p-3 space-y-3">
+                <div key={item.id} id={`video-audit-${item.id}`} className={`rounded-lg border p-3 space-y-3 scroll-mt-24 ${lastOpened === item.id ? "border-primary ring-1 ring-primary/40" : ""}`}>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-medium">{item.name_pt}</p>
@@ -363,7 +363,7 @@ const AdminVideoAudit = () => {
                   <div className="flex flex-wrap items-center gap-2">
                     {item.video_url && (
                       <Button variant="outline" size="sm" asChild>
-                        <a href={item.video_url} target="_blank" rel="noreferrer">
+                        <a href={item.video_url} target="_blank" rel="noreferrer" onClick={() => markOpened(item.id)}>
                           <ExternalLink className="h-4 w-4 mr-1" />
                           Ver vídeo
                         </a>
