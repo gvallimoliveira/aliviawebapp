@@ -195,6 +195,9 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       const { data } = await (supabase as any)
         .from("exercise_library")
         .select("id, name_pt, name_en, name_es, body_region, category, difficulty, video_url")
+        // Só exercícios com vídeo aprovado/validado entram na seleção do HEP;
+        // pendentes de auditoria (mismatch, needs_replacement, broken, unknown) ficam ocultos.
+        .in("video_status", ["ok", "approved"])
         .order("body_region")
         .order("category");
       setExercises(data || []);
