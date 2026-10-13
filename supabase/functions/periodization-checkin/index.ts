@@ -179,9 +179,14 @@ serve(async (req) => {
       professionalName = pro?.full_name ?? null;
       proUserId = pro?.user_id ?? null;
     }
-    if (!professionalName && patient.clinic_id) {
-      const { data: clinic } = await supabase.from("clinics").select("name").eq("id", patient.clinic_id).maybeSingle();
-      professionalName = clinic?.name ?? null;
+    // Pacientes da clínica: a clínica ganha destaque próprio (nome + logo),
+    // com o fisioterapeuta responsável como identificação secundária.
+    let clinicName: string | null = null;
+    let clinicLogo: string | null = null;
+    if (patient.clinic_id) {
+      const { data: clinic } = await supabase.from("clinics").select("name, logo_url").eq("id", patient.clinic_id).maybeSingle();
+      clinicName = clinic?.name ?? null;
+      clinicLogo = clinic?.logo_url ?? null;
     }
 
     let planTitle: string | null = null;
@@ -290,6 +295,8 @@ serve(async (req) => {
           hr_ceiling: hrCeiling,
           patient_name: patient.full_name ?? null,
           professional_name: professionalName,
+          clinic_name: clinicName,
+          clinic_logo_url: clinicLogo,
           audience: link.audience,
           label: link.label,
           plan_title: planTitle,
