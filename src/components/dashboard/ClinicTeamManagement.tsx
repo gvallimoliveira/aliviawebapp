@@ -139,6 +139,10 @@ const ClinicTeamManagement = () => {
 
   if (!activeClinic) return null;
 
+  const isUnlimited = activeClinic.max_members >= 9999;
+  const seatsUsed = members.length + invitations.length;
+  const atLimit = !isUnlimited && seatsUsed >= activeClinic.max_members;
+
   return (
     <div className="space-y-6">
       {/* Clinic settings */}
