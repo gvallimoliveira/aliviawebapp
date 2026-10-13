@@ -153,7 +153,7 @@ const ClinicTeamManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
-            {lang === "pt" ? "Equipe" : lang === "es" ? "Equipo" : "Team"} ({members.length}/{activeClinic.max_members >= 9999 ? "∞ Enterprise" : activeClinic.max_members})
+            {lang === "pt" ? "Equipe" : lang === "es" ? "Equipo" : "Team"} ({seatsUsed}/{isUnlimited ? "∞ Enterprise" : activeClinic.max_members})
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -237,8 +237,33 @@ const ClinicTeamManagement = () => {
         </Card>
       )}
 
+      {/* Limit reached notice */}
+      {canManage && atLimit && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardContent className="py-4 flex items-start gap-3">
+            <Users className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium">
+                {lang === "pt"
+                  ? `Limite do plano atingido (${activeClinic.max_members} membros)`
+                  : lang === "es"
+                    ? `Límite del plan alcanzado (${activeClinic.max_members} miembros)`
+                    : `Plan limit reached (${activeClinic.max_members} members)`}
+              </p>
+              <p className="text-muted-foreground text-xs mt-1">
+                {lang === "pt"
+                  ? "Para adicionar alguém, remova um membro, cancele um convite pendente ou faça upgrade do plano da clínica."
+                  : lang === "es"
+                    ? "Para añadir a alguien, elimine un miembro, cancele una invitación pendiente o mejore el plan de la clínica."
+                    : "To add someone, remove a member, cancel a pending invite, or upgrade the clinic plan."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Invite form */}
-      {canManage && members.length < activeClinic.max_members && (
+      {canManage && !atLimit && (
         <Card>
           <CardHeader>
              <CardTitle className="flex items-center gap-2 text-lg">
