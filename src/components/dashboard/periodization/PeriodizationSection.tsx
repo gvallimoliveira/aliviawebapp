@@ -156,6 +156,32 @@ const PeriodizationSection = ({
   };
 
   const loadedOnceRef = useRef(false);
+  // Marca de rolagem para sobreviver a remontagens do prontuário: se a seção
+  // for desmontada e montada de novo logo após um comando, voltamos ao ponto.
+  const SCROLL_MARK_KEY = "alivia:periodization:scroll";
+  const saveScrollMark = () => {
+    try { sessionStorage.setItem(SCROLL_MARK_KEY, JSON.stringify({ y: window.scrollY, t: Date.now() })); } catch { /* opcional */ }
+  };
+  const restoredMarkRef = useRef(false);
+  useEffect(() => {
+    if (loading || restoredMarkRef.current) return;
+    restoredMarkRef.current = true;
+    let mark: { y: number; t: number } | null = null;
+    try { mark = JSON.parse(sessionStorage.getItem(SCROLL_MARK_KEY) || "null"); } catch { mark = null; }
+    if (!mark || Date.now() - mark.t > 10000 || mark.y < 50) return;
+    const target = mark.y;
+    const until = performance.now() + 1500;
+    let stop = false;
+    const cancel = () => { stop = true; };
+    window.addEventListener("wheel", cancel, { passive: true, once: true });
+    window.addEventListener("touchmove", cancel, { passive: true, once: true });
+    const step = () => {
+      if (stop) return;
+      if (Math.abs(window.scrollY - target) > 4) window.scrollTo({ top: target, behavior: "auto" });
+      if (performance.now() < until) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [loading]);
   const lastTouchedRef = useRef<HTMLElement | null>(null);
   const viewAnchorRef = useRef<HTMLElement | null>(null);
   // Elemento estável perto do centro da tela, usado quando o botão tocado
@@ -340,6 +366,7 @@ const PeriodizationSection = ({
   return (
     <div
       className="space-y-3"
+      style={{ overflowAnchor: "none" }}
       onPointerDownCapture={(e) => {
         const t = e.target as HTMLElement;
         // Toques dentro de diálogos (portal) não servem de âncora: somem ao fechar.
@@ -347,6 +374,16 @@ const PeriodizationSection = ({
         lastTouchedRef.current =
           (t.closest("[data-periodization-block]") as HTMLElement | null) ?? t.closest("button,a,[role='button']") ?? t;
         viewAnchorRef.current = pickViewportAnchor();
+        saveScrollMark();
+      }}
+      onClickCapture={(e) => {
+        const t = e.target as HTMLElement;
+        if (t.closest("[role='dialog'],[role='alertdialog']")) return;
+        if (!t.closest("button,a,[role='button'],[role='switch'],[role='checkbox'],[role='tab'],[role='combobox']")) return;
+        // Qualquer comando da seção mantém o ponto tocado fixo na tela
+        // enquanto cards abrem/fecham, salvam ou recarregam.
+        saveScrollMark();
+        anchorScroll(anchorTarget, 2500)();
       }}
     >
       {/* Ordem do fluxo: macrociclo → links → sessão monitorada → teto FC → testes → análise → carga/prontidão → dose → microciclo. */}
