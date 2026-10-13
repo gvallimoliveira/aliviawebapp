@@ -131,6 +131,8 @@ type State = "loading" | "ready" | "error";
 interface Info {
   patient_name: string | null;
   professional_name: string | null;
+  clinic_name?: string | null;
+  clinic_logo_url?: string | null;
   audience: string;
   label: string | null;
   plan_title: string | null;
@@ -378,6 +380,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
       setInfo(refreshed);
       applyAutoSelection(refreshed);
     }
+    return true;
   };
 
 
@@ -538,7 +541,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                         className="text-sm"
                       />
                       {errorMsg && <p className="text-xs text-destructive">{errorMsg}</p>}
-                      <Button className="w-full rounded-xl gap-2" onClick={submitCheckin} disabled={savingCheckin}>
+                      <Button className="w-full rounded-xl gap-2" onClick={() => submitCheckin()} disabled={savingCheckin}>
                         {savingCheckin ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                         Enviar check-in
                       </Button>
@@ -843,7 +846,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                         className="text-sm"
                       />
                       {errorMsg && <p className="text-xs text-destructive">{errorMsg}</p>}
-                      <Button className="w-full rounded-xl gap-2" onClick={submitSrpe} disabled={savingSrpe}>
+                      <Button className="w-full rounded-xl gap-2" onClick={() => submitSrpe()} disabled={savingSrpe}>
                         {savingSrpe ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                         Registrar sessão
                       </Button>
