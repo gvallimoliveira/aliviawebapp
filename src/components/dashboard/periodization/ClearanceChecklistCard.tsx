@@ -40,7 +40,7 @@ const ClearanceChecklistCard = ({ items, onChanged, readOnly }: Props) => {
         </div>
         <div className="space-y-1.5">
           {items.map((item) => (
-            <button
+            <button type="button"
               key={item.id}
               onClick={() => toggle(item)}
               disabled={readOnly}

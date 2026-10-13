@@ -317,7 +317,7 @@ const MicroWeekGrid = ({
                   </div>
                 ))}
                 {!readOnly && (
-                  <button
+                  <button type="button"
                     onClick={() => setEditing({ date })}
                     className="w-full text-[10px] text-muted-foreground hover:text-primary flex items-center justify-center gap-1 py-1"
                   >
