@@ -4,7 +4,6 @@
 
 - Cardiovascular views use `usePatientBirthDate` to refresh demographics after patient record edits and on refocus; age-dependent estimates must not remain stale or reset unsaved session inputs.
 
-- Periodization buttons use type="button"; they sit inside patient-record forms.
 
 
 - Aliv.iA solution ecosystems must reference the canonical differential IDs in `aliviaDifferentials.ts`; one source prevents feature copy and product promises from drifting.
@@ -16,14 +15,13 @@
 - "Today" in load control is always the local/Brazil calendar date (`localISODate` client-side, America/Sao_Paulo in the check-in function), never `toISOString()`; UTC rolls to tomorrow after 21h in Brazil.
 - Planned-vs-perceived dose compares only sessions dated up to local today that have an sRPE (`adherenceByTrack`); unanswered past and upcoming sessions are listed separately and never count as underdose, and dose never triggers push alerts. Patient sRPE accepts today and the 7 previous days, enforced server-side.
 - Weekly dose display derives full-week targets and recorded-to-date totals separately from answered-session adherence, with answered/scheduled counts per track; this preserves partial comparison and chart semantics without turning future or unanswered work into underdose.
-- Microcycle planned sessions from today or the previous 7 days open a pre-filled monitored-session dialog on click (MicroWeekGrid → saveProfessionalSession); future sessions stay read-only and the trash action must stopPropagation.
 - Load-control front views show text lists for the last 3 days (grouped by day) and charts for the last 7 rolling days via `loadWindows.ts`, falling back to the most recent days with data; full history is fetched on demand in `LoadHistoryDialog` and never deleted. Risk math (acute/chronic/ACWR, auto plan) ignores these display windows.
 - Patient record content insets by the fixed `PatientSectionRail` width; avoids covered titles.
 - Cardiovascular analysis (session metrics, weekly goals, intensity distribution, trends, readings) and both cardiovascular PDF reports derive only from the pure rule-based `cardioAnalysis.ts`; one deterministic source keeps panel, technical report and patient report consistent without AI credits.
-- Cardio analysis mounts only inside `CardioAnalysisDialog`; keeps the record light.
 - Cardiovascular educational copy is shared through `cardioEducation.ts` by the information dialog and PDFs; profile references must remain distinct from universal safety limits and unmeasured respiratory targets.
 - Dashboard/clinic data effects depend on `user?.id`, never the `user` object; token refresh on app return must not reset open screens.
 - Recovery decisions (load matrix, day adjustment, load card) use `recoverySignal` in `periodization.ts`: check-in readiness is the universal base and morning resting HR, when fresh with baseline, takes priority (most conservative wins); patients often skip morning HR.
 - Load control has one session-entry path (monitored-session block + microcycle shortcut); the load card is read-only plus manual check-in, and cardio analysis appears only when HR data exists.
 - Load-control "Conduta do dia" derives only from `dailyConduct.ts` (safety → recovery → yesterday/effort coherence → ACWR trend); one deterministic priority order keeps the top recommendation consistent and works with a single check-in.
 - Cardiorespiratory functional tests (TSL 1-min, TC6M, TD6M) are interpreted only by the pure `cardioFunctionalTests.ts`; deterministic rules keep the record, sheet and future reports consistent without AI credits.
+- Subdirectories may have their own AGENTS.md; read it before changing files there.
