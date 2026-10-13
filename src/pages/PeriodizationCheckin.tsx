@@ -254,28 +254,36 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
   }, [token]);
 
 
-  const submitCheckin = async () => {
+  // Há notas de prontidão preenchidas que ainda não foram enviadas?
+  const checkinPending = () =>
+    !checkinDone && (Object.keys(values).length > 0 || !!restingHr || !!peakHr || !!spo2 || !!note?.trim());
+  // Há uma sessão (carga) preenchida que ainda não foi enviada?
+  const srpePending = () => !srpeDone && Number(duration) > 0;
+
+  const submitCheckin = async (opts: { silent?: boolean } = {}): Promise<boolean> => {
+    const fail = (m: string) => { if (!opts.silent) setErrorMsg(m); return false; };
     const hrNum = restingHr ? Number(restingHr) : null;
     if (hrNum !== null && (!Number.isFinite(hrNum) || hrNum < 25 || hrNum > 140)) {
-      setErrorMsg("FC ao acordar deve ficar entre 25 e 140 bpm.");
-      return;
+      return fail("FC ao acordar deve ficar entre 25 e 140 bpm.");
     }
     const peakNum = peakHr ? Number(peakHr) : null;
     const spoNum = spo2 ? Number(spo2) : null;
-    if (peakNum !== null && (peakNum < 40 || peakNum > 240)) { setErrorMsg("FC no esforço deve ficar entre 40 e 240 bpm."); return; }
-    if (spoNum !== null && (spoNum < 70 || spoNum > 100)) { setErrorMsg("SpO₂ deve ficar entre 70 e 100%."); return; }
+    if (peakNum !== null && (peakNum < 40 || peakNum > 240)) return fail("FC no esforço deve ficar entre 40 e 240 bpm.");
+    if (spoNum !== null && (spoNum < 70 || spoNum > 100)) return fail("SpO₂ deve ficar entre 70 e 100%.");
     if (Object.keys(values).length === 0 && hrNum === null && peakNum === null && spoNum === null) {
-      setErrorMsg("Responda pelo menos uma escala.");
-      return;
+      return fail("Responda pelo menos uma escala.");
     }
-    setErrorMsg("");
+    if (!opts.silent) setErrorMsg("");
     setSavingCheckin(true);
     const { data, error } = await supabase.functions.invoke("periodization-checkin", {
-      body: { action: "submit_checkin", token, values: { ...values, resting_hr: restingHr ? Number(restingHr) : null, peak_hr: peakNum, spo2: spoNum, note } },
+      body: { action: "submit_checkin", token, values: { ...values, resting_hr: hrNum, peak_hr: peakNum, spo2: spoNum, note } },
     });
     setSavingCheckin(false);
-    if (error || !data?.ok) { setErrorMsg("Não foi possível enviar agora. Tente novamente."); return; }
+    if (error || !data?.ok) return fail("Não foi possível enviar agora. Tente novamente.");
     setCheckinDone(true);
+    // Sessão de carga preenchida mas não enviada segue junto.
+    if (!opts.silent && srpePending()) await submitSrpe({ silent: true });
+    return true;
   };
 
   const submitPlanned = async () => {
@@ -325,17 +333,21 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
     setErrorMsg("");
   };
 
-  const submitSrpe = async () => {
+  const submitSrpe = async (opts: { silent?: boolean } = {}): Promise<boolean> => {
     const pendingTargets = (info?.today_targets || []).filter((t) => !t.already_reported);
     const isPast = !!sessionDate && sessionDate !== info?.today;
     if (!isPast && !freeMode && pendingTargets.length > 0 && !selectedSessionId) {
-      setErrorMsg("Escolha qual sessão de hoje você fez.");
-      return;
+      if (!opts.silent) setErrorMsg("Escolha qual sessão de hoje você fez.");
+      return false;
     }
     const min = Number(duration);
-    if (!Number.isFinite(min) || min <= 0) { setErrorMsg("Informe a duração da sessão em minutos."); return; }
+    if (!Number.isFinite(min) || min <= 0) { if (!opts.silent) setErrorMsg("Informe a duração da sessão em minutos."); return false; }
 
-    setErrorMsg("");
+    if (!opts.silent) {
+      setErrorMsg("");
+      // Notas de prontidão preenchidas mas não enviadas seguem junto.
+      if (checkinPending()) await submitCheckin({ silent: true });
+    }
     setSavingSrpe(true);
     const { data, error } = await supabase.functions.invoke("periodization-checkin", {
       body: {
@@ -353,7 +365,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
       },
     });
     setSavingSrpe(false);
-    if (error || !data?.ok) { setErrorMsg("Não foi possível enviar agora. Tente novamente."); return; }
+    if (error || !data?.ok) { if (!opts.silent) setErrorMsg("Não foi possível enviar agora. Tente novamente."); return false; }
     setSrpeDone(true);
     setDuration("");
     setSrpeNotes("");
@@ -385,11 +397,24 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
               <Activity className="h-5 w-5 text-primary" />
               {isCoach ? "Planejamento da sessão (treinador)" : "Check-in de hoje"}
             </CardTitle>
+            {state === "ready" && info?.clinic_name && (
+              <div className="flex items-center gap-3 rounded-xl border bg-muted/40 px-3 py-2">
+                {info.clinic_logo_url ? (
+                  <img src={info.clinic_logo_url} alt={info.clinic_name} className="h-10 w-10 rounded-lg object-contain bg-background" />
+                ) : null}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{info.clinic_name}</p>
+                  {info.professional_name ? (
+                    <p className="text-xs text-muted-foreground truncate">Fisioterapeuta responsável: {info.professional_name}</p>
+                  ) : null}
+                </div>
+              </div>
+            )}
             {state === "ready" && (
               <p className="text-sm text-muted-foreground">
                 {info?.patient_name ? <><strong>{info.patient_name}</strong> · </> : null}
                 {dateLabel}
-                {info?.professional_name ? <> · acompanhamento de <strong>{info.professional_name}</strong></> : null}
+                {!info?.clinic_name && info?.professional_name ? <> · acompanhamento de <strong>{info.professional_name}</strong></> : null}
               </p>
             )}
             {state === "ready" && (
