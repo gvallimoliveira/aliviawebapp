@@ -6,17 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import {
-  Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine,
-} from "recharts";
 import { HeartPulse, Loader2, Plus, Trash2, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { loadStatus, localISODate, readinessScore, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import type { ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
 import { deleteCheckin, saveCheckin } from "@/lib/periodizationData";
 import { CHECKIN_ITEMS, LEVEL_CLASS, ZONE_LABEL } from "./scales";
-import { CHART_WINDOW_DAYS, inWindow, recentDaysWindow, rollingDailySeries } from "@/lib/loadWindows";
-import DailyLoadChart from "./DailyLoadChart";
+import { CHART_WINDOW_DAYS, recentDaysWindow } from "@/lib/loadWindows";
+import { loadRecoverySeries } from "@/lib/loadRecovery";
+import LoadRecoveryChart from "./LoadRecoveryChart";
 import LoadHistoryDialog from "./LoadHistoryDialog";
 
 interface Props {
@@ -27,16 +25,6 @@ interface Props {
   onChanged: () => void;
   readOnly?: boolean;
 }
-
-const tooltipStyle = {
-  borderRadius: 8,
-  border: "1px solid hsl(var(--border))",
-  background: "hsl(var(--card))",
-  fontSize: 12,
-};
-
-const shortDate = (iso: string) =>
-  new Date(`${iso}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 
 const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
@@ -81,18 +69,9 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
 
   const chartWindow = useMemo(() => {
     const w = recentDaysWindow([...entries.map((e) => e.session_date), ...checkins.map((c) => c.checkin_date)], CHART_WINDOW_DAYS, localISODate());
-    const series = rollingDailySeries(entries, w.from, w.to);
-    return { ...w, series, total: series.reduce((a, d) => a + d.total, 0) };
+    const series = loadRecoverySeries(entries, checkins, w.from, w.to);
+    return { ...w, series, total: series.reduce((a, d) => a + (d.load ?? 0), 0) };
   }, [entries, checkins]);
-
-  const readinessData = useMemo(
-    () =>
-      checkins
-        .filter((c) => inWindow(c.checkin_date, chartWindow))
-        .map((c) => ({ date: shortDate(c.checkin_date), Prontidão: readinessScore(c) }))
-        .filter((d) => d.Prontidão !== null),
-    [checkins, chartWindow],
-  );
 
   // Formulário de check-in manual (fisio registrando pelo paciente)
   const [checkinOpen, setCheckinOpen] = useState(false);
@@ -225,34 +204,15 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-foreground">
-              Carga total dos últimos 7 dias <span className="font-normal text-muted-foreground">· todas as frentes · {chartWindow.total} sRPE</span>
+              Carga diária × recuperação (PSR) <span className="font-normal text-muted-foreground">· 7 dias · {chartWindow.total} sRPE</span>
             </p>
             <LoadHistoryDialog patientId={patientId} />
           </div>
           {chartWindow.fallback && (
             <p className="mb-1 text-[10px] text-muted-foreground">Sem registros nos últimos 7 dias — exibindo os mais recentes.</p>
           )}
-          <DailyLoadChart data={chartWindow.series} />
+          <LoadRecoveryChart data={chartWindow.series} />
         </div>
-
-        {/* Prontidão */}
-        {readinessData.length > 1 && (
-          <div>
-            <p className="text-xs font-medium text-foreground mb-1">Prontidão (0-100)</p>
-            <div className="h-36">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={readinessData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <ReferenceLine y={40} stroke="hsl(0, 70%, 55%)" strokeDasharray="4 4" />
-                  <Line type="monotone" dataKey="Prontidão" stroke="hsl(150, 60%, 40%)" strokeWidth={2} dot={{ r: 2 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
 
         {entries.length === 0 && checkins.length === 0 && (
           <p className="text-xs text-muted-foreground">

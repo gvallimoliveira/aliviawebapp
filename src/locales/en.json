@@ -1,4 +1,6 @@
 {
+  "support.pro.faq.rf24.q": "How do I compare perceived recovery (PSR) and recorded load?",
+  "support.pro.faq.rf24.a": "Under Load and readiness, daily load bars (duration × RPE summed across tracks) are paired with a line for perceived recovery (PSR), the first check-in item scored 1–10. PSR is distinct from composite readiness. The seven displayed days are contextualized with acute load, the preceding seven-day period and the 28-day weekly average when enough history exists. Descriptive readings highlight PSR at least 2 points below/above the mean of at least 3 prior responses in seven days alongside acute load ±10% versus the previous seven-day period or ACWR outside 0.8–1.3. These are descriptive criteria, not diagnostic thresholds or statistical correlation. PSR may precede training; missing records do not mean rest. Consider symptoms, sleep and planning. There are no automatic adjustments or AI credits. Older responses used the training-readiness wording and are not retrospective PSR measurements.",
   "nav.home": "Home",
   "landing.exit_intent_title": "Wait! Your first self-assessment is free 🎉",
   "landing.exit_intent_desc": "Discover what might be causing your pain in minutes, based on scientific evidence. No commitment.",
