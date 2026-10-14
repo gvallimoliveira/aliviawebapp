@@ -15,6 +15,8 @@ import { CHECKIN_ITEMS, TRACK_LABEL } from "@/components/dashboard/periodization
 import { plannedLoad, trainingLoad, loadLevelFromRpe } from "@/lib/periodization";
 import CardioPrintReader from "@/components/periodization/CardioPrintReader";
 import ExternalWorkoutImport from "@/components/periodization/ExternalWorkoutImport";
+import ClinicBrandHeader from "@/components/ClinicBrandHeader";
+import { clinicAssessmentTheme } from "@/lib/clinicAssessmentTheme";
 
 const LEVEL_BADGE: Record<string, { label: string; className: string }> = {
   rest: { label: "Descanso", className: "bg-muted text-muted-foreground" },
@@ -133,6 +135,7 @@ interface Info {
   professional_name: string | null;
   clinic_name?: string | null;
   clinic_logo_url?: string | null;
+  clinic_brand_color?: string | null;
   audience: string;
   label: string | null;
   plan_title: string | null;
@@ -395,7 +398,8 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
     : "";
 
   const content = (
-      <div className={embedded ? "w-full space-y-4" : "w-full max-w-lg space-y-4"}>
+      <div className={embedded ? "w-full space-y-4" : "w-full max-w-lg space-y-4"} style={clinicAssessmentTheme(info?.clinic_brand_color)}>
+        {state === "ready" && info?.clinic_name && <ClinicBrandHeader {...info} />}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-xl flex items-center gap-2">
@@ -403,12 +407,8 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
               {isCoach ? "Planejamento da sessão (treinador)" : "Check-in de hoje"}
             </CardTitle>
             {state === "ready" && info?.clinic_name && (
-              <div className="flex items-center gap-3 rounded-xl border bg-muted/40 px-3 py-2">
-                {info.clinic_logo_url ? (
-                  <img src={info.clinic_logo_url} alt={info.clinic_name} className="h-10 w-10 rounded-lg object-contain bg-background" />
-                ) : null}
+              <div className="border-l-2 border-primary pl-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">{info.clinic_name}</p>
                   {info.professional_name ? (
                     <p className="text-xs text-muted-foreground truncate">Fisioterapeuta responsável: {info.professional_name}</p>
                   ) : null}

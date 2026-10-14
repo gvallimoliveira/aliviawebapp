@@ -5,6 +5,7 @@ import { resolveResponsibleProfessional } from "./getResponsibleProfessional";
 export interface AssessmentBranding {
   clinicLogoUrl?: string;
   clinicName?: string;
+  brandColor?: string;
   professionalLogoUrl?: string;
   responsibleProfessional?: ResponsibleProfessional;
 }
@@ -32,6 +33,7 @@ export async function resolveAssessmentBranding(opts: {
       const c: any = rows?.[0];
       if (c?.logo_url) out.clinicLogoUrl = c.logo_url as string;
       if (c?.name) out.clinicName = c.name as string;
+      if (c?.brand_color) out.brandColor = c.brand_color as string;
     } catch {
       /* ignore */
     }

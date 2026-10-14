@@ -45,7 +45,7 @@ serve(async (req) => {
 
     const { data: assessment, error: aErr } = await supabase
       .from("assessments")
-      .select("id, pain_regions, patient_name, test_results, anamnesis_data")
+      .select("id, pain_regions, patient_name, test_results, anamnesis_data, clinic_id")
       .eq("id", assessmentId)
       .maybeSingle();
     if (aErr || !assessment) return json({ error: "assessment_not_found" }, 404);
@@ -57,7 +57,9 @@ serve(async (req) => {
     if (pErr) return json({ error: "load_failed" }, 500);
 
     if (action === "load") {
+      const { data: clinic } = assessment.clinic_id ? await supabase.from("clinics").select("name,logo_url,brand_color").eq("id", assessment.clinic_id).maybeSingle() : { data: null };
       return json({
+        branding: clinic ? { clinic_name: clinic.name, clinic_logo_url: clinic.logo_url, clinic_brand_color: clinic.brand_color } : null,
         assessment: {
           id: assessment.id,
           pain_regions: assessment.pain_regions ?? [],

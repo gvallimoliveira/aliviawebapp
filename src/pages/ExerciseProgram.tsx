@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Dumbbell, Play, Clock, ChevronDown, ChevronUp, Globe, ArrowLeft } from "lucide-react";
 import logoAlivia from "@/assets/logo-alivia.png";
+import ClinicBrandHeader, { type ClinicLinkBranding } from "@/components/ClinicBrandHeader";
+import { clinicAssessmentTheme } from "@/lib/clinicAssessmentTheme";
 
 interface ExerciseItem {
   id: string;
@@ -67,6 +69,7 @@ const ExerciseProgram = () => {
   const { language, toggleLanguage } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [program, setProgram] = useState<Program | null>(null);
+  const [branding, setBranding] = useState<ClinicLinkBranding | null>(null);
   const [items, setItems] = useState<ExerciseItem[]>([]);
   const [expired, setExpired] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -139,6 +142,8 @@ const ExerciseProgram = () => {
       }
 
       setProgram(resolved);
+      const { data: clinicBranding } = await (supabase as any).rpc("get_hep_clinic_branding", { _token: token });
+      setBranding(clinicBranding);
 
       setItems(prog.items || []);
       setLoading(false);
@@ -382,7 +387,7 @@ const ExerciseProgram = () => {
   }, {});
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={clinicAssessmentTheme(branding?.clinic_brand_color)}>
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
@@ -391,14 +396,14 @@ const ExerciseProgram = () => {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
-            {program?.professional?.logo_url ? (
+            {branding?.clinic_name ? <ClinicBrandHeader {...branding} compact /> : program?.professional?.logo_url ? (
               <img src={program.professional.logo_url} alt="" className="h-8 w-8 rounded-full object-cover" />
             ) : (
               <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
             )}
-            <span className="text-sm font-semibold text-foreground truncate">
+            {!branding?.clinic_name && <span className="text-sm font-semibold text-foreground truncate">
               {program?.professional?.full_name || program?.professional?.clinic_name || "Aliv.iA"}
-            </span>
+            </span>}
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <Button
@@ -418,6 +423,7 @@ const ExerciseProgram = () => {
       </header>
 
       <main className="container max-w-lg py-6 px-4 space-y-5">
+        {branding?.clinic_name && program?.professional?.full_name && <p className="text-xs text-muted-foreground">{language === "pt" ? "Fisioterapeuta responsável" : language === "es" ? "Fisioterapeuta responsable" : "Responsible physiotherapist"}: {program.professional.full_name}</p>}
         {(program?.professional?.active_profile_mode ?? (program?.professional?.is_student ? "student" : "professional")) === "student" && (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
             <p className="font-semibold">

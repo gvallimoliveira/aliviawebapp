@@ -1942,6 +1942,7 @@ export type Database = {
       exercise_programs: {
         Row: {
           assessment_id: string | null
+          clinic_id: string | null
           created_at: string
           domain: string
           expires_at: string
@@ -1953,6 +1954,7 @@ export type Database = {
         }
         Insert: {
           assessment_id?: string | null
+          clinic_id?: string | null
           created_at?: string
           domain?: string
           expires_at?: string
@@ -1964,6 +1966,7 @@ export type Database = {
         }
         Update: {
           assessment_id?: string | null
+          clinic_id?: string | null
           created_at?: string
           domain?: string
           expires_at?: string
@@ -1979,6 +1982,13 @@ export type Database = {
             columns: ["assessment_id"]
             isOneToOne: false
             referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_programs_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
             referencedColumns: ["id"]
           },
           {
@@ -5319,6 +5329,7 @@ export type Database = {
         }[]
       }
       get_exercise_program_by_token: { Args: { _token: string }; Returns: Json }
+      get_hep_clinic_branding: { Args: { _token: string }; Returns: Json }
       get_hep_professional: {
         Args: { _token: string }
         Returns: {
