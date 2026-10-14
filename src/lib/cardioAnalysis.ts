@@ -596,3 +596,41 @@ export function patientReadings(p: PeriodAnalysis, ctx: AnalysisContext): string
 export function profileGoal(profile?: string | null): CardioGoal {
   return CARDIO_GOALS[profileRule(profile).key];
 }
+
+/** Report-only hierarchy: factual observations, not new diagnostic or training rules. */
+export function cardioReportSections(p: PeriodAnalysis, profile: string, patient: boolean, readings: string[] = []) {
+  const key = profileRule(profile).key;
+  const performance = key === "athletic" || key === "healthy";
+  const response: string[] = [];
+  const recovery: string[] = [];
+  const review: string[] = [];
+  if (p.sessions.length) {
+    response.push(`${p.sessions.length} sessões registradas; ${p.monitoredSessions} com dados de FC. Os registros podem não representar todo o treino realizado.`);
+    const latest = [...p.sessions].reverse().find((s) => s.hrAvg !== null || s.hrMax !== null);
+    if (latest) response.push(`${patient ? "Último treino com batimentos registrados" : "Última sessão com FC"} (${shortDate(latest.date)}): ${latest.durationMin} min, PSE ${fmtNum(latest.rpe)}/10; FC média ${latest.hrAvg ?? "—"} e pico ${latest.hrMax ?? "—"} bpm.`);
+    const zones = p.sessions.filter((s) => s.zones !== null);
+    response.push(zones.length
+      ? `TRIMP disponível em ${zones.length}/${p.sessions.length} sessões, somente com minutos por zona. Não representa toda a exigência de força, velocidade ou esforços curtos.`
+      : "Sem minutos por zona: TRIMP não calculado. A carga por duração × PSE (sRPE) permanece disponível.");
+  } else response.push("Sem sessões registradas no período; não é possível avaliar a resposta ao esforço. Ausência de registro não significa inatividade.");
+  if (p.recoveryTrend) recovery.push(`Queda da FC no 1º minuto: média ${fmtNum(p.recoveryTrend.first)} → ${fmtNum(p.recoveryTrend.last)} bpm nos registros. Comparar somente esforços e protocolos semelhantes; a variação isolada não comprova melhora ou piora clínica.`);
+  else if (p.avgRecovery !== null) recovery.push(`Queda média da FC no 1º minuto: ${p.avgRecovery} bpm em ${p.recoverySeries.length} registros. Ainda sem dados suficientes para tendência.`);
+  else recovery.push("Recuperação da FC após o esforço não registrada. Informar a FC após 1 minuto permite acompanhar esse comportamento.");
+  if (p.restingTrend) recovery.push(`FC ao acordar, média semanal: ${fmtNum(p.restingTrend.first)} → ${fmtNum(p.restingTrend.last)} bpm. Sinal separado da carga do treino; considerar sono, sintomas e condições de medição.`);
+  else recovery.push("FC ao acordar: sem semanas suficientes para comparar o padrão pessoal.");
+  if (p.counts.spo2Low) review.push(`${p.counts.spo2Low} sessões com oxigenação abaixo de ${SPO2_ALERT}%: conferir a medida, sintomas e necessidade de avaliação médica.`);
+  if (p.counts.recoveryLow) review.push(`${p.counts.recoveryLow} sessões com queda de FC de até ${RECOVERY_LOW} bpm no 1º minuto: revisar o protocolo e o contexto clínico. Esse corte não é universal nem diagnóstico.`);
+  if (p.counts.aboveCeiling) review.push(`${p.counts.aboveCeiling} sessões acima da referência de FC do perfil. Conferir teto individual, sintomas e prescrição; ultrapassar uma estimativa isoladamente não define perigo.`);
+  if (p.counts.heartHigher || p.counts.perceivedHigher) review.push(`Divergência entre resposta de FC e PSE: ${p.counts.heartHigher} sessões com FC relativamente maior e ${p.counts.perceivedHigher} com percepção maior. Revisar calor, hidratação, dor, medicação e condições da tarefa; as escalas não têm equivalência exata.`);
+  if (performance) review.push("Revisar intensidade e recuperação conforme modalidade, objetivo e fase de treino. O modelo 80/20 não é obrigação; zonas de FC não são limiares medidos. Não aumentar carga apenas por cumprir ou deixar de cumprir a OMS.");
+  if (!review.length) review.push("Sem os sinais de atenção acompanhados nesta análise. Isso não demonstra ausência de risco; considerar sintomas e avaliação profissional.");
+  if (performance) review.push("Compare ritmo ou potência e FC/PSE apenas em tarefas semelhantes. Essas relações não medem economia de movimento, VO₂máx, overtraining ou risco individual de lesão.");
+  const moment = readings.filter((text) => text.startsWith("Leitura do momento"));
+  recovery.push(...moment);
+  if (patient) review.push("Combine os próximos passos com seu fisioterapeuta; não ajuste a intensidade por conta própria.");
+  const who = [
+    `Referência OMS: ${p.whoWeeksMet}/${p.weeks.length} semanas com pelo menos ${WHO_MODERATE_MIN} min moderados equivalentes; média registrada ${p.avgEquivalent} min/semana. A equivalência de intensidade é aproximada.`,
+    "Referência de saúde geral, não medida de desempenho ou prova de dose adequada. Atividade abaixo dela também conta; semanas sem registro não comprovam inatividade.",
+  ];
+  return { performance, response, recovery, review, who };
+}

@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import { registerInterFonts } from "./fonts/registerInterFonts";
 import {
   CARDIO_CAVEATS, CARDIO_REFERENCES, WHO_MODERATE_MIN, fmtNum, profileGoal, shortDate,
-  type PeriodAnalysis,
+  cardioReportSections, type PeriodAnalysis,
 } from "@/lib/cardioAnalysis";
 import { OXIMETER_GUIDE, profileRule, type HrCeiling } from "@/lib/cardioSafety";
 import { TRACK_LABEL } from "@/components/dashboard/periodization/scales";
@@ -73,6 +73,7 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
   const p = o.period;
   const rule = profileRule(o.profile);
   const goal = profileGoal(o.profile);
+  const summary = cardioReportSections(p, o.profile, !tech, o.readings);
   let y = MARGIN;
 
   const font = (size: number, weight: "normal" | "bold" | "italic" = "normal", color: RGB = C.foreground) => {
@@ -137,6 +138,21 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
   }
   y += headerH;
 
+  if (summary.performance) {
+    section("Resposta ao esforço", bulletsHeight(summary.response));
+    bullets(summary.response);
+    y += 3;
+  }
+
+  if (summary.performance) {
+    section("Recuperação", bulletsHeight(summary.recovery));
+    bullets(summary.recovery);
+    y += 3;
+    section("Pontos a revisar", bulletsHeight(summary.review));
+    bullets(summary.review);
+    y += 3;
+  }
+
   // ── Perfil e teto ──────────────────────────────────────────────────────
   const profileLines = tech
     ? [
@@ -144,14 +160,14 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
         o.ceiling.ceiling
           ? `Teto de FC: ${o.ceiling.ceiling} bpm ${o.ceiling.source === "manual" ? "(manual)" : `(${Math.round(o.ceiling.pct * 100)}% de ${o.ceiling.maxHr} bpm, Gellish 207 − 0,7 × idade)`}.`
           : "Teto de FC: sem data de nascimento e sem teto manual.",
-        `Meta do perfil: ${goal.intensity}. ${goal.weekly}. Fonte: ${goal.source}.`,
+        ...(summary.performance ? ["Intensidade e volume individualizados por modalidade, objetivo e fase de treino."] : [`Meta do perfil: ${goal.intensity}. ${goal.weekly}. Fonte: ${goal.source}.`]),
         ...(o.betaBlocker ? ["Em uso de betabloqueador: intensidade avaliada pela PSE; FC apenas como apoio."] : []),
       ]
     : [
         o.ceiling.ceiling
-          ? `Referência superior de batimentos nos treinos: ${o.ceiling.ceiling} batimentos por minuto ${o.ceiling.source === "manual" ? "(ajustada pelo profissional)" : "(estimativa pela idade)"}. Se o monitor mostrar mais que isso, diminua o ritmo e converse com seu fisioterapeuta.`
+          ? `Referência superior de batimentos nos treinos: ${o.ceiling.ceiling} batimentos por minuto ${o.ceiling.source === "manual" ? "(ajustada pelo profissional)" : "(estimativa pela idade)"}. ${summary.performance ? "É referência operacional, não limite universal de segurança; confirme a orientação individual com seu fisioterapeuta." : "Se o monitor mostrar mais que isso, diminua o ritmo e converse com seu fisioterapeuta."}`
           : "Seu limite de batimentos será definido pelo seu fisioterapeuta.",
-        `Referência para construir com seu fisioterapeuta: ${goal.weekly.replace(/\(.*?\)/g, "").trim()}. Atividades abaixo dessa referência também contam; a progressão deve respeitar sua tolerância.`,
+        ...(summary.performance ? ["Seu treino deve ser ajustado ao objetivo, à modalidade e à recuperação, não apenas aos minutos semanais."] : [`Referência para construir com seu fisioterapeuta: ${goal.weekly.replace(/\(.*?\)/g, "").trim()}. Atividades abaixo dessa referência também contam; a progressão deve respeitar sua tolerância.`]),
         ...(o.betaBlocker ? ["Como você usa um remédio que deixa os batimentos mais baixos, guie-se principalmente pela sensação de esforço."] : []),
       ];
   font(8.5);
@@ -171,19 +187,26 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
 
   const education = profileEducation(o.profile, !tech);
   if (tech) education.push(CARDIO_EDUCATION[1].text, CARDIO_EDUCATION[3].text);
-  section(tech ? "Prescrição individual e interpretação das intensidades" : "Entendendo seu treino", bulletsHeight(education));
-  bullets(education);
-  y += 3;
+  if (!summary.performance) {
+    section(tech ? "Prescrição individual e interpretação das intensidades" : "Entendendo seu treino", bulletsHeight(education));
+    bullets(education);
+    y += 3;
+  }
 
   // Valorizar o trabalho realizado antes da comparação gráfica na versão do paciente.
-  if (!tech) {
+  if (!tech && !summary.performance) {
     section("Seu esforço, suas conquistas e próximos passos", bulletsHeight(o.readings));
     bullets(o.readings);
     y += 3;
   }
 
   // ── Indicadores ────────────────────────────────────────────────────────
-  const kpis: Array<[string, string, boolean?]> = [
+  const kpis: Array<[string, string, boolean?]> = summary.performance ? [
+    ["Sessões com FC", `${p.monitoredSessions}/${p.sessions.length}`],
+    ["Sessões com zonas", `${p.sessions.filter((s) => s.zones !== null).length}/${p.sessions.length}`],
+    ["Acima da referência FC", `${p.counts.aboveCeiling}`],
+    ["Queda FC em 1 min", p.avgRecovery !== null ? `${p.avgRecovery} bpm` : "—"],
+  ] : [
     [tech ? "Meta OMS atingida" : "Semanas na meta", `${p.whoWeeksMet}/${p.weeks.length}`],
     [tech ? "Média semanal (min eq.)" : "Minutos por semana", `${p.avgEquivalent}`],
     [tech ? "Sessões acima do teto" : "Treinos acima do limite", `${p.counts.aboveCeiling}`, p.counts.aboveCeiling > 0],
@@ -202,42 +225,6 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
     doc.text(pdfSafe(value), kx + 2, y + 14);
   });
   y += 22;
-
-  // ── Gráfico semanal: minutos moderados + vigorosos (×2) vs meta OMS ─────
-  const chartH = 44;
-  section(tech ? "Atividade aeróbia semanal × meta da OMS" : "Seus minutos de atividade por semana", chartH + 10);
-  const chartX = X + 10, chartW = W - 10, baseY = y + chartH - 6;
-  const maxV = Math.max(WHO_MODERATE_MIN * 1.25, ...p.weeks.map((w) => w.equivalent)) || 1;
-  const yOf = (v: number) => baseY - (v / maxV) * (chartH - 10);
-  font(6.5, "normal", C.muted);
-  [0, WHO_MODERATE_MIN].forEach((v) => doc.text(String(v), X, yOf(v) + 1));
-  doc.setDrawColor(...C.border);
-  doc.line(chartX, baseY, chartX + chartW, baseY);
-  const slot = chartW / p.weeks.length;
-  const bw = Math.min(10, slot * 0.6);
-  p.weeks.forEach((w, i) => {
-    const bx = chartX + i * slot + (slot - bw) / 2;
-    const mod = w.moderate, vig = w.vigorous * 2;
-    if (mod > 0) { doc.setFillColor(...C.primarySoft); doc.rect(bx, yOf(mod), bw, baseY - yOf(mod), "F"); }
-    if (vig > 0) { doc.setFillColor(...C.primary); doc.rect(bx, yOf(mod + vig), bw, yOf(mod) - yOf(mod + vig), "F"); }
-    if (w.equivalent > 0) { font(6, "normal", C.muted); doc.text(String(w.equivalent), bx + bw / 2, yOf(w.equivalent) - 1, { align: "center" }); }
-    font(6.5, "normal", C.muted);
-    doc.text(w.label, bx + bw / 2, baseY + 4, { align: "center" });
-  });
-  doc.setDrawColor(...C.amber);
-  doc.setLineDashPattern([1.2, 1], 0);
-  doc.line(chartX, yOf(WHO_MODERATE_MIN), chartX + chartW, yOf(WHO_MODERATE_MIN));
-  doc.setLineDashPattern([], 0);
-  font(6.5, "normal", C.amber);
-  doc.text(`meta ${WHO_MODERATE_MIN} min`, chartX + chartW, yOf(WHO_MODERATE_MIN) - 1.2, { align: "right" });
-  y = baseY + 7;
-  font(6.5, "normal", C.muted);
-  doc.setFillColor(...C.primarySoft); doc.rect(X, y - 2.2, 3, 2.5, "F");
-  doc.text("moderado", X + 4, y);
-  doc.setFillColor(...C.primary); doc.rect(X + 20, y - 2.2, 3, 2.5, "F");
-  doc.text(tech ? "vigoroso (×2, equivalência OMS)" : "intenso (vale em dobro)", X + 24, y);
-  doc.text(tech ? "Semanas móveis de 7 dias até a data de emissão." : "Cada barra é uma semana.", X + W, y, { align: "right" });
-  y += 6;
 
   // ── Tempo por zona no período ───────────────────────────────────────────
   const zoneTot = [0, 0, 0, 0, 0];
@@ -264,13 +251,13 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
 
   // ── Tendências (técnica) ───────────────────────────────────────────────
   const series = [
-    { title: "Recuperação da FC no 1º minuto (bpm)", pts: p.recoverySeries, ref: 12 as number | null },
-    { title: "Eficiência cardíaca (metros por batimento)", pts: p.efficiencySeries, ref: null },
-    { title: "Eficiência na bicicleta (W por bpm)", pts: p.powerSeries, ref: null },
+    { title: "Queda da FC no 1º minuto (bpm)", pts: p.recoverySeries, ref: (summary.performance ? null : 12) as number | null },
+    { title: "Relação distância/FC (metros por batimento)", pts: p.efficiencySeries, ref: null },
+    { title: "Relação potência/FC (W por bpm)", pts: p.powerSeries, ref: null },
   ].filter((s) => s.pts.length >= 2);
-  if (tech && series.length) {
+  if ((tech || summary.performance) && series.length) {
     const sh = 30;
-    section("Tendências", sh + 6);
+    section(summary.performance ? "Resposta e recuperação — registros ao longo do período" : "Tendências", sh + 6);
     series.forEach((s, si) => {
       if (si > 0) ensure(sh + 6);
       font(8, "bold");
@@ -307,9 +294,22 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
   }
 
   // ── Leituras ───────────────────────────────────────────────────────────
-  if (tech) {
+  if (tech && !summary.performance) {
     section("Trabalho realizado e pontos a acompanhar", bulletsHeight(o.readings));
     bullets(o.readings);
+    y += 3;
+  }
+
+  // ── Testes funcionais ─────────────────────────────────────────────────
+  if (o.functionalTests?.length) {
+    const items = o.functionalTests.map((t) => {
+      const base = `${fmtDate(t.date)} · ${t.label}: ${t.result}${t.percent != null ? ` (${t.percent}% do previsto)` : ""}`;
+      if (!tech) return `${base}. Compare sua evolução em condições semelhantes.${t.alerts.length ? ` Pontos de atenção: ${t.alerts.join(" ")}` : ""}`;
+      const extra = [...t.patterns, ...t.alerts.map((a) => `Alerta: ${a}`)];
+      return extra.length ? `${base}. ${extra.join(" ")}` : base;
+    });
+    section(tech ? "Testes funcionais cardiorrespiratórios" : "Seus testes de capacidade", bulletsHeight(items));
+    bullets(items);
     y += 3;
   }
 
@@ -356,16 +356,50 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
     y += 4;
   }
 
-  // ── Testes funcionais ─────────────────────────────────────────────────
-  if (o.functionalTests?.length) {
-    const items = o.functionalTests.map((t) => {
-      const base = `${fmtDate(t.date)} · ${t.label}: ${t.result}${t.percent != null ? ` (${t.percent}% do previsto)` : ""}`;
-      if (!tech) return t.percent != null ? `${base}. Este número serve de ponto de partida para comparar sua evolução.` : `${base}.`;
-      const extra = [...t.patterns, ...t.alerts.map((a) => `Alerta: ${a}`)];
-      return extra.length ? `${base}. ${extra.join(" ")}` : base;
-    });
-    section(tech ? "Testes funcionais cardiorrespiratórios" : "Seus testes de capacidade", bulletsHeight(items));
-    bullets(items);
+  if (summary.performance) {
+    section("Contexto de saúde geral", bulletsHeight(summary.who));
+    bullets(summary.who);
+    y += 3;
+  }
+  // ── Gráfico semanal: minutos moderados + vigorosos (×2) vs meta OMS ─────
+  const chartH = 44;
+  section(summary.performance ? "Saúde geral — referência semanal da OMS" : tech ? "Atividade aeróbia semanal × meta da OMS" : "Seus minutos de atividade por semana", chartH + 10);
+  const chartX = X + 10, chartW = W - 10, baseY = y + chartH - 6;
+  const maxV = Math.max(WHO_MODERATE_MIN * 1.25, ...p.weeks.map((w) => w.equivalent)) || 1;
+  const yOf = (v: number) => baseY - (v / maxV) * (chartH - 10);
+  font(6.5, "normal", C.muted);
+  [0, WHO_MODERATE_MIN].forEach((v) => doc.text(String(v), X, yOf(v) + 1));
+  doc.setDrawColor(...C.border);
+  doc.line(chartX, baseY, chartX + chartW, baseY);
+  const slot = chartW / p.weeks.length;
+  const bw = Math.min(10, slot * 0.6);
+  p.weeks.forEach((w, i) => {
+    const bx = chartX + i * slot + (slot - bw) / 2;
+    const mod = w.moderate, vig = w.vigorous * 2;
+    if (mod > 0) { doc.setFillColor(...C.primarySoft); doc.rect(bx, yOf(mod), bw, baseY - yOf(mod), "F"); }
+    if (vig > 0) { doc.setFillColor(...C.primary); doc.rect(bx, yOf(mod + vig), bw, yOf(mod) - yOf(mod + vig), "F"); }
+    if (w.equivalent > 0) { font(6, "normal", C.muted); doc.text(String(w.equivalent), bx + bw / 2, yOf(w.equivalent) - 1, { align: "center" }); }
+    font(6.5, "normal", C.muted);
+    doc.text(w.label, bx + bw / 2, baseY + 4, { align: "center" });
+  });
+  doc.setDrawColor(...C.amber);
+  doc.setLineDashPattern([1.2, 1], 0);
+  doc.line(chartX, yOf(WHO_MODERATE_MIN), chartX + chartW, yOf(WHO_MODERATE_MIN));
+  doc.setLineDashPattern([], 0);
+  font(6.5, "normal", C.amber);
+  doc.text(`meta ${WHO_MODERATE_MIN} min`, chartX + chartW, yOf(WHO_MODERATE_MIN) - 1.2, { align: "right" });
+  y = baseY + 7;
+  font(6.5, "normal", C.muted);
+  doc.setFillColor(...C.primarySoft); doc.rect(X, y - 2.2, 3, 2.5, "F");
+  doc.text("moderado", X + 4, y);
+  doc.setFillColor(...C.primary); doc.rect(X + 20, y - 2.2, 3, 2.5, "F");
+  doc.text(tech ? "vigoroso (×2, equivalência OMS)" : "intenso (vale em dobro)", X + 24, y);
+  doc.text(tech ? "Semanas móveis de 7 dias até a data de emissão." : "Cada barra é uma semana.", X + W, y, { align: "right" });
+  y += 6;
+
+  if (summary.performance) {
+    section(tech ? "Prescrição individual e limites da interpretação" : "Entendendo seu treino", bulletsHeight(education));
+    bullets(education);
     y += 3;
   }
 
