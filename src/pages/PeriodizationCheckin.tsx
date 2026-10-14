@@ -629,7 +629,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                             <span className="text-sm font-medium text-foreground">Esforço alvo (0-10)</span>
                             <Badge variant="outline" className="text-xs">{planRpe}</Badge>
                           </div>
-                          <Slider min={0} max={10} step={1} value={[planRpe]} onValueChange={([v]) => setPlanRpe(v)} />
+                          <Slider dragOnly min={0} max={10} step={1} value={[planRpe]} onValueChange={([v]) => setPlanRpe(v)} />
                           <div className="flex justify-between text-[10px] text-muted-foreground">
                             <span>Muito leve</span><span>Máximo</span>
                           </div>
@@ -825,7 +825,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           <span className="text-sm font-medium text-foreground">Esforço percebido (0-10)</span>
                           <Badge variant="outline" className="text-xs">{rpe}</Badge>
                         </div>
-                        <Slider min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => setRpe(v)} />
+                        <Slider dragOnly min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => setRpe(v)} />
                         <div className="flex justify-between text-[10px] text-muted-foreground">
                           <span>Muito leve</span><span>Máximo</span>
                         </div>
