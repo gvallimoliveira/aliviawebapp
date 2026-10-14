@@ -315,6 +315,7 @@ Responda APENAS em JSON válido no formato:
       .from("exercise_programs")
       .insert({
         professional_id: pro.id,
+        clinic_id: patient.clinic_id || null,
         assessment_id: assessment.id,
         patient_name: patient.full_name,
         notes: [

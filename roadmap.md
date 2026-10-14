@@ -1,5 +1,5 @@
 # Tasks
-- [ ] Standardize institutional logo, name and color across PDFs, check-in, reassessment, questionnaires and HEP links; verify real links and generated PDFs.
+- [x] Standardize institutional logo, name and color across PDFs, check-in, reassessment, questionnaires and HEP links; 21 tests pass; real check-in/assessment links and three PDFs verified. Questionnaire/HEP layouts verified with mocked responses (no existing institutional links available for end-to-end checks).
 - [x] Reorder athlete/active cardiovascular PDFs around effort response, recovery and review points; retain WHO context.
 - [x] Update report help and regression tests; verify both generated PDF variants using fictional validation data (26 tests pass).
 - [x] Add daily sRPE × PSR chart and cautious deterministic interpretation.

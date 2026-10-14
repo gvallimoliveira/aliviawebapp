@@ -41,7 +41,7 @@ describe("institutional branding", () => {
     const reports = await Promise.all([
       generateMicrocyclePdfBlob({ ...brand, patientName: "Paciente fictício QA", weekStart: "2026-10-12", sessions: [] }),
       generateCardioReportPdfBlob({ ...brand, patientName: "Paciente fictício QA", variant: "technical", period, readings: [], ceiling, profile: "athletic", betaBlocker: false, age: 30 }),
-      generateBasicReportPdfBlob({ ...brand, patientName: "Paciente fictício QA", language: "pt", diagnosis: { hypothesis: "Dados fictícios de validação" } } as Parameters<typeof generateBasicReportPdfBlob>[0]),
+      generateBasicReportPdfBlob({ ...brand, patientName: "Paciente fictício QA", language: "pt", diagnosis: { hypothesis: "Dados fictícios de validação", summary: "Relatório fictício para conferir identidade institucional." } } as Parameters<typeof generateBasicReportPdfBlob>[0]),
     ]);
     for (const [i, blob] of reports.entries()) {
       const data = await new Promise<ArrayBuffer>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result as ArrayBuffer); reader.onerror = reject; reader.readAsArrayBuffer(blob); });
