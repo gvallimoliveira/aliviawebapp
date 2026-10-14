@@ -15,6 +15,8 @@ const CONSENT_KEY = "alivia_self_assessment_consent_v1";
 export interface WelcomeStepProps {
   mode: "basic" | "premium" | "professional";
   professionalName?: string;
+  clinicLogoUrl?: string | null;
+  clinicName?: string;
   onContinue: (data?: { email?: string; name?: string }) => void;
   /**
    * Optional callback to reset the entire assessment from scratch.
@@ -27,7 +29,7 @@ export interface WelcomeStepProps {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeStepProps) => {
+const WelcomeStep = ({ mode, professionalName, clinicLogoUrl, clinicName, onContinue, onRestart }: WelcomeStepProps) => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const isPt = language === "pt";
@@ -36,6 +38,8 @@ const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeS
   const [name, setName] = useState("");
   const [emailError, setEmailError] = useState("");
   const [nameError, setNameError] = useState("");
+  const [failedLogoUrl, setFailedLogoUrl] = useState<string | null>(null);
+  const showClinicLogo = !!clinicLogoUrl && failedLogoUrl !== clinicLogoUrl;
   // Only patient self-assessments require the explicit consent.
   // Professional/clinic flows already have a clinical responsible party.
   const requiresConsent = mode === "basic" || mode === "premium";
@@ -153,13 +157,20 @@ const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeS
           initial={{ scale: 0.8, opacity: 0 }}
           animate={isTransitioning ? { scale: 1.2, opacity: 0 } : { scale: 1, opacity: 1 }}
           transition={{ delay: isTransitioning ? 0 : 0.2, duration: 0.4 }}
-          className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center p-2"
+          className={showClinicLogo
+            ? "w-48 h-28 flex items-center justify-center"
+            : "w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center p-2"}
         >
-          <img src={logoAlivia} alt="Aliv.iA" className="h-14 w-14 object-contain" />
+          <img
+            src={showClinicLogo ? clinicLogoUrl ?? logoAlivia : logoAlivia}
+            alt={showClinicLogo ? clinicName || professionalName || "Clínica" : "Aliv.iA"}
+            onError={showClinicLogo ? () => setFailedLogoUrl(clinicLogoUrl ?? null) : undefined}
+            className={showClinicLogo ? "h-full w-full object-contain" : "h-14 w-14 object-contain"}
+          />
         </motion.div>
 
         <div className="space-y-3 max-w-md">
-          <h2 className="text-2xl font-bold text-foreground">
+          <h2 className={`text-2xl font-bold ${clinicName ? "text-[hsl(var(--clinic-ink))]" : "text-foreground"}`}>
             {mode === "professional" && professionalName
               ? (isPt ? `Avaliação pré-consulta com ${professionalName}` : `Pre-consultation assessment with ${professionalName}`)
               : (isPt ? "Vamos entender sua dor juntos" : "Let's understand your pain together")}
@@ -182,7 +193,7 @@ const WelcomeStep = ({ mode, professionalName, onContinue, onRestart }: WelcomeS
               initial={{ opacity: 0, x: -20 }}
               animate={isTransitioning ? { opacity: 0, x: 20 } : { opacity: 1, x: 0 }}
               transition={{ delay: isTransitioning ? i * 0.05 : 0.3 + i * 0.15 }}
-              className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 text-left"
+              className={`flex items-center gap-3 p-3 rounded-xl text-left ${clinicName ? "bg-primary/5 border border-primary/20 border-l-4 border-l-primary" : "bg-muted/50"}`}
             >
               <div className="shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                 {s.icon}

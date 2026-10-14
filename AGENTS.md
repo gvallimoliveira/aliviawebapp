@@ -26,3 +26,4 @@
 - Load-control "Conduta do dia" derives only from `dailyConduct.ts` (safety → recovery → yesterday/effort coherence → ACWR trend); one deterministic priority order keeps the top recommendation consistent and works with a single check-in.
 - Cardiorespiratory functional tests (TSL 1-min, TC6M, TD6M) are interpreted only by the pure `cardioFunctionalTests.ts`; deterministic rules keep the record, sheet and future reports consistent without AI credits.
 - Subdirectories may have their own AGENTS.md; read it before changing files there.
+- ClinicAssessment scopes color tokens via clinicAssessmentTheme and passes branding to WelcomeStep to avoid global theme leakage.

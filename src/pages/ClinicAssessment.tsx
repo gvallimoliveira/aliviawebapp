@@ -20,6 +20,7 @@ import PsychosocialStep, { type PsychosocialStepResult } from "@/components/asse
 import AssessmentStepper from "@/components/assessment/AssessmentStepper";
 import ClinicalThinkingSkeleton from "@/components/assessment/ClinicalThinkingSkeleton";
 import WelcomeStep from "@/components/assessment/WelcomeStep";
+import { clinicAssessmentTheme } from "@/lib/clinicAssessmentTheme";
 import ResumeSummary, { type ResumeConflictInfo } from "@/components/assessment/ResumeSummary";
 import { type QuestionnaireResult } from "@/data/questionnaireData";
 import {
@@ -758,29 +759,25 @@ const ClinicAssessment = () => {
   return (
     <div
       className="min-h-screen bg-background"
-      style={clinic?.brand_color ? { "--brand-accent": clinic.brand_color } as React.CSSProperties : undefined}
+      style={clinicAssessmentTheme(clinic?.brand_color)}
     >
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="container flex h-16 items-center justify-between">
+      <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-background/80 backdrop-blur-md">
+        <div className="container flex min-h-16 items-center justify-between gap-2 py-2">
           <div className="flex items-center gap-2">
             <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
             <span className="text-xl font-bold text-foreground">Aliv.iA</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center justify-end gap-2">
             {/* Clinic branding */}
             {clinic?.logo_url && (
               <img
                 src={clinic.logo_url}
                 alt={clinic.name}
-                className="h-9 w-9 rounded-full object-cover border border-border"
+                className="hidden sm:block h-9 w-9 object-contain"
               />
             )}
             <span
-              className="text-xs font-medium px-3 py-1 rounded-full"
-              style={clinic?.brand_color
-                ? { backgroundColor: `${clinic.brand_color}18`, color: clinic.brand_color }
-                : undefined
-              }
+              className="text-xs font-medium px-3 py-1 rounded-full bg-primary/10 text-[hsl(var(--clinic-ink))] min-w-0 break-words"
             >
               <Building2 className="h-3 w-3 inline mr-1" />
               {clinic?.name || "Clínica"}
@@ -861,6 +858,8 @@ const ClinicAssessment = () => {
           <WelcomeStep
             mode="professional"
             professionalName={clinic.name}
+            clinicLogoUrl={clinic.logo_url}
+            clinicName={clinic.name}
             onContinue={() => setStep("patient_info")}
             onRestart={() => {
               setAnamnesisData(null);
