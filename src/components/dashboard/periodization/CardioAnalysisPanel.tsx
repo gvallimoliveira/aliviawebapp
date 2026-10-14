@@ -10,8 +10,8 @@ import { fetchCheckins, fetchSrpe, type PeriodizationPlan, type ReadinessCheckin
 import { acwr, localISODate, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import { DEFAULT_CARDIO_PROFILE, ageFromBirth, cardioMatrix, hrCeiling, profileRule } from "@/lib/cardioSafety";
 import {
-  CARDIO_REFERENCES, WHO_MODERATE_MIN, addIsoDays, analyzePeriod, fmtNum, patientReadings, periodReadings, profileGoal, shortDate,
-  type AnalysisContext,
+  CARDIO_REFERENCES, WHO_MODERATE_MIN, addIsoDays, analyzePeriod, fmtNum, patientReadings, periodReadings, profileGoal, profilePanelOrder, shortDate,
+  type AnalysisContext, type PanelSectionKey,
 } from "@/lib/cardioAnalysis";
 import { cardioReportFileName, generateCardioReportPdfBlob, type BrandLogo } from "@/utils/generateCardioReportPdf";
 import { TEST_INFO, analyzeFunctionalTest, type FunctionalTestData, type FunctionalTestType } from "@/lib/cardioFunctionalTests";
@@ -85,6 +85,117 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
   const recovery = analysis?.recoverySeries.map((p) => ({ dia: shortDate(p.date), v: p.value })) ?? [];
   const efficiency = analysis?.efficiencySeries.map((p) => ({ dia: shortDate(p.date), v: p.value })) ?? [];
   const hasRhr = weekly.some((w) => w.fcr !== null);
+
+  // Prioridade por perfil: a ordem dos cartões e das seções segue a mesma
+  // lógica dos relatórios (profilePanelOrder em cardioAnalysis.ts).
+  const panelOrder = profilePanelOrder(profile);
+  const kpiDefs: Record<string, [string, string, boolean]> = {
+    who: ["Meta OMS atingida", analysis ? `${analysis.whoWeeksMet}/${analysis.weeks.length} sem.` : "—", false],
+    avg: ["Média semanal", analysis ? `${analysis.avgEquivalent} min eq.` : "—", false],
+    ceiling: ["Acima do teto", analysis ? `${analysis.counts.aboveCeiling} de ${analysis.monitoredSessions}` : "—", !!analysis && analysis.counts.aboveCeiling > 0],
+    recovery: ["Recuperação 1º min", analysis && analysis.avgRecovery !== null ? `${analysis.avgRecovery} bpm` : "—", !!analysis && analysis.avgRecovery !== null && analysis.avgRecovery <= 12],
+  };
+  const perfilKey = profileRule(profile).key;
+  const kpiOrder = perfilKey === "athletic" || perfilKey === "healthy"
+    ? ["ceiling", "recovery", "avg", "who"]
+    : perfilKey === "sedentary"
+      ? ["who", "avg", "ceiling", "recovery"]
+      : ["ceiling", "recovery", "who", "avg"];
+
+  const sections: Record<PanelSectionKey, JSX.Element | null> = {
+    who: (
+      <div key="who">
+        <p className="text-xs font-medium text-foreground">Minutos aeróbios por semana × meta da OMS</p>
+        <p className="mb-1 text-[11px] text-muted-foreground">Vigoroso conta em dobro (1 min vigoroso = 2 moderados). Semanas móveis de 7 dias.</p>
+        <div style={{ height: 170 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={weekly}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <XAxis dataKey="semana" tick={{ fontSize: 10 }} className="fill-muted-foreground" interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 10 }} width={34} className="fill-muted-foreground" />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number, k: string) => [`${v} min`, k === "vigoroso" ? "vigoroso (×2)" : k]} />
+              <ReferenceLine y={WHO_MODERATE_MIN} stroke="hsl(var(--chart-3))" strokeDasharray="4 3" label={{ value: "meta 150", fontSize: 10, position: "insideTopRight", fill: "hsl(var(--muted-foreground))" }} />
+              <Bar dataKey="moderado" stackId="a" fill="hsl(var(--chart-2))" />
+              <Bar dataKey="vigoroso" stackId="a" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    ),
+    distribution: analysis?.distribution ? (
+      <div key="distribution" className="space-y-1">
+        <p className="text-xs font-medium text-foreground">Distribuição de intensidade (modelo polarizado ~80/20)</p>
+        <div className="flex h-3 overflow-hidden rounded-full bg-muted">
+          <div style={{ width: `${100 - analysis.distribution.pctHigh}%`, backgroundColor: "hsl(var(--chart-2))" }} />
+          <div style={{ width: `${analysis.distribution.pctHigh}%`, backgroundColor: analysis.distribution.status === "excess" ? "hsl(var(--destructive))" : "hsl(var(--chart-1))" }} />
+        </div>
+        <p className="text-[11px] text-muted-foreground">{100 - analysis.distribution.pctHigh}% leve/moderado (Z1–Z3) · {analysis.distribution.pctHigh}% intenso (Z4–Z5)</p>
+      </div>
+    ) : null,
+    prescribed: analysis?.prescribed ? (
+      <div key="prescribed" className="space-y-1">
+        <p className="text-xs font-medium text-foreground">Sessões dentro da zona prescrita</p>
+        <div className="h-3 overflow-hidden rounded-full bg-muted">
+          <div className="h-full" style={{ width: `${analysis.prescribed.pct}%`, backgroundColor: analysis.prescribed.pct >= 80 ? "hsl(var(--chart-1))" : "hsl(var(--destructive))" }} />
+        </div>
+        <p className="text-[11px] text-muted-foreground">{analysis.prescribed.inZone} de {analysis.prescribed.total} ({analysis.prescribed.pct}%) · {goal.intensity}</p>
+      </div>
+    ) : null,
+    trimp: (
+      <div key="trimp" className="min-w-0">
+        <p className="text-xs font-medium text-foreground">Carga por FC (TRIMP) semanal{hasRhr ? " e FC ao acordar" : ""}</p>
+        <p className="mb-1 text-[11px] text-muted-foreground">
+          TRIMP = minutos de cada sessão ponderados pela zona de FC (Z1×1 a Z5×5) — é a carga do treino, não uma frequência cardíaca. A FC ao acordar mede a recuperação: não há fórmula entre as duas; juntas mostram se o corpo acompanha a carga (carga subindo com FC ao acordar acima do habitual sugere má assimilação).
+        </p>
+        <div style={{ height: 150 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={weekly}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <XAxis dataKey="semana" tick={{ fontSize: 10 }} className="fill-muted-foreground" interval="preserveStartEnd" />
+              <YAxis yAxisId="t" tick={{ fontSize: 10 }} width={34} className="fill-muted-foreground" />
+              {hasRhr && <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10 }} width={30} className="fill-muted-foreground" domain={["dataMin - 3", "dataMax + 3"]} />}
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number, k: string) => [k === "fcr" ? `${v} bpm` : v, k === "fcr" ? "FC ao acordar" : "TRIMP"]} />
+              <Line yAxisId="t" dataKey="trimp" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 2 }} />
+              {hasRhr && <Line yAxisId="r" dataKey="fcr" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={{ r: 2 }} connectNulls />}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    ),
+    recovery: recovery.length >= 2 ? (
+      <div key="recovery" className="min-w-0">
+        <p className="mb-1 text-xs font-medium text-foreground">Recuperação da FC no 1º minuto (bpm)</p>
+        <div style={{ height: 150 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={recovery}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <XAxis dataKey="dia" tick={{ fontSize: 10 }} className="fill-muted-foreground" interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 10 }} width={30} className="fill-muted-foreground" />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v} bpm`, "Recuperação"]} />
+              <ReferenceLine y={12} stroke="hsl(var(--destructive))" strokeDasharray="4 3" />
+              <Line dataKey="v" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 2 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    ) : null,
+    efficiency: efficiency.length >= 2 ? (
+      <div key="efficiency" className="min-w-0">
+        <p className="mb-1 text-xs font-medium text-foreground">Eficiência cardíaca (metros por batimento)</p>
+        <div style={{ height: 150 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={efficiency}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <XAxis dataKey="dia" tick={{ fontSize: 10 }} className="fill-muted-foreground" interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 10 }} width={34} className="fill-muted-foreground" domain={["auto", "auto"]} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmtNum(v), "m/batimento"]} />
+              <Line dataKey="v" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ r: 2 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    ) : null,
+  };
 
   const report = async (variant: "technical" | "patient", share = false) => {
     if (!analysis) return;
@@ -171,118 +282,26 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
         <>
           {reportButtons}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {([
-              ["Meta OMS atingida", `${analysis.whoWeeksMet}/${analysis.weeks.length} sem.`, false],
-              ["Média semanal", `${analysis.avgEquivalent} min eq.`, false],
-              ["Acima do teto", `${analysis.counts.aboveCeiling} de ${analysis.monitoredSessions}`, analysis.counts.aboveCeiling > 0],
-              ["Recuperação 1º min", analysis.avgRecovery !== null ? `${analysis.avgRecovery} bpm` : "—", analysis.avgRecovery !== null && analysis.avgRecovery <= 12],
-            ] as Array<[string, string, boolean]>).map(([l, v, warn]) => (
-              <div key={l} className={`min-w-0 rounded-lg p-2 ${warn ? "bg-destructive/10" : "bg-muted/50"}`}>
-                <div className="truncate text-[11px] text-muted-foreground">{l}</div>
-                <div className={`truncate text-sm font-semibold ${warn ? "text-destructive" : "text-foreground"}`}>{v}</div>
-              </div>
-            ))}
+            {kpiOrder.map((kpi) => {
+              const [l, v, warn] = kpiDefs[kpi];
+              return (
+                <div key={l} className={`min-w-0 rounded-lg p-2 ${warn ? "bg-destructive/10" : "bg-muted/50"}`}>
+                  <div className="truncate text-[11px] text-muted-foreground">{l}</div>
+                  <div className={`truncate text-sm font-semibold ${warn ? "text-destructive" : "text-foreground"}`}>{v}</div>
+                </div>
+              );
+            })}
           </div>
 
           {analysis.aerobicSessions === 0 ? (
             <p className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
               Ainda não há sessões aeróbias neste período. Os gráficos aparecem quando houver sessão de cardio/corrida, outro esporte ou qualquer sessão com FC do monitor. Tente um período maior ou lance uma sessão monitorada.
             </p>
-          ) : (<>
-          <div>
-            <p className="text-xs font-medium text-foreground">Minutos aeróbios por semana × meta da OMS</p>
-            <p className="mb-1 text-[11px] text-muted-foreground">Vigoroso conta em dobro (1 min vigoroso = 2 moderados). Semanas móveis de 7 dias.</p>
-            <div style={{ height: 170 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weekly}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="semana" tick={{ fontSize: 10 }} className="fill-muted-foreground" interval="preserveStartEnd" />
-                  <YAxis tick={{ fontSize: 10 }} width={34} className="fill-muted-foreground" />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: number, k: string) => [`${v} min`, k === "vigoroso" ? "vigoroso (×2)" : k]} />
-                  <ReferenceLine y={WHO_MODERATE_MIN} stroke="hsl(var(--chart-3))" strokeDasharray="4 3" label={{ value: "meta 150", fontSize: 10, position: "insideTopRight", fill: "hsl(var(--muted-foreground))" }} />
-                  <Bar dataKey="moderado" stackId="a" fill="hsl(var(--chart-2))" />
-                  <Bar dataKey="vigoroso" stackId="a" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          ) : (
+          <div className="space-y-4">
+            {panelOrder.map((key) => sections[key]).filter(Boolean)}
           </div>
-
-          {analysis.distribution && (
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-foreground">Distribuição de intensidade (modelo polarizado ~80/20)</p>
-              <div className="flex h-3 overflow-hidden rounded-full bg-muted">
-                <div style={{ width: `${100 - analysis.distribution.pctHigh}%`, backgroundColor: "hsl(var(--chart-2))" }} />
-                <div style={{ width: `${analysis.distribution.pctHigh}%`, backgroundColor: analysis.distribution.status === "excess" ? "hsl(var(--destructive))" : "hsl(var(--chart-1))" }} />
-              </div>
-              <p className="text-[11px] text-muted-foreground">{100 - analysis.distribution.pctHigh}% leve/moderado (Z1–Z3) · {analysis.distribution.pctHigh}% intenso (Z4–Z5)</p>
-            </div>
           )}
-          {analysis.prescribed && (
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-foreground">Sessões dentro da zona prescrita</p>
-              <div className="h-3 overflow-hidden rounded-full bg-muted">
-                <div className="h-full" style={{ width: `${analysis.prescribed.pct}%`, backgroundColor: analysis.prescribed.pct >= 80 ? "hsl(var(--chart-1))" : "hsl(var(--destructive))" }} />
-              </div>
-              <p className="text-[11px] text-muted-foreground">{analysis.prescribed.inZone} de {analysis.prescribed.total} ({analysis.prescribed.pct}%) · {goal.intensity}</p>
-            </div>
-          )}
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-foreground">Carga por FC (TRIMP) semanal{hasRhr ? " e FC ao acordar" : ""}</p>
-              <p className="mb-1 text-[11px] text-muted-foreground">
-                TRIMP = minutos de cada sessão ponderados pela zona de FC (Z1×1 a Z5×5) — é a carga do treino, não uma frequência cardíaca. A FC ao acordar mede a recuperação: não há fórmula entre as duas; juntas mostram se o corpo acompanha a carga (carga subindo com FC ao acordar acima do habitual sugere má assimilação).
-              </p>
-              <div style={{ height: 150 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={weekly}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="semana" tick={{ fontSize: 10 }} className="fill-muted-foreground" interval="preserveStartEnd" />
-                    <YAxis yAxisId="t" tick={{ fontSize: 10 }} width={34} className="fill-muted-foreground" />
-                    {hasRhr && <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10 }} width={30} className="fill-muted-foreground" domain={["dataMin - 3", "dataMax + 3"]} />}
-                    <Tooltip contentStyle={tooltipStyle} formatter={(v: number, k: string) => [k === "fcr" ? `${v} bpm` : v, k === "fcr" ? "FC ao acordar" : "TRIMP"]} />
-                    <Line yAxisId="t" dataKey="trimp" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 2 }} />
-                    {hasRhr && <Line yAxisId="r" dataKey="fcr" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={{ r: 2 }} connectNulls />}
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            {recovery.length >= 2 && (
-              <div className="min-w-0">
-                <p className="mb-1 text-xs font-medium text-foreground">Recuperação da FC no 1º minuto (bpm)</p>
-                <div style={{ height: 150 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={recovery}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis dataKey="dia" tick={{ fontSize: 10 }} className="fill-muted-foreground" interval="preserveStartEnd" />
-                      <YAxis tick={{ fontSize: 10 }} width={30} className="fill-muted-foreground" />
-                      <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v} bpm`, "Recuperação"]} />
-                      <ReferenceLine y={12} stroke="hsl(var(--destructive))" strokeDasharray="4 3" />
-                      <Line dataKey="v" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 2 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-            {efficiency.length >= 2 && (
-              <div className="min-w-0">
-                <p className="mb-1 text-xs font-medium text-foreground">Eficiência cardíaca (metros por batimento)</p>
-                <div style={{ height: 150 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={efficiency}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis dataKey="dia" tick={{ fontSize: 10 }} className="fill-muted-foreground" interval="preserveStartEnd" />
-                      <YAxis tick={{ fontSize: 10 }} width={34} className="fill-muted-foreground" domain={["auto", "auto"]} />
-                      <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmtNum(v), "m/batimento"]} />
-                      <Line dataKey="v" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ r: 2 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
-          </div>
-
-          </>)}
 
           <div className="space-y-1">
             <p className="text-xs font-medium text-foreground">Conquistas e pontos a acompanhar</p>
