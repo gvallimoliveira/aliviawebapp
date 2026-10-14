@@ -32,3 +32,17 @@ describe("cardiovascular report priorities", () => {
     expect(s.recovery.join(" ")).toContain("não registrada");
   });
 });
+describe("clinical profile focus", () => {
+  const mk = (profile: any) => analyzePeriod({ entries: [{ id: "a", session_date: "2026-10-13", track: "cardio", duration_min: 30, rpe: 4, hr_max: 120, hr_recovery_1min: 100, spo2_min: 90 }], checkins: [], ctx: { profile, betaBlocker: false, ceiling: hrCeiling({ profile, age: 60 }) }, weeks: 4, today: "2026-10-13" });
+  it.each([["sedentary", "Consistência"], ["hypertensive", "hemodinâmica"], ["cardiac", "Janela de segurança"], ["pulmonary", "Oximetria"]] as const)("%s gets its own priority block", (profile, title) => {
+    const f = cardioReportSections(mk(profile), profile, false).focus;
+    expect(f?.title).toContain(title);
+    expect(f!.items.length).toBeGreaterThan(2);
+  });
+  it("pulmonary flags low SpO2 first", () => {
+    expect(cardioReportSections(mk("pulmonary"), "pulmonary", false).focus!.items[0]).toContain("1 abaixo");
+  });
+  it("athletes keep no clinical focus", () => {
+    expect(cardioReportSections(mk("athletic"), "athletic", false).focus).toBeNull();
+  });
+});

@@ -632,5 +632,58 @@ export function cardioReportSections(p: PeriodAnalysis, profile: string, patient
     `Referência OMS: ${p.whoWeeksMet}/${p.weeks.length} semanas com pelo menos ${WHO_MODERATE_MIN} min moderados equivalentes; média registrada ${p.avgEquivalent} min/semana. A equivalência de intensidade é aproximada.`,
     "Referência de saúde geral, não medida de desempenho ou prova de dose adequada. Atividade abaixo dela também conta; semanas sem registro não comprovam inatividade.",
   ];
-  return { performance, response, recovery, review, who };
+  const focus = profileFocus(p, key, patient);
+  return { performance, response, recovery, review, who, focus };
+}
+
+/** Prioridades clínicas por perfil (não atlético). Só descreve dados registrados; nunca inventa métricas. */
+export function profileFocus(p: PeriodAnalysis, key: string, patient: boolean): { title: string; items: string[] } | null {
+  const n = p.sessions.length;
+  const withSpo2 = p.sessions.filter((s) => s.spo2Min !== null);
+  const withRpe = p.sessions.filter((s) => s.rpe !== null && s.rpe !== undefined);
+  const lowRpe = withRpe.filter((s) => (s.rpe as number) <= 5).length;
+  const withHr = p.sessions.filter((s) => s.hrMax !== null);
+  const rec = p.avgRecovery !== null ? `queda média de ${p.avgRecovery} bpm no 1º minuto (${p.recoverySeries.length} registros)` : "queda da FC no 1º minuto ainda não registrada";
+  const noData = "Sem sessões registradas no período; ausência de registro não significa inatividade.";
+  if (key === "sedentary") return {
+    title: patient ? "Sua constância e conquistas" : "Consistência, tolerância e adaptação inicial",
+    items: n ? [
+      `${n} sessões registradas; média de ${p.avgEquivalent} min moderados equivalentes por semana. ${patient ? "Cada sessão conta para construir sua base." : "Prioridade: regularidade antes de intensidade."}`,
+      p.distribution ? `Tempo em intensidade leve/moderada: ${p.distribution.lowMin} min; alta: ${p.distribution.highMin} min. A base aeróbica do iniciante vem principalmente de esforços leves a moderados.` : "Sem minutos por zona: distribuição de intensidade não calculada.",
+      withRpe.length ? `PSE registrada em ${withRpe.length}/${n} sessões (${lowRpe} até 5/10). ${patient ? "Aprender a reconhecer seu esforço ajuda a treinar com segurança." : "Usar a relação PSE × FC para calibrar a percepção do paciente."}` : "PSE não registrada: incluir a sensação de esforço ao final de cada sessão.",
+      `Recuperação: ${rec}. Comparar ao longo das semanas em esforços semelhantes.`,
+      patient ? "Próximo passo: aumentos pequenos e graduais, combinados com seu fisioterapeuta." : "Progressão sugerida: incrementos graduais de volume conforme tolerância; não há meta obrigatória de intensidade.",
+    ] : [noData],
+  };
+  if (key === "hypertensive") return {
+    title: patient ? "Treino seguro para sua pressão" : "Resposta hemodinâmica e dose terapêutica",
+    items: [
+      patient ? "A pressão medida nos testes funcionais aparece na seção de avaliação; meça antes do treino quando orientado." : "PA de repouso e pico vem dos testes funcionais (seção de avaliação): conferir repouso ≥140×90, queda da PAS no esforço e PAS de pico elevada.",
+      n ? `${p.counts.aboveCeiling ? `${p.counts.aboveCeiling} sessões acima` : "Nenhuma sessão acima"} da referência de FC do perfil (${withHr.length} com FC registrada).` : noData,
+      withRpe.length ? `PSE registrada em ${withRpe.length}/${n} sessões (${lowRpe} até 5/10). Com betabloqueador, a PSE é a principal âncora de intensidade.` : "PSE não registrada: essencial quando há medicação que reduz a FC.",
+      patient ? "Avise seu fisioterapeuta se sentir tontura, dor de cabeça forte ou mal-estar no esforço." : "Checar sintomas de alerta (tontura, cefaleia, mal-estar) a cada sessão; não são registrados automaticamente.",
+      `Volume aeróbico médio: ${p.avgEquivalent} min/semana. O exercício regular é intervenção não medicamentosa reconhecida para a pressão arterial, sem substituir o acompanhamento médico.`,
+    ],
+  };
+  if (key === "cardiac") return {
+    title: patient ? "Seu treino dentro da faixa segura" : "Janela de segurança, recuperação e controle duplo",
+    items: [
+      n ? `${p.counts.aboveCeiling ? `${p.counts.aboveCeiling} sessões ultrapassaram` : "Nenhuma sessão ultrapassou"} a referência de FC do perfil (${withHr.length}/${n} com FC). ${patient ? "" : "Confirmar o limite prescrito pela equipe médica."}`.trim() : noData,
+      `Recuperação: ${rec}. ${patient ? "Ajuda a acompanhar como seu coração se recupera." : "Marcador relevante em reabilitação cardíaca; comparar protocolos semelhantes, sem valor diagnóstico isolado."}`,
+      withRpe.length ? `Controle duplo: PSE em ${withRpe.length}/${n} sessões, ${lowRpe} em até 5/10, junto da FC monitorada.` : "PSE não registrada: o controle duplo (FC + PSE) depende dela.",
+      patient ? "Dor no peito, falta de ar desproporcional ou palpitações: interromper e avisar a equipe." : "Sintomas (dor torácica, palpitações, dispneia desproporcional) não são registrados automaticamente; checar a cada sessão.",
+      "Capacidade para atividades do dia a dia aparece nos testes funcionais; regularidade e tolerância têm prioridade sobre picos de intensidade.",
+    ],
+  };
+  if (key === "pulmonary") return {
+    title: patient ? "Sua oxigenação e falta de ar" : "Oximetria, dispneia e tolerância ventilatória",
+    items: [
+      withSpo2.length ? `SpO₂ mínima registrada em ${withSpo2.length}/${n} sessões; ${p.counts.spo2Low} abaixo de ${SPO2_ALERT}%. ${patient ? "" : "Considerar queda ≥4 pontos e a meta individual definida pela equipe médica."}`.trim() : "SpO₂ não registrada nas sessões: em pneumopatas é a métrica prioritária; registrar mínima e recuperação.",
+      patient ? "Nos testes, a falta de ar e o cansaço das pernas são avaliados separadamente." : "Borg dispneia × MMII (testes funcionais) separa limitação ventilatória de periférica e orienta a conduta.",
+      `Recuperação: ${rec}. Observar também o retorno da SpO₂ e da respiração entre séries.`,
+      patient ? "Remédios inalatórios podem acelerar os batimentos; avise seu fisioterapeuta sobre o uso." : "Broncodilatadores beta-2 podem elevar a FC; interpretar FC acima do esperado com essa ressalva.",
+      withRpe.length ? `PSE registrada em ${withRpe.length}/${n} sessões (${lowRpe} até 5/10).` : "PSE não registrada no período.",
+    ],
+  };
+  return null;
 }
