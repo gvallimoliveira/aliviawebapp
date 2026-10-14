@@ -144,6 +144,15 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
     y += 3;
   }
 
+  if (summary.performance) {
+    section("Recuperação", bulletsHeight(summary.recovery));
+    bullets(summary.recovery);
+    y += 3;
+    section("Pontos a revisar", bulletsHeight(summary.review));
+    bullets(summary.review);
+    y += 3;
+  }
+
   // ── Perfil e teto ──────────────────────────────────────────────────────
   const profileLines = tech
     ? [
@@ -288,15 +297,6 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
   if (tech && !summary.performance) {
     section("Trabalho realizado e pontos a acompanhar", bulletsHeight(o.readings));
     bullets(o.readings);
-    y += 3;
-  }
-
-  if (summary.performance) {
-    section("Recuperação", bulletsHeight(summary.recovery));
-    bullets(summary.recovery);
-    y += 3;
-    section("Pontos a revisar", bulletsHeight(summary.review));
-    bullets(summary.review);
     y += 3;
   }
 
