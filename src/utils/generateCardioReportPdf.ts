@@ -138,6 +138,12 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
   }
   y += headerH;
 
+  if (summary.focus) {
+    section(summary.focus.title, bulletsHeight(summary.focus.items));
+    bullets(summary.focus.items);
+    y += 3;
+  }
+
   if (summary.performance) {
     section("Resposta ao esforço", bulletsHeight(summary.response));
     bullets(summary.response);
