@@ -10,8 +10,8 @@ import { fetchCheckins, fetchSrpe, type PeriodizationPlan, type ReadinessCheckin
 import { acwr, localISODate, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import { DEFAULT_CARDIO_PROFILE, ageFromBirth, cardioMatrix, hrCeiling, profileRule } from "@/lib/cardioSafety";
 import {
-  CARDIO_REFERENCES, WHO_MODERATE_MIN, addIsoDays, analyzePeriod, fmtNum, patientReadings, periodReadings, profileGoal, shortDate,
-  type AnalysisContext,
+  CARDIO_REFERENCES, WHO_MODERATE_MIN, addIsoDays, analyzePeriod, fmtNum, patientReadings, periodReadings, profileGoal, profilePanelOrder, shortDate,
+  type AnalysisContext, type PanelSectionKey,
 } from "@/lib/cardioAnalysis";
 import { cardioReportFileName, generateCardioReportPdfBlob, type BrandLogo } from "@/utils/generateCardioReportPdf";
 import { TEST_INFO, analyzeFunctionalTest, type FunctionalTestData, type FunctionalTestType } from "@/lib/cardioFunctionalTests";
