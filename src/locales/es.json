@@ -1,4 +1,6 @@
 {
+  "support.pro.faq.rf24.q": "¿Cómo comparar la recuperación percibida (PSR) con la carga registrada?",
+  "support.pro.faq.rf24.a": "En Carga y preparación, las barras de carga diaria (duración × PSE sumada entre frentes) se cruzan con la línea de percepción de recuperación (PSR), primer ítem del check-in de 1 a 10. PSR no es el índice compuesto de preparación. Los siete días se contextualizan con carga aguda, los siete días anteriores y la media semanal de 28 días cuando hay historial suficiente. La lectura destaca PSR al menos 2 puntos por debajo/encima de la media de al menos 3 respuestas previas en siete días, junto a carga aguda ±10% respecto al período anterior o ACWR fuera de 0,8–1,3. Son criterios descriptivos, no umbrales diagnósticos ni correlación estadística. PSR puede preceder al entrenamiento; ausencia de registros no significa descanso. Considere sueño, síntomas y planificación, sin ajustes automáticos ni créditos de IA. Las respuestas anteriores usaban la pregunta de preparación para entrenar y no son mediciones retrospectivas de PSR.",
   "nav.home": "Inicio",
   "landing.exit_intent_title": "¡Espere! Su primera autoevaluación es gratis 🎉",
   "landing.exit_intent_desc": "Descubra qué puede estar causando su dolor en minutos, basado en evidencia científica. Sin compromiso.",

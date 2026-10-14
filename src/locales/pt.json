@@ -1,4 +1,6 @@
 {
+  "support.pro.faq.rf24.q": "Como cruzar a recuperação (PSR) com a carga realizada?",
+  "support.pro.faq.rf24.a": "Em Carga e prontidão, o gráfico reúne barras da carga diária (duração × PSE somada em todas as frentes) e linha da Percepção de recuperação (PSR), nota de 1 a 10 do primeiro item do check-in. PSR não é o índice composto de prontidão. Os 7 dias exibidos são contextualizados pela carga aguda, pelos 7 dias anteriores e pela média semanal de 28 dias, quando há histórico suficiente. A leitura destaca PSR pelo menos 2 pontos abaixo/acima da média de ao menos 3 respostas nos 7 dias anteriores, coincidindo com carga aguda ±10% da semana anterior ou ACWR fora de 0,8–1,3. São critérios descritivos, não cortes diagnósticos nem correlação estatística. A PSR pode anteceder o treino; ausência de registro não significa descanso. Considere sono, sintomas e planejamento, sem ajuste automático nem créditos de IA. Notas anteriores à mudança do rótulo foram respostas de prontidão para treinar, não medições retroativas de PSR.",
   "nav.home": "Início",
   "landing.exit_intent_title": "Espere! Sua primeira autoavaliação é grátis 🎉",
   "landing.exit_intent_desc": "Descubra o que pode estar causando sua dor em minutos, com base em evidência científica. Sem compromisso.",
