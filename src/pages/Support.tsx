@@ -56,7 +56,7 @@ const proTools = [
   { key: "video_call", icon: Video },
   { key: "clinical_impression", icon: Brain },
   { key: "differential_diagnosis", icon: Brain },
-  // Cardiovascular profiles, educational i dialog and balanced PDF guidance: localized FAQ rf22.
+  // Profile-specific PDF priorities (effort response, recovery, review; WHO context): localized FAQ rf22.
   // HEP/load guidance is localized under support.pro.tool.hep.desc.
   // Global list-coherence guidance is localized under studio_creative_network.desc.
   { key: "hep", icon: Dumbbell },
