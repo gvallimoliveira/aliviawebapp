@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { applyPdfBranding } from "@/lib/pdfBranding";
 import { registerInterFonts } from "./fonts/registerInterFonts";
 import {
   CARDIO_CAVEATS, CARDIO_REFERENCES, WHO_MODERATE_MIN, fmtNum, profileGoal, shortDate,
@@ -49,6 +50,8 @@ export interface CardioReportOptions {
   patientName?: string | null;
   professionalName?: string | null;
   logo?: BrandLogo | null;
+  clinicName?: string;
+  brandColor?: string;
   /** Testes funcionais do período (TSL, TC6M, degrau), já interpretados por regras fixas. */
   functionalTests?: { date: string; label: string; result: string; percent: number | null; patterns: string[]; alerts: string[] }[];
 }
@@ -68,6 +71,7 @@ const fmtDate = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString
 
 export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promise<Blob> {
   const doc = new jsPDF();
+  applyPdfBranding(doc, o.brandColor);
   registerInterFonts(doc);
   const tech = o.variant === "technical";
   const p = o.period;
@@ -125,7 +129,9 @@ export async function generateCardioReportPdfBlob(o: CardioReportOptions): Promi
   doc.setDrawColor(...C.border);
   doc.roundedRect(MARGIN, y - 6, CONTENT_WIDTH, headerH, 3, 3, "FD");
   font(14, "bold", C.primary);
-  doc.text("Aliv.iA", X, y + 2);
+  const headerTitle = wrap(o.clinicName || "Aliv.iA", W - (o.logo ? 34 : 0));
+  while (headerTitle.length > 1 && doc.getFontSize() > 8) { doc.setFontSize(doc.getFontSize() - 1); headerTitle.splice(0, headerTitle.length, ...wrap(o.clinicName || "Aliv.iA", W - (o.logo ? 34 : 0))); }
+  doc.text(headerTitle, X, y + 2);
   font(10, "bold");
   doc.text(tech ? "Relatório cardiovascular — versão técnica" : "Seu relatório do coração", X, y + 8);
   font(8, "normal", C.muted);

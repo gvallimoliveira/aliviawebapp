@@ -183,10 +183,12 @@ serve(async (req) => {
     // com o fisioterapeuta responsável como identificação secundária.
     let clinicName: string | null = null;
     let clinicLogo: string | null = null;
+    let clinicColor: string | null = null;
     if (patient.clinic_id) {
-      const { data: clinic } = await supabase.from("clinics").select("name, logo_url").eq("id", patient.clinic_id).maybeSingle();
+      const { data: clinic } = await supabase.from("clinics").select("name, logo_url, brand_color").eq("id", patient.clinic_id).maybeSingle();
       clinicName = clinic?.name ?? null;
       clinicLogo = clinic?.logo_url ?? null;
+      clinicColor = clinic?.brand_color ?? null;
     }
 
     let planTitle: string | null = null;
@@ -297,6 +299,7 @@ serve(async (req) => {
           professional_name: professionalName,
           clinic_name: clinicName,
           clinic_logo_url: clinicLogo,
+        clinic_brand_color: clinicColor,
           audience: link.audience,
           label: link.label,
           plan_title: planTitle,

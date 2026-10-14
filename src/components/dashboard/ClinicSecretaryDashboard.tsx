@@ -156,6 +156,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
           redFlagsDismissal: assessment.red_flags_dismissed_at ? { at: assessment.red_flags_dismissed_at, by: assessment.red_flags_dismissed_by_name, reason: assessment.red_flags_dismissed_reason } : null,
         clinicLogoUrl: logos.clinicLogoUrl || activeClinic?.logo_url || undefined,
         clinicName: logos.clinicName || activeClinic?.clinic_name || undefined,
+        brandColor: logos.brandColor,
         professionalLogoUrl: logos.professionalLogoUrl,
         responsibleProfessional,
 

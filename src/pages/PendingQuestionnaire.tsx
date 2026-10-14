@@ -13,7 +13,8 @@ import {
   scoreSpecialtyQuestionnaire,
   type SpecQuestionnaire,
 } from "@/data/specialtyQuestionnaires";
-import logoAlivia from "@/assets/logo-alivia.png";
+import ClinicBrandHeader, { type ClinicLinkBranding } from "@/components/ClinicBrandHeader";
+import { clinicAssessmentTheme } from "@/lib/clinicAssessmentTheme";
 import { useToast } from "@/hooks/use-toast";
 
 export default function PendingQuestionnaire() {
@@ -28,6 +29,7 @@ export default function PendingQuestionnaire() {
   const [done, setDone] = useState(false);
   const [pending, setPending] = useState<any>(null);
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [branding, setBranding] = useState<ClinicLinkBranding | null>(null);
 
   const q: SpecQuestionnaire | null = useMemo(
     () => (pending ? getSpecialtyQuestionnaire(pending.questionnaire_id) ?? null : null),
@@ -44,6 +46,7 @@ export default function PendingQuestionnaire() {
         if (err) throw err;
         if (data?.error) throw new Error(data.error);
         setPending(data.pending);
+        setBranding(data.branding);
         if (data.pending?.status === "completed") setDone(true);
       } catch (e: any) {
         setError(e?.message || "not_found");
@@ -93,7 +96,7 @@ export default function PendingQuestionnaire() {
 
   if (error || !pending || !q) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <div className="min-h-screen flex items-center justify-center bg-background p-6" style={clinicAssessmentTheme(branding?.clinic_brand_color)}>
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="text-base">
@@ -112,9 +115,10 @@ export default function PendingQuestionnaire() {
 
   if (done) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <div className="min-h-screen flex items-center justify-center bg-background p-6" style={clinicAssessmentTheme(branding?.clinic_brand_color)}>
         <Card className="max-w-md w-full text-center">
           <CardContent className="pt-6 pb-6 space-y-3">
+            <ClinicBrandHeader {...branding} />
             <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
             <p className="font-semibold">{isPt ? "Resposta enviada!" : "Submitted!"}</p>
             <p className="text-sm text-muted-foreground">
@@ -131,11 +135,9 @@ export default function PendingQuestionnaire() {
   const Icon = q.domain === "cardio" ? Heart : Footprints;
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
+    <div className="min-h-screen bg-background py-8 px-4" style={clinicAssessmentTheme(branding?.clinic_brand_color)}>
       <div className="max-w-xl mx-auto space-y-4">
-        <div className="flex items-center justify-center">
-          <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
-        </div>
+        <ClinicBrandHeader {...branding} />
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2 flex-wrap">

@@ -1,3 +1,4 @@
+import ClinicBrandHeader from "@/components/ClinicBrandHeader";
 import { useState, useEffect, useMemo, useRef } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
@@ -763,25 +764,10 @@ const ClinicAssessment = () => {
     >
       <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-background/80 backdrop-blur-md">
         <div className="container flex min-h-16 items-center justify-between gap-2 py-2">
-          <div className="flex items-center gap-2">
-            <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
-            <span className="text-xl font-bold text-foreground">Aliv.iA</span>
+          <div className="min-w-0 flex-1">
+            <ClinicBrandHeader clinic_name={clinic?.name} clinic_logo_url={clinic?.logo_url} compact />
           </div>
-          <div className="flex min-w-0 items-center justify-end gap-2">
-            {/* Clinic branding */}
-            {clinic?.logo_url && (
-              <img
-                src={clinic.logo_url}
-                alt={clinic.name}
-                className="hidden sm:block h-9 w-9 object-contain"
-              />
-            )}
-            <span
-              className="text-xs font-medium px-3 py-1 rounded-full bg-primary/10 text-[hsl(var(--clinic-ink))] min-w-0 break-words"
-            >
-              <Building2 className="h-3 w-3 inline mr-1" />
-              {clinic?.name || "Clínica"}
-            </span>
+          <div className="flex shrink-0 items-center gap-2">
             <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5">
               <Globe className="h-4 w-4" />
               {t("nav.language")}

@@ -46,7 +46,14 @@ serve(async (req) => {
     }
 
     if (action === "load") {
-      return new Response(JSON.stringify({ pending }), {
+      let clinicId = pending.clinic_id;
+      if (!clinicId && pending.assessment_id) {
+        const { data: assessment } = await supabase.from("assessments").select("clinic_id").eq("id", pending.assessment_id).maybeSingle();
+        clinicId = assessment?.clinic_id;
+      }
+      const { data: clinic } = clinicId ? await supabase.from("clinics").select("name,logo_url,brand_color").eq("id", clinicId).maybeSingle() : { data: null };
+      const branding = clinic ? { clinic_name: clinic.name, clinic_logo_url: clinic.logo_url, clinic_brand_color: clinic.brand_color } : null;
+      return new Response(JSON.stringify({ pending, branding }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

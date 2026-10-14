@@ -95,6 +95,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         professionalLogoUrl: branding.professionalLogoUrl,
         clinicLogoUrl: branding.clinicLogoUrl,
         clinicName: branding.clinicName,
+        brandColor: branding.brandColor,
         responsibleProfessional: branding.responsibleProfessional,
       };
     } catch {

@@ -257,7 +257,7 @@ const Support = () => {
                     <Building2 className="h-8 w-8 text-primary" />
                   </div>
                   <h2 className="text-xl font-semibold text-foreground">Aliv.iA Clinic</h2>
-                  <p className="text-sm text-muted-foreground">Suporte para clínicas: agenda IA, equipe, NPS, white-label e mais.</p>
+                  <p className="text-sm text-muted-foreground">Suporte para clínicas: equipe, agenda, NPS e identidade institucional nos relatórios e links do paciente.</p>
                 </CardContent>
               </Card>
             </motion.div>

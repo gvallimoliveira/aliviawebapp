@@ -11,7 +11,8 @@ import {
   getSpecialtyQuestionnaire,
   scoreSpecialtyQuestionnaire,
 } from "@/data/specialtyQuestionnaires";
-import logoAlivia from "@/assets/logo-alivia.png";
+import ClinicBrandHeader, { type ClinicLinkBranding } from "@/components/ClinicBrandHeader";
+import { clinicAssessmentTheme } from "@/lib/clinicAssessmentTheme";
 import { useToast } from "@/hooks/use-toast";
 import type { QuestionnaireResult } from "@/data/questionnaireData";
 
@@ -25,6 +26,7 @@ type PendingRow = {
 };
 
 type Loaded = {
+  branding?: ClinicLinkBranding;
   assessment: { id: string; pain_regions: string[]; patient_name: string };
   pending: PendingRow[];
 };
@@ -133,11 +135,9 @@ export default function AssessmentPendingQuestionnaires() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
+    <div className="min-h-screen bg-background py-8 px-4" style={clinicAssessmentTheme(data.branding?.clinic_brand_color)}>
       <div className="max-w-2xl mx-auto space-y-4">
-        <div className="flex items-center justify-center">
-          <img src={logoAlivia} alt="Aliv.iA" className="h-8" />
-        </div>
+        <ClinicBrandHeader {...data.branding} />
 
         <Card>
           <CardHeader className="pb-3">

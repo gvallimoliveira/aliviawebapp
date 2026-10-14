@@ -1454,6 +1454,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         professionalLogoUrl: proLogoUrl,
         clinicLogoUrl,
         clinicName,
+        brandColor: branding.brandColor,
         responsibleProfessional,
       } as any);
       const url = URL.createObjectURL(blob);

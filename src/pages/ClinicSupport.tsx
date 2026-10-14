@@ -325,7 +325,7 @@ const categories: ToolCategory[] = [
         key: "white_label_brand",
         icon: Palette,
         title: "White-label completo",
-        desc: "Logo e cor da clínica no painel da equipe, nos PDFs, no link de avaliação e na pesquisa de satisfação. O paciente vê a sua marca em todos os pontos de contato.",
+        desc: "Nome, logo e cor da clínica no painel, nos relatórios de avaliação/evolução, cardiovascular e microciclo, e nos links de pré-avaliação, reavaliação, check-in, questionários e HEP. A identidade institucional tem prioridade sobre a marca pessoal; o profissional responsável permanece identificado. O paciente vê a sua marca em todos os pontos de contato.",
       },
       {
         key: "data_export",
