@@ -701,7 +701,7 @@ async function loadLogoBase64(): Promise<BrandImage | null> {
   }
 }
 
-async function loadExternalImageAsBase64(url: string): Promise<BrandImage | null> {
+export async function loadExternalImageAsBase64(url: string): Promise<BrandImage | null> {
   try {
     const response = await fetch(url);
     const blob = await response.blob();
@@ -723,7 +723,7 @@ function fitContain(natW: number, natH: number, maxW: number, maxH: number) {
 
 /** Draws a brand logo inside the given bounding box without distorting it.
  *  Returns the actual rendered width (so callers can offset text). */
-function drawBrandLogo(
+export function drawBrandLogo(
   doc: jsPDF,
   img: BrandImage,
   x: number,
