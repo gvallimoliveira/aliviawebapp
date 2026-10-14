@@ -166,6 +166,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
   const [info, setInfo] = useState<Info | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [values, setValues] = useState<Record<string, number>>({});
+  const [scalesTouched, setScalesTouched] = useState(false);
   const [note, setNote] = useState("");
   const [restingHr, setRestingHr] = useState("");
   const [peakHr, setPeakHr] = useState("");
@@ -237,13 +238,14 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
       setSessionDate(loaded.today);
       if (loaded.audience === "coach") setTrack("gym");
       applyAutoSelection(loaded);
+      // Escala parada no meio vale como resposta 5 (o paciente concorda com ela).
+      const preset: Record<string, number> = {};
+      CHECKIN_ITEMS.forEach((item) => {
+        const v = loaded.today_checkin?.[item.key];
+        preset[item.key] = typeof v === "number" ? v : 5;
+      });
+      setValues(preset);
       if (loaded.today_checkin) {
-        const preset: Record<string, number> = {};
-        CHECKIN_ITEMS.forEach((item) => {
-          const v = loaded.today_checkin?.[item.key];
-          if (typeof v === "number") preset[item.key] = v;
-        });
-        setValues(preset);
         const hr = loaded.today_checkin?.resting_hr;
         if (typeof hr === "number") setRestingHr(String(hr));
         const tc = loaded.today_checkin as any;
@@ -258,7 +260,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
 
   // Há notas de prontidão preenchidas que ainda não foram enviadas?
   const checkinPending = () =>
-    !checkinDone && (Object.keys(values).length > 0 || !!restingHr || !!peakHr || !!spo2 || !!note?.trim());
+    !checkinDone && (scalesTouched || !!restingHr || !!peakHr || !!spo2 || !!note?.trim());
   // Há uma sessão (carga) preenchida que ainda não foi enviada?
   const srpePending = () => !srpeDone && Number(duration) > 0;
 
@@ -464,14 +466,14 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                   ) : (
                     <>
                       <p className="text-xs text-muted-foreground">
-                        Escala de 1 a 10. Responda o que fizer sentido — nada é obrigatório.
+                        Escala de 1 a 10. Cada escala começa em 5 — se 5 representa como você está, pode deixar; ela será enviada como resposta.
                       </p>
                       {CHECKIN_ITEMS.map((item) => (
                         <div key={item.key} className="space-y-1.5">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-foreground">{item.label}</span>
                             <Badge variant="outline" className="text-xs">
-                              {values[item.key] ?? "—"}
+                              {values[item.key] ?? 5}
                             </Badge>
                           </div>
                           <Slider
@@ -479,11 +481,11 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                             max={10}
                             step={1}
                             value={[values[item.key] ?? 5]}
-                            onValueChange={([v]) => setValues((prev) => ({ ...prev, [item.key]: v }))}
+                            onValueChange={([v]) => { setScalesTouched(true); setValues((prev) => ({ ...prev, [item.key]: v })); }}
                           />
                           <div className="flex justify-between text-[10px] text-muted-foreground">
-                            <span>{item.low}</span>
-                            <span>{item.high}</span>
+                            <span><strong className="text-foreground">1</strong> · {item.low}</span>
+                            <span>{item.high} · <strong className="text-foreground">10</strong></span>
                           </div>
                         </div>
                       ))}
