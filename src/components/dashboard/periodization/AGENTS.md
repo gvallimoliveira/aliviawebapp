@@ -1,4 +1,5 @@
 # Periodization UI rules
+- Daily sRPE × PSR chart and descriptive comparisons use `loadRecovery.ts`; raw PSR stays separate from composite readiness, missing data stay null, and risk math is unchanged.
 - Periodization buttons use type="button"; they sit inside patient-record forms.
 - Microcycle planned sessions from today or the previous 7 days open a pre-filled monitored-session dialog on click (MicroWeekGrid → saveProfessionalSession); future sessions stay read-only and the trash action must stopPropagation.
 - Cardio analysis mounts only inside `CardioAnalysisDialog`; keeps the record light.

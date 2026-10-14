@@ -7,7 +7,7 @@ export const CHECKIN_ITEMS: Array<{
   /** true quando nota alta é ruim (dor, fadiga, estresse). */
   inverse: boolean;
 }> = [
-  { key: "readiness", label: "Prontidão para treinar", low: "Nada pronto", high: "Totalmente pronto", inverse: false },
+  { key: "readiness", label: "Percepção de recuperação (PSR)", low: "Nada recuperado", high: "Totalmente recuperado", inverse: false },
   { key: "sleep", label: "Qualidade do sono", low: "Muito ruim", high: "Excelente", inverse: false },
   { key: "soreness", label: "Dor muscular tardia", low: "Nenhuma", high: "Muita", inverse: true },
   { key: "fatigue", label: "Fadiga geral", low: "Descansado", high: "Exausto", inverse: true },
