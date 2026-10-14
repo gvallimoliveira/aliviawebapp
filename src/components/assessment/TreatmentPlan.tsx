@@ -143,6 +143,7 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
         professionalLogoUrl: branding.professionalLogoUrl ?? professionalLogoUrl,
         clinicLogoUrl: branding.clinicLogoUrl,
         clinicName: branding.clinicName,
+        brandColor: branding.brandColor,
         responsibleProfessional: branding.responsibleProfessional,
       };
     } catch {

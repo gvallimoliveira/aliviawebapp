@@ -27,3 +27,6 @@
 - Cardiorespiratory functional tests (TSL 1-min, TC6M, TD6M) are interpreted only by the pure `cardioFunctionalTests.ts`; deterministic rules keep the record, sheet and future reports consistent without AI credits.
 - Subdirectories may have their own AGENTS.md; read it before changing files there.
 - ClinicAssessment scopes color tokens via clinicAssessmentTheme and passes branding to WelcomeStep to avoid global theme leakage.
+
+- Institutional patient links use ClinicBrandHeader and scoped clinicAssessmentTheme; PDFs resolve branding via resolveAssessmentBranding and applyPdfBranding per document, preventing cross-clinic theme leakage and preserving warning colors.
+- HEP programs persist clinic_id at creation; public branding resolves only through the valid program token, never by guessing a clinic from the professional.

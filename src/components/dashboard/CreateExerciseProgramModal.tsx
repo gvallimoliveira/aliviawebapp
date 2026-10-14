@@ -747,7 +747,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
       if (isEditing && editProgramId) {
         // Update existing program
         programId = editProgramId;
-        await (supabase as any).from("exercise_programs").update({ notes: notes || null, domain }).eq("id", editProgramId);
+        await (supabase as any).from("exercise_programs").update({ notes: notes || null, domain, ...(clinicId ? { clinic_id: clinicId } : {}) }).eq("id", editProgramId);
         // Delete old items and re-insert
         await (supabase as any).from("exercise_program_items").delete().eq("program_id", editProgramId);
         // Get token
@@ -759,6 +759,7 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
           .from("exercise_programs")
           .insert({
             professional_id: professionalId,
+            clinic_id: clinicId || null,
             assessment_id: assessmentId || null,
             patient_name: patientName,
             notes: notes || null,

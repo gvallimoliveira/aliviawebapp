@@ -1,4 +1,6 @@
 import jsPDF from "jspdf";
+import { applyPdfBranding } from "@/lib/pdfBranding";
+import { drawBrandLogo, loadExternalImageAsBase64 } from "./generatePdf";
 import { registerInterFonts } from "./fonts/registerInterFonts";
 import { plannedLoad } from "@/lib/periodization";
 import type { PeriodizationSession } from "@/lib/periodizationData";
@@ -46,10 +48,15 @@ export interface MicrocyclePdfOptions {
   /** Fase atual do macrociclo marcada pelo profissional. */
   currentPhase?: string | null;
   notes?: string | null;
+  clinicName?: string;
+  clinicLogoUrl?: string;
+  professionalLogoUrl?: string;
+  brandColor?: string;
 }
 
 export async function generateMicrocyclePdfBlob(options: MicrocyclePdfOptions): Promise<Blob> {
   const doc = new jsPDF();
+  applyPdfBranding(doc, options.brandColor);
   registerInterFonts(doc);
   doc.setFont("Inter", "normal");
 
@@ -67,8 +74,11 @@ export async function generateMicrocyclePdfBlob(options: MicrocyclePdfOptions): 
   if (options.sport) metaBits.push(`Atividade: ${options.sport}`);
   metaBits.push(`Emitido em ${new Date().toLocaleDateString("pt-BR")}`);
 
+  const logoUrl = options.clinicLogoUrl || options.professionalLogoUrl;
+  const logo = logoUrl ? await loadExternalImageAsBase64(logoUrl) : null;
+  const headerTextW = TEXT_W - (logo ? 34 : 0);
   doc.setFontSize(8);
-  const metaLines = (doc.splitTextToSize(metaBits.join(" · "), TEXT_W) as string[]).slice(0, 2);
+  const metaLines = (doc.splitTextToSize(metaBits.join(" · "), headerTextW) as string[]).slice(0, 2);
   const headerH = 24 + metaLines.length * 4;
 
   doc.setFillColor(...COLORS.primaryLight);
@@ -79,7 +89,10 @@ export async function generateMicrocyclePdfBlob(options: MicrocyclePdfOptions): 
   doc.setFont("Inter", "bold");
   doc.setFontSize(14);
   doc.setTextColor(...COLORS.primary);
-  doc.text("Aliv.iA", SECTION_X, MARGIN + 2);
+  const title = options.clinicName || "Aliv.iA";
+  while (doc.getTextWidth(title) > headerTextW && doc.getFontSize() > 8) doc.setFontSize(doc.getFontSize() - 1);
+  doc.text(doc.splitTextToSize(title, headerTextW), SECTION_X, MARGIN + 2);
+  if (logo) drawBrandLogo(doc, logo, SECTION_X + TEXT_W - 28, MARGIN - 2, 28, 14, "right");
 
   doc.setFontSize(9.5);
   doc.setTextColor(...COLORS.foreground);

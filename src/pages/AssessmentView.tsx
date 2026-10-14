@@ -212,6 +212,7 @@ const AssessmentView = () => {
           redFlagsAnsweredAt: (assessment.red_flags as any)?.answered_at,
           clinicLogoUrl: branding.clinicLogoUrl,
           clinicName: branding.clinicName,
+        brandColor: branding.brandColor,
           professionalLogoUrl: branding.professionalLogoUrl,
         });
         const url = URL.createObjectURL(pdfBlob);
@@ -282,6 +283,7 @@ const AssessmentView = () => {
           redFlagsAnsweredAt: (assessment.red_flags as any)?.answered_at,
           clinicLogoUrl: branding.clinicLogoUrl,
           clinicName: branding.clinicName,
+        brandColor: branding.brandColor,
           professionalLogoUrl: branding.professionalLogoUrl,
         });
       } else {

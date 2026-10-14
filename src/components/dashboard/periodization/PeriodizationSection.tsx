@@ -475,6 +475,7 @@ const PeriodizationSection = ({
       {(
         <PeriodizationCollapsible title="Microciclo da semana" icon={<Plus className="h-4 w-4 text-primary" />}>
           <MicroWeekGrid
+            clinicId={clinicId}
             planId={plan?.id ?? null}
             patientId={patientId}
             sessions={sessions}

@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+import { resolveAssessmentBranding } from "@/lib/resolveAssessmentBranding";
 import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,7 @@ import { Slider } from "@/components/ui/slider";
 interface Props {
   planId?: string | null;
   patientId: string;
+  clinicId?: string | null;
   sessions: PeriodizationSession[];
   /** sRPE relatado pelo paciente, para o selo de aderência de dose. */
   entries?: SrpeEntry[];
@@ -45,6 +48,7 @@ const DOW = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const MicroWeekGrid = ({
   planId,
   patientId,
+  clinicId,
   sessions,
   entries = [],
   onChanged,
@@ -214,7 +218,10 @@ const MicroWeekGrid = ({
         })
         .sort((a, b) => a.session_date.localeCompare(b.session_date));
       const { downloadMicrocyclePdf } = await import("@/utils/generateMicrocyclePdf");
+      const { data: auth } = await supabase.auth.getUser();
+      const branding = await resolveAssessmentBranding({ clinicId, userId: auth.user?.id });
       await downloadMicrocyclePdf({
+        ...branding,
         weekStart,
         sessions: weekSessions,
         patientName,

@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { applyPdfBranding, pdfBrandPalette } from "@/lib/pdfBranding";
 import { regionsByView, type View, type ClickableRegion } from "@/components/assessment/painMapData";
 import { questionnaires, getApplicableQuestionnaires } from "@/data/questionnaireData";
 import { functionalTests } from "@/data/functionalTestsData";
@@ -181,6 +182,7 @@ interface PdfOptions {
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
   clinicName?: string;
+  brandColor?: string;
   /** Technical responsible (name + CREFITO) printed above the footer. */
   responsibleProfessional?: ResponsibleProfessional;
 }
@@ -2185,18 +2187,20 @@ interface BasicReportOptions {
   clinicLogoUrl?: string;
   /** Clinic name, shown as the report header title when clinic-branded. */
   clinicName?: string;
+  brandColor?: string;
 }
 
 export async function generateBasicReportPdfBlob(options: BasicReportOptions): Promise<Blob> {
   const doc = createPdfDoc();
+  applyPdfBranding(doc, options.brandColor);
   const isPt = options.language === "pt";
   let y = MARGIN;
 
   // Branding: clinic logo wins; otherwise the solo professional logo shows on
   // the right of the Aliv.iA lockup, exactly like the premium report.
-  const isClinicBranded = !!options.clinicLogoUrl;
-  const logoBase64 = isClinicBranded
-    ? await loadExternalImageAsBase64(options.clinicLogoUrl!)
+  const isClinicBranded = !!(options.clinicName || options.clinicLogoUrl);
+  const logoBase64 = options.clinicLogoUrl
+    ? (await loadExternalImageAsBase64(options.clinicLogoUrl) || await loadLogoBase64())
     : await loadLogoBase64();
   const proLogoBase64 = !isClinicBranded && options.professionalLogoUrl
     ? await loadExternalImageAsBase64(options.professionalLogoUrl)
@@ -2221,7 +2225,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   }
   doc.setFont("Inter", "bold");
   doc.setFontSize(22);
-  doc.setTextColor(...COLORS.white);
+  doc.setTextColor(...pdfBrandPalette(options.brandColor).foreground);
   const titleY = logoY + logoH / 2 + 2;
   const headerTitle = isClinicBranded && options.clinicName ? options.clinicName : "Aliv.iA";
   doc.text(truncateToWidth(doc, headerTitle, Math.max(titleMaxW, 20)), textStartX, titleY);
@@ -2445,14 +2449,15 @@ export async function generateAssessmentPdf(options: PdfOptions) {
   doc.save(`AliviA_${isPt ? "Relatorio" : "Report"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 }
 
-async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, redFlags, redFlagsDismissal, redFlagAnswers, redFlagsAnsweredAt, professionalNotes, addenda, professionalLogoUrl, clinicLogoUrl, clinicName, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
+async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothesis, treatmentPlan, language, userName, anamnesisData, painRegions, testResults, redFlags, redFlagsDismissal, redFlagAnswers, redFlagsAnsweredAt, professionalNotes, addenda, professionalLogoUrl, clinicLogoUrl, clinicName, brandColor, responsibleProfessional }: PdfOptions): Promise<jsPDF> {
   const doc = createPdfDoc();
+  applyPdfBranding(doc, brandColor);
   const isPt = language === "pt";
   let y = MARGIN;
 
   // Load logos — clinic logo replaces Aliv.iA logo when present
-  const isClinicBranded = !!clinicLogoUrl;
-  const logoBase64 = isClinicBranded ? await loadExternalImageAsBase64(clinicLogoUrl) : await loadLogoBase64();
+  const isClinicBranded = !!(clinicName || clinicLogoUrl);
+  const logoBase64 = clinicLogoUrl ? (await loadExternalImageAsBase64(clinicLogoUrl) || await loadLogoBase64()) : await loadLogoBase64();
   const proLogoBase64 = (!isClinicBranded && professionalLogoUrl) ? await loadExternalImageAsBase64(professionalLogoUrl) : null;
 
   // ── Header Band ──
@@ -2478,7 +2483,7 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
 
   doc.setFont("Inter", "bold");
   doc.setFontSize(22);
-  doc.setTextColor(...COLORS.white);
+  doc.setTextColor(...pdfBrandPalette(brandColor).foreground);
   const titleY = logoY + logoH / 2 + 2;
   const titleMaxW = PAGE_WIDTH - MARGIN - textStartX - Math.max(rightReservedW, 30);
   const headerTitle = isClinicBranded && clinicName ? clinicName : "Aliv.iA";
@@ -3272,18 +3277,20 @@ export interface EvolutionPdfOptions {
   professionalLogoUrl?: string;
   clinicLogoUrl?: string;
   clinicName?: string;
+  brandColor?: string;
   responsibleProfessional?: ResponsibleProfessional;
 }
 
 export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Promise<Blob> {
   const doc = createPdfDoc();
+  applyPdfBranding(doc, options.brandColor);
   const isPt = options.language === "pt";
   const isEs = options.language === "es";
   let y = MARGIN;
 
   // Load logos — clinic logo replaces Aliv.iA logo when present
-  const isClinicBranded = !!options.clinicLogoUrl;
-  const logoBase64 = isClinicBranded ? await loadExternalImageAsBase64(options.clinicLogoUrl!) : await loadLogoBase64();
+  const isClinicBranded = !!(options.clinicName || options.clinicLogoUrl);
+  const logoBase64 = options.clinicLogoUrl ? (await loadExternalImageAsBase64(options.clinicLogoUrl) || await loadLogoBase64()) : await loadLogoBase64();
   const proLogoBase64 = (!isClinicBranded && options.professionalLogoUrl) ? await loadExternalImageAsBase64(options.professionalLogoUrl) : null;
 
   // ── Header Band ──
@@ -3304,7 +3311,7 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
   }
   doc.setFont("Inter", "bold");
   doc.setFontSize(22);
-  doc.setTextColor(...COLORS.white);
+  doc.setTextColor(...pdfBrandPalette(options.brandColor).foreground);
   const titleY = logoY + logoH / 2 + 2;
   const titleMaxW = PAGE_WIDTH - MARGIN - textStartX - Math.max(rightReservedW, 30);
   const headerTitle = isClinicBranded && options.clinicName ? options.clinicName : "Aliv.iA";

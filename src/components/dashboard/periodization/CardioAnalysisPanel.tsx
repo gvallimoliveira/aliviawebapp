@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveAssessmentBranding } from "@/lib/resolveAssessmentBranding";
 import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
 import { fetchCheckins, fetchSrpe, type PeriodizationPlan, type ReadinessCheckin, type SrpeEntry } from "@/lib/periodizationData";
 import { acwr, localISODate, recoverySignal, restingHrStatus } from "@/lib/periodization";
@@ -201,18 +202,9 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
     if (!analysis) return;
     setBusy(variant);
     try {
-      let logoUrl: string | null = null;
-      if (clinicId) {
-        const { data: c } = await supabase.from("clinics").select("logo_url").eq("id", clinicId).maybeSingle();
-        logoUrl = c?.logo_url ?? null;
-      }
-      if (!logoUrl) {
-        const { data: auth } = await supabase.auth.getUser();
-        if (auth?.user?.id) {
-          const { data: pro } = await supabase.from("professionals").select("logo_url").eq("user_id", auth.user.id).maybeSingle();
-          logoUrl = (pro as { logo_url?: string | null } | null)?.logo_url ?? null;
-        }
-      }
+      const { data: auth } = await supabase.auth.getUser();
+      const branding = await resolveAssessmentBranding({ clinicId, userId: auth.user?.id });
+      const logoUrl = branding.clinicLogoUrl || branding.professionalLogoUrl || null;
       const { data: ft } = await supabase.from("cardio_functional_tests").select("test_date,test_type,data")
         .eq("patient_id", patientId).gte("test_date", analysis.from).lte("test_date", analysis.to).order("test_date");
       const functionalTests = ((ft ?? []) as unknown as { test_date: string; test_type: FunctionalTestType; data: FunctionalTestData }[]).map((r) => {
@@ -223,7 +215,7 @@ const CardioAnalysisPanel = ({ patientId, plan, entries, patientName, profession
       const opts = {
         variant, functionalTests, period: analysis, ceiling: ctx.ceiling, profile, betaBlocker: ctx.betaBlocker, age,
         readings: variant === "technical" ? readings : patientReadings(analysis, ctx),
-        patientName, professionalName, logo: await loadLogo(logoUrl),
+        patientName, professionalName, clinicName: branding.clinicName, brandColor: branding.brandColor, logo: await loadLogo(logoUrl),
       };
       const blob = await generateCardioReportPdfBlob(opts);
       const name = cardioReportFileName(opts);

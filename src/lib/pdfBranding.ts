@@ -32,7 +32,7 @@ export function applyPdfBranding(doc: jsPDF, color?: string | null) {
       if (matches(SOFT)) return original(...palette.soft);
       return original(...args);
     };
-    doc[method] = rebound as typeof doc[typeof method];
+    Object.defineProperty(doc, method, { value: rebound, writable: true, configurable: true });
   }
   return palette;
 }
