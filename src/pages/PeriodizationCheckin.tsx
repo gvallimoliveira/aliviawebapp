@@ -465,9 +465,6 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                     </div>
                   ) : (
                     <>
-                      <p className="text-xs text-muted-foreground">
-                        Escala de 1 a 10. Cada escala começa em 5 — se 5 representa como você está, pode deixar; ela será enviada como resposta.
-                      </p>
                       {CHECKIN_ITEMS.map((item) => (
                         <div key={item.key} className="space-y-1.5">
                           <div className="flex items-center justify-between">
@@ -480,6 +477,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                             min={1}
                             max={10}
                             step={1}
+                            dragOnly
                             value={[values[item.key] ?? 5]}
                             onValueChange={([v]) => { setScalesTouched(true); setValues((prev) => ({ ...prev, [item.key]: v })); }}
                           />
@@ -631,7 +629,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                             <span className="text-sm font-medium text-foreground">Esforço alvo (0-10)</span>
                             <Badge variant="outline" className="text-xs">{planRpe}</Badge>
                           </div>
-                          <Slider min={0} max={10} step={1} value={[planRpe]} onValueChange={([v]) => setPlanRpe(v)} />
+                          <Slider dragOnly min={0} max={10} step={1} value={[planRpe]} onValueChange={([v]) => setPlanRpe(v)} />
                           <div className="flex justify-between text-[10px] text-muted-foreground">
                             <span>Muito leve</span><span>Máximo</span>
                           </div>
@@ -827,7 +825,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           <span className="text-sm font-medium text-foreground">Esforço percebido (0-10)</span>
                           <Badge variant="outline" className="text-xs">{rpe}</Badge>
                         </div>
-                        <Slider min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => setRpe(v)} />
+                        <Slider dragOnly min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => setRpe(v)} />
                         <div className="flex justify-between text-[10px] text-muted-foreground">
                           <span>Muito leve</span><span>Máximo</span>
                         </div>

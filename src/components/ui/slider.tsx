@@ -3,14 +3,27 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 
 import { cn } from "@/lib/utils";
 
+type SliderProps = React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> & {
+  /** true = o valor só muda arrastando a bolinha; toque na trilha não pula para aquele ponto. */
+  dragOnly?: boolean;
+};
+
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(({ className, ...props }, ref) => (
+  SliderProps
+>(({ className, dragOnly, onPointerDown, ...props }, ref) => (
   <SliderPrimitive.Root
     ref={ref}
     style={{ touchAction: "none" }}
     className={cn("relative flex w-full touch-none select-none items-center py-2", className)}
+    onPointerDown={(event) => {
+      onPointerDown?.(event);
+      // Bloqueia o salto para o ponto tocado na régua: só o arraste da bolinha altera o valor.
+      if (dragOnly && !event.defaultPrevented) {
+        const target = event.target as HTMLElement | null;
+        if (!target?.closest('[role="slider"]')) event.preventDefault();
+      }
+    }}
     {...props}
   >
     <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
