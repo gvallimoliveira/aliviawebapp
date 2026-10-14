@@ -1,4 +1,6 @@
 # Tasks
+- [ ] Reorder athlete/active cardiovascular PDFs around effort response, recovery and review points; retain WHO context.
+- [ ] Update report help and regression tests; verify both generated PDF variants.
 - [x] Add daily sRPE × PSR chart and cautious deterministic interpretation.
 - [x] Rename first check-in item globally, preserving historical data and composite readiness.
 - [x] Update support, tests and architecture rules; verify rendering in an authenticated clinic patient record (35 calculation tests pass).
