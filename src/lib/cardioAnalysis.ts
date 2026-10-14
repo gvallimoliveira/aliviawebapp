@@ -636,6 +636,22 @@ export function cardioReportSections(p: PeriodAnalysis, profile: string, patient
   return { performance, response, recovery, review, who, focus };
 }
 
+export type PanelSectionKey = "who" | "distribution" | "prescribed" | "trimp" | "recovery" | "efficiency";
+
+/**
+ * Ordem das seções do painel de análise cardiovascular por perfil — a mesma
+ * lógica de prioridade dos relatórios: o que mais importa para a decisão
+ * clínica daquele perfil vem primeiro. Só reordena a apresentação; nunca
+ * altera cálculos. Seções sem dados continuam ocultas.
+ */
+export function profilePanelOrder(profile?: string | null): PanelSectionKey[] {
+  const key = profileRule(profile).key;
+  if (key === "athletic" || key === "healthy") return ["trimp", "distribution", "efficiency", "recovery", "who", "prescribed"];
+  if (key === "sedentary") return ["who", "distribution", "prescribed", "recovery", "trimp", "efficiency"];
+  // hipertenso, cardiopata e pneumopata: adesão à zona prescrita e recuperação primeiro
+  return ["prescribed", "recovery", "trimp", "who", "distribution", "efficiency"];
+}
+
 /** Prioridades clínicas por perfil (não atlético). Só descreve dados registrados; nunca inventa métricas. */
 export function profileFocus(p: PeriodAnalysis, key: string, patient: boolean): { title: string; items: string[] } | null {
   const n = p.sessions.length;
