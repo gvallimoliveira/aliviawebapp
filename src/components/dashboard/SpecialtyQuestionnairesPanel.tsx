@@ -27,7 +27,7 @@ export const specialtyDomainIcon = (domain: SpecialtyDomain) =>
   domain === "cardio" ? Heart : domain === "psychosocial" ? Brain : Footprints;
 
 export const specialtyDomainColor = (domain: SpecialtyDomain) =>
-  domain === "cardio" ? "text-rose-500" : domain === "psychosocial" ? "text-violet-500" : "text-amber-600";
+  domain === "cardio" ? "text-rose-500" : domain === "psychosocial" ? "text-violet-500" : domain === "spine" ? "text-primary" : "text-amber-600";
 
 
 export interface SpecialtyAppliedResult {
