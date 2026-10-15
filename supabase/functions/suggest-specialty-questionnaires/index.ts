@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 // Mirror of catalog (kept in sync manually with src/data/specialtyQuestionnaires.ts).
-type Domain = "cardio" | "geri" | "psychosocial";
+type Domain = "cardio" | "geri" | "psychosocial" | "spine";
 interface Item { id: string; domain: Domain; name: string; triggers: string[]; ageGate?: boolean; basePriority: number; avgMinutes: number; }
 
 const FABQ_TRIGGERS = [
@@ -34,6 +34,7 @@ const CATALOG: Item[] = [
   { id: "berg", domain: "geri", name: "Berg", triggers: ["equilíbrio", "equilibrio", "balance", "instabilidade", "instability", "parkinson"], ageGate: true, basePriority: 70, avgMinutes: 15 },
   { id: "sppb", domain: "geri", name: "SPPB", triggers: ["fragilidade", "frailty", "sarcopenia", "marcha", "gait", "fraqueza", "weakness"], ageGate: true, basePriority: 65, avgMinutes: 10 },
   { id: "fabq_brasil", domain: "psychosocial", name: "FABQ-Brasil", triggers: FABQ_TRIGGERS, basePriority: 80, avgMinutes: 4 },
+  { id: "srs22r", domain: "spine", name: "SRS-22r (Escoliose/coluna)", triggers: ["escoliose", "escoliotica", "escoliótica", "scoliosis", "cobb", "gibosidade", "colete", "hipercifose", "cifose", "kyphosis", "coluna torácica", "coluna toracica", "dorsalgia", "thoracic spine", "deformidade da coluna", "artrodese"], basePriority: 85, avgMinutes: 6 },
   { id: "fabq_pa", domain: "psychosocial", name: "FABQ-PA (curto)", triggers: FABQ_TRIGGERS, basePriority: 70, avgMinutes: 1 },
 ];
 

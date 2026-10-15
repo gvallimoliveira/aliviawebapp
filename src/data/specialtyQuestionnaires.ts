@@ -4,7 +4,7 @@
 // QuestionnaireDefinition shape used for the mandatory musculoskeletal
 // questionnaires.
 
-export type SpecialtyDomain = "cardio" | "geri" | "psychosocial";
+export type SpecialtyDomain = "cardio" | "geri" | "psychosocial" | "spine";
 
 export interface SpecQItemOption {
   value: number;
@@ -555,10 +555,106 @@ const FABQ_PA: SpecQuestionnaire = {
 };
 
 // ---------------------------------------------------------------------------
+// Spine — SRS-22r (scoliosis / thoracic spine, impact on daily life)
+// Each item scored 1 (worst) → 5 (best). Domain score = mean of answered items.
+// ---------------------------------------------------------------------------
+type Opt5 = [string, string][]; // [pt, en] ordered from value 5 (best) to 1 (worst)
+const o5 = (labels: Opt5): SpecQItemOption[] =>
+  labels.map(([pt, en], i) => ({ value: 5 - i, label_pt: pt, label_en: en }));
+
+const PAIN_LEVEL: Opt5 = [["Nenhuma", "None"], ["Leve", "Mild"], ["Moderada", "Moderate"], ["Moderada a intensa", "Moderate to severe"], ["Intensa", "Severe"]];
+const NEVER_TO_ALWAYS: Opt5 = [["Nunca", "Never"], ["Raramente", "Rarely"], ["Às vezes", "Sometimes"], ["Frequentemente", "Often"], ["Muito frequentemente", "Very often"]];
+const ALWAYS_TO_NEVER: Opt5 = [["Sempre", "All of the time"], ["Frequentemente", "Most of the time"], ["Às vezes", "Some of the time"], ["Raramente", "A little of the time"], ["Nunca", "None of the time"]];
+const HAPPY: Opt5 = [["Muito feliz", "Very happy"], ["Um pouco feliz", "Somewhat happy"], ["Nem feliz nem infeliz", "Neither"], ["Um pouco infeliz", "Somewhat unhappy"], ["Muito infeliz", "Very unhappy"]];
+const AMOUNT: Opt5 = [["Nada", "Not at all"], ["Pouco", "Slightly"], ["Moderadamente", "Moderately"], ["Muito", "Very much"], ["Extremamente", "Extremely"]];
+
+const SRS_ITEMS: { id: string; pt: string; en: string; opts: Opt5; d: "function" | "pain" | "image" | "mental" | "satisfaction" }[] = [
+  { id: "s1", d: "pain", pt: "1. Qual a intensidade da dor que você sentiu nos últimos 6 meses?", en: "1. Amount of pain experienced in the past 6 months?", opts: PAIN_LEVEL },
+  { id: "s2", d: "pain", pt: "2. Qual a intensidade da dor que você sentiu no último mês?", en: "2. Amount of pain experienced in the last month?", opts: PAIN_LEVEL },
+  { id: "s3", d: "mental", pt: "3. Nos últimos 6 meses, com que frequência você se sentiu muito nervoso(a)?", en: "3. In the past 6 months, have you been a very nervous person?", opts: NEVER_TO_ALWAYS },
+  { id: "s4", d: "image", pt: "4. Se tivesse que viver o resto da vida com a coluna como está agora, como se sentiria?", en: "4. If you had to spend the rest of your life with your back shape as it is now, how would you feel?", opts: HAPPY },
+  { id: "s5", d: "function", pt: "5. Qual é o seu nível atual de atividade?", en: "5. What is your current level of activity?", opts: [["Atividade total, sem restrição", "Full activity without restriction"], ["Atividade moderada / esportes", "Moderate activity / sports"], ["Tarefas e esportes leves", "Light chores and sports"], ["Quase sem atividade", "Hardly any activity"], ["Restrito à cama/cadeira", "Bed/chair bound"]] },
+  { id: "s6", d: "image", pt: "6. Como você acha que fica com roupas?", en: "6. How do you look in clothes?", opts: [["Muito bem", "Very good"], ["Bem", "Good"], ["Razoável", "Fair"], ["Mal", "Poor"], ["Muito mal", "Very poor"]] },
+  { id: "s7", d: "mental", pt: "7. Nos últimos 6 meses, você se sentiu tão para baixo que nada conseguia animá-lo(a)?", en: "7. In the past 6 months, have you felt so down in the dumps that nothing could cheer you up?", opts: NEVER_TO_ALWAYS },
+  { id: "s8", d: "pain", pt: "8. Você sente dor nas costas em repouso?", en: "8. Do you experience back pain when at rest?", opts: NEVER_TO_ALWAYS },
+  { id: "s9", d: "function", pt: "9. Qual o seu nível atual de atividade no trabalho/escola?", en: "9. What is your current level of work/school activity?", opts: [["100% do normal", "100% normal"], ["75% do normal", "75% normal"], ["50% do normal", "50% normal"], ["25% do normal", "25% normal"], ["0% do normal", "0% normal"]] },
+  { id: "s10", d: "image", pt: "10. Como você descreveria a aparência do seu tronco?", en: "10. Which best describes the appearance of your trunk?", opts: [["Muito boa", "Very good"], ["Boa", "Good"], ["Razoável", "Fair"], ["Ruim", "Poor"], ["Muito ruim", "Very poor"]] },
+  { id: "s11", d: "pain", pt: "11. Que medicação você usa para dor nas costas?", en: "11. Which describes your medication use for back pain?", opts: [["Nenhuma", "None"], ["Analgésico simples semanal ou menos", "Non-narcotic weekly or less"], ["Analgésico simples diariamente", "Non-narcotic daily"], ["Analgésico forte semanal ou menos", "Narcotic weekly or less"], ["Analgésico forte diariamente", "Narcotic daily"]] },
+  { id: "s12", d: "function", pt: "12. A coluna limita sua capacidade de fazer tarefas em casa?", en: "12. Does your back limit your ability to do things around the house?", opts: NEVER_TO_ALWAYS },
+  { id: "s13", d: "mental", pt: "13. Nos últimos 6 meses, você se sentiu calmo(a) e tranquilo(a)?", en: "13. In the past 6 months, have you felt calm and peaceful?", opts: ALWAYS_TO_NEVER },
+  { id: "s14", d: "image", pt: "14. A condição da sua coluna afeta seus relacionamentos pessoais?", en: "14. Do you feel your back condition affects your personal relationships?", opts: AMOUNT },
+  { id: "s15", d: "function", pt: "15. Você ou sua família têm dificuldades financeiras por causa da sua coluna?", en: "15. Are you and/or your family experiencing financial difficulties because of your back?", opts: AMOUNT },
+  { id: "s16", d: "mental", pt: "16. Nos últimos 6 meses, você se sentiu desanimado(a) e triste?", en: "16. In the past 6 months, have you felt downhearted and blue?", opts: NEVER_TO_ALWAYS },
+  { id: "s17", d: "pain", pt: "17. Nos últimos 3 meses, quantos dias faltou ao trabalho/escola por dor nas costas?", en: "17. In the last 3 months, how many days off work/school due to back pain?", opts: [["Nenhum", "0"], ["1 dia", "1"], ["2 dias", "2"], ["3 dias", "3"], ["4 ou mais", "4 or more"]] },
+  { id: "s18", d: "function", pt: "18. A coluna limita você de sair com amigos ou família?", en: "18. Does your back condition limit going out with friends/family?", opts: NEVER_TO_ALWAYS },
+  { id: "s19", d: "image", pt: "19. Você se sente atraente com a condição atual da sua coluna?", en: "19. Do you feel attractive with your current back condition?", opts: [["Sim, muito", "Yes, very"], ["Sim, um pouco", "Yes, somewhat"], ["Nem sim nem não", "Neither"], ["Não muito", "No, not very"], ["Não, nada", "No, not at all"]] },
+  { id: "s20", d: "mental", pt: "20. Nos últimos 6 meses, você foi uma pessoa feliz?", en: "20. Have you been a happy person in the past 6 months?", opts: ALWAYS_TO_NEVER },
+  { id: "s21", d: "satisfaction", pt: "21. Está satisfeito(a) com o resultado do tratamento da coluna? (se não tratou, escolha \"Nem satisfeito nem insatisfeito\")", en: "21. Are you satisfied with the results of your back management?", opts: [["Muito satisfeito", "Very satisfied"], ["Satisfeito", "Satisfied"], ["Nem satisfeito nem insatisfeito", "Neither"], ["Insatisfeito", "Dissatisfied"], ["Muito insatisfeito", "Very dissatisfied"]] },
+  { id: "s22", d: "satisfaction", pt: "22. Faria o mesmo tratamento de novo se tivesse a mesma condição?", en: "22. Would you have the same management again if you had the same condition?", opts: [["Com certeza sim", "Definitely yes"], ["Provavelmente sim", "Probably yes"], ["Não sei", "Not sure"], ["Provavelmente não", "Probably not"], ["Com certeza não", "Definitely not"]] },
+];
+
+const SRS_DOMAINS: { id: SRSDomain; pt: string; en: string }[] = [
+  { id: "function", pt: "Função / atividade", en: "Function/activity" },
+  { id: "pain", pt: "Dor", en: "Pain" },
+  { id: "image", pt: "Autoimagem", en: "Self-image" },
+  { id: "mental", pt: "Saúde mental", en: "Mental health" },
+  { id: "satisfaction", pt: "Satisfação com o tratamento", en: "Satisfaction with management" },
+];
+type SRSDomain = "function" | "pain" | "image" | "mental" | "satisfaction";
+
+const mean = (vals: number[]) => (vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : 0);
+
+const SRS22R: SpecQuestionnaire = {
+  id: "srs22r",
+  domain: "spine",
+  name: "SRS-22r",
+  fullName_pt: "Questionário SRS-22r — Escoliose / coluna (versão brasileira)",
+  fullName_en: "Scoliosis Research Society-22 revised (SRS-22r)",
+  description_pt: "22 itens (1–5, maior = melhor) sobre o impacto da condição da coluna nas atividades diárias. Domínios: Função, Dor, Autoimagem, Saúde mental (média 1–5) e Satisfação com o tratamento. Não há ponto de corte universal — use para acompanhar a evolução.",
+  description_en: "22 items (1–5, higher = better) on the impact of the spinal condition on daily life. Domains: Function, Pain, Self-image, Mental health (mean 1–5) and Satisfaction. No universal cut-off — use to track change.",
+  reference: "Asher et al., 2003 · Camarini et al., 2013 (SRS-22r Brasil)",
+  avgMinutes: 6,
+  triggers: [
+    "escoliose", "escoliótica", "escoliotica", "scoliosis", "cobb", "gibosidade", "giba", "colete", "brace",
+    "hipercifose", "cifose", "kyphosis", "coluna torácica", "coluna toracica", "dor torácica na coluna", "dorsalgia",
+    "thoracic spine", "thoracic pain", "deformidade da coluna", "spinal deformity", "artrodese", "spinal fusion",
+  ],
+  items: SRS_ITEMS.map((it) => ({ id: it.id, text_pt: it.pt, text_en: it.en, type: "choice" as const, options: o5(it.opts) })),
+  scoring: (a) => {
+    const domainMean = (d: SRSDomain) => mean(SRS_ITEMS.filter((i) => i.d === d && a[i.id] != null).map((i) => a[i.id]));
+    const core = mean(SRS_ITEMS.filter((i) => i.d !== "satisfaction" && a[i.id] != null).map((i) => a[i.id]));
+    const subs = SRS_DOMAINS.map((d) => {
+      const total = domainMean(d.id);
+      return { id: d.id, label_pt: d.pt, label_en: d.en, total, max: 5, cutoff: undefined, high: d.id !== "satisfaction" && total > 0 && total < 3 };
+    });
+    const low = subs.filter((s) => s.high);
+    const severity: SpecQScoreResult["severity"] = core >= 4.5 ? "minimal" : core >= 4 ? "mild" : core >= 3 ? "moderate" : core >= 2 ? "severe" : "extreme";
+    const lowPt = low.map((s) => s.label_pt.toLowerCase()).join(", ");
+    const lowEn = low.map((s) => s.label_en.toLowerCase()).join(", ");
+    return {
+      total: core,
+      max: 5,
+      severity,
+      interpretation_pt: low.length
+        ? `Média geral ${core}/5. Domínios com impacto mais relevante (média < 3): ${lowPt}. Sem ponto de corte universal — reaplicar para acompanhar.`
+        : core >= 4
+        ? `Média geral ${core}/5 — pouco impacto da condição da coluna nas atividades diárias. Útil como linha de base para acompanhamento.`
+        : `Média geral ${core}/5 — impacto leve a moderado nas atividades diárias. Reaplicar para acompanhar a evolução.`,
+      interpretation_en: low.length
+        ? `Overall mean ${core}/5. Domains with more relevant impact (mean < 3): ${lowEn}. No universal cut-off — reassess to track change.`
+        : core >= 4
+        ? `Overall mean ${core}/5 — little impact of the spinal condition on daily life. Useful as a baseline.`
+        : `Overall mean ${core}/5 — mild to moderate impact on daily life. Reassess to track change.`,
+      subscores: subs,
+    };
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Public catalog
 // ---------------------------------------------------------------------------
 
-export const SPECIALTY_QUESTIONNAIRES: SpecQuestionnaire[] = [mMRC, CAT, Borg, TUG, FES_I, Berg, SPPB, FABQ, FABQ_PA];
+export const SPECIALTY_QUESTIONNAIRES: SpecQuestionnaire[] = [mMRC, CAT, Borg, TUG, FES_I, Berg, SPPB, FABQ, FABQ_PA, SRS22R];
 
 /** Psychosocial (yellow flags) instruments — not tied to a body region. */
 export const PSYCHOSOCIAL_QUESTIONNAIRES: SpecQuestionnaire[] = SPECIALTY_QUESTIONNAIRES.filter(
