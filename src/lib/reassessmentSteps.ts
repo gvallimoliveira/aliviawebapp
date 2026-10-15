@@ -13,7 +13,7 @@ export type ReassessStepId =
   | "functionaltests" // testes funcionais autoaplicados (opcional)
   | "psychosocial" // FABQ (yellow flags)
   | "spine"; // SRS-22r (escoliose / coluna torácica) — opcional e obrigatório no link quando marcado
-  // legacy comment: FABQ (yellow flags) — opcional, não depende de região
+
 
 export const ALL_REASSESS_STEPS: ReassessStepId[] = [
   "redflags",
