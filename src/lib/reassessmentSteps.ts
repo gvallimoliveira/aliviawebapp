@@ -11,7 +11,9 @@ export type ReassessStepId =
   | "activity" // nível de atividade + acesso a academia
   | "questionnaire"
   | "functionaltests" // testes funcionais autoaplicados (opcional)
-  | "psychosocial"; // FABQ (yellow flags) — opcional, não depende de região
+  | "psychosocial" // FABQ (yellow flags)
+  | "spine"; // SRS-22r (escoliose / coluna torácica) — opcional e obrigatório no link quando marcado
+  // legacy comment: FABQ (yellow flags) — opcional, não depende de região
 
 export const ALL_REASSESS_STEPS: ReassessStepId[] = [
   "redflags",
@@ -24,6 +26,7 @@ export const ALL_REASSESS_STEPS: ReassessStepId[] = [
   "questionnaire",
   "functionaltests",
   "psychosocial",
+  "spine",
 ];
 
 

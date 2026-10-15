@@ -75,7 +75,10 @@ const ClinicAssessment = () => {
   const reassessHasAnamnesis = hasAnyAnamnesisSub(enabledSteps);
   const reassessHasQuestionnaire = isStepEnabled(enabledSteps, "questionnaire");
   // Psychosocial (FABQ) is opt-in only: never part of the default full flow.
-  const reassessHasPsychosocial = enabledSteps ? enabledSteps.has("psychosocial") : false;
+  const extraQuestionnaireIds = enabledSteps
+    ? [...(enabledSteps.has("psychosocial") ? ["fabq_brasil"] : []), ...(enabledSteps.has("spine") ? ["srs22r"] : [])]
+    : [];
+  const reassessHasPsychosocial = extraQuestionnaireIds.length > 0;
   const reassessHasRedflags = isStepEnabled(enabledSteps, "redflags");
   // Testes funcionais autoaplicados: fazem parte do fluxo completo do link
   // (opcionais/puláveis) e são opt-in nos links de reavaliação.
@@ -570,14 +573,15 @@ const ClinicAssessment = () => {
   };
 
   // ── Optional psychosocial step (FABQ / yellow flags) ──
-  const finishAfterPsychosocial = async (result?: PsychosocialStepResult) => {
+  const finishAfterPsychosocial = async (results: PsychosocialStepResult[] = []) => {
     const base = (anamnesisData || {}) as any;
     let data = base as AnamnesisData;
-    if (result) {
+    if (results.length) {
+      const ids = new Set(results.map((r) => r.questionnaireId));
       const prev = Array.isArray(base.specialtyResults) ? base.specialtyResults : [];
       data = {
         ...base,
-        specialtyResults: [...prev.filter((r: any) => r.questionnaireId !== result.questionnaireId), result],
+        specialtyResults: [...prev.filter((r: any) => !ids.has(r.questionnaireId)), ...results],
       } as AnamnesisData;
       setAnamnesisData(data);
       if (assessmentId) {
@@ -1012,8 +1016,8 @@ const ClinicAssessment = () => {
 
         {step === "psychosocial" && (
           <PsychosocialStep
+            questionnaireIds={extraQuestionnaireIds}
             onComplete={(r) => finishAfterPsychosocial(r)}
-            onSkip={() => finishAfterPsychosocial()}
             onBack={() => setStep(hasFunctionalTests ? "functional_tests" : reassessHasQuestionnaire ? "questionnaire" : "anamnesis")}
           />
         )}
