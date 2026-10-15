@@ -636,10 +636,10 @@ const SRS22R: SpecQuestionnaire = {
       max: 5,
       severity,
       interpretation_pt: low.length
-        ? `Média geral ${core}/5. Domínios com impacto mais relevante (média < 3): ${lowPt}. Sem ponto de corte universal — reaplicar para acompanhar.`
+        ? `Média geral ${String(core).replace(".", ",")}/5. Domínios com impacto mais relevante (média < 3): ${lowPt}. Sem ponto de corte universal — reaplicar para acompanhar.`
         : core >= 4
-        ? `Média geral ${core}/5 — pouco impacto da condição da coluna nas atividades diárias. Útil como linha de base para acompanhamento.`
-        : `Média geral ${core}/5 — impacto leve a moderado nas atividades diárias. Reaplicar para acompanhar a evolução.`,
+        ? `Média geral ${String(core).replace(".", ",")}/5 — pouco impacto da condição da coluna nas atividades diárias. Útil como linha de base para acompanhamento.`
+        : `Média geral ${String(core).replace(".", ",")}/5 — impacto leve a moderado nas atividades diárias. Reaplicar para acompanhar a evolução.`,
       interpretation_en: low.length
         ? `Overall mean ${core}/5. Domains with more relevant impact (mean < 3): ${lowEn}. No universal cut-off — reassess to track change.`
         : core >= 4
