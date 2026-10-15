@@ -33,6 +33,7 @@ import {
   ANAMNESIS_SUB_IDS,
 } from "@/lib/reassessmentSteps";
 import { fetchPatientPrefillExtras } from "@/lib/reassessmentPrefill";
+import { normalizeHealthHistory } from "@/lib/healthHistory";
 import { normalizeAnamnesisForReassessment } from "@/lib/reassessmentNormalize";
 import { painExtentValue } from "@/lib/painExtent";
 import { buildMechanismPayload } from "@/components/assessment/PainMechanismLite";

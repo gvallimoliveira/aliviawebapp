@@ -101,8 +101,8 @@ const PsychosocialStep = ({ onComplete, onBack, questionnaireIds = ["fabq_brasil
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           {isSpine
             ? tl(
-                "Não existe resposta certa ou errada. Escolha a opção que melhor descreve como você está.",
-                "There is no right or wrong answer. Choose the option that best describes how you are.",
+                "Este é um questionário específico para escoliose e coluna. Não existe resposta certa ou errada — escolha a opção que melhor descreve como você está.",
+                "This is a questionnaire specific to scoliosis and spine. There is no right or wrong answer — choose the option that best describes how you are.",
               )
             : tl(
                 "Não existe resposta certa ou errada. Marque o quanto você concorda com cada frase, pensando na sua dor atual.",
