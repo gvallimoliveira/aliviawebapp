@@ -292,6 +292,8 @@ const ClinicAssessment = () => {
             hasNausea: anam?.hasNausea,
             headacheCrisisFrequency: anam?.headacheCrisisFrequency,
             painSubArea: anam?.painSubArea,
+            // Saúde geral (comorbidades + medicação contínua)
+            ...normalizeHealthHistory(anam),
           });
 
           const testResults = orig.test_results as any;

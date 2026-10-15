@@ -95,7 +95,7 @@ const PsychosocialStep = ({ onComplete, onBack, questionnaireIds = ["fabq_brasil
         </div>
         <h2 className="text-xl md:text-2xl font-bold text-foreground">
           {isSpine
-            ? tl("Sua coluna no dia a dia", "Your spine in daily life")
+            ? tl("Questionário de escoliose (SRS-22r)", "Scoliosis questionnaire (SRS-22r)")
             : tl("Como você se sente em relação ao movimento", "How you feel about movement")}
         </h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">

@@ -309,6 +309,8 @@ const ProfessionalAssessment = () => {
             headacheCrisisFrequency: anam?.headacheCrisisFrequency,
             // Refinamento do mapa de dor
             painSubArea: anam?.painSubArea,
+            // Saúde geral (comorbidades + medicação contínua)
+            ...normalizeHealthHistory(anam),
           });
 
           // Extract previous questionnaire answers for highlighting
