@@ -32,6 +32,7 @@ import {
   type ReassessStepId,
 } from "@/lib/reassessmentSteps";
 import { fetchPatientPrefillExtras } from "@/lib/reassessmentPrefill";
+import { normalizeHealthHistory } from "@/lib/healthHistory";
 import { normalizeAnamnesisForReassessment } from "@/lib/reassessmentNormalize";
 import { painExtentValue } from "@/lib/painExtent";
 import { buildMechanismPayload } from "@/components/assessment/PainMechanismLite";
@@ -309,6 +310,8 @@ const ProfessionalAssessment = () => {
             headacheCrisisFrequency: anam?.headacheCrisisFrequency,
             // Refinamento do mapa de dor
             painSubArea: anam?.painSubArea,
+            // Saúde geral (comorbidades + medicação contínua)
+            ...normalizeHealthHistory(anam),
           });
 
           // Extract previous questionnaire answers for highlighting

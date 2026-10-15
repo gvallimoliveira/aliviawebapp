@@ -33,6 +33,7 @@ import {
   ANAMNESIS_SUB_IDS,
 } from "@/lib/reassessmentSteps";
 import { fetchPatientPrefillExtras } from "@/lib/reassessmentPrefill";
+import { normalizeHealthHistory } from "@/lib/healthHistory";
 import { normalizeAnamnesisForReassessment } from "@/lib/reassessmentNormalize";
 import { painExtentValue } from "@/lib/painExtent";
 import { buildMechanismPayload } from "@/components/assessment/PainMechanismLite";
@@ -292,6 +293,8 @@ const ClinicAssessment = () => {
             hasNausea: anam?.hasNausea,
             headacheCrisisFrequency: anam?.headacheCrisisFrequency,
             painSubArea: anam?.painSubArea,
+            // Saúde geral (comorbidades + medicação contínua)
+            ...normalizeHealthHistory(anam),
           });
 
           const testResults = orig.test_results as any;
