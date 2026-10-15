@@ -1540,8 +1540,8 @@ function renderStrengthTableSection(
   y = checkPage(doc, y, 14 + 8 + 16);
   y = renderSectionTitle(doc, y, title, COLORS.primary);
 
-  const valueColW = 22;
-  const asymColW = 22;
+  const valueColW = 34;
+  const asymColW = 24;
   const movColW = SECTION_TEXT_W - valueColW * 2 - asymColW;
   const xMov = SECTION_X;
   const xLeft = xMov + movColW;
@@ -1579,10 +1579,26 @@ function renderStrengthTableSection(
   doc.setFontSize(9);
 
   cleaned.forEach((r, i) => {
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(9);
     const movLines = doc.splitTextToSize(r.movement || "—", movColW - 3);
-    const detailH = r.leftDetail || r.rightDetail ? 3.6 : 0;
-    const rowH = Math.max(7, movLines.length * 4.2 + 2.5) + detailH;
-    y = checkPage(doc, y, rowH + 1);
+    doc.setFontSize(7);
+    const leftLines: string[] = r.leftDetail ? doc.splitTextToSize(r.leftDetail, valueColW - 4) : [];
+    const rightLines: string[] = r.rightDetail ? doc.splitTextToSize(r.rightDetail, valueColW - 4) : [];
+    const rowH = Math.max(8, movLines.length * 4.2 + 3, 7 + Math.max(leftLines.length, rightLines.length) * 3.4);
+    if (y + rowH + 1 > PAGE_BOTTOM) {
+      doc.addPage();
+      y = MARGIN;
+      drawRoundedRect(doc, MARGIN, y, CONTENT_WIDTH, headerH, 1.5, COLORS.primaryLight, COLORS.border);
+      doc.setFont("Inter", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COLORS.primary);
+      doc.text(colMov, xMov, y + 4.8);
+      doc.text(colLeft, xLeft + valueColW / 2, y + 4.8, { align: "center" });
+      doc.text(colRight, xRight + valueColW / 2, y + 4.8, { align: "center" });
+      doc.text(colAsym, xAsym + asymColW / 2, y + 4.8, { align: "center" });
+      y += headerH;
+    }
 
     drawRoundedRect(
       doc,
@@ -1607,10 +1623,10 @@ function renderStrengthTableSection(
 
     if (r.leftDetail || r.rightDetail) {
       doc.setFont("Inter", "normal");
-      doc.setFontSize(6.2);
+      doc.setFontSize(7);
       doc.setTextColor(...COLORS.muted);
-      if (r.leftDetail) doc.text(r.leftDetail, xLeft + valueColW / 2, y + 8, { align: "center" });
-      if (r.rightDetail) doc.text(r.rightDetail, xRight + valueColW / 2, y + 8, { align: "center" });
+      leftLines.forEach((line, index) => doc.text(line, xLeft + valueColW / 2, y + 8 + index * 3.4, { align: "center" }));
+      rightLines.forEach((line, index) => doc.text(line, xRight + valueColW / 2, y + 8 + index * 3.4, { align: "center" }));
       doc.setFontSize(9);
     }
 
@@ -4026,5 +4042,66 @@ export async function generateAgentChatPdfBlob(options: AgentChatPdfOptions): Pr
     doc.text(`${i}/${totalPages}`, PAGE_WIDTH - MARGIN, 288, { align: "right" });
   }
 
+  return doc.output("blob");
+}
+
+/** Standalone export of saved, dated measurements. No AI inference. */
+export async function generateMeasurementPdfBlob(options: {
+  kind: "strength" | "questionnaires";
+  patientName: string;
+  date: string;
+  language: string;
+  strengthTable?: AnamnesisData["strengthTable"];
+  questionnaireResults?: any[];
+  specialtyResults?: any[];
+} & Pick<PdfOptions, "professionalLogoUrl" | "clinicLogoUrl" | "clinicName" | "brandColor" | "responsibleProfessional">): Promise<Blob> {
+  const doc = createPdfDoc();
+  applyPdfBranding(doc, options.brandColor);
+  const isPt = options.language === "pt";
+  const isEs = options.language === "es";
+  const title = options.kind === "strength"
+    ? (isPt ? "Relatório de dinamometria" : isEs ? "Informe de dinamometría" : "Dynamometry report")
+    : (isPt ? "Relatório de questionário" : isEs ? "Informe de cuestionario" : "Questionnaire report");
+  const logo = options.clinicLogoUrl || options.professionalLogoUrl;
+  const logoData = logo ? await loadExternalImageAsBase64(logo) : await loadLogoBase64();
+  if (logoData) drawBrandLogo(doc, logoData, SECTION_X, 15, 36, 16);
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(...COLORS.primary);
+  const brandLines = doc.splitTextToSize(options.clinicName || "Aliv.iA", SECTION_TEXT_W - 42);
+  doc.text(brandLines, SECTION_X + 42, 21);
+  let y = Math.max(40, 24 + brandLines.length * 5);
+  y = renderSectionTitle(doc, y, title, COLORS.primary);
+  doc.setFont("Inter", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.foreground);
+  const locale = isPt ? "pt-BR" : isEs ? "es-ES" : "en-US";
+  for (const text of [
+    `${isPt || isEs ? "Paciente" : "Patient"}: ${options.patientName}`,
+    `${isPt ? "Avaliação" : isEs ? "Evaluación" : "Assessment"}: ${new Date(options.date).toLocaleDateString(locale)}`,
+  ]) {
+    const lines = doc.splitTextToSize(text, SECTION_TEXT_W);
+    doc.text(lines, SECTION_X, y);
+    y += lines.length * 4.2 + 2;
+  }
+  y += 4;
+  if (options.kind === "strength") {
+    y = renderStrengthTableSection(doc, y, options.strengthTable, isPt, options.language);
+  } else {
+    y = renderTestResultsSection(doc, y, options.questionnaireResults, isPt, options.language);
+    y = renderSpecialtyResultsSection(doc, y, options.specialtyResults || [], isPt);
+  }
+  if (options.responsibleProfessional) await drawResponsibleBlock(doc, y + 6, isPt, options.responsibleProfessional);
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(...COLORS.primary);
+    doc.line(MARGIN, 284, PAGE_WIDTH - MARGIN, 284);
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...COLORS.muted);
+    doc.text("Aliv.iA", SECTION_X, 290);
+    doc.text(`${i}/${pages}`, PAGE_WIDTH - SECTION_X, 290, { align: "right" });
+  }
   return doc.output("blob");
 }

@@ -16,12 +16,15 @@ import { normalizeMovementKey, pickMovementLabel } from "@/lib/movementNormalize
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
+import MeasurementReportButton from "./MeasurementReportButton";
 
 
 interface Props {
   patient: any;
   readOnly?: boolean;
   isDemo?: boolean;
+  clinicId?: string;
+  professionalId?: string;
 }
 
 const fmtDate = (d: string) =>
@@ -33,7 +36,7 @@ const fmtDate = (d: string) =>
  * attach a report (PDF/photo) or type values directly into the latest
  * assessment — without needing to re-open the manual assessment flow.
  */
-export default function PatientStrengthSection({ patient, readOnly, isDemo }: Props) {
+export default function PatientStrengthSection({ patient, readOnly, isDemo, clinicId, professionalId }: Props) {
   const { toast } = useToast();
 
   const assessments = React.useMemo(
@@ -148,6 +151,10 @@ export default function PatientStrengthSection({ patient, readOnly, isDemo }: Pr
     <Card ref={cardRef} id="dinamometria">
 
       <CardContent className="space-y-4 pt-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-foreground">Dinamometria</p>
+          <MeasurementReportButton kind="strength" assessments={assessments} patientName={patient.name || "Paciente"} clinicId={clinicId} professionalId={professionalId} />
+        </div>
         <StrengthTable
           value={rows}
           onChange={readOnly ? undefined : setRows}

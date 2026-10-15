@@ -1,4 +1,6 @@
 # Tasks
+- [x] Fix dynamometry PDF overlap; visually verify full/standalone reports and three-page table with repeated headers.
+- [x] Add standalone saved dynamometry and individual questionnaire PDFs; update help; 8 tests pass and authenticated saved-questionnaire download verified. Dynamometry PDF verified with fictional data; accessible clinic records have no saved measurements for a real download check.
 - [x] Standardize institutional logo, name and color across PDFs, check-in, reassessment, questionnaires and HEP links; 21 tests pass; real check-in/assessment links and three PDFs verified. Questionnaire/HEP layouts verified with mocked responses (no existing institutional links available for end-to-end checks).
 - [x] Reorder athlete/active cardiovascular PDFs around effort response, recovery and review points; retain WHO context.
 - [x] Update report help and regression tests; verify both generated PDF variants using fictional validation data (26 tests pass).

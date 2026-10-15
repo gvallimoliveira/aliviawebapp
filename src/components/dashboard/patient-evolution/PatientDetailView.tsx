@@ -49,6 +49,7 @@ import { mechanismAnswersFromExternal } from "@/components/assessment/PainMechan
 import PainMechanismBadge from "@/components/assessment/PainMechanismBadge";
 import MechanismEvolutionCard from "./MechanismEvolutionCard";
 import SpecialtyResultsCard from "./SpecialtyResultsCard";
+import MeasurementReportButton from "./MeasurementReportButton";
 
 import HealthGeneralCard from "./HealthGeneralCard";
 import DifferentialDiagnosisPanel from "./DifferentialDiagnosisPanel";
@@ -1387,6 +1388,9 @@ export default function PatientDetailView(props: any) {
 
       {/* Evolução de questionários funcionais */}
       <div id="sec-questionarios" className="scroll-mt-24 space-y-5">
+      <div className="flex flex-wrap justify-end gap-2">
+        <MeasurementReportButton kind="questionnaires" assessments={patient.assessments} patientName={patient.name} clinicId={clinicId} professionalId={professionalId} />
+      </div>
       {questionnaireEvolution.length > 0 ? questionnaireEvolution.map((chart: any) => (
         <Card key={chart.displayTitle}>
           <CardHeader className="pb-2">
@@ -1457,7 +1461,7 @@ export default function PatientDetailView(props: any) {
             : "true"
         }
       >
-        <SpecialtyResultsCard assessments={patient.assessments} />
+        <SpecialtyResultsCard assessments={patient.assessments} patientName={patient.name} clinicId={clinicId} professionalId={professionalId} />
       </div>
 
 
@@ -1495,7 +1499,7 @@ export default function PatientDetailView(props: any) {
             : "true"
         }
       >
-        <PatientStrengthSection patient={patient} readOnly={readOnly} isDemo={isDemo} />
+        <PatientStrengthSection patient={patient} readOnly={readOnly} isDemo={isDemo} clinicId={clinicId} professionalId={professionalId} />
       </div>
 
       {/* ADM (arco de movimento) — registrada na avaliação manual, visível e editável no prontuário */}
