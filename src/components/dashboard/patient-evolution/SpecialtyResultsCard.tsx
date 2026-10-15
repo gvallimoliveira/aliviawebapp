@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getSpecialtyQuestionnaire } from "@/data/specialtyQuestionnaires";
+import MeasurementReportButton from "./MeasurementReportButton";
 
 interface AppliedResult {
   questionnaireId: string;
@@ -22,6 +23,9 @@ interface AppliedResult {
 
 interface Props {
   assessments: any[];
+  patientName: string;
+  clinicId?: string;
+  professionalId?: string;
 }
 
 /**
@@ -29,7 +33,7 @@ interface Props {
  * Interpretação e semáforo aparecem SOMENTE aqui, no prontuário do profissional;
  * o PDF do paciente mostra apenas a pontuação bruta.
  */
-const SpecialtyResultsCard = ({ assessments }: Props) => {
+const SpecialtyResultsCard = ({ assessments, patientName, clinicId, professionalId }: Props) => {
   const { language } = useLanguage();
   const isPt = language === "pt";
   const isEs = language === "es";
@@ -73,7 +77,8 @@ const SpecialtyResultsCard = ({ assessments }: Props) => {
               const def = getSpecialtyQuestionnaire(r.questionnaireId);
               const domain = r.domain || def?.domain;
               const isPsy = domain === "psychosocial";
-              const score = r.score!;
+              const score = r.score;
+              if (!score) return null;
               const anyHigh = (score.subscores || []).some((s) => s.high);
               return (
                 <div
@@ -145,6 +150,8 @@ const SpecialtyResultsCard = ({ assessments }: Props) => {
                       </div>
                     );
                   })}
+
+                  <MeasurementReportButton kind="questionnaires" assessments={assessments.filter((a) => a.id === entry.id)} patientName={patientName} clinicId={clinicId} professionalId={professionalId} questionnaireId={r.questionnaireId} />
 
                   <p
                     className={`text-xs leading-snug ${anyHigh ? "text-destructive" : "text-muted-foreground"}`}
