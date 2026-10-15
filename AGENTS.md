@@ -23,5 +23,5 @@
 - Load-control "Conduta do dia" derives only from `dailyConduct.ts` (safety → recovery → yesterday/effort coherence → ACWR trend); one deterministic priority order keeps the top recommendation consistent and works with a single check-in.
 - Cardiorespiratory functional tests (TSL 1-min, TC6M, TD6M) are interpreted only by the pure `cardioFunctionalTests.ts`; deterministic rules keep the record, sheet and future reports consistent without AI credits.
 - Subdirectories may have their own AGENTS.md; read it before changing files there.
-- Patient links use ClinicBrandHeader and scoped clinicAssessmentTheme; ClinicAssessment also passes branding to WelcomeStep. PDFs use resolveAssessmentBranding and per-document applyPdfBranding; prevent cross-clinic theme leakage and preserve warning colors.
+- Patient links use ClinicBrandHeader and scoped clinicAssessmentTheme; ClinicAssessment also passes branding to WelcomeStep. PDFs (including standalone measurements) share section renderers, resolveAssessmentBranding and per-document applyPdfBranding; preserve warning colors and clinic isolation.
 - HEP programs persist clinic_id at creation; public branding resolves only through the valid program token, never by guessing a clinic from the professional.
