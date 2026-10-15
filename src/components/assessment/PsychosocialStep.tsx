@@ -18,29 +18,48 @@ import {
 export interface PsychosocialStepResult {
   questionnaireId: string;
   questionnaireName: string;
-  domain: "psychosocial";
+  domain: "psychosocial" | "spine";
   answers: Record<string, number>;
   score: SpecQScoreResult;
 }
 
 interface Props {
-  onComplete: (result: PsychosocialStepResult) => void;
+  /** Called once every queued instrument was answered or skipped. */
+  onComplete: (results: PsychosocialStepResult[]) => void;
   onBack: () => void;
-  onSkip: () => void;
-  /** Which instrument to apply. Defaults to the full FABQ-Brasil. */
-  questionnaireId?: string;
+  /** Instruments applied in sequence. Defaults to the full FABQ-Brasil. */
+  questionnaireIds?: string[];
 }
 
-const PsychosocialStep = ({ onComplete, onBack, onSkip, questionnaireId = "fabq_brasil" }: Props) => {
+/** Instruments the professional made mandatory (no skip button). */
+const MANDATORY = new Set(["srs22r"]);
+
+const PsychosocialStep = ({ onComplete, onBack, questionnaireIds = ["fabq_brasil"] }: Props) => {
   const { language } = useLanguage();
   const isPt = language === "pt";
   const tl = (pt: string, en: string) => (isPt ? pt : en);
 
-  const q = getSpecialtyQuestionnaire(questionnaireId);
+  const [qIdx, setQIdx] = useState(0);
+  const [collected, setCollected] = useState<PsychosocialStepResult[]>([]);
+  const q = getSpecialtyQuestionnaire(questionnaireIds[qIdx]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [index, setIndex] = useState(0);
 
   if (!q) return null;
+  const isSpine = q.domain === "spine";
+
+  const advance = (result?: PsychosocialStepResult) => {
+    const all = result ? [...collected, result] : collected;
+    if (qIdx < questionnaireIds.length - 1) {
+      setCollected(all);
+      setQIdx((i) => i + 1);
+      setAnswers({});
+      setIndex(0);
+      window.scrollTo({ top: 0 });
+      return;
+    }
+    onComplete(all);
+  };
 
   const item = q.items[index];
   const total = q.items.length;
@@ -57,10 +76,10 @@ const PsychosocialStep = ({ onComplete, onBack, onSkip, questionnaireId = "fabq_
     if (!score) return;
     setTimeout(
       () =>
-        onComplete({
+        advance({
           questionnaireId: q.id,
           questionnaireName: q.name,
-          domain: "psychosocial",
+          domain: isSpine ? "spine" : "psychosocial",
           answers: next,
           score,
         }),
@@ -75,13 +94,20 @@ const PsychosocialStep = ({ onComplete, onBack, onSkip, questionnaireId = "fabq_
           <HeartHandshake className="h-6 w-6 text-violet-500" />
         </div>
         <h2 className="text-xl md:text-2xl font-bold text-foreground">
-          {tl("Como você se sente em relação ao movimento", "How you feel about movement")}
+          {isSpine
+            ? tl("Sua coluna no dia a dia", "Your spine in daily life")
+            : tl("Como você se sente em relação ao movimento", "How you feel about movement")}
         </h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          {tl(
-            "Não existe resposta certa ou errada. Marque o quanto você concorda com cada frase, pensando na sua dor atual.",
-            "There is no right or wrong answer. Mark how much you agree with each statement, thinking about your current pain.",
-          )}
+          {isSpine
+            ? tl(
+                "Não existe resposta certa ou errada. Escolha a opção que melhor descreve como você está.",
+                "There is no right or wrong answer. Choose the option that best describes how you are.",
+              )
+            : tl(
+                "Não existe resposta certa ou errada. Marque o quanto você concorda com cada frase, pensando na sua dor atual.",
+                "There is no right or wrong answer. Mark how much you agree with each statement, thinking about your current pain.",
+              )}
         </p>
       </div>
 
@@ -121,15 +147,17 @@ const PsychosocialStep = ({ onComplete, onBack, onSkip, questionnaireId = "fabq_
         <Button
           variant="ghost"
           className="rounded-xl gap-1"
-          onClick={() => (index === 0 ? onBack() : setIndex((i) => i - 1))}
+          onClick={() => (index > 0 ? setIndex((i) => i - 1) : qIdx === 0 ? onBack() : (setQIdx((i) => i - 1), setCollected((c) => c.slice(0, -1)), setAnswers({}), setIndex(0)))}
         >
           <ChevronLeft className="h-4 w-4" />
           {tl("Voltar", "Back")}
         </Button>
-        <Button variant="outline" className="rounded-xl gap-1" onClick={onSkip}>
-          {tl("Pular esta etapa", "Skip this step")}
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+        {!MANDATORY.has(q.id) && (
+          <Button variant="outline" className="rounded-xl gap-1" onClick={() => advance()}>
+            {tl("Pular esta etapa", "Skip this step")}
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </motion.div>
   );
