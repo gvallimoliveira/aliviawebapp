@@ -90,16 +90,36 @@ const SpecialtyResultsCard = ({ assessments }: Props) => {
                         <p className="text-[11px] text-muted-foreground">{isPt ? def.fullName_pt : def.fullName_en}</p>
                       )}
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={
-                        anyHigh
-                          ? "text-[11px] border-destructive/40 text-destructive bg-destructive/5 shrink-0"
-                          : "text-[11px] shrink-0"
-                      }
-                    >
-                      {score.total}/{score.max}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {score.severity && (
+                        <Badge
+                          variant="outline"
+                          className={
+                            score.severity === "severe" || score.severity === "extreme"
+                              ? "text-[10px] border-destructive/40 text-destructive bg-destructive/5"
+                              : score.severity === "moderate"
+                              ? "text-[10px] border-amber-400/50 text-amber-700 dark:text-amber-400 bg-amber-500/5"
+                              : "text-[10px] border-emerald-400/50 text-emerald-700 dark:text-emerald-400 bg-emerald-500/5"
+                          }
+                        >
+                          {tl(
+                            { minimal: "Impacto mínimo", mild: "Impacto leve", moderate: "Impacto moderado", severe: "Impacto importante", extreme: "Impacto muito importante" }[score.severity] || score.severity,
+                            { minimal: "Minimal impact", mild: "Mild impact", moderate: "Moderate impact", severe: "Major impact", extreme: "Very major impact" }[score.severity] || score.severity,
+                            { minimal: "Impacto mínimo", mild: "Impacto leve", moderate: "Impacto moderado", severe: "Impacto importante", extreme: "Impacto muy importante" }[score.severity] || score.severity,
+                          )}
+                        </Badge>
+                      )}
+                      <Badge
+                        variant="outline"
+                        className={
+                          anyHigh
+                            ? "text-[11px] border-destructive/40 text-destructive bg-destructive/5"
+                            : "text-[11px]"
+                        }
+                      >
+                        {score.total}/{score.max}
+                      </Badge>
+                    </div>
                   </div>
 
                   {(score.subscores || []).map((s) => {
