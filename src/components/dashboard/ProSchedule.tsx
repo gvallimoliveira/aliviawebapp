@@ -911,8 +911,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   return (
     <div className="space-y-3 max-w-full min-w-0 overflow-x-hidden" style={{ touchAction: "pan-x pan-y" }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1 min-w-0">
           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateWeek(-1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -941,7 +941,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Button variant="outline" size="sm" className="text-xs" onClick={() => setViewDate(new Date())}>
             {t("schedule.today")}
           </Button>
@@ -963,9 +963,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
               <span className="hidden sm:inline">{isPt ? "Importar" : "Import"}</span>
             </Button>
           )}
-          <Button size="sm" className="gap-1.5 rounded-xl text-xs" onClick={() => openNew()}>
+          <Button size="sm" className="gap-1.5 rounded-xl text-xs shrink-0" onClick={() => openNew()} aria-label={t("schedule.new") as string}>
             <Plus className="h-3.5 w-3.5" />
-            {t("schedule.new")}
+            {isMobile ? (isPt ? "Novo" : "New") : t("schedule.new")}
           </Button>
         </div>
       </div>
