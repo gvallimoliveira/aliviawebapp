@@ -82,7 +82,21 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      const parsed = (data.appointments || []).map((a: any) => ({ ...a, selected: true }));
+      let pts: PatientOpt[] = [];
+      {
+        let q = (supabase.from("patients" as any) as any).select("id, full_name");
+        q = clinicId ? q.eq("clinic_id", clinicId) : q.eq("professional_id", professionalId);
+        const { data: pdata } = await q.order("full_name").limit(2000);
+        pts = (pdata || []) as PatientOpt[];
+        setPatients(pts);
+      }
+      const parsed = (data.appointments || []).map((a: any) => {
+        const name = String(a.patient_name || "").trim();
+        const match = findBestPatient(name, pts);
+        const mode: RowMode = a.is_patient === false || (!match && looksLikeCommitment(name))
+          ? "none" : match ? "link" : "create";
+        return { ...a, patient_name: name, selected: true, mode, patientId: match?.id, suggested: !!match, editedName: name };
+      });
       if (parsed.length === 0) {
         toast({ title: lang === "pt" ? "Nenhum agendamento encontrado na imagem" : "No appointments found in image" });
       } else {
@@ -103,46 +117,68 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
     );
   };
 
+  // Same read name across rows shares the decision.
+  const updateRow = (index: number, patch: Partial<ParsedAppointment>) => {
+    setAppointments((prev) => {
+      const key = normalizeName(prev[index].patient_name);
+      return prev.map((a, i) =>
+        i === index || ("mode" in patch || "patientId" in patch ? normalizeName(a.patient_name) === key : false)
+          ? { ...a, ...(i === index ? patch : { mode: patch.mode ?? a.mode, patientId: patch.patientId ?? a.patientId, suggested: false }), ...(i === index ? { suggested: false } : {}) }
+          : a
+      );
+    });
+  };
+
   const handleImport = async () => {
     const selected = appointments.filter((a) => a.selected);
     if (selected.length === 0) return;
+    if (selected.some((a) => a.mode === "link" && !a.patientId)) {
+      toast({ title: lang === "pt" ? "Escolha o paciente a vincular" : "Choose the patient to link", variant: "destructive" });
+      return;
+    }
 
     setImporting(true);
     setStep("importing");
 
     try {
-      const rows = selected.map((a) => ({
-        professional_id: professionalId,
-        clinic_id: clinicId || null,
-        patient_name: a.patient_name,
-        appointment_date: a.date,
-        appointment_time: a.time,
-        duration_minutes: a.duration_minutes || 50,
-        type: a.type || "in_person",
-        notes: a.notes ? `[Importado] ${a.notes}` : "[Importado de outro app]",
-        status: "scheduled",
-      }));
-
-      const { error } = await supabase.from("professional_appointments").insert(rows);
-      if (error) throw error;
-
-      // Create patient records for each imported patient (so they appear in patient list)
-      for (const a of selected) {
-        const patientRow: any = {
-          full_name: a.patient_name,
-          email: null,
-          cpf: null,
-          birth_date: null,
-          phone: null,
-          address: null,
-        };
-        if (clinicId) {
-          patientRow.clinic_id = clinicId;
-        } else {
-          patientRow.professional_id = professionalId;
-        }
-        await (supabase.from("patients" as any) as any).insert(patientRow).then(() => {});
+      // Create each new patient once (grouped by normalized name), skipping exact existing ones.
+      const created = new Map<string, string>();
+      for (const a of selected.filter((x) => x.mode === "create")) {
+        const name = (a.editedName || a.patient_name).trim();
+        const key = normalizeName(name);
+        if (!key || created.has(key)) continue;
+        const existing = patients.find((p) => normalizeName(p.full_name) === key);
+        if (existing) { created.set(key, existing.full_name); continue; }
+        const patientRow: any = { full_name: name };
+        if (clinicId) patientRow.clinic_id = clinicId; else patientRow.professional_id = professionalId;
+        const { error: pErr } = await (supabase.from("patients" as any) as any).insert(patientRow);
+        if (pErr) throw pErr;
+        created.set(key, name);
       }
+
+      const rows = selected.map((a) => {
+        const isCommitment = a.mode === "none";
+        const name = a.mode === "link"
+          ? patients.find((p) => p.id === a.patientId)?.full_name || a.patient_name
+          : a.mode === "create"
+            ? created.get(normalizeName(a.editedName || a.patient_name)) || a.editedName || a.patient_name
+            : a.editedName || a.patient_name;
+        return {
+          professional_id: professionalId,
+          clinic_id: clinicId || null,
+          patient_name: name,
+          appointment_date: a.date,
+          appointment_time: a.time,
+          duration_minutes: a.duration_minutes || 50,
+          type: a.type || "in_person",
+          notes: a.notes ? `[Importado] ${a.notes}` : isCommitment ? "[Compromisso importado]" : "[Importado de outro app]",
+          status: "scheduled",
+          external_import_data: { kind: isCommitment ? "commitment" : "patient", read_name: a.patient_name },
+        };
+      });
+
+      const { error } = await supabase.from("professional_appointments").insert(rows as any);
+      if (error) throw error;
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
 
       toast({
