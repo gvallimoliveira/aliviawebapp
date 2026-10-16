@@ -268,6 +268,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     open: false, sessionId: 0, apt: null, defaultDate: new Date(), defaultTime: "09:00",
   });
   const modalSessionRef = useRef(0);
+  const gridScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
@@ -780,15 +781,21 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         lastDropHour = null;
         setDropTarget(null);
       }
-      // Auto-scroll near viewport edges (helps on mobile)
+      // Auto-scroll confined to the grid container (never the page/window)
       cancelAnimationFrame(scrollRaf);
-      const margin = 60;
-      const vh = window.innerHeight;
-      let dyScroll = 0;
-      if (ev.clientY < margin) dyScroll = -10;
-      else if (ev.clientY > vh - margin) dyScroll = 10;
-      if (dyScroll !== 0) {
-        scrollRaf = requestAnimationFrame(() => window.scrollBy(0, dyScroll));
+      const container = gridScrollRef.current;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const margin = 48;
+        let dxScroll = 0;
+        let dyScroll = 0;
+        if (ev.clientY < rect.top + margin) dyScroll = -10;
+        else if (ev.clientY > rect.bottom - margin) dyScroll = 10;
+        if (ev.clientX < rect.left + margin) dxScroll = -10;
+        else if (ev.clientX > rect.right - margin) dxScroll = 10;
+        if (dxScroll !== 0 || dyScroll !== 0) {
+          scrollRaf = requestAnimationFrame(() => container.scrollBy(dxScroll, dyScroll));
+        }
       }
     };
 
@@ -934,11 +941,11 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       </div>
 
       {/* Time-slot grid */}
-      <div className="h-[420px] rounded-lg border border-border/40 overflow-auto">
+      <div ref={gridScrollRef} className="h-[420px] rounded-lg border border-border/40 overflow-auto overscroll-contain">
         <div className={cn("min-w-0", isMobile && "min-w-[500px]")}>
           {/* Day headers — sticky */}
-          <div className={cn("grid sticky top-0 z-10 bg-background border-b border-border/40", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}>
-            <div className="py-2 px-1" /> {/* time gutter */}
+          <div className={cn("grid sticky top-0 z-20 bg-background border-b border-border/40", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}>
+            <div className="py-2 px-1 sticky left-0 z-10 bg-background" /> {/* time gutter */}
             {days.map((day) => {
               const isToday = isSameDay(day, new Date());
               return (
@@ -972,7 +979,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 className={cn("grid border-b border-border/20", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}
               >
                 {/* Time label */}
-                <div className="py-2 px-1 text-[10px] text-muted-foreground font-medium text-right pr-2 tabular-nums border-r border-border/30">
+                <div className="py-2 px-1 text-[10px] text-muted-foreground font-medium text-right pr-2 tabular-nums border-r border-border/30 sticky left-0 z-10 bg-background">
                   {slot}
                 </div>
 
