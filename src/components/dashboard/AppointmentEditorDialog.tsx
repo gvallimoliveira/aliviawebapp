@@ -372,6 +372,7 @@ const AppointmentEditorDialog = ({
     }
   };
 
+  const isCommitment = formServiceType === "compromisso";
   const handleSave = async () => {
     if (!formName.trim()) return;
     if (!isCommitment && selectedPatientKey === "__new__" && !formEmail.trim()) { setEmailWarning(true); return; }
@@ -386,7 +387,7 @@ const AppointmentEditorDialog = ({
     const payload: AppointmentEditorPayload = {
       professional_id: effectiveProfId,
       patient_name: formName.trim(),
-      patient_email: formEmail.trim() || null,
+      patient_email: isCommitment ? null : formEmail.trim() || null,
       appointment_date: format(formDate, "yyyy-MM-dd"),
       appointment_time: formTime,
       duration_minutes: parseInt(formDuration) || 50,
