@@ -937,8 +937,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       <div className="h-[420px] rounded-lg border border-border/40 overflow-auto">
         <div className={cn("min-w-0", isMobile && "min-w-[500px]")}>
           {/* Day headers — sticky */}
-          <div className={cn("grid sticky top-0 z-10 bg-background border-b border-border/40", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}>
-            <div className="py-2 px-1" /> {/* time gutter */}
+          <div className={cn("grid sticky top-0 z-20 bg-background border-b border-border/40", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}>
+            <div className="py-2 px-1 sticky left-0 z-10 bg-background" /> {/* time gutter */}
             {days.map((day) => {
               const isToday = isSameDay(day, new Date());
               return (
@@ -972,7 +972,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 className={cn("grid border-b border-border/20", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}
               >
                 {/* Time label */}
-                <div className="py-2 px-1 text-[10px] text-muted-foreground font-medium text-right pr-2 tabular-nums border-r border-border/30">
+                <div className="py-2 px-1 text-[10px] text-muted-foreground font-medium text-right pr-2 tabular-nums border-r border-border/30 sticky left-0 z-10 bg-background">
                   {slot}
                 </div>
 
