@@ -275,6 +275,24 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const modalSessionRef = useRef(0);
   const gridScrollRef = useRef<HTMLDivElement | null>(null);
 
+  // Block iOS pinch / double-tap zoom while the schedule is open
+  useEffect(() => {
+    const prevent = (e: Event) => e.preventDefault();
+    document.addEventListener("gesturestart", prevent as EventListener, { passive: false } as any);
+    document.addEventListener("gesturechange", prevent as EventListener, { passive: false } as any);
+    // Reset any existing zoom by re-applying the viewport meta
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (meta) {
+      const c = meta.getAttribute("content") || "";
+      meta.setAttribute("content", c + ", user-scalable=no");
+      setTimeout(() => meta.setAttribute("content", c), 300);
+    }
+    return () => {
+      document.removeEventListener("gesturestart", prevent as EventListener);
+      document.removeEventListener("gesturechange", prevent as EventListener);
+    };
+  }, []);
+
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
   const isClinicOnlyMode = !professionalId && !!clinicId;
@@ -725,7 +743,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     const cardEl = e.currentTarget as HTMLElement;
     const startX = e.clientX;
     const startY = e.clientY;
-    const THRESHOLD = 6; // px before considered a drag (else click)
+    const THRESHOLD = 6; // px before considered a drag (else click) — mouse only
+    const isTouch = e.pointerType !== "mouse";
+    const LONG_PRESS_MS = 600;
     let dragging = false;
     let ghost: HTMLElement | null = null;
     let didMove = false;
@@ -838,13 +858,58 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       }
     };
 
+    if (isTouch) {
+      // Long-press: card only lifts after LONG_PRESS_MS without moving
+      const blockTouchScroll = (tev: TouchEvent) => { if (dragging) tev.preventDefault(); };
+      window.addEventListener("touchmove", blockTouchScroll, { passive: false });
+      let pressTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+        pressTimer = null;
+        beginDrag();
+        cardEl.style.transform = "scale(1.04)";
+        try { navigator.vibrate?.(15); } catch {}
+      }, LONG_PRESS_MS);
+      const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
+      const onTouchMove = (ev: PointerEvent) => {
+        if (!dragging) {
+          if (Math.hypot(ev.clientX - startX, ev.clientY - startY) > 8) {
+            cancelPress();
+            endAll();
+          }
+          return;
+        }
+        onMove(ev);
+      };
+      const onTouchUp = (ev: PointerEvent) => {
+        const wasPress = !!pressTimer;
+        cancelPress();
+        if (!dragging) {
+          endAll();
+          if (ev.type === "pointerup" && wasPress) openEdit(apt);
+          return;
+        }
+        endAll();
+        onUp(ev);
+      };
+      const endAll = () => {
+        window.removeEventListener("pointermove", onTouchMove);
+        window.removeEventListener("pointerup", onTouchUp);
+        window.removeEventListener("pointercancel", onTouchUp);
+        window.removeEventListener("touchmove", blockTouchScroll);
+        cardEl.style.transform = "";
+      };
+      window.addEventListener("pointermove", onTouchMove, { passive: false });
+      window.addEventListener("pointerup", onTouchUp);
+      window.addEventListener("pointercancel", onTouchUp);
+      return;
+    }
+
     window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 max-w-full min-w-0 overflow-x-hidden" style={{ touchAction: "pan-x pan-y" }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -938,16 +1003,16 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           </span>
         )}
 
-        {!isMobile && (
-          <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 ml-auto">
-            <GripVertical className="h-3 w-3" />
-            {isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule"}
-          </p>
-        )}
+        <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 ml-auto">
+          <GripVertical className="h-3 w-3" />
+          {isMobile
+            ? (isPt ? "Toque e segure um card para reagendar" : "Touch and hold a card to reschedule")
+            : (isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule")}
+        </p>
       </div>
 
       {/* Time-slot grid */}
-      <div ref={gridScrollRef} className="h-[420px] rounded-lg border border-border/40 overflow-auto overscroll-contain">
+      <div ref={gridScrollRef} style={{ touchAction: "pan-x pan-y" }} className="h-[420px] max-w-full rounded-lg border border-border/40 overflow-auto overscroll-contain">
         <div className={cn("min-w-0", isMobile && "min-w-[500px]")}>
           {/* Day headers — sticky */}
           <div className={cn("grid sticky top-0 z-20 bg-background border-b border-border/40", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}>
@@ -1142,7 +1207,8 @@ const AppointmentCard = ({
         apt.status === "cancelled" && "opacity-50",
         "h-full w-full min-w-0 overflow-hidden", isConcurrent ? "p-0.5" : "p-1"
       )}
-        style={{ touchAction: "none" }}
+        style={{ touchAction: "pan-x pan-y", WebkitTouchCallout: "none", WebkitUserSelect: "none" } as React.CSSProperties}
+      onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => onPointerDownCard(e, apt)}
     >
       {hasEvolution && evolution && (
