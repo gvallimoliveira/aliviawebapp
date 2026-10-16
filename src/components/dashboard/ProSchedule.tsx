@@ -275,6 +275,24 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const modalSessionRef = useRef(0);
   const gridScrollRef = useRef<HTMLDivElement | null>(null);
 
+  // Block iOS pinch / double-tap zoom while the schedule is open
+  useEffect(() => {
+    const prevent = (e: Event) => e.preventDefault();
+    document.addEventListener("gesturestart", prevent as EventListener, { passive: false } as any);
+    document.addEventListener("gesturechange", prevent as EventListener, { passive: false } as any);
+    // Reset any existing zoom by re-applying the viewport meta
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (meta) {
+      const c = meta.getAttribute("content") || "";
+      meta.setAttribute("content", c + ", user-scalable=no");
+      setTimeout(() => meta.setAttribute("content", c), 300);
+    }
+    return () => {
+      document.removeEventListener("gesturestart", prevent as EventListener);
+      document.removeEventListener("gesturechange", prevent as EventListener);
+    };
+  }, []);
+
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
   const isClinicOnlyMode = !professionalId && !!clinicId;
@@ -891,7 +909,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 max-w-full min-w-0 overflow-x-hidden" style={{ touchAction: "pan-x pan-y" }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -985,16 +1003,16 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           </span>
         )}
 
-        {!isMobile && (
-          <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 ml-auto">
-            <GripVertical className="h-3 w-3" />
-            {isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule"}
-          </p>
-        )}
+        <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 ml-auto">
+          <GripVertical className="h-3 w-3" />
+          {isMobile
+            ? (isPt ? "Toque e segure um card para reagendar" : "Touch and hold a card to reschedule")
+            : (isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule")}
+        </p>
       </div>
 
       {/* Time-slot grid */}
-      <div ref={gridScrollRef} className="h-[420px] rounded-lg border border-border/40 overflow-auto overscroll-contain">
+      <div ref={gridScrollRef} style={{ touchAction: "pan-x pan-y" }} className="h-[420px] max-w-full rounded-lg border border-border/40 overflow-auto overscroll-contain">
         <div className={cn("min-w-0", isMobile && "min-w-[500px]")}>
           {/* Day headers — sticky */}
           <div className={cn("grid sticky top-0 z-20 bg-background border-b border-border/40", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}>
