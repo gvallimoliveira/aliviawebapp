@@ -153,6 +153,7 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 const SERVICE_TYPE_COLORS: Record<string, string> = {
+  avaliacao: "border-l-4 border-l-red-500",
   fisioterapia: "border-l-4 border-l-teal-500",
   pilates: "border-l-4 border-l-purple-500",
   osteopatia: "border-l-4 border-l-orange-500",
@@ -161,6 +162,7 @@ const SERVICE_TYPE_COLORS: Record<string, string> = {
 };
 
 const SERVICE_TYPE_DOT: Record<string, string> = {
+  avaliacao: "bg-red-500",
   fisioterapia: "bg-teal-500",
   pilates: "bg-purple-500",
   osteopatia: "bg-orange-500",
@@ -169,6 +171,7 @@ const SERVICE_TYPE_DOT: Record<string, string> = {
 };
 
 const SERVICE_TYPE_LABELS: Record<string, Record<string, string>> = {
+  avaliacao: { pt: "Avaliação", en: "Assessment", es: "Evaluación" },
   fisioterapia: { pt: "Fisioterapia", en: "Physiotherapy", es: "Fisioterapia" },
   pilates: { pt: "Pilates", en: "Pilates", es: "Pilates" },
   osteopatia: { pt: "Osteopatia", en: "Osteopathy", es: "Osteopatía" },
