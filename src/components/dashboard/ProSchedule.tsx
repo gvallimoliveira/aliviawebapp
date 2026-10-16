@@ -1,3 +1,4 @@
+import { toMinutes, endTimeFrom, assignLanes } from "@/lib/appointmentTime";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -204,6 +205,7 @@ interface KnownPatient {
 
 // Default time range 07:00-20:00, expanded if appointments exist outside
 const DEFAULT_START_HOUR = 7;
+const HOUR_PX = 44;
 const DEFAULT_END_HOUR = 20;
 
 function getTimeRange(apts: Appointment[]): string[] {
@@ -212,7 +214,7 @@ function getTimeRange(apts: Appointment[]): string[] {
   for (const a of apts) {
     const h = parseInt(a.appointment_time?.slice(0, 2) || "9", 10);
     if (h < minH) minH = h;
-    const endH = h + Math.ceil(a.duration_minutes / 60);
+    const endH = Math.ceil(((toMinutes(a.appointment_time) ?? h * 60) + (a.duration_minutes || 50)) / 60) - 1;
     if (endH > maxH) maxH = endH;
   }
   const slots: string[] = [];
@@ -994,6 +996,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                     (a) => a.appointment_date === dateStr && isServiceVisible(a.service_type),
                   );
                   const cellApts = getAptsForSlot(filteredApts, slot);
+                  const lanes = assignLanes(filteredApts.map((a) => {
+                    const st = toMinutes(a.appointment_time) ?? 0;
+                    return { id: a.id, start: st, end: st + Math.max(15, a.duration_minutes || 50) };
+                  }));
                   const isOver = dropTarget?.date === dateStr && dropTarget?.hour === slot;
 
                   return (
@@ -1001,29 +1007,42 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                       key={`${dateStr}-${slot}`}
                       data-cell-date={dateStr}
                       data-cell-hour={slot}
+                      style={{ height: HOUR_PX }}
                       className={cn(
-                        "border-l border-border/20 min-h-[40px] min-w-0 overflow-hidden p-0.5 transition-colors cursor-pointer hover:bg-muted/30",
+                        "relative border-l border-border/20 min-w-0 transition-colors cursor-pointer hover:bg-muted/30",
                         isOver && "bg-primary/10 ring-1 ring-primary/40"
                       )}
                       onClick={() => {
                         if (cellApts.length === 0) openNew(day, slot);
                       }}
                     >
-                      {cellApts.length > 0 && (
-                        <div className={cn("flex gap-0.5", cellApts.length > 1 ? "flex-row" : "")}>
-                          {cellApts.map((apt) => (
+                      {cellApts.map((apt) => {
+                        const st = toMinutes(apt.appointment_time) ?? 0;
+                        const dur = Math.max(15, apt.duration_minutes || 50);
+                        const ln = lanes.get(apt.id) ?? { lane: 0, lanes: 1 };
+                        return (
+                          <div
+                            key={apt.id}
+                            className="absolute z-[5] flex"
+                            style={{
+                              top: ((st % 60) / 60) * HOUR_PX + 1,
+                              height: Math.max(18, (dur / 60) * HOUR_PX - 2),
+                              left: `calc(${(ln.lane / ln.lanes) * 100}% + 2px)`,
+                              width: `calc(${100 / ln.lanes}% - 4px)`,
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <AppointmentCard
-                              key={apt.id}
                               apt={apt}
-                              isConcurrent={cellApts.length > 1}
+                              isConcurrent={ln.lanes > 1}
                               onPointerDownCard={handleCardPointerDown}
                               isMobile={isMobile}
                               isPt={isPt}
                               evolution={apt.patient_email ? (evolutionMap.get(buildEvolutionKey(apt.patient_email, apt.appointment_date, apt.appointment_time)) || evolutionMap.get(buildEvolutionDayKey(apt.patient_email, apt.appointment_date))) : undefined}
                             />
-                          ))}
-                        </div>
-                      )}
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })}
@@ -1121,7 +1140,7 @@ const AppointmentCard = ({
         statusColor,
         serviceColor,
         apt.status === "cancelled" && "opacity-50",
-        isConcurrent ? "p-0.5 flex-1 min-w-0" : "p-1 min-w-0 w-full overflow-hidden"
+        "h-full w-full min-w-0 overflow-hidden", isConcurrent ? "p-0.5" : "p-1"
       )}
         style={{ touchAction: "none" }}
       onPointerDown={(e) => onPointerDownCard(e, apt)}
@@ -1164,7 +1183,7 @@ const AppointmentCard = ({
         </Popover>
       )}
       <div className="flex items-center gap-0.5">
-        <span className="text-[9px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}</span>
+        <span className="text-[9px] font-bold tabular-nums">{apt.appointment_time?.slice(0, 5)}{apt.duration_minutes > 60 && !isConcurrent ? `–${endTimeFrom(apt.appointment_time, apt.duration_minutes)}` : ""}</span>
         {!isConcurrent && !hasEvolution && <GripVertical className="h-2 w-2 ml-auto text-muted-foreground/40" />}
       </div>
       {isConcurrent ? (
@@ -1188,7 +1207,7 @@ const AppointmentCard = ({
         <TooltipContent side="top" className="max-w-[200px] space-y-1">
           <p className="text-xs font-semibold">{apt.patient_name}</p>
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Clock className="h-3 w-3" /> {apt.appointment_time?.slice(0, 5)} — {apt.duration_minutes}min
+            <Clock className="h-3 w-3" /> {apt.appointment_time?.slice(0, 5)}–{endTimeFrom(apt.appointment_time, apt.duration_minutes)}
           </div>
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
             <Icon className="h-3 w-3" /> {typeLabel}
