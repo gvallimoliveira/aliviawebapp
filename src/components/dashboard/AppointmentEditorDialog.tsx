@@ -1,3 +1,4 @@
+import { endTimeFrom, durationBetween, formatDuration } from "@/lib/appointmentTime";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -548,6 +549,16 @@ const AppointmentEditorDialog = ({
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{t("schedule.time")}</label>
                     <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
+                    <label className="text-xs font-medium text-muted-foreground mt-2 block">{isPtLocal ? "Fim" : "End"}</label>
+                    <Input
+                      type="time"
+                      value={endTimeFrom(formTime, parseInt(formDuration) || 0)}
+                      onChange={(e) => {
+                        const d = durationBetween(formTime, e.target.value);
+                        setFormDuration(d ? String(d) : "0");
+                      }}
+                      className="mt-1 text-xs h-9"
+                    />
                   </div>
                 </div>
 
@@ -734,7 +745,15 @@ const AppointmentEditorDialog = ({
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
-                    <Input type="number" value={formDuration} onChange={(e) => setFormDuration(e.target.value)} className="mt-1 text-xs h-9" min={15} max={180} />
+                    <p className={cn("mt-1 text-xs h-9 flex items-center", (parseInt(formDuration) || 0) <= 0 && "text-destructive")}>
+                      {(parseInt(formDuration) || 0) > 0 ? formatDuration(parseInt(formDuration)) : (isPtLocal ? "Fim deve ser após o início" : "End must be after start")}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {[[30, "30 min"], [50, "50 min"], [60, "1h"], [120, "2h"]].map(([m, l]) => (
+                        <button key={m} type="button" onClick={() => setFormDuration(String(m))} className="text-[10px] px-2 py-0.5 rounded-full border border-border hover:bg-muted">{l}</button>
+                      ))}
+                      <button type="button" onClick={() => { setFormTime("08:00"); setFormDuration("600"); }} className="text-[10px] px-2 py-0.5 rounded-full border border-border hover:bg-muted">{isPtLocal ? "Dia inteiro" : "All day"}</button>
+                    </div>
                   </div>
                 </div>
 
