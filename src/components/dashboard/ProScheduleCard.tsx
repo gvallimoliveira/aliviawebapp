@@ -31,6 +31,7 @@ const SERVICE_DOT: Record<string, string> = {
   osteopatia: "bg-orange-500",
   massoterapia: "bg-pink-500",
   rpg: "bg-indigo-500",
+  compromisso: "bg-muted-foreground",
 };
 
 const SERVICE_LABELS: Record<string, Record<string, string>> = {
@@ -40,6 +41,7 @@ const SERVICE_LABELS: Record<string, Record<string, string>> = {
   osteopatia: { pt: "Osteo", en: "Osteo", es: "Osteo" },
   massoterapia: { pt: "Massot.", en: "Massage", es: "Masot." },
   rpg: { pt: "RPG", en: "RPG", es: "RPG" },
+  compromisso: { pt: "Compromisso", en: "Commitment", es: "Compromiso" },
 };
 
 const SERVICE_BORDER: Record<string, string> = {
@@ -49,6 +51,7 @@ const SERVICE_BORDER: Record<string, string> = {
   osteopatia: "border-l-2 border-l-orange-500",
   massoterapia: "border-l-2 border-l-pink-500",
   rpg: "border-l-2 border-l-indigo-500",
+  compromisso: "border-l-2 border-l-muted-foreground",
 };
 
 const STATUS_BG: Record<string, string> = {
