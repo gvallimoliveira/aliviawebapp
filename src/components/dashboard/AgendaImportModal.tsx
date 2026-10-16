@@ -13,6 +13,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Upload, Loader2, CalendarIcon, Clock, Image as ImageIcon, CheckCircle2, XCircle, Sparkles,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { findBestPatient, looksLikeCommitment, normalizeName } from "@/lib/patientNameMatch";
+
+type RowMode = "link" | "create" | "none";
+interface PatientOpt { id: string; full_name: string }
 
 interface ParsedAppointment {
   patient_name: string;
@@ -22,6 +28,11 @@ interface ParsedAppointment {
   type: string;
   notes: string | null;
   selected?: boolean;
+  is_patient?: boolean;
+  mode: RowMode;
+  patientId?: string;
+  suggested?: boolean;
+  editedName: string;
 }
 
 interface AgendaImportModalProps {
@@ -43,6 +54,7 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<ParsedAppointment[]>([]);
   const [importing, setImporting] = useState(false);
+  const [patients, setPatients] = useState<PatientOpt[]>([]);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,7 +94,21 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      const parsed = (data.appointments || []).map((a: any) => ({ ...a, selected: true }));
+      let pts: PatientOpt[] = [];
+      {
+        let q = (supabase.from("patients" as any) as any).select("id, full_name");
+        q = clinicId ? q.eq("clinic_id", clinicId) : q.eq("professional_id", professionalId);
+        const { data: pdata } = await q.order("full_name").limit(2000);
+        pts = (pdata || []) as PatientOpt[];
+        setPatients(pts);
+      }
+      const parsed = (data.appointments || []).map((a: any) => {
+        const name = String(a.patient_name || "").trim();
+        const match = findBestPatient(name, pts);
+        const mode: RowMode = a.is_patient === false || (!match && looksLikeCommitment(name))
+          ? "none" : match ? "link" : "create";
+        return { ...a, patient_name: name, selected: true, mode, patientId: match?.id, suggested: !!match, editedName: name };
+      });
       if (parsed.length === 0) {
         toast({ title: lang === "pt" ? "Nenhum agendamento encontrado na imagem" : "No appointments found in image" });
       } else {
@@ -103,46 +129,71 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
     );
   };
 
+  // Mode/patient choice propagates to rows with the same read name.
+  const updateRow = (index: number, patch: Partial<ParsedAppointment>) => {
+    setAppointments((prev) => {
+      const key = normalizeName(prev[index].patient_name);
+      const shared: Partial<ParsedAppointment> = {};
+      if (patch.mode) shared.mode = patch.mode;
+      if (patch.patientId) shared.patientId = patch.patientId;
+      return prev.map((a, i) => {
+        if (i === index) return { ...a, ...patch, suggested: false };
+        if (Object.keys(shared).length && normalizeName(a.patient_name) === key) return { ...a, ...shared, suggested: false };
+        return a;
+      });
+    });
+  };
+
   const handleImport = async () => {
     const selected = appointments.filter((a) => a.selected);
     if (selected.length === 0) return;
+    if (selected.some((a) => a.mode === "link" && !a.patientId)) {
+      toast({ title: lang === "pt" ? "Escolha o paciente a vincular" : "Choose the patient to link", variant: "destructive" });
+      return;
+    }
 
     setImporting(true);
     setStep("importing");
 
     try {
-      const rows = selected.map((a) => ({
-        professional_id: professionalId,
-        clinic_id: clinicId || null,
-        patient_name: a.patient_name,
-        appointment_date: a.date,
-        appointment_time: a.time,
-        duration_minutes: a.duration_minutes || 50,
-        type: a.type || "in_person",
-        notes: a.notes ? `[Importado] ${a.notes}` : "[Importado de outro app]",
-        status: "scheduled",
-      }));
-
-      const { error } = await supabase.from("professional_appointments").insert(rows);
-      if (error) throw error;
-
-      // Create patient records for each imported patient (so they appear in patient list)
-      for (const a of selected) {
-        const patientRow: any = {
-          full_name: a.patient_name,
-          email: null,
-          cpf: null,
-          birth_date: null,
-          phone: null,
-          address: null,
-        };
-        if (clinicId) {
-          patientRow.clinic_id = clinicId;
-        } else {
-          patientRow.professional_id = professionalId;
-        }
-        await (supabase.from("patients" as any) as any).insert(patientRow).then(() => {});
+      // Create each new patient once (grouped by normalized name), skipping exact existing ones.
+      const created = new Map<string, string>();
+      for (const a of selected.filter((x) => x.mode === "create")) {
+        const name = (a.editedName || a.patient_name).trim();
+        const key = normalizeName(name);
+        if (!key || created.has(key)) continue;
+        const existing = patients.find((p) => normalizeName(p.full_name) === key);
+        if (existing) { created.set(key, existing.full_name); continue; }
+        const patientRow: any = { full_name: name };
+        if (clinicId) patientRow.clinic_id = clinicId; else patientRow.professional_id = professionalId;
+        const { error: pErr } = await (supabase.from("patients" as any) as any).insert(patientRow);
+        if (pErr) throw pErr;
+        created.set(key, name);
       }
+
+      const rows = selected.map((a) => {
+        const isCommitment = a.mode === "none";
+        const name = a.mode === "link"
+          ? patients.find((p) => p.id === a.patientId)?.full_name || a.patient_name
+          : a.mode === "create"
+            ? created.get(normalizeName(a.editedName || a.patient_name)) || a.editedName || a.patient_name
+            : a.editedName || a.patient_name;
+        return {
+          professional_id: professionalId,
+          clinic_id: clinicId || null,
+          patient_name: name,
+          appointment_date: a.date,
+          appointment_time: a.time,
+          duration_minutes: a.duration_minutes || 50,
+          type: a.type || "in_person",
+          notes: a.notes ? `[Importado] ${a.notes}` : isCommitment ? "[Compromisso importado]" : "[Importado de outro app]",
+          status: "scheduled",
+          external_import_data: { kind: isCommitment ? "commitment" : "patient", read_name: a.patient_name },
+        };
+      });
+
+      const { error } = await supabase.from("professional_appointments").insert(rows as any);
+      if (error) throw error;
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
 
       toast({
@@ -247,34 +298,66 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
               </Badge>
             </div>
 
-            <ScrollArea className="h-64">
-              <div className="space-y-2">
+            <ScrollArea className="h-80">
+              <div className="space-y-2 pr-2">
                 {appointments.map((a, i) => (
                   <Card key={i} className={`transition-colors ${a.selected ? "border-primary/30 bg-primary/5" : "opacity-60"}`}>
-                    <CardContent className="py-2.5 px-3 flex items-center gap-3">
-                      <Checkbox checked={a.selected} onCheckedChange={() => toggleAppointment(i)} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{a.patient_name}</p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <CalendarIcon className="h-3 w-3" />
-                            {a.date}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {a.time} ({a.duration_minutes}min)
-                          </span>
+                    <CardContent className="py-2.5 px-3 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <Checkbox checked={a.selected} onCheckedChange={() => toggleAppointment(i)} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{a.patient_name}</p>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                            <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" />{a.date}</span>
+                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{a.time} ({a.duration_minutes}min)</span>
+                          </div>
+                          {a.notes && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{a.notes}</p>}
                         </div>
-                        {a.notes && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{a.notes}</p>}
+                        <Badge variant="outline" className="text-[10px] shrink-0">
+                          {a.mode === "none" ? "Compromisso" : a.type === "video_call" ? "Vídeo" : a.type === "external" ? "Externo" : "Presencial"}
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className="text-[10px] shrink-0">
-                        {a.type === "video_call" ? "Vídeo" : a.type === "external" ? "Externo" : "Presencial"}
-                      </Badge>
+                      {a.selected && (
+                        <div className="space-y-1.5 pl-7">
+                          <Select value={a.mode} onValueChange={(v) => updateRow(i, { mode: v as RowMode })}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="link">Vincular a paciente existente</SelectItem>
+                              <SelectItem value="create">Criar novo paciente</SelectItem>
+                              <SelectItem value="none">Não é paciente (compromisso)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {a.mode === "link" && (
+                            <>
+                              <Select value={a.patientId || ""} onValueChange={(v) => updateRow(i, { patientId: v })}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Escolha o paciente" /></SelectTrigger>
+                                <SelectContent className="max-h-64">
+                                  {patients.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                              {a.suggested && a.patientId && (
+                                <p className="text-[10px] text-primary">Possível: {patients.find((p) => p.id === a.patientId)?.full_name} — confira</p>
+                              )}
+                            </>
+                          )}
+                          {a.mode !== "link" && (
+                            <Input className="h-8 text-xs" value={a.editedName}
+                              onChange={(e) => updateRow(i, { editedName: e.target.value })}
+                              placeholder={a.mode === "create" ? "Nome do paciente" : "Descrição do compromisso"} />
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
               </div>
             </ScrollArea>
+            <p className="text-xs text-muted-foreground">
+              {(() => {
+                const s = appointments.filter((a) => a.selected);
+                return `${s.filter((a) => a.mode === "link").length} vinculado(s) · ${s.filter((a) => a.mode === "create").length} novo(s) · ${s.filter((a) => a.mode === "none").length} compromisso(s)`;
+              })()}
+            </p>
           </div>
         )}
 
