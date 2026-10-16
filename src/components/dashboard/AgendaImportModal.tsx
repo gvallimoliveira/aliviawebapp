@@ -13,6 +13,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Upload, Loader2, CalendarIcon, Clock, Image as ImageIcon, CheckCircle2, XCircle, Sparkles,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { findBestPatient, looksLikeCommitment, normalizeName } from "@/lib/patientNameMatch";
+
+type RowMode = "link" | "create" | "none";
+interface PatientOpt { id: string; full_name: string }
 
 interface ParsedAppointment {
   patient_name: string;
@@ -22,6 +28,11 @@ interface ParsedAppointment {
   type: string;
   notes: string | null;
   selected?: boolean;
+  is_patient?: boolean;
+  mode: RowMode;
+  patientId?: string;
+  suggested?: boolean;
+  editedName: string;
 }
 
 interface AgendaImportModalProps {
