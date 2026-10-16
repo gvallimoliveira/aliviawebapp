@@ -725,7 +725,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     const cardEl = e.currentTarget as HTMLElement;
     const startX = e.clientX;
     const startY = e.clientY;
-    const THRESHOLD = 6; // px before considered a drag (else click)
+    const THRESHOLD = 6; // px before considered a drag (else click) — mouse only
+    const isTouch = e.pointerType !== "mouse";
+    const LONG_PRESS_MS = 600;
     let dragging = false;
     let ghost: HTMLElement | null = null;
     let didMove = false;
@@ -837,6 +839,51 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         cleanup();
       }
     };
+
+    if (isTouch) {
+      // Long-press: card only lifts after LONG_PRESS_MS without moving
+      const blockTouchScroll = (tev: TouchEvent) => { if (dragging) tev.preventDefault(); };
+      window.addEventListener("touchmove", blockTouchScroll, { passive: false });
+      let pressTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+        pressTimer = null;
+        beginDrag();
+        cardEl.style.transform = "scale(1.04)";
+        try { navigator.vibrate?.(15); } catch {}
+      }, LONG_PRESS_MS);
+      const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
+      const onTouchMove = (ev: PointerEvent) => {
+        if (!dragging) {
+          if (Math.hypot(ev.clientX - startX, ev.clientY - startY) > 8) {
+            cancelPress();
+            endAll();
+          }
+          return;
+        }
+        onMove(ev);
+      };
+      const onTouchUp = (ev: PointerEvent) => {
+        const wasPress = !!pressTimer;
+        cancelPress();
+        if (!dragging) {
+          endAll();
+          if (ev.type === "pointerup" && wasPress) openEdit(apt);
+          return;
+        }
+        endAll();
+        onUp(ev);
+      };
+      const endAll = () => {
+        window.removeEventListener("pointermove", onTouchMove);
+        window.removeEventListener("pointerup", onTouchUp);
+        window.removeEventListener("pointercancel", onTouchUp);
+        window.removeEventListener("touchmove", blockTouchScroll);
+        cardEl.style.transform = "";
+      };
+      window.addEventListener("pointermove", onTouchMove, { passive: false });
+      window.addEventListener("pointerup", onTouchUp);
+      window.addEventListener("pointercancel", onTouchUp);
+      return;
+    }
 
     window.addEventListener("pointermove", onMove, { passive: false });
     window.addEventListener("pointerup", onUp);
@@ -1142,7 +1189,8 @@ const AppointmentCard = ({
         apt.status === "cancelled" && "opacity-50",
         "h-full w-full min-w-0 overflow-hidden", isConcurrent ? "p-0.5" : "p-1"
       )}
-        style={{ touchAction: "none" }}
+        style={{ touchAction: "pan-x pan-y", WebkitTouchCallout: "none", WebkitUserSelect: "none" } as React.CSSProperties}
+      onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => onPointerDownCard(e, apt)}
     >
       {hasEvolution && evolution && (
