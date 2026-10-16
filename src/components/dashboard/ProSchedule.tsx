@@ -159,6 +159,7 @@ const SERVICE_TYPE_COLORS: Record<string, string> = {
   osteopatia: "border-l-4 border-l-orange-500",
   massoterapia: "border-l-4 border-l-pink-500",
   rpg: "border-l-4 border-l-indigo-500",
+  compromisso: "border-l-4 border-l-muted-foreground opacity-80",
 };
 
 const SERVICE_TYPE_DOT: Record<string, string> = {
@@ -168,6 +169,7 @@ const SERVICE_TYPE_DOT: Record<string, string> = {
   osteopatia: "bg-orange-500",
   massoterapia: "bg-pink-500",
   rpg: "bg-indigo-500",
+  compromisso: "bg-muted-foreground",
 };
 
 const SERVICE_TYPE_LABELS: Record<string, Record<string, string>> = {
@@ -177,6 +179,7 @@ const SERVICE_TYPE_LABELS: Record<string, Record<string, string>> = {
   osteopatia: { pt: "Osteopatia", en: "Osteopathy", es: "Osteopatía" },
   massoterapia: { pt: "Massoterapia", en: "Massage Therapy", es: "Masoterapia" },
   rpg: { pt: "RPG", en: "RPG", es: "RPG" },
+  compromisso: { pt: "Compromisso", en: "Commitment", es: "Compromiso" },
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -548,6 +551,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         return true;
       }
 
+      const isCommitmentPayload = payload.service_type === "compromisso";
       const trimmedEmail = (payload.patient_email || "").trim();
       const patientRow: any = {
         full_name: payload.patient_name,
@@ -563,7 +567,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       if (isEdit && editId) {
         await (supabase.from("professional_appointments" as any) as any)
           .update(payload).eq("id", editId);
-        if (trimmedEmail || payload.patient_name) {
+        if (!isCommitmentPayload && (trimmedEmail || payload.patient_name)) {
           let matchQuery = (supabase.from("patients" as any) as any).select("id");
           if (clinicId) matchQuery = matchQuery.eq("clinic_id", clinicId);
           else if (effectiveProfId) matchQuery = matchQuery.eq("professional_id", effectiveProfId);
@@ -579,7 +583,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         }
       } else {
         await (supabase.from("professional_appointments" as any) as any).insert(payload);
-        if (extras.selectedPatientKey === "__new__" && payload.patient_name && (clinicId || effectiveProfId)) {
+        if (!isCommitmentPayload && extras.selectedPatientKey === "__new__" && payload.patient_name && (clinicId || effectiveProfId)) {
           // Cadastra o paciente na tabela `patients` para aparecer na aba Profissional.
           // NÃO cria mais um assessment placeholder com status "completed" — isso disparava
           // o toast de "Avaliação concluída" e fazia o card mostrar uma avaliação fantasma.

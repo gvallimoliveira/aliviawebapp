@@ -372,9 +372,10 @@ const AppointmentEditorDialog = ({
     }
   };
 
+  const isCommitment = formServiceType === "compromisso";
   const handleSave = async () => {
     if (!formName.trim()) return;
-    if (selectedPatientKey === "__new__" && !formEmail.trim()) { setEmailWarning(true); return; }
+    if (!isCommitment && selectedPatientKey === "__new__" && !formEmail.trim()) { setEmailWarning(true); return; }
     // professional is optional now — clinic owner/admin/secretary can schedule without assigning a therapist
     const rawProfId = (clinicId && formProfessionalId) ? formProfessionalId : (professionalId || formProfessionalId);
     const effectiveProfId = rawProfId && rawProfId !== "__none__" ? rawProfId : null;
@@ -386,7 +387,7 @@ const AppointmentEditorDialog = ({
     const payload: AppointmentEditorPayload = {
       professional_id: effectiveProfId,
       patient_name: formName.trim(),
-      patient_email: formEmail.trim() || null,
+      patient_email: isCommitment ? null : formEmail.trim() || null,
       appointment_date: format(formDate, "yyyy-MM-dd"),
       appointment_time: formTime,
       duration_minutes: parseInt(formDuration) || 50,
@@ -581,6 +582,21 @@ const AppointmentEditorDialog = ({
                   </div>
                 )}
 
+                {isCommitment ? (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {isPt ? "Descrição do compromisso" : "Commitment description"} *
+                    </label>
+                    <Input
+                      value={formName} onChange={(e) => setFormName(e.target.value)}
+                      placeholder={isPt ? "Ex.: Reunião de equipe" : "e.g. Team meeting"}
+                      className="mt-1 text-xs h-9"
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      {isPt ? "Entra só na agenda, sem cadastro de paciente." : "Calendar only — no patient record is created."}
+                    </p>
+                  </div>
+                ) : (<>
                 <div className="relative" ref={patientPickerContainerRef}>
                   <label className="text-xs font-medium text-muted-foreground">{t("schedule.select_patient")}</label>
                   <Button
@@ -697,6 +713,7 @@ const AppointmentEditorDialog = ({
                     </div>
                   </>
                 )}
+                </>)}
 
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
