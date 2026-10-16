@@ -263,7 +263,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
 
   // Há notas de prontidão preenchidas que ainda não foram enviadas?
   const checkinPending = () =>
-    !checkinDone && (scalesTouched || !!restingHr || !!peakHr || !!spo2 || !!note?.trim());
+    !checkinDone && (scalesTouched || !!restingHr || !!note?.trim());
   // Há uma sessão (carga) preenchida que ainda não foi enviada?
   const srpePending = () => !srpeDone && Number(duration) > 0;
 
@@ -273,17 +273,13 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
     if (hrNum !== null && (!Number.isFinite(hrNum) || hrNum < 25 || hrNum > 140)) {
       return fail("FC ao acordar deve ficar entre 25 e 140 bpm.");
     }
-    const peakNum = peakHr ? Number(peakHr) : null;
-    const spoNum = spo2 ? Number(spo2) : null;
-    if (peakNum !== null && (peakNum < 40 || peakNum > 240)) return fail("FC no esforço deve ficar entre 40 e 240 bpm.");
-    if (spoNum !== null && (spoNum < 70 || spoNum > 100)) return fail("SpO₂ deve ficar entre 70 e 100%.");
-    if (Object.keys(values).length === 0 && hrNum === null && peakNum === null && spoNum === null) {
+    if (Object.keys(values).length === 0 && hrNum === null) {
       return fail("Responda pelo menos uma escala.");
     }
     if (!opts.silent) setErrorMsg("");
     setSavingCheckin(true);
     const { data, error } = await supabase.functions.invoke("periodization-checkin", {
-      body: { action: "submit_checkin", token, values: { ...values, resting_hr: hrNum, peak_hr: peakNum, spo2: spoNum, note } },
+      body: { action: "submit_checkin", token, values: { ...values, resting_hr: hrNum, note } },
     });
     setSavingCheckin(false);
     if (error || !data?.ok) return fail("Não foi possível enviar agora. Tente novamente.");
@@ -349,6 +345,10 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
     }
     const min = Number(duration);
     if (!Number.isFinite(min) || min <= 0) { if (!opts.silent) setErrorMsg("Informe a duração da sessão em minutos."); return false; }
+    const peakNum = peakHr ? Number(peakHr) : null;
+    const spoNum = spo2 ? Number(spo2) : null;
+    if (peakNum !== null && (peakNum < 40 || peakNum > 240)) { if (!opts.silent) setErrorMsg("FC no treino deve ficar entre 40 e 240 bpm."); return false; }
+    if (spoNum !== null && (spoNum < 70 || spoNum > 100)) { if (!opts.silent) setErrorMsg("SpO₂ deve ficar entre 70 e 100%."); return false; }
 
     if (!opts.silent) {
       setErrorMsg("");
@@ -366,6 +366,9 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
           duration_min: min,
           rpe,
           notes: srpeNotes,
+          // Coração no treino: FC mais alta e SpO₂ medidos nesta sessão.
+          hr_max: peakNum,
+          spo2_min: spoNum,
           // Vínculo direto com a sessão planejada, quando o paciente confirmou uma.
           session_id: freeMode ? null : selectedSessionId,
         },
@@ -377,6 +380,8 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
     setDuration("");
     setSrpeNotes("");
     setRpe(5);
+    setPeakHr("");
+    setSpo2("");
     setSelectedSessionId(null);
     setSessionDate("");
     // Recarrega os alvos para marcar a sessão como já relatada.
@@ -508,29 +513,6 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           />
                           <span className="text-xs text-muted-foreground">bpm</span>
                         </div>
-                      </div>
-                      <div className="space-y-1.5 rounded-xl border border-border p-3">
-                        <p className="text-sm font-medium text-foreground">Coração no treino (opcional)</p>
-                        {(info as any)?.hr_ceiling ? (
-                          <p className="text-[11px] text-foreground">
-                            Seu teto de batimentos: <strong>{(info as any).hr_ceiling} bpm</strong>. Se tiver monitor cardíaco com alarme, configure o aviso nesse valor. Passou dele, reduza o ritmo.
-                          </p>
-                        ) : null}
-                        <p className="text-[11px] text-muted-foreground">
-                          Sem monitor cardíaco (cinta, relógio ou pulseira)? Use um oxímetro de dedo: meça em repouso, ao fim da série ou bloco e após 2–3 min de recuperação.
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Input type="number" inputMode="numeric" value={peakHr} onChange={(e) => setPeakHr(e.target.value)} placeholder="FC mais alta" className="w-32" aria-label="FC mais alta no treino" />
-                          <span className="text-xs text-muted-foreground">bpm</span>
-                          <Input type="number" inputMode="numeric" value={spo2} onChange={(e) => setSpo2(e.target.value)} placeholder="SpO₂" className="w-24" aria-label="SpO2" />
-                          <span className="text-xs text-muted-foreground">%</span>
-                        </div>
-                        {peakHr && (info as any)?.hr_ceiling && Number(peakHr) > (info as any).hr_ceiling && (
-                          <p className="text-[11px] text-amber-700 dark:text-amber-400">Acima do seu teto. Seu fisioterapeuta será avisado.</p>
-                        )}
-                        {spo2 && Number(spo2) < 92 && (
-                          <p className="text-[11px] text-amber-700 dark:text-amber-400">Oxigenação abaixo de 92%. Descanse e avise seu fisioterapeuta; se tiver falta de ar ou dor no peito, procure atendimento.</p>
-                        )}
                       </div>
                       <Textarea
                         value={note}
@@ -836,6 +818,30 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           Carga desta sessão: <strong>{trainingLoad(Number(duration), rpe)}</strong> unidades.
                         </p>
                       )}
+
+                      <div className="space-y-1.5 rounded-xl border border-border p-3">
+                        <p className="text-sm font-medium text-foreground">Coração no treino (opcional)</p>
+                        {(info as any)?.hr_ceiling ? (
+                          <p className="text-[11px] text-foreground">
+                            Seu teto de batimentos: <strong>{(info as any).hr_ceiling} bpm</strong>. Se tiver monitor cardíaco com alarme, configure o aviso nesse valor. Passou dele, reduza o ritmo.
+                          </p>
+                        ) : null}
+                        <p className="text-[11px] text-muted-foreground">
+                          Sem monitor cardíaco (cinta, relógio ou pulseira)? Use um oxímetro de dedo: meça em repouso, ao fim da série ou bloco e após 2–3 min de recuperação.
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Input type="number" inputMode="numeric" value={peakHr} onChange={(e) => setPeakHr(e.target.value)} placeholder="FC mais alta" className="w-32" aria-label="FC mais alta no treino" />
+                          <span className="text-xs text-muted-foreground">bpm</span>
+                          <Input type="number" inputMode="numeric" value={spo2} onChange={(e) => setSpo2(e.target.value)} placeholder="SpO₂" className="w-24" aria-label="SpO2" />
+                          <span className="text-xs text-muted-foreground">%</span>
+                        </div>
+                        {peakHr && (info as any)?.hr_ceiling && Number(peakHr) > (info as any).hr_ceiling && (
+                          <p className="text-[11px] text-amber-700 dark:text-amber-400">Acima do seu teto. Seu fisioterapeuta será avisado.</p>
+                        )}
+                        {spo2 && Number(spo2) < 92 && (
+                          <p className="text-[11px] text-amber-700 dark:text-amber-400">Oxigenação abaixo de 92%. Descanse e avise seu fisioterapeuta; se tiver falta de ar ou dor no peito, procure atendimento.</p>
+                        )}
+                      </div>
 
                       <Textarea
                         value={srpeNotes}
