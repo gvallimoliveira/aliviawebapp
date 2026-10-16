@@ -54,6 +54,7 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<ParsedAppointment[]>([]);
   const [importing, setImporting] = useState(false);
+  const [patients, setPatients] = useState<PatientOpt[]>([]);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -128,15 +129,18 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
     );
   };
 
-  // Same read name across rows shares the decision.
+  // Mode/patient choice propagates to rows with the same read name.
   const updateRow = (index: number, patch: Partial<ParsedAppointment>) => {
     setAppointments((prev) => {
       const key = normalizeName(prev[index].patient_name);
-      return prev.map((a, i) =>
-        i === index || ("mode" in patch || "patientId" in patch ? normalizeName(a.patient_name) === key : false)
-          ? { ...a, ...(i === index ? patch : { mode: patch.mode ?? a.mode, patientId: patch.patientId ?? a.patientId, suggested: false }), ...(i === index ? { suggested: false } : {}) }
-          : a
-      );
+      const shared: Partial<ParsedAppointment> = {};
+      if (patch.mode) shared.mode = patch.mode;
+      if (patch.patientId) shared.patientId = patch.patientId;
+      return prev.map((a, i) => {
+        if (i === index) return { ...a, ...patch, suggested: false };
+        if (Object.keys(shared).length && normalizeName(a.patient_name) === key) return { ...a, ...shared, suggested: false };
+        return a;
+      });
     });
   };
 
@@ -294,34 +298,66 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
               </Badge>
             </div>
 
-            <ScrollArea className="h-64">
-              <div className="space-y-2">
+            <ScrollArea className="h-80">
+              <div className="space-y-2 pr-2">
                 {appointments.map((a, i) => (
                   <Card key={i} className={`transition-colors ${a.selected ? "border-primary/30 bg-primary/5" : "opacity-60"}`}>
-                    <CardContent className="py-2.5 px-3 flex items-center gap-3">
-                      <Checkbox checked={a.selected} onCheckedChange={() => toggleAppointment(i)} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{a.patient_name}</p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <CalendarIcon className="h-3 w-3" />
-                            {a.date}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {a.time} ({a.duration_minutes}min)
-                          </span>
+                    <CardContent className="py-2.5 px-3 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <Checkbox checked={a.selected} onCheckedChange={() => toggleAppointment(i)} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{a.patient_name}</p>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                            <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" />{a.date}</span>
+                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{a.time} ({a.duration_minutes}min)</span>
+                          </div>
+                          {a.notes && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{a.notes}</p>}
                         </div>
-                        {a.notes && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{a.notes}</p>}
+                        <Badge variant="outline" className="text-[10px] shrink-0">
+                          {a.mode === "none" ? "Compromisso" : a.type === "video_call" ? "Vídeo" : a.type === "external" ? "Externo" : "Presencial"}
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className="text-[10px] shrink-0">
-                        {a.type === "video_call" ? "Vídeo" : a.type === "external" ? "Externo" : "Presencial"}
-                      </Badge>
+                      {a.selected && (
+                        <div className="space-y-1.5 pl-7">
+                          <Select value={a.mode} onValueChange={(v) => updateRow(i, { mode: v as RowMode })}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="link">Vincular a paciente existente</SelectItem>
+                              <SelectItem value="create">Criar novo paciente</SelectItem>
+                              <SelectItem value="none">Não é paciente (compromisso)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {a.mode === "link" && (
+                            <>
+                              <Select value={a.patientId || ""} onValueChange={(v) => updateRow(i, { patientId: v })}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Escolha o paciente" /></SelectTrigger>
+                                <SelectContent className="max-h-64">
+                                  {patients.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                              {a.suggested && a.patientId && (
+                                <p className="text-[10px] text-primary">Possível: {patients.find((p) => p.id === a.patientId)?.full_name} — confira</p>
+                              )}
+                            </>
+                          )}
+                          {a.mode !== "link" && (
+                            <Input className="h-8 text-xs" value={a.editedName}
+                              onChange={(e) => updateRow(i, { editedName: e.target.value })}
+                              placeholder={a.mode === "create" ? "Nome do paciente" : "Descrição do compromisso"} />
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
               </div>
             </ScrollArea>
+            <p className="text-xs text-muted-foreground">
+              {(() => {
+                const s = appointments.filter((a) => a.selected);
+                return `${s.filter((a) => a.mode === "link").length} vinculado(s) · ${s.filter((a) => a.mode === "create").length} novo(s) · ${s.filter((a) => a.mode === "none").length} compromisso(s)`;
+              })()}
+            </p>
           </div>
         )}
 

@@ -49,6 +49,7 @@ Return a JSON array of appointments. Each appointment must have:
 - "duration_minutes": number (estimate if not shown, default 50)
 - "type": "in_person" | "video_call" | "external" (infer from context)
 - "notes": string | null (any extra info visible)
+- "is_patient": boolean (false for personal commitments, meetings, lunch, blocks, courses; true when it looks like a patient session)
 
 Rules:
 - If year is not visible, assume current year (2026)
