@@ -1,3 +1,4 @@
+import { endTimeFrom, durationBetween } from "@/lib/appointmentTime";
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -107,7 +108,9 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
         const match = findBestPatient(name, pts);
         const mode: RowMode = a.is_patient === false || (!match && looksLikeCommitment(name))
           ? "none" : match ? "link" : "create";
-        return { ...a, patient_name: name, selected: true, mode, patientId: match?.id, suggested: !!match, editedName: name };
+        const fromEnd = a.end_time ? durationBetween(a.time, a.end_time) : null;
+        const duration_minutes = fromEnd ?? (Number(a.duration_minutes) > 0 ? Number(a.duration_minutes) : 50);
+        return { ...a, duration_minutes, patient_name: name, selected: true, mode, patientId: match?.id, suggested: !!match, editedName: name };
       });
       if (parsed.length === 0) {
         toast({ title: lang === "pt" ? "Nenhum agendamento encontrado na imagem" : "No appointments found in image" });
@@ -310,7 +313,12 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
                           <p className="text-sm font-medium truncate">{a.patient_name}</p>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                             <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" />{a.date}</span>
-                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{a.time} ({a.duration_minutes}min)</span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              <input type="time" aria-label={lang === "pt" ? "Início" : "Start"} value={a.time} onChange={(e) => e.target.value && updateRow(i, { time: e.target.value })} className="bg-transparent border border-border rounded px-1 h-6 text-xs" />
+                              –
+                              <input type="time" aria-label={lang === "pt" ? "Fim" : "End"} value={endTimeFrom(a.time, a.duration_minutes)} onChange={(e) => { const d = durationBetween(a.time, e.target.value); if (d) updateRow(i, { duration_minutes: d }); }} className="bg-transparent border border-border rounded px-1 h-6 text-xs" />
+                            </span>
                           </div>
                           {a.notes && <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{a.notes}</p>}
                         </div>

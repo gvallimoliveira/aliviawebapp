@@ -1,3 +1,4 @@
+import { endTimeFrom } from "@/lib/appointmentTime";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -185,7 +186,7 @@ const ProScheduleCard = ({ professionalId, onNavigateToSchedule }: ProScheduleCa
                       <div className="flex items-center gap-1.5 shrink-0">
                         <Clock className="h-3 w-3 text-muted-foreground" />
                         <span className="text-xs font-semibold text-foreground tabular-nums">
-                          {apt.appointment_time?.slice(0, 5)}
+                          {apt.appointment_time?.slice(0, 5)}{apt.duration_minutes ? `–${endTimeFrom(apt.appointment_time, apt.duration_minutes)}` : ""}
                         </span>
                       </div>
                       <span className="text-xs text-foreground truncate flex-1">{apt.patient_name}</span>

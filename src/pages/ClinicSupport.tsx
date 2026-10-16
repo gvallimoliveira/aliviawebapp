@@ -61,7 +61,7 @@ const categories: ToolCategory[] = [
         key: "agenda_import",
         icon: Camera,
         title: "Importar agenda por foto (IA)",
-        desc: "Tire uma foto ou screenshot da sua agenda atual (papel, Trello, planilha, outra plataforma) e a IA OCR cria todos os agendamentos automaticamente. Migração completa em menos de 1 minuto.",
+        desc: "Tire uma foto ou screenshot da sua agenda atual (papel, Trello, planilha, outra plataforma) e a IA OCR cria todos os agendamentos automaticamente. Horário de início e fim são lidos e editáveis antes de importar — compromissos longos (ex.: curso de 8h às 17h) ocupam o período inteiro na agenda.",
       },
     ],
   },
