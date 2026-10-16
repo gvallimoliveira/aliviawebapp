@@ -46,7 +46,8 @@ Return a JSON array of appointments. Each appointment must have:
 - "patient_name": string (the patient or event name)
 - "date": string in YYYY-MM-DD format
 - "time": string in HH:MM format (24h)
-- "duration_minutes": number (estimate if not shown, default 50)
+- "end_time": string HH:MM (24h) | null — the end time when visible (e.g. "08:00 - 17:00" → "17:00"), or derived from the block's visual height
+- "duration_minutes": number (end minus start when end is known; otherwise estimate, default 50). All-day events or courses can last many hours.
 - "type": "in_person" | "video_call" | "external" (infer from context)
 - "notes": string | null (any extra info visible)
 - "is_patient": boolean (false for personal commitments, meetings, lunch, blocks, courses; true when it looks like a patient session)
