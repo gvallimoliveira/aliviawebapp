@@ -375,6 +375,10 @@ const AppointmentEditorDialog = ({
 
   const isCommitment = formServiceType === "compromisso";
   const handleSave = async () => {
+    if ((parseInt(formDuration) || 0) <= 0) {
+      toast({ title: isPt ? "O fim deve ser depois do início" : "End must be after start", variant: "destructive" });
+      return;
+    }
     if (!formName.trim()) return;
     if (!isCommitment && selectedPatientKey === "__new__" && !formEmail.trim()) { setEmailWarning(true); return; }
     // professional is optional now — clinic owner/admin/secretary can schedule without assigning a therapist
@@ -549,7 +553,7 @@ const AppointmentEditorDialog = ({
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{t("schedule.time")}</label>
                     <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} className="mt-1 text-xs h-9" />
-                    <label className="text-xs font-medium text-muted-foreground mt-2 block">{isPtLocal ? "Fim" : "End"}</label>
+                    <label className="text-xs font-medium text-muted-foreground mt-2 block">{isPt ? "Fim" : "End"}</label>
                     <Input
                       type="time"
                       value={endTimeFrom(formTime, parseInt(formDuration) || 0)}
@@ -746,13 +750,13 @@ const AppointmentEditorDialog = ({
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
                     <p className={cn("mt-1 text-xs h-9 flex items-center", (parseInt(formDuration) || 0) <= 0 && "text-destructive")}>
-                      {(parseInt(formDuration) || 0) > 0 ? formatDuration(parseInt(formDuration)) : (isPtLocal ? "Fim deve ser após o início" : "End must be after start")}
+                      {(parseInt(formDuration) || 0) > 0 ? formatDuration(parseInt(formDuration)) : (isPt ? "Fim deve ser após o início" : "End must be after start")}
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {[[30, "30 min"], [50, "50 min"], [60, "1h"], [120, "2h"]].map(([m, l]) => (
                         <button key={m} type="button" onClick={() => setFormDuration(String(m))} className="text-[10px] px-2 py-0.5 rounded-full border border-border hover:bg-muted">{l}</button>
                       ))}
-                      <button type="button" onClick={() => { setFormTime("08:00"); setFormDuration("600"); }} className="text-[10px] px-2 py-0.5 rounded-full border border-border hover:bg-muted">{isPtLocal ? "Dia inteiro" : "All day"}</button>
+                      <button type="button" onClick={() => { setFormTime("08:00"); setFormDuration("600"); }} className="text-[10px] px-2 py-0.5 rounded-full border border-border hover:bg-muted">{isPt ? "Dia inteiro" : "All day"}</button>
                     </div>
                   </div>
                 </div>
