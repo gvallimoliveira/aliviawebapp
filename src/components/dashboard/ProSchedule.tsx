@@ -920,7 +920,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="text-sm font-semibold text-foreground hover:text-primary transition-colors px-1 py-0.5 rounded-md hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
+                className="text-sm font-semibold text-foreground whitespace-nowrap hover:text-primary transition-colors px-1 py-0.5 rounded-md hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
                 aria-label={isPt ? "Selecionar data" : "Pick date"}
               >
                 {format(days[0], "dd MMM", { locale })} — {format(days[days.length - 1], "dd MMM yyyy", { locale })}
