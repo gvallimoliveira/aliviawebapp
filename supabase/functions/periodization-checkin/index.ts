@@ -326,6 +326,14 @@ serve(async (req) => {
 
     if (action === "submit_checkin") {
       const v = body.values ?? {};
+      // Coração no treino agora é registrado junto da sessão; aqui preservamos
+      // o que já existe do dia em vez de apagar com null.
+      const { data: existingCheckin } = await supabase
+        .from("readiness_checkins")
+        .select("peak_hr, spo2")
+        .eq("patient_id", patient.id)
+        .eq("checkin_date", todayISO())
+        .maybeSingle();
       const payload = {
         patient_id: patient.id,
         plan_id: link.plan_id,
@@ -342,11 +350,13 @@ serve(async (req) => {
         })(),
         peak_hr: (() => {
           const n = Math.round(Number(v.peak_hr));
-          return v.peak_hr != null && Number.isFinite(n) && n >= 40 && n <= 240 ? n : null;
+          if (v.peak_hr != null && Number.isFinite(n) && n >= 40 && n <= 240) return n;
+          return existingCheckin?.peak_hr ?? null;
         })(),
         spo2: (() => {
           const n = Math.round(Number(v.spo2));
-          return v.spo2 != null && Number.isFinite(n) && n >= 70 && n <= 100 ? n : null;
+          if (v.spo2 != null && Number.isFinite(n) && n >= 70 && n <= 100) return n;
+          return existingCheckin?.spo2 ?? null;
         })(),
         note: typeof v.note === "string" ? v.note.slice(0, 1000) : null,
         source: link.audience === "coach" ? "coach" : "patient",
@@ -382,6 +392,18 @@ serve(async (req) => {
       const rpe = Number(e.rpe);
       if (!Number.isFinite(duration) || duration <= 0 || duration > 600) return json({ error: "invalid_duration" }, 400);
       if (!Number.isFinite(rpe) || rpe < 0 || rpe > 10) return json({ error: "invalid_rpe" }, 400);
+      // Coração no treino: FC mais alta e SpO₂ medidos durante a sessão.
+      const hrMax = (() => {
+        if (e.hr_max == null) return null;
+        const n = Math.round(Number(e.hr_max));
+        return Number.isFinite(n) && n >= 40 && n <= 240 ? n : null;
+      })();
+      const spo2Min = (() => {
+        if (e.spo2_min == null) return null;
+        const n = Math.round(Number(e.spo2_min));
+        return Number.isFinite(n) && n >= 70 && n <= 100 ? n : null;
+      })();
+      const monitorData = hrMax !== null || spo2Min !== null;
       let track = ["physio", "gym", "sport", "cardio"].includes(e.track) ? e.track : "physio";
       const sessionDate = typeof e.session_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.session_date)
         ? e.session_date
@@ -417,13 +439,16 @@ serve(async (req) => {
       // Sessão já lançada pelo profissional com monitor: junta a percepção do
       // paciente na mesma sessão, sem contar duas vezes na carga.
       const { data: proRow } = await supabase.from("srpe_entries")
-        .select("id, notes").eq("patient_id", patient.id).eq("session_date", sessionDate)
+        .select("id, notes, hr_max, spo2_min, monitor_source").eq("patient_id", patient.id).eq("session_date", sessionDate)
         .eq("track", track).eq("source", "professional").limit(1).maybeSingle();
       if (proRow) {
         const pn = typeof e.notes === "string" && e.notes.trim() ? `Paciente: ${e.notes.slice(0, 900)}` : null;
         await supabase.from("srpe_entries").update({
           patient_rpe: rpe,
           notes: pn ? [proRow.notes, pn].filter(Boolean).join("\n") : proRow.notes,
+          hr_max: proRow.hr_max ?? hrMax,
+          spo2_min: proRow.spo2_min ?? spo2Min,
+          monitor_source: proRow.monitor_source || (monitorData ? "manual" : null),
         }).eq("id", proRow.id);
         await supabase.from("periodization_links").update({ last_used_at: new Date().toISOString() }).eq("id", link.id);
         return json({ ok: true, merged: true });
@@ -431,12 +456,15 @@ serve(async (req) => {
 
       // Uma sessão por data e frente: reenvio do paciente atualiza o registro.
       const { data: ownRow } = await supabase.from("srpe_entries")
-        .select("id").eq("patient_id", patient.id).eq("session_date", sessionDate)
+        .select("id, hr_max, spo2_min, monitor_source").eq("patient_id", patient.id).eq("session_date", sessionDate)
         .eq("track", track).eq("source", "patient").limit(1).maybeSingle();
       if (ownRow) {
         await supabase.from("srpe_entries").update({
           duration_min: Math.round(duration), rpe, session_id: linkedId,
           notes: typeof e.notes === "string" ? e.notes.slice(0, 1000) : null,
+          hr_max: hrMax ?? ownRow.hr_max,
+          spo2_min: spo2Min ?? ownRow.spo2_min,
+          monitor_source: ownRow.monitor_source || (monitorData ? "manual" : null),
         }).eq("id", ownRow.id);
         await supabase.from("periodization_links").update({ last_used_at: new Date().toISOString() }).eq("id", link.id);
         return json({ ok: true, updated: true });
@@ -452,6 +480,9 @@ serve(async (req) => {
         duration_min: Math.round(duration),
         rpe,
         notes: typeof e.notes === "string" ? e.notes.slice(0, 1000) : null,
+        hr_max: hrMax,
+        spo2_min: spo2Min,
+        monitor_source: monitorData ? "manual" : null,
         source: "patient",
       });
       if (error) {
