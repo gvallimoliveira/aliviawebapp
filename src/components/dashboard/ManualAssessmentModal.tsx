@@ -699,11 +699,59 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     functionalTests, romTable, strengthTable, clinicalImpression, diagnosisText, treatmentText,
     aiClinicalImpression,
   };
+  // Rascunho só existe quando há conteúdo real digitado/selecionado.
+  // Campos no estado inicial (step, painScore 5, tabelas vazias) NÃO contam —
+  // evita o banner "rascunho na nuvem" para avaliações nunca preenchidas.
+  const isDraftEmpty = (s: typeof draftState): boolean => {
+    const texts = [
+      s.chiefComplaint, s.additionalComplaint, s.history, s.duration, s.onset,
+      s.aggravating, s.relieving, s.medications, s.previousSurgeries, s.comorbidities,
+      s.occupation, s.complementaryExams, s.healthConditionsOther,
+      s.healthConditionsOtherOnset, s.healthConditionsOtherControl,
+      s.usesContinuousMedication, s.functionalTests, s.additionalClinicalNotes,
+      s.clinicalImpression, s.diagnosisText, s.treatmentText,
+    ];
+    if (texts.some((t) => typeof t === "string" && t.trim())) return false;
+    if (s.painScore !== 5) return false;
+    if ((s.painRegions?.length ?? 0) > 0) return false;
+    if ((s.painTypes?.length ?? 0) > 0) return false;
+    if (s.painType) return false;
+    if ((s.redFlagsChecked?.length ?? 0) > 0) return false;
+    if ((s.healthConditions?.length ?? 0) > 0) return false;
+    if ((s.questionnaireResults?.length ?? 0) > 0) return false;
+    if (Object.keys(s.painScoresPerRegion ?? {}).length > 0) return false;
+    if (Object.keys(s.painTypesPerRegion ?? {}).length > 0) return false;
+    if (Object.keys(s.painRegionRefinements ?? {}).length > 0) return false;
+    if (
+      s.mechanismAnswers &&
+      Object.values(s.mechanismAnswers).some(
+        (v) =>
+          v != null &&
+          v !== "" &&
+          v !== "unknown" &&
+          !(Array.isArray(v) && v.length === 0),
+      )
+    )
+      return false;
+    // "unit" (kgf etc.) é rótulo padrão da tabela, não conteúdo digitado.
+    const tableHasContent = (rows: any[] | undefined) =>
+      Array.isArray(rows) &&
+      rows.some((r) =>
+        Object.entries(r ?? {}).some(
+          ([k, v]) => k !== "unit" && typeof v === "string" && v.trim(),
+        ),
+      );
+    if (tableHasContent(s.romTable) || tableHasContent(s.strengthTable)) return false;
+    if (s.aiClinicalImpression) return false;
+    return true;
+  };
+
   const draft = useAutosaveDraft<typeof draftState>({
     formKey: "manual_assessment",
     scopeKey: draftScopeKey,
     state: draftState,
     enabled: open && !isEditing && !demoMode,
+    isEmpty: isDraftEmpty,
     // Autosave agressivo: ~300ms de debounce + flush em visibilitychange/pagehide
     // (já implementado no hook). Garante que cada alteração curta sobreviva à
     // troca de aplicativo no celular, sem martelar a nuvem.
