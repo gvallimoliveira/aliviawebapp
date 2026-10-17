@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { mergeAnamnesisOnUpdate } from "@/lib/preAssessmentContinuation";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { HEALTH_CONDITION_IDS, healthConditionLabel, formatHealthConditions, formatContinuousMedication, OTHER_ONSET_OPTIONS, OTHER_CONTROL_OPTIONS, otherOnsetLabel, otherControlLabel } from "@/lib/healthHistory";
@@ -1886,6 +1887,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         </div>
 
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-6">
+          {continuationOfLink && (
+            <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
+              {isPt
+                ? "Continuando a pré-avaliação respondida pelo paciente no link. Os dados e questionários já respondidos vêm preenchidos — acrescente ou refine. As respostas originais do paciente ficam guardadas."
+                : "Continuing the pre-assessment answered by the patient via link. Existing answers and questionnaires are pre-filled — add or refine. The patient's original answers are kept."}
+            </div>
+          )}
           <div className="space-y-4 py-4">
             {externalSource && (
               <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-xs">
