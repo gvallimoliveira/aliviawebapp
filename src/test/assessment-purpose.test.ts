@@ -44,4 +44,13 @@ describe("explicit preventive assessment isolation", () => {
     expect(original.painScore).toBeNull();
     expect(original.historyRegions).toEqual(["thoracic"]);
   });
+  it("retains omitted surgical history and explicit questionnaire results in prevention", () => {
+    const specialtyResults = [{ questionnaireId: "srs22r", score: { total: 4.2 } }];
+    const result = mergeAnamnesisWithOriginal({ assessmentPurpose: "prevention", hasPriorSurgery: "", activityLevel: "" }, { anamnesis_data: { hasPriorSurgery: "yes", surgeryDetails: "Cirurgia anterior documentada", activityLevel: "athlete", specialtyResults, painScore: 7 } }, new Set(["painmap"]));
+    expect(result.hasPriorSurgery).toBe("yes");
+    expect(result.surgeryDetails).toBe("Cirurgia anterior documentada");
+    expect(result.activityLevel).toBe("athlete");
+    expect(result.specialtyResults).toEqual(specialtyResults);
+    expect(result.painScore).toBeNull();
+  });
 });

@@ -85,7 +85,19 @@ export const mergeAnamnesisWithOriginal = (
   original: { anamnesis_data?: any; pain_regions?: string[] | null } | null,
   enabled: Set<ReassessStepId> | null,
 ): any => {
-  if (isPreventiveAssessment(data)) return normalizeAssessmentPurpose(data);
+  if (isPreventiveAssessment(data)) {
+    const orig = original?.anamnesis_data || {};
+    const merged = { ...orig, ...data };
+    if (enabled && !enabled.has("surgery")) {
+      merged.hasPriorSurgery = orig.hasPriorSurgery;
+      merged.surgeryDetails = orig.surgeryDetails;
+    }
+    if (enabled && !enabled.has("activity")) {
+      merged.activityLevel = orig.activityLevel;
+      merged.hasGymAccess = orig.hasGymAccess;
+    }
+    return normalizeAssessmentPurpose(merged);
+  }
   if (!original || !enabled) return data;
   const orig = (original.anamnesis_data || {}) as any;
   const merged: any = { ...data };
