@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mergeAnamnesisOnUpdate } from "@/lib/preAssessmentContinuation";
+import { savedClinicalImpression } from "@/lib/clinicalImpression";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { HEALTH_CONDITION_IDS, healthConditionLabel, formatHealthConditions, formatContinuousMedication, OTHER_ONSET_OPTIONS, OTHER_CONTROL_OPTIONS, otherOnsetLabel, otherControlLabel } from "@/lib/healthHistory";
@@ -1650,11 +1651,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   ? (diagnosisText || aiDiagnosis?.summary || clinicalImpression || null)
                   : (aiDiagnosis?.summary || diagnosisText || clinicalImpression || null),
                 text: diagnosisText || null,
-                clinicalImpression: aiClinicalImpression
-                  ? aiClinicalImpression
-                  : (clinicalImpression
-                      ? { overview: clinicalImpression, therapeuticObjectives: [] }
-                      : undefined),
+                clinicalImpression: savedClinicalImpression(clinicalImpression, aiClinicalImpression),
               };
             })()
           : null,

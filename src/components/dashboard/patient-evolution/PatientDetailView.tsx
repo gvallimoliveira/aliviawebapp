@@ -1312,8 +1312,8 @@ export default function PatientDetailView(props: any) {
 
             <div id="sec-impressao-clinica" className="scroll-mt-24">
               <ClinicalImpressionCard
-                assessment={target}
-                existingImpression={target.diagnosis?.clinicalImpression}
+                assessment={latestAssessment || target}
+                existingImpression={(latestAssessment || target).diagnosis?.clinicalImpression}
                 allAssessments={patient?.assessments}
                 isDemo={isDemo}
               />
