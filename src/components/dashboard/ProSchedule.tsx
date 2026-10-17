@@ -1,4 +1,4 @@
-import { toMinutes, endTimeFrom, assignLanes } from "@/lib/appointmentTime";
+import { toMinutes, endTimeFrom, assignLanes, cardPixelHeight } from "@/lib/appointmentTime";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -205,7 +205,7 @@ interface KnownPatient {
 
 // Default time range 07:00-20:00, expanded if appointments exist outside
 const DEFAULT_START_HOUR = 7;
-const HOUR_PX = 44;
+const HOUR_PX = 48;
 const DEFAULT_END_HOUR = 20;
 
 function getTimeRange(apts: Appointment[]): string[] {
@@ -1085,13 +1085,16 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                         const st = toMinutes(apt.appointment_time) ?? 0;
                         const dur = Math.max(15, apt.duration_minutes || 50);
                         const ln = lanes.get(apt.id) ?? { lane: 0, lanes: 1 };
+                        const concurrent = ln.lanes > 1;
+                        const h = cardPixelHeight(dur, HOUR_PX, concurrent);
+                        const forcedMin = h > (dur / 60) * HOUR_PX - 2;
                         return (
                           <div
                             key={apt.id}
-                            className="absolute z-[5] flex"
+                            className={cn("absolute flex", forcedMin ? "z-[6]" : "z-[5]")}
                             style={{
                               top: ((st % 60) / 60) * HOUR_PX + 1,
-                              height: Math.max(18, (dur / 60) * HOUR_PX - 2),
+                              height: h,
                               left: `calc(${(ln.lane / ln.lanes) * 100}% + 2px)`,
                               width: `calc(${100 / ln.lanes}% - 4px)`,
                             }}
