@@ -8,7 +8,7 @@ import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 
-const MODEL_CHAIN = ["google/gemini-2.5-pro", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite"];
+const MODEL_CHAIN = ["google/gemini-3.1-pro-preview", "google/gemini-3.8-flash", "google/gemini-3.1-flash-lite"];
 const PROMPT_VERSION = "rom-v1";
 
 const PROMPT = `Você é um assistente clínico de fisioterapia que lê fichas, laudos, prints de apps e fotos de GONIOMETRIA, INCLINOMETRIA e testes de FLEXIBILIDADE MUSCULAR.
