@@ -1,4 +1,6 @@
 import React from "react";
+import PreventiveAssessmentSummary from "@/components/assessment/PreventiveAssessmentSummary";
+import { isPreventiveAssessment } from "@/lib/assessmentPurpose";
 import { useNavigate } from "react-router-dom";
 import { usePreserveScrollOnResume } from "@/hooks/usePreserveScrollOnResume";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -1342,7 +1344,7 @@ export default function PatientDetailView(props: any) {
 
       <PatientHorizontalRow label={language === "pt" ? "Anamnese e saúde geral" : language === "es" ? "Anamnesis y salud general" : "Anamnesis and general health"}>
       {/* Anamnese resumida da última avaliação — colapsável (Extra C: atalho ver completa) */}
-      {latestAnamnesisFields.length > 0 && (
+      {(latestAnamnesisFields.length > 0 || isPreventiveAssessment(latestAssessment?.anamnesis_data)) && (
         <Card id="sec-anamnese" className="scroll-mt-24">
 
           <CardContent className="py-3">
@@ -1364,7 +1366,8 @@ export default function PatientDetailView(props: any) {
                 </div>
               }
             >
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pt-2">{latestAnamnesisFields.map((f: any, i: number) => <div key={i} className="space-y-0.5"><span className="text-muted-foreground font-medium">{f.label}</span><p className="text-foreground">{f.value}</p></div>)}</div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs pt-2"><PreventiveAssessmentSummary data={latestAssessment?.anamnesis_data || {}} />
+                {latestAnamnesisFields.map((f: any, i: number) => <div key={i} className="space-y-0.5"><span className="text-muted-foreground font-medium">{f.label}</span><p className="text-foreground">{f.value}</p></div>)}</div>
             </CollapsibleSection>
           </CardContent>
         </Card>

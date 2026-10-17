@@ -1,3 +1,6 @@
+import AssessmentPurposeFields, { purposeCopy } from "@/components/assessment/AssessmentPurposeFields";
+import PainMap from "@/components/assessment/PainMap";
+import { isPreventiveAssessment, normalizeAssessmentPurpose, manualPurposeSteps, preventiveReasoningContext, type PurposeData } from "@/lib/assessmentPurpose";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mergeAnamnesisOnUpdate } from "@/lib/preAssessmentContinuation";
 import { savedClinicalImpression } from "@/lib/clinicalImpression";
@@ -229,6 +232,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const isPt = language === "pt";
 
   const [step, setStep] = useState(0);
+  const [purpose, setPurpose] = useState<PurposeData>({});
+  const preventive = isPreventiveAssessment(purpose);
+  const visibleSteps = manualPurposeSteps(purpose);
+  const stepPosition = Math.max(0, visibleSteps.indexOf(step));
+  const nextManualStep = (s: number) => visibleSteps.find(i => i > s) ?? 9;
+  const previousManualStep = (s: number) => [...visibleSteps].reverse().find(i => i < s) ?? 0;
+  useEffect(() => { if (preventive && step === 3) setStep(4); }, [preventive, step]);
 
   // Ref to the scrollable content area — used to force scroll-to-top
   // whenever the user advances/returns between steps so fields near the top
@@ -704,7 +714,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     : null;
 
   const draftState = {
-    step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
+    purpose, step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
     medications, previousSurgeries, comorbidities, occupation, complementaryExams,
     healthConditions, healthConditionsOther, healthConditionsOtherOnset,
     healthConditionsOtherControl, usesContinuousMedication,
@@ -717,6 +727,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Campos no estado inicial (step, painScore 5, tabelas vazias) NÃO contam —
   // evita o banner "rascunho na nuvem" para avaliações nunca preenchidas.
   const isDraftEmpty = (s: typeof draftState): boolean => {
+    if (isPreventiveAssessment(s.purpose)) return false;
     const texts = [
       s.chiefComplaint, s.additionalComplaint, s.history, s.duration, s.onset,
       s.aggravating, s.relieving, s.medications, s.previousSurgeries, s.comorbidities,
@@ -774,6 +785,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const handleRestoreDraft = () => {
     const p = draft.restore();
     if (!p) return;
+    setPurpose(p.purpose || {});
     setStep(p.step ?? 0);
     setChiefComplaint(p.chiefComplaint ?? "");
     setAdditionalComplaint(p.additionalComplaint ?? "");
@@ -826,6 +838,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     prefilledIdRef.current = editAssessment.id;
     const a = editAssessment;
     const an = a.anamnesis_data || {};
+    setPurpose({ assessmentPurpose: an.assessmentPurpose, preventionGoals: an.preventionGoals, preventionGoalDetails: an.preventionGoalDetails, historyRegions: an.historyRegions });
     setStep(0);
     // Only use customComplaint as fallback for chiefComplaint if chiefComplaint is missing
     // (legacy rows duplicated both fields). Otherwise customComplaint is its own field.
@@ -941,6 +954,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     prefilledMarkerRef.current = prefillData.markerId;
     const a = prefillData.row || {};
     const an = a.anamnesis_data || {};
+    setPurpose({ assessmentPurpose: an.assessmentPurpose, preventionGoals: an.preventionGoals, preventionGoalDetails: an.preventionGoalDetails, historyRegions: an.historyRegions });
     setStep(0);
     setChiefComplaint(readable(an.chiefComplaint || ""));
     setAdditionalComplaint(an.additionalComplaint || "");
@@ -1169,8 +1183,8 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
         body: {
           anamnesisData: buildAnamnesisData(),
-          painRegions,
-          painScore,
+          painRegions: preventive ? [] : painRegions,
+          painScore: preventive ? null : painScore,
           questionnaireResults,
           diagnosis: diagnosisText
             ? { hypothesis: diagnosisText.split("\n")[0]?.slice(0, 280), summary: diagnosisText }
@@ -1200,7 +1214,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
   // IMPORTANT: keep keys in camelCase to match the rest of the app
   // (AssessmentView, generatePdf, generate-clinical-impression, ResumeSummary, etc.)
-  const buildAnamnesisData = () => ({
+  const buildAnamnesisData = () => normalizeAssessmentPurpose({
+    ...purpose,
+    painRegions, painScore,
     manualEntry: true,
     // Chief complaint — store both the array form (used by AssessmentView/Resume/Pro dashboards)
     // and the legacy single string for backward compatibility.
@@ -1265,7 +1281,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
    * Retorna null quando a triagem (opcional) não foi preenchida.
    */
   const buildProMechanism = () =>
-    ENABLE_PAIN_MECHANISM && hasMechanismAnswers(mechanismAnswers)
+    !preventive && ENABLE_PAIN_MECHANISM && hasMechanismAnswers(mechanismAnswers)
       ? toStoredMechanism(
           classifyMechanism({
             descriptors: mechanismAnswers.descriptors,
@@ -1298,9 +1314,6 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           // painRegions / painScore / painTypes from inside it.
           anamnesisData: {
             ...buildAnamnesisData(),
-            painRegions,
-            painScore,
-            painTypes: effectivePainTypes,
             redFlags: redFlagsChecked,
           },
           questionnaireResults,
@@ -1309,7 +1322,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           language,
           // Passo D1 — mecanismo/extensão como contexto clínico para a IA.
           painMechanism: buildProMechanism(),
-          painExtent: computePainExtent(painRegions).surfacePercent || null,
+          painExtent: preventive ? null : computePainExtent(painRegions).surfacePercent || null,
         },
       });
       if (error) throw error;
@@ -1344,8 +1357,6 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         body: {
           anamnesisData: {
             ...buildAnamnesisData(),
-            painRegions,
-            painScore,
           },
           questionnaireResults,
           diagnosis: aiDiagnosis || (diagnosisText ? { summary: diagnosisText } : null),
@@ -1380,7 +1391,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   const sijLang: "pt" | "en" | "es" = language === "en" ? "en" : language === "es" ? "es" : "pt";
   const sacroiliacDetected = useMemo(
     () =>
-      detectSacroiliacPain({
+      !preventive && detectSacroiliacPain({
         painRegionIds: painRegions,
         texts: [
           chiefComplaint,
@@ -1391,7 +1402,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           ...painRegions.flatMap((id) => painRegionRefinements[id] || []),
         ],
       }),
-    [painRegions, painRegionRefinements, chiefComplaint, history, aggravating, relieving, painType],
+    [preventive, painRegions, painRegionRefinements, chiefComplaint, history, aggravating, relieving, painType],
   );
 
   const displayedSuggestions: TestSuggestion[] = useMemo(
@@ -1404,6 +1415,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setSuggestingTests(true);
     try {
       const anamnesisSummary = [
+        preventiveReasoningContext(purpose),
         chiefComplaint && `Queixa principal: ${chiefComplaint}`,
         history && `História: ${history}`,
         duration && `Duração: ${duration}`,
@@ -1422,9 +1434,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       const { data, error } = await supabase.functions.invoke("suggest-functional-tests", {
         body: {
           anamnesis: anamnesisSummary,
-          painScore,
-          painType,
-          painRegions: painRegions.map((id) => {
+          painScore: preventive ? null : painScore,
+          painType: preventive ? "" : painType,
+          painRegions: (preventive ? [] : painRegions).map((id) => {
             const base = regionLabelMap[id]?.[isPt ? "label_pt" : "label_en"] || id;
             const refs = painRegionRefinements[id];
             if (!refs || refs.length === 0) return base;
@@ -1587,10 +1599,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               userId: user?.id || null,
             })
           : buildAnamnesisData(),
-        pain_regions: painRegions,
+        pain_regions: preventive ? [] : painRegions,
         // Aggregate pain_score = highest per-region score (clinically the most
         // representative) when per-region values exist; otherwise the slider value.
-        pain_score: (() => {
+        pain_score: preventive ? null : (() => {
           const vals = painRegions
             .map((r) => painScoresPerRegion[r])
             .filter((v): v is number => typeof v === "number");
@@ -1602,12 +1614,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         // cálculo local quando não houve chamada de IA.
         // Só grava quando houve triagem; avaliações sem triagem seguem nulas.
         ...(() => {
+          if (preventive) return { pain_mechanism: null };
           const aiMech = (aiDiagnosis as any)?.pain_mechanism;
           const mech = (aiMech && typeof aiMech === "object" ? aiMech : null) ?? buildProMechanism();
           return mech ? { pain_mechanism: mech } : {};
         })(),
         // Passo C2 — extensão de dor sempre que houver regiões marcadas.
-        pain_extent: computePainExtent(painRegions).surfacePercent || null,
+        pain_extent: preventive ? null : computePainExtent(painRegions).surfacePercent || null,
 
         // test_results MUST be an array of questionnaire results — that's what AssessmentView,
         // generatePdf and clinical-impression all expect. Free-text functional observations
@@ -1713,7 +1726,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
 
       // Passo B1 — registra a triagem de mecanismo (auditável). Falha aqui
       // nunca invalida a avaliação já salva.
-      if (savedId && ENABLE_PAIN_MECHANISM && hasMechanismAnswers(mechanismAnswers)) {
+      if (savedId && !preventive && ENABLE_PAIN_MECHANISM && hasMechanismAnswers(mechanismAnswers)) {
         try {
           await supabase.from("pain_mechanism_screenings" as any).insert({
             assessment_id: savedId,
@@ -1754,7 +1767,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
       // preencher depois, inserimos uma linha "general" por questionário
       // aplicável (baseado nas regiões marcadas) vinculada à mesma avaliação.
       let createdGeneralPending = 0;
-      if (savedId && deferQuestionnaires && painRegions.length > 0) {
+      if (savedId && !preventive && deferQuestionnaires && painRegions.length > 0) {
         const applicable = getApplicableQuestionnaires(painRegions);
         const { data: existing, error: existingError } = await supabase
           .from("pending_questionnaires" as any)
@@ -1821,6 +1834,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   };
 
   const resetForm = () => {
+    setPurpose({});
     setStep(0);
     setChiefComplaint(""); setHistory(""); setDuration(""); setOnset("");
     setAggravating(""); setRelieving(""); setMedications(""); setPreviousSurgeries("");
@@ -1882,14 +1896,14 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
           </DialogTitle>
           <DialogDescription>
             {isPt
-              ? `Etapa ${step + 1} de ${STEPS.length}: ${stepLabels[step]}`
-              : `Step ${step + 1} of ${STEPS.length}: ${stepLabels[step]}`}
+              ? `Etapa ${stepPosition + 1} de ${visibleSteps.length}: ${preventive && step === 2 ? purposeCopy[language].map : stepLabels[step]}`
+              : `Step ${stepPosition + 1} of ${visibleSteps.length}: ${preventive && step === 2 ? purposeCopy[language].map : stepLabels[step]}`}
           </DialogDescription>
         </DialogHeader>
 
           {/* Step indicator */}
           <div className="flex gap-1 px-1 mt-3">
-            {STEPS.map((_, i) => (
+            {visibleSteps.map((i) => (
               <div key={i} className={`h-1 flex-1 rounded ${i <= step ? "bg-primary" : "bg-muted"}`} />
             ))}
           </div>
@@ -2017,14 +2031,15 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             {/* STEP 0: ANAMNESE */}
             {step === 0 && (
               <div className="space-y-3">
-                <div>
+                <AssessmentPurposeFields value={purpose} onChange={patch => setPurpose(prev => ({ ...prev, ...patch }))} />
+                {!preventive && <div>
                   <Label className="text-xs">{isPt ? "Queixa principal" : "Chief complaint"} *</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(chiefComplaint, MOCK_MANUAL_CASE.chiefComplaint, setChiefComplaint, "")}>
                     <Textarea value={chiefComplaint} onChange={(e) => setChiefComplaint(e.target.value)} rows={2}
                       placeholder={isPt ? "Ex: Dor lombar à esquerda há 3 semanas" : "E.g. Left lumbar pain for 3 weeks"} className="mt-1 text-sm" />
                   </DemoShield>
-                </div>
-                <div>
+                </div>}
+                {!preventive && <div>
                   <Label className="text-xs">{isPt ? "Queixa adicional" : "Additional complaint"}</Label>
                   <Textarea
                     value={additionalComplaint}
@@ -2035,7 +2050,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     disabled={demoMode}
                     maxLength={300}
                   />
-                </div>
+                </div>}
                 <div>
                   <Label className="text-xs">{isPt ? "Histórico" : "History"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(history, MOCK_MANUAL_CASE.history, setHistory, "")}>
@@ -2051,13 +2066,13 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   </DemoShield>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
+                  {!preventive && <div>
                     <Label className="text-xs">{isPt ? "Tempo de evolução" : "Duration"}</Label>
                     <DemoShield on={demoMode} onAutofill={() => autofill(duration, MOCK_MANUAL_CASE.duration, setDuration, "")}>
                       <Input value={duration} onChange={(e) => setDuration(e.target.value)} className="mt-1 text-sm h-9" />
                     </DemoShield>
-                  </div>
-                  <div>
+                  </div>}
+                  {!preventive && <div>
                     <Label className="text-xs">{isPt ? "Início" : "Onset"}</Label>
                     <DemoShield on={demoMode} onAutofill={() => autofill(onset, MOCK_MANUAL_CASE.onset, setOnset, "")}>
                       <Select value={onset} onValueChange={setOnset}>
@@ -2070,21 +2085,21 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                         </SelectContent>
                       </Select>
                     </DemoShield>
-                  </div>
+                  </div>}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
+                  {!preventive && <div>
                     <Label className="text-xs">{isPt ? "Fatores agravantes" : "Aggravating factors"}</Label>
                     <DemoShield on={demoMode} onAutofill={() => autofill(aggravating, MOCK_MANUAL_CASE.aggravating, setAggravating, "")}>
                       <Textarea value={aggravating} onChange={(e) => setAggravating(e.target.value)} rows={2} className="mt-1 text-sm" />
                     </DemoShield>
-                  </div>
-                  <div>
+                  </div>}
+                  {!preventive && <div>
                     <Label className="text-xs">{isPt ? "Fatores aliviantes" : "Relieving factors"}</Label>
                     <DemoShield on={demoMode} onAutofill={() => autofill(relieving, MOCK_MANUAL_CASE.relieving, setRelieving, "")}>
                       <Textarea value={relieving} onChange={(e) => setRelieving(e.target.value)} rows={2} className="mt-1 text-sm" />
                     </DemoShield>
-                  </div>
+                  </div>}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -2269,6 +2284,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                 regiões marcadas aqui). */}
             {step === 2 && (
               <div className="space-y-4">
+                {preventive ? <PainMap purpose="history" selectedRegions={purpose.historyRegions || []} onRegionsChange={historyRegions => setPurpose(prev => ({ ...prev, historyRegions }))} /> : <>
                 {/* Refinamento anatômico aparece NO TOPO assim que houver
                     regiões marcadas — evita que fique escondido abaixo da
                     lista de seleção. */}
@@ -2410,6 +2426,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                       : "In the next step you set intensity and pain type for each region marked here."}
                   </p>
                 </div>
+              </>}
               </div>
             )}
 
@@ -2619,7 +2636,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
             {/* STEP 5: QUESTIONÁRIOS — mesmo fluxo da avaliação premium/link */}
             {step === 5 && (
               <div className="space-y-3">
-                {painRegions.length === 0 ? (
+                {preventive ? null : painRegions.length === 0 ? (
                   <div className="p-4 rounded-md border bg-muted/30 text-sm text-muted-foreground">
                     {isPt
                       ? "Selecione ao menos uma região com dor no mapa de dor para que os questionários aplicáveis sejam carregados automaticamente."
@@ -2732,10 +2749,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                         autofillAnswers={demoMode ? MOCK_MANUAL_CASE.questionnaireAnswers : undefined}
                         onComplete={(results) => {
                           setQuestionnaireResults(results);
-                          setStep((s) => Math.min(STEPS.length - 1, s + 1));
+                          setStep(nextManualStep);
                         }}
-                        onBack={() => setStep((s) => Math.max(0, s - 1))}
-                        onSkip={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+                        onBack={() => setStep(previousManualStep)}
+                        onSkip={() => setStep(nextManualStep)}
                       />
                     )}
                   </>
@@ -2919,7 +2936,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     size="sm"
                     onClick={() => {
                       setStrengthTable(createInitialStrengthRows(1));
-                      setStep((s) => Math.min(STEPS.length - 1, s + 1));
+                      setStep(nextManualStep);
                     }}
                     className="shrink-0"
                   >
@@ -2998,7 +3015,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                         questionnaireResults,
                         redFlags: redFlagsChecked,
                         painMechanism: (aiDiagnosis as any)?.pain_mechanism || buildProMechanism(),
-                        painExtent: computePainExtent(painRegions).surfacePercent || null,
+                        painExtent: preventive ? null : computePainExtent(painRegions).surfacePercent || null,
                       }}
                       isDemo={demoMode}
                       onAppendDiscriminators={(text) =>
@@ -3036,7 +3053,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         </div>
 
         <DialogFooter className="relative flex-row justify-between sm:justify-between border-t p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shrink-0 bg-background">
-          <Button variant="outline" size="sm" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
+          <Button variant="outline" size="sm" onClick={() => setStep(previousManualStep)} disabled={step === 0}>
             <ChevronLeft className="h-4 w-4" /> {isPt ? "Voltar" : "Back"}
           </Button>
           {draft.lastSavedAt && (
@@ -3064,7 +3081,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
               {isPt ? "Salvar agora" : "Save now"}
             </Button>
             {step < STEPS.length - 1 ? (
-              <Button size="sm" onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}>
+              <Button size="sm" onClick={() => setStep(nextManualStep)}>
                 {isPt ? "Avançar" : "Next"} <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (

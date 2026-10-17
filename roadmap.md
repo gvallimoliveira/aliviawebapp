@@ -1,4 +1,6 @@
 # Tasks
+- [ ] Add isolated opt-in preventive assessment to link/manual flows, retaining safety and explicit questionnaires.
+- [ ] Verify painful/preventive routes, persistence, reporting and reasoning; update help in pt/en/es.
 - [x] Reuse saved manual clinical impressions in the record; preserve edits and prevent automatic generation. Help updated in pt/en/es; 7 tests pass, including save-to-card synchronization with zero AI calls. Authenticated clinic record displays its saved impression and objectives; no real clinical data altered for testing.
 - [x] Fix dynamometry PDF overlap; visually verify full/standalone reports and three-page table with repeated headers.
 - [x] Add standalone saved dynamometry and individual questionnaire PDFs; update help; 8 tests pass and authenticated saved-questionnaire download verified. Dynamometry PDF verified with fictional data; accessible clinic records have no saved measurements for a real download check.

@@ -4,6 +4,7 @@
 // (pending row + optional patient link). Psychosocial instruments (FABQ) are
 // not tied to a body region, so they can also be applied manually at any time.
 
+import { isPreventiveAssessment } from "@/lib/assessmentPurpose";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Loader2, Lightbulb, Sparkles, Clock, ChevronDown, ChevronUp, Link as LinkIcon, Check, Heart, Footprints, Brain, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,7 @@ const SpecialtyQuestionnairesPanel = forwardRef<SpecialtyPanelHandle, Props>(
     const { language } = useLanguage();
     const { toast } = useToast();
     const isPt = language === "pt";
+    const preventive = isPreventiveAssessment(anamnesisData);
 
     const [loading, setLoading] = useState(false);
     const [loaded, setLoaded] = useState(false);
@@ -216,6 +218,7 @@ const SpecialtyQuestionnairesPanel = forwardRef<SpecialtyPanelHandle, Props>(
     };
 
     const openQ = useMemo(() => (openId ? getSpecialtyQuestionnaire(openId) : null), [openId]);
+    const preventiveManual: Suggestion[] = preventive ? SPECIALTY_QUESTIONNAIRES.filter(q => !isApplied(q.id)).map(q => ({ id: q.id, domain: q.domain, name: q.name, reason: language === "pt" ? "Indicação do profissional" : language === "es" ? "Indicación del profesional" : "Professional selection", avgMinutes: q.avgMinutes })) : [];
     const visibleSuggestions = suggestions.filter((s) => !isApplied(s.id));
 
     // Psychosocial instruments (yellow flags) are profile-based, not region-based:
@@ -338,7 +341,7 @@ const SpecialtyQuestionnairesPanel = forwardRef<SpecialtyPanelHandle, Props>(
             <Lightbulb className="h-3.5 w-3.5 text-primary" />
             {isPt ? "Questionários complementares (Cardio / Geriátrico / Psicossocial)" : "Complementary questionnaires (Cardio / Geri / Psychosocial)"}
           </div>
-          <Button
+          {!preventive && <Button
             type="button"
             onClick={loadSuggestions}
             disabled={loading || !anamnesisData}
@@ -348,10 +351,10 @@ const SpecialtyQuestionnairesPanel = forwardRef<SpecialtyPanelHandle, Props>(
           >
             {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
             {loaded ? (isPt ? "Atualizar" : "Refresh") : (isPt ? "Sugerir com IA" : "Suggest with AI")}
-          </Button>
+          </Button>}
         </div>
 
-        {!loaded && (
+        {!preventive && !loaded && (
           <p className="text-[11px] text-muted-foreground leading-snug">
             {isPt
               ? "A IA analisa a anamnese e sugere instrumentos validados de fisioterapia cardiorrespiratória, geriátrica ou psicossocial (medo-evitação) quando aplicável. Você escolhe quais aplicar agora ou enviar ao paciente para responder depois."
@@ -373,7 +376,9 @@ const SpecialtyQuestionnairesPanel = forwardRef<SpecialtyPanelHandle, Props>(
           </div>
         )}
 
-        {manualPsychosocial.length > 0 && (
+        {preventive && <div className="space-y-2">{preventiveManual.map(renderCard)}</div>}
+
+        {!preventive && manualPsychosocial.length > 0 && (
           <div className="space-y-2 pt-1 border-t border-border/50">
             <p className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
               <Brain className="h-3.5 w-3.5 text-violet-500" />

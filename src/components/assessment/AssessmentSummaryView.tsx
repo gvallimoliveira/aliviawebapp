@@ -1,3 +1,5 @@
+import PreventiveAssessmentSummary from "./PreventiveAssessmentSummary";
+import { isPreventiveAssessment } from "@/lib/assessmentPurpose";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
@@ -379,7 +381,7 @@ const AssessmentSummaryView = ({
           {isPt ? "Métricas principais" : "Key metrics"}
         </h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {assessment.pain_score != null && (
+          {!isPreventiveAssessment(anamnesis) && assessment.pain_score != null && (
             <div className="rounded-xl border p-3 text-center">
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">EVA</p>
               <p className={`text-xl font-bold ${getPainColor(assessment.pain_score)}`}>
@@ -397,6 +399,8 @@ const AssessmentSummaryView = ({
           ))}
         </div>
       </section>
+
+      <PreventiveAssessmentSummary data={anamnesis} />
 
       {/* Pain regions */}
       {painRegions.length > 0 && (

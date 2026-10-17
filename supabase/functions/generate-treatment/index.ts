@@ -1,3 +1,4 @@
+import { isPreventiveAssessment, normalizeAssessmentPurpose, preventiveReasoningContext } from "../_shared/assessment-purpose.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -17,7 +18,9 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, forceRefresh, painMechanism: bodyPainMechanism, painExtent: bodyPainExtent } = await req.json();
+    const { anamnesisData: rawAnamnesisData, testResults, questionnaireResults, diagnosis, mode, language, forceRefresh, painMechanism: bodyPainMechanism, painExtent: bodyPainExtent } = await req.json();
+    const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
+    const preventive = isPreventiveAssessment(anamnesisData);
     // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
     const creditDecision = await canaryCredits(req, "generate-treatment");
     void creditDecision;
@@ -32,6 +35,7 @@ serve(async (req) => {
     // Passo D3 — mecanismo de dor entra na chave de cache: o mesmo caso com
     // mecanismo diferente precisa de um plano diferente.
     const resolvedMechanism = (() => {
+      if (preventive) return null;
       const raw = (diagnosis && typeof diagnosis === "object" ? (diagnosis as any).pain_mechanism : null)
         ?? bodyPainMechanism
         ?? (anamnesisData && typeof anamnesisData === "object" ? (anamnesisData as any).painMechanismResolved : null);
@@ -45,7 +49,7 @@ serve(async (req) => {
       : typeof (resolvedMechanism as any)?.pain_extent === "number"
         ? (resolvedMechanism as any).pain_extent
         : null;
-    const cachePayload = { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, painMechanism: resolvedMechanism, painExtent: resolvedExtent };
+    const cachePayload = { v: "treatment-purpose-v2", anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, painMechanism: resolvedMechanism, painExtent: resolvedExtent };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ treatmentPlan: unknown }>(admin, "generate-treatment", cachePayload);
       if (cached) {
@@ -56,9 +60,9 @@ serve(async (req) => {
     }
 
 
-    const lang = language === "en" ? "English" : "Portuguese (Brazil)";
-    const painScore = anamnesisData?.painScore ?? 5;
-    const isHighPain = painScore >= 6;
+    const lang = language === "es" ? "Spanish" : language === "en" ? "English" : "Portuguese (Brazil)";
+    const painScore = preventive ? null : anamnesisData?.painScore ?? 5;
+    const isHighPain = typeof painScore === "number" && painScore >= 6;
     const hasGym = anamnesisData?.hasGymAccess?.includes("yes") ?? false;
     const isProfessional = mode === "professional";
     const hasEdema = anamnesisData?.painTypes?.includes("anamnesis.pain_type.edema") || anamnesisData?.painTypes?.includes("edema") || anamnesisData?.chiefComplaints?.some((c: string) => c.toLowerCase().includes("edema")) || false;
@@ -155,7 +159,7 @@ REQUIRED OUTPUT: add a "painMechanismStrategy" field to the JSON with:
 { "mechanism": "${resolvedMechanism.mechanism}", "rationale": "1-2 sentences on how this mechanism shaped the plan", "patientMessage": "2-3 sentences in ${lang} in PLAIN LANGUAGE (no jargon like 'nociplastic', 'sensitization', 'neurodynamic'), warm and reassuring, explaining how the plan respects the way this pain behaves", "avoid": ["what to avoid for this mechanism"], "progressionRule": "criteria used to progress phases for this mechanism" }
 ` : "";
 
-    const systemPrompt = `You are an experienced physiotherapist AI assistant (musculoskeletal, cardiorespiratory and geriatric). Based on the patient's data, diagnostic hypothesis, and functional test results, create a personalized treatment plan in 3 phases.
+    const symptomaticSystemPrompt = `You are an experienced physiotherapist AI assistant (musculoskeletal, cardiorespiratory and geriatric). Based on the patient's data, diagnostic hypothesis, and functional test results, create a personalized treatment plan in 3 phases.
 ${mechanismProtocol}
 ${includePedro ? PEDRO_KNOWLEDGE_BASE : ""}
 ${cardioGeriProtocol}
@@ -406,16 +410,27 @@ Format for professionalGuidelines:
 ` : ""}`;
 
 
+    const systemPrompt = preventive ? `You are a clinical physiotherapy expert preparing a preventive functional follow-up plan, not treating assumed pain or disease.
+${preventiveReasoningContext(anamnesisData)}
+Write in ${lang}. ${equipmentContext}
+Keep the existing JSON structure: generalGuidelines and short_term, medium_term, long_term phases, each with goal, duration, stepsMapping and a nonempty exercises array. Exercises need name, sets, reps, frequency, observations, searchQueryPro and searchQueryShorts.
+Use STEPS only where applicable: short_term maps to Steps 3-4 (mobility, general strength and motor control); medium_term and long_term progressively use Steps 4-6, according to actual goals and findings. Steps 1-2 are not indicated without current injury/pain findings. Never assume a D.I.F.I pain cycle; omit difiContext and painMechanismStrategy.
+Base progression on actual function, activity and tolerance; do not assume disability from posture or injury history. Preserve safety screening, red flags and referral precautions. Do not invent clearance, norms or measured values. Do not prescribe passive analgesic or tissue repair modalities without actual indications. Do not use BOSU/wobble boards.
+Include 3-5 appropriate exercises per phase, and avoid positions contraindicated by recorded findings. Include only references relevant to actual findings.
+${formatHealthHistoryForPrompt(anamnesisData)}` : symptomaticSystemPrompt;
+
     const painfulTests = testResults?.filter((t: any) => t.painful).map((t: any) => t.testId) || [];
     const normalTests = testResults?.filter((t: any) => !t.painful).map((t: any) => t.testId) || [];
 
-    const userPrompt = `Patient data:
+    const userPrompt = `${preventiveReasoningContext(anamnesisData)}
+${preventive ? "Preventive mode overrides pain-specific stages: retain STEPS structure but do not prescribe pain/inflammation or tissue repair interventions without actual findings. D.I.F.I is not evidence of pain in an asymptomatic patient." : ""}
+Patient data:
 - Chief complaint: ${anamnesisData?.chiefComplaints?.join(", ") || anamnesisData?.chiefComplaint || anamnesisData?.customComplaint}
 - Pain regions: ${anamnesisData?.painRegions?.join(", ") || "Not specified"}${anamnesisData?.painRegionRefinements && Object.keys(anamnesisData.painRegionRefinements).length > 0 ? `
 - Anatomical refinement per region (use to target structures and progression — medial/lateral, anterior/posterior, proximal/distal for limbs; right/left side or central for axial regions):
 ${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]) => `    • ${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join("\n")}` : ""}
 - Pain types: ${anamnesisData?.painTypes?.join(", ") || "Not specified"}
-- Pain score: ${painScore}/10
+- Pain score: ${painScore === null ? "not collected" : `${painScore}/10`}
 - Evolution: ${anamnesisData?.evolution}
 - Aggravating factors: ${anamnesisData?.aggravatingFactors || "Not specified"}
 - Relieving factors: ${anamnesisData?.relievingFactors || "Not specified"}
