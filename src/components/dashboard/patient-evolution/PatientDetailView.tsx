@@ -13,6 +13,7 @@ import CollapsibleSection from "@/components/ui/CollapsibleSection";
 import { Separator } from "@/components/ui/separator";
 import CreateExerciseProgramModal from "../CreateExerciseProgramModal";
 import ManualAssessmentModal from "../ManualAssessmentModal";
+import { findPendingPreAssessment } from "@/lib/preAssessmentContinuation";
 import ExternalAssessmentUploadModal from "../ExternalAssessmentUploadModal";
 import AddPatientModal, { type PatientToEdit } from "../AddPatientModal";
 import FinalHypothesisEditor from "../FinalHypothesisEditor";
@@ -306,6 +307,14 @@ export default function PatientDetailView(props: any) {
   // Avaliação incompleta/em andamento que o profissional decidiu retomar:
   // abre o ManualAssessmentModal em modo edição (não o link público de autoavaliação).
   const [resumeAssessment, setResumeAssessment] = React.useState<any | null>(null);
+  // Pré-avaliação do link pendente: perguntar se a avaliação manual continua dela.
+  const [continuationChoice, setContinuationChoice] = React.useState<any | null>(null);
+  const [continuingLink, setContinuingLink] = React.useState(false);
+  const openManualAssessment = React.useCallback(() => {
+    const pending = isDemo ? null : findPendingPreAssessment(patient?.assessments || []);
+    if (pending) setContinuationChoice(pending);
+    else setManualAssessmentOpen(true);
+  }, [patient?.assessments, isDemo]);
   const [externalUploadOpen, setExternalUploadOpen] = React.useState(false);
   // Payload entregue pelo modal de upload externo, usado para abrir o
   // ManualAssessmentModal pré-preenchido com a interpretação da IA.
@@ -672,7 +681,7 @@ export default function PatientDetailView(props: any) {
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0 hidden md:inline-flex border-primary/30 text-primary hover:bg-primary/10" onClick={handleQuickEvolution}><NotebookPen className="h-4 w-4" /> {language === "pt" ? "Registrar evolução" : language === "es" ? "Registrar evolución" : "Log evolution"}</Button>
-          {((!readOnly || allowManualAssessment) || isDemo) && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setManualAssessmentOpen(true)}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
+          {((!readOnly || allowManualAssessment) || isDemo) && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={openManualAssessment}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
           {(latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2 || (hasAgentAccess && !isDemo) || !isDemo) && (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
@@ -951,7 +960,7 @@ export default function PatientDetailView(props: any) {
                             <RotateCcw className="h-3.5 w-3.5" />
                             {language === "pt" ? "Retomar esta avaliação" : language === "es" ? "Retomar esta evaluación" : "Resume this assessment"}
                           </Button>
-                          <Button size="sm" variant="outline" className="gap-1.5 justify-start" onClick={() => { setSummaryDialogOpen(false); setManualAssessmentOpen(true); }}>
+                          <Button size="sm" variant="outline" className="gap-1.5 justify-start" onClick={() => { setSummaryDialogOpen(false); openManualAssessment(); }}>
                             <FilePlus className="h-3.5 w-3.5" />
                             {language === "pt" ? "Nova avaliação manual" : language === "es" ? "Nueva evaluación manual" : "New manual assessment"}
                           </Button>
@@ -1033,16 +1042,40 @@ export default function PatientDetailView(props: any) {
       </Dialog>
 
 
+      <Dialog open={!!continuationChoice} onOpenChange={(o) => { if (!o) setContinuationChoice(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{language === "pt" ? "Continuar a pré-avaliação?" : language === "es" ? "¿Continuar la pre-evaluación?" : "Continue the pre-assessment?"}</DialogTitle>
+            <DialogDescription>
+              {language === "pt"
+                ? `${patient.name} respondeu a pré-avaliação pelo link em ${continuationChoice?.created_at ? new Date(continuationChoice.created_at).toLocaleDateString("pt-BR") : ""}. Você pode completar essa mesma avaliação em consulta — queixa, mapa de dor, saúde geral e questionários já vêm preenchidos — ou começar uma avaliação do zero.`
+                : language === "es"
+                ? `${patient.name} respondió la pre-evaluación por enlace el ${continuationChoice?.created_at ? new Date(continuationChoice.created_at).toLocaleDateString("es") : ""}. Puede completar esa misma evaluación en consulta o empezar de cero.`
+                : `${patient.name} answered the pre-assessment via link on ${continuationChoice?.created_at ? new Date(continuationChoice.created_at).toLocaleDateString("en") : ""}. You can complete that same assessment in person or start from scratch.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => { setContinuationChoice(null); setManualAssessmentOpen(true); }}>
+              {language === "pt" ? "Começar do zero" : language === "es" ? "Empezar de cero" : "Start from scratch"}
+            </Button>
+            <Button onClick={() => { const a = continuationChoice; setContinuationChoice(null); setContinuingLink(true); setResumeAssessment(a); }}>
+              {language === "pt" ? "Continuar a pré-avaliação" : language === "es" ? "Continuar la pre-evaluación" : "Continue pre-assessment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {resumeAssessment && (
         <ManualAssessmentModal
           open={!!resumeAssessment}
-          onOpenChange={(open) => { if (!open) setResumeAssessment(null); }}
+          onOpenChange={(open) => { if (!open) { setResumeAssessment(null); setContinuingLink(false); } }}
           professionalId={professionalId}
           clinicId={clinicId}
           patientName={patient.name}
           patientEmail={patient.email}
           patientId={patient.id}
           editAssessment={resumeAssessment}
+          continuationOfLink={continuingLink}
           demoMode={isDemo}
         />
       )}
