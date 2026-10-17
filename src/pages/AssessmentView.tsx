@@ -910,6 +910,12 @@ const AssessmentView = () => {
                       value={anamnesis.additionalClinicalNotes}
                     />
                   )}
+                  {typeof anamnesis.functionalTests === "string" && anamnesis.functionalTests.trim() && (
+                    <AnamnesisField
+                      label={isPt ? "Achados dos testes / exame físico" : "Test / physical exam findings"}
+                      value={anamnesis.functionalTests}
+                    />
+                  )}
                   {anamnesis.additionalExternalInfo && (
                     <AnamnesisField
                       label={isPt ? "Informações Externas Adicionais" : "Additional External Info"}

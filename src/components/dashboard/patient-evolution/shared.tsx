@@ -288,7 +288,8 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
           });
         }
       } else {
-        const sessionNotes = await fetchSessionNotes();
+        // Session notes are intentionally not used in the clinical impression.
+        const sessionNotes: never[] = [];
         const voiceNotes = await fetchVoiceNotes();
         const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
           body: {
