@@ -1,11 +1,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AnamnesisForm from "@/components/assessment/AnamnesisForm";
 
 vi.mock("@/contexts/LanguageContext", () => ({ useLanguage: () => ({ language: "pt", t: (key: string) => key }) }));
 vi.mock("@/hooks/useAutosaveDraft", () => ({ useAutosaveDraft: () => ({ hasDraft: false, discard: vi.fn(), restore: vi.fn() }) }));
 vi.mock("@/components/assessment/PainMap", () => ({ default: ({ onRegionsChange }: { onRegionsChange: (ids: string[]) => void }) => <button onClick={() => onRegionsChange(["thoracic"])}>Historical thoracic site</button> }));
-afterEach(cleanup);
+beforeEach(() => { vi.spyOn(window, "scrollTo").mockImplementation(() => {}); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("preventive anamnestic answers", () => {
   it("completes without painful areas and preserves health, posture goals and historical sites", () => {
