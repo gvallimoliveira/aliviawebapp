@@ -207,7 +207,7 @@ const STEPS = [
   { id: "diagnostico", label: "Diagnóstico" },
 ];
 
-const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, patientId, editAssessment, prefillData, onSaved, demoMode = false }: ManualAssessmentModalProps) => {
+const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, patientId, editAssessment, prefillData, onSaved, demoMode = false, continuationOfLink = false }: ManualAssessmentModalProps & { continuationOfLink?: boolean }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -1567,7 +1567,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
         status: "completed",
         patient_name: patientName,
         patient_email: patientEmail || null,
-        anamnesis_data: buildAnamnesisData(),
+        anamnesis_data: isEditing && editAssessment?.id
+          ? mergeAnamnesisOnUpdate(editAssessment.anamnesis_data, buildAnamnesisData(), {
+              continuation: !!continuationOfLink || !!editAssessment.anamnesis_data?.patientSnapshot,
+              userId: user?.id || null,
+            })
+          : buildAnamnesisData(),
         pain_regions: painRegions,
         // Aggregate pain_score = highest per-region score (clinically the most
         // representative) when per-region values exist; otherwise the slider value.
