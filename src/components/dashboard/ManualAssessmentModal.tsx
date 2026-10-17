@@ -724,13 +724,22 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     if (Object.keys(s.painRegionRefinements ?? {}).length > 0) return false;
     if (
       s.mechanismAnswers &&
-      Object.values(s.mechanismAnswers).some((v) => v != null && v !== "")
+      Object.values(s.mechanismAnswers).some(
+        (v) =>
+          v != null &&
+          v !== "" &&
+          v !== "unknown" &&
+          !(Array.isArray(v) && v.length === 0),
+      )
     )
       return false;
+    // "unit" (kgf etc.) é rótulo padrão da tabela, não conteúdo digitado.
     const tableHasContent = (rows: any[] | undefined) =>
       Array.isArray(rows) &&
       rows.some((r) =>
-        Object.values(r ?? {}).some((v) => typeof v === "string" && v.trim()),
+        Object.entries(r ?? {}).some(
+          ([k, v]) => k !== "unit" && typeof v === "string" && v.trim(),
+        ),
       );
     if (tableHasContent(s.romTable) || tableHasContent(s.strengthTable)) return false;
     if (s.aiClinicalImpression) return false;
