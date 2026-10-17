@@ -211,7 +211,19 @@ const STEPS = [
 const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, patientId, editAssessment, prefillData, onSaved, demoMode = false, continuationOfLink = false }: ManualAssessmentModalProps & { continuationOfLink?: boolean }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
+  // Respostas do link podem vir como chaves de tradução (ex.: "anamnesis.complaint.shoulder_pain").
+  // Nunca exibir chave crua no formulário: traduz cada item e junta listas.
+  const readable = (v: any): string => {
+    const one = (x: any) => {
+      const str = String(x ?? "").trim();
+      if (!/^[a-z_]+(\.[a-z0-9_]+)+$/i.test(str)) return str;
+      const tr = t(str);
+      return tr && tr !== str ? tr : str.split(".").pop()!.replace(/_/g, " ");
+    };
+    if (Array.isArray(v)) return v.map(one).filter(Boolean).join(", ");
+    return one(v);
+  };
   const { toast } = useToast();
   const isPt = language === "pt";
 
@@ -816,12 +828,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setStep(0);
     // Only use customComplaint as fallback for chiefComplaint if chiefComplaint is missing
     // (legacy rows duplicated both fields). Otherwise customComplaint is its own field.
-    setChiefComplaint(an.chiefComplaint || (Array.isArray(an.chiefComplaints) ? an.chiefComplaints[0] : "") || an.customComplaint || "");
+    setChiefComplaint(readable(an.chiefComplaint || (Array.isArray(an.chiefComplaints) && an.chiefComplaints.length ? an.chiefComplaints : "") || an.customComplaint || ""));
     setAdditionalComplaint(
       an.customComplaint && an.customComplaint !== an.chiefComplaint ? an.customComplaint : ""
     );
     setHistory(an.history || "");
-    setDuration(an.duration || an.painDuration || "");
+    setDuration(readable(an.duration || an.painDuration || ""));
     setOnset(an.onset || "");
     setAggravating(an.aggravatingFactors || "");
     setRelieving(an.relievingFactors || "");
