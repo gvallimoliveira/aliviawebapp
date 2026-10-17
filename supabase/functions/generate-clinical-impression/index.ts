@@ -1,3 +1,4 @@
+import { isPreventiveAssessment, normalizeAssessmentPurpose, preventiveReasoningContext } from "../_shared/assessment-purpose.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
@@ -12,7 +13,7 @@ const corsHeaders = {
 };
 
 /** Bump when the prompt/data blocks change so cached impressions are regenerated. */
-const PROMPT_VERSION = "ci-v4-professional-notes";
+const PROMPT_VERSION = "ci-v6-purpose";
 
 const num = (v: unknown): number | null => {
   if (v == null) return null;
@@ -120,7 +121,9 @@ serve(async (req) => {
     void creditDecision;
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, voiceNotes, forceRefresh } = await req.json();
+    const { anamnesisData: rawAnamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, voiceNotes, forceRefresh } = await req.json();
+    const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
+    const preventive = isPreventiveAssessment(anamnesisData);
 
     // Cache: identical clinical context → identical impression (7d).
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -166,6 +169,7 @@ serve(async (req) => {
     const systemPrompt = `You are a clinical physiotherapy expert. Your task is to produce a DEEP, detailed integrative clinical impression based on assessment data.
 
 Rules:
+${preventiveReasoningContext(anamnesisData)}
 - Write a substantive overview (8-14 lines, in flowing clinical prose separated into short paragraphs) integrating: chief complaint, onset, pain characteristics and intensity per region, duration, functional questionnaire scores, and diagnostic hypothesis.${multiAssessment ? "\n- When multiple assessments exist, describe the clinical trajectory over time: whether the patient improved, worsened, or remained stable, referencing specific score changes." : ""}
 - OBJECTIVE TESTS ARE MANDATORY CONTENT when present. If dynamometry (strength) data is provided, you MUST dedicate an explicit part of the overview to it: cite the actual values (mean and best in kgf), the number of trials and reliability (CV% — above 15% means questionable reproducibility), left/right asymmetries and agonist/antagonist ratios within the same side, naming the movements. Interpret asymmetries above 10% as clinically relevant (deficit/inhibition per D.I.F.I) and state which side and which movement is deficient. Never treat these numbers as a footnote and never omit them.
 - If range of motion (ROM) data is provided, likewise discuss it explicitly: which joints/movements are restricted, side comparison, and how the restriction relates to the hypothesis and to the strength findings.
@@ -174,13 +178,13 @@ Rules:
 - If anamnesis interview voice transcripts/summaries are provided, treat them as a PRIMARY source: they capture the patient's own words during the consultation. Integrate anything clinically relevant that is NOT already in the structured fields — nuances of onset and mechanism, direct quotes about pain behavior, psychosocial context, beliefs, goals and expectations. Do not quote them verbatim at length; synthesize.
 - Only comment on data actually provided. Never invent values. If dynamometry or ROM was not recorded, do not speculate about them.
 - Do NOT mention specific exercises, treatment techniques, or therapeutic approaches.
-- Select exactly 2 main therapeutic objectives from this list ONLY: controle do quadro álgico, reequilibrar tensões miofasciais, exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar, modulação da dor.
+- Select exactly 2 main therapeutic objectives from this list ONLY: ${preventive ? "exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar" : "controle do quadro álgico, reequilibrar tensões miofasciais, exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar, modulação da dor"}.
 - Respond in ${langLabel}.
 - Use the tool provided to return the structured output.${timelineInstruction}`;
 
 
     // Build user prompt with only populated fields to reduce token spend.
-    const lines: string[] = ["Current assessment data:"];
+    const lines: string[] = [preventiveReasoningContext(anamnesisData), "Current assessment data:"];
     const push = (label: string, value: unknown) => {
       if (value === null || value === undefined) return;
       if (typeof value === "string" && !value.trim()) return;
@@ -191,14 +195,14 @@ Rules:
     push("Chief complaint", anamnesisData?.chiefComplaint);
     push("Custom complaint", anamnesisData?.customComplaint);
     push("Onset", anamnesisData?.onset);
-    push("Pain regions", painRegions);
+    push("Pain regions", preventive ? [] : painRegions);
     if (anamnesisData?.painRegionRefinements && Object.keys(anamnesisData.painRegionRefinements).length > 0) {
       lines.push(
         `- Anatomical refinement per region (medial/lateral, anterior/posterior, proximal/distal for limbs; right/left side or central for axial regions — use to characterize the pain generator more precisely):\n${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]) => `    • ${k}: ${Array.isArray(v) ? v.join(", ") : v}`).join("\n")}`
       );
     }
     push("Pain types", anamnesisData?.painTypes);
-    if (painScore !== null && painScore !== undefined) push("Pain score (VAS, overall/average)", `${painScore}/10`);
+    if (!preventive && painScore !== null && painScore !== undefined) push("Pain score (VAS, overall/average)", `${painScore}/10`);
     if (anamnesisData?.painScoreMode && anamnesisData.painScoreMode !== "general") push("Pain score mode", anamnesisData.painScoreMode);
     if (anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0) {
       lines.push(
@@ -310,7 +314,7 @@ Rules:
             properties: {
               overview: {
                 type: "string",
-                description: "Deep integrative clinical overview (8-14 lines, short paragraphs) that explicitly analyses dynamometry values/asymmetries, ROM findings and session evolution notes when provided, plus timeline perspective when multiple assessments exist",
+                description: "Deep integrative clinical overview (8-14 lines, short paragraphs) that explicitly analyses dynamometry values/asymmetries, ROM findings and professional examination observations when provided, plus timeline perspective when multiple assessments exist",
               },
               therapeuticObjectives: {
                 type: "array",

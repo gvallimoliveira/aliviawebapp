@@ -9,8 +9,11 @@
  * must NOT make an assessment look complete.
  */
 
+import { isPreventiveAssessment } from "./assessmentPurpose";
+
 export function hasAnamnesisCore(assessment: any): boolean {
   const ad: any = assessment?.anamnesis_data || {};
+  if (isPreventiveAssessment(ad)) return !!ad.preventionGoals?.length || !!ad.preventionGoalDetails?.trim();
   return !!(
     ad.chiefComplaint ||
     (Array.isArray(ad.chiefComplaints) && ad.chiefComplaints.length > 0) ||

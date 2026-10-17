@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { purposeCopy } from "./AssessmentPurposeFields";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,11 +23,12 @@ const viewImages: Record<View, string> = {
 };
 
 interface PainMapProps {
+  purpose?: "pain" | "history";
   selectedRegions: string[];
   onRegionsChange: (regions: string[]) => void;
 }
 
-const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
+const PainMap = ({ selectedRegions, onRegionsChange, purpose = "pain" }: PainMapProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const isAdmin = user?.email === "gvallimoliveira@gmail.com";
@@ -88,18 +90,18 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
       className="space-y-4"
     >
       <div className="text-center space-y-2">
-        <h3 className="text-lg font-semibold text-foreground">{t("painmap.title")}</h3>
-        <p className="text-sm text-muted-foreground">{t("painmap.subtitle")}</p>
+        <h3 className="text-lg font-semibold text-foreground">{purpose === "history" ? purposeCopy[language].map : t("painmap.title")}</h3>
+        <p className="text-sm text-muted-foreground">{purpose === "history" ? purposeCopy[language].mapHint : t("painmap.subtitle")}</p>
       </div>
 
       {/* Focus reminder */}
-      <div className="mx-auto max-w-md text-[11px] leading-snug rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-900/15 dark:border-amber-700/50 text-amber-900 dark:text-amber-200 px-3 py-2 text-center">
+      {purpose === "pain" && <div className="mx-auto max-w-md text-[11px] leading-snug rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-900/15 dark:border-amber-700/50 text-amber-900 dark:text-amber-200 px-3 py-2 text-center">
         {language === "pt"
           ? "Selecione apenas as regiões da(s) queixa(s) atual(is). Evite marcar dores antigas sem relação."
           : language === "es"
           ? "Selecciona solo las regiones de tu(s) queja(s) actual(es). Evita marcar dolores antiguos sin relación."
           : "Select only the regions of your current complaint(s). Avoid marking old, unrelated pains."}
-      </div>
+      </div>}
 
       {/* View toggle */}
       <div className="flex justify-center gap-2 flex-wrap">
@@ -223,7 +225,7 @@ const PainMap = ({ selectedRegions, onRegionsChange }: PainMapProps) => {
       </div>
 
       {/* Passo C2 — contador + extensão estimada de dor (sem lista de regiões) */}
-      {ENABLE_PAINMAP_V2 && !debugMode && (
+      {purpose === "pain" && ENABLE_PAINMAP_V2 && !debugMode && (
         <div className="mx-auto max-w-md">
           {(() => {
 

@@ -1,3 +1,5 @@
+import { normalizeAssessmentPurpose, isPreventiveAssessment } from "./assessmentPurpose";
+
 // Granular steps that can be enabled/disabled inside a reassessment link.
 // Top-level "anamnesis" is implicit: present if any of the anamnesis sub-steps is enabled.
 
@@ -83,6 +85,19 @@ export const mergeAnamnesisWithOriginal = (
   original: { anamnesis_data?: any; pain_regions?: string[] | null } | null,
   enabled: Set<ReassessStepId> | null,
 ): any => {
+  if (isPreventiveAssessment(data)) {
+    const orig = original?.anamnesis_data || {};
+    const merged = { ...orig, ...data };
+    if (enabled && !enabled.has("surgery")) {
+      merged.hasPriorSurgery = orig.hasPriorSurgery;
+      merged.surgeryDetails = orig.surgeryDetails;
+    }
+    if (enabled && !enabled.has("activity")) {
+      merged.activityLevel = orig.activityLevel;
+      merged.hasGymAccess = orig.hasGymAccess;
+    }
+    return normalizeAssessmentPurpose(merged);
+  }
   if (!original || !enabled) return data;
   const orig = (original.anamnesis_data || {}) as any;
   const merged: any = { ...data };
@@ -156,7 +171,12 @@ export const buildAnamnesisFromOriginal = (original: {
   pain_score?: number | null;
 } | null): any => {
   const orig = (original?.anamnesis_data || {}) as any;
-  return {
+  return normalizeAssessmentPurpose({
+    assessmentPurpose: orig.assessmentPurpose,
+    preventionGoals: orig.preventionGoals,
+    preventionGoalDetails: orig.preventionGoalDetails,
+    historyRegions: orig.historyRegions,
+    ...orig,
     chiefComplaint: orig.chiefComplaint || "",
     chiefComplaints: orig.chiefComplaints || (orig.chiefComplaint ? [orig.chiefComplaint] : []),
     customComplaint: orig.customComplaint || "",
@@ -191,5 +211,5 @@ export const buildAnamnesisFromOriginal = (original: {
     painScoreMode: orig.painScoreMode || "general",
     painScoresPerRegion: orig.painScoresPerRegion || {},
     painMechanism: orig.painMechanism,
-  };
+  });
 };

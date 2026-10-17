@@ -1,3 +1,4 @@
+import { isPreventiveAssessment, normalizeAssessmentPurpose, preventiveReasoningContext } from "../_shared/assessment-purpose.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -18,7 +19,9 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, forceRefresh, assessmentId, previousBasicDiagnosis, painMechanism: bodyPainMechanism, painExtent: bodyPainExtent } = await req.json();
+    const { anamnesisData: rawAnamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, forceRefresh, assessmentId, previousBasicDiagnosis, painMechanism: bodyPainMechanism, painExtent: bodyPainExtent } = await req.json();
+    const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
+    const preventive = isPreventiveAssessment(anamnesisData);
     // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
     const creditDecision = await canaryCredits(req, "generate-diagnosis");
     void creditDecision;
@@ -49,7 +52,7 @@ serve(async (req) => {
       }
     };
 
-    const cachePayload = { v: "dx-pro-notes-v1", anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null, painMechanism: bodyPainMechanism ?? null, painExtent: bodyPainExtent ?? null };
+    const cachePayload = { v: "dx-purpose-v2", anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null, painMechanism: bodyPainMechanism ?? null, painExtent: bodyPainExtent ?? null };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ diagnosis: unknown }>(admin, "generate-diagnosis", cachePayload);
       if (cached) {
@@ -94,6 +97,7 @@ serve(async (req) => {
     const CONFIDENCE_KEYS = ["low", "moderate", "high"];
 
     const rulesMechanism = (() => {
+      if (preventive) return null;
       const raw = bodyPainMechanism ?? anamnesisData?.painMechanismResolved ?? null;
       if (!raw || typeof raw !== "object") return null;
       const m = String((raw as any).mechanism ?? "");
@@ -455,6 +459,8 @@ CLINICAL DECISION:
     const { PEDRO_KNOWLEDGE_BASE, shouldIncludePedroKnowledge } = await import("../_shared/pedro-knowledge.ts");
     const includePedro = shouldIncludePedroKnowledge(anamnesisData, additionalInfo);
     const systemPrompt = `You are an experienced musculoskeletal physiotherapist AI assistant. Based on the patient's anamnesis data and validated questionnaire results, generate a diagnostic hypothesis.
+${preventiveReasoningContext(anamnesisData)}
+${preventive ? "For this preventive assessment D.I.F.I must NOT imply existing pain, inhibition or disability; the pain-cycle instructions below apply ONLY to symptomatic cases. Use current functional findings and safety screening, not a presumed pain generator." : ""}
 ${includePedro ? PEDRO_KNOWLEDGE_BASE : ""}
 
 PROPRIETARY MODEL — D.I.F.I. (Pain Feedback Cycle):
@@ -589,7 +595,8 @@ Response format (JSON):
   ` : ""}"disclaimer": "${isProfessional ? (lang === "English" ? "Preliminary hypothesis for triage purposes. The definitive diagnosis will be the responsibility of the attending physiotherapist." : "Hipótese preliminar para fins de triagem. O diagnóstico definitivo será de responsabilidade do fisioterapeuta responsável.") : "Medical disclaimer text"}"
 }`;
 
-    const userPrompt = `Patient anamnesis data:
+    const userPrompt = `${preventiveReasoningContext(anamnesisData)}
+Patient anamnesis data:
 - Chief complaints: ${chiefComplaints.join(", ") || anamnesisData.customComplaint}
 - Custom complaint details: ${anamnesisData.customComplaint || "N/A"}
 - Onset: ${anamnesisData.onset}

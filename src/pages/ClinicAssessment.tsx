@@ -1,4 +1,5 @@
 import ClinicBrandHeader from "@/components/ClinicBrandHeader";
+import { normalizeAssessmentPurpose, isPreventiveAssessment, shouldCollectPainQuestionnaires, shouldCollectPainSelfTests } from "@/lib/assessmentPurpose";
 import { useState, useEffect, useMemo, useRef } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
@@ -269,6 +270,10 @@ const ClinicAssessment = () => {
             patientEmail: orig.patient_email,
           });
           setPrefilledExtras({
+            assessmentPurpose: anam?.assessmentPurpose,
+            preventionGoals: anam?.preventionGoals,
+            preventionGoalDetails: anam?.preventionGoalDetails,
+            historyRegions: anam?.historyRegions,
             sex: anam?.sex || patientFallback.sex,
             ageRange: anam?.ageRange || patientFallback.ageRange,
             birthDate: anam?.birthDate || patientFallback.birthDate,
@@ -502,24 +507,25 @@ const ClinicAssessment = () => {
     setStep("redflag_alert");
   };
 
-  const handleAnamnesisComplete = async (rawData: AnamnesisData) => {
+  const handleAnamnesisComplete = async (rawData: AnamnesisData, safetyConfirmed = false) => {
     const data = (reassessmentId && originalAssessment)
       ? (mergeAnamnesisWithOriginal(rawData, originalAssessment, enabledSteps) as AnamnesisData)
-      : rawData;
+      : normalizeAssessmentPurpose(rawData);
     setAnamnesisData(data);
+    if (isPreventiveAssessment(data) && redFlagData === null && !safetyConfirmed) { setStep("redflags"); return; }
     const id = await createAssessment();
     if (id) {
       await updateAssessment(id, {
         anamnesis_data: data as any,
-        pain_regions: data.painRegions,
-        pain_extent: painExtentValue(data.painRegions),
-        pain_score: data.painScore,
+        pain_regions: isPreventiveAssessment(data) ? [] : data.painRegions,
+        pain_extent: isPreventiveAssessment(data) ? null : painExtentValue(data.painRegions),
+        pain_score: isPreventiveAssessment(data) ? null : data.painScore,
         ...buildMechanismPayload(data),
       });
     }
-    if (reassessHasQuestionnaire) {
+    if (shouldCollectPainQuestionnaires(data, reassessHasQuestionnaire)) {
       setStep("questionnaire");
-    } else if (hasFunctionalTests) {
+    } else if (shouldCollectPainSelfTests(data, hasFunctionalTests)) {
       setQuestionnaireResults((originalAssessment?.test_results as any) || []);
       setStep("functional_tests");
     } else if (reassessHasPsychosocial) {
@@ -534,7 +540,7 @@ const ClinicAssessment = () => {
   /** Continua o fluxo depois dos questionários: testes funcionais (se
    *  habilitados) → perfil psicossocial (se habilitado) → hipótese. */
   const continueAfterQuestionnaire = (results: QuestionnaireResult[]) => {
-    if (hasFunctionalTests) {
+    if (shouldCollectPainSelfTests(anamnesisData, hasFunctionalTests)) {
       setStep("functional_tests");
       return;
     }
@@ -625,7 +631,7 @@ const ClinicAssessment = () => {
       // Passo D1 — mecanismo/extensão de dor como contexto clínico para a IA.
       const mechPayload = buildMechanismPayload(data as any);
       if (mechPayload.pain_mechanism) bodyData.painMechanism = mechPayload.pain_mechanism;
-      bodyData.painExtent = painExtentValue((data as any).painRegions);
+      bodyData.painExtent = isPreventiveAssessment(data) ? null : painExtentValue((data as any).painRegions);
       const result = await invokeDiagnosisWithRetry(bodyData);
 
       const id = currentId || assessmentId;
@@ -708,7 +714,7 @@ const ClinicAssessment = () => {
       if (tryIdentityResume(patientName, patientEmail)) return;
     }
     if (reassessmentId && originalAssessment) {
-
+      if (isPreventiveAssessment(originalAssessment.anamnesis_data) && redFlagData === null) { if (!reassessHasAnamnesis) setAnamnesisData(buildAnamnesisFromOriginal(originalAssessment)); setStep("redflags"); return; }
       if (reassessHasAnamnesis) {
         setStep("anamnesis");
       } else {
@@ -718,12 +724,12 @@ const ClinicAssessment = () => {
         if (id) {
           await updateAssessment(id, {
             anamnesis_data: data as any,
-            pain_regions: data.painRegions,
-            pain_extent: painExtentValue(data.painRegions),
-            pain_score: data.painScore,
+            pain_regions: isPreventiveAssessment(data) ? [] : data.painRegions,
+            pain_extent: isPreventiveAssessment(data) ? null : painExtentValue(data.painRegions),
+            pain_score: isPreventiveAssessment(data) ? null : data.painScore,
           });
         }
-        if (reassessHasQuestionnaire) {
+        if (shouldCollectPainQuestionnaires(data, reassessHasQuestionnaire)) {
           setStep("questionnaire");
         } else if (reassessHasPsychosocial) {
           setQuestionnaireResults((originalAssessment?.test_results as any) || []);
@@ -784,15 +790,15 @@ const ClinicAssessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
-        {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
+        {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && step !== "thank_you" && step !== "diagnosis_error" && (
           <AssessmentStepper
             currentStep={step}
             mode="professional"
             enabledStepIds={reassessmentId ? [
               ...(reassessHasRedflags ? ["redflags"] : []),
               ...(reassessHasAnamnesis ? ["anamnesis"] : []),
-              ...(reassessHasQuestionnaire ? ["questionnaire"] : []),
-              ...(hasFunctionalTests ? ["functional_tests"] : []),
+              ...(shouldCollectPainQuestionnaires(anamnesisData, reassessHasQuestionnaire) ? ["questionnaire"] : []),
+              ...(shouldCollectPainSelfTests(anamnesisData, hasFunctionalTests) ? ["functional_tests"] : []),
               ...(reassessHasPsychosocial ? ["psychosocial"] : []),
               "result",
             ] : undefined}
@@ -952,7 +958,7 @@ const ClinicAssessment = () => {
 
         {step === "redflags" && (
           <RedFlagScreening
-            onPass={() => setStep("anamnesis")}
+            onPass={() => { setRedFlagData({}); if (isPreventiveAssessment(anamnesisData) && anamnesisData) { void handleAnamnesisComplete(anamnesisData, true); } else setStep("anamnesis"); }}
             onFlagged={() => setStep("redflag_continue")}
             onFlaggedWithData={handleRedFlagged}
             onBack={() => setStep("patient_info")}
@@ -962,7 +968,7 @@ const ClinicAssessment = () => {
           <RedFlagContinueScreen
             flaggedItems={redFlagData}
             professionalName={clinic?.name}
-            onContinue={() => setStep("anamnesis")}
+            onContinue={() => { if (isPreventiveAssessment(anamnesisData) && anamnesisData) void handleAnamnesisComplete(anamnesisData, true); else setStep("anamnesis"); }}
             onEnd={handleRedFlagEnd}
           />
         )}
@@ -1010,7 +1016,7 @@ const ClinicAssessment = () => {
           <FunctionalTests
             painRegions={anamnesisData.painRegions}
             onComplete={handleFunctionalTestsDone}
-            onBack={() => setStep(reassessHasQuestionnaire ? "questionnaire" : "anamnesis")}
+            onBack={() => setStep(shouldCollectPainQuestionnaires(anamnesisData, reassessHasQuestionnaire) ? "questionnaire" : "anamnesis")}
             hasQuestionnaires={questionnaireResults.length > 0}
             optional
             onSkip={() => handleFunctionalTestsDone([])}
@@ -1021,7 +1027,7 @@ const ClinicAssessment = () => {
           <PsychosocialStep
             questionnaireIds={extraQuestionnaireIds}
             onComplete={(r) => finishAfterPsychosocial(r)}
-            onBack={() => setStep(hasFunctionalTests ? "functional_tests" : reassessHasQuestionnaire ? "questionnaire" : "anamnesis")}
+            onBack={() => setStep(shouldCollectPainSelfTests(anamnesisData, hasFunctionalTests) ? "functional_tests" : shouldCollectPainQuestionnaires(anamnesisData, reassessHasQuestionnaire) ? "questionnaire" : "anamnesis")}
           />
         )}
 

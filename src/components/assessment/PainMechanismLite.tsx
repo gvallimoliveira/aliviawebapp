@@ -307,10 +307,12 @@ export default PainMechanismLite;
  * quando a flag está desligada — nunca sobrescreve dados existentes com null.
  */
 export const buildMechanismPayload = (data: {
+  assessmentPurpose?: "symptomatic" | "prevention";
   painMechanism?: unknown;
   painRegions?: string[];
   painTypes?: string[];
 }): Record<string, unknown> => {
+  if (data.assessmentPurpose === "prevention") return { pain_mechanism: null };
   if (!ENABLE_PAIN_MECHANISM) return {};
   const lite = sanitizeLiteAnswers(data.painMechanism);
   if (!hasLiteAnswers(lite)) return {};

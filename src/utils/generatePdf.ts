@@ -1,3 +1,6 @@
+import { getAllRegions } from "@/components/assessment/painMapData";
+import { isPreventiveAssessment, type PurposeData } from "@/lib/assessmentPurpose";
+import { preventionGoalLabels } from "@/components/assessment/AssessmentPurposeFields";
 import jsPDF from "jspdf";
 import { applyPdfBranding, pdfBrandPalette } from "@/lib/pdfBranding";
 import { regionsByView, type View, type ClickableRegion } from "@/components/assessment/painMapData";
@@ -92,7 +95,7 @@ interface Diagnosis {
   } | null;
 }
 
-interface AnamnesisData {
+interface AnamnesisData extends PurposeData {
   chiefComplaint: string;
   customComplaint: string;
   onset: string;
@@ -933,8 +936,14 @@ async function composePainMapPng(bodyDataUrl: string | null, pathsSvg: string): 
 
 
 // ── Render Anamnesis Section ──
-function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData, isPt: boolean): number {
+function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData, isPt: boolean, language = isPt ? "pt" : "en"): number {
   const fields: { label: string; value: string }[] = [];
+  if (isPreventiveAssessment(anamnesis)) {
+    fields.push({ label: isPt ? "Finalidade" : language === "es" ? "Finalidad" : "Purpose", value: isPt ? "Avaliação preventiva — sem dor atual" : language === "es" ? "Evaluación preventiva — sin dolor actual" : "Preventive assessment — no current pain" });
+    if (anamnesis.preventionGoals?.length) fields.push({ label: isPt ? "Objetivos" : language === "es" ? "Objetivos" : "Goals", value: preventionGoalLabels(anamnesis.preventionGoals, language === "es" ? "es" : isPt ? "pt" : "en") });
+    if (anamnesis.preventionGoalDetails) fields.push({ label: isPt ? "Objetivo descrito" : language === "es" ? "Objetivo descrito" : "Goal details", value: anamnesis.preventionGoalDetails });
+    if (anamnesis.historyRegions?.length) fields.push({ label: isPt ? "Histórico / regiões de atenção (não dolorosas)" : language === "es" ? "Historia / regiones de atención (no dolorosas)" : "History / attention sites (not painful)", value: anamnesis.historyRegions.map(id => getAllRegions()[id]?.[isPt ? "label_pt" : "label_en"] || id).join(", ") });
+  }
 
   if (anamnesis.chiefComplaint) {
     fields.push({ label: isPt ? "Queixa Principal" : "Chief Complaint", value: translateKey(anamnesis.chiefComplaint, isPt) });
@@ -954,7 +963,7 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
   if (_continuousMed) {
     fields.push({ label: isPt ? "Medicacao de Uso Continuo" : "Continuous Medication", value: _continuousMed });
   }
-  if (anamnesis.painScore != null) {
+  if (!isPreventiveAssessment(anamnesis) && anamnesis.painScore != null) {
     fields.push({ label: isPt ? "Nivel de Dor (EVA)" : "Pain Level (VAS)", value: `${anamnesis.painScore}/10` });
   }
   if (anamnesis.painTypes?.length) {
@@ -1005,7 +1014,7 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
   if (anamnesis.headacheCrisisFrequency) {
     fields.push({ label: isPt ? "Frequencia de Crises" : "Crisis Frequency", value: translateKey(anamnesis.headacheCrisisFrequency, isPt) });
   }
-  if (anamnesis.painRegions?.length) {
+  if (!isPreventiveAssessment(anamnesis) && anamnesis.painRegions?.length) {
     const regionLabels = anamnesis.painRegions.map(id => {
       for (const view of Object.values(regionsByView)) {
         const r = view.find(reg => reg.id === id);
@@ -1015,7 +1024,7 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     });
     fields.push({ label: isPt ? "Regioes de Dor" : "Pain Regions", value: regionLabels.join(", ") });
   }
-  if (anamnesis.painScoreMode === "per_region" && anamnesis.painScoresPerRegion && Object.keys(anamnesis.painScoresPerRegion).length > 0) {
+  if (!isPreventiveAssessment(anamnesis) && anamnesis.painScoreMode === "per_region" && anamnesis.painScoresPerRegion && Object.keys(anamnesis.painScoresPerRegion).length > 0) {
     const regionScores = Object.entries(anamnesis.painScoresPerRegion)
       .map(([key, score]) => `${painRegionLabel(key, isPt)}: ${score}/10`)
       .join(", ");
@@ -2136,6 +2145,7 @@ function painRegionLabel(id: string, isPt: boolean): string {
 }
 
 function renderVasSection(doc: jsPDF, y: number, isPt: boolean, painScore: number | undefined, anamnesisData?: AnamnesisData | any): number {
+  if (isPreventiveAssessment(anamnesisData)) return y;
   const hasPerRegion = anamnesisData?.painScoreMode === "per_region" && anamnesisData?.painScoresPerRegion && Object.keys(anamnesisData.painScoresPerRegion).length > 0;
   const score = painScore ?? anamnesisData?.painScore;
   if (score == null && !hasPerRegion) return y;
@@ -2305,7 +2315,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
 
   // ── Anamnesis summary (same fields shown in the online assessment summary) ──
   if (options.anamnesisData) {
-    y = renderAnamnesisSection(doc, y, options.anamnesisData, isPt);
+    y = renderAnamnesisSection(doc, y, options.anamnesisData, isPt, options.language);
   }
 
   // Passo E2 — mecanismo de dor (apresentado após a anamnese)
@@ -2320,7 +2330,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   y = renderVasSection(doc, y, isPt, options.painScore, options.anamnesisData);
 
   // ── Pain Map ──
-  if (options.painRegions && options.painRegions.length > 0) {
+  if (!isPreventiveAssessment(options.anamnesisData) && options.painRegions && options.painRegions.length > 0) {
     y = await renderPainMapSection(doc, y, options.painRegions, isPt);
   }
 
@@ -2692,7 +2702,7 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
 
   // ── Anamnesis Section ──
   if (anamnesisData) {
-    y = renderAnamnesisSection(doc, y, anamnesisData, isPt);
+    y = renderAnamnesisSection(doc, y, anamnesisData, isPt, language);
   }
 
   // Passo E2 — mecanismo de dor (apresentado após a anamnese)
@@ -2760,7 +2770,7 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
 
   // ── Pain Map ──
   const regions = painRegions || anamnesisData?.painRegions;
-  if (regions && regions.length > 0) {
+  if (!isPreventiveAssessment(anamnesisData) && regions && regions.length > 0) {
     y = await renderPainMapSection(doc, y, regions, isPt);
   }
 

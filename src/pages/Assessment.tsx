@@ -1,3 +1,4 @@
+import { isPreventiveAssessment } from "@/lib/assessmentPurpose";
 import { useState, useEffect, useRef, useCallback } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE, PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
@@ -567,11 +568,18 @@ const Assessment = () => {
     if (id) {
       await updateAssessment(id, {
         anamnesis_data: data as any,
-        pain_regions: data.painRegions,
-        pain_extent: painExtentValue(data.painRegions),
-        pain_score: data.painScore,
+        pain_regions: isPreventiveAssessment(data) ? [] : data.painRegions,
+        pain_extent: isPreventiveAssessment(data) ? null : painExtentValue(data.painRegions),
+        pain_score: isPreventiveAssessment(data) ? null : data.painScore,
         ...buildMechanismPayload(data),
       });
+    }
+    if (isPreventiveAssessment(data)) {
+      setQuestionnaireResults([]);
+      setTestResults([]);
+      if (mode === "premium") setStep("final_notes");
+      else generateDiagnosis(data, [], id);
+      return;
     }
     if (mode === "premium") {
       // Detect functional limitation context for the 3rd questionnaire rule.

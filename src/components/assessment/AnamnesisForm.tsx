@@ -11,6 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PainMap from "./PainMap";
+import AssessmentPurposeFields, { purposeCopy } from "./AssessmentPurposeFields";
+import { isPreventiveAssessment, normalizeAssessmentPurpose, type PurposeData } from "@/lib/assessmentPurpose";
 import { formatCpf } from "@/utils/masks";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
@@ -24,7 +26,7 @@ import PainMechanismLite, {
 } from "./PainMechanismLite";
 
 
-export interface AnamnesisData {
+export interface AnamnesisData extends PurposeData {
   chiefComplaint: string; // deprecated, kept for backward compat
   chiefComplaints: string[];
   customComplaint: string;
@@ -169,31 +171,6 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     continuousMedications: "",
     painMechanism: createEmptyLiteAnswers(),
   });
-
-
-  // ── Autosave (local + nuvem) ─────────────────────────────────────────────
-  const draft = useAutosaveDraft<{ step: number; data: AnamnesisData }>({
-    formKey: "anamnesis",
-    scopeKey: draftScopeKey ?? null,
-    state: { step, data },
-    enabled: !!draftScopeKey,
-  });
-  const handleRestoreDraft = useCallback(() => {
-    const p = draft.restore();
-    if (!p) return;
-    if (typeof p.step === "number") setStep(p.step);
-    if (p.data) setData((prev) => ({ ...prev, ...p.data }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.draftPayload]);
-
-  // Retomada já confirmada pelo paciente → restaura sozinho, sem segundo clique.
-  const autoRestoredRef = useRef(false);
-  useEffect(() => {
-    if (!autoRestoreDraft || autoRestoredRef.current) return;
-    if (!draft.hasDraft || !draft.draftPayload) return;
-    autoRestoredRef.current = true;
-    handleRestoreDraft();
-  }, [autoRestoreDraft, draft.hasDraft, draft.draftPayload, handleRestoreDraft]);
 
 
   // Track which fields were pre-filled from a previous assessment so we can render
@@ -473,7 +450,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
   };
 
   // Define step IDs for clarity
-  type StepId = "complaint" | "onset" | "surgery" | "health_history" | "painmap" | "region_detail" | "migraine_screening" | "sex_age" | "paintype" | "pain_mechanism" | "evolution" | "factors" | "duration" | "pain_frequency" | "gym" | "painscore";
+  type StepId = "purpose" | "preventive_activity" | "complaint" | "onset" | "surgery" | "health_history" | "painmap" | "region_detail" | "migraine_screening" | "sex_age" | "paintype" | "pain_mechanism" | "evolution" | "factors" | "duration" | "pain_frequency" | "gym" | "painscore";
 
   // Check if migraine screening should show
   const needsMigraineScreening = () => {
@@ -500,7 +477,10 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       return enabledSubs.includes(g);
     };
 
-    const base: StepId[] = ["complaint", "onset", "surgery", "health_history", "painmap"];
+    if (isPreventiveAssessment(data)) {
+      return ["purpose", "surgery", "health_history", "painmap", "sex_age", "preventive_activity", "gym"];
+    }
+    const base: StepId[] = ["purpose", "complaint", "onset", "surgery", "health_history", "painmap"];
     if (needsRegionDetail()) {
       base.push("region_detail");
     }
@@ -512,13 +492,54 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
     // Passos B2/B3 — triagem leiga de mecanismo de dor logo após o tipo de dor.
     if (ENABLE_PAIN_MECHANISM) base.push("pain_mechanism");
     base.push("evolution", "factors", "duration", "pain_frequency", "gym", "painscore");
-    return base.filter((id) => allowGroup(groupOf(id)));
+    return base.filter((id) => id === "purpose" || allowGroup(groupOf(id)));
   };
 
   const stepSequence = buildStepSequence();
+  const safeStep = Math.min(step, stepSequence.length - 1);
+  const pendingRestoreStepRef = useRef<StepId | null>(null);
+
+  // ── Autosave (local + nuvem) ─────────────────────────────────────────────
+  const draft = useAutosaveDraft<{ step: number; stepId?: StepId; data: AnamnesisData }>({
+    formKey: "anamnesis",
+    scopeKey: draftScopeKey ?? null,
+    state: { step, stepId: stepSequence[safeStep], data },
+    enabled: !!draftScopeKey,
+  });
+  const handleRestoreDraft = useCallback(() => {
+    const p = draft.restore();
+    if (!p) return;
+    setStep(0);
+    pendingRestoreStepRef.current = p.stepId || null;
+    if (p.data) setData((prev) => ({ ...prev, ...p.data }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.draftPayload]);
+
+  // Retomada já confirmada pelo paciente → restaura sozinho, sem segundo clique.
+  const autoRestoredRef = useRef(false);
+  useEffect(() => {
+    if (!autoRestoreDraft || autoRestoredRef.current) return;
+    if (!draft.hasDraft || !draft.draftPayload) return;
+    autoRestoredRef.current = true;
+    handleRestoreDraft();
+  }, [autoRestoreDraft, draft.hasDraft, draft.draftPayload, handleRestoreDraft]);
+
+
+  useEffect(() => {
+    const id = pendingRestoreStepRef.current;
+    if (!id) return;
+    pendingRestoreStepRef.current = null;
+    const index = stepSequence.indexOf(id);
+    setStep(index >= 0 ? index : 0);
+  }, [data]);
+  useEffect(() => { if (step !== safeStep) setStep(safeStep); }, [step, safeStep]);
 
   const renderStep = (id: StepId) => {
     switch (id) {
+      case "purpose":
+        return <AssessmentPurposeFields value={data} onChange={patch => setData(prev => ({ ...prev, ...patch }))} />;
+      case "preventive_activity":
+        return <div className="space-y-3"><Label>{purposeCopy[language].activity}</Label><div className="grid grid-cols-2 gap-2">{activityLevels.map(a => <Button key={a} type="button" variant={data.activityLevel === a ? "default" : "outline"} onClick={() => setData(prev => ({ ...prev, activityLevel: a }))}>{t(a)}</Button>)}</div></div>;
       case "complaint":
         return (
           <div className="space-y-4">
@@ -778,7 +799,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         );
       }
       case "painmap":
-        return <PainMap selectedRegions={data.painRegions} onRegionsChange={(regions) => setData({ ...data, painRegions: regions })} />;
+        return <PainMap purpose={isPreventiveAssessment(data) ? "history" : "pain"} selectedRegions={isPreventiveAssessment(data) ? data.historyRegions || [] : data.painRegions} onRegionsChange={(regions) => setData({ ...data, ...(isPreventiveAssessment(data) ? { historyRegions: regions } : { painRegions: regions }) })} />;
       case "region_detail": {
         const regionType = getSelectedSingleRegionType();
         if (!regionType) return null;
@@ -1316,6 +1337,8 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
 
   const isStepValid = (id: StepId): boolean => {
     switch (id) {
+      case "purpose": return !isPreventiveAssessment(data) || !!data.preventionGoals?.length || !!data.preventionGoalDetails?.trim();
+      case "preventive_activity": return data.activityLevel !== "";
       case "complaint": return data.chiefComplaints.length > 0 || data.customComplaint.trim() !== "";
       case "onset": return data.onset !== "";
       case "surgery": return data.hasPriorSurgery !== "";
@@ -1331,7 +1354,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         if (data.usesContinuousMedication === "yes" && !(data.continuousMedications || "").trim()) return false;
         return true;
       }
-      case "painmap": return data.painRegions.length > 0;
+      case "painmap": return isPreventiveAssessment(data) || data.painRegions.length > 0;
       case "region_detail": {
         if (data.painSubArea.length === 0) return false;
         const regionType = getSelectedSingleRegionType();
@@ -1362,7 +1385,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
   };
 
   const totalSteps = stepSequence.length;
-  const canGoNext = () => isStepValid(stepSequence[step]);
+  const canGoNext = () => isStepValid(stepSequence[safeStep]);
 
   const handleNext = () => {
     if (step < totalSteps - 1) {
@@ -1370,7 +1393,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       void draft.discard();
-      onComplete(data);
+      onComplete(normalizeAssessmentPurpose(data));
     }
   };
 
@@ -1419,7 +1442,7 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
       >
-        {renderStep(stepSequence[step])}
+        {renderStep(stepSequence[safeStep])}
       </motion.div>
 
       {/* Navigation */}

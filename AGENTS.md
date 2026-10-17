@@ -26,3 +26,5 @@
 - Subdirectories may have their own AGENTS.md; read it before changing files there.
 - Patient links use ClinicBrandHeader and scoped clinicAssessmentTheme; ClinicAssessment also passes branding to WelcomeStep. PDFs (including standalone measurements) share section renderers, resolveAssessmentBranding and per-document applyPdfBranding; preserve warning colors and clinic isolation.
 - HEP programs persist clinic_id at creation; public branding resolves only through the valid program token, never by guessing a clinic from the professional.
+
+- Preventive assessments are explicit opt-in via the shared purpose helper; preserve symptomatic defaults, store historical sites separately and unmeasured pain as null, and keep safety and professional-selected questionnaires.

@@ -49,7 +49,7 @@ const categories: ToolCategory[] = [
         key: "manual_assessment",
         icon: ClipboardList,
         title: "Avaliação manual no consultório",
-        desc: "Para o paciente que chega sem ter preenchido o link, você cria a avaliação direto no painel — não precisa de e-mail nem cadastro do paciente. Útil também para idosos e pacientes presenciais.",
+        desc: "A avaliação pode continuar a pré-avaliação ou começar do zero. Em pacientes sem dor, selecione prevenção ou acompanhamento: regiões históricas são opcionais, etapas de dor e questionários automáticos ficam ocultos; segurança, saúde e questionários escolhidos pelo profissional continuam. Para o paciente que chega sem ter preenchido o link, você cria a avaliação direto no painel — não precisa de e-mail nem cadastro do paciente. Útil também para idosos e pacientes presenciais.",
       },
       {
         key: "red_flags",
