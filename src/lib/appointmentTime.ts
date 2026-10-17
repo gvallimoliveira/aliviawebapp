@@ -53,3 +53,14 @@ export function assignLanes(items: LaneItem[]): Map<string, { lane: number; lane
   flush();
   return out;
 }
+
+/** Minimum on-grid card height (px) so short appointments stay readable. */
+export const MIN_CARD_HEIGHT_PX = 46;
+export const MIN_CONCURRENT_CARD_HEIGHT_PX = 32;
+
+/** Card height in px for the schedule grid; never below the readability minimum. */
+export function cardPixelHeight(durationMinutes: number, hourPx: number, concurrent: boolean): number {
+  const dur = Math.max(15, durationMinutes || 50);
+  const natural = (dur / 60) * hourPx - 2;
+  return Math.max(concurrent ? MIN_CONCURRENT_CARD_HEIGHT_PX : MIN_CARD_HEIGHT_PX, natural);
+}
