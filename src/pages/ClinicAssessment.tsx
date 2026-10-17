@@ -790,7 +790,7 @@ const ClinicAssessment = () => {
       </header>
 
       <main className="container max-w-2xl py-8 px-4">
-        {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
+        {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && step !== "thank_you" && step !== "diagnosis_error" && (
           <AssessmentStepper
             currentStep={step}
             mode="professional"

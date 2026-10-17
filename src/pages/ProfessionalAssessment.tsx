@@ -811,7 +811,7 @@ const ProfessionalAssessment = () => {
             </p>
           </div>
         )}
-        {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && (
+        {step !== "welcome" && step !== "patient_info" && step !== "resume_summary" && step !== "thank_you" && step !== "diagnosis_error" && (
           <AssessmentStepper
             currentStep={step}
             mode="professional"
