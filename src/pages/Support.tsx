@@ -54,7 +54,7 @@ const proTools = [
   { key: "acquire_treatment_badge", icon: Lock },
   { key: "messages", icon: MessageCircle },
   { key: "video_call", icon: Video },
-  { key: "clinical_impression", icon: Brain },
+  { key: "clinical_impression", icon: Brain }, // Help includes reuse of the saved manual impression without AI calls.
   { key: "differential_diagnosis", icon: Brain },
   // Profile-specific PDF priorities (effort response, recovery, review; WHO context): localized FAQ rf22.
   // HEP/load guidance is localized under support.pro.tool.hep.desc.

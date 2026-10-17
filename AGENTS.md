@@ -4,7 +4,8 @@
 
 - Cardiovascular views use `usePatientBirthDate` to refresh demographics after patient record edits and on refocus; age-dependent estimates must not remain stale or reset unsaved session inputs.
 
-- Aliv.iA ecosystems and landing messages use canonical IDs in `aliviaDifferentials.ts` to prevent promise drift; feed Studio through this repertoire, never new controls. Recipes may add transition copy explaining handoffs without duplicating features or implying duplicate entry.
+- Aliv.iA/Studio copy uses canonical `aliviaDifferentials.ts` IDs; handoff copy must not duplicate features or imply duplicate entry.
+- Manual assessment and record share diagnosis.clinicalImpression; sync saved updates and regenerate only on request to avoid duplicate credits.
 - Patient record paired sections use the shared native horizontal row; this preserves form behavior and lets section shortcuts reveal horizontally hidden content.
 - Patient regional pain charts and comparisons share one chronological data helper; explicit regional measurements must never be replaced by an invented regional score from a multi-region global average.
 - HEP load metrics (volume, intensity, weekly sets per region, planned dose) are computed only by the shared `hepLoad.ts` helper; one deterministic source keeps the HEP panel and the microcycle dose consistent.

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { mockClinicalImpressions } from "@/data/mockPatientData";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Brain, FileCheck, Loader2, Lock, RefreshCw, Sparkles } from "lucide-react";
 
 export function normalizeTestResults(tr: any): any[] {
@@ -201,7 +201,10 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
   const { language } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [impression, setImpression] = useState<{ overview: string; therapeuticObjectives: string[] } | null>(existingImpression || null);
-  const autoRegenRef = useRef(false);
+  // Reconcile saved edits and patient changes without another AI request.
+  useEffect(() => {
+    setImpression(existingImpression?.overview ? existingImpression : null);
+  }, [assessment?.id, existingImpression]);
 
   const buildTimeline = () => {
     if (!allAssessments || allAssessments.length === 0) return undefined;
@@ -304,10 +307,13 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         if (error) throw error;
         const ci = data?.clinicalImpression;
         if (!ci?.overview) throw new Error("Empty response");
-        setImpression(ci);
-
         const updatedDiagnosis = { ...(assessment.diagnosis || {}), clinicalImpression: ci };
-        await supabase.from("assessments").update({ diagnosis: updatedDiagnosis as any }).eq("id", assessment.id);
+        const { error: saveError } = await supabase.from("assessments")
+          .update({ diagnosis: updatedDiagnosis as any, needs_reimpression: false }).eq("id", assessment.id);
+        if (saveError) throw saveError;
+        assessment.diagnosis = updatedDiagnosis;
+        assessment.needs_reimpression = false;
+        setImpression(ci);
       }
     } catch (err: any) {
       console.error("Clinical impression error:", err);
@@ -318,21 +324,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
   };
 
 
-  // Auto-regenerate impression when assessment is flagged (e.g. after a pending
-  // questionnaire is completed by the patient).
-  useEffect(() => {
-    if (isDemo) return;
-    if (autoRegenRef.current) return;
-    if (!assessment?.needs_reimpression) return;
-    autoRegenRef.current = true;
-    (async () => {
-      await generate();
-      try {
-        await supabase.from("assessments").update({ needs_reimpression: false }).eq("id", assessment.id);
-      } catch (e) { console.warn("clear needs_reimpression failed", e); }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assessment?.id, assessment?.needs_reimpression]);
+  // New data does not silently spend credits or replace the saved impression.
 
 
   return (
@@ -354,6 +346,13 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         </div>
       </CardHeader>
       <CardContent>
+        {assessment?.needs_reimpression && impression && (
+          <p className="mb-3 text-xs text-muted-foreground">
+            {language === "pt" ? "Há novos dados na avaliação. A impressão salva foi preservada; você pode regenerá-la se necessário."
+              : language === "es" ? "Hay nuevos datos en la evaluación. La impresión guardada se conserva; puede regenerarla si es necesario."
+              : "New assessment data is available. The saved impression is preserved; you can regenerate it if needed."}
+          </p>
+        )}
         {!impression && !loading && (
           <div className="text-center py-4 space-y-3">
             <p className="text-sm text-muted-foreground">Gere uma visão integrativa do quadro clínico baseada nos dados da avaliação.</p>
