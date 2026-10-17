@@ -175,7 +175,7 @@ const categories: ToolCategory[] = [
         key: "clinical_impression",
         icon: Brain,
         title: "Impressão clínica evolutiva",
-        desc: "Resumo automático da evolução do paciente ao longo de várias avaliações. Útil em reuniões de equipe, troca de turno entre fisioterapeutas e laudos para convênio.",
+        desc: "A impressão clínica gerada ou escrita na avaliação manual aparece no prontuário assim que a avaliação é salva, incluindo os objetivos terapêuticos e as edições do profissional, sem outra geração ou consumo de créditos. Novos dados não substituem a impressão salva automaticamente: use Regenerar quando quiser atualizar a análise. Útil em reuniões de equipe, troca de turno entre fisioterapeutas e laudos para convênio.",
       },
       {
         key: "differential_diagnosis",
