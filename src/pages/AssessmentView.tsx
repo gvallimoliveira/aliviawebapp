@@ -1010,7 +1010,7 @@ const AssessmentView = () => {
                 header={
                   <div className="text-base font-semibold flex items-center gap-2">
                     <Activity className="h-4 w-4 text-primary" />
-                    {isPt ? "Mobilidade Articular (ADM)" : "Joint Mobility (ROM)"}
+                    {isPt ? "Mobilidade articular e flexibilidade" : "Joint mobility and flexibility"}
                   </div>
                 }
               >

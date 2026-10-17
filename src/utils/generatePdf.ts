@@ -1165,7 +1165,7 @@ function renderRomTableSection(
     language === "es"
       ? "Movilidad Articular (ADM)"
       : isPt
-        ? "Mobilidade Articular (ADM)"
+        ? "Mobilidade articular e flexibilidade"
         : "Joint Mobility (ROM)";
   const colJoint =
     language === "es" ? "Articulación / Movimiento" : isPt ? "Articulação / Movimento" : "Joint / Movement";

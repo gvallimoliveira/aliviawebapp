@@ -132,7 +132,7 @@ export const describeStrength = (rows: unknown): string | null => {
 export const describeRom = (rows: unknown): string | null => {
   const rom = Array.isArray(rows) ? rows.filter((r: any) => r?.joint || r?.leftValue || r?.rightValue) : [];
   if (rom.length === 0) return null;
-  return `RANGE OF MOTION (ROM):\n${rom
+  return `RANGE OF MOTION (ROM) AND MUSCLE FLEXIBILITY (values in degrees or cm as written):\n${rom
     .map((r: any) => {
       const asym = asymmetryPct(num(r.leftValue), num(r.rightValue));
       return `    • ${r.joint || "?"}: L ${r.leftValue || "—"} | R ${r.rightValue || "—"}${asym != null ? ` | L/R difference ${asym}%${asym > 10 ? " (RELEVANT, >10%)" : ""}` : ""}${r.notes ? ` | notes: ${r.notes}` : ""}`;
