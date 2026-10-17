@@ -941,10 +941,10 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     const a = prefillData.row || {};
     const an = a.anamnesis_data || {};
     setStep(0);
-    setChiefComplaint(an.chiefComplaint || "");
+    setChiefComplaint(readable(an.chiefComplaint || ""));
     setAdditionalComplaint(an.additionalComplaint || "");
     setHistory(an.history || "");
-    setDuration(an.duration || "");
+    setDuration(readable(an.duration || ""));
     setOnset(an.onset || "");
     setAggravating(an.aggravatingFactors || "");
     setRelieving(an.relievingFactors || "");
