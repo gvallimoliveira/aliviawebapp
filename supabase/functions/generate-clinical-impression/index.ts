@@ -169,7 +169,7 @@ Rules:
 - OBJECTIVE TESTS ARE MANDATORY CONTENT when present. If dynamometry (strength) data is provided, you MUST dedicate an explicit part of the overview to it: cite the actual values (mean and best in kgf), the number of trials and reliability (CV% — above 15% means questionable reproducibility), left/right asymmetries and agonist/antagonist ratios within the same side, naming the movements. Interpret asymmetries above 10% as clinically relevant (deficit/inhibition per D.I.F.I) and state which side and which movement is deficient. Never treat these numbers as a footnote and never omit them.
 - If range of motion (ROM) data is provided, likewise discuss it explicitly: which joints/movements are restricted, side comparison, and how the restriction relates to the hypothesis and to the strength findings.
 - Explicitly CORRELATE the objective findings (strength, ROM) with the symptoms, the functional scores and the diagnostic hypothesis — do not list data without interpreting it.
-- If session evolution notes are provided, incorporate the clinically useful observations from them (response to load, pain behavior between sessions, adherence, intercurrences), citing them as reported during follow-up.
+- The physiotherapist's own observations and exam/test findings are PRIMARY expert sources: integrate them explicitly (including negative findings) and let them guide the reasoning. Also integrate complementary questionnaires (e.g. SRS-22r) with their scores. Do not use session evolution notes.
 - If anamnesis interview voice transcripts/summaries are provided, treat them as a PRIMARY source: they capture the patient's own words during the consultation. Integrate anything clinically relevant that is NOT already in the structured fields — nuances of onset and mechanism, direct quotes about pain behavior, psychosocial context, beliefs, goals and expectations. Do not quote them verbatim at length; synthesize.
 - Only comment on data actually provided. Never invent values. If dynamometry or ROM was not recorded, do not speculate about them.
 - Do NOT mention specific exercises, treatment techniques, or therapeutic approaches.
@@ -269,16 +269,9 @@ Rules:
       lines.push(`- Dynamometry: NOT RECORDED — do not infer or invent strength values; reason from the data above without speculating about objective strength.`);
     }
 
-    const notes = Array.isArray(sessionNotes)
-      ? sessionNotes.filter((n: any) => (n?.content || "").trim().length > 0).slice(0, 12)
-      : [];
-    if (notes.length > 0) {
-      lines.push(
-        `- **SESSION EVOLUTION NOTES (follow-up records written by the therapist — extract the clinically useful observations and incorporate them):**\n${notes
-          .map((n: any) => `    • ${n.session_date || n.date || "?"}: ${String(n.content).replace(/\s+/g, " ").slice(0, 700)}`)
-          .join("\n")}`,
-      );
-    }
+    // Session evolution notes are intentionally excluded from the impression.
+    void sessionNotes;
+    lines.push(...buildProfessionalContext(anamnesisData));
 
     const vNotes = (Array.isArray(voiceNotes) ? voiceNotes : [])
       .filter((v: any) => (v?.transcript || "").trim().length > 0 || (v?.summary && typeof v.summary === "object"))

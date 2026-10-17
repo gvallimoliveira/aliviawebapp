@@ -626,9 +626,7 @@ ${formatHealthHistoryForPrompt(anamnesisData)}
 ${anamnesisData.painTypesPerRegion && Object.keys(anamnesisData.painTypesPerRegion).length > 1 ? `
 - **PAIN TYPE PER REGION (use to differentiate mechanical vs neural vs referred pain):**
 ${Object.entries(anamnesisData.painTypesPerRegion).map(([k, v]) => `    • ${k}: ${v}`).join("\n")}` : ""}
-${anamnesisData.additionalClinicalNotes ? `
-- **ADDITIONAL CLINICAL OBSERVATIONS (free-text notes by the physiotherapist — use this to refine your hypothesis, severity grading and test/treatment suggestions):**
-${anamnesisData.additionalClinicalNotes}` : ""}
+${buildProfessionalContext(anamnesisData).join("\n")}
 
 ${additionalInfo ? `Additional information provided by the patient (USE THIS to refine your hypothesis and potentially increase confidence):
 ${additionalInfo}` : ""}
