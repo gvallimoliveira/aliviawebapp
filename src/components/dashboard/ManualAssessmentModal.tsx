@@ -2995,7 +2995,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   </DemoShield>
                 </div>
                 {/* Refinar antes de fechar — diferenciais só com confiança baixa/moderada. */}
-                {!demoMode && shouldOfferDifferential({ diagnosis: aiDiagnosis }) && (
+                {!demoMode && !preventive && shouldOfferDifferential({ diagnosis: aiDiagnosis }) && (
                   <div className="rounded-lg border border-border/70 bg-muted/20 p-3">
                     <p className="text-xs font-semibold text-foreground mb-1">
                       {isPt ? "Refinar antes de fechar" : "Refine before closing"}

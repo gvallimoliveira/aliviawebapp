@@ -797,8 +797,8 @@ const ClinicAssessment = () => {
             enabledStepIds={reassessmentId ? [
               ...(reassessHasRedflags ? ["redflags"] : []),
               ...(reassessHasAnamnesis ? ["anamnesis"] : []),
-              ...(reassessHasQuestionnaire ? ["questionnaire"] : []),
-              ...(hasFunctionalTests ? ["functional_tests"] : []),
+              ...(shouldCollectPainQuestionnaires(anamnesisData, reassessHasQuestionnaire) ? ["questionnaire"] : []),
+              ...(shouldCollectPainSelfTests(anamnesisData, hasFunctionalTests) ? ["functional_tests"] : []),
               ...(reassessHasPsychosocial ? ["psychosocial"] : []),
               "result",
             ] : undefined}
