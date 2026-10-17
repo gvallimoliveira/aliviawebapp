@@ -91,7 +91,7 @@ const categories: ToolCategory[] = [
         key: "white_label_pdf",
         icon: Palette,
         title: "PDFs com a marca da clínica",
-        desc: "Logo, cor e identidade da clínica aplicados em todos os relatórios gerados. Na seção Dinamometria ou Questionários do prontuário, use Gerar relatório PDF e escolha a data e o instrumento para um relatório separado, incluindo SRS-22r. Exporta somente dados salvos, sem créditos de IA; salve alterações da dinamometria antes de gerar.",
+        desc: "Logo, cor e identidade da clínica aplicados em todos os relatórios gerados. Na seção Dinamometria ou Questionários do prontuário, use Gerar relatório PDF e escolha a data e o instrumento para um relatório separado, incluindo SRS-22r. Exporta somente dados salvos, sem créditos de IA; salve alterações da dinamometria antes de gerar. Na seção Mobilidade articular e flexibilidade, importe fichas de goniometria ou testes de flexibilidade por imagem/PDF (usa créditos de IA).",
       },
       {
         key: "hep_templates",

@@ -82,7 +82,7 @@ export default function PatientRomSection({ patient, readOnly, isDemo }: Props) 
         .eq("id", target.id);
       if (error) throw error;
       toast({
-        title: "ADM salva",
+        title: "Mobilidade e flexibilidade salvas",
         description: `Registrada na avaliação de ${fmtDate(target.created_at)}.`,
       });
       const restoreScroll = preserveScroll();
@@ -138,6 +138,7 @@ export default function PatientRomSection({ patient, readOnly, isDemo }: Props) 
           readOnly={!!readOnly}
           bare
           lang="pt"
+          disableImport={isDemo}
         />
         {!readOnly && (
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -155,7 +156,7 @@ export default function PatientRomSection({ patient, readOnly, isDemo }: Props) 
               ) : (
                 <Save className="h-3.5 w-3.5" />
               )}
-              Salvar ADM
+              Salvar medidas
             </Button>
           </div>
         )}
@@ -181,7 +182,7 @@ export default function PatientRomSection({ patient, readOnly, isDemo }: Props) 
                   {numericCount >= 2 && (
                     <MovementEvolutionChart
                       data={entry.series.map((s) => ({ date: s.date, esq: s.esq, dir: s.dir }))}
-                      unit="°"
+                      unit={entry.series.some((x) => /cm/i.test(`${x.L} ${x.R}`)) ? " cm" : "°"}
                     />
                   )}
                   <div className="overflow-x-auto mt-2">

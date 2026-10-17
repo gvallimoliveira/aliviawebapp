@@ -49,7 +49,7 @@ export const PATIENT_SECTIONS: PatientSectionDef[] = [
   { id: "sec-notas-voz", icon: Mic, label: { pt: "Notas de voz", en: "Voice notes", es: "Notas de voz" } },
   { id: "sec-notas-sessao", icon: NotebookPen, label: { pt: "Notas de sessão", en: "Session notes", es: "Notas de sesión" } },
   { id: "sec-dinamometria", icon: Dumbbell, label: { pt: "Dinamometria", en: "Dynamometry", es: "Dinamometría" } },
-  { id: "sec-adm", icon: Activity, label: { pt: "ADM (mobilidade)", en: "ROM (mobility)", es: "ADM (movilidad)" } },
+  { id: "sec-adm", icon: Activity, label: { pt: "Mobilidade e flexibilidade", en: "Mobility & flexibility", es: "Movilidad y flexibilidad" } },
   { id: "sec-arquivos", icon: FolderOpen, label: { pt: "Arquivos e fotos", en: "Files & photos", es: "Archivos y fotos" } },
   { id: "sec-hep", icon: Dumbbell, label: { pt: "Programas de exercícios", en: "Exercise programs", es: "Programas de ejercicios" } },
   { id: "sec-periodizacao", icon: Gauge, label: { pt: "Carga e periodização", en: "Load & periodization", es: "Carga y periodización" } },
