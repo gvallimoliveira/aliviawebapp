@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { endTimeFrom, durationBetween, assignLanes } from "@/lib/appointmentTime";
+import { endTimeFrom, durationBetween, assignLanes, cardPixelHeight, MIN_CARD_HEIGHT_PX } from "@/lib/appointmentTime";
 
 describe("appointment time", () => {
   it("08:00 + 540 min ends at 17:00", () => expect(endTimeFrom("08:00", 540)).toBe("17:00"));
@@ -14,5 +14,14 @@ describe("appointment time", () => {
     expect(l.get("curso")!.lanes).toBe(2);
     expect(l.get("pac")!.lane).toBe(1);
     expect(l.get("late")!.lanes).toBe(1);
+  });
+  it("40 min card never shrinks below the readable minimum", () => {
+    expect(cardPixelHeight(40, 48, false)).toBe(MIN_CARD_HEIGHT_PX);
+  });
+  it("long cards keep proportional height", () => {
+    expect(cardPixelHeight(540, 48, false)).toBe((540 / 60) * 48 - 2);
+  });
+  it("concurrent cards use the smaller minimum", () => {
+    expect(cardPixelHeight(40, 48, true)).toBeLessThan(MIN_CARD_HEIGHT_PX);
   });
 });
