@@ -5,6 +5,7 @@ import { canaryCredits } from "../_shared/ai-credits.ts";
 import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 import { formatHealthHistoryForPrompt } from "../_shared/health-history.ts";
+import { buildProfessionalContext } from "../_shared/professional-context.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

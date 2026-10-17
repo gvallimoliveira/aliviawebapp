@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
+import { buildProfessionalContext } from "../_shared/professional-context.ts";
 import { canaryCredits } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 
@@ -11,7 +12,7 @@ const corsHeaders = {
 };
 
 /** Bump when the prompt/data blocks change so cached impressions are regenerated. */
-const PROMPT_VERSION = "ci-v3-voice-notes";
+const PROMPT_VERSION = "ci-v4-professional-notes";
 
 const num = (v: unknown): number | null => {
   if (v == null) return null;
