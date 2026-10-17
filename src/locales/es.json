@@ -1543,5 +1543,7 @@
   "support.pro.faq.rf26.q": "¿Cómo genero informes separados de dinamometría o cuestionarios?",
   "support.pro.faq.rf26.a": "En la historia clínica, use Generar informe PDF en Dinamometría o Cuestionarios. Elija la fecha y el instrumento. Los complementarios, incluido SRS-22r, tienen un botón junto al resultado. El PDF utiliza solo datos guardados, paciente, fecha, marca y profesional responsable, sin créditos de IA. Guarde los cambios de dinamometría antes de exportar.",
   "support.pro.faq.rf28.q": "¿Cómo importar medidas de movilidad y flexibilidad?",
-  "support.pro.faq.rf28.a": "En la sección Movilidad articular y flexibilidad, toque Importar desde imagen/PDF y envíe hasta 6 fotos, capturas o PDFs de goniometría, inclinometría o pruebas de flexibilidad. La IA completa las filas en grados o cm sin borrar lo escrito; revise y guarde. La lectura usa créditos de IA."
+  "support.pro.faq.rf28.a": "En la sección Movilidad articular y flexibilidad, toque Importar desde imagen/PDF y envíe hasta 6 fotos, capturas o PDFs de goniometría, inclinometría o pruebas de flexibilidad. La IA completa las filas en grados o cm sin borrar lo escrito; revise y guarde. La lectura usa créditos de IA.",
+  "support.pro.faq.rf29.q": "¿Mis anotaciones se usan en la impresión clínica y la hipótesis?",
+  "support.pro.faq.rf29.a": "Sí. Sus observaciones clínicas adicionales, los hallazgos de pruebas/examen físico escritos (incluidos los negativos) y los cuestionarios complementarios como el SRS-22r guían la impresión clínica y la hipótesis y aparecen en el informe. Las notas de sesión no se usan en la impresión clínica. Para actualizar una evaluación antigua, use Regenerar (usa créditos de IA)."
 }

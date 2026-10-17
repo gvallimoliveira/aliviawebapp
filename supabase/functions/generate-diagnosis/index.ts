@@ -5,6 +5,7 @@ import { canaryCredits } from "../_shared/ai-credits.ts";
 import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 import { formatHealthHistoryForPrompt } from "../_shared/health-history.ts";
+import { buildProfessionalContext } from "../_shared/professional-context.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,7 +49,7 @@ serve(async (req) => {
       }
     };
 
-    const cachePayload = { anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null, painMechanism: bodyPainMechanism ?? null, painExtent: bodyPainExtent ?? null };
+    const cachePayload = { v: "dx-pro-notes-v1", anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null, painMechanism: bodyPainMechanism ?? null, painExtent: bodyPainExtent ?? null };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ diagnosis: unknown }>(admin, "generate-diagnosis", cachePayload);
       if (cached) {
@@ -626,9 +627,7 @@ ${formatHealthHistoryForPrompt(anamnesisData)}
 ${anamnesisData.painTypesPerRegion && Object.keys(anamnesisData.painTypesPerRegion).length > 1 ? `
 - **PAIN TYPE PER REGION (use to differentiate mechanical vs neural vs referred pain):**
 ${Object.entries(anamnesisData.painTypesPerRegion).map(([k, v]) => `    • ${k}: ${v}`).join("\n")}` : ""}
-${anamnesisData.additionalClinicalNotes ? `
-- **ADDITIONAL CLINICAL OBSERVATIONS (free-text notes by the physiotherapist — use this to refine your hypothesis, severity grading and test/treatment suggestions):**
-${anamnesisData.additionalClinicalNotes}` : ""}
+${buildProfessionalContext(anamnesisData).join("\n")}
 
 ${additionalInfo ? `Additional information provided by the patient (USE THIS to refine your hypothesis and potentially increase confidence):
 ${additionalInfo}` : ""}

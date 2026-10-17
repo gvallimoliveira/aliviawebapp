@@ -2718,6 +2718,25 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
     y += 4;
   }
 
+  // ── Professional notes & exam findings (manual assessment) ──
+  {
+    const proBlocks: Array<[string, string, string]> = [
+      [isPt ? "Observações clínicas do profissional" : "Professional clinical observations", isPt ? "ANOTAÇÕES DO FISIOTERAPEUTA" : "PHYSIOTHERAPIST NOTES", String((anamnesisData as any)?.additionalClinicalNotes || "").trim()],
+      [isPt ? "Achados dos testes / exame físico" : "Test / physical exam findings", isPt ? "REGISTRADO EM CONSULTA" : "RECORDED IN CONSULTATION", String((anamnesisData as any)?.functionalTests || "").trim()],
+    ];
+    for (const [title, label, text] of proBlocks) {
+      if (!text) continue;
+      y = checkPage(doc, y, 24);
+      y = renderSectionTitle(doc, y, title, COLORS.primary, 20);
+      y = drawTextCard(doc, y, text, {
+        fill: COLORS.background, stroke: COLORS.border, padX: 6, padY: 5,
+        body: { font: "Inter", weight: "normal", size: 9, lineHeight: 4.2, textColor: COLORS.foreground },
+        label: { text: label, color: COLORS.muted, size: 7 },
+      });
+      y += 4;
+    }
+  }
+
   // ── Test Results (Questionnaires) — right after anamnesis ──
   if (testResults) {
     y = renderTestResultsSection(doc, y, testResults, isPt, language);
