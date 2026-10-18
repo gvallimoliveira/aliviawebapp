@@ -1,4 +1,5 @@
 # Tasks
+- [x] Remove bold from selectable preventive goals and change lunge suggestion to degrees in pt/en/es; 13 tests pass, existing measurements preserved, build OK.
 - [x] Add isolated opt-in preventive assessment to link/manual flows, retaining safety and explicit questionnaires; update help in pt/en/es.
 - [x] Verify default/preventive anamnesis and PDF with regressions; authenticated manual UI and real clinic link exercised with intercepted writes, no clinical data changed. Preventive prompts deployed.
 - [ ] Verify preventive assessment persisted and read back in a real record, plus generated AI result: requires an authorized disposable patient/assessment; isolated writes and fictional PDF passed, but do not claim live persistence or generated content verified.
