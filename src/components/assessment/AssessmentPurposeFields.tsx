@@ -37,7 +37,7 @@ export default function AssessmentPurposeFields({ value, onChange, disabled = fa
     </div>
     {preventive && <>
       <Label>{copy.goals}</Label>
-      <div className="flex flex-wrap gap-2">{goals.map(g => <Button key={g.id} type="button" size="sm" disabled={disabled} variant={value.preventionGoals?.includes(g.id) ? "default" : "outline"} aria-pressed={value.preventionGoals?.includes(g.id) ?? false} className="h-auto min-h-9 whitespace-normal" onClick={() => onChange({ preventionGoals: value.preventionGoals?.includes(g.id) ? value.preventionGoals.filter(id => id !== g.id) : [...(value.preventionGoals || []), g.id] })}>{g[language]}</Button>)}</div>
+      <div className="flex flex-wrap gap-2">{goals.map(g => <Button key={g.id} type="button" size="sm" disabled={disabled} variant={value.preventionGoals?.includes(g.id) ? "default" : "outline"} aria-pressed={value.preventionGoals?.includes(g.id) ?? false} className="h-auto min-h-9 whitespace-normal font-normal" onClick={() => onChange({ preventionGoals: value.preventionGoals?.includes(g.id) ? value.preventionGoals.filter(id => id !== g.id) : [...(value.preventionGoals || []), g.id] })}>{g[language]}</Button>)}</div>
       <Label htmlFor="prevention-goal-details">{copy.details}</Label>
       <Textarea id="prevention-goal-details" disabled={disabled} value={value.preventionGoalDetails || ""} maxLength={2000} rows={3} onChange={e => onChange({ preventionGoalDetails: e.target.value })} />
     </>}
