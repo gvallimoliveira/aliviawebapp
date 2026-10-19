@@ -819,7 +819,12 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setRedFlagsChecked(p.redFlagsChecked ?? []);
     setAdditionalClinicalNotes((p as any).additionalClinicalNotes ?? "");
     setMechanismAnswers(sanitizeMechanismAnswers((p as any).mechanismAnswers));
-    setQuestionnaireResults(p.questionnaireResults ?? []);
+    // Rascunho sem questionários nunca apaga resultados já salvos na avaliação.
+    setQuestionnaireResults((prev) =>
+      Array.isArray(p.questionnaireResults) && p.questionnaireResults.length > 0
+        ? p.questionnaireResults
+        : prev,
+    );
     setDeferQuestionnaires(Boolean((p as any).deferQuestionnaires));
     setFunctionalTests(p.functionalTests ?? "");
     setRomTable(Array.isArray(p.romTable) && p.romTable.length > 0 ? p.romTable : createInitialRomRows(2));
@@ -2700,7 +2705,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                             : "The link appears as soon as you finish the assessment. You can also find it whenever you reopen the assessment for editing."}
                         </p>
                       </div>
-                    ) : isEditing && questionnaireResults.length > 0 ? (
+                    ) : questionnaireResults.length > 0 ? (
                       <div className="rounded-md border border-emerald-200 bg-emerald-50/60 dark:bg-emerald-950/20 p-3 space-y-2">
                         <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
                           <ClipboardList className="h-3.5 w-3.5" />
@@ -2757,7 +2762,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     )}
                   </>
                 )}
-                {!isEditing && questionnaireResults.length > 0 && (
+                {false && questionnaireResults.length > 0 && (
                   <div className="text-xs text-muted-foreground p-2 rounded bg-primary/5 border border-primary/20">
                     {isPt ? "Já aplicados: " : "Already applied: "}
                     {questionnaireResults.map((r) => r.questionnaireName).join(", ")}
