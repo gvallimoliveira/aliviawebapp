@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Repair generic import: ZIP structured data, validation, clinic responsibility, deduplication, safe atomic undo, multi-file recovery, help and tests; verify with disposable data.
 - [x] Show saved Maigne star beside ADM in record and assessment/evolution PDFs; dated history preserved, help pt/en/es updated; 18 tests pass and PDFs visually checked.
 - [ ] Verify Maigne display and download in a populated real record: available clinic record has no assessments; requires access to a saved Maigne exam.
 - [x] Add optional Maigne star (user drawing) + Fryette palpation to manual assessment step 6, deterministic ERS/FRS/NSR badge, and canonical knowledge in clinical agent; tests pass.

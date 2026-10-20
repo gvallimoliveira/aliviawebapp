@@ -25,16 +25,16 @@ export default function ImportDataCard({ mode, professionalId, clinicId, entityN
               <h3 className="font-semibold text-lg">Importar dados</h3>
               <p className="text-sm text-muted-foreground">
                 Trazer pacientes, avaliações, evoluções e agenda de outro sistema (CSV, JSON ou ZIP do Aliv.iA).
-                A IA mapeia colunas para o schema nativo e preserva o que não couber em <em>"Dados externos"</em>.
+                Revise as colunas antes de salvar; informações sem campo correspondente ficam em <em>"Dados externos"</em>.
                 {isDemo && " Em modo demo nada é gravado."}
               </p>
             </div>
           </div>
           <ul className="text-xs text-muted-foreground space-y-1 ml-12 list-disc">
             <li>Suporta CSV/TSV, JSON e ZIP exportado pelo próprio Aliv.iA</li>
-            <li>Deduplicação por e-mail com opção de mesclar ou criar novo</li>
-            <li>Janela de 24h para desfazer com um clique</li>
-            <li>Campos não correspondentes vão para <code>external_import_data</code></li>
+            <li>Pacientes comparados por e-mail, CPF ou nome; correspondências ambíguas exigem revisão</li>
+            <li>Desfazer em 24h preserva dados anteriores; alterações posteriores bloqueiam a operação</li>
+            <li>ZIP importa somente tabelas compatíveis, não anexos, tratamentos ou mensagens</li>
           </ul>
           <div className="flex items-center justify-between pt-2">
             <span className="text-xs text-muted-foreground flex items-center gap-1">

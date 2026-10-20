@@ -21,9 +21,10 @@ export async function parseFile(file: File): Promise<ParsedFile> {
   if (lower.endsWith(".json")) {
     const text = await file.text();
     let data: any;
-    try { data = JSON.parse(text); } catch { data = []; }
+    try { data = JSON.parse(text); } catch { throw new Error("JSON inválido."); }
     const rows: Record<string, any>[] = Array.isArray(data) ? data : (Array.isArray(data?.rows) ? data.rows : [data]);
     const headers = Array.from(new Set(rows.flatMap((r) => Object.keys(r ?? {}))));
+    if (!rows.length || rows.some(r => !r || typeof r !== "object" || Array.isArray(r)) || !headers.length) throw new Error("Arquivo sem registros válidos.");
     return { filename: name, format: "json", headers, rows };
   }
   if (lower.endsWith(".csv") || lower.endsWith(".tsv") || lower.endsWith(".txt")) {
@@ -36,24 +37,29 @@ export async function parseFile(file: File): Promise<ParsedFile> {
     });
     const rows = (res.data ?? []).filter((r) => r && Object.values(r).some((v) => v !== "" && v != null));
     const headers = res.meta.fields ?? [];
+    if (res.errors.some(e => e.code !== "UndetectableDelimiter")) throw new Error("Planilha inválida: confira colunas e delimitadores.");
+    if (!headers.length || !rows.length) throw new Error("Planilha vazia.");
     return { filename: name, format: "csv", headers, rows };
   }
-  return { filename: name, format: "unknown", headers: [], rows: [] };
+  throw new Error("Formato não suportado. Use CSV, TSV, TXT tabular, JSON ou ZIP do Aliv.iA.");
 }
 
 async function parseAliviaZip(file: File): Promise<ParsedFile> {
   const zip = await JSZip.loadAsync(await file.arrayBuffer());
   const native: Record<string, any[]> = {};
-  // Convenção do exportZipBuilder: tabelas_brutas/*.json
+  let unpacked = 0;
   for (const path of Object.keys(zip.files)) {
-    if (!path.startsWith("tabelas_brutas/") || !path.endsWith(".json")) continue;
-    const entity = path.replace("tabelas_brutas/", "").replace(".json", "");
-    try {
+    const match = path.match(/^tabelas_brutas\/(?:json\/)?([^/]+)\.json$/);
+    if (!match) continue;
+    const entity = match[1];
       const txt = await zip.files[path].async("text");
+      unpacked += txt.length;
+      if (unpacked > 100 * 1024 * 1024) throw new Error("ZIP descompactado excede 100MB.");
       const parsed = JSON.parse(txt);
-      if (Array.isArray(parsed)) native[entity] = parsed;
-    } catch (_) { /* skip */ }
+      if (!Array.isArray(parsed)) throw new Error(`Tabela inválida no ZIP: ${entity}`);
+      if (parsed.length) native[entity] = parsed;
   }
+  if (!Object.keys(native).length) throw new Error("ZIP sem tabelas estruturadas. Use o volume que contém os dados, não apenas anexos.");
   return { filename: file.name, format: "zip-alivia", headers: [], rows: [], nativeEntities: native };
 }
 
