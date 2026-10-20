@@ -2,7 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { z } from 'npm:zod@3';
 import { IMPORT_ENTITIES, findPatient, validateImportRow, sameImportedRecord } from '../_shared/import-rules.ts';
-const schema=z.object({entity:z.enum(IMPORT_ENTITIES),rows:z.array(z.record(z.unknown())).min(1).max(5000),externalRows:z.array(z.record(z.unknown())).optional(),dedup:z.enum(['create','merge','skip']),professionalId:z.string().uuid().optional(),clinicId:z.string().uuid().optional(),sourceFilename:z.string().min(1).max(500),sourceFormat:z.enum(['csv','json','zip-alivia']).optional()});
+const schema=z.object({entity:z.enum(IMPORT_ENTITIES),rows:z.array(z.record(z.unknown())).min(1).max(5000),externalRows:z.array(z.record(z.unknown())).optional(),dedup:z.enum(['create','merge','skip']),professionalId:z.string().uuid().optional(),clinicId:z.string().uuid().optional(),sourceFilename:z.string().min(1).max(500),sourceFormat:z.enum(['csv','json','xml','zip-alivia']).optional()});
 const respond=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...corsHeaders,'Content-Type':'application/json'}});
 Deno.serve(async req=>{
  if(req.method==='OPTIONS') return new Response('ok',{headers:corsHeaders});

@@ -7,6 +7,7 @@ const ZIP_ENTITIES: Record<string, EntityKey> = {
   pain_diary_entries: "pain_diary", painDiary: "pain_diary", pain_diary: "pain_diary",
 };
 export function expandImportFile(parsed: ParsedFile): { parsed: ParsedFile; entity: EntityKey }[] {
+  if (parsed.tables) return parsed.tables.flatMap(expandImportFile);
   if (!parsed.nativeEntities) return [{ parsed, entity: guessEntity(parsed.headers) }];
   const parts = Object.entries(parsed.nativeEntities).filter(([name]) => ZIP_ENTITIES[name]).map(([name, rows]) => ({
     entity: ZIP_ENTITIES[name],
