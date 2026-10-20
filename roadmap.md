@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Show saved Maigne star beside ADM in patient record and PDFs; validate existing reports and update help.
 - [x] Add optional Maigne star (user drawing) + Fryette palpation to manual assessment step 6, deterministic ERS/FRS/NSR badge, and canonical knowledge in clinical agent; tests pass.
 - [x] Remove bold from selectable preventive goals and change lunge suggestion to degrees in pt/en/es; 13 tests pass, existing measurements preserved, build OK.
 - [x] Add isolated opt-in preventive assessment to link/manual flows, retaining safety and explicit questionnaires; update help in pt/en/es.
