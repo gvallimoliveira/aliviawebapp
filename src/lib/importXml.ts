@@ -22,10 +22,12 @@ export function readXmlTables(text: string): XmlTable[] {
       const children = Array.from(el.children);
       if (!children.length && prefix) out[prefix] = el.textContent?.trim() ?? "";
       const occurrences = new Map<string, number>();
+      const totals = new Map<string, number>();
+      for (const child of children) totals.set(child.localName, (totals.get(child.localName) ?? 0) + 1);
       for (const child of children) {
         const index = (occurrences.get(child.localName) ?? 0) + 1;
         occurrences.set(child.localName, index);
-        const repeated = children.filter(c => c.localName === child.localName).length > 1;
+        const repeated = (totals.get(child.localName) ?? 0) > 1;
         const key = child.localName + (repeated ? `[${index}]` : "");
         flatten(child, prefix ? `${prefix}.${key}` : key);
       }
@@ -36,6 +38,10 @@ export function readXmlTables(text: string): XmlTable[] {
   const recordNames = new Set(["paciente", "patient", "avaliacao", "avaliação", "assessment", "evolucao", "evolução", "session_note", "agendamento", "appointment", "registro", "record", "row"]);
   function visit(node: Element) {
     const children = Array.from(node.children);
+    if (recordNames.has(node.localName.toLowerCase()) && (children.length || node.attributes.length)) {
+      tables.push({ name: node.localName, rows: [row(node)] });
+      return;
+    }
     if (!children.length) return;
     const groups = new Map<string, Element[]>();
     for (const child of children) groups.set(child.localName, [...(groups.get(child.localName) ?? []), child]);
