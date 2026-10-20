@@ -342,7 +342,7 @@ const categories: ToolCategory[] = [
         key: "data_import",
         icon: Archive,
         title: "Importar dados externos com revisão",
-        desc: "Na Gestão do proprietário, importe CSV/TSV, TXT tabular, JSON ou as tabelas compatíveis do ZIP Aliv.iA: pacientes, avaliações, evoluções, diário e agenda. Até 20MB por arquivo, 50 tabelas e 5.000 linhas por tabela. Revise cada tabela e selecione um responsável para evoluções e agenda. Pacientes são comparados por e-mail, CPF ou nome exato normalizado; correspondências ambíguas exigem revisão. Registros clínicos idênticos são ignorados, salvo ao escolher criar novos. O desfazer em 24h restaura dados mesclados e só remove registros criados; alterações posteriores bloqueiam a operação inteira. ZIP não restaura anexos, tratamentos, mensagens ou permissões. Excel deve ser convertido para CSV. Não há integração específica validada com FisioSoft.",
+        desc: "Na Gestão do proprietário, importe CSV/TSV, TXT tabular, JSON, XML tabular ou as tabelas compatíveis do ZIP Aliv.iA: pacientes, avaliações, evoluções, diário e agenda. Até 20MB por arquivo, 50 tabelas e 5.000 linhas por tabela. Revise cada tabela e selecione um responsável para evoluções e agenda. Pacientes são comparados por e-mail, CPF ou nome exato normalizado; correspondências ambíguas exigem revisão. Registros clínicos idênticos são ignorados, salvo ao escolher criar novos. O desfazer em 24h restaura dados mesclados e só remove registros criados; alterações posteriores bloqueiam a operação inteira. ZIP não restaura anexos, tratamentos, mensagens ou permissões. Excel deve ser convertido para CSV. Não há integração específica validada com FisioSoft.",
       },
       {
         key: "all_inclusive",
