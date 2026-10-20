@@ -1,5 +1,6 @@
 # Tasks
-- [ ] Show saved Maigne star beside ADM in patient record and PDFs; validate existing reports and update help.
+- [x] Show saved Maigne star beside ADM in record and assessment/evolution PDFs; dated history preserved, help pt/en/es updated; 18 tests pass and PDFs visually checked.
+- [ ] Verify Maigne display and download in a populated real record: available clinic record has no assessments; requires access to a saved Maigne exam.
 - [x] Add optional Maigne star (user drawing) + Fryette palpation to manual assessment step 6, deterministic ERS/FRS/NSR badge, and canonical knowledge in clinical agent; tests pass.
 - [x] Remove bold from selectable preventive goals and change lunge suggestion to degrees in pt/en/es; 13 tests pass, existing measurements preserved, build OK.
 - [x] Add isolated opt-in preventive assessment to link/manual flows, retaining safety and explicit questionnaires; update help in pt/en/es.

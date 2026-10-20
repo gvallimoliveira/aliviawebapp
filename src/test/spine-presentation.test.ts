@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { writeFileSync } from "node:fs";
 import jsPDF from "jspdf";
+import { registerInterFonts } from "@/utils/fonts/registerInterFonts";
 import { savedSpineExams } from "@/lib/spinePresentation";
 import { emptySpineData, type SpineBiomechanicsData } from "@/lib/spineBiomechanics";
 import { generateAssessmentPdfBlob, generateEvolutionPdfBlob, renderSpineBiomechanicsSection } from "@/utils/generatePdf";
@@ -23,6 +24,7 @@ describe("Saved Maigne exams beside ROM", () => {
   });
   it("omits an empty exam and draws the six saved axes plus six marks without any ROM rows", () => {
     const doc = new jsPDF();
+    registerInterFonts(doc);
     const line = vi.spyOn(doc, "line");
     expect(renderSpineBiomechanicsSection(doc, 30, emptySpineData(), "pt")).toBe(30);
     expect(line).not.toHaveBeenCalled();

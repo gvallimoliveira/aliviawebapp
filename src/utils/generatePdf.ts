@@ -2375,6 +2375,7 @@ export async function generateBasicReportPdfBlob(options: BasicReportOptions): P
   if (options.anamnesisData) {
     y = renderAnamnesisSection(doc, y, options.anamnesisData, isPt, options.language);
   }
+  y = renderSpineBiomechanicsSection(doc, y, options.anamnesisData?.spineBiomechanics, options.language);
 
   // Passo E2 — mecanismo de dor (apresentado após a anamnese)
   y = renderPainMechanismBlock(
