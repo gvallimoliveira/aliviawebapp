@@ -13,6 +13,8 @@ import { normalizeMovementKey, parseMeasurementValue, pickMovementLabel } from "
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
+import SpineBiomechanicsSummary from "@/components/assessment/SpineBiomechanicsSummary";
+import { savedSpineExams } from "@/lib/spinePresentation";
 
 interface Props {
   patient: any;
@@ -43,6 +45,8 @@ export default function PatientRomSection({ patient, readOnly, isDemo }: Props) 
     [patient?.assessments],
   );
   const target = assessments[assessments.length - 1]; // newest assessment receives new data
+  const spineExams = savedSpineExams(assessments.map((a: any) => ({ date: a.created_at, spineBiomechanics: a.anamnesis_data?.spineBiomechanics })));
+  const latestSpine = spineExams[spineExams.length - 1];
 
   const initialRows: RomRow[] = React.useMemo(() => {
     const existing = sanitizeRomRows(target?.anamnesis_data?.romTable);
@@ -159,6 +163,13 @@ export default function PatientRomSection({ patient, readOnly, isDemo }: Props) 
               Salvar medidas
             </Button>
           </div>
+        )}
+        {latestSpine && <SpineBiomechanicsSummary data={latestSpine.data} date={latestSpine.date} />}
+        {spineExams.length > 1 && (
+          <CollapsibleSection storageKey={`patient:${patient?.email || patient?.groupKey}:spine-history`} defaultOpen={false}
+            header={<span className="text-sm font-semibold">Estrelas de Maigne anteriores ({spineExams.length - 1})</span>}>
+            {spineExams.slice(0, -1).reverse().map((exam, i) => <SpineBiomechanicsSummary key={`${exam.date}-${i}`} data={exam.data} date={exam.date} />)}
+          </CollapsibleSection>
         )}
         {hasMultiple && (
           <CollapsibleSection
