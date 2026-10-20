@@ -28,3 +28,4 @@
 - HEP programs persist clinic_id at creation; public branding resolves only through the valid program token, never by guessing a clinic from the professional.
 
 - Preventive assessments are explicit opt-in via the shared purpose helper; preserve symptomatic defaults, store historical sites separately and unmeasured pain as null, and keep safety and professional-selected questionnaires.
+- Spine biomechanics (Maigne star + Fryette 3-position palpation) is interpreted only by pure `spineBiomechanics.ts`; Fryette badges apply to thoracic/lumbar only and only when palpation and star agree, keeping record, AI and reports consistent.
