@@ -24,14 +24,14 @@ export default function ImportDataCard({ mode, professionalId, clinicId, entityN
             <div className="flex-1">
               <h3 className="font-semibold text-lg">Importar dados</h3>
               <p className="text-sm text-muted-foreground">
-                Trazer pacientes, avaliações, evoluções e agenda de outro sistema (CSV, JSON ou ZIP do Aliv.iA).
+                Trazer pacientes, avaliações, evoluções e agenda de outro sistema (CSV, JSON, XML ou ZIP do Aliv.iA).
                 Revise as colunas antes de salvar; informações sem campo correspondente ficam em <em>"Dados externos"</em>.
                 {isDemo && " Em modo demo nada é gravado."}
               </p>
             </div>
           </div>
           <ul className="text-xs text-muted-foreground space-y-1 ml-12 list-disc">
-            <li>Suporta CSV/TSV, JSON e ZIP exportado pelo próprio Aliv.iA</li>
+            <li>Suporta CSV/TSV, TXT tabular, JSON, XML tabular e ZIP exportado pelo próprio Aliv.iA</li>
             <li>Pacientes comparados por e-mail, CPF ou nome; correspondências ambíguas exigem revisão</li>
             <li>Desfazer em 24h preserva dados anteriores; alterações posteriores bloqueiam a operação</li>
             <li>ZIP importa somente tabelas compatíveis, não anexos, tratamentos ou mensagens</li>

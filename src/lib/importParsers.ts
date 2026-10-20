@@ -1,10 +1,12 @@
 // Parsers para arquivos de importação: CSV, JSON, ZIP (Aliv.iA nativo).
 import Papa from "papaparse";
 import JSZip from "jszip";
+import { readXmlTables } from "./importXml";
 
 export type ParsedFile = {
   filename: string;
-  format: "csv" | "json" | "zip-alivia" | "unknown";
+  format: "csv" | "json" | "xml" | "zip-alivia" | "unknown";
+  tables?: ParsedFile[];
   headers: string[];
   rows: Record<string, any>[];
   // when zip-alivia: nativeEntities holds parsed JSONs by entity name
@@ -14,6 +16,13 @@ export type ParsedFile = {
 export async function parseFile(file: File): Promise<ParsedFile> {
   const name = file.name;
   const lower = name.toLowerCase();
+  if (lower.endsWith(".xml")) {
+    const tables = readXmlTables(await file.text()).map(table => ({
+      filename: `${name} / ${table.name}`, format: "xml" as const,
+      headers: Array.from(new Set(table.rows.flatMap(row => Object.keys(row)))), rows: table.rows,
+    }));
+    return tables.length === 1 ? { ...tables[0], filename: name } : { filename: name, format: "xml", headers: [], rows: [], tables };
+  }
 
   if (lower.endsWith(".zip")) {
     return parseAliviaZip(file);
@@ -41,7 +50,7 @@ export async function parseFile(file: File): Promise<ParsedFile> {
     if (!headers.length || !rows.length) throw new Error("Planilha vazia.");
     return { filename: name, format: "csv", headers, rows };
   }
-  throw new Error("Formato não suportado. Use CSV, TSV, TXT tabular, JSON ou ZIP do Aliv.iA.");
+  throw new Error("Formato não suportado. Use CSV, TSV, TXT tabular, JSON, XML ou ZIP do Aliv.iA.");
 }
 
 async function parseAliviaZip(file: File): Promise<ParsedFile> {

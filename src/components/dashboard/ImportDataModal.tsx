@@ -201,8 +201,8 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
               <label className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center gap-2 cursor-pointer hover:bg-muted/30">
                 <Upload className="w-8 h-8 text-muted-foreground" />
                 <span className="font-medium">Selecionar arquivos</span>
-                <span className="text-xs text-muted-foreground">CSV, JSON ou ZIP exportado do Aliv.iA · até 20MB por arquivo · 50 tabelas · 5.000 linhas por tabela</span>
-                <Input type="file" multiple accept=".csv,.json,.zip,.tsv,.txt" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+                <span className="text-xs text-muted-foreground">CSV, JSON, XML ou ZIP exportado do Aliv.iA · até 20MB por arquivo · 50 tabelas · 5.000 linhas por tabela</span>
+                <Input type="file" multiple accept=".csv,.json,.xml,.zip,.tsv,.txt" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
               </label>
               {files.length > 0 && (
                 <ul className="space-y-2">

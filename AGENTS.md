@@ -29,4 +29,4 @@
 
 - Preventive assessments are explicit opt-in via the shared purpose helper; preserve symptomatic defaults, store historical sites separately and unmeasured pain as null, and keep safety and professional-selected questionnaires.
 - Spine logic stays in `spineBiomechanics.ts`; `spinePresentation.ts` shares screen/PDF geometry and dated exams to preserve history.
-- Imports use service-only transactional write/undo RPCs with before/after journals: restore merges, reject later edits and undo selected batches atomically. ZIP expands supported entities, never source IDs or privileges.
+- Imports use service-only write/undo journals to restore merges and reject later edits atomically. ZIP omits source IDs/privileges; local XML parsing rejects DTD/entities and bounds complexity, preserving fields for review.

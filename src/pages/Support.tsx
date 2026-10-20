@@ -71,7 +71,7 @@ const proTools = [
   { key: "session_dictation", icon: Mic },
   { key: "academic_mode", icon: GraduationCap },
   { key: "data_export", icon: Archive },
-  { key: "data_import", icon: Archive },
+  { key: "data_import", icon: Archive }, // Includes safe tabular XML; localized guidance explains scope.
   { key: "insights_churn", icon: TrendingUp },
   { key: "insights_discharge", icon: TrendingUp },
   { key: "insights_adherence", icon: Activity },
