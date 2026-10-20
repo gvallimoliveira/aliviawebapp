@@ -2256,6 +2256,44 @@ export type Database = {
           },
         ]
       }
+      import_changes: {
+        Row: {
+          after_data: Json
+          batch_id: string
+          before_data: Json | null
+          created_at: string
+          id: number
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          after_data: Json
+          batch_id: string
+          before_data?: Json | null
+          created_at?: string
+          id?: never
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          after_data?: Json
+          batch_id?: string
+          before_data?: Json | null
+          created_at?: string
+          id?: never
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_changes_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_articles: {
         Row: {
           abstract: string | null
@@ -5545,6 +5583,14 @@ export type Database = {
       has_active_pro_subscription: {
         Args: { _professional_id: string }
         Returns: boolean
+      }
+      import_undo_batches: {
+        Args: { p_actor: string; p_batches: string[] }
+        Returns: Json
+      }
+      import_write_record: {
+        Args: { p_batch: string; p_data: Json; p_id?: string; p_table: string }
+        Returns: string
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_clinic_member: {

@@ -22,6 +22,10 @@ export const NATIVE_FIELDS: Record<EntityKey, { key: string; label: string; requ
     { key: "notes", label: "Observações" },
   ],
   assessments: [
+    { key: "created_at", label: "Data da avaliação" },
+    { key: "anamnesis_data", label: "Anamnese estruturada" },
+    { key: "test_results", label: "Resultados estruturados" },
+    { key: "diagnosis", label: "Diagnóstico estruturado" },
     { key: "patient_name", label: "Nome do paciente", required: true },
     { key: "patient_email", label: "E-mail do paciente" },
     { key: "chief_complaint", label: "Queixa principal" },
@@ -108,6 +112,9 @@ export function guessEntity(headers: string[]): EntityKey {
 /** Heurística simples nome de coluna -> campo nativo. */
 export function guessMapping(header: string, entity: EntityKey): ColumnTarget {
   const h = header.toLowerCase().trim();
+  if (NATIVE_FIELDS[entity].some(f => f.key === h)) return h;
+  if (entity === "session_notes" && h === "session_date") return "note_date";
+  if (entity === "pain_diary" && h === "notes") return "note";
   const dict: Record<EntityKey, Record<string, string>> = {
     patients: {
       "nome": "full_name", "nome completo": "full_name", "name": "full_name", "full name": "full_name", "paciente": "full_name",
@@ -162,9 +169,13 @@ export function guessMapping(header: string, entity: EntityKey): ColumnTarget {
 /** Normaliza valores básicos: trim, datas pt-BR -> ISO, números. */
 export function normalizeValue(target: string, raw: any): any {
   if (raw == null) return null;
+  if (["anamnesis_data", "test_results", "diagnosis"].includes(target)) {
+    if (typeof raw === "object") return raw;
+    try { return JSON.parse(String(raw)); } catch { throw new Error(`JSON inválido: ${target}`); }
+  }
   let v = String(raw).trim();
   if (!v) return null;
-  if (target === "birth_date" || target === "appointment_date" || target === "note_date" || target === "logged_at") {
+  if (target === "birth_date" || target === "appointment_date" || target === "note_date" || target === "logged_at" || target === "created_at") {
     // dd/mm/yyyy -> yyyy-mm-dd
     const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
     if (m) {
@@ -174,7 +185,8 @@ export function normalizeValue(target: string, raw: any): any {
   }
   if (target === "pain_score" || target === "duration_minutes") {
     const n = Number(v.replace(",", "."));
-    return Number.isFinite(n) ? n : null;
+    if (!Number.isFinite(n)) throw new Error(`Número inválido: ${target}`);
+    return n;
   }
   if (target === "cpf") return v.replace(/\D/g, "");
   return v;

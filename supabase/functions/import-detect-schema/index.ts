@@ -3,6 +3,8 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { z } from "npm:zod@3";
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
 
@@ -63,8 +65,13 @@ Responda SOMENTE JSON válido:
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const client = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "");
+    const { data: auth, error: authError } = await client.auth.getUser((req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, ""));
+    if (authError || !auth.user) return new Response(JSON.stringify({ error: "unauthenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const input = z.object({ filename: z.string().max(500).optional(), headers: z.array(z.string().max(200)).min(1).max(200), sample: z.array(z.record(z.unknown())).max(10).optional() }).safeParse(await req.json());
+    if (!input.success) return new Response(JSON.stringify({ error: "invalid_body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     shadowLogAiUsage(req, { function_name: "import-detect-schema" });
-    const { filename, headers, sample } = await req.json();
+    const { filename, headers, sample } = input.data;
     if (!Array.isArray(headers) || headers.length === 0) {
       return new Response(JSON.stringify({ error: "headers required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -92,14 +99,17 @@ Amostra (anonimizada): ${JSON.stringify((sample ?? []).slice(0, 10))}`;
     }
 
     const data = await resp.json();
-    let content = data?.choices?.[0]?.message?.content ?? "{}";
+    let content = String(data?.choices?.[0]?.message?.content ?? "{}");
     // 4-layer JSON extraction
     let parsed: any = null;
-    try { parsed = JSON.parse(content); } catch (_) {
+    const candidates = [content, content.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim(), content.match(/\{[\s\S]*\}/)?.[0], content.match(/\{[\s\S]*\}/)?.[0]?.replace(/,\s*([}\]])/g, "$1")];
+    for (const candidate of candidates) { if (!candidate || parsed) continue; try { parsed = JSON.parse(candidate); } catch {} }
+    if (!parsed) {
       const m = content.match(/\{[\s\S]*\}/);
       if (m) { try { parsed = JSON.parse(m[0]); } catch (_) {} }
     }
-    if (!parsed || typeof parsed !== "object") parsed = { entity: "patients", entity_confidence: 0, mappings: [] };
+    if (!parsed || !NATIVE_FIELDS[parsed.entity] || !Array.isArray(parsed.mappings)) throw new Error("Invalid AI mapping");
+    parsed.mappings = parsed.mappings.filter((m: any) => headers.includes(m.source)).map((m: any) => ({ ...m, target: ["external", "ignore", ...NATIVE_FIELDS[parsed.entity]].includes(m.target) ? m.target : "external" }));
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
