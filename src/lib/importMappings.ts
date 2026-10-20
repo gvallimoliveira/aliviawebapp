@@ -185,7 +185,8 @@ export function normalizeValue(target: string, raw: any): any {
   }
   if (target === "pain_score" || target === "duration_minutes") {
     const n = Number(v.replace(",", "."));
-    return Number.isFinite(n) ? n : null;
+    if (!Number.isFinite(n)) throw new Error(`Número inválido: ${target}`);
+    return n;
   }
   if (target === "cpf") return v.replace(/\D/g, "");
   return v;

@@ -31,7 +31,7 @@ Deno.serve(async req=>{
    if(!own) return respond({error:'forbidden'},403);
   }
   if(['session_notes','appointments'].includes(body.entity) && !professionalId) return respond({error:'Selecione um profissional responsável da clínica.'},400);
-  const scope=(q:any)=>body.clinicId?q.eq('clinic_id',body.clinicId):q.eq('professional_id',professionalId);
+  const scope=(q:any)=>body.clinicId?q.eq('clinic_id',body.clinicId):q.eq('professional_id',professionalId).is('clinic_id',null);
   const patients:Record<string,any>[]=[];
   for(let offset=0;;offset+=1000){const {data,error}=await scope(admin.from('patients').select('*')).range(offset,offset+999);if(error)throw error;patients.push(...data);if(data.length<1000)break;}
   const {data:batch,error:batchError}=await admin.from('import_batches').insert({user_id:auth.user.id,clinic_id:body.clinicId ?? null,professional_id:professionalId ?? null,source_filename:body.sourceFilename,source_format:body.sourceFormat,status:'running',summary:{journal_version:1}}).select('id').single();
@@ -65,7 +65,7 @@ Deno.serve(async req=>{
       table='professional_appointments'; payload={...scoped,patient_name:name,patient_email:email || null,appointment_date:row.appointment_date,appointment_time:row.appointment_time ?? '09:00',duration_minutes:Number(row.duration_minutes ?? 50),status:row.status ?? 'scheduled',notes:row.notes ?? null};
      }else{
       if(!patient)throw new Error('Paciente não encontrado neste consultório/clínica.');
-      const {data:assessments,error}=await scope(admin.from('assessments').select('user_id').ilike('patient_email',email).not('user_id','is',null)).limit(2);
+      const {data:assessments,error}=await scope(admin.from('assessments').select('user_id').eq('patient_email',email).not('user_id','is',null));
       if(error)throw error; const ids=[...new Set(assessments.map((a:any)=>a.user_id))];
       if(ids.length!==1)throw new Error('Diário exige conta do paciente vinculada a uma avaliação deste consultório/clínica.');
       table='pain_diary_entries'; payload={user_id:ids[0],pain_score:Number(row.pain_score),notes:row.note ?? null,logged_at:row.logged_at};

@@ -56,7 +56,7 @@ async function parseAliviaZip(file: File): Promise<ParsedFile> {
       unpacked += txt.length;
       if (unpacked > 100 * 1024 * 1024) throw new Error("ZIP descompactado excede 100MB.");
       const parsed = JSON.parse(txt);
-      if (!Array.isArray(parsed)) throw new Error(`Tabela inválida no ZIP: ${entity}`);
+      if (!Array.isArray(parsed) || parsed.some(row => !row || typeof row !== "object" || Array.isArray(row))) throw new Error(`Tabela inválida no ZIP: ${entity}`);
       if (parsed.length) native[entity] = parsed;
   }
   if (!Object.keys(native).length) throw new Error("ZIP sem tabelas estruturadas. Use o volume que contém os dados, não apenas anexos.");

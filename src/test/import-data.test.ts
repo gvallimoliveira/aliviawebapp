@@ -49,4 +49,14 @@ describe("Generic data import", () => {
     expect(sameImportedRecord({ ...payload, id: "existing" }, payload)).toBe(true);
     expect(sameImportedRecord({ ...payload, content: "Piora" }, payload)).toBe(false);
   });
+  it("rejects invalid numeric values instead of silently dropping them", () => {
+    expect(() => normalizeValue("pain_score", "não informado como número")).toThrow("Número inválido");
+    expect(() => normalizeValue("duration_minutes", "cinquenta")).toThrow("Número inválido");
+  });
+  it("rejects malformed ZIP table rows before expanding them", async () => {
+    const zip = new JSZip();
+    zip.file("tabelas_brutas/json/patients.json", JSON.stringify([null]));
+    const buffer = await zip.generateAsync({ type: "arraybuffer" });
+    await expect(parseFile({ name: "bad.zip", arrayBuffer: async () => buffer } as File)).rejects.toThrow("Tabela inválida");
+  });
 });
