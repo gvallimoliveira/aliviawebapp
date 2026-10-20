@@ -82,6 +82,11 @@ const categories: ToolCategory[] = [
         desc: "Anexe ressonância, raio-x, exames laboratoriais e fotos de evolução postural diretamente ao prontuário do paciente. Limite de 20MB por arquivo, sem custo adicional de armazenamento.",
       },
       {
+        key: "spine_maigne", icon: Activity,
+        title: "Estrela de Maigne no prontuário e PDF",
+        desc: "Quando registrada na avaliação manual, a Estrela de Maigne aparece junto da ADM, com data, região, nível e observações. Registros anteriores continuam disponíveis. O PDF da avaliação inclui seu exame; o relatório de evolução inclui os exames do período selecionado. A hipótese biomecânica é revisável, sem substituir a triagem de segurança ou o exame neurológico.",
+      },
+      {
         key: "session_notes",
         icon: FileCheck,
         title: "Notas de sessão",
@@ -550,11 +555,11 @@ const ClinicSupport = () => {
                               <AccordionTrigger className="text-left text-base font-medium text-foreground gap-3">
                                 <span className="flex items-center gap-3">
                                   <ItemIcon className="h-4 w-4 text-primary shrink-0" />
-                                  {item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
+                                  {item.key === "spine_maigne" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
                                 </span>
                               </AccordionTrigger>
                               <AccordionContent className="text-muted-foreground leading-relaxed pl-7">
-                                {item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
+                                {item.key === "spine_maigne" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
                               </AccordionContent>
                             </AccordionItem>
                           );

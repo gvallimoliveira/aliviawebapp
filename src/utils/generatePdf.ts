@@ -12,6 +12,8 @@ import esLocale from "@/locales/es.json";
 import { formatHealthConditions, formatContinuousMedication } from "@/lib/healthHistory";
 import { normalizeMovementKey, pickMovementLabel, parseMeasurementValue } from "@/lib/movementNormalize";
 import { registerInterFonts } from "./fonts/registerInterFonts";
+import { emptyStar, evaluateSpine, hasSpineContent, type MaigneAxis, type SpineBiomechanicsData } from "@/lib/spineBiomechanics";
+import { MAIGNE_CENTER, MAIGNE_ENDS, savedSpineExams } from "@/lib/spinePresentation";
 import {
   MECHANISM_CRITERIA,
   getMechanismLabel,
@@ -121,6 +123,7 @@ interface AnamnesisData extends PurposeData {
   painScoresPerRegion?: Record<string, number>;
   /** Joint mobility / Range of Motion table (manual assessment). */
   romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
+  spineBiomechanics?: SpineBiomechanicsData;
   /** Dynamometry / muscle strength table (manual assessment). Values in kgf. */
   strengthTable?: Array<{
     movement: string;
@@ -1247,6 +1250,61 @@ function renderRomTableSection(
   });
 
   return y + 4;
+}
+
+/** Saved exam, shared by assessment and evolution reports; never requires ROM rows. */
+export function renderSpineBiomechanicsSection(doc: jsPDF, y: number, data: SpineBiomechanicsData | undefined, language: string, date?: string): number {
+  if (!data || !hasSpineContent(data)) return y;
+  const pt = language === "pt", es = language === "es";
+  const title = pt ? "Estrela de Maigne" : es ? "Estrella de Maigne" : "Maigne star";
+  y = checkPage(doc, y, 74);
+  y = renderSectionTitle(doc, y, title, COLORS.primary);
+  const region = data.region === "thoracic" ? (pt ? "Torácica" : es ? "Torácica" : "Thoracic") : data.region === "lumbar" ? "Lumbar" : data.region === "cervical" ? "Cervical" : "";
+  const caption = [date ? new Date(date).toLocaleDateString(pt ? "pt-BR" : es ? "es-ES" : "en-US") : "", region, data.level].filter(Boolean).join(" · ");
+  doc.setFont("Inter", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.muted);
+  const captionLines = doc.splitTextToSize(caption, SECTION_TEXT_W);
+  doc.text(captionLines, SECTION_X, y + 2);
+  y += captionLines.length * 4 + 4;
+  y = checkPage(doc, y, 55);
+  const scale = 0.21, x = SECTION_X, top = y;
+  const star = data.star || emptyStar();
+  const cx = x + MAIGNE_CENTER.x * scale, cy = top + MAIGNE_CENTER.y * scale;
+  for (const axis of Object.keys(MAIGNE_ENDS) as MaigneAxis[]) {
+    const e = MAIGNE_ENDS[axis];
+    const n = Math.max(0, Math.min(3, Math.floor(star[axis] || 0)));
+    const dx = e.x - MAIGNE_CENTER.x, dy = e.y - MAIGNE_CENTER.y;
+    const length = Math.hypot(dx, dy), px = -dy / length, py = dx / length;
+    doc.setDrawColor(...(n ? COLORS.red : COLORS.primary));
+    doc.setLineWidth(n ? 0.6 : 0.4);
+    doc.line(cx, cy, x + e.x * scale, top + e.y * scale);
+    for (let i = 0; i < n; i++) {
+      const t = 0.55 + i * 0.12;
+      const tx = cx + dx * t * scale, ty = cy + dy * t * scale;
+      doc.line(tx + px * 8 * scale, ty + py * 8 * scale, tx - px * 8 * scale, ty - py * 8 * scale);
+    }
+    doc.setFontSize(10);
+    doc.setTextColor(...COLORS.foreground);
+    doc.text(e.main, x + e.lx * scale, top + e.ly * scale);
+    if (e.sub) {
+      doc.setFontSize(7);
+      doc.text(e.sub, x + e.lx * scale + doc.getTextWidth(e.main) + 0.4, top + e.ly * scale + 1);
+    }
+  }
+  y += 54;
+  const p = data.palpation || {};
+  const side = (v: string | null | undefined) => v === "right" ? (pt ? "D posterior" : es ? "D posterior" : "R posterior") : v === "left" ? (pt ? "E posterior" : es ? "I posterior" : "L posterior") : v === "none" ? (pt ? "Nivelados" : es ? "Nivelados" : "Level") : "—";
+  const behavior = (v: string | null | undefined) => v === "levels" ? (pt ? "Nivela (indolor)" : es ? "Se nivela (sin dolor)" : "Levels (painless)") : v === "worsens" ? (pt ? "Acentua (dor/limitação)" : es ? "Acentúa (dolor/limitación)" : "Worsens (pain/limitation)") : v === "unchanged" ? (pt ? "Sem alteração" : es ? "Sin cambios" : "Unchanged") : "—";
+  if (p.neutral || p.extension || p.flexion) {
+    y = renderSubSection(doc, y, pt ? "Teste palpatório — 3 posições" : es ? "Prueba palpatoria — 3 posiciones" : "Palpation — 3 positions",
+      `${pt ? "Neutro" : es ? "Neutro" : "Neutral"}: ${side(p.neutral)}. ${pt ? "Extensão" : es ? "Extensión" : "Extension"}: ${behavior(p.extension)}. ${pt ? "Flexão" : es ? "Flexión" : "Flexion"}: ${behavior(p.flexion)}.`);
+  }
+  const h = evaluateSpine(data);
+  if (h.summary && pt) y = renderSubSection(doc, y, "Hipótese biomecânica revisável", h.summary);
+  if (h.label && !pt) y = renderSubSection(doc, y, es ? "Hipótesis biomecánica revisable" : "Revisable biomechanical hypothesis", `${h.classification} — ${h.side === "right" ? (es ? "Derecha" : "Right") : (es ? "Izquierda" : "Left")}`);
+  if (data.notes?.trim()) y = renderSubSection(doc, y, pt ? "Observações" : es ? "Observaciones" : "Notes", data.notes);
+  return renderSubSection(doc, y, pt ? "Ressalva clínica" : es ? "Advertencia clínica" : "Clinical caveat", pt ? "Hipótese clínica revisável; não substitui red flags nem exame neurológico." : es ? "Hipótesis clínica revisable; no sustituye la evaluación de señales de alarma ni el examen neurológico." : "Revisable clinical hypothesis; does not replace red-flag screening or neurological examination.");
 }
 
 // ── Longitudinal evolution charts (ROM / dynamometry) ──
@@ -2764,6 +2822,7 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
   }
 
   // ── Dynamometry / Muscle Strength — right after ROM ──
+  y = renderSpineBiomechanicsSection(doc, y, anamnesisData?.spineBiomechanics, language);
   if (anamnesisData?.strengthTable && anamnesisData.strengthTable.length > 0) {
     y = renderStrengthTableSection(doc, y, anamnesisData.strengthTable, isPt, language);
   }
@@ -3299,6 +3358,7 @@ export interface EvolutionPdfOptions {
     hypothesis?: string;
     /** Joint mobility / ROM table measured at the last assessment. */
     romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
+    spineBiomechanics?: SpineBiomechanicsData;
   };
   /**
    * Every assessment (any order) carrying objective measures. Feeds the
@@ -3307,6 +3367,7 @@ export interface EvolutionPdfOptions {
    */
   longitudinalAssessments?: Array<{
     date: string;
+    spineBiomechanics?: SpineBiomechanicsData;
     romTable?: Array<{ joint: string; leftValue: string; rightValue: string }>;
     strengthTable?: Array<{
       movement: string;
@@ -3638,6 +3699,13 @@ export async function generateEvolutionPdfBlob(options: EvolutionPdfOptions): Pr
         ? `Valores medidos en la última evaluación (${romDate})`
         : `Values measured at the last assessment (${romDate})`;
     y = renderRomTableSection(doc, y, lastRom, isPt, options.language, romCaption);
+  }
+
+  const spineExams = savedSpineExams(options.longitudinalAssessments || []);
+  if (spineExams.length) {
+    for (const exam of spineExams) y = renderSpineBiomechanicsSection(doc, y, exam.data, options.language, exam.date);
+  } else {
+    y = renderSpineBiomechanicsSection(doc, y, options.lastAssessment.spineBiomechanics, options.language, options.lastAssessment.date);
   }
 
   // ── Longitudinal evolution charts (ROM ° / dynamometry kgf) ──

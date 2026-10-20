@@ -28,4 +28,4 @@
 - HEP programs persist clinic_id at creation; public branding resolves only through the valid program token, never by guessing a clinic from the professional.
 
 - Preventive assessments are explicit opt-in via the shared purpose helper; preserve symptomatic defaults, store historical sites separately and unmeasured pain as null, and keep safety and professional-selected questionnaires.
-- Spine Maigne/Fryette logic lives only in pure `spineBiomechanics.ts`; badges only thoracic/lumbar when palpation and star agree.
+- Spine logic stays in `spineBiomechanics.ts`; `spinePresentation.ts` shares screen/PDF geometry and dated exams to preserve history.
