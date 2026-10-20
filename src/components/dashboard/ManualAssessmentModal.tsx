@@ -62,6 +62,8 @@ import {
 } from "@/components/assessment/PainMechanismScreening";
 import { classifyMechanism, toStoredMechanism, parseStoredMechanism, getSubtypeLabel } from "@/lib/painMechanism";
 import { computePainExtent, suggestDistribution } from "@/lib/painExtent";
+import SpineBiomechanicsSection from "@/components/assessment/SpineBiomechanicsSection";
+import { emptySpineData, spinePayload, spineRegionsFrom, type SpineBiomechanicsData } from "@/lib/spineBiomechanics";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -385,6 +387,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
   // Testes
   const [functionalTests, setFunctionalTests] = useState("");
   const [romTable, setRomTable] = useState<RomRow[]>(createInitialRomRows(2));
+  const [spineBiomechanics, setSpineBiomechanics] = useState<SpineBiomechanicsData>(emptySpineData());
   const [strengthTable, setStrengthTable] = useState<StrengthRow[]>(createInitialStrengthRows(1));
   const [testSuggestions, setTestSuggestions] = useState<Array<{ name: string; category: string; rationale: string }>>([]);
   const [suggestingTests, setSuggestingTests] = useState(false);
@@ -721,7 +724,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     painScore, painType, painTypes, painRegions, painScoresPerRegion, painTypesPerRegion, painRegionRefinements,
     redFlagsChecked, additionalClinicalNotes, mechanismAnswers, questionnaireResults, deferQuestionnaires,
     functionalTests, romTable, strengthTable, clinicalImpression, diagnosisText, treatmentText,
-    aiClinicalImpression,
+    aiClinicalImpression, spineBiomechanics,
   };
   // Rascunho só existe quando há conteúdo real digitado/selecionado.
   // Campos no estado inicial (step, painScore 5, tabelas vazias) NÃO contam —
@@ -828,6 +831,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setDeferQuestionnaires(Boolean((p as any).deferQuestionnaires));
     setFunctionalTests(p.functionalTests ?? "");
     setRomTable(Array.isArray(p.romTable) && p.romTable.length > 0 ? p.romTable : createInitialRomRows(2));
+    setSpineBiomechanics((p as any).spineBiomechanics?.star ? (p as any).spineBiomechanics : emptySpineData());
     setStrengthTable(Array.isArray(p.strengthTable) && p.strengthTable.length > 0 ? p.strengthTable : createInitialStrengthRows(1));
     setClinicalImpression(p.clinicalImpression ?? "");
     setDiagnosisText(p.diagnosisText ?? "");
@@ -918,6 +922,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setSpecialtyApplied(Array.isArray(an?.specialtyResults) ? an.specialtyResults : []);
     setFunctionalTests(an.functionalTests || "");
     setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(2));
+    setSpineBiomechanics(an.spineBiomechanics?.star ? an.spineBiomechanics : emptySpineData());
     setStrengthTable(Array.isArray(an.strengthTable) && an.strengthTable.length > 0 ? an.strengthTable : createInitialStrengthRows(1));
     const dx = a.diagnosis || {};
     setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
@@ -1005,6 +1010,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     setQuestionnaireResults(Array.isArray(a.test_results) ? a.test_results : []);
     setFunctionalTests(an.functionalTests || "");
     setRomTable(Array.isArray(an.romTable) && an.romTable.length > 0 ? an.romTable : createInitialRomRows(2));
+    setSpineBiomechanics(an.spineBiomechanics?.star ? an.spineBiomechanics : emptySpineData());
     setStrengthTable(Array.isArray(an.strengthTable) && an.strengthTable.length > 0 ? an.strengthTable : createInitialStrengthRows(1));
     const dx = a.diagnosis || {};
     setAiDiagnosis(dx && (dx.hypothesis || dx.summary) ? dx : null);
@@ -1263,6 +1269,7 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     additionalClinicalNotes: additionalClinicalNotes || undefined,
     functionalTests, // free-text observations from Step 4 (kept inside anamnesis_data so it persists and shows up in views)
     romTable: sanitizeRomRows(romTable), // Joint mobility / ROM table
+    spineBiomechanics: spinePayload(spineBiomechanics), // Maigne + Fryette (optional)
     strengthTable: sanitizeStrengthRows(strengthTable), // Dynamometry / muscle strength
     patientName,
     patientEmail: patientEmail || null,
@@ -2801,6 +2808,17 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     lang={isPt ? "pt" : "en"}
                   />
                 </DemoShield>
+                {(() => {
+                  const sr = spineRegionsFrom([...(painRegions || []), ...((purpose as any).historyRegions || [])]);
+                  return (sr.cervical || sr.thoracolumbar || spineBiomechanics.region) ? (
+                    <SpineBiomechanicsSection
+                      value={spineBiomechanics}
+                      onChange={setSpineBiomechanics}
+                      cervical={sr.cervical}
+                      thoracolumbar={sr.thoracolumbar}
+                    />
+                  ) : null;
+                })()}
                 <p className="text-[11px] text-muted-foreground">
                   {isPt
                     ? "Os testes funcionais e observações ficam na próxima etapa."
