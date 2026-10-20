@@ -11,9 +11,9 @@
 - HEP load metrics (volume, intensity, weekly sets per region, planned dose) are computed only by the shared `hepLoad.ts` helper; one deterministic source keeps the HEP panel and the microcycle dose consistent.
 - Professional session writes (plain sRPE or heart-rate monitor data) go only through `saveProfessionalSession` in `periodizationData.ts`, which merges with the patient check-in of the same date/track and links the planned session; one row per session keeps ACWR and dose free of double counting. TRIMP/sRPE math lives only in `cardioLoad.ts`.
 - "Today" in load control is always the local/Brazil calendar date (`localISODate` client-side, America/Sao_Paulo in the check-in function), never `toISOString()`; UTC rolls to tomorrow after 21h in Brazil.
-- Planned-vs-perceived dose compares only sessions dated up to local today that have an sRPE (`adherenceByTrack`); unanswered past and upcoming sessions are listed separately and never count as underdose, and dose never triggers push alerts. Patient sRPE accepts today and the 7 previous days, enforced server-side.
+- Dose adherence (`adherenceByTrack`) counts only sessions up to local today with sRPE; unanswered/upcoming never count as underdose nor push alerts. Patient sRPE: today + 7 prior days, server-enforced.
 - Weekly dose display derives full-week targets and recorded-to-date totals separately from answered-session adherence, with answered/scheduled counts per track; this preserves partial comparison and chart semantics without turning future or unanswered work into underdose.
-- Load-control front views show text lists for the last 3 days (grouped by day) and charts for the last 7 rolling days via `loadWindows.ts`, falling back to the most recent days with data; full history is fetched on demand in `LoadHistoryDialog` and never deleted. Risk math (acute/chronic/ACWR, auto plan) ignores these display windows.
+- Load-control views use `loadWindows.ts` (3-day lists, 7-day charts, fallback to latest data); full history on demand in `LoadHistoryDialog`, never deleted; risk math ignores display windows.
 - Patient record content insets by the fixed `PatientSectionRail` width; avoids covered titles.
 - Cardiovascular metrics, goals, distributions, trends, readings and both PDFs derive only from pure `cardioAnalysis.ts`; keep panel and reports consistent without AI credits.
 - Athlete/active PDF priorities and descriptive summaries use `cardioReportSections` in `cardioAnalysis.ts`; WHO remains secondary and presentation changes never alter load or safety calculations.
@@ -28,4 +28,4 @@
 - HEP programs persist clinic_id at creation; public branding resolves only through the valid program token, never by guessing a clinic from the professional.
 
 - Preventive assessments are explicit opt-in via the shared purpose helper; preserve symptomatic defaults, store historical sites separately and unmeasured pain as null, and keep safety and professional-selected questionnaires.
-- Spine biomechanics (Maigne star + Fryette 3-position palpation) is interpreted only by pure `spineBiomechanics.ts`; Fryette badges apply to thoracic/lumbar only and only when palpation and star agree, keeping record, AI and reports consistent.
+- Spine Maigne/Fryette logic lives only in pure `spineBiomechanics.ts`; badges only thoracic/lumbar when palpation and star agree.
