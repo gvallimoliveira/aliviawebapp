@@ -1,16 +1,8 @@
 import type { MaigneAxis, MaigneStar } from "@/lib/spineBiomechanics";
+import { MAIGNE_CENTER as C, MAIGNE_ENDS as ENDS } from "@/lib/spinePresentation";
 
 // Geometria fiel ao desenho: F em cima, E embaixo, RE/RD na horizontal,
 // IE/ID nas diagonais superiores; metade inferior só com a haste de E.
-const C = { x: 120, y: 125 };
-const ENDS: Record<MaigneAxis, { x: number; y: number; lx: number; ly: number; main: string; sub?: string }> = {
-  F: { x: 120, y: 20, lx: 132, ly: 26, main: "F" },
-  E: { x: 120, y: 225, lx: 132, ly: 232, main: "E" },
-  RE: { x: 25, y: 125, lx: 16, ly: 148, main: "R", sub: "E" },
-  RD: { x: 215, y: 125, lx: 214, ly: 148, main: "R", sub: "D" },
-  IE: { x: 55, y: 55, lx: 36, ly: 46, main: "I", sub: "E" },
-  ID: { x: 185, y: 55, lx: 192, ly: 46, main: "I", sub: "D" },
-};
 
 interface Props {
   value: MaigneStar;

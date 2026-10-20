@@ -63,6 +63,7 @@ const proTools = [
   { key: "hep_templates", icon: FileText },
   { key: "ai_test_suggestions", icon: Lightbulb },
   { key: "reassessment", icon: RefreshCw },
+  { key: "spine_maigne", icon: Activity },
   { key: "white_label", icon: Palette },
   { key: "evolution_report", icon: TrendingUp },
   { key: "simulated_env", icon: MonitorPlay },

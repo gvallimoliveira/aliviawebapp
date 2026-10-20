@@ -1,6 +1,7 @@
 import React from "react";
 import PreventiveAssessmentSummary from "@/components/assessment/PreventiveAssessmentSummary";
 import { isPreventiveAssessment } from "@/lib/assessmentPurpose";
+import { hasSpineContent } from "@/lib/spineBiomechanics";
 import { useNavigate } from "react-router-dom";
 import { usePreserveScrollOnResume } from "@/hooks/usePreserveScrollOnResume";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -599,6 +600,7 @@ export default function PatientDetailView(props: any) {
         .map((a: any) => ({
           date: a.created_at,
           romTable: Array.isArray(a.anamnesis_data?.romTable) ? a.anamnesis_data.romTable : undefined,
+          spineBiomechanics: a.anamnesis_data?.spineBiomechanics,
           strengthTable: Array.isArray(a.anamnesis_data?.strengthTable) ? a.anamnesis_data.strengthTable : undefined,
         }));
       const blob = await generateEvolutionPdfBlob({ patientName: patient.name, firstAssessment: { date: firstA.created_at, pain_score: firstA.pain_score, pain_regions: firstA.pain_regions || [], test_results: firstA.test_results, hypothesis: firstA.diagnosis?.hypothesis }, lastAssessment: { date: lastA.created_at, pain_score: lastA.pain_score, pain_regions: lastA.pain_regions || [], test_results: lastA.test_results, hypothesis: lastA.diagnosis?.hypothesis, romTable: Array.isArray(lastA.anamnesis_data?.romTable) ? lastA.anamnesis_data.romTable : undefined }, longitudinalAssessments, totalAssessments: withDiagnosis.length, summary: summary as EvolutionSummary, language, professionalLogoUrl: _branding.professionalLogoUrl ?? professionalLogoUrl, clinicLogoUrl: _branding.clinicLogoUrl ?? clinicLogoUrl, clinicName: _branding.clinicName ?? clinicName, brandColor: _branding.brandColor, responsibleProfessional: _branding.responsibleProfessional });
@@ -1544,10 +1546,10 @@ export default function PatientDetailView(props: any) {
         className="scroll-mt-24"
         data-rail-hide={
           (patient?.assessments || []).some((a: any) =>
-            Array.isArray(a?.anamnesis_data?.romTable) &&
+            hasSpineContent(a?.anamnesis_data?.spineBiomechanics) || (Array.isArray(a?.anamnesis_data?.romTable) &&
             a.anamnesis_data.romTable.some(
               (r: any) => r?.joint || r?.leftValue || r?.rightValue,
-            ),
+            )),
           )
             ? undefined
             : "true"
