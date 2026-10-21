@@ -8,7 +8,7 @@ export interface DemoLoadProfile {
   pain: number;
   readiness: number;
   historyDays: number;
-  sessions: { weekday: number; track: "physio" | "gym" | "sport" | "home"; title: string; minutes: number; rpe: number }[];
+  sessions: { weekday: number; track: "physio" | "gym" | "sport"; title: string; minutes: number; rpe: number }[];
   notes: string;
 }
 
@@ -17,7 +17,7 @@ export const demoLoadProfiles: Record<string, DemoLoadProfile> = {
     title: "Manutenção funcional lombar", phase: "Manutenção e prevenção secundária",
     goal: "Manter a autonomia e a atividade física regular após a alta funcional",
     sport: "Atividade física regular", limb: null, pain: 1, readiness: 8, historyDays: 28,
-    sessions: [1, 3, 5].map(weekday => ({ weekday, track: "home", title: "Manutenção domiciliar lombar", minutes: 25, rpe: 3 })),
+    sessions: [1, 3, 5].map(weekday => ({ weekday, track: "physio", title: "Manutenção domiciliar lombar", minutes: 25, rpe: 3 })),
     notes: "Alta funcional na última avaliação. Hipertensão controlada: manter acompanhamento e observar sintomas.",
   },
   "demo-002b": {
@@ -56,14 +56,14 @@ export const demoLoadProfiles: Record<string, DemoLoadProfile> = {
     sport: "Corrida", limb: "Joelho esquerdo", pain: 0, readiness: 8, historyDays: 28,
     sessions: [{ weekday: 1, track: "gym", title: "Manutenção de força e controle neuromuscular", minutes: 30, rpe: 4 },
       { weekday: 3, track: "sport", title: "Corrida gradual — volume controlado", minutes: 20, rpe: 4 },
-      { weekday: 5, track: "home", title: "Prevenção neuromuscular", minutes: 25, rpe: 3 }],
+      { weekday: 5, track: "physio", title: "Prevenção neuromuscular domiciliar", minutes: 25, rpe: 3 }],
     notes: "Alta funcional e RTS registrados na última avaliação. Histórico anterior representa preparação, não corrida já liberada.",
   },
   "demo-007c": {
     title: "Manutenção funcional pós-ATQ", phase: "Manutenção domiciliar e prevenção de quedas",
     goal: "Preservar marcha independente e autonomia, respeitando orientações do cirurgião",
     sport: "Atividade funcional domiciliar", limb: "Quadril direito", pain: 1, readiness: 6, historyDays: 28,
-    sessions: [1, 3, 5].map(weekday => ({ weekday, track: "home", title: "Equilíbrio e manutenção funcional domiciliar", minutes: 20, rpe: 2 })),
+    sessions: [1, 3, 5].map(weekday => ({ weekday, track: "physio", title: "Equilíbrio e manutenção funcional domiciliar", minutes: 20, rpe: 2 })),
     notes: "Alta ortopédica funcional; sem acesso à academia. Asma sem acompanhamento na triagem: revisar controle antes de progressão de esforço.",
   },
 };

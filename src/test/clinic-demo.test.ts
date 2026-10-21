@@ -54,7 +54,7 @@ describe("demo scenarios follow the latest assessment, never the same generic pr
   it("Maria is in maintenance, not active generic strengthening", () => {
     const scenario = createDemoPeriodization(today, "Maria Silva");
     expect(scenario.cycles[0].name).toBe("Manutenção e prevenção secundária");
-    expect(scenario.sessions.every(s => s.track === "home")).toBe(true);
+    expect(scenario.sessions.every(s => s.track === "physio" && s.title?.includes("domiciliar"))).toBe(true);
   });
   it("João has historical overload but no future running prescription", () => {
     const scenario = createDemoPeriodization(today, "João Santos");
@@ -81,7 +81,7 @@ describe("demo scenarios follow the latest assessment, never the same generic pr
   });
   it("Helena has home maintenance without gym access or uncontrolled progression", () => {
     const scenario = createDemoPeriodization(today, "Helena Rocha");
-    expect(scenario.sessions.every(s => s.track === "home" && s.planned_rpe === 2)).toBe(true);
+    expect(scenario.sessions.every(s => s.track === "physio" && s.planned_rpe === 2 && s.title?.includes("domiciliar"))).toBe(true);
     expect(scenario.plan.notes).toContain("Asma sem acompanhamento");
   });
   it("unknown or older assessment has no unreviewed generic load", () => {

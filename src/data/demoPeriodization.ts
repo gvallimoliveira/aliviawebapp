@@ -22,7 +22,7 @@ export function createDemoPeriodization(today = localISODate(), key = "patient",
     id: planId, patient_id: patientId, professional_id: null, clinic_id: null, assessment_id: assessment?.id ?? null,
     title: profile?.title ?? "Sem cenário de carga revisado", sport: profile?.sport ?? null, injured_limb: profile?.limb ?? null,
     start_date: day(today, -(profile?.historyDays ?? 0)), end_date: null, status: "active",
-    notes: profile ? `Caso fictício. ${profile.notes}` : "Sem dados de carga para esta avaliação.", created_at: `${today}T12:00:00Z`,
+    notes: profile ? `Cenário de carga fictício, não prescrição. Doses e prontidão ilustrativas; dor atual e fase alinhadas à avaliação. ${profile.notes}` : "Sem dados de carga para esta avaliação.", created_at: `${today}T12:00:00Z`,
   };
   const cycles: PeriodizationCycle[] = profile ? [{ id: `${planId}-current`, plan_id: planId, parent_id: null,
     level: "macro", name: profile.phase, goal: profile.goal, exit_criteria: null,
