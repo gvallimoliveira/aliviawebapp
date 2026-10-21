@@ -19,7 +19,7 @@ import {
 } from "@/lib/importMappings";
 
 import { expandImportFile, defaultImportMappings } from "@/lib/importFiles";
-import { buildMixedPlan, suggestMixedConfig, chunkImportRecords, type MixedConfig, type ImportRecord } from "@/lib/importCombined";
+import { buildMixedPlan, suggestMixedConfig, chunkImportRecords, type MixedConfig } from "@/lib/importCombined";
 import CombinedImportEditor from "./CombinedImportEditor";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
@@ -49,12 +49,29 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
   const [dedup, setDedup] = useState<"create" | "merge" | "skip">("merge");
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [operationId, setOperationId] = useState(() => crypto.randomUUID());
+  const [recoveryIds, setRecoveryIds] = useState<string[]>([]);
   const [allowPartial, setAllowPartial] = useState(false);
   const [progress, setProgress] = useState("");
   const [report, setReport] = useState<{ batchIds?: string[]; created: number; updated: number; skipped: number; errors: number; errorsDetail?: any[] } | null>(null);
 
   const [responsibleId, setResponsibleId] = useState(professionalId ?? "");
   const [responsibles, setResponsibles] = useState<{ id: string; full_name: string }[]>([]);
+  useEffect(() => {
+    if (!open || isDemo) return;
+    let cancelled=false;
+    (async()=>{
+      const {data:auth}=await supabase.auth.getUser();
+      if(!auth.user)return;
+      let query=supabase.from("import_batches").select("id,operation_id,status").eq("user_id",auth.user.id).not("operation_id","is",null).neq("status","undone").gte("expires_undo_at",new Date().toISOString()).order("created_at",{ascending:false});
+      query=clinicId?query.eq("clinic_id",clinicId):query.eq("professional_id",professionalId ?? "").is("clinic_id",null);
+      const {data}=await query.limit(100);
+      if(cancelled)return;
+      const latest=data?.[0]?.operation_id;
+      setRecoveryIds((data ?? []).filter(b=>b.operation_id===latest).map(b=>b.id));
+    })();
+    return ()=>{cancelled=true;};
+  },[open,isDemo,clinicId,professionalId]);
   const active = files[activeIdx];
   const mixedPlans = useMemo(() => files.map(f => f.mixed && f.parsed ? buildMixedPlan(f.parsed.rows, f.mixed) : null), [files]);
   const pendingCount = mixedPlans.reduce((n,p) => n + (p?.issues.length ?? 0), 0);
@@ -79,7 +96,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
   }, [open, clinicId, isDemo]);
 
   function reset() {
-    setStep(1); setFiles([]); setActiveIdx(0); setConsent(false); setReport(null); setDedup("merge"); setAllowPartial(false); setProgress("");
+    setStep(1); setFiles([]); setActiveIdx(0); setConsent(false); setReport(null); setDedup("merge"); setAllowPartial(false); setProgress(""); setOperationId(crypto.randomUUID()); setRecoveryIds([]);
   }
 
   async function handleFiles(list: FileList | null) {
@@ -170,7 +187,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
           entity: f.entity, rows: mapped.map(m => m.row), externalRows: mapped.map(m => m.external), dedup: f.mixed && f.entity==='patients' ? 'merge' : dedup,
           professionalId: clinicId ? responsibleId || undefined : professionalId, clinicId,
           sourceFilename: f.parsed?.filename ?? f.file.name, sourceFormat: f.parsed?.format,
-          historical: !!f.mixed, safeRetry: true,
+          historical: !!f.mixed, safeRetry: true, operationId,
       });
       // Check all source data before the first write; patient-dependent checks run again after parents exist.
       for (const {f,mapped} of chunks) {
@@ -181,7 +198,11 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
       for (const [index, { f, mapped }] of chunks.entries()) {
         setProgress(`Lote ${index+1} de ${chunks.length}`);
         const { data, error } = await supabase.functions.invoke("import-commit", { body: bodyFor(f,mapped) });
-        if (data?.batchId) totals.batchIds.push(data.batchId);
+        if (data?.batchId && !totals.batchIds.includes(data.batchId)) totals.batchIds.push(data.batchId);
+        if(error && !data?.batchId){
+          const {data:recovered}=await supabase.from("import_batches").select("id").eq("operation_id",operationId);
+          for(const b of recovered ?? [])if(!totals.batchIds.includes(b.id))totals.batchIds.push(b.id);
+        }
         if (error || data?.error) throw new Error(data?.error ?? "Falha no lote; os lotes anteriores estão no relatório.");
         totals.created += data.created; totals.updated += data.updated; totals.skipped += data.skipped; totals.errors += data.errors;
         totals.errorsDetail.push(...(data.errorsDetail ?? []).map((e: any) => ({ ...e, arquivo: f.parsed?.filename })));
@@ -226,6 +247,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
         <ScrollArea className="flex-1 pr-4">
           {step === 1 && (
             <div className="space-y-4">
+              {recoveryIds.length>0 && <Button variant="outline" onClick={()=>{setReport({batchIds:recoveryIds,created:0,updated:0,skipped:0,errors:1,errorsDetail:[{error:"Operação anterior recuperada; contagens não reconstituídas. Desfazer verifica todos os registros."}]});setStep(6);}}>Recuperar última operação para desfazer</Button>}
               <label className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center gap-2 cursor-pointer hover:bg-muted/30">
                 <Upload className="w-8 h-8 text-muted-foreground" />
                 <span className="font-medium">Selecionar arquivos</span>
