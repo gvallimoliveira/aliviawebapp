@@ -191,7 +191,7 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
           type: a.type || "in_person",
           notes: a.notes ? `[Importado] ${a.notes}` : isCommitment ? "[Compromisso importado]" : "[Importado de outro app]",
           status: "scheduled",
-          ...(isCommitment ? { service_type: "compromisso" } : {}),
+          service_type: isCommitment ? "compromisso" : "fisioterapia",
           external_import_data: { kind: isCommitment ? "commitment" : "patient", read_name: a.patient_name },
         };
       });
