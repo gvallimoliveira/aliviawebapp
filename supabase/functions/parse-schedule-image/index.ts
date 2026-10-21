@@ -92,8 +92,8 @@ Rules:
     };
 
     // Thinking models can exhaust a small output budget and return empty content;
-    // use a generous cap and retry once with a stronger model when nothing comes back.
-    const chains = [["google/gemini-2.5-flash"], ["google/gemini-2.5-pro"]];
+    // use a generous cap and retry once when nothing comes back.
+    const chains = [["google/gemini-3.8-flash"], ["google/gemini-3.8-flash"]];
     let appointments: unknown[] = [];
     let response: Response | null = null;
     for (const models of chains) {
