@@ -145,7 +145,7 @@ const ClinicDemo = () => {
     const rows = mockPatientAssessments.map(a => ({ ...a, professional_id: owners[emails.indexOf(a.patient_email) % owners.length] }));
     return scopeDemoRows(rows, viewerRole).filter(a => filterTherapist === "all" || a.professional_id === filterTherapist);
   }, [viewerRole, filterTherapist]);
-  const assignAssessment = (id: string, professionalId: string) => {
+  const assignAssessment = (id: string, professionalId: string | null) => {
     setAssessments(prev => prev.map(a => a.id === id ? { ...a, professional_id: professionalId } : a));
     toast({ title: "Avaliação atribuída", description: getProName(professionalId) });
   };
@@ -642,7 +642,7 @@ const ClinicDemo = () => {
             <h3 className="text-sm font-medium text-foreground">Distribuição de pacientes</h3>
             {assessments.map(a => <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-3">
               <div><p className="text-sm font-medium text-foreground">{a.patient_name}</p><p className="text-xs text-muted-foreground">{a.patient_email}</p></div>
-              <Select value={a.professional_id ?? "unassigned"} onValueChange={id => assignAssessment(a.id, id === "unassigned" ? "" : id)}>
+              <Select value={a.professional_id ?? "unassigned"} onValueChange={id => assignAssessment(a.id, id === "unassigned" ? null : id)}>
                 <SelectTrigger aria-label={`Responsável por ${a.patient_name}`} className="w-[210px]"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="unassigned">Aguardando atribuição</SelectItem>{therapists.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
               </Select>
@@ -683,7 +683,7 @@ const ClinicDemo = () => {
                 <div><label className="text-xs text-muted-foreground">Data</label><p className="text-sm text-foreground">{format(new Date(selectedApt.appointment_date), "dd/MM/yyyy")}</p></div>
                 <div><label className="text-xs text-muted-foreground">Horário</label><p className="text-sm text-foreground">{selectedApt.appointment_time.slice(0, 5)} ({selectedApt.duration_minutes}min)</p></div>
                 <div><label className="text-xs text-muted-foreground">Tipo</label><Badge variant="outline" className={cn("text-xs", TYPE_COLORS[selectedApt.type])}>{selectedApt.type === "video_call" ? "Teleconsulta" : selectedApt.type === "external" ? "Domiciliar" : "Presencial"}</Badge></div>
-                <div><label className="text-xs text-muted-foreground">Status</label><Badge variant="outline" className={cn("text-xs capitalize", STATUS_COLORS[selectedApt.status])}>{selectedApt.status === "scheduled" ? "Agendado" : selectedApt.status === "completed" ? "Realizado" : "Cancelado"}</Badge></div>
+                <div><label className="text-xs text-muted-foreground">Status</label><Badge variant="outline" className={cn("text-xs capitalize", STATUS_COLORS[selectedApt.status])}>{selectedApt.status === "scheduled" ? "Agendado" : selectedApt.status === "confirmed" ? "Confirmado" : selectedApt.status === "completed" ? "Realizado" : "Cancelado"}</Badge></div>
               </div>
               {viewerRole !== "secretary" && selectedApt.notes && (
                 <div><label className="text-xs text-muted-foreground">Observações</label><p className="text-sm text-foreground mt-0.5">{selectedApt.notes}</p></div>

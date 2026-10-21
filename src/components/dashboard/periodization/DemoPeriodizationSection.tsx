@@ -9,6 +9,7 @@ import DoseAdherenceCard from "./DoseAdherenceCard";
 import MacroTimeline from "./MacroTimeline";
 import MicroWeekGrid from "./MicroWeekGrid";
 import PeriodizationCollapsible from "./PeriodizationCollapsible";
+import { anchorScroll } from "@/hooks/useScrollAnchor";
 
 /** Reuses real calculations/presentation with a local sandbox, not a live patient ID. */
 const DemoPeriodizationSection = ({ patientName }: { patientName?: string | null }) => {
@@ -16,7 +17,12 @@ const DemoPeriodizationSection = ({ patientName }: { patientName?: string | null
   const [sessions, setSessions] = useState(fixture.sessions);
   const [entries, setEntries] = useState(fixture.entries);
   const noop = () => {};
-  return <div className="space-y-3">
+  return <div className="space-y-3" onClickCapture={event => {
+    const target = event.target as HTMLElement;
+    if (target.closest("[role='dialog']")) return;
+    const block = target.closest<HTMLElement>("[data-periodization-block]");
+    if (block) anchorScroll(() => block.isConnected ? block : null, 1800)();
+  }}>
     <DailyConductContent birth={null} plan={fixture.plan} entries={entries} checkins={fixture.checkins} sessions={sessions} />
     <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
       <MacroTimeline cycles={fixture.cycles} planId={fixture.plan.id} onChanged={noop} readOnly />
