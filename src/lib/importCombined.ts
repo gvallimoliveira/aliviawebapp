@@ -87,18 +87,22 @@ export function buildMixedPlan(rows: Record<string,unknown>[], config: MixedConf
   });
   // Reconcile all declarations before children, including conflicts beyond the visible sample.
   const declarations=[...patients.entries()];
-  for(let a=0;a<declarations.length;a++)for(let b=a+1;b<declarations.length;b++){
-    const [ka,pa]=declarations[a];const[kb,pb]=declarations[b];
-    const sameEmail=pa.row.email && identity(pa.row.email)===identity(pb.row.email);
-    const sameCpf=pa.row.cpf && String(pa.row.cpf).replace(/\D/g,'')===String(pb.row.cpf ?? '').replace(/\D/g,'');
-    const sameName=identity(pa.row.full_name)===identity(pb.row.full_name);
-    if(sameEmail || sameCpf || (sameName && (!pa.row.email || !pb.row.email))){badKeys.add(ka);badKeys.add(kb);issue(pb.sourceRow,'patients','Identificações sobrepostas; revise os cadastros antes de vincular.');}
+  const seen = new Map<string,string>();
+  const byName = new Map<string,{key:string;email:unknown}>();
+  for(const[key,p]of declarations){
+    const keys=[p.row.email?`email:${identity(p.row.email)}`:'',p.row.cpf?`cpf:${String(p.row.cpf).replace(/\D/g,'')}`:''].filter(Boolean);
+    const name=identity(p.row.full_name);const prior=byName.get(name);
+    if(prior && (!prior.email || !p.row.email)){badKeys.add(key);badKeys.add(prior.key);issue(p.sourceRow,'patients','Homônimos sem identificação inequívoca.');}
+    else byName.set(name,{key,email:p.row.email});
+    for(const id of keys){const previous=seen.get(id);if(previous && previous!==key){badKeys.add(key);badKeys.add(previous);issue(p.sourceRow,'patients','Identificações sobrepostas; revise os cadastros antes de vincular.');}else seen.set(id,key);}
   }
+  const lookup=new Map<string,ImportRecord>();
+  for(const[,p]of declarations)lookup.set(identity(p.row.email ?? p.row.full_name),p);
   const valid:ImportRecord[]=[];
   for(const[key,p]of declarations){if(badKeys.has(key))continue;try{validateImportRow('patients',p.row);valid.push(p);}catch(e){badKeys.add(key);issue(p.sourceRow,p.group,(e as Error).message);}}
   for(const c of candidates){
     const source=String(c.external.source_patient_id ?? '');
-    const p=source ? patients.get(sourceKeys.get(source) ?? '') : [...patients.values()].find(p=>identity(p.row.email ?? p.row.full_name)===identity(c.row.patient_email ?? c.row.patient_name));
+    const p=source ? patients.get(sourceKeys.get(source) ?? '') : lookup.get(identity(c.row.patient_email ?? c.row.patient_name));
     const key=source?sourceKeys.get(source):declarations.find(([,d])=>d===p)?.[0];
     if(!p || !key || badKeys.has(key)){issue(c.sourceRow,c.group,'Paciente não resolvido com segurança.');continue;}
     c.row.patient_name=p.row.full_name;c.row.patient_email=p.row.email;c.row.cpf=p.row.cpf;
