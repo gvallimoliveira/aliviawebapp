@@ -7,8 +7,13 @@ export function findPatient(rows: Record<string, any>[], row: Record<string, any
   const email = identity(row.email ?? row.patient_email);
   const cpf = String(row.cpf ?? '').replace(/\D/g, '');
   const name = identity(row.full_name ?? row.patient_name);
-  const matches = rows.filter(p => email ? identity(p.email) === email : cpf ? String(p.cpf ?? '').replace(/\D/g, '') === cpf : name && identity(p.full_name) === name);
+  const emailMatches = email ? rows.filter(p => identity(p.email) === email) : [];
+  const cpfMatches = cpf ? rows.filter(p => String(p.cpf ?? '').replace(/\D/g, '') === cpf) : [];
+  if (emailMatches.length && cpfMatches.length && emailMatches.some(p => !cpfMatches.includes(p))) throw new Error('E-mail e CPF apontam para pacientes diferentes.');
+  const matches = emailMatches.length ? emailMatches : cpfMatches.length ? cpfMatches : rows.filter(p => name && identity(p.full_name) === name);
   if (matches.length > 1) throw new Error('Mais de um paciente corresponde; informe e-mail ou CPF único.');
+  const match = matches[0];
+  if (match && ((email && match.email && identity(match.email) !== email) || (cpf && match.cpf && String(match.cpf).replace(/\D/g, '') !== cpf))) throw new Error('Identificadores do paciente conflitantes; revise e-mail e CPF.');
   return matches[0] ?? null;
 }
 export function validateImportRow(entity: ImportEntity, row: Record<string, any>) {

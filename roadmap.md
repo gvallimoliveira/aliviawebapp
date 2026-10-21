@@ -1,5 +1,6 @@
 # Tasks
-- [ ] Design generalist mixed-category import with editable mapping, historical dates, patient linkage and regression safeguards; awaiting plan approval before implementation.
+- [x] Implement generalist combined-category import with editable column/group mapping, dated patient/assessment/evolution expansion, conflict blocking, bounded chunks and actor-scoped recovery/undo; 31 tests pass, demo upload-to-report and authenticated live preflight verified. Evolutions still require a genuine patient email; no universal format compatibility claimed.
+- [ ] Verify combined import persists and reads back assessments/evolutions, retries and whole-operation undo in an authenticated real clinic: requesting user's clinic has no professional responsible available, so this flow remains blocked; no live clinical data written.
 - [x] Align all seven demo load scenarios with the displayed latest assessment, safety and phase; correct Maria's chronology; 19 tests pass and all seven phases verified in the public demo. Doses/readiness explicitly illustrative; Carlos has no invented pre-clearance load history.
 - [x] P1: Populate demo load control and periodization with fictional history and local microcycle interactions; 40 tests pass, monitored save updates total and weekly PDF downloads with no backend writes.
 - [x] P3: Add owner/therapist/secretary demo views, scoped lists and reception; team and pt/en/es help updated. Assignment and attendance confirmation verified; mobile has no horizontal overflow.

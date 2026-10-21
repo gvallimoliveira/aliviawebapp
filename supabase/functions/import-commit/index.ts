@@ -2,7 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { z } from 'npm:zod@3';
 import { IMPORT_ENTITIES, findPatient, validateImportRow, sameImportedRecord } from '../_shared/import-rules.ts';
-const schema=z.object({entity:z.enum(IMPORT_ENTITIES),rows:z.array(z.record(z.unknown())).min(1).max(5000),externalRows:z.array(z.record(z.unknown())).optional(),dedup:z.enum(['create','merge','skip']),professionalId:z.string().uuid().optional(),clinicId:z.string().uuid().optional(),sourceFilename:z.string().min(1).max(500),sourceFormat:z.enum(['csv','json','xml','zip-alivia']).optional()});
+const schema=z.object({entity:z.enum(IMPORT_ENTITIES),rows:z.array(z.record(z.unknown())).min(1).max(5000),externalRows:z.array(z.record(z.unknown())).optional(),dedup:z.enum(['create','merge','skip']),professionalId:z.string().uuid().optional(),clinicId:z.string().uuid().optional(),sourceFilename:z.string().min(1).max(500),sourceFormat:z.enum(['csv','json','xml','zip-alivia']).optional(),preflight:z.boolean().optional(),safeRetry:z.boolean().optional(),historical:z.boolean().optional(),operationId:z.string().uuid().optional()});
 const respond=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...corsHeaders,'Content-Type':'application/json'}});
 Deno.serve(async req=>{
  if(req.method==='OPTIONS') return new Response('ok',{headers:corsHeaders});
@@ -34,7 +34,29 @@ Deno.serve(async req=>{
   const scope=(q:any)=>body.clinicId?q.eq('clinic_id',body.clinicId):q.eq('professional_id',professionalId).is('clinic_id',null);
   const patients:Record<string,any>[]=[];
   for(let offset=0;;offset+=1000){const {data,error}=await scope(admin.from('patients').select('*')).range(offset,offset+999);if(error)throw error;patients.push(...data);if(data.length<1000)break;}
-  const {data:batch,error:batchError}=await admin.from('import_batches').insert({user_id:auth.user.id,clinic_id:body.clinicId ?? null,professional_id:professionalId ?? null,source_filename:body.sourceFilename,source_format:body.sourceFormat,status:'running',summary:{journal_version:1}}).select('id').single();
+  const validationErrors:{index:number;error:string}[]=[];
+  for(let i=0;i<body.rows.length;i++)try{
+    const row=body.rows[i];validateImportRow(body.entity,row);
+    if(body.historical && body.entity==='assessments' && !row.created_at)throw new Error('Data da avaliação ausente.');
+    const p=findPatient(patients,row);
+    if(body.historical && body.entity==='session_notes' && !p)throw new Error('Paciente não encontrado no escopo autorizado.');
+    if(body.historical && body.entity==='session_notes' && ![row.content,row.subjective,row.objective,row.assessment,row.plan].some(v=>v!=null && String(v).trim()))throw new Error('Evolução sem conteúdo.');
+  }catch(e){validationErrors.push({index:i,error:(e as Error).message});}
+  if(body.preflight)return respond({errors:validationErrors.length,errorsDetail:validationErrors.slice(0,50)});
+  if(body.historical && validationErrors.length)return respond({error:'Há pendências de validação; nenhuma linha deste lote foi gravada.',errorsDetail:validationErrors.slice(0,50)},400);
+  let requestKey:string|null=null;
+  if(body.safeRetry){
+    const text=JSON.stringify({entity:body.entity,rows:body.rows,external:body.externalRows,clinic:body.clinicId,professional:professionalId,dedup:body.dedup,source:body.sourceFilename,operation:body.operationId});
+    requestKey=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))).map(b=>b.toString(16).padStart(2,'0')).join('');
+    const {data:prior,error:priorError}=await admin.from('import_batches').select('id,status,summary').eq('user_id',auth.user.id).eq('request_key',requestKey).maybeSingle();
+    if(priorError)throw priorError;
+    if(prior){
+      if(prior.status==='undone'){await admin.from('import_batches').update({request_key:null}).eq('id',prior.id);}
+      else if(prior.status==='completed')return respond({batchId:prior.id,...prior.summary,reused:true});
+      else return respond({error:'Um lote anterior ficou pendente. Desfaça-o antes de reenviar.',batchId:prior.id},409);
+    }
+  }
+  const {data:batch,error:batchError}=await admin.from('import_batches').insert({user_id:auth.user.id,clinic_id:body.clinicId ?? null,professional_id:professionalId ?? null,source_filename:body.sourceFilename,source_format:body.sourceFormat,status:'running',summary:{journal_version:1},request_key:requestKey,operation_id:body.operationId ?? null}).select('id').single();
   if(batchError)throw batchError; batchId=batch.id;
   let created=0,updated=0,skipped=0; const errorsDetail:{index:number;error:string}[]=[];
   for(let i=0;i<body.rows.length;i++){

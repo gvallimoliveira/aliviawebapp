@@ -113,6 +113,20 @@
       "when": 1792538366191,
       "tag": "0015_import_undo_alias_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792620980714,
+      "tag": "0016_import_idempotent_batches",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792621227735,
+      "tag": "0017_import_operation_recovery",
+      "breakpoints": true
     }
   ]
 }
