@@ -1,6 +1,6 @@
 # Tasks
-- [ ] P1: Populate clinic demo load control and periodization with isolated fictional history and local microcycle interactions.
-- [ ] P3: Add clinic demo role switching, scoped clinical views and administrative reception; update team and localized help.
+- [x] P1: Populate demo load control and periodization with fictional history and local microcycle interactions; 40 tests pass, monitored save updates total and weekly PDF downloads with no backend writes.
+- [x] P3: Add owner/therapist/secretary demo views, scoped lists and reception; team and pt/en/es help updated. Assignment and attendance confirmation verified; mobile has no horizontal overflow.
 - [x] Add safe XML table import, field review and localized help; 16 tests pass; authenticated clinic XML creation, merge and undo verified with disposable patient, cleanup confirmed.
 - [x] Repair generic import: ZIP structured data, validation, clinic responsibility, deduplication, safe atomic undo, multi-file recovery and help; unit tests pass, authenticated clinic UI creation/merge/undo verified with disposable data and cleanup confirmed. FisioSoft compatibility remains outside this task.
 - [x] Show saved Maigne star beside ADM in record and assessment/evolution PDFs; dated history preserved, help pt/en/es updated; 18 tests pass and PDFs visually checked.
