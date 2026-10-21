@@ -1,0 +1,3 @@
+ALTER TABLE public.import_batches ADD COLUMN IF NOT EXISTS request_key text;
+CREATE UNIQUE INDEX IF NOT EXISTS import_batches_actor_request_key ON public.import_batches(user_id, request_key) WHERE request_key IS NOT NULL;
+COMMENT ON COLUMN public.import_batches.request_key IS 'Server-computed content fingerprint for resumable imports within authorized scope; not a privilege or source patient identity.';
