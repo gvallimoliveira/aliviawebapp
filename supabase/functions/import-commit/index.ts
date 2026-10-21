@@ -34,7 +34,6 @@ Deno.serve(async req=>{
   const scope=(q:any)=>body.clinicId?q.eq('clinic_id',body.clinicId):q.eq('professional_id',professionalId).is('clinic_id',null);
   const patients:Record<string,any>[]=[];
   for(let offset=0;;offset+=1000){const {data,error}=await scope(admin.from('patients').select('*')).range(offset,offset+999);if(error)throw error;patients.push(...data);if(data.length<1000)break;}
-  const plannedPatients=body.entity==='patients' ? [] : body.rows;
   const validationErrors:{index:number;error:string}[]=[];
   for(let i=0;i<body.rows.length;i++)try{
     const row=body.rows[i];validateImportRow(body.entity,row);
@@ -49,7 +48,7 @@ Deno.serve(async req=>{
   if(body.safeRetry){
     const text=JSON.stringify({entity:body.entity,rows:body.rows,external:body.externalRows,clinic:body.clinicId,professional:professionalId,dedup:body.dedup,source:body.sourceFilename});
     requestKey=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))).map(b=>b.toString(16).padStart(2,'0')).join('');
-    const {data:prior,error:priorError}=await admin.from('import_batches').select('id,status,summary,expires_undo_at').eq('user_id',auth.user.id).eq('request_key',requestKey).maybeSingle();
+    const {data:prior,error:priorError}=await admin.from('import_batches').select('id,status,summary').eq('user_id',auth.user.id).eq('request_key',requestKey).maybeSingle();
     if(priorError)throw priorError;
     if(prior){
       if(prior.status==='undone'){await admin.from('import_batches').update({request_key:null}).eq('id',prior.id);}
