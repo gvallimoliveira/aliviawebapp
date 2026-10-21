@@ -50,6 +50,9 @@ export const DEMO_TEAM = [
   { id: "demo-pro-t1", user_id: "demo-user-t1", full_name: "Dra. Camila Santos", role: "therapist" as const, specialties: ["Neurologia", "Respiratória"], email: "camila@fisiovida.com" },
   { id: "demo-pro-t2", user_id: "demo-user-t2", full_name: "Dr. Felipe Oliveira", role: "therapist" as const, specialties: ["Ortopedia", "RPG"], email: "felipe@fisiovida.com" },
   { id: "demo-sec", user_id: "demo-user-sec", full_name: "Ana Carolina Lima", role: "secretary" as const, specialties: [], email: "ana@fisiovida.com" },
+  { id: "demo-admin", user_id: "demo-user-admin", full_name: "Beatriz Martins", role: "admin" as const, specialties: [], email: "beatriz@fisiovida.com" },
+  { id: "demo-intern", user_id: "demo-user-intern", full_name: "Lucas Ribeiro", role: "intern" as const, specialties: ["Acadêmico · 8º período", "Instituição de exemplo"], email: "lucas@fisiovida.com" },
+  { id: "demo-osteo", user_id: "demo-user-osteo", full_name: "Dra. Marina Lopes", role: "osteopath" as const, specialties: ["Osteopatia"], email: "marina@fisiovida.com" },
 ];
 
 export const DEMO_APPOINTMENTS = [
