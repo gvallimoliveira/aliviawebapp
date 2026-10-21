@@ -19,6 +19,8 @@ import {
 } from "@/lib/importMappings";
 
 import { expandImportFile, defaultImportMappings } from "@/lib/importFiles";
+import { buildMixedPlan, suggestMixedConfig, chunkImportRecords, type MixedConfig, type ImportRecord } from "@/lib/importCombined";
+import CombinedImportEditor from "./CombinedImportEditor";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -36,6 +38,7 @@ interface FileState {
   entity: EntityKey;
   mappings: ColumnMapping[];
   ai?: { entity_confidence?: number; rationale?: string };
+  mixed?: MixedConfig;
 }
 
 export default function ImportDataModal({ open, onOpenChange, mode, professionalId, clinicId }: Props) {
@@ -46,11 +49,17 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
   const [dedup, setDedup] = useState<"create" | "merge" | "skip">("merge");
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [allowPartial, setAllowPartial] = useState(false);
+  const [progress, setProgress] = useState("");
   const [report, setReport] = useState<{ batchIds?: string[]; created: number; updated: number; skipped: number; errors: number; errorsDetail?: any[] } | null>(null);
 
   const [responsibleId, setResponsibleId] = useState(professionalId ?? "");
   const [responsibles, setResponsibles] = useState<{ id: string; full_name: string }[]>([]);
   const active = files[activeIdx];
+  const mixedPlans = useMemo(() => files.map(f => f.mixed && f.parsed ? buildMixedPlan(f.parsed.rows, f.mixed) : null), [files]);
+  const pendingCount = mixedPlans.reduce((n,p) => n + (p?.issues.length ?? 0), 0);
+  const activeMixedPlan = mixedPlans[activeIdx];
+  const setMixed = (mixed: MixedConfig) => { setAllowPartial(false); setFiles(prev => prev.map((f,i) => i===activeIdx ? {...f,mixed} : f)); };
   useEffect(() => {
     if (!open || !clinicId || isDemo) return;
     let cancelled = false;
@@ -70,7 +79,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
   }, [open, clinicId, isDemo]);
 
   function reset() {
-    setStep(1); setFiles([]); setActiveIdx(0); setConsent(false); setReport(null); setDedup("merge");
+    setStep(1); setFiles([]); setActiveIdx(0); setConsent(false); setReport(null); setDedup("merge"); setAllowPartial(false); setProgress("");
   }
 
   async function handleFiles(list: FileList | null) {
@@ -82,7 +91,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
       try {
         const parsed = await parseFile(f);
         const parts = expandImportFile(parsed);
-        if (parts.some(p => p.parsed.rows.length > 5000)) throw new Error("Máximo de 5.000 linhas por tabela; divida o arquivo.");
+        if (parts.some(p => p.parsed.rows.length > 50000)) throw new Error("Máximo de 50.000 linhas por tabela.");
         if (files.length + newFiles.length + parts.length > 50) throw new Error("Máximo de 50 tabelas por importação.");
         for (const part of parts) newFiles.push({ file: f, parsed: part.parsed, entity: part.entity, mappings: defaultImportMappings(part.parsed.headers, part.entity) });
         if (parsed.nativeEntities) toast.info("ZIP: somente pacientes, avaliações, evoluções, diário e agenda; anexos, tratamentos e demais categorias não são restaurados.");
@@ -126,38 +135,57 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
   }, [active]);
 
   async function commitAll() {
+    if (pendingCount && !allowPartial) { toast.error("Revise as pendências ou confirme a importação da parte válida."); return; }
     if (isDemo) {
-      const total = files.reduce((s, f) => s + (f.parsed?.rows.length ?? 0), 0);
+      const total = files.reduce((s, f, i) => s + (mixedPlans[i]?.records.length ?? f.parsed?.rows.length ?? 0), 0);
       setReport({ created: total, updated: 0, skipped: 0, errors: 0 });
       setStep(6);
       toast.success("Simulação concluída (modo demo — nada foi gravado).");
       return;
     }
     if (!consent) { toast.error("Confirme o consentimento LGPD."); return; }
-    if (clinicId && files.some(f => ["session_notes", "appointments"].includes(f.entity)) && !responsibleId) { toast.error("Selecione o profissional responsável."); return; }
+    if (clinicId && files.some(f => f.mixed || ["session_notes", "appointments"].includes(f.entity)) && !responsibleId) { toast.error("Selecione o profissional responsável."); return; }
     setBusy(true);
     const totals = { batchIds: [] as string[], created: 0, updated: 0, skipped: 0, errors: 0, errorsDetail: [] as any[] };
     try {
       // Prepare every table before the first write, and import patients before child records.
-      const prepared = [...files].sort((a,b) => Number(b.entity === "patients") - Number(a.entity === "patients")).map(f => {
+      const prepared = files.flatMap((f,index) => {
+        const plan = mixedPlans[index];
+        if (plan) return (["patients","assessments","session_notes"] as EntityKey[]).flatMap(entity => {
+          const records = plan.records.filter(r => r.entity===entity);
+          return records.length ? [{f:{...f,entity},mapped:records.map(r=>({row:r.row,external:r.external}))}] : [];
+        });
         const mapped = (f.parsed?.rows ?? []).map(raw => {
           const { native, external } = applyMapping(raw, f.mappings);
           const row: Record<string, any> = {};
           for (const [k,v] of Object.entries(native)) row[k] = normalizeValue(k,v);
           return { row, external };
         });
-        return { f, mapped };
-      });
-      for (const { f, mapped } of prepared) {
-        const { data, error } = await supabase.functions.invoke("import-commit", { body: {
-          entity: f.entity, rows: mapped.map(m => m.row), externalRows: mapped.map(m => m.external), dedup,
+        return [{ f, mapped }];
+      }).sort((a,b) => Number(b.f.entity === "patients") - Number(a.f.entity === "patients"));
+      const chunks = prepared.flatMap(({f,mapped}) => chunkImportRecords(mapped).map(mapped=>({f,mapped})));
+      if (chunks.length > 100) throw new Error("Esta importação excede 100 lotes seguros; selecione menos arquivos.");
+      if (!chunks.length) throw new Error("Nenhum registro válido para importar.");
+      const bodyFor = (f: FileState, mapped: {row: Record<string, unknown>; external: Record<string, unknown>}[]) => ({
+          entity: f.entity, rows: mapped.map(m => m.row), externalRows: mapped.map(m => m.external), dedup: f.mixed && f.entity==='patients' ? 'merge' : dedup,
           professionalId: clinicId ? responsibleId || undefined : professionalId, clinicId,
           sourceFilename: f.parsed?.filename ?? f.file.name, sourceFormat: f.parsed?.format,
-        } });
+          historical: !!f.mixed, safeRetry: true,
+      });
+      // Check all source data before the first write; patient-dependent checks run again after parents exist.
+      for (const {f,mapped} of chunks) {
+        const {data,error}=await supabase.functions.invoke("import-commit",{body:{...bodyFor(f,mapped),preflight:true}});
+        const issues=(data?.errorsDetail ?? []).filter((e:{error:string})=>e.error!=="Paciente não encontrado no escopo autorizado.");
+        if(error || issues.length) throw new Error(issues[0]?.error ?? "Não foi possível conferir os dados antes de importar.");
+      }
+      for (const [index, { f, mapped }] of chunks.entries()) {
+        setProgress(`Lote ${index+1} de ${chunks.length}`);
+        const { data, error } = await supabase.functions.invoke("import-commit", { body: bodyFor(f,mapped) });
         if (data?.batchId) totals.batchIds.push(data.batchId);
-        if (error || data?.error) throw error ?? new Error(data.error);
+        if (error || data?.error) throw new Error(data?.error ?? "Falha no lote; os lotes anteriores estão no relatório.");
         totals.created += data.created; totals.updated += data.updated; totals.skipped += data.skipped; totals.errors += data.errors;
         totals.errorsDetail.push(...(data.errorsDetail ?? []).map((e: any) => ({ ...e, arquivo: f.parsed?.filename })));
+        if(data.errors) throw new Error("Um lote teve erros; os seguintes não foram enviados.");
       }
       setReport(totals); setStep(6);
       if (totals.errors) toast.warning("Importação parcial: confira os erros antes de continuar.");
@@ -201,7 +229,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
               <label className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center gap-2 cursor-pointer hover:bg-muted/30">
                 <Upload className="w-8 h-8 text-muted-foreground" />
                 <span className="font-medium">Selecionar arquivos</span>
-                <span className="text-xs text-muted-foreground">CSV, JSON, XML ou ZIP exportado do Aliv.iA · até 20MB por arquivo · 50 tabelas · 5.000 linhas por tabela</span>
+                <span className="text-xs text-muted-foreground">CSV, JSON, XML ou ZIP exportado do Aliv.iA · até 20MB por arquivo · 50 tabelas · 50.000 linhas por tabela · até 100 lotes por operação</span>
                 <Input type="file" multiple accept=".csv,.json,.xml,.zip,.tsv,.txt" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
               </label>
               {files.length > 0 && (
@@ -237,9 +265,10 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
               )}
               <div className="space-y-2">
                 <Label>Tipo de entidade detectada</Label>
-                <Select value={active.entity} onValueChange={(v) => setFiles((prev) => prev.map((f, i) => i === activeIdx ? { ...f, entity: v as EntityKey, mappings: f.mappings.map((m) => ({ ...m, target: guessMapping(m.source, v as EntityKey) })) } : f))}>
+                <Select value={active.mixed ? "mixed" : active.entity} onValueChange={(v) => { setAllowPartial(false); setFiles((prev) => prev.map((f, i) => i === activeIdx ? v==='mixed' ? {...f,mixed:suggestMixedConfig(f.parsed?.headers ?? [])} : { ...f, mixed:undefined, entity: v as EntityKey, mappings: f.mappings.map((m) => ({ ...m, target: guessMapping(m.source, v as EntityKey) })) } : f)); }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="mixed">Categorias combinadas</SelectItem>
                     {Object.entries(ENTITY_LABELS).map(([k, l]) => (
                       <SelectItem key={k} value={k}>{l}</SelectItem>
                     ))}
@@ -247,7 +276,8 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
                 </Select>
                 {active.ai?.rationale && <p className="text-xs text-muted-foreground">IA: {active.ai.rationale}</p>}
               </div>
-              <Button variant="outline" onClick={runAIDetect} disabled={busy || isDemo}>
+              {active.mixed && activeMixedPlan && <CombinedImportEditor config={active.mixed} headers={active.parsed?.headers ?? []} rows={active.parsed?.rows ?? []} onChange={setMixed} plan={activeMixedPlan} stage={2} />}
+              <Button variant="outline" onClick={runAIDetect} disabled={busy || isDemo || !!active.mixed}>
                 {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
                 Pedir sugestão da IA
               </Button>
@@ -255,7 +285,8 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
             </div>
           )}
 
-          {step === 3 && active && (
+          {(step===3 || step===4) && active?.mixed && activeMixedPlan && <CombinedImportEditor config={active.mixed} headers={active.parsed?.headers ?? []} rows={active.parsed?.rows ?? []} onChange={setMixed} plan={activeMixedPlan} stage={step} />}
+          {step === 3 && active && !active.mixed && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
                 Confirme onde cada coluna do arquivo deve entrar. Colunas marcadas como <Badge variant="secondary">externo</Badge> ficam preservadas no campo "Dados importados de outro sistema" do prontuário.
@@ -290,7 +321,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
             </div>
           )}
 
-          {step === 4 && active && (
+          {step === 4 && active && !active.mixed && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">Pré-visualização (10 primeiras linhas). Confira antes de avançar.</p>
               <div className="space-y-3 max-h-[400px]">
@@ -338,10 +369,11 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
                 <div className="font-semibold">Resumo</div>
                 {files.map((f, i) => (
                   <div key={i}>
-                    {f.parsed?.filename ?? f.file.name} → <strong>{ENTITY_LABELS[f.entity]}</strong> · {f.parsed?.rows.length ?? 0} linhas
+                    {f.parsed?.filename ?? f.file.name} → <strong>{f.mixed ? "Categorias combinadas" : ENTITY_LABELS[f.entity]}</strong> · {mixedPlans[i]?.records.length ?? f.parsed?.rows.length ?? 0} registros
                   </div>
                 ))}
               </div>
+              {pendingCount>0 && <label className="flex items-start gap-2 text-sm text-destructive"><Checkbox checked={allowPartial} onCheckedChange={v=>setAllowPartial(v===true)} /><span>Confirmo importar somente os registros válidos; {pendingCount} pendência(s) não serão importadas.</span></label>}
               <label className="flex items-start gap-2 text-sm">
                 <Checkbox checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5" />
                 <span>
@@ -392,9 +424,9 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
             </Button>
           )}
           {step === 5 && (
-            <Button onClick={commitAll} disabled={busy || (!consent && !isDemo) || (!!clinicId && !isDemo && files.some(f => ["session_notes", "appointments"].includes(f.entity)) && !responsibleId)}>
+            <Button onClick={commitAll} disabled={busy || (pendingCount>0 && !allowPartial) || (!consent && !isDemo) || (!!clinicId && !isDemo && files.some(f => f.mixed || ["session_notes", "appointments"].includes(f.entity)) && !responsibleId)}>
               {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              {isDemo ? "Simular" : "Importar"}
+              {busy && progress ? progress : isDemo ? "Simular" : "Importar"}
             </Button>
           )}
           {step === 6 && (
