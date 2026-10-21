@@ -12,8 +12,8 @@ import PeriodizationCollapsible from "./PeriodizationCollapsible";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
 
 /** Reuses real calculations/presentation with a local sandbox, not a live patient ID. */
-const DemoPeriodizationSection = ({ patientName }: { patientName?: string | null }) => {
-  const fixture = useMemo(() => createDemoPeriodization(undefined, patientName ?? "patient"), [patientName]);
+const DemoPeriodizationSection = ({ patientName, assessmentId }: { patientName?: string | null; assessmentId?: string | null }) => {
+  const fixture = useMemo(() => createDemoPeriodization(undefined, patientName ?? "patient", assessmentId), [patientName, assessmentId]);
   const [sessions, setSessions] = useState(fixture.sessions);
   const [entries, setEntries] = useState(fixture.entries);
   const noop = () => {};
@@ -23,6 +23,7 @@ const DemoPeriodizationSection = ({ patientName }: { patientName?: string | null
     const block = target.closest<HTMLElement>("[data-periodization-block]");
     if (block) anchorScroll(() => block.isConnected ? block : null, 1800)();
   }}>
+    <p className="text-xs text-muted-foreground">{fixture.plan.notes}</p>
     <DailyConductContent birth={null} plan={fixture.plan} entries={entries} checkins={fixture.checkins} sessions={sessions} />
     <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
       <MacroTimeline cycles={fixture.cycles} planId={fixture.plan.id} onChanged={noop} readOnly />

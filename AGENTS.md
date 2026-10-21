@@ -1,5 +1,5 @@
 # Architecture decisions
-- Clinic demos filter fictional fixtures by viewer; load calculations reuse real helpers with explicit local microcycle adapters, never live writes or AI calls.
+- Clinic demos scope fixtures by viewer; local load adapters reuse real math, never live writes/AI. Load scenarios bind to the displayed latest assessment, including safety; unmatched IDs stay empty.
 
 - AgentMessageInput autosizes mobile drafts; empty fields collapse, other textareas stay unchanged.
 

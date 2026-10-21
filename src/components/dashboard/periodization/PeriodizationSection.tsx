@@ -301,7 +301,7 @@ const PeriodizationSection = ({
   };
 
   if (isDemo) {
-    return <DemoPeriodizationSection key={patientEmail ?? patientName} patientName={patientName} />;
+    return <DemoPeriodizationSection key={`${patientEmail ?? patientName}-${latestAssessmentId}`} patientName={patientName} assessmentId={latestAssessmentId} />;
   }
 
   const activateAndCreateLink = async () => {

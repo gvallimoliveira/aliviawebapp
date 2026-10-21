@@ -9,7 +9,7 @@ const rawMockPatientAssessments = [
     status: "completed",
     pain_score: 7,
     pain_regions: ["lower_back", "right_hip"],
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
     anamnesis_data: {
       chiefComplaints: ["anamnesis.complaint.back_pain"],
       onset: "anamnesis.onset.gradual",
