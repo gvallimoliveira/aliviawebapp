@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Align every demo patient's load, recovery and periodization with the latest displayed assessment; verify patient-specific scenarios.
 - [x] P1: Populate demo load control and periodization with fictional history and local microcycle interactions; 40 tests pass, monitored save updates total and weekly PDF downloads with no backend writes.
 - [x] P3: Add owner/therapist/secretary demo views, scoped lists and reception; team and pt/en/es help updated. Assignment and attendance confirmation verified; mobile has no horizontal overflow.
 - [x] Add safe XML table import, field review and localized help; 16 tests pass; authenticated clinic XML creation, merge and undo verified with disposable patient, cleanup confirmed.
