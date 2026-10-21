@@ -2195,6 +2195,7 @@ export type Database = {
           created_at: string
           expires_undo_at: string
           id: string
+          operation_id: string | null
           professional_id: string | null
           request_key: string | null
           source_filename: string
@@ -2210,6 +2211,7 @@ export type Database = {
           created_at?: string
           expires_undo_at?: string
           id?: string
+          operation_id?: string | null
           professional_id?: string | null
           request_key?: string | null
           source_filename: string
@@ -2225,6 +2227,7 @@ export type Database = {
           created_at?: string
           expires_undo_at?: string
           id?: string
+          operation_id?: string | null
           professional_id?: string | null
           request_key?: string | null
           source_filename?: string
