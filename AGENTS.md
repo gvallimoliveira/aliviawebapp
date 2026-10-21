@@ -32,4 +32,4 @@
 - Spine logic stays in `spineBiomechanics.ts`; `spinePresentation.ts` shares screen/PDF geometry and dated exams to preserve history.
 - Imports use service-only write/undo journals to restore merges and reject later edits atomically. ZIP omits source IDs/privileges; local XML parsing rejects DTD/entities and bounds complexity, preserving fields for review.
 
-- Combined imports use the isolated deterministic planner, explicit per-column disposition and server revalidation; bounded idempotent chunks preserve dated records, source coordinates and whole-set undo. Source codes are metadata, never authority; email-only evolution readers require genuine emails until an additive linkage migration is implemented.
+- Combined imports use the isolated deterministic planner, explicit per-column disposition and server revalidation; bounded idempotent chunks are correlated by actor-scoped operation UUIDs for recovery and whole-set undo. Source codes are metadata, never authority; email-only evolution readers require genuine emails until an additive linkage migration is implemented.

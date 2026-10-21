@@ -47,6 +47,7 @@ export function buildMixedPlan(rows: Record<string,unknown>[], config: MixedConf
   rows.forEach((raw,index) => {
     const sourceRow = index + 1;
     const shared: Record<string,unknown> = {};
+    let sharedFailed = false;
     const external: Record<string,unknown> = {};
     const groups = new Map<string, { entity:MixedEntity; row:Record<string,unknown>; failed:boolean }>();
     const typed = config.layout === 'typed' ? config.types[identity(raw[config.typeColumn])] ?? config.types[clean(String(raw[config.typeColumn] ?? ''))] : undefined;
@@ -55,7 +56,7 @@ export function buildMixedPlan(rows: Record<string,unknown>[], config: MixedConf
       const value = raw[m.source];
       if (value == null || String(value).trim() === '' || m.entity === 'ignore') continue;
       if (m.entity === 'external') {external[m.source]=value;continue;}
-      if (m.entity === 'shared') {if (shared[m.target] != null) issue(sourceRow,'',`Identificação duplicada: ${m.target}.`);shared[m.target]=String(value).trim();continue;}
+      if (m.entity === 'shared') {if (shared[m.target] != null) {issue(sourceRow,'',`Identificação duplicada: ${m.target}.`);sharedFailed=true;}shared[m.target]=String(value).trim();continue;}
       if (!['patients','assessments','session_notes'].includes(m.entity)) continue;
       const entity = m.entity as MixedEntity;
       if (typed && entity !== 'patients' && entity !== typed) continue;
@@ -66,6 +67,7 @@ export function buildMixedPlan(rows: Record<string,unknown>[], config: MixedConf
       groups.set(key,group);
     }
     const patientGroup = [...groups.values()].find(g => g.entity === 'patients');
+    if(sharedFailed || patientGroup?.failed)return;
     const patientRow: Record<string,unknown> = {...(patientGroup?.row ?? {}),full_name:shared.patient_name ?? patientGroup?.row.full_name,email:shared.patient_email ?? patientGroup?.row.email,cpf:shared.cpf ?? patientGroup?.row.cpf};
     const sourceKey = String(shared.source_patient_id ?? '').trim();
     const email = identity(patientRow.email); const cpf=String(patientRow.cpf ?? '').replace(/\D/g,''); const name=identity(patientRow.full_name);
@@ -97,13 +99,14 @@ export function buildMixedPlan(rows: Record<string,unknown>[], config: MixedConf
     for(const id of keys){const previous=seen.get(id);if(previous && previous!==key){badKeys.add(key);badKeys.add(previous);issue(p.sourceRow,'patients','Identificações sobrepostas; revise os cadastros antes de vincular.');}else seen.set(id,key);}
   }
   const lookup=new Map<string,ImportRecord>();
+  const declarationKeys=new Map<ImportRecord,string>(declarations.map(([key,p])=>[p,key]));
   for(const[,p]of declarations)lookup.set(identity(p.row.email ?? p.row.full_name),p);
   const valid:ImportRecord[]=[];
   for(const[key,p]of declarations){if(badKeys.has(key))continue;try{validateImportRow('patients',p.row);valid.push(p);}catch(e){badKeys.add(key);issue(p.sourceRow,p.group,(e as Error).message);}}
   for(const c of candidates){
     const source=String(c.external.source_patient_id ?? '');
     const p=source ? patients.get(sourceKeys.get(source) ?? '') : lookup.get(identity(c.row.patient_email ?? c.row.patient_name));
-    const key=source?sourceKeys.get(source):declarations.find(([,d])=>d===p)?.[0];
+    const key=source?sourceKeys.get(source):p?declarationKeys.get(p):undefined;
     if(!p || !key || badKeys.has(key)){issue(c.sourceRow,c.group,'Paciente não resolvido com segurança.');continue;}
     c.row.patient_name=p.row.full_name;c.row.patient_email=p.row.email;c.row.cpf=p.row.cpf;
     try{

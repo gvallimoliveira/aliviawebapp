@@ -155,7 +155,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
     if (pendingCount && !allowPartial) { toast.error("Revise as pendências ou confirme a importação da parte válida."); return; }
     if (isDemo) {
       const total = files.reduce((s, f, i) => s + (mixedPlans[i]?.records.length ?? f.parsed?.rows.length ?? 0), 0);
-      setReport({ created: total, updated: 0, skipped: 0, errors: 0 });
+      setReport({ created: total, updated: 0, skipped: 0, errors: pendingCount, errorsDetail: mixedPlans.flatMap(p=>p?.issues ?? []) });
       setStep(6);
       toast.success("Simulação concluída (modo demo — nada foi gravado).");
       return;
@@ -163,7 +163,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
     if (!consent) { toast.error("Confirme o consentimento LGPD."); return; }
     if (clinicId && files.some(f => f.mixed || ["session_notes", "appointments"].includes(f.entity)) && !responsibleId) { toast.error("Selecione o profissional responsável."); return; }
     setBusy(true);
-    const totals = { batchIds: [] as string[], created: 0, updated: 0, skipped: 0, errors: 0, errorsDetail: [] as any[] };
+    const totals = { batchIds: [] as string[], created: 0, updated: 0, skipped: 0, errors: pendingCount, errorsDetail: mixedPlans.flatMap(p=>p?.issues ?? []) as any[] };
     try {
       // Prepare every table before the first write, and import patients before child records.
       const prepared = files.flatMap((f,index) => {
