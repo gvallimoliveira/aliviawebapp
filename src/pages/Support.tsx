@@ -67,6 +67,7 @@ const proTools = [
   { key: "white_label", icon: Palette },
   { key: "evolution_report", icon: TrendingUp },
   { key: "simulated_env", icon: MonitorPlay },
+  { key: "clinic_demo", icon: MonitorPlay },
   { key: "voice_notes", icon: Mic },
   { key: "session_dictation", icon: Mic },
   { key: "academic_mode", icon: GraduationCap },
