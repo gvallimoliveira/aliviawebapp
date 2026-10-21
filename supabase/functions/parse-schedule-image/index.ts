@@ -55,69 +55,71 @@ Return a JSON array of appointments. Each appointment must have:
 Rules:
 - If year is not visible, assume current year (2026)
 - If duration is not visible, default to 50 minutes
-- Parse all appointments visible in the image
+- Parse all appointments visible in the image, in ANY layout: week/day grid, month view, or list/agenda ("schedule") view such as Google Calendar mobile, where a day label (e.g. "QUA. 21") appears at the left and every colored block below it belongs to that day until the next day label. The month name appears in the header (e.g. "outubro" = October).
+- Each colored block usually has a title line (name) and a time line "HH:MM – HH:MM".
+- Keep names exactly as written (including "?" or extra words) in patient_name.
 - Return ONLY the JSON array, no other text
 - If no appointments found, return an empty array []`;
 
     const { callAiWithFallback } = await import("../_shared/ai-fallback.ts");
-    const response = await callAiWithFallback(LOVABLE_API_KEY, {
+    const buildBody = () => ({
       messages: [
         { role: "system", content: systemPrompt },
         {
           role: "user",
           content: [
-            {
-              type: "image_url",
-              image_url: { url: `data:${mimeType || "image/png"};base64,${imageBase64}` },
-            },
-            {
-              type: "text",
-              text: "Extract all appointments from this schedule screenshot. Return only the JSON array.",
-            },
+            { type: "image_url", image_url: { url: `data:${mimeType || "image/png"};base64,${imageBase64}` } },
+            { type: "text", text: "Extract all appointments from this schedule screenshot. Return only the JSON array." },
           ],
         },
       ],
-    }, undefined, { functionName: "parse-schedule-image", maxTokens: 2000 });
+    });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Add funds in Settings > Workspace > Usage." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI processing error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "[]";
-
-    // Extract JSON array from response
-    let appointments = [];
-    try {
-      // Try direct parse
-      appointments = JSON.parse(content);
-    } catch {
-      // Try extracting from markdown code block
-      const match = content.match(/\[[\s\S]*\]/);
+    const parseAppointments = (content: string): unknown[] => {
+      const cleaned = (content || "").replace(/```(?:json)?/gi, "").trim();
+      try {
+        const v = JSON.parse(cleaned);
+        if (Array.isArray(v)) return v;
+        if (v && Array.isArray(v.appointments)) return v.appointments;
+      } catch { /* fall through */ }
+      const match = cleaned.match(/\[[\s\S]*\]/);
       if (match) {
-        try {
-          appointments = JSON.parse(match[0]);
-        } catch {
-          console.error("Failed to parse extracted JSON:", match[0]);
+        try { const v = JSON.parse(match[0]); if (Array.isArray(v)) return v; } catch {
+          console.error("Failed to parse extracted JSON:", match[0].slice(0, 500));
         }
       }
+      return [];
+    };
+
+    // Thinking models can exhaust a small output budget and return empty content;
+    // use a generous cap and retry once when nothing comes back.
+    const chains = [["google/gemini-3.8-flash"], ["google/gemini-3.8-flash"]];
+    let appointments: unknown[] = [];
+    let response: Response | null = null;
+    for (const models of chains) {
+      response = await callAiWithFallback(LOVABLE_API_KEY, buildBody(), models, {
+        functionName: "parse-schedule-image",
+        maxTokens: 12000,
+      });
+      if (!response.ok) break;
+      const data = await response.json();
+      const choice = data.choices?.[0];
+      appointments = parseAppointments(choice?.message?.content || "");
+      if (appointments.length > 0) break;
+      console.warn("parse-schedule-image empty result", models[0], choice?.finish_reason);
+    }
+
+    if (response && !response.ok) {
+      const status = response.status;
+      const t = await response.text();
+      console.error("AI gateway error:", status, t);
+      const msg = status === 429 ? "Rate limit exceeded. Please try again in a moment."
+        : status === 402 ? "AI credits exhausted. Add funds in Settings > Workspace > Usage."
+        : "AI processing error";
+      return new Response(JSON.stringify({ error: msg }), {
+        status: status === 429 || status === 402 ? status : 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (admin && Array.isArray(appointments) && appointments.length > 0) {
