@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Design generalist mixed-category import with editable mapping, historical dates, patient linkage and regression safeguards; awaiting plan approval before implementation.
 - [x] Align all seven demo load scenarios with the displayed latest assessment, safety and phase; correct Maria's chronology; 19 tests pass and all seven phases verified in the public demo. Doses/readiness explicitly illustrative; Carlos has no invented pre-clearance load history.
 - [x] P1: Populate demo load control and periodization with fictional history and local microcycle interactions; 40 tests pass, monitored save updates total and weekly PDF downloads with no backend writes.
 - [x] P3: Add owner/therapist/secretary demo views, scoped lists and reception; team and pt/en/es help updated. Assignment and attendance confirmation verified; mobile has no horizontal overflow.
