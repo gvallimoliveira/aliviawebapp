@@ -28,6 +28,12 @@ interface Props {
   professionalName?: string | null;
   sport?: string | null;
   currentPhase?: string | null;
+  /** Local-only demo adapter. Production continues through the canonical save helpers. */
+  demoActions?: {
+    saveDose: (dose: Parameters<typeof savePlannedDose>[0]) => void;
+    removeDose: (id: string) => void;
+    saveMonitored: (entry: Parameters<typeof saveProfessionalSession>[0]) => { merged: boolean };
+  };
 }
 
 const mondayOf = (d: Date): string => {
@@ -57,6 +63,7 @@ const MicroWeekGrid = ({
   professionalName,
   sport,
   currentPhase,
+  demoActions,
 }: Props) => {
   const { toast } = useToast();
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()));
@@ -108,7 +115,7 @@ const MicroWeekGrid = ({
     if (!editing) return;
     setSaving(true);
     try {
-      await savePlannedDose({
+      const dose = {
         patientId,
         planId,
         sessionDate: editing.date,
@@ -117,7 +124,9 @@ const MicroWeekGrid = ({
         plannedDurationMin: Number(plannedMin) > 0 ? Number(plannedMin) : 0,
         plannedRpe,
         title: title.trim() || null,
-      });
+      };
+      if (demoActions) demoActions.saveDose(dose);
+      else await savePlannedDose(dose);
       setTitle("");
       setPlannedMin("");
       (document.activeElement as HTMLElement | null)?.blur?.();
@@ -133,7 +142,8 @@ const MicroWeekGrid = ({
   const remove = async (id: string) => {
     if (!window.confirm("Excluir esta dose planejada? Ela sai do microciclo e da comparação planejado × percebido. Registros de sessões realizadas são mantidos.")) return;
     try {
-      await deleteSession(id);
+      if (demoActions) demoActions.removeDose(id);
+      else await deleteSession(id);
       onChanged();
       toast({ title: "Dose planejada excluída" });
     } catch (e: any) {
@@ -177,7 +187,7 @@ const MicroWeekGrid = ({
     let merged = false;
     let error: unknown = null;
     try {
-      ({ merged } = await saveProfessionalSession({
+      const entry: Parameters<typeof saveProfessionalSession>[0] = {
         patientId,
         planId,
         sessionDate: monitoring.session_date.slice(0, 10),
@@ -195,7 +205,8 @@ const MicroWeekGrid = ({
           hr_recovery_1min: ri(monHrRec),
           distance_km: dist != null ? Math.round(dist * 100) / 100 : null,
         },
-      }));
+      };
+      ({ merged } = demoActions ? demoActions.saveMonitored(entry) : await saveProfessionalSession(entry));
     } catch (e) { error = e; }
     setMonSaving(false);
     if (error) { toast({ title: "Não foi possível salvar", variant: "destructive" }); return; }
@@ -218,8 +229,10 @@ const MicroWeekGrid = ({
         })
         .sort((a, b) => a.session_date.localeCompare(b.session_date));
       const { downloadMicrocyclePdf } = await import("@/utils/generateMicrocyclePdf");
-      const { data: auth } = await supabase.auth.getUser();
-      const branding = await resolveAssessmentBranding({ clinicId, userId: auth.user?.id });
+      const branding = demoActions ? {} : await (async () => {
+        const { data: auth } = await supabase.auth.getUser();
+        return resolveAssessmentBranding({ clinicId, userId: auth.user?.id });
+      })();
       await downloadMicrocyclePdf({
         ...branding,
         weekStart,

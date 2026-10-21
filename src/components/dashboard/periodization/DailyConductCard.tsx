@@ -17,6 +17,10 @@ const toneLabel: Record<ConductTone, string> = { stop: "Segurança", reduce: "Re
 /** Conduta do dia: o que fazer hoje, antes dos números. Sempre sugestão. */
 const DailyConductCard = ({ patientId, plan, entries, checkins, sessions }: { patientId: string; plan: any; entries: any[]; checkins: any[]; sessions: any[] }) => {
   const birth = usePatientBirthDate(patientId);
+  return <DailyConductContent birth={birth} plan={plan} entries={entries} checkins={checkins} sessions={sessions} />;
+};
+
+export const DailyConductContent = ({ birth, plan, entries, checkins, sessions }: { birth: string | null; plan: any; entries: any[]; checkins: any[]; sessions: any[] }) => {
   const result = useMemo(() => {
     const ceil = hrCeiling({ profile: plan?.cardio_profile, age: ageFromBirth(birth), override: plan?.hr_ceiling_override ?? null });
     return dailyConduct({

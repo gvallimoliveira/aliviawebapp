@@ -35,6 +35,7 @@ import PatientEvolutionDashboard from "@/components/dashboard/PatientEvolutionDa
 import { mockPatientAssessments } from "@/data/mockPatientData";
 import ExportDataCard from "@/components/dashboard/ExportDataCard";
 import ImportDataCard from "@/components/dashboard/ImportDataCard";
+import { clinicDemoTabs, scopeDemoRows, DEMO_THERAPIST_ID, DEMO_ROLE_LABELS, DEMO_TEAM_ROLE_LABELS, type ClinicDemoRole } from "@/lib/clinicDemoViews";
 
 const TYPE_ICONS: Record<string, typeof Video> = {
   video_call: Video,
@@ -76,9 +77,17 @@ const ClinicDemo = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("agenda");
+  const [viewerRole, setViewerRole] = useState<ClinicDemoRole>("owner");
+  const allowedTabs = clinicDemoTabs(viewerRole);
+  const changeRole = (role: ClinicDemoRole) => {
+    setViewerRole(role);
+    setFilterTherapist("all");
+    setSelectedApt(null);
+    if (!clinicDemoTabs(role).includes(activeTab)) setActiveTab("agenda");
+  };
   const [clinicSubTab, setClinicSubTab] = useState("team");
   const [appointments, setAppointments] = useState(DEMO_APPOINTMENTS);
-  const [assessments] = useState(DEMO_CLINIC_ASSESSMENTS);
+  const [assessments, setAssessments] = useState(DEMO_CLINIC_ASSESSMENTS);
   const [selectedApt, setSelectedApt] = useState<(typeof DEMO_APPOINTMENTS)[0] | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [filterTherapist, setFilterTherapist] = useState<string>("all");
@@ -92,11 +101,11 @@ const ClinicDemo = () => {
   const visibleApts = useMemo(() => {
     const rangeStart = format(days[0], "yyyy-MM-dd");
     const rangeEnd = format(days[days.length - 1], "yyyy-MM-dd");
-    return appointments.filter(a => a.appointment_date >= rangeStart && a.appointment_date <= rangeEnd);
-  }, [appointments, days]);
+    return scopeDemoRows(appointments, viewerRole).filter(a => a.appointment_date >= rangeStart && a.appointment_date <= rangeEnd);
+  }, [appointments, days, viewerRole]);
 
   const timeSlots = getTimeSlots(visibleApts);
-  const therapists = DEMO_TEAM.filter(t => t.role === "owner" || t.role === "therapist");
+  const therapists = DEMO_TEAM.filter(t => t.role === "owner" || t.role === "therapist" || t.role === "osteopath");
 
   // Drag and drop
   const [draggedApt, setDraggedApt] = useState<string | null>(null);
@@ -126,9 +135,20 @@ const ClinicDemo = () => {
   }, [visibleApts, filterTherapist]);
 
   const filteredAssessments = useMemo(() => {
-    if (filterTherapist === "all") return assessments;
-    return assessments.filter(a => a.professional_id === filterTherapist || !a.professional_id);
-  }, [assessments, filterTherapist]);
+    const scoped = scopeDemoRows(assessments, viewerRole);
+    if (filterTherapist === "all") return scoped;
+    return scoped.filter(a => a.professional_id === filterTherapist || !a.professional_id);
+  }, [assessments, filterTherapist, viewerRole]);
+  const recordAssessments = useMemo(() => {
+    const owners = ["demo-pro-owner", DEMO_THERAPIST_ID, "demo-pro-t2"];
+    const emails = Array.from(new Set(mockPatientAssessments.map(a => a.patient_email)));
+    const rows = mockPatientAssessments.map(a => ({ ...a, professional_id: owners[emails.indexOf(a.patient_email) % owners.length] }));
+    return scopeDemoRows(rows, viewerRole).filter(a => filterTherapist === "all" || a.professional_id === filterTherapist);
+  }, [viewerRole, filterTherapist]);
+  const assignAssessment = (id: string, professionalId: string | null) => {
+    setAssessments(prev => prev.map(a => a.id === id ? { ...a, professional_id: professionalId } : a));
+    toast({ title: "Avaliação atribuída", description: getProName(professionalId) });
+  };
 
   const getProName = (proId: string | null) => {
     if (!proId) return "Não atribuído";
@@ -152,7 +172,7 @@ const ClinicDemo = () => {
             </Badge>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} className="hidden md:inline-flex">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/clinica/suporte")} className="hidden md:inline-flex" aria-label="Suporte da clínica">
               <HelpCircle className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/clinica")} className="gap-1.5 rounded-xl">
@@ -184,39 +204,44 @@ const ClinicDemo = () => {
                 <p className="text-xs text-muted-foreground">{DEMO_CLINIC.address} · {DEMO_TEAM.length} membros</p>
               </div>
             </div>
-            <Button size="sm" onClick={() => navigate("/clinica#planos")} className="rounded-xl gap-1.5">
-              <Crown className="h-3.5 w-3.5" /> Assinar
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <span id="demo-role-label" className="text-xs text-muted-foreground">Visualizar como</span>
+              <Select value={viewerRole} onValueChange={value => changeRole(value as ClinicDemoRole)}>
+                <SelectTrigger aria-labelledby="demo-role-label" className="w-[180px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{Object.entries(DEMO_ROLE_LABELS).map(([role, label]) => <SelectItem key={role} value={role}>{label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="w-full grid grid-cols-6">
-            <TabsTrigger value="agenda" className="gap-1.5 text-xs">
+          <TabsList className="w-full flex">
+            <TabsTrigger value="agenda" aria-label="Agenda" className="flex-1 gap-1.5 text-xs">
               <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">Agenda</span>
             </TabsTrigger>
-            <TabsTrigger value="patients" className="gap-1.5 text-xs">
+            {allowedTabs.includes("patients") && <TabsTrigger value="patients" aria-label="Pacientes" className="flex-1 gap-1.5 text-xs">
               <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">Pacientes</span>
-            </TabsTrigger>
-            <TabsTrigger value="insights" className="gap-1.5 text-xs">
+            </TabsTrigger>}
+            {allowedTabs.includes("reception") && <TabsTrigger value="reception" className="flex-1 gap-1.5 text-xs"><Users className="h-4 w-4" />Recepção</TabsTrigger>}
+            {allowedTabs.includes("insights") && <TabsTrigger value="insights" aria-label="Insights" className="flex-1 gap-1.5 text-xs">
               <Sparkles className="h-4 w-4" /><span className="hidden sm:inline">Insights</span>
-            </TabsTrigger>
-            <TabsTrigger value="messages" className="gap-1.5 text-xs">
+            </TabsTrigger>}
+            {allowedTabs.includes("messages") && <TabsTrigger value="messages" aria-label="Mensagens" className="flex-1 gap-1.5 text-xs">
               <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">Mensagens</span>
-            </TabsTrigger>
-            <TabsTrigger value="agente" className="gap-1.5 text-xs">
+            </TabsTrigger>}
+            {allowedTabs.includes("agente") && <TabsTrigger value="agente" aria-label="Agente" className="flex-1 gap-1.5 text-xs">
               <Brain className="h-4 w-4" /><span className="hidden sm:inline">Agente</span>
-            </TabsTrigger>
-            <TabsTrigger value="clinic" className="gap-1.5 text-xs">
+            </TabsTrigger>}
+            {allowedTabs.includes("clinic") && <TabsTrigger value="clinic" aria-label="Clínica" className="flex-1 gap-1.5 text-xs">
               <Building2 className="h-4 w-4" /><span className="hidden sm:inline">Clínica</span>
-            </TabsTrigger>
+            </TabsTrigger>}
           </TabsList>
 
           {/* ─── Agenda ─── */}
           <TabsContent value="agenda" className="space-y-5">
             <DemoUpsellBanner section="agenda" />
-            <DemoDailySummaryMock />
+            {viewerRole !== "secretary" && <DemoDailySummaryMock professionalId={viewerRole === "therapist" ? DEMO_THERAPIST_ID : undefined} />}
 
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2">
@@ -228,7 +253,7 @@ const ClinicDemo = () => {
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
-              <Select value={filterTherapist} onValueChange={setFilterTherapist}>
+              {viewerRole !== "therapist" && <Select value={filterTherapist} onValueChange={setFilterTherapist}>
                 <SelectTrigger className="w-[200px] h-8 text-xs">
                   <SelectValue placeholder="Todos os profissionais" />
                 </SelectTrigger>
@@ -238,7 +263,7 @@ const ClinicDemo = () => {
                     <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select>}
               <Button size="sm" className="gap-1.5 rounded-xl" onClick={() => demoToast("No modo real, você criaria um novo agendamento aqui.")}>
                 <Plus className="h-3.5 w-3.5" />
                 Novo
@@ -328,7 +353,7 @@ const ClinicDemo = () => {
           </TabsContent>
 
           {/* ─── Pacientes ─── */}
-          <TabsContent value="patients" className="space-y-5">
+          {allowedTabs.includes("patients") && <TabsContent value="patients" className="space-y-5">
             <DemoUpsellBanner section="patients" />
 
             <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -336,7 +361,7 @@ const ClinicDemo = () => {
                 <Activity className="h-5 w-5 text-primary" />
                 Pool de avaliações
               </h2>
-              <Select value={filterTherapist} onValueChange={setFilterTherapist}>
+              {viewerRole !== "therapist" && <Select value={filterTherapist} onValueChange={setFilterTherapist}>
                 <SelectTrigger className="w-[200px] h-8 text-xs">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
@@ -346,7 +371,7 @@ const ClinicDemo = () => {
                     <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select>}
             </div>
 
             {filteredAssessments.filter(a => !a.professional_id).length > 0 && (
@@ -364,7 +389,7 @@ const ClinicDemo = () => {
                         <p className="text-sm font-medium text-foreground">{a.patient_name}</p>
                         <p className="text-xs text-muted-foreground">{a.patient_email}</p>
                       </div>
-                      <Select onValueChange={(v) => demoToast(`Avaliação atribuída a ${getProName(v)}`)}>
+                      <Select onValueChange={(v) => assignAssessment(a.id, v)}>
                         <SelectTrigger className="w-[160px] h-8 text-xs">
                           <SelectValue placeholder="Atribuir a..." />
                         </SelectTrigger>
@@ -395,7 +420,8 @@ const ClinicDemo = () => {
               </p>
               <div className="rounded-2xl border border-border/60 bg-card p-3 sm:p-4">
                 <PatientEvolutionDashboard
-                  assessments={mockPatientAssessments as any}
+                  key={viewerRole + filterTherapist}
+                  assessments={recordAssessments as any}
                   professionalId="demo-clinic-professional"
                   clinicId="demo-clinic"
                   clinicName={DEMO_CLINIC.name}
@@ -407,35 +433,35 @@ const ClinicDemo = () => {
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold text-foreground">{assessments.length}</p><p className="text-[10px] text-muted-foreground">Total</p></CardContent></Card>
-              <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold text-primary">{assessments.filter(a => a.status === "completed").length}</p><p className="text-[10px] text-muted-foreground">Concluídas</p></CardContent></Card>
-              <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold text-amber-600">{assessments.filter(a => !a.professional_id).length}</p><p className="text-[10px] text-muted-foreground">Sem atribuição</p></CardContent></Card>
+              <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold text-foreground">{filteredAssessments.length}</p><p className="text-[10px] text-muted-foreground">Total</p></CardContent></Card>
+              <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold text-primary">{filteredAssessments.filter(a => a.status === "completed").length}</p><p className="text-[10px] text-muted-foreground">Concluídas</p></CardContent></Card>
+              <Card><CardContent className="py-4 text-center"><p className="text-2xl font-bold text-accent-foreground">{filteredAssessments.filter(a => !a.professional_id).length}</p><p className="text-[10px] text-muted-foreground">Sem atribuição</p></CardContent></Card>
             </div>
-          </TabsContent>
+          </TabsContent>}
 
 
           {/* ─── Insights ─── */}
-          <TabsContent value="insights" className="space-y-5">
+          {allowedTabs.includes("insights") && <TabsContent value="insights" className="space-y-5">
             <DemoUpsellBanner section="insights" />
             <DemoInsightsMock variant="clinic" />
             <DemoFeedbackMock />
-          </TabsContent>
+          </TabsContent>}
 
           {/* ─── Mensagens ─── */}
-          <TabsContent value="messages" className="space-y-5">
+          {allowedTabs.includes("messages") && <TabsContent value="messages" className="space-y-5">
             <DemoUpsellBanner section="messages" />
             <DemoMessagesMock />
-          </TabsContent>
+          </TabsContent>}
 
           {/* ─── Agente ─── */}
-          <TabsContent value="agente" className="space-y-5">
+          {allowedTabs.includes("agente") && <TabsContent value="agente" className="space-y-5">
             <DemoUpsellBanner section="agente" />
             <DemoClinicalAgentMock />
-          </TabsContent>
+          </TabsContent>}
 
 
           {/* ─── Clínica (sub-tabs) ─── */}
-          <TabsContent value="clinic" className="space-y-5">
+          {allowedTabs.includes("clinic") && <TabsContent value="clinic" className="space-y-5">
             <DemoUpsellBanner section="clinic" />
             <Tabs value={clinicSubTab} onValueChange={setClinicSubTab} className="space-y-5">
               <TabsList className="w-full grid grid-cols-3">
@@ -477,7 +503,7 @@ const ClinicDemo = () => {
                                 member.role === "secretary" ? "bg-amber-500/10 text-amber-600 border-amber-300/40" :
                                 "bg-muted text-muted-foreground"
                               )}>
-                                {member.role === "owner" ? "Proprietário" : member.role === "secretary" ? "Secretária" : "Fisioterapeuta"}
+                                {DEMO_TEAM_ROLE_LABELS[member.role] ?? member.role}
                               </Badge>
                             </p>
                             <p className="text-xs text-muted-foreground">{member.email}</p>
@@ -609,7 +635,19 @@ const ClinicDemo = () => {
                 <ImportDataCard mode="demo" entityName={DEMO_CLINIC.name} clinicId="demo-clinic" />
               </TabsContent>
             </Tabs>
-          </TabsContent>
+          </TabsContent>}
+          {viewerRole === "secretary" && <TabsContent value="reception" className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Recepção · Ana Carolina Lima</h2>
+            <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => demoToast("Cadastro iniciado no ambiente de demonstração.")}><UserPlus className="h-4 w-4 mr-2" />Cadastrar paciente</Button><Button variant="outline" onClick={copyClinicLink}><Link2 className="h-4 w-4 mr-2" />Link institucional</Button></div>
+            <h3 className="text-sm font-medium text-foreground">Distribuição de pacientes</h3>
+            {assessments.map(a => <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-3">
+              <div><p className="text-sm font-medium text-foreground">{a.patient_name}</p><p className="text-xs text-muted-foreground">{a.patient_email}</p></div>
+              <Select value={a.professional_id ?? "unassigned"} onValueChange={id => assignAssessment(a.id, id === "unassigned" ? null : id)}>
+                <SelectTrigger aria-label={`Responsável por ${a.patient_name}`} className="w-[210px]"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="unassigned">Aguardando atribuição</SelectItem>{therapists.map(t => <SelectItem key={t.id} value={t.id}>{t.full_name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>)}
+          </TabsContent>}
         </Tabs>
 
         {/* Final CTA */}
@@ -645,14 +683,19 @@ const ClinicDemo = () => {
                 <div><label className="text-xs text-muted-foreground">Data</label><p className="text-sm text-foreground">{format(new Date(selectedApt.appointment_date), "dd/MM/yyyy")}</p></div>
                 <div><label className="text-xs text-muted-foreground">Horário</label><p className="text-sm text-foreground">{selectedApt.appointment_time.slice(0, 5)} ({selectedApt.duration_minutes}min)</p></div>
                 <div><label className="text-xs text-muted-foreground">Tipo</label><Badge variant="outline" className={cn("text-xs", TYPE_COLORS[selectedApt.type])}>{selectedApt.type === "video_call" ? "Teleconsulta" : selectedApt.type === "external" ? "Domiciliar" : "Presencial"}</Badge></div>
-                <div><label className="text-xs text-muted-foreground">Status</label><Badge variant="outline" className={cn("text-xs capitalize", STATUS_COLORS[selectedApt.status])}>{selectedApt.status === "scheduled" ? "Agendado" : selectedApt.status === "completed" ? "Realizado" : "Cancelado"}</Badge></div>
+                <div><label className="text-xs text-muted-foreground">Status</label><Badge variant="outline" className={cn("text-xs capitalize", STATUS_COLORS[selectedApt.status])}>{selectedApt.status === "scheduled" ? "Agendado" : selectedApt.status === "confirmed" ? "Confirmado" : selectedApt.status === "completed" ? "Realizado" : "Cancelado"}</Badge></div>
               </div>
-              {selectedApt.notes && (
+              {viewerRole !== "secretary" && selectedApt.notes && (
                 <div><label className="text-xs text-muted-foreground">Observações</label><p className="text-sm text-foreground mt-0.5">{selectedApt.notes}</p></div>
               )}
             </div>
           )}
           <DialogFooter>
+            {selectedApt && selectedApt.status === "scheduled" && viewerRole === "secretary" && <Button onClick={() => {
+              setAppointments(prev => prev.map(a => a.id === selectedApt.id ? { ...a, status: "confirmed" } : a));
+              setSelectedApt({ ...selectedApt, status: "confirmed" });
+              toast({ title: "Presença confirmada" });
+            }}>Confirmar presença</Button>}
             <Button variant="outline" onClick={() => setSelectedApt(null)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>

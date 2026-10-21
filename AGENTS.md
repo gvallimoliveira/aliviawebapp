@@ -1,14 +1,15 @@
 # Architecture decisions
+- Clinic demos filter fictional fixtures by viewer; load calculations reuse real helpers with explicit local microcycle adapters, never live writes or AI calls.
 
-- AgentMessageInput autosizes mobile drafts within the visible viewport; empty fields collapse to preserve chat space, without changing other textareas.
+- AgentMessageInput autosizes mobile drafts; empty fields collapse, other textareas stay unchanged.
 
-- Cardiovascular views use `usePatientBirthDate` to refresh demographics after patient record edits and on refocus; age-dependent estimates must not remain stale or reset unsaved session inputs.
+- Cardiovascular views refresh demographics via `usePatientBirthDate` after edits/refocus; keep estimates fresh and unsaved inputs intact.
 
 - Aliv.iA/Studio copy uses canonical `aliviaDifferentials.ts` IDs; handoff copy must not duplicate features or imply duplicate entry.
 - Manual assessment and record share diagnosis.clinicalImpression; sync saved updates and regenerate only on request to avoid duplicate credits.
 - Patient record paired sections use the shared native horizontal row; this preserves form behavior and lets section shortcuts reveal horizontally hidden content.
 - Patient regional pain charts and comparisons share one chronological data helper; explicit regional measurements must never be replaced by an invented regional score from a multi-region global average.
-- HEP load metrics (volume, intensity, weekly sets per region, planned dose) are computed only by the shared `hepLoad.ts` helper; one deterministic source keeps the HEP panel and the microcycle dose consistent.
+- HEP dose metrics use only `hepLoad.ts` to keep the panel and microcycle consistent.
 - Professional sessions use only `saveProfessionalSession` in `periodizationData.ts`: merge same-date/track check-ins and link plans to avoid duplicate load. TRIMP/sRPE math stays in `cardioLoad.ts`.
 - "Today" in load control is always the local/Brazil calendar date (`localISODate` client-side, America/Sao_Paulo in the check-in function), never `toISOString()`; UTC rolls to tomorrow after 21h in Brazil.
 - Dose adherence (`adherenceByTrack`) counts only sessions up to local today with sRPE; unanswered/upcoming never count as underdose nor push alerts. Patient sRPE: today + 7 prior days, server-enforced.

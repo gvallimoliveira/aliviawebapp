@@ -40,6 +40,7 @@ import DailyConductCard from "./DailyConductCard";
 import { HeartPulse } from "lucide-react";
 import PeriodizationCollapsible from "./PeriodizationCollapsible";
 import { useAuth } from "@/contexts/AuthContext";
+import DemoPeriodizationSection from "./DemoPeriodizationSection";
 
 interface Props {
   /** Id do registro em `patients`, quando o prontuário já o conhece. */
@@ -85,6 +86,7 @@ const PeriodizationSection = ({
   // Nome de quem assina o PDF da semana: profissional logado; na clínica, a
   // clínica entra como fallback quando o perfil não tem nome preenchido.
   useEffect(() => {
+    if (isDemo) return;
     let cancelled = false;
     (async () => {
       try {
@@ -108,7 +110,7 @@ const PeriodizationSection = ({
       }
     })();
     return () => { cancelled = true; };
-  }, [clinicId]);
+  }, [clinicId, isDemo]);
 
 
 
@@ -299,16 +301,7 @@ const PeriodizationSection = ({
   };
 
   if (isDemo) {
-    return (
-      <Card className="border-dashed">
-        <CardContent className="py-6 text-center">
-          <Gauge className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">
-            No ambiente simulado a periodização de carga fica apenas ilustrativa.
-          </p>
-        </CardContent>
-      </Card>
-    );
+    return <DemoPeriodizationSection key={patientEmail ?? patientName} patientName={patientName} />;
   }
 
   const activateAndCreateLink = async () => {
