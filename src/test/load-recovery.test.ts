@@ -40,3 +40,18 @@ describe("load × PSR", () => {
     expect(loadRecoverySeries(entries, checkins.slice(0, 3), date, date)[0].psrBaseline).toBeNull();
   });
 });
+describe("daily load composition by track", () => {
+  const date = "2026-10-22";
+  it("breaks the day bar down by track and keeps null without a session", () => {
+    const entries = [
+      { session_date: date, duration_min: 30, rpe: 5, track: "physio" },
+      { session_date: date, duration_min: 40, rpe: 6, track: "gym" },
+      { session_date: date, duration_min: 20, rpe: 4, track: "cardio" },
+    ];
+    const [point] = loadRecoverySeries(entries, [], date, date);
+    expect(point.tracks).toEqual({ physio: 150, gym: 240, cardio: 80, sport: 0 });
+    expect(point.load).toBe(470);
+    const [empty] = loadRecoverySeries([], [], date, date);
+    expect(empty.tracks).toBeNull();
+  });
+});

@@ -25,10 +25,10 @@ export default function PatientPainEvolution({ assessments }: { assessments: Reg
       <div className="h-56 min-w-0" role="img" aria-label={language === "pt" ? "Pontuação de dor de 0 a 10 por região e data" : language === "es" ? "Dolor de 0 a 10 por región y fecha" : "Pain score from 0 to 10 by region and date"}>
         <ResponsiveContainer width="100%" height="100%"><LineChart data={points} margin={{ top: 10, right: 12, left: -20, bottom: 0 }}>
           <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
-          <XAxis dataKey="date" tickFormatter={date} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} minTickGap={24} />
+          <XAxis dataKey="date" tickFormatter={date} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} minTickGap={24} padding={{ left: 48, right: 48 }} />
           <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
           <Tooltip labelFormatter={value => new Date(String(value)).toLocaleDateString(locale)} formatter={(value: number, name: string) => [`${value}/10`, name]} contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))", maxWidth: 240, whiteSpace: "normal" }} />
-          {series.map((s, i) => <Line key={s.key} dataKey={s.key} name={regionalPainLabel(s.regionId, language, t)} hide={hidden.includes(s.key)} stroke={`hsl(var(--chart-${i % 6 + 1}))`} strokeDasharray={i >= 6 ? "5 3" : undefined} type="linear" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} isAnimationActive={false} />)}
+          {series.map((s, i) => { const color = `hsl(var(--chart-${i % 6 + 1}))`; return <Line key={s.key} dataKey={s.key} name={regionalPainLabel(s.regionId, language, t)} hide={hidden.includes(s.key)} stroke={color} strokeDasharray={i >= 6 ? "5 3" : undefined} type="monotone" strokeWidth={2.5} dot={{ r: 5, fill: color, strokeWidth: 2, stroke: "hsl(var(--card))" }} activeDot={{ r: 7, fill: color, strokeWidth: 2, stroke: "hsl(var(--card))" }} connectNulls={false} isAnimationActive={false} />; })}
         </LineChart></ResponsiveContainer>
       </div>
       <div id="sec-regioes-dor" className="scroll-mt-24 divide-y divide-border">
