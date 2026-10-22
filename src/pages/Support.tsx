@@ -41,7 +41,7 @@ const proTools = [
   { key: "statistics", icon: BarChart3 },
   { key: "analytics_charts", icon: PieChart },
   { key: "patient_list", icon: Users },
-  { key: "evolution_dashboard", icon: Activity },
+  { key: "evolution_dashboard", icon: Activity }, // Localized help includes read-only summary alerts and dated health caveats.
   { key: "pdf_download", icon: FileDown },
   { key: "rename_share_assessments", icon: FileEdit },
   { key: "final_hypothesis", icon: Stamp },

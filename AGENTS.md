@@ -1,4 +1,5 @@
 # Architecture decisions
+- Record-summary alerts preserve assessment-specific dismissal audits across history; health caveats reuse healthHistory formatting and Saúde geral recency (latest day, manual precedence) without new risk calculations or AI.
 - Clinic demos scope fixtures by viewer; local load adapters reuse real math, never live writes/AI. Load scenarios bind to the displayed latest assessment, including safety; unmatched IDs stay empty.
 
 - AgentMessageInput autosizes mobile drafts; empty fields collapse, other textareas stay unchanged.

@@ -876,6 +876,7 @@ export default function PatientDetailView(props: any) {
         patientEmail={selectedEmail ?? patient.email ?? null}
         patientId={patient?.patientRecord?.id ?? null}
         assessment={latestWithDiagnosis || latestAssessment}
+        assessments={patient.assessments || []}
         latestAssessmentId={latestWithDiagnosis?.id ?? patient?.assessments?.[0]?.id ?? null}
         heps={(hepHistory || []).filter((h: any) => (h.patient_name || "").toLowerCase().trim() === (patient.name || "").toLowerCase().trim())}
         isDemo={isDemo}
