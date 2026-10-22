@@ -37,7 +37,7 @@ interface Props {
 }
 
 const Section = ({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) => (
-  <section className="space-y-2">
+  <section className="min-w-0 max-w-full space-y-2">
     <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">{icon}{title}</h4>
     {children}
   </section>
@@ -142,13 +142,13 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" />{tr(l, "Resumo do prontuário", "Record summary", "Resumen de la historia")}</DialogTitle>
+      <DialogContent className="flex w-[calc(100%-1rem)] min-w-0 max-w-2xl max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-lg p-4 sm:p-6">
+        <DialogHeader className="min-w-0 shrink-0 pr-6 text-left">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg"><Sparkles className="h-4 w-4 shrink-0 text-primary" />{tr(l, "Resumo do prontuário", "Record summary", "Resumen de la historia")}</DialogTitle>
           <DialogDescription>{patientName}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5">
+        <div className="min-h-0 min-w-0 max-w-full space-y-5 overflow-y-auto overflow-x-hidden overscroll-contain [overflow-wrap:anywhere]">
           <Section icon={<AlertTriangle className="h-3.5 w-3.5 text-destructive" />} title={tr(l, "Alerta clínico", "Clinical alert", "Alerta clínica")}>
             {alerts.length ? <div className="space-y-2">{alerts.map((alert, index) => (
               <div key={alert.id || index} className={alert.dismissedAt ? "border-l-2 border-border pl-3 space-y-1" : "border-l-2 border-destructive pl-3 space-y-1"}>
@@ -183,7 +183,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
 
           <Section icon={<Gauge className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Carga e periodização", "Load & periodization", "Carga y periodización")}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : !hasLoad ? empty(tr(l, "Sem registros de carga ainda.", "No load records yet.", "Sin registros de carga aún.")) : (
-              <div className="space-y-4">
+              <div className="min-w-0 max-w-full space-y-4">
                 {!isDemo && patientId ? <LiveConduct patientId={patientId} load={load} /> : <DailyConductContent birth={null} plan={load.plan} entries={load.entries} checkins={load.checkins} sessions={load.sessions} />}
                 <div>
                   <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Microciclo da semana", "Weekly microcycle", "Microciclo semanal")}</p>
@@ -225,7 +225,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
         </div>
 
         {assessment && (
-          <DialogFooter>
+          <DialogFooter className="min-w-0 shrink-0">
             <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={onOpenAssessmentSummary}>
               <FileText className="h-4 w-4" />{tr(l, "Ver avaliação completa", "View full assessment", "Ver evaluación completa")}
             </Button>
