@@ -5590,6 +5590,10 @@ export type Database = {
         Args: { _professional_id: string }
         Returns: boolean
       }
+      import_patient_is_unreferenced_shell: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
       import_undo_batches: {
         Args: { p_actor: string; p_batches: string[] }
         Returns: Json
