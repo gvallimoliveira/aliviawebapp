@@ -51,6 +51,7 @@ interface Props {
   professionalId?: string | null;
   clinicId?: string | null;
   latestAssessmentId?: string | null;
+  assessments?: any[];
   readOnly?: boolean;
   isDemo?: boolean;
 }
@@ -62,6 +63,7 @@ const PeriodizationSection = ({
   professionalId,
   clinicId,
   latestAssessmentId,
+  assessments,
   readOnly,
   isDemo,
 }: Props) => {
@@ -480,7 +482,7 @@ const PeriodizationSection = ({
           </PeriodizationCollapsible>
         )}
 
-        <CardioSafetyCard patientId={patientId} plan={plan} checkins={checkins} entries={entries} onChanged={refresh} readOnly={readOnly} />
+        <CardioSafetyCard patientId={patientId} assessments={assessments} patientEmail={patientEmail} clinicId={clinicId} plan={plan} checkins={checkins} entries={entries} onChanged={refresh} readOnly={readOnly} />
 
         {!readOnly && (
           <PeriodizationCollapsible title="Avaliação cardiorrespiratória (testes funcionais)" icon={<HeartPulse className="h-4 w-4 text-primary" />} defaultOpen={false}>

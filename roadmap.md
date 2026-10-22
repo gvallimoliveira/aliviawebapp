@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Correct cardiovascular ceiling health-history reading and verify Francisco's recorded hypertension without birthdate; preserve clinician profile and manual ceiling.
 - [x] Add only existing clinical alerts and health caveats to the read-only record summary; preserve dismissal audits and dated health history, update pt/en/es help. Nine tests pass, build OK; authenticated clinic summary verified with saved medication and structured impression, no clinical data changed.
 - [x] Implement generalist combined-category import with editable column/group mapping, dated patient/assessment/evolution expansion, conflict blocking, bounded chunks and actor-scoped recovery/undo; 31 tests pass, demo upload-to-report and authenticated live preflight verified. Evolutions still require a genuine patient email; no universal format compatibility claimed.
 - [ ] Verify combined import persists and reads back assessments/evolutions, retries and whole-operation undo in an authenticated real clinic: requesting user's clinic has no professional responsible available, so this flow remains blocked; no live clinical data written.

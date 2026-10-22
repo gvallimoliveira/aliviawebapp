@@ -5,6 +5,7 @@
 - AgentMessageInput autosizes mobile drafts; empty fields collapse, other textareas stay unchanged.
 
 - Cardiovascular views refresh demographics via `usePatientBirthDate` after edits/refocus; keep estimates fresh and unsaved inputs intact.
+- Cardiovascular ceiling reminders combine the record's assessments and ID/email-linked dated health records via `usePatientCardioHealth`; structured conditions never auto-select a clinician profile, infer control, or fabricate an age-based ceiling.
 
 - Aliv.iA/Studio copy uses canonical `aliviaDifferentials.ts` IDs; handoff copy must not duplicate features or imply duplicate entry.
 - Manual assessment and record share diagnosis.clinicalImpression; sync saved updates and regenerate only on request to avoid duplicate credits.

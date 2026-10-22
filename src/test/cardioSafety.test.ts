@@ -1,6 +1,24 @@
 import { describe, it, expect } from "vitest";
-import { hrCeiling, checkinSafetyFlags, estimatedMaxHr } from "@/lib/cardioSafety";
+import { hrCeiling, checkinSafetyFlags, estimatedMaxHr, cardioHealthHint } from "@/lib/cardioSafety";
+import { summaryHealthRecord } from "@/lib/recordSummary";
 describe("cardioSafety", () => {
+  it("reads Francisco's assessment hypertension even without a birthdate, without inventing control or bpm", () => {
+    const health = summaryHealthRecord([{ created_at: "2026-10-13T19:48:26Z", anamnesis_data: { healthConditions: ["hypertension"] } }], []);
+    expect(health?.data.healthConditions).toEqual(["hypertension"]);
+    expect(cardioHealthHint(health?.data)).not.toBeNull();
+    expect(health?.data.healthConditionsControl?.hypertension).toBeUndefined();
+    expect(hrCeiling({ age: null }).ceiling).toBeNull();
+  });
+  it("reads patient-ID manual health records and respects an explicit newer negative answer", () => {
+    const assessment = [{ created_at: "2026-10-13", anamnesis_data: { healthConditions: ["hypertension"] } }];
+    const manual = [{ patient_id: "francisco", recorded_at: "2026-10-22", health_conditions: ["hypertension"], health_conditions_control: { hypertension: "controlled" } }];
+    expect(summaryHealthRecord(assessment, manual)?.data.healthConditionsControl?.hypertension).toBe("controlled");
+    expect(cardioHealthHint(summaryHealthRecord(assessment, [{ ...manual[0], health_conditions: ["none"] }])?.data)).toBeNull();
+  });
+  it("preserves the professional's manual ceiling even without birthdate and with hypertension", () => {
+    expect(cardioHealthHint({ health_conditions: ["hypertension"] })).not.toBeNull();
+    expect(hrCeiling({ age: null, profile: "cardiac", override: 110 })).toMatchObject({ ceiling: 110, profile: "cardiac", source: "manual" });
+  });
   it("Gellish + perfil", () => {
     expect(estimatedMaxHr(50)).toBe(172);
     expect(hrCeiling({ profile: "hypertensive", age: 50 }).ceiling).toBe(120);

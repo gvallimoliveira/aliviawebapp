@@ -8,17 +8,22 @@ import { ChevronDown, HeartPulse, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
+import { usePatientCardioHealth } from "@/hooks/usePatientCardioHealth";
+import { formatContinuousMedication } from "@/lib/healthHistory";
 import CardioEducationDialog from "./CardioEducationDialog";
 import { BETA_BLOCKER_SHORT, CEILING_SHORT, ISCHEMIC_SHORT, PULMONARY_SHORT } from "@/lib/cardioEducation";
 import type { PeriodizationPlan, ReadinessCheckin, SrpeEntry } from "@/lib/periodizationData";
 import { acwr, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import {
   CARDIO_PROFILES, DEFAULT_CARDIO_PROFILE, SPO2_ALERT,
-  ageFromBirth, cardioMatrix, checkinSafetyFlags, comorbidityHint, hrCeiling, profileRule,
+  ageFromBirth, cardioMatrix, checkinSafetyFlags, cardioHealthHint, hrCeiling, profileRule,
 } from "@/lib/cardioSafety";
 
 interface Props {
   patientId: string;
+  assessments?: any[];
+  patientEmail?: string | null;
+  clinicId?: string | null;
   plan: PeriodizationPlan | null;
   checkins: ReadinessCheckin[];
   entries: SrpeEntry[];
@@ -26,36 +31,24 @@ interface Props {
   readOnly?: boolean;
 }
 
-const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readOnly }: Props) => {
+const EMPTY_ASSESSMENTS: any[] = [];
+const CardioSafetyCard = ({ patientId, assessments = EMPTY_ASSESSMENTS, patientEmail, clinicId, plan, checkins, entries, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
   const birth = usePatientBirthDate(patientId);
-  const [hint, setHint] = useState<string | null>(null);
   const [profile, setProfile] = useState<string>(plan?.cardio_profile ?? DEFAULT_CARDIO_PROFILE);
   const [override, setOverride] = useState(plan?.hr_ceiling_override ? String(plan.hr_ceiling_override) : "");
   const [betaBlocker, setBetaBlocker] = useState(!!plan?.beta_blocker);
   const [saving, setSaving] = useState(false);
   // Recolhido por padrão: a linha-resumo do cabeçalho já traz o teto e as atenções.
   const [open, setOpen] = useState(false);
+  const { health, error: healthError } = usePatientCardioHealth(patientId, assessments, patientEmail, clinicId, open);
+  const hint = cardioHealthHint(health?.data);
 
   useEffect(() => {
     setProfile(plan?.cardio_profile ?? DEFAULT_CARDIO_PROFILE);
     setOverride(plan?.hr_ceiling_override ? String(plan.hr_ceiling_override) : "");
     setBetaBlocker(!!plan?.beta_blocker);
   }, [plan?.cardio_profile, plan?.hr_ceiling_override, plan?.beta_blocker]);
-
-  useEffect(() => {
-    let off = false;
-    (async () => {
-      const sb = supabase as any;
-      const { data: p } = await sb.from("patients").select("email").eq("id", patientId).maybeSingle();
-      if (off) return;
-      if (p?.email) {
-        const { data: rec } = await sb.from("patient_health_records").select("*").eq("patient_email", p.email).limit(1).maybeSingle();
-        if (!off && rec) setHint(comorbidityHint(JSON.stringify(rec)));
-      }
-    })();
-    return () => { off = true; };
-  }, [patientId]);
 
   const age = ageFromBirth(birth);
   const ceil = hrCeiling({ profile, age, override: override ? Number(override) : null });
@@ -120,6 +113,8 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
                   )}
                 </span>
               )}
+              {!open && hint && <span className="block text-xs text-muted-foreground break-words">{hint}</span>}
+              {!open && healthError && <span className="block text-xs text-destructive">Não foi possível consultar Saúde geral.</span>}
             </span>
           </button>
           <CardioEducationDialog />
@@ -190,7 +185,12 @@ const CardioSafetyCard = ({ patientId, plan, checkins, entries, onChanged, readO
               </span>
             </label>
 
-            {hint && <p className="text-xs text-amber-700 dark:text-amber-400">{hint}</p>}
+            {health && <div className="space-y-1 text-xs text-muted-foreground">
+              {hint && <p className="text-foreground break-words">{hint}</p>}
+              {formatContinuousMedication(health.data) && <p>Medicação contínua: {formatContinuousMedication(health.data)}</p>}
+              <p>{health.source === "manual" ? "Saúde geral" : "Avaliação"} · {new Date(health.date).toLocaleDateString("pt-BR")}</p>
+            </div>}
+            {healthError && <p className="text-xs text-destructive">Não foi possível consultar Saúde geral; confira o prontuário antes de definir o teto.</p>}
 
             {flagged.length > 0 && (
               <div className="space-y-0.5">
