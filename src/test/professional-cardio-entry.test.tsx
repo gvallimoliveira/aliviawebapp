@@ -3,15 +3,28 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import ProfessionalCardioEntry from "@/components/dashboard/periodization/ProfessionalCardioEntry";
 import CardioSafetyCard from "@/components/dashboard/periodization/CardioSafetyCard";
 
-const patient = vi.hoisted(() => ({ birth: null as string | null }));
+const patient = vi.hoisted(() => ({ birth: null as string | null, health: [] as any[] }));
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { birth_date: patient.birth }, error: null }) }) }) }) },
+  supabase: {
+    from: (table: string) => {
+      const query = {
+        select: () => query,
+        eq: () => query,
+        or: () => query,
+        maybeSingle: async () => ({ data: { birth_date: patient.birth }, error: null }),
+        then: (resolve: (result: unknown) => unknown) => Promise.resolve({ data: table === "patient_health_records" ? patient.health : [], error: null }).then(resolve),
+      };
+      return query;
+    },
+    channel: () => { const channel = { on: () => channel, subscribe: () => channel }; return channel; },
+    removeChannel: vi.fn(),
+  },
 }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
 vi.mock("@/lib/periodizationData", () => ({ saveProfessionalSession: vi.fn() }));
 
 describe("monitor session demographics", () => {
-  beforeEach(() => { patient.birth = null; });
+  beforeEach(() => { patient.birth = null; patient.health = []; });
   it("uses a birth date added later without losing session inputs", async () => {
     render(<ProfessionalCardioEntry patientId="patient" plan={null} entries={[]} onChanged={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Lançar sessão monitorada" }));
