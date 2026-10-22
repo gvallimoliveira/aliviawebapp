@@ -4,6 +4,8 @@ import { addDaysISO, inWindow, rollingDailySeries } from "./loadWindows";
 export interface LoadRecoveryPoint {
   date: string;
   load: number | null;
+  /** Composição da carga do dia por frente; null quando não há sessão registrada. */
+  tracks: { physio: number; gym: number; cardio: number; sport: number } | null;
   psr: number | null;
   psrBaseline: number | null;
   acute: number;
@@ -47,6 +49,6 @@ export function loadRecoverySeries(
       if (psr <= psrBaseline - 2 && highLoad) pattern = "low_recovery_high_load";
       else if (psr >= psrBaseline + 2 && lowLoad) pattern = "high_recovery_low_load";
     }
-    return { date: day.date, load: hasSession ? day.total : null, psr, psrBaseline, acute, previousWeek, chronic, ratio, pattern };
+    return { date: day.date, load: hasSession ? day.total : null, tracks: hasSession ? { physio: day.physio, gym: day.gym, cardio: day.cardio, sport: day.sport } : null, psr, psrBaseline, acute, previousWeek, chronic, ratio, pattern };
   });
 }

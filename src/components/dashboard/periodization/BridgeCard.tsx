@@ -94,13 +94,13 @@ const BridgeCard = ({ patientId, planId, restrictions, links, onChanged, readOnl
         )}
 
         {activeLinks.length > 0 && (
-          <div className="space-y-1.5">
+          <div className="grid gap-1.5 sm:grid-cols-2">
             {activeLinks.map((l) => (
-              <div key={l.id} className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
-                <Badge variant="outline" className="text-[10px]">
+              <div key={l.id} className="flex min-w-0 items-center gap-2 rounded-xl border border-border px-3 py-2">
+                <Badge variant="outline" className="shrink-0 text-[10px]">
                   {l.audience === "coach" ? "Preparador" : "Paciente"}
                 </Badge>
-                <span className="text-[11px] text-muted-foreground truncate flex-1">{linkUrl(l.token)}</span>
+                <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">{linkUrl(l.token)}</span>
                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label="Copiar link de check-in" title="Copiar link de check-in" onClick={() => copy(l.token)}>
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
