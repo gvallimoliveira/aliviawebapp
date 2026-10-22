@@ -379,7 +379,7 @@ const PeriodizationSection = ({
         anchorScroll(anchorTarget, 2500)();
       }}
     >
-      {/* Ordem do fluxo: macrociclo → links → sessão monitorada → teto FC → testes → análise → carga/prontidão → dose → microciclo. */}
+      {/* Ordem: conduta → macrociclo → links → carga/prontidão → dose → microciclo; depois a área cardiovascular. */}
       <DailyConductCard patientId={patientId} plan={plan} entries={entries} checkins={checkins} sessions={sessions} />
 
       {plan ? (
