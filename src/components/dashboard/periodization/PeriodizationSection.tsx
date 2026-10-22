@@ -422,21 +422,6 @@ const PeriodizationSection = ({
         />
       </PeriodizationCollapsible>
 
-      {!readOnly && (
-        <PeriodizationCollapsible title="Sessão monitorada" icon={<HeartPulse className="h-4 w-4 text-primary" />}>
-          <ProfessionalCardioEntry patientId={patientId} plan={plan} entries={entries} onChanged={refresh} />
-        </PeriodizationCollapsible>
-      )}
-
-      <CardioSafetyCard patientId={patientId} plan={plan} checkins={checkins} entries={entries} onChanged={refresh} readOnly={readOnly} />
-
-      {!readOnly && (
-        <PeriodizationCollapsible title="Avaliação cardiorrespiratória (testes funcionais)" icon={<HeartPulse className="h-4 w-4 text-primary" />} defaultOpen={false}>
-          <CardioFunctionalTestsCard patientId={patientId} entries={entries} />
-        </PeriodizationCollapsible>
-      )}
-
-      {entries.some((e: any) => e.hr_avg || e.hr_max || e.zone_minutes || e.trimp) && <CardioAnalysisDialog patientId={patientId} plan={plan} entries={entries} patientName={patientName} professionalName={proName} clinicId={clinicId} />}
 
       <PeriodizationCollapsible title="Carga e prontidão" icon={<Gauge className="h-4 w-4 text-primary" />}>
         <LoadMonitorCard
@@ -482,6 +467,29 @@ const PeriodizationSection = ({
           />
         </PeriodizationCollapsible>
       )}
+
+      {/* Área cardiovascular própria: sessão monitorada, segurança, testes e análise. */}
+      <div id="sec-cardio" className="scroll-mt-24 space-y-3 pt-4">
+        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <HeartPulse className="h-4 w-4 text-primary" />
+          Avaliação e monitoramento cardiovascular
+        </h4>
+        {!readOnly && (
+          <PeriodizationCollapsible title="Sessão monitorada" icon={<HeartPulse className="h-4 w-4 text-primary" />}>
+            <ProfessionalCardioEntry patientId={patientId} plan={plan} entries={entries} onChanged={refresh} />
+          </PeriodizationCollapsible>
+        )}
+
+        <CardioSafetyCard patientId={patientId} plan={plan} checkins={checkins} entries={entries} onChanged={refresh} readOnly={readOnly} />
+
+        {!readOnly && (
+          <PeriodizationCollapsible title="Avaliação cardiorrespiratória (testes funcionais)" icon={<HeartPulse className="h-4 w-4 text-primary" />} defaultOpen={false}>
+            <CardioFunctionalTestsCard patientId={patientId} entries={entries} />
+          </PeriodizationCollapsible>
+        )}
+
+        {entries.some((e: any) => e.hr_avg || e.hr_max || e.zone_minutes || e.trimp) && <CardioAnalysisDialog patientId={patientId} plan={plan} entries={entries} patientName={patientName} professionalName={proName} clinicId={clinicId} />}
+      </div>
     </div>
   );
 };
