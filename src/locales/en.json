@@ -1088,7 +1088,7 @@
   "support.pro.tool.patient_list.title": "Patient List",
   "support.pro.tool.patient_list.desc": "All patients who completed an assessment via your link are listed with name or email search. Click a patient to expand and see all their assessments with date, type, and status.",
   "support.pro.tool.evolution_dashboard.title": "Evolution Dashboard",
-  "support.pro.tool.evolution_dashboard.desc": "The record groups anamnesis/general health and documents/photos in horizontally scrollable rows on mobile. Body maps appear side by side. One chart combines regional pain evolution and initial → current comparisons, keeping overall scores identified when regional measurements are unavailable. Functional questionnaire charts remain available.",
+  "support.pro.tool.evolution_dashboard.desc": "The record groups anamnesis/general health and documents/photos in horizontally scrollable rows on mobile. Body maps appear side by side. One chart combines regional pain evolution and initial → current comparisons, keeping overall scores identified when regional measurements are unavailable. Functional questionnaire charts remain available. The Summary button also shows clinical alerts and health caveats: recorded conditions, control and medication, with date and source. Earlier alerts remain until explicitly dismissed; dismissals retain their justification, without editing in the summary.",
   "support.pro.tool.pdf_download.title": "PDF Report Download",
   "support.pro.tool.pdf_download.desc": "Each completed assessment can be exported as a PDF containing assessment data, diagnosis, treatment plan, and your professional notes. Use for clinical documentation or patient sharing.",
   "support.pro.tool.pro_notes.title": "Professional Notes",

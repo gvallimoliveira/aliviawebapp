@@ -73,7 +73,7 @@ const categories: ToolCategory[] = [
         key: "compact_record",
         icon: Layers,
         title: "Prontuário compacto e dor por região",
-        desc: "Anamnese e saúde geral ficam na mesma faixa; documentos e fotos também. No celular, as faixas deslizam lateralmente, mantendo os atalhos para cada seção. Os mapas de avaliações aparecem lado a lado. A evolução da dor reúne as medidas por região, a legenda e a comparação inicial → atual em um único bloco. Pontuações gerais compartilhadas por várias regiões permanecem identificadas como dor geral, sem inventar medidas regionais.",
+        desc: "Anamnese e saúde geral ficam na mesma faixa; documentos e fotos também. No celular, as faixas deslizam lateralmente, mantendo os atalhos para cada seção. Os mapas de avaliações aparecem lado a lado. A evolução da dor reúne as medidas por região, a legenda e a comparação inicial → atual em um único bloco. Pontuações gerais compartilhadas por várias regiões permanecem identificadas como dor geral, sem inventar medidas regionais. O botão Resumo também mostra alertas clínicos e ressalvas de saúde, com condições, controle e medicação registrados, data e origem. Sinais de alarme anteriores não somem por falta de registro novo; dispensas mantêm a justificativa, sem ações de edição no resumo.",
       },
       {
         key: "patient_files",

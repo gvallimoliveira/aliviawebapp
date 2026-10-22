@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Brain, CalendarDays, Copy, Dumbbell, ExternalLink, FileText, Gauge, Loader2, NotebookPen, Sparkles, Stethoscope } from "lucide-react";
+import { AlertTriangle, HeartPulse, Brain, CalendarDays, Copy, Dumbbell, ExternalLink, FileText, Gauge, Loader2, NotebookPen, Sparkles, Stethoscope } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { fetchActivePlan, fetchCheckins, fetchSessionsByPatient, fetchSrpe } from "@/lib/periodizationData";
@@ -10,7 +10,9 @@ import { localISODate } from "@/lib/periodization";
 import { CHART_WINDOW_DAYS, recentDaysWindow } from "@/lib/loadWindows";
 import { loadRecoverySeries } from "@/lib/loadRecovery";
 import { createDemoPeriodization } from "@/data/demoPeriodization";
-import { effectiveHypothesis, latestByCreated, latestEvolution } from "@/lib/recordSummary";
+import { effectiveHypothesis, latestByCreated, latestEvolution, summaryClinicalAlerts, summaryHealthRecord, summaryImpression } from "@/lib/recordSummary";
+import { formatHealthConditions, formatContinuousMedication } from "@/lib/healthHistory";
+import { getRedFlagQuestionText } from "@/lib/redFlags";
 import { DailyConductContent } from "../periodization/DailyConductCard";
 import LoadRecoveryChart from "../periodization/LoadRecoveryChart";
 import MicroWeekGrid from "../periodization/MicroWeekGrid";
@@ -27,6 +29,7 @@ interface Props {
   patientEmail?: string | null;
   patientId: string | null;
   assessment: any;
+  assessments: any[];
   latestAssessmentId?: string | null;
   heps: any[];
   isDemo?: boolean;
@@ -47,12 +50,44 @@ const LiveConduct = ({ patientId, load }: { patientId: string; load: { plan: any
   return <DailyConductContent birth={birth} plan={load.plan} entries={load.entries} checkins={load.checkins} sessions={load.sessions} />;
 };
 
-const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, patientEmail, patientId, assessment, latestAssessmentId, heps, isDemo, onOpenAssessmentSummary }: Props) => {
+const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, patientEmail, patientId, assessment, assessments, latestAssessmentId, heps, isDemo, onOpenAssessmentSummary }: Props) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [load, setLoad] = useState<{ plan: any; entries: any[]; checkins: any[]; sessions: any[] }>({ plan: null, entries: [], checkins: [], sessions: [] });
   const [note, setNote] = useState<any>(null);
   const [expanded, setExpanded] = useState(false);
+  const [healthRecords, setHealthRecords] = useState<any[]>([]);
+  const [healthLoading, setHealthLoading] = useState(false);
+  const [healthError, setHealthError] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setHealthRecords([]);
+    setHealthError(false);
+    setHealthLoading(true);
+    (async () => {
+      try {
+        if (isDemo) {
+          const { mockHealthRecords } = await import("@/data/mockProDemoExtras");
+          if (!cancelled) setHealthRecords((patientEmail && mockHealthRecords[patientEmail]) || []);
+        } else if (patientId || patientEmail) {
+          let query = (supabase as any).from("patient_health_records").select("*");
+          if (patientId && patientEmail) query = query.or(`patient_id.eq.${patientId},patient_email.eq.${patientEmail}`);
+          else if (patientId) query = query.eq("patient_id", patientId);
+          else query = query.eq("patient_email", patientEmail);
+          const { data, error } = await query;
+          if (error) throw error;
+          if (!cancelled) setHealthRecords(data || []);
+        }
+      } catch {
+        if (!cancelled) setHealthError(true);
+      } finally {
+        if (!cancelled) setHealthLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, isDemo, patientId, patientEmail]);
 
   useEffect(() => {
     if (!open) return;
@@ -94,7 +129,9 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
   }, [load.entries, load.checkins]);
 
   const hypothesis = effectiveHypothesis(assessment);
-  const impression: string | null = (assessment?.diagnosis?.clinicalImpression || "").trim() || null;
+  const alerts = summaryClinicalAlerts(assessments);
+  const health = summaryHealthRecord(assessments, healthRecords);
+  const impression = summaryImpression(assessment?.diagnosis?.clinicalImpression);
   const hep = latestByCreated(heps);
   const hepLink = hep ? `${window.location.origin}/hep/${hep.token}` : null;
   const hasLoad = load.entries.length > 0 || load.checkins.length > 0 || load.sessions.length > 0;
@@ -112,6 +149,30 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
         </DialogHeader>
 
         <div className="space-y-5">
+          <Section icon={<AlertTriangle className="h-3.5 w-3.5 text-destructive" />} title={tr(l, "Alerta clínico", "Clinical alert", "Alerta clínica")}>
+            {alerts.length ? <div className="space-y-2">{alerts.map((alert, index) => (
+              <div key={alert.id || index} className={alert.dismissedAt ? "border-l-2 border-border pl-3 space-y-1" : "border-l-2 border-destructive pl-3 space-y-1"}>
+                <p className={alert.dismissedAt ? "text-xs font-medium text-muted-foreground" : "text-xs font-semibold text-destructive"}>
+                  {alert.dismissedAt ? tr(l, "Dispensado pelo profissional", "Dismissed by professional", "Dispensado por el profesional") : tr(l, "Sinal de alarme — sob ressalva", "Red flag — requires clinical review", "Señal de alarma — bajo reserva")}
+                </p>
+                <ul className="list-disc pl-4 text-sm text-foreground space-y-1">{alert.items.map((item) => <li key={item}>{item.startsWith("redflags.") ? getRedFlagQuestionText(item, l) : item}</li>)}</ul>
+                <p className="text-xs text-muted-foreground">{tr(l, "Avaliação", "Assessment", "Evaluación")} · {fmt(alert.date)}</p>
+                {alert.dismissedAt && <p className="text-xs text-muted-foreground whitespace-pre-line">{fmt(alert.dismissedAt)}{alert.dismissedBy ? ` · ${alert.dismissedBy}` : ""}{alert.reason ? ` — ${alert.reason}` : ""}</p>}
+              </div>
+            ))}</div> : empty(tr(l, "Nenhum sinal de alarme registrado nas avaliações disponíveis.", "No red flags recorded in the available assessments.", "Ninguna señal de alarma registrada en las evaluaciones disponibles."))}
+          </Section>
+
+          <Section icon={<HeartPulse className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Ressalvas de saúde", "Health caveats", "Salvedades de salud")}>
+            {healthLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <>
+              {healthError && <p className="text-xs text-destructive">{tr(l, "Não foi possível consultar os registros de saúde geral; confira a seção Saúde geral.", "Could not load general health records; check General health.", "No se pudieron consultar los registros de salud general; revise Salud general.")}</p>}
+              {health ? <div className="space-y-1 text-sm text-foreground">
+                {formatHealthConditions(health.data, l) && <p>{formatHealthConditions(health.data, l)}</p>}
+                {formatContinuousMedication(health.data, l) && <p>{tr(l, "Medicação contínua", "Continuous medication", "Medicación continua")}: {formatContinuousMedication(health.data, l)}</p>}
+                <p className="text-xs text-muted-foreground">{health.source === "manual" ? tr(l, "Saúde geral", "General health", "Salud general") : tr(l, "Avaliação", "Assessment", "Evaluación")} · {fmt(health.date)}</p>
+              </div> : !healthError && empty(tr(l, "Sem ressalvas de saúde registradas.", "No health caveats recorded.", "Sin salvedades de salud registradas."))}
+            </>}
+          </Section>
+
           <Section icon={<Stethoscope className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Hipótese diagnóstica", "Diagnostic hypothesis", "Hipótesis diagnóstica")}>
             {hypothesis ? <p className="text-sm text-foreground whitespace-pre-line">{hypothesis}</p> : empty(tr(l, "Sem hipótese registrada.", "No hypothesis recorded.", "Sin hipótesis registrada."))}
           </Section>
