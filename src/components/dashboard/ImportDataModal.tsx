@@ -115,7 +115,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
   }, [open, clinicId, isDemo]);
 
   function reset() {
-    setStep(1); setFiles([]); setActiveIdx(0); setConsent(false); setReport(null); setDedup("merge"); setAllowPartial(false); setProgress(""); setOperationId(crypto.randomUUID()); setRecoveryIds([]);
+    setStep(1); setFiles([]); setActiveIdx(0); setConsent(false); setReport(null); setDedup("merge"); setAllowPartial(false); setProgress(""); setOperationId(crypto.randomUUID()); setReloadRecent(n => n + 1);
   }
 
   async function handleFiles(list: FileList | null) {
@@ -266,7 +266,27 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
         <ScrollArea className="flex-1 pr-4">
           {step === 1 && (
             <div className="space-y-4">
-              {recoveryIds.length>0 && <Button variant="outline" onClick={()=>{setReport({batchIds:recoveryIds,created:0,updated:0,skipped:0,errors:1,errorsDetail:[{error:"Operação anterior recuperada; contagens não reconstituídas. Desfazer verifica todos os registros."}]});setStep(6);}}>Recuperar última operação para desfazer</Button>}
+              {recentOps.length>0 && (
+                <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
+                  <div className="flex items-center gap-2 text-sm font-semibold"><Undo2 className="w-4 h-4 text-primary" />Importações recentes — desfazer em até 24h</div>
+                  <ul className="space-y-2">
+                    {recentOps.map(op => {
+                      const hours = Math.max(0, Math.ceil((new Date(op.expiresAt).getTime() - Date.now()) / 3600000));
+                      return (
+                        <li key={op.key} className="flex flex-wrap items-center justify-between gap-2 border rounded p-2 text-sm bg-background">
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{op.filename}</div>
+                            <div className="text-xs text-muted-foreground">{new Date(op.createdAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} · ainda pode desfazer por ~{hours}h</div>
+                          </div>
+                          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => undoRecent(op.ids)}>
+                            <Undo2 className="w-4 h-4 mr-1" />Desfazer
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
               <label className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center gap-2 cursor-pointer hover:bg-muted/30">
                 <Upload className="w-8 h-8 text-muted-foreground" />
                 <span className="font-medium">Selecionar arquivos</span>
