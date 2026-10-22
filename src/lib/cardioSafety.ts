@@ -3,6 +3,7 @@
  * régua de alerta por perfil. Tudo é sugestão ao fisioterapeuta, nunca diagnóstico.
  * Refs: Gellish 2007 (FC máx.), ACSM 2021, Diretriz SBC Reabilitação 2020.
  */
+import { formatHealthConditions, normalizeHealthHistory } from "@/lib/healthHistory";
 export type CardioProfile = "athletic" | "healthy" | "sedentary" | "hypertensive" | "cardiac" | "pulmonary";
 
 export const CARDIO_PROFILES: Array<{
@@ -93,6 +94,16 @@ export function comorbidityHint(text?: string | null): string | null {
   if (/(cardiopat|infarto|insufici[eê]ncia card|arritmi|stent|angina|marca-?passo)/.test(t)) return "A anamnese cita condição cardíaca — confira o perfil.";
   if (/(hipertens|press[aã]o alta)/.test(t)) return "A anamnese cita hipertensão — confira o perfil.";
   return null;
+}
+
+/** Read structured condition IDs, not a regex over untranslated JSON keys. */
+export function cardioHealthHint(raw: unknown): string | null {
+  const h = normalizeHealthHistory(raw);
+  const conditions = formatHealthConditions(h);
+  if (!conditions || h.healthConditions?.every((id) => id === "none")) return null;
+  const reminder = comorbidityHint(conditions);
+  const unknownHypertension = h.healthConditions?.includes("hypertension") && !h.healthConditionsControl?.hypertension;
+  return `${conditions}.${reminder ? ` ${reminder}` : " Confira as condições na prescrição do esforço."}${unknownHypertension ? " Controle da hipertensão não informado; não presumir que esteja controlada." : ""}`;
 }
 
 export const OXIMETER_GUIDE =

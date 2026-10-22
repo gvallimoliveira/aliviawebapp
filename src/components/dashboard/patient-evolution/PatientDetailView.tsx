@@ -1602,6 +1602,7 @@ export default function PatientDetailView(props: any) {
             {language === "pt" ? "Carga e periodização" : language === "es" ? "Carga y periodización" : "Load & periodization"}
           </h4>
           <PeriodizationSection
+            assessments={patient?.assessments}
             patientId={patient?.patientRecord?.id ?? null}
             patientName={patient?.name ?? null}
             patientEmail={selectedEmail ?? patient?.email ?? null}

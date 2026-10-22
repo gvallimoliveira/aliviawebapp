@@ -56,7 +56,7 @@ const proTools = [
   { key: "video_call", icon: Video },
   { key: "clinical_impression", icon: Brain }, // Help includes reuse of the saved manual impression without AI calls.
   { key: "differential_diagnosis", icon: Brain },
-  // Profile-specific PDF priorities (effort response, recovery, review; WHO context): localized FAQ rf22.
+  // Localized FAQ rf22 also explains birthdate-independent dated health reminders and preserved clinician ceilings.
   // HEP/load guidance is localized under support.pro.tool.hep.desc.
   // Global list-coherence guidance is localized under studio_creative_network.desc.
   { key: "hep", icon: Dumbbell },
