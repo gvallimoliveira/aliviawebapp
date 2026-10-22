@@ -349,7 +349,7 @@ const MicroWeekGrid = ({
           })}
         </div>
 
-        {flagged.size > 0 && (
+        {days.some((d) => flagged.has(d)) && (
           <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-2 flex items-center gap-1">
             <AlertTriangle className="h-3.5 w-3.5" />
             Dias de alto estresse em sequência — considere intercalar carga leve ou descanso.
