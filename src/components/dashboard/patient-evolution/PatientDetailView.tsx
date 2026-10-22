@@ -33,6 +33,7 @@ import PeriodizationSection from "../periodization/PeriodizationSection";
 import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
 import PainMapView from "@/components/assessment/PainMapView";
 import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
+import RecordSummaryDialog from "./RecordSummaryDialog";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
@@ -323,6 +324,7 @@ export default function PatientDetailView(props: any) {
   // ManualAssessmentModal pré-preenchido com a interpretação da IA.
   const [externalPrefill, setExternalPrefill] = React.useState<{ markerId: string; row: any; externalSourceFileId?: string | null } | null>(null);
   const [summaryDialogOpen, setSummaryDialogOpen] = React.useState(false);
+  const [recordSummaryOpen, setRecordSummaryOpen] = React.useState(false);
   const [reassessDialog, setReassessDialog] = React.useState<{ open: boolean; loading: boolean; link: string; error: string | null }>({ open: false, loading: false, link: "", error: null });
   const [reassessConfigOpen, setReassessConfigOpen] = React.useState(false);
   const [registrationModalOpen, setRegistrationModalOpen] = React.useState(false);
@@ -681,7 +683,7 @@ export default function PatientDetailView(props: any) {
           <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {patient.email}<span className="mx-1">•</span>{patient.assessments.length} {t("pro.assessments_count")}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {(latestWithDiagnosis || latestAssessment) && <Button variant="ghost" size="sm" className="gap-1.5 shrink-0 text-primary hover:text-primary hover:bg-primary/10" onClick={() => setSummaryDialogOpen(true)}><Sparkles className="h-4 w-4" /> {language === "pt" ? "Resumo" : language === "es" ? "Resumen" : "Summary"}</Button>}
+          {(latestWithDiagnosis || latestAssessment) && <Button variant="ghost" size="sm" className="gap-1.5 shrink-0 text-primary hover:text-primary hover:bg-primary/10" onClick={() => setRecordSummaryOpen(true)}><Sparkles className="h-4 w-4" /> {language === "pt" ? "Resumo" : language === "es" ? "Resumen" : "Summary"}</Button>}
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0 hidden md:inline-flex border-primary/30 text-primary hover:bg-primary/10" onClick={handleQuickEvolution}><NotebookPen className="h-4 w-4" /> {language === "pt" ? "Registrar evolução" : language === "es" ? "Registrar evolución" : "Log evolution"}</Button>
@@ -866,6 +868,19 @@ export default function PatientDetailView(props: any) {
         </DialogContent>
       </Dialog>
 
+      <RecordSummaryDialog
+        open={recordSummaryOpen}
+        onOpenChange={setRecordSummaryOpen}
+        language={language as any}
+        patientName={patient.name}
+        patientEmail={selectedEmail ?? patient.email ?? null}
+        patientId={patient?.patientRecord?.id ?? null}
+        assessment={latestWithDiagnosis || latestAssessment}
+        latestAssessmentId={latestWithDiagnosis?.id ?? patient?.assessments?.[0]?.id ?? null}
+        heps={(hepHistory || []).filter((h: any) => (h.patient_name || "").toLowerCase().trim() === (patient.name || "").toLowerCase().trim())}
+        isDemo={isDemo}
+        onOpenAssessmentSummary={() => { setRecordSummaryOpen(false); setSummaryDialogOpen(true); }}
+      />
       {(() => {
         const summaryTarget = latestWithDiagnosis || latestAssessment;
         if (!summaryTarget) return null;

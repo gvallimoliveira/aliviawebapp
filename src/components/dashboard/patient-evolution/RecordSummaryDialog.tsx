@@ -42,9 +42,13 @@ const Section = ({ icon, title, children }: { icon: React.ReactNode; title: stri
 
 const LONG = 420;
 
+const LiveConduct = ({ patientId, load }: { patientId: string; load: { plan: any; entries: any[]; checkins: any[]; sessions: any[] } }) => {
+  const birth = usePatientBirthDate(patientId);
+  return <DailyConductContent birth={birth} plan={load.plan} entries={load.entries} checkins={load.checkins} sessions={load.sessions} />;
+};
+
 const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, patientEmail, patientId, assessment, latestAssessmentId, heps, isDemo, onOpenAssessmentSummary }: Props) => {
   const { toast } = useToast();
-  const birth = usePatientBirthDate(isDemo ? null : patientId);
   const [loading, setLoading] = useState(false);
   const [load, setLoad] = useState<{ plan: any; entries: any[]; checkins: any[]; sessions: any[] }>({ plan: null, entries: [], checkins: [], sessions: [] });
   const [note, setNote] = useState<any>(null);
@@ -119,7 +123,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
           <Section icon={<Gauge className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Carga e periodização", "Load & periodization", "Carga y periodización")}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : !hasLoad ? empty(tr(l, "Sem registros de carga ainda.", "No load records yet.", "Sin registros de carga aún.")) : (
               <div className="space-y-4">
-                <DailyConductContent birth={birth} plan={load.plan} entries={load.entries} checkins={load.checkins} sessions={load.sessions} />
+                {!isDemo && patientId ? <LiveConduct patientId={patientId} load={load} /> : <DailyConductContent birth={null} plan={load.plan} entries={load.entries} checkins={load.checkins} sessions={load.sessions} />}
                 <div>
                   <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Microciclo da semana", "Weekly microcycle", "Microciclo semanal")}</p>
                   <MicroWeekGrid patientId={patientId || "demo"} planId={load.plan?.id ?? null} sessions={load.sessions} entries={load.entries} onChanged={() => {}} readOnly patientName={patientName} />
