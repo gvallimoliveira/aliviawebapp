@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { effectiveHypothesis, latestByCreated, latestEvolution, summaryClinicalAlerts, summaryHealthRecord } from "@/lib/recordSummary";
+import { effectiveHypothesis, latestByCreated, latestEvolution, summaryClinicalAlerts, summaryHealthRecord, summaryImpression } from "@/lib/recordSummary";
 
 describe("record summary rules", () => {
+  it("reads structured saved impressions without regenerating or failing", () => {
+    expect(summaryImpression({ overview: "Quadro em melhora", therapeuticObjectives: ["Retorno funcional"] })).toBe("Quadro em melhora");
+    expect(summaryImpression("Impressão manual")).toBe("Impressão manual");
+    expect(summaryImpression({})).toBeNull();
+  });
   it("keeps an older active clinical alert when the latest assessment has none", () => {
     expect(summaryClinicalAlerts([{ id: "new", red_flags: { detected: [] } }, { id: "old", red_flags: { detected: ["redflags.fever"] } }])[0]?.items).toEqual(["redflags.fever"]);
   });

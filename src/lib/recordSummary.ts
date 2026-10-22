@@ -1,6 +1,12 @@
 /** Pure rules for the patient-record "Resumo" dialog. */
 import { isHealthHistoryEmpty, normalizeHealthHistory } from "@/lib/healthHistory";
 
+/** Saved clinical impressions may be plain text or structured with an overview. */
+export function summaryImpression(raw: unknown): string | null {
+  const text = typeof raw === "string" ? raw : raw && typeof raw === "object" && "overview" in raw && typeof raw.overview === "string" ? raw.overview : "";
+  return text.trim() || null;
+}
+
 /** Preserve every recorded warning and its explicit dismissal; absence on a newer exam is not resolution. */
 export function summaryClinicalAlerts(assessments: any[]) {
   return assessments.flatMap((a) => {

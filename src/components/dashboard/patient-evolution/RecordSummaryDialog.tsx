@@ -10,7 +10,7 @@ import { localISODate } from "@/lib/periodization";
 import { CHART_WINDOW_DAYS, recentDaysWindow } from "@/lib/loadWindows";
 import { loadRecoverySeries } from "@/lib/loadRecovery";
 import { createDemoPeriodization } from "@/data/demoPeriodization";
-import { effectiveHypothesis, latestByCreated, latestEvolution, summaryClinicalAlerts, summaryHealthRecord } from "@/lib/recordSummary";
+import { effectiveHypothesis, latestByCreated, latestEvolution, summaryClinicalAlerts, summaryHealthRecord, summaryImpression } from "@/lib/recordSummary";
 import { formatHealthConditions, formatContinuousMedication } from "@/lib/healthHistory";
 import { getRedFlagQuestionText } from "@/lib/redFlags";
 import { DailyConductContent } from "../periodization/DailyConductCard";
@@ -131,7 +131,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
   const hypothesis = effectiveHypothesis(assessment);
   const alerts = summaryClinicalAlerts(assessments);
   const health = summaryHealthRecord(assessments, healthRecords);
-  const impression: string | null = (assessment?.diagnosis?.clinicalImpression || "").trim() || null;
+  const impression = summaryImpression(assessment?.diagnosis?.clinicalImpression);
   const hep = latestByCreated(heps);
   const hepLink = hep ? `${window.location.origin}/hep/${hep.token}` : null;
   const hasLoad = load.entries.length > 0 || load.checkins.length > 0 || load.sessions.length > 0;
