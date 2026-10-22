@@ -50,7 +50,8 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [operationId, setOperationId] = useState(() => crypto.randomUUID());
-  const [recoveryIds, setRecoveryIds] = useState<string[]>([]);
+  const [recentOps, setRecentOps] = useState<{ key: string; ids: string[]; filename: string; createdAt: string; expiresAt: string }[]>([]);
+  const [reloadRecent, setReloadRecent] = useState(0);
   const [allowPartial, setAllowPartial] = useState(false);
   const [progress, setProgress] = useState("");
   const [report, setReport] = useState<{ batchIds?: string[]; created: number; updated: number; skipped: number; errors: number; errorsDetail?: any[] } | null>(null);
@@ -63,15 +64,33 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
     (async()=>{
       const {data:auth}=await supabase.auth.getUser();
       if(!auth.user)return;
-      let query=supabase.from("import_batches").select("id,operation_id,status").eq("user_id",auth.user.id).not("operation_id","is",null).neq("status","undone").gte("expires_undo_at",new Date().toISOString()).order("created_at",{ascending:false});
+      let query=supabase.from("import_batches").select("id,operation_id,status,source_filename,created_at,expires_undo_at").eq("user_id",auth.user.id).neq("status","undone").gte("expires_undo_at",new Date().toISOString()).order("created_at",{ascending:false});
       query=clinicId?query.eq("clinic_id",clinicId):query.eq("professional_id",professionalId ?? "").is("clinic_id",null);
-      const {data}=await query.limit(100);
+      const {data}=await query.limit(200);
       if(cancelled)return;
-      const latest=data?.[0]?.operation_id;
-      setRecoveryIds((data ?? []).filter(b=>b.operation_id===latest).map(b=>b.id));
+      // Group chunks of the same operation; legacy imports without operation stay one per batch.
+      const groups=new Map<string,{ key: string; ids: string[]; filename: string; createdAt: string; expiresAt: string }>();
+      for(const b of (data ?? []) as any[]){
+        const key=b.operation_id ?? b.id;
+        const g=groups.get(key);
+        if(g){g.ids.push(b.id); if(b.expires_undo_at<g.expiresAt)g.expiresAt=b.expires_undo_at; if(b.created_at<g.createdAt)g.createdAt=b.created_at;}
+        else groups.set(key,{key,ids:[b.id],filename:b.source_filename ?? "Importação",createdAt:b.created_at,expiresAt:b.expires_undo_at});
+      }
+      setRecentOps([...groups.values()]);
     })();
     return ()=>{cancelled=true;};
-  },[open,isDemo,clinicId,professionalId]);
+  },[open,isDemo,clinicId,professionalId,reloadRecent]);
+  async function undoRecent(ids: string[]) {
+    if (!window.confirm("Desfazer esta importação? Os registros criados serão removidos e os atualizados voltarão ao estado anterior.")) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("import-undo", { body: { batchIds: ids } });
+      if (error || data?.error) throw error ?? new Error(data.error);
+      toast.success("Importação desfeita; dados anteriores preservados.");
+      setReloadRecent(n => n + 1);
+    } catch (e: any) { toast.error("Não foi possível desfazer: " + (e?.message ?? "")); }
+    finally { setBusy(false); }
+  }
   const active = files[activeIdx];
   const mixedPlans = useMemo(() => files.map(f => f.mixed && f.parsed ? buildMixedPlan(f.parsed.rows, f.mixed) : null), [files]);
   const pendingCount = mixedPlans.reduce((n,p) => n + (p?.issues.length ?? 0), 0);
@@ -96,7 +115,7 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
   }, [open, clinicId, isDemo]);
 
   function reset() {
-    setStep(1); setFiles([]); setActiveIdx(0); setConsent(false); setReport(null); setDedup("merge"); setAllowPartial(false); setProgress(""); setOperationId(crypto.randomUUID()); setRecoveryIds([]);
+    setStep(1); setFiles([]); setActiveIdx(0); setConsent(false); setReport(null); setDedup("merge"); setAllowPartial(false); setProgress(""); setOperationId(crypto.randomUUID()); setReloadRecent(n => n + 1);
   }
 
   async function handleFiles(list: FileList | null) {
@@ -247,7 +266,27 @@ export default function ImportDataModal({ open, onOpenChange, mode, professional
         <ScrollArea className="flex-1 pr-4">
           {step === 1 && (
             <div className="space-y-4">
-              {recoveryIds.length>0 && <Button variant="outline" onClick={()=>{setReport({batchIds:recoveryIds,created:0,updated:0,skipped:0,errors:1,errorsDetail:[{error:"Operação anterior recuperada; contagens não reconstituídas. Desfazer verifica todos os registros."}]});setStep(6);}}>Recuperar última operação para desfazer</Button>}
+              {recentOps.length>0 && (
+                <div className="border rounded-lg p-3 space-y-2 bg-muted/30">
+                  <div className="flex items-center gap-2 text-sm font-semibold"><Undo2 className="w-4 h-4 text-primary" />Importações recentes — desfazer em até 24h</div>
+                  <ul className="space-y-2">
+                    {recentOps.map(op => {
+                      const hours = Math.max(0, Math.ceil((new Date(op.expiresAt).getTime() - Date.now()) / 3600000));
+                      return (
+                        <li key={op.key} className="flex flex-wrap items-center justify-between gap-2 border rounded p-2 text-sm bg-background">
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{op.filename}</div>
+                            <div className="text-xs text-muted-foreground">{new Date(op.createdAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })} · ainda pode desfazer por ~{hours}h</div>
+                          </div>
+                          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => undoRecent(op.ids)}>
+                            <Undo2 className="w-4 h-4 mr-1" />Desfazer
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
               <label className="border-2 border-dashed rounded-lg p-8 flex flex-col items-center gap-2 cursor-pointer hover:bg-muted/30">
                 <Upload className="w-8 h-8 text-muted-foreground" />
                 <span className="font-medium">Selecionar arquivos</span>
