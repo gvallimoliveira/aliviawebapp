@@ -1,4 +1,6 @@
 {
+  "support.pro.faq.planned_dose_edit.q": "Can I edit a planned dose without deleting the performed session?",
+  "support.pro.faq.planned_dose_edit.a": "Yes. In the weekly microcycle, use the session pencil to edit duration and target sRPE. Saving refreshes the microcycle and planned versus perceived comparison while preserving perceived load and performed-session data. The session date and track stay unchanged.",
   "support.pro.faq.daily_readiness.q": "Is readiness reported for every activity?",
   "support.pro.faq.daily_readiness.a": "No. Each patient has one readiness/PSR response per day. Reopening the check-in locks saved scores; Adjust today's answers edits the same response. Each session has its own perceived load. Without a planned duration, the microcycle displays perceived load without inventing a target or adherence verdict. Answered sessions are marked as recorded in the check-in.",
   "support.pro.faq.rf24.q": "How do I compare perceived recovery (PSR) and recorded load?",

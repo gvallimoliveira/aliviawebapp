@@ -1,4 +1,6 @@
 {
+  "support.pro.faq.planned_dose_edit.q": "¿Puedo editar la dosis planificada sin borrar la sesión realizada?",
+  "support.pro.faq.planned_dose_edit.a": "Sí. En el microciclo semanal, usa el lápiz de la sesión para ajustar duración y sRPE objetivo. Guardar actualiza el microciclo y la comparación planificada frente a percibida, conservando la carga percibida y los datos de la sesión realizada. La fecha y la categoría no cambian.",
   "support.pro.faq.daily_readiness.q": "¿Se responde la preparación en cada actividad?",
   "support.pro.faq.daily_readiness.a": "No. Hay una respuesta de preparación/PSR por paciente y día. Al reabrir el check-in, las notas guardadas quedan bloqueadas; Ajustar respuestas de hoy edita la misma respuesta. Cada sesión tiene su propia carga percibida. Sin duración planificada, el microciclo muestra la carga percibida sin inventar una dosis objetivo ni clasificación. Las sesiones respondidas quedan marcadas como registradas en el check-in.",
   "support.pro.faq.rf24.q": "¿Cómo comparar la recuperación percibida (PSR) con la carga registrada?",

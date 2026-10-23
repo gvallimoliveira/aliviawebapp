@@ -1,4 +1,6 @@
 {
+  "support.pro.faq.planned_dose_edit.q": "Posso editar a dose planejada sem apagar a sessão realizada?",
+  "support.pro.faq.planned_dose_edit.a": "Sim. No Microciclo da semana, toque no lápis da sessão para ajustar a duração e o sRPE alvo. Salvar atualiza o microciclo e a comparação planejado × percebido, mantendo a carga percebida e os dados da sessão realizada. A data e a frente da sessão permanecem iguais.",
   "support.pro.faq.daily_readiness.q": "A prontidão é respondida a cada atividade?",
   "support.pro.faq.daily_readiness.a": "Não. Há uma resposta de prontidão/PSR por paciente por dia. Ao reabrir o check-in, as notas salvas ficam bloqueadas; Ajustar respostas de hoje edita a mesma resposta. Cada sessão tem sua própria carga percebida. Sem duração planejada, o microciclo mostra a carga percebida sem inventar dose alvo ou classificação. Uma sessão já respondida fica marcada como registrada no check-in.",
   "support.pro.faq.rf24.q": "Como cruzar a recuperação (PSR) com a carga realizada?",
