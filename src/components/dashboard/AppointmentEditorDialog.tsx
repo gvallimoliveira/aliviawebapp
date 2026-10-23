@@ -1,5 +1,7 @@
 import { endTimeFrom, durationBetween, formatDuration } from "@/lib/appointmentTime";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import RecurrencePicker from "./RecurrencePicker";
+import type { RecurrenceRule } from "@/lib/appointmentRecurrence";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -67,6 +69,7 @@ export interface AppointmentEditorExtras {
   phone: string;
   address: string;
   selectedPatientKey: string; // "__new__" or email
+  recurrence?: RecurrenceRule;
 }
 
 interface Props {
@@ -199,6 +202,7 @@ const AppointmentEditorDialog = ({
   const [formBirthDate, setFormBirthDate] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formAddress, setFormAddress] = useState("");
+  const [recurrence, setRecurrence] = useState<RecurrenceRule>({ freq: "none" });
   const [selectedPatientKey, setSelectedPatientKey] = useState<string>(() => {
     if (!initialApt) return "__new__";
     const em = (initialApt.patient_email || "").toLowerCase();
@@ -404,6 +408,7 @@ const AppointmentEditorDialog = ({
     const extras: AppointmentEditorExtras = {
       cpf: formCpf, birth_date: formBirthDate, phone: formPhone, address: formAddress,
       selectedPatientKey,
+      recurrence: isEdit ? undefined : recurrence,
     };
     const ok = await onSubmit({ isEdit, editId: currentApt?.id ?? null, payload, extras });
     if (aliveRef.current) setSaving(false);
@@ -565,6 +570,10 @@ const AppointmentEditorDialog = ({
                     />
                   </div>
                 </div>
+
+                {!isEdit && !isSimulated && (
+                  <RecurrencePicker value={recurrence} onChange={setRecurrence} startDate={format(formDate, "yyyy-MM-dd")} language={language} />
+                )}
 
                 {clinicId && (
                   <div>

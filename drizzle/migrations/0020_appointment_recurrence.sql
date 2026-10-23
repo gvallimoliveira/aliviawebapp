@@ -1,0 +1,2 @@
+ALTER TABLE public.professional_appointments ADD COLUMN IF NOT EXISTS series_id uuid, ADD COLUMN IF NOT EXISTS recurrence_rule jsonb;
+CREATE INDEX IF NOT EXISTS idx_prof_appointments_series ON public.professional_appointments(series_id, appointment_date) WHERE series_id IS NOT NULL;

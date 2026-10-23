@@ -1,4 +1,6 @@
 import { endTimeFrom, durationBetween } from "@/lib/appointmentTime";
+import { expandRecurrence } from "@/lib/appointmentRecurrence";
+import { Repeat } from "lucide-react";
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -147,6 +149,10 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
     });
   };
 
+  const [repeatFreq, setRepeatFreq] = useState<"none" | "weekly" | "biweekly">("none");
+  const [repeatWeeks, setRepeatWeeks] = useState(8);
+  const [repeatCommitments, setRepeatCommitments] = useState(false);
+
   const handleImport = async () => {
     const selected = appointments.filter((a) => a.selected);
     if (selected.length === 0) return;
@@ -196,7 +202,19 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
         };
       });
 
-      const { error } = await supabase.from("professional_appointments").insert(rows as any);
+      let finalRows: any[] = rows;
+      if (repeatFreq !== "none") {
+        const seriesByKey = new Map<string, string>();
+        finalRows = rows.flatMap((r: any) => {
+          if (r.service_type === "compromisso" && !repeatCommitments) return [r];
+          const rule = { freq: repeatFreq, count: repeatFreq === "weekly" ? repeatWeeks : Math.ceil(repeatWeeks / 2) } as const;
+          const key = `${r.patient_name}|${r.appointment_time}|${r.appointment_date}`;
+          const sid = seriesByKey.get(key) || crypto.randomUUID();
+          seriesByKey.set(key, sid);
+          return expandRecurrence(r.appointment_date, rule).map((d) => ({ ...r, appointment_date: d, series_id: sid, recurrence_rule: rule }));
+        });
+      }
+      const { error } = await supabase.from("professional_appointments").insert(finalRows as any);
       if (error) throw error;
       window.dispatchEvent(new CustomEvent("reload-pro-patients"));
 
@@ -376,6 +394,29 @@ const AgendaImportModal = ({ open, onOpenChange, professionalId, clinicId, onImp
             <p className="text-sm text-muted-foreground">
               {lang === "pt" ? `Importando ${selectedCount} agendamento(s)...` : `Importing ${selectedCount} appointment(s)...`}
             </p>
+          </div>
+        )}
+
+        {step === "review" && (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/30 p-2 text-xs">
+            <Repeat className="h-3.5 w-3.5 text-muted-foreground" />
+            <span>{lang === "pt" ? "Repetir os selecionados:" : "Repeat selected:"}</span>
+            <select value={repeatFreq} onChange={(e) => setRepeatFreq(e.target.value as any)} className="h-8 rounded-md border border-input bg-background px-2">
+              <option value="none">{lang === "pt" ? "Não se repete" : "Does not repeat"}</option>
+              <option value="weekly">{lang === "pt" ? "Toda semana" : "Every week"}</option>
+              <option value="biweekly">{lang === "pt" ? "A cada 2 semanas" : "Every 2 weeks"}</option>
+            </select>
+            {repeatFreq !== "none" && (
+              <>
+                <span>{lang === "pt" ? "por" : "for"}</span>
+                <input type="number" min={2} max={26} value={repeatWeeks} onChange={(e) => setRepeatWeeks(Math.min(26, Math.max(2, parseInt(e.target.value) || 2)))} className="h-8 w-14 rounded-md border border-input bg-background px-2" />
+                <span>{lang === "pt" ? "semanas" : "weeks"}</span>
+                <label className="flex items-center gap-1 ml-auto">
+                  <input type="checkbox" checked={repeatCommitments} onChange={(e) => setRepeatCommitments(e.target.checked)} className="accent-primary" />
+                  {lang === "pt" ? "Incluir compromissos" : "Include commitments"}
+                </label>
+              </>
+            )}
           </div>
         )}
 

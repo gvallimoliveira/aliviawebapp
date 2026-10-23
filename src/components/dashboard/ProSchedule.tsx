@@ -1,4 +1,5 @@
 import { toMinutes, endTimeFrom, assignLanes, cardPixelHeight } from "@/lib/appointmentTime";
+import { expandRecurrence, splitConflicts } from "@/lib/appointmentRecurrence";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -249,6 +250,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [appointments, setAppointments] = useState<Appointment[]>(isSimulated ? (DEMO_APPOINTMENTS as Appointment[]) : []);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteScope, setDeleteScope] = useState<"one" | "following">("one");
   const [deleting, setDeleting] = useState(false);
   const [batchConfirming, setBatchConfirming] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -602,7 +604,33 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           window.dispatchEvent(new CustomEvent("reload-pro-patients"));
         }
       } else {
-        await (supabase.from("professional_appointments" as any) as any).insert(payload);
+        const rule = extras.recurrence;
+        if (rule && rule.freq !== "none") {
+          const all = expandRecurrence(payload.appointment_date, rule);
+          let q = (supabase.from("professional_appointments" as any) as any)
+            .select("appointment_date, appointment_time")
+            .in("appointment_date", all).neq("status", "cancelled");
+          if (clinicId) q = q.eq("clinic_id", clinicId); else q = q.eq("professional_id", effectiveProfId);
+          if (clinicId && effectiveProfId) q = q.eq("professional_id", effectiveProfId);
+          const { data: taken } = await q;
+          const { free, conflicts } = splitConflicts(all, payload.appointment_time, taken || []);
+          const seriesId = crypto.randomUUID();
+          const rows = free.map((d) => ({ ...payload, appointment_date: d, service_type: payload.service_type || "fisioterapia", series_id: seriesId, recurrence_rule: rule }));
+          if (rows.length) {
+            const { error } = await (supabase.from("professional_appointments" as any) as any).insert(rows);
+            if (error) throw error;
+          }
+          toast({
+            title: language === "pt" ? `${rows.length} atendimento(s) criados na série` : `${rows.length} appointment(s) created`,
+            description: conflicts.length
+              ? (language === "pt" ? `${conflicts.length} data(s) já ocupada(s) nesse horário foram puladas: ${conflicts.map((d) => d.split("-").reverse().slice(0, 2).join("/")).join(", ")}` : `${conflicts.length} busy date(s) skipped`)
+              : undefined,
+            duration: conflicts.length ? 9000 : 4000,
+          });
+        } else {
+          const { error } = await (supabase.from("professional_appointments" as any) as any).insert(payload);
+          if (error) throw error;
+        }
         if (!isCommitmentPayload && extras.selectedPatientKey === "__new__" && payload.patient_name && (clinicId || effectiveProfId)) {
           // Cadastra o paciente na tabela `patients` para aparecer na aba Profissional.
           // NÃO cria mais um assessment placeholder com status "completed" — isso disparava
@@ -633,7 +661,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       toast({ title: t("schedule.error"), variant: "destructive" });
       return false;
     }
-  }, [clinicId, closeAppointmentModal, fetchAppointments, isSimulated, t, toast]);
+  }, [clinicId, closeAppointmentModal, fetchAppointments, isSimulated, language, t, toast]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -647,7 +675,18 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       return;
     }
     try {
-      await (supabase.from("professional_appointments" as any) as any).delete().eq("id", deleteId);
+      const target = appointments.find((a: any) => a.id === deleteId) as any;
+      if (deleteScope === "following" && target?.series_id) {
+        // Only future scheduled sessions of the series; realized ones stay.
+        const { data: rows } = await (supabase.from("professional_appointments" as any) as any)
+          .select("id").eq("series_id", target.series_id).gte("appointment_date", target.appointment_date).eq("status", "scheduled");
+        const ids = (rows || []).map((r: any) => r.id);
+        if (!ids.includes(deleteId)) ids.push(deleteId);
+        await (supabase.from("professional_appointments" as any) as any).delete().in("id", ids);
+      } else {
+        await (supabase.from("professional_appointments" as any) as any).delete().eq("id", deleteId);
+      }
+      setDeleteScope("one");
       toast({ title: t("schedule.deleted") });
       setDeleteId(null);
       closeAppointmentModal();
@@ -1148,12 +1187,23 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       )}
 
       {/* Delete confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) { setDeleteId(null); setDeleteScope("one"); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("schedule.delete_title")}</AlertDialogTitle>
             <AlertDialogDescription>{t("schedule.delete_desc")}</AlertDialogDescription>
           </AlertDialogHeader>
+          {(appointments.find((a: any) => a.id === deleteId) as any)?.series_id && (
+            <div className="space-y-1.5 text-sm">
+              <p className="text-xs text-muted-foreground">{language === "pt" ? "Este atendimento faz parte de uma série." : "This appointment is part of a series."}</p>
+              {(["one", "following"] as const).map((sc) => (
+                <label key={sc} className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="del-scope" checked={deleteScope === sc} onChange={() => setDeleteScope(sc)} className="accent-primary" />
+                  {sc === "one" ? (language === "pt" ? "Só este" : "Only this one") : (language === "pt" ? "Este e os seguintes (sessões realizadas são mantidas)" : "This and following (completed sessions are kept)")}
+                </label>
+              ))}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>{t("session_notes.cancel")}</AlertDialogCancel>
             <AlertDialogAction
