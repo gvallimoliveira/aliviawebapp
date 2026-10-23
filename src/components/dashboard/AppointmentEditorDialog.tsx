@@ -501,7 +501,7 @@ const AppointmentEditorDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-        <DialogContent className="w-[calc(100vw-1.25rem)] max-w-md max-h-[92vh] overflow-hidden p-0 flex flex-col gap-0">
+        <DialogContent className="w-[calc(100vw-1.25rem)] max-w-md sm:max-w-2xl lg:max-w-3xl max-h-[92vh] overflow-hidden p-0 flex flex-col gap-0">
           <DialogHeader className="px-4 pt-5 pb-3 sm:px-6 sm:pt-6 border-b border-border/40">
             <DialogTitle className="text-base sm:text-lg">
               {isEdit ? t("schedule.edit") : t("schedule.new")}
@@ -517,7 +517,7 @@ const AppointmentEditorDialog = ({
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
                     {isPt ? "Classificação do atendimento" : language === "es" ? "Estado de la cita" : "Appointment status"}
                   </p>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     {STATUS_OPTIONS.map((st) => {
                       const cfg = STATUS_BUTTON_STYLES[st];
                       const Icon = cfg.icon;
@@ -577,8 +577,19 @@ const AppointmentEditorDialog = ({
                   </div>
                 </div>
 
-                {!isEdit && !isSimulated && (
-                  <RecurrencePicker value={recurrence} onChange={setRecurrence} startDate={format(formDate, "yyyy-MM-dd")} language={language} />
+                {!isSimulated && (
+                  <div className="space-y-1">
+                    <RecurrencePicker value={recurrence} onChange={setRecurrence} startDate={format(formDate, "yyyy-MM-dd")} language={language} />
+                    {isEdit && recurrenceTouched && (
+                      <p className="text-[11px] text-muted-foreground">
+                        {isPt
+                          ? "Vale a partir desta data: os próximos agendamentos em aberto desta série serão refeitos. Sessões realizadas são mantidas."
+                          : language === "es"
+                            ? "Aplica desde esta fecha: se rehacen las próximas citas abiertas de la serie. Las realizadas se mantienen."
+                            : "Applies from this date: upcoming open appointments in this series are rebuilt. Completed sessions are kept."}
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {clinicId && (
