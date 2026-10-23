@@ -3390,6 +3390,8 @@ export type Database = {
           patient_email: string | null
           patient_name: string
           professional_id: string | null
+          recurrence_rule: Json | null
+          series_id: string | null
           service_type: string
           status: string
           type: string
@@ -3408,6 +3410,8 @@ export type Database = {
           patient_email?: string | null
           patient_name?: string
           professional_id?: string | null
+          recurrence_rule?: Json | null
+          series_id?: string | null
           service_type?: string
           status?: string
           type?: string
@@ -3426,6 +3430,8 @@ export type Database = {
           patient_email?: string | null
           patient_name?: string
           professional_id?: string | null
+          recurrence_rule?: Json | null
+          series_id?: string | null
           service_type?: string
           status?: string
           type?: string
