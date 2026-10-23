@@ -486,7 +486,7 @@ export function adherenceByTrack(
 
   const bounds = { min: DOSE_WEEK_ON_TARGET_MIN, max: DOSE_WEEK_ON_TARGET_MAX };
   // Cardio só aparece quando há dose planejada ou relatada (frente opcional).
-  const byTrack: TrackAdherence[] = TRACKS.filter((t) => t !== "cardio" || planned[t] > 0 || real[t] > 0).map((track) => {
+  const byTrack: TrackAdherence[] = TRACKS.filter((t) => t !== "cardio" || planned[t] > 0 || real[t] > 0 || weekEntries.some((e) => normalizeTrack(e.track) === t && trainingLoad(e.duration_min, e.rpe) > 0)).map((track) => {
     const ratio = doseAdherence(real[track], planned[track]);
     return {
       track,
@@ -538,7 +538,6 @@ export function pairSessionsWithSrpe(
   entries: Array<SrpeEntryLike & { session_id?: string | null }>,
 ): SessionDosePair[] {
   return sessions
-    .filter((s) => plannedLoad(s.planned_duration_min, s.planned_rpe) > 0)
     .map((session) => {
       const target = plannedLoad(session.planned_duration_min, session.planned_rpe);
       const matched = entries.filter((e) =>

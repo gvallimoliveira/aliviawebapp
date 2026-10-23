@@ -326,11 +326,15 @@ const MicroWeekGrid = ({
                       )}
                       {(() => {
                         const dose = doseBySession.get(s.id);
-                        if (!dose?.verdict) return null;
+                        if (!dose) return null;
                         return (
-                          <Badge variant="outline" className={`text-[9px] border-0 ${DOSE_CLASS[dose.verdict] || ""}`}>
-                            {DOSE_LABEL[dose.verdict]}
-                          </Badge>
+                          <>
+                            {dose.realLoad > 0 && <span className="text-[9px] font-medium text-foreground">Percebido: {dose.realLoad}</span>}
+                            {dose.plannedLoad === 0 && <span className="text-[9px] text-muted-foreground">Sem dose alvo</span>}
+                            {dose.verdict && <Badge variant="outline" className={`text-[9px] border-0 ${DOSE_CLASS[dose.verdict] || ""}`}>
+                              {DOSE_LABEL[dose.verdict]}
+                            </Badge>}
+                          </>
                         );
                       })()}
                     </div>
