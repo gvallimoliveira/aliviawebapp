@@ -1,4 +1,6 @@
 # Tasks
+- [ ] Correct today's example running-session check-in visibility and perceived-dose linkage; verify read-back without inventing a response.
+- [ ] Lock saved daily readiness on reopening, allow explicit same-day edits independently of session load; tests and pt/en/es help.
 - [x] Correct cardiovascular ceiling health-history reading; authenticated Francisco record verified collapsed and expanded with dated assessment hypertension despite missing birthdate, no live clinical data changed; preserve clinician profile and manual ceiling, pt/en/es help updated.
 - [x] Add only existing clinical alerts and health caveats to the read-only record summary; preserve dismissal audits and dated health history, update pt/en/es help. Nine tests pass, build OK; authenticated clinic summary verified with saved medication and structured impression, no clinical data changed.
 - [x] Implement generalist combined-category import with editable column/group mapping, dated patient/assessment/evolution expansion, conflict blocking, bounded chunks and actor-scoped recovery/undo; 31 tests pass, demo upload-to-report and authenticated live preflight verified. Evolutions still require a genuine patient email; no universal format compatibility claimed.
