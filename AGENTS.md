@@ -37,3 +37,4 @@
 - Imports use service-only write/undo journals to restore merges and reject later edits atomically. ZIP omits source IDs/privileges; local XML parsing rejects DTD/entities and bounds complexity, preserving fields for review.
 
 - Combined imports use the isolated deterministic planner, explicit per-column disposition and server revalidation; bounded idempotent chunks are correlated by actor-scoped operation UUIDs for recovery and whole-set undo. Source codes are metadata, never authority; email-only evolution readers require genuine emails until an additive linkage migration is implemented.
+- Agenda appointments repeat by inserting real rows sharing series_id (rule in recurrence_rule) via pure appointmentRecurrence.ts; reports/occupancy need no changes and completed sessions are never bulk-deleted.

@@ -360,6 +360,10 @@ const faqKeys = [
     a: "Sim. No Microciclo da semana, toque no lápis da sessão para ajustar a duração e o sRPE alvo. Salvar atualiza o microciclo e a comparação planejado × percebido, mantendo a carga percebida e os dados da sessão realizada. A data e a frente da sessão permanecem iguais.",
   },
   {
+    q: "Posso criar atendimentos que se repetem?",
+    a: "Sim. Ao criar um atendimento, use o campo \"Não se repete\" para escolher toda semana, dias escolhidos, a cada 2 semanas ou todo mês, e quando termina (após N sessões ou em uma data; máximo de 60 sessões ou 6 meses). Datas já ocupadas no mesmo horário são puladas e avisadas. Na importação por print, o seletor \"Repetir os selecionados\" aplica a repetição a todos os marcados. Ao excluir, escolha \"Só este\" ou \"Este e os seguintes\"; sessões realizadas são mantidas.",
+  },
+  {
     q: "A prontidão é respondida a cada atividade?",
     a: "Não. Há uma resposta de prontidão/PSR por paciente por dia. Ao reabrir o check-in, as notas salvas ficam bloqueadas; Ajustar respostas de hoje edita a mesma resposta. Cada sessão tem sua própria carga percebida. Se uma sessão não tem duração planejada, o microciclo mostra a carga percebida sem inventar dose alvo nem classificar subdose ou superdose. Uma sessão já respondida fica marcada como registrada no check-in.",
   },
