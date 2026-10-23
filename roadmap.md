@@ -1,5 +1,5 @@
 # Tasks
-- [ ] Edit each microcycle session's planned dose in place, preserve performed-session data, refresh comparisons, add regression tests and pt/en/es help, verify saved edit in the UI.
+- [x] Edit each microcycle session's planned dose in place, preserve performed-session data and refresh comparisons; 47 tests pass and pt/en/es help updated. Authenticated clinic temporary dose edited 0→40 and read back through UI, then removed; actual example run was not changed without a clinician-selected target.
 - [x] Correct example running dose visibility: real run already linked (40 min × 7 = 280), planned duration zero; preserve perceived load without target/verdict and keep answered sessions visible in check-in. No clinical writes.
 - [x] Lock saved daily readiness on reopening, explicit same-day edits independent of session load; 54 tests pass, pt/en/es help updated, real patient link verified locked and explicit editing available.
 - [x] Correct cardiovascular ceiling health-history reading; authenticated Francisco record verified collapsed and expanded with dated assessment hypertension despite missing birthdate, no live clinical data changed; preserve clinician profile and manual ceiling, pt/en/es help updated.
