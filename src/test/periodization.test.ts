@@ -168,6 +168,18 @@ describe("microcycle heuristics", () => {
 });
 
 describe("dose planejada x percebida", () => {
+  it("preserves today's reported running load without inventing a zero-duration target", () => {
+    const sessions = [{ id: "run", session_date: "2026-10-23", track: "cardio", planned_duration_min: 0, planned_rpe: 6 }];
+    const entries = [{ session_id: "run", session_date: "2026-10-23", track: "cardio", duration_min: 40, rpe: 7 }];
+    const pairs = pairSessionsWithSrpe(sessions, entries);
+    expect(pairs).toHaveLength(1);
+    expect(pairs[0].realLoad).toBe(280);
+    expect(pairs[0].plannedLoad).toBe(0);
+    expect(pairs[0].verdict).toBeNull();
+    const summary = adherenceByTrack(entries, sessions, "2026-10-19", "2026-10-23");
+    expect(summary.total.ratio).toBeNull();
+    expect(summary.extras).toEqual(entries);
+  });
   it("carga alvo é duração planejada × RPE alvo", () => {
     expect(plannedLoad(40, 8)).toBe(320);
     expect(plannedLoad(null, 8)).toBe(0);

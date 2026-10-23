@@ -238,6 +238,9 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
         return;
       }
       setInfo(loaded);
+      setCheckinDone(!!loaded.today_checkin);
+      setScalesTouched(false);
+      setNote(typeof loaded.today_checkin?.note === "string" ? loaded.today_checkin.note : "");
       setSessionDate(loaded.today);
       if (loaded.audience === "coach") setTrack("gym");
       applyAutoSelection(loaded);
@@ -284,6 +287,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
     setSavingCheckin(false);
     if (error || !data?.ok) return fail("Não foi possível enviar agora. Tente novamente.");
     setCheckinDone(true);
+    setScalesTouched(false);
     // Sessão de carga preenchida mas não enviada segue junto.
     if (!opts.silent && srpePending()) await submitSrpe({ silent: true });
     return true;
@@ -462,8 +466,15 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                   {checkinDone ? (
                     <div className="text-center py-6 space-y-2">
                       <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto" />
-                      <p className="text-sm font-semibold text-foreground">Check-in enviado!</p>
-                      <p className="text-xs text-muted-foreground">Você pode voltar amanhã para o próximo check-in.</p>
+                      <p className="text-sm font-semibold text-foreground">Prontidão de hoje registrada</p>
+                      <div className="space-y-1 text-left">
+                        {CHECKIN_ITEMS.map((item) => (
+                          <div key={item.key} className="flex justify-between gap-2 text-xs">
+                            <span className="text-muted-foreground">{item.label}</span>
+                            <span className="font-medium text-foreground">{values[item.key] ?? "—"}/10</span>
+                          </div>
+                        ))}
+                      </div>
                       <Button variant="outline" size="sm" className="mt-2" onClick={() => setCheckinDone(false)}>
                         Ajustar respostas de hoje
                       </Button>
@@ -757,7 +768,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           {todayTargets.length > 0 && (
                             <button
                               type="button"
-                              onClick={() => { setFreeMode(false); applyAutoSelection(info!); }}
+                              onClick={() => { setFreeMode(false); if (info) applyAutoSelection(info); }}
                               className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-primary"
                             >
                               Voltar para as sessões planejadas

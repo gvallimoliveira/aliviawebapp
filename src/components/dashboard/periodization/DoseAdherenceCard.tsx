@@ -66,6 +66,7 @@ const DoseTooltip = ({ active, payload, label }: any) => {
   return (
     <div style={tooltipStyle} className="px-3 py-2 shadow-md max-w-[240px]">
       <p className="font-semibold mb-1">{label}</p>
+      {d.noTarget && <p className="text-muted-foreground">Sem dose alvo — sem classificação</p>}
       <p className="text-muted-foreground">Planejado: {d.Planejado}</p>
       {d.planejadoDetalhe?.map((p: string, i: number) => (
         <p key={`p${i}`} className="text-muted-foreground pl-2 text-[11px]">· {p}</p>
@@ -107,7 +108,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
   // Lista em texto: últimos 3 dias da janela exibida, agrupada por dia.
   const recentGroups = useMemo(() => {
     const end = summary.weekEnd < today ? summary.weekEnd : today;
-    const relevant = pairs.filter((p) => p.plannedLoad > 0 && p.session.session_date.slice(0, 10) <= end);
+    const relevant = pairs.filter((p) => (p.plannedLoad > 0 || p.realLoad > 0) && p.session.session_date.slice(0, 10) <= end);
     const w = recentDaysWindow(relevant.map((p) => p.session.session_date), TEXT_WINDOW_DAYS, end);
     const groups: DayGroup[] = groupByDay(relevant.filter((p) => inWindow(p.session.session_date, w)), (p) => p.session.session_date)
       .map((g) => {
@@ -123,7 +124,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
           rows: g.items.map((p, i) => ({
             key: p.session.id || String(i),
             left: `${TRACK_LABEL[p.session.track as string] || p.session.track}${p.session.title ? ` · ${p.session.title}` : ""}`,
-            right: `${p.plannedLoad} → ${p.ratio !== null ? p.realLoad : "sem resposta"}${p.verdict ? ` · ${DOSE_LABEL[p.verdict]}` : ""}`,
+            right: `${p.plannedLoad > 0 ? p.plannedLoad : "sem alvo"} → ${p.realLoad > 0 || p.ratio !== null ? p.realLoad : "sem resposta"}${p.verdict ? ` · ${DOSE_LABEL[p.verdict]}` : ""}`,
           })),
         };
       });
@@ -149,16 +150,17 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
   const chartData = useMemo(
     () =>
       summary.byTrack
-        .filter((t) => t.planned > 0 || t.real > 0)
+        .filter((t) => t.planned > 0 || t.real > 0 || (weekly.byTrack[t.track]?.real ?? 0) > 0)
         .map((t) => ({
           frente: TRACK_LABEL[t.track],
           track: t.track,
           Planejado: t.planned,
-          Percebido: t.real,
+          Percebido: t.planned > 0 ? t.real : weekly.byTrack[t.track]?.real ?? 0,
+          noTarget: t.planned === 0,
           planejadoDetalhe: t.plannedParts,
           percebidoDetalhe: t.realParts,
         })),
-    [summary],
+    [summary, weekly],
   );
 
   const hasTarget = weekly.total.planned > 0 || weekly.total.real > 0;

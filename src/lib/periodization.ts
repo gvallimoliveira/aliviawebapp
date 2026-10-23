@@ -538,7 +538,6 @@ export function pairSessionsWithSrpe(
   entries: Array<SrpeEntryLike & { session_id?: string | null }>,
 ): SessionDosePair[] {
   return sessions
-    .filter((s) => plannedLoad(s.planned_duration_min, s.planned_rpe) > 0)
     .map((session) => {
       const target = plannedLoad(session.planned_duration_min, session.planned_rpe);
       const matched = entries.filter((e) =>
