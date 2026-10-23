@@ -41,6 +41,8 @@ export interface AptInput {
   status: string;
   created_at: string;
   service_type?: string;
+  series_id?: string | null;
+  recurrence_rule?: unknown;
 }
 
 interface KnownPatient { name: string; email: string }
@@ -202,7 +204,11 @@ const AppointmentEditorDialog = ({
   const [formBirthDate, setFormBirthDate] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formAddress, setFormAddress] = useState("");
-  const [recurrence, setRecurrence] = useState<RecurrenceRule>({ freq: "none" });
+  const [recurrence, setRecurrenceState] = useState<RecurrenceRule>(
+    () => (initialApt?.recurrence_rule as RecurrenceRule | null | undefined) || { freq: "none" }
+  );
+  const [recurrenceTouched, setRecurrenceTouched] = useState(false);
+  const setRecurrence = (r: RecurrenceRule) => { setRecurrenceState(r); setRecurrenceTouched(true); };
   const [selectedPatientKey, setSelectedPatientKey] = useState<string>(() => {
     if (!initialApt) return "__new__";
     const em = (initialApt.patient_email || "").toLowerCase();
@@ -408,7 +414,7 @@ const AppointmentEditorDialog = ({
     const extras: AppointmentEditorExtras = {
       cpf: formCpf, birth_date: formBirthDate, phone: formPhone, address: formAddress,
       selectedPatientKey,
-      recurrence: isEdit ? undefined : recurrence,
+      recurrence: isEdit ? (recurrenceTouched ? recurrence : undefined) : recurrence,
     };
     const ok = await onSubmit({ isEdit, editId: currentApt?.id ?? null, payload, extras });
     if (aliveRef.current) setSaving(false);
