@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, FileDown, Loader2, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, FileDown, Loader2, Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { backToBackHighDays, loadLevelFromRpe, localISODate, pairSessionsWithSrpe, plannedLoad } from "@/lib/periodization";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
@@ -67,7 +67,7 @@ const MicroWeekGrid = ({
 }: Props) => {
   const { toast } = useToast();
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()));
-  const [editing, setEditing] = useState<{ date: string } | null>(null);
+  const [editing, setEditing] = useState<{ date: string; session?: PeriodizationSession } | null>(null);
   const [track, setTrack] = useState("physio");
   const [title, setTitle] = useState("");
   const [plannedMin, setPlannedMin] = useState("");
@@ -111,19 +111,35 @@ const MicroWeekGrid = ({
   // Nível de intensidade do calendário deriva da nota de sRPE alvo.
   const load = loadLevelFromRpe(plannedRpe, String(plannedMin).trim() === "" ? null : Number(plannedMin));
 
+  const openPlanned = (date: string, session?: PeriodizationSession) => {
+    setTrack(session?.track ?? "physio");
+    setTitle(session?.title ?? "");
+    setPlannedMin(session?.planned_duration_min != null ? String(session.planned_duration_min) : "");
+    setPlannedRpe(session?.planned_rpe ?? 7);
+    setEditing({ date, session });
+  };
+
   const add = async () => {
     if (!editing) return;
+    const duration = plannedMin.trim() === "" ? 0 : Number(plannedMin);
+    if (!Number.isFinite(duration) || duration < 0 || duration > 600) {
+      toast({ title: "Informe uma duração entre 0 e 600 minutos", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     try {
       const dose = {
+        id: editing.session?.id,
         patientId,
-        planId,
+        planId: editing.session ? editing.session.plan_id : planId,
         sessionDate: editing.date,
-        track,
+        track: editing.session?.track ?? track,
         plannedLoad: load,
-        plannedDurationMin: Number(plannedMin) > 0 ? Number(plannedMin) : 0,
+        plannedDurationMin: duration,
         plannedRpe,
         title: title.trim() || null,
+        notes: editing.session?.notes,
+        source: editing.session?.created_source,
       };
       if (demoActions) demoActions.saveDose(dose);
       else await savePlannedDose(dose);
@@ -310,9 +326,14 @@ const MicroWeekGrid = ({
                         {s.title && <p className="text-[10px] text-muted-foreground truncate">{s.title}</p>}
                       </div>
                       {!readOnly && (
-                        <button type="button" aria-label="Excluir dose planejada" onClick={(e) => { e.stopPropagation(); remove(s.id); }} onKeyDown={(e) => e.stopPropagation()} className="shrink-0 p-0.5 opacity-70 hover:opacity-100 transition">
-                          <Trash2 className="h-3 w-3 text-muted-foreground" />
-                        </button>
+                        <div className="flex shrink-0">
+                          <Button type="button" size="icon" variant="ghost" className="h-6 w-6" aria-label={`Editar dose planejada: ${s.title || TRACK_LABEL[s.track] || s.track}`} title="Editar dose planejada" onClick={(e) => { e.stopPropagation(); openPlanned(s.session_date.slice(0, 10), s); }} onKeyDown={(e) => e.stopPropagation()}>
+                            <Pencil className="h-3 w-3 text-muted-foreground" />
+                          </Button>
+                          <Button type="button" size="icon" variant="ghost" className="h-6 w-6" aria-label="Excluir dose planejada" title="Excluir dose planejada" onClick={(e) => { e.stopPropagation(); remove(s.id); }} onKeyDown={(e) => e.stopPropagation()}>
+                            <Trash2 className="h-3 w-3 text-muted-foreground" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-1 mt-0.5">
@@ -342,7 +363,7 @@ const MicroWeekGrid = ({
                 ))}
                 {!readOnly && (
                   <button type="button"
-                    onClick={() => setEditing({ date })}
+                    onClick={() => openPlanned(date)}
                     className="w-full text-[10px] text-muted-foreground hover:text-primary flex items-center justify-center gap-1 py-1"
                   >
                     <Plus className="h-3 w-3" /> sessão
@@ -375,13 +396,13 @@ const MicroWeekGrid = ({
           </Button>
         </div>
 
-        <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <Dialog open={!!editing} onOpenChange={(o) => !o && !saving && setEditing(null)}>
           <DialogContent className="max-w-sm" onCloseAutoFocus={(e) => e.preventDefault()}>
-            <DialogHeader><DialogTitle className="text-base">Sessão planejada</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="text-base">{editing?.session ? "Editar dose planejada" : "Sessão planejada"}</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {Object.entries(TRACK_LABEL).map(([key, label]) => (
-                  <Button type="button" key={key} size="sm" variant={track === key ? "default" : "outline"} className="text-[11px] rounded-xl" onClick={() => setTrack(key)}>
+                  <Button type="button" key={key} size="sm" disabled={!!editing?.session} variant={track === key ? "default" : "outline"} className="text-[11px] rounded-xl" onClick={() => setTrack(key)}>
                     {label}
                   </Button>
                 ))}
@@ -390,6 +411,7 @@ const MicroWeekGrid = ({
                 <span className="text-xs text-muted-foreground">Duração planejada (min)</span>
                 <Input
                   type="number"
+                  aria-label="Duração planejada (min)"
                   min={0}
                   max={600}
                   value={plannedMin}
@@ -421,8 +443,8 @@ const MicroWeekGrid = ({
               </div>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Descrição curta (opcional)" />
               <Button type="button" className="w-full rounded-xl gap-2" onClick={add} disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                Adicionar
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editing?.session ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                {editing?.session ? "Salvar dose planejada" : "Adicionar"}
               </Button>
             </div>
           </DialogContent>
