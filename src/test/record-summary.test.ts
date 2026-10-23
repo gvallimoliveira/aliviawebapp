@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { effectiveHypothesis, latestByCreated, latestEvolution, summaryClinicalAlerts, summaryHealthRecord, summaryImpression } from "@/lib/recordSummary";
+import { currentStepsPhase, effectiveHypothesis, latestByCreated, latestEvolution, summaryClinicalAlerts, summaryHealthRecord, summaryImpression, summaryPainfulTests } from "@/lib/recordSummary";
 
 describe("record summary rules", () => {
   it("reads structured saved impressions without regenerating or failing", () => {
@@ -41,5 +41,23 @@ describe("record summary rules", () => {
   });
   it("latest program is the newest created", () => {
     expect(latestByCreated([{ created_at: "2026-09-01", id: 1 }, { created_at: "2026-10-01", id: 2 }])?.id).toBe(2);
+  });
+  it("STEPS phase uses the professional mark, never an inferred one", () => {
+    expect(currentStepsPhase([
+      { level: "macro", name: "Cicatrização tecidual", goal: "Controle de dor", sort_order: 0 },
+      { level: "macro", name: "Hipertrofia e força", goal: "Tolerância à carga", sort_order: 1, is_current: true },
+    ])?.name).toBe("Hipertrofia e força");
+  });
+  it("STEPS phase is null without macro cycles", () => {
+    expect(currentStepsPhase([])).toBeNull();
+    expect(currentStepsPhase([{ level: "micro", name: "Semana 1" }])).toBeNull();
+  });
+  it("painful tests come only from recorded answers, never invented", () => {
+    expect(summaryPainfulTests({ test_results: [
+      { testId: "cervical_rotation", painful: true },
+      { testId: "upper_trap_stretch", painful: false },
+      { questionnaireId: "odi", percentageScore: 56 },
+    ] })).toEqual(["cervical_rotation"]);
+    expect(summaryPainfulTests({ test_results: null })).toEqual([]);
   });
 });
