@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -23,6 +23,15 @@ import LoadHistoryDialog from "./LoadHistoryDialog";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
 import { savePlannedDose } from "@/lib/periodizationData";
 import { DOSE_CLASS, DOSE_LABEL, TRACK_LABEL } from "./scales";
+
+// Mesma cor por frente em todos os gráficos de carga (ver LoadRecoveryChart).
+const TRACK_FILL: Record<string, string> = {
+  physio: "hsl(var(--chart-1))",
+  gym: "hsl(var(--chart-2))",
+  cardio: "hsl(var(--chart-4))",
+  sport: "hsl(var(--chart-5))",
+};
+const trackFill = (track: string) => TRACK_FILL[track] ?? "hsl(var(--muted-foreground))";
 
 interface Props {
   patientId: string;
@@ -143,6 +152,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
         .filter((t) => t.planned > 0 || t.real > 0)
         .map((t) => ({
           frente: TRACK_LABEL[t.track],
+          track: t.track,
           Planejado: t.planned,
           Percebido: t.real,
           planejadoDetalhe: t.plannedParts,
@@ -329,11 +339,22 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                     <XAxis dataKey="frente" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
                     <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
                     <Tooltip content={<DoseTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="Planejado" fill="hsl(var(--muted-foreground) / 0.5)" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Percebido" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Planejado" radius={[4, 4, 0, 0]} fillOpacity={0.35}>
+                      {chartData.map((d) => <Cell key={d.track} fill={trackFill(d.track)} />)}
+                    </Bar>
+                    <Bar dataKey="Percebido" radius={[4, 4, 0, 0]}>
+                      {chartData.map((d) => <Cell key={d.track} fill={trackFill(d.track)} />)}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
+                {chartData.map((d) => (
+                  <span key={d.track} className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-[2px]" style={{ background: trackFill(d.track) }} />{d.frente}
+                  </span>
+                ))}
+                <span>Claro = planejado · Sólido = percebido</span>
               </div>
               </>
             )}
