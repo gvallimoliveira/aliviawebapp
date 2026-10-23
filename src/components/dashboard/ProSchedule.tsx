@@ -661,7 +661,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       toast({ title: t("schedule.error"), variant: "destructive" });
       return false;
     }
-  }, [clinicId, closeAppointmentModal, fetchAppointments, isSimulated, t, toast]);
+  }, [clinicId, closeAppointmentModal, fetchAppointments, isSimulated, language, t, toast]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
