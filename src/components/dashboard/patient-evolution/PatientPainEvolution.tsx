@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Activity, ArrowDown, ArrowUp, Minus } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,27 @@ export default function PatientPainEvolution({ assessments }: { assessments: Reg
   const { language, t } = useLanguage();
   const { series, points } = useMemo(() => buildRegionalPainEvolution(assessments), [assessments]);
   const [hidden, setHidden] = useState<string[]>([]);
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [chartWidth, setChartWidth] = useState(0);
+  useEffect(() => {
+    const el = chartRef.current;
+    if (!el) return;
+    const update = () => setChartWidth(el.clientWidth);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  // Centraliza as datas simetricamente: 1 registro no centro; N registros
+  // igualmente espaçados em torno do centro, preenchendo ~60% do gráfico.
+  const xPadding = useMemo(() => {
+    const n = points.length;
+    if (!chartWidth) return { left: 48, right: 48 };
+    const plot = Math.max(0, chartWidth - 60);
+    const span = n <= 1 ? 0 : Math.min((n - 1) * 180, plot * 0.6);
+    const pad = Math.max(24, Math.round((plot - span) / 2));
+    return { left: pad, right: pad };
+  }, [chartWidth, points.length]);
   const locale = language === "en" ? "en-US" : language === "es" ? "es" : "pt-BR";
   const date = (value: string) => new Date(value).toLocaleDateString(locale, { day: "2-digit", month: "short" });
   if (!series.length) return null;
@@ -22,10 +43,10 @@ export default function PatientPainEvolution({ assessments }: { assessments: Reg
           <span className={hidden.includes(s.key) ? "text-muted-foreground line-through" : ""}>{regionalPainLabel(s.regionId, language, t)}</span>
         </Button>)}
       </div>
-      <div className="h-56 min-w-0" role="img" aria-label={language === "pt" ? "Pontuação de dor de 0 a 10 por região e data" : language === "es" ? "Dolor de 0 a 10 por región y fecha" : "Pain score from 0 to 10 by region and date"}>
+      <div ref={chartRef} className="h-56 min-w-0" role="img" aria-label={language === "pt" ? "Pontuação de dor de 0 a 10 por região e data" : language === "es" ? "Dolor de 0 a 10 por región y fecha" : "Pain score from 0 to 10 by region and date"}>
         <ResponsiveContainer width="100%" height="100%"><LineChart data={points} margin={{ top: 10, right: 12, left: -20, bottom: 0 }}>
           <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" />
-          <XAxis dataKey="date" tickFormatter={date} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} minTickGap={24} padding={{ left: 48, right: 48 }} />
+          <XAxis dataKey="date" tickFormatter={date} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} minTickGap={24} padding={xPadding} />
           <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
           <Tooltip labelFormatter={value => new Date(String(value)).toLocaleDateString(locale)} formatter={(value: number, name: string) => [`${value}/10`, name]} contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))", maxWidth: 240, whiteSpace: "normal" }} />
           {series.map((s, i) => { const color = `hsl(var(--chart-${i % 6 + 1}))`; return <Line key={s.key} dataKey={s.key} name={regionalPainLabel(s.regionId, language, t)} hide={hidden.includes(s.key)} stroke={color} strokeDasharray={i >= 6 ? "5 3" : undefined} type="monotone" strokeWidth={2.5} dot={{ r: 5, fill: color, strokeWidth: 2, stroke: "hsl(var(--card))" }} activeDot={{ r: 7, fill: color, strokeWidth: 2, stroke: "hsl(var(--card))" }} connectNulls={false} isAnimationActive={false} />; })}
