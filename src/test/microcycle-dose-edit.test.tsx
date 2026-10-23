@@ -6,6 +6,7 @@ import { savePlannedDose, saveProfessionalSession, deleteSession, type Periodiza
 
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
 vi.mock("@/lib/periodizationData", () => ({ savePlannedDose: vi.fn().mockResolvedValue(undefined), saveProfessionalSession: vi.fn(), deleteSession: vi.fn() }));
+vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 const session: PeriodizationSession = { id: "run", patient_id: "patient", plan_id: "plan", cycle_id: "cycle", session_date: localISODate(), track: "cardio", planned_load: "moderate", title: "Corrida", exercise_program_id: "hep", notes: "Preservar", planned_duration_min: 0, planned_rpe: 6, planned_target_load: 0, created_source: "professional" };
