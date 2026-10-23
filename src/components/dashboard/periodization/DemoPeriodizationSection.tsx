@@ -40,12 +40,12 @@ const DemoPeriodizationSection = ({ patientName, assessmentId }: { patientName?:
         currentPhase={fixture.cycles.find(c => c.is_current)?.name} demoActions={{
           saveDose: dose => {
             const duration = dose.plannedDurationMin;
-            const session: PeriodizationSession = { id: crypto.randomUUID(), patient_id: fixture.patientId,
+            const session: PeriodizationSession = { id: dose.id ?? crypto.randomUUID(), patient_id: fixture.patientId,
               plan_id: fixture.plan.id, cycle_id: null, session_date: dose.sessionDate, track: dose.track,
               planned_load: loadLevelFromRpe(dose.plannedRpe, duration), planned_duration_min: duration,
               planned_rpe: dose.plannedRpe, planned_target_load: trainingLoad(duration, dose.plannedRpe),
               title: dose.title ?? null, notes: dose.notes ?? null, exercise_program_id: null, created_source: "professional" };
-            setSessions(prev => [...prev, session]);
+            setSessions(prev => dose.id ? prev.map(s => s.id === dose.id ? { ...s, ...session, cycle_id: s.cycle_id, exercise_program_id: s.exercise_program_id } : s) : [...prev, session]);
           },
           removeDose: id => setSessions(prev => prev.filter(s => s.id !== id)),
           saveMonitored: input => {

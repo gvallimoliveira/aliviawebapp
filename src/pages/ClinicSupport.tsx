@@ -356,6 +356,10 @@ const categories: ToolCategory[] = [
 
 const faqKeys = [
   {
+    q: "Posso editar a dose planejada sem apagar a sessão realizada?",
+    a: "Sim. No Microciclo da semana, toque no lápis da sessão para ajustar a duração e o sRPE alvo. Salvar atualiza o microciclo e a comparação planejado × percebido, mantendo a carga percebida e os dados da sessão realizada. A data e a frente da sessão permanecem iguais.",
+  },
+  {
     q: "A prontidão é respondida a cada atividade?",
     a: "Não. Há uma resposta de prontidão/PSR por paciente por dia. Ao reabrir o check-in, as notas salvas ficam bloqueadas; Ajustar respostas de hoje edita a mesma resposta. Cada sessão tem sua própria carga percebida. Se uma sessão não tem duração planejada, o microciclo mostra a carga percebida sem inventar dose alvo nem classificar subdose ou superdose. Uma sessão já respondida fica marcada como registrada no check-in.",
   },

@@ -1,4 +1,5 @@
 # Architecture decisions
+- Microcycle dose edits reuse savePlannedDose with the existing session ID and preserved date, track and metadata; never write perceived load when changing a target.
 - Check-in reopening locks existing patient/day readiness until explicit editing; the existing unique patient/date upsert keeps one daily response. Dose displays retain perceived load for zero-target sessions without inventing a target or adherence verdict.
 - Record-summary alerts preserve assessment-specific dismissal audits across history; health caveats reuse healthHistory formatting and Saúde geral recency (latest day, manual precedence) without new risk calculations or AI.
 - Clinic demos scope fixtures by viewer; local load adapters reuse real math, never live writes/AI. Load scenarios bind to the displayed latest assessment, including safety; unmatched IDs stay empty.
