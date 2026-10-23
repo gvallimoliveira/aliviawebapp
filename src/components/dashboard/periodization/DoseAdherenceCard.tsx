@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChevronLeft, ChevronRight, ClipboardList, Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -23,6 +23,15 @@ import LoadHistoryDialog from "./LoadHistoryDialog";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
 import { savePlannedDose } from "@/lib/periodizationData";
 import { DOSE_CLASS, DOSE_LABEL, TRACK_LABEL } from "./scales";
+
+// Mesma cor por frente em todos os gráficos de carga (ver LoadRecoveryChart).
+const TRACK_FILL: Record<string, string> = {
+  physio: "hsl(var(--chart-1))",
+  gym: "hsl(var(--chart-2))",
+  cardio: "hsl(var(--chart-4))",
+  sport: "hsl(var(--chart-5))",
+};
+const trackFill = (track: string) => TRACK_FILL[track] ?? "hsl(var(--muted-foreground))";
 
 interface Props {
   patientId: string;
