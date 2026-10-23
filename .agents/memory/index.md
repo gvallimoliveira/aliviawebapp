@@ -43,6 +43,7 @@ Studio: manual da marca em PDF e questionário valem IGUAL — marca com só o m
 Studio refinamentos de uma marca viram guardas globais quando forem gramática/coerência; só regras de domínio ficam específicas.
 
 ## Memories
+- [Patient list default sort](mem://features/patient-list-default-sort) — Lista abre em "mais recentes"; A-Z é escolha do profissional na sessão.
 - [HEP load bands](mem://features/hep-load-bands) — Faixas de séries semanais (leve até 15, moderada 16-29, alta ≥30), ponderação por objetivo e esforço 5-9.
 - [Studio Editorial Line Any Brand](mem://features/studio-editorial-line-any-brand) — Linha editorial genérica: temas fechados, termos de destaque, seleção múltipla e arco obrigatório.
 - [Studio Aline Veterinary Voice](mem://features/studio-aline-veterinary-voice) — Tutor é interlocutor, pet é paciente e referências à profissional Aline usam feminino.
