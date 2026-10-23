@@ -272,6 +272,32 @@ const PeriodizationSection = ({
     return () => { void supabase.removeChannel(channel); };
   }, [patientId, isDemo, load]);
 
+  // Reserva do tempo real: no celular a conexão cai quando o app vai para
+  // segundo plano (ex.: ao abrir o link de check-in). Ao voltar para a tela,
+  // e a cada 20 s enquanto visível, recarrega em silêncio.
+  useEffect(() => {
+    if (!patientId || isDemo) return;
+    let last = 0;
+    const kick = () => {
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (now - last < 3000) return;
+      last = now;
+      void load({ silent: true });
+    };
+    const onVis = () => { if (document.visibilityState === "visible") kick(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", kick);
+    window.addEventListener("pageshow", kick);
+    const timer = window.setInterval(kick, 20000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", kick);
+      window.removeEventListener("pageshow", kick);
+      window.clearInterval(timer);
+    };
+  }, [patientId, isDemo, load]);
+
   /**
    * Recarrega preservando a rolagem (sem spinner de página inteira). Ancoramos
    * na seção do prontuário: quando um card colapsa e volta, o navegador não

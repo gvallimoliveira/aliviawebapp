@@ -134,6 +134,13 @@
       "when": 1792675989905,
       "tag": "0018_import_undo_clean_shell_patients",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792776219164,
+      "tag": "0019_realtime_periodization_sessions",
+      "breakpoints": true
     }
   ]
 }
