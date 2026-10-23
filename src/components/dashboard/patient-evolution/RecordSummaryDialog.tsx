@@ -197,17 +197,43 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
           </Section>
 
           <Section icon={<Gauge className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Carga e periodização", "Load & periodization", "Carga y periodización")}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : !hasLoad ? empty(tr(l, "Sem registros de carga ainda.", "No load records yet.", "Sin registros de carga aún.")) : (
+            {loading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
               <div className="min-w-0 max-w-full space-y-4">
-                {!isDemo && patientId ? <LiveConduct patientId={patientId} load={load} /> : <DailyConductContent birth={null} plan={load.plan} entries={load.entries} checkins={load.checkins} sessions={load.sessions} />}
-                <div>
-                  <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Microciclo da semana", "Weekly microcycle", "Microciclo semanal")}</p>
-                  <MicroWeekGrid patientId={patientId || "demo"} planId={load.plan?.id ?? null} sessions={load.sessions} entries={load.entries} onChanged={() => {}} readOnly patientName={patientName} />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Carga diária × recuperação (PSR)", "Daily load × recovery (PSR)", "Carga diaria × recuperación (PSR)")}</p>
-                  <LoadRecoveryChart data={chart} />
-                </div>
+                {phase && (
+                  <p className="text-sm text-foreground">
+                    <span className="font-medium">{tr(l, "Fase do STEPS", "STEPS phase", "Fase del STEPS")}:</span> {phase.name}
+                    {phase.goal && <span className="text-muted-foreground"> — {phase.goal}</span>}
+                  </p>
+                )}
+                {!hasLoad ? (
+                  <div className="space-y-2">
+                    {empty(tr(l, "Sem registros de carga ainda.", "No load records yet.", "Sin registros de carga aún."))}
+                    {painfulTests.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Testes dolorosos na última avaliação", "Painful tests in the latest assessment", "Pruebas dolorosas en la última evaluación")}</p>
+                        <ul className="list-disc pl-4 text-sm text-foreground space-y-0.5">{painfulTests.map((name) => <li key={name}>{name}</li>)}</ul>
+                      </div>
+                    )}
+                    {hepItems.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Exercícios em andamento (HEP)", "Ongoing exercises (HEP)", "Ejercicios en curso (HEP)")}</p>
+                        <p className="text-sm text-foreground">{hepItems.slice(0, 6).join(" · ")}{hepItems.length > 6 ? ` +${hepItems.length - 6}` : ""}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {!isDemo && patientId ? <LiveConduct patientId={patientId} load={load} /> : <DailyConductContent birth={null} plan={load.plan} entries={load.entries} checkins={load.checkins} sessions={load.sessions} />}
+                    <div>
+                      <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Microciclo da semana", "Weekly microcycle", "Microciclo semanal")}</p>
+                      <MicroWeekGrid patientId={patientId || "demo"} planId={load.plan?.id ?? null} sessions={load.sessions} entries={load.entries} onChanged={() => {}} readOnly patientName={patientName} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Carga diária × recuperação (PSR)", "Daily load × recovery (PSR)", "Carga diaria × recuperación (PSR)")}</p>
+                      <LoadRecoveryChart data={chart} />
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </Section>
