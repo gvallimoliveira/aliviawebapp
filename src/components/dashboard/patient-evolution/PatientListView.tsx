@@ -68,7 +68,9 @@ export default function PatientListView(props: any) {
     isDemo,
   } = props;
 
-  const [sortMode, setSortMode] = useState<"alpha" | "recent">("alpha");
+  // Default to the most recently attended patients: the daily routine opens the
+  // record of whoever came last, so alphabetical order is the opt-in view.
+  const [sortMode, setSortMode] = useState<"alpha" | "recent">("recent");
 
   return (
     <div className="space-y-3">
