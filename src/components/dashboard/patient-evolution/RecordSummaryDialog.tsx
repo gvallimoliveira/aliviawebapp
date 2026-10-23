@@ -55,7 +55,8 @@ const LiveConduct = ({ patientId, load }: { patientId: string; load: { plan: any
 const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, patientEmail, patientId, assessment, assessments, latestAssessmentId, heps, isDemo, onOpenAssessmentSummary }: Props) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [load, setLoad] = useState<{ plan: any; entries: any[]; checkins: any[]; sessions: any[] }>({ plan: null, entries: [], checkins: [], sessions: [] });
+  const [load, setLoad] = useState<{ plan: any; entries: any[]; checkins: any[]; sessions: any[]; cycles: any[] }>({ plan: null, entries: [], checkins: [], sessions: [], cycles: [] });
+  const [hepItems, setHepItems] = useState<string[]>([]);
   const [note, setNote] = useState<any>(null);
   const [expanded, setExpanded] = useState(false);
   const [healthRecords, setHealthRecords] = useState<any[]>([]);
@@ -96,8 +97,9 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
     setExpanded(false);
     if (isDemo) {
       const f = createDemoPeriodization(undefined, patientName ?? "patient", latestAssessmentId);
-      setLoad({ plan: f.plan, entries: f.entries, checkins: f.checkins, sessions: f.sessions });
+      setLoad({ plan: f.plan, entries: f.entries, checkins: f.checkins, sessions: f.sessions, cycles: f.cycles });
       setNote(null);
+      setHepItems([]);
       return;
     }
     let cancelled = false;
