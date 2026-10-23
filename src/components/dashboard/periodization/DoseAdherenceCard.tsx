@@ -112,7 +112,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
     const w = recentDaysWindow(relevant.map((p) => p.session.session_date), TEXT_WINDOW_DAYS, end);
     const groups: DayGroup[] = groupByDay(relevant.filter((p) => inWindow(p.session.session_date, w)), (p) => p.session.session_date)
       .map((g) => {
-        const answered = g.items.filter((p) => p.ratio !== null);
+        const answered = g.items.filter((p) => p.ratio !== null || p.realLoad > 0);
         const pending = g.items.length - answered.length;
         return {
           date: g.date,
