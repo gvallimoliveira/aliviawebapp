@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, HeartPulse, Brain, CalendarDays, Copy, Dumbbell, ExternalLink, FileText, Gauge, Loader2, NotebookPen, Sparkles, Stethoscope } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { fetchActivePlan, fetchCheckins, fetchSessionsByPatient, fetchSrpe } from "@/lib/periodizationData";
+import { fetchActivePlan, fetchCheckins, fetchCycles, fetchSessionsByPatient, fetchSrpe } from "@/lib/periodizationData";
 import { localISODate } from "@/lib/periodization";
 import { CHART_WINDOW_DAYS, recentDaysWindow } from "@/lib/loadWindows";
 import { loadRecoverySeries } from "@/lib/loadRecovery";
 import { createDemoPeriodization } from "@/data/demoPeriodization";
-import { effectiveHypothesis, latestByCreated, latestEvolution, summaryClinicalAlerts, summaryHealthRecord, summaryImpression } from "@/lib/recordSummary";
+import { currentStepsPhase, effectiveHypothesis, latestByCreated, latestEvolution, summaryClinicalAlerts, summaryHealthRecord, summaryImpression, summaryPainfulTests } from "@/lib/recordSummary";
+import { functionalTests } from "@/data/functionalTestsData";
+import i18n from "@/i18n";
 import { formatHealthConditions, formatContinuousMedication } from "@/lib/healthHistory";
 import { getRedFlagQuestionText } from "@/lib/redFlags";
 import { DailyConductContent } from "../periodization/DailyConductCard";
@@ -53,7 +55,8 @@ const LiveConduct = ({ patientId, load }: { patientId: string; load: { plan: any
 const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, patientEmail, patientId, assessment, assessments, latestAssessmentId, heps, isDemo, onOpenAssessmentSummary }: Props) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [load, setLoad] = useState<{ plan: any; entries: any[]; checkins: any[]; sessions: any[] }>({ plan: null, entries: [], checkins: [], sessions: [] });
+  const [load, setLoad] = useState<{ plan: any; entries: any[]; checkins: any[]; sessions: any[]; cycles: any[] }>({ plan: null, entries: [], checkins: [], sessions: [], cycles: [] });
+  const [hepItems, setHepItems] = useState<string[]>([]);
   const [note, setNote] = useState<any>(null);
   const [expanded, setExpanded] = useState(false);
   const [healthRecords, setHealthRecords] = useState<any[]>([]);
@@ -94,8 +97,9 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
     setExpanded(false);
     if (isDemo) {
       const f = createDemoPeriodization(undefined, patientName ?? "patient", latestAssessmentId);
-      setLoad({ plan: f.plan, entries: f.entries, checkins: f.checkins, sessions: f.sessions });
+      setLoad({ plan: f.plan, entries: f.entries, checkins: f.checkins, sessions: f.sessions, cycles: f.cycles });
       setNote(null);
+      setHepItems([]);
       return;
     }
     let cancelled = false;
@@ -115,9 +119,18 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
               .then((r: any) => r.data || [], () => [])
           : Promise.resolve([]),
       ]);
+      const cycles = plan?.id ? await fetchCycles(plan.id).catch(() => []) : [];
+      const hep = latestByCreated(heps);
+      const items = hep?.id
+        ? await (supabase as any).from("exercise_program_items")
+            .select("custom_name, sort_order, exercise:exercise_library(name_pt, name_en, name_es)")
+            .eq("program_id", hep.id).order("sort_order", { ascending: true })
+            .then((r: any) => r.data || [], () => [])
+        : [];
       if (cancelled) return;
-      setLoad({ plan, entries: entries as any[], checkins: checkins as any[], sessions: sessions as any[] });
+      setLoad({ plan, entries: entries as any[], checkins: checkins as any[], sessions: sessions as any[], cycles: cycles as any[] });
       setNote(latestEvolution(notes as any[]));
+      setHepItems((items as any[]).map((it: any) => it.custom_name || (l === "en" ? it.exercise?.name_en : l === "es" ? it.exercise?.name_es : null) || it.exercise?.name_pt).filter(Boolean));
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -135,6 +148,8 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
   const hep = latestByCreated(heps);
   const hepLink = hep ? `${window.location.origin}/hep/${hep.token}` : null;
   const hasLoad = load.entries.length > 0 || load.checkins.length > 0 || load.sessions.length > 0;
+  const phase = currentStepsPhase(load.cycles);
+  const painfulTests = summaryPainfulTests(assessment).map((id) => { const def = functionalTests.find((ft) => ft.id === id); return def ? i18n.t(def.nameKey) : id; });
   const locale = l === "pt" ? "pt-BR" : l === "es" ? "es-ES" : "en-US";
   const fmt = (d?: string | null) => (d ? new Date(d.length === 10 ? `${d}T12:00:00` : d).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" }) : "");
   const noteText: string = note ? [note.content, note.observation].filter((x: any) => (x || "").trim()).join("\n\n") : "";
@@ -182,26 +197,63 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
           </Section>
 
           <Section icon={<Gauge className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Carga e periodização", "Load & periodization", "Carga y periodización")}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : !hasLoad ? empty(tr(l, "Sem registros de carga ainda.", "No load records yet.", "Sin registros de carga aún.")) : (
+            {loading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : (
               <div className="min-w-0 max-w-full space-y-4">
-                {!isDemo && patientId ? <LiveConduct patientId={patientId} load={load} /> : <DailyConductContent birth={null} plan={load.plan} entries={load.entries} checkins={load.checkins} sessions={load.sessions} />}
-                <div>
-                  <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Microciclo da semana", "Weekly microcycle", "Microciclo semanal")}</p>
-                  <MicroWeekGrid patientId={patientId || "demo"} planId={load.plan?.id ?? null} sessions={load.sessions} entries={load.entries} onChanged={() => {}} readOnly patientName={patientName} />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Carga diária × recuperação (PSR)", "Daily load × recovery (PSR)", "Carga diaria × recuperación (PSR)")}</p>
-                  <LoadRecoveryChart data={chart} />
-                </div>
+                {phase && (
+                  <p className="text-sm text-foreground">
+                    <span className="font-medium">{tr(l, "Fase do STEPS", "STEPS phase", "Fase del STEPS")}:</span> {phase.name}
+                    {phase.goal && <span className="text-muted-foreground"> — {phase.goal}</span>}
+                  </p>
+                )}
+                {!hasLoad ? (
+                  <div className="space-y-2">
+                    {empty(tr(l, "Sem registros de carga ainda.", "No load records yet.", "Sin registros de carga aún."))}
+                    {painfulTests.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Testes dolorosos na última avaliação", "Painful tests in the latest assessment", "Pruebas dolorosas en la última evaluación")}</p>
+                        <ul className="list-disc pl-4 text-sm text-foreground space-y-0.5">{painfulTests.map((name) => <li key={name}>{name}</li>)}</ul>
+                      </div>
+                    )}
+                    {hepItems.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Exercícios em andamento (HEP)", "Ongoing exercises (HEP)", "Ejercicios en curso (HEP)")}</p>
+                        <p className="text-sm text-foreground">{hepItems.slice(0, 6).join(" · ")}{hepItems.length > 6 ? ` +${hepItems.length - 6}` : ""}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {!isDemo && patientId ? <LiveConduct patientId={patientId} load={load} /> : <DailyConductContent birth={null} plan={load.plan} entries={load.entries} checkins={load.checkins} sessions={load.sessions} />}
+                    <div>
+                      <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Microciclo da semana", "Weekly microcycle", "Microciclo semanal")}</p>
+                      <MicroWeekGrid patientId={patientId || "demo"} planId={load.plan?.id ?? null} sessions={load.sessions} entries={load.entries} onChanged={() => {}} readOnly patientName={patientName} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-foreground mb-1">{tr(l, "Carga diária × recuperação (PSR)", "Daily load × recovery (PSR)", "Carga diaria × recuperación (PSR)")}</p>
+                      <LoadRecoveryChart data={chart} />
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </Section>
 
-          <Section icon={<NotebookPen className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Última evolução", "Latest progress note", "Última evolución")}>
+          <Section icon={<NotebookPen className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Última sessão — conduta e resposta", "Latest session — plan and response", "Última sesión — conducta y respuesta")}>
             {loading ? null : note ? (
-              <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
+              <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
                 <p className="text-xs text-muted-foreground flex items-center gap-1"><CalendarDays className="h-3 w-3" />{fmt(note.session_date || note.created_at)}</p>
-                <p className="text-sm text-foreground whitespace-pre-line">{expanded || noteText.length <= LONG ? noteText : `${noteText.slice(0, LONG).trimEnd()}…`}</p>
+                {(note.content || "").trim() && (
+                  <div>
+                    <p className="text-xs font-medium text-foreground">{tr(l, "Conduta", "Plan", "Conducta")}</p>
+                    <p className="text-sm text-foreground whitespace-pre-line">{expanded || note.content.length <= LONG ? note.content : `${note.content.slice(0, LONG).trimEnd()}…`}</p>
+                  </div>
+                )}
+                {(note.observation || "").trim() && (
+                  <div>
+                    <p className="text-xs font-medium text-foreground">{tr(l, "Resposta pós-sessão", "Post-session response", "Respuesta postsesión")}</p>
+                    <p className="text-sm text-foreground whitespace-pre-line">{note.observation}</p>
+                  </div>
+                )}
                 {noteText.length > LONG && <button type="button" className="text-xs text-primary hover:underline" onClick={() => setExpanded((v) => !v)}>{expanded ? tr(l, "ver menos", "show less", "ver menos") : tr(l, "ver mais", "show more", "ver más")}</button>}
               </div>
             ) : empty(tr(l, "Nenhuma evolução registrada.", "No progress note recorded.", "Ninguna evolución registrada."))}

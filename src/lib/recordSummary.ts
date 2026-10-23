@@ -57,3 +57,17 @@ export function latestByCreated<T extends { created_at?: string | null }>(items:
   if (!items.length) return null;
   return items.reduce((best, n) => ((n.created_at || "") > (best.created_at || "") ? n : best));
 }
+
+/** Current STEPS macro phase: the professional's explicit mark, else the latest macro block. Never inferred from dates. */
+export function currentStepsPhase(cycles: Array<{ level?: string | null; name?: string | null; goal?: string | null; is_current?: boolean | null; sort_order?: number | null }> | null | undefined): { name: string; goal: string | null } | null {
+  const macros = (cycles || []).filter((c) => c.level === "macro" && (c.name || "").trim());
+  if (!macros.length) return null;
+  const current = macros.find((c) => c.is_current) || [...macros].sort((a, b) => (b.sort_order ?? 0) - (a.sort_order ?? 0))[0];
+  return { name: current.name!.trim(), goal: (current.goal || "").trim() || null };
+}
+
+/** Painful functional tests recorded in an assessment (ids; names resolved by the UI). */
+export function summaryPainfulTests(assessment: any): string[] {
+  const results = Array.isArray(assessment?.test_results) ? assessment.test_results : [];
+  return [...new Set<string>(results.filter((r: any) => r?.testId && r?.painful === true).map((r: any) => r.testId))];
+}
