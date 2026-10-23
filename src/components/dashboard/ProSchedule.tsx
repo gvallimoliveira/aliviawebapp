@@ -589,6 +589,47 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       if (isEdit && editId) {
         await (supabase.from("professional_appointments" as any) as any)
           .update(payload).eq("id", editId);
+        const rule = extras.recurrence;
+        if (rule) {
+          const tbl = () => (supabase.from("professional_appointments" as any) as any);
+          const current = appointments.find((a: any) => a.id === editId) as any;
+          const existingSeries: string | null = current?.series_id ?? null;
+          // Replace only future, still-scheduled occurrences of this series; realized sessions stay.
+          if (existingSeries) {
+            const { error: delErr } = await tbl().delete()
+              .eq("series_id", existingSeries).gt("appointment_date", payload.appointment_date).eq("status", "scheduled");
+            if (delErr) throw delErr;
+          }
+          if (rule.freq === "none") {
+            await tbl().update({ series_id: null, recurrence_rule: null }).eq("id", editId);
+          } else {
+            const seriesId = existingSeries || crypto.randomUUID();
+            await tbl().update({ series_id: seriesId, recurrence_rule: rule }).eq("id", editId);
+            const all = expandRecurrence(payload.appointment_date, rule).filter((d) => d !== payload.appointment_date);
+            let created = 0; let conflicts: string[] = [];
+            if (all.length) {
+              let q = tbl().select("appointment_date, appointment_time").in("appointment_date", all).neq("status", "cancelled");
+              if (clinicId) q = q.eq("clinic_id", clinicId); else q = q.eq("professional_id", effectiveProfId);
+              if (clinicId && effectiveProfId) q = q.eq("professional_id", effectiveProfId);
+              const { data: taken } = await q;
+              const split = splitConflicts(all, payload.appointment_time, taken || []);
+              conflicts = split.conflicts;
+              const rows = split.free.map((d) => ({ ...payload, appointment_date: d, service_type: payload.service_type || "fisioterapia", series_id: seriesId, recurrence_rule: rule, status: "scheduled" }));
+              if (rows.length) {
+                const { error } = await tbl().insert(rows);
+                if (error) throw error;
+              }
+              created = rows.length;
+            }
+            toast({
+              title: language === "pt" ? `Repetição ajustada: ${created} próximo(s) agendamento(s)` : `Recurrence updated: ${created} upcoming`,
+              description: conflicts.length
+                ? (language === "pt" ? `${conflicts.length} data(s) já ocupada(s) foram puladas: ${conflicts.map((d) => d.split("-").reverse().slice(0, 2).join("/")).join(", ")}` : `${conflicts.length} busy date(s) skipped`)
+                : undefined,
+              duration: conflicts.length ? 9000 : 4000,
+            });
+          }
+        }
         if (!isCommitmentPayload && (trimmedEmail || payload.patient_name)) {
           let matchQuery = (supabase.from("patients" as any) as any).select("id");
           if (clinicId) matchQuery = matchQuery.eq("clinic_id", clinicId);
