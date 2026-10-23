@@ -26,7 +26,7 @@ describe("daily readiness independent of session load", () => {
     invoke.mockImplementation(async (_: string, { body }: any) => ({ data: body.action === "load" ? { info } : { ok: true } }));
     render(<PeriodizationCheckin token="patient-token" embedded />);
     await screen.findByRole("button", { name: "Ajustar respostas de hoje" });
-    expect(screen.queryByText("Set scale")).toBeNull();
+    expect(screen.getAllByText("Set scale")).toHaveLength(1); // session effort only; daily scales are locked
     for (let i = 0; i < 3; i++) {
       fireEvent.change(screen.getByPlaceholderText("Ex.: 50"), { target: { value: "40" } });
       fireEvent.click(screen.getByRole("button", { name: "Registrar sessão" }));

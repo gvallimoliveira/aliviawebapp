@@ -356,6 +356,10 @@ const categories: ToolCategory[] = [
 
 const faqKeys = [
   {
+    q: "A prontidão é respondida a cada atividade?",
+    a: "Não. Há uma resposta de prontidão/PSR por paciente por dia. Ao reabrir o check-in, as notas salvas ficam bloqueadas; Ajustar respostas de hoje edita a mesma resposta. Cada sessão tem sua própria carga percebida. Se uma sessão não tem duração planejada, o microciclo mostra a carga percebida sem inventar dose alvo nem classificar subdose ou superdose. Uma sessão já respondida fica marcada como registrada no check-in.",
+  },
+  {
     q: "Como cruzar a recuperação (PSR) com a carga realizada?",
     a: "Em Carga e prontidão, o gráfico reúne barras da carga diária (soma de duração × PSE em todas as frentes) e uma linha da Percepção de recuperação (PSR), nota de 1 a 10 do primeiro item do check-in. PSR não é o índice composto de prontidão. Exibe 7 dias e compara a carga aguda com os 7 dias anteriores e com a média semanal de 28 dias, quando há histórico suficiente. A leitura destaca PSR pelo menos 2 pontos abaixo/acima da média pessoal de ao menos 3 respostas anteriores, coincidindo com aumento/redução de carga. São critérios descritivos, não cortes diagnósticos nem correlação estatística: recuperação pode ser relatada antes do treino, e registros ausentes não significam descanso. Considere sono, sintomas, plano e avaliação profissional; não há ajuste automático nem custo de IA. As notas anteriores à mudança do rótulo foram respostas de prontidão para treinar e devem ser interpretadas nesse contexto.",
   },
