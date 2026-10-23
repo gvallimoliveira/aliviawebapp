@@ -238,11 +238,22 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
             )}
           </Section>
 
-          <Section icon={<NotebookPen className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Última evolução", "Latest progress note", "Última evolución")}>
+          <Section icon={<NotebookPen className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Última sessão — conduta e resposta", "Latest session — plan and response", "Última sesión — conducta y respuesta")}>
             {loading ? null : note ? (
-              <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
+              <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
                 <p className="text-xs text-muted-foreground flex items-center gap-1"><CalendarDays className="h-3 w-3" />{fmt(note.session_date || note.created_at)}</p>
-                <p className="text-sm text-foreground whitespace-pre-line">{expanded || noteText.length <= LONG ? noteText : `${noteText.slice(0, LONG).trimEnd()}…`}</p>
+                {(note.content || "").trim() && (
+                  <div>
+                    <p className="text-xs font-medium text-foreground">{tr(l, "Conduta", "Plan", "Conducta")}</p>
+                    <p className="text-sm text-foreground whitespace-pre-line">{expanded || note.content.length <= LONG ? note.content : `${note.content.slice(0, LONG).trimEnd()}…`}</p>
+                  </div>
+                )}
+                {(note.observation || "").trim() && (
+                  <div>
+                    <p className="text-xs font-medium text-foreground">{tr(l, "Resposta pós-sessão", "Post-session response", "Respuesta postsesión")}</p>
+                    <p className="text-sm text-foreground whitespace-pre-line">{note.observation}</p>
+                  </div>
+                )}
                 {noteText.length > LONG && <button type="button" className="text-xs text-primary hover:underline" onClick={() => setExpanded((v) => !v)}>{expanded ? tr(l, "ver menos", "show less", "ver menos") : tr(l, "ver mais", "show more", "ver más")}</button>}
               </div>
             ) : empty(tr(l, "Nenhuma evolução registrada.", "No progress note recorded.", "Ninguna evolución registrada."))}
