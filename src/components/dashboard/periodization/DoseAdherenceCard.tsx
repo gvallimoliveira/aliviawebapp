@@ -339,11 +339,19 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                     <XAxis dataKey="frente" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
                     <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" />
                     <Tooltip content={<DoseTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="Planejado" fill="hsl(var(--muted-foreground) / 0.5)" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Percebido" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Planejado" radius={[4, 4, 0, 0]} fillOpacity={0.35}>
+                      {chartData.map((d) => <Cell key={d.track} fill={trackFill(d.track)} />)}
+                    </Bar>
+                    <Bar dataKey="Percebido" radius={[4, 4, 0, 0]}>
+                      {chartData.map((d) => <Cell key={d.track} fill={trackFill(d.track)} />)}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-[2px] bg-muted-foreground/35" />Planejado (claro)</span>
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-[2px] bg-muted-foreground" />Percebido (sólido)</span>
+                <span>A cor segue a frente: Fisio, Academia, Cardio, Esporte</span>
               </div>
               </>
             )}
