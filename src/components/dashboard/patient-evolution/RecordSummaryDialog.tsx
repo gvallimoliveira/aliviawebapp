@@ -119,9 +119,18 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
               .then((r: any) => r.data || [], () => [])
           : Promise.resolve([]),
       ]);
+      const cycles = plan?.id ? await fetchCycles(plan.id).catch(() => []) : [];
+      const hep = latestByCreated(heps);
+      const items = hep?.id
+        ? await (supabase as any).from("exercise_program_items")
+            .select("custom_name, sort_order, exercise:exercise_library(name_pt, name_en, name_es)")
+            .eq("program_id", hep.id).order("sort_order", { ascending: true })
+            .then((r: any) => r.data || [], () => [])
+        : [];
       if (cancelled) return;
-      setLoad({ plan, entries: entries as any[], checkins: checkins as any[], sessions: sessions as any[] });
+      setLoad({ plan, entries: entries as any[], checkins: checkins as any[], sessions: sessions as any[], cycles: cycles as any[] });
       setNote(latestEvolution(notes as any[]));
+      setHepItems((items as any[]).map((it: any) => it.custom_name || (l === "en" ? it.exercise?.name_en : l === "es" ? it.exercise?.name_es : null) || it.exercise?.name_pt).filter(Boolean));
       setLoading(false);
     })();
     return () => { cancelled = true; };
