@@ -133,6 +133,52 @@ const MacroTimeline = ({ cycles, planId, planStatus, onChanged, readOnly }: Prop
               </div>
             );
           })}
+          {planId && (
+            <div className={`min-w-[190px] rounded-xl border p-3 border-emerald-500/40 ${planStatus === "completed" ? "bg-emerald-500/10" : "bg-emerald-500/5"}`}>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <GraduationCap className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" />
+                  {DISCHARGE_PHASE.name}
+                </span>
+                {planStatus === "completed" && <Badge className="text-[10px]">Alta registrada</Badge>}
+              </div>
+              <p className="text-[11px] text-muted-foreground">{DISCHARGE_PHASE.goal}</p>
+              {!readOnly && planStatus !== "completed" && (
+                confirmingDischarge ? (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <Button type="button"
+                      size="sm"
+                      className="h-7 rounded-xl gap-1 text-[10px] flex-1"
+                      disabled={savingId === "discharge"}
+                      onClick={discharge}
+                    >
+                      {savingId === "discharge" ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                      Confirmar alta
+                    </Button>
+                    <Button type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 rounded-xl text-[10px]"
+                      onClick={() => setConfirmingDischarge(false)}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button"
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-2 h-7 rounded-xl gap-1 text-[10px]"
+                    disabled={savingId !== null}
+                    onClick={() => setConfirmingDischarge(true)}
+                  >
+                    <GraduationCap className="h-3 w-3" />
+                    Registrar alta e encerrar
+                  </Button>
+                )
+              )}
+            </div>
+          )}
         </div>
         <p className="text-[10px] text-muted-foreground">
           A fase atual é definida pelo profissional. Ao marcá-la, a fase começa hoje e o sistema sugere as datas das
