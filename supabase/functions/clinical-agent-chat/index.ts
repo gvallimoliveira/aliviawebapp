@@ -883,6 +883,7 @@ Deno.serve(async (req) => {
         full_name: sc.full_name,
         birth_date: birthDate,
         professional_id: pro?.id || null,
+        clinic_id: thread.clinic_id || null,
         is_study_case: true,
         notes: teachingBlock,
       } as any).select("id").maybeSingle();

@@ -168,9 +168,10 @@ const HealthGeneralCard: React.FC<HealthGeneralCardProps> = ({
     if (patientId && patientEmail) q = q.or(`patient_id.eq.${patientId},patient_email.eq.${patientEmail}`);
     else if (patientId) q = q.eq("patient_id", patientId);
     else q = q.eq("patient_email", patientEmail);
+    q = clinicId ? q.eq("clinic_id", clinicId) : q.is("clinic_id", null);
     const { data, error } = await q;
     if (!error) setManualRecords(data || []);
-  }, [patientId, patientEmail, isDemo]);
+  }, [patientId, patientEmail, clinicId, isDemo]);
 
 
   useEffect(() => {

@@ -672,7 +672,10 @@ async function collectRealData(opts: ExportOptions) {
   const scopeVal = mode === "clinic" ? clinicId : professionalId;
   if (!scopeVal) throw new Error("Identificador de escopo ausente.");
 
-  const scoped = (table: string) => sb.from(table).select("*").eq(scopeCol, scopeVal);
+  const scoped = (table: string) => {
+    const query = sb.from(table).select("*").eq(scopeCol, scopeVal);
+    return mode === "clinic" ? query : query.is("clinic_id", null);
+  };
   const empty = async () => ({ data: [] as any[], error: null });
 
   const [
@@ -696,17 +699,18 @@ async function collectRealData(opts: ExportOptions) {
     selection.documents || selection.binaries ? scoped("patient_files") : empty(),
     selection.photos || selection.binaries ? scoped("patient_photos") : empty(),
     selection.auditLogs && mode === "clinic" ? sb.from("clinic_assessment_logs").select("*").eq("clinic_id", scopeVal) : empty(),
-    selection.chat ? sb.from("conversations").select("*").eq(scopeCol, scopeVal) : empty(),
+    selection.chat ? scoped("conversations") : empty(),
   ]);
 
   // notes: always scoped by current professional_id (own only — even in clinic mode)
-  const notesRes = selection.notes && professionalId
-    ? await sb.from("professional_notes").select("*").eq("professional_id", professionalId)
+  // Notes inherit practice scope from their assessment (no clinic_id column).
+  const notesRes = selection.notes && assessmentsRes.data?.length
+    ? await sb.from("professional_notes").select("*").in("assessment_id", assessmentsRes.data.map((a: any) => a.id))
     : { data: [] as any[] };
 
   // programs: by professional (clinic owner cannot see other therapists' programs without explicit RLS)
-  const programsRes = selection.treatment && professionalId
-    ? await sb.from("exercise_programs").select("*").eq("professional_id", professionalId)
+  const programsRes = selection.treatment
+    ? await scoped("exercise_programs")
     : { data: [] as any[] };
 
   let programItems: any[] = [];

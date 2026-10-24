@@ -887,6 +887,7 @@ const Dashboard = () => {
               <ClinicTrialBanner />
               <div className="relative" id="agenda-schedule-anchor">
                 <ProSchedule
+                  key={`clinic:${activeClinic.clinic_id}`}
                   professionalId={professional?.id}
                   clinicId={activeClinic.clinic_id}
                   isSimulated={isSimulated}
@@ -903,7 +904,7 @@ const Dashboard = () => {
                 {isClinicSecretary || canManageClinic ? (
                   <ClinicSecretaryDashboard />
                 ) : professional ? (
-                  <ProDashboard professional={professional} hideForClinicTabs isSimulated={isSimulated} onSimulatedChange={setIsSimulated} />
+                  <ProDashboard key={`clinic:${activeClinic.clinic_id}`} professional={professional} hideForClinicTabs isSimulated={isSimulated} onSimulatedChange={setIsSimulated} />
                 ) : (
                   // Therapist without professional profile — restricted view (no analytics/feedback/reports)
                   <ClinicSecretaryDashboard restrictedTherapistView />
