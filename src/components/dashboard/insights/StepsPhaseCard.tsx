@@ -64,8 +64,8 @@ const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Pr
       <p className="font-semibold">{t("Como é calculado", "How it's calculated")}</p>
       <p className="text-xs text-muted-foreground leading-relaxed">
         {t(
-          "Mostra a fase atual (macrociclo) de cada plano de periodização ativo e há quantas semanas o paciente está nela. Quem passa de 4 semanas na mesma fase aparece destacado — vale revisar os critérios de saída da fase.",
-          "Shows the current phase (macrocycle) of each active periodization plan and how many weeks the patient has been in it. Anyone over 4 weeks in the same phase is highlighted — worth reviewing the phase exit criteria.",
+          "Mostra a fase atual (macrociclo) de cada plano ativo e há quantas semanas o paciente está nela. Quem passa de 4 semanas na mesma fase aparece destacado — vale revisar os critérios de saída. Toque no paciente para mudar a fase ou registrar a Alta sem abrir o prontuário.",
+          "Shows the current phase (macrocycle) of each active plan and how many weeks the patient has been in it. Anyone over 4 weeks in the same phase is highlighted — worth reviewing the exit criteria. Tap a patient to change the phase or record Discharge without opening the record.",
         )}
       </p>
     </div>
@@ -116,9 +116,18 @@ const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Pr
               const pct = r.total_phases > 0 ? Math.round(((r.sort_order + 1) / r.total_phases) * 100) : 0;
               const isStalled = r.weeks_in_phase >= 4;
               return (
-                <div key={r.patient_id} className="p-3 rounded-lg border border-border/60 bg-background space-y-1.5">
+                <div
+                  key={r.patient_id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setPhaseTarget(r)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPhaseTarget(r); } }}
+                  title={t("Toque para mudar a fase ou registrar a alta", "Tap to change the phase or record discharge", "Toca para cambiar la fase o registrar el alta")}
+                  className="p-3 rounded-lg border border-border/60 bg-background space-y-1.5 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium truncate flex-1">{r.patient_name || t("Paciente", "Patient")}</p>
+                    <ArrowRightLeft className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <Badge
                       variant="outline"
                       className={`text-[10px] shrink-0 ${
@@ -131,7 +140,7 @@ const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Pr
                     </Badge>
                     <button
                       type="button"
-                      onClick={() => dismiss(r.patient_id)}
+                      onClick={(e) => { e.stopPropagation(); dismiss(r.patient_id); }}
                       aria-label={dismissLabel}
                       title={dismissLabel}
                       className="shrink-0 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
