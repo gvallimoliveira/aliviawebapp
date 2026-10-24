@@ -610,10 +610,10 @@ const ClinicSupport = () => {
             {faqKeys.map((faq, i) => (
               <AccordionItem key={i} value={`faq-${i}`}>
                 <AccordionTrigger className="text-left text-base font-medium text-foreground">
-                  {faq.q}
+                  {i === 0 ? t("support.pro.faq.profile_isolation.q") : faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
-                  {faq.a}
+                  {i === 0 ? t("support.pro.faq.profile_isolation.a") : faq.a}
                 </AccordionContent>
               </AccordionItem>
             ))}

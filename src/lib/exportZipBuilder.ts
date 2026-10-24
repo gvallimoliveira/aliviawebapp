@@ -702,10 +702,12 @@ async function collectRealData(opts: ExportOptions) {
     selection.chat ? scoped("conversations") : empty(),
   ]);
 
-  // notes: always scoped by current professional_id (own only — even in clinic mode)
   // Notes inherit practice scope from their assessment (no clinic_id column).
-  const notesRes = selection.notes && assessmentsRes.data?.length
-    ? await sb.from("professional_notes").select("*").in("assessment_id", assessmentsRes.data.map((a: any) => a.id))
+  const noteAssessmentIds = selection.notes
+    ? (selection.assessments ? assessmentsRes.data : (await scoped("assessments")).data)?.map((a: any) => a.id) || []
+    : [];
+  const notesRes = noteAssessmentIds.length
+    ? await sb.from("professional_notes").select("*").in("assessment_id", noteAssessmentIds)
     : { data: [] as any[] };
 
   // programs: by professional (clinic owner cannot see other therapists' programs without explicit RLS)

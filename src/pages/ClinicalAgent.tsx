@@ -619,6 +619,7 @@ const ClinicalAgent = () => {
 
   const send = async () => {
     if (!activeThread || sending) return;
+    const requestKey = careKey;
     const readyAttachments = attachments.filter(a => a.status === "ready" && a.extracted);
     if (!input.trim() && !readyAttachments.length) return;
     if (attachments.some(a => a.status === "analyzing")) {
@@ -660,6 +661,7 @@ const ClinicalAgent = () => {
     const { data, error } = await supabase.functions.invoke("clinical-agent-chat", {
       body: { thread_id: activeThread.id, message: messageForAgent, clinic_id: careClinicId },
     });
+    if (careKeyRef.current !== requestKey) return;
 
 
     if (error || data?.error) {
@@ -684,6 +686,7 @@ const ClinicalAgent = () => {
       .select("id, role, parts, citations, created_at")
       .eq("thread_id", activeThread.id)
       .order("created_at", { ascending: true });
+    if (careKeyRef.current !== requestKey) return;
     setMessages((msgs || []) as any);
     setSending(false);
     // Scroll to the START of the newest assistant message so the user can read
@@ -709,6 +712,7 @@ const ClinicalAgent = () => {
     const { data: th } = await threadScope(supabase.from("agent_threads")
       .select("id, title, patient_id, archived, updated_at, mentor_mode"), careClinicId)
       .eq("user_id", user.id).eq("archived", false).order("updated_at", { ascending: false });
+    if (careKeyRef.current !== requestKey) return;
     setThreads(th || []);
     const updated = (th || []).find(t => t.id === activeThread.id);
     if (updated) setActiveThread(updated);
