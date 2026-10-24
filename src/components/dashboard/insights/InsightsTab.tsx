@@ -56,9 +56,9 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false, canMana
 
       {/* Rotina clínica: reavaliação + fase STEPS + alta */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ReassessmentDueCard clinicId={clinicId} professionalId={professionalId} />
+        <ReassessmentDueCard clinicId={clinicId} professionalId={professionalId} dismissForTeam={canManage && !!clinicId} />
         {ENABLE_PERIODIZATION && (
-          <StepsPhaseCard clinicId={clinicId} professionalId={professionalId} />
+          <StepsPhaseCard clinicId={clinicId} professionalId={professionalId} dismissForTeam={canManage && !!clinicId} />
         )}
       </div>
 
@@ -71,11 +71,13 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false, canMana
       <OccupancyVsNoShowCard clinicId={clinicId} professionalId={professionalId} />
       <ReactivationCard clinicId={clinicId} professionalId={professionalId} />
 
-      {/* Conversão — clínica e PRO autônomo, sem duplicar o card. */}
-      {(clinicId || professionalId) && <ClinicFunnelCard key={clinicId ?? professionalId} clinicId={clinicId} professionalId={professionalId} />}
+      {/* Conversão — gestão: dono/admin na clínica; o PRO autônomo é dono dos próprios dados. */}
+      {(professionalId || canManage) && (clinicId || professionalId) && (
+        <ClinicFunnelCard key={clinicId ?? professionalId} clinicId={clinicId} professionalId={professionalId} dismissForTeam={canManage && !!clinicId} />
+      )}
 
-      {/* Clínica: equipe, concentração, benchmark */}
-      {fullClinicMode && clinicId && (
+      {/* Clínica: equipe, concentração, benchmark — somente dono/admin */}
+      {fullClinicMode && clinicId && canManage && (
         <>
           <TherapistStatsCard clinicId={clinicId} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -85,8 +87,8 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false, canMana
         </>
       )}
 
-      {/* Revenue goal — both modes */}
-      <RevenueGoalCard clinicId={clinicId} professionalId={professionalId} />
+      {/* Revenue goal — PRO autônomo ou dono/admin da clínica */}
+      {(!clinicId || canManage) && <RevenueGoalCard clinicId={clinicId} professionalId={professionalId} />}
     </div>
   );
 };
