@@ -15,10 +15,12 @@ beforeAll(async () => {
     CREATE FUNCTION public.is_clinic_member(uuid, uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $2 = '${clinic}'::uuid $$;
     CREATE TABLE professionals(id uuid, user_id uuid);
     INSERT INTO professionals VALUES ('${pro}', '${pro}');
-    CREATE TABLE assessments(id uuid DEFAULT gen_random_uuid(), patient_email text, created_at timestamptz DEFAULT now()-interval '2 days', status text DEFAULT 'completed', clinic_id uuid, professional_id uuid);
+    CREATE TABLE assessments(id uuid DEFAULT gen_random_uuid(), patient_email text, patient_name text, created_at timestamptz DEFAULT now()-interval '2 days', status text DEFAULT 'completed', clinic_id uuid, professional_id uuid);
     CREATE TABLE professional_appointments(patient_email text, appointment_date date DEFAULT (now() AT TIME ZONE 'America/Sao_Paulo')::date, service_type text DEFAULT 'fisioterapia', status text DEFAULT 'scheduled', clinic_id uuid, professional_id uuid, assessment_id uuid);
+    CREATE TABLE patients(id uuid DEFAULT gen_random_uuid(), full_name text, email text, clinic_id uuid, professional_id uuid);
   `);
   await db.exec(readFileSync("drizzle/migrations/0026_assessment_agenda_conversion.sql", "utf8"));
+  await db.exec(readFileSync("drizzle/migrations/0027_insight_dismissals_and_conversion_7d.sql", "utf8"));
 }, 30000);
 afterAll(async () => { await db.close(); });
 async function reset() { await db.exec("TRUNCATE assessments, professional_appointments"); }
@@ -74,5 +76,31 @@ describe("assessment to agenda conversion SQL", () => {
       INSERT INTO professional_appointments(patient_email,professional_id) VALUES ('one@test.invalid','${pro}');`);
     const r=await db.query(`SELECT * FROM get_assessment_agenda_conversion('${clinic}',NULL)`);
     expect(r.rows[0]).toEqual({assessed_count:1,scheduled_count:0,unscheduled_count:1,attended_count:0});
+  });
+  it("converts an appointment exactly 7 days after the assessment but not 8 days after", async () => {
+    await reset();
+    // assessments default to 2 days ago: +7 days = CURRENT_DATE+5, +8 days = CURRENT_DATE+6
+    await db.exec(`INSERT INTO assessments(patient_email,professional_id) VALUES ('in7@test.invalid','${pro}'),('out8@test.invalid','${pro}');
+      INSERT INTO professional_appointments(patient_email,professional_id,appointment_date) VALUES
+      ('in7@test.invalid','${pro}',CURRENT_DATE+5),
+      ('out8@test.invalid','${pro}',CURRENT_DATE+6);`);
+    expect(await result()).toEqual({assessed_count:2,scheduled_count:1,unscheduled_count:1,attended_count:0});
+  });
+  it("unscheduled list names only patients without an appointment within 7 days", async () => {
+    await reset();
+    await db.exec(`INSERT INTO assessments(patient_email,patient_name,professional_id) VALUES
+      ('ok@test.invalid','Com Agenda','${pro}'),('sem@test.invalid','Sem Agenda','${pro}');
+      INSERT INTO professional_appointments(patient_email,professional_id) VALUES ('ok@test.invalid','${pro}');`);
+    const r = await db.query(`SELECT * FROM get_assessment_unscheduled_list(NULL,'${pro}')`);
+    expect(r.rows).toHaveLength(1);
+    expect(r.rows[0]).toMatchObject({identity_key:'sem@test.invalid',patient_name:'Sem Agenda',days_since:2});
+  });
+  it("unscheduled list falls back to the patients record name and respects scope", async () => {
+    await reset();
+    await db.exec(`INSERT INTO assessments(patient_email,professional_id) VALUES ('sem@test.invalid','${pro}');
+      INSERT INTO patients(full_name,email,professional_id) VALUES ('Nome Cadastro','sem@test.invalid','${pro}');`);
+    const r = await db.query(`SELECT * FROM get_assessment_unscheduled_list(NULL,'${pro}')`);
+    expect(r.rows[0]).toMatchObject({patient_name:'Nome Cadastro'});
+    await expect(db.query(`SELECT * FROM get_assessment_unscheduled_list('${clinic}','${pro}')`)).rejects.toThrow("Exactly one");
   });
 });

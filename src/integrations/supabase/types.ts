@@ -2300,6 +2300,33 @@ export type Database = {
           },
         ]
       }
+      insight_dismissals: {
+        Row: {
+          created_at: string
+          id: string
+          insight_key: string
+          patient_key: string
+          scope_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          insight_key: string
+          patient_key: string
+          scope_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          insight_key?: string
+          patient_key?: string
+          scope_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       knowledge_articles: {
         Row: {
           abstract: string | null
@@ -5278,6 +5305,15 @@ export type Database = {
           device_label: string
           snapshot: Json
           updated_at: string
+        }[]
+      }
+      get_assessment_unscheduled_list: {
+        Args: { _clinic_id?: string; _professional_id?: string }
+        Returns: {
+          assessment_date: string
+          days_since: number
+          identity_key: string
+          patient_name: string
         }[]
       }
       get_clinic_all_patients: {
