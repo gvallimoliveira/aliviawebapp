@@ -13,6 +13,9 @@ const records = [
   { id: "other-clinic", clinic_id: "other", professional_id: "pro" },
 ];
 describe("clinic and autonomous practice isolation", () => {
+  it("does not load all solo patients before a professional is available", () => {
+    expect(careScope(new Query(records), null, null).rows).toEqual([]);
+  });
   it("GV Fisio test patients never enter the solo PRO list despite matching professional", () => {
     expect(careScope(new Query(records), null, "pro").rows.map(r => r.id)).toEqual(["solo"]);
   });

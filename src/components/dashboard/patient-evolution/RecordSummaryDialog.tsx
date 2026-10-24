@@ -19,6 +19,8 @@ import { DailyConductContent } from "../periodization/DailyConductCard";
 import LoadRecoveryChart from "../periodization/LoadRecoveryChart";
 import MicroWeekGrid from "../periodization/MicroWeekGrid";
 import { usePatientBirthDate } from "@/hooks/usePatientBirthDate";
+import { careScope } from "@/lib/careScope";
+import { useClinic } from "@/contexts/ClinicContext";
 
 type Lang = "pt" | "en" | "es";
 const tr = (l: Lang, pt: string, en: string, es: string) => (l === "pt" ? pt : l === "es" ? es : en);
@@ -54,6 +56,9 @@ const LiveConduct = ({ patientId, load }: { patientId: string; load: { plan: any
 
 const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, patientEmail, patientId, assessment, assessments, latestAssessmentId, heps, isDemo, onOpenAssessmentSummary }: Props) => {
   const { toast } = useToast();
+  const { isClinicMode, activeClinic } = useClinic();
+  const clinicId = isClinicMode ? activeClinic?.clinic_id || null : null;
+  const professionalId = assessment?.professional_id || null;
   const [loading, setLoading] = useState(false);
   const [load, setLoad] = useState<{ plan: any; entries: any[]; checkins: any[]; sessions: any[]; cycles: any[] }>({ plan: null, entries: [], checkins: [], sessions: [], cycles: [] });
   const [hepItems, setHepItems] = useState<string[]>([]);
@@ -79,7 +84,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
           if (patientId && patientEmail) query = query.or(`patient_id.eq.${patientId},patient_email.eq.${patientEmail}`);
           else if (patientId) query = query.eq("patient_id", patientId);
           else query = query.eq("patient_email", patientEmail);
-          const { data, error } = await query;
+          const { data, error } = await careScope(query, clinicId, professionalId);
           if (error) throw error;
           if (!cancelled) setHealthRecords(data || []);
         }
@@ -90,7 +95,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
       }
     })();
     return () => { cancelled = true; };
-  }, [open, isDemo, patientId, patientEmail]);
+  }, [open, isDemo, patientId, patientEmail, clinicId, professionalId]);
 
   useEffect(() => {
     if (!open) return;
@@ -114,7 +119,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
         patientId ? fetchCheckins(patientId, sinceISO).catch(() => []) : Promise.resolve([]),
         patientId ? fetchSessionsByPatient(patientId, sinceISO).catch(() => []) : Promise.resolve([]),
         patientEmail
-          ? (supabase as any).from("session_notes").select("session_date, created_at, content, observation").eq("patient_email", patientEmail)
+          ? careScope((supabase as any).from("session_notes").select("session_date, created_at, content, observation").eq("patient_email", patientEmail), clinicId, professionalId)
               .order("session_date", { ascending: false }).order("created_at", { ascending: false }).limit(10)
               .then((r: any) => r.data || [], () => [])
           : Promise.resolve([]),
@@ -134,7 +139,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [open, isDemo, patientId, patientEmail, patientName, latestAssessmentId]);
+  }, [open, isDemo, patientId, patientEmail, patientName, latestAssessmentId, clinicId, professionalId, heps, l]);
 
   const chart = useMemo(() => {
     const w = recentDaysWindow([...load.entries.map((e) => e.session_date), ...load.checkins.map((c) => c.checkin_date)], CHART_WINDOW_DAYS, localISODate());
