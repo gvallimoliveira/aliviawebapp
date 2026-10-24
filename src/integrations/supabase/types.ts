@@ -5496,6 +5496,7 @@ export type Database = {
           professional_id: string
           reasons: Json
           score: number
+          silent_days: number
         }[]
       }
       get_patient_load_alerts: {
