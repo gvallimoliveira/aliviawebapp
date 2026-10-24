@@ -1,3 +1,4 @@
+import { careScope } from "@/lib/careScope";
 import { useState, useEffect, useMemo, useRef } from "react";
 import AddPatientModal from "./AddPatientModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -174,10 +175,11 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     checkSubscription();
     loadPatientAssessments();
     loadReferrals();
-  }, [isClinicMode, activeClinic?.clinic_id]);
+  }, [isClinicMode, activeClinic?.clinic_id, professional.id]);
 
   // Debounce realtime refetches to avoid storms when multiple therapists
   // update assessments at the same time (clinic with 5+ active fisios).
+  const assessmentRequest = useRef(0);
   const realtimeRefetchTimer = useRef<number | null>(null);
   const scheduleRealtimeRefetch = () => {
     if (realtimeRefetchTimer.current) {
@@ -247,36 +249,18 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     "pain_mechanism, reviewed_at, archived_at, paid_at, created_at, updated_at";
 
   const loadPatientAssessments = async () => {
-    // Load assessments linked to this professional
-    const { data: proData } = await supabase
+    const request = ++assessmentRequest.current;
+    setPatientAssessments([]);
+    // One selected practice, never a union of solo and clinic records.
+    const { data: proData } = await careScope(supabase
       .from("assessments")
-      .select(ASSESSMENT_COLUMNS)
-      .eq("professional_id", professional.id)
+      .select(ASSESSMENT_COLUMNS), isClinicMode ? activeClinic?.clinic_id : null, professional.id)
       .order("created_at", { ascending: false })
       .limit(500);
 
-    // Also load clinic assessments (professional_id may be null) when in clinic mode
-    let clinicData: any[] = [];
-    if (isClinicMode && activeClinic?.clinic_id) {
-      const { data: cData } = await supabase
-        .from("assessments")
-        .select(ASSESSMENT_COLUMNS)
-        .eq("clinic_id", activeClinic.clinic_id)
-        .order("created_at", { ascending: false })
-        .limit(500);
-      clinicData = cData || [];
-    }
-
-    // Merge and deduplicate by id
-    const merged: any[] = [...((proData as any[]) || [])];
-    const existingIds = new Set(merged.map((a: any) => a.id));
-    for (const ca of clinicData as any[]) {
-      if (!existingIds.has(ca.id)) {
-        merged.push(ca);
-      }
-    }
+    const merged: any[] = (proData as any[]) || [];
     merged.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    setPatientAssessments(merged);
+    if (request === assessmentRequest.current) setPatientAssessments(merged);
   };
 
   // Load clinic therapists (for assignment dropdown) when in clinic mode
@@ -301,7 +285,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       setClinicTherapists(pros || []);
     };
     loadTherapists();
-  }, [isClinicMode, activeClinic?.clinic_id]);
+  }, [isClinicMode, activeClinic?.clinic_id, professional.id]);
 
   const handleAssignProfessional = async (assessmentId: string, targetProId: string) => {
     if (!targetProId) return;
@@ -325,6 +309,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   };
 
   const loadReferrals = async () => {
+    if (isClinicMode) { setReferrals([]); setReferralProfiles({}); return; }
     const { data: refs } = await (supabase.from("professional_referrals" as any) as any)
       .select("id, patient_user_id, professional_id, assessment_id, status, created_at")
       .eq("professional_id", professional.id)
@@ -1152,6 +1137,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       <div data-onboarding="pro-patients">
         <DashboardErrorBoundary>
           <PatientEvolutionDashboard
+            key={isClinicMode ? activeClinic?.clinic_id : `solo:${professional.id}`}
             assessments={displayAssessments as any}
             professionalId={professional.id}
             lifetimeTreatment={professional.lifetime_treatment || (isClinicMode && (activeClinic?.subscription_status === 'active' || activeClinic?.subscription_status === 'trialing'))}
