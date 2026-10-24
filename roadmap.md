@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Isolate clinic versus solo patients and clinical-agent conversations; audit sibling context queries, add regressions and verify authenticated profile switching without modifying clinical data.
 - [x] Edit each microcycle session's planned dose in place, preserve performed-session data and refresh comparisons; 47 tests pass and pt/en/es help updated. Authenticated clinic temporary dose edited 0→40 and read back through UI, then removed; actual example run was not changed without a clinician-selected target.
 - [x] Correct example running dose visibility: real run already linked (40 min × 7 = 280), planned duration zero; preserve perceived load without target/verdict and keep answered sessions visible in check-in. No clinical writes.
 - [x] Lock saved daily readiness on reopening, explicit same-day edits independent of session load; 54 tests pass, pt/en/es help updated, real patient link verified locked and explicit editing available.
