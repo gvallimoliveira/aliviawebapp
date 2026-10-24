@@ -7,6 +7,12 @@ import BenchmarkCard from "./BenchmarkCard";
 import RevenueGoalCard from "./RevenueGoalCard";
 import OccupancyVsNoShowCard from "./OccupancyVsNoShowCard";
 import LoadReadinessCard from "./LoadReadinessCard";
+import ReassessmentDueCard from "./ReassessmentDueCard";
+import StepsPhaseCard from "./StepsPhaseCard";
+import ReactivationCard from "./ReactivationCard";
+import TherapistStatsCard from "./TherapistStatsCard";
+import ClinicFunnelCard from "./ClinicFunnelCard";
+import ConcentrationCard from "./ConcentrationCard";
 import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
 
 interface Props {
@@ -14,7 +20,7 @@ interface Props {
   clinicId?: string;
   /** Set when in pro autônomo mode. */
   professionalId?: string;
-  /** When true, also render Adherence + Benchmark cards (clinic only). */
+  /** When true, also render clinic management cards (team, funnel, benchmark). */
   fullClinicMode?: boolean;
 }
 
@@ -38,27 +44,41 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false }: Props
         </div>
       </div>
 
-      {/* Alerts row: churn + discharge */}
+      {/* Alertas clínicos: abandono silencioso + flare-up/sobrecarga */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ChurnRiskCard clinicId={clinicId} professionalId={professionalId} />
-        <DischargePredictionCard clinicId={clinicId} professionalId={professionalId} />
+        {ENABLE_PERIODIZATION && (
+          <LoadReadinessCard clinicId={clinicId} professionalId={professionalId} />
+        )}
       </div>
 
-      {/* Occupancy vs No-show — both modes */}
+      {/* Rotina clínica: reavaliação + fase STEPS + alta */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ReassessmentDueCard clinicId={clinicId} professionalId={professionalId} />
+        {ENABLE_PERIODIZATION && (
+          <StepsPhaseCard clinicId={clinicId} professionalId={professionalId} />
+        )}
+      </div>
+
+      <DischargePredictionCard clinicId={clinicId} professionalId={professionalId} />
+
+      {/* Adesão — agora também no PRO autônomo */}
+      <PatientAdherenceCard clinicId={clinicId} professionalId={professionalId} />
+
+      {/* Gestão: ocupação, reativação, receita */}
       <OccupancyVsNoShowCard clinicId={clinicId} professionalId={professionalId} />
+      <ReactivationCard clinicId={clinicId} professionalId={professionalId} />
 
-      {/* Carga e prontidão (periodização) — ambos os modos */}
-      {ENABLE_PERIODIZATION && (
-        <LoadReadinessCard clinicId={clinicId} professionalId={professionalId} />
-      )}
-
-
-      {/* Clinic-only: adherence + benchmark */}
+      {/* Clínica: equipe, funil, concentração, benchmark */}
       {fullClinicMode && clinicId && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <PatientAdherenceCard clinicId={clinicId} />
+        <>
+          <TherapistStatsCard clinicId={clinicId} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ClinicFunnelCard clinicId={clinicId} />
+            <ConcentrationCard clinicId={clinicId} />
+          </div>
           <BenchmarkCard clinicId={clinicId} />
-        </div>
+        </>
       )}
 
       {/* Revenue goal — both modes */}
