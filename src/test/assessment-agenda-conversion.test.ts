@@ -15,10 +15,12 @@ beforeAll(async () => {
     CREATE FUNCTION public.is_clinic_member(uuid, uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT $2 = '${clinic}'::uuid $$;
     CREATE TABLE professionals(id uuid, user_id uuid);
     INSERT INTO professionals VALUES ('${pro}', '${pro}');
-    CREATE TABLE assessments(id uuid DEFAULT gen_random_uuid(), patient_email text, created_at timestamptz DEFAULT now()-interval '2 days', status text DEFAULT 'completed', clinic_id uuid, professional_id uuid);
+    CREATE TABLE assessments(id uuid DEFAULT gen_random_uuid(), patient_email text, patient_name text, created_at timestamptz DEFAULT now()-interval '2 days', status text DEFAULT 'completed', clinic_id uuid, professional_id uuid);
     CREATE TABLE professional_appointments(patient_email text, appointment_date date DEFAULT (now() AT TIME ZONE 'America/Sao_Paulo')::date, service_type text DEFAULT 'fisioterapia', status text DEFAULT 'scheduled', clinic_id uuid, professional_id uuid, assessment_id uuid);
+    CREATE TABLE patients(id uuid DEFAULT gen_random_uuid(), full_name text, email text, clinic_id uuid, professional_id uuid);
   `);
   await db.exec(readFileSync("drizzle/migrations/0026_assessment_agenda_conversion.sql", "utf8"));
+  await db.exec(readFileSync("drizzle/migrations/0027_insight_dismissals_and_conversion_7d.sql", "utf8"));
 }, 30000);
 afterAll(async () => { await db.close(); });
 async function reset() { await db.exec("TRUNCATE assessments, professional_appointments"); }
