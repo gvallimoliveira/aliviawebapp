@@ -176,6 +176,13 @@
       "when": 1792810167420,
       "tag": "0024_insight_load_flareup",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792810222220,
+      "tag": "0025_insight_new_indicators",
+      "breakpoints": true
     }
   ]
 }
