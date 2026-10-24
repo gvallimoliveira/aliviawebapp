@@ -1,3 +1,4 @@
+import { threadScope } from "@/lib/careScope";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
@@ -128,6 +129,10 @@ const ClinicalAgent = () => {
   const seedConsumedRef = useRef(false);
   const { hasAccess, isBetaInternal, checked } = useClinicalAgentAccess();
   const { activeClinic, isClinicMode } = useClinic();
+  const careClinicId = isClinicMode ? activeClinic?.clinic_id || null : null;
+  const careKey = `${user?.id || ""}:${careClinicId || "solo"}`;
+  const careKeyRef = useRef(careKey);
+  careKeyRef.current = careKey;
 
   const [threads, setThreads] = useState<Thread[]>([]);
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
@@ -185,7 +190,7 @@ const ClinicalAgent = () => {
     })();
   }, [user?.id]);
 
-  const clinicCoversAccess = !!(activeClinic &&
+  const clinicCoversAccess = !!(isClinicMode && activeClinic &&
     (activeClinic.subscription_status === "active" || activeClinic.subscription_status === "trialing"));
   const hasActivePlan =
     subState.subscribed || subState.isPartner || clinicCoversAccess;
@@ -229,10 +234,10 @@ const ClinicalAgent = () => {
 
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data } = await threadScope(supabase
         .from("patients")
         .select("id, full_name")
-        .eq("id", patientId)
+        .eq("id", patientId), careClinicId)
         .maybeSingle();
 
       if (!cancelled) {
@@ -243,16 +248,21 @@ const ClinicalAgent = () => {
     return () => {
       cancelled = true;
     };
-  }, [activeThread?.patient_id, patients]);
+  }, [activeThread?.patient_id, patients, careClinicId]);
 
   // Load threads + patients
   useEffect(() => {
+    setThreads([]); setPatients([]); setActiveThread(null); setMessages([]);
+    setResolvedLinkedPatient(null); setInput(""); setAttachments([]);
+    setLoadingThreads(true); bootstrappedRef.current = false;
     if (!user || !hasAccess || !hasActivePlan) return;
+    let cancelled = false;
+    const requestKey = careKey;
     (async () => {
       const sb = supabase as any;
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-      const thRes: any = await sb.from("agent_threads")
-        .select("id, title, patient_id, archived, updated_at, mentor_mode")
+      const thRes: any = await threadScope(sb.from("agent_threads")
+        .select("id, title, patient_id, archived, updated_at, mentor_mode"), careClinicId)
         .eq("user_id", user.id).eq("archived", false)
         .gte("updated_at", sevenDaysAgo)
         .order("updated_at", { ascending: false });
@@ -289,7 +299,7 @@ const ClinicalAgent = () => {
         raw = (data || []) as any;
       } else if (myProfessionalId) {
         const { data } = await sb.from("patients")
-          .select("id, full_name, email, created_at").eq("professional_id", myProfessionalId).order("full_name");
+          .select("id, full_name, email, created_at").eq("professional_id", myProfessionalId).is("clinic_id", null).order("full_name");
         raw = (data || []) as any;
       }
 
@@ -308,6 +318,7 @@ const ClinicalAgent = () => {
         .map(({ id, full_name }) => ({ id, full_name }))
         .sort((a, b) => a.full_name.localeCompare(b.full_name, "pt-BR"));
 
+      if (cancelled || careKeyRef.current !== requestKey) return;
       const th = thRes.data as Thread[] | null;
       setThreads(th || []);
       setPatients(pt);
@@ -324,11 +335,11 @@ const ClinicalAgent = () => {
         } else {
           navigate("/agente", { replace: true });
         }
-      } else if (initialPatientId) {
+      } else if (initialPatientId && pt.some(p => p.id === initialPatientId)) {
         // Look for an existing (non-archived) thread linked to this patient,
         // ignoring the 7-day window so older threads can be resumed.
-        const { data: existing } = await sb.from("agent_threads")
-          .select("id, title, patient_id, archived, updated_at")
+        const { data: existing } = await threadScope(sb.from("agent_threads")
+          .select("id, title, patient_id, archived, updated_at"), careClinicId)
           .eq("user_id", user.id)
           .eq("patient_id", initialPatientId)
           .eq("archived", false)
@@ -349,23 +360,28 @@ const ClinicalAgent = () => {
 
 
     })();
-  }, [user, hasAccess, hasActivePlan, isClinicMode, activeClinic?.clinic_id]);
+    return () => { cancelled = true; };
+  }, [user?.id, hasAccess, hasActivePlan, careKey]);
 
   // Load messages when active thread changes
   useEffect(() => {
-    if (!activeThread) { setMessages([]); return; }
+    setMessages([]);
+    if (!activeThread) return;
+    let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("agent_messages")
         .select("id, role, parts, citations, created_at")
         .eq("thread_id", activeThread.id)
         .order("created_at", { ascending: true });
+      if (cancelled) return;
       setMessages((data || []) as any);
       if ((data || []).length > 0) {
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 100);
       }
     })();
-  }, [activeThread?.id]);
+    return () => { cancelled = true; };
+  }, [activeThread?.id, careKey]);
 
   // Seed input from ?seed=... (used by Trilhas / Desempenho links)
   useEffect(() => {
@@ -379,18 +395,20 @@ const ClinicalAgent = () => {
   }, [initialSeed, hasAccess, hasActivePlan]);
 
   const createThread = async (patient_id: string | null) => {
+    const requestKey = careKey;
     setSheetOpen(false);
     setCreatingThread(true);
     setMessages([]);
     setActiveThread(null);
     try {
       const { data, error } = await supabase.functions.invoke("clinical-agent-threads", {
-        body: { action: "create", patient_id },
+        body: { action: "create", patient_id, clinic_id: careClinicId },
       });
       if (error || data?.error) {
         toast.error("Não foi possível criar a conversa");
         return;
       }
+      if (careKeyRef.current !== requestKey) return;
       const newThread = data.thread as Thread;
       setThreads(prev => [newThread, ...prev]);
       setActiveThread(newThread);
@@ -404,7 +422,7 @@ const ClinicalAgent = () => {
     if (thread.patient_id === patientId) return thread;
 
     const { error } = await supabase.functions.invoke("clinical-agent-threads", {
-      body: { action: "attach_patient", thread_id: thread.id, patient_id: patientId },
+      body: { action: "attach_patient", thread_id: thread.id, patient_id: patientId, clinic_id: careClinicId },
     });
 
     if (error) throw error;
@@ -422,6 +440,7 @@ const ClinicalAgent = () => {
       const { data, error } = await supabase.functions.invoke("agent-generate-hep", {
         body: {
           thread_id: activeThread.id,
+          clinic_id: careClinicId,
           patient_id: activeThread.patient_id,
           ...(level !== "auto" ? { challenge_level: level } : {}),
         },
@@ -506,7 +525,7 @@ const ClinicalAgent = () => {
       setActiveThread(null);
     }
     const { error } = await supabase.functions.invoke("clinical-agent-threads", {
-      body: { action: "delete", thread_id: id },
+      body: { action: "delete", thread_id: id, clinic_id: careClinicId },
     });
     if (error) toast.error("Não foi possível excluir.");
     else toast.success("Conversa excluída");
@@ -521,7 +540,7 @@ const ClinicalAgent = () => {
       return;
     }
     await supabase.functions.invoke("clinical-agent-threads", {
-      body: { action: "attach_patient", thread_id: activeThread.id, patient_id },
+      body: { action: "attach_patient", clinic_id: careClinicId, thread_id: activeThread.id, patient_id },
     });
     setActiveThread({ ...activeThread, patient_id });
     setThreads(prev => prev.map(t => t.id === activeThread.id ? { ...t, patient_id } : t));
@@ -536,7 +555,7 @@ const ClinicalAgent = () => {
     setThreads(prev => prev.map(t => t.id === activeThread.id ? { ...t, title: newTitle } : t));
     setEditingTitle(false);
     const { error } = await supabase.functions.invoke("clinical-agent-threads", {
-      body: { action: "rename", thread_id: activeThread.id, title: newTitle },
+      body: { action: "rename", clinic_id: careClinicId, thread_id: activeThread.id, title: newTitle },
     });
     if (error) toast.error("Não foi possível renomear");
   };
@@ -639,7 +658,7 @@ const ClinicalAgent = () => {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
     const { data, error } = await supabase.functions.invoke("clinical-agent-chat", {
-      body: { thread_id: activeThread.id, message: messageForAgent },
+      body: { thread_id: activeThread.id, message: messageForAgent, clinic_id: careClinicId },
     });
 
 
@@ -686,9 +705,10 @@ const ClinicalAgent = () => {
     }, 100);
 
     // Refresh thread title if changed
-    const { data: th } = await supabase.from("agent_threads")
-      .select("id, title, patient_id, archived, updated_at, mentor_mode")
-      .eq("user_id", user!.id).eq("archived", false).order("updated_at", { ascending: false });
+    if (!user) return;
+    const { data: th } = await threadScope(supabase.from("agent_threads")
+      .select("id, title, patient_id, archived, updated_at, mentor_mode"), careClinicId)
+      .eq("user_id", user.id).eq("archived", false).order("updated_at", { ascending: false });
     setThreads(th || []);
     const updated = (th || []).find(t => t.id === activeThread.id);
     if (updated) setActiveThread(updated);
@@ -1425,7 +1445,7 @@ const ClinicalAgent = () => {
         }}
         hasAgentAccess={hasAccess}
         professionalId={professionalId}
-        clinicId={activeClinic?.clinic_id || null}
+        clinicId={careClinicId}
       />
     </div>
   );

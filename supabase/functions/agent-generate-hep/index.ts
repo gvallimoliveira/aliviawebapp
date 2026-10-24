@@ -1,3 +1,4 @@
+import { canUseAgentScope } from "../_shared/agent-care-scope.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
@@ -37,7 +38,7 @@ serve(async (req) => {
       });
     }
 
-    const { thread_id, patient_id, forceRefresh, challenge_level } = await req.json();
+    const { thread_id, patient_id, forceRefresh, challenge_level, clinic_id } = await req.json();
     if (!thread_id || !patient_id) {
       return new Response(JSON.stringify({ error: "missing_params" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -46,11 +47,18 @@ serve(async (req) => {
 
     // Validate thread ownership
     const { data: thread } = await adminClient
-      .from("agent_threads").select("id, user_id, patient_id")
+      .from("agent_threads").select("id, user_id, patient_id, clinic_id")
       .eq("id", thread_id).maybeSingle();
     if (!thread || thread.user_id !== user.id) {
       return new Response(JSON.stringify({ error: "thread_not_found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (thread.patient_id !== patient_id || (thread.clinic_id || null) !== (clinic_id || null) ||
+        !(await canUseAgentScope(adminClient, user.id, thread.clinic_id || null, patient_id))) {
+      return new Response(JSON.stringify({ error: "patient_forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -89,7 +97,7 @@ serve(async (req) => {
     if (patient.clinic_id) {
       assessmentQuery = assessmentQuery.eq("clinic_id", patient.clinic_id);
     } else if (patient.professional_id) {
-      assessmentQuery = assessmentQuery.eq("professional_id", patient.professional_id);
+      assessmentQuery = assessmentQuery.eq("professional_id", patient.professional_id).is("clinic_id", null);
     }
 
     const { data: assessment, error: assessErr } = await assessmentQuery.maybeSingle();
