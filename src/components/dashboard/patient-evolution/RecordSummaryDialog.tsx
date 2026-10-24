@@ -153,7 +153,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
   const hep = latestByCreated(heps);
   const hepLink = hep ? `${window.location.origin}/hep/${hep.token}` : null;
   const hasLoad = load.entries.length > 0 || load.checkins.length > 0 || load.sessions.length > 0;
-  const phase = currentStepsPhase(load.cycles);
+  const phase = currentStepsPhase(load.cycles, load.plan);
   const painfulTests = summaryPainfulTests(assessment).map((id) => { const def = functionalTests.find((ft) => ft.id === id); return def ? i18n.t(def.nameKey) : id; });
   const locale = l === "pt" ? "pt-BR" : l === "es" ? "es-ES" : "en-US";
   const fmt = (d?: string | null) => (d ? new Date(d.length === 10 ? `${d}T12:00:00` : d).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" }) : "");

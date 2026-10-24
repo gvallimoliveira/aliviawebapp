@@ -1,4 +1,5 @@
 # Tasks
+- [ ] Correct Raissa's record-summary discharge display and explain the grouped macrocycle versus canonical STEPS, preserving her saved plan.
 - [x] Show assessment-to-agenda conversion in PRO and clinic Insights, with isolated scope and pt/en/es help; 12 tests pass and authenticated clinic renders correctly, build OK. No clinical data changed.
 - [ ] Verify populated conversion in the real PRO screen: available authenticated account has no professional profile; SQL conversion and isolation tested with disposable local fixtures, not live PRO records.
 - [x] Isolate clinic versus solo patients, agenda, evolutions, health, HEP, export and conversations; server validates agent scope. 77 regressions pass; authenticated clinic thread creation/reload, wrong-solo 403 and cleanup verified. No existing clinical data changed.

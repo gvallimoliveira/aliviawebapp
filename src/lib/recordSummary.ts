@@ -1,5 +1,6 @@
 /** Pure rules for the patient-record "Resumo" dialog. */
 import { isHealthHistoryEmpty, normalizeHealthHistory } from "@/lib/healthHistory";
+import { DISCHARGE_PHASE } from "@/lib/periodization";
 
 /** Saved clinical impressions may be plain text or structured with an overview. */
 export function summaryImpression(raw: unknown): string | null {
@@ -59,11 +60,14 @@ export function latestByCreated<T extends { created_at?: string | null }>(items:
 }
 
 /** Current STEPS macro phase: the professional's explicit mark, else the latest macro block. Never inferred from dates. */
-export function currentStepsPhase(cycles: Array<{ level?: string | null; name?: string | null; goal?: string | null; is_current?: boolean | null; sort_order?: number | null }> | null | undefined): { name: string; goal: string | null } | null {
+export function currentStepsPhase(cycles: Array<{ level?: string | null; name?: string | null; goal?: string | null; is_current?: boolean | null; sort_order?: number | null }> | null | undefined, plan?: { status?: string | null } | null): { name: string; goal: string | null } | null {
+  // Completion is an explicit clinical decision; cleared marks must not fall back to a previous phase.
+  if (plan?.status === "completed") return { name: DISCHARGE_PHASE.name, goal: DISCHARGE_PHASE.goal };
   const macros = (cycles || []).filter((c) => c.level === "macro" && (c.name || "").trim());
   if (!macros.length) return null;
   const current = macros.find((c) => c.is_current) || [...macros].sort((a, b) => (b.sort_order ?? 0) - (a.sort_order ?? 0))[0];
-  return { name: current.name!.trim(), goal: (current.goal || "").trim() || null };
+  const name = current?.name?.trim();
+  return name ? { name, goal: (current.goal || "").trim() || null } : null;
 }
 
 /** Painful functional tests recorded in an assessment (ids; names resolved by the UI). */

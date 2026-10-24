@@ -52,6 +52,16 @@ describe("record summary rules", () => {
     expect(currentStepsPhase([])).toBeNull();
     expect(currentStepsPhase([{ level: "micro", name: "Semana 1" }])).toBeNull();
   });
+  it("discharge overrides the last macro phase after insight completion clears current marks", () => {
+    expect(currentStepsPhase([
+      { level: "macro", name: "Cicatrização tecidual", sort_order: 0, is_current: false },
+      { level: "macro", name: "Hipertrofia e força", sort_order: 1, is_current: false },
+    ], { status: "completed" })?.name).toBe("Alta");
+  });
+  it("completed plans retain discharge even without macro cycles", () => {
+    expect(currentStepsPhase([], { status: "completed" })?.name).toBe("Alta");
+    expect(currentStepsPhase([], { status: "active" })).toBeNull();
+  });
   it("painful tests come only from recorded answers, never invented", () => {
     expect(summaryPainfulTests({ test_results: [
       { testId: "cervical_rotation", painful: true },
