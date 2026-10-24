@@ -368,6 +368,8 @@ export default function PatientDetailView(props: any) {
     address: row.address ?? null,
     sex: row.sex ?? null,
     occupation: row.occupation ?? null,
+    prescribed_weekly_frequency: row.prescribed_weekly_frequency ?? null,
+    referral_source: row.referral_source ?? null,
   }), [patient?.name, patient?.email]);
 
   const openRegistrationModal = React.useCallback(async () => {
