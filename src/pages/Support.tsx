@@ -76,7 +76,7 @@ const proTools = [
   { key: "insights_churn", icon: TrendingUp },
   { key: "insights_flareup", icon: Activity },
   { key: "insights_reassessment", icon: ClipboardList },
-  { key: "insights_steps", icon: Layers },
+  { key: "insights_steps", icon: Layers }, // Localized help includes discharge reflected in the record summary.
   { key: "insights_reactivation", icon: RefreshCw },
   { key: "insights_funnel", icon: BarChart3 },
   { key: "insights_discharge", icon: TrendingUp },

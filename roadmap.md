@@ -1,4 +1,6 @@
 # Tasks
+- [x] Correct discharge in the record summary using saved completed status; 14 tests pass and build OK. Raissa's saved plan has two grouped macro cycles plus terminal discharge, not canonical six-step STEPS; no clinical data changed.
+- [ ] Verify Raissa's summary through her real clinic UI: the requesting user's accessible Minha Clínica list does not include Raissa; database completion and regression tests verified, but her clinic context is unavailable in this session.
 - [x] Show assessment-to-agenda conversion in PRO and clinic Insights, with isolated scope and pt/en/es help; 12 tests pass and authenticated clinic renders correctly, build OK. No clinical data changed.
 - [ ] Verify populated conversion in the real PRO screen: available authenticated account has no professional profile; SQL conversion and isolation tested with disposable local fixtures, not live PRO records.
 - [x] Isolate clinic versus solo patients, agenda, evolutions, health, HEP, export and conversations; server validates agent scope. 77 regressions pass; authenticated clinic thread creation/reload, wrong-solo 403 and cleanup verified. No existing clinical data changed.
