@@ -1,4 +1,6 @@
 {
+  "support.pro.faq.profile_isolation.q": "¿Los datos de la clínica aparecen en mi PRO autónomo?",
+  "support.pro.faq.profile_isolation.a": "No. Pacientes, agenda, evoluciones, programas de ejercicios y conversaciones del agente se separan por el perfil seleccionado. Asignar un paciente de la clínica a un fisioterapeuta no lo convierte en paciente particular. Cambie a la clínica correspondiente para consultar sus registros; se conserva el historial.",
   "support.pro.faq.planned_dose_edit.q": "¿Puedo editar la dosis planificada sin borrar la sesión realizada?",
   "support.pro.faq.planned_dose_edit.a": "Sí. En el microciclo semanal, usa el lápiz de la sesión para ajustar duración y sRPE objetivo. Guardar actualiza el microciclo y la comparación planificada frente a percibida, conservando la carga percibida y los datos de la sesión realizada. La fecha y la categoría no cambian.",
   "support.pro.faq.daily_readiness.q": "¿Se responde la preparación en cada actividad?",

@@ -1062,7 +1062,7 @@ const ClinicalAgent = () => {
                     setActiveThread({ ...activeThread, mentor_mode: next });
                     setThreads(prev => prev.map(t => t.id === activeThread.id ? { ...t, mentor_mode: next } : t));
                     await supabase.functions.invoke("clinical-agent-threads", {
-                      body: { action: "set_mentor_mode", thread_id: activeThread.id, mentor_mode: next },
+                      body: { action: "set_mentor_mode", thread_id: activeThread.id, mentor_mode: next, clinic_id: careClinicId },
                     });
                     toast.success(next ? "🎓 Modo Mentor ativado" : "Modo Mentor desligado");
                   }}
