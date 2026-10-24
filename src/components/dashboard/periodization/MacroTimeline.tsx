@@ -2,17 +2,19 @@ import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarRange, CheckCircle2, History, Loader2 } from "lucide-react";
+import { CalendarRange, CheckCircle2, GraduationCap, History, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
 import type { PeriodizationCycle } from "@/lib/periodizationData";
-import { setCurrentMacroPhase } from "@/lib/periodizationData";
-import { isOptionalMacroPhase } from "@/lib/periodization";
+import { dischargePlan, setCurrentMacroPhase } from "@/lib/periodizationData";
+import { DISCHARGE_PHASE, isOptionalMacroPhase } from "@/lib/periodization";
 
 
 interface Props {
   cycles: PeriodizationCycle[];
   planId?: string | null;
+  /** Status do plano: quando 'completed' (Alta), mostra o encerramento. */
+  planStatus?: string | null;
   onChanged?: () => void;
   readOnly?: boolean;
 }

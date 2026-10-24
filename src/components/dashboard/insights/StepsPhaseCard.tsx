@@ -173,6 +173,15 @@ const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Pr
           )}
         </div>
       )}
+      {phaseTarget && (
+        <PhaseQuickChangeDialog
+          open={phaseTarget !== null}
+          onOpenChange={(open) => { if (!open) setPhaseTarget(null); }}
+          planId={phaseTarget.plan_id}
+          patientName={phaseTarget.patient_name || t("Paciente", "Patient", "Paciente")}
+          onChanged={load}
+        />
+      )}
     </InsightCardShell>
   );
 };
