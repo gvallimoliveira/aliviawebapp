@@ -5678,6 +5678,7 @@ export type Database = {
           patient_name: string
           phase_goal: string
           phase_name: string
+          plan_id: string
           plan_title: string
           sort_order: number
           total_phases: number
