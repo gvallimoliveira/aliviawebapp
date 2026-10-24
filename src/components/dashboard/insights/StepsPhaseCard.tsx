@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Layers, Loader2, X } from "lucide-react";
+import { ArrowRightLeft, Layers, Loader2, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import InsightCardShell from "./InsightCardShell";
+import PhaseQuickChangeDialog from "./PhaseQuickChangeDialog";
 import { useInsightDismissals } from "./useInsightDismissals";
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 interface PhaseRow {
   patient_id: string;
   patient_name: string | null;
+  plan_id: string;
   plan_title: string | null;
   phase_name: string | null;
   phase_goal: string | null;
@@ -33,25 +35,28 @@ const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Pr
   const t = (pt: string, en: string, es?: string) => (lang === "pt" ? pt : lang === "es" ? es ?? en : en);
   const { dismissed, dismiss, restoreAll } = useInsightDismissals("steps_phase", clinicId ?? professionalId, dismissForTeam);
   const visible = useMemo(() => rows.filter((r) => !dismissed.has(r.patient_id)), [rows, dismissed]);
+  const [phaseTarget, setPhaseTarget] = useState<PhaseRow | null>(null);
   const dismissLabel = dismissForTeam
     ? t("Remover para toda a equipe", "Remove for the whole team", "Quitar para todo el equipo")
     : t("Remover da lista", "Remove from list", "Quitar de la lista");
+  const load = useCallback(async () => {
+    if (!clinicId && !professionalId) { setLoading(false); return; }
+    setLoading(true);
+    const { data, error } = await supabase.rpc("get_steps_phase_overview" as any, {
+      _clinic_id: clinicId ?? null,
+      _professional_id: professionalId ?? null,
+    });
+    if (!error && Array.isArray(data)) setRows(data as any);
+    setLoading(false);
+  }, [clinicId, professionalId]);
   useEffect(() => {
     let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.rpc("get_steps_phase_overview" as any, {
-        _clinic_id: clinicId ?? null,
-        _professional_id: professionalId ?? null,
-      });
+    (async () => {
       if (cancelled) return;
-      if (!error && Array.isArray(data)) setRows(data as any);
-      setLoading(false);
-    };
-    if (clinicId || professionalId) load();
-    else setLoading(false);
+      await load();
+    })();
     return () => { cancelled = true; };
-  }, [clinicId, professionalId]);
+  }, [load]);
   const stalled = useMemo(() => visible.filter((r) => r.weeks_in_phase >= 4), [visible]);
 
   const infoContent = (
