@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, type MgmtAppt, type MgmtNote } from "@/lib/managementMetrics";
-import { localISODate } from "@/lib/localDate";
+import { localISODate } from "@/lib/periodization";
 
 export interface ManagementData {
   loading: boolean;
