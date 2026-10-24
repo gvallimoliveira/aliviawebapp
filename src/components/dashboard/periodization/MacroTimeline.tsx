@@ -22,9 +22,10 @@ interface Props {
 const fmt = (iso: string | null) =>
   iso ? new Date(`${iso}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "—";
 
-const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
+const MacroTimeline = ({ cycles, planId, planStatus, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [confirmingDischarge, setConfirmingDischarge] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const railRef = useRef<HTMLDivElement | null>(null);
   const macros = cycles.filter((c) => c.level === "macro");
@@ -54,6 +55,26 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
       toast({ title: "Não foi possível marcar a fase", description: e?.message, variant: "destructive" });
     } finally {
       setSavingId(null);
+    }
+  };
+
+  const discharge = async () => {
+    if (!planId) return;
+    const keepAnchored = anchorScroll(() => cardRef.current, 1500);
+    keepAnchored();
+    setSavingId("discharge");
+    try {
+      await dischargePlan(planId);
+      onChanged?.();
+      toast({
+        title: "Alta registrada",
+        description: "O plano foi encerrado — o paciente sai do acompanhamento de fases em andamento.",
+      });
+    } catch (e: any) {
+      toast({ title: "Não foi possível registrar a alta", description: e?.message, variant: "destructive" });
+    } finally {
+      setSavingId(null);
+      setConfirmingDischarge(false);
     }
   };
 
