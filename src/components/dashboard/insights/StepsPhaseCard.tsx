@@ -66,46 +66,76 @@ const StepsPhaseCard = ({ clinicId, professionalId }: Props) => {
     >
       {loading ? (
         <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-      ) : rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-2">
-          {t(
-            "Nenhum plano de periodização ativo. Monte o macrociclo na seção Periodização do prontuário.",
-            "No active periodization plan. Build the macrocycle in the Periodization section of the record.",
+      ) : visible.length === 0 ? (
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground py-2">
+            {t(
+              "Nenhum plano de periodização ativo. Monte o macrociclo na seção Periodização do prontuário.",
+              "No active periodization plan. Build the macrocycle in the Periodization section of the record.",
+            )}
+          </p>
+          {dismissed.size > 0 && (
+            <button
+              type="button"
+              onClick={restoreAll}
+              className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+            >
+              {t(`${dismissed.size} oculto(s) · restaurar`, `${dismissed.size} hidden · restore`, `${dismissed.size} oculto(s) · restaurar`)}
+            </button>
           )}
-        </p>
+        </div>
       ) : (
-        <div className="space-y-2 max-h-[384px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
-          {rows.map((r) => {
-            const pct = r.total_phases > 0 ? Math.round(((r.sort_order + 1) / r.total_phases) * 100) : 0;
-            const isStalled = r.weeks_in_phase >= 4;
-            return (
-              <div key={r.patient_id} className="p-3 rounded-lg border border-border/60 bg-background space-y-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium truncate flex-1">{r.patient_name || t("Paciente", "Patient")}</p>
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] shrink-0 ${
-                      isStalled
-                        ? "bg-amber-500/10 text-amber-700 border-amber-500/30"
-                        : "bg-emerald-500/10 text-emerald-700 border-emerald-500/30"
-                    }`}
-                  >
-                    {r.weeks_in_phase} {t("sem", "w", "sem")}
-                  </Badge>
+        <div className="space-y-2">
+          <div className="space-y-2 max-h-[384px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
+            {visible.map((r) => {
+              const pct = r.total_phases > 0 ? Math.round(((r.sort_order + 1) / r.total_phases) * 100) : 0;
+              const isStalled = r.weeks_in_phase >= 4;
+              return (
+                <div key={r.patient_id} className="p-3 rounded-lg border border-border/60 bg-background space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium truncate flex-1">{r.patient_name || t("Paciente", "Patient")}</p>
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] shrink-0 ${
+                        isStalled
+                          ? "bg-amber-500/10 text-amber-700 border-amber-500/30"
+                          : "bg-emerald-500/10 text-emerald-700 border-emerald-500/30"
+                      }`}
+                    >
+                      {r.weeks_in_phase} {t("sem", "w", "sem")}
+                    </Badge>
+                    <button
+                      type="button"
+                      onClick={() => dismiss(r.patient_id)}
+                      aria-label={t("Remover da lista", "Remove from list", "Quitar de la lista")}
+                      className="shrink-0 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {r.phase_name || "—"}
+                    {r.phase_goal ? ` · ${r.phase_goal}` : ""}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Progress value={pct} className="h-1.5 flex-1" />
+                    <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+                      {t("fase", "phase", "fase")} {r.sort_order + 1}/{r.total_phases}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  {r.phase_name || "—"}
-                  {r.phase_goal ? ` · ${r.phase_goal}` : ""}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Progress value={pct} className="h-1.5 flex-1" />
-                  <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                    {t("fase", "phase", "fase")} {r.sort_order + 1}/{r.total_phases}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          {dismissed.size > 0 && (
+            <button
+              type="button"
+              onClick={restoreAll}
+              className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+            >
+              {t(`${dismissed.size} oculto(s) · restaurar`, `${dismissed.size} hidden · restore`, `${dismissed.size} oculto(s) · restaurar`)}
+            </button>
+          )}
         </div>
       )}
     </InsightCardShell>
