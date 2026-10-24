@@ -78,6 +78,7 @@ const proTools = [
   { key: "insights_reassessment", icon: ClipboardList },
   { key: "insights_steps", icon: Layers },
   { key: "insights_reactivation", icon: RefreshCw },
+  { key: "insights_funnel", icon: BarChart3 },
   { key: "insights_discharge", icon: TrendingUp },
   { key: "insights_adherence", icon: Activity },
   { key: "insights_benchmark", icon: Gauge },

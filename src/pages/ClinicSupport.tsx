@@ -311,8 +311,8 @@ const categories: ToolCategory[] = [
       {
         key: "insights_funnel",
         icon: Filter,
-        title: "Funil avaliação → tratamento",
-        desc: "Últimos 90 dias: avaliações concluídas → pacientes que iniciaram tratamento → engajados (4+ sessões) → engajados há 30+ dias sem atendimento. Revela onde a clínica perde pacientes no caminho.",
+        title: "Conversão avaliação → agenda",
+        desc: "Novos pacientes avaliados nos últimos 90 dias, com e sem atendimento confirmado na agenda desde a avaliação, e quantos já compareceram. Reavaliações, faltas, cancelamentos, compromissos e citas de avaliação não contam como conversão. Disponível na clínica e no PRO, com dados separados e sem créditos de IA.",
       },
       {
         key: "insights_concentration",

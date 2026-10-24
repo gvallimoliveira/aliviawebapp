@@ -69,12 +69,14 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false }: Props
       <OccupancyVsNoShowCard clinicId={clinicId} professionalId={professionalId} />
       <ReactivationCard clinicId={clinicId} professionalId={professionalId} />
 
-      {/* Clínica: equipe, funil, concentração, benchmark */}
+      {/* Conversão — clínica e PRO autônomo, sem duplicar o card. */}
+      {(clinicId || professionalId) && <ClinicFunnelCard key={clinicId ?? professionalId} clinicId={clinicId} professionalId={professionalId} />}
+
+      {/* Clínica: equipe, concentração, benchmark */}
       {fullClinicMode && clinicId && (
         <>
           <TherapistStatsCard clinicId={clinicId} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ClinicFunnelCard clinicId={clinicId} />
             <ConcentrationCard clinicId={clinicId} />
           </div>
           <BenchmarkCard clinicId={clinicId} />
