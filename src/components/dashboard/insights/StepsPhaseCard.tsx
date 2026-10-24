@@ -25,14 +25,17 @@ interface PhaseRow {
   total_phases: number;
 }
 
-const StepsPhaseCard = ({ clinicId, professionalId }: Props) => {
+const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Props) => {
   const [rows, setRows] = useState<PhaseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const { language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
   const t = (pt: string, en: string, es?: string) => (lang === "pt" ? pt : lang === "es" ? es ?? en : en);
-  const { dismissed, dismiss, restoreAll } = useInsightDismissals("steps_phase", clinicId ?? professionalId);
+  const { dismissed, dismiss, restoreAll } = useInsightDismissals("steps_phase", clinicId ?? professionalId, dismissForTeam);
   const visible = useMemo(() => rows.filter((r) => !dismissed.has(r.patient_id)), [rows, dismissed]);
+  const dismissLabel = dismissForTeam
+    ? t("Remover para toda a equipe", "Remove for the whole team", "Quitar para todo el equipo")
+    : t("Remover da lista", "Remove from list", "Quitar de la lista");
   useEffect(() => {
     let cancelled = false;
     const load = async () => {

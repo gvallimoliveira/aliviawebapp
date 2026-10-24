@@ -125,7 +125,8 @@ const ReassessmentDueCard = ({ clinicId, professionalId, dismissForTeam = false 
                 <button
                   type="button"
                   onClick={() => dismiss(r.patient_id)}
-                  aria-label={t("Remover da lista", "Remove from list", "Quitar de la lista")}
+                  aria-label={dismissLabel}
+                  title={dismissLabel}
                   className="shrink-0 p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 >
                   <X className="h-3.5 w-3.5" />
