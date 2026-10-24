@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Layers, Loader2 } from "lucide-react";
+import { Layers, Loader2, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import InsightCardShell from "./InsightCardShell";
+import { useInsightDismissals } from "./useInsightDismissals";
 
 interface Props {
   clinicId?: string;

@@ -27,6 +27,8 @@ const ReassessmentDueCard = ({ clinicId, professionalId }: Props) => {
   const { language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
   const t = (pt: string, en: string, es?: string) => (lang === "pt" ? pt : lang === "es" ? es ?? en : en);
+  const { dismissed, dismiss, restoreAll } = useInsightDismissals("reassessment", clinicId ?? professionalId);
+  const visible = rows.filter((r) => !dismissed.has(r.patient_id));
 
   useEffect(() => {
     let cancelled = false;
