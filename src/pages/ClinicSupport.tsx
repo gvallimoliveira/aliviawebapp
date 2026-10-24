@@ -6,7 +6,7 @@ import {
   ClipboardList, AlertTriangle, FileText, Image as ImageIcon, Brain,
   MessageCircle, Video, Bell, BookOpen, TrendingUp, Shield, CreditCard,
   UserCog, Stethoscope, FileCheck, Sparkles, Heart, Layers, Mic, Archive,
-  Lightbulb, GraduationCap, Activity,
+  Lightbulb, GraduationCap, Activity, Filter, PieChart,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -275,8 +275,50 @@ const categories: ToolCategory[] = [
       {
         key: "insights_churn",
         icon: AlertTriangle,
-        title: "Predição de evasão (churn)",
-        desc: "O sistema cruza faltas, dor estagnada, baixa adesão a exercícios e silêncio no chat para sinalizar pacientes em risco de abandonar o tratamento — com sugestão de ação imediata para a equipe.",
+        title: "Abandono silencioso (risco de evasão)",
+        desc: "Cruza faltas recentes, ausência de próximo agendamento, dor estagnada e silêncio digital — dias sem diário de dor, sem check-in de prontidão e sem mensagem escrita pelo paciente. O silêncio total pesa mais no score porque costuma preceder o abandono. Cada paciente mostra os motivos e há quantos dias deu o último sinal de atividade.",
+      },
+      {
+        key: "insights_flareup",
+        icon: Activity,
+        title: "Flare-up e sobrecarga",
+        desc: "Cruza o diário de dor com a carga de treino: flare-up é o último registro de dor (em até 3 dias) pelo menos 2 pontos acima da média de 30 dias. O card também mostra ACWR (ideal 0,8–1,3) e quedas de prontidão; pico de dor com ACWR acima de 1,3 eleva o caso a risco alto.",
+      },
+      {
+        key: "insights_reassessment",
+        icon: FileCheck,
+        title: "Reavaliação programada",
+        desc: "Lista pacientes há 28+ dias sem avaliação concluída ou com 8+ evoluções desde a última — reavaliar documenta progresso e atualiza o plano.",
+      },
+      {
+        key: "insights_steps",
+        icon: TrendingUp,
+        title: "Fase do tratamento (STEPS)",
+        desc: "Mostra a fase atual do macrociclo de cada plano ativo e há quantas semanas o paciente está nela. Quem passa de 4 semanas na mesma fase aparece destacado para revisão dos critérios de saída.",
+      },
+      {
+        key: "insights_reactivation",
+        icon: Heart,
+        title: "Reativação de inativos",
+        desc: "Ex-pacientes com 2+ atendimentos, último entre 30 e 180 dias atrás e sem retorno agendado — contatos já inativos que valem uma abordagem de reconquista, com atalhos para agendar ou mandar mensagem.",
+      },
+      {
+        key: "insights_team",
+        icon: Users,
+        title: "Retenção por profissional",
+        desc: "Para cada profissional ativo da equipe: pacientes únicos atendidos, atendimentos concluídos e taxa de faltas nos últimos 30 dias — mostra quem segura a carteira e quem precisa de apoio.",
+      },
+      {
+        key: "insights_funnel",
+        icon: Filter,
+        title: "Funil avaliação → tratamento",
+        desc: "Últimos 90 dias: avaliações concluídas → pacientes que iniciaram tratamento → engajados (4+ sessões) → engajados há 30+ dias sem atendimento. Revela onde a clínica perde pacientes no caminho.",
+      },
+      {
+        key: "insights_concentration",
+        icon: PieChart,
+        title: "Concentração da carteira",
+        desc: "Participação dos 5 pacientes mais frequentes no total de atendimentos (90 dias). Acima de 60% indica dependência alta de poucos pacientes — diversificar reduz o risco de receita.",
       },
       {
         key: "insights_discharge",

@@ -24,6 +24,7 @@ interface LoadAlertRow {
   readiness_baseline: number | null;
   last_srpe_date: string | null;
   last_checkin_date: string | null;
+  pain_spike: boolean;
   level: "ok" | "caution" | "danger" | string;
   reasons: string[];
 }
@@ -98,8 +99,8 @@ const LoadReadinessCard = ({ clinicId, professionalId }: Props) => {
         <p className="font-semibold mb-1">{t("Como é calculado", "How it's calculated")}</p>
         <p className="text-xs text-muted-foreground leading-relaxed">
           {t(
-            "Carga da sessão = duração (min) × esforço percebido (0–10). Carga aguda = soma dos últimos 7 dias; carga crônica = média semanal dos últimos 28 dias. ACWR = aguda ÷ crônica. Faixa ideal: 0,8–1,3. A prontidão (0–100) vem dos check-ins diários e serve para detectar tolerância à carga — não entra no ACWR.",
-            "Session load = duration (min) × perceived effort (0–10). Acute load = last 7 days; chronic load = weekly average of last 28 days. ACWR = acute ÷ chronic. Ideal range: 0.8–1.3. Readiness (0–100) comes from daily check-ins and flags load tolerance — it does not feed the ACWR.",
+            "Carga da sessão = duração (min) × esforço percebido (0–10). Carga aguda = soma dos últimos 7 dias; carga crônica = média semanal dos últimos 28 dias. ACWR = aguda ÷ crônica. Faixa ideal: 0,8–1,3. A prontidão (0–100) vem dos check-ins diários e serve para detectar tolerância à carga — não entra no ACWR. Flare-up: último registro do diário de dor (em até 3 dias) pelo menos 2 pontos acima da média dos últimos 30 dias, com 3+ registros. Pico de dor combinado com ACWR acima de 1,3 eleva o caso a risco alto.",
+            "Session load = duration (min) × perceived effort (0–10). Acute load = last 7 days; chronic load = weekly average of last 28 days. ACWR = acute ÷ chronic. Ideal range: 0.8–1.3. Readiness (0–100) comes from daily check-ins and flags load tolerance — it does not feed the ACWR. Flare-up: latest pain diary entry (within 3 days) at least 2 points above the 30-day average, with 3+ entries. A pain spike combined with ACWR above 1.3 raises the case to high risk.",
           )}
         </p>
       </div>
@@ -142,10 +143,10 @@ const LoadReadinessCard = ({ clinicId, professionalId }: Props) => {
     <InsightCardShell
       id="load-readiness"
       icon={<Activity className="h-4 w-4 text-primary" />}
-      title={t("Carga e prontidão", "Load & readiness")}
+      title={t("Flare-up e sobrecarga", "Flare-up & overload", "Brote y sobrecarga")}
       description={t(
-        "Pacientes com carga fora da faixa segura ou queda de prontidão.",
-        "Patients with load outside the safe range or dropping readiness.",
+        "Picos de dor no diário, carga fora da faixa segura ou queda de prontidão.",
+        "Pain diary spikes, load outside the safe range or dropping readiness.",
       )}
       rightSlot={
         filtered.length > 0 ? (
@@ -183,13 +184,20 @@ const LoadReadinessCard = ({ clinicId, professionalId }: Props) => {
                     {t("Último check-in", "Last check-in")}: {fmtDate(r.last_checkin_date)}
                   </p>
                 </div>
-                <Badge variant="outline" className={`${levelStyle(r.level)} text-xs shrink-0`}>
-                  {r.level === "danger"
-                    ? t("Risco alto", "High risk")
-                    : r.level === "caution"
-                    ? t("Atenção", "Caution")
-                    : t("Seguro", "Safe")}
-                </Badge>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <Badge variant="outline" className={`${levelStyle(r.level)} text-xs`}>
+                    {r.level === "danger"
+                      ? t("Risco alto", "High risk")
+                      : r.level === "caution"
+                      ? t("Atenção", "Caution")
+                      : t("Seguro", "Safe")}
+                  </Badge>
+                  {r.pain_spike && (
+                    <Badge variant="outline" className="text-[10px] bg-rose-500/10 text-rose-700 border-rose-500/30">
+                      {t("Flare-up de dor", "Pain flare-up", "Brote de dolor")}
+                    </Badge>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-center">

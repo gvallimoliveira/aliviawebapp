@@ -162,6 +162,27 @@
       "when": 1792808410823,
       "tag": "0022_validate_solo_conversation_links",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792810129464,
+      "tag": "0023_insight_churn_silent_abandonment",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792810167420,
+      "tag": "0024_insight_load_flareup",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792810222220,
+      "tag": "0025_insight_new_indicators",
+      "breakpoints": true
     }
   ]
 }

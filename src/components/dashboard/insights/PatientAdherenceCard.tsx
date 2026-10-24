@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import InsightCardShell from "./InsightCardShell";
 import { useInsightPrefs } from "./useInsightPreferences";
 
-interface Props { clinicId: string; }
+interface Props { clinicId?: string; professionalId?: string; }
 
 interface AdherenceRow {
   patient_email: string;
@@ -35,7 +35,7 @@ const DEFAULTS = {
   wMessages: 10,
 };
 
-const PatientAdherenceCard = ({ clinicId }: Props) => {
+const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
   const [rawRows, setRawRows] = useState<AdherenceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const { language } = useLanguage();
@@ -46,13 +46,16 @@ const PatientAdherenceCard = ({ clinicId }: Props) => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase.rpc("get_patient_adherence_scores" as any, { _clinic_id: clinicId });
+      const { data, error } = await supabase.rpc("get_patient_adherence_scores" as any, {
+        _clinic_id: clinicId ?? null,
+        _professional_id: professionalId ?? null,
+      });
       if (cancelled) return;
       if (!error && Array.isArray(data)) setRawRows(data as any);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [clinicId]);
+  }, [clinicId, professionalId]);
 
   // Recompute composite score using user weights (normalized to 100).
   const rows = useMemo(() => {

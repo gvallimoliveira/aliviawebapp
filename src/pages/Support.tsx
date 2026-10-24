@@ -74,6 +74,10 @@ const proTools = [
   { key: "data_export", icon: Archive },
   { key: "data_import", icon: Archive }, // Combined-category review, batching and honest linkage limits are localized together.
   { key: "insights_churn", icon: TrendingUp },
+  { key: "insights_flareup", icon: Activity },
+  { key: "insights_reassessment", icon: ClipboardList },
+  { key: "insights_steps", icon: Layers },
+  { key: "insights_reactivation", icon: RefreshCw },
   { key: "insights_discharge", icon: TrendingUp },
   { key: "insights_adherence", icon: Activity },
   { key: "insights_benchmark", icon: Gauge },

@@ -23,6 +23,7 @@ interface ChurnRow {
   reasons: string[];
   last_session_date: string | null;
   next_session_date: string | null;
+  silent_days: number | null;
 }
 
 const scoreColor = (score: number) => {
@@ -75,8 +76,8 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
           {lang === "pt"
-            ? "O score (0–100) combina sinais de risco: número de faltas recentes, dias de silêncio (sem mensagens/diário), evolução estagnada da dor e ausência de próximo agendamento. Quanto mais sinais simultâneos, maior o score."
-            : "Score (0–100) combines risk signals: recent no-shows, days of silence, stagnant pain evolution and no upcoming appointment. The more signals, the higher the score."}
+            ? "O score (0–100) combina: faltas recentes, ausência de próximo agendamento, dor estagnada e silêncio digital — dias sem diário de dor, sem check-in de prontidão e sem mensagem escrita pelo paciente. O silêncio total pesa mais porque costuma preceder o abandono."
+            : "Score (0–100) combines: recent no-shows, no upcoming appointment, stagnant pain and digital silence — days without pain diary, readiness check-in or a message written by the patient. Full silence weighs more because it usually precedes dropout."}
         </p>
       </div>
       <div className="border-t pt-3 space-y-3">
@@ -150,13 +151,13 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
       id="churn"
       className="border-red-500/20"
       icon={<AlertTriangle className="h-4 w-4 text-red-600" />}
-      title={lang === "pt" ? "Pacientes em risco de evasão" : lang === "es" ? "Pacientes en riesgo de evasión" : "Patients at churn risk"}
+      title={lang === "pt" ? "Abandono silencioso" : lang === "es" ? "Abandono silencioso" : "Silent dropout"}
       description={
         lang === "pt"
-          ? "Pacientes que combinam ausência, faltas, dor estagnada ou silêncio prolongado."
+          ? "Pacientes esfriando: sem agendar, faltando, com dor estagnada ou em silêncio digital (sem diário, check-in ou mensagem)."
           : lang === "es"
-          ? "Pacientes que combinan ausencias, faltas, dolor estancado o silencio prolongado."
-          : "Patients combining absence, no-shows, stagnant pain or long silence."
+          ? "Pacientes enfriándose: sin agendar, faltando, con dolor estancado o en silencio digital (sin diario, check-in o mensaje)."
+          : "Patients cooling off: not booking, missing sessions, stagnant pain or digitally silent (no diary, check-in or message)."
       }
       rightSlot={
         !loading && filtered.length > 0 ? (
@@ -183,6 +184,15 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
                 <p className="text-xs text-muted-foreground truncate">
                   {(r.reasons || []).slice(0, 2).join(" · ") || "—"}
                 </p>
+                {typeof r.silent_days === "number" && r.silent_days > 0 && r.silent_days < 9999 && (
+                  <p className="text-[10px] text-muted-foreground/80 mt-0.5">
+                    {lang === "pt"
+                      ? `Último sinal de atividade há ${r.silent_days} dia(s)`
+                      : lang === "es"
+                      ? `Última señal de actividad hace ${r.silent_days} día(s)`
+                      : `Last sign of activity ${r.silent_days} day(s) ago`}
+                  </p>
+                )}
               </div>
               <div className="flex gap-1 shrink-0">
                 <Button

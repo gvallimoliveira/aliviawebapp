@@ -5297,6 +5297,15 @@ export type Database = {
           small_count: number
         }[]
       }
+      get_clinic_funnel: {
+        Args: { _clinic_id: string }
+        Returns: {
+          assessments_count: number
+          engaged_count: number
+          inactive_after_treatment: number
+          started_count: number
+        }[]
+      }
       get_clinic_kpis: {
         Args: { _clinic_id: string }
         Returns: {
@@ -5326,9 +5335,28 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_clinic_patient_concentration: {
+        Args: { _clinic_id: string }
+        Returns: {
+          top5_sessions: number
+          top5_share_pct: number
+          total_patients: number
+          total_sessions: number
+        }[]
+      }
       get_clinic_role: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["clinic_role"]
+      }
+      get_clinic_therapist_stats: {
+        Args: { _clinic_id: string }
+        Returns: {
+          active_patients: number
+          completed_30d: number
+          noshow_rate_30d: number
+          professional_id: string
+          professional_name: string
+        }[]
       }
       get_clinics_public: {
         Args: { _ids: string[] }
@@ -5465,7 +5493,7 @@ export type Database = {
         }[]
       }
       get_patient_adherence_scores: {
-        Args: { _clinic_id: string }
+        Args: { _clinic_id?: string; _professional_id?: string }
         Returns: {
           attendance_pct: number
           diary_pct: number
@@ -5496,6 +5524,7 @@ export type Database = {
           professional_id: string
           reasons: Json
           score: number
+          silent_days: number
         }[]
       }
       get_patient_load_alerts: {
@@ -5507,6 +5536,7 @@ export type Database = {
           last_checkin_date: string
           last_srpe_date: string
           level: string
+          pain_spike: boolean
           patient_id: string
           patient_name: string
           readiness_baseline: number
@@ -5572,6 +5602,38 @@ export type Database = {
           student_institution: string
           student_period: string
           user_id: string
+        }[]
+      }
+      get_reactivation_candidates: {
+        Args: { _clinic_id?: string; _professional_id?: string }
+        Returns: {
+          days_inactive: number
+          last_session_date: string
+          patient_email: string
+          patient_name: string
+        }[]
+      }
+      get_reassessment_due: {
+        Args: { _clinic_id?: string; _professional_id?: string }
+        Returns: {
+          days_since: number
+          last_assessment_date: string
+          patient_id: string
+          patient_name: string
+          sessions_since: number
+        }[]
+      }
+      get_steps_phase_overview: {
+        Args: { _clinic_id?: string; _professional_id?: string }
+        Returns: {
+          patient_id: string
+          patient_name: string
+          phase_goal: string
+          phase_name: string
+          plan_title: string
+          sort_order: number
+          total_phases: number
+          weeks_in_phase: number
         }[]
       }
       get_support_tickets_admin: {
