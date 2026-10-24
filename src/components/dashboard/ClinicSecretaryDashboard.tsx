@@ -422,6 +422,7 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
       {(filteredAssessments.length > 0 || therapists.length > 0 || activeClinic?.clinic_id) && (
         <DashboardErrorBoundary>
           <PatientEvolutionDashboard
+            key={activeClinic?.clinic_id}
             assessments={filteredAssessments}
             professionalId={selectedTherapistId === "all" || selectedTherapistId === "unassigned" ? (therapists[0]?.id || "") : selectedTherapistId}
             onDownloadPdf={handleDownloadPdf}

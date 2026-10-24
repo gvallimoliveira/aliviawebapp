@@ -148,6 +148,20 @@
       "when": 1792787996679,
       "tag": "0020_appointment_recurrence",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792808385095,
+      "tag": "0021_isolate_solo_contacts_and_clinic_conversations",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792808410823,
+      "tag": "0022_validate_solo_conversation_links",
+      "breakpoints": true
     }
   ]
 }

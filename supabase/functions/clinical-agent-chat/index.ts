@@ -1,3 +1,4 @@
+import { canUseAgentScope } from "../_shared/agent-care-scope.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { canaryCredits } from "../_shared/ai-credits.ts";
@@ -165,7 +166,7 @@ async function loadPatientContext(adminClient: any, patientId: string, userId: s
     .eq("user_id", userId)
     .maybeSingle();
 
-  const { data: assessments } = await adminClient
+  let assessmentQuery = adminClient
     .from("assessments")
     .select("id, created_at, pain_score, pain_regions, pain_mechanism, pain_extent, anamnesis_data, test_results, diagnosis, final_hypothesis, treatment_plan, professional_id, clinic_id, patient_name, patient_email")
     .or([
@@ -174,12 +175,16 @@ async function loadPatientContext(adminClient: any, patientId: string, userId: s
     ].filter(Boolean).join(","))
     .order("created_at", { ascending: false })
     .limit(5);
+  assessmentQuery = patient.clinic_id
+    ? assessmentQuery.eq("clinic_id", patient.clinic_id)
+    : assessmentQuery.is("clinic_id", null).eq("professional_id", patient.professional_id);
+  const { data: assessments } = await assessmentQuery;
 
   const scopedAssessments = (assessments || []).filter((a: any) => {
     if (patient.clinic_id) return a.clinic_id === patient.clinic_id;
-    if (patient.professional_id) return a.professional_id === patient.professional_id;
+    if (patient.professional_id) return !a.clinic_id && a.professional_id === patient.professional_id;
     if (professional?.id) return a.professional_id === professional.id;
-    return true;
+    return false;
   });
 
   const { data: heps } = await adminClient
@@ -738,12 +743,19 @@ Deno.serve(async (req) => {
     // Validate thread ownership + load context
     const { data: thread } = await adminClient
       .from("agent_threads")
-      .select("id, user_id, patient_id, title, mentor_mode")
+      .select("id, user_id, patient_id, clinic_id, title, mentor_mode")
       .eq("id", thread_id)
       .maybeSingle();
     if (!thread || thread.user_id !== user.id) {
       return new Response(JSON.stringify({ error: "Thread not found" }), {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if ((thread.clinic_id || null) !== (body.clinic_id || null) ||
+        !(await canUseAgentScope(adminClient, user.id, thread.clinic_id || null, thread.patient_id))) {
+      return new Response(JSON.stringify({ error: "thread_scope_forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -871,6 +883,7 @@ Deno.serve(async (req) => {
         full_name: sc.full_name,
         birth_date: birthDate,
         professional_id: pro?.id || null,
+        clinic_id: thread.clinic_id || null,
         is_study_case: true,
         notes: teachingBlock,
       } as any).select("id").maybeSingle();

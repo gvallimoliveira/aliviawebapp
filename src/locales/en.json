@@ -1,4 +1,6 @@
 {
+  "support.pro.faq.profile_isolation.q": "Does clinic data appear in my independent PRO profile?",
+  "support.pro.faq.profile_isolation.a": "No. Patients, appointments, session notes, exercise programs and agent conversations are separated by the selected profile. Assigning a clinic patient to a therapist does not turn them into a private patient. Switch to the relevant clinic to consult its records; history is preserved.",
   "support.pro.faq.planned_dose_edit.q": "Can I edit a planned dose without deleting the performed session?",
   "support.pro.faq.planned_dose_edit.a": "Yes. In the weekly microcycle, use the session pencil to edit duration and target sRPE. Saving refreshes the microcycle and planned versus perceived comparison while preserving perceived load and performed-session data. The session date and track stay unchanged.",
   "support.pro.faq.daily_readiness.q": "Is readiness reported for every activity?",

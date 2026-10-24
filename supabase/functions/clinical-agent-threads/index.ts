@@ -1,3 +1,4 @@
+import { canUseAgentScope } from "../_shared/agent-care-scope.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
@@ -52,30 +53,23 @@ serve(async (req) => {
       });
     }
 
-    async function userOwnsPatient(patient_id: string): Promise<boolean> {
-      const { data: pat } = await adminClient
-        .from("patients")
-        .select("professional_id, clinic_id")
-        .eq("id", patient_id)
-        .maybeSingle();
-      if (!pat) return false;
-      if (pat.professional_id) {
-        const { data: pro } = await adminClient
-          .from("professionals").select("user_id").eq("id", pat.professional_id).maybeSingle();
-        if (pro?.user_id === user.id) return true;
-      }
-      if (pat.clinic_id) {
-        const { data: mem } = await adminClient
-          .from("clinic_members").select("id")
-          .eq("clinic_id", pat.clinic_id).eq("user_id", user.id).maybeSingle();
-        if (mem) return true;
-      }
-      return false;
+    const clinicId = body.clinic_id || null;
+    const forbidden = (error: string) => new Response(JSON.stringify({ error }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+    if (!(await canUseAgentScope(adminClient, user.id, clinicId))) return forbidden("clinic_forbidden");
+    let threadClinicId: string | null = clinicId;
+    if (action !== "create") {
+      const { data: thread, error } = await adminClient.from("agent_threads")
+        .select("id, clinic_id").eq("id", body.thread_id).eq("user_id", user.id).maybeSingle();
+      if (error) throw error;
+      if (!thread || (thread.clinic_id || null) !== clinicId) return forbidden("thread_scope_forbidden");
+      threadClinicId = thread.clinic_id || null;
     }
 
     if (action === "create") {
       const { patient_id, clinic_id, title } = body;
-      if (patient_id && !(await userOwnsPatient(patient_id))) {
+      if (patient_id && !(await canUseAgentScope(adminClient, user.id, threadClinicId, patient_id))) {
         return new Response(JSON.stringify({ error: "patient_forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -137,7 +131,7 @@ serve(async (req) => {
 
     if (action === "attach_patient") {
       const { thread_id, patient_id } = body;
-      if (patient_id && !(await userOwnsPatient(patient_id))) {
+      if (patient_id && !(await canUseAgentScope(adminClient, user.id, threadClinicId, patient_id))) {
         return new Response(JSON.stringify({ error: "patient_forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

@@ -261,7 +261,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, 
   useEffect(() => {
     if (!user) return;
     fetchConversations();
-  }, [user, mode, professionalId, clinicId, staffUserId]);
+  }, [user?.id, mode, professionalId, clinicId, staffUserId]);
 
   useEffect(() => {
     if (initialConversationId && conversations.length > 0) {
@@ -324,6 +324,8 @@ const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, 
       .maybeSingle();
 
     if (!conv) return false;
+    if (mode !== "patient" && (conv.clinic_id || null) !== (clinicId || null)) return false;
+    if (mode === "professional" && conv.professional_id !== professionalId) return false;
 
     let otherName = mode === "patient" ? "Profissional" : "Paciente";
 
@@ -464,6 +466,7 @@ const ConversationList = ({ mode, professionalId, clinicId = null, staffUserId, 
       if (clinicId) query = query.eq("clinic_id", clinicId);
     } else if (professionalId) {
       query = query.eq("professional_id", professionalId).eq("hidden_by_professional", false);
+      query = clinicId ? query.eq("clinic_id", clinicId) : query.is("clinic_id", null);
     }
     const { data: convs } = await query.order("updated_at", { ascending: false });
 

@@ -351,7 +351,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     if (clinicId) {
       query = query.eq("clinic_id", clinicId);
     } else {
-      query = query.eq("professional_id", professionalId);
+      query = query.eq("professional_id", professionalId).is("clinic_id", null);
     }
     const { data } = await query;
     setAppointments((data as Appointment[]) || []);
@@ -377,7 +377,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         .gte("created_at", startISO)
         .lte("created_at", endISO);
       if (clinicId) aq = aq.eq("clinic_id", clinicId);
-      else if (scopedProfessionalId) aq = aq.eq("professional_id", scopedProfessionalId);
+      else if (scopedProfessionalId) aq = aq.eq("professional_id", scopedProfessionalId).is("clinic_id", null);
       const { data: assess } = await aq;
       const map = new Map<string, EvolutionInfo>();
       const assessmentById = new Map<string, any>();
@@ -400,7 +400,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         .in("patient_email", emails);
 
       if (clinicId) noteAssessmentQuery = noteAssessmentQuery.eq("clinic_id", clinicId);
-      else if (scopedProfessionalId) noteAssessmentQuery = noteAssessmentQuery.eq("professional_id", scopedProfessionalId);
+      else if (scopedProfessionalId) noteAssessmentQuery = noteAssessmentQuery.eq("professional_id", scopedProfessionalId).is("clinic_id", null);
 
       const { data: noteAssessments } = await noteAssessmentQuery;
       (noteAssessments || []).forEach((r: any) => {
@@ -502,17 +502,17 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       } else if (professionalId) {
         const { data: patientsData } = await (supabase.from("patients" as any) as any)
           .select("full_name, email")
-          .eq("professional_id", professionalId);
+          .eq("professional_id", professionalId).is("clinic_id", null);
         (patientsData as any[] | null)?.forEach((p) => addEntry(p.full_name, p.email));
         const { data: assessData } = await supabase
           .from("assessments")
           .select("patient_name, patient_email")
-          .eq("professional_id", professionalId)
+          .eq("professional_id", professionalId).is("clinic_id", null)
           .not("patient_email", "is", null);
         assessData?.forEach((a) => addEntry(a.patient_name, a.patient_email));
         const { data: aptData } = await (supabase.from("professional_appointments" as any) as any)
           .select("patient_name, patient_email")
-          .eq("professional_id", professionalId)
+          .eq("professional_id", professionalId).is("clinic_id", null)
           .not("patient_email", "is", null);
         (aptData as any[] | null)?.forEach((a) => addEntry(a.patient_name, a.patient_email));
       }
@@ -609,7 +609,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             let created = 0; let conflicts: string[] = [];
             if (all.length) {
               let q = tbl().select("appointment_date, appointment_time").in("appointment_date", all).neq("status", "cancelled");
-              if (clinicId) q = q.eq("clinic_id", clinicId); else q = q.eq("professional_id", effectiveProfId);
+              if (clinicId) q = q.eq("clinic_id", clinicId); else q = q.eq("professional_id", effectiveProfId).is("clinic_id", null);
               if (clinicId && effectiveProfId) q = q.eq("professional_id", effectiveProfId);
               const { data: taken } = await q;
               const split = splitConflicts(all, payload.appointment_time, taken || []);
@@ -633,7 +633,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         if (!isCommitmentPayload && (trimmedEmail || payload.patient_name)) {
           let matchQuery = (supabase.from("patients" as any) as any).select("id");
           if (clinicId) matchQuery = matchQuery.eq("clinic_id", clinicId);
-          else if (effectiveProfId) matchQuery = matchQuery.eq("professional_id", effectiveProfId);
+          else if (effectiveProfId) matchQuery = matchQuery.eq("professional_id", effectiveProfId).is("clinic_id", null);
           if (trimmedEmail) matchQuery = matchQuery.eq("email", trimmedEmail);
           else matchQuery = matchQuery.eq("full_name", payload.patient_name);
           const { data: existing } = await matchQuery.limit(1);
@@ -651,7 +651,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           let q = (supabase.from("professional_appointments" as any) as any)
             .select("appointment_date, appointment_time")
             .in("appointment_date", all).neq("status", "cancelled");
-          if (clinicId) q = q.eq("clinic_id", clinicId); else q = q.eq("professional_id", effectiveProfId);
+          if (clinicId) q = q.eq("clinic_id", clinicId); else q = q.eq("professional_id", effectiveProfId).is("clinic_id", null);
           if (clinicId && effectiveProfId) q = q.eq("professional_id", effectiveProfId);
           const { data: taken } = await q;
           const { free, conflicts } = splitConflicts(all, payload.appointment_time, taken || []);

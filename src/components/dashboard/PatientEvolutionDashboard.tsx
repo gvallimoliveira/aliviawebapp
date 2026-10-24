@@ -1,3 +1,4 @@
+import { careScope } from "@/lib/careScope";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import SessionNotesSection from "./SessionNotesSection";
 import PatientListView from "./patient-evolution/PatientListView";
@@ -201,9 +202,9 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const assessments = useMemo(
     () =>
       (rawAssessments || [])
-        .filter((a) => !locallyDeletedIds.includes(a.id))
+        .filter((a) => !locallyDeletedIds.includes(a.id) && (isDemo || (clinicId ? a.clinic_id === clinicId : !a.clinic_id && a.professional_id === professionalId)))
         .map((a) => normalizeAssessment(a) as any),
-    [rawAssessments, locallyDeletedIds]
+    [rawAssessments, locallyDeletedIds, clinicId, professionalId, isDemo]
   );
 
   const { t, language } = useLanguage();
@@ -381,7 +382,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       if (clinicId) {
         query = query.eq("clinic_id", clinicId);
       } else {
-        query = query.eq("professional_id", professionalId);
+        query = query.eq("professional_id", professionalId).is("clinic_id", null);
       }
       const { data } = await query;
       setPatientsTableData(data || []);
@@ -400,7 +401,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         .select("id, assessment_id");
       programsQuery = clinicId
         ? programsQuery.eq("clinic_id", clinicId)
-        : programsQuery.eq("professional_id", professionalId);
+        : programsQuery.eq("professional_id", professionalId).is("clinic_id", null);
       const { data: programs } = await programsQuery;
       if (!programs || programs.length === 0) return;
       const programIds = programs.map((p: any) => p.id);
@@ -426,7 +427,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       setExerciseAdherence(adherenceMap);
     };
     fetchAdherence();
-  }, [professionalId, isDemo]);
+  }, [professionalId, clinicId, isDemo]);
 
   // Reassign all patient assessments to a new professional within the clinic
   const handleReassignPatient = async (assessmentIds: string[], targetProId: string) => {
@@ -486,15 +487,14 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   useEffect(() => {
     if (!professionalId || !selectedEmail || isDemo) { setHepHistory([]); return; }
     setHepHistoryLoading(true);
-    (supabase.from("exercise_programs") as any)
-      .select("id, token, patient_name, created_at, expires_at, notes, assessment_id")
-      .eq("professional_id", professionalId)
+    careScope((supabase.from("exercise_programs") as any)
+      .select("id, token, patient_name, created_at, expires_at, notes, assessment_id"), clinicId, professionalId)
       .order("created_at", { ascending: false })
       .then(({ data }: any) => {
         setHepHistory(data || []);
         setHepHistoryLoading(false);
       });
-  }, [professionalId, selectedEmail, hepModalOpen, isDemo]);
+  }, [professionalId, clinicId, selectedEmail, hepModalOpen, isDemo]);
 
   const handleDeleteHep = async (hepId: string) => {
     if (deletingHepId) return;
@@ -521,9 +521,8 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     if (!professionalId || readOnly) return;
     try {
       // Find conversation with this patient
-      const { data: convs } = await (supabase.from("conversations") as any)
-        .select("id, patient_user_id")
-        .eq("professional_id", professionalId);
+      const { data: convs } = await careScope((supabase.from("conversations") as any)
+        .select("id, patient_user_id"), clinicId, professionalId);
 
       // Find patient user_id by email
       const { data: profiles } = await supabase
@@ -532,9 +531,9 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
         .limit(1000);
 
       // Match patient email to user_id through assessments
-      const { data: patientAssessments } = await supabase
+      const { data: patientAssessments } = await careScope(supabase
         .from("assessments")
-        .select("user_id")
+        .select("user_id"), clinicId, professionalId)
         .eq("patient_email", patientEmail)
         .not("user_id", "is", null)
         .limit(1);
@@ -610,7 +609,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       } else if (clinicId || professionalId) {
         let q: any = (supabase as any).from("patients").delete();
         if (clinicId) q = q.eq("clinic_id", clinicId);
-        else q = q.eq("professional_id", professionalId);
+        else q = q.eq("professional_id", professionalId).is("clinic_id", null);
         if (group?.email) {
           q = q.ilike("email", group.email);
         } else if (group?.name) {

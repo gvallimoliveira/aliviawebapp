@@ -168,7 +168,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
       .select("*")
       .eq("patient_email", patientEmail)
       .order("session_date", { ascending: false });
-    q = clinicId ? q.eq("clinic_id", clinicId) : q.eq("professional_id", professionalId);
+    q = clinicId ? q.eq("clinic_id", clinicId) : q.eq("professional_id", professionalId).is("clinic_id", null);
     const { data } = await q;
     const list = (data as SessionNote[]) || [];
     setNotes(list);

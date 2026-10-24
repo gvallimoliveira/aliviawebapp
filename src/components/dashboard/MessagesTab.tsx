@@ -115,7 +115,7 @@ const MessagesTab = ({
       )}
 
       {/* Referrals received from patients — shown above professional conversations */}
-      {professional?.id && (
+      {professional?.id && !clinicId && (
         <ReceivedReferralsCard professionalId={professional.id} />
       )}
 
@@ -123,6 +123,7 @@ const MessagesTab = ({
           Filter "Profissionais" → mode="patient" (conversations WITH professionals) */}
       {(msgFilter === "all" || msgFilter === "patient") && professional && (
         <ConversationList
+          key={`pro:${clinicId || "solo"}:${professional.id}`}
           mode="professional"
           professionalId={professional.id}
           clinicId={clinicId}
@@ -131,7 +132,7 @@ const MessagesTab = ({
           canInitiateConversation={canInitiateAsProfessional}
         />
       )}
-      {(msgFilter === "all" || msgFilter === "professional") && (
+      {(msgFilter === "all" || msgFilter === "professional") && !clinicId && (
         <ConversationList
           mode="patient"
           initialConversationId={initialConversationId}

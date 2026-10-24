@@ -356,6 +356,10 @@ const categories: ToolCategory[] = [
 
 const faqKeys = [
   {
+    q: "Os pacientes da clínica aparecem no PRO autônomo?",
+    a: "Não. Pacientes, agenda, evoluções, programas de exercícios e conversas do agente ficam separados pelo perfil selecionado. Atribuir um paciente da clínica a um fisioterapeuta não o transforma em paciente particular. Consulte os registros no perfil da clínica; o histórico é preservado.",
+  },
+  {
     q: "Posso editar a dose planejada sem apagar a sessão realizada?",
     a: "Sim. No Microciclo da semana, toque no lápis da sessão para ajustar a duração e o sRPE alvo. Salvar atualiza o microciclo e a comparação planejado × percebido, mantendo a carga percebida e os dados da sessão realizada. A data e a frente da sessão permanecem iguais.",
   },
@@ -606,10 +610,10 @@ const ClinicSupport = () => {
             {faqKeys.map((faq, i) => (
               <AccordionItem key={i} value={`faq-${i}`}>
                 <AccordionTrigger className="text-left text-base font-medium text-foreground">
-                  {faq.q}
+                  {i === 0 ? t("support.pro.faq.profile_isolation.q") : faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
-                  {faq.a}
+                  {i === 0 ? t("support.pro.faq.profile_isolation.a") : faq.a}
                 </AccordionContent>
               </AccordionItem>
             ))}

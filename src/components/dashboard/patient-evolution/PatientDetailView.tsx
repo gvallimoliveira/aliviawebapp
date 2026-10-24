@@ -1,3 +1,4 @@
+import { careScope } from "@/lib/careScope";
 import React from "react";
 import PreventiveAssessmentSummary from "@/components/assessment/PreventiveAssessmentSummary";
 import { isPreventiveAssessment } from "@/lib/assessmentPurpose";
@@ -338,10 +339,10 @@ export default function PatientDetailView(props: any) {
   const fetchPatientRow = React.useCallback(async (id?: string | null) => {
     const sb = supabase as any;
     if (id) {
-      const { data } = await sb
+      const { data } = await careScope(sb
         .from("patients")
         .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation")
-        .eq("id", id)
+        .eq("id", id), clinicId, professionalId)
         .maybeSingle();
       if (data) return data;
     }
@@ -352,7 +353,7 @@ export default function PatientDetailView(props: any) {
     if (patient?.email) lookup = lookup.eq("email", patient.email);
     else lookup = lookup.eq("full_name", patient.name);
     if (clinicId) lookup = lookup.eq("clinic_id", clinicId);
-    else if (professionalId) lookup = lookup.eq("professional_id", professionalId);
+    else if (professionalId) lookup = lookup.eq("professional_id", professionalId).is("clinic_id", null);
     const { data } = await lookup.maybeSingle();
     return data || null;
   }, [patient?.email, patient?.name, clinicId, professionalId]);
@@ -720,7 +721,7 @@ export default function PatientDetailView(props: any) {
                           lookup = lookup.eq("full_name", patient.name);
                         }
                         if (clinicId) lookup = lookup.eq("clinic_id", clinicId);
-                        else if (professionalId) lookup = lookup.eq("professional_id", professionalId);
+                        else if (professionalId) lookup = lookup.eq("professional_id", professionalId).is("clinic_id", null);
 
                         const { data } = await lookup.maybeSingle();
                         patientDbId = data?.id || null;

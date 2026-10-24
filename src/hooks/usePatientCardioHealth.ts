@@ -17,7 +17,7 @@ export function usePatientCardioHealth(patientId: string, assessments: any[], pa
       const email = patientEmail || patient?.email;
       let query = supabase.from("patient_health_records").select("*");
       query = email ? query.or(`patient_id.eq.${patientId},patient_email.eq.${email}`) : query.eq("patient_id", patientId);
-      if (clinicId) query = query.eq("clinic_id", clinicId);
+      query = clinicId ? query.eq("clinic_id", clinicId) : query.is("clinic_id", null);
       const { data, error: healthError } = await query;
       if (cancelled || current !== request) return;
       setError(!!patientError || !!healthError);

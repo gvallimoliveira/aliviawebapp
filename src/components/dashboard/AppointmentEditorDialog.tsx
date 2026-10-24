@@ -263,7 +263,7 @@ const AppointmentEditorDialog = ({
       try {
         let query = (supabase.from("patients" as any) as any).select("*");
         if (clinicId) query = query.eq("clinic_id", clinicId);
-        else if (professionalId) query = query.eq("professional_id", professionalId);
+        else if (professionalId) query = query.eq("professional_id", professionalId).is("clinic_id", null);
         if (apt.patient_email) query = query.eq("email", apt.patient_email);
         else query = query.eq("full_name", apt.patient_name);
         const { data } = await query.limit(1);
@@ -294,7 +294,7 @@ const AppointmentEditorDialog = ({
             .gte("created_at", aptDayStart).lte("created_at", aptDayEnd)
             .order("created_at", { ascending: false }).limit(1);
           if (clinicId) sameDayQuery = sameDayQuery.eq("clinic_id", clinicId);
-          else sameDayQuery = sameDayQuery.eq("professional_id", effectiveProId);
+          else sameDayQuery = sameDayQuery.eq("professional_id", effectiveProId).is("clinic_id", null);
           const { data: sameDayRows } = await sameDayQuery;
 
           let assessmentId = sameDayRows?.[0]?.id || null;
@@ -304,7 +304,7 @@ const AppointmentEditorDialog = ({
               .eq("patient_email", evolutionEmail)
               .order("created_at", { ascending: false }).limit(1);
             if (clinicId) latestQuery = latestQuery.eq("clinic_id", clinicId);
-            else latestQuery = latestQuery.eq("professional_id", effectiveProId);
+            else latestQuery = latestQuery.eq("professional_id", effectiveProId).is("clinic_id", null);
             const { data: latestRows } = await latestQuery;
             assessmentId = latestRows?.[0]?.id || null;
           }
