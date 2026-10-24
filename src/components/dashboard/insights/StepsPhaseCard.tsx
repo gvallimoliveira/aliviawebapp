@@ -88,7 +88,7 @@ const StepsPhaseCard = ({ clinicId, professionalId }: Props) => {
           )}
         </p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 max-h-[400px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
           {rows.map((r) => {
             const pct = r.total_phases > 0 ? Math.round(((r.sort_order + 1) / r.total_phases) * 100) : 0;
             const isStalled = r.weeks_in_phase >= 4;
