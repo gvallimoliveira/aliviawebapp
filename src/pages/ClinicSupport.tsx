@@ -294,7 +294,7 @@ const categories: ToolCategory[] = [
         key: "insights_steps",
         icon: TrendingUp,
         title: "Fase do tratamento (STEPS)",
-        desc: "Mostra a fase atual do macrociclo de cada plano ativo e há quantas semanas o paciente está nela. Quem passa de 4 semanas na mesma fase aparece destacado para revisão dos critérios de saída.",
+        desc: "Mostra a fase atual do macrociclo de cada plano ativo e há quantas semanas o paciente está nela. Quem passa de 4 semanas na mesma fase aparece destacado para revisão dos critérios de saída. Toque no paciente para mudar a fase ou registrar a Alta (encerra o plano) direto do insight.",
       },
       {
         key: "insights_reactivation",
