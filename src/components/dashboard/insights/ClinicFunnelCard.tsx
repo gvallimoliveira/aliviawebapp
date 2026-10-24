@@ -73,7 +73,7 @@ const ClinicFunnelCard = ({ clinicId, professionalId, dismissForTeam = false }: 
       <p className="font-semibold">{t("Como é calculado", "How it's calculated", "Cómo se calcula")}</p>
       <p className="text-xs text-muted-foreground leading-relaxed">
         {t(
-          "Pacientes cuja primeira avaliação concluída neste perfil ocorreu nos últimos 90 dias. Conversão = pacientes com atendimento agendado ou realizado em até 7 dias após a avaliação ÷ novos pacientes avaliados. Reavaliações não aumentam a base. Cancelamentos, faltas, compromissos e agendamentos de avaliação não contam. O vínculo usa e-mail ou avaliação vinculada, nunca apenas o nome; sem vínculo identificável, não confirma conversão. Clínica e PRO são separados. Você pode descartar pacientes da lista com o X e restaurar depois — o descarte vale só para você.",
+          `Pacientes cuja primeira avaliação concluída neste perfil ocorreu nos últimos 90 dias. Conversão = pacientes com atendimento agendado ou realizado em até 7 dias após a avaliação ÷ novos pacientes avaliados. Reavaliações não aumentam a base. Cancelamentos, faltas, compromissos e agendamentos de avaliação não contam. O vínculo usa e-mail ou avaliação vinculada, nunca apenas o nome; sem vínculo identificável, não confirma conversão. Clínica e PRO são separados. Você pode descartar pacientes da lista com o X e restaurar depois — ${dismissForTeam ? "como dono/admin, o descarte vale para toda a equipe" : "o descarte vale só para você"}.`,
           "Patients whose first completed assessment in this profile was within 90 days. Conversion = patients with a treatment appointment scheduled or completed within 7 days of the assessment ÷ newly assessed patients. Reassessments do not increase the base. Cancellations, no-shows, personal commitments and assessment appointments do not count. Matching uses email or linked assessment, never name alone; without an identifiable link, conversion is not confirmed. Clinic and solo PRO stay separate. You can dismiss patients from the list with the X and restore them later — dismissal only applies to you.",
           "Pacientes cuya primera evaluación completada en este perfil fue en los últimos 90 días. Conversión = pacientes con atención agendada o realizada dentro de 7 días tras la evaluación ÷ nuevos pacientes evaluados. Las reevaluaciones no aumentan la base. Cancelaciones, faltas, compromisos y citas de evaluación no cuentan. El vínculo usa correo o evaluación vinculada, nunca solo el nombre; sin vínculo identificable, no confirma conversión. Clínica y PRO permanecen separados. Puedes descartar pacientes de la lista con la X y restaurarlos después — el descarte solo aplica para ti.",
         )}
@@ -139,7 +139,8 @@ const ClinicFunnelCard = ({ clinicId, professionalId, dismissForTeam = false }: 
                     <button
                       type="button"
                       onClick={() => dismiss(r.identity_key)}
-                      aria-label={t("Remover da lista", "Remove from list", "Quitar de la lista")}
+                      aria-label={dismissLabel}
+                      title={dismissLabel}
                       className="shrink-0 p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     >
                       <X className="h-3.5 w-3.5" />
