@@ -30,7 +30,7 @@ interface UnscheduledRow {
 
 const fmtDate = (iso: string | null) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "—");
 
-const ClinicFunnelCard = ({ clinicId, professionalId }: Props) => {
+const ClinicFunnelCard = ({ clinicId, professionalId, dismissForTeam = false }: Props) => {
   const [row, setRow] = useState<FunnelRow | null>(null);
   const [unscheduled, setUnscheduled] = useState<UnscheduledRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,8 +38,11 @@ const ClinicFunnelCard = ({ clinicId, professionalId }: Props) => {
   const { language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
   const t = (pt: string, en: string, es?: string) => (lang === "pt" ? pt : lang === "es" ? es ?? en : en);
-  const { dismissed, dismiss, restoreAll } = useInsightDismissals("conversion_unscheduled", clinicId ?? professionalId);
+  const { dismissed, dismiss, restoreAll } = useInsightDismissals("conversion_unscheduled", clinicId ?? professionalId, dismissForTeam);
   const visibleUnscheduled = unscheduled.filter((r) => !dismissed.has(r.identity_key));
+  const dismissLabel = dismissForTeam
+    ? t("Remover para toda a equipe", "Remove for the whole team", "Quitar para todo el equipo")
+    : t("Remover da lista", "Remove from list", "Quitar de la lista");
 
   useEffect(() => {
     let cancelled = false;

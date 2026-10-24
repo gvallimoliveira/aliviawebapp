@@ -22,9 +22,11 @@ interface Props {
   professionalId?: string;
   /** When true, also render clinic management cards (team, funnel, benchmark). */
   fullClinicMode?: boolean;
+  /** Clinic owner/admin: sees management cards and dismisses for the whole team. */
+  canManage?: boolean;
 }
 
-const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false }: Props) => {
+const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false, canManage = false }: Props) => {
   const { language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
 
