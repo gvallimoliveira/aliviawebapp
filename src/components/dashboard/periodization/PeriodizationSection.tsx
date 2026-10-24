@@ -412,7 +412,7 @@ const PeriodizationSection = ({
 
       {plan ? (
         <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
-          <MacroTimeline cycles={cycles} planId={plan.id} onChanged={refresh} readOnly={readOnly} />
+          <MacroTimeline cycles={cycles} planId={plan.id} planStatus={plan.status} onChanged={refresh} readOnly={readOnly} />
         </PeriodizationCollapsible>
       ) : !readOnly && (
         <Card className="border-dashed">

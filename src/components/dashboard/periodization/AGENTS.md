@@ -5,3 +5,5 @@
 - Cardio analysis mounts only inside `CardioAnalysisDialog`; keeps the record light.
 - Cardio panel section and KPI order come from `profilePanelOrder` in `cardioAnalysis.ts` (same priority logic as the PDFs); reordering presentation must never change calculations.
 - Every command inside PeriodizationSection anchors the touched element and stores a short-lived scroll mark restored after remounts; load-control actions must never move the page.
+- STEPS inclui o passo terminal "Alta" (DISCHARGE_PHASE): selecionável no MacroTimeline e no insight de fases; `dischargePlan` encerra o plano (status 'completed') e desmarca a fase atual — nunca criar ciclo macro de alta nem apagar histórico.
+- O insight "Fase do tratamento (STEPS)" abre PhaseQuickChangeDialog ao tocar no paciente: troca de fase/alta usam setCurrentMacroPhase/dischargePhase do prontuário, sem regra duplicada; a RPC get_steps_phase_overview retorna plan_id para isso.

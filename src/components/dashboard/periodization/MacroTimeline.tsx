@@ -2,17 +2,19 @@ import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarRange, CheckCircle2, History, Loader2 } from "lucide-react";
+import { CalendarRange, CheckCircle2, GraduationCap, History, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
 import type { PeriodizationCycle } from "@/lib/periodizationData";
-import { setCurrentMacroPhase } from "@/lib/periodizationData";
-import { isOptionalMacroPhase } from "@/lib/periodization";
+import { dischargePlan, setCurrentMacroPhase } from "@/lib/periodizationData";
+import { DISCHARGE_PHASE, isOptionalMacroPhase } from "@/lib/periodization";
 
 
 interface Props {
   cycles: PeriodizationCycle[];
   planId?: string | null;
+  /** Status do plano: quando 'completed' (Alta), mostra o encerramento. */
+  planStatus?: string | null;
   onChanged?: () => void;
   readOnly?: boolean;
 }
@@ -20,9 +22,10 @@ interface Props {
 const fmt = (iso: string | null) =>
   iso ? new Date(`${iso}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "—";
 
-const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
+const MacroTimeline = ({ cycles, planId, planStatus, onChanged, readOnly }: Props) => {
   const { toast } = useToast();
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [confirmingDischarge, setConfirmingDischarge] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const railRef = useRef<HTMLDivElement | null>(null);
   const macros = cycles.filter((c) => c.level === "macro");
@@ -55,6 +58,26 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
     }
   };
 
+  const discharge = async () => {
+    if (!planId) return;
+    const keepAnchored = anchorScroll(() => cardRef.current, 1500);
+    keepAnchored();
+    setSavingId("discharge");
+    try {
+      await dischargePlan(planId);
+      onChanged?.();
+      toast({
+        title: "Alta registrada",
+        description: "O plano foi encerrado — o paciente sai do acompanhamento de fases em andamento.",
+      });
+    } catch (e: any) {
+      toast({ title: "Não foi possível registrar a alta", description: e?.message, variant: "destructive" });
+    } finally {
+      setSavingId(null);
+      setConfirmingDischarge(false);
+    }
+  };
+
 
   return (
     <Card ref={cardRef}>
@@ -65,7 +88,7 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {!hasCurrent && (
+        {!hasCurrent && planStatus !== "completed" && (
           <p className="text-[11px] text-amber-700 dark:text-amber-400">
             Nenhuma fase marcada. Marque em qual fase o paciente está — o sistema não decide isso por você.
           </p>
@@ -110,6 +133,52 @@ const MacroTimeline = ({ cycles, planId, onChanged, readOnly }: Props) => {
               </div>
             );
           })}
+          {planId && (
+            <div className={`min-w-[190px] rounded-xl border p-3 border-emerald-500/40 ${planStatus === "completed" ? "bg-emerald-500/10" : "bg-emerald-500/5"}`}>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <GraduationCap className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" />
+                  {DISCHARGE_PHASE.name}
+                </span>
+                {planStatus === "completed" && <Badge className="text-[10px]">Alta registrada</Badge>}
+              </div>
+              <p className="text-[11px] text-muted-foreground">{DISCHARGE_PHASE.goal}</p>
+              {!readOnly && planStatus !== "completed" && (
+                confirmingDischarge ? (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <Button type="button"
+                      size="sm"
+                      className="h-7 rounded-xl gap-1 text-[10px] flex-1"
+                      disabled={savingId === "discharge"}
+                      onClick={discharge}
+                    >
+                      {savingId === "discharge" ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                      Confirmar alta
+                    </Button>
+                    <Button type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 rounded-xl text-[10px]"
+                      onClick={() => setConfirmingDischarge(false)}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button"
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-2 h-7 rounded-xl gap-1 text-[10px]"
+                    disabled={savingId !== null}
+                    onClick={() => setConfirmingDischarge(true)}
+                  >
+                    <GraduationCap className="h-3 w-3" />
+                    Registrar alta e encerrar
+                  </Button>
+                )
+              )}
+            </div>
+          )}
         </div>
         <p className="text-[10px] text-muted-foreground">
           A fase atual é definida pelo profissional. Ao marcá-la, a fase começa hoje e o sistema sugere as datas das

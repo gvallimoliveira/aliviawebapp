@@ -304,6 +304,17 @@ export const MACRO_PHASES: Array<{ key: string; name: string; goal: string; week
   { key: "rts", name: "Retorno ao esporte", goal: "Demanda específica do esporte e critérios de liberação", weeks: 4, optional: true },
 ];
 
+/**
+ * Passo terminal do STEPS: selecionável como qualquer fase, mas em vez de
+ * marcar uma fase como atual ele encerra o plano (status 'completed') — o
+ * paciente para de acumular "semanas paradas" na última fase nos insights.
+ */
+export const DISCHARGE_PHASE = {
+  key: "discharge",
+  name: "Alta",
+  goal: "Critérios atingidos — encerramento do ciclo de tratamento",
+} as const;
+
 /** Fases que só se aplicam a parte dos pacientes (atleta/esporte/alta demanda). */
 export const OPTIONAL_MACRO_PHASE_KEYS = ["power", "rts"] as const;
 

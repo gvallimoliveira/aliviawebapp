@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Layers, Loader2, X } from "lucide-react";
+import { ArrowRightLeft, Layers, Loader2, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import InsightCardShell from "./InsightCardShell";
+import PhaseQuickChangeDialog from "./PhaseQuickChangeDialog";
 import { useInsightDismissals } from "./useInsightDismissals";
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 interface PhaseRow {
   patient_id: string;
   patient_name: string | null;
+  plan_id: string;
   plan_title: string | null;
   phase_name: string | null;
   phase_goal: string | null;
@@ -33,25 +35,28 @@ const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Pr
   const t = (pt: string, en: string, es?: string) => (lang === "pt" ? pt : lang === "es" ? es ?? en : en);
   const { dismissed, dismiss, restoreAll } = useInsightDismissals("steps_phase", clinicId ?? professionalId, dismissForTeam);
   const visible = useMemo(() => rows.filter((r) => !dismissed.has(r.patient_id)), [rows, dismissed]);
+  const [phaseTarget, setPhaseTarget] = useState<PhaseRow | null>(null);
   const dismissLabel = dismissForTeam
     ? t("Remover para toda a equipe", "Remove for the whole team", "Quitar para todo el equipo")
     : t("Remover da lista", "Remove from list", "Quitar de la lista");
+  const load = useCallback(async () => {
+    if (!clinicId && !professionalId) { setLoading(false); return; }
+    setLoading(true);
+    const { data, error } = await supabase.rpc("get_steps_phase_overview" as any, {
+      _clinic_id: clinicId ?? null,
+      _professional_id: professionalId ?? null,
+    });
+    if (!error && Array.isArray(data)) setRows(data as any);
+    setLoading(false);
+  }, [clinicId, professionalId]);
   useEffect(() => {
     let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.rpc("get_steps_phase_overview" as any, {
-        _clinic_id: clinicId ?? null,
-        _professional_id: professionalId ?? null,
-      });
+    (async () => {
       if (cancelled) return;
-      if (!error && Array.isArray(data)) setRows(data as any);
-      setLoading(false);
-    };
-    if (clinicId || professionalId) load();
-    else setLoading(false);
+      await load();
+    })();
     return () => { cancelled = true; };
-  }, [clinicId, professionalId]);
+  }, [load]);
   const stalled = useMemo(() => visible.filter((r) => r.weeks_in_phase >= 4), [visible]);
 
   const infoContent = (
@@ -59,8 +64,8 @@ const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Pr
       <p className="font-semibold">{t("Como é calculado", "How it's calculated")}</p>
       <p className="text-xs text-muted-foreground leading-relaxed">
         {t(
-          "Mostra a fase atual (macrociclo) de cada plano de periodização ativo e há quantas semanas o paciente está nela. Quem passa de 4 semanas na mesma fase aparece destacado — vale revisar os critérios de saída da fase.",
-          "Shows the current phase (macrocycle) of each active periodization plan and how many weeks the patient has been in it. Anyone over 4 weeks in the same phase is highlighted — worth reviewing the phase exit criteria.",
+          "Mostra a fase atual (macrociclo) de cada plano ativo e há quantas semanas o paciente está nela. Quem passa de 4 semanas na mesma fase aparece destacado — vale revisar os critérios de saída. Toque no paciente para mudar a fase ou registrar a Alta sem abrir o prontuário.",
+          "Shows the current phase (macrocycle) of each active plan and how many weeks the patient has been in it. Anyone over 4 weeks in the same phase is highlighted — worth reviewing the exit criteria. Tap a patient to change the phase or record Discharge without opening the record.",
         )}
       </p>
     </div>
@@ -111,9 +116,18 @@ const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Pr
               const pct = r.total_phases > 0 ? Math.round(((r.sort_order + 1) / r.total_phases) * 100) : 0;
               const isStalled = r.weeks_in_phase >= 4;
               return (
-                <div key={r.patient_id} className="p-3 rounded-lg border border-border/60 bg-background space-y-1.5">
+                <div
+                  key={r.patient_id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setPhaseTarget(r)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setPhaseTarget(r); } }}
+                  title={t("Toque para mudar a fase ou registrar a alta", "Tap to change the phase or record discharge", "Toca para cambiar la fase o registrar el alta")}
+                  className="p-3 rounded-lg border border-border/60 bg-background space-y-1.5 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium truncate flex-1">{r.patient_name || t("Paciente", "Patient")}</p>
+                    <ArrowRightLeft className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                     <Badge
                       variant="outline"
                       className={`text-[10px] shrink-0 ${
@@ -126,7 +140,7 @@ const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Pr
                     </Badge>
                     <button
                       type="button"
-                      onClick={() => dismiss(r.patient_id)}
+                      onClick={(e) => { e.stopPropagation(); dismiss(r.patient_id); }}
                       aria-label={dismissLabel}
                       title={dismissLabel}
                       className="shrink-0 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -158,6 +172,15 @@ const StepsPhaseCard = ({ clinicId, professionalId, dismissForTeam = false }: Pr
             </button>
           )}
         </div>
+      )}
+      {phaseTarget && (
+        <PhaseQuickChangeDialog
+          open={phaseTarget !== null}
+          onOpenChange={(open) => { if (!open) setPhaseTarget(null); }}
+          planId={phaseTarget.plan_id}
+          patientName={phaseTarget.patient_name || t("Paciente", "Patient", "Paciente")}
+          onChanged={load}
+        />
       )}
     </InsightCardShell>
   );
