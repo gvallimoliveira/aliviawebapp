@@ -47,6 +47,7 @@ const ClinicSettingsCard = () => {
   const [satStart, setSatStart] = useState(activeClinic?.saturday_hours_start || "08:00");
   const [satEnd, setSatEnd] = useState(activeClinic?.saturday_hours_end || "12:00");
   const [workingDays, setWorkingDays] = useState<number[]>(activeClinic?.working_days || [1, 2, 3, 4, 5]);
+  const [rooms, setRooms] = useState<string>(activeClinic?.rooms_count ? String(activeClinic.rooms_count) : "");
   const [brandColor, setBrandColor] = useState<string | null>(activeClinic?.brand_color || null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -129,6 +130,7 @@ const ClinicSettingsCard = () => {
     (satEnabled ? satStart : null) !== (activeClinic.saturday_hours_start || null) ||
     (satEnabled ? satEnd : null) !== (activeClinic.saturday_hours_end || null) ||
     !arraysEqual(workingDays, activeClinic.working_days || [1, 2, 3, 4, 5]) ||
+    (rooms ? Number(rooms) : null) !== (activeClinic.rooms_count ?? null) ||
     brandColor !== (activeClinic.brand_color || null);
 
   const handleSave = async () => {
@@ -146,6 +148,7 @@ const ClinicSettingsCard = () => {
           saturday_hours_start: satEnabled ? satStart : null,
           saturday_hours_end: satEnabled ? satEnd : null,
           working_days: workingDays,
+          rooms_count: rooms ? Number(rooms) : null,
           brand_color: brandColor,
         } as any)
         .eq("id", activeClinic.clinic_id);
@@ -237,6 +240,25 @@ const ClinicSettingsCard = () => {
         </div>
 
         {/* Operating Hours */}
+        <div className="space-y-2">
+          <Label>{lang === "pt" ? "Macas / boxes de atendimento" : lang === "es" ? "Camillas / boxes de atención" : "Treatment rooms / boxes"}</Label>
+          <Input
+            type="number"
+            min={1}
+            value={rooms}
+            onChange={(e) => setRooms(e.target.value)}
+            placeholder={lang === "pt" ? "Ex: 3" : "E.g. 3"}
+            className="w-28"
+          />
+          <p className="text-xs text-muted-foreground">
+            {lang === "pt"
+              ? "Usado no insight de gargalo de capacidade (macas × terapeutas)."
+              : lang === "es"
+                ? "Usado en el insight de cuello de botella de capacidad."
+                : "Used by the capacity bottleneck insight (rooms × therapists)."}
+          </p>
+        </div>
+
         <div className="space-y-2">
           <Label className="flex items-center gap-1.5">
             <Clock className="h-4 w-4" />

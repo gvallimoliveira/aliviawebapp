@@ -1561,6 +1561,7 @@ export type Database = {
           operating_hours_start: string | null
           owner_user_id: string
           phone: string | null
+          rooms_count: number | null
           saturday_hours_end: string | null
           saturday_hours_start: string | null
           subscription_status: string
@@ -1584,6 +1585,7 @@ export type Database = {
           operating_hours_start?: string | null
           owner_user_id: string
           phone?: string | null
+          rooms_count?: number | null
           saturday_hours_end?: string | null
           saturday_hours_start?: string | null
           subscription_status?: string
@@ -1607,6 +1609,7 @@ export type Database = {
           operating_hours_start?: string | null
           owner_user_id?: string
           phone?: string | null
+          rooms_count?: number | null
           saturday_hours_end?: string | null
           saturday_hours_start?: string | null
           subscription_status?: string
@@ -2872,7 +2875,9 @@ export type Database = {
           notes: string | null
           occupation: string | null
           phone: string | null
+          prescribed_weekly_frequency: number | null
           professional_id: string | null
+          referral_source: string | null
           sex: string | null
           updated_at: string
         }
@@ -2892,7 +2897,9 @@ export type Database = {
           notes?: string | null
           occupation?: string | null
           phone?: string | null
+          prescribed_weekly_frequency?: number | null
           professional_id?: string | null
+          referral_source?: string | null
           sex?: string | null
           updated_at?: string
         }
@@ -2912,7 +2919,9 @@ export type Database = {
           notes?: string | null
           occupation?: string | null
           phone?: string | null
+          prescribed_weekly_frequency?: number | null
           professional_id?: string | null
+          referral_source?: string | null
           sex?: string | null
           updated_at?: string
         }
@@ -3424,6 +3433,7 @@ export type Database = {
           series_id: string | null
           service_type: string
           status: string
+          status_changed_at: string | null
           type: string
         }
         Insert: {
@@ -3444,6 +3454,7 @@ export type Database = {
           series_id?: string | null
           service_type?: string
           status?: string
+          status_changed_at?: string | null
           type?: string
         }
         Update: {
@@ -3464,6 +3475,7 @@ export type Database = {
           series_id?: string | null
           service_type?: string
           status?: string
+          status_changed_at?: string | null
           type?: string
         }
         Relationships: [

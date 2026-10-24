@@ -22,6 +22,7 @@ interface ClinicMembership {
   saturday_hours_start: string | null;
   saturday_hours_end: string | null;
   working_days: number[] | null;
+  rooms_count: number | null;
   brand_color: string | null;
 
 }
@@ -97,7 +98,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       const { data: members } = await supabase
         .from("clinic_members")
-        .select("clinic_id, role, clinics(name, subscription_status, max_members, created_at, logo_url, phone, address, operating_hours_start, operating_hours_end, saturday_hours_start, saturday_hours_end, working_days, brand_color)")
+        .select("clinic_id, role, clinics(name, subscription_status, max_members, created_at, logo_url, phone, address, operating_hours_start, operating_hours_end, saturday_hours_start, saturday_hours_end, working_days, rooms_count, brand_color)")
         .eq("user_id", user.id)
         .eq("status", "active");
 
@@ -116,6 +117,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         saturday_hours_start: m.clinics?.saturday_hours_start || null,
         saturday_hours_end: m.clinics?.saturday_hours_end || null,
         working_days: m.clinics?.working_days || null,
+        rooms_count: m.clinics?.rooms_count ?? null,
         brand_color: m.clinics?.brand_color || null,
       }));
       setMemberships(mapped);

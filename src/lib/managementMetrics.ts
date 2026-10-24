@@ -13,6 +13,17 @@ export interface MgmtAppt {
   professional_id?: string | null;
   patient_email?: string | null;
   patient_name?: string | null;
+  /** Trigger-maintained timestamp of the last status change; null on legacy rows. */
+  status_changed_at?: string | null;
+}
+
+export interface MgmtPatient {
+  id: string;
+  full_name?: string | null;
+  email?: string | null;
+  created_at: string;
+  prescribed_weekly_frequency?: number | null;
+  referral_source?: string | null;
 }
 
 export interface MgmtNote {
@@ -269,4 +280,179 @@ export function recordCompliance(appts: MgmtAppt[], notes: MgmtNote[], now: Date
     pending: pending.sort((a, b) => b.hoursSince - a.hoursSince),
     byTherapist: Object.entries(per).filter(([, v]) => v.total > 0).map(([id, v]) => ({ id, ...v, rate: Math.round((v.onTime / v.total) * 100) })).sort((a, b) => a.rate - b.rate),
   };
+}
+
+/* ---------------- Frequência real vs prescrita ---------------- */
+export const FREQ_GAP_WEEKS = 4;
+export const FREQ_ACTIVE_DAYS = 60;
+
+/**
+ * Compares the prescribed weekly frequency (patient record) with the real one
+ * (completed care sessions over the last FREQ_GAP_WEEKS weeks). Only active
+ * patients (a completed session within FREQ_ACTIVE_DAYS, not discharged) with a
+ * prescribed frequency set are listed.
+ */
+export function frequencyAdherenceGap(appts: MgmtAppt[], patients: MgmtPatient[], dischargedKeys: Set<string>, today: string, weeks = FREQ_GAP_WEEKS) {
+  const from = addDays(today, -(weeks * 7 - 1));
+  const activeFrom = addDays(today, -(FREQ_ACTIVE_DAYS - 1));
+  const doneByKey = new Map<string, { recent: number; window: number }>();
+  for (const a of appts) {
+    if (!isCare(a) || a.status !== "completed") continue;
+    const k = patientKey(a);
+    if (!k) continue;
+    const cur = doneByKey.get(k) || { recent: 0, window: 0 };
+    if (a.appointment_date >= activeFrom && a.appointment_date <= today) cur.recent++;
+    if (a.appointment_date >= from && a.appointment_date <= today) cur.window++;
+    doneByKey.set(k, cur);
+  }
+  const rows: { key: string; name: string; prescribed: number; actual: number; gap: number }[] = [];
+  let noShowRecent = 0;
+  for (const p of patients) {
+    const prescribed = p.prescribed_weekly_frequency || 0;
+    if (!prescribed) continue;
+    const e = (p.email || "").trim().toLowerCase();
+    const key = e || (p.full_name ? `name:${p.full_name.trim().toLowerCase()}` : "");
+    if (!key || dischargedKeys.has(key)) continue;
+    const agg = doneByKey.get(key);
+    if (!agg || agg.recent === 0) { noShowRecent++; continue; } // inactive: churn/reactivation own this
+    const actual = round1(agg.window / weeks);
+    rows.push({ key, name: p.full_name || key, prescribed, actual, gap: round1(actual - prescribed) });
+  }
+  rows.sort((a, b) => a.gap - b.gap);
+  const below = rows.filter((r) => r.gap < 0);
+  const adherence = rows.length ? Math.round((rows.reduce((s, r) => s + Math.min(1, r.actual / r.prescribed), 0) / rows.length) * 100) : 0;
+  return { rows, below, adherence, measured: rows.length, noShowRecent };
+}
+
+/* ---------------- Indicação orgânica (referral) ---------------- */
+export const REFERRAL_SOURCES = ["patient", "social", "doctor", "other"] as const;
+
+export function referralMix(patients: MgmtPatient[], today: string) {
+  const known = patients.filter((p) => p.referral_source);
+  const bySource: Record<string, number> = {};
+  for (const p of known) bySource[p.referral_source!] = (bySource[p.referral_source!] || 0) + 1;
+  const referralCount = bySource.patient || 0;
+  const months: { month: string; total: number; referral: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(Date.parse(today + "T00:00:00Z"));
+    d.setUTCMonth(d.getUTCMonth() - i);
+    const m = d.toISOString().slice(0, 7);
+    const inMonth = patients.filter((p) => (p.created_at || "").slice(0, 7) === m);
+    months.push({ month: m, total: inMonth.length, referral: inMonth.filter((p) => p.referral_source === "patient").length });
+  }
+  return {
+    total: patients.length,
+    known: known.length,
+    bySource,
+    referralCount,
+    referralRate: known.length ? Math.round((referralCount / known.length) * 100) : 0,
+    months,
+  };
+}
+
+/* ---------------- Pacientes sem próximo horário ---------------- */
+export const LEAK_ACTIVE_DAYS = 60;
+
+/** Active patients (recent completed session, not discharged) with nothing scheduled ahead. */
+export function leakageNoNextAppointment(appts: MgmtAppt[], dischargedKeys: Set<string>, today: string, activeDays = LEAK_ACTIVE_DAYS) {
+  const from = addDays(today, -(activeDays - 1));
+  const byKey = new Map<string, MgmtAppt[]>();
+  for (const a of appts) {
+    if (!isCare(a)) continue;
+    const k = patientKey(a);
+    if (!k) continue;
+    if (!byKey.has(k)) byKey.set(k, []);
+    byKey.get(k)!.push(a);
+  }
+  const rows: { key: string; name: string; lastDate: string; daysSince: number }[] = [];
+  for (const [key, list] of byKey) {
+    if (dischargedKeys.has(key)) continue;
+    const done = list.filter((a) => a.status === "completed" && a.appointment_date >= from && a.appointment_date <= today);
+    if (!done.length) continue;
+    const hasFuture = list.some((a) => a.status === "scheduled" && a.appointment_date >= today);
+    if (hasFuture) continue;
+    const lastDate = done.map((a) => a.appointment_date).sort().at(-1)!;
+    rows.push({ key, name: done[0].patient_name || key, lastDate, daysSince: diffDays(today, lastDate) });
+  }
+  return rows.sort((a, b) => b.daysSince - a.daysSince);
+}
+
+/* ---------------- Cancelamento tardio vs antecipado ---------------- */
+export const LATE_CANCEL_HOURS = 2;
+
+/**
+ * Splits cancellations by timing using status_changed_at (trigger-maintained).
+ * Legacy cancellations without the timestamp are reported as unknown.
+ */
+export function lateCancellations(appts: MgmtAppt[], today: string, days: number) {
+  const from = addDays(today, -(days - 1));
+  const cancelled = appts.filter((a) => isCare(a) && a.status === "cancelled" && inWindow(a, from, today));
+  let late = 0, early = 0, unknown = 0;
+  const byTherapist: Record<string, { late: number; known: number }> = {};
+  for (const a of cancelled) {
+    const k = a.professional_id || "—";
+    byTherapist[k] = byTherapist[k] || { late: 0, known: 0 };
+    if (!a.status_changed_at) { unknown++; continue; }
+    const start = Date.parse(`${a.appointment_date}T${(a.appointment_time || "00:00").slice(0, 5)}:00`);
+    const hoursBefore = (start - Date.parse(a.status_changed_at)) / 3600000;
+    byTherapist[k].known++;
+    if (hoursBefore < LATE_CANCEL_HOURS) { late++; byTherapist[k].late++; } else early++;
+  }
+  const known = late + early;
+  return {
+    total: cancelled.length, late, early, unknown, known,
+    lateRate: known ? Math.round((late / known) * 100) : 0,
+    byTherapist: Object.entries(byTherapist)
+      .filter(([, v]) => v.known > 0)
+      .map(([id, v]) => ({ id, ...v, lateRate: Math.round((v.late / v.known) * 100) }))
+      .sort((a, b) => b.lateRate - a.lateRate),
+  };
+}
+
+/* ---------------- Dependência do titular ---------------- */
+export function ownerDependence(appts: MgmtAppt[], ownerProfessionalId: string | null | undefined, today: string, days: number, price: number) {
+  const from = addDays(today, -(days - 1));
+  const done = appts.filter((a) => isCare(a) && a.status === "completed" && inWindow(a, from, today));
+  if (!ownerProfessionalId || !done.length) return { sessions: 0, ownerSessions: 0, share: 0, revenueShare: 0, teamSessions: 0 };
+  const ownerSessions = done.filter((a) => a.professional_id === ownerProfessionalId).length;
+  return {
+    sessions: done.length,
+    ownerSessions,
+    teamSessions: done.length - ownerSessions,
+    share: Math.round((ownerSessions / done.length) * 100),
+    revenueShare: price ? Math.round(((ownerSessions * price) / (done.length * price)) * 100) : 0,
+  };
+}
+
+/* ---------------- Gargalo operacional (capacidade) ---------------- */
+/**
+ * Counts simultaneous bookings per date+hour slot; a slot instance is saturated
+ * when bookings reach capacity (min of active therapists and rooms, when set).
+ * Index = % of used slot instances at full capacity.
+ */
+export function capacityBottleneck(appts: MgmtAppt[], therapists: number, rooms: number | null | undefined, today: string, days: number) {
+  const from = addDays(today, -(days - 1));
+  const capacity = Math.max(1, Math.min(Math.max(1, therapists), rooms && rooms > 0 ? rooms : Math.max(1, therapists)));
+  const instances = new Map<string, { weekday: number; hour: string; count: number }>();
+  for (const a of appts) {
+    if (!isCare(a) || !["scheduled", "completed"].includes(a.status) || !inWindow(a, from, today)) continue;
+    const hour = (a.appointment_time || "").slice(0, 2);
+    if (!hour) continue;
+    const key = `${a.appointment_date}|${hour}`;
+    const weekday = new Date(toDay(a.appointment_date)).getUTCDay();
+    const cur = instances.get(key) || { weekday, hour, count: 0 };
+    cur.count++;
+    instances.set(key, cur);
+  }
+  let used = 0, saturated = 0;
+  const slots: Record<string, { weekday: number; hour: string; hits: number; total: number }> = {};
+  for (const inst of instances.values()) {
+    used++;
+    const sk = `${inst.weekday}|${inst.hour}`;
+    slots[sk] = slots[sk] || { weekday: inst.weekday, hour: inst.hour, hits: 0, total: 0 };
+    slots[sk].total++;
+    if (inst.count >= capacity) { saturated++; slots[sk].hits++; }
+  }
+  const top = Object.values(slots).filter((s) => s.hits > 0).sort((a, b) => b.hits - a.hits).slice(0, 4);
+  return { capacity, used, saturated, index: used ? Math.round((saturated / used) * 100) : 0, top };
 }
