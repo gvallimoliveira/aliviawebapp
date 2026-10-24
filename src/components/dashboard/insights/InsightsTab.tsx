@@ -15,6 +15,7 @@ import TherapistStatsCard from "./TherapistStatsCard";
 import ClinicFunnelCard from "./ClinicFunnelCard";
 import ConcentrationCard from "./ConcentrationCard";
 import { LtvCard, EmptyChairCard, RevenuePerHourCard, DischargeVsDropoutCard, RecordComplianceCard, useSummaryTiles } from "./ManagementCards";
+import { FrequencyGapCard, ReferralRateCard, LeakageCard, LateCancellationCard, OwnerDependenceCard, BottleneckCard } from "./OpsGrowthCards";
 import { useManagementData, type ManagementData } from "./useManagementData";
 import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
 
@@ -42,6 +43,7 @@ const REGISTRY: Entry[] = [
   { id: "load", cat: "patients", when: ENABLE_PERIODIZATION, render: (c) => <LoadReadinessCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
   { id: "adherence", cat: "patients", wide: true, render: (c) => <PatientAdherenceCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
   { id: "reactivation", cat: "patients", wide: true, render: (c) => <ReactivationCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
+  { id: "freq-gap", cat: "patients", render: (c) => <FrequencyGapCard d={c.d} /> },
   { id: "reassessment", cat: "routine", render: (c) => <ReassessmentDueCard clinicId={c.clinicId} professionalId={c.professionalId} dismissForTeam={c.teamDismiss} /> },
   { id: "steps", cat: "routine", when: ENABLE_PERIODIZATION, render: (c) => <StepsPhaseCard clinicId={c.clinicId} professionalId={c.professionalId} dismissForTeam={c.teamDismiss} /> },
   { id: "discharge-pred", cat: "routine", wide: true, render: (c) => <DischargePredictionCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
@@ -50,12 +52,17 @@ const REGISTRY: Entry[] = [
   { id: "empty-chair", cat: "finance", manager: true, render: (c) => <EmptyChairCard d={c.d} /> },
   { id: "rev-hour", cat: "finance", manager: true, render: (c) => <RevenuePerHourCard d={c.d} showTeam={c.isClinic} /> },
   { id: "concentration", cat: "finance", manager: true, clinicOnly: true, render: (c) => <ConcentrationCard clinicId={c.clinicId!} /> },
+  { id: "referral", cat: "finance", manager: true, render: (c) => <ReferralRateCard d={c.d} /> },
   { id: "discharge-dropout", cat: "team", manager: true, render: (c) => <DischargeVsDropoutCard d={c.d} /> },
+  { id: "owner-dep", cat: "team", manager: true, clinicOnly: true, render: (c) => <OwnerDependenceCard d={c.d} /> },
   { id: "therapists", cat: "team", manager: true, clinicOnly: true, wide: true, render: (c) => <TherapistStatsCard clinicId={c.clinicId!} /> },
   { id: "benchmark", cat: "team", manager: true, clinicOnly: true, wide: true, render: (c) => <BenchmarkCard clinicId={c.clinicId!} /> },
   { id: "occupancy", cat: "operations", wide: true, render: (c) => <OccupancyVsNoShowCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
   { id: "records", cat: "operations", render: (c) => <RecordComplianceCard d={c.d} scopeKey={c.scopeKey} dismissForTeam={c.teamDismiss} showTeam={c.isClinic} /> },
   { id: "funnel", cat: "operations", manager: true, wide: true, render: (c) => <ClinicFunnelCard key={c.scopeKey} clinicId={c.clinicId} professionalId={c.professionalId} dismissForTeam={c.teamDismiss} /> },
+  { id: "leakage", cat: "operations", render: (c) => <LeakageCard d={c.d} scopeKey={c.scopeKey} dismissForTeam={c.teamDismiss} /> },
+  { id: "late-cancel", cat: "operations", render: (c) => <LateCancellationCard d={c.d} showTeam={c.isClinic} /> },
+  { id: "bottleneck", cat: "operations", manager: true, render: (c) => <BottleneckCard d={c.d} isClinic={c.isClinic} /> },
 ];
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -123,6 +130,7 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false, canMana
               {tiles.showMoney && <Tile to="finance" label={tr(l, "LTV clínico", "Clinical LTV", "LTV clínico")} value={brl(tiles.ltv.avgValue)} hint={`${tiles.ltv.avgSessions} ${tr(l, "sessões/paciente", "sessions/patient", "sesiones/paciente")}`} />}
               {isManager && <Tile to="team" label={tr(l, "Taxa de alta (180d)", "Discharge rate (180d)", "Tasa de alta (180d)")} value={`${tiles.dd.dischargeRate}%`} hint={`${tiles.dd.dropouts} ${tr(l, "evasões", "dropouts", "abandonos")}`} tone={tiles.dd.total ? (tiles.dd.dischargeRate >= 50 ? "good" : "bad") : undefined} />}
               <Tile to="operations" label={tr(l, "Prontuário em dia (30d)", "Records on time (30d)", "Historia al día (30d)")} value={`${tiles.rec.rate}%`} hint={`${tiles.rec.pendingCount} ${tr(l, "sem evolução", "missing", "sin evolución")}`} tone={tiles.rec.rate >= 80 ? "good" : "bad"} />
+              <Tile to="operations" label={tr(l, "Sem próximo horário", "No next appointment", "Sin próximo turno")} value={String(tiles.leak)} hint={tr(l, "pacientes ativos", "active patients", "pacientes activos")} tone={tiles.leak ? "bad" : "good"} />
             </div>
           )}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">

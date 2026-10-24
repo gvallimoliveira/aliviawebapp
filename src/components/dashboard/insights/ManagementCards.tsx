@@ -6,6 +6,7 @@ import { useInsightDismissals } from "./useInsightDismissals";
 import type { ManagementData } from "./useManagementData";
 import {
   emptyChairCost, availableHours, revenuePerHour, closedCycles, clinicalLtv, dischargeVsDropout, recordCompliance, MIN_CASES_PER_THERAPIST,
+  leakageNoNextAppointment,
 } from "@/lib/managementMetrics";
 
 type L = "pt" | "en" | "es";
@@ -235,6 +236,7 @@ export function useSummaryTiles(d: ManagementData, showMoney: boolean) {
     const ltv = clinicalLtv(cycles, d.price);
     const dd = dischargeVsDropout(cycles, d.today, 180);
     const rec = recordCompliance(d.appts, d.notes, new Date(), 30);
-    return { chair, ltv, dd, rec, showMoney: showMoney && d.price > 0 };
+    const leak = leakageNoNextAppointment(d.appts, d.dischargedKeys, d.today).length;
+    return { chair, ltv, dd, rec, leak, showMoney: showMoney && d.price > 0 };
   }, [d, showMoney]);
 }
