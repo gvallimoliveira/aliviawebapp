@@ -24,7 +24,16 @@ export interface PatientToEdit {
   address?: string | null;
   sex?: string | null;
   occupation?: string | null;
+  prescribed_weekly_frequency?: number | null;
+  referral_source?: string | null;
 }
+
+const REFERRAL_OPTIONS = [
+  { value: "patient", pt: "Outro cliente", en: "Another client", es: "Otro cliente" },
+  { value: "social", pt: "Redes sociais", en: "Social media", es: "Redes sociales" },
+  { value: "doctor", pt: "Médico", en: "Doctor", es: "Médico" },
+  { value: "other", pt: "Outra", en: "Other", es: "Otra" },
+];
 
 interface AddPatientModalProps {
   open: boolean;
@@ -83,6 +92,8 @@ const AddPatientModal = ({
   const [address, setAddress] = useState("");
   const [sex, setSex] = useState("");
   const [occupation, setOccupation] = useState("");
+  const [frequency, setFrequency] = useState("");
+  const [referral, setReferral] = useState("");
   const [saving, setSaving] = useState(false);
 
   // viewMode: "view" => somente leitura, "edit" => formulário editável
@@ -103,6 +114,8 @@ const AddPatientModal = ({
       setAddress(editPatient.address || "");
       setSex(editPatient.sex || "");
       setOccupation(editPatient.occupation || "");
+      setFrequency(editPatient.prescribed_weekly_frequency ? String(editPatient.prescribed_weekly_frequency) : "");
+      setReferral(editPatient.referral_source || "");
     }
   }, [editPatient, open]);
 
@@ -136,6 +149,8 @@ const AddPatientModal = ({
         address: address.trim() || null,
         sex: sex || null,
         occupation: occupation.trim() || null,
+        prescribed_weekly_frequency: frequency ? Number(frequency) : null,
+        referral_source: referral || null,
       };
 
       if (isEdit) {
@@ -224,6 +239,8 @@ const AddPatientModal = ({
     setAddress("");
     setSex("");
     setOccupation("");
+    setFrequency("");
+    setReferral("");
     onOpenChange(false);
   };
 
@@ -239,6 +256,10 @@ const AddPatientModal = ({
         <ReadRow icon={<User className="h-4 w-4" />} label={tr("Sexo", "Sex", "Sexo")} value={sexLabel(sex)} compact />
       </div>
       <ReadRow icon={<Briefcase className="h-4 w-4" />} label={tr("Ocupação", "Occupation", "Ocupación")} value={occupation || tr("Não informada", "Not informed", "No informada")} />
+      <div className="grid grid-cols-2 gap-3">
+        <ReadRow icon={<User className="h-4 w-4" />} label={tr("Frequência sugerida", "Suggested frequency", "Frecuencia sugerida")} value={frequency ? `${frequency}x ${tr("por semana", "per week", "por semana")}` : tr("Não informada", "Not informed", "No informada")} compact />
+        <ReadRow icon={<User className="h-4 w-4" />} label={tr("Origem da indicação", "Referral source", "Origen de recomendación")} value={referral ? (REFERRAL_OPTIONS.find((o) => o.value === referral)?.[isPt ? "pt" : isEs ? "es" : "en"] || referral) : tr("Não informada", "Not informed", "No informada")} compact />
+      </div>
       <ReadRow icon={<Cake className="h-4 w-4" />} label={tr("Data de nascimento", "Date of birth", "Fecha de nacimiento")} value={formatDateDisplay(birthDate)} />
       <ReadRow icon={<Mail className="h-4 w-4" />} label="Email" value={email || tr("Não informado", "Not informed", "No informado")} />
       <ReadRow icon={<Phone className="h-4 w-4" />} label={tr("Telefone", "Phone", "Teléfono")} value={phone || tr("Não informado", "Not informed", "No informado")} />
@@ -281,6 +302,34 @@ const AddPatientModal = ({
       <div>
         <Label className="text-xs">{tr("Ocupação", "Occupation", "Ocupación")}</Label>
         <Input value={occupation} onChange={(e) => setOccupation(e.target.value)} placeholder={tr("Ex: Professor, Atleta, Aposentado", "E.g. Teacher, Athlete, Retired", "Ej.: Profesor, Atleta, Jubilado")} className="mt-1 text-sm h-9" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs">{tr("Frequência sugerida de fisioterapia", "Suggested physio frequency", "Frecuencia sugerida de fisio")}</Label>
+          <Select value={frequency || undefined} onValueChange={setFrequency}>
+            <SelectTrigger className="mt-1 h-9 text-sm">
+              <SelectValue placeholder={tr("Selecione", "Select", "Seleccionar")} />
+            </SelectTrigger>
+            <SelectContent>
+              {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                <SelectItem key={n} value={String(n)}>{n}x {tr("por semana", "per week", "por semana")}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">{tr("De onde veio a indicação", "Referral source", "Origen de la recomendación")}</Label>
+          <Select value={referral || undefined} onValueChange={setReferral}>
+            <SelectTrigger className="mt-1 h-9 text-sm">
+              <SelectValue placeholder={tr("Selecione", "Select", "Seleccionar")} />
+            </SelectTrigger>
+            <SelectContent>
+              {REFERRAL_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{isPt ? o.pt : isEs ? o.es : o.en}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div>
         <Label className="text-xs">Email</Label>
