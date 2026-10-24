@@ -79,7 +79,7 @@ const ReassessmentDueCard = ({ clinicId, professionalId }: Props) => {
           {t("Todas as avaliações estão em dia ✨", "All assessments are up to date ✨")}
         </p>
       ) : (
-        <div className="space-y-2 max-h-[264px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
+        <div className="space-y-2 max-h-[300px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
           {rows.map((r) => (
             <div key={r.patient_id} className="flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-background">
               <div className="flex-1 min-w-0">
