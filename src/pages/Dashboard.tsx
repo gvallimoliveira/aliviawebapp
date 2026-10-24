@@ -918,7 +918,7 @@ const Dashboard = () => {
               <TabsContent value="insights" className="space-y-6">
                 <ClinicTrialBanner />
                 <div className="relative space-y-6">
-                  <InsightsTab clinicId={activeClinic.clinic_id} fullClinicMode />
+                  <InsightsTab clinicId={activeClinic.clinic_id} fullClinicMode canManage={isClinicOwner} />
                   <FeedbackSurveyCard clinicId={activeClinic.clinic_id} lang={language} />
                   <FeedbackResultsCard clinicId={activeClinic.clinic_id} lang={language} />
                   <ProMetricsSection clinicId={activeClinic.clinic_id} />

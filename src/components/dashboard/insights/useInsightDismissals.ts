@@ -3,10 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Per-user, per-scope dismissals for insight lists.
- * Dismissed patients stay hidden for the current viewer only (never for the
- * whole clinic team) and can be restored with restoreAll().
+ * Dismissed patients stay hidden for the current viewer; when `teamWide` is
+ * set (clinic owner/admin), the dismissal hides the item for the whole team.
+ * restoreAll() clears every dismissal the viewer is allowed to delete.
  */
-export function useInsightDismissals(insightKey: string, scopeKey?: string) {
+export function useInsightDismissals(insightKey: string, scopeKey?: string, teamWide = false) {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -42,11 +43,12 @@ export function useInsightDismissals(insightKey: string, scopeKey?: string) {
           insight_key: insightKey,
           scope_key: scopeKey,
           patient_key: patientKey,
+          scope_wide: teamWide,
         },
         { onConflict: "user_id,insight_key,scope_key,patient_key" },
       );
     },
-    [insightKey, scopeKey],
+    [insightKey, scopeKey, teamWide],
   );
 
   const restoreAll = useCallback(async () => {
