@@ -5262,6 +5262,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_assessment_agenda_conversion: {
+        Args: { _clinic_id?: string; _professional_id?: string }
+        Returns: {
+          assessed_count: number
+          attended_count: number
+          scheduled_count: number
+          unscheduled_count: number
+        }[]
+      }
       get_assessment_progress: {
         Args: { _scope_key: string }
         Returns: {
