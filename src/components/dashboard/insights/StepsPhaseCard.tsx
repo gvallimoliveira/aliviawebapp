@@ -31,7 +31,22 @@ const StepsPhaseCard = ({ clinicId, professionalId }: Props) => {
   const t = (pt: string, en: string, es?: string) => (lang === "pt" ? pt : lang === "es" ? es ?? en : en);
   const { dismissed, dismiss, restoreAll } = useInsightDismissals("steps_phase", clinicId ?? professionalId);
   const visible = useMemo(() => rows.filter((r) => !dismissed.has(r.patient_id)), [rows, dismissed]);
-...
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      const { data, error } = await supabase.rpc("get_steps_phase_overview" as any, {
+        _clinic_id: clinicId ?? null,
+        _professional_id: professionalId ?? null,
+      });
+      if (cancelled) return;
+      if (!error && Array.isArray(data)) setRows(data as any);
+      setLoading(false);
+    };
+    if (clinicId || professionalId) load();
+    else setLoading(false);
+    return () => { cancelled = true; };
+  }, [clinicId, professionalId]);
   const stalled = useMemo(() => visible.filter((r) => r.weeks_in_phase >= 4), [visible]);
 
   const infoContent = (
