@@ -5508,6 +5508,7 @@ export type Database = {
           last_checkin_date: string
           last_srpe_date: string
           level: string
+          pain_spike: boolean
           patient_id: string
           patient_name: string
           readiness_baseline: number

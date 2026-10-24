@@ -169,6 +169,13 @@
       "when": 1792810129464,
       "tag": "0023_insight_churn_silent_abandonment",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792810167420,
+      "tag": "0024_insight_load_flareup",
+      "breakpoints": true
     }
   ]
 }
