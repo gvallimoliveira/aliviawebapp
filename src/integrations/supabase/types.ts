@@ -2307,6 +2307,7 @@ export type Database = {
           insight_key: string
           patient_key: string
           scope_key: string
+          scope_wide: boolean
           user_id: string
         }
         Insert: {
@@ -2315,6 +2316,7 @@ export type Database = {
           insight_key: string
           patient_key: string
           scope_key: string
+          scope_wide?: boolean
           user_id: string
         }
         Update: {
@@ -2323,6 +2325,7 @@ export type Database = {
           insight_key?: string
           patient_key?: string
           scope_key?: string
+          scope_wide?: boolean
           user_id?: string
         }
         Relationships: []
