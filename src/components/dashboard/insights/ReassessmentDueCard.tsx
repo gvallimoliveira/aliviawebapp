@@ -69,44 +69,74 @@ const ReassessmentDueCard = ({ clinicId, professionalId }: Props) => {
         "Patients 4+ weeks without reassessment or with 8+ sessions since the last one.",
       )}
       rightSlot={
-        !loading && rows.length > 0 ? (
-          <Badge variant="outline" className="text-xs">{rows.length}</Badge>
+        !loading && visible.length > 0 ? (
+          <Badge variant="outline" className="text-xs">{visible.length}</Badge>
         ) : null
       }
       infoContent={infoContent}
     >
       {loading ? (
         <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-      ) : rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-2">
-          {t("Todas as avaliações estão em dia ✨", "All assessments are up to date ✨")}
-        </p>
+      ) : visible.length === 0 ? (
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground py-2">
+            {t("Todas as avaliações estão em dia ✨", "All assessments are up to date ✨")}
+          </p>
+          {dismissed.size > 0 && (
+            <button
+              type="button"
+              onClick={restoreAll}
+              className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+            >
+              {t(`${dismissed.size} oculto(s) · restaurar`, `${dismissed.size} hidden · restore`, `${dismissed.size} oculto(s) · restaurar`)}
+            </button>
+          )}
+        </div>
       ) : (
-        <div className="space-y-2 max-h-[300px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
-          {rows.map((r) => (
-            <div key={r.patient_id} className="flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-background">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{r.patient_name || t("Paciente", "Patient")}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t("Última avaliação", "Last assessment")}: {fmtDate(r.last_assessment_date)}
-                  {" · "}
-                  {r.sessions_since > 0
-                    ? t(`${r.sessions_since} sessões depois`, `${r.sessions_since} sessions since`)
-                    : t(`${r.days_since} dias`, `${r.days_since} days`)}
-                </p>
+        <div className="space-y-2">
+          <div className="space-y-2 max-h-[300px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
+            {visible.map((r) => (
+              <div key={r.patient_id} className="flex items-center gap-3 p-3 rounded-lg border border-border/60 bg-background">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{r.patient_name || t("Paciente", "Patient")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("Última avaliação", "Last assessment")}: {fmtDate(r.last_assessment_date)}
+                    {" · "}
+                    {r.sessions_since > 0
+                      ? t(`${r.sessions_since} sessões depois`, `${r.sessions_since} sessions since`)
+                      : t(`${r.days_since} dias`, `${r.days_since} days`)}
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={`shrink-0 text-[10px] ${
+                    r.days_since >= 42
+                      ? "bg-red-500/10 text-red-700 border-red-500/30"
+                      : "bg-amber-500/10 text-amber-700 border-amber-500/30"
+                  }`}
+                >
+                  {r.days_since}d
+                </Badge>
+                <button
+                  type="button"
+                  onClick={() => dismiss(r.patient_id)}
+                  aria-label={t("Remover da lista", "Remove from list", "Quitar de la lista")}
+                  className="shrink-0 p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
-              <Badge
-                variant="outline"
-                className={`shrink-0 text-[10px] ${
-                  r.days_since >= 42
-                    ? "bg-red-500/10 text-red-700 border-red-500/30"
-                    : "bg-amber-500/10 text-amber-700 border-amber-500/30"
-                }`}
-              >
-                {r.days_since}d
-              </Badge>
-            </div>
-          ))}
+            ))}
+          </div>
+          {dismissed.size > 0 && (
+            <button
+              type="button"
+              onClick={restoreAll}
+              className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+            >
+              {t(`${dismissed.size} oculto(s) · restaurar`, `${dismissed.size} hidden · restore`, `${dismissed.size} oculto(s) · restaurar`)}
+            </button>
+          )}
         </div>
       )}
     </InsightCardShell>
