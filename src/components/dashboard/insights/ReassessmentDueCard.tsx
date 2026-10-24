@@ -9,6 +9,8 @@ import { useInsightDismissals } from "./useInsightDismissals";
 interface Props {
   clinicId?: string;
   professionalId?: string;
+  /** Clinic owner/admin: dismissals hide the item for the whole team. */
+  dismissForTeam?: boolean;
 }
 
 interface DueRow {
@@ -21,14 +23,17 @@ interface DueRow {
 
 const fmtDate = (iso: string | null) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "—");
 
-const ReassessmentDueCard = ({ clinicId, professionalId }: Props) => {
+const ReassessmentDueCard = ({ clinicId, professionalId, dismissForTeam = false }: Props) => {
   const [rows, setRows] = useState<DueRow[]>([]);
   const [loading, setLoading] = useState(true);
   const { language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
   const t = (pt: string, en: string, es?: string) => (lang === "pt" ? pt : lang === "es" ? es ?? en : en);
-  const { dismissed, dismiss, restoreAll } = useInsightDismissals("reassessment", clinicId ?? professionalId);
+  const { dismissed, dismiss, restoreAll } = useInsightDismissals("reassessment", clinicId ?? professionalId, dismissForTeam);
   const visible = rows.filter((r) => !dismissed.has(r.patient_id));
+  const dismissLabel = dismissForTeam
+    ? t("Remover para toda a equipe", "Remove for the whole team", "Quitar para todo el equipo")
+    : t("Remover da lista", "Remove from list", "Quitar de la lista");
 
   useEffect(() => {
     let cancelled = false;
