@@ -10,6 +10,8 @@ import { funnelStepPct } from "@/lib/insightFormat";
 interface Props {
   clinicId?: string;
   professionalId?: string;
+  /** Clinic owner/admin: dismissals hide the item for the whole team. */
+  dismissForTeam?: boolean;
 }
 
 interface FunnelRow {
