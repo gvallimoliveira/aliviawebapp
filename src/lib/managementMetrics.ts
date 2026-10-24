@@ -13,6 +13,17 @@ export interface MgmtAppt {
   professional_id?: string | null;
   patient_email?: string | null;
   patient_name?: string | null;
+  /** Trigger-maintained timestamp of the last status change; null on legacy rows. */
+  status_changed_at?: string | null;
+}
+
+export interface MgmtPatient {
+  id: string;
+  full_name?: string | null;
+  email?: string | null;
+  created_at: string;
+  prescribed_weekly_frequency?: number | null;
+  referral_source?: string | null;
 }
 
 export interface MgmtNote {
