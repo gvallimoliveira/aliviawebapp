@@ -88,7 +88,7 @@ const MacroTimeline = ({ cycles, planId, planStatus, onChanged, readOnly }: Prop
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {!hasCurrent && (
+        {!hasCurrent && planStatus !== "completed" && (
           <p className="text-[11px] text-amber-700 dark:text-amber-400">
             Nenhuma fase marcada. Marque em qual fase o paciente está — o sistema não decide isso por você.
           </p>
