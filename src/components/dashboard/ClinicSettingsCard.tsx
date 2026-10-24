@@ -241,6 +241,25 @@ const ClinicSettingsCard = () => {
 
         {/* Operating Hours */}
         <div className="space-y-2">
+          <Label>{lang === "pt" ? "Macas / boxes de atendimento" : lang === "es" ? "Camillas / boxes de atención" : "Treatment rooms / boxes"}</Label>
+          <Input
+            type="number"
+            min={1}
+            value={rooms}
+            onChange={(e) => setRooms(e.target.value)}
+            placeholder={lang === "pt" ? "Ex: 3" : "E.g. 3"}
+            className="w-28"
+          />
+          <p className="text-xs text-muted-foreground">
+            {lang === "pt"
+              ? "Usado no insight de gargalo de capacidade (macas × terapeutas)."
+              : lang === "es"
+                ? "Usado en el insight de cuello de botella de capacidad."
+                : "Used by the capacity bottleneck insight (rooms × therapists)."}
+          </p>
+        </div>
+
+        <div className="space-y-2">
           <Label className="flex items-center gap-1.5">
             <Clock className="h-4 w-4" />
             {lang === "pt" ? "Horário de Funcionamento" : lang === "es" ? "Horario de Atención" : "Operating Hours"}
