@@ -14,7 +14,7 @@ const tr = (l: L, pt: string, en: string, es: string) => (l === "pt" ? pt : l ==
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
 const PERIODS = [30, 90, 180];
-function PeriodPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+export function PeriodPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
     <div className="inline-flex rounded-md border border-border overflow-hidden text-[11px]" onClick={(e) => e.stopPropagation()}>
       {PERIODS.map((p) => (
@@ -25,7 +25,7 @@ function PeriodPicker({ value, onChange }: { value: number; onChange: (v: number
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "bad" | "good" }) {
+export function Stat({ label, value, tone }: { label: string; value: string; tone?: "bad" | "good" }) {
   return (
     <div className="rounded-lg bg-muted/50 p-2.5">
       <p className="text-[11px] text-muted-foreground leading-tight">{label}</p>
@@ -34,7 +34,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "ba
   );
 }
 
-function Wrap({ d, needsPrice, children }: { d: ManagementData; needsPrice?: boolean; children: React.ReactNode }) {
+export function Wrap({ d, needsPrice, children }: { d: ManagementData; needsPrice?: boolean; children: React.ReactNode }) {
   const l = useL();
   if (d.loading) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   if (needsPrice && !d.price)
@@ -42,7 +42,7 @@ function Wrap({ d, needsPrice, children }: { d: ManagementData; needsPrice?: boo
   return <>{children}</>;
 }
 
-const Info = ({ children }: { children: React.ReactNode }) => <div className="text-xs text-muted-foreground space-y-1.5">{children}</div>;
+export const Info = ({ children }: { children: React.ReactNode }) => <div className="text-xs text-muted-foreground space-y-1.5">{children}</div>;
 
 /* ---------- LTV ---------- */
 export function LtvCard({ d }: { d: ManagementData }) {
