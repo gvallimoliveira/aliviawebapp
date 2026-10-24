@@ -377,7 +377,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     if ((!clinicId && !professionalId) || isDemo) return;
     const loadPatients = async () => {
       let query = (supabase.from("patients" as any) as any)
-        .select("id, full_name, email, cpf, phone, created_at, clinic_id, professional_id, assessment_token")
+        .select("id, full_name, email, cpf, phone, created_at, clinic_id, professional_id, assessment_token, birth_date, address, sex, occupation, prescribed_weekly_frequency, referral_source")
         .eq("is_study_case", false);
       if (clinicId) {
         query = query.eq("clinic_id", clinicId);

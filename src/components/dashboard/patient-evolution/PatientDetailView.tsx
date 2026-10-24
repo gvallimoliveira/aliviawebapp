@@ -341,14 +341,14 @@ export default function PatientDetailView(props: any) {
     if (id) {
       const { data } = await careScope(sb
         .from("patients")
-        .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation")
+        .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation, prescribed_weekly_frequency, referral_source")
         .eq("id", id), clinicId, professionalId)
         .maybeSingle();
       if (data) return data;
     }
     let lookup = sb
       .from("patients")
-      .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation")
+      .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation, prescribed_weekly_frequency, referral_source")
       .limit(1);
     if (patient?.email) lookup = lookup.eq("email", patient.email);
     else lookup = lookup.eq("full_name", patient.name);
@@ -386,7 +386,7 @@ export default function PatientDetailView(props: any) {
         const { data: created, error } = await sb
           .from("patients")
           .insert(payload)
-          .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation")
+          .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation, prescribed_weekly_frequency, referral_source")
           .single();
         if (error) throw error;
         row = created;
