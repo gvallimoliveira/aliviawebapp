@@ -1,4 +1,6 @@
 # Tasks
+- [x] Show assessment-to-agenda conversion in PRO and clinic Insights, with isolated scope and pt/en/es help; 12 tests pass and authenticated clinic renders correctly, build OK. No clinical data changed.
+- [ ] Verify populated conversion in the real PRO screen: available authenticated account has no professional profile; SQL conversion and isolation tested with disposable local fixtures, not live PRO records.
 - [x] Isolate clinic versus solo patients, agenda, evolutions, health, HEP, export and conversations; server validates agent scope. 77 regressions pass; authenticated clinic thread creation/reload, wrong-solo 403 and cleanup verified. No existing clinical data changed.
 - [ ] Verify GV Fisio test patients absent from a populated real solo PRO list: the requesting user's available authenticated account has only “Minha Clínica” and PRO demo, not the GV Fisio/solo profile shown in the screenshot. Filters tested with clinic+solo fixtures; real screenshot account remains unavailable.
 - [x] Edit each microcycle session's planned dose in place, preserve performed-session data and refresh comparisons; 47 tests pass and pt/en/es help updated. Authenticated clinic temporary dose edited 0→40 and read back through UI, then removed; actual example run was not changed without a clinician-selected target.

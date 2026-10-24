@@ -1144,6 +1144,8 @@
   "support.pro.tool.insights_reassessment.desc": "Lists patients 28+ days without a completed assessment, or with 8+ session notes since the last one. Reassessing documents progress, refreshes the plan and supports the continuity or discharge conversation.",
   "support.pro.tool.insights_steps.title": "Treatment phase (STEPS)",
   "support.pro.tool.insights_steps.desc": "Shows the current macrocycle phase of each active periodization plan and how many weeks the patient has been in it. Anyone over 4 weeks in the same phase is highlighted — a signal to review exit criteria and progress.",
+  "support.pro.tool.insights_funnel.title": "Assessment → appointment conversion",
+  "support.pro.tool.insights_funnel.desc": "In clinic and solo PRO, shows patients whose first completed assessment in the profile was within 90 days: with treatment appointments on or after assessment, without confirmed appointments, and already attended. Reassessments do not increase the base. Cancellations, no-shows, commitments and assessment appointments do not count as conversion. Matching uses email or linked assessment, not name alone; without an identifiable link conversion is not confirmed. Separate profile data, no AI credits.",
   "support.pro.tool.insights_reactivation.title": "Inactive reactivation",
   "support.pro.tool.insights_reactivation.desc": "Past patients with 2+ completed visits, the last one 30-180 days ago, and no return booked. Unlike silent dropout (active patients cooling off), these are already-inactive contacts worth a win-back approach — with shortcuts to book or message.",
   "support.pro.tool.insights_discharge.title": "Discharge prediction",
