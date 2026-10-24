@@ -301,6 +301,26 @@ export async function deleteCycle(id: string): Promise<void> {
   await supabase.from("periodization_cycles").delete().eq("id", id);
 }
 
+/**
+ * Registra a ALTA do plano (passo terminal do STEPS): encerra o plano e
+ * desmarca a fase atual. A partir daí o paciente some dos insights de fase
+ * (que só olham planos ativos) e para de acumular semanas estagnadas.
+ */
+export async function dischargePlan(planId: string): Promise<void> {
+  const sb = supabase as any;
+  const { error } = await sb
+    .from("periodization_plans")
+    .update({ status: "completed", end_date: localISODate() })
+    .eq("id", planId);
+  if (error) throw error;
+  const { error: clearError } = await sb
+    .from("periodization_cycles")
+    .update({ is_current: false, marked_current_at: null })
+    .eq("plan_id", planId)
+    .eq("level", "macro");
+  if (clearError) throw clearError;
+}
+
 /* --------------------------------------------------------------- sessions */
 
 export async function fetchSessions(planId: string, fromDate?: string, toDate?: string): Promise<PeriodizationSession[]> {
