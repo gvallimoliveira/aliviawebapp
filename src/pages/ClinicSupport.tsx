@@ -312,7 +312,7 @@ const categories: ToolCategory[] = [
         key: "insights_funnel",
         icon: Filter,
         title: "Conversão avaliação → agenda",
-        desc: "Novos pacientes avaliados nos últimos 90 dias, com e sem atendimento confirmado na agenda desde a avaliação, e quantos já compareceram. Reavaliações, faltas, cancelamentos, compromissos e citas de avaliação não contam como conversão. Disponível na clínica e no PRO, com dados separados e sem créditos de IA.",
+        desc: "Novos pacientes avaliados nos últimos 90 dias, com e sem atendimento confirmado na agenda desde a avaliação, e quantos já compareceram. Reavaliações, faltas, cancelamentos, compromissos e agendamentos de avaliação não contam como conversão. Disponível na clínica e no PRO, com dados separados e sem créditos de IA.",
       },
       {
         key: "insights_concentration",
@@ -624,11 +624,11 @@ const ClinicSupport = () => {
                               <AccordionTrigger className="text-left text-base font-medium text-foreground gap-3">
                                 <span className="flex items-center gap-3">
                                   <ItemIcon className="h-4 w-4 text-primary shrink-0" />
-                                  {item.key === "spine_maigne" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
+                                  {item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
                                 </span>
                               </AccordionTrigger>
                               <AccordionContent className="text-muted-foreground leading-relaxed pl-7">
-                                {item.key === "spine_maigne" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
+                                {item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
                               </AccordionContent>
                             </AccordionItem>
                           );

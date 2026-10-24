@@ -1145,6 +1145,8 @@
   "support.pro.tool.insights_reassessment.desc": "Lista pacientes con 28 días o más sin evaluación completada, o con 8+ evoluciones registradas desde la última. Reevaluar documenta el progreso, actualiza el plan y sostiene la conversación de continuidad o alta.",
   "support.pro.tool.insights_steps.title": "Fase del tratamiento (STEPS)",
   "support.pro.tool.insights_steps.desc": "Muestra la fase actual del macrociclo de cada plan de periodización activo y cuántas semanas lleva el paciente en ella. Quien supera 4 semanas en la misma fase aparece destacado — señal para revisar los criterios de salida y progresar.",
+  "support.pro.tool.insights_funnel.title": "Conversión evaluación → agenda",
+  "support.pro.tool.insights_funnel.desc": "En clínica y PRO, muestra pacientes cuya primera evaluación completada en el perfil fue en los últimos 90 días: con atención en agenda desde la evaluación, sin atención confirmada y cuántos ya asistieron. Las reevaluaciones no aumentan la base. Cancelaciones, faltas, compromisos y citas de evaluación no cuentan como conversión. El vínculo usa correo o evaluación vinculada, no solo nombre; sin vínculo identificable no confirma conversión. Datos separados por perfil, sin créditos de IA.",
   "support.pro.tool.insights_reactivation.title": "Reactivación de inactivos",
   "support.pro.tool.insights_reactivation.desc": "Ex-pacientes con 2+ atenciones completadas, la última entre 30 y 180 días atrás y ningún retorno agendado. A diferencia del abandono silencioso (pacientes activos enfriándose), aquí son contactos ya inactivos que valen un acercamiento de reconquista — con atajos para agendar o enviar mensaje.",
   "support.pro.tool.insights_discharge.title": "Predicción de alta",
