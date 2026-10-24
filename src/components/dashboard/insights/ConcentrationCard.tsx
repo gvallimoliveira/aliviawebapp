@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { PieChart, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import InsightCardShell from "./InsightCardShell";
+import { concentrationTone } from "@/lib/insightFormat";
 
 interface Props {
   clinicId: string;
@@ -36,7 +37,8 @@ const ConcentrationCard = ({ clinicId }: Props) => {
   }, [clinicId]);
 
   const share = row?.top5_share_pct ?? 0;
-  const tone = share >= 60 ? "text-red-700" : share >= 40 ? "text-amber-700" : "text-emerald-700";
+  const toneKey = concentrationTone(share);
+  const tone = toneKey === "high" ? "text-red-700" : toneKey === "medium" ? "text-amber-700" : "text-emerald-700";
 
   const infoContent = (
     <div className="space-y-2 text-sm">
