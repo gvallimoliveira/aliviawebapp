@@ -6,8 +6,13 @@ import { useInsightDismissals } from "./useInsightDismissals";
 import type { ManagementData } from "./useManagementData";
 import {
   emptyChairCost, availableHours, revenuePerHour, closedCycles, clinicalLtv, dischargeVsDropout, recordCompliance, MIN_CASES_PER_THERAPIST,
-  leakageNoNextAppointment,
+  leakageNoNextAppointment, buildPriceResolver,
 } from "@/lib/managementMetrics";
+
+/** Service-aware price resolver for the loaded scope (monthly plans diluted per realized session). */
+export function usePriceOf(d: ManagementData) {
+  return useMemo(() => buildPriceResolver(d.appts, d.services, d.price), [d]);
+}
 
 type L = "pt" | "en" | "es";
 const useL = () => useLanguage().language as L;
@@ -38,8 +43,8 @@ export function Stat({ label, value, tone }: { label: string; value: string; ton
 export function Wrap({ d, needsPrice, children }: { d: ManagementData; needsPrice?: boolean; children: React.ReactNode }) {
   const l = useL();
   if (d.loading) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
-  if (needsPrice && !d.price)
-    return <p className="text-sm text-muted-foreground">{tr(l, "Cadastre o preço padrão da sessão (no card Meta de receita / perfil) para ver valores em R$.", "Set the default session price to see currency values.", "Registre el precio estándar de la sesión para ver valores.")}</p>;
+  if (needsPrice && !d.price && !d.services.length)
+    return <p className="text-sm text-muted-foreground">{tr(l, "Cadastre o preço padrão da sessão ou serviços com valores nas configurações para ver valores em R$.", "Set the default session price or catalog services to see currency values.", "Registre el precio estándar o servicios con valores para ver importes.")}</p>;
   return <>{children}</>;
 }
 
