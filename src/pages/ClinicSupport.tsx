@@ -35,6 +35,10 @@ type ToolCategory = {
 };
 
 const categories: ToolCategory[] = [
+  { title: "Perfil pessoal do paciente", icon: Heart, items: [{ key: "patient_daily_care", icon: Activity,
+    title: "Rotina diária e evolução em abas",
+    desc: "O paciente vinculado abre em Hoje, com check-in de carga e prontidão e os exercícios prescritos. Minha Evolução reúne condições, avaliações e histórico. Agendamentos mantém os pedidos de horário e Mensagens & Avisos reúne conversas e comunicados. As ofertas de plano pessoal deixam de ocupar o topo. Os registros e as permissões existentes são preservados.",
+  }] },
   { title: "Resumo da clínica", icon: PieChart, items: [{ key: "clinic_overview", icon: TrendingUp,
     title: "Totais e relatório em Insights → Resumo",
     desc: "A aba Pacientes fica focada na lista e nos prontuários. Os totais de profissionais, avaliações e pacientes e o Relatório do Período (30, 60 ou 90 dias) estão em Insights → Resumo. A distribuição por status permanece nos gráficos dos Insights, sem repetição na lista de pacientes.",
@@ -643,11 +647,11 @@ const ClinicSupport = () => {
                               <AccordionTrigger className="text-left text-base font-medium text-foreground gap-3">
                                 <span className="flex items-center gap-3">
                                   <ItemIcon className="h-4 w-4 text-primary shrink-0" />
-                                  {item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
+                                  {item.key === "patient_daily_care" ? t(`clinic.support.tool.${item.key}.title`) : item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.title`) : item.title}
                                 </span>
                               </AccordionTrigger>
                               <AccordionContent className="text-muted-foreground leading-relaxed pl-7">
-                                {item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
+                                {item.key === "patient_daily_care" ? t(`clinic.support.tool.${item.key}.desc`) : item.key === "spine_maigne" || item.key === "insights_funnel" || item.key === "insights_management" || item.key === "studio_cardiorespiratory" || item.key === "studio_ecosystem" ? t(`support.pro.tool.${item.key}.desc`) : item.desc}
                               </AccordionContent>
                             </AccordionItem>
                           );

@@ -70,6 +70,8 @@ import { Input } from "@/components/ui/input";
 import { Search, CalendarDays, Megaphone } from "lucide-react";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { hasRealCrefito, isPlaceholderCrefito } from "@/lib/crefito";
+import { usePatientCare } from "@/hooks/usePatientCare";
+import { resolvePatientTab } from "@/lib/patientNavigation";
 
 
 const TabFallback = () => (
@@ -92,7 +94,7 @@ type OnboardingContext = "personal" | "professional" | "clinic";
 
 function buildOnboardingSteps(
   context: OnboardingContext,
-  opts: { subscriptionType?: "monthly" | "single" | null; canManageClinic?: boolean; hasAgentAccess?: boolean } = {}
+  opts: { subscriptionType?: "monthly" | "single" | null; canManageClinic?: boolean; hasAgentAccess?: boolean; linkedPatient?: boolean } = {}
 ): OnboardingStep[] {
   if (context === "clinic") {
     const steps: OnboardingStep[] = [
@@ -122,6 +124,13 @@ function buildOnboardingSteps(
   }
 
   // personal
+  if (opts.linkedPatient) {
+    return [
+      { targetId: "patient-today-tab", titleKey: "dashboard.tab_today", descriptionKey: "support.patient.tool.daily_care.desc", position: "bottom", tab: "today" },
+      { targetId: "patient-evolution-tab", titleKey: "dashboard.tab_evolution", descriptionKey: "support.patient.tool.history.desc", position: "bottom", tab: "health" },
+      { targetId: "patient-appointments-tab", titleKey: "dashboard.tab_appointments", descriptionKey: "support.pro.tool.care_services.desc", position: "bottom", tab: "appointments" },
+    ];
+  }
   const steps: OnboardingStep[] = [
     { targetId: "patient-welcome", titleKey: "onboarding.patient.step1.title", descriptionKey: "onboarding.patient.step1.desc" },
     { targetId: "patient-assessments", titleKey: "onboarding.patient.step2.title", descriptionKey: "onboarding.patient.step2.desc", position: "bottom" },
@@ -148,17 +157,18 @@ const Dashboard = () => {
   const [premiumLoading, setPremiumLoading] = useState(true);
   const [professional, setProfessional] = useState<any>(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
+  const patientCare = usePatientCare(user?.id, authReady && activeContext === "personal");
   const [activeTab, setActiveTab] = useState<string>(() => {
     // Restore tab from URL first, then sessionStorage (survives short
     // mobile background→foreground reloads), default to "health".
-    if (typeof window === "undefined") return "health";
+    if (typeof window === "undefined") return "today";
     const urlTab = new URLSearchParams(window.location.search).get("tab");
     if (urlTab) return urlTab;
     try {
       const stored = sessionStorage.getItem("alivia_dashboard_tab");
       if (stored) return stored;
     } catch {}
-    return "health";
+    return "today";
   });
   const [unreadCount, setUnreadCount] = useState(0);
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
@@ -166,6 +176,7 @@ const Dashboard = () => {
   const [allConversationIds, setAllConversationIds] = useState<string[]>([]);
   const [hasAutoSwitchedPro, setHasAutoSwitchedPro] = useState(false);
   const [clinicSubTab, setClinicSubTab] = useState<string>("team");
+  const [patientContactTab, setPatientContactTab] = useState(() => tabFromUrl === "notices" && !convFromUrl ? "notices" : "conversations");
 
   // Tutorial estritamente ligado ao contexto ativo. Cada modo tem sua
   // própria chave de "concluído" — assim aparece UMA ÚNICA vez no
@@ -180,8 +191,9 @@ const Dashboard = () => {
       subscriptionType: premiumAccess?.subscription_type,
       canManageClinic,
       hasAgentAccess,
+      linkedPatient: patientCare.linked,
     }),
-    [onboardingContext, premiumAccess?.subscription_type, canManageClinic, hasAgentAccess]
+    [onboardingContext, premiumAccess?.subscription_type, canManageClinic, hasAgentAccess, patientCare.linked]
   );
   const onboardingStorageKey = `onboarding_${onboardingContext}_completed_v2`;
   const onboarding = useOnboarding(onboardingStorageKey, onboardingSteps);
@@ -191,7 +203,7 @@ const Dashboard = () => {
   // tour ends, return to the main "professional" tab.
   const tourPrevTabRef = useRef<string | null>(null);
   useEffect(() => {
-    if (onboardingContext !== "professional") return;
+    if (onboardingContext !== "professional" && onboardingContext !== "personal") return;
     if (onboarding.isActive) {
       const targetTab = onboarding.step?.tab;
       if (targetTab) {
@@ -199,7 +211,7 @@ const Dashboard = () => {
         if (targetTab !== activeTab) setActiveTab(targetTab);
       }
     } else if (tourPrevTabRef.current !== null) {
-      setActiveTab("professional");
+      setActiveTab(tourPrevTabRef.current);
       tourPrevTabRef.current = null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -539,14 +551,14 @@ const Dashboard = () => {
       const valid = ["professional", "agenda", "insights", "messages"];
       setActiveTab(valid.includes(desired) ? desired : "professional");
     } else if (activeContext === "personal") {
-      const valid = ["health", "appointments", "notices", "messages"];
-      setActiveTab(valid.includes(desired) ? desired : "health");
+      if (patientCare.loading) return;
+      setActiveTab(resolvePatientTab(desired, patientCare.linked));
     }
     // If activeContext is "professional"/"clinic" but the underlying data
     // hasn't arrived yet, do NOT set a tab — the effect re-runs when
     // professional/activeClinic become available.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tabFromUrl, activeContext, activeClinic, professional]);
+  }, [tabFromUrl, activeContext, activeClinic, professional, patientCare.loading, patientCare.linked]);
 
   // Safety clamp: if activeTab doesn't belong to the currently rendered
   // tab branch (race between context switch and async data), reset it to
@@ -554,17 +566,18 @@ const Dashboard = () => {
   useEffect(() => {
     const inClinicMode = isClinicMode && !!activeClinic;
     const inProMode = !inClinicMode && ((activeContext === "professional" && !!professional) || activeContext === "professional_demo");
+    if (!inClinicMode && !inProMode && patientCare.loading) return;
 
     const validTabs = inClinicMode
       ? ["agenda", "patients", "insights", "messages", "clinic"]
       : inProMode
         ? ["professional", "agenda", "insights", "messages"]
-        : ["health", "appointments", "notices", "messages"];
+        : patientCare.linked ? ["today", "health", "appointments", "messages"] : ["health", "appointments", "messages"];
 
     if (!validTabs.includes(activeTab)) {
-      setActiveTab(inClinicMode ? "agenda" : inProMode ? "professional" : "health");
+      setActiveTab(inClinicMode ? "agenda" : inProMode ? "professional" : resolvePatientTab(activeTab, patientCare.linked));
     }
-  }, [activeTab, activeContext, activeClinic, professional, isClinicMode]);
+  }, [activeTab, activeContext, activeClinic, professional, isClinicMode, patientCare.loading, patientCare.linked]);
 
 
   // Sync professional profile flag.
@@ -698,9 +711,21 @@ const Dashboard = () => {
   };
 
 
+  const renderDailyCare = () => (
+    <>
+      <PatientCheckinCard />
+      <ExerciseChecklist />
+      {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
+        <div data-onboarding="patient-diary">
+          <PainDiary conditions={conditions} activeConditionKey={conditionFocusKey} />
+        </div>
+      )}
+    </>
+  );
+
   const renderClientContent = () => (
     <>
-      <UpgradeBanner premiumAccess={premiumAccess} premiumLoading={premiumLoading} professional={professional} />
+      {!patientCare.linked && <UpgradeBanner premiumAccess={premiumAccess} premiumLoading={premiumLoading} professional={professional} />}
 
       {/* Minhas condições — um acompanhamento por região/diagnóstico */}
       <ConditionOverviewCards
@@ -720,27 +745,27 @@ const Dashboard = () => {
       <EvolutionSummary assessments={conditionAssessments} />
       
       <QuickActions hasPremiumAccess={premiumAccess?.has_access} premiumLoading={premiumLoading} />
-      <ReferralCard availableDiscount={premiumAccess?.available_discount} />
+      {!patientCare.linked && <ReferralCard availableDiscount={premiumAccess?.available_discount} />}
 
       {/* Exercise Checklist */}
-      <ExerciseChecklist
+      {!patientCare.linked && <ExerciseChecklist
         conditionAssessmentIds={(activeCondition?.assessments || []).map((a) => a.id)}
         conditionLabel={activeCondition?.label}
         filterByCondition={conditions.length > 1}
-      />
+      />}
 
 
       {/* AI Adaptive Progression - only for self-service premium */}
-      <AdaptiveProgressionCard premiumAccess={premiumAccess} assessments={conditionAssessments} />
+      {!patientCare.linked && <AdaptiveProgressionCard premiumAccess={premiumAccess} assessments={conditionAssessments} />}
 
-      {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
+      {!patientCare.linked && premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
         <div data-onboarding="patient-diary">
           <PainDiary conditions={conditions} activeConditionKey={conditionFocusKey} />
         </div>
       )}
 
       {/* Check-in de carga: aparece quando o e-mail da conta é paciente de um fisio/clínica */}
-      <PatientCheckinCard />
+      {!patientCare.linked && <PatientCheckinCard />}
       {premiumAccess?.has_access && premiumAccess?.subscription_type === "monthly" && (
         <AssessmentComparison assessments={conditionAssessments} />
       )}
@@ -751,6 +776,13 @@ const Dashboard = () => {
         conditionLabels={conditionLabelById}
         onDeleted={(ids) => setAssessments((prev) => prev.filter((a) => !ids.includes(a.id)))}
       />
+
+      {patientCare.linked && (
+        <details className="border-t border-border pt-4">
+          <summary className="cursor-pointer text-sm text-muted-foreground">{t("dashboard.patient_referral")}</summary>
+          <div className="mt-4"><ReferralCard availableDiscount={premiumAccess?.available_discount} /></div>
+        </details>
+      )}
 
     </>
   );
@@ -1267,26 +1299,42 @@ const Dashboard = () => {
             );
           })()
         ) : (
-          /* ── Personal Mode: Saúde + Mensagens ── */
+          /* Personal care: daily actions separate from clinical history. */
+          patientCare.loading ? <TabFallback /> :
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-4">
-              <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>
-              <TabsTrigger value="appointments" className="gap-1.5 text-xs"><CalendarDays className="h-4 w-4" /><span className="hidden sm:inline">Agendamentos</span></TabsTrigger>
-              <TabsTrigger value="notices" className="gap-1.5 text-xs"><Megaphone className="h-4 w-4" /><span className="hidden sm:inline">Avisos</span></TabsTrigger>
-              <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
-                <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
+            {patientCare.linked && patientCare.names.length > 0 && (
+              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Stethoscope className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                <span className="min-w-0 break-words">{t("dashboard.patient_followed_by")} <span className="font-medium text-foreground">{patientCare.names.join(" · ")}</span></span>
+              </div>
+            )}
+            <TabsList className={cn("w-full grid h-auto p-1", patientCare.linked ? "grid-cols-4" : "grid-cols-3")}>
+              {patientCare.linked && <TabsTrigger value="today" data-onboarding="patient-today-tab" className="min-w-0 gap-1.5 flex-col sm:flex-row py-2 text-xs sm:text-sm"><Activity className="h-4 w-4 shrink-0" /><span>{t("dashboard.tab_today")}</span></TabsTrigger>}
+              <TabsTrigger value="health" data-onboarding="patient-evolution-tab" className="min-w-0 gap-1.5 flex-col sm:flex-row py-2 text-xs sm:text-sm"><Heart className="h-4 w-4 shrink-0" /><span className="whitespace-normal text-center">{t(patientCare.linked ? "dashboard.tab_evolution" : "dashboard.tab_my_health")}</span></TabsTrigger>
+              <TabsTrigger value="appointments" data-onboarding="patient-appointments-tab" className="min-w-0 gap-1.5 flex-col sm:flex-row px-1 sm:px-3 py-2 text-xs sm:text-sm"><CalendarDays className="h-4 w-4 shrink-0" /><span className="sm:hidden">{t("dashboard.tab_patient_agenda")}</span><span className="hidden sm:inline">{t("dashboard.tab_appointments")}</span></TabsTrigger>
+              <TabsTrigger value="messages" className="min-w-0 gap-1.5 flex-col sm:flex-row py-2 relative text-xs sm:text-sm">
+                <span className="flex items-center"><MessageCircle className="h-4 w-4 shrink-0" />{unreadBadge}</span><span className="whitespace-normal text-center">{t("dashboard.tab_messages_notices")}</span>
               </TabsTrigger>
             </TabsList>
+            {patientCare.linked && <TabsContent value="today" className="space-y-6">{renderDailyCare()}</TabsContent>}
             <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
             <TabsContent value="appointments" className="space-y-6"><PatientAppointmentsTab /></TabsContent>
-            <TabsContent value="notices" className="space-y-6"><PatientNoticesTab /></TabsContent>
             <TabsContent value="messages" className="space-y-6">
+              <Tabs value={patientContactTab} onValueChange={setPatientContactTab} className="space-y-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="conversations" className="gap-2"><MessageCircle className="h-4 w-4" />{t("dashboard.tab_messages")}</TabsTrigger>
+                  <TabsTrigger value="notices" className="gap-2"><Megaphone className="h-4 w-4" />{t("dashboard.tab_notices")}</TabsTrigger>
+                </TabsList>
+                <TabsContent value="notices"><PatientNoticesTab /></TabsContent>
+                <TabsContent value="conversations">
               <MessagesTab
                 professional={professional}
                 initialConversationId={convFromUrl}
                 canInitiateAsPatient={true}
                 canInitiateAsProfessional={false}
               />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
           </Tabs>
         )}
