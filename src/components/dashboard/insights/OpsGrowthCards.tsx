@@ -99,7 +99,7 @@ export function ReferralRateCard({ d }: { d: ManagementData }) {
 /* ---------- Pacientes sem próximo horário ---------- */
 export function LeakageCard({ d, scopeKey, dismissForTeam }: { d: ManagementData; scopeKey?: string; dismissForTeam?: boolean }) {
   const l = useL();
-  const rows = useMemo(() => leakageNoNextAppointment(d.appts, d.dischargedKeys, d.today), [d]);
+  const rows = useMemo(() => leakageNoNextAppointment(d.appts, d.dischargedKeys, d.today, undefined, d.patients), [d]);
   const { dismissed, dismiss, restoreAll } = useInsightDismissals("leakage_no_next", scopeKey, dismissForTeam);
   const visible = rows.filter((p) => !dismissed.has(p.key));
   const hidden = rows.length - visible.length;
@@ -139,7 +139,7 @@ export function LateCancellationCard({ d, showTeam }: { d: ManagementData; showT
     <InsightCardShell id="mgmt-late-cancel" icon={<Timer className="h-4 w-4 text-destructive" />} title={tr(l, "Cancelamento tardio", "Late cancellation", "Cancelación tardía")}
       rightSlot={<PeriodPicker value={days} onChange={setDays} />}
       description={tr(l, `Cancelamentos a menos de ${LATE_CANCEL_HOURS}h do horário vs antecipados`, `Cancellations under ${LATE_CANCEL_HOURS}h before the slot vs early ones`, `Cancelaciones a menos de ${LATE_CANCEL_HOURS}h del turno vs anticipadas`)}
-      infoContent={<Info><p>{tr(l, "O horário exato da mudança de status passou a ser registrado agora; cancelamentos antigos aparecem como 'sem horário registrado' e não entram na taxa.", "The exact status-change time started being recorded now; older cancellations show as 'no recorded time' and are excluded from the rate.", "El horario exacto del cambio de estado se registra desde ahora; cancelaciones antiguas aparecen como 'sin horario' y no entran en la tasa.")}</p><p>{tr(l, "Cancelamento tardio quase sempre vira cadeira vazia: vale cobrar política de aviso ou lista de espera.", "Late cancellations almost always become empty chairs: consider a notice policy or waitlist.", "La cancelación tardía casi siempre se vuelve silla vacía: considere política de aviso o lista de espera.")}</p></Info>}>
+      infoContent={<Info><p>{tr(l, "O horário exato da mudança de status passou a ser registrado agora; cancelamentos antigos e horários sem hora marcada aparecem como 'sem horário registrado' e não entram na taxa. O período considera a data do cancelamento, não a do horário vago.", "The exact status-change time started being recorded now; older cancellations and slots without a time show as 'no recorded time' and are excluded from the rate. The window follows the cancellation date, not the empty slot's date.", "El horario exacto del cambio de estado se registra desde ahora; cancelaciones antiguas y turnos sin hora aparecen como 'sin horario' y no entran en la tasa. El período sigue la fecha de la cancelación.")}</p><p>{tr(l, "Cancelamento tardio quase sempre vira cadeira vazia: vale cobrar política de aviso ou lista de espera.", "Late cancellations almost always become empty chairs: consider a notice policy or waitlist.", "La cancelación tardía casi siempre se vuelve silla vacía: considere política de aviso o lista de espera.")}</p></Info>}>
       <Wrap d={d}>
         {r.total === 0 ? (
           <p className="text-sm text-muted-foreground">{tr(l, "Nenhum cancelamento no período.", "No cancellations in the period.", "Ninguna cancelación en el período.")}</p>
@@ -200,7 +200,7 @@ export function OwnerDependenceCard({ d }: { d: ManagementData }) {
 export function BottleneckCard({ d, isClinic }: { d: ManagementData; isClinic: boolean }) {
   const l = useL();
   const [days, setDays] = useState(30);
-  const r = useMemo(() => capacityBottleneck(d.appts, d.therapists, d.rooms, d.today, days), [d, days]);
+  const r = useMemo(() => capacityBottleneck(d.appts, d.therapists, d.rooms, d.today, days, d.hours), [d, days]);
   return (
     <InsightCardShell id="mgmt-bottleneck" icon={<DoorOpen className="h-4 w-4 text-primary" />} title={tr(l, "Gargalo de capacidade", "Capacity bottleneck", "Cuello de botella de capacidad")}
       rightSlot={<PeriodPicker value={days} onChange={setDays} />}
@@ -212,9 +212,11 @@ export function BottleneckCard({ d, isClinic }: { d: ManagementData; isClinic: b
         ) : (
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2">
-              <Stat label={tr(l, "Índice de gargalo", "Bottleneck index", "Índice de cuello")} value={`${r.index}%`} tone={r.index >= 40 ? "bad" : "good"} />
+              <Stat label={tr(l, "Ocupação da agenda", "Schedule occupancy", "Ocupación de la agenda")} value={`${r.occupancy}%`} tone={r.occupancy >= 80 ? "bad" : "good"} />
               <Stat label={tr(l, "Capacidade simultânea", "Simultaneous capacity", "Capacidad simultánea")} value={String(r.capacity)} />
-              <Stat label={tr(l, "Horários travados", "Locked slots", "Turnos bloqueados")} value={`${r.saturated}/${r.used}`} />
+              {r.capacity > 1
+                ? <Stat label={tr(l, "Horários travados", "Locked slots", "Turnos bloqueados")} value={`${r.saturated}/${r.used}`} tone={r.index >= 40 ? "bad" : "good"} />
+                : <Stat label={tr(l, "Horários usados", "Used slots", "Turnos usados")} value={`${r.used}/${r.possible}`} />}
             </div>
             {r.top.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
