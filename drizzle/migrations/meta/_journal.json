@@ -330,6 +330,13 @@
       "when": 1792946788823,
       "tag": "0046_admin_list_clinics_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1792956364737,
+      "tag": "0047_clinic_small_100_per_member",
+      "breakpoints": true
     }
   ]
 }

@@ -60,6 +60,7 @@ const AiCreditsWidget = () => {
   const [rows, setRows] = useState<UsageRow[]>([]);
   const [status, setStatus] = useState<CreditStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [clinicRole, setClinicRole] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -93,9 +94,21 @@ const AiCreditsWidget = () => {
       if (periodEnd) q = q.lt("created_at", periodEnd);
       const usageRes = await q;
 
+      let role: string | null = null;
+      if (s?.clinic_id) {
+        const { data: m } = await supabase
+          .from("clinic_members")
+          .select("role")
+          .eq("clinic_id", s.clinic_id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        role = (m?.role as string | undefined) ?? null;
+      }
+
       if (!cancelled) {
         setRows((usageRes.data as UsageRow[]) || []);
         setStatus(s);
+        setClinicRole(role);
         setLoading(false);
       }
     })();
@@ -126,6 +139,8 @@ const AiCreditsWidget = () => {
     });
 
   const unlimited = !!status?.unlimited;
+  // In a clinic, only the owner/admin manages purchases; staff never see the store.
+  const canBuy = !status?.clinic_id || clinicRole === "owner" || clinicRole === "admin";
   const included = status?.included ?? 0;
   const purchased = status?.purchased ?? 0;
   const pooled = !!status?.pooled;
@@ -402,14 +417,22 @@ const AiCreditsWidget = () => {
         )}
 
         <div className="pt-2 border-t border-border space-y-1.5">
-          <AiCreditsStore
-            trigger={
-              <Button size="sm" variant="outline" className="w-full gap-1.5">
-                <Sparkles className="h-3.5 w-3.5" />
-                {isPt ? "Comprar pacote de créditos" : "Buy credit pack"}
-              </Button>
-            }
-          />
+          {canBuy ? (
+            <AiCreditsStore
+              trigger={
+                <Button size="sm" variant="outline" className="w-full gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {isPt ? "Comprar pacote de créditos" : "Buy credit pack"}
+                </Button>
+              }
+            />
+          ) : (
+            <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+              {isPt
+                ? "Os créditos de IA são da clínica. Se a cota acabar, peça ao gestor da clínica para liberar mais."
+                : "AI credits belong to the clinic. If the quota runs out, ask the clinic manager to add more."}
+            </p>
+          )}
           {unlimited && (
             <p className="text-[10px] text-muted-foreground text-center">
               {isPt
