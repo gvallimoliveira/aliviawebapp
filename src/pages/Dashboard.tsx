@@ -890,7 +890,6 @@ const Dashboard = () => {
             <TabsContent value="agenda" className="space-y-6">
               <ClinicTrialBanner />
               {canManageClinic && !isSimulated && <AppointmentRequestsPanel clinicId={activeClinic.clinic_id} />}
-              {canManageClinic && !isSimulated && <AnnouncementsManager clinicId={activeClinic.clinic_id} />}
               <div className="relative" id="agenda-schedule-anchor">
                 <ProSchedule
                   key={`clinic:${activeClinic.clinic_id}`}
@@ -936,6 +935,9 @@ const Dashboard = () => {
             {/* Mensagens */}
             <TabsContent value="messages" className="space-y-6">
               <ClinicTrialBanner />
+              {(canManageClinic || isClinicSecretary) && !isSimulated && (
+                <Suspense fallback={null}><AnnouncementsManager clinicId={activeClinic.clinic_id} /></Suspense>
+              )}
               <div className="relative min-h-[400px]">
                 <MessagesTab
                   professional={professional}
@@ -1171,7 +1173,6 @@ const Dashboard = () => {
                   ) : hasProAccess ? (
                     <>
                       {!isSimulated && <AppointmentRequestsPanel professionalId={proStub.id} />}
-                      {!isSimulated && <AnnouncementsManager professionalId={proStub.id} />}
                       <ProSchedule professionalId={proStub.id} isSimulated={isSimulated} />
                     </>
                   ) : (
@@ -1207,12 +1208,15 @@ const Dashboard = () => {
                       <DemoMessagesMock />
                     </>
                   ) : hasProAccess ? (
+                    <>
+                    {!isSimulated && <Suspense fallback={null}><AnnouncementsManager professionalId={proStub.id} /></Suspense>}
                     <MessagesTab
                       professional={proStub}
                       initialConversationId={convFromUrl}
                       canInitiateAsPatient={false}
                       canInitiateAsProfessional={true}
                     />
+                    </>
                   ) : (
                     <>
                       <TryProDemoCard section="Mensagens" />
