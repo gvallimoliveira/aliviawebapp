@@ -187,27 +187,29 @@ function parseHour(v?: string | null): number | null {
   return Number.isFinite(h) ? h + (Number.isFinite(m) ? m / 60 : 0) : null;
 }
 
-export function revenuePerHour(appts: MgmtAppt[], price: number, today: string, days: number, availHours: number) {
+export function revenuePerHour(appts: MgmtAppt[], price: number, today: string, days: number, availHours: number, priceOf?: PriceOf) {
+  const unit = (a: MgmtAppt) => (priceOf ? priceOf(a) : price);
   const from = addDays(today, -(days - 1));
   const done = appts.filter((a) => isCare(a) && a.status === "completed" && inWindow(a, from, today));
-  const revenue = done.length * price;
+  const revenue = done.reduce((s, a) => s + unit(a), 0);
   const workedHours = done.reduce((s, a) => s + (a.duration_minutes || 50), 0) / 60;
-  const per: Record<string, { sessions: number; hours: number }> = {};
+  const per: Record<string, { sessions: number; hours: number; revenue: number }> = {};
   for (const a of done) {
     const k = a.professional_id || "—";
-    per[k] = per[k] || { sessions: 0, hours: 0 };
+    per[k] = per[k] || { sessions: 0, hours: 0, revenue: 0 };
     per[k].sessions++;
     per[k].hours += (a.duration_minutes || 50) / 60;
+    per[k].revenue += unit(a);
   }
   return {
-    revenue,
+    revenue: round2(revenue),
     sessions: done.length,
     availableHours: availHours,
     workedHours: round1(workedHours),
     perAvailableHour: availHours > 0 ? round2(revenue / availHours) : 0,
     perWorkedHour: workedHours > 0 ? round2(revenue / workedHours) : 0,
     byTherapist: Object.entries(per)
-      .map(([id, v]) => ({ id, sessions: v.sessions, revenue: v.sessions * price, perWorkedHour: v.hours > 0 ? round2((v.sessions * price) / v.hours) : 0 }))
+      .map(([id, v]) => ({ id, sessions: v.sessions, revenue: round2(v.revenue), perWorkedHour: v.hours > 0 ? round2(v.revenue / v.hours) : 0 }))
       .sort((a, b) => b.revenue - a.revenue),
   };
 }
