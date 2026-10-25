@@ -54,6 +54,8 @@ const DemoMessagesMock = lazy(() => import("@/components/demo/DemoMessagesMock")
 const DemoDailySummaryMock = lazy(() => import("@/components/demo/DemoDailySummaryMock"));
 const PatientAppointmentsTab = lazy(() => import("@/components/dashboard/PatientAppointmentsTab"));
 const AppointmentRequestsPanel = lazy(() => import("@/components/dashboard/AppointmentRequestsPanel"));
+const AnnouncementsManager = lazy(() => import("@/components/dashboard/AnnouncementsManager"));
+const PatientNoticesTab = lazy(() => import("@/components/dashboard/PatientNoticesTab"));
 import TryProDemoCard from "@/components/dashboard/TryProDemoCard";
 import ProBottomTabBar from "@/components/dashboard/ProBottomTabBar";
 import { useOnboarding, OnboardingStep } from "@/hooks/useOnboarding";
@@ -515,7 +517,7 @@ const Dashboard = () => {
       const valid = ["professional", "agenda", "insights", "messages"];
       setActiveTab(valid.includes(desired) ? desired : "professional");
     } else if (activeContext === "personal") {
-      const valid = ["health", "appointments", "messages"];
+      const valid = ["health", "appointments", "notices", "messages"];
       setActiveTab(valid.includes(desired) ? desired : "health");
     }
     // If activeContext is "professional"/"clinic" but the underlying data
@@ -535,7 +537,7 @@ const Dashboard = () => {
       ? ["agenda", "patients", "insights", "messages", "clinic"]
       : inProMode
         ? ["professional", "agenda", "insights", "messages"]
-        : ["health", "appointments", "messages"];
+        : ["health", "appointments", "notices", "messages"];
 
     if (!validTabs.includes(activeTab)) {
       setActiveTab(inClinicMode ? "agenda" : inProMode ? "professional" : "health");
@@ -888,6 +890,7 @@ const Dashboard = () => {
             <TabsContent value="agenda" className="space-y-6">
               <ClinicTrialBanner />
               {canManageClinic && !isSimulated && <AppointmentRequestsPanel clinicId={activeClinic.clinic_id} />}
+              {canManageClinic && !isSimulated && <AnnouncementsManager clinicId={activeClinic.clinic_id} />}
               <div className="relative" id="agenda-schedule-anchor">
                 <ProSchedule
                   key={`clinic:${activeClinic.clinic_id}`}
@@ -1168,6 +1171,7 @@ const Dashboard = () => {
                   ) : hasProAccess ? (
                     <>
                       {!isSimulated && <AppointmentRequestsPanel professionalId={proStub.id} />}
+                      {!isSimulated && <AnnouncementsManager professionalId={proStub.id} />}
                       <ProSchedule professionalId={proStub.id} isSimulated={isSimulated} />
                     </>
                   ) : (
@@ -1237,15 +1241,17 @@ const Dashboard = () => {
         ) : (
           /* ── Personal Mode: Saúde + Mensagens ── */
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="w-full grid grid-cols-3">
+            <TabsList className="w-full grid grid-cols-4">
               <TabsTrigger value="health" className="gap-1.5"><Heart className="h-4 w-4" />{t("dashboard.tab_my_health")}</TabsTrigger>
               <TabsTrigger value="appointments" className="gap-1.5 text-xs"><CalendarDays className="h-4 w-4" /><span className="hidden sm:inline">Agendamentos</span></TabsTrigger>
+              <TabsTrigger value="notices" className="gap-1.5 text-xs"><Megaphone className="h-4 w-4" /><span className="hidden sm:inline">Avisos</span></TabsTrigger>
               <TabsTrigger value="messages" className="gap-1.5 relative text-xs">
                 <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
             <TabsContent value="appointments" className="space-y-6"><PatientAppointmentsTab /></TabsContent>
+            <TabsContent value="notices" className="space-y-6"><PatientNoticesTab /></TabsContent>
             <TabsContent value="messages" className="space-y-6">
               <MessagesTab
                 professional={professional}
