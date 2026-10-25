@@ -1,5 +1,10 @@
 # Roadmap
 
+## Correção de localização dos painéis
+- [ ] Devolver solicitações de agendamento à Agenda no PRO e na clínica.
+- [ ] Mover Serviços e valores para Insights → Operação, retirando de Pacientes/Equipe e atualizando a ajuda.
+- [ ] Verificar a navegação autenticada e preservar os vínculos dos serviços e agendamentos.
+
 ## Concluído (esta rodada)
 - [x] Insights deixam de usar diário de dor e mensagens; sinais agora: check-in de prontidão (dor por região/nota), HEP e comparecimento na agenda (migrações 0032–0034, RPCs validadas).
 - [x] Verificada a aba Pacientes vazia na clínica de teste: integração OK, ausência real de dados no escopo; escopo rico produz sinais (~20 silêncios, dor estagnada).
