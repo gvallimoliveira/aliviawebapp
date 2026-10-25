@@ -1,5 +1,8 @@
 # Roadmap
 
+## Correção dos controles de parceiros
+- [ ] Diagnosticar e corrigir desativação do Acadêmico e remoção da parceria de Juliana, preservando conta/histórico; verificar persistência e painel autenticado.
+
 ## Preparação dos créditos de IA
 - [x] PRO com margem de 10%; parceiros 25/mês e compra permitida; clínica mantém 20%; ilimitado só admin/VIP.
 - [x] Avisos 80/100%, recuperação contextual e controles seletivos no Admin; chave geral desligada e categorias vazias.
