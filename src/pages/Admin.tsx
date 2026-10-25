@@ -24,6 +24,8 @@ import AdminAiUsage from "@/components/admin/AdminAiUsage";
 import AdminLgpdCenter from "@/components/admin/AdminLgpdCenter";
 import PatientUserManagement from "@/components/admin/PatientUserManagement";
 import AdminVideoAudit from "@/components/admin/AdminVideoAudit";
+import ClinicManagement from "@/components/admin/ClinicManagement";
+import { Building2 } from "lucide-react";
 
 interface VipUser {
   id: string;
@@ -252,6 +254,10 @@ const Admin = () => {
                 </Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="clinics" className="gap-1.5">
+              <Building2 className="h-3.5 w-3.5" />
+              {isPt ? "Clínicas" : "Clinics"}
+            </TabsTrigger>
             <TabsTrigger value="patients" className="gap-1.5">
               <HeartPulse className="h-3.5 w-3.5" />
               {isPt ? "Pacientes" : "Patients"}
@@ -291,6 +297,10 @@ const Admin = () => {
             </TabsTrigger>
           </TabsList>
 
+
+          <TabsContent value="clinics">
+            <ClinicManagement isPt={isPt} />
+          </TabsContent>
 
           <TabsContent value="dashboard">
             <AdminDashboard language={language} onNavigate={setActiveTab} />

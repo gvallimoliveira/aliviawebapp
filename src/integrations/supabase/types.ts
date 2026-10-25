@@ -5399,6 +5399,22 @@ export type Database = {
         Args: { _professional_id: string }
         Returns: undefined
       }
+      admin_list_clinics: {
+        Args: never
+        Returns: {
+          active_members: number
+          created_at: string
+          id: string
+          max_members: number
+          members: Json
+          name: string
+          owner_email: string
+          owner_name: string
+          patients_count: number
+          subscription_status: string
+          subscription_stripe_id: string
+        }[]
+      }
       admin_list_patient_users: {
         Args: never
         Returns: {
