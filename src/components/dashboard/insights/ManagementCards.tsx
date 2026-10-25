@@ -6,8 +6,13 @@ import { useInsightDismissals } from "./useInsightDismissals";
 import type { ManagementData } from "./useManagementData";
 import {
   emptyChairCost, availableHours, revenuePerHour, closedCycles, clinicalLtv, dischargeVsDropout, recordCompliance, MIN_CASES_PER_THERAPIST,
-  leakageNoNextAppointment,
+  leakageNoNextAppointment, buildPriceResolver,
 } from "@/lib/managementMetrics";
+
+/** Service-aware price resolver for the loaded scope (monthly plans diluted per realized session). */
+export function usePriceOf(d: ManagementData) {
+  return useMemo(() => buildPriceResolver(d.appts, d.services, d.price), [d]);
+}
 
 type L = "pt" | "en" | "es";
 const useL = () => useLanguage().language as L;
@@ -38,8 +43,8 @@ export function Stat({ label, value, tone }: { label: string; value: string; ton
 export function Wrap({ d, needsPrice, children }: { d: ManagementData; needsPrice?: boolean; children: React.ReactNode }) {
   const l = useL();
   if (d.loading) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
-  if (needsPrice && !d.price)
-    return <p className="text-sm text-muted-foreground">{tr(l, "Cadastre o preço padrão da sessão (no card Meta de receita / perfil) para ver valores em R$.", "Set the default session price to see currency values.", "Registre el precio estándar de la sesión para ver valores.")}</p>;
+  if (needsPrice && !d.price && !d.services.length)
+    return <p className="text-sm text-muted-foreground">{tr(l, "Cadastre o preço padrão da sessão ou serviços com valores nas configurações para ver valores em R$.", "Set the default session price or catalog services to see currency values.", "Registre el precio estándar o servicios con valores para ver importes.")}</p>;
   return <>{children}</>;
 }
 
@@ -48,11 +53,12 @@ export const Info = ({ children }: { children: React.ReactNode }) => <div classN
 /* ---------- LTV ---------- */
 export function LtvCard({ d }: { d: ManagementData }) {
   const l = useL();
-  const r = useMemo(() => clinicalLtv(closedCycles(d.appts, d.dischargedKeys, d.today), d.price), [d]);
+  const priceOf = usePriceOf(d);
+  const r = useMemo(() => clinicalLtv(closedCycles(d.appts, d.dischargedKeys, d.today, priceOf), d.price), [d, priceOf]);
   return (
     <InsightCardShell id="mgmt-ltv" icon={<Gem className="h-4 w-4 text-primary" />} title={tr(l, "LTV clínico", "Clinical LTV", "LTV clínico")}
       description={tr(l, "Valor médio gerado por paciente em ciclos encerrados (12 meses)", "Average value per patient in closed cycles (12 months)", "Valor medio por paciente en ciclos cerrados (12 meses)")}
-      infoContent={<Info><p>{tr(l, "Ciclo encerrado = alta registrada ou 30 dias sem atendimento e sem agendamento futuro.", "Closed cycle = recorded discharge or 30 days with no session and nothing scheduled.", "Ciclo cerrado = alta registrada o 30 días sin atención ni agenda futura.")}</p><p>{tr(l, "Valor = sessões realizadas × preço padrão da sessão.", "Value = completed sessions × default session price.", "Valor = sesiones realizadas × precio estándar.")}</p></Info>}>
+      infoContent={<Info><p>{tr(l, "Ciclo encerrado = alta registrada ou 30 dias sem atendimento e sem agendamento futuro.", "Closed cycle = recorded discharge or 30 days with no session and nothing scheduled.", "Ciclo cerrado = alta registrada o 30 días sin atención ni agenda futura.")}</p><p>{tr(l, "Sessão realizada conta pela agenda concluída ou pela evolução registrada no dia. Valor = preço do serviço do agendamento (mensalidades diluídas por sessão feita) ou o preço padrão.", "A realized session counts from a completed slot or a same-day note. Value = the slot's service price (monthly plans diluted per session) or the default price.", "Sesión realizada = turno concluido o evolución del día. Valor = precio del servicio (planes mensuales diluidos) o precio estándar.")}</p></Info>}>
       <Wrap d={d} needsPrice>
         {r.patients === 0 ? <p className="text-sm text-muted-foreground">{tr(l, "Ainda não há ciclos encerrados.", "No closed cycles yet.", "Aún no hay ciclos cerrados.")}</p> : (
           <div className="space-y-3">
@@ -77,7 +83,8 @@ const WD = { pt: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"], en: ["Sun",
 export function EmptyChairCard({ d }: { d: ManagementData }) {
   const l = useL();
   const [days, setDays] = useState(90);
-  const r = useMemo(() => emptyChairCost(d.appts, d.price, d.today, days), [d, days]);
+  const priceOf = usePriceOf(d);
+  const r = useMemo(() => emptyChairCost(d.appts, d.price, d.today, days, priceOf), [d, days, priceOf]);
   const maxM = Math.max(1, ...r.byMonth.map((m) => m.value));
   const worstDay = r.byWeekday.indexOf(Math.max(...r.byWeekday));
   return (
@@ -119,15 +126,16 @@ export function EmptyChairCard({ d }: { d: ManagementData }) {
 export function RevenuePerHourCard({ d, showTeam }: { d: ManagementData; showTeam?: boolean }) {
   const l = useL();
   const [days, setDays] = useState(30);
+  const priceOf = usePriceOf(d);
   const r = useMemo(() => {
     const avail = availableHours({ today: d.today, days, start: d.hours.start, end: d.hours.end, workingDays: d.hours.workingDays, therapists: d.therapists });
-    return revenuePerHour(d.appts, d.price, d.today, days, avail);
-  }, [d, days]);
+    return revenuePerHour(d.appts, d.price, d.today, days, avail, priceOf);
+  }, [d, days, priceOf]);
   return (
     <InsightCardShell id="mgmt-rev-hour" icon={<Clock3 className="h-4 w-4 text-primary" />} title={tr(l, "Receita por hora clínica", "Revenue per clinical hour", "Ingreso por hora clínica")}
       rightSlot={<PeriodPicker value={days} onChange={setDays} />}
       description={tr(l, "Quanto cada hora aberta e cada hora atendida rende", "What each open and each worked hour yields", "Cuánto rinde cada hora abierta y atendida")}
-      infoContent={<Info><p>{tr(l, "Hora disponível = horário de funcionamento × dias úteis × terapeutas ativos (padrão 08–18h, seg–sex).", "Available hour = opening hours × workdays × active therapists (default 8–18h Mon–Fri).", "Hora disponible = horario × días hábiles × terapeutas activos.")}</p><p>{tr(l, "Hora atendida = duração das sessões realizadas (50 min se não informada). Ainda não há cadastro de salas, por isso o rendimento é por hora e por terapeuta.", "Worked hour = completed session duration (50 min default). No room registry yet, so yield is per hour and therapist.", "Hora atendida = duración de sesiones realizadas. Sin registro de salas, el rendimiento es por hora y terapeuta.")}</p></Info>}>
+      infoContent={<Info><p>{tr(l, "Hora disponível = horário de funcionamento × dias úteis × terapeutas ativos (padrão 08–18h, seg–sex).", "Available hour = opening hours × workdays × active therapists (default 8–18h Mon–Fri).", "Hora disponible = horario × días hábiles × terapeutas activos.")}</p><p>{tr(l, "Hora atendida = duração das sessões realizadas (50 min se não informada). Receita usa o preço do serviço de cada agendamento; mensalidades são diluídas por sessão feita no mês.", "Worked hour = completed session duration (50 min default). Revenue uses each slot's service price; monthly plans are diluted per session done that month.", "Hora atendida = duración de sesiones. Los ingresos usan el precio del servicio; planes mensuales diluidos por sesión.")}</p></Info>}>
       <Wrap d={d} needsPrice>
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
@@ -196,14 +204,18 @@ export function RecordComplianceCard({ d, scopeKey, dismissForTeam, showTeam }: 
     <InsightCardShell id="mgmt-records" icon={<FileCheck2 className="h-4 w-4 text-primary" />} title={tr(l, "Prontuário em dia", "Records up to date", "Historia al día")}
       rightSlot={<PeriodPicker value={days} onChange={setDays} />}
       description={tr(l, "Sessões realizadas com evolução registrada em até 48h", "Completed sessions with a note within 48h", "Sesiones con evolución registrada en 48h")}
-      infoContent={<Info><p>{tr(l, "Conta a evolução ligada ao atendimento ou ao mesmo paciente no mesmo dia. Sessões com menos de 48h ainda não entram.", "Counts the note linked to the appointment or the same patient/day. Sessions under 48h are not yet counted.", "Cuenta la evolución del turno o del mismo paciente/día. Sesiones con menos de 48h aún no cuentan.")}</p><p>{tr(l, "Use o X para tirar da lista o que já foi resolvido fora do sistema.", "Use X to clear items handled outside the system.", "Use X para quitar lo resuelto fuera del sistema.")}</p></Info>}>
+      infoContent={<Info><p>{tr(l, "Conta a evolução ligada ao atendimento ou ao mesmo paciente no mesmo dia. Sessões com menos de 48h ainda não entram.", "Counts the note linked to the appointment or the same patient/day. Sessions under 48h are not yet counted.", "Cuenta la evolución del turno o del mismo paciente/día. Sesiones con menos de 48h aún no cuentan.")}</p><p>{tr(l, "Horários passados sem classificação (realizado/falta/cancelado) e sem evolução entram como pendência — eles nunca contam como 'em dia'.", "Past slots never classified (done/no-show/cancelled) and without a note count as pending — never as 'on time'.", "Turnos pasados sin clasificar y sin evolución cuentan como pendientes, nunca como 'al día'.")}</p><p>{tr(l, "Use o X para tirar da lista o que já foi resolvido fora do sistema.", "Use X to clear items handled outside the system.", "Use X para quitar lo resuelto fuera del sistema.")}</p></Info>}>
       <Wrap d={d}>
         <div className="space-y-3">
+          {r.rate === null ? (
+            <p className="text-sm text-muted-foreground">{tr(l, "Sem atendimentos para avaliar no período.", "No appointments to evaluate in the period.", "Sin atenciones para evaluar en el período.")}</p>
+          ) : (
           <div className="grid grid-cols-3 gap-2">
             <Stat label={tr(l, "Em dia", "On time", "Al día")} value={`${r.rate}%`} tone={r.rate >= 80 ? "good" : "bad"} />
             <Stat label={tr(l, "Atrasadas", "Late", "Atrasadas")} value={String(r.late)} />
-            <Stat label={tr(l, "Sem evolução", "Missing", "Sin evolución")} value={String(visible.length)} tone={visible.length ? "bad" : undefined} />
+            <Stat label={tr(l, "Pendências", "Pending", "Pendientes")} value={String(visible.length)} tone={visible.length ? "bad" : undefined} />
           </div>
+          )}
           {showTeam && r.byTherapist.length > 1 && (
             <div className="flex flex-wrap gap-1.5">
               {r.byTherapist.map((t) => <span key={t.id} className="text-[11px] rounded-full bg-muted px-2 py-0.5">{d.names[t.id] || "—"}: <b>{t.rate}%</b></span>)}
@@ -213,7 +225,7 @@ export function RecordComplianceCard({ d, scopeKey, dismissForTeam, showTeam }: 
             <div className="max-h-[240px] overflow-y-auto divide-y divide-border/60">
               {visible.map((p) => (
                 <div key={p.id} className="flex items-center gap-2 py-1.5 text-sm">
-                  <div className="flex-1 min-w-0"><p className="truncate">{p.name}</p><p className="text-[11px] text-muted-foreground">{p.date.split("-").reverse().join("/")}{showTeam && p.therapistId ? ` · ${d.names[p.therapistId] || ""}` : ""} · {Math.floor(p.hoursSince / 24)}d</p></div>
+                  <div className="flex-1 min-w-0"><p className="truncate">{p.name}</p><p className="text-[11px] text-muted-foreground">{p.date.split("-").reverse().join("/")}{showTeam && p.therapistId ? ` · ${d.names[p.therapistId] || ""}` : ""} · {Math.floor(p.hoursSince / 24)}d{p.unclassified ? ` · ${tr(l, "horário sem classificação", "slot not classified", "turno sin clasificar")}` : ` · ${tr(l, "sem evolução", "no note", "sin evolución")}`}</p></div>
                   <button type="button" onClick={() => dismiss(p.id)} className="p-1 text-muted-foreground hover:text-foreground"
                     aria-label={dismissForTeam ? tr(l, "Remover para toda a equipe", "Remove for the whole team", "Quitar para todo el equipo") : tr(l, "Remover da lista", "Remove from list", "Quitar de la lista")}><X className="h-3.5 w-3.5" /></button>
                 </div>
@@ -231,12 +243,13 @@ export function RecordComplianceCard({ d, scopeKey, dismissForTeam, showTeam }: 
 export function useSummaryTiles(d: ManagementData, showMoney: boolean) {
   return useMemo(() => {
     if (d.loading) return null;
-    const chair = emptyChairCost(d.appts, d.price, d.today, 30);
-    const cycles = closedCycles(d.appts, d.dischargedKeys, d.today);
+    const priceOf = buildPriceResolver(d.appts, d.services, d.price);
+    const chair = emptyChairCost(d.appts, d.price, d.today, 30, priceOf);
+    const cycles = closedCycles(d.appts, d.dischargedKeys, d.today, priceOf);
     const ltv = clinicalLtv(cycles, d.price);
     const dd = dischargeVsDropout(cycles, d.today, 180);
     const rec = recordCompliance(d.appts, d.notes, new Date(), 30);
     const leak = leakageNoNextAppointment(d.appts, d.dischargedKeys, d.today).length;
-    return { chair, ltv, dd, rec, leak, showMoney: showMoney && d.price > 0 };
+    return { chair, ltv, dd, rec, leak, showMoney: showMoney && (d.price > 0 || d.services.length > 0) };
   }, [d, showMoney]);
 }

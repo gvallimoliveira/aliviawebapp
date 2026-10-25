@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { addDays, type MgmtAppt, type MgmtNote, type MgmtPatient } from "@/lib/managementMetrics";
+import { addDays, synthesizeNoteSessions, type MgmtAppt, type MgmtNote, type MgmtPatient, type MgmtService } from "@/lib/managementMetrics";
 import { localISODate } from "@/lib/periodization";
 
 export interface ManagementData {
@@ -10,6 +10,8 @@ export interface ManagementData {
   appts: MgmtAppt[];
   notes: MgmtNote[];
   patients: MgmtPatient[];
+  /** Service catalog of the scope (clinic or solo PRO). */
+  services: MgmtService[];
   dischargedKeys: Set<string>;
   names: Record<string, string>;
   therapists: number;
@@ -36,7 +38,7 @@ async function fetchAll(build: (from: number, to: number) => any, max = 10000) {
 export function useManagementData(clinicId?: string, professionalId?: string): ManagementData {
   const today = localISODate();
   const [state, setState] = useState<ManagementData>({
-    loading: true, today, price: 0, appts: [], notes: [], patients: [], dischargedKeys: new Set(), names: {}, therapists: 1,
+    loading: true, today, price: 0, appts: [], notes: [], patients: [], services: [], dischargedKeys: new Set(), names: {}, therapists: 1,
     hours: { start: null, end: null, workingDays: null }, ownerProfessionalId: null, rooms: null,
   });
 
@@ -48,9 +50,9 @@ export function useManagementData(clinicId?: string, professionalId?: string): M
     const scope = (q: any) => (clinicId ? q.eq("clinic_id", clinicId) : q.is("clinic_id", null).eq("professional_id", professionalId));
     (async () => {
       const sb = supabase as any;
-      const [appts, notes, plans, cfg, patients] = await Promise.all([
+      const [rawAppts, notes, plans, cfg, patients, services] = await Promise.all([
         fetchAll((a, b) => scope(sb.from("professional_appointments")
-          .select("id, appointment_date, appointment_time, status, status_changed_at, duration_minutes, service_type, professional_id, patient_email, patient_name")
+          .select("id, appointment_date, appointment_time, status, status_changed_at, duration_minutes, service_type, service_id, professional_id, patient_email, patient_name")
           .gte("appointment_date", from).lte("appointment_date", until)).order("appointment_date").range(a, b)),
         fetchAll((a, b) => scope(sb.from("session_notes")
           .select("appointment_id, patient_email, session_date, created_at")
@@ -62,7 +64,11 @@ export function useManagementData(clinicId?: string, professionalId?: string): M
         fetchAll((a, b) => scope(sb.from("patients")
           .select("id, full_name, email, created_at, prescribed_weekly_frequency, referral_source")
           .eq("is_study_case", false)).order("created_at").range(a, b)),
+        fetchAll((a, b) => scope(sb.from("care_services")
+          .select("id, name, price, billing_type").eq("active", true)).range(a, b)),
       ]);
+      // Evolution notes count as realized sessions when the agenda slot was never classified.
+      const appts = synthesizeNoteSessions(rawAppts, notes);
       const patientIds = [...new Set(plans.map((p: any) => p.patient_id).filter(Boolean))];
       const discharged = new Set<string>();
       if (patientIds.length) {
@@ -93,7 +99,9 @@ export function useManagementData(clinicId?: string, professionalId?: string): M
       if (cancelled) return;
       const c = cfg?.data || {};
       setState({
-        loading: false, today, price: Number(c.default_session_price) || 0, appts, notes, patients, dischargedKeys: discharged, names, therapists,
+        loading: false, today, price: Number(c.default_session_price) || 0, appts, notes, patients,
+        services: (services || []).map((s: any) => ({ id: s.id, name: s.name, price: Number(s.price) || 0, billing_type: s.billing_type === "monthly" ? "monthly" : "per_session" })),
+        dischargedKeys: discharged, names, therapists,
         hours: { start: c.operating_hours_start ?? null, end: c.operating_hours_end ?? null, workingDays: c.working_days ?? null },
         ownerProfessionalId, rooms: clinicId ? (c.rooms_count ?? null) : null,
       });

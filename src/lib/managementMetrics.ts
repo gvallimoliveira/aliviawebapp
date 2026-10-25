@@ -15,6 +15,47 @@ export interface MgmtAppt {
   patient_name?: string | null;
   /** Trigger-maintained timestamp of the last status change; null on legacy rows. */
   status_changed_at?: string | null;
+  /** Linked catalog service; null falls back to the default session price. */
+  service_id?: string | null;
+}
+
+/** Service catalog entry (per clinic or solo PRO). */
+export interface MgmtService {
+  id: string;
+  name: string;
+  price: number;
+  /** per_session = valor por atendimento; monthly = mensalidade diluída por sessão realizada. */
+  billing_type: "per_session" | "monthly";
+}
+
+/**
+ * Resolves the money value of one appointment:
+ * - per-session service → its price;
+ * - monthly service → monthly price diluted across that patient's realized
+ *   sessions of the same service in the same month (lost slots worth 0);
+ * - no service → default session price.
+ */
+export type PriceOf = (a: MgmtAppt) => number;
+export function buildPriceResolver(appts: MgmtAppt[], services: MgmtService[], defaultPrice: number): PriceOf {
+  const svc = new Map(services.map((s) => [s.id, s]));
+  const monthlyDone = new Map<string, number>();
+  for (const a of appts) {
+    if (a.status !== "completed" || !a.service_id) continue;
+    const s = svc.get(a.service_id);
+    if (!s || s.billing_type !== "monthly") continue;
+    const k = `${patientKey(a)}|${a.service_id}|${a.appointment_date.slice(0, 7)}`;
+    monthlyDone.set(k, (monthlyDone.get(k) || 0) + 1);
+  }
+  return (a) => {
+    const s = a.service_id ? svc.get(a.service_id) : undefined;
+    if (!s) return defaultPrice;
+    if (s.billing_type === "monthly") {
+      if (a.status !== "completed") return 0;
+      const n = monthlyDone.get(`${patientKey(a)}|${a.service_id}|${a.appointment_date.slice(0, 7)}`) || 1;
+      return s.price / n;
+    }
+    return s.price;
+  };
 }
 
 export interface MgmtPatient {
@@ -61,8 +102,33 @@ export function median(values: number[]): number {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
+/* ---------------- Evidência de sessão realizada ---------------- */
+/**
+ * Real-world data: many clinics record the evolution note but never classify
+ * the appointment. A note day with no completed appointment counts as a
+ * realized session everywhere (frequency, cycles, leakage, discharge).
+ */
+export function synthesizeNoteSessions(appts: MgmtAppt[], notes: MgmtNote[]): MgmtAppt[] {
+  const doneDays = new Set(
+    appts.filter((a) => a.status === "completed").map((a) => `${(a.patient_email || "").trim().toLowerCase()}|${a.appointment_date}`)
+  );
+  const extra: MgmtAppt[] = [];
+  const seen = new Set<string>();
+  for (const n of notes) {
+    const e = (n.patient_email || "").trim().toLowerCase();
+    const d = (n.session_date || "").slice(0, 10);
+    if (!e || !d) continue;
+    const k = `${e}|${d}`;
+    if (doneDays.has(k) || seen.has(k)) continue;
+    seen.add(k);
+    extra.push({ id: `note:${k}`, appointment_date: d, status: "completed", patient_email: e });
+  }
+  return [...appts, ...extra];
+}
+
 /* ---------------- Custo da cadeira vazia ---------------- */
-export function emptyChairCost(appts: MgmtAppt[], price: number, today: string, days: number) {
+export function emptyChairCost(appts: MgmtAppt[], price: number, today: string, days: number, priceOf?: PriceOf) {
+  const unit = (a: MgmtAppt) => (priceOf ? priceOf(a) : price);
   const from = addDays(today, -(days - 1));
   const care = appts.filter((a) => isCare(a) && inWindow(a, from, today));
   const lost = care.filter((a) => LOST_STATUSES.includes(a.status));
@@ -71,9 +137,12 @@ export function emptyChairCost(appts: MgmtAppt[], price: number, today: string, 
   const byMonth: Record<string, number> = {};
   const byWeekday = [0, 0, 0, 0, 0, 0, 0];
   const byHour: Record<string, number> = {};
+  let lostValue = 0;
   for (const a of lost) {
+    const v = unit(a);
+    lostValue += v;
     const m = a.appointment_date.slice(0, 7);
-    byMonth[m] = (byMonth[m] || 0) + price;
+    byMonth[m] = (byMonth[m] || 0) + v;
     byWeekday[new Date(toDay(a.appointment_date)).getUTCDay()] += 1;
     const h = (a.appointment_time || "").slice(0, 2);
     if (h) byHour[h] = (byHour[h] || 0) + 1;
@@ -83,7 +152,7 @@ export function emptyChairCost(appts: MgmtAppt[], price: number, today: string, 
     lostCount: lost.length,
     noShow,
     cancelled,
-    lostValue: lost.length * price,
+    lostValue: round2(lostValue),
     lossRate: care.length ? Math.round((lost.length / care.length) * 100) : 0,
     byMonth: Object.entries(byMonth).sort(([a], [b]) => a.localeCompare(b)).map(([month, value]) => ({ month, value })),
     byWeekday,
@@ -118,27 +187,29 @@ function parseHour(v?: string | null): number | null {
   return Number.isFinite(h) ? h + (Number.isFinite(m) ? m / 60 : 0) : null;
 }
 
-export function revenuePerHour(appts: MgmtAppt[], price: number, today: string, days: number, availHours: number) {
+export function revenuePerHour(appts: MgmtAppt[], price: number, today: string, days: number, availHours: number, priceOf?: PriceOf) {
+  const unit = (a: MgmtAppt) => (priceOf ? priceOf(a) : price);
   const from = addDays(today, -(days - 1));
   const done = appts.filter((a) => isCare(a) && a.status === "completed" && inWindow(a, from, today));
-  const revenue = done.length * price;
+  const revenue = done.reduce((s, a) => s + unit(a), 0);
   const workedHours = done.reduce((s, a) => s + (a.duration_minutes || 50), 0) / 60;
-  const per: Record<string, { sessions: number; hours: number }> = {};
+  const per: Record<string, { sessions: number; hours: number; revenue: number }> = {};
   for (const a of done) {
     const k = a.professional_id || "—";
-    per[k] = per[k] || { sessions: 0, hours: 0 };
+    per[k] = per[k] || { sessions: 0, hours: 0, revenue: 0 };
     per[k].sessions++;
     per[k].hours += (a.duration_minutes || 50) / 60;
+    per[k].revenue += unit(a);
   }
   return {
-    revenue,
+    revenue: round2(revenue),
     sessions: done.length,
     availableHours: availHours,
     workedHours: round1(workedHours),
     perAvailableHour: availHours > 0 ? round2(revenue / availHours) : 0,
     perWorkedHour: workedHours > 0 ? round2(revenue / workedHours) : 0,
     byTherapist: Object.entries(per)
-      .map(([id, v]) => ({ id, sessions: v.sessions, revenue: v.sessions * price, perWorkedHour: v.hours > 0 ? round2((v.sessions * price) / v.hours) : 0 }))
+      .map(([id, v]) => ({ id, sessions: v.sessions, revenue: round2(v.revenue), perWorkedHour: v.hours > 0 ? round2(v.revenue / v.hours) : 0 }))
       .sort((a, b) => b.revenue - a.revenue),
   };
 }
@@ -151,6 +222,8 @@ export interface ClosedCycle {
   key: string;
   name: string;
   sessions: number;
+  /** Money value of the cycle (service-aware) when a resolver is given. */
+  value?: number;
   therapistId: string | null;
   outcome: "discharge" | "dropout";
   lastDate: string;
@@ -160,7 +233,7 @@ export interface ClosedCycle {
  * A cycle is closed when the patient has a recorded discharge (completed plan)
  * or has had no completed session for DROPOUT_DAYS and nothing scheduled ahead.
  */
-export function closedCycles(appts: MgmtAppt[], dischargedKeys: Set<string>, today: string): ClosedCycle[] {
+export function closedCycles(appts: MgmtAppt[], dischargedKeys: Set<string>, today: string, priceOf?: PriceOf): ClosedCycle[] {
   const byPatient = new Map<string, MgmtAppt[]>();
   for (const a of appts) {
     if (!isCare(a)) continue;
@@ -181,17 +254,19 @@ export function closedCycles(appts: MgmtAppt[], dischargedKeys: Set<string>, tod
     const count: Record<string, number> = {};
     for (const a of done) if (a.professional_id) count[a.professional_id] = (count[a.professional_id] || 0) + 1;
     const therapistId = Object.entries(count).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-    out.push({ key, name: done[0].patient_name || key, sessions: done.length, therapistId, outcome: discharged ? "discharge" : "dropout", lastDate });
+    const value = priceOf ? round2(done.reduce((s, a) => s + priceOf(a), 0)) : undefined;
+    out.push({ key, name: done[0].patient_name || key, sessions: done.length, value, therapistId, outcome: discharged ? "discharge" : "dropout", lastDate });
   }
   return out;
 }
 
 export function clinicalLtv(cycles: ClosedCycle[], price: number) {
-  const vals = cycles.map((c) => c.sessions * price);
+  const cycleValue = (c: ClosedCycle) => c.value ?? c.sessions * price;
+  const vals = cycles.map(cycleValue);
   const sess = cycles.map((c) => c.sessions);
   const group = (o: ClosedCycle["outcome"]) => {
     const g = cycles.filter((c) => c.outcome === o);
-    return { patients: g.length, avgValue: g.length ? round2((g.reduce((s, c) => s + c.sessions, 0) * price) / g.length) : 0, avgSessions: g.length ? round1(g.reduce((s, c) => s + c.sessions, 0) / g.length) : 0 };
+    return { patients: g.length, avgValue: g.length ? round2(g.reduce((s, c) => s + cycleValue(c), 0) / g.length) : 0, avgSessions: g.length ? round1(g.reduce((s, c) => s + c.sessions, 0) / g.length) : 0 };
   };
   return {
     patients: cycles.length,
@@ -231,10 +306,23 @@ export function dischargeVsDropout(cycles: ClosedCycle[], today: string, days: n
 }
 
 /* ---------------- Prontuário em dia ---------------- */
+/** Final classifications; anything else in the past is "unclassified". */
+export const FINAL_APPT_STATUSES = ["completed", "no_show", "no_show_justified", "cancelled"];
+
+export interface RecordPending {
+  id: string;
+  name: string;
+  date: string;
+  therapistId: string | null;
+  hoursSince: number;
+  /** Past slot never marked as done/no-show/cancelled and without a note. */
+  unclassified?: boolean;
+}
+
 export function recordCompliance(appts: MgmtAppt[], notes: MgmtNote[], now: Date, days: number) {
   const today = now.toISOString().slice(0, 10);
   const from = addDays(today, -(days - 1));
-  const done = appts.filter((a) => isCare(a) && a.status === "completed" && inWindow(a, from, today));
+  const care = appts.filter((a) => isCare(a) && inWindow(a, from, today));
   const byAppt = new Map<string, MgmtNote[]>();
   const byPatientDay = new Map<string, MgmtNote[]>();
   for (const n of notes) {
@@ -249,26 +337,49 @@ export function recordCompliance(appts: MgmtAppt[], notes: MgmtNote[], now: Date
       byPatientDay.get(k)!.push(n);
     }
   }
-  let onTime = 0, late = 0;
-  const pending: { id: string; name: string; date: string; therapistId: string | null; hoursSince: number }[] = [];
-  const per: Record<string, { total: number; onTime: number }> = {};
-  for (const a of done) {
+  const notesFor = (a: MgmtAppt) => {
     const e = (a.patient_email || "").trim().toLowerCase();
-    const cands = [...(byAppt.get(a.id) || []), ...(e ? byPatientDay.get(`${e}|${a.appointment_date}`) || [] : [])];
-    const start = Date.parse(`${a.appointment_date}T${(a.appointment_time || "00:00").slice(0, 5)}:00`);
-    const deadline = start + RECORD_DEADLINE_HOURS * 3600000;
+    return [...(byAppt.get(a.id) || []), ...(e ? byPatientDay.get(`${e}|${a.appointment_date}`) || [] : [])];
+  };
+  const startOf = (a: MgmtAppt) => Date.parse(`${a.appointment_date}T${(a.appointment_time || "00:00").slice(0, 5)}:00`);
+
+  let onTime = 0, late = 0;
+  const pending: RecordPending[] = [];
+  const per: Record<string, { total: number; onTime: number }> = {};
+  const bump = (a: MgmtAppt, ok: boolean) => {
     const k = a.professional_id || "—";
     per[k] = per[k] || { total: 0, onTime: 0 };
+    per[k].total++;
+    if (ok) per[k].onTime++;
+  };
+
+  for (const a of care) {
+    const start = startOf(a);
     const elapsed = now.getTime() - start;
+    const pastDeadline = elapsed >= RECORD_DEADLINE_HOURS * 3600000;
+    const cands = notesFor(a);
+    const isFinal = FINAL_APPT_STATUSES.includes(a.status);
+
+    if (!isFinal) {
+      // Past slot never classified and nothing written: not "in day", it is a pendency.
+      if (pastDeadline && a.status !== "cancelled" && !cands.length) {
+        bump(a, false);
+        pending.push({ id: a.id, name: a.patient_name || a.patient_email || "—", date: a.appointment_date, therapistId: a.professional_id || null, hoursSince: Math.floor(elapsed / 3600000), unclassified: true });
+      }
+      continue;
+    }
+    if (a.status !== "completed") continue; // no-show/cancelled need no evolution
+
     if (!cands.length) {
-      if (elapsed < RECORD_DEADLINE_HOURS * 3600000) continue; // still inside the window
-      per[k].total++;
+      if (!pastDeadline) continue; // still inside the window
+      bump(a, false);
       pending.push({ id: a.id, name: a.patient_name || a.patient_email || "—", date: a.appointment_date, therapistId: a.professional_id || null, hoursSince: Math.floor(elapsed / 3600000) });
       continue;
     }
-    per[k].total++;
     const first = Math.min(...cands.map((n) => Date.parse(n.created_at)));
-    if (first <= deadline) { onTime++; per[k].onTime++; } else late++;
+    const ok = first <= start + RECORD_DEADLINE_HOURS * 3600000;
+    bump(a, ok);
+    if (ok) onTime++; else late++;
   }
   const evaluated = onTime + late + pending.length;
   return {
@@ -276,7 +387,8 @@ export function recordCompliance(appts: MgmtAppt[], notes: MgmtNote[], now: Date
     onTime,
     late,
     pendingCount: pending.length,
-    rate: evaluated ? Math.round((onTime / evaluated) * 100) : 100,
+    /** null when nothing to evaluate yet (never show a fake 100%). */
+    rate: evaluated ? Math.round((onTime / evaluated) * 100) : null,
     pending: pending.sort((a, b) => b.hoursSince - a.hoursSince),
     byTherapist: Object.entries(per).filter(([, v]) => v.total > 0).map(([id, v]) => ({ id, ...v, rate: Math.round((v.onTime / v.total) * 100) })).sort((a, b) => a.rate - b.rate),
   };
@@ -410,17 +522,20 @@ export function lateCancellations(appts: MgmtAppt[], today: string, days: number
 }
 
 /* ---------------- Dependência do titular ---------------- */
-export function ownerDependence(appts: MgmtAppt[], ownerProfessionalId: string | null | undefined, today: string, days: number, price: number) {
+export function ownerDependence(appts: MgmtAppt[], ownerProfessionalId: string | null | undefined, today: string, days: number, price: number, priceOf?: PriceOf) {
   const from = addDays(today, -(days - 1));
   const done = appts.filter((a) => isCare(a) && a.status === "completed" && inWindow(a, from, today));
   if (!ownerProfessionalId || !done.length) return { sessions: 0, ownerSessions: 0, share: 0, revenueShare: 0, teamSessions: 0 };
+  const unit = (a: MgmtAppt) => (priceOf ? priceOf(a) : price);
   const ownerSessions = done.filter((a) => a.professional_id === ownerProfessionalId).length;
+  const totalValue = done.reduce((s, a) => s + unit(a), 0);
+  const ownerValue = done.filter((a) => a.professional_id === ownerProfessionalId).reduce((s, a) => s + unit(a), 0);
   return {
     sessions: done.length,
     ownerSessions,
     teamSessions: done.length - ownerSessions,
     share: Math.round((ownerSessions / done.length) * 100),
-    revenueShare: price ? Math.round(((ownerSessions * price) / (done.length * price)) * 100) : 0,
+    revenueShare: totalValue ? Math.round((ownerValue / totalValue) * 100) : 0,
   };
 }
 

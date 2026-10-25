@@ -76,8 +76,8 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
           {lang === "pt"
-            ? "O score (0–100) combina: faltas recentes, ausência de próximo agendamento, dor estagnada e silêncio digital — dias sem diário de dor, sem check-in de prontidão e sem mensagem escrita pelo paciente. O silêncio total pesa mais porque costuma preceder o abandono."
-            : "Score (0–100) combines: recent no-shows, no upcoming appointment, stagnant pain and digital silence — days without pain diary, readiness check-in or a message written by the patient. Full silence weighs more because it usually precedes dropout."}
+            ? "O score (0–100) combina: faltas recentes, ausência de próximo agendamento, dor estagnada nos check-ins de prontidão e inatividade — dias sem sessão registrada (agenda concluída ou evolução no prontuário) e sem check-in. A inatividade total pesa mais porque costuma preceder o abandono."
+            : "Score (0–100) combines: recent no-shows, no upcoming appointment, stagnant pain in readiness check-ins and inactivity — days without a recorded session (completed slot or record note) and without check-ins. Full inactivity weighs more because it usually precedes dropout."}
         </p>
       </div>
       <div className="border-t pt-3 space-y-3">
@@ -154,10 +154,10 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
       title={lang === "pt" ? "Abandono silencioso" : lang === "es" ? "Abandono silencioso" : "Silent dropout"}
       description={
         lang === "pt"
-          ? "Pacientes esfriando: sem agendar, faltando, com dor estagnada ou em silêncio digital (sem diário, check-in ou mensagem)."
+          ? "Pacientes esfriando: sem agendar, faltando, com dor estagnada nos check-ins ou sem sessão registrada há dias."
           : lang === "es"
-          ? "Pacientes enfriándose: sin agendar, faltando, con dolor estancado o en silencio digital (sin diario, check-in o mensaje)."
-          : "Patients cooling off: not booking, missing sessions, stagnant pain or digitally silent (no diary, check-in or message)."
+          ? "Pacientes enfriándose: sin agendar, faltando, con dolor estancado en los check-ins o sin sesión registrada."
+          : "Patients cooling off: not booking, missing sessions, stagnant pain in check-ins or no recorded session for days."
       }
       rightSlot={
         !loading && filtered.length > 0 ? (
