@@ -522,17 +522,20 @@ export function lateCancellations(appts: MgmtAppt[], today: string, days: number
 }
 
 /* ---------------- Dependência do titular ---------------- */
-export function ownerDependence(appts: MgmtAppt[], ownerProfessionalId: string | null | undefined, today: string, days: number, price: number) {
+export function ownerDependence(appts: MgmtAppt[], ownerProfessionalId: string | null | undefined, today: string, days: number, price: number, priceOf?: PriceOf) {
   const from = addDays(today, -(days - 1));
   const done = appts.filter((a) => isCare(a) && a.status === "completed" && inWindow(a, from, today));
   if (!ownerProfessionalId || !done.length) return { sessions: 0, ownerSessions: 0, share: 0, revenueShare: 0, teamSessions: 0 };
+  const unit = (a: MgmtAppt) => (priceOf ? priceOf(a) : price);
   const ownerSessions = done.filter((a) => a.professional_id === ownerProfessionalId).length;
+  const totalValue = done.reduce((s, a) => s + unit(a), 0);
+  const ownerValue = done.filter((a) => a.professional_id === ownerProfessionalId).reduce((s, a) => s + unit(a), 0);
   return {
     sessions: done.length,
     ownerSessions,
     teamSessions: done.length - ownerSessions,
     share: Math.round((ownerSessions / done.length) * 100),
-    revenueShare: price ? Math.round(((ownerSessions * price) / (done.length * price)) * 100) : 0,
+    revenueShare: totalValue ? Math.round((ownerValue / totalValue) * 100) : 0,
   };
 }
 
