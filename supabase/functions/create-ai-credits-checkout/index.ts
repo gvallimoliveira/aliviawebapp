@@ -119,6 +119,27 @@ serve(async (req) => {
       });
     }
 
+    // Clinic staff (non owner/admin) never buy packs: credits belong to the clinic.
+    {
+      const admin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      );
+      const { data: memberships } = await admin
+        .from("clinic_members")
+        .select("role, clinics!inner(subscription_status)")
+        .eq("user_id", user.id)
+        .in("clinics.subscription_status", ["active", "trialing"]);
+      const rows = (memberships ?? []) as Array<{ role: string }>;
+      if (rows.length > 0 && !rows.some((r) => r.role === "owner" || r.role === "admin")) {
+        if (shouldRedirect) return redirectToApp(origin, "error");
+        return new Response(JSON.stringify({ error: "Only the clinic manager can buy credit packs" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
