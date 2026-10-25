@@ -222,6 +222,8 @@ export interface ClosedCycle {
   key: string;
   name: string;
   sessions: number;
+  /** Money value of the cycle (service-aware) when a resolver is given. */
+  value?: number;
   therapistId: string | null;
   outcome: "discharge" | "dropout";
   lastDate: string;
