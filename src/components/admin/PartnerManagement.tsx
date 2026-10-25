@@ -81,7 +81,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     resend_no_email: "Parceiro sem e-mail cadastrado.",
     remove_partner: "Remover da lista",
     remove_confirm_title: "Remover parceiro?",
-    remove_confirm_desc: "Isso desliga PRO, Premium e remove a pessoa da lista de parceiros. A conta do usuário e o histórico permanecem.",
+    remove_confirm_desc: "Isso desliga PRO, Acadêmico e Premium e remove a pessoa da lista de parceiros. A conta do usuário e o histórico permanecem.",
     remove_confirm_action: "Sim, remover",
     cancel: "Cancelar",
     granted_title: "Premium liberado por e-mail",
@@ -117,7 +117,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
     resend_no_email: "Partner has no email on file.",
     remove_partner: "Remove from list",
     remove_confirm_title: "Remove partner?",
-    remove_confirm_desc: "This disables PRO and Premium and removes the person from the partner list. The user account and history remain.",
+    remove_confirm_desc: "This disables PRO, Academic and Premium and removes the person from the partner list. The user account and history remain.",
     remove_confirm_action: "Yes, remove",
     cancel: "Cancel",
     granted_title: "Premium granted by email",
@@ -322,6 +322,7 @@ const PartnerManagement = ({ language }: PartnerManagementProps) => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ description: t.toggled });
+      await loadPartners();
     } catch (err: any) {
       loadPartners();
       toast({ title: t.error, description: err.message, variant: "destructive" });
@@ -538,6 +539,7 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRe
     { type: "academic", label: t.academic_label, icon: <GraduationCap className="h-3.5 w-3.5" />, checked: partner.is_student },
   ];
   const removeKey = `${partner.id}_remove`;
+  const busy = Object.entries(togglingMap).some(([key, value]) => key.startsWith(`${partner.id}_`) && value);
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-3">
@@ -572,7 +574,7 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRe
               <span className="text-sm font-medium text-foreground">{label}</span>
               <Switch
                 checked={checked}
-                disabled={isToggling}
+                disabled={busy}
                 onCheckedChange={(val) => onToggle(partner.id, type, val)}
               />
             </label>
@@ -595,7 +597,7 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRe
             variant="ghost"
             size="sm"
             className="gap-1.5 h-8 text-destructive hover:text-destructive"
-            disabled={togglingMap[removeKey]}
+            disabled={busy}
             onClick={onRequestRemove}
           >
             {togglingMap[removeKey]

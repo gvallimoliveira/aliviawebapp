@@ -562,7 +562,7 @@ serve(async (req) => {
           // até o próximo check-pro-subscription rodar.
           if (!pro.is_partner) {
             updates.subscription_status = "inactive";
-            updates.is_partner_account = false;
+            updates.approved = false;
           }
         }
         const { error } = await supabaseClient
