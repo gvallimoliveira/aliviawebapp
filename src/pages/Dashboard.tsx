@@ -235,7 +235,8 @@ const Dashboard = () => {
           const active =
             data?.subscribed === true ||
             data?.is_partner === true ||
-            data?.subscription_status === "active";
+            data?.subscription_status === "active" ||
+            data?.active === true;
           if (active) break;
         } catch {
           // segue para próxima tentativa
