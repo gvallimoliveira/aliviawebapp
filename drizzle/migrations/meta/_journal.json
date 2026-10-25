@@ -365,6 +365,13 @@
       "when": 1792962609111,
       "tag": "0051_grant_ai_credit_rollout_admins",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1792963663477,
+      "tag": "0052_allow_revoking_academic_access_without_crefito",
+      "breakpoints": true
     }
   ]
 }

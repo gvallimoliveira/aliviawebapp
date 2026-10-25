@@ -1,5 +1,8 @@
 # Roadmap
 
+## Correção dos controles de parceiros
+- [x] Validação de CREFITO corrigida sem registro fictício; desativação do Acadêmico e remoção de Juliana realizadas no Admin autenticado e confirmadas no banco, preservando conta/histórico. Cinco testes passaram; build OK. Toggles recarregam dados e mantêm a pessoa na lista até remoção explícita.
+
 ## Preparação dos créditos de IA
 - [x] PRO com margem de 10%; parceiros 25/mês e compra permitida; clínica mantém 20%; ilimitado só admin/VIP.
 - [x] Avisos 80/100%, recuperação contextual e controles seletivos no Admin; chave geral desligada e categorias vazias.
