@@ -17,6 +17,8 @@
 - Editor de catálogo de serviços para PRO autônomo (pedido anterior; não incluído nestes ajustes).
 
 ## Ajustes solicitados agora
+- [ ] Investigar e corrigir agendamentos ausentes, preservando escopos e registros.
+- [ ] Disponibilizar/localizar cadastro de serviços no PRO e clínica para solicitação do paciente.
 - [x] Abandono silencioso: rolagem e descarte persistente pelo mecanismo existente.
 - [x] Adesão: causa confirmada (ambos sem e-mail); RPC usa ID do paciente, canais ausentes não diluem e lista completa pesquisável.
 - [x] Frequência: comparar somente oportunidades decorridas no mês, considerando início do acompanhamento.
