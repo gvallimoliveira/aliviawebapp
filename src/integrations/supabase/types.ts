@@ -5437,6 +5437,12 @@ export type Database = {
           email: string
         }[]
       }
+      announcement_recipient_ids: {
+        Args: { _announcement_id: string }
+        Returns: {
+          user_id: string
+        }[]
+      }
       approve_appointment_request: {
         Args: {
           _date: string
