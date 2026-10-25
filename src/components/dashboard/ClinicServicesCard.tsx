@@ -140,8 +140,8 @@ const ClinicServicesCard = ({ professionalId }: { professionalId?: string } = {}
               <p className="text-sm text-muted-foreground">{t("Nenhum serviço cadastrado ainda.", "No services yet.", "Ningún servicio aún.")}</p>
             )}
             {rows.map((r) => (
-              <div key={r.id} className={`flex items-center gap-2 rounded-lg border border-border p-2 text-sm ${r.active ? "" : "opacity-50"}`}>
-                <div className="flex-1 min-w-0">
+              <div key={r.id} className={`flex flex-wrap items-center gap-2 rounded-lg border border-border p-2 text-sm ${r.active ? "" : "opacity-50"}`}>
+                <div className="flex-1 min-w-[120px]">
                   <p className="break-words font-medium">{r.name}</p>
                   <p className="text-[11px] text-muted-foreground">
                     {brl(Number(r.price))}{r.billing_type === "monthly" ? t(" /mês", " /mo", " /mes") : t(" /sessão", " /session", " /sesión")}
