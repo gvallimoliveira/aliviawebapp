@@ -28,17 +28,18 @@ const PatientAppointmentsTab = () => {
   const [providerKey, setProviderKey] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [serviceId, setServiceId] = useState("none");
+  const [serviceId, setServiceId] = useState("");
   const [services, setServices] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     const [kind, id] = providerKey.split(":");
-    setServiceId("none");
+    setServiceId("");
     if (!kind || !id) { setServices([]); return; }
     let cancelled = false;
     (async () => {
       const { data } = await supabase.rpc("get_provider_services" as any, { _kind: kind, _provider_id: id });
-      if (!cancelled) setServices((data as { id: string; name: string }[]) || []);
+      const list = (data as { id: string; name: string }[]) || [];
+      if (!cancelled) { setServices(list); if (list.length === 1) setServiceId(list[0].id); }
     })();
     return () => { cancelled = true; };
   }, [providerKey]);
@@ -76,19 +77,22 @@ const PatientAppointmentsTab = () => {
     const [kind, id] = providerKey.split(":");
     if (!kind || !id || !date) { toast.error("Escolha o local e a data."); return; }
     if (!time) { toast.error("Informe o horário desejado."); return; }
+    if (services.length > 0 && !serviceId) { toast.error("Escolha o serviço desejado."); return; }
     setSaving(true);
     const { data, error } = await supabase.rpc("create_appointment_request_v2" as any, {
       _kind: kind, _provider_id: id, _date: date, _time: time,
-      _service_id: serviceId === "none" ? null : serviceId,
+      _service_id: serviceId || null,
     });
     setSaving(false);
     if (error) {
-      toast.error(error.message.includes("too many") ? "Você já tem 5 solicitações aguardando resposta." : "Não foi possível enviar a solicitação.");
+      toast.error(error.message.includes("too many") ? "Você já tem 5 solicitações aguardando resposta."
+        : error.message.includes("service required") ? "Escolha o serviço desejado."
+        : "Não foi possível enviar a solicitação.");
       return;
     }
     if (data) void notifyAppointmentRequest(data as string);
     toast.success("Solicitação enviada! Ela será analisada e você será avisado quando for confirmada.");
-    setOpen(false); setDate(""); setTime(""); setServiceId("none");
+    setOpen(false); setDate(""); setTime(""); setServiceId(services.length === 1 ? services[0].id : "");
     void load();
   };
 
@@ -173,13 +177,12 @@ const PatientAppointmentsTab = () => {
               <Label>Horário</Label>
               <Input type="time" className="w-full min-w-0" value={time} onChange={(e) => setTime(e.target.value)} />
             </div>
-            {services.length > 0 && (
+            {providerKey && (
               <div className="space-y-1.5">
-                <Label>Serviço (opcional)</Label>
-                <Select value={serviceId} onValueChange={setServiceId}>
-                  <SelectTrigger><SelectValue placeholder="Escolha" /></SelectTrigger>
+                <Label>Serviço</Label>
+                <Select value={serviceId} onValueChange={setServiceId} disabled={services.length === 0}>
+                  <SelectTrigger><SelectValue placeholder={services.length ? "Escolha o serviço" : "Nenhum serviço disponível"} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Não sei / tanto faz</SelectItem>
                     {services.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
