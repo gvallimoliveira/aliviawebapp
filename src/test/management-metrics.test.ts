@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   emptyChairCost, availableHours, revenuePerHour, closedCycles, clinicalLtv, dischargeVsDropout, recordCompliance,
-  frequencyAdherenceGap, referralMix, leakageNoNextAppointment, lateCancellations, ownerDependence, capacityBottleneck, type MgmtAppt,
+  frequencyAdherenceGap, referralMix, leakageNoNextAppointment, lateCancellations, ownerDependence, capacityBottleneck,
+  buildPriceResolver, synthesizeNoteSessions, type MgmtAppt,
 } from "@/lib/managementMetrics";
 
 const ap = (o: Partial<MgmtAppt>): MgmtAppt => ({ id: Math.random().toString(36), appointment_date: "2026-10-20", status: "completed", patient_email: "a@x.com", patient_name: "Ana", professional_id: "t1", ...o });
