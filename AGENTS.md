@@ -4,7 +4,7 @@
 - Check-in reopening locks existing patient/day readiness until explicit editing; the existing unique patient/date upsert keeps one daily response. Dose displays retain perceived load for zero-target sessions without inventing a target or adherence verdict.
 - Record-summary alerts preserve assessment-specific dismissal audits across history; health caveats reuse healthHistory formatting and Saúde geral recency (latest day, manual precedence) without new risk calculations or AI.
 - Record-summary STEPS uses the fetched plan status: completed means discharge before any macro-cycle fallback, so insight and record discharge decisions remain consistent without rewriting history.
-- Clinic demos use viewer-scoped fixtures and real local math, never live writes/AI; scenarios match the latest assessment and safety, otherwise stay empty.
+- Clinic demos: viewer-scoped fixtures, local math, no live writes/AI; match latest assessment/safety or stay empty.
 
 - Cardiovascular ceiling reminders combine the record's assessments and ID/email-linked dated health records via `usePatientCardioHealth`; structured conditions never auto-select a clinician profile, infer control, or fabricate an age-based ceiling.
 
