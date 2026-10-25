@@ -235,7 +235,8 @@ const Dashboard = () => {
           const active =
             data?.subscribed === true ||
             data?.is_partner === true ||
-            data?.subscription_status === "active";
+            data?.subscription_status === "active" ||
+            data?.active === true;
           if (active) break;
         } catch {
           // segue para próxima tentativa
@@ -430,7 +431,28 @@ const Dashboard = () => {
         .eq("user_id", user.id)
         .eq("status", "active")
         .limit(1);
-      const hasAnyClinic = Array.isArray(myMembers) && myMembers.length > 0;
+      let hasAnyClinic = Array.isArray(myMembers) && myMembers.length > 0;
+
+      // Pagamento de clínica concluído mas a clínica ainda não existe
+      // (aviso do gateway atrasou/falhou): a verificação cria a clínica a
+      // partir da assinatura paga. Tenta algumas vezes antes de mandar o
+      // usuário para a tela de planos — nunca prende quem já pagou.
+      const cameFromClinicCheckout = searchParams.get("clinic") === "success";
+      if (!hasAnyClinic && (effectiveOrigin === "clinic" || cameFromClinicCheckout)) {
+        const delays = cameFromClinicCheckout ? [0, 1500, 3000, 5000] : [0];
+        for (const d of delays) {
+          if (d) await new Promise((r) => setTimeout(r, d));
+          try {
+            const { data } = await supabase.functions.invoke("check-clinic-subscription");
+            if (Array.isArray(data?.clinics) && data.clinics.length > 0) {
+              hasAnyClinic = true;
+              break;
+            }
+          } catch {
+            // tenta de novo
+          }
+        }
+      }
 
       // Skip flag: usuário clicou em "Pular por agora" no /professional/register.
       // Não redirecionar mais; ele segue no painel pessoal com banner persistente.

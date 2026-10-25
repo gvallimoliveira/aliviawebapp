@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { provisionClinic, resolveMaxMembers } from "../_shared/clinicProvisioning.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2025-08-27.basil",
@@ -663,57 +664,13 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
 
     case "clinic_subscription": {
       if (userId) {
-        const clinicName = session.metadata?.clinic_name || "Minha Clínica";
-        const maxMembers = parseInt(session.metadata?.max_members || "3", 10);
-        const subscriptionId = session.subscription as string || null;
-
-        // Check if user already has a clinic
-        const { data: existingClinic } = await supabase
-          .from("clinics")
-          .select("id")
-          .eq("owner_user_id", userId)
-          .limit(1)
-          .single();
-
-        if (existingClinic) {
-          // Update existing clinic
-          await supabase
-            .from("clinics")
-            .update({
-              subscription_status: "active",
-              subscription_stripe_id: subscriptionId,
-              max_members: maxMembers,
-            })
-            .eq("id", existingClinic.id);
-          log("Clinic subscription updated", { clinicId: existingClinic.id });
-        } else {
-          // Create new clinic and add owner as member
-          const { data: newClinic } = await supabase
-            .from("clinics")
-            .insert({
-              name: clinicName,
-              owner_user_id: userId,
-              subscription_status: "active",
-              subscription_stripe_id: subscriptionId,
-              max_members: maxMembers,
-            })
-            .select("id")
-            .single();
-
-          if (newClinic) {
-            await supabase
-              .from("clinic_members")
-              .insert({
-                clinic_id: newClinic.id,
-                user_id: userId,
-                role: "owner",
-                invited_by: userId,
-                accepted_at: new Date().toISOString(),
-                status: "active",
-              });
-            log("Clinic created with owner", { clinicId: newClinic.id, userId });
-          }
-        }
+        const r = await provisionClinic(supabase, {
+          userId,
+          clinicName: session.metadata?.clinic_name,
+          maxMembers: resolveMaxMembers(session.metadata?.max_members),
+          subscriptionId: (session.subscription as string) || null,
+        });
+        log(r.created ? "Clinic created with owner" : "Clinic subscription updated", { clinicId: r.clinicId, userId });
       }
       break;
     }
