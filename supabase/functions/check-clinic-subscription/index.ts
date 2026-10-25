@@ -149,7 +149,7 @@ serve(async (req) => {
         const productId = sub.items.data[0]?.price?.product;
         if (typeof productId === "string" && CLINIC_PRODUCT_IDS.includes(productId)) {
           activeClinicSub = true;
-          subscriptionEnd = new Date(sub.current_period_end * 1000).toISOString();
+          { const pe = (sub as any).current_period_end ?? (sub.items.data[0] as any)?.current_period_end; subscriptionEnd = pe ? new Date(pe * 1000).toISOString() : null; }
 
           // Update clinic subscription status
           for (const clinic of clinics) {
