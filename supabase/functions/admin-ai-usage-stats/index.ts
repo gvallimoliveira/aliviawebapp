@@ -236,6 +236,9 @@ serve(async (req) => {
         functions: functionsRanked,
         daily,
         top_users: topUsers,
+        quota_bands: bands,
+        by_tier: byTier,
+        at_risk: atRisk.slice(0, 15),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
