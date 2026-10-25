@@ -186,6 +186,43 @@ serve(async (req) => {
     // Estimated USD: assume 1 credit ≈ $0.0008 (Lovable workspace pricing benchmark)
     const estUsd = Number((totalCredits * 0.0008).toFixed(2));
 
+    // Decision support: current-period quota status per active account (read-only simulation).
+    const bands = { under50: 0, b50_80: 0, b80_100: 0, grace: 0, over: 0, unlimited: 0 };
+    const tierMap: Record<string, { users: number; credits: number; at_risk: number; over: number }> = {};
+    const atRisk: { label: string; tier: string; pct: number; used: number; included: number }[] = [];
+    const accountIds = Object.keys(byUser).filter((u) => !isAnonymousUsageId(u)).slice(0, 300);
+    await Promise.all(accountIds.map(async (uid) => {
+      const { data: s } = await admin.rpc("get_user_credit_status", { _user_id: uid });
+      if (!s) return;
+      const st = s as Record<string, any>;
+      const tier = String(st.tier || "unknown");
+      const isClinic = tier.startsWith("clinic_");
+      const grace = isClinic ? 0.2 : tier.startsWith("pro_") || tier.startsWith("academic_") ? 0.1 : 0;
+      const included = Number(st.included || 0);
+      const used = Number(st.used || 0);
+      const purchased = Number(st.purchased || 0);
+      const pct = included > 0 ? (used / included) * 100 : 0;
+      tierMap[tier] = tierMap[tier] || { users: 0, credits: 0, at_risk: 0, over: 0 };
+      tierMap[tier].users += 1;
+      tierMap[tier].credits += byUser[uid].credits;
+      if (st.unlimited) { bands.unlimited++; return; }
+      const wouldBlock = used >= included * (1 + grace) + purchased;
+      if (wouldBlock) { bands.over++; tierMap[tier].over++; }
+      else if (pct >= 100) bands.grace++;
+      else if (pct >= 80) bands.b80_100++;
+      else if (pct >= 50) bands.b50_80++;
+      else bands.under50++;
+      if (pct >= 80) {
+        tierMap[tier].at_risk++;
+        atRisk.push({ label: userMap[uid] || uid.slice(0, 8), tier, pct: Number(pct.toFixed(1)), used: Number(used.toFixed(2)), included });
+      }
+    }));
+    const byTier = Object.entries(tierMap)
+      .map(([tier, v]) => ({ tier, ...v, credits: Number(v.credits.toFixed(3)), avg: v.users ? Number((v.credits / v.users).toFixed(3)) : 0 }))
+      .sort((a, b) => b.credits - a.credits);
+    atRisk.sort((a, b) => b.pct - a.pct);
+
+
     return new Response(
       JSON.stringify({
         window_days: days,
