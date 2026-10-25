@@ -89,10 +89,55 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { user_id, clinic_id, conversation_id, email, title, body, url, kind, tag, call_id, category } =
-      await req.json();
+    const reqBody = await req.json();
+    let { user_id, clinic_id, conversation_id, email, title, body, url, kind, tag, call_id, category } = reqBody;
+    const appointmentRequestId = reqBody.appointment_request_id ? String(reqBody.appointment_request_id) : null;
 
-    if (!title || (!user_id && !clinic_id && !conversation_id && !email)) {
+    // Appointment requests: recipients and copy are resolved here from the
+    // request row; the caller is validated (patient on create, staff on approve).
+    let preAuthorizedTargets: string[] | null = null;
+    if (appointmentRequestId) {
+      if (!callerUserId) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: ar } = await supabase.from("appointment_requests").select("*").eq("id", appointmentRequestId).maybeSingle();
+      if (!ar) {
+        return new Response(JSON.stringify({ error: "Request not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const fmtDate = (d: string) => d.split("-").reverse().join("/");
+      if (ar.status === "pending" && ar.patient_user_id === callerUserId) {
+        const targets = new Set<string>();
+        if (ar.clinic_id) {
+          const { data: members } = await supabase.from("clinic_members").select("user_id")
+            .eq("clinic_id", ar.clinic_id).eq("status", "active").in("role", ["owner", "admin", "secretary"]);
+          (members || []).forEach((m: any) => m.user_id && targets.add(m.user_id));
+        } else if (ar.professional_id) {
+          const { data: p } = await supabase.from("professionals").select("user_id").eq("id", ar.professional_id).maybeSingle();
+          if (p?.user_id) targets.add(p.user_id);
+        }
+        preAuthorizedTargets = [...targets];
+        title = "📅 Nova solicitação de agendamento";
+        body = `${ar.patient_name} pediu horário para ${fmtDate(ar.requested_date)}${ar.requested_time ? ` às ${ar.requested_time}` : ""}.`;
+        url = "/dashboard?tab=agenda";
+        tag = `apt-req-${ar.id}`;
+      } else if (ar.status === "approved" && ar.decided_by === callerUserId && ar.appointment_id) {
+        const { data: apt } = await supabase.from("professional_appointments")
+          .select("appointment_date, appointment_time").eq("id", ar.appointment_id).maybeSingle();
+        preAuthorizedTargets = [ar.patient_user_id];
+        title = "✅ Agendamento confirmado";
+        body = apt ? `Sua sessão em ${fmtDate(apt.appointment_date)} às ${String(apt.appointment_time).slice(0, 5)} foi confirmada.` : "Seu agendamento foi confirmado.";
+        url = "/dashboard?tab=appointments";
+        tag = `apt-req-${ar.id}`;
+      } else {
+        return new Response(JSON.stringify({ error: "Forbidden" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      user_id = undefined; clinic_id = undefined; conversation_id = undefined; email = undefined; category = undefined;
+    }
+
+    if (!title || (!preAuthorizedTargets && !user_id && !clinic_id && !conversation_id && !email)) {
       return new Response(
         JSON.stringify({ error: "title and (user_id, clinic_id, conversation_id or email) are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -100,7 +145,7 @@ Deno.serve(async (req) => {
     }
 
     // Resolve recipient user_ids
-    let targetUserIds: string[] = [];
+    let targetUserIds: string[] = preAuthorizedTargets ? [...preAuthorizedTargets] : [];
     if (user_id) targetUserIds.push(user_id);
 
     // Video calls and chat alerts should not depend on a client-side query to
@@ -175,7 +220,12 @@ Deno.serve(async (req) => {
     // Non-service-role, non-anon callers may target themselves OR any user who
     // shares a conversation with them (chat messages / video calls). Anything
     // else is rejected.
-    if (!isServiceRole && !isAnonKey) {
+    if (preAuthorizedTargets) {
+      if (targetUserIds.length === 0) {
+        return new Response(JSON.stringify({ message: "No recipients", sent: 0 }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    } else if (!isServiceRole && !isAnonKey) {
       const others = targetUserIds.filter((uid) => uid !== callerUserId);
       const allowed = new Set(targetUserIds.filter((uid) => uid === callerUserId));
 
