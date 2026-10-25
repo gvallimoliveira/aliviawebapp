@@ -106,6 +106,7 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
       toast.error(msg); return;
     }
     void notifyAppointmentRequest(target.id);
+    window.dispatchEvent(new CustomEvent("alivia:appointments-changed"));
     toast.success("Agendamento confirmado e incluído na agenda.");
     setTarget(null);
     void load();
