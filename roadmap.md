@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Categorias de clínicas no Admin
-- [ ] Separar assinantes vinculados à cobrança e parceiros ativos gratuitos; preservar testes/inativas, busca e detalhes; validar testes e navegação autenticada.
+- [x] Separados 1 assinante, 4 parceiros ativos gratuitos e 2 clínicas em teste/inativas; busca e detalhes preservados. Quatro testes passaram, build OK e navegação autenticada desktop/celular conferida com dados reais, sem alterar acessos.
 
 ## Blindagem de compromissos pessoais
 - [x] Compromissos excluídos nos cards locais e em 10 RPCs, incluindo notas explicitamente vinculadas; Agenda e escopos preservados. Migração 0044 aplicada e definições conferidas no servidor.
