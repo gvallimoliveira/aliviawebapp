@@ -751,6 +751,74 @@ export type Database = {
         }
         Relationships: []
       }
+      announcement_reads: {
+        Row: {
+          announcement_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          announcement_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          announcement_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_reads_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "patient_announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcement_templates: {
+        Row: {
+          body: string
+          category: string
+          clinic_id: string | null
+          created_at: string
+          created_by: string
+          cta_label: string | null
+          cta_url: string | null
+          id: string
+          name: string
+          professional_id: string | null
+          title: string
+        }
+        Insert: {
+          body: string
+          category?: string
+          clinic_id?: string | null
+          created_at?: string
+          created_by: string
+          cta_label?: string | null
+          cta_url?: string | null
+          id?: string
+          name: string
+          professional_id?: string | null
+          title: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          clinic_id?: string | null
+          created_at?: string
+          created_by?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          id?: string
+          name?: string
+          professional_id?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       app_config: {
         Row: {
           key: string
@@ -2757,6 +2825,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      patient_announcements: {
+        Row: {
+          archived: boolean
+          audience: string
+          author_user_id: string
+          body: string
+          category: string
+          clinic_id: string | null
+          created_at: string
+          cta_label: string | null
+          cta_url: string | null
+          expires_at: string | null
+          id: string
+          professional_id: string | null
+          published_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          audience?: string
+          author_user_id: string
+          body: string
+          category?: string
+          clinic_id?: string | null
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          expires_at?: string | null
+          id?: string
+          professional_id?: string | null
+          published_at?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          audience?: string
+          author_user_id?: string
+          body?: string
+          category?: string
+          clinic_id?: string | null
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          expires_at?: string | null
+          id?: string
+          professional_id?: string | null
+          published_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       patient_files: {
         Row: {
@@ -5305,6 +5427,16 @@ export type Database = {
             Args: { _caller?: string; _email?: string; _user_id: string }
             Returns: Json
           }
+      announcement_audience_emails: {
+        Args: {
+          _audience: string
+          _clinic_id: string
+          _professional_id: string
+        }
+        Returns: {
+          email: string
+        }[]
+      }
       approve_appointment_request: {
         Args: {
           _date: string
@@ -5366,6 +5498,17 @@ export type Database = {
           remaining: number
           unlimited: boolean
           used_this_period: number
+        }[]
+      }
+      count_announcement_audience: {
+        Args: {
+          _audience: string
+          _clinic_id: string
+          _professional_id: string
+        }
+        Returns: {
+          patients: number
+          with_app: number
         }[]
       }
       create_appointment_request: {
@@ -5659,6 +5802,21 @@ export type Database = {
           professional_id: string
           professional_name: string
           program_id: string
+        }[]
+      }
+      get_my_announcements: {
+        Args: never
+        Returns: {
+          body: string
+          category: string
+          cta_label: string
+          cta_url: string
+          id: string
+          is_read: boolean
+          provider_logo: string
+          provider_name: string
+          published_at: string
+          title: string
         }[]
       }
       get_my_assessments: {

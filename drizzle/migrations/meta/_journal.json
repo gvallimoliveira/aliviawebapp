@@ -267,6 +267,13 @@
       "when": 1792903669448,
       "tag": "0037_appointment_requests_confirmed_slot",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1792904334119,
+      "tag": "0038_patient_announcements",
+      "breakpoints": true
     }
   ]
 }
