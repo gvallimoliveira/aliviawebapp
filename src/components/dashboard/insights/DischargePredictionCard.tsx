@@ -188,7 +188,7 @@ const DischargePredictionCard = ({ clinicId, professionalId }: Props) => {
               <p className="text-xs text-muted-foreground">
                 {lang === "pt"
                   ? `${r.progress_pct}% do caminho · ${r.sessions_done} sessões feitas · ~${r.sessions_remaining} restantes (${r.weeks_estimate} sem)`
-                  : `${r.progress_pct%100}% along · ${r.sessions_done} done · ~${r.sessions_remaining} left (${r.weeks_estimate}w)`}
+                  : `${r.progress_pct}% along · ${r.sessions_done} done · ~${r.sessions_remaining} left (${r.weeks_estimate}w)`}
               </p>
               {factorChips(r.factors)}
             </div>
