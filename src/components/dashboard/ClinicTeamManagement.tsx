@@ -140,8 +140,12 @@ const ClinicTeamManagement = () => {
   if (!activeClinic) return null;
 
   const isUnlimited = activeClinic.max_members >= 9999;
-  const seatsUsed = members.length + invitations.length;
-  const atLimit = !isUnlimited && seatsUsed >= activeClinic.max_members;
+  const isSec = (r: ClinicRole) => r === "secretary";
+  const secretarySeats = members.filter((m) => isSec(m.role)).length + invitations.filter((i) => isSec(i.role)).length;
+  const seatsUsed = members.length + invitations.length - secretarySeats;
+  const clinicalFull = !isUnlimited && seatsUsed >= activeClinic.max_members;
+  const secretaryFull = !isUnlimited && secretarySeats >= 1;
+  const atLimit = clinicalFull && secretaryFull;
 
   return (
     <div className="space-y-6">
@@ -153,7 +157,12 @@ const ClinicTeamManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
-            {lang === "pt" ? "Equipe" : lang === "es" ? "Equipo" : "Team"} ({seatsUsed}/{isUnlimited ? "∞ Enterprise" : activeClinic.max_members})
+            {lang === "pt" ? "Equipe clínica" : lang === "es" ? "Equipo clínico" : "Clinical team"} ({seatsUsed}/{isUnlimited ? "∞ Enterprise" : activeClinic.max_members})
+            {!isUnlimited && (
+              <span className="text-sm font-normal text-muted-foreground">
+                · {lang === "pt" ? "Secretária" : lang === "es" ? "Secretaria" : "Secretary"} {secretarySeats}/1
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -279,16 +288,11 @@ const ClinicTeamManagement = () => {
                    <SelectValue />
                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>
-                    <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>
-                    <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
-                    <SelectItem value="intern">{roleLabels.intern[lang]}</SelectItem>
-                    <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
-                    <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
-                    <SelectItem value="pilates_instructor">{roleLabels.pilates_instructor[lang]}</SelectItem>
-                    <SelectItem value="doctor">{roleLabels.doctor[lang]}</SelectItem>
-                    <SelectItem value="rpg_specialist">{roleLabels.rpg_specialist[lang]}</SelectItem>
-                    <SelectItem value="massage_therapist">{roleLabels.massage_therapist[lang]}</SelectItem>
+                    {(["owner","admin","therapist","intern","secretary","osteopath","pilates_instructor","doctor","rpg_specialist","massage_therapist"] as ClinicRole[]).map((r) => (
+                      <SelectItem key={r} value={r} disabled={isSec(r) ? secretaryFull : clinicalFull}>
+                        {roleLabels[r][lang]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                </Select>
              </div>

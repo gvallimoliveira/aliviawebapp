@@ -5499,6 +5499,10 @@ export type Database = {
         Args: { _scope_key: string }
         Returns: undefined
       }
+      clinic_member_credit_weight: {
+        Args: { _role: Database["public"]["Enums"]["clinic_role"] }
+        Returns: number
+      }
       consume_studio_generation: {
         Args: { p_amount?: number }
         Returns: {

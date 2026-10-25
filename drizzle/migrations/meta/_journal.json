@@ -337,6 +337,13 @@
       "when": 1792956364737,
       "tag": "0047_clinic_small_100_per_member",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1792956897196,
+      "tag": "0048_clinic_role_weighted_credits_and_seats",
+      "breakpoints": true
     }
   ]
 }
