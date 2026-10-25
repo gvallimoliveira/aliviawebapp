@@ -13,12 +13,12 @@
 - [x] Sem próximo horário: nome da sessão mais recente; sessões só com evolução resolvem nome pelo cadastro.
 - [x] Gargalo de capacidade: solo não mostra 100% falso; card ganhou "ocupação da agenda" (horários usados ÷ possíveis).
 
-## Fora desta rodada
-- Editor de catálogo de serviços para PRO autônomo (pedido anterior; não incluído nestes ajustes).
+## Catálogo PRO
+- [x] Editor disponível em Pacientes → Serviços e valores; gravação/leitura/remoção verificadas na conta profissional.
 
 ## Ajustes solicitados agora
-- [ ] Investigar e corrigir agendamentos ausentes, preservando escopos e registros.
-- [ ] Disponibilizar/localizar cadastro de serviços no PRO e clínica para solicitação do paciente.
+- [x] Agenda corrigida: respostas antigas não substituem o período atual; horários 26/10 12:15 e 13:00 verificados com atraso artificial no celular, sem alterar registros.
+- [x] Serviços PRO em Pacientes → Serviços e valores; clínica em Clínica → Equipe → Serviços e valores, dono/admin; ajuda pt/en/es e 9 testes aprovados.
 - [x] Abandono silencioso: rolagem e descarte persistente pelo mecanismo existente.
 - [x] Adesão: causa confirmada (ambos sem e-mail); RPC usa ID do paciente, canais ausentes não diluem e lista completa pesquisável.
 - [x] Frequência: comparar somente oportunidades decorridas no mês, considerando início do acompanhamento.
