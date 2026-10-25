@@ -1,4 +1,6 @@
 {
+  "support.pro.tool.care_services.title": "Serviços e solicitações de horário",
+  "support.pro.tool.care_services.desc": "No PRO autônomo, abra Pacientes → Serviços e valores. Na clínica: Clínica → Equipe → Serviços e valores (dono/admin). Cadastre e ative os serviços que o paciente vinculado poderá selecionar. O paciente solicita data, hora e serviço; a equipe define a duração e pode confirmar ou reagendar. Somente a aprovação cria o compromisso na agenda.",
   "support.pro.faq.profile_isolation.q": "Os dados da clínica aparecem no meu PRO autônomo?",
   "support.pro.faq.profile_isolation.a": "Não. Pacientes, agenda, evoluções, programas de exercícios e conversas do agente são separados pelo perfil selecionado. Atribuir um paciente da clínica a um fisioterapeuta não o transforma em paciente particular. Troque para a clínica correspondente para consultar seus registros; o histórico é preservado.",
   "support.pro.faq.planned_dose_edit.q": "Posso editar a dose planejada sem apagar a sessão realizada?",

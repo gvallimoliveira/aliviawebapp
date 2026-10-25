@@ -1,4 +1,6 @@
 {
+  "support.pro.tool.care_services.title": "Servicios y solicitudes de citas",
+  "support.pro.tool.care_services.desc": "En PRO autónomo, abra Pacientes → Servicios y valores. En clínica: Clínica → Equipo → Servicios y valores (dueño/admin). Registre y active los servicios que los pacientes vinculados podrán elegir. El paciente solicita fecha, hora y servicio; el equipo define la duración y puede confirmar o reprogramar. Solo la aprobación crea la cita en la agenda.",
   "support.pro.faq.profile_isolation.q": "¿Los datos de la clínica aparecen en mi PRO autónomo?",
   "support.pro.faq.profile_isolation.a": "No. Pacientes, agenda, evoluciones, programas de ejercicios y conversaciones del agente se separan por el perfil seleccionado. Asignar un paciente de la clínica a un fisioterapeuta no lo convierte en paciente particular. Cambie a la clínica correspondiente para consultar sus registros; se conserva el historial.",
   "support.pro.faq.planned_dose_edit.q": "¿Puedo editar la dosis planificada sin borrar la sesión realizada?",
