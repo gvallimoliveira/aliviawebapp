@@ -40,13 +40,14 @@ export function buildPriceResolver(appts: MgmtAppt[], services: MgmtService[], d
   const svc = new Map(services.map((s) => [s.id, s]));
   const monthlyDone = new Map<string, number>();
   for (const a of appts) {
-    if (a.status !== "completed" || !a.service_id) continue;
+    if (!isCare(a) || a.status !== "completed" || !a.service_id) continue;
     const s = svc.get(a.service_id);
     if (!s || s.billing_type !== "monthly") continue;
     const k = `${patientKey(a)}|${a.service_id}|${a.appointment_date.slice(0, 7)}`;
     monthlyDone.set(k, (monthlyDone.get(k) || 0) + 1);
   }
   return (a) => {
+    if (!isCare(a)) return 0;
     const s = a.service_id ? svc.get(a.service_id) : undefined;
     if (!s) return defaultPrice;
     if (s.billing_type === "monthly") {
@@ -84,7 +85,29 @@ export const addDays = (iso: string, n: number) => new Date(toDay(iso) + n * DAY
 const diffDays = (a: string, b: string) => Math.round((toDay(a) - toDay(b)) / DAY_MS);
 
 /** Billable care appointments: personal commitments never count. */
-export const isCare = (a: MgmtAppt) => (a.service_type || "") !== "compromisso";
+export const isCare = (a: { service_type?: string | null }) => (a.service_type || "") !== "compromisso";
+
+/** Read queries keep legacy NULL types, while excluding commitments before pagination/counting. */
+export const CARE_APPOINTMENT_FILTER = "service_type.is.null,service_type.neq.compromisso";
+
+export function careOccupancyStats(appts: Array<{ status: string; service_type?: string | null }>, capacity: number) {
+  const care = appts.filter(isCare);
+  const total = care.length;
+  const noShow = care.filter((a) => a.status === "no_show" || a.status === "no_show_justified").length;
+  const active = care.filter((a) => a.status === "scheduled" || a.status === "completed").length;
+  return {
+    capacity, total, noShow, active,
+    occupancy: capacity > 0 ? Math.round(active / capacity * 100) : 0,
+    noShowRate: total > 0 ? Math.round(noShow / total * 100) : 0,
+    idleSlots: Math.max(0, capacity - active),
+  };
+}
+
+/** Notes explicitly linked to a personal commitment cannot become care sessions. */
+export function careSessionNotes(appts: MgmtAppt[], notes: MgmtNote[]): MgmtNote[] {
+  const commitments = new Set(appts.filter((a) => !isCare(a)).map((a) => a.id));
+  return notes.filter((n) => !n.appointment_id || !commitments.has(n.appointment_id));
+}
 
 export const patientKey = (a: { patient_email?: string | null; patient_name?: string | null }) => {
   const e = (a.patient_email || "").trim().toLowerCase();
@@ -110,11 +133,11 @@ export function median(values: number[]): number {
  */
 export function synthesizeNoteSessions(appts: MgmtAppt[], notes: MgmtNote[]): MgmtAppt[] {
   const doneDays = new Set(
-    appts.filter((a) => a.status === "completed").map((a) => `${(a.patient_email || "").trim().toLowerCase()}|${a.appointment_date}`)
+    appts.filter((a) => isCare(a) && a.status === "completed").map((a) => `${(a.patient_email || "").trim().toLowerCase()}|${a.appointment_date}`)
   );
   const extra: MgmtAppt[] = [];
   const seen = new Set<string>();
-  for (const n of notes) {
+  for (const n of careSessionNotes(appts, notes)) {
     const e = (n.patient_email || "").trim().toLowerCase();
     const d = (n.session_date || "").slice(0, 10);
     if (!e || !d) continue;

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Activity, CalendarX2, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import InsightCardShell from "./InsightCardShell";
+import { CARE_APPOINTMENT_FILTER, careOccupancyStats } from "@/lib/managementMetrics";
 
 interface Props {
   clinicId?: string;
@@ -23,24 +24,28 @@ const OccupancyVsNoShowCard = ({ clinicId, professionalId }: Props) => {
 
   useEffect(() => {
     if (!clinicId && !professionalId) return;
+    let cancelled = false;
     setLoading(true);
+    setAppts([]);
+    setTherapists(1);
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 30);
     const cutoffStr = cutoff.toISOString().slice(0, 10);
 
     const loadAppts = async () => {
       let q = (supabase.from("professional_appointments" as any) as any)
-        .select("status, appointment_date")
+        .select("status, appointment_date, service_type")
+        .or(CARE_APPOINTMENT_FILTER)
         .gte("appointment_date", cutoffStr);
       if (clinicId) q = q.eq("clinic_id", clinicId);
-      else q = q.eq("professional_id", professionalId);
+      else q = q.is("clinic_id", null).eq("professional_id", professionalId);
       const { data } = await q;
-      setAppts(data || []);
+      if (!cancelled) setAppts(data || []);
     };
 
     const loadTherapists = async () => {
       if (!clinicId) {
-        setTherapists(1);
+        if (!cancelled) setTherapists(1);
         return;
       }
       const { count } = await supabase
@@ -49,10 +54,11 @@ const OccupancyVsNoShowCard = ({ clinicId, professionalId }: Props) => {
         .eq("clinic_id", clinicId)
         .eq("status", "active")
         .in("role", ["owner", "therapist"]);
-      setTherapists(Math.max(1, count || 1));
+      if (!cancelled) setTherapists(Math.max(1, count || 1));
     };
 
-    Promise.all([loadAppts(), loadTherapists()]).finally(() => setLoading(false));
+    Promise.all([loadAppts(), loadTherapists()]).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [clinicId, professionalId]);
 
   const stats = useMemo(() => {
@@ -61,15 +67,7 @@ const OccupancyVsNoShowCard = ({ clinicId, professionalId }: Props) => {
     const slotsPerDay = 10;
     const capacity = workdays * slotsPerDay * therapists;
 
-    const total = appts.length;
-    const noShow = appts.filter((a) => a.status === "no_show" || a.status === "no_show_justified").length;
-    const active = appts.filter((a) => a.status === "scheduled" || a.status === "completed").length;
-
-    const occupancy = capacity > 0 ? Math.round((active / capacity) * 100) : 0;
-    const noShowRate = total > 0 ? Math.round((noShow / total) * 100) : 0;
-    const idleSlots = Math.max(0, capacity - active);
-
-    return { capacity, total, noShow, active, occupancy, noShowRate, idleSlots };
+    return careOccupancyStats(appts, capacity);
   }, [appts, therapists]);
 
   const tt = {
