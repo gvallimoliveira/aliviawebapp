@@ -1,5 +1,10 @@
 # Roadmap
 
+## Blindagem de compromissos pessoais
+- [ ] Excluir compromissos de todas as entradas de métricas de Insights, mantendo Agenda e escopos.
+- [ ] Validar cálculos locais e indicadores do servidor com regressões e conferir a tela autenticada.
+- [ ] Atualizar a ajuda pt/en/es e registrar a regra de arquitetura.
+
 ## Serviço na solicitação
 - [x] Serviço escolhido visível no pedido e na confirmação, com ID pré-selecionado e nomes do catálogo no mesmo escopo (incluindo inativos). Pedido real consultado: Avaliação. Tela autenticada da clínica sem pedidos reais; visual desktop/celular conferido com resposta simulada somente de leitura, sem aprovar ou gravar. Build OK. Aprovação real no PRO não reexecutada: conta disponível tem PRO demo.
 
