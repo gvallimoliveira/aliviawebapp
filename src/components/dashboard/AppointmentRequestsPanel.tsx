@@ -95,7 +95,16 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
       _professional_id: clinicId ? therapistId : null, _service_id: serviceId === "none" ? null : serviceId,
     });
     setBusy(false);
-    if (error) { toast.error("Não foi possível aprovar."); return; }
+    if (error) {
+      const m = error.message || "";
+      const msg = m.includes("invalid slot") ? "Data ou horário inválido."
+        : m.includes("invalid therapist") ? "Fisioterapeuta inválido para esta clínica."
+        : m.includes("invalid service") ? "Serviço inválido."
+        : m.includes("already decided") ? "Esta solicitação já foi decidida."
+        : m.includes("forbidden") ? "Você não tem permissão para aprovar."
+        : "Não foi possível aprovar.";
+      toast.error(msg); return;
+    }
     void notifyAppointmentRequest(target.id);
     toast.success("Agendamento confirmado e incluído na agenda.");
     setTarget(null);
@@ -156,10 +165,10 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
             <DialogDescription>{target?.patient_name} — ajuste se necessário antes de confirmar.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5 col-span-1"><Label>Data</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-              <div className="space-y-1.5"><Label>Horário</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
-              <div className="space-y-1.5"><Label>Minutos</Label><Input type="number" min={10} max={240} value={duration} onChange={(e) => setDuration(e.target.value)} /></div>
+            <div className="space-y-1.5 min-w-0"><Label>Data</Label><Input type="date" className="w-full min-w-0" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5 min-w-0"><Label>Horário</Label><Input type="time" className="w-full min-w-0" value={time} onChange={(e) => setTime(e.target.value)} /></div>
+              <div className="space-y-1.5 min-w-0"><Label>Minutos</Label><Input type="number" inputMode="numeric" className="w-full min-w-0" min={10} max={240} value={duration} onChange={(e) => setDuration(e.target.value)} /></div>
             </div>
             {clinicId && (
               <div className="space-y-1.5">
