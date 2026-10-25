@@ -105,6 +105,7 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
         </p>
       </div>
       <div className="border-t pt-3 space-y-3">
+        <p className="text-xs text-muted-foreground">{lang === "pt" ? "Check-ins: dias respondidos nos últimos 14 dias ÷ 14. Pacientes com check-ins nos últimos 60 dias permanecem na lista, mesmo sem e-mail. Canais sem dados não entram no denominador do score." : lang === "es" ? "Check-ins: días respondidos en los últimos 14 días ÷ 14. Pacientes con check-ins en 60 días siguen en la lista, incluso sin correo. Canales sin datos no reducen el score." : "Check-ins: answered days in the last 14 days ÷ 14. Patients with check-ins within 60 days remain listed, even without email. Missing channels do not dilute the score."}</p>
         <p className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">
           {lang === "pt" ? "Pesos personalizados" : "Custom weights"}
         </p>
