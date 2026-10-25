@@ -15,6 +15,13 @@ interface Props {
   professionalId?: string;
 }
 
+interface DischargeFactors {
+  pain?: number | null;
+  steps?: number | null;
+  load?: number | null;
+  readiness?: number | null;
+}
+
 interface DischargeRow {
   patient_email: string;
   patient_name: string | null;
@@ -25,11 +32,12 @@ interface DischargeRow {
   sessions_remaining: number;
   weeks_estimate: number;
   confidence: "low" | "medium" | "high";
+  progress_pct: number;
+  factors: DischargeFactors | null;
 }
 
 const DEFAULTS = {
   minSessions: 3,
-  painDropPerSession: 0.3,
   closeThreshold: 3,
 };
 
@@ -68,6 +76,26 @@ const DischargePredictionCard = ({ clinicId, professionalId }: Props) => {
       ? c === "high" ? "alta" : c === "medium" ? "média" : "baixa"
       : c === "high" ? "high" : c === "medium" ? "medium" : "low";
 
+  const factorChips = (f: DischargeFactors | null) => {
+    if (!f) return null;
+    const items: { label: string; v: number | null | undefined }[] = [
+      { label: lang === "pt" ? "Dor" : "Pain", v: f.pain },
+      { label: "STEPS", v: f.steps },
+      { label: lang === "pt" ? "Carga" : "Load", v: f.load },
+      { label: lang === "pt" ? "Prontidão" : "Readiness", v: f.readiness },
+    ].filter((i) => i.v !== null && i.v !== undefined);
+    if (!items.length) return null;
+    return (
+      <div className="flex flex-wrap gap-1">
+        {items.map((i) => (
+          <span key={i.label} className="text-[10px] rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+            {i.label} <b className="text-foreground">{i.v}%</b>
+          </span>
+        ))}
+      </div>
+    );
+  };
+
   const infoContent = (
     <div className="space-y-3 text-sm">
       <div>
@@ -76,8 +104,8 @@ const DischargePredictionCard = ({ clinicId, professionalId }: Props) => {
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
           {lang === "pt"
-            ? "Estimamos sessões restantes com base na queda média da dor por sessão (NRS inicial → atual). Confiança é maior quando há mais registros do diário e sessões consistentes."
-            : "We estimate remaining sessions from the average pain drop per session (initial → current NRS). Confidence is higher with more diary entries and consistent attendance."}
+            ? "O progresso (0–100%) combina quatro sinais, quando existem: evolução da dor nos check-ins de prontidão (peso 40), fase atual do plano STEPS (30), progresso da carga de trabalho nas últimas 4 semanas vs as 4 anteriores (15) e prontidão atual (15). As sessões restantes aplicam o que falta do caminho ao ritmo atual do paciente; semanas usam a frequência real recente. Confiança cresce com mais sinais e mais sessões."
+            : "Progress (0–100%) blends four signals when available: pain evolution from readiness check-ins (weight 40), current STEPS plan phase (30), workload progress over the last 4 weeks vs the previous 4 (15) and current readiness (15). Remaining sessions apply the missing path to the patient's current pace; weeks use the recent real frequency. Confidence grows with more signals and sessions."}
         </p>
       </div>
       <div className="border-t pt-3 space-y-3">
@@ -92,17 +120,6 @@ const DischargePredictionCard = ({ clinicId, professionalId }: Props) => {
             type="number" min={1}
             value={prefs.minSessions}
             onChange={(e) => update({ minSessions: Math.max(1, Number(e.target.value) || 1) })}
-            className="h-8"
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">
-            {lang === "pt" ? "Queda de dor esperada por sessão (NRS)" : "Expected pain drop per session (NRS)"}
-          </Label>
-          <Input
-            type="number" min={0.1} step={0.1}
-            value={prefs.painDropPerSession}
-            onChange={(e) => update({ painDropPerSession: Math.max(0.1, Number(e.target.value) || 0.1) })}
             className="h-8"
           />
         </div>
@@ -133,10 +150,10 @@ const DischargePredictionCard = ({ clinicId, professionalId }: Props) => {
       title={lang === "pt" ? "Previsão de alta" : lang === "es" ? "Previsión de alta" : "Discharge prediction"}
       description={
         lang === "pt"
-          ? "Estimativa de sessões restantes baseada na evolução da dor."
+          ? "Estimativa combinando dor, fase STEPS, progresso de carga e prontidão."
           : lang === "es"
-          ? "Estimación de sesiones restantes basada en la evolución del dolor."
-          : "Estimated sessions remaining based on pain evolution."
+          ? "Estimación combinando dolor, fase STEPS, progreso de carga y preparación."
+          : "Estimate combining pain, STEPS phase, load progress and readiness."
       }
       rightSlot={
         <Button
@@ -159,26 +176,23 @@ const DischargePredictionCard = ({ clinicId, professionalId }: Props) => {
             {lang === "pt" ? "Sem dados suficientes ainda." : lang === "es" ? "Sin datos suficientes." : "Not enough data yet."}
           </p>
         ) : (
-          filtered.slice(0, 15).map((r) => {
-            const total = r.sessions_done + r.sessions_remaining;
-            const progress = total > 0 ? Math.round((r.sessions_done / total) * 100) : 0;
-            return (
-              <div key={r.patient_email} className="p-3 rounded-lg border border-border/60 bg-background space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium truncate flex-1">{r.patient_name || r.patient_email}</p>
-                  <Badge variant="outline" className="text-[10px] shrink-0">
-                    {confLabel(r.confidence)}
-                  </Badge>
-                </div>
-                <Progress value={progress} className="h-1.5" />
-                <p className="text-xs text-muted-foreground">
-                  {lang === "pt"
-                    ? `${r.sessions_done} sessões feitas · ~${r.sessions_remaining} restantes (${r.weeks_estimate} sem)`
-                    : `${r.sessions_done} done · ~${r.sessions_remaining} left (${r.weeks_estimate}w)`}
-                </p>
+          filtered.slice(0, 15).map((r) => (
+            <div key={r.patient_email} className="p-3 rounded-lg border border-border/60 bg-background space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium truncate flex-1">{r.patient_name || r.patient_email}</p>
+                <Badge variant="outline" className="text-[10px] shrink-0">
+                  {confLabel(r.confidence)}
+                </Badge>
               </div>
-            );
-          })
+              <Progress value={r.progress_pct} className="h-1.5" />
+              <p className="text-xs text-muted-foreground">
+                {lang === "pt"
+                  ? `${r.progress_pct}% do caminho · ${r.sessions_done} sessões feitas · ~${r.sessions_remaining} restantes (${r.weeks_estimate} sem)`
+                  : `${r.progress_pct}% along · ${r.sessions_done} done · ~${r.sessions_remaining} left (${r.weeks_estimate}w)`}
+              </p>
+              {factorChips(r.factors)}
+            </div>
+          ))
         )}
       </div>
     </InsightCardShell>

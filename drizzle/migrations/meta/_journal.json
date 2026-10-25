@@ -232,6 +232,20 @@
       "when": 1792897679451,
       "tag": "0032_insights_real_world_signals",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792898593276,
+      "tag": "0033_insights_real_world_signals_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792898628297,
+      "tag": "0034_churn_reasons_jsonb_fix",
+      "breakpoints": true
     }
   ]
 }

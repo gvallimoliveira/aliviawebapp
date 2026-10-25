@@ -41,6 +41,7 @@ export interface AptInput {
   status: string;
   created_at: string;
   service_type?: string;
+  service_id?: string | null;
   series_id?: string | null;
   recurrence_rule?: unknown;
 }
@@ -61,9 +62,13 @@ export interface AppointmentEditorPayload {
   duration_minutes: number;
   type: string;
   service_type: string;
+  /** Catalog service (care_services) driving the price in financial insights. */
+  service_id?: string | null;
   notes: string | null;
   clinic_id?: string;
 }
+
+interface CareServiceOption { id: string; name: string; price: number; billing_type: string }
 
 export interface AppointmentEditorExtras {
   cpf: string;
@@ -199,7 +204,24 @@ const AppointmentEditorDialog = ({
   const [formEmail, setFormEmail] = useState(initialApt?.patient_email ?? "");
   const [formType, setFormType] = useState(initialApt?.type ?? "in_person");
   const [formServiceType, setFormServiceType] = useState(initialApt?.service_type ?? "fisioterapia");
+  const [formServiceId, setFormServiceId] = useState<string>(initialApt?.service_id ?? "__none__");
+  const [careServices, setCareServices] = useState<CareServiceOption[]>([]);
   const [formNotes, setFormNotes] = useState(initialApt?.notes ?? "");
+
+  // Catálogo de serviços do escopo (define o valor nas métricas financeiras).
+  useEffect(() => {
+    if (isSimulated || (!clinicId && !professionalId)) return;
+    let alive = true;
+    (async () => {
+      let q = (supabase.from("care_services" as any) as any)
+        .select("id, name, price, billing_type").eq("active", true).order("name");
+      if (clinicId) q = q.eq("clinic_id", clinicId);
+      else q = q.eq("professional_id", professionalId).is("clinic_id", null);
+      const { data } = await q;
+      if (alive && Array.isArray(data)) setCareServices(data);
+    })();
+    return () => { alive = false; };
+  }, [clinicId, professionalId, isSimulated]);
   const [formCpf, setFormCpf] = useState("");
   const [formBirthDate, setFormBirthDate] = useState("");
   const [formPhone, setFormPhone] = useState("");
@@ -408,6 +430,7 @@ const AppointmentEditorDialog = ({
       duration_minutes: parseInt(formDuration) || 50,
       type: formType,
       service_type: formServiceType,
+      service_id: formServiceId !== "__none__" ? formServiceId : null,
       notes: formNotes || null,
     };
     if (clinicId) payload.clinic_id = clinicId;
@@ -773,6 +796,22 @@ const AppointmentEditorDialog = ({
                       </SelectContent>
                     </Select>
                   </div>
+                  {careServices.length > 0 && !isCommitment && (
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Serviço (valor)" : language === "es" ? "Servicio (valor)" : "Service (price)"}</label>
+                      <Select value={formServiceId} onValueChange={setFormServiceId}>
+                        <SelectTrigger className="mt-1 text-xs h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">{isPt ? "Sem serviço do catálogo" : "No catalog service"}</SelectItem>
+                          {careServices.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.name} · {(s.price || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}{s.billing_type === "monthly" ? (isPt ? "/mês" : "/mo") : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
                     <p className={cn("mt-1 text-xs h-9 flex items-center", (parseInt(formDuration) || 0) <= 0 && "text-destructive")}>

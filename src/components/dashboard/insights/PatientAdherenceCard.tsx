@@ -17,9 +17,8 @@ interface AdherenceRow {
   patient_name: string | null;
   score: number;
   exercises_pct: number;
-  diary_pct: number;
+  checkin_pct: number;
   attendance_pct: number;
-  messages_pct: number;
 }
 
 const scoreColor = (s: number) => {
@@ -29,10 +28,9 @@ const scoreColor = (s: number) => {
 };
 
 const DEFAULTS = {
-  wExercises: 40,
-  wDiary: 25,
-  wAttendance: 25,
-  wMessages: 10,
+  wExercises: 45,
+  wCheckin: 25,
+  wAttendance: 30,
 };
 
 const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
@@ -59,15 +57,14 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
 
   // Recompute composite score using user weights (normalized to 100).
   const rows = useMemo(() => {
-    const total = prefs.wExercises + prefs.wDiary + prefs.wAttendance + prefs.wMessages || 1;
+    const total = prefs.wExercises + prefs.wCheckin + prefs.wAttendance || 1;
     return rawRows
       .map((r) => ({
         ...r,
         score: Math.round(
           (r.exercises_pct * prefs.wExercises +
-            r.diary_pct * prefs.wDiary +
-            r.attendance_pct * prefs.wAttendance +
-            r.messages_pct * prefs.wMessages) /
+            r.checkin_pct * prefs.wCheckin +
+            r.attendance_pct * prefs.wAttendance) /
             total
         ),
       }))
@@ -77,7 +74,7 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
   const top = rows.slice(0, 5);
   const bottom = rows.slice(-5).reverse();
 
-  const WeightSlider = ({ label, k, max = 100 }: { label: string; k: keyof typeof DEFAULTS; max?: number }) => (
+  const WeightSlider = ({ label, k }: { label: string; k: keyof typeof DEFAULTS }) => (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
         <span>{label}</span>
@@ -87,13 +84,13 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
         value={[prefs[k]]}
         onValueChange={(v) => update({ [k]: v[0] } as any)}
         min={0}
-        max={max}
+        max={100}
         step={5}
       />
     </div>
   );
 
-  const totalW = prefs.wExercises + prefs.wDiary + prefs.wAttendance + prefs.wMessages;
+  const totalW = prefs.wExercises + prefs.wCheckin + prefs.wAttendance;
 
   const infoContent = (
     <div className="space-y-3 text-sm">
@@ -103,8 +100,8 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
           {lang === "pt"
-            ? "Combinação ponderada de: exercícios concluídos, registros no diário de dor, comparecimento às sessões e leitura de mensagens — janela de 30 dias. Você pode ajustar os pesos."
-            : "Weighted blend of: exercise completion, pain diary entries, session attendance and message reads — 30-day window. You can adjust the weights."}
+            ? "Combinação ponderada de: exercícios concluídos (app do paciente), consistência dos check-ins de prontidão e comparecimento às sessões classificadas. Diário de dor e mensagens não entram — na prática a maioria dos pacientes não usa esses canais. Você pode ajustar os pesos."
+            : "Weighted blend of: exercise completion (patient app), readiness check-in consistency and classified session attendance. Pain diary and messages are not used — most patients don't use those channels in practice. You can adjust the weights."}
         </p>
       </div>
       <div className="border-t pt-3 space-y-3">
@@ -112,9 +109,8 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
           {lang === "pt" ? "Pesos personalizados" : "Custom weights"}
         </p>
         <WeightSlider label={lang === "pt" ? "Exercícios" : "Exercises"} k="wExercises" />
-        <WeightSlider label={lang === "pt" ? "Diário de dor" : "Pain diary"} k="wDiary" />
+        <WeightSlider label={lang === "pt" ? "Check-ins de prontidão" : "Readiness check-ins"} k="wCheckin" />
         <WeightSlider label={lang === "pt" ? "Comparecimento" : "Attendance"} k="wAttendance" />
-        <WeightSlider label={lang === "pt" ? "Mensagens lidas" : "Messages read"} k="wMessages" />
         <p className="text-[11px] text-muted-foreground">
           {lang === "pt"
             ? `Soma atual: ${totalW}% — normalizamos automaticamente para 100%.`
@@ -143,9 +139,8 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
       <CollapsibleContent className="pt-2 pl-3 pr-2 pb-1 space-y-1">
         {[
           { label: lang === "pt" ? "Exercícios" : "Exercises", v: r.exercises_pct, w: prefs.wExercises },
-          { label: lang === "pt" ? "Diário de dor" : "Pain diary", v: r.diary_pct, w: prefs.wDiary },
+          { label: lang === "pt" ? "Check-ins" : "Check-ins", v: r.checkin_pct, w: prefs.wCheckin },
           { label: lang === "pt" ? "Comparecimento" : "Attendance", v: r.attendance_pct, w: prefs.wAttendance },
-          { label: lang === "pt" ? "Mensagens lidas" : "Messages read", v: r.messages_pct, w: prefs.wMessages },
         ].map((m) => (
           <div key={m.label} className="flex items-center gap-2 text-xs">
             <span className="w-32 text-muted-foreground">{m.label} ({m.w}%)</span>
@@ -164,8 +159,8 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
       title={lang === "pt" ? "Adesão dos pacientes" : lang === "es" ? "Adherencia de pacientes" : "Patient adherence"}
       description={
         lang === "pt"
-          ? "Score 0–100 combinando exercícios, diário, comparecimento e leitura de mensagens."
-          : "0–100 score combining exercises, diary, attendance and message reads."
+          ? "Score 0–100 combinando exercícios, check-ins de prontidão e comparecimento."
+          : "0–100 score combining exercises, readiness check-ins and attendance."
       }
       infoContent={infoContent}
     >
