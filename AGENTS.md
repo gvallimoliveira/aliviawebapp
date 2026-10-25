@@ -10,9 +10,9 @@
 
 - Aliv.iA/Studio copy uses canonical `aliviaDifferentials.ts` IDs; handoff copy must not duplicate features or imply duplicate entry.
 - Manual assessment and record share diagnosis.clinicalImpression; sync saved updates and regenerate only on request to avoid duplicate credits.
-- Record paired sections share a native horizontal row; preserve forms and reveal hidden sections via shortcuts.
+- Record paired sections share a horizontal row; preserve forms and shortcut reveals.
 - Patient regional pain charts and comparisons share one chronological data helper; explicit regional measurements must never be replaced by an invented regional score from a multi-region global average.
-- HEP dose metrics use only `hepLoad.ts` for panel/microcycle consistency.
+- HEP metrics share `hepLoad.ts` across panel/microcycle.
 - Professional sessions use only `saveProfessionalSession` in `periodizationData.ts`: merge same-date/track check-ins and link plans to avoid duplicate load. TRIMP/sRPE math stays in `cardioLoad.ts`.
 - "Today" in load control is always the local/Brazil calendar date (`localISODate` client-side, America/Sao_Paulo in the check-in function), never `toISOString()`; UTC rolls to tomorrow after 21h in Brazil.
 - Dose adherence (`adherenceByTrack`) counts only sessions up to local today with sRPE; unanswered/upcoming never count as underdose nor push alerts. Patient sRPE: today + 7 prior days, server-enforced.
@@ -48,6 +48,7 @@
 - Appointment requests use scoped RPCs/push; approval creates the slot only in Agenda (solo PRO, clinic owner/admin/secretary). Resolve service names from the same scoped catalog, including inactive entries; show the requested service in the card/dialog and preselect its saved ID.
 - Announcements use scoped server lists, can_handle_appointment_request and server-resolved push recipients.
 - Agenda uses latestRequest to reject stale results. ClinicServicesCard lives only in the manager-visible `care-services` registry entry in Insights → Operação, not Patients/Team, to keep home uncluttered; explicit professional scope isolates solo services.
-- Clinics use idempotent `_shared/clinicProvisioning.ts` (webhook + subscription self-heal). Admin groups subscribers, active free partners and trials/inactive via `clinicAdminGroups`, preserving status.
+- Clinics use idempotent `_shared/clinicProvisioning.ts` for webhook/self-heal; `clinicAdminGroups` separates paid/free/trial, preserving status.
 
-- AI quotas use server status/policy, atomic FIFO package accounting and service-only fulfillment; distinguish app quota errors from provider errors. Admin rollout uses the protected separate ai_credit_admin_roles table; empty tiers block nobody. Checkout and fulfillment share the server catalog and verify paid line items.
+- AI quotas: server policy, atomic FIFO, service-only fulfillment, distinct quota/provider errors. Protected ai_credit_admin_roles controls rollout; empty tiers block nobody. Checkout/fulfillment verify paid items against the shared catalog.
+- Academic revocation preserves absent CREFITO only on inactive, unapproved updates with access off; inserts/activation remain validated. Toggles keep list membership until explicit removal and reload saved state.
