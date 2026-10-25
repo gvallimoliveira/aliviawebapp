@@ -38,7 +38,7 @@ async function fetchAll(build: (from: number, to: number) => any, max = 10000) {
 export function useManagementData(clinicId?: string, professionalId?: string): ManagementData {
   const today = localISODate();
   const [state, setState] = useState<ManagementData>({
-    loading: true, today, price: 0, appts: [], notes: [], patients: [], dischargedKeys: new Set(), names: {}, therapists: 1,
+    loading: true, today, price: 0, appts: [], notes: [], patients: [], services: [], dischargedKeys: new Set(), names: {}, therapists: 1,
     hours: { start: null, end: null, workingDays: null }, ownerProfessionalId: null, rooms: null,
   });
 
@@ -50,9 +50,9 @@ export function useManagementData(clinicId?: string, professionalId?: string): M
     const scope = (q: any) => (clinicId ? q.eq("clinic_id", clinicId) : q.is("clinic_id", null).eq("professional_id", professionalId));
     (async () => {
       const sb = supabase as any;
-      const [appts, notes, plans, cfg, patients] = await Promise.all([
+      const [rawAppts, notes, plans, cfg, patients, services] = await Promise.all([
         fetchAll((a, b) => scope(sb.from("professional_appointments")
-          .select("id, appointment_date, appointment_time, status, status_changed_at, duration_minutes, service_type, professional_id, patient_email, patient_name")
+          .select("id, appointment_date, appointment_time, status, status_changed_at, duration_minutes, service_type, service_id, professional_id, patient_email, patient_name")
           .gte("appointment_date", from).lte("appointment_date", until)).order("appointment_date").range(a, b)),
         fetchAll((a, b) => scope(sb.from("session_notes")
           .select("appointment_id, patient_email, session_date, created_at")
