@@ -4,7 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Trophy, ChevronDown, RotateCcw } from "lucide-react";
+import { Loader2, Trophy, ChevronDown, RotateCcw, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { adherenceScore } from "@/lib/patientAdherence";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import InsightCardShell from "./InsightCardShell";
@@ -16,9 +18,9 @@ interface AdherenceRow {
   patient_email: string;
   patient_name: string | null;
   score: number;
-  exercises_pct: number;
-  checkin_pct: number;
-  attendance_pct: number;
+  exercises_pct: number | null;
+  checkin_pct: number | null;
+  attendance_pct: number | null;
 }
 
 const scoreColor = (s: number) => {
@@ -36,6 +38,8 @@ const DEFAULTS = {
 const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
   const [rawRows, setRawRows] = useState<AdherenceRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(false);
+  const [search, setSearch] = useState("");
   const { language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
   const { prefs, update, reset } = useInsightPrefs("adherence", DEFAULTS);
@@ -44,12 +48,15 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
     let cancelled = false;
     (async () => {
       setLoading(true);
+      setRawRows([]);
+      setErrorMessage(false);
       const { data, error } = await supabase.rpc("get_patient_adherence_scores" as any, {
         _clinic_id: clinicId ?? null,
         _professional_id: professionalId ?? null,
       });
       if (cancelled) return;
       if (!error && Array.isArray(data)) setRawRows(data as any);
+      setErrorMessage(!!error);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -57,22 +64,15 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
 
   // Recompute composite score using user weights (normalized to 100).
   const rows = useMemo(() => {
-    const total = prefs.wExercises + prefs.wCheckin + prefs.wAttendance || 1;
     return rawRows
       .map((r) => ({
         ...r,
-        score: Math.round(
-          (r.exercises_pct * prefs.wExercises +
-            r.checkin_pct * prefs.wCheckin +
-            r.attendance_pct * prefs.wAttendance) /
-            total
-        ),
+        score: adherenceScore([r.exercises_pct, r.checkin_pct, r.attendance_pct], [prefs.wExercises, prefs.wCheckin, prefs.wAttendance], r.score),
       }))
       .sort((a, b) => b.score - a.score);
   }, [rawRows, prefs]);
 
-  const top = rows.slice(0, 5);
-  const bottom = rows.slice(-5).reverse();
+  const visible = rows.filter((r) => (r.patient_name || r.patient_email).toLocaleLowerCase().includes(search.toLocaleLowerCase()));
 
   const WeightSlider = ({ label, k }: { label: string; k: keyof typeof DEFAULTS }) => (
     <div className="space-y-1">
@@ -127,14 +127,14 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
   const Row = ({ r }: { r: AdherenceRow }) => (
     <Collapsible>
       <CollapsibleTrigger asChild>
-        <button className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-border/60 hover:bg-muted/40 transition-colors text-left">
+        <Button variant="ghost" className="h-auto w-full flex items-center gap-3 p-2.5 rounded-lg border border-border/60 hover:bg-muted/40 transition-colors text-left">
           <Badge variant="outline" className={`shrink-0 px-2 py-0.5 text-xs font-bold ${scoreColor(r.score)}`}>{r.score}</Badge>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{r.patient_name || r.patient_email}</p>
             <Progress value={r.score} className="h-1 mt-1" />
           </div>
           <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-        </button>
+        </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-2 pl-3 pr-2 pb-1 space-y-1">
         {[
@@ -144,8 +144,8 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
         ].map((m) => (
           <div key={m.label} className="flex items-center gap-2 text-xs">
             <span className="w-32 text-muted-foreground">{m.label} ({m.w}%)</span>
-            <Progress value={m.v} className="h-1 flex-1" />
-            <span className="w-10 text-right tabular-nums text-muted-foreground">{m.v}%</span>
+            <Progress value={m.v ?? 0} className="h-1 flex-1" />
+            <span className="text-right tabular-nums text-muted-foreground">{m.v === null ? (lang === "pt" ? "Sem dados" : lang === "es" ? "Sin datos" : "No data") : `${m.v}%`}</span>
           </div>
         ))}
       </CollapsibleContent>
@@ -167,26 +167,16 @@ const PatientAdherenceCard = ({ clinicId, professionalId }: Props) => {
       <div className="space-y-4">
         {loading ? (
           <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : errorMessage ? (
+          <p className="text-sm text-destructive">{lang === "pt" ? "Não foi possível carregar a adesão. Tente novamente." : "Could not load adherence. Please try again."}</p>
         ) : rows.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             {lang === "pt" ? "Sem dados suficientes." : "Not enough data."}
           </p>
         ) : (
           <>
-            <div>
-              <p className="text-xs font-semibold text-emerald-700 mb-2 uppercase tracking-wide">
-                {lang === "pt" ? "🏆 Top 5" : "🏆 Top 5"}
-              </p>
-              <div className="space-y-1.5">{top.map(r => <Row key={r.patient_email} r={r} />)}</div>
-            </div>
-            {rows.length > 5 && (
-              <div>
-                <p className="text-xs font-semibold text-red-700 mb-2 uppercase tracking-wide">
-                  {lang === "pt" ? "⚠️ Atenção (5 mais baixos)" : "⚠️ Attention (lowest 5)"}
-                </p>
-                <div className="space-y-1.5">{bottom.map(r => <Row key={r.patient_email} r={r} />)}</div>
-              </div>
-            )}
+            <div className="flex items-center gap-2"><Search className="h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={lang === "pt" ? "Buscar paciente" : lang === "es" ? "Buscar paciente" : "Search patient"} aria-label={lang === "pt" ? "Buscar paciente na adesão" : "Search adherence patients"} /><Badge variant="secondary">{rows.length}</Badge></div>
+            <div className="max-h-[360px] overflow-y-auto overscroll-contain space-y-1.5" tabIndex={0}>{visible.map(r => <Row key={r.patient_email} r={r} />)}</div>
           </>
         )}
       </div>
