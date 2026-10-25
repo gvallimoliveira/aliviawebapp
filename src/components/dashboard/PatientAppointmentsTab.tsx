@@ -28,9 +28,20 @@ const PatientAppointmentsTab = () => {
   const [providerKey, setProviderKey] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [period, setPeriod] = useState<RequestPeriod | "">("");
-  const [phone, setPhone] = useState("");
-  const [notes, setNotes] = useState("");
+  const [serviceId, setServiceId] = useState("none");
+  const [services, setServices] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    const [kind, id] = providerKey.split(":");
+    setServiceId("none");
+    if (!kind || !id) { setServices([]); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.rpc("get_provider_services" as any, { _kind: kind, _provider_id: id });
+      if (!cancelled) setServices((data as { id: string; name: string }[]) || []);
+    })();
+    return () => { cancelled = true; };
+  }, [providerKey]);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -64,11 +75,11 @@ const PatientAppointmentsTab = () => {
   const submit = async () => {
     const [kind, id] = providerKey.split(":");
     if (!kind || !id || !date) { toast.error("Escolha o local e a data."); return; }
-    if (!time && !period) { toast.error("Informe um horário ou turno de preferência."); return; }
+    if (!time) { toast.error("Informe o horário desejado."); return; }
     setSaving(true);
-    const { data, error } = await supabase.rpc("create_appointment_request" as any, {
-      _kind: kind, _provider_id: id, _date: date, _time: time || null, _period: period || null,
-      _notes: notes || null, _phone: phone || null,
+    const { data, error } = await supabase.rpc("create_appointment_request_v2" as any, {
+      _kind: kind, _provider_id: id, _date: date, _time: time,
+      _service_id: serviceId === "none" ? null : serviceId,
     });
     setSaving(false);
     if (error) {
@@ -76,8 +87,8 @@ const PatientAppointmentsTab = () => {
       return;
     }
     if (data) void notifyAppointmentRequest(data as string);
-    toast.success("Solicitação enviada! Você será avisado quando for confirmada.");
-    setOpen(false); setDate(""); setTime(""); setPeriod(""); setNotes("");
+    toast.success("Solicitação enviada! Ela será analisada e você será avisado quando for confirmada.");
+    setOpen(false); setDate(""); setTime(""); setServiceId("none");
     void load();
   };
 
@@ -154,34 +165,29 @@ const PatientAppointmentsTab = () => {
                 </Select>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5 min-w-0">
+              <Label>Data</Label>
+              <Input type="date" className="w-full min-w-0" min={today} value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+            <div className="space-y-1.5 min-w-0">
+              <Label>Horário</Label>
+              <Input type="time" className="w-full min-w-0" value={time} onChange={(e) => setTime(e.target.value)} />
+            </div>
+            {services.length > 0 && (
               <div className="space-y-1.5">
-                <Label>Data</Label>
-                <Input type="date" min={today} value={date} onChange={(e) => setDate(e.target.value)} />
+                <Label>Serviço (opcional)</Label>
+                <Select value={serviceId} onValueChange={setServiceId}>
+                  <SelectTrigger><SelectValue placeholder="Escolha" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Não sei / tanto faz</SelectItem>
+                    {services.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>Horário (opcional)</Label>
-                <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Ou turno de preferência</Label>
-              <div className="flex gap-2">
-                {(Object.keys(PERIOD_LABEL) as RequestPeriod[]).map((p) => (
-                  <Button key={p} type="button" size="sm" variant={period === p ? "default" : "outline"} onClick={() => setPeriod(period === p ? "" : p)}>
-                    {PERIOD_LABEL[p]}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>WhatsApp para contato</Label>
-              <Input inputMode="tel" placeholder="(11) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Observações</Label>
-              <Textarea rows={2} maxLength={500} placeholder="Ex.: prefiro depois das 15h" value={notes} onChange={(e) => setNotes(e.target.value)} />
-            </div>
+            )}
+            <p className="rounded-xl bg-muted p-3 text-xs text-muted-foreground">
+              Esta é uma solicitação. O horário ainda será analisado e poderá ser confirmado ou reagendado pelo profissional ou pela clínica.
+            </p>
           </div>
           <DialogFooter>
             <Button onClick={submit} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}Enviar solicitação</Button>

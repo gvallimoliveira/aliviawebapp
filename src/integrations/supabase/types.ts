@@ -5529,6 +5529,16 @@ export type Database = {
         }
         Returns: string
       }
+      create_appointment_request_v2: {
+        Args: {
+          _date: string
+          _kind: string
+          _provider_id: string
+          _service_id: string
+          _time: string
+        }
+        Returns: string
+      }
       create_conversation_for_clinic_patient: {
         Args: {
           _clinic_id: string
@@ -5972,6 +5982,13 @@ export type Database = {
           full_name: string
           id: string
           logo_url: string
+        }[]
+      }
+      get_provider_services: {
+        Args: { _kind: string; _provider_id: string }
+        Returns: {
+          id: string
+          name: string
         }[]
       }
       get_public_clinic_assessment_link: {

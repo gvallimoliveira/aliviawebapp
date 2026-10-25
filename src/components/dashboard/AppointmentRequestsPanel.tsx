@@ -82,7 +82,7 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
     setDate(r.requested_date);
     setTime(suggestedTime(r));
     setDuration("50");
-    setServiceId("none");
+    setServiceId((r as any).service_id || "none");
     setTherapistId(therapists[0]?.id || "");
   };
 
