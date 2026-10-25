@@ -1607,5 +1607,9 @@
   "credits.tier.clinic_medium": "Clínica Média",
   "credits.tier.clinic_large": "Clínica Grande",
   "credits.tier.premium_b2c": "Premium pessoal",
-  "support.clinic.tool.ai_credits_control.desc": "Créditos inclusos renovam mensalmente no calendário de Brasília. PRO: margem de continuidade de 10%; clínica: 20%, em saldo compartilhado (Small: 100 por clínico, 50 por secretária; até 3 clínicos + 1 secretária). Parceiros: 25 créditos gratuitos/mês e compra de pacotes permitida. Apenas admin e VIP têm uso ilimitado. Avisos aos 80% e 100% aparecem durante o uso e em Insights. Pacotes: 15/R$29, 30/R$59, 60/R$89, válidos por 12 meses; consumo após cota e margem, sem cobrança automática. Na clínica, apenas dono/admin compra; toda equipe usa o saldo. Bloqueios permanecem desligados; quando ativados por categoria no Admin, a falta de saldo abre o aviso com renovação e compra, sem impedir acesso aos registros."
+  "support.clinic.tool.ai_credits_control.desc": "Créditos inclusos renovam mensalmente no calendário de Brasília. PRO: margem de continuidade de 10%; clínica: 20%, em saldo compartilhado (Small: 100 por clínico, 50 por secretária; até 3 clínicos + 1 secretária). Parceiros: 25 créditos gratuitos/mês e compra de pacotes permitida. Apenas admin e VIP têm uso ilimitado. Avisos aos 80% e 100% aparecem durante o uso e em Insights. Pacotes: 15/R$29, 30/R$59, 60/R$89, válidos por 12 meses; consumo após cota e margem, sem cobrança automática. Na clínica, apenas dono/admin compra; toda equipe usa o saldo. Bloqueios permanecem desligados; quando ativados por categoria no Admin, a falta de saldo abre o aviso com renovação e compra, sem impedir acesso aos registros.",
+  "credits.statusActive": "Bloqueio ativo",
+  "credits.statusShadow": "Modo observação — ninguém é bloqueado",
+  "credits.rolloutDesc": "Ligue a chave geral e marque as categorias que passam a exigir saldo após cota + margem (PRO 10%, clínica 20%). Admin e VIP seguem ilimitados.",
+  "credits.rolloutDenied": "Sua conta não tem permissão para alterar os limites de IA."
 }
