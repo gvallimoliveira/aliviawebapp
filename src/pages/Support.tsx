@@ -23,6 +23,10 @@ type SupportProfile = "patient" | "professional" | null;
 
 const patientTools = [
   { key: "daily_care", icon: Activity },
+  { key: "checkin", icon: Gauge },
+  { key: "prescribed_exercises", icon: Dumbbell },
+  { key: "appointments", icon: NotebookPen },
+  { key: "notices", icon: Bell },
   { key: "basic_assessment", icon: ClipboardList },
   { key: "premium_assessment", icon: Crown },
   { key: "premium_status", icon: Crown },
@@ -38,6 +42,7 @@ const patientTools = [
 ];
 
 const proTools = [
+  { key: "patient_daily_care", icon: Heart },
   { key: "clinic_overview", icon: BarChart3 },
   { key: "care_services", icon: NotebookPen }, // Catalog: Insights → Operations; request approval: Calendar.
   { key: "custom_link", icon: Link2 },
@@ -94,7 +99,7 @@ const proTools = [
   { key: "studio_cardiorespiratory", icon: Activity },
 ];
 
-const patientFaqKeys = ["pf_signup", "pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11", "pf12", "pf13"];
+const patientFaqKeys = ["daily_care", "missing_care", "pf_signup", "pf1", "pf2", "pf3", "pf4", "pf5", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11", "pf12", "pf13"];
 const proFaqKeys = ["profile_isolation", "rf_signup", "rf_student", "rf1", "rf2", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9", "rf10", "rf11", "rf12", "rf13", "rf14", "rf15", "rf16", "rf17", "rf18", "rf19", "rf20", "rf21", "rf22", "rf23", "rf24", "daily_readiness", "planned_dose_edit", "recurring_appointments", "rf25", "rf26", "rf27", "rf28", "rf29", "rf30"];
 
 const Support = () => {

@@ -1,5 +1,8 @@
 # Roadmap
 
+## Revisão do suporte do paciente
+- [ ] Atualizar orientações de localização e ajuda de check-in, exercícios, agendamentos e avisos em pt/en/es; conferir páginas de paciente, PRO e clínica.
+
 ## Organização do perfil pessoal do paciente
 - [x] Rotina em Hoje, histórico em Minha Evolução, Agenda preservada e Mensagens & Avisos reunidos; vínculo determinado pelas consultas existentes, ofertas fora do topo e indicação recolhida.
 - [x] Ajuda pt/en/es atualizada; 12 testes passaram, build OK. Perfil real autenticado: Hoje → Evolução → Agenda → Avisos → abertura do check-in conferidos no celular/computador sem erros ou sobreposição; links antigos health/notices conferidos. Nenhuma resposta clínica alterada. Conta sem HEP ativo, avisos ou agendamentos: execução/gravação desses recursos não repetida; componentes e permissões existentes preservados.
