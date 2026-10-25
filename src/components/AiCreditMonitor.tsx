@@ -14,6 +14,7 @@ export default function AiCreditMonitor() {
   const location = useLocation();
   const [status, setStatus] = useState<AiCreditStatus | null>(null);
   const [open, setOpen] = useState(false);
+  const [storeOpen, setStoreOpen] = useState(false);
   const seen = useRef(new Set<string>());
   useEffect(() => {
     if (!user?.id) { setStatus(null); setOpen(false); return; }
@@ -41,13 +42,13 @@ export default function AiCreditMonitor() {
     window.addEventListener("focus", load);
     return () => { alive = false; clearInterval(timer); window.removeEventListener(AI_CREDIT_REFRESH, load); window.removeEventListener(AI_CREDIT_BLOCKED, block); window.removeEventListener("focus", load); };
   }, [user?.id, location.pathname, t]);
-  return <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-w-md"><DialogHeader>
+  return <><Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-w-md"><DialogHeader>
     <DialogTitle>{t("credits.notice100")}</DialogTitle>
     <DialogDescription>{t(status?.hard_enabled ? "credits.recovery" : "credits.noticeShadow")}</DialogDescription>
   </DialogHeader>
     {status?.period_end && <p className="text-sm text-muted-foreground">{t("credits.renews")} {new Date(status.period_end).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { timeZone: "America/Sao_Paulo" })}.</p>}
     {status && (status.grace_ratio ?? 1) > 1 && <p className="text-sm text-muted-foreground">{t("credits.margin")} {Math.round(((status.grace_ratio ?? 1) - 1) * 100)}%.</p>}
-    {status?.can_buy ? <AiCreditsStore trigger={<Button className="w-full">{t("credits.buy")}</Button>} /> : <p className="text-sm text-muted-foreground">{t("credits.askManager")}</p>}
+    {status?.can_buy ? <Button className="w-full" onClick={() => { setOpen(false); setStoreOpen(true); }}>{t("credits.buy")}</Button> : <p className="text-sm text-muted-foreground">{t("credits.askManager")}</p>}
     <Button variant="outline" onClick={() => setOpen(false)}>{t("credits.close")}</Button>
-  </DialogContent></Dialog>;
+  </DialogContent></Dialog><AiCreditsStore controlledOpen={storeOpen} onControlledOpenChange={setStoreOpen} /></>;
 }
