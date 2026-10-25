@@ -204,7 +204,7 @@ export function RecordComplianceCard({ d, scopeKey, dismissForTeam, showTeam }: 
     <InsightCardShell id="mgmt-records" icon={<FileCheck2 className="h-4 w-4 text-primary" />} title={tr(l, "Prontuário em dia", "Records up to date", "Historia al día")}
       rightSlot={<PeriodPicker value={days} onChange={setDays} />}
       description={tr(l, "Sessões realizadas com evolução registrada em até 48h", "Completed sessions with a note within 48h", "Sesiones con evolución registrada en 48h")}
-      infoContent={<Info><p>{tr(l, "Conta a evolução ligada ao atendimento ou ao mesmo paciente no mesmo dia. Sessões com menos de 48h ainda não entram.", "Counts the note linked to the appointment or the same patient/day. Sessions under 48h are not yet counted.", "Cuenta la evolución del turno o del mismo paciente/día. Sesiones con menos de 48h aún no cuentan.")}</p><p>{tr(l, "Use o X para tirar da lista o que já foi resolvido fora do sistema.", "Use X to clear items handled outside the system.", "Use X para quitar lo resuelto fuera del sistema.")}</p></Info>}>
+      infoContent={<Info><p>{tr(l, "Conta a evolução ligada ao atendimento ou ao mesmo paciente no mesmo dia. Sessões com menos de 48h ainda não entram.", "Counts the note linked to the appointment or the same patient/day. Sessions under 48h are not yet counted.", "Cuenta la evolución del turno o del mismo paciente/día. Sesiones con menos de 48h aún no cuentan.")}</p><p>{tr(l, "Horários passados sem classificação (realizado/falta/cancelado) e sem evolução entram como pendência — eles nunca contam como 'em dia'.", "Past slots never classified (done/no-show/cancelled) and without a note count as pending — never as 'on time'.", "Turnos pasados sin clasificar y sin evolución cuentan como pendientes, nunca como 'al día'.")}</p><p>{tr(l, "Use o X para tirar da lista o que já foi resolvido fora do sistema.", "Use X to clear items handled outside the system.", "Use X para quitar lo resuelto fuera del sistema.")}</p></Info>}>
       <Wrap d={d}>
         <div className="space-y-3">
           {r.rate === null ? (
@@ -243,12 +243,13 @@ export function RecordComplianceCard({ d, scopeKey, dismissForTeam, showTeam }: 
 export function useSummaryTiles(d: ManagementData, showMoney: boolean) {
   return useMemo(() => {
     if (d.loading) return null;
-    const chair = emptyChairCost(d.appts, d.price, d.today, 30);
-    const cycles = closedCycles(d.appts, d.dischargedKeys, d.today);
+    const priceOf = buildPriceResolver(d.appts, d.services, d.price);
+    const chair = emptyChairCost(d.appts, d.price, d.today, 30, priceOf);
+    const cycles = closedCycles(d.appts, d.dischargedKeys, d.today, priceOf);
     const ltv = clinicalLtv(cycles, d.price);
     const dd = dischargeVsDropout(cycles, d.today, 180);
     const rec = recordCompliance(d.appts, d.notes, new Date(), 30);
     const leak = leakageNoNextAppointment(d.appts, d.dischargedKeys, d.today).length;
-    return { chair, ltv, dd, rec, leak, showMoney: showMoney && d.price > 0 };
+    return { chair, ltv, dd, rec, leak, showMoney: showMoney && (d.price > 0 || d.services.length > 0) };
   }, [d, showMoney]);
 }
