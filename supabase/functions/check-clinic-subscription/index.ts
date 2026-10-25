@@ -19,7 +19,7 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-CLINIC-SUBSCRIPTION] ${step}${d}`);
 };
 
-const TIER_MEMBERS: Record<string, number> = { small: 3, medium: 7, large: 15 };
+const TIER_MEMBERS: Record<string, number> = { small: 3, medium: 8, large: 999 };
 
 // deno-lint-ignore no-explicit-any
 async function selfHealClinic(admin: any, userId: string, email: string): Promise<string | null> {
