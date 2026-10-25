@@ -8,8 +8,10 @@
 - [x] Prontuário em dia não mostra mais 100% falso: horários passados sem classificação viram pendência; sem casos avaliáveis mostra "—".
 - [x] Ajuda atualizada (locales pt/en/es + ClinicSupport inline); testes (18) e build OK.
 
-## Próxima rodada (Guilherme pediu depois)
-- [ ] Revisar cancelamento tardio (<2h) vs antecipado.
-- [ ] Revisar "sem próximo horário" (leakage de saída).
-- [ ] Revisar gargalo de capacidade (macas vs terapeutas).
+## Rodada 2 (concluída)
+- [x] Cancelamento tardio: slot sem hora não finge antecedência; janela segue a data do cancelamento.
+- [x] Sem próximo horário: nome da sessão mais recente; sessões só com evolução resolvem nome pelo cadastro.
+- [x] Gargalo de capacidade: solo não mostra 100% falso; card ganhou "ocupação da agenda" (horários usados ÷ possíveis).
+
+## Próxima rodada
 - [ ] Editor de catálogo de serviços para PRO autônomo (schema/loader já suportam).
