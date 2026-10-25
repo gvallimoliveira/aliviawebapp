@@ -126,15 +126,16 @@ export function EmptyChairCard({ d }: { d: ManagementData }) {
 export function RevenuePerHourCard({ d, showTeam }: { d: ManagementData; showTeam?: boolean }) {
   const l = useL();
   const [days, setDays] = useState(30);
+  const priceOf = usePriceOf(d);
   const r = useMemo(() => {
     const avail = availableHours({ today: d.today, days, start: d.hours.start, end: d.hours.end, workingDays: d.hours.workingDays, therapists: d.therapists });
-    return revenuePerHour(d.appts, d.price, d.today, days, avail);
-  }, [d, days]);
+    return revenuePerHour(d.appts, d.price, d.today, days, avail, priceOf);
+  }, [d, days, priceOf]);
   return (
     <InsightCardShell id="mgmt-rev-hour" icon={<Clock3 className="h-4 w-4 text-primary" />} title={tr(l, "Receita por hora clínica", "Revenue per clinical hour", "Ingreso por hora clínica")}
       rightSlot={<PeriodPicker value={days} onChange={setDays} />}
       description={tr(l, "Quanto cada hora aberta e cada hora atendida rende", "What each open and each worked hour yields", "Cuánto rinde cada hora abierta y atendida")}
-      infoContent={<Info><p>{tr(l, "Hora disponível = horário de funcionamento × dias úteis × terapeutas ativos (padrão 08–18h, seg–sex).", "Available hour = opening hours × workdays × active therapists (default 8–18h Mon–Fri).", "Hora disponible = horario × días hábiles × terapeutas activos.")}</p><p>{tr(l, "Hora atendida = duração das sessões realizadas (50 min se não informada). Ainda não há cadastro de salas, por isso o rendimento é por hora e por terapeuta.", "Worked hour = completed session duration (50 min default). No room registry yet, so yield is per hour and therapist.", "Hora atendida = duración de sesiones realizadas. Sin registro de salas, el rendimiento es por hora y terapeuta.")}</p></Info>}>
+      infoContent={<Info><p>{tr(l, "Hora disponível = horário de funcionamento × dias úteis × terapeutas ativos (padrão 08–18h, seg–sex).", "Available hour = opening hours × workdays × active therapists (default 8–18h Mon–Fri).", "Hora disponible = horario × días hábiles × terapeutas activos.")}</p><p>{tr(l, "Hora atendida = duração das sessões realizadas (50 min se não informada). Receita usa o preço do serviço de cada agendamento; mensalidades são diluídas por sessão feita no mês.", "Worked hour = completed session duration (50 min default). Revenue uses each slot's service price; monthly plans are diluted per session done that month.", "Hora atendida = duración de sesiones. Los ingresos usan el precio del servicio; planes mensuales diluidos por sesión.")}</p></Info>}>
       <Wrap d={d} needsPrice>
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
