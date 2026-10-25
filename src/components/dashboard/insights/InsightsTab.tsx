@@ -16,7 +16,7 @@ import ClinicFunnelCard from "./ClinicFunnelCard";
 import ConcentrationCard from "./ConcentrationCard";
 import { LtvCard, EmptyChairCard, RevenuePerHourCard, DischargeVsDropoutCard, RecordComplianceCard, useSummaryTiles } from "./ManagementCards";
 import { FrequencyGapCard, ReferralRateCard, LeakageCard, LateCancellationCard, OwnerDependenceCard, BottleneckCard } from "./OpsGrowthCards";
-import AppointmentRequestsPanel from "@/components/dashboard/AppointmentRequestsPanel";
+import ClinicServicesCard from "@/components/dashboard/ClinicServicesCard";
 import { useManagementData, type ManagementData } from "./useManagementData";
 import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
 
@@ -58,7 +58,7 @@ const REGISTRY: Entry[] = [
   { id: "owner-dep", cat: "team", manager: true, clinicOnly: true, render: (c) => <OwnerDependenceCard d={c.d} /> },
   { id: "therapists", cat: "team", manager: true, clinicOnly: true, wide: true, render: (c) => <TherapistStatsCard clinicId={c.clinicId!} /> },
   { id: "benchmark", cat: "team", manager: true, clinicOnly: true, wide: true, render: (c) => <BenchmarkCard clinicId={c.clinicId!} /> },
-  { id: "appt-requests", cat: "operations", wide: true, render: (c) => <AppointmentRequestsPanel clinicId={c.clinicId} professionalId={c.professionalId} /> },
+  { id: "care-services", cat: "operations", manager: true, wide: true, render: (c) => <ClinicServicesCard key={`services:${c.scopeKey}`} professionalId={c.isClinic ? undefined : c.professionalId} /> },
   { id: "occupancy", cat: "operations", wide: true, render: (c) => <OccupancyVsNoShowCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
   { id: "records", cat: "operations", render: (c) => <RecordComplianceCard d={c.d} scopeKey={c.scopeKey} dismissForTeam={c.teamDismiss} showTeam={c.isClinic} /> },
   { id: "funnel", cat: "operations", manager: true, wide: true, render: (c) => <ClinicFunnelCard key={c.scopeKey} clinicId={c.clinicId} professionalId={c.professionalId} dismissForTeam={c.teamDismiss} /> },

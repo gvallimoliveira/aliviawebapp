@@ -1,5 +1,10 @@
 # Roadmap
 
+## Correção de localização dos painéis
+- [x] Solicitações devolvidas à Agenda no PRO e na clínica, com permissões e atualização existentes preservadas.
+- [x] Serviços e valores em Insights → Operação, retirados de Pacientes/Equipe; ajuda pt/en/es atualizada.
+- [x] Navegação autenticada da clínica conferida, 9 testes aprovados e build OK; sem alterações nos dados. Conta disponível sem PRO real ou solicitações pendentes: aprovação e navegação PRO não reexecutadas nesta correção de localização.
+
 ## Concluído (esta rodada)
 - [x] Insights deixam de usar diário de dor e mensagens; sinais agora: check-in de prontidão (dor por região/nota), HEP e comparecimento na agenda (migrações 0032–0034, RPCs validadas).
 - [x] Verificada a aba Pacientes vazia na clínica de teste: integração OK, ausência real de dados no escopo; escopo rico produz sinais (~20 silêncios, dor estagnada).
@@ -14,11 +19,11 @@
 - [x] Gargalo de capacidade: solo não mostra 100% falso; card ganhou "ocupação da agenda" (horários usados ÷ possíveis).
 
 ## Catálogo PRO
-- [x] Editor disponível em Pacientes → Serviços e valores; gravação/leitura/remoção verificadas na conta profissional.
+- [x] Editor agora em Insights → Operação → Serviços e valores; mecanismo de gravação/leitura/remoção preservado.
 
 ## Ajustes solicitados agora
 - [x] Agenda corrigida: respostas antigas não substituem o período atual; horários 26/10 12:15 e 13:00 verificados com atraso artificial no celular, sem alterar registros.
-- [x] Serviços PRO em Pacientes → Serviços e valores; clínica em Clínica → Equipe → Serviços e valores, dono/admin; ajuda pt/en/es e 9 testes aprovados.
+- [x] Serviços PRO/clínica agora em Insights → Operação → Serviços e valores (clínica: dono/admin); ajuda pt/en/es e 9 testes aprovados.
 - [x] Abandono silencioso: rolagem e descarte persistente pelo mecanismo existente.
 - [x] Adesão: causa confirmada (ambos sem e-mail); RPC usa ID do paciente, canais ausentes não diluem e lista completa pesquisável.
 - [x] Frequência: comparar somente oportunidades decorridas no mês, considerando início do acompanhamento.
