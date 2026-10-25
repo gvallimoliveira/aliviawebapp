@@ -1,5 +1,8 @@
 # Roadmap
 
+## Serviço na solicitação
+- [ ] Mostrar o serviço escolhido no pedido e na confirmação, preservando o vínculo salvo e conferindo a tela autenticada.
+
 ## Correção de localização dos painéis
 - [x] Solicitações devolvidas à Agenda no PRO e na clínica, com permissões e atualização existentes preservadas.
 - [x] Serviços e valores em Insights → Operação, retirados de Pacientes/Equipe; ajuda pt/en/es atualizada.
