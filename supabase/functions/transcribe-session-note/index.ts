@@ -1,7 +1,7 @@
 // Ditado da evolução do paciente: transcreve um trecho curto de áudio (WAV)
 // e devolve APENAS o texto literal. Nada é salvo em banco, o áudio é descartado.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,6 +58,9 @@ Deno.serve(async (req) => {
     // `language` só quando for um código simples (pt, en, es); vazio = detecção automática.
     if (language && /^[a-z]{2}$/.test(language)) form.append("language", language);
 
+    const creditDecision = await canaryCredits(req, "transcribe-session-note", { credits: 0.01, metadata: { bytes: bytes.byteLength } });
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}` },
@@ -75,15 +78,6 @@ Deno.serve(async (req) => {
     const data = await resp.json().catch(() => ({}));
     const text: string = (data?.text || "").trim();
 
-    try {
-      const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-      shadowLogAiUsage(req, {
-        function_name: "transcribe-session-note",
-        credits: 0.01, // trecho curto de ditado
-        transcriptions: 1,
-        metadata: { bytes: bytes.byteLength },
-      }, admin);
-    } catch (_e) { /* logging nunca bloqueia o ditado */ }
 
     return json({ text });
   } catch (err: any) {
