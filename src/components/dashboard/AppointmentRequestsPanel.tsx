@@ -38,8 +38,19 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
     if (!scopeReady) return;
     let q = (supabase.from("appointment_requests" as any) as any).select("*").eq("status", "pending");
     q = clinicId ? q.eq("clinic_id", clinicId) : q.eq("professional_id", professionalId).is("clinic_id", null);
-    const { data } = await q.order("requested_date", { ascending: true });
-    setItems((data as AppointmentRequest[]) || []);
+    let serviceQuery = supabase.from("care_services").select("id, name");
+    serviceQuery = clinicId ? serviceQuery.eq("clinic_id", clinicId) : serviceQuery.eq("professional_id", professionalId ?? "").is("clinic_id", null);
+    const [{ data, error }, { data: catalog, error: serviceError }] = await Promise.all([
+      q.order("requested_date", { ascending: true }), serviceQuery,
+    ]);
+    if (error || serviceError) {
+      toast.error("Não foi possível carregar as solicitações e seus serviços.");
+      return;
+    }
+    const names = new Map((catalog || []).map((service) => [service.id, service.name]));
+    setItems(((data as AppointmentRequest[]) || []).map((request) => ({
+      ...request, service_name: request.service_id ? names.get(request.service_id) ?? null : null,
+    })));
   }, [clinicId, professionalId, scopeReady]);
 
   useEffect(() => { void load(); }, [load]);
@@ -82,7 +93,7 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
     setDate(r.requested_date);
     setTime(suggestedTime(r));
     setDuration("50");
-    setServiceId((r as any).service_id || "none");
+    setServiceId(r.service_id || "none");
     setTherapistId(therapists[0]?.id || "");
   };
 
@@ -141,6 +152,10 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
                         {formatBrDate(r.requested_date)} · {r.requested_time || (r.requested_period ? PERIOD_LABEL[r.requested_period] : "")}
                       </span>
                     </div>
+                    <p className="text-sm min-w-0 break-words">
+                      <span className="text-muted-foreground">Serviço solicitado: </span>
+                      <span className="font-medium">{r.service_name || (r.service_id ? "Serviço indisponível no catálogo" : "Não informado")}</span>
+                    </p>
                     {r.notes && <p className="text-xs text-muted-foreground">“{r.notes}”</p>}
                     <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" className="gap-1" onClick={() => openApprove(r)}><Check className="h-4 w-4" />Aprovar</Button>
@@ -166,6 +181,10 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
             <DialogDescription>{target?.patient_name} — ajuste se necessário antes de confirmar.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <p className="text-sm min-w-0 break-words">
+              <span className="text-muted-foreground">Serviço solicitado pelo paciente: </span>
+              <span className="font-medium">{target?.service_name || (target?.service_id ? "Serviço indisponível no catálogo" : "Não informado")}</span>
+            </p>
             <div className="space-y-1.5 min-w-0"><Label>Data</Label><Input type="date" className="w-full min-w-0" value={date} onChange={(e) => setDate(e.target.value)} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5 min-w-0"><Label>Horário</Label><Input type="time" className="w-full min-w-0" value={time} onChange={(e) => setTime(e.target.value)} /></div>
@@ -180,13 +199,16 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
                 </Select>
               </div>
             )}
-            {services.length > 0 && (
+            {(services.length > 0 || target?.service_id) && (
               <div className="space-y-1.5">
                 <Label>Serviço</Label>
                 <Select value={serviceId} onValueChange={setServiceId}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sem serviço (preço padrão)</SelectItem>
+                    {target?.service_id && !services.some((service) => service.id === target.service_id) && (
+                      <SelectItem value={target.service_id} disabled>{target.service_name || "Serviço indisponível"} (inativo)</SelectItem>
+                    )}
                     {services.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
