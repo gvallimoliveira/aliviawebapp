@@ -73,13 +73,13 @@ const proTools = [
   { key: "academic_mode", icon: GraduationCap },
   { key: "data_export", icon: Archive },
   { key: "data_import", icon: Archive }, // Combined-category review, batching and honest linkage limits are localized together.
-  { key: "insights_churn", icon: TrendingUp },
+  { key: "insights_churn", icon: TrendingUp }, // Localized help covers scrolling, dismissals and restoration.
   { key: "insights_flareup", icon: Activity },
   { key: "insights_reassessment", icon: ClipboardList },
   { key: "insights_steps", icon: Layers }, // Localized help includes discharge reflected in the record summary.
   { key: "insights_reactivation", icon: RefreshCw },
   { key: "insights_funnel", icon: BarChart3 },
-  { key: "insights_management", icon: BarChart3 },
+  { key: "insights_management", icon: BarChart3 }, // Month-to-date frequency and traceable financial details.
   { key: "insights_discharge", icon: TrendingUp },
   { key: "insights_adherence", icon: Activity },
   { key: "insights_benchmark", icon: Gauge },

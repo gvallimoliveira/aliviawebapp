@@ -276,7 +276,7 @@ const categories: ToolCategory[] = [
         key: "insights_churn",
         icon: AlertTriangle,
         title: "Abandono silencioso (risco de evasão)",
-        desc: "Cruza faltas recentes, ausência de próximo agendamento, dor estagnada nos check-ins de prontidão e inatividade — dias sem sessão registrada (agenda concluída ou evolução no prontuário) e sem check-in. A inatividade total pesa mais no score porque costuma preceder o abandono. Diário de dor e mensagens internas não entram: poucos pacientes usam esses canais. Cada paciente mostra os motivos e os dias sem atividade.",
+        desc: "Cruza faltas recentes, ausência de próximo agendamento, dor estagnada nos check-ins de prontidão e inatividade — dias sem sessão registrada (agenda concluída ou evolução no prontuário) e sem check-in. A inatividade total pesa mais no score porque costuma preceder o abandono. Diário de dor e mensagens internas não entram: poucos pacientes usam esses canais. Cada paciente mostra os motivos e os dias sem atividade. Lista com rolagem interna, descarte por paciente e restauração; dono/admin pode descartar para a equipe.",
       },
       {
         key: "insights_flareup",
@@ -336,7 +336,7 @@ const categories: ToolCategory[] = [
         key: "insights_adherence",
         icon: Heart,
         title: "Score de adesão (0-100) por paciente",
-        desc: "Combina exercícios concluídos, consistência dos check-ins de prontidão e comparecimento em um único score. Diário de dor e mensagens não entram — poucos pacientes usam esses canais. A equipe identifica em segundos quem precisa de reforço.",
+        desc: "Combina exercícios concluídos, consistência dos check-ins de prontidão e comparecimento em um único score. Diário de dor e mensagens não entram — poucos pacientes usam esses canais. Inclui pacientes sem e-mail pelos check-ins ligados ao ID, com busca de todos os pacientes. Check-ins dos últimos 60 dias mantêm o paciente na lista e o score usa os últimos 14 dias; canais sem dados não reduzem o score.",
       },
       {
         key: "insights_benchmark",

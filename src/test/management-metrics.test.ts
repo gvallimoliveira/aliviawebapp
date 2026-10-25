@@ -87,11 +87,11 @@ describe("frequência real vs prescrita", () => {
     ap({ patient_email: "d@x.com", appointment_date: "2026-10-20" }), // alta → fora
   ];
   const r = frequencyAdherenceGap(appts, patients as any, new Set(["d@x.com"]), today);
-  it("só mede ativos com frequência preenchida e sem alta; real = sessões/4 semanas", () => {
+  it("só mede ativos com frequência preenchida e sem alta; real usa somente o mês decorrido", () => {
     expect(r.measured).toBe(1);
-    expect(r.rows[0].actual).toBe(1);
-    expect(r.rows[0].gap).toBe(-1);
-    expect(r.adherence).toBe(50);
+    expect(r.rows[0].actual).toBe(1.2);
+    expect(r.rows[0].gap).toBe(-0.8);
+    expect(r.adherence).toBe(58);
   });
 });
 
@@ -260,5 +260,33 @@ describe("gargalo de capacidade (rodada 2)", () => {
     expect(r.capacity).toBe(1);
     expect(r.saturated).toBe(1);
     expect(r.index).toBe(100);
+  });
+});
+
+
+describe("frequência proporcional ao tempo", () => {
+  it("4 sessões em 14 dias com prescrição de 2/semana são 100%, não 50%", () => {
+    const r = frequencyAdherenceGap([1, 5, 9, 13].map((d) => ap({ appointment_date: `2026-10-${String(d).padStart(2, "0")}` })), [{ id: "1", email: "a@x.com", created_at: "2026-01-01", prescribed_weekly_frequency: 2 }], new Set(), "2026-10-14");
+    expect(r.rows[0].expected).toBe(4);
+    expect(r.rows[0].completed).toBe(4);
+    expect(r.adherence).toBe(100);
+  });
+  it("não cobra dias anteriores ao início nem conta sessões futuras", () => {
+    const r = frequencyAdherenceGap([ap({ appointment_date: "2026-10-08" }), ap({ appointment_date: "2026-10-12" }), ap({ appointment_date: "2026-10-21" })], [{ id: "1", email: "a@x.com", created_at: "2026-10-08", prescribed_weekly_frequency: 2 }], new Set(), "2026-10-14");
+    expect(r.rows[0].elapsedDays).toBe(7);
+    expect(r.rows[0].expected).toBe(2);
+    expect(r.rows[0].completed).toBe(2);
+    expect(r.adherence).toBe(100);
+  });
+});
+describe("rastreabilidade financeira", () => {
+  it("perdas detalhadas reconciliam com o total e excluem atendimentos realizados", () => {
+    const r = emptyChairCost([ap({ id: "lost", status: "no_show", appointment_time: "14:00" }), ap({ id: "done" })], 150, today, 30);
+    expect(r.details.map((a) => [a.id, a.appointment_date, a.appointment_time, a.value])).toEqual([["lost", "2026-10-20", "14:00", 150]]);
+    expect(r.details.reduce((s, a) => s + a.value, 0)).toBe(r.lostValue);
+  });
+  it("detalhes do ciclo contêm apenas sessões realizadas até hoje", () => {
+    const r = closedCycles([ap({ id: "done", appointment_date: "2026-08-01" }), ap({ id: "lost", status: "no_show" })], new Set(), today);
+    expect(r[0].appointments?.map((a) => a.id)).toEqual(["done"]);
   });
 });
