@@ -430,6 +430,7 @@ const AppointmentEditorDialog = ({
       duration_minutes: parseInt(formDuration) || 50,
       type: formType,
       service_type: formServiceType,
+      service_id: formServiceId !== "__none__" ? formServiceId : null,
       notes: formNotes || null,
     };
     if (clinicId) payload.clinic_id = clinicId;
@@ -795,6 +796,22 @@ const AppointmentEditorDialog = ({
                       </SelectContent>
                     </Select>
                   </div>
+                  {careServices.length > 0 && !isCommitment && (
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{isPt ? "Serviço (valor)" : language === "es" ? "Servicio (valor)" : "Service (price)"}</label>
+                      <Select value={formServiceId} onValueChange={setFormServiceId}>
+                        <SelectTrigger className="mt-1 text-xs h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">{isPt ? "Sem serviço do catálogo" : "No catalog service"}</SelectItem>
+                          {careServices.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.name} · {(s.price || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}{s.billing_type === "monthly" ? (isPt ? "/mês" : "/mo") : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{t("schedule.duration")}</label>
                     <p className={cn("mt-1 text-xs h-9 flex items-center", (parseInt(formDuration) || 0) <= 0 && "text-destructive")}>
