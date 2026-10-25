@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Revisão do suporte do paciente
-- [ ] Atualizar orientações de localização e ajuda de check-in, exercícios, agendamentos e avisos em pt/en/es; conferir páginas de paciente, PRO e clínica.
+- [x] Ajuda específica para check-in, HEP, solicitações e avisos; localização de histórico, diário, comparação, indicação e plano pessoal corrigida em pt/en/es. Guia para PRO e clínica e dúvidas sobre vínculo acrescentados. Tópicos do paciente e da clínica abertos no navegador, sem erros; traduções presentes e build OK. Somente orientações alteradas, sem mudanças de acesso ou dados.
 
 ## Organização do perfil pessoal do paciente
 - [x] Rotina em Hoje, histórico em Minha Evolução, Agenda preservada e Mensagens & Avisos reunidos; vínculo determinado pelas consultas existentes, ofertas fora do topo e indicação recolhida.
