@@ -96,6 +96,35 @@ Deno.serve(async (req) => {
     // Appointment requests: recipients and copy are resolved here from the
     // request row; the caller is validated (patient on create, staff on approve).
     let preAuthorizedTargets: string[] | null = null;
+    const announcementId = reqBody.announcement_id ? String(reqBody.announcement_id) : null;
+    if (announcementId) {
+      if (!callerUserId) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: an } = await supabase.from("patient_announcements").select("*").eq("id", announcementId).maybeSingle();
+      if (!an) {
+        return new Response(JSON.stringify({ error: "Not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: allowed } = await supabase.rpc("can_handle_appointment_request", {
+        _user_id: callerUserId, _clinic_id: an.clinic_id, _professional_id: an.professional_id,
+      });
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "Forbidden" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: ids } = await supabase.rpc("announcement_recipient_ids", { _announcement_id: an.id });
+      preAuthorizedTargets = [...new Set(((ids as any[]) || []).map((r) => r.user_id).filter(Boolean))];
+      title = `📢 ${an.title}`;
+      body = String(an.body).slice(0, 140);
+      url = "/dashboard?tab=notices";
+      tag = `notice-${an.id}`;
+      user_id = undefined; clinic_id = undefined; conversation_id = undefined; email = undefined; category = undefined;
+      if (preAuthorizedTargets.length === 0) {
+        return new Response(JSON.stringify({ sent: 0 }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
     if (appointmentRequestId) {
       if (!callerUserId) {
         return new Response(JSON.stringify({ error: "Unauthorized" }),
