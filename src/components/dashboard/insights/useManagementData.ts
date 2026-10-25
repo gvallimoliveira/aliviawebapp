@@ -64,7 +64,11 @@ export function useManagementData(clinicId?: string, professionalId?: string): M
         fetchAll((a, b) => scope(sb.from("patients")
           .select("id, full_name, email, created_at, prescribed_weekly_frequency, referral_source")
           .eq("is_study_case", false)).order("created_at").range(a, b)),
+        fetchAll((a, b) => scope(sb.from("care_services")
+          .select("id, name, price, billing_type").eq("active", true)).range(a, b)),
       ]);
+      // Evolution notes count as realized sessions when the agenda slot was never classified.
+      const appts = synthesizeNoteSessions(rawAppts, notes);
       const patientIds = [...new Set(plans.map((p: any) => p.patient_id).filter(Boolean))];
       const discharged = new Set<string>();
       if (patientIds.length) {
