@@ -472,6 +472,14 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     return () => { supabase.removeChannel(channel); };
   }, [clinicId, professionalId, isSimulated, fetchAppointments]);
 
+  // Instant refresh when a request is approved (realtime may not reach every mount)
+  useEffect(() => {
+    if (isSimulated) return;
+    const handler = () => { void fetchAppointments(); };
+    window.addEventListener("alivia:appointments-changed", handler);
+    return () => window.removeEventListener("alivia:appointments-changed", handler);
+  }, [isSimulated, fetchAppointments]);
+
   useEffect(() => {
     if (isSimulated) return;
     const fetchPatients = async () => {
