@@ -351,6 +351,13 @@
       "when": 1792958674981,
       "tag": "0049_ai_credit_rollout_preparation",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1792959085358,
+      "tag": "0050_secure_ai_credit_rollout_roles",
+      "breakpoints": true
     }
   ]
 }

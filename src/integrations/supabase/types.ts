@@ -430,6 +430,21 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_credit_admin_roles: {
+        Row: {
+          role: string
+          user_id: string
+        }
+        Insert: {
+          role?: string
+          user_id: string
+        }
+        Update: {
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_credit_decisions: {
         Row: {
           blocked: boolean
@@ -5507,6 +5522,7 @@ export type Database = {
         Returns: boolean
       }
       can_access_studio_brand: { Args: { _brand_id: string }; Returns: boolean }
+      can_admin_ai_credits: { Args: { _user_id: string }; Returns: boolean }
       can_handle_appointment_request: {
         Args: { _clinic_id: string; _professional_id: string; _user_id: string }
         Returns: boolean
