@@ -815,6 +815,8 @@ export type Database = {
         Row: {
           appointment_id: string | null
           clinic_id: string | null
+          confirmed_date: string | null
+          confirmed_time: string | null
           created_at: string
           decided_at: string | null
           decided_by: string | null
@@ -834,6 +836,8 @@ export type Database = {
         Insert: {
           appointment_id?: string | null
           clinic_id?: string | null
+          confirmed_date?: string | null
+          confirmed_time?: string | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null
@@ -853,6 +857,8 @@ export type Database = {
         Update: {
           appointment_id?: string | null
           clinic_id?: string | null
+          confirmed_date?: string | null
+          confirmed_time?: string | null
           created_at?: string
           decided_at?: string | null
           decided_by?: string | null

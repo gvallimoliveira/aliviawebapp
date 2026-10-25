@@ -260,6 +260,13 @@
       "when": 1792903611555,
       "tag": "0036_appointment_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1792903669448,
+      "tag": "0037_appointment_requests_confirmed_slot",
+      "breakpoints": true
     }
   ]
 }
