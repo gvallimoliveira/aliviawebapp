@@ -276,13 +276,13 @@ const categories: ToolCategory[] = [
         key: "insights_churn",
         icon: AlertTriangle,
         title: "Abandono silencioso (risco de evasão)",
-        desc: "Cruza faltas recentes, ausência de próximo agendamento, dor estagnada e silêncio digital — dias sem diário de dor, sem check-in de prontidão e sem mensagem escrita pelo paciente. O silêncio total pesa mais no score porque costuma preceder o abandono. Cada paciente mostra os motivos e há quantos dias deu o último sinal de atividade.",
+        desc: "Cruza faltas recentes, ausência de próximo agendamento, dor estagnada nos check-ins de prontidão e inatividade — dias sem sessão registrada (agenda concluída ou evolução no prontuário) e sem check-in. A inatividade total pesa mais no score porque costuma preceder o abandono. Diário de dor e mensagens internas não entram: poucos pacientes usam esses canais. Cada paciente mostra os motivos e os dias sem atividade.",
       },
       {
         key: "insights_flareup",
         icon: Activity,
         title: "Flare-up e sobrecarga",
-        desc: "Cruza o diário de dor com a carga de treino: flare-up é o último registro de dor (em até 3 dias) pelo menos 2 pontos acima da média de 30 dias. O card também mostra ACWR (ideal 0,8–1,3) e quedas de prontidão; pico de dor com ACWR acima de 1,3 eleva o caso a risco alto.",
+        desc: "Cruza a dor dos check-ins de prontidão com a carga de treino: flare-up é a dor do último check-in (em até 3 dias) pelo menos 2 pontos acima da média de 30 dias, com 3+ check-ins. O card também mostra ACWR (ideal 0,8–1,3) e quedas de prontidão; pico de dor com ACWR acima de 1,3 eleva o caso a risco alto.",
       },
       {
         key: "insights_reassessment",
@@ -300,7 +300,7 @@ const categories: ToolCategory[] = [
         key: "insights_reactivation",
         icon: Heart,
         title: "Reativação de inativos",
-        desc: "Ex-pacientes com 2+ atendimentos, último entre 30 e 180 dias atrás e sem retorno agendado — contatos já inativos que valem uma abordagem de reconquista, com atalhos para agendar ou mandar mensagem.",
+        desc: "Ex-pacientes com 2+ atendimentos registrados (agenda concluída ou evolução no prontuário), último entre 30 e 180 dias atrás e sem retorno agendado — contatos já inativos que valem uma abordagem de reconquista, com atalhos para agendar ou mandar mensagem.",
       },
       {
         key: "insights_team",
@@ -330,13 +330,13 @@ const categories: ToolCategory[] = [
         key: "insights_discharge",
         icon: FileCheck,
         title: "Predição de alta",
-        desc: "Estimativa do número de sessões restantes até a alta, baseada na curva de evolução da dor e na adesão. Ajuda a planejar pacotes, organizar agenda e antecipar conversas com o paciente.",
+        desc: "Estimativa de sessões restantes até a alta combinando dor nos check-ins (peso 40), fase do plano STEPS (30), progresso de carga (15) e prontidão atual (15), com os fatores visíveis por paciente. Ajuda a planejar pacotes, organizar agenda e antecipar conversas com o paciente.",
       },
       {
         key: "insights_adherence",
         icon: Heart,
         title: "Score de adesão (0-100) por paciente",
-        desc: "Combina exercícios concluídos, diário de dor, comparecimento e leitura de mensagens em um único score. A equipe identifica em segundos quem precisa de reforço.",
+        desc: "Combina exercícios concluídos, consistência dos check-ins de prontidão e comparecimento em um único score. Diário de dor e mensagens não entram — poucos pacientes usam esses canais. A equipe identifica em segundos quem precisa de reforço.",
       },
       {
         key: "insights_benchmark",
