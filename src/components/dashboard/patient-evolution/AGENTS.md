@@ -1,0 +1,2 @@
+- Inset record content by `PatientSectionRail` width to uncover titles.
+- Cardiovascular views refresh via `usePatientBirthDate` on edits/refocus, preserving unsaved inputs.
