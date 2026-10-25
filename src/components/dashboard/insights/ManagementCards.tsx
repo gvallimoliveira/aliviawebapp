@@ -53,11 +53,12 @@ export const Info = ({ children }: { children: React.ReactNode }) => <div classN
 /* ---------- LTV ---------- */
 export function LtvCard({ d }: { d: ManagementData }) {
   const l = useL();
-  const r = useMemo(() => clinicalLtv(closedCycles(d.appts, d.dischargedKeys, d.today), d.price), [d]);
+  const priceOf = usePriceOf(d);
+  const r = useMemo(() => clinicalLtv(closedCycles(d.appts, d.dischargedKeys, d.today, priceOf), d.price), [d, priceOf]);
   return (
     <InsightCardShell id="mgmt-ltv" icon={<Gem className="h-4 w-4 text-primary" />} title={tr(l, "LTV clínico", "Clinical LTV", "LTV clínico")}
       description={tr(l, "Valor médio gerado por paciente em ciclos encerrados (12 meses)", "Average value per patient in closed cycles (12 months)", "Valor medio por paciente en ciclos cerrados (12 meses)")}
-      infoContent={<Info><p>{tr(l, "Ciclo encerrado = alta registrada ou 30 dias sem atendimento e sem agendamento futuro.", "Closed cycle = recorded discharge or 30 days with no session and nothing scheduled.", "Ciclo cerrado = alta registrada o 30 días sin atención ni agenda futura.")}</p><p>{tr(l, "Valor = sessões realizadas × preço padrão da sessão.", "Value = completed sessions × default session price.", "Valor = sesiones realizadas × precio estándar.")}</p></Info>}>
+      infoContent={<Info><p>{tr(l, "Ciclo encerrado = alta registrada ou 30 dias sem atendimento e sem agendamento futuro.", "Closed cycle = recorded discharge or 30 days with no session and nothing scheduled.", "Ciclo cerrado = alta registrada o 30 días sin atención ni agenda futura.")}</p><p>{tr(l, "Sessão realizada conta pela agenda concluída ou pela evolução registrada no dia. Valor = preço do serviço do agendamento (mensalidades diluídas por sessão feita) ou o preço padrão.", "A realized session counts from a completed slot or a same-day note. Value = the slot's service price (monthly plans diluted per session) or the default price.", "Sesión realizada = turno concluido o evolución del día. Valor = precio del servicio (planes mensuales diluidos) o precio estándar.")}</p></Info>}>
       <Wrap d={d} needsPrice>
         {r.patients === 0 ? <p className="text-sm text-muted-foreground">{tr(l, "Ainda não há ciclos encerrados.", "No closed cycles yet.", "Aún no hay ciclos cerrados.")}</p> : (
           <div className="space-y-3">
@@ -82,7 +83,8 @@ const WD = { pt: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"], en: ["Sun",
 export function EmptyChairCard({ d }: { d: ManagementData }) {
   const l = useL();
   const [days, setDays] = useState(90);
-  const r = useMemo(() => emptyChairCost(d.appts, d.price, d.today, days), [d, days]);
+  const priceOf = usePriceOf(d);
+  const r = useMemo(() => emptyChairCost(d.appts, d.price, d.today, days, priceOf), [d, days, priceOf]);
   const maxM = Math.max(1, ...r.byMonth.map((m) => m.value));
   const worstDay = r.byWeekday.indexOf(Math.max(...r.byWeekday));
   return (
