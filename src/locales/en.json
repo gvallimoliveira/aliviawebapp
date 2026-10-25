@@ -1607,5 +1607,9 @@
   "credits.tier.clinic_medium": "Medium clinic",
   "credits.tier.clinic_large": "Large clinic",
   "credits.tier.premium_b2c": "Personal Premium",
-  "support.clinic.tool.ai_credits_control.desc": "Included credits renew monthly on the Brasília calendar. PRO: 10% continuity buffer; clinic: 20%, shared balance (Small: 100 per clinician, 50 per secretary; up to 3 clinicians plus 1 secretary). Partners: 25 free credits/month and paid packs available. Only admin and VIP have unlimited use. Warnings at 80% and 100% appear during use and in Insights. Packs: 15/R$29, 30/R$59, 60/R$89, valid 12 months; used after allowance and buffer, never automatically charging a card. Only clinic owner/admin buys; the team shares the balance. Blocking remains disabled; when activated by category in Admin, insufficient balance opens renewal/purchase options without locking records."
+  "support.clinic.tool.ai_credits_control.desc": "Included credits renew monthly on the Brasília calendar. PRO: 10% continuity buffer; clinic: 20%, shared balance (Small: 100 per clinician, 50 per secretary; up to 3 clinicians plus 1 secretary). Partners: 25 free credits/month and paid packs available. Only admin and VIP have unlimited use. Warnings at 80% and 100% appear during use and in Insights. Packs: 15/R$29, 30/R$59, 60/R$89, valid 12 months; used after allowance and buffer, never automatically charging a card. Only clinic owner/admin buys; the team shares the balance. Blocking remains disabled; when activated by category in Admin, insufficient balance opens renewal/purchase options without locking records.",
+  "credits.statusActive": "Blocking active",
+  "credits.statusShadow": "Observation mode — nobody is blocked",
+  "credits.rolloutDesc": "Turn on the master switch and select the categories that require balance after quota + grace (PRO 10%, clinic 20%). Admin and VIP stay unlimited.",
+  "credits.rolloutDenied": "Your account cannot change AI limits."
 }

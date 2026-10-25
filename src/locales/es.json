@@ -1607,5 +1607,9 @@
   "credits.tier.clinic_medium": "Clínica Mediana",
   "credits.tier.clinic_large": "Clínica Grande",
   "credits.tier.premium_b2c": "Premium personal",
-  "support.clinic.tool.ai_credits_control.desc": "Los créditos incluidos se renuevan mensualmente según el calendario de Brasilia. PRO: margen del 10%; clínica: 20%, saldo compartido (Small: 100 por clínico, 50 por secretaria; hasta 3 clínicos más 1 secretaria). Socios: 25 créditos gratuitos/mes y compra de paquetes. Solo admin y VIP tienen uso ilimitado. Avisos al 80% y 100% durante el uso y en Insights. Paquetes: 15/R$29, 30/R$59, 60/R$89, válidos 12 meses; se usan tras la cuota y el margen, sin cobro automático. Solo dueño/admin compra para la clínica; todo el equipo comparte saldo. Bloqueos desactivados; al activarlos por categoría en Admin, la falta de saldo muestra renovación/compra sin bloquear registros."
+  "support.clinic.tool.ai_credits_control.desc": "Los créditos incluidos se renuevan mensualmente según el calendario de Brasilia. PRO: margen del 10%; clínica: 20%, saldo compartido (Small: 100 por clínico, 50 por secretaria; hasta 3 clínicos más 1 secretaria). Socios: 25 créditos gratuitos/mes y compra de paquetes. Solo admin y VIP tienen uso ilimitado. Avisos al 80% y 100% durante el uso y en Insights. Paquetes: 15/R$29, 30/R$59, 60/R$89, válidos 12 meses; se usan tras la cuota y el margen, sin cobro automático. Solo dueño/admin compra para la clínica; todo el equipo comparte saldo. Bloqueos desactivados; al activarlos por categoría en Admin, la falta de saldo muestra renovación/compra sin bloquear registros.",
+  "credits.statusActive": "Bloqueo activo",
+  "credits.statusShadow": "Modo observación — nadie es bloqueado",
+  "credits.rolloutDesc": "Activa el interruptor general y marca las categorías que exigirán saldo tras cuota + margen (PRO 10%, clínica 20%). Admin y VIP siguen ilimitados.",
+  "credits.rolloutDenied": "Tu cuenta no puede cambiar los límites de IA."
 }

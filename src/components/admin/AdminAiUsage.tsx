@@ -30,7 +30,84 @@ interface Stats {
   functions: { name: string; credits: number; calls: number; avg: number }[];
   daily: { day: string; credits: number }[];
   top_users: { user_id: string; label: string; credits: number; calls: number }[];
+  quota_bands?: { under50: number; b50_80: number; b80_100: number; grace: number; over: number; unlimited: number };
+  by_tier?: { tier: string; users: number; credits: number; avg: number; at_risk: number; over: number }[];
+  at_risk?: { label: string; tier: string; pct: number; used: number; included: number }[];
 }
+
+const DecisionCard = ({ stats, t }: { stats: Stats; t: (pt: string, en: string) => string }) => {
+  const b = stats.quota_bands!;
+  const items = [
+    { label: t("Abaixo de 50%", "Under 50%"), v: b.under50, cls: "text-primary" },
+    { label: "50–80%", v: b.b50_80, cls: "text-foreground" },
+    { label: t("80–100% (aviso)", "80–100% (warning)"), v: b.b80_100, cls: "text-accent-foreground" },
+    { label: t("Na margem", "In grace"), v: b.grace, cls: "text-accent-foreground" },
+    { label: t("Seria bloqueado", "Would be blocked"), v: b.over, cls: "text-destructive" },
+    { label: t("Ilimitados (admin/VIP)", "Unlimited"), v: b.unlimited, cls: "text-muted-foreground" },
+  ];
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">{t("Simulador: se eu ligar o bloqueio hoje", "Simulator: if blocking were on today")}</CardTitle>
+        <CardDescription>{t("Situação do ciclo atual de cada conta que usou IA no período (cota + margem + pacotes).", "Current-cycle status of each account that used AI (quota + grace + packs).")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          {items.map((i) => (
+            <div key={i.label} className="rounded-lg border border-border p-3">
+              <p className="text-xs text-muted-foreground">{i.label}</p>
+              <p className={`text-2xl font-bold ${i.cls}`}>{i.v}</p>
+            </div>
+          ))}
+        </div>
+        {!!stats.by_tier?.length && (
+          <div className="overflow-x-auto">
+            <p className="text-sm font-medium mb-2">{t("Consumo por categoria", "Usage by category")}</p>
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>{t("Categoria", "Category")}</TableHead>
+                <TableHead className="text-right">{t("Contas", "Accounts")}</TableHead>
+                <TableHead className="text-right">{t("Créditos", "Credits")}</TableHead>
+                <TableHead className="text-right">{t("Média/conta", "Avg/account")}</TableHead>
+                <TableHead className="text-right">{t("≥80%", "≥80%")}</TableHead>
+                <TableHead className="text-right">{t("Bloqueáveis", "Blockable")}</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {stats.by_tier.map((r) => (
+                  <TableRow key={r.tier}>
+                    <TableCell className="font-mono text-xs">{r.tier}</TableCell>
+                    <TableCell className="text-right">{r.users}</TableCell>
+                    <TableCell className="text-right font-semibold">{r.credits.toFixed(2)}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{r.avg.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{r.at_risk}</TableCell>
+                    <TableCell className="text-right text-destructive">{r.over}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        {!!stats.at_risk?.length && (
+          <div className="overflow-x-auto">
+            <p className="text-sm font-medium mb-2">{t("Contas perto do limite", "Accounts near the limit")}</p>
+            <Table>
+              <TableBody>
+                {stats.at_risk.map((r, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm">{r.label}</TableCell>
+                    <TableCell className="font-mono text-xs">{r.tier}</TableCell>
+                    <TableCell className="text-right">{r.used} / {r.included}</TableCell>
+                    <TableCell className="text-right font-semibold">{r.pct}%</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 const WINDOWS = [7, 30, 90];
 
@@ -133,6 +210,8 @@ const AdminAiUsage = ({ isPt }: { isPt: boolean }) => {
               value={String(stats.unique_users)}
             />
           </div>
+
+          {stats.quota_bands && <DecisionCard stats={stats} t={t} />}
 
           {/* AI Accountant — interpretation & recommendations */}
           <AccountantCard stats={stats} days={days} isPt={isPt} />
