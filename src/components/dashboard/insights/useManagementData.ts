@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { addDays, type MgmtAppt, type MgmtNote, type MgmtPatient } from "@/lib/managementMetrics";
+import { addDays, synthesizeNoteSessions, type MgmtAppt, type MgmtNote, type MgmtPatient, type MgmtService } from "@/lib/managementMetrics";
 import { localISODate } from "@/lib/periodization";
 
 export interface ManagementData {
@@ -10,6 +10,8 @@ export interface ManagementData {
   appts: MgmtAppt[];
   notes: MgmtNote[];
   patients: MgmtPatient[];
+  /** Service catalog of the scope (clinic or solo PRO). */
+  services: MgmtService[];
   dischargedKeys: Set<string>;
   names: Record<string, string>;
   therapists: number;
