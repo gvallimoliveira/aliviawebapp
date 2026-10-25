@@ -176,6 +176,7 @@ const Dashboard = () => {
   const [allConversationIds, setAllConversationIds] = useState<string[]>([]);
   const [hasAutoSwitchedPro, setHasAutoSwitchedPro] = useState(false);
   const [clinicSubTab, setClinicSubTab] = useState<string>("team");
+  const [patientContactTab, setPatientContactTab] = useState(() => tabFromUrl === "notices" && !convFromUrl ? "notices" : "conversations");
 
   // Tutorial estritamente ligado ao contexto ativo. Cada modo tem sua
   // própria chave de "concluído" — assim aparece UMA ÚNICA vez no
@@ -1310,7 +1311,7 @@ const Dashboard = () => {
             <TabsList className={cn("w-full grid h-auto p-1", patientCare.linked ? "grid-cols-4" : "grid-cols-3")}>
               {patientCare.linked && <TabsTrigger value="today" data-onboarding="patient-today-tab" className="min-w-0 gap-1.5 flex-col sm:flex-row py-2 text-xs sm:text-sm"><Activity className="h-4 w-4 shrink-0" /><span>{t("dashboard.tab_today")}</span></TabsTrigger>}
               <TabsTrigger value="health" data-onboarding="patient-evolution-tab" className="min-w-0 gap-1.5 flex-col sm:flex-row py-2 text-xs sm:text-sm"><Heart className="h-4 w-4 shrink-0" /><span className="whitespace-normal text-center">{t(patientCare.linked ? "dashboard.tab_evolution" : "dashboard.tab_my_health")}</span></TabsTrigger>
-              <TabsTrigger value="appointments" data-onboarding="patient-appointments-tab" className="min-w-0 gap-1.5 flex-col sm:flex-row py-2 text-xs sm:text-sm"><CalendarDays className="h-4 w-4 shrink-0" /><span className="whitespace-normal text-center break-words">{t("dashboard.tab_appointments")}</span></TabsTrigger>
+              <TabsTrigger value="appointments" data-onboarding="patient-appointments-tab" className="min-w-0 gap-1.5 flex-col sm:flex-row px-1 sm:px-3 py-2 text-xs sm:text-sm"><CalendarDays className="h-4 w-4 shrink-0" /><span className="sm:hidden">{t("dashboard.tab_patient_agenda")}</span><span className="hidden sm:inline">{t("dashboard.tab_appointments")}</span></TabsTrigger>
               <TabsTrigger value="messages" className="min-w-0 gap-1.5 flex-col sm:flex-row py-2 relative text-xs sm:text-sm">
                 <span className="flex items-center"><MessageCircle className="h-4 w-4 shrink-0" />{unreadBadge}</span><span className="whitespace-normal text-center">{t("dashboard.tab_messages_notices")}</span>
               </TabsTrigger>
@@ -1319,7 +1320,7 @@ const Dashboard = () => {
             <TabsContent value="health" className="space-y-8">{renderClientContent()}</TabsContent>
             <TabsContent value="appointments" className="space-y-6"><PatientAppointmentsTab /></TabsContent>
             <TabsContent value="messages" className="space-y-6">
-              <Tabs defaultValue={tabFromUrl === "notices" && !convFromUrl ? "notices" : "conversations"} className="space-y-4">
+              <Tabs value={patientContactTab} onValueChange={setPatientContactTab} className="space-y-4">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="conversations" className="gap-2"><MessageCircle className="h-4 w-4" />{t("dashboard.tab_messages")}</TabsTrigger>
                   <TabsTrigger value="notices" className="gap-2"><Megaphone className="h-4 w-4" />{t("dashboard.tab_notices")}</TabsTrigger>

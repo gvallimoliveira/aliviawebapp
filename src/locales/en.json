@@ -1,5 +1,6 @@
 {
   "dashboard.tab_today": "Today",
+  "dashboard.tab_patient_agenda": "Calendar",
   "dashboard.tab_evolution": "My Progress",
   "dashboard.tab_appointments": "Appointments",
   "dashboard.tab_messages_notices": "Messages & Notices",
