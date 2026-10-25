@@ -27,6 +27,8 @@ describe("compra → saldo → consumo real em ambiente isolado",()=>{
    INSERT INTO clinic_members VALUES ('${clinic}','${owner}','owner','active',now()),('${clinic}','${therapist}','therapist','active',now()),('${clinic}','${secretary}','secretary','active',now());
    INSERT INTO app_config VALUES ('ai_credits_enforced','true'),('ai_credits_enforced_tiers','[]');`);
   await db.exec(readFileSync('drizzle/migrations/0049_ai_credit_rollout_preparation.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0050_secure_ai_credit_rollout_roles.sql','utf8'));
+  await db.exec(`INSERT INTO ai_credit_admin_roles VALUES ('${vip}','admin');`);
  },60000);
  afterAll(async()=>{await db.close();});
  it("parceiro recebe 25, não infinito",async()=>{const s=await status(partner);expect(s.included).toBe(25);expect(s.unlimited).toBe(false);expect(s.can_buy).toBe(true);});
@@ -41,6 +43,7 @@ describe("compra → saldo → consumo real em ambiente isolado",()=>{
  it("pacote vencido não fica disponível",async()=>{await db.query("update ai_credit_packages set expires_at=now()-interval '1 day' where user_id=$1::uuid",[partner]);expect((await status(partner)).purchased).toBe(0);});
  it("VIP não consome cota da equipe",async()=>{await db.query("insert into clinic_members values ($1::uuid,$2::uuid,'therapist','active',now())",[clinic,vip]);await use(vip,9);expect((await status(owner)).used).toBe(300.3);});
  it("sem categorias ativadas não há hard",async()=>expect((await status(pro)).hard_enabled).toBe(false));
+ it("catálogo rejeita crédito inflado",async()=>{await expect(db.query('select fulfill_ai_credit_package($1::uuid,null,$2,null,$3,999,29)',[partner,'test-invalid','mini'])).rejects.toThrow('Invalid package');});
  it("parceiro não muda a chave do Admin",async()=>{await db.exec(`SET test.uid='${partner}'`);await expect(db.query("select admin_ai_credit_rollout(true,'[\"partner\"]')")).rejects.toThrow('Access denied');await db.exec("RESET test.uid");});
  it("usuário não lê saldo de outro",async()=>{await db.exec(`SET test.uid='${partner}'`);await expect(status(pro)).rejects.toThrow('Access denied');await db.exec("RESET test.uid");});
 });
