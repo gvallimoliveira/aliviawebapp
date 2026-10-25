@@ -1227,6 +1227,61 @@ export type Database = {
         }
         Relationships: []
       }
+      care_services: {
+        Row: {
+          active: boolean
+          billing_type: string
+          clinic_id: string | null
+          created_at: string
+          id: string
+          name: string
+          price: number
+          professional_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          billing_type?: string
+          clinic_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          price?: number
+          professional_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          billing_type?: string
+          clinic_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number
+          professional_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_services_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_services_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_services_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clearance_items: {
         Row: {
           created_at: string
@@ -3431,6 +3486,7 @@ export type Database = {
           professional_id: string | null
           recurrence_rule: Json | null
           series_id: string | null
+          service_id: string | null
           service_type: string
           status: string
           status_changed_at: string | null
@@ -3452,6 +3508,7 @@ export type Database = {
           professional_id?: string | null
           recurrence_rule?: Json | null
           series_id?: string | null
+          service_id?: string | null
           service_type?: string
           status?: string
           status_changed_at?: string | null
@@ -3473,6 +3530,7 @@ export type Database = {
           professional_id?: string | null
           recurrence_rule?: Json | null
           series_id?: string | null
+          service_id?: string | null
           service_type?: string
           status?: string
           status_changed_at?: string | null
@@ -3512,6 +3570,13 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "care_services"
             referencedColumns: ["id"]
           },
         ]
