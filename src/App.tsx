@@ -23,6 +23,9 @@ import ManualAssessmentResumer from "@/components/dashboard/ManualAssessmentResu
 import PasskeyEnrollPrompt from "@/components/auth/PasskeyEnrollPrompt";
 import ProfessionalLanding from "@/pages/cinematic/ProfessionalLandingShell";
 import { LANDING_LAYOUT } from "@/lib/landingLayout";
+import AiCreditMonitor from "@/components/AiCreditMonitor";
+import { AI_CREDIT_BLOCKED, AI_CREDIT_REFRESH } from "@/lib/aiCreditPolicy";
+import { supabase } from "@/integrations/supabase/client";
 
 const Gateway = lazy(() => import("./pages/Gateway"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -94,6 +97,22 @@ const RouteFallback = () => (
 
 const App = () => {
   useEffect(() => {
+    // Observe function results only: auth and requests are never intercepted.
+    const original = supabase.functions.invoke.bind(supabase.functions);
+    const observed: typeof supabase.functions.invoke = async (...args) => {
+      const result = await original(...args);
+      window.dispatchEvent(new Event(AI_CREDIT_REFRESH));
+      const context = result.error?.context;
+      if (context instanceof Response && context.status === 402) {
+        const payload = await context.clone().json().catch(() => null);
+        if (payload?.error === "alivia_credit_limit") window.dispatchEvent(new Event(AI_CREDIT_BLOCKED));
+      }
+      return result;
+    };
+    supabase.functions.invoke = observed;
+    return () => { supabase.functions.invoke = original; };
+  }, []);
+  useEffect(() => {
     startVersionChecker();
     startIdlePreloads();
     installGlobalErrorLogging();
@@ -112,6 +131,7 @@ const App = () => {
             <NavigationOverlay />
             <BrowserRouter>
               <ScrollToTop />
+              <AiCreditMonitor />
               <GlobalMobileMenu />
               <RealtimeNotifier />
               <PushSubscriptionKeeper />

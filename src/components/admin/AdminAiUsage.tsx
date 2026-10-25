@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import AiCreditRollout from "./AiCreditRollout";
 import { Loader2, RefreshCw, Activity, Users, Zap, DollarSign, Calculator, TrendingUp, AlertTriangle, Lightbulb, CheckCircle2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -65,6 +66,7 @@ const AdminAiUsage = ({ isPt }: { isPt: boolean }) => {
 
   return (
     <div className="space-y-6">
+      <AiCreditRollout />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold text-foreground">
