@@ -1,5 +1,8 @@
 # Roadmap
 
+## Organização dos pacientes na clínica
+- [ ] Retirar métricas/status da lista e mover totais e relatório para Insights → Resumo; preservar cálculos/acessos e conferir navegação.
+
 ## Correção dos controles de parceiros
 - [x] Validação de CREFITO corrigida sem registro fictício; desativação do Acadêmico e remoção de Juliana realizadas no Admin autenticado e confirmadas no banco, preservando conta/histórico. Cinco testes passaram; build OK. Toggles recarregam dados e mantêm a pessoa na lista até remoção explícita.
 
