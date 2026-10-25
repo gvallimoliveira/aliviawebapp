@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Organização dos pacientes na clínica
-- [ ] Retirar métricas/status da lista e mover totais e relatório para Insights → Resumo; preservar cálculos/acessos e conferir navegação.
+- [x] Totais e relatório movidos para o registro Resumo dos Insights; lista sem métricas/status duplicados. Cálculos e acessos mantidos, ajuda pt/en/es atualizada. Percurso autenticado Pacientes → Insights → Resumo conferido no desktop/celular com dados reais; oito testes passaram e build OK.
 
 ## Correção dos controles de parceiros
 - [x] Validação de CREFITO corrigida sem registro fictício; desativação do Acadêmico e remoção de Juliana realizadas no Admin autenticado e confirmadas no banco, preservando conta/histórico. Cinco testes passaram; build OK. Toggles recarregam dados e mantêm a pessoa na lista até remoção explícita.

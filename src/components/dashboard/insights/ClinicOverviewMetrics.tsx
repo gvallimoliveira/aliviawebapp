@@ -44,7 +44,7 @@ const ClinicOverviewMetrics = ({ clinicId }: { clinicId: string }) => {
       <div className="grid grid-cols-3 gap-3">
         {labels.map((label, index) => <Card key={label}><CardContent className="py-4 text-center">
           <p className={`text-2xl font-bold ${index === 2 ? "text-primary" : "text-foreground"}`}>{totals ? [totals.professionals, totals.assessments, totals.patients][index] : "—"}</p>
-          <p className="text-xs text-muted-foreground mt-1 break-words">{label}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 whitespace-nowrap">{label}</p>
         </CardContent></Card>)}
       </div>}
     <SecretaryReportsCard key={clinicId} clinicId={clinicId} lang={lang} />
