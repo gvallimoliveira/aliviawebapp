@@ -306,10 +306,23 @@ export function dischargeVsDropout(cycles: ClosedCycle[], today: string, days: n
 }
 
 /* ---------------- Prontuário em dia ---------------- */
+/** Final classifications; anything else in the past is "unclassified". */
+export const FINAL_APPT_STATUSES = ["completed", "no_show", "no_show_justified", "cancelled"];
+
+export interface RecordPending {
+  id: string;
+  name: string;
+  date: string;
+  therapistId: string | null;
+  hoursSince: number;
+  /** Past slot never marked as done/no-show/cancelled and without a note. */
+  unclassified?: boolean;
+}
+
 export function recordCompliance(appts: MgmtAppt[], notes: MgmtNote[], now: Date, days: number) {
   const today = now.toISOString().slice(0, 10);
   const from = addDays(today, -(days - 1));
-  const done = appts.filter((a) => isCare(a) && a.status === "completed" && inWindow(a, from, today));
+  const care = appts.filter((a) => isCare(a) && inWindow(a, from, today));
   const byAppt = new Map<string, MgmtNote[]>();
   const byPatientDay = new Map<string, MgmtNote[]>();
   for (const n of notes) {
@@ -324,26 +337,49 @@ export function recordCompliance(appts: MgmtAppt[], notes: MgmtNote[], now: Date
       byPatientDay.get(k)!.push(n);
     }
   }
-  let onTime = 0, late = 0;
-  const pending: { id: string; name: string; date: string; therapistId: string | null; hoursSince: number }[] = [];
-  const per: Record<string, { total: number; onTime: number }> = {};
-  for (const a of done) {
+  const notesFor = (a: MgmtAppt) => {
     const e = (a.patient_email || "").trim().toLowerCase();
-    const cands = [...(byAppt.get(a.id) || []), ...(e ? byPatientDay.get(`${e}|${a.appointment_date}`) || [] : [])];
-    const start = Date.parse(`${a.appointment_date}T${(a.appointment_time || "00:00").slice(0, 5)}:00`);
-    const deadline = start + RECORD_DEADLINE_HOURS * 3600000;
+    return [...(byAppt.get(a.id) || []), ...(e ? byPatientDay.get(`${e}|${a.appointment_date}`) || [] : [])];
+  };
+  const startOf = (a: MgmtAppt) => Date.parse(`${a.appointment_date}T${(a.appointment_time || "00:00").slice(0, 5)}:00`);
+
+  let onTime = 0, late = 0;
+  const pending: RecordPending[] = [];
+  const per: Record<string, { total: number; onTime: number }> = {};
+  const bump = (a: MgmtAppt, ok: boolean) => {
     const k = a.professional_id || "—";
     per[k] = per[k] || { total: 0, onTime: 0 };
+    per[k].total++;
+    if (ok) per[k].onTime++;
+  };
+
+  for (const a of care) {
+    const start = startOf(a);
     const elapsed = now.getTime() - start;
+    const pastDeadline = elapsed >= RECORD_DEADLINE_HOURS * 3600000;
+    const cands = notesFor(a);
+    const isFinal = FINAL_APPT_STATUSES.includes(a.status);
+
+    if (!isFinal) {
+      // Past slot never classified and nothing written: not "in day", it is a pendency.
+      if (pastDeadline && a.status !== "cancelled" && !cands.length) {
+        bump(a, false);
+        pending.push({ id: a.id, name: a.patient_name || a.patient_email || "—", date: a.appointment_date, therapistId: a.professional_id || null, hoursSince: Math.floor(elapsed / 3600000), unclassified: true });
+      }
+      continue;
+    }
+    if (a.status !== "completed") continue; // no-show/cancelled need no evolution
+
     if (!cands.length) {
-      if (elapsed < RECORD_DEADLINE_HOURS * 3600000) continue; // still inside the window
-      per[k].total++;
+      if (!pastDeadline) continue; // still inside the window
+      bump(a, false);
       pending.push({ id: a.id, name: a.patient_name || a.patient_email || "—", date: a.appointment_date, therapistId: a.professional_id || null, hoursSince: Math.floor(elapsed / 3600000) });
       continue;
     }
-    per[k].total++;
     const first = Math.min(...cands.map((n) => Date.parse(n.created_at)));
-    if (first <= deadline) { onTime++; per[k].onTime++; } else late++;
+    const ok = first <= start + RECORD_DEADLINE_HOURS * 3600000;
+    bump(a, ok);
+    if (ok) onTime++; else late++;
   }
   const evaluated = onTime + late + pending.length;
   return {
@@ -351,7 +387,8 @@ export function recordCompliance(appts: MgmtAppt[], notes: MgmtNote[], now: Date
     onTime,
     late,
     pendingCount: pending.length,
-    rate: evaluated ? Math.round((onTime / evaluated) * 100) : 100,
+    /** null when nothing to evaluate yet (never show a fake 100%). */
+    rate: evaluated ? Math.round((onTime / evaluated) * 100) : null,
     pending: pending.sort((a, b) => b.hoursSince - a.hoursSince),
     byTherapist: Object.entries(per).filter(([, v]) => v.total > 0).map(([id, v]) => ({ id, ...v, rate: Math.round((v.onTime / v.total) * 100) })).sort((a, b) => a.rate - b.rate),
   };
