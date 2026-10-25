@@ -96,7 +96,7 @@ export function shadowLogAiUsage(
 ): void {
   // Resolve user id SYNCHRONOUSLY before scheduling the background work.
   const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
-  const resolvedUserId = opts.user_id ?? decodeJwtSub(authHeader) ?? ANON_SENTINEL;
+  let resolvedUserId = ANON_SENTINEL;
   const credits = opts.credits ?? CREDIT_COST[opts.function_name] ?? 0.05;
   const transcriptions = opts.transcriptions ?? 0;
   const metadata = {
@@ -113,6 +113,12 @@ export function shadowLogAiUsage(
         return;
       }
       const client = admin ?? createClient(supabaseUrl, serviceKey);
+      const token = authHeader?.replace(/^Bearer\s+/i, "").trim();
+      if (token) {
+        const { data, error: identityError } = await client.auth.getUser(token);
+        if (!identityError && data.user?.id && (!opts.user_id || opts.user_id === data.user.id)) resolvedUserId = data.user.id;
+      }
+      metadata.anonymous = resolvedUserId === ANON_SENTINEL;
       const { error } = await client.from("ai_credit_usage").insert({
         user_id: resolvedUserId,
         function_name: opts.function_name,

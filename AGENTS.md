@@ -50,4 +50,4 @@
 - Agenda uses latestRequest to reject stale results. ClinicServicesCard lives only in the manager-visible `care-services` registry entry in Insights → Operação, not Patients/Team, to keep home uncluttered; explicit professional scope isolates solo services.
 - Clinics use idempotent `_shared/clinicProvisioning.ts` (webhook + subscription self-heal). Admin groups subscribers, active free partners and trials/inactive via `clinicAdminGroups`, preserving status.
 
-- AI quotas use server status/policy, atomic FIFO package accounting and service-only fulfillment; distinguish app quota errors from provider errors. Admin rollout requires server authorization; empty tiers block nobody.
+- AI quotas use server status/policy, atomic FIFO package accounting and service-only fulfillment; distinguish app quota errors from provider errors. Admin rollout uses the protected separate ai_credit_admin_roles table; empty tiers block nobody. Checkout and fulfillment share the server catalog and verify paid line items.

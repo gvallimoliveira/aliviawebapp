@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { safeCreditReturnOrigin, AI_CREDIT_PACKAGES } from "../../supabase/functions/_shared/ai-credit-catalog";
 import { graceRatio, creditAvailability, mayBlock, creditThreshold } from "@/lib/aiCreditPolicy";
 describe("regras de créditos aprovadas", () => {
+ it("pagamento retorna só para origem autorizada",()=>{expect(safeCreditReturnOrigin("https://attacker.example/path")).toBe("https://aliviawebapp.com.br");expect(safeCreditReturnOrigin("https://aliviawebapp.com.br/path")).toBe("https://aliviawebapp.com.br");});
+ it("catálogo fixa os três pacotes atuais",()=>{expect(Object.values(AI_CREDIT_PACKAGES).map(p=>[p.credits,p.price_brl])).toEqual([[15,29],[30,59],[60,89]]);});
  it("PRO mensal tem exatamente 10% de margem", () => expect(creditAvailability({tier:"pro_monthly",included:60,used:60,purchased:0},0.3).remaining).toBe(6));
  it("PRO anual tem 10%", () => expect(graceRatio("pro_annual")).toBe(1.1));
  it("clínica conserva 20%", () => expect(creditAvailability({tier:"clinic_small",included:350,used:350,purchased:0,pooled:true},0.3).remaining).toBe(70));
