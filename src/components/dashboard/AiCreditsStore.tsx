@@ -48,11 +48,13 @@ const estimateChatMessages = (credits: number) => Math.floor(credits / 0.05);
  * Storefront for one-off AI credit packs. Uses a native form POST redirect to Stripe Checkout.
  * Credit fulfillment is server-side via the `stripe-webhook` (`ai_credits` case).
  */
-const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
+const AiCreditsStore = ({ trigger, controlledOpen, onControlledOpenChange }: { trigger?: React.ReactNode; controlledOpen?: boolean; onControlledOpenChange?: (open: boolean) => void }) => {
   const { user } = useAuth();
   const { language } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [open, setOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = onControlledOpenChange ?? setLocalOpen;
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const isPt = language === "pt";
@@ -170,14 +172,14 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      {controlledOpen === undefined && <DialogTrigger asChild>
         {trigger || (
           <Button size="sm" variant="outline" className="gap-1.5">
             <Sparkles className="h-3.5 w-3.5" />
             {isPt ? "Comprar créditos" : "Buy credits"}
           </Button>
         )}
-      </DialogTrigger>
+      </DialogTrigger>}
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
