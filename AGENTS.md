@@ -6,8 +6,6 @@
 - Record-summary STEPS uses the fetched plan status: completed means discharge before any macro-cycle fallback, so insight and record discharge decisions remain consistent without rewriting history.
 - Clinic demos scope fixtures by viewer; local load adapters reuse real math, never live writes/AI. Load scenarios bind to the displayed latest assessment, including safety; unmatched IDs stay empty.
 
-- AgentMessageInput autosizes mobile drafts; empty fields collapse, other textareas stay unchanged.
-
 - Cardiovascular views refresh demographics via `usePatientBirthDate` after edits/refocus; keep estimates fresh and unsaved inputs intact.
 - Cardiovascular ceiling reminders combine the record's assessments and ID/email-linked dated health records via `usePatientCardioHealth`; structured conditions never auto-select a clinician profile, infer control, or fabricate an age-based ceiling.
 
@@ -50,3 +48,4 @@
 
 - Adherence links readiness by scoped patient ID (email-less identities use patient:<id>), normalizes only available channels, retains 60-day check-in participants and measures a 14-day window; all ranked patients remain searchable. Frequency uses elapsed month-to-date days from the later of registration/first session; financial drilldowns reuse the same scoped appointments and price resolver as totals.
 - Patient appointment requests live in `appointment_requests`, created/approved/dismissed only via RPCs that validate patient linkage and staff (owner/admin/secretary or solo PRO) server-side; approval inserts the real appointment, so agenda metrics never count pending requests. Push recipients for requests are resolved server-side from the request row.
+- Announcements: scope-global, server-side lists, staff via can_handle_appointment_request, push recipients resolved server-side; prevents cross-scope leaks.
