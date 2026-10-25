@@ -6,7 +6,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 
 // Vision-heavy table reading: Pro first (accuracy matters far more than cost on
@@ -156,7 +156,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    shadowLogAiUsage(req, { function_name: "extract-dynamometry" });
+    const creditDecision = await canaryCredits(req, "extract-dynamometry", { function_name: "extract-dynamometry" });
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "Missing LOVABLE_API_KEY" }), {

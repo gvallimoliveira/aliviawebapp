@@ -2,7 +2,7 @@
 // a partir de uma amostra anonimizada de linhas.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3";
 
@@ -70,7 +70,9 @@ Deno.serve(async (req) => {
     if (authError || !auth.user) return new Response(JSON.stringify({ error: "unauthenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     const input = z.object({ filename: z.string().max(500).optional(), headers: z.array(z.string().max(200)).min(1).max(200), sample: z.array(z.record(z.unknown())).max(10).optional() }).safeParse(await req.json());
     if (!input.success) return new Response(JSON.stringify({ error: "invalid_body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    shadowLogAiUsage(req, { function_name: "import-detect-schema" });
+    const creditDecision = await canaryCredits(req, "import-detect-schema", { function_name: "import-detect-schema" });
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
     const { filename, headers, sample } = input.data;
     if (!Array.isArray(headers) || headers.length === 0) {
       return new Response(JSON.stringify({ error: "headers required" }), {

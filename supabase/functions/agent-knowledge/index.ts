@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { isPriorityJournal, journalImpactFactor, priorityJournalListForPrompt } from "../_shared/priority-journals.ts";
 import { buildPubmedQuery, getNicheSearchTerms, type NicheSearchTerms } from "../_shared/niche-search-terms.ts";
 import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
 
 const corsHeaders = {
@@ -834,7 +834,9 @@ serve(async (req) => {
   }
 
   try {
-    shadowLogAiUsage(req, { function_name: "agent-knowledge" });
+    const creditDecision = await canaryCredits(req, "agent-knowledge", { function_name: "agent-knowledge" });
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
