@@ -1,9 +1,10 @@
 # Roadmap
 
 ## Preparação dos créditos de IA
-- [ ] PRO com margem de 10%; parceiros 25/mês, compra permitida e sem bypass ilimitado; clínica mantém 20%.
-- [ ] Avisos proativos 80/100%, recuperação contextual e controles seletivos no Admin, sem ativar bloqueios.
-- [ ] Validar consumo → avisos → compra → saldo, permissões e ajuda pt/en/es; registrar limitações reais.
+- [x] PRO com margem de 10%; parceiros 25/mês e compra permitida; clínica mantém 20%; ilimitado só admin/VIP.
+- [x] Avisos 80/100%, recuperação contextual e controles seletivos no Admin; chave geral desligada e categorias vazias.
+- [x] 29 testes aprovados para política, compra idempotente, saldo compartilhado, débitos fracionados, expiração e permissões. Admin autenticado, parceiros reais e clínica pagante consultados; pagamento aberto sem cobrança. Aviso de 100% → renovação → pacotes conferido com saldo simulado apenas no navegador; ajuda pt/en/es atualizada.
+- [ ] Antes da ativação hard: confirmar um pagamento real de pacote até o saldo aparecer (aguarda compra autorizada) e executar concorrência/escopo clínica-PRO com contas não-VIP representativas (aguarda contas autorizadas). Nenhum bloqueio ativado.
 
 ## Categorias de clínicas no Admin
 - [x] Separados 1 assinante, 4 parceiros ativos gratuitos e 2 clínicas em teste/inativas; busca e detalhes preservados. Quatro testes passaram, build OK e navegação autenticada desktop/celular conferida com dados reais, sem alterar acessos.
