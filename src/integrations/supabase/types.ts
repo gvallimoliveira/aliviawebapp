@@ -1371,6 +1371,7 @@ export type Database = {
           name: string
           price: number
           professional_id: string | null
+          service_type: string | null
         }
         Insert: {
           active?: boolean
@@ -1381,6 +1382,7 @@ export type Database = {
           name: string
           price?: number
           professional_id?: string | null
+          service_type?: string | null
         }
         Update: {
           active?: boolean
@@ -1391,6 +1393,7 @@ export type Database = {
           name?: string
           price?: number
           professional_id?: string | null
+          service_type?: string | null
         }
         Relationships: [
           {
