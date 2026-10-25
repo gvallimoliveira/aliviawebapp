@@ -54,7 +54,6 @@ const DemoInsightsMock = lazy(() => import("@/components/demo/DemoInsightsMock")
 const DemoMessagesMock = lazy(() => import("@/components/demo/DemoMessagesMock"));
 const DemoDailySummaryMock = lazy(() => import("@/components/demo/DemoDailySummaryMock"));
 const PatientAppointmentsTab = lazy(() => import("@/components/dashboard/PatientAppointmentsTab"));
-const AppointmentRequestsPanel = lazy(() => import("@/components/dashboard/AppointmentRequestsPanel"));
 const AnnouncementsManager = lazy(() => import("@/components/dashboard/AnnouncementsManager"));
 const PatientNoticesTab = lazy(() => import("@/components/dashboard/PatientNoticesTab"));
 import TryProDemoCard from "@/components/dashboard/TryProDemoCard";
@@ -890,7 +889,6 @@ const Dashboard = () => {
             {/* Agenda */}
             <TabsContent value="agenda" className="space-y-6">
               <ClinicTrialBanner />
-              {canManageClinic && !isSimulated && <AppointmentRequestsPanel clinicId={activeClinic.clinic_id} />}
               <div className="relative" id="agenda-schedule-anchor">
                 <ProSchedule
                   key={`clinic:${activeClinic.clinic_id}`}
@@ -1176,7 +1174,6 @@ const Dashboard = () => {
                     </>
                   ) : hasProAccess ? (
                     <>
-                      {!isSimulated && <AppointmentRequestsPanel professionalId={proStub.id} />}
                       <ProSchedule professionalId={proStub.id} isSimulated={isSimulated} />
                     </>
                   ) : (
