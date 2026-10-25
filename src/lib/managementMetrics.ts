@@ -465,9 +465,18 @@ export function referralMix(patients: MgmtPatient[], today: string) {
 /* ---------------- Pacientes sem próximo horário ---------------- */
 export const LEAK_ACTIVE_DAYS = 60;
 
-/** Active patients (recent completed session, not discharged) with nothing scheduled ahead. */
-export function leakageNoNextAppointment(appts: MgmtAppt[], dischargedKeys: Set<string>, today: string, activeDays = LEAK_ACTIVE_DAYS) {
+/**
+ * Active patients (recent completed session, not discharged) with nothing
+ * scheduled ahead. Names come from the most recent session; sessions that only
+ * exist as evolution notes resolve the name from the patient registry.
+ */
+export function leakageNoNextAppointment(appts: MgmtAppt[], dischargedKeys: Set<string>, today: string, activeDays = LEAK_ACTIVE_DAYS, patients?: MgmtPatient[]) {
   const from = addDays(today, -(activeDays - 1));
+  const registry = new Map<string, string>();
+  for (const p of patients || []) {
+    const e = (p.email || "").trim().toLowerCase();
+    if (e && p.full_name) registry.set(e, p.full_name);
+  }
   const byKey = new Map<string, MgmtAppt[]>();
   for (const a of appts) {
     if (!isCare(a)) continue;
@@ -479,12 +488,14 @@ export function leakageNoNextAppointment(appts: MgmtAppt[], dischargedKeys: Set<
   const rows: { key: string; name: string; lastDate: string; daysSince: number }[] = [];
   for (const [key, list] of byKey) {
     if (dischargedKeys.has(key)) continue;
-    const done = list.filter((a) => a.status === "completed" && a.appointment_date >= from && a.appointment_date <= today);
+    const done = list.filter((a) => a.status === "completed" && a.appointment_date >= from && a.appointment_date <= today)
+      .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date));
     if (!done.length) continue;
     const hasFuture = list.some((a) => a.status === "scheduled" && a.appointment_date >= today);
     if (hasFuture) continue;
-    const lastDate = done.map((a) => a.appointment_date).sort().at(-1)!;
-    rows.push({ key, name: done[0].patient_name || key, lastDate, daysSince: diffDays(today, lastDate) });
+    const lastDate = done.at(-1)!.appointment_date;
+    const name = [...done].reverse().find((a) => a.patient_name)?.patient_name || registry.get(key) || key;
+    rows.push({ key, name, lastDate, daysSince: diffDays(today, lastDate) });
   }
   return rows.sort((a, b) => b.daysSince - a.daysSince);
 }
@@ -494,18 +505,25 @@ export const LATE_CANCEL_HOURS = 2;
 
 /**
  * Splits cancellations by timing using status_changed_at (trigger-maintained).
- * Legacy cancellations without the timestamp are reported as unknown.
+ * Legacy cancellations without the timestamp are reported as unknown, and so
+ * are slots without a time (midnight would fake an early cancellation).
+ * The window follows the cancellation date (when known), not the slot date.
  */
 export function lateCancellations(appts: MgmtAppt[], today: string, days: number) {
   const from = addDays(today, -(days - 1));
-  const cancelled = appts.filter((a) => isCare(a) && a.status === "cancelled" && inWindow(a, from, today));
+  const cancelled = appts.filter((a) => {
+    if (!isCare(a) || a.status !== "cancelled") return false;
+    const eventDate = (a.status_changed_at || "").slice(0, 10) || a.appointment_date;
+    return eventDate >= from && eventDate <= today;
+  });
   let late = 0, early = 0, unknown = 0;
   const byTherapist: Record<string, { late: number; known: number }> = {};
   for (const a of cancelled) {
     const k = a.professional_id || "—";
     byTherapist[k] = byTherapist[k] || { late: 0, known: 0 };
-    if (!a.status_changed_at) { unknown++; continue; }
-    const start = Date.parse(`${a.appointment_date}T${(a.appointment_time || "00:00").slice(0, 5)}:00`);
+    const time = (a.appointment_time || "").slice(0, 5);
+    if (!a.status_changed_at || !time) { unknown++; continue; }
+    const start = Date.parse(`${a.appointment_date}T${time}:00`);
     const hoursBefore = (start - Date.parse(a.status_changed_at)) / 3600000;
     byTherapist[k].known++;
     if (hoursBefore < LATE_CANCEL_HOURS) { late++; byTherapist[k].late++; } else early++;
@@ -541,11 +559,17 @@ export function ownerDependence(appts: MgmtAppt[], ownerProfessionalId: string |
 
 /* ---------------- Gargalo operacional (capacidade) ---------------- */
 /**
- * Counts simultaneous bookings per date+hour slot; a slot instance is saturated
- * when bookings reach capacity (min of active therapists and rooms, when set).
- * Index = % of used slot instances at full capacity.
+ * Two complementary readings over date+hour slots:
+ * - occupancy = used hour-slots ÷ available hour-slots in the window (uses the
+ *   scope's working hours/days, defaults 08–18 weekdays) — the meaningful
+ *   number for a solo PRO, whose capacity is always 1;
+ * - saturation index = % of used slot instances booked up to capacity
+ *   (min of active therapists and rooms, when set) — meaningful for clinics.
  */
-export function capacityBottleneck(appts: MgmtAppt[], therapists: number, rooms: number | null | undefined, today: string, days: number) {
+export function capacityBottleneck(
+  appts: MgmtAppt[], therapists: number, rooms: number | null | undefined, today: string, days: number,
+  schedule?: { start?: string | null; end?: string | null; workingDays?: number[] | null },
+) {
   const from = addDays(today, -(days - 1));
   const capacity = Math.max(1, Math.min(Math.max(1, therapists), rooms && rooms > 0 ? rooms : Math.max(1, therapists)));
   const instances = new Map<string, { weekday: number; hour: string; count: number }>();
@@ -569,5 +593,19 @@ export function capacityBottleneck(appts: MgmtAppt[], therapists: number, rooms:
     if (inst.count >= capacity) { saturated++; slots[sk].hits++; }
   }
   const top = Object.values(slots).filter((s) => s.hits > 0).sort((a, b) => b.hits - a.hits).slice(0, 4);
-  return { capacity, used, saturated, index: used ? Math.round((saturated / used) * 100) : 0, top };
+  const startH = Math.floor(parseHour(schedule?.start) ?? 8);
+  const endH = Math.floor(parseHour(schedule?.end) ?? 18);
+  const wd = schedule?.workingDays && schedule.workingDays.length ? schedule.workingDays : [1, 2, 3, 4, 5];
+  let possible = 0;
+  for (let i = 0; i < days; i++) {
+    const d = new Date(toDay(today) - i * DAY_MS).getUTCDay();
+    if (wd.includes(d)) possible += Math.max(0, endH - startH);
+  }
+  return {
+    capacity, used, saturated,
+    index: used ? Math.round((saturated / used) * 100) : 0,
+    possible,
+    occupancy: possible ? Math.round((used / possible) * 100) : 0,
+    top,
+  };
 }
