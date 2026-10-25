@@ -41,6 +41,7 @@ export interface AptInput {
   status: string;
   created_at: string;
   service_type?: string;
+  service_id?: string | null;
   series_id?: string | null;
   recurrence_rule?: unknown;
 }
@@ -61,9 +62,13 @@ export interface AppointmentEditorPayload {
   duration_minutes: number;
   type: string;
   service_type: string;
+  /** Catalog service (care_services) driving the price in financial insights. */
+  service_id?: string | null;
   notes: string | null;
   clinic_id?: string;
 }
+
+interface CareServiceOption { id: string; name: string; price: number; billing_type: string }
 
 export interface AppointmentEditorExtras {
   cpf: string;
