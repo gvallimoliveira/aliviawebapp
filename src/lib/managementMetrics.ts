@@ -15,6 +15,47 @@ export interface MgmtAppt {
   patient_name?: string | null;
   /** Trigger-maintained timestamp of the last status change; null on legacy rows. */
   status_changed_at?: string | null;
+  /** Linked catalog service; null falls back to the default session price. */
+  service_id?: string | null;
+}
+
+/** Service catalog entry (per clinic or solo PRO). */
+export interface MgmtService {
+  id: string;
+  name: string;
+  price: number;
+  /** per_session = valor por atendimento; monthly = mensalidade diluída por sessão realizada. */
+  billing_type: "per_session" | "monthly";
+}
+
+/**
+ * Resolves the money value of one appointment:
+ * - per-session service → its price;
+ * - monthly service → monthly price diluted across that patient's realized
+ *   sessions of the same service in the same month (lost slots worth 0);
+ * - no service → default session price.
+ */
+export type PriceOf = (a: MgmtAppt) => number;
+export function buildPriceResolver(appts: MgmtAppt[], services: MgmtService[], defaultPrice: number): PriceOf {
+  const svc = new Map(services.map((s) => [s.id, s]));
+  const monthlyDone = new Map<string, number>();
+  for (const a of appts) {
+    if (a.status !== "completed" || !a.service_id) continue;
+    const s = svc.get(a.service_id);
+    if (!s || s.billing_type !== "monthly") continue;
+    const k = `${patientKey(a)}|${a.service_id}|${a.appointment_date.slice(0, 7)}`;
+    monthlyDone.set(k, (monthlyDone.get(k) || 0) + 1);
+  }
+  return (a) => {
+    const s = a.service_id ? svc.get(a.service_id) : undefined;
+    if (!s) return defaultPrice;
+    if (s.billing_type === "monthly") {
+      if (a.status !== "completed") return 0;
+      const n = monthlyDone.get(`${patientKey(a)}|${a.service_id}|${a.appointment_date.slice(0, 7)}`) || 1;
+      return s.price / n;
+    }
+    return s.price;
+  };
 }
 
 export interface MgmtPatient {
