@@ -233,7 +233,7 @@ export interface ClosedCycle {
  * A cycle is closed when the patient has a recorded discharge (completed plan)
  * or has had no completed session for DROPOUT_DAYS and nothing scheduled ahead.
  */
-export function closedCycles(appts: MgmtAppt[], dischargedKeys: Set<string>, today: string): ClosedCycle[] {
+export function closedCycles(appts: MgmtAppt[], dischargedKeys: Set<string>, today: string, priceOf?: PriceOf): ClosedCycle[] {
   const byPatient = new Map<string, MgmtAppt[]>();
   for (const a of appts) {
     if (!isCare(a)) continue;
