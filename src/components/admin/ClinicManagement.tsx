@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { clinicAdminGroup, type ClinicAdminGroup } from "@/lib/clinicAdminGroups";
 
 interface Member { email: string | null; name: string | null; role: string; status: string }
 interface ClinicRow {
@@ -21,6 +23,7 @@ export default function ClinicManagement({ isPt }: { isPt: boolean }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [group, setGroup] = useState<ClinicAdminGroup>("paid");
 
   useEffect(() => {
     (async () => {
@@ -33,10 +36,16 @@ export default function ClinicManagement({ isPt }: { isPt: boolean }) {
 
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
-    if (!t) return rows;
-    return rows.filter((r) =>
+    const grouped = rows.filter((r) => clinicAdminGroup(r) === group);
+    if (!t) return grouped;
+    return grouped.filter((r) =>
       [r.name, r.owner_email, r.owner_name, ...r.members.map((m) => m.email)].some((v) => v?.toLowerCase().includes(t)));
-  }, [rows, q]);
+  }, [rows, q, group]);
+
+  const counts = rows.reduce((acc, row) => {
+    acc[clinicAdminGroup(row)] += 1;
+    return acc;
+  }, { paid: 0, partners: 0, other: 0 });
 
   const active = rows.filter((r) => r.subscription_status === "active").length;
 
@@ -50,10 +59,19 @@ export default function ClinicManagement({ isPt }: { isPt: boolean }) {
         <CardDescription>
           {rows.length} {isPt ? "clínica(s)" : "clinic(s)"} · {active} {isPt ? "ativa(s)" : "active"}
         </CardDescription>
+        <Tabs value={group} onValueChange={(value) => {
+          if (value === "paid" || value === "partners" || value === "other") setGroup(value);
+        }}>
+          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
+            <TabsTrigger value="paid" className="whitespace-normal text-center">{isPt ? "Assinantes pagantes" : "Paid subscribers"} ({counts.paid})</TabsTrigger>
+            <TabsTrigger value="partners" className="whitespace-normal text-center">{isPt ? "Parceiros com acesso" : "Partners with access"} ({counts.partners})</TabsTrigger>
+            <TabsTrigger value="other" className="whitespace-normal text-center">{isPt ? "Em teste / inativas" : "Trial / inactive"} ({counts.other})</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <Input placeholder={isPt ? "Buscar por nome ou e-mail" : "Search by name or email"} value={q} onChange={(e) => setQ(e.target.value)} className="mt-2" />
       </CardHeader>
       <CardContent className="space-y-3">
-        {filtered.length === 0 && <p className="text-muted-foreground text-center py-6">{isPt ? "Nenhuma clínica." : "No clinics."}</p>}
+        {filtered.length === 0 && <p className="text-muted-foreground text-center py-6">{isPt ? "Nenhuma clínica nesta categoria." : "No clinics in this category."}</p>}
         {filtered.map((c) => (
           <div key={c.id} className="rounded-xl border border-border p-4 space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">

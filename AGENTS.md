@@ -48,4 +48,4 @@
 - Appointment requests use scoped RPCs/push; approval creates the slot only in Agenda (solo PRO, clinic owner/admin/secretary). Resolve service names from the same scoped catalog, including inactive entries; show the requested service in the card/dialog and preselect its saved ID.
 - Announcements use scoped server lists, can_handle_appointment_request and server-resolved push recipients.
 - Agenda uses latestRequest to reject stale results. ClinicServicesCard lives only in the manager-visible `care-services` registry entry in Insights → Operação, not Patients/Team, to keep home uncluttered; explicit professional scope isolates solo services.
-- Paid clinics are provisioned only via idempotent `_shared/clinicProvisioning.ts` (webhook + check-clinic-subscription self-heal), so a missed webhook never blocks a payer.
+- Clinics use idempotent `_shared/clinicProvisioning.ts` (webhook + subscription self-heal). Admin groups subscribers, active free partners and trials/inactive via `clinicAdminGroups`, preserving status.
