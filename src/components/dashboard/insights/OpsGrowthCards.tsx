@@ -166,7 +166,7 @@ export function LateCancellationCard({ d, showTeam }: { d: ManagementData; showT
 export function OwnerDependenceCard({ d }: { d: ManagementData }) {
   const l = useL();
   const [days, setDays] = useState(90);
-  const r = useMemo(() => ownerDependence(d.appts, d.ownerProfessionalId, d.today, days, d.price), [d, days]);
+  const r = useMemo(() => ownerDependence(d.appts, d.ownerProfessionalId, d.today, days, d.price, buildPriceResolver(d.appts, d.services, d.price)), [d, days]);
   const ownerName = d.ownerProfessionalId ? d.names[d.ownerProfessionalId] : null;
   return (
     <InsightCardShell id="mgmt-owner-dep" icon={<UserCheck className="h-4 w-4 text-primary" />} title={tr(l, "Dependência do titular", "Owner dependence", "Dependencia del titular")}
