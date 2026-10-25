@@ -1,4 +1,6 @@
 {
+  "support.pro.tool.care_services.title": "Services and appointment requests",
+  "support.pro.tool.care_services.desc": "In solo PRO, open Patients → Services & pricing. In a clinic: Clinic → Team → Services & pricing (owner/admin). Add and activate the services linked patients may choose. Patients request date, time and service; staff set duration and may confirm or reschedule. Only approval creates a calendar appointment.",
   "support.pro.faq.profile_isolation.q": "Does clinic data appear in my independent PRO profile?",
   "support.pro.faq.profile_isolation.a": "No. Patients, appointments, session notes, exercise programs and agent conversations are separated by the selected profile. Assigning a clinic patient to a therapist does not turn them into a private patient. Switch to the relevant clinic to consult its records; history is preserved.",
   "support.pro.faq.planned_dose_edit.q": "Can I edit a planned dose without deleting the performed session?",

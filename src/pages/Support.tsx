@@ -37,6 +37,7 @@ const patientTools = [
 ];
 
 const proTools = [
+  { key: "care_services", icon: NotebookPen },
   { key: "custom_link", icon: Link2 },
   { key: "statistics", icon: BarChart3 },
   { key: "analytics_charts", icon: PieChart },

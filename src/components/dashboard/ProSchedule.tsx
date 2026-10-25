@@ -1,4 +1,5 @@
 import { toMinutes, endTimeFrom, assignLanes, cardPixelHeight } from "@/lib/appointmentTime";
+import { createLatestRequestGate } from "@/lib/latestRequest";
 import { expandRecurrence, splitConflicts } from "@/lib/appointmentRecurrence";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -339,9 +340,13 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const rangeEnd = format(days[days.length - 1], "yyyy-MM-dd");
 
   const timeSlots = getTimeRange(appointments);
+  const requestGate = useRef(createLatestRequestGate());
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchAppointments = useCallback(async () => {
+    const isCurrent = requestGate.current.start();
     if (isSimulated) { setLoading(false); return; }
+    if (!clinicId && !professionalId) { setLoading(false); return; }
     setLoading(true);
     let query = (supabase.from("professional_appointments" as any) as any)
       .select("*")
@@ -353,12 +358,23 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     } else {
       query = query.eq("professional_id", professionalId).is("clinic_id", null);
     }
-    const { data } = await query;
+    const { data, error } = await query;
+    if (!isCurrent()) return;
+    if (error) {
+      setLoadError(error.message);
+      setLoading(false);
+      return;
+    }
+    setLoadError(null);
     setAppointments((data as Appointment[]) || []);
     setLoading(false);
   }, [professionalId, clinicId, rangeStart, rangeEnd, isSimulated]);
 
-  useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
+  useEffect(() => {
+    setAppointments(isSimulated ? (DEMO_APPOINTMENTS as Appointment[]) : []);
+    void fetchAppointments();
+    return () => requestGate.current.invalidate();
+  }, [fetchAppointments, isSimulated]);
 
   const [evolutionMap, setEvolutionMap] = useState<Map<string, EvolutionInfo>>(new Map());
   useEffect(() => {
@@ -1100,6 +1116,14 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       </div>
 
       {/* Time-slot grid */}
+      {loadError && (
+        <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-destructive">
+          <span>{language === "pt" ? "Não foi possível carregar a agenda." : language === "es" ? "No se pudo cargar la agenda." : "Could not load the schedule."}</span>
+          <Button variant="outline" size="sm" onClick={() => void fetchAppointments()}>
+            {language === "pt" ? "Tentar novamente" : language === "es" ? "Reintentar" : "Retry"}
+          </Button>
+        </div>
+      )}
       <div ref={gridScrollRef} style={{ touchAction: "pan-x pan-y" }} className="h-[420px] max-w-full rounded-lg border border-border/40 overflow-auto overscroll-contain">
         <div className={cn("min-w-0", isMobile && "min-w-[500px]")}>
           {/* Day headers — sticky */}

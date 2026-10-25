@@ -37,6 +37,7 @@ const ProDashboard = lazy(() => import("@/components/dashboard/ProDashboard"));
 const MessagesTab = lazy(() => import("@/components/dashboard/MessagesTab"));
 const OnboardingTour = lazy(() => import("@/components/onboarding/OnboardingTour"));
 const ClinicTeamManagement = lazy(() => import("@/components/dashboard/ClinicTeamManagement"));
+const ClinicServicesCard = lazy(() => import("@/components/dashboard/ClinicServicesCard"));
 const ClinicSecretaryDashboard = lazy(() => import("@/components/dashboard/ClinicSecretaryDashboard"));
 const ContextSelectionModal = lazy(() => import("@/components/dashboard/ContextSelectionModal"));
 const ProSchedule = lazy(() => import("@/components/dashboard/ProSchedule"));
@@ -1155,6 +1156,9 @@ const Dashboard = () => {
 
                 </TabsList>
                 <TabsContent value="professional" className="space-y-6">
+                  {!isProDemo && !isSimulated && hasProAccess && professional?.id && (
+                    <ClinicServicesCard key={`solo-services:${professional.id}`} professionalId={professional.id} />
+                  )}
                   {isProDemo && <DemoUpsellBanner section="pro-patients" variant="pro" />}
                   {!isProDemo && !hasProAccess && <TryProDemoCard section="Pacientes" />}
                   <ProDashboard

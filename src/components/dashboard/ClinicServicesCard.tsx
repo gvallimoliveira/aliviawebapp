@@ -23,7 +23,7 @@ interface ServiceRow {
  * Os valores alimentam os insights financeiros; mensalidades são diluídas
  * por sessão realizada no mês. Ao agendar, a equipe escolhe o serviço.
  */
-const ClinicServicesCard = () => {
+const ClinicServicesCard = ({ professionalId }: { professionalId?: string } = {}) => {
   const { activeClinic, canManageClinic } = useClinic();
   const { language } = useLanguage();
   const lang = language as "pt" | "en" | "es";
@@ -36,23 +36,25 @@ const ClinicServicesCard = () => {
   const [billing, setBilling] = useState<"per_session" | "monthly">("per_session");
   const [saving, setSaving] = useState(false);
 
-  const clinicId = activeClinic?.clinic_id;
-  const canEdit = !!canManageClinic && !!clinicId;
+  const clinicId = professionalId ? undefined : activeClinic?.clinic_id;
+  const canEdit = !!professionalId || (!!canManageClinic && !!clinicId);
 
   const load = async () => {
-    if (!clinicId) return;
+    if (!canEdit) return;
     setLoading(true);
-    const { data } = await (supabase.from("care_services" as any) as any)
+    let query = (supabase.from("care_services" as any) as any)
       .select("id, name, price, billing_type, active")
-      .eq("clinic_id", clinicId)
       .order("name");
+    query = clinicId ? query.eq("clinic_id", clinicId) : query.is("clinic_id", null).eq("professional_id", professionalId);
+    const { data, error } = await query;
+    if (error) toast({ title: t("Erro ao carregar serviços", "Could not load services", "Error al cargar servicios"), description: error.message, variant: "destructive" });
     setRows((data as ServiceRow[]) || []);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [clinicId]);
+  useEffect(() => { setRows([]); void load(); }, [clinicId, professionalId, canEdit]);
 
-  if (!activeClinic || !canManageClinic) return null;
+  if (!canEdit) return null;
 
   const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -64,7 +66,7 @@ const ClinicServicesCard = () => {
     }
     setSaving(true);
     const { error } = await (supabase.from("care_services" as any) as any)
-      .insert({ clinic_id: clinicId, name: name.trim(), price: p, billing_type: billing });
+      .insert({ clinic_id: clinicId || null, professional_id: clinicId ? null : professionalId, name: name.trim(), price: p, billing_type: billing });
     setSaving(false);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     setName(""); setPrice(""); setBilling("per_session");
@@ -73,7 +75,8 @@ const ClinicServicesCard = () => {
   };
 
   const toggle = async (r: ServiceRow) => {
-    await (supabase.from("care_services" as any) as any).update({ active: !r.active }).eq("id", r.id);
+    const { error } = await (supabase.from("care_services" as any) as any).update({ active: !r.active }).eq("id", r.id);
+    if (error) { toast({ title: t("Erro", "Error", "Error"), description: error.message, variant: "destructive" }); return; }
     load();
   };
 
@@ -94,9 +97,9 @@ const ClinicServicesCard = () => {
       <CardContent className="space-y-4">
         <p className="text-xs text-muted-foreground">
           {t(
-            "Cadastre os serviços com valor avulso ou mensal. Ao agendar, a equipe escolhe o serviço e os insights financeiros usam esses valores (mensalidade diluída por sessão realizada no mês).",
-            "Register services with per-session or monthly pricing. When booking, the team picks the service and financial insights use these values (monthly fees diluted per realized session that month).",
-            "Registre servicios con valor por sesión o mensual. Al agendar, el equipo elige el servicio y los insights financieros usan estos valores (mensualidad diluida por sesión realizada).")}
+            "Serviços ativos ficam disponíveis aos pacientes vinculados ao solicitar um horário. Valores avulsos ou mensais alimentam os indicadores financeiros.",
+            "Active services are available to linked patients when requesting an appointment. Per-session or monthly prices feed financial indicators.",
+            "Los servicios activos están disponibles para pacientes vinculados al solicitar una cita. Los precios por sesión o mensuales alimentan los indicadores financieros.")}
         </p>
 
         {loading ? (
@@ -109,7 +112,7 @@ const ClinicServicesCard = () => {
             {rows.map((r) => (
               <div key={r.id} className={`flex items-center gap-2 rounded-lg border border-border p-2 text-sm ${r.active ? "" : "opacity-50"}`}>
                 <div className="flex-1 min-w-0">
-                  <p className="truncate font-medium">{r.name}</p>
+                  <p className="break-words font-medium">{r.name}</p>
                   <p className="text-[11px] text-muted-foreground">
                     {brl(Number(r.price))}{r.billing_type === "monthly" ? t(" /mês", " /mo", " /mes") : t(" /sessão", " /session", " /sesión")}
                   </p>
@@ -128,11 +131,11 @@ const ClinicServicesCard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_110px_130px_auto] gap-2 items-end border-t border-border pt-3">
           <div>
             <Label className="text-xs">{t("Nome do serviço", "Service name", "Nombre del servicio")}</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Ex.: Fisioterapia, Pilates...", "E.g.: Physio, Pilates...", "Ej.: Fisioterapia, Pilates...")} className="h-9 mt-1" />
+            <Input aria-label={t("Nome do serviço", "Service name", "Nombre del servicio")} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Ex.: Fisioterapia, Pilates...", "E.g.: Physio, Pilates...", "Ej.: Fisioterapia, Pilates...")} className="h-9 mt-1" />
           </div>
           <div>
             <Label className="text-xs">{t("Valor (R$)", "Price", "Valor")}</Label>
-            <Input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal" placeholder="150" className="h-9 mt-1" />
+            <Input aria-label={t("Valor (R$)", "Price", "Valor")} value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal" placeholder="150" className="h-9 mt-1" />
           </div>
           <div>
             <Label className="text-xs">{t("Cobrança", "Billing", "Cobro")}</Label>
