@@ -344,6 +344,13 @@
       "when": 1792956897196,
       "tag": "0048_clinic_role_weighted_credits_and_seats",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1792958674981,
+      "tag": "0049_ai_credit_rollout_preparation",
+      "breakpoints": true
     }
   ]
 }
