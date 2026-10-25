@@ -15,3 +15,10 @@
 
 ## Próxima rodada
 - [ ] Editor de catálogo de serviços para PRO autônomo (schema/loader já suportam).
+
+## Ajustes solicitados agora
+- [ ] Abandono silencioso: rolagem e descarte persistente.
+- [ ] Adesão: conferir check-ins de Francisco e Fabio e inclusão na lista.
+- [ ] Frequência: comparar somente oportunidades decorridas no mês.
+- [ ] Financeiro: detalhar pacientes, dias, horários e valores de LTV/cadeira vazia.
+- [ ] Testes, validação autenticada e ajuda pt/en/es.
