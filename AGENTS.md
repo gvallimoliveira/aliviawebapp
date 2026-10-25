@@ -4,22 +4,22 @@
 - Check-in reopening locks existing patient/day readiness until explicit editing; the existing unique patient/date upsert keeps one daily response. Dose displays retain perceived load for zero-target sessions without inventing a target or adherence verdict.
 - Record-summary alerts preserve assessment-specific dismissal audits across history; health caveats reuse healthHistory formatting and Saúde geral recency (latest day, manual precedence) without new risk calculations or AI.
 - Record-summary STEPS uses the fetched plan status: completed means discharge before any macro-cycle fallback, so insight and record discharge decisions remain consistent without rewriting history.
-- Clinic demos scope fixtures by viewer; local load adapters reuse real math, never live writes/AI. Load scenarios bind to the displayed latest assessment, including safety; unmatched IDs stay empty.
+- Clinic demos use viewer-scoped fixtures and real local math, never live writes/AI; scenarios match the latest assessment and safety, otherwise stay empty.
 
-- Cardiovascular views refresh demographics via `usePatientBirthDate` after edits/refocus; keep estimates fresh and unsaved inputs intact.
+- Cardiovascular views refresh via `usePatientBirthDate` on edits/refocus, preserving unsaved inputs.
 - Cardiovascular ceiling reminders combine the record's assessments and ID/email-linked dated health records via `usePatientCardioHealth`; structured conditions never auto-select a clinician profile, infer control, or fabricate an age-based ceiling.
 
 - Aliv.iA/Studio copy uses canonical `aliviaDifferentials.ts` IDs; handoff copy must not duplicate features or imply duplicate entry.
 - Manual assessment and record share diagnosis.clinicalImpression; sync saved updates and regenerate only on request to avoid duplicate credits.
 - Patient record paired sections use the shared native horizontal row; this preserves form behavior and lets section shortcuts reveal horizontally hidden content.
 - Patient regional pain charts and comparisons share one chronological data helper; explicit regional measurements must never be replaced by an invented regional score from a multi-region global average.
-- HEP dose metrics use only `hepLoad.ts` to keep the panel and microcycle consistent.
+- HEP dose metrics use only `hepLoad.ts` for panel/microcycle consistency.
 - Professional sessions use only `saveProfessionalSession` in `periodizationData.ts`: merge same-date/track check-ins and link plans to avoid duplicate load. TRIMP/sRPE math stays in `cardioLoad.ts`.
 - "Today" in load control is always the local/Brazil calendar date (`localISODate` client-side, America/Sao_Paulo in the check-in function), never `toISOString()`; UTC rolls to tomorrow after 21h in Brazil.
 - Dose adherence (`adherenceByTrack`) counts only sessions up to local today with sRPE; unanswered/upcoming never count as underdose nor push alerts. Patient sRPE: today + 7 prior days, server-enforced.
 - Weekly dose display derives full-week targets and recorded-to-date totals separately from answered-session adherence, with answered/scheduled counts per track; this preserves partial comparison and chart semantics without turning future or unanswered work into underdose.
 - Load-control views use `loadWindows.ts` (3-day lists, 7-day charts, fallback to latest data); full history on demand in `LoadHistoryDialog`, never deleted; risk math ignores display windows.
-- Patient record content insets by the fixed `PatientSectionRail` width; avoids covered titles.
+- Inset record content by `PatientSectionRail` width to uncover titles.
 - Cardiovascular metrics, goals, distributions, trends, readings and both PDFs derive only from pure `cardioAnalysis.ts`; keep panel and reports consistent without AI credits.
 - Athlete/active PDF priorities and descriptive summaries use `cardioReportSections` in `cardioAnalysis.ts`; WHO remains secondary and presentation changes never alter load or safety calculations.
 - Cardiovascular educational copy is shared through `cardioEducation.ts` by the information dialog and PDFs; profile references must remain distinct from universal safety limits and unmeasured respiratory targets.
@@ -28,7 +28,7 @@
 - Load control has one session-entry path (monitored-session block + microcycle shortcut); the load card is read-only plus manual check-in, and cardio analysis appears only when HR data exists.
 - Load-control "Conduta do dia" derives only from `dailyConduct.ts` (safety → recovery → yesterday/effort coherence → ACWR trend); one deterministic priority order keeps the top recommendation consistent and works with a single check-in.
 - Cardiorespiratory functional tests (TSL 1-min, TC6M, TD6M) are interpreted only by the pure `cardioFunctionalTests.ts`; deterministic rules keep the record, sheet and future reports consistent without AI credits.
-- Subdirectories may have their own AGENTS.md; read it before changing files there.
+- Read nested AGENTS.md before editing its directory.
 - Patient links use ClinicBrandHeader/scoped clinicAssessmentTheme, including WelcomeStep. PDFs share section renderers, resolveAssessmentBranding and per-document applyPdfBranding; preserve warnings and clinic isolation.
 - HEP programs persist clinic_id at creation; public branding resolves only through the valid program token, never by guessing a clinic from the professional.
 
@@ -48,4 +48,5 @@
 
 - Adherence links readiness by scoped patient ID (email-less identities use patient:<id>), normalizes only available channels, retains 60-day check-in participants and measures a 14-day window; all ranked patients remain searchable. Frequency uses elapsed month-to-date days from the later of registration/first session; financial drilldowns reuse the same scoped appointments and price resolver as totals.
 - Patient appointment requests live in `appointment_requests`, created/approved/dismissed only via RPCs that validate patient linkage and staff (owner/admin/secretary or solo PRO) server-side; approval inserts the real appointment, so agenda metrics never count pending requests. Push recipients for requests are resolved server-side from the request row.
-- Announcements: scope-global, server-side lists, staff via can_handle_appointment_request, push recipients resolved server-side; prevents cross-scope leaks.
+- Announcements use scoped server lists, can_handle_appointment_request and server-resolved push recipients.
+- Agenda uses latestRequest to reject stale date/viewport/scope results. ClinicServicesCard shares catalog editing; explicit professional scope overrides clinic context to isolate solo services.
