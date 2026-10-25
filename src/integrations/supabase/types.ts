@@ -5498,10 +5498,12 @@ export type Database = {
         Returns: {
           confidence: string
           current_pain: number
+          factors: Json
           initial_pain: number
           patient_email: string
           patient_name: string
           professional_id: string
+          progress_pct: number
           sessions_done: number
           sessions_remaining: number
           weeks_estimate: number
@@ -5621,9 +5623,8 @@ export type Database = {
         Args: { _clinic_id?: string; _professional_id?: string }
         Returns: {
           attendance_pct: number
-          diary_pct: number
+          checkin_pct: number
           exercises_pct: number
-          messages_pct: number
           patient_email: string
           patient_name: string
           score: number
