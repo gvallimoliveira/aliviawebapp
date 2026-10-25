@@ -41,7 +41,7 @@ const categories: ToolCategory[] = [
     items: [{
       key: "care_services", icon: ClipboardList,
       title: "Serviços disponíveis para agendamento",
-      desc: "Na clínica, abra Clínica → Equipe → Serviços e valores (dono/admin). No PRO autônomo, abra Pacientes → Serviços e valores. Somente os serviços ativos do perfil escolhido ficam disponíveis ao paciente vinculado. Ele solicita data, hora e serviço; a equipe define a duração ao confirmar. A solicitação pode ser confirmada ou reagendada e só entra na agenda após aprovação.",
+      desc: "Na clínica (dono/admin) e no PRO autônomo, abra Insights → Operação → Serviços e valores. Analise as solicitações de agendamento na aba Agenda. Somente os serviços ativos do perfil escolhido ficam disponíveis ao paciente vinculado. Ele solicita data, hora e serviço; a equipe define a duração ao confirmar. A solicitação pode ser confirmada ou reagendada e só entra na agenda após aprovação.",
     }],
   },
   {
