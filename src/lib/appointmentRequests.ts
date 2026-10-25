@@ -10,6 +10,8 @@ export interface AppointmentRequest {
   patient_phone: string | null;
   clinic_id: string | null;
   professional_id: string | null;
+  service_id: string | null;
+  service_name?: string | null;
   requested_date: string;
   requested_time: string | null;
   requested_period: RequestPeriod | null;
