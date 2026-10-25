@@ -288,16 +288,11 @@ const ClinicTeamManagement = () => {
                    <SelectValue />
                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="owner">{roleLabels.owner[lang]}</SelectItem>
-                    <SelectItem value="admin">{roleLabels.admin[lang]}</SelectItem>
-                    <SelectItem value="therapist">{roleLabels.therapist[lang]}</SelectItem>
-                    <SelectItem value="intern">{roleLabels.intern[lang]}</SelectItem>
-                    <SelectItem value="secretary">{roleLabels.secretary[lang]}</SelectItem>
-                    <SelectItem value="osteopath">{roleLabels.osteopath[lang]}</SelectItem>
-                    <SelectItem value="pilates_instructor">{roleLabels.pilates_instructor[lang]}</SelectItem>
-                    <SelectItem value="doctor">{roleLabels.doctor[lang]}</SelectItem>
-                    <SelectItem value="rpg_specialist">{roleLabels.rpg_specialist[lang]}</SelectItem>
-                    <SelectItem value="massage_therapist">{roleLabels.massage_therapist[lang]}</SelectItem>
+                    {(["owner","admin","therapist","intern","secretary","osteopath","pilates_instructor","doctor","rpg_specialist","massage_therapist"] as ClinicRole[]).map((r) => (
+                      <SelectItem key={r} value={r} disabled={isSec(r) ? secretaryFull : clinicalFull}>
+                        {roleLabels[r][lang]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                </Select>
              </div>
