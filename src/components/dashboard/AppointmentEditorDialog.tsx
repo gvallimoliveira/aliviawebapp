@@ -207,6 +207,21 @@ const AppointmentEditorDialog = ({
   const [formServiceId, setFormServiceId] = useState<string>(initialApt?.service_id ?? "__none__");
   const [careServices, setCareServices] = useState<CareServiceOption[]>([]);
   const [formNotes, setFormNotes] = useState(initialApt?.notes ?? "");
+
+  // Catálogo de serviços do escopo (define o valor nas métricas financeiras).
+  useEffect(() => {
+    if (isSimulated || (!clinicId && !professionalId)) return;
+    let alive = true;
+    (async () => {
+      let q = (supabase.from("care_services" as any) as any)
+        .select("id, name, price, billing_type").eq("active", true).order("name");
+      if (clinicId) q = q.eq("clinic_id", clinicId);
+      else q = q.eq("professional_id", professionalId).is("clinic_id", null);
+      const { data } = await q;
+      if (alive && Array.isArray(data)) setCareServices(data);
+    })();
+    return () => { alive = false; };
+  }, [clinicId, professionalId, isSimulated]);
   const [formCpf, setFormCpf] = useState("");
   const [formBirthDate, setFormBirthDate] = useState("");
   const [formPhone, setFormPhone] = useState("");
