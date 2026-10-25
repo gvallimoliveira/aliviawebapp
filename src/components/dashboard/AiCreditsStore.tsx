@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSearchParams } from "react-router-dom";
+import { AI_CREDIT_REFRESH } from "@/lib/aiCreditPolicy";
 import { ENABLE_CHAT_ADDON } from "@/lib/featureFlags";
 import {
   Dialog,
@@ -74,6 +75,7 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
       setSearchParams(next, { replace: true });
     }
     if (status === "success") {
+      window.dispatchEvent(new Event(AI_CREDIT_REFRESH));
       toast({
         title: isPt ? "✨ Pagamento confirmado!" : "✨ Payment confirmed!",
         description: isPt
@@ -284,8 +286,8 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
 
         <p className="text-[11px] text-muted-foreground leading-snug">
           {isPt
-            ? "Os pacotes são um complemento pontual da sua assinatura (60 créditos/mês inclusos, 72 no anual). Para uso recorrente alto, a assinatura continua sendo a opção mais econômica."
-            : "Packs are a top-up on your subscription (60 credits/month included, 72 on annual). For consistently high usage, the subscription remains the cheapest option."}
+            ? "Pacotes complementam o saldo do seu perfil ou da clínica. Parceiros recebem 25 créditos gratuitos por mês e também podem comprar pacotes."
+            : "Packs top up your profile or clinic balance. Partners receive 25 free credits monthly and can also buy packs."}
         </p>
 
 

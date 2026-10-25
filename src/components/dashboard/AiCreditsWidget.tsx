@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Info, Wallet, Infinity as InfinityIcon, AlertTriangle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import AiCreditsStore from "./AiCreditsStore";
+import { AI_CREDIT_REFRESH, graceRatio } from "@/lib/aiCreditPolicy";
 
 interface UsageRow {
   function_name: string;
@@ -16,6 +17,11 @@ interface UsageRow {
 }
 
 interface CreditStatus {
+  grace_ratio?: number;
+  hard_enabled?: boolean;
+  can_buy?: boolean;
+  clinical_members?: number;
+  secretary_members?: number;
   tier: string;
   is_partner: boolean;
   unlimited: boolean;
@@ -37,6 +43,7 @@ interface CreditStatus {
 }
 
 const TIER_LABEL: Record<string, { pt: string; en: string }> = {
+  partner: { pt: "Parceiro Aliv.iA", en: "Aliv.iA partner" },
   unlimited: { pt: "Acesso ilimitado", en: "Unlimited access" },
   pro_monthly: { pt: "Plano Profissional", en: "Professional plan" },
   pro_annual: { pt: "Plano Profissional Anual", en: "Professional (annual)" },
@@ -65,7 +72,7 @@ const AiCreditsWidget = () => {
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
-    (async () => {
+    const load = async () => {
       setLoading(true);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,8 +118,13 @@ const AiCreditsWidget = () => {
         setClinicRole(role);
         setLoading(false);
       }
-    })();
+    };
+    void load();
+    const timer = window.setInterval(() => { if (!document.hidden) void load(); }, 15000);
+    window.addEventListener(AI_CREDIT_REFRESH, load);
     return () => {
+      clearInterval(timer);
+      window.removeEventListener(AI_CREDIT_REFRESH, load);
       cancelled = true;
     };
   }, [user?.id]);
@@ -140,7 +152,7 @@ const AiCreditsWidget = () => {
 
   const unlimited = !!status?.unlimited;
   // In a clinic, only the owner/admin manages purchases; staff never see the store.
-  const canBuy = !status?.clinic_id || clinicRole === "owner" || clinicRole === "admin";
+  const canBuy = status?.can_buy ?? (!status?.clinic_id || clinicRole === "owner" || clinicRole === "admin");
   const included = status?.included ?? 0;
   const purchased = status?.purchased ?? 0;
   const pooled = !!status?.pooled;
@@ -154,8 +166,9 @@ const AiCreditsWidget = () => {
   const trailing30 = status?.trailing_30d_used ?? 0;
   const suspiciousZero = !loading && !!status && used === 0 && trailing30 > 0;
   const remaining = Math.max(included - used, 0);
-  const pct = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : (status?.pct ?? 0);
+  const pct = included > 0 ? Math.floor((used / included) * 100) : (status?.pct ?? 0);
 
+  const buffer = Math.round(((status?.grace_ratio ?? graceRatio(status?.tier ?? "", pooled)) - 1) * 100);
   const daysToReset = status?.period_end
     ? Math.max(0, Math.ceil((new Date(status.period_end).getTime() - Date.now()) / 86400000))
     : null;
@@ -239,8 +252,8 @@ const AiCreditsWidget = () => {
             {pooled && (
               <p className="text-[11px] text-muted-foreground">
                 {isPt
-                  ? `Cota agregada da equipe: ${perMember} créditos × ${clinicMembers} ${clinicMembers === 1 ? "terapeuta" : "terapeutas"} = ${included} créditos compartilhados no mês.`
-                  : `Team-wide pooled quota: ${perMember} credits × ${clinicMembers} ${clinicMembers === 1 ? "therapist" : "therapists"} = ${included} shared credits this month.`}
+                  ? `Saldo compartilhado: ${status?.clinical_members ?? clinicMembers} clínicos × ${perMember} + ${status?.secretary_members ?? 0} secretárias × ${perMember / 2} = ${included} créditos/mês.`
+                  : `Shared balance: ${status?.clinical_members ?? clinicMembers} clinicians × ${perMember} + ${status?.secretary_members ?? 0} secretaries × ${perMember / 2} = ${included} credits/month.`}
               </p>
             )}
             <div className="flex items-end justify-between gap-2">
@@ -297,58 +310,15 @@ const AiCreditsWidget = () => {
                 <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
                 <p className="text-[11px] leading-relaxed text-destructive-foreground/90">
                   {isPt
-                    ? pooled && pct < 120
-                      ? `Cota do mês atingida (${pct.toFixed(0)}%). A clínica está na carência de 20% — a equipe continua usando IA normalmente até 120% da cota.`
-                      : purchased > 0
-                        ? `Cota do mês atingida (${pct.toFixed(0)}%). Seu saldo de pacotes (${purchased} créditos) está cobrindo o uso a partir de agora.`
-                        : `Cota do mês atingida (${pct.toFixed(0)}%). Sem saldo de pacotes, as funções de IA podem pausar até a renovação. Você pode comprar um pacote abaixo.`
-                    : pooled && pct < 120
-                      ? `Monthly quota reached (${pct.toFixed(0)}%). The clinic is inside the 20% grace buffer — the team keeps using AI up to 120% of the quota.`
-                      : purchased > 0
-                        ? `Monthly quota reached (${pct.toFixed(0)}%). Your pack balance (${purchased} credits) is covering usage from now on.`
-                        : `Monthly quota reached (${pct.toFixed(0)}%). With no pack balance, AI features may pause until renewal. You can buy a pack below.`}
+                    ? `Cota mensal atingida. ${buffer ? `Margem de continuidade: ${buffer}%. ` : ""}${status?.hard_enabled ? "Após a margem, o uso depende de pacotes ou renovação." : "Nenhum bloqueio está ativo; o uso continua normalmente."}`
+                    : `Monthly allowance reached. ${buffer ? `Continuity buffer: ${buffer}%. ` : ""}${status?.hard_enabled ? "After the buffer, use requires packs or renewal." : "No blocking is active; usage continues normally."}`}
 
                 </p>
               </div>
             )}
-            {/* Como funcionam os limites */}
-            <div className="rounded-md border border-border bg-background/60 p-2 space-y-1">
-              <p className="text-[11px] font-medium text-foreground">
-                {isPt ? "Como funcionam os limites" : "How the limits work"}
-              </p>
-              <ul className="text-[11px] text-muted-foreground leading-relaxed list-disc pl-4 space-y-0.5">
-                <li>
-                  {isPt
-                    ? `Seu plano inclui ${included} créditos por mês${pooled ? " para toda a equipe" : ""}, renovados${daysToReset !== null ? ` em ${daysToReset} ${daysToReset === 1 ? "dia" : "dias"}` : " todo mês"}.`
-                    : `Your plan includes ${included} credits per month${pooled ? " for the whole team" : ""}, renewing${daysToReset !== null ? ` in ${daysToReset} ${daysToReset === 1 ? "day" : "days"}` : " every month"}.`}
-                </li>
-                <li>
-                  {isPt
-                    ? "Ao chegar em 80%, mostramos um aviso amarelo aqui — só para você se organizar. Nada é bloqueado."
-                    : "At 80% we show an amber warning here — just so you can plan ahead. Nothing is blocked."}
-                </li>
-                <li>
-                  {isPt
-                    ? pooled
-                      ? "Se a equipe passar do incluso, a clínica tem uma carência de 20% (até 120% da cota) para não interromper atendimento. Avisamos o dono da clínica quando isso acontece."
-                      : "Se a cota acabar, o saldo de pacotes que você já comprou é consumido automaticamente. Não fazemos nenhuma cobrança automática no cartão — a compra é sempre manual, por você."
-                    : pooled
-                      ? "If the team goes over, the clinic gets a 20% grace buffer (up to 120% of the quota) so care isn't interrupted. We notify the clinic owner when that happens."
-                      : "If the quota runs out, credits from packs you already bought are used automatically. We never charge your card automatically — purchases are always manual."}
-                </li>
-                <li>
-                  {isPt
-                    ? pooled
-                      ? "Depois da carência, o excedente consome o saldo de pacotes da clínica. Sem saldo, as funções de IA pausam até a renovação — nunca cobramos o cartão automaticamente."
-                      : "Sem saldo de pacote, as funções de IA pausam até a renovação (soft-block) — o restante do app continua funcionando normalmente."
-                    : pooled
-                      ? "After the grace buffer, usage draws from the clinic's purchased pack balance. With no balance, AI features pause until renewal — we never charge the card automatically."
-                      : "With no pack balance left, AI features pause until renewal (soft-block) — the rest of the app keeps working normally."}
-                </li>
-
-
-              </ul>
-            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              {isPt ? `Renovação${daysToReset !== null ? ` em ${daysToReset} dias` : " mensal"}. Pacotes valem 12 meses e são consumidos após a cota e a margem. Compra sempre manual, sem cobrança automática. ${status?.hard_enabled ? "Limite ativo para este perfil." : "Bloqueios desligados para este perfil."}` : `Renewal${daysToReset !== null ? ` in ${daysToReset} days` : " monthly"}. Packs last 12 months and are used after the allowance and buffer. Purchases are manual, never automatic. ${status?.hard_enabled ? "Limits active for this profile." : "Blocking disabled for this profile."}`}
+            </p>
           </div>
         )}
 
