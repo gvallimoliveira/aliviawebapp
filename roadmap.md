@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Organização do perfil pessoal do paciente
-- [ ] Separar rotina diária e evolução para pacientes vinculados, reunir avisos e mensagens e preservar o autoatendimento.
-- [ ] Atualizar ajuda pt/en/es e verificar navegação, links antigos e apresentação no celular/computador.
+- [x] Rotina em Hoje, histórico em Minha Evolução, Agenda preservada e Mensagens & Avisos reunidos; vínculo determinado pelas consultas existentes, ofertas fora do topo e indicação recolhida.
+- [x] Ajuda pt/en/es atualizada; 12 testes passaram, build OK. Perfil real autenticado: Hoje → Evolução → Agenda → Avisos → abertura do check-in conferidos no celular/computador sem erros ou sobreposição; links antigos health/notices conferidos. Nenhuma resposta clínica alterada. Conta sem HEP ativo, avisos ou agendamentos: execução/gravação desses recursos não repetida; componentes e permissões existentes preservados.
 
 ## Organização dos pacientes na clínica
 - [x] Totais e relatório movidos para o registro Resumo dos Insights; lista sem métricas/status duplicados. Cálculos e acessos mantidos, ajuda pt/en/es atualizada. Percurso autenticado Pacientes → Insights → Resumo conferido no desktop/celular com dados reais; oito testes passaram e build OK.
