@@ -213,3 +213,52 @@ describe("evolução registrada conta como sessão realizada", () => {
     expect(merged.some((m) => m.id === "note:b@x.com|2026-10-21" && m.status === "completed")).toBe(true);
   });
 });
+
+describe("cancelamento tardio (rodada 2)", () => {
+  it("slot sem hora não finge antecedência; janela segue a data do cancelamento", () => {
+    const r = lateCancellations([
+      ap({ status: "cancelled", appointment_date: "2026-10-20", appointment_time: null, status_changed_at: "2026-10-20T08:00:00Z" }),
+      ap({ status: "cancelled", appointment_date: "2026-11-05", appointment_time: "10:00", status_changed_at: "2026-10-23T10:30:00Z" }), // cancelado na janela, slot fora
+      ap({ status: "cancelled", appointment_date: "2026-10-22", appointment_time: "10:00", status_changed_at: "2026-10-22T09:00:00Z" }), // 1h antes → tardio
+    ], today, 7);
+    expect(r.total).toBe(3);
+    expect(r.unknown).toBe(1);
+    expect(r.early).toBe(1);
+    expect(r.late).toBe(1);
+    expect(r.lateRate).toBe(50);
+  });
+});
+
+describe("sem próximo horário (rodada 2)", () => {
+  it("usa o nome da sessão mais recente e resolve nome pelo cadastro quando só há evolução", () => {
+    const rows = leakageNoNextAppointment([
+      ap({ patient_email: "a@x.com", patient_name: "Ana A.", appointment_date: "2026-10-01" }),
+      ap({ patient_email: "a@x.com", patient_name: "Ana Souza", appointment_date: "2026-10-15" }),
+      ap({ patient_email: "b@x.com", patient_name: null, appointment_date: "2026-10-10" }),
+    ], new Set(), today, 60, [{ id: "p1", full_name: "Bruno Lima", email: "b@x.com", created_at: "2026-01-01" }]);
+    expect(rows.find((r) => r.key === "a@x.com")?.name).toBe("Ana Souza");
+    expect(rows.find((r) => r.key === "b@x.com")?.name).toBe("Bruno Lima");
+  });
+});
+
+describe("gargalo de capacidade (rodada 2)", () => {
+  it("solo (capacidade 1) não infla saturação; ocupação usa os horários possíveis", () => {
+    // 5 dias úteis na janela de 7d, 10h/dia possíveis → 50 slots; 2 usados
+    const r = capacityBottleneck([
+      ap({ appointment_date: "2026-10-20", appointment_time: "09:00", status: "scheduled" }),
+      ap({ appointment_date: "2026-10-21", appointment_time: "10:00", status: "completed" }),
+    ], 1, null, today, 7, { start: "08:00", end: "18:00", workingDays: [1, 2, 3, 4, 5] });
+    expect(r.possible).toBe(50);
+    expect(r.used).toBe(2);
+    expect(r.occupancy).toBe(4);
+  });
+  it("clínica com 2 terapeutas e 1 maca satura só com 2 reservas simultâneas... capacidade = min", () => {
+    const r = capacityBottleneck([
+      ap({ appointment_date: "2026-10-20", appointment_time: "09:00" }),
+      ap({ appointment_date: "2026-10-20", appointment_time: "09:00", patient_email: "b@x.com", professional_id: "t2" }),
+    ], 2, 1, today, 7);
+    expect(r.capacity).toBe(1);
+    expect(r.saturated).toBe(1);
+    expect(r.index).toBe(100);
+  });
+});
