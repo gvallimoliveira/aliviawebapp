@@ -46,10 +46,31 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { data: clinics } = await supabaseAdmin
+    let { data: clinics } = await supabaseAdmin
       .from("clinics")
       .select("*")
       .eq("owner_user_id", user.id);
+
+    // Self-heal: paid clinic subscription in Stripe but no clinic row
+    // (webhook missed/failed). Provision idempotently from Stripe data.
+    if (!clinics || clinics.length === 0) {
+      try {
+        const healed = await selfHealClinic(supabaseAdmin, user.id, user.email);
+        if (healed) {
+          logStep("Self-heal provisioned clinic", { clinicId: healed });
+          await supabaseAdmin.from("subscription_admin_actions").insert({
+            action: "clinic_self_heal_provision",
+            target_email: user.email,
+            target_user_id: user.id,
+            details: { clinic_id: healed },
+          }).then(() => {}, () => {});
+          ({ data: clinics } = await supabaseAdmin
+            .from("clinics").select("*").eq("owner_user_id", user.id));
+        }
+      } catch (e) {
+        logStep("Self-heal failed", { message: e instanceof Error ? e.message : String(e) });
+      }
+    }
 
     if (!clinics || clinics.length === 0) {
       // Also check if user is a member of any clinic
