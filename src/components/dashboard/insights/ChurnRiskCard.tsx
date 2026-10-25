@@ -4,15 +4,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, Loader2, MessageCircle, CalendarPlus, RotateCcw } from "lucide-react";
+import { AlertTriangle, Loader2, MessageCircle, CalendarPlus, RotateCcw, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import InsightCardShell from "./InsightCardShell";
+import { useInsightDismissals } from "./useInsightDismissals";
 import { useInsightPrefs } from "./useInsightPreferences";
 
 interface Props {
   clinicId?: string;
   professionalId?: string;
+  dismissForTeam?: boolean;
 }
 
 interface ChurnRow {
@@ -39,7 +41,7 @@ const DEFAULTS = {
   painStagnationWeeks: 3,
 };
 
-const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
+const ChurnRiskCard = ({ clinicId, professionalId, dismissForTeam }: Props) => {
   const [rows, setRows] = useState<ChurnRow[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -63,9 +65,11 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
     return () => { cancelled = true; };
   }, [clinicId, professionalId]);
 
+  const { dismissed, dismiss, restoreAll } = useInsightDismissals("churn", clinicId ?? professionalId, dismissForTeam);
+  const hidden = rows.filter((r) => r.score >= prefs.minScore && dismissed.has(r.patient_email)).length;
   const filtered = useMemo(
-    () => rows.filter((r) => r.score >= prefs.minScore),
-    [rows, prefs.minScore]
+    () => rows.filter((r) => r.score >= prefs.minScore && !dismissed.has(r.patient_email)),
+    [rows, prefs.minScore, dismissed]
   );
 
   const infoContent = (
@@ -166,7 +170,7 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
       }
       infoContent={infoContent}
     >
-      <div className="space-y-2">
+      <div className="max-h-[320px] overflow-y-auto overscroll-contain space-y-2" aria-label={lang === "pt" ? "Pacientes em risco" : "Patients at risk"} tabIndex={0}>
         {loading ? (
           <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
         ) : filtered.length === 0 ? (
@@ -174,7 +178,7 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
             {lang === "pt" ? "Nenhum paciente em risco no momento ✨" : lang === "es" ? "Sin pacientes en riesgo ✨" : "No patients at risk ✨"}
           </p>
         ) : (
-          filtered.slice(0, 10).map((r) => (
+          filtered.map((r) => (
             <div key={r.patient_email} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-background">
               <Badge variant="outline" className={`shrink-0 px-2 py-1 text-xs font-bold ${scoreColor(r.score)}`}>
                 {r.score}
@@ -195,6 +199,7 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
                 )}
               </div>
               <div className="flex gap-1 shrink-0">
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => dismiss(r.patient_email)} aria-label={lang === "pt" ? "Descartar paciente da listagem" : "Dismiss patient"} title={lang === "pt" ? "Descartar paciente da listagem" : "Dismiss patient"}><X className="h-3 w-3" /></Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -218,6 +223,7 @@ const ChurnRiskCard = ({ clinicId, professionalId }: Props) => {
           ))
         )}
       </div>
+      {hidden > 0 && <Button variant="link" size="sm" onClick={restoreAll}>{hidden} {lang === "pt" ? "oculto(s) · restaurar" : lang === "es" ? "ocultos · restaurar" : "hidden · restore"}</Button>}
     </InsightCardShell>
   );
 };

@@ -18,6 +18,7 @@ type L = "pt" | "en" | "es";
 const useL = () => useLanguage().language as L;
 const tr = (l: L, pt: string, en: string, es: string) => (l === "pt" ? pt : l === "es" ? es : en);
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const dateLabel = (date: string) => date.split("-").reverse().join("/");
 
 const PERIODS = [30, 90, 180];
 export function PeriodPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -54,7 +55,8 @@ export const Info = ({ children }: { children: React.ReactNode }) => <div classN
 export function LtvCard({ d }: { d: ManagementData }) {
   const l = useL();
   const priceOf = usePriceOf(d);
-  const r = useMemo(() => clinicalLtv(closedCycles(d.appts, d.dischargedKeys, d.today, priceOf), d.price), [d, priceOf]);
+  const cycles = useMemo(() => closedCycles(d.appts, d.dischargedKeys, d.today, priceOf), [d, priceOf]);
+  const r = useMemo(() => clinicalLtv(cycles, d.price), [cycles, d.price]);
   return (
     <InsightCardShell id="mgmt-ltv" icon={<Gem className="h-4 w-4 text-primary" />} title={tr(l, "LTV clínico", "Clinical LTV", "LTV clínico")}
       description={tr(l, "Valor médio gerado por paciente em ciclos encerrados (12 meses)", "Average value per patient in closed cycles (12 months)", "Valor medio por paciente en ciclos cerrados (12 meses)")}
@@ -70,6 +72,12 @@ export function LtvCard({ d }: { d: ManagementData }) {
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="rounded-lg border border-border p-2"><p className="text-muted-foreground">{tr(l, "Com alta", "Discharged", "Con alta")} · {r.discharge.patients}</p><p className="font-semibold text-primary">{brl(r.discharge.avgValue)} · {r.discharge.avgSessions} {tr(l, "sessões", "sessions", "sesiones")}</p></div>
               <div className="rounded-lg border border-border p-2"><p className="text-muted-foreground">{tr(l, "Evasão", "Dropout", "Abandono")} · {r.dropout.patients}</p><p className="font-semibold text-destructive">{brl(r.dropout.avgValue)} · {r.dropout.avgSessions} {tr(l, "sessões", "sessions", "sesiones")}</p></div>
+            </div>
+            <div className="max-h-[280px] overflow-y-auto divide-y divide-border" tabIndex={0}>
+              {cycles.map((c) => <details key={c.key} className="py-2 text-xs">
+                <summary className="cursor-pointer"><span className="font-medium">{d.patients.find((p) => p.email?.trim().toLowerCase() === c.key)?.full_name || c.name}</span> · {brl(c.value ?? c.sessions * d.price)}<span className="block text-muted-foreground">{c.sessions} {tr(l, "sessões", "sessions", "sesiones")} · {c.outcome === "discharge" ? tr(l, "Alta", "Discharge", "Alta") : tr(l, "Evasão", "Dropout", "Abandono")} · {dateLabel(c.lastDate)}</span></summary>
+                <div className="mt-2 space-y-2 pl-3">{c.appointments?.map((a) => <div key={a.id} className="flex gap-2 justify-between"><span className="text-muted-foreground">{dateLabel(a.appointment_date)} · {a.appointment_time?.slice(0, 5) || tr(l, "Horário não registrado", "Time not recorded", "Hora no registrada")}<span className="block">{d.services.find((s) => s.id === a.service_id)?.name || tr(l, "Preço padrão", "Default price", "Precio estándar")}</span></span><span className="shrink-0">{brl(priceOf(a))}</span></div>)}</div>
+              </details>)}
             </div>
           </div>
         )}
@@ -91,7 +99,7 @@ export function EmptyChairCard({ d }: { d: ManagementData }) {
     <InsightCardShell id="mgmt-empty-chair" icon={<Armchair className="h-4 w-4 text-destructive" />} title={tr(l, "Custo da cadeira vazia", "Empty-chair cost", "Costo de la silla vacía")}
       rightSlot={<PeriodPicker value={days} onChange={setDays} />}
       description={tr(l, "Receita perdida com faltas e cancelamentos", "Revenue lost to no-shows and cancellations", "Ingresos perdidos por faltas y cancelaciones")}
-      infoContent={<Info><p>{tr(l, "Faltas (inclusive justificadas) + cancelamentos × preço padrão. Compromissos pessoais não entram.", "No-shows (incl. justified) + cancellations × default price. Personal commitments excluded.", "Faltas + cancelaciones × precio estándar. Compromisos personales excluidos.")}</p></Info>}>
+      infoContent={<Info><p>{tr(l, "Faltas (inclusive justificadas) e cancelamentos usam o preço do serviço ou o padrão. Mensalidades não geram perda adicional por falta. Valores estimados, não um registro de cobrança; compromissos pessoais não entram.", "No-shows and cancellations use the service or default price. Monthly fees incur no extra lost revenue per missed slot. Estimated values, not billing records; personal commitments excluded.", "Faltas y cancelaciones usan el precio del servicio o estándar. Planes mensuales no generan pérdida adicional por falta. Valores estimados, no cobros; compromisos personales excluidos.")}</p></Info>}>
       <Wrap d={d} needsPrice>
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
@@ -116,6 +124,9 @@ export function EmptyChairCard({ d }: { d: ManagementData }) {
               {r.topHours.length > 0 && <> · {r.topHours.map((h) => `${h.hour} (${h.count})`).join(", ")}</>}
             </p>
           )}
+          {r.details.length > 0 && <div className="max-h-[280px] overflow-y-auto divide-y divide-border" tabIndex={0}>
+            {r.details.map((a) => <div key={a.id} className="flex items-start justify-between gap-2 py-2 text-xs"><div className="min-w-0"><p className="font-medium break-words">{a.patient_name || d.patients.find((p) => p.email?.trim().toLowerCase() === a.patient_email?.trim().toLowerCase())?.full_name || a.patient_email || "—"}</p><p className="text-muted-foreground">{dateLabel(a.appointment_date)} · {a.appointment_time?.slice(0, 5) || tr(l, "Horário não registrado", "Time not recorded", "Hora no registrada")}</p><p className="text-muted-foreground">{a.status === "cancelled" ? tr(l, "Cancelamento", "Cancellation", "Cancelación") : a.status === "no_show_justified" ? tr(l, "Falta justificada", "Justified absence", "Falta justificada") : tr(l, "Falta", "No-show", "Falta")} · {d.services.find((s) => s.id === a.service_id)?.name || tr(l, "Preço padrão", "Default price", "Precio estándar")}</p></div><b className="shrink-0">{brl(a.value)}</b></div>)}
+          </div>}
         </div>
       </Wrap>
     </InsightCardShell>
