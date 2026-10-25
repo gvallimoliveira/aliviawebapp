@@ -57,7 +57,8 @@ const SCHEDULING_OPTIONS = [
 const ClinicFeedback = () => {
   const { clinicId } = useParams();
   const [searchParams] = useSearchParams();
-  const preService = searchParams.get("service") || "";
+  const rawService = searchParams.get("service") || "";
+  const preService = SERVICE_OPTIONS.some((o) => o.value === rawService) ? rawService : "";
   const preProfessionalId = searchParams.get("professional_id") || "";
 
   const [clinic, setClinic] = useState<any>(null);
@@ -67,8 +68,6 @@ const ClinicFeedback = () => {
   const [submitted, setSubmitted] = useState(false);
 
   // Form state
-  const [patientName, setPatientName] = useState("");
-  const [patientEmail, setPatientEmail] = useState("");
   const [serviceType, setServiceType] = useState(preService || "");
   const [serviceAnswers, setServiceAnswers] = useState<Record<string, string>>({});
   const [serviceObs, setServiceObs] = useState("");
@@ -97,8 +96,9 @@ const ClinicFeedback = () => {
       clinic_id: clinicId,
       service_type: serviceType || "fisioterapia",
       professional_id: preProfessionalId || null,
-      patient_name: patientName.trim() || null,
-      patient_email: patientEmail.trim() || null,
+      // Anonymous survey: never collect identity.
+      patient_name: null,
+      patient_email: null,
       service_answers: { ...serviceAnswers, observations: serviceObs },
       professional_answers: { ...proAnswers, observations: proObs },
       clinic_answers: { ...clinicAnswers, observations: clinicObs },
@@ -110,7 +110,7 @@ const ClinicFeedback = () => {
       body: {
         clinic_id: clinicId,
         service_type: serviceType || "fisioterapia",
-        patient_name: patientName.trim() || null,
+        patient_name: null,
       },
     }).catch(() => {});
 
@@ -176,20 +176,7 @@ const ClinicFeedback = () => {
     </div>
   );
 
-  const steps = [
-    // Step 0: Identification
-    <div key="id" className="space-y-4">
-      <h3 className="text-lg font-semibold">Identificação</h3>
-      <div className="space-y-2">
-        <Label>Nome</Label>
-        <Input value={patientName} onChange={(e) => setPatientName(e.target.value)} placeholder="Seu nome" />
-      </div>
-      <div className="space-y-2">
-        <Label>Email</Label>
-        <Input type="email" value={patientEmail} onChange={(e) => setPatientEmail(e.target.value)} placeholder="seu@email.com" />
-      </div>
-    </div>,
-
+  const allSteps = [
     // Step 1: Service selection
     <div key="svc" className="space-y-4">
       <h3 className="text-lg font-semibold">Serviço avaliado</h3>
@@ -255,9 +242,11 @@ const ClinicFeedback = () => {
       />
     </div>,
   ];
+  // Link with a fixed service skips the selection step (locked to that service).
+  const steps = preService ? allSteps.filter((el) => el.key !== "svc") : allSteps;
 
   const canAdvance = () => {
-    if (step === 1 && !serviceType) return false;
+    if (steps[step]?.key === "svc" && !serviceType) return false;
     return true;
   };
 
@@ -272,7 +261,10 @@ const ClinicFeedback = () => {
         )}
         <div>
           <h1 className="text-lg font-bold">{clinic.name}</h1>
-          <p className="text-xs text-muted-foreground">Pesquisa de satisfação</p>
+          <p className="text-xs text-muted-foreground">
+            Pesquisa de satisfação anônima
+            {preService ? ` · ${SERVICE_OPTIONS.find((o) => o.value === preService)?.label}` : ""}
+          </p>
         </div>
       </div>
 
