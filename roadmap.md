@@ -1,5 +1,8 @@
 # Roadmap
 
+## Revisão do suporte do paciente
+- [x] Ajuda específica para check-in, HEP, solicitações e avisos; localização de histórico, diário, comparação, indicação e plano pessoal corrigida em pt/en/es. Guia para PRO e clínica e dúvidas sobre vínculo acrescentados. Tópicos do paciente e da clínica abertos no navegador, sem erros; traduções presentes e build OK. Somente orientações alteradas, sem mudanças de acesso ou dados.
+
 ## Organização do perfil pessoal do paciente
 - [x] Rotina em Hoje, histórico em Minha Evolução, Agenda preservada e Mensagens & Avisos reunidos; vínculo determinado pelas consultas existentes, ofertas fora do topo e indicação recolhida.
 - [x] Ajuda pt/en/es atualizada; 12 testes passaram, build OK. Perfil real autenticado: Hoje → Evolução → Agenda → Avisos → abertura do check-in conferidos no celular/computador sem erros ou sobreposição; links antigos health/notices conferidos. Nenhuma resposta clínica alterada. Conta sem HEP ativo, avisos ou agendamentos: execução/gravação desses recursos não repetida; componentes e permissões existentes preservados.

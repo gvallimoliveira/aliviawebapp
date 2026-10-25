@@ -631,7 +631,7 @@ const ClinicSupport = () => {
                       <CatIcon className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-foreground">{cat.title}</h3>
+                      <h3 className="text-lg font-semibold text-foreground">{cat.items[0]?.key === "patient_daily_care" ? t("clinic.support.patient_profile_category") : cat.title}</h3>
                       <p className="text-sm text-muted-foreground">{cat.items.length} funcionalidades</p>
                     </div>
                     <span className="text-primary text-sm font-medium">{isOpen ? "Fechar" : "Abrir"}</span>
