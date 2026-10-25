@@ -207,11 +207,15 @@ export function RecordComplianceCard({ d, scopeKey, dismissForTeam, showTeam }: 
       infoContent={<Info><p>{tr(l, "Conta a evolução ligada ao atendimento ou ao mesmo paciente no mesmo dia. Sessões com menos de 48h ainda não entram.", "Counts the note linked to the appointment or the same patient/day. Sessions under 48h are not yet counted.", "Cuenta la evolución del turno o del mismo paciente/día. Sesiones con menos de 48h aún no cuentan.")}</p><p>{tr(l, "Use o X para tirar da lista o que já foi resolvido fora do sistema.", "Use X to clear items handled outside the system.", "Use X para quitar lo resuelto fuera del sistema.")}</p></Info>}>
       <Wrap d={d}>
         <div className="space-y-3">
+          {r.rate === null ? (
+            <p className="text-sm text-muted-foreground">{tr(l, "Sem atendimentos para avaliar no período.", "No appointments to evaluate in the period.", "Sin atenciones para evaluar en el período.")}</p>
+          ) : (
           <div className="grid grid-cols-3 gap-2">
             <Stat label={tr(l, "Em dia", "On time", "Al día")} value={`${r.rate}%`} tone={r.rate >= 80 ? "good" : "bad"} />
             <Stat label={tr(l, "Atrasadas", "Late", "Atrasadas")} value={String(r.late)} />
-            <Stat label={tr(l, "Sem evolução", "Missing", "Sin evolución")} value={String(visible.length)} tone={visible.length ? "bad" : undefined} />
+            <Stat label={tr(l, "Pendências", "Pending", "Pendientes")} value={String(visible.length)} tone={visible.length ? "bad" : undefined} />
           </div>
+          )}
           {showTeam && r.byTherapist.length > 1 && (
             <div className="flex flex-wrap gap-1.5">
               {r.byTherapist.map((t) => <span key={t.id} className="text-[11px] rounded-full bg-muted px-2 py-0.5">{d.names[t.id] || "—"}: <b>{t.rate}%</b></span>)}
@@ -221,7 +225,7 @@ export function RecordComplianceCard({ d, scopeKey, dismissForTeam, showTeam }: 
             <div className="max-h-[240px] overflow-y-auto divide-y divide-border/60">
               {visible.map((p) => (
                 <div key={p.id} className="flex items-center gap-2 py-1.5 text-sm">
-                  <div className="flex-1 min-w-0"><p className="truncate">{p.name}</p><p className="text-[11px] text-muted-foreground">{p.date.split("-").reverse().join("/")}{showTeam && p.therapistId ? ` · ${d.names[p.therapistId] || ""}` : ""} · {Math.floor(p.hoursSince / 24)}d</p></div>
+                  <div className="flex-1 min-w-0"><p className="truncate">{p.name}</p><p className="text-[11px] text-muted-foreground">{p.date.split("-").reverse().join("/")}{showTeam && p.therapistId ? ` · ${d.names[p.therapistId] || ""}` : ""} · {Math.floor(p.hoursSince / 24)}d{p.unclassified ? ` · ${tr(l, "horário sem classificação", "slot not classified", "turno sin clasificar")}` : ` · ${tr(l, "sem evolução", "no note", "sin evolución")}`}</p></div>
                   <button type="button" onClick={() => dismiss(p.id)} className="p-1 text-muted-foreground hover:text-foreground"
                     aria-label={dismissForTeam ? tr(l, "Remover para toda a equipe", "Remove for the whole team", "Quitar para todo el equipo") : tr(l, "Remover da lista", "Remove from list", "Quitar de la lista")}><X className="h-3.5 w-3.5" /></button>
                 </div>
