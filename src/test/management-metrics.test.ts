@@ -156,3 +156,60 @@ describe("dependência do titular e gargalo de capacidade", () => {
     expect(r.top[0]).toMatchObject({ weekday: 2, hour: "09", hits: 1 });
   });
 });
+
+describe("prontuário: horário passado sem classificação", () => {
+  it("slot antigo 'scheduled' sem evolução vira pendência e derruba a taxa", () => {
+    const u1 = ap({ id: "u1", status: "scheduled", appointment_date: "2026-10-20", appointment_time: "10:00" });
+    const r = recordCompliance([u1], [], new Date("2026-10-24T12:00:00"), 30);
+    expect(r.pendingCount).toBe(1);
+    expect(r.pending[0].unclassified).toBe(true);
+    expect(r.rate).toBe(0);
+  });
+  it("sem nada para avaliar, a taxa é nula (nunca 100% falso)", () => {
+    const r = recordCompliance([], [], new Date("2026-10-24T12:00:00"), 30);
+    expect(r.rate).toBeNull();
+    expect(r.evaluated).toBe(0);
+  });
+  it("slot não classificado COM evolução no dia não vira pendência", () => {
+    const u1 = ap({ id: "u2", status: "scheduled", appointment_date: "2026-10-20", appointment_time: "10:00" });
+    const r = recordCompliance([u1], [{ patient_email: "a@x.com", session_date: "2026-10-20", created_at: "2026-10-20T15:00:00" }], new Date("2026-10-24T12:00:00"), 30);
+    expect(r.pendingCount).toBe(0);
+  });
+});
+
+describe("serviços e mensalidade diluída", () => {
+  const services = [
+    { id: "s1", name: "Plano mensal", price: 400, billing_type: "monthly" as const },
+    { id: "s2", name: "Avulso", price: 180, billing_type: "per_session" as const },
+  ];
+  it("mensal dilui por sessão realizada no mês; falta não gera valor", () => {
+    const a1 = ap({ service_id: "s1", appointment_date: "2026-10-05" });
+    const a2 = ap({ service_id: "s1", appointment_date: "2026-10-12" });
+    const a3 = ap({ service_id: "s1", status: "no_show", appointment_date: "2026-10-19" });
+    const priceOf = buildPriceResolver([a1, a2, a3], services, 100);
+    expect(priceOf(a1)).toBe(200);
+    expect(priceOf(a2)).toBe(200);
+    expect(priceOf(a3)).toBe(0);
+  });
+  it("serviço avulso sobrepõe o preço padrão; sem serviço usa o padrão", () => {
+    const a1 = ap({ service_id: "s2" });
+    const a2 = ap({});
+    const priceOf = buildPriceResolver([a1, a2], services, 100);
+    expect(priceOf(a1)).toBe(180);
+    expect(priceOf(a2)).toBe(100);
+  });
+});
+
+describe("evolução registrada conta como sessão realizada", () => {
+  it("nota em dia sem atendimento concluído cria sessão; mesmo dia não duplica", () => {
+    const merged = synthesizeNoteSessions(
+      [ap({ id: "1", appointment_date: "2026-10-20" })],
+      [
+        { patient_email: "a@x.com", session_date: "2026-10-20", created_at: "2026-10-20T12:00:00" },
+        { patient_email: "b@x.com", session_date: "2026-10-21", created_at: "2026-10-21T12:00:00" },
+      ]
+    );
+    expect(merged).toHaveLength(2);
+    expect(merged.some((m) => m.id === "note:b@x.com|2026-10-21" && m.status === "completed")).toBe(true);
+  });
+});
