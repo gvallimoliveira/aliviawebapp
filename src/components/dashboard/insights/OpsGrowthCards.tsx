@@ -7,7 +7,7 @@ import { Info, PeriodPicker, Stat, Wrap } from "./ManagementCards";
 import type { ManagementData } from "./useManagementData";
 import {
   frequencyAdherenceGap, referralMix, leakageNoNextAppointment, lateCancellations, ownerDependence, capacityBottleneck,
-  FREQ_GAP_WEEKS, REFERRAL_SOURCES, LATE_CANCEL_HOURS,
+  FREQ_GAP_WEEKS, REFERRAL_SOURCES, LATE_CANCEL_HOURS, buildPriceResolver,
 } from "@/lib/managementMetrics";
 
 type L = "pt" | "en" | "es";
