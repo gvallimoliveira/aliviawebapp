@@ -1,4 +1,6 @@
 {
+  "support.pro.tool.clinic_overview.title": "Resumo da clínica e acesso aos prontuários",
+  "support.pro.tool.clinic_overview.desc": "Na clínica, a aba Pacientes fica focada na lista e nos prontuários. Os totais de profissionais, avaliações e pacientes e o Relatório do Período (30, 60 ou 90 dias) ficam em Insights → Resumo. A distribuição por status permanece nos gráficos dos Insights, sem duplicação na lista. Os acessos da equipe e os cálculos existentes são preservados.",
   "support.pro.tool.care_services.title": "Serviços e solicitações de horário",
   "support.pro.tool.care_services.desc": "No PRO autônomo ou na clínica (dono/admin), abra Insights → Operação → Serviços e valores. As solicitações são analisadas na aba Agenda. Cadastre e ative os serviços que o paciente vinculado poderá selecionar. O paciente solicita data, hora e serviço; a equipe define a duração e pode confirmar ou reagendar. Somente a aprovação cria o compromisso na agenda.",
   "support.pro.faq.profile_isolation.q": "Os dados da clínica aparecem no meu PRO autônomo?",

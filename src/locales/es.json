@@ -1,4 +1,6 @@
 {
+  "support.pro.tool.clinic_overview.title": "Resumen de la clínica e historias clínicas",
+  "support.pro.tool.clinic_overview.desc": "En la clínica, Pacientes se centra en la lista y las historias clínicas. Los totales de profesionales, evaluaciones y pacientes y el Informe del período (30, 60 o 90 días) están en Insights → Resumen. La distribución por estado permanece en los gráficos de Insights, sin duplicarse en la lista. Se conservan los accesos del equipo y los cálculos existentes.",
   "support.pro.tool.care_services.title": "Servicios y solicitudes de citas",
   "support.pro.tool.care_services.desc": "En PRO autónomo o en clínica (dueño/admin), abra Insights → Operación → Servicios y valores. Revise las solicitudes en la pestaña Agenda. Registre y active los servicios que los pacientes vinculados podrán elegir. El paciente solicita fecha, hora y servicio; el equipo define la duración y puede confirmar o reprogramar. Solo la aprobación crea la cita en la agenda.",
   "support.pro.faq.profile_isolation.q": "¿Los datos de la clínica aparecen en mi PRO autónomo?",

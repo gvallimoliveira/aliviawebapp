@@ -35,6 +35,10 @@ type ToolCategory = {
 };
 
 const categories: ToolCategory[] = [
+  { title: "Resumo da clínica", icon: PieChart, items: [{ key: "clinic_overview", icon: BarChart3,
+    title: "Totais e relatório em Insights → Resumo",
+    desc: "A aba Pacientes fica focada na lista e nos prontuários. Os totais de profissionais, avaliações e pacientes e o Relatório do Período (30, 60 ou 90 dias) estão em Insights → Resumo. A distribuição por status permanece nos gráficos dos Insights, sem repetição na lista de pacientes.",
+  }] },
   {
     title: "Serviços e solicitações de horário",
     icon: Calendar,

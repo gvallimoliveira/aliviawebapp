@@ -1,4 +1,5 @@
 # Insight signal architecture
+- Clinic patient-list totals and the existing period report render only in the summary registry entry; the list stays record-focused. Preserve original counts/report math and clinic permissions; status charts remain in the existing Insights analytics, not duplicated in Patients.
 
 - Appointment reads exclude personal commitments before counting in cards and RPCs. Notes explicitly linked to commitments cannot become care sessions; unlinked notes and legacy NULL service types remain valid. Preserve Agenda records and existing scope/authorization.
 
