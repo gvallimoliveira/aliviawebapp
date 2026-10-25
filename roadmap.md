@@ -1,37 +1,11 @@
-# Tasks
-- [x] Correct discharge in the record summary using saved completed status; 14 tests pass and build OK. Raissa's saved plan has two grouped macro cycles plus terminal discharge, not canonical six-step STEPS; no clinical data changed.
-- [ ] Verify Raissa's summary through her real clinic UI: the requesting user's accessible Minha Clínica list does not include Raissa; database completion and regression tests verified, but her clinic context is unavailable in this session.
-- [x] Show assessment-to-agenda conversion in PRO and clinic Insights, with isolated scope and pt/en/es help; 12 tests pass and authenticated clinic renders correctly, build OK. No clinical data changed.
-- [ ] Verify populated conversion in the real PRO screen: available authenticated account has no professional profile; SQL conversion and isolation tested with disposable local fixtures, not live PRO records.
-- [x] Isolate clinic versus solo patients, agenda, evolutions, health, HEP, export and conversations; server validates agent scope. 77 regressions pass; authenticated clinic thread creation/reload, wrong-solo 403 and cleanup verified. No existing clinical data changed.
-- [ ] Verify GV Fisio test patients absent from a populated real solo PRO list: the requesting user's available authenticated account has only “Minha Clínica” and PRO demo, not the GV Fisio/solo profile shown in the screenshot. Filters tested with clinic+solo fixtures; real screenshot account remains unavailable.
-- [x] Edit each microcycle session's planned dose in place, preserve performed-session data and refresh comparisons; 47 tests pass and pt/en/es help updated. Authenticated clinic temporary dose edited 0→40 and read back through UI, then removed; actual example run was not changed without a clinician-selected target.
-- [x] Correct example running dose visibility: real run already linked (40 min × 7 = 280), planned duration zero; preserve perceived load without target/verdict and keep answered sessions visible in check-in. No clinical writes.
-- [x] Lock saved daily readiness on reopening, explicit same-day edits independent of session load; 54 tests pass, pt/en/es help updated, real patient link verified locked and explicit editing available.
-- [x] Correct cardiovascular ceiling health-history reading; authenticated Francisco record verified collapsed and expanded with dated assessment hypertension despite missing birthdate, no live clinical data changed; preserve clinician profile and manual ceiling, pt/en/es help updated.
-- [x] Add only existing clinical alerts and health caveats to the read-only record summary; preserve dismissal audits and dated health history, update pt/en/es help. Nine tests pass, build OK; authenticated clinic summary verified with saved medication and structured impression, no clinical data changed.
-- [x] Implement generalist combined-category import with editable column/group mapping, dated patient/assessment/evolution expansion, conflict blocking, bounded chunks and actor-scoped recovery/undo; 31 tests pass, demo upload-to-report and authenticated live preflight verified. Evolutions still require a genuine patient email; no universal format compatibility claimed.
-- [ ] Verify combined import persists and reads back assessments/evolutions, retries and whole-operation undo in an authenticated real clinic: requesting user's clinic has no professional responsible available, so this flow remains blocked; no live clinical data written.
-- [x] Align all seven demo load scenarios with the displayed latest assessment, safety and phase; correct Maria's chronology; 19 tests pass and all seven phases verified in the public demo. Doses/readiness explicitly illustrative; Carlos has no invented pre-clearance load history.
-- [x] P1: Populate demo load control and periodization with fictional history and local microcycle interactions; 40 tests pass, monitored save updates total and weekly PDF downloads with no backend writes.
-- [x] P3: Add owner/therapist/secretary demo views, scoped lists and reception; team and pt/en/es help updated. Assignment and attendance confirmation verified; mobile has no horizontal overflow.
-- [x] Add safe XML table import, field review and localized help; 16 tests pass; authenticated clinic XML creation, merge and undo verified with disposable patient, cleanup confirmed.
-- [x] Repair generic import: ZIP structured data, validation, clinic responsibility, deduplication, safe atomic undo, multi-file recovery and help; unit tests pass, authenticated clinic UI creation/merge/undo verified with disposable data and cleanup confirmed. FisioSoft compatibility remains outside this task.
-- [x] Show saved Maigne star beside ADM in record and assessment/evolution PDFs; dated history preserved, help pt/en/es updated; 18 tests pass and PDFs visually checked.
-- [ ] Verify Maigne display and download in a populated real record: available clinic record has no assessments; requires access to a saved Maigne exam.
-- [x] Add optional Maigne star (user drawing) + Fryette palpation to manual assessment step 6, deterministic ERS/FRS/NSR badge, and canonical knowledge in clinical agent; tests pass.
-- [x] Remove bold from selectable preventive goals and change lunge suggestion to degrees in pt/en/es; 13 tests pass, existing measurements preserved, build OK.
-- [x] Add isolated opt-in preventive assessment to link/manual flows, retaining safety and explicit questionnaires; update help in pt/en/es.
-- [x] Verify default/preventive anamnesis and PDF with regressions; authenticated manual UI and real clinic link exercised with intercepted writes, no clinical data changed. Preventive prompts deployed.
-- [ ] Verify preventive assessment persisted and read back in a real record, plus generated AI result: requires an authorized disposable patient/assessment; isolated writes and fictional PDF passed, but do not claim live persistence or generated content verified.
-- [x] Reuse saved manual clinical impressions in the record; preserve edits and prevent automatic generation. Help updated in pt/en/es; 7 tests pass, including save-to-card synchronization with zero AI calls. Authenticated clinic record displays its saved impression and objectives; no real clinical data altered for testing.
-- [x] Fix dynamometry PDF overlap; visually verify full/standalone reports and three-page table with repeated headers.
-- [x] Add standalone saved dynamometry and individual questionnaire PDFs; update help; 8 tests pass and authenticated saved-questionnaire download verified. Dynamometry PDF verified with fictional data; accessible clinic records have no saved measurements for a real download check.
-- [x] Standardize institutional logo, name and color across PDFs, check-in, reassessment, questionnaires and HEP links; 21 tests pass; real check-in/assessment links and three PDFs verified. Questionnaire/HEP layouts verified with mocked responses (no existing institutional links available for end-to-end checks).
-- [x] Reorder athlete/active cardiovascular PDFs around effort response, recovery and review points; retain WHO context.
-- [x] Update report help and regression tests; verify both generated PDF variants using fictional validation data (26 tests pass).
-- [x] Add daily sRPE × PSR chart and cautious deterministic interpretation.
-- [x] Rename first check-in item globally, preserving historical data and composite readiness.
-- [x] Update support, tests and architecture rules; verify rendering in an authenticated clinic patient record (35 calculation tests pass).
-- [ ] Verify populated chart end-to-end with recorded sessions and PSR: requesting user's accessible records contain no sRPE; requires access to a populated patient record.- [x] Insights inteligentes: abandono silencioso e flare-up/sobrecarga reescritos (sem duplicar); novos cards reavaliação, STEPS, reativação, adesão no PRO, equipe, funil e concentração na clínica; 3 migrations aplicadas, 5 testes novos passam, ajuda pt/en/es atualizada.
-- [x] Insights rodada 2: frequência real vs prescrita, indicação orgânica, sem próximo horário, cancelamento tardio, dependência do titular, gargalo de capacidade (+ campos cadastro paciente e macas da clínica)
+# Roadmap
+
+## Insights: rodada de ajustes (pedido do Guilherme)
+
+- [ ] Remover diário de dor e mensagens das métricas (churn, alertas de carga); basear em nota de prontidão e dor regional dos check-ins
+- [ ] Diagnosticar aba Pacientes sem dados (churn, carga, adesão, reativação, frequência)
+- [ ] Previsão de alta mais inteligente: dor + fase STEPS + progresso de carga/dose + prontidão
+- [ ] Financeiro: catálogo de serviços (nome, preço, avulso/mensal), serviço no agendamento, mensalidade diluída por sessão realizada, capacidade (salas/macas)
+- [ ] Prontuário em dia: não ler 100% quando atendimentos passados estão sem classificação (realizado/falta/etc.)
+- [ ] (depois) Revisar cancelamento tardio, sem próximo horário e gargalo de capacidade
+- [ ] Atualizar Support.tsx + ClinicSupport.tsx + pt/en/es
