@@ -1,5 +1,10 @@
 # Roadmap
 
+## Blindagem de compromissos pessoais
+- [x] Compromissos excluídos nos cards locais e em 10 RPCs, incluindo notas explicitamente vinculadas; Agenda e escopos preservados. Migração 0044 aplicada e definições conferidas no servidor.
+- [x] 44 testes passaram: invariância dos cálculos com compromissos em todos os status, notas, tipos nulos, clínica/solo e recusas de acesso. Insights → Operação conferido na clínica autenticada, sem erros; build OK. Clínica acessível sem atendimentos representativos e PRO disponível só demo: confronto visual com compromissos reais não realizado; regressões usam dados isolados, sem escrever em produção.
+- [x] Ajuda pt/en/es atualizada; regra registrada no AGENTS dos Insights.
+
 ## Serviço na solicitação
 - [x] Serviço escolhido visível no pedido e na confirmação, com ID pré-selecionado e nomes do catálogo no mesmo escopo (incluindo inativos). Pedido real consultado: Avaliação. Tela autenticada da clínica sem pedidos reais; visual desktop/celular conferido com resposta simulada somente de leitura, sem aprovar ou gravar. Build OK. Aprovação real no PRO não reexecutada: conta disponível tem PRO demo.
 

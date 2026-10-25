@@ -321,7 +321,7 @@ const categories: ToolCategory[] = [
         key: "insights_management",
         icon: Filter,
         title: "Insights por categoria e métricas de gestão",
-        desc: "",
+        desc: "Compromissos pessoais cinza permanecem na Agenda, mas não contam em nenhuma métrica dos Insights, incluindo ocupação, faltas, receita, metas e equipe.",
       },
       {
         key: "insights_funnel",

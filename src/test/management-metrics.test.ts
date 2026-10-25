@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   emptyChairCost, availableHours, revenuePerHour, closedCycles, clinicalLtv, dischargeVsDropout, recordCompliance,
   frequencyAdherenceGap, referralMix, leakageNoNextAppointment, lateCancellations, ownerDependence, capacityBottleneck,
-  buildPriceResolver, synthesizeNoteSessions, type MgmtAppt,
+  buildPriceResolver, careSessionNotes, careOccupancyStats, synthesizeNoteSessions, type MgmtAppt,
 } from "@/lib/managementMetrics";
 
 const ap = (o: Partial<MgmtAppt>): MgmtAppt => ({ id: Math.random().toString(36), appointment_date: "2026-10-20", status: "completed", patient_email: "a@x.com", patient_name: "Ana", professional_id: "t1", ...o });
@@ -288,5 +288,56 @@ describe("rastreabilidade financeira", () => {
   it("detalhes do ciclo contêm apenas sessões realizadas até hoje", () => {
     const r = closedCycles([ap({ id: "done", appointment_date: "2026-08-01" }), ap({ id: "lost", status: "no_show" })], new Set(), today);
     expect(r[0].appointments?.map((a) => a.id)).toEqual(["done"]);
+  });
+});
+
+describe("compromissos pessoais não entram nos Insights", () => {
+  it("ocupação e faltas contam só atendimentos, incluindo tipos antigos nulos", () => {
+    const r = careOccupancyStats([
+      ap({ status: "scheduled", service_type: "avaliacao" }),
+      ap({ status: "completed", service_type: null }),
+      ap({ status: "no_show", service_type: "fisioterapia" }),
+      ...["scheduled", "completed", "no_show", "no_show_justified", "cancelled"].map((status) => ap({ status, service_type: "compromisso" })),
+    ], 10);
+    expect(r).toEqual({ capacity: 10, total: 3, noShow: 1, active: 2, occupancy: 20, noShowRate: 33, idleSlots: 8 });
+  });
+
+  it("compromisso não dilui mensalidade nem gera preço", () => {
+    const care = ap({ service_id: "monthly" });
+    const personal = ap({ service_id: "monthly", service_type: "compromisso" });
+    const price = buildPriceResolver([care, personal], [{ id: "monthly", name: "Mensal", price: 400, billing_type: "monthly" }], 150);
+    expect(price(care)).toBe(400);
+    expect(price(personal)).toBe(0);
+  });
+
+  it("nota ligada a compromisso não cria sessão; nota clínica independente no mesmo dia permanece", () => {
+    const personal = ap({ id: "personal", service_type: "compromisso" });
+    const linked = { appointment_id: "personal", patient_email: "a@x.com", session_date: "2026-10-20", created_at: "2026-10-20T12:00:00Z" };
+    const independent = { ...linked, appointment_id: null };
+    expect(careSessionNotes([personal], [linked, independent])).toEqual([independent]);
+    expect(synthesizeNoteSessions([personal], [linked])).toHaveLength(1);
+    const result = synthesizeNoteSessions([personal], [linked, independent]);
+    expect(result.map((a) => a.id)).toEqual(["personal", "note:a@x.com|2026-10-20"]);
+    expect(revenuePerHour(result, 150, today, 30, 100).revenue).toBe(150);
+  });
+
+  it("adicionar compromissos de qualquer status não altera as demais métricas de gestão", () => {
+    const care = [ap({ id: "care", appointment_time: "10:00" }), ap({ id: "lost", status: "no_show" })];
+    const mixed = [...care, ...["completed", "scheduled", "no_show", "no_show_justified", "cancelled"].map((status) => ap({ status, service_type: "compromisso", appointment_time: "11:00", status_changed_at: "2026-10-20T10:30:00Z" }))];
+    const patients = [{ id: "p", email: "a@x.com", created_at: "2026-01-01", prescribed_weekly_frequency: 2 }];
+    const metrics = (rows: MgmtAppt[]) => ({
+      chair: emptyChairCost(rows, 150, today, 30),
+      revenue: revenuePerHour(rows, 150, today, 30, 100),
+      cycles: closedCycles(rows, new Set(["a@x.com"]), today),
+      records: recordCompliance(rows, [], new Date("2026-10-24T12:00:00Z"), 30),
+      frequency: frequencyAdherenceGap(rows, patients, new Set(), today),
+      leakage: leakageNoNextAppointment(rows, new Set(), today),
+      cancellations: lateCancellations(rows, today, 30),
+      owner: ownerDependence(rows, "t1", today, 30, 150),
+      capacity: capacityBottleneck(rows, 1, null, today, 30),
+    });
+    expect(metrics(mixed)).toEqual(metrics(care));
+    expect(metrics(mixed).revenue.sessions).toBe(1);
+    expect(metrics(mixed).records.evaluated).toBe(1);
   });
 });

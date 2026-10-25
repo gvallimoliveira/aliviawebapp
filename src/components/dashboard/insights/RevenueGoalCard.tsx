@@ -9,6 +9,7 @@ import { Loader2, Target, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import InsightCardShell from "./InsightCardShell";
+import { CARE_APPOINTMENT_FILTER, isCare } from "@/lib/managementMetrics";
 
 interface Props {
   /** owner: pass clinicId. Pro autônomo: pass professionalId. */
@@ -46,6 +47,10 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
     let cancelled = false;
     (async () => {
       setLoading(true);
+      setCompleted(0);
+      setNoShowRate(0);
+      setOccupancy(0);
+      setBaseTouched(false);
       const table = clinicId ? "clinics" : "professionals";
       const id = clinicId ?? professionalId;
       if (!id) { setLoading(false); return; }
@@ -73,12 +78,15 @@ const RevenueGoalCard = ({ clinicId, professionalId }: Props) => {
       } else if (professionalId) {
         const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
         const { data: appts } = await (supabase as any).from("professional_appointments")
-          .select("status, appointment_date")
+          .select("status, appointment_date, service_type")
+          .or(CARE_APPOINTMENT_FILTER)
+          .is("clinic_id", null)
           .eq("professional_id", professionalId)
           .gte("appointment_date", monthStart.toISOString().slice(0, 10));
         if (!cancelled && Array.isArray(appts)) {
-          const done = appts.filter((a: any) => a.status === "completed").length;
-          const consid = appts.filter((a: any) => ["completed","no_show","cancelled"].includes(a.status));
+          const care = appts.filter(isCare);
+          const done = care.filter((a: any) => a.status === "completed").length;
+          const consid = care.filter((a: any) => ["completed","no_show","cancelled"].includes(a.status));
           setCompleted(done);
           setNoShowRate(consid.length ? Math.round((100 * consid.filter((a:any)=>a.status==="no_show").length) / consid.length) : 0);
           setOccupancy(0);

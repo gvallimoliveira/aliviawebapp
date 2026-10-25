@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { addDays, synthesizeNoteSessions, type MgmtAppt, type MgmtNote, type MgmtPatient, type MgmtService } from "@/lib/managementMetrics";
+import { addDays, careSessionNotes, synthesizeNoteSessions, type MgmtAppt, type MgmtNote, type MgmtPatient, type MgmtService } from "@/lib/managementMetrics";
 import { localISODate } from "@/lib/periodization";
 
 export interface ManagementData {
@@ -50,7 +50,7 @@ export function useManagementData(clinicId?: string, professionalId?: string): M
     const scope = (q: any) => (clinicId ? q.eq("clinic_id", clinicId) : q.is("clinic_id", null).eq("professional_id", professionalId));
     (async () => {
       const sb = supabase as any;
-      const [rawAppts, notes, plans, cfg, patients, services] = await Promise.all([
+      const [rawAppts, rawNotes, plans, cfg, patients, services] = await Promise.all([
         fetchAll((a, b) => scope(sb.from("professional_appointments")
           .select("id, appointment_date, appointment_time, status, status_changed_at, duration_minutes, service_type, service_id, professional_id, patient_email, patient_name")
           .gte("appointment_date", from).lte("appointment_date", until)).order("appointment_date").range(a, b)),
@@ -67,6 +67,16 @@ export function useManagementData(clinicId?: string, professionalId?: string): M
         fetchAll((a, b) => scope(sb.from("care_services")
           .select("id, name, price, billing_type").eq("active", true)).range(a, b)),
       ]);
+      // Resolve every explicitly linked note, even if its slot lies outside the display window.
+      const linkedIds = [...new Set(rawNotes.map((n: MgmtNote) => n.appointment_id).filter(Boolean))];
+      const commitments: MgmtAppt[] = [];
+      for (let i = 0; i < linkedIds.length; i += 500) {
+        const { data, error } = await scope(sb.from("professional_appointments")
+          .select("id, service_type").eq("service_type", "compromisso").in("id", linkedIds.slice(i, i + 500)));
+        if (error) throw error;
+        commitments.push(...(data || []));
+      }
+      const notes = careSessionNotes([...rawAppts, ...commitments], rawNotes);
       // Evolution notes count as realized sessions when the agenda slot was never classified.
       const appts = synthesizeNoteSessions(rawAppts, notes);
       const patientIds = [...new Set(plans.map((p: any) => p.patient_id).filter(Boolean))];
