@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSearchParams } from "react-router-dom";
+import { AI_CREDIT_REFRESH } from "@/lib/aiCreditPolicy";
 import { ENABLE_CHAT_ADDON } from "@/lib/featureFlags";
 import {
   Dialog,
@@ -47,11 +48,13 @@ const estimateChatMessages = (credits: number) => Math.floor(credits / 0.05);
  * Storefront for one-off AI credit packs. Uses a native form POST redirect to Stripe Checkout.
  * Credit fulfillment is server-side via the `stripe-webhook` (`ai_credits` case).
  */
-const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
+const AiCreditsStore = ({ trigger, controlledOpen, onControlledOpenChange }: { trigger?: React.ReactNode; controlledOpen?: boolean; onControlledOpenChange?: (open: boolean) => void }) => {
   const { user } = useAuth();
   const { language } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [open, setOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = onControlledOpenChange ?? setLocalOpen;
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const isPt = language === "pt";
@@ -74,6 +77,7 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
       setSearchParams(next, { replace: true });
     }
     if (status === "success") {
+      window.dispatchEvent(new Event(AI_CREDIT_REFRESH));
       toast({
         title: isPt ? "✨ Pagamento confirmado!" : "✨ Payment confirmed!",
         description: isPt
@@ -168,14 +172,14 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      {controlledOpen === undefined && <DialogTrigger asChild>
         {trigger || (
           <Button size="sm" variant="outline" className="gap-1.5">
             <Sparkles className="h-3.5 w-3.5" />
             {isPt ? "Comprar créditos" : "Buy credits"}
           </Button>
         )}
-      </DialogTrigger>
+      </DialogTrigger>}
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -284,8 +288,8 @@ const AiCreditsStore = ({ trigger }: { trigger?: React.ReactNode }) => {
 
         <p className="text-[11px] text-muted-foreground leading-snug">
           {isPt
-            ? "Os pacotes são um complemento pontual da sua assinatura (60 créditos/mês inclusos, 72 no anual). Para uso recorrente alto, a assinatura continua sendo a opção mais econômica."
-            : "Packs are a top-up on your subscription (60 credits/month included, 72 on annual). For consistently high usage, the subscription remains the cheapest option."}
+            ? "Pacotes complementam o saldo do seu perfil ou da clínica. Parceiros recebem 25 créditos gratuitos por mês e também podem comprar pacotes."
+            : "Packs top up your profile or clinic balance. Partners receive 25 free credits monthly and can also buy packs."}
         </p>
 
 

@@ -5,7 +5,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 
 const MODEL_CHAIN = ["google/gemini-3.1-pro-preview", "google/gemini-3.8-flash", "google/gemini-3.1-flash-lite"];
@@ -76,7 +76,9 @@ const withUnit = (v: unknown): string => {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    shadowLogAiUsage(req, { function_name: "extract-rom" });
+    const creditDecision = await canaryCredits(req, "extract-rom");
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "Missing LOVABLE_API_KEY" }, 500);
 

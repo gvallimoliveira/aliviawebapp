@@ -219,7 +219,7 @@ const categories: ToolCategory[] = [
         key: "ai_credits_control",
         icon: Sparkles,
         title: "Controle de créditos de IA (widget 'Seu uso de IA')",
-        desc: "Todo consumo mensal de IA da clínica (hipóteses, planos de tratamento, impressão clínica, HEP, sugestões de teste, notas de voz, Agente Clínico) é medido em créditos. Para acompanhar em tempo real, acesse o Dashboard da clínica → aba Insights e role até o card 'Seu uso de IA'. Você vê a barra de progresso do mês, quantos créditos restam e recebe avisos automáticos ao atingir 80% (banner âmbar) e 100% (banner vermelho — sem bloquear a operação). Clínicas com plano ativo não têm interrupção de uso.",
+        desc: "Créditos inclusos renovam mensalmente no calendário de Brasília. PRO: margem de continuidade de 10%; clínica: 20%, em saldo compartilhado (Small: 100 por clínico, 50 por secretária; até 3 clínicos + 1 secretária). Parceiros: 25 créditos gratuitos/mês e compra de pacotes permitida. Apenas admin e VIP têm uso ilimitado. Avisos aos 80% e 100% aparecem durante o uso e em Insights. Pacotes: 15/R$29, 30/R$59, 60/R$89, válidos por 12 meses; consumo após cota e margem, sem cobrança automática. Na clínica, apenas dono/admin compra; toda equipe usa o saldo. Bloqueios permanecem desligados; quando ativados por categoria no Admin, a falta de saldo abre o aviso com renovação e compra, sem impedir acesso aos registros.",
       },
     ],
   },

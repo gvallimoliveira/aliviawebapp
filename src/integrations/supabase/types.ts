@@ -430,6 +430,21 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_credit_admin_roles: {
+        Row: {
+          role: string
+          user_id: string
+        }
+        Insert: {
+          role?: string
+          user_id: string
+        }
+        Update: {
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_credit_decisions: {
         Row: {
           blocked: boolean
@@ -494,6 +509,7 @@ export type Database = {
           id: string
           package_type: string
           price_paid: number
+          remaining_units: number
           stripe_payment_intent_id: string | null
           stripe_session_id: string | null
           transcriptions_remaining: number
@@ -509,6 +525,7 @@ export type Database = {
           id?: string
           package_type: string
           price_paid: number
+          remaining_units?: number
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
           transcriptions_remaining?: number
@@ -524,6 +541,7 @@ export type Database = {
           id?: string
           package_type?: string
           price_paid?: number
+          remaining_units?: number
           stripe_payment_intent_id?: string | null
           stripe_session_id?: string | null
           transcriptions_remaining?: number
@@ -648,42 +666,59 @@ export type Database = {
       }
       ai_credit_usage: {
         Row: {
+          accounting_applied: boolean
           bypass_reason: string | null
+          clinic_id: string | null
           created_at: string
           credits_used: number
           function_name: string
           id: string
           metadata: Json
+          package_debited: number
           transcriptions_used: number
           user_id: string | null
           was_blocked: boolean
           was_bypassed: boolean
         }
         Insert: {
+          accounting_applied?: boolean
           bypass_reason?: string | null
+          clinic_id?: string | null
           created_at?: string
           credits_used?: number
           function_name: string
           id?: string
           metadata?: Json
+          package_debited?: number
           transcriptions_used?: number
           user_id?: string | null
           was_blocked?: boolean
           was_bypassed?: boolean
         }
         Update: {
+          accounting_applied?: boolean
           bypass_reason?: string | null
+          clinic_id?: string | null
           created_at?: string
           credits_used?: number
           function_name?: string
           id?: string
           metadata?: Json
+          package_debited?: number
           transcriptions_used?: number
           user_id?: string | null
           was_blocked?: boolean
           was_bypassed?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_usage_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_response_cache: {
         Row: {
@@ -5395,6 +5430,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_ai_credit_rollout: {
+        Args: { _enabled?: boolean; _tiers?: Json }
+        Returns: Json
+      }
       admin_delete_professional: {
         Args: { _professional_id: string }
         Returns: undefined
@@ -5446,6 +5485,7 @@ export type Database = {
             Args: { _caller?: string; _email?: string; _user_id: string }
             Returns: Json
           }
+      ai_credit_grace_ratio: { Args: { _tier: string }; Returns: number }
       announcement_audience_emails: {
         Args: {
           _audience: string
@@ -5482,6 +5522,7 @@ export type Database = {
         Returns: boolean
       }
       can_access_studio_brand: { Args: { _brand_id: string }; Returns: boolean }
+      can_admin_ai_credits: { Args: { _user_id: string }; Returns: boolean }
       can_handle_appointment_request: {
         Args: { _clinic_id: string; _professional_id: string; _user_id: string }
         Returns: boolean
@@ -5647,6 +5688,18 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      fulfill_ai_credit_package: {
+        Args: {
+          _clinic_id: string
+          _credits: number
+          _key: string
+          _payment: string
+          _price: number
+          _session: string
+          _user_id: string
+        }
+        Returns: boolean
       }
       get_assessment_agenda_conversion: {
         Args: { _clinic_id?: string; _professional_id?: string }

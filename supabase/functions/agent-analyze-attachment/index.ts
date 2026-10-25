@@ -6,7 +6,7 @@
 // No storage bucket: the raw file is discarded after extraction. Only the
 // interpreted text lives on, inside agent_messages.parts.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,11 +69,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    shadowLogAiUsage(req, {
+    const creditDecision = await canaryCredits(req, "agent-analyze-attachment", {
       function_name: "agent-analyze-attachment",
       user_id: user.id,
       metadata: { mime_type, approx_bytes: approxBytes },
     });
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
 
     const isPdf = mime_type === "application/pdf";
     const userContent: any[] = [

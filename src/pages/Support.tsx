@@ -85,7 +85,7 @@ const proTools = [
   { key: "insights_adherence", icon: Activity },
   { key: "insights_benchmark", icon: Gauge },
   { key: "insights_revenue", icon: BarChart3 },
-  { key: "ai_credits", icon: Gauge },
+  { key: "ai_credits", icon: Gauge }, // Shared localized quota, warnings, margin and paid top-up guidance.
   { key: "studio_carousel", icon: Palette },
   { key: "studio_creative_network", icon: Brain },
   { key: "studio_ecosystem", icon: Layers },

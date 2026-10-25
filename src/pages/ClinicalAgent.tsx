@@ -667,7 +667,9 @@ const ClinicalAgent = () => {
     if (error || data?.error) {
       setMessages(prev => prev.filter(m => m.id !== optimistic.id));
       const code = data?.error || error?.message;
-      if (code === "quota_exceeded") {
+      if (code === "alivia_credit_limit") {
+        setInput(userText); setAttachments(readyAttachments);
+      } else if (code === "quota_exceeded") {
         toast.error(`Limite diário atingido (${data?.limit || 30} mensagens). Volte amanhã.`);
       } else if (code === "ai_credits_exhausted") {
         toast.error("Créditos de IA esgotados. Entre em contato com o admin.");

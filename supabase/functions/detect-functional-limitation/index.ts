@@ -3,7 +3,7 @@
 // Returns a list of region IDs (subset of painRegions) for which we should
 // add an extra prioritized questionnaire.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { shadowLogAiUsage } from "../_shared/ai-credits.ts";
+import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse } from "../_shared/ai-cache.ts";
 
 
@@ -37,7 +37,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    shadowLogAiUsage(req, { function_name: "detect-functional-limitation" });
+    const creditDecision = await canaryCredits(req, "detect-functional-limitation");
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
     const { note, painRegions = [], painScoresPerRegion = {}, language = "pt" } = await req.json();
     const text = (note || "").toString().trim();
     if (!text || !Array.isArray(painRegions) || painRegions.length === 0) {

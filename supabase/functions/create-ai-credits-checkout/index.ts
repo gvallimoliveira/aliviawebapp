@@ -4,6 +4,8 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+import { AI_CREDIT_PACKAGES, safeCreditReturnOrigin } from "../_shared/ai-credit-catalog.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -32,29 +34,7 @@ function htmlError(message: string, status = 400) {
 // 2026-07 reescala: pacotes avulsos são um EXTRA da assinatura (60 cr/mês),
 // não um substituto. Escala pequena e preço por crédito crescente para
 // desincentivar a compra do pacote maior no lugar da assinatura.
-const PACKAGES: Record<
-  string,
-  { price_id: string; credits: number; price_brl: number; label: string }
-> = {
-  mini: {
-    price_id: "price_1TxbDh2HgVhVBE8UhMrZcf0l",
-    credits: 15,
-    price_brl: 29.0,
-    label: "Pacote IA Mini (15 créditos)",
-  },
-  plus: {
-    price_id: "price_1TxbE22HgVhVBE8Ura1ksREZ",
-    credits: 30,
-    price_brl: 59.0,
-    label: "Pacote IA Plus (30 créditos)",
-  },
-  pro: {
-    price_id: "price_1TxbEQ2HgVhVBE8UYUA34mfm",
-    credits: 60,
-    price_brl: 89.0,
-    label: "Pacote IA Pro (60 créditos)",
-  },
-};
+const PACKAGES = AI_CREDIT_PACKAGES;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -84,7 +64,7 @@ serve(async (req) => {
       returnOrigin = String(body?.return_origin || "");
     }
 
-    const origin = returnOrigin || req.headers.get("origin") || "https://aliviawebapp.com.br";
+    const origin = safeCreditReturnOrigin(returnOrigin || req.headers.get("origin") || "");
 
     if (!token) {
       if (shouldRedirect) return redirectToApp(origin, "error");
@@ -119,25 +99,12 @@ serve(async (req) => {
       });
     }
 
-    // Clinic staff (non owner/admin) never buy packs: credits belong to the clinic.
-    {
-      const admin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      );
-      const { data: memberships } = await admin
-        .from("clinic_members")
-        .select("role, clinics!inner(subscription_status)")
-        .eq("user_id", user.id)
-        .in("clinics.subscription_status", ["active", "trialing"]);
-      const rows = (memberships ?? []) as Array<{ role: string }>;
-      if (rows.length > 0 && !rows.some((r) => r.role === "owner" || r.role === "admin")) {
-        if (shouldRedirect) return redirectToApp(origin, "error");
-        return new Response(JSON.stringify({ error: "Only the clinic manager can buy credit packs" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+    const { data: creditStatus, error: statusError } = await admin.rpc("get_user_credit_status", { _user_id: user.id });
+    if (statusError || !creditStatus) throw new Error("Unable to resolve credit account");
+    if (!creditStatus.can_buy) {
+      if (shouldRedirect) return redirectToApp(origin, "error");
+      return new Response(JSON.stringify({ error: "Only the clinic manager can buy credit packs" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -160,6 +127,7 @@ serve(async (req) => {
       cancel_url: `${origin}/dashboard?tab=insights&ai_credits=canceled`,
       metadata: {
         type: "ai_credits",
+        clinic_id: creditStatus.clinic_id ?? "",
         user_id: user.id,
         package_key: packageKey,
         credits: String(pkg.credits),

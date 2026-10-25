@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { AI_CREDIT_PACKAGES } from "../_shared/ai-credit-catalog.ts";
 import { provisionClinic, resolveMaxMembers } from "../_shared/clinicProvisioning.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -680,56 +681,21 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
         log("ai_credits: missing user_id", { sessionId: session.id });
         break;
       }
-      const credits = parseInt(session.metadata?.credits || "0", 10);
-      const priceBrl = parseFloat(session.metadata?.price_brl || "0");
-      const packageKey = session.metadata?.package_key || "unknown";
+      const packageKey = session.metadata?.package_key || "";
+      const pkg = AI_CREDIT_PACKAGES[packageKey];
+      if (!pkg || session.payment_status !== "paid" || session.currency !== "brl" || session.amount_total !== pkg.price_brl * 100) throw new Error("Invalid paid credit package");
+      const lines = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
+      if (lines.data.length !== 1 || lines.data[0]?.price?.id !== pkg.price_id || lines.data[0]?.quantity !== 1) throw new Error("Credit package line item mismatch");
+      const credits = pkg.credits;
+      const priceBrl = pkg.price_brl;
 
-      if (credits <= 0) {
-        log("ai_credits: invalid credits", { sessionId: session.id });
-        break;
-      }
-
-      // Idempotency: skip if a package already exists for this session.
-      const { data: existing } = await supabase
-        .from("ai_credit_packages")
-        .select("id")
-        .eq("stripe_session_id", session.id)
-        .maybeSingle();
-
-      if (existing) {
-        log("ai_credits: already fulfilled, skipping", { sessionId: session.id });
-        break;
-      }
-
-      const { error: pkgErr } = await supabase
-        .from("ai_credit_packages")
-        .insert({
-          user_id: userId,
-          package_type: packageKey,
-          credits_total: credits,
-          credits_remaining: credits,
-          transcriptions_total: 0,
-          transcriptions_remaining: 0,
-          price_paid: priceBrl,
-          stripe_session_id: session.id,
-          stripe_payment_intent_id:
-            (session.payment_intent as string) || null,
-        });
-      if (pkgErr) {
-        log("ai_credits: insert package failed", { error: String(pkgErr) });
-        break;
-      }
-
-      await supabase.from("ai_credit_transactions").insert({
-        user_id: userId,
-        transaction_type: "purchase",
-        product_key: `ai_credits_${packageKey}`,
-        amount_brl: priceBrl,
-        credits_delta: credits,
-        transcriptions_delta: 0,
-        stripe_session_id: session.id,
-        notes: `Pacote ${packageKey} comprado via Stripe Checkout`,
+      const { data: fulfilled, error: fulfillError } = await supabase.rpc("fulfill_ai_credit_package", {
+        _user_id: userId, _clinic_id: session.metadata?.clinic_id || null,
+        _session: session.id, _payment: (session.payment_intent as string) || null,
+        _key: packageKey, _credits: credits, _price: priceBrl,
       });
+      if (fulfillError) throw new Error(`Credit fulfillment failed: ${fulfillError.message}`);
+      if (!fulfilled) break;
 
       log("ai_credits fulfilled", { userId, credits, packageKey });
 
