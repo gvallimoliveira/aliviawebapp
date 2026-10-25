@@ -1,5 +1,10 @@
 # Roadmap
 
+## Preparação dos créditos de IA
+- [ ] PRO com margem de 10%; parceiros 25/mês, compra permitida e sem bypass ilimitado; clínica mantém 20%.
+- [ ] Avisos proativos 80/100%, recuperação contextual e controles seletivos no Admin, sem ativar bloqueios.
+- [ ] Validar consumo → avisos → compra → saldo, permissões e ajuda pt/en/es; registrar limitações reais.
+
 ## Categorias de clínicas no Admin
 - [x] Separados 1 assinante, 4 parceiros ativos gratuitos e 2 clínicas em teste/inativas; busca e detalhes preservados. Quatro testes passaram, build OK e navegação autenticada desktop/celular conferida com dados reais, sem alterar acessos.
 
