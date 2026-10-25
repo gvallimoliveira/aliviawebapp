@@ -6,7 +6,6 @@
 - Record-summary STEPS uses the fetched plan status: completed means discharge before any macro-cycle fallback, so insight and record discharge decisions remain consistent without rewriting history.
 - Clinic demos use viewer-scoped fixtures and real local math, never live writes/AI; scenarios match the latest assessment and safety, otherwise stay empty.
 
-- Cardiovascular views refresh via `usePatientBirthDate` on edits/refocus, preserving unsaved inputs.
 - Cardiovascular ceiling reminders combine the record's assessments and ID/email-linked dated health records via `usePatientCardioHealth`; structured conditions never auto-select a clinician profile, infer control, or fabricate an age-based ceiling.
 
 - Aliv.iA/Studio copy uses canonical `aliviaDifferentials.ts` IDs; handoff copy must not duplicate features or imply duplicate entry.
@@ -19,7 +18,6 @@
 - Dose adherence (`adherenceByTrack`) counts only sessions up to local today with sRPE; unanswered/upcoming never count as underdose nor push alerts. Patient sRPE: today + 7 prior days, server-enforced.
 - Weekly dose display derives full-week targets and recorded-to-date totals separately from answered-session adherence, with answered/scheduled counts per track; this preserves partial comparison and chart semantics without turning future or unanswered work into underdose.
 - Load-control views use `loadWindows.ts` (3-day lists, 7-day charts, fallback to latest data); full history on demand in `LoadHistoryDialog`, never deleted; risk math ignores display windows.
-- Inset record content by `PatientSectionRail` width to uncover titles.
 - Cardiovascular metrics, goals, distributions, trends, readings and both PDFs derive only from pure `cardioAnalysis.ts`; keep panel and reports consistent without AI credits.
 - Athlete/active PDF priorities and descriptive summaries use `cardioReportSections` in `cardioAnalysis.ts`; WHO remains secondary and presentation changes never alter load or safety calculations.
 - Cardiovascular educational copy is shared through `cardioEducation.ts` by the information dialog and PDFs; profile references must remain distinct from universal safety limits and unmeasured respiratory targets.
@@ -50,3 +48,4 @@
 - Appointment requests use scoped RPCs/push; approval creates the slot only in Agenda (solo PRO, clinic owner/admin/secretary). Resolve service names from the same scoped catalog, including inactive entries; show the requested service in the card/dialog and preselect its saved ID.
 - Announcements use scoped server lists, can_handle_appointment_request and server-resolved push recipients.
 - Agenda uses latestRequest to reject stale results. ClinicServicesCard lives only in the manager-visible `care-services` registry entry in Insights → Operação, not Patients/Team, to keep home uncluttered; explicit professional scope isolates solo services.
+- Paid clinics are provisioned only via idempotent `_shared/clinicProvisioning.ts` (webhook + check-clinic-subscription self-heal), so a missed webhook never blocks a payer.
