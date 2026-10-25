@@ -7,7 +7,7 @@ import { Info, PeriodPicker, Stat, Wrap } from "./ManagementCards";
 import type { ManagementData } from "./useManagementData";
 import {
   frequencyAdherenceGap, referralMix, leakageNoNextAppointment, lateCancellations, ownerDependence, capacityBottleneck,
-  FREQ_GAP_WEEKS, REFERRAL_SOURCES, LATE_CANCEL_HOURS, buildPriceResolver,
+  REFERRAL_SOURCES, LATE_CANCEL_HOURS, buildPriceResolver,
 } from "@/lib/managementMetrics";
 
 type L = "pt" | "en" | "es";
@@ -29,8 +29,8 @@ export function FrequencyGapCard({ d }: { d: ManagementData }) {
   const r = useMemo(() => frequencyAdherenceGap(d.appts, d.patients, d.dischargedKeys, d.today), [d]);
   return (
     <InsightCardShell id="mgmt-freq-gap" icon={<Gauge className="h-4 w-4 text-primary" />} title={tr(l, "Frequência real vs prescrita", "Real vs prescribed frequency", "Frecuencia real vs prescrita")}
-      description={tr(l, `Compare a frequência semanal sugerida com a real (últimas ${FREQ_GAP_WEEKS} semanas)`, `Compares the suggested weekly frequency with the real one (last ${FREQ_GAP_WEEKS} weeks)`, `Compara la frecuencia semanal sugerida con la real (últimas ${FREQ_GAP_WEEKS} semanas)`)}
-      infoContent={<Info><p>{tr(l, "A frequência prescrita vem do cadastro do paciente (campo Frequência sugerida). A real é a média de sessões realizadas por semana.", "The prescribed frequency comes from the patient record. The real one is the average of completed sessions per week.", "La frecuencia prescrita viene del registro del paciente. La real es el promedio de sesiones por semana.")}</p><p>{tr(l, "Só entram pacientes ativos com frequência preenchida; inativos aparecem nos insights de reativação.", "Only active patients with the field filled in count; inactive ones appear in reactivation insights.", "Solo cuentan pacientes activos con el campo lleno; inactivos aparecen en reactivación.")}</p></Info>}>
+      description={tr(l, "Mês atual até hoje: sessões realizadas vs esperadas", "Current month to date: completed vs expected sessions", "Mes actual hasta hoy: sesiones realizadas vs esperadas")}
+      infoContent={<Info><p>{tr(l, "A frequência prescrita vem do cadastro do paciente (campo Frequência sugerida). A expectativa é proporcional aos dias decorridos no mês, a partir do cadastro ou primeiro atendimento, o que for mais recente. Dias futuros não entram.", "The prescribed frequency comes from the patient record. Expected sessions are prorated to elapsed days this month, starting at registration or first session, whichever is later. Future days do not count.", "La frecuencia prescrita viene del registro del paciente. Las sesiones esperadas son proporcionales a los días transcurridos del mes, desde el registro o primera sesión. Días futuros no cuentan.")}</p><p>{tr(l, "Só entram pacientes ativos com frequência preenchida; inativos aparecem nos insights de reativação.", "Only active patients with the field filled in count; inactive ones appear in reactivation insights.", "Solo cuentan pacientes activos con el campo lleno; inactivos aparecen en reactivación.")}</p></Info>}>
       <Wrap d={d}>
         {r.measured === 0 ? (
           <p className="text-sm text-muted-foreground">{tr(l, "Preencha a Frequência sugerida no cadastro dos pacientes para medir este gap.", "Fill in the suggested frequency in the patient record to measure this gap.", "Complete la frecuencia sugerida en el registro del paciente para medir esta brecha.")}</p>
@@ -41,12 +41,11 @@ export function FrequencyGapCard({ d }: { d: ManagementData }) {
               <Stat label={tr(l, "Abaixo do prescrito", "Below prescribed", "Debajo de lo prescrito")} value={String(r.below.length)} tone={r.below.length ? "bad" : "good"} />
               <Stat label={tr(l, "Monitorados", "Tracked", "Monitoreados")} value={String(r.measured)} />
             </div>
-            {r.below.length > 0 && (
+            {r.rows.length > 0 && (
               <div className="max-h-[220px] overflow-y-auto divide-y divide-border/60">
-                {r.below.map((p) => (
+                {r.rows.map((p) => (
                   <div key={p.key} className="flex items-center gap-2 py-1.5 text-sm">
-                    <p className="flex-1 truncate">{p.name}</p>
-                    <p className="text-[11px] text-muted-foreground whitespace-nowrap">{tr(l, "real", "real", "real")} <b className="text-destructive">{fmt(p.actual)}x</b> / {tr(l, "prescrito", "prescribed", "prescrito")} {p.prescribed}x</p>
+                    <div className="flex-1 min-w-0"><p className="truncate">{p.name}</p><p className="text-[11px] text-muted-foreground">{p.from.split("-").reverse().join("/")} – {d.today.split("-").reverse().join("/")} · {p.prescribed}x/{tr(l, "semana", "week", "semana")}</p><p className="text-[11px] text-muted-foreground">{p.completed} {tr(l, "realizadas", "completed", "realizadas")} / {fmt(p.expected)} {tr(l, "esperadas até hoje", "expected to date", "esperadas hasta hoy")}</p></div><b className="text-xs shrink-0">{p.adherence}%</b>
                   </div>
                 ))}
               </div>

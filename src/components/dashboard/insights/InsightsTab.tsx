@@ -39,7 +39,7 @@ interface Entry { id: string; cat: Exclude<Cat, "summary">; manager?: boolean; c
  * category; visibility by role lives here, never scattered in the page.
  */
 const REGISTRY: Entry[] = [
-  { id: "churn", cat: "patients", render: (c) => <ChurnRiskCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
+  { id: "churn", cat: "patients", render: (c) => <ChurnRiskCard clinicId={c.clinicId} professionalId={c.professionalId} dismissForTeam={c.teamDismiss} /> },
   { id: "load", cat: "patients", when: ENABLE_PERIODIZATION, render: (c) => <LoadReadinessCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
   { id: "adherence", cat: "patients", wide: true, render: (c) => <PatientAdherenceCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
   { id: "reactivation", cat: "patients", wide: true, render: (c) => <ReactivationCard clinicId={c.clinicId} professionalId={c.professionalId} /> },

@@ -157,6 +157,7 @@ export function emptyChairCost(appts: MgmtAppt[], price: number, today: string, 
     byMonth: Object.entries(byMonth).sort(([a], [b]) => a.localeCompare(b)).map(([month, value]) => ({ month, value })),
     byWeekday,
     topHours,
+    details: [...lost].sort((a, b) => b.appointment_date.localeCompare(a.appointment_date) || (b.appointment_time || "").localeCompare(a.appointment_time || "")).map((a) => ({ ...a, value: round2(unit(a)) })),
   };
 }
 
@@ -227,6 +228,7 @@ export interface ClosedCycle {
   therapistId: string | null;
   outcome: "discharge" | "dropout";
   lastDate: string;
+  appointments?: MgmtAppt[];
 }
 
 /**
@@ -240,14 +242,15 @@ export function closedCycles(appts: MgmtAppt[], dischargedKeys: Set<string>, tod
     const k = patientKey(a);
     if (!k) continue;
     if (!byPatient.has(k)) byPatient.set(k, []);
-    byPatient.get(k)!.push(a);
+    byPatient.get(k)?.push(a);
   }
   const out: ClosedCycle[] = [];
   for (const [key, list] of byPatient) {
     const done = list.filter((a) => a.status === "completed" && a.appointment_date <= today);
     if (!done.length) continue;
     const hasFuture = list.some((a) => a.status === "scheduled" && a.appointment_date >= today);
-    const lastDate = done.map((a) => a.appointment_date).sort().at(-1)!;
+    const lastDate = done.map((a) => a.appointment_date).sort().at(-1);
+    if (!lastDate) continue;
     const discharged = dischargedKeys.has(key);
     const dropout = !discharged && !hasFuture && diffDays(today, lastDate) >= DROPOUT_DAYS;
     if (!discharged && !dropout) continue;
@@ -255,7 +258,7 @@ export function closedCycles(appts: MgmtAppt[], dischargedKeys: Set<string>, tod
     for (const a of done) if (a.professional_id) count[a.professional_id] = (count[a.professional_id] || 0) + 1;
     const therapistId = Object.entries(count).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
     const value = priceOf ? round2(done.reduce((s, a) => s + priceOf(a), 0)) : undefined;
-    out.push({ key, name: done[0].patient_name || key, sessions: done.length, value, therapistId, outcome: discharged ? "discharge" : "dropout", lastDate });
+    out.push({ key, name: [...done].reverse().find((a) => a.patient_name)?.patient_name || key, sessions: done.length, value, therapistId, outcome: discharged ? "discharge" : "dropout", lastDate, appointments: [...done].sort((a, b) => b.appointment_date.localeCompare(a.appointment_date)) });
   }
   return out;
 }
@@ -398,42 +401,32 @@ export function recordCompliance(appts: MgmtAppt[], notes: MgmtNote[], now: Date
 export const FREQ_GAP_WEEKS = 4;
 export const FREQ_ACTIVE_DAYS = 60;
 
-/**
- * Compares the prescribed weekly frequency (patient record) with the real one
- * (completed care sessions over the last FREQ_GAP_WEEKS weeks). Only active
- * patients (a completed session within FREQ_ACTIVE_DAYS, not discharged) with a
- * prescribed frequency set are listed.
- */
-export function frequencyAdherenceGap(appts: MgmtAppt[], patients: MgmtPatient[], dischargedKeys: Set<string>, today: string, weeks = FREQ_GAP_WEEKS) {
-  const from = addDays(today, -(weeks * 7 - 1));
+/** Month-to-date comparison: future days never enter the expected dose. */
+export function frequencyAdherenceGap(appts: MgmtAppt[], patients: MgmtPatient[], dischargedKeys: Set<string>, today: string) {
+  const monthStart = today.slice(0, 7) + "-01";
   const activeFrom = addDays(today, -(FREQ_ACTIVE_DAYS - 1));
-  const doneByKey = new Map<string, { recent: number; window: number }>();
-  for (const a of appts) {
-    if (!isCare(a) || a.status !== "completed") continue;
-    const k = patientKey(a);
-    if (!k) continue;
-    const cur = doneByKey.get(k) || { recent: 0, window: 0 };
-    if (a.appointment_date >= activeFrom && a.appointment_date <= today) cur.recent++;
-    if (a.appointment_date >= from && a.appointment_date <= today) cur.window++;
-    doneByKey.set(k, cur);
-  }
-  const rows: { key: string; name: string; prescribed: number; actual: number; gap: number }[] = [];
+  const rows: { key: string; name: string; prescribed: number; actual: number; gap: number; completed: number; expected: number; from: string; elapsedDays: number; adherence: number }[] = [];
   let noShowRecent = 0;
   for (const p of patients) {
     const prescribed = p.prescribed_weekly_frequency || 0;
     if (!prescribed) continue;
-    const e = (p.email || "").trim().toLowerCase();
-    const key = e || (p.full_name ? `name:${p.full_name.trim().toLowerCase()}` : "");
+    const key = (p.email || "").trim().toLowerCase() || (p.full_name ? `name:${p.full_name.trim().toLowerCase()}` : "");
     if (!key || dischargedKeys.has(key)) continue;
-    const agg = doneByKey.get(key);
-    if (!agg || agg.recent === 0) { noShowRecent++; continue; } // inactive: churn/reactivation own this
-    const actual = round1(agg.window / weeks);
-    rows.push({ key, name: p.full_name || key, prescribed, actual, gap: round1(actual - prescribed) });
+    const done = appts.filter((a) => isCare(a) && a.status === "completed" && patientKey(a) === key && a.appointment_date <= today);
+    if (!done.some((a) => a.appointment_date >= activeFrom)) { noShowRecent++; continue; }
+    const firstSession = done.map((a) => a.appointment_date).sort()[0];
+    const start = [monthStart, p.created_at.slice(0, 10), firstSession || monthStart].sort().at(-1) || monthStart;
+    if (start > today) continue;
+    const elapsedDays = diffDays(today, start) + 1;
+    const expectedRaw = prescribed * elapsedDays / 7;
+    const completed = done.filter((a) => a.appointment_date >= start).length;
+    const actual = round1(completed * 7 / elapsedDays);
+    rows.push({ key, name: p.full_name || key, prescribed, actual, gap: round1(actual - prescribed), completed, expected: round1(expectedRaw), from: start, elapsedDays, adherence: Math.round(Math.min(1, completed / expectedRaw) * 100) });
   }
-  rows.sort((a, b) => a.gap - b.gap);
-  const below = rows.filter((r) => r.gap < 0);
-  const adherence = rows.length ? Math.round((rows.reduce((s, r) => s + Math.min(1, r.actual / r.prescribed), 0) / rows.length) * 100) : 0;
-  return { rows, below, adherence, measured: rows.length, noShowRecent };
+  rows.sort((a, b) => a.adherence - b.adherence);
+  const below = rows.filter((r) => r.adherence < 100);
+  const adherence = rows.length ? Math.round(rows.reduce((s, r) => s + r.adherence, 0) / rows.length) : 0;
+  return { rows, below, adherence, measured: rows.length, noShowRecent, from: monthStart, until: today };
 }
 
 /* ---------------- Indicação orgânica (referral) ---------------- */
