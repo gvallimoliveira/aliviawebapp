@@ -140,8 +140,12 @@ const ClinicTeamManagement = () => {
   if (!activeClinic) return null;
 
   const isUnlimited = activeClinic.max_members >= 9999;
-  const seatsUsed = members.length + invitations.length;
-  const atLimit = !isUnlimited && seatsUsed >= activeClinic.max_members;
+  const isSec = (r: ClinicRole) => r === "secretary";
+  const secretarySeats = members.filter((m) => isSec(m.role)).length + invitations.filter((i) => isSec(i.role)).length;
+  const seatsUsed = members.length + invitations.length - secretarySeats;
+  const clinicalFull = !isUnlimited && seatsUsed >= activeClinic.max_members;
+  const secretaryFull = !isUnlimited && secretarySeats >= 1;
+  const atLimit = clinicalFull && secretaryFull;
 
   return (
     <div className="space-y-6">
@@ -153,7 +157,12 @@ const ClinicTeamManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
-            {lang === "pt" ? "Equipe" : lang === "es" ? "Equipo" : "Team"} ({seatsUsed}/{isUnlimited ? "∞ Enterprise" : activeClinic.max_members})
+            {lang === "pt" ? "Equipe clínica" : lang === "es" ? "Equipo clínico" : "Clinical team"} ({seatsUsed}/{isUnlimited ? "∞ Enterprise" : activeClinic.max_members})
+            {!isUnlimited && (
+              <span className="text-sm font-normal text-muted-foreground">
+                · {lang === "pt" ? "Secretária" : lang === "es" ? "Secretaria" : "Secretary"} {secretarySeats}/1
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
