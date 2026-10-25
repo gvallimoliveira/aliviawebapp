@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Activity, ChevronDown, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import PeriodizationCheckin from "@/pages/PeriodizationCheckin";
+import { Button } from "@/components/ui/button";
 
 type State = "loading" | "ready" | "none";
 
@@ -51,10 +52,11 @@ const PatientCheckinCard = () => {
 
   return (
     <Card>
-      <button
+      <Button
+        variant="ghost"
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left"
+        className="w-full h-auto flex items-center justify-between gap-2 px-4 py-3 text-left whitespace-normal"
         aria-expanded={open}
       >
         <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -62,12 +64,9 @@ const PatientCheckinCard = () => {
           Check-in de carga e prontidão
         </span>
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
+      </Button>
       {open && token && (
         <CardContent className="pt-0">
-          <p className="text-xs text-muted-foreground pb-3">
-            O mesmo check-in do link que seu fisioterapeuta te enviou — agora direto na sua página.
-          </p>
           <PeriodizationCheckin token={token} embedded />
         </CardContent>
       )}

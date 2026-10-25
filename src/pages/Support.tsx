@@ -22,6 +22,7 @@ import InstallAppCard from "@/components/InstallAppCard";
 type SupportProfile = "patient" | "professional" | null;
 
 const patientTools = [
+  { key: "daily_care", icon: Activity },
   { key: "basic_assessment", icon: ClipboardList },
   { key: "premium_assessment", icon: Crown },
   { key: "premium_status", icon: Crown },
