@@ -220,7 +220,12 @@ Deno.serve(async (req) => {
     // Non-service-role, non-anon callers may target themselves OR any user who
     // shares a conversation with them (chat messages / video calls). Anything
     // else is rejected.
-    if (!isServiceRole && !isAnonKey) {
+    if (preAuthorizedTargets) {
+      if (targetUserIds.length === 0) {
+        return new Response(JSON.stringify({ message: "No recipients", sent: 0 }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    } else if (!isServiceRole && !isAnonKey) {
       const others = targetUserIds.filter((uid) => uid !== callerUserId);
       const allowed = new Set(targetUserIds.filter((uid) => uid === callerUserId));
 
