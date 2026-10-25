@@ -811,6 +811,66 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_requests: {
+        Row: {
+          appointment_id: string | null
+          clinic_id: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          notes: string | null
+          patient_email: string | null
+          patient_name: string
+          patient_phone: string | null
+          patient_user_id: string
+          professional_id: string | null
+          requested_date: string
+          requested_period: string | null
+          requested_time: string | null
+          service_id: string | null
+          status: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          clinic_id?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          notes?: string | null
+          patient_email?: string | null
+          patient_name: string
+          patient_phone?: string | null
+          patient_user_id: string
+          professional_id?: string | null
+          requested_date: string
+          requested_period?: string | null
+          requested_time?: string | null
+          service_id?: string | null
+          status?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          clinic_id?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          notes?: string | null
+          patient_email?: string | null
+          patient_name?: string
+          patient_phone?: string | null
+          patient_user_id?: string
+          professional_id?: string | null
+          requested_date?: string
+          requested_period?: string | null
+          requested_time?: string | null
+          service_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       assessment_addenda: {
         Row: {
           assessment_id: string
@@ -5239,6 +5299,17 @@ export type Database = {
             Args: { _caller?: string; _email?: string; _user_id: string }
             Returns: Json
           }
+      approve_appointment_request: {
+        Args: {
+          _date: string
+          _duration: number
+          _professional_id: string
+          _request_id: string
+          _service_id: string
+          _time: string
+        }
+        Returns: string
+      }
       can_access_assessment_addenda: {
         Args: { _assessment_id: string; _pro_only?: boolean; _user_id: string }
         Returns: boolean
@@ -5248,6 +5319,10 @@ export type Database = {
         Returns: boolean
       }
       can_access_studio_brand: { Args: { _brand_id: string }; Returns: boolean }
+      can_handle_appointment_request: {
+        Args: { _clinic_id: string; _professional_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_manage_clinic: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
@@ -5287,6 +5362,18 @@ export type Database = {
           used_this_period: number
         }[]
       }
+      create_appointment_request: {
+        Args: {
+          _date: string
+          _kind: string
+          _notes: string
+          _period: string
+          _phone: string
+          _provider_id: string
+          _time: string
+        }
+        Returns: string
+      }
       create_conversation_for_clinic_patient: {
         Args: {
           _clinic_id: string
@@ -5314,6 +5401,10 @@ export type Database = {
         Returns: boolean
       }
       delete_my_assessments: { Args: { _ids: string[] }; Returns: number }
+      dismiss_appointment_request: {
+        Args: { _request_id: string }
+        Returns: undefined
+      }
       dismiss_assessment_red_flags: {
         Args: { _assessment_id: string; _reason: string }
         Returns: undefined
@@ -5610,6 +5701,15 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_my_care_providers: {
+        Args: never
+        Returns: {
+          kind: string
+          logo_url: string
+          name: string
+          provider_id: string
+        }[]
       }
       get_next_fixed_quiz: {
         Args: { _niche: string; _user_id: string }

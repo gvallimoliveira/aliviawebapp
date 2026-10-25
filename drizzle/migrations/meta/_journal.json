@@ -253,6 +253,13 @@
       "when": 1792901414380,
       "tag": "0035_adherence_patient_id_scoped_checkins",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1792903611555,
+      "tag": "0036_appointment_requests",
+      "breakpoints": true
     }
   ]
 }
