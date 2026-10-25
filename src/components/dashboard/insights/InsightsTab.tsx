@@ -19,6 +19,7 @@ import { FrequencyGapCard, ReferralRateCard, LeakageCard, LateCancellationCard, 
 import ClinicServicesCard from "@/components/dashboard/ClinicServicesCard";
 import { useManagementData, type ManagementData } from "./useManagementData";
 import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
+import ClinicOverviewMetrics from "./ClinicOverviewMetrics";
 
 interface Props {
   clinicId?: string;
@@ -33,13 +34,14 @@ type L = "pt" | "en" | "es";
 const tr = (l: L, pt: string, en: string, es: string) => (l === "pt" ? pt : l === "es" ? es : en);
 
 interface Ctx { clinicId?: string; professionalId?: string; scopeKey?: string; isManager: boolean; isClinic: boolean; teamDismiss: boolean; d: ManagementData }
-interface Entry { id: string; cat: Exclude<Cat, "summary">; manager?: boolean; clinicOnly?: boolean; wide?: boolean; when?: boolean; render: (c: Ctx) => ReactNode }
+interface Entry { id: string; cat: Cat; manager?: boolean; clinicOnly?: boolean; wide?: boolean; when?: boolean; render: (c: Ctx) => ReactNode }
 
 /**
  * Insight registry: every insight (existing and future) belongs to exactly one
  * category; visibility by role lives here, never scattered in the page.
  */
 const REGISTRY: Entry[] = [
+  { id: "clinic-overview", cat: "summary", clinicOnly: true, wide: true, render: (c) => c.clinicId ? <ClinicOverviewMetrics key={c.clinicId} clinicId={c.clinicId} /> : null },
   { id: "churn", cat: "patients", render: (c) => <ChurnRiskCard clinicId={c.clinicId} professionalId={c.professionalId} dismissForTeam={c.teamDismiss} /> },
   { id: "load", cat: "patients", when: ENABLE_PERIODIZATION, render: (c) => <LoadReadinessCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
   { id: "adherence", cat: "patients", wide: true, render: (c) => <PatientAdherenceCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
@@ -126,6 +128,7 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false, canMana
 
       {active === "summary" ? (
         <div className="space-y-4">
+          {entries.filter((e) => e.cat === "summary").map((e) => <div key={e.id}>{e.render(ctx)}</div>)}
           {!tiles ? <p className="text-sm text-muted-foreground">{tr(l, "Carregando…", "Loading…", "Cargando…")}</p> : (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
               {tiles.showMoney && <Tile to="finance" label={tr(l, "Perdido c/ faltas (30d)", "Lost to no-shows (30d)", "Perdido por faltas (30d)")} value={brl(tiles.chair.lostValue)} hint={`${tiles.chair.lostCount} ${tr(l, "horários", "slots", "turnos")}`} tone={tiles.chair.lostValue ? "bad" : undefined} />}

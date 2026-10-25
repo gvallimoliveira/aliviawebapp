@@ -9,15 +9,13 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2, UserPlus, ChevronDown, ChevronUp, MessageCircle,
+  Users, Stethoscope, Eye, Loader2, Copy, Check, Link2, UserPlus, MessageCircle,
 } from "lucide-react";
 import ConversationList from "@/components/chat/ConversationList";
 
 import DashboardErrorBoundary from "./DashboardErrorBoundary";
-import SecretaryReportsCard from "./SecretaryReportsCard";
 import CrefitoCompletionBanner from "./CrefitoCompletionBanner";
 import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
-import ProAnalyticsCharts from "./ProAnalyticsCharts";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
 import { useToast } from "@/hooks/use-toast";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
@@ -48,14 +46,6 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
   // Assignment state
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [assignTarget, setAssignTarget] = useState<string>("");
-  const [patientDetailOpen, setPatientDetailOpen] = useState(false);
-  const [metricsCollapsed, setMetricsCollapsed] = useState<boolean>(() => {
-    try { return localStorage.getItem("aliviA:metricsCollapsed:clinicSecretary") === "1"; } catch { return false; }
-  });
-  useEffect(() => {
-    try { localStorage.setItem("aliviA:metricsCollapsed:clinicSecretary", metricsCollapsed ? "1" : "0"); } catch {}
-  }, [metricsCollapsed]);
-
   useEffect(() => {
     if (!activeClinic) return;
     loadData();
@@ -353,71 +343,6 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
         </Card>
       )}
 
-      {/* Stats + Analytics — hidden while viewing a patient's detail for a cleaner workspace */}
-      {!patientDetailOpen && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setMetricsCollapsed((v) => !v)}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              aria-expanded={!metricsCollapsed}
-            >
-              {metricsCollapsed
-                ? <ChevronDown className="h-3.5 w-3.5" />
-                : <ChevronUp className="h-3.5 w-3.5" />}
-              {lang === "pt"
-                ? (metricsCollapsed ? "Mostrar métricas" : "Ocultar métricas")
-                : lang === "es"
-                ? (metricsCollapsed ? "Mostrar métricas" : "Ocultar métricas")
-                : (metricsCollapsed ? "Show metrics" : "Hide metrics")}
-            </button>
-          </div>
-          {!metricsCollapsed && (
-            <>
-              <div className="grid grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="py-4 text-center">
-                    <p className="text-3xl font-bold text-foreground">{therapists.length}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {lang === "pt" ? "Profissionais" : "Therapists"}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="py-4 text-center">
-                    <p className="text-3xl font-bold text-foreground">{filteredAssessments.length}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {lang === "pt" ? "Avaliações" : "Assessments"}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="py-4 text-center">
-                    <p className="text-3xl font-bold text-primary">
-                      {new Set(filteredAssessments.map((a) => a.patient_email).filter(Boolean)).size}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {lang === "pt" ? "Pacientes" : "Patients"}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Owner/secretary-only widgets */}
-              {showPrivileged && (
-                <>
-                  {activeClinic?.clinic_id && (
-                    <SecretaryReportsCard clinicId={activeClinic.clinic_id} lang={lang} />
-                  )}
-                  <ProAnalyticsCharts assessments={filteredAssessments} />
-                </>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
       {/* Patient list — read-only with ability to add and archive patients */}
       {(filteredAssessments.length > 0 || therapists.length > 0 || activeClinic?.clinic_id) && (
         <DashboardErrorBoundary>
@@ -437,7 +362,6 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
             clinicLogoUrl={activeClinic?.logo_url || undefined}
             clinicName={activeClinic?.clinic_name || undefined}
             onSelectionChange={(sel) => {
-              setPatientDetailOpen(!!sel);
               if (sel) {
                 const scrollToAnchor = () => {
                   const el = document.getElementById("patient-detail-anchor");

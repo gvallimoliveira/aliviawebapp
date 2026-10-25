@@ -37,6 +37,7 @@ const patientTools = [
 ];
 
 const proTools = [
+  { key: "clinic_overview", icon: BarChart3 },
   { key: "care_services", icon: NotebookPen }, // Catalog: Insights → Operations; request approval: Calendar.
   { key: "custom_link", icon: Link2 },
   { key: "statistics", icon: BarChart3 },
