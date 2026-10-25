@@ -13,7 +13,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const creditDecision = await canaryCredits(req, "parse-schedule-image", { function_name: "parse-schedule-image" });
+    const creditDecision = await canaryCredits(req, "parse-schedule-image");
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;
     const { imageBase64, mimeType } = await req.json();

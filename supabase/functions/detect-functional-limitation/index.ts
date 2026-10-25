@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const creditDecision = await canaryCredits(req, "detect-functional-limitation", { function_name: "detect-functional-limitation" });
+    const creditDecision = await canaryCredits(req, "detect-functional-limitation");
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;
     const { note, painRegions = [], painScoresPerRegion = {}, language = "pt" } = await req.json();

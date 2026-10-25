@@ -834,7 +834,7 @@ serve(async (req) => {
   }
 
   try {
-    const creditDecision = await canaryCredits(req, "agent-knowledge", { function_name: "agent-knowledge" });
+    const creditDecision = await canaryCredits(req, "agent-knowledge");
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;
     const authHeader = req.headers.get("Authorization") || "";

@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const creditDecision = await canaryCredits(req, "extract-dynamometry", { function_name: "extract-dynamometry" });
+    const creditDecision = await canaryCredits(req, "extract-dynamometry");
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");

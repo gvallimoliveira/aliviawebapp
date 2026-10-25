@@ -79,7 +79,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const creditDecision = await canaryCredits(req, "suggest-specialty-questionnaires", { function_name: "suggest-specialty-questionnaires" });
+    const creditDecision = await canaryCredits(req, "suggest-specialty-questionnaires");
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;
     const { anamnesisData, additionalInfo } = await req.json();

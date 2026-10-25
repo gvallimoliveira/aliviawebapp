@@ -105,7 +105,10 @@ const App = () => {
       const context = result.error?.context;
       if (context instanceof Response && context.status === 402) {
         const payload = await context.clone().json().catch(() => null);
-        if (payload?.error === "alivia_credit_limit") window.dispatchEvent(new Event(AI_CREDIT_BLOCKED));
+        if (payload?.error === "alivia_credit_limit") {
+          if (result.error) result.error.message = "alivia_credit_limit";
+          window.dispatchEvent(new Event(AI_CREDIT_BLOCKED));
+        }
       }
       return result;
     };

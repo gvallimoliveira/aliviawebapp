@@ -16,7 +16,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const creditDecision = await canaryCredits(req, "suggest-functional-tests", { function_name: "suggest-functional-tests" });
+    const creditDecision = await canaryCredits(req, "suggest-functional-tests");
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");

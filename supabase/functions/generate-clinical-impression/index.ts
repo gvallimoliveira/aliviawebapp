@@ -116,10 +116,7 @@ serve(async (req) => {
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
-    const creditDecision = await canaryCredits(req, "generate-clinical-impression");
-    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
-    if (quotaBlock) return quotaBlock;
+
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const { anamnesisData: rawAnamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, voiceNotes, forceRefresh } = await req.json();
@@ -143,6 +140,10 @@ serve(async (req) => {
         });
       }
     }
+    // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
+    const creditDecision = await canaryCredits(req, "generate-clinical-impression");
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
     const isPt = language === "pt";
     const isEs = language === "es";
 

@@ -20,7 +20,7 @@
 - Load-control views use `loadWindows.ts` (3-day lists, 7-day charts, fallback to latest data); full history on demand in `LoadHistoryDialog`, never deleted; risk math ignores display windows.
 - Cardiovascular metrics, goals, distributions, trends, readings and both PDFs derive only from pure `cardioAnalysis.ts`; keep panel and reports consistent without AI credits.
 - Athlete/active PDF priorities and descriptive summaries use `cardioReportSections` in `cardioAnalysis.ts`; WHO remains secondary and presentation changes never alter load or safety calculations.
-- Cardiovascular educational copy is shared through `cardioEducation.ts` by the information dialog and PDFs; profile references must remain distinct from universal safety limits and unmeasured respiratory targets.
+- `cardioEducation.ts` shares dialog/PDF education; profile references differ from safety limits and unmeasured respiratory targets.
 - Dashboard/clinic data effects depend on `user?.id`, never the `user` object; token refresh on app return must not reset open screens.
 - Recovery decisions (load matrix, day adjustment, load card) use `recoverySignal` in `periodization.ts`: check-in readiness is the universal base and morning resting HR, when fresh with baseline, takes priority (most conservative wins); patients often skip morning HR.
 - Load control has one session-entry path (monitored-session block + microcycle shortcut); the load card is read-only plus manual check-in, and cardio analysis appears only when HR data exists.
@@ -49,3 +49,5 @@
 - Announcements use scoped server lists, can_handle_appointment_request and server-resolved push recipients.
 - Agenda uses latestRequest to reject stale results. ClinicServicesCard lives only in the manager-visible `care-services` registry entry in Insights → Operação, not Patients/Team, to keep home uncluttered; explicit professional scope isolates solo services.
 - Clinics use idempotent `_shared/clinicProvisioning.ts` (webhook + subscription self-heal). Admin groups subscribers, active free partners and trials/inactive via `clinicAdminGroups`, preserving status.
+
+- AI quotas use server status/policy, atomic FIFO package accounting and service-only fulfillment; distinguish app quota errors from provider errors. Admin rollout requires server authorization; empty tiers block nobody.

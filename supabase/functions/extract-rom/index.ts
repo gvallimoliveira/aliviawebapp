@@ -76,7 +76,7 @@ const withUnit = (v: unknown): string => {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const creditDecision = await canaryCredits(req, "extract-rom", { function_name: "extract-rom" });
+    const creditDecision = await canaryCredits(req, "extract-rom");
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
