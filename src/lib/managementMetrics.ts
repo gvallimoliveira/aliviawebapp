@@ -102,8 +102,33 @@ export function median(values: number[]): number {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
+/* ---------------- Evidência de sessão realizada ---------------- */
+/**
+ * Real-world data: many clinics record the evolution note but never classify
+ * the appointment. A note day with no completed appointment counts as a
+ * realized session everywhere (frequency, cycles, leakage, discharge).
+ */
+export function synthesizeNoteSessions(appts: MgmtAppt[], notes: MgmtNote[]): MgmtAppt[] {
+  const doneDays = new Set(
+    appts.filter((a) => a.status === "completed").map((a) => `${(a.patient_email || "").trim().toLowerCase()}|${a.appointment_date}`)
+  );
+  const extra: MgmtAppt[] = [];
+  const seen = new Set<string>();
+  for (const n of notes) {
+    const e = (n.patient_email || "").trim().toLowerCase();
+    const d = (n.session_date || "").slice(0, 10);
+    if (!e || !d) continue;
+    const k = `${e}|${d}`;
+    if (doneDays.has(k) || seen.has(k)) continue;
+    seen.add(k);
+    extra.push({ id: `note:${k}`, appointment_date: d, status: "completed", patient_email: e });
+  }
+  return [...appts, ...extra];
+}
+
 /* ---------------- Custo da cadeira vazia ---------------- */
-export function emptyChairCost(appts: MgmtAppt[], price: number, today: string, days: number) {
+export function emptyChairCost(appts: MgmtAppt[], price: number, today: string, days: number, priceOf?: PriceOf) {
+  const unit = (a: MgmtAppt) => (priceOf ? priceOf(a) : price);
   const from = addDays(today, -(days - 1));
   const care = appts.filter((a) => isCare(a) && inWindow(a, from, today));
   const lost = care.filter((a) => LOST_STATUSES.includes(a.status));
@@ -112,9 +137,12 @@ export function emptyChairCost(appts: MgmtAppt[], price: number, today: string, 
   const byMonth: Record<string, number> = {};
   const byWeekday = [0, 0, 0, 0, 0, 0, 0];
   const byHour: Record<string, number> = {};
+  let lostValue = 0;
   for (const a of lost) {
+    const v = unit(a);
+    lostValue += v;
     const m = a.appointment_date.slice(0, 7);
-    byMonth[m] = (byMonth[m] || 0) + price;
+    byMonth[m] = (byMonth[m] || 0) + v;
     byWeekday[new Date(toDay(a.appointment_date)).getUTCDay()] += 1;
     const h = (a.appointment_time || "").slice(0, 2);
     if (h) byHour[h] = (byHour[h] || 0) + 1;
@@ -124,7 +152,7 @@ export function emptyChairCost(appts: MgmtAppt[], price: number, today: string, 
     lostCount: lost.length,
     noShow,
     cancelled,
-    lostValue: lost.length * price,
+    lostValue: round2(lostValue),
     lossRate: care.length ? Math.round((lost.length / care.length) * 100) : 0,
     byMonth: Object.entries(byMonth).sort(([a], [b]) => a.localeCompare(b)).map(([month, value]) => ({ month, value })),
     byWeekday,
