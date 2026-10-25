@@ -2,7 +2,7 @@ import { canUseAgentScope } from "../_shared/agent-care-scope.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
-import { canaryCredits } from "../_shared/ai-credits.ts";
+import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 import { mechanismContextBlock, mechanismHepRules, resolveStoredMechanism } from "../_shared/pain-mechanism.ts";
 
@@ -24,7 +24,8 @@ serve(async (req) => {
   try {
     // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
     const creditDecision = await canaryCredits(req, "agent-generate-hep");
-    void creditDecision;
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },

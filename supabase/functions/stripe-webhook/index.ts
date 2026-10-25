@@ -689,47 +689,13 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
         break;
       }
 
-      // Idempotency: skip if a package already exists for this session.
-      const { data: existing } = await supabase
-        .from("ai_credit_packages")
-        .select("id")
-        .eq("stripe_session_id", session.id)
-        .maybeSingle();
-
-      if (existing) {
-        log("ai_credits: already fulfilled, skipping", { sessionId: session.id });
-        break;
-      }
-
-      const { error: pkgErr } = await supabase
-        .from("ai_credit_packages")
-        .insert({
-          user_id: userId,
-          package_type: packageKey,
-          credits_total: credits,
-          credits_remaining: credits,
-          transcriptions_total: 0,
-          transcriptions_remaining: 0,
-          price_paid: priceBrl,
-          stripe_session_id: session.id,
-          stripe_payment_intent_id:
-            (session.payment_intent as string) || null,
-        });
-      if (pkgErr) {
-        log("ai_credits: insert package failed", { error: String(pkgErr) });
-        break;
-      }
-
-      await supabase.from("ai_credit_transactions").insert({
-        user_id: userId,
-        transaction_type: "purchase",
-        product_key: `ai_credits_${packageKey}`,
-        amount_brl: priceBrl,
-        credits_delta: credits,
-        transcriptions_delta: 0,
-        stripe_session_id: session.id,
-        notes: `Pacote ${packageKey} comprado via Stripe Checkout`,
+      const { data: fulfilled, error: fulfillError } = await supabase.rpc("fulfill_ai_credit_package", {
+        _user_id: userId, _clinic_id: session.metadata?.clinic_id || null,
+        _session: session.id, _payment: (session.payment_intent as string) || null,
+        _key: packageKey, _credits: credits, _price: priceBrl,
       });
+      if (fulfillError) throw new Error(`Credit fulfillment failed: ${fulfillError.message}`);
+      if (!fulfilled) break;
 
       log("ai_credits fulfilled", { userId, credits, packageKey });
 

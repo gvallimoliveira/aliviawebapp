@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { canaryCredits } from "../_shared/ai-credits.ts";
+import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 import { describeStrength, describeRom } from "../_shared/objective-tests.ts";
 
@@ -20,7 +20,8 @@ serve(async (req) => {
     const { assessments, language = "pt", forceRefresh, sessionNotes } = await req.json();
     // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
     const creditDecision = await canaryCredits(req, "generate-evolution-summary");
-    void creditDecision;
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
 
     if (!assessments || !Array.isArray(assessments) || assessments.length < 2) {
       return new Response(JSON.stringify({ error: "At least 2 assessments required" }), {

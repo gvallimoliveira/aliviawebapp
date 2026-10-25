@@ -1,7 +1,7 @@
 import { canUseAgentScope } from "../_shared/agent-care-scope.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
-import { canaryCredits } from "../_shared/ai-credits.ts";
+import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { mechanismSummary } from "../_shared/pain-mechanism.ts";
 
 function normalizeAnamnesis(raw: any) {
@@ -668,16 +668,8 @@ Deno.serve(async (req) => {
 
     // A5: VIP/parceiros são isentos — não contam para o addon nem para crédito.
     // Buscamos o status uma vez aqui para reusar no gate abaixo.
-    const [vipEarly, partnerRow] = await Promise.all([
-      isVipEmail(adminClient, user.email),
-      adminClient
-        .from("professionals")
-        .select("is_partner")
-        .eq("user_id", user.id)
-        .maybeSingle()
-        .then((r: any) => !!r.data?.is_partner),
-    ]);
-    const isExempt = vipEarly || partnerRow;
+    const vipEarly = await isVipEmail(adminClient, user.email);
+    const isExempt = vipEarly;
 
     let addonConsumed = false;
     if (!isExempt) {
@@ -708,13 +700,14 @@ Deno.serve(async (req) => {
       user_id: user.id,
       credits: isExempt ? 0 : (addonConsumed ? 0 : undefined),
       metadata: {
-        ...(isExempt ? { exempt: vipEarly ? "vip" : "partner" } : {}),
+        ...(isExempt ? { exempt: "vip" } : {}),
         ...(addonConsumed ? { chat_addon: true } : {}),
         addon_consumed: addonConsumed,
         legacy_exempt: isExempt,
       },
     });
-    void creditDecision;
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
 
 
     // Access gate (reusa vipEarly)

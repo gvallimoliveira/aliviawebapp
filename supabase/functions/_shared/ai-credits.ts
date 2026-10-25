@@ -13,6 +13,8 @@
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+import { creditAvailability, BLOCKABLE_TIERS, mayBlock } from "./ai-credit-policy.ts";
+
 const CREDIT_COST: Record<string, number> = {
   "generate-diagnosis": 0.30,
   "generate-treatment": 0.30,
@@ -41,9 +43,9 @@ type LogOptions = {
   metadata?: Record<string, unknown>;
   user_id?: string | null;
   /**
-   * Marca a linha como consumo NÃO faturável (VIP, parceiro, tier ilimitado).
+   * Marca a linha como consumo NÃO faturável (VIP, tier ilimitado).
    * Crítico: `get_user_credit_status` soma o pool da clínica por membro e
-   * ignora linhas com was_bypassed=true. Sem isso, um VIP/parceiro dentro de
+   * ignora linhas com was_bypassed=true. Sem isso, um VIP dentro de
    * uma clínica queimaria a cota do time inteiro.
    */
   was_bypassed?: boolean;
@@ -155,7 +157,6 @@ export const AI_USAGE_ANON_SENTINEL = ANON_SENTINEL;
 //
 // Bypass sempre respeitado ANTES de consultar quota:
 //   1. VIP (vip_users por email + fallback hardcoded)
-//   2. professionals.is_partner
 //   3. tier == 'unlimited' (fallback do RPC)
 //
 // Clínica tem política de carência (canônico 2026-07): quando o RPC devolve
@@ -254,16 +255,7 @@ function logDecisionTelemetry(
 // Tiers cujo saldo é confiável o suficiente para virar bloqueio real.
 // Qualquer tier fora desta lista NUNCA bloqueia (fail-open), mesmo com a
 // flag global ligada — inclui 'unknown' (email não resolvido) e tiers novos.
-export const BLOCKABLE_TIERS = [
-  "pro_monthly",
-  "pro_annual",
-  "academic_monthly",
-  "academic_annual",
-  "clinic_small",
-  "clinic_medium",
-  "clinic_large",
-  "premium_b2c",
-] as const;
+export { BLOCKABLE_TIERS };
 
 type EnforcementConfig = {
   /** flag global (app_config.ai_credits_enforced) */
@@ -306,7 +298,7 @@ async function readEnforcement(admin: SupabaseClient): Promise<EnforcementConfig
 function canBlock(cfg: EnforcementConfig, tier: string | null | undefined): boolean {
   if (!cfg.global || !tier) return false;
   if (!(BLOCKABLE_TIERS as readonly string[]).includes(tier)) return false;
-  return cfg.tiers.includes(tier);
+  return mayBlock(cfg.global, cfg.tiers, tier);
 }
 
 async function isVipEmail(admin: SupabaseClient, email: string | null): Promise<boolean> {
@@ -345,7 +337,7 @@ function decodeJwtEmail(authHeader: string | null): string | null {
   }
 }
 
-// Cache de bypass por isolate (5 min). VIP/parceiro/ilimitado não mudam de
+// Cache de bypass por isolate (5 min). VIP/ilimitado não mudam de
 // minuto a minuto, e é justamente esse caminho que somava ~0,5–2s de latência
 // no canário (getUserById + vip_users + professionals + RPC). Só cacheia
 // decisões ilimitadas — nunca decisões que possam bloquear.
@@ -399,36 +391,17 @@ export async function assertCreditsAvailable(
     const enforced = cfg.global;
 
 
-    // Resolve user_id + email
+    // Validate identity before entitlement decisions; decoded claims are logging-only.
     const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
-    const userId = opts.user_id ?? decodeJwtSub(authHeader);
-    if (!userId || userId === ANON_SENTINEL) {
-      return finalize(admin, null, {
-        ...base, enforced, ok: true, reason: "anonymous", path_taken: "anonymous",
-      });
+    const token = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return finalize(admin, null, { ...base, enforced, ok: true, reason: "anonymous", path_taken: "anonymous" });
+    const { data: identity, error: identityError } = await admin.auth.getUser(token);
+    const userId = identity.user?.id;
+    if (identityError || !userId || (opts.user_id && opts.user_id !== userId)) {
+      return finalize(admin, null, { ...base, enforced, ok: true, reason: "fail_open", path_taken: "fail_open", metadata: { fail_open_cause: "invalid_identity" } });
     }
-
-    // Bypass já conhecido neste isolate? Devolve sem tocar em rede.
-    const cached = bypassCache.get(userId);
-    if (cached && Date.now() - cached.at < BYPASS_TTL_MS) {
-      return finalize(admin, userId, {
-        ...base, enforced, ok: true, unlimited: true,
-        reason: cached.reason, path_taken: cached.path, tier: cached.tier,
-        metadata: { bypass_cache: true },
-      });
-    }
-
-    // Email para VIP: tenta do JWT, senão profiles/auth
-    let email = decodeJwtEmail(authHeader);
-    let emailResolved = !!email;
-    if (!email) {
-      try {
-        const { data: u } = await admin.auth.admin.getUserById(userId);
-        email = u?.user?.email ?? null;
-        emailResolved = !!email;
-      } catch { /* noop */ }
-    }
-
+    const email = identity.user?.email ?? null;
+    const emailResolved = !!email;
     if (await isVipEmail(admin, email)) {
       bypassCache.set(userId, { unlimited: true, reason: "vip", path: "vip", at: Date.now() });
       return finalize(admin, userId, {
@@ -437,7 +410,7 @@ export async function assertCreditsAvailable(
     }
 
     // Se não conseguimos nem descobrir o e-mail, não temos como afirmar que a
-    // pessoa NÃO é VIP/parceiro → fail-open explícito (nunca bloqueia).
+    // pessoa NÃO é VIP → fail-open explícito (nunca bloqueia).
     if (!emailResolved) {
       return finalize(admin, userId, {
         ...base, enforced, ok: true, reason: "fail_open", path_taken: "fail_open",
@@ -445,23 +418,7 @@ export async function assertCreditsAvailable(
       });
     }
 
-    // Partner (e sinalização de estudante, usada no fail-open abaixo)
-    let isStudent = false;
-    try {
-      const { data: prof } = await admin
-        .from("professionals")
-        .select("is_partner, is_student")
-        .eq("user_id", userId)
-        .maybeSingle();
-      isStudent = !!prof?.is_student;
-      if (prof?.is_partner) {
-        bypassCache.set(userId, { unlimited: true, reason: "partner", path: "partner", at: Date.now() });
-        return finalize(admin, userId, {
-          ...base, enforced, ok: true, unlimited: true, reason: "partner", path_taken: "partner",
-        });
-      }
-    } catch { /* noop */ }
-
+    const isStudent = false;
 
     // Consulta consolidada
     const { data: statusData, error: statusError } = await admin.rpc(
@@ -519,50 +476,16 @@ export async function assertCreditsAvailable(
 
     const blockable = canBlock(cfg, s.tier);
 
-    if (s.clinic_id) {
-      // Política de carência: 20% acima do incluso antes de tocar em pacotes.
-      const included = s.included ?? 0;
-      const used = s.used ?? 0;
-      const purchased = s.purchased ?? 0;
-      const graceLimit = included * CLINIC_GRACE_RATIO;
-      const remainingWithGrace = Math.max(0, graceLimit - used);
-      const remaining = remainingWithGrace + purchased;
-      const inGrace = used > included && remainingWithGrace > 0;
-      const sufficient = remaining >= cost;
-      return finalize(admin, userId, {
-        ...base,
-        enforced,
-        ok: sufficient || !blockable,
-        blocked: blockable && !sufficient,
-        remaining,
-        reason: inGrace ? "clinic_grace" : sufficient ? "sufficient" : "insufficient",
-        path_taken: inGrace ? "clinic_grace" : "clinic_quota_check",
-        tier: s.tier,
-        metadata: {
-          included, used, purchased, clinic_id: s.clinic_id,
-          grace_limit: graceLimit, grace_ratio: CLINIC_GRACE_RATIO,
-          blockable, enforced_tiers: cfg.tiers,
-        },
-      });
-    }
-
-    const remainingIncluded = Math.max(0, (s.included ?? 0) - (s.used ?? 0));
-    const remaining = remainingIncluded + (s.purchased ?? 0);
-    const sufficient = remaining >= cost;
-
+    const available = creditAvailability({ ...s, pooled: !!s.clinic_id && s.tier.startsWith("clinic_") }, cost);
     return finalize(admin, userId, {
-      ...base,
-      enforced,
-      ok: sufficient || !blockable, // só bloqueia tier na allowlist
-      blocked: blockable && !sufficient,
-      remaining,
-      reason: sufficient ? "sufficient" : "insufficient",
-      path_taken: "quota_check",
-      tier: s.tier,
-      metadata: {
-        included: s.included, used: s.used, purchased: s.purchased,
-        blockable, enforced_tiers: cfg.tiers,
-      },
+      ...base, enforced, ok: available.sufficient || !blockable,
+      blocked: blockable && !available.sufficient,
+      remaining: available.remaining,
+      reason: available.sufficient ? "sufficient" : "insufficient",
+      path_taken: s.clinic_id ? "clinic_quota_check" : "quota_check", tier: s.tier,
+      metadata: { included: s.included, used: s.used, purchased: s.purchased,
+        clinic_id: s.clinic_id, grace_ratio: available.ratio, grace_limit: available.limit,
+        blockable, enforced_tiers: cfg.tiers },
     });
 
   } catch (e) {
@@ -601,11 +524,11 @@ export async function canaryCredits(
     tier: decision.tier,
     latency_ms: decision.latency_ms,
   }));
-  shadowLogAiUsage(req, {
+  if (!decision.blocked) shadowLogAiUsage(req, {
     function_name,
     user_id: opts.user_id,
     credits: opts.credits,
-    // VIP/parceiro/ilimitado não consome cota nem queima o pool da clínica.
+    // VIP/ilimitado não consome cota nem queima o pool da clínica.
     was_bypassed: decision.unlimited,
 
     metadata: {
@@ -620,4 +543,12 @@ export async function canaryCredits(
     },
   });
   return decision;
+}
+
+/** Only an application quota block carries this code; provider funding errors are distinct. */
+export function creditBlockResponse(decision: CreditDecision, cors: Record<string, string>): Response | null {
+  if (!decision.blocked) return null;
+  return new Response(JSON.stringify({ error: "alivia_credit_limit", tier: decision.tier }), {
+    status: 402, headers: { ...cors, "Content-Type": "application/json" },
+  });
 }

@@ -119,25 +119,12 @@ serve(async (req) => {
       });
     }
 
-    // Clinic staff (non owner/admin) never buy packs: credits belong to the clinic.
-    {
-      const admin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      );
-      const { data: memberships } = await admin
-        .from("clinic_members")
-        .select("role, clinics!inner(subscription_status)")
-        .eq("user_id", user.id)
-        .in("clinics.subscription_status", ["active", "trialing"]);
-      const rows = (memberships ?? []) as Array<{ role: string }>;
-      if (rows.length > 0 && !rows.some((r) => r.role === "owner" || r.role === "admin")) {
-        if (shouldRedirect) return redirectToApp(origin, "error");
-        return new Response(JSON.stringify({ error: "Only the clinic manager can buy credit packs" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+    const { data: creditStatus, error: statusError } = await admin.rpc("get_user_credit_status", { _user_id: user.id });
+    if (statusError || !creditStatus) throw new Error("Unable to resolve credit account");
+    if (!creditStatus.can_buy) {
+      if (shouldRedirect) return redirectToApp(origin, "error");
+      return new Response(JSON.stringify({ error: "Only the clinic manager can buy credit packs" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -160,6 +147,7 @@ serve(async (req) => {
       cancel_url: `${origin}/dashboard?tab=insights&ai_credits=canceled`,
       metadata: {
         type: "ai_credits",
+        clinic_id: creditStatus.clinic_id ?? "",
         user_id: user.id,
         package_key: packageKey,
         credits: String(pkg.credits),
