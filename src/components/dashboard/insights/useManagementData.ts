@@ -99,7 +99,9 @@ export function useManagementData(clinicId?: string, professionalId?: string): M
       if (cancelled) return;
       const c = cfg?.data || {};
       setState({
-        loading: false, today, price: Number(c.default_session_price) || 0, appts, notes, patients, dischargedKeys: discharged, names, therapists,
+        loading: false, today, price: Number(c.default_session_price) || 0, appts, notes, patients,
+        services: (services || []).map((s: any) => ({ id: s.id, name: s.name, price: Number(s.price) || 0, billing_type: s.billing_type === "monthly" ? "monthly" : "per_session" })),
+        dischargedKeys: discharged, names, therapists,
         hours: { start: c.operating_hours_start ?? null, end: c.operating_hours_end ?? null, workingDays: c.working_days ?? null },
         ownerProfessionalId, rooms: clinicId ? (c.rooms_count ?? null) : null,
       });
