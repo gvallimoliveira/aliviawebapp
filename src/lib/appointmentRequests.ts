@@ -16,6 +16,8 @@ export interface AppointmentRequest {
   notes: string | null;
   status: "pending" | "approved" | "dismissed" | "cancelled";
   appointment_id: string | null;
+  confirmed_date: string | null;
+  confirmed_time: string | null;
   created_at: string;
 }
 

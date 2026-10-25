@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { localISODate } from "@/lib/localDate";
+import { localISODate } from "@/lib/periodization";
 import {
   type AppointmentRequest, type RequestPeriod, PERIOD_LABEL, formatBrDate, notifyAppointmentRequest,
 } from "@/lib/appointmentRequests";
