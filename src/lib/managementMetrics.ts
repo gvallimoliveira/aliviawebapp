@@ -254,17 +254,19 @@ export function closedCycles(appts: MgmtAppt[], dischargedKeys: Set<string>, tod
     const count: Record<string, number> = {};
     for (const a of done) if (a.professional_id) count[a.professional_id] = (count[a.professional_id] || 0) + 1;
     const therapistId = Object.entries(count).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-    out.push({ key, name: done[0].patient_name || key, sessions: done.length, therapistId, outcome: discharged ? "discharge" : "dropout", lastDate });
+    const value = priceOf ? round2(done.reduce((s, a) => s + priceOf(a), 0)) : undefined;
+    out.push({ key, name: done[0].patient_name || key, sessions: done.length, value, therapistId, outcome: discharged ? "discharge" : "dropout", lastDate });
   }
   return out;
 }
 
 export function clinicalLtv(cycles: ClosedCycle[], price: number) {
-  const vals = cycles.map((c) => c.sessions * price);
+  const cycleValue = (c: ClosedCycle) => c.value ?? c.sessions * price;
+  const vals = cycles.map(cycleValue);
   const sess = cycles.map((c) => c.sessions);
   const group = (o: ClosedCycle["outcome"]) => {
     const g = cycles.filter((c) => c.outcome === o);
-    return { patients: g.length, avgValue: g.length ? round2((g.reduce((s, c) => s + c.sessions, 0) * price) / g.length) : 0, avgSessions: g.length ? round1(g.reduce((s, c) => s + c.sessions, 0) / g.length) : 0 };
+    return { patients: g.length, avgValue: g.length ? round2(g.reduce((s, c) => s + cycleValue(c), 0) / g.length) : 0, avgSessions: g.length ? round1(g.reduce((s, c) => s + c.sessions, 0) / g.length) : 0 };
   };
   return {
     patients: cycles.length,
