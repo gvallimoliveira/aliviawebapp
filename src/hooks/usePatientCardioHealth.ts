@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { summaryHealthRecord } from "@/lib/recordSummary";
 
 /** Same dated health sources as the record; never requires birthdate or writes a profile. */
-export function usePatientCardioHealth(patientId: string, assessments: any[], patientEmail?: string | null, clinicId?: string | null, refreshKey?: boolean) {
+export function usePatientCardioHealth(patientId: string | null | undefined, assessments: any[], patientEmail?: string | null, clinicId?: string | null, refreshKey?: boolean) {
   const [manual, setManual] = useState<any[]>([]);
   const [error, setError] = useState(false);
   useEffect(() => {
@@ -11,7 +11,11 @@ export function usePatientCardioHealth(patientId: string, assessments: any[], pa
     let request = 0;
     setManual([]);
     setError(false);
+    if (!patientId) return;
     const refresh = async () => {
+      try { await load(); } catch { if (!cancelled) setError(true); }
+    };
+    const load = async () => {
       const current = ++request;
       const { data: patient, error: patientError } = await supabase.from("patients").select("email").eq("id", patientId).maybeSingle();
       const email = patientEmail || patient?.email;

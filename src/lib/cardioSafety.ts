@@ -96,6 +96,29 @@ export function comorbidityHint(text?: string | null): string | null {
   return null;
 }
 
+/**
+ * Perfil de precaução sugerido pelo registro de saúde mais recente.
+ * Só vale enquanto o profissional não salvou um perfil; o mais protetor vence:
+ * cardiopatia (65%) > hipertensão/pulmonar (70%) > saudável.
+ */
+export function suggestedCardioProfile(raw: unknown): { profile: CardioProfile; reason: string } | null {
+  if (!raw) return null;
+  const h = normalizeHealthHistory(raw);
+  const ids = h.healthConditions || [];
+  if (ids.includes("heart_disease")) return { profile: "cardiac", reason: "Cardiopatia" };
+  if (ids.includes("hypertension")) return { profile: "hypertensive", reason: "Hipertensão" };
+  const other = `${h.healthConditionsOther || ""}`.toLowerCase();
+  if (/(cardiopat|infarto|insufici[eê]ncia card|arritmi|stent|angina|marca-?passo)/.test(other)) return { profile: "cardiac", reason: "Condição cardíaca" };
+  if (/(hipertens|press[aã]o alta)/.test(other)) return { profile: "hypertensive", reason: "Hipertensão" };
+  if (/(dpoc|pneumopat|enfisema|doen[cç]a pulmonar)/.test(other)) return { profile: "pulmonary", reason: "Condição pulmonar" };
+  return null;
+}
+
+/** Perfil mais permissivo que o sugerido pela saúde (maior % do teto). */
+export function profileLessProtective(current: string | null | undefined, suggested: CardioProfile): boolean {
+  return profileRule(current).ceilingPct > profileRule(suggested).ceilingPct;
+}
+
 /** Read structured condition IDs, not a regex over untranslated JSON keys. */
 export function cardioHealthHint(raw: unknown): string | null {
   const h = normalizeHealthHistory(raw);

@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePatientCardioHealth } from "@/hooks/usePatientCardioHealth";
+import { suggestedCardioProfile } from "@/lib/cardioSafety";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +43,8 @@ import { HeartPulse } from "lucide-react";
 import PeriodizationCollapsible from "./PeriodizationCollapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import DemoPeriodizationSection from "./DemoPeriodizationSection";
+
+const EMPTY_LIST: any[] = [];
 
 interface Props {
   /** Id do registro em `patients`, quando o prontuário já o conhece. */
@@ -309,6 +313,14 @@ const PeriodizationSection = ({
     }
   };
 
+  // Sem perfil salvo, o teto herda o perfil de precaução da saúde registrada.
+  const { health: cardioHealth } = usePatientCardioHealth(isDemo ? null : patientId, assessments ?? EMPTY_LIST, patientEmail, clinicId);
+  const suggestedProfile = suggestedCardioProfile(cardioHealth?.data);
+  const cardioPlan = useMemo(
+    () => (plan && !plan.cardio_profile && suggestedProfile ? { ...plan, cardio_profile: suggestedProfile.profile } : plan),
+    [plan, suggestedProfile?.profile],
+  );
+
   if (isDemo) {
     return <DemoPeriodizationSection key={`${patientEmail ?? patientName}-${latestAssessmentId}`} patientName={patientName} assessmentId={latestAssessmentId} />;
   }
@@ -379,7 +391,7 @@ const PeriodizationSection = ({
       }}
     >
       {/* Ordem: conduta → macrociclo → links → carga/prontidão → dose → microciclo; depois a área cardiovascular. */}
-      <DailyConductCard patientId={patientId} plan={plan} entries={entries} checkins={checkins} sessions={sessions} />
+      <DailyConductCard patientId={patientId} plan={cardioPlan} entries={entries} checkins={checkins} sessions={sessions} />
 
       {plan ? (
         <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} open={macroOpen} onOpenChange={setMacroOpen}>
@@ -444,7 +456,7 @@ const PeriodizationSection = ({
         />
         {plan && isAdmin && (
           <div className="mt-3">
-            <AutoPlanCard patientId={patientId} plan={plan} entries={entries} checkins={checkins} sessions={sessions} onChanged={refresh} readOnly={readOnly} />
+            <AutoPlanCard patientId={patientId} plan={cardioPlan} entries={entries} checkins={checkins} sessions={sessions} onChanged={refresh} readOnly={readOnly} />
           </div>
         )}
       </PeriodizationCollapsible>
@@ -475,7 +487,7 @@ const PeriodizationSection = ({
         </h4>
         {!readOnly && (
           <PeriodizationCollapsible title="Sessão monitorada" icon={<HeartPulse className="h-4 w-4 text-primary" />}>
-            <ProfessionalCardioEntry patientId={patientId} plan={plan} entries={entries} onChanged={refresh} />
+            <ProfessionalCardioEntry patientId={patientId} plan={cardioPlan} entries={entries} onChanged={refresh} />
           </PeriodizationCollapsible>
         )}
 
@@ -487,7 +499,7 @@ const PeriodizationSection = ({
           </PeriodizationCollapsible>
         )}
 
-        {entries.some((e: any) => e.hr_avg || e.hr_max || e.zone_minutes || e.trimp) && <CardioAnalysisDialog patientId={patientId} plan={plan} entries={entries} patientName={patientName} professionalName={proName} clinicId={clinicId} />}
+        {entries.some((e: any) => e.hr_avg || e.hr_max || e.zone_minutes || e.trimp) && <CardioAnalysisDialog patientId={patientId} plan={cardioPlan} entries={entries} patientName={patientName} professionalName={proName} clinicId={clinicId} />}
       </div>
     </div>
   );
