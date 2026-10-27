@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { backToBackHighDays, loadLevelFromRpe, localISODate, pairSessionsWithSrpe, plannedLoad } from "@/lib/periodization";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
 import { deleteSession, savePlannedDose, saveProfessionalSession } from "@/lib/periodizationData";
+import CopyToDaysPicker from "./CopyToDaysPicker";
 import { DOSE_CLASS, DOSE_LABEL, PLANNED_LOAD_CLASS, PLANNED_LOAD_LABEL, TRACK_LABEL } from "./scales";
 import { Slider } from "@/components/ui/slider";
 
@@ -111,7 +112,9 @@ const MicroWeekGrid = ({
   // Nível de intensidade do calendário deriva da nota de sRPE alvo.
   const load = loadLevelFromRpe(plannedRpe, String(plannedMin).trim() === "" ? null : Number(plannedMin));
 
+  const [copyDays, setCopyDays] = useState<string[]>([]);
   const openPlanned = (date: string, session?: PeriodizationSession) => {
+    setCopyDays([]);
     setTrack(session?.track ?? "physio");
     setTitle(session?.title ?? "");
     setPlannedMin(session?.planned_duration_min != null ? String(session.planned_duration_min) : "");
@@ -141,8 +144,14 @@ const MicroWeekGrid = ({
         notes: editing.session?.notes,
         source: editing.session?.created_source,
       };
-      if (demoActions) demoActions.saveDose(dose);
-      else await savePlannedDose(dose);
+      const dates = [editing.date, ...(editing.session ? [] : copyDays.filter((d) => d !== editing.date))];
+      for (const d of dates) {
+        const one = { ...dose, sessionDate: d };
+        if (demoActions) demoActions.saveDose(one);
+        else await savePlannedDose(one);
+      }
+      if (dates.length > 1) toast({ title: `Dose copiada para ${dates.length} dias` });
+      setCopyDays([]);
       setTitle("");
       setPlannedMin("");
       (document.activeElement as HTMLElement | null)?.blur?.();
@@ -442,6 +451,9 @@ const MicroWeekGrid = ({
                 </p>
               </div>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Descrição curta (opcional)" />
+              {editing && !editing.session && (
+                <CopyToDaysPicker baseDate={editing.date} value={copyDays} onChange={setCopyDays} />
+              )}
               <Button type="button" className="w-full rounded-xl gap-2" onClick={add} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editing?.session ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 {editing?.session ? "Salvar dose planejada" : "Adicionar"}

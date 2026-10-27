@@ -149,6 +149,7 @@ interface Info {
     planned_rpe: number | null;
     title: string | null;
     already_reported?: boolean;
+    reported?: { rpe: number; duration_min: number | null; notes: string } | null;
   }>;
   week_sessions?: WeekSession[];
   /** Sessões planejadas dos últimos 7 dias ainda sem sRPE. */
@@ -187,6 +188,11 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
   // Sessão planejada do microciclo escolhida pelo paciente (pré-preenchimento).
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [freeMode, setFreeMode] = useState(false);
+  // Só envia a sessão junto com a prontidão se o paciente mexeu nela de propósito
+  // (a pré-seleção automática não conta como resposta).
+  const [srpeTouched, setSrpeTouched] = useState(false);
+  // Editando uma sessão de hoje já respondida.
+  const [editingReported, setEditingReported] = useState(false);
 
 
   // Prescrição de dose (link do treinador/preparador)
@@ -268,7 +274,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
   const checkinPending = () =>
     !checkinDone && (scalesTouched || !!restingHr || !!note?.trim());
   // Há uma sessão (carga) preenchida que ainda não foi enviada?
-  const srpePending = () => !srpeDone && Number(duration) > 0;
+  const srpePending = () => !srpeDone && srpeTouched && Number(duration) > 0;
 
   const submitCheckin = async (opts: { silent?: boolean } = {}): Promise<boolean> => {
     const fail = (m: string) => { if (!opts.silent) setErrorMsg(m); return false; };
@@ -322,16 +328,45 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
   };
 
   const pickSession = (t: NonNullable<Info["today_targets"]>[number]) => {
-    if (t.already_reported) return;
+    // Tocar de novo na sessão selecionada desmarca (nada é enviado para ela).
+    if (selectedSessionId === t.id) {
+      setSelectedSessionId(null);
+      setDuration("");
+      setRpe(5);
+      setSrpeNotes("");
+      setSrpeTouched(false);
+      setEditingReported(false);
+      setErrorMsg("");
+      return;
+    }
+    if (t.already_reported && !t.reported) return;
     setSessionDate("");
     setSelectedSessionId(t.id);
     setTrack(t.track);
-    setDuration(t.planned_duration_min ? String(t.planned_duration_min) : "");
+    if (t.already_reported && t.reported) {
+      // Edição no mesmo dia: abre com a resposta já enviada.
+      setDuration(String(t.reported.duration_min ?? t.planned_duration_min ?? ""));
+      setRpe(t.reported.rpe);
+      setSrpeNotes(t.reported.notes || "");
+      setEditingReported(true);
+    } else {
+      setDuration(t.planned_duration_min ? String(t.planned_duration_min) : "");
+      setEditingReported(false);
+    }
+    setSrpeTouched(true);
     setFreeMode(false);
     setErrorMsg("");
   };
 
   const pickPastSession = (t: NonNullable<Info["pending_sessions"]>[number]) => {
+    if (selectedSessionId === t.id) {
+      setSelectedSessionId(null);
+      setDuration("");
+      setSessionDate("");
+      setSrpeTouched(false);
+      return;
+    }
+    setSrpeTouched(true);
     setSelectedSessionId(t.id);
     setTrack(t.track);
     setDuration(t.planned_duration_min ? String(t.planned_duration_min) : "");
@@ -388,6 +423,8 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
     setSpo2("");
     setSelectedSessionId(null);
     setSessionDate("");
+    setSrpeTouched(false);
+    setEditingReported(false);
     // Recarrega os alvos para marcar a sessão como já relatada.
     const refreshed = await fetchInfo();
     if (refreshed) {
@@ -665,10 +702,14 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                         <div className="space-y-2">
                           <p className="text-sm font-medium text-foreground">Sessões de hoje registradas</p>
                           {todayTargets.filter((t) => t.already_reported).map((t) => (
-                            <div key={t.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                            <button key={t.id} type="button" disabled={!t.reported}
+                              onClick={() => { setFreeMode(false); pickSession(t); }}
+                              className="w-full text-left flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 enabled:hover:border-primary/60">
                               <span className="text-xs text-foreground">{TRACK_LABEL[t.track] || t.track}{t.title ? ` · ${t.title}` : ""}</span>
-                              <Badge variant="secondary" className="shrink-0 text-[10px]">Já registrada</Badge>
-                            </div>
+                              <Badge variant="secondary" className="shrink-0 text-[10px]">
+                                {t.reported ? `${t.reported.rpe}/10 · editar` : "Já registrada"}
+                              </Badge>
+                            </button>
                           ))}
                         </div>
                       )}
@@ -699,18 +740,21 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           <div className="space-y-2">
                             {todayTargets.map((t) => {
                               const done = !!t.already_reported;
-                              const active = selectedSessionId === t.id && !done;
+                              const editable = done && !!t.reported;
+                              const active = selectedSessionId === t.id;
                               return (
                                 <button
                                   key={t.id}
                                   type="button"
                                   onClick={() => pickSession(t)}
-                                  disabled={done}
+                                  disabled={done && !editable}
                                   className={`w-full text-left rounded-xl border px-3 py-2 transition ${
                                     active
                                       ? "border-primary bg-primary/5"
                                       : done
-                                        ? "border-border bg-muted/40 opacity-70 cursor-default"
+                                        ? editable
+                                          ? "border-border bg-muted/40 hover:border-primary/60"
+                                          : "border-border bg-muted/40 opacity-70 cursor-default"
                                         : "border-border hover:border-primary/60"
                                   }`}
                                 >
@@ -718,10 +762,12 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                                     <span className="text-sm font-medium text-foreground">
                                       {TRACK_LABEL[t.track] || t.track}
                                     </span>
-                                    {done ? (
-                                      <Badge variant="secondary" className="text-[10px]">Já registrada</Badge>
-                                    ) : active ? (
+                                    {active ? (
                                       <CheckCircle2 className="h-4 w-4 text-primary" />
+                                    ) : done ? (
+                                      <Badge variant="secondary" className="text-[10px]">
+                                        {editable ? `Registrada · ${t.reported!.rpe}/10 · editar` : "Já registrada"}
+                                      </Badge>
                                     ) : null}
                                   </div>
                                   <p className="text-[11px] text-muted-foreground">
@@ -736,7 +782,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                             })}
                           </div>
                           <p className="text-[10px] text-muted-foreground">
-                            Responda pelo que você realmente sentiu — não precisa bater com o alvo.
+                            Responda pelo que você realmente sentiu — não precisa bater com o alvo. Toque de novo na sessão para desmarcar; sessões de hoje já registradas podem ser corrigidas até o fim do dia.
                           </p>
                           <button
                             type="button"
@@ -819,7 +865,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           min={1}
                           max={600}
                           value={duration}
-                          onChange={(e) => setDuration(e.target.value)}
+                          onChange={(e) => { setDuration(e.target.value); setSrpeTouched(true); }}
                           placeholder="Ex.: 50"
                         />
                       </div>
@@ -829,7 +875,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                           <span className="text-sm font-medium text-foreground">Esforço percebido (0-10)</span>
                           <Badge variant="outline" className="text-xs">{rpe}</Badge>
                         </div>
-                        <Slider dragOnly min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => setRpe(v)} />
+                        <Slider dragOnly min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => { setRpe(v); setSrpeTouched(true); }} />
                         <div className="flex justify-between text-[10px] text-muted-foreground">
                           <span>Muito leve</span><span>Máximo</span>
                         </div>
@@ -876,7 +922,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                       {errorMsg && <p className="text-xs text-destructive">{errorMsg}</p>}
                       <Button className="w-full rounded-xl gap-2" onClick={() => submitSrpe()} disabled={savingSrpe}>
                         {savingSrpe ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                        Registrar sessão
+                        {editingReported ? "Salvar correção" : "Registrar sessão"}
                       </Button>
                     </>
                   )}

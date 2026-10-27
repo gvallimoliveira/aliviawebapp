@@ -225,9 +225,14 @@ serve(async (req) => {
       // Sessões já relatadas hoje: evita o paciente registrar a mesma sessão duas vezes.
       const { data: reported } = await supabase
         .from("srpe_entries")
-        .select("session_id")
+        .select("session_id, track, source, duration_min, rpe, patient_rpe, notes")
         .eq("patient_id", patient.id)
         .eq("session_date", todayISO());
+      // Resposta do próprio paciente hoje, por sessão: permite editar no mesmo dia.
+      const reportedBySession = new Map<string, Record<string, unknown>>();
+      (reported || []).forEach((r: Record<string, unknown>) => {
+        if (typeof r.session_id === "string") reportedBySession.set(r.session_id, r);
+      });
       const reportedIds = new Set((reported || []).map((r: { session_id: string | null }) => r.session_id).filter(Boolean));
 
       // Visão do microciclo para o preparador: toda a semana (seg→dom), todas as
@@ -315,6 +320,18 @@ serve(async (req) => {
             planned_rpe: s.planned_rpe,
             title: s.title,
             already_reported: reportedIds.has(s.id as string),
+            reported: (() => {
+              const r = reportedBySession.get(s.id as string);
+              if (!r) return null;
+              const own = r.source !== "professional";
+              const rpe = own ? r.rpe : r.patient_rpe;
+              if (typeof rpe !== "number") return null;
+              return {
+                rpe,
+                duration_min: own ? r.duration_min : null,
+                notes: own && typeof r.notes === "string" ? r.notes : "",
+              };
+            })(),
           })),
           week_sessions: weekSessions,
           pending_sessions: pendingSessions,
