@@ -186,7 +186,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       window.clearTimeout(realtimeRefetchTimer.current);
     }
     realtimeRefetchTimer.current = window.setTimeout(() => {
-      loadPatientAssessments();
+      loadPatientAssessments({ keepCurrent: true });
       realtimeRefetchTimer.current = null;
     }, 1500);
   };
@@ -248,9 +248,11 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     "final_hypothesis_by, final_hypothesis_at, original_assessment_id, redo_used, " +
     "pain_mechanism, reviewed_at, archived_at, paid_at, created_at, updated_at";
 
-  const loadPatientAssessments = async () => {
+  const loadPatientAssessments = async (opts?: { keepCurrent?: boolean }) => {
     const request = ++assessmentRequest.current;
-    setPatientAssessments([]);
+    // Só limpa ao trocar de escopo; recargas em tempo real mantêm o prontuário
+    // aberto montado (limpar aqui desmontava o prontuário e voltava ao topo).
+    if (!opts?.keepCurrent) setPatientAssessments([]);
     // One selected practice, never a union of solo and clinic records.
     const { data: proData } = await careScope(supabase
       .from("assessments")
