@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { findOverlaps, fmtMinutes, type AgendaSlot } from "@/lib/appointmentConflicts";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
@@ -31,6 +32,28 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
   const [therapistId, setTherapistId] = useState("");
   const [serviceId, setServiceId] = useState("none");
   const [busy, setBusy] = useState(false);
+  const [daySlots, setDaySlots] = useState<AgendaSlot[]>([]);
+
+  useEffect(() => {
+    if (!target || !date) { setDaySlots([]); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      let q = (supabase.from("professional_appointments") as any)
+        .select("id, appointment_time, duration_minutes, patient_name, service_type, status")
+        .eq("appointment_date", date);
+      if (clinicId) {
+        q = q.eq("clinic_id", clinicId);
+        if (therapistId) q = q.eq("professional_id", therapistId);
+      } else {
+        q = q.eq("professional_id", professionalId ?? "").is("clinic_id", null);
+      }
+      const { data } = await q;
+      if (!cancelled) setDaySlots((data as AgendaSlot[]) || []);
+    }, 250);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [target, date, therapistId, clinicId, professionalId]);
+
+  const overlaps = useMemo(() => (time ? findOverlaps(time, Number(duration) || 50, daySlots) : []), [time, duration, daySlots]);
 
   const scopeReady = !!clinicId || !!professionalId;
 
@@ -212,6 +235,22 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
                     {services.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+            {overlaps.length > 0 && (
+              <div role="alert" className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm space-y-1.5">
+                <p className="font-medium text-foreground">
+                  Atenção: já {overlaps.length === 1 ? "existe 1 agendamento que se sobrepõe" : `existem ${overlaps.length} agendamentos que se sobrepõem`} a este horário{clinicId && !therapistId ? " na clínica" : ""}.
+                </p>
+                <ul className="space-y-1">
+                  {overlaps.map((o, i) => (
+                    <li key={o.slot.id || i} className="flex flex-wrap justify-between gap-2 text-muted-foreground">
+                      <span>{fmtMinutes(o.start)}–{fmtMinutes(o.end)} · {o.slot.service_type === "compromisso" ? "Compromisso" : (o.slot.patient_name || "Paciente")}{o.slot.service_type && o.slot.service_type !== "compromisso" ? ` (${o.slot.service_type})` : ""}</span>
+                      <span className="text-xs">sobrepõe {o.overlapMin} min</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground">Você ainda pode confirmar, ajustar o horário ou recusar.</p>
               </div>
             )}
           </div>
