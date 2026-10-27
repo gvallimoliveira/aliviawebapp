@@ -7,6 +7,8 @@ interface Props {
   icon?: ReactNode;
   defaultOpen?: boolean;
   children: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -15,8 +17,10 @@ interface Props {
  * evitando título duplicado — a estrutura Card > CardHeader + CardContent é
  * preservada para o conteúdo.
  */
-const PeriodizationCollapsible = ({ title, icon, defaultOpen = true, children }: Props) => {
-  const [open, setOpen] = useState(defaultOpen);
+const PeriodizationCollapsible = ({ title, icon, defaultOpen = true, children, open: openProp, onOpenChange }: Props) => {
+  const [openState, setOpenState] = useState(defaultOpen);
+  const open = openProp ?? openState;
+  const setOpen = (v: boolean) => { if (openProp === undefined) setOpenState(v); onOpenChange?.(v); };
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger asChild>
