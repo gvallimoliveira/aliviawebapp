@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { ChevronRight, ChevronLeft, ClipboardCheck, Award, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -71,6 +72,7 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
   const [currentSubscaleIndex, setCurrentSubscaleIndex] = useState(0);
   const [allAnswers, setAllAnswers] = useState<Record<string, Record<string, number>>>({});
   const [results, setResults] = useState<QuestionnaireResult[]>([]);
+  const [activityLabels, setActivityLabels] = useState<Record<string, string>>({});
   const [showResults, setShowResults] = useState(false);
 
   const currentQ = applicableQuestionnaires[currentQIndex] as QuestionnaireDefinition | undefined;
@@ -108,7 +110,11 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
   const currentSubscale = subscales[currentSubscaleIndex];
   const subscaleQuestions = currentQ.questions.filter((q) => q.subscale === currentSubscale);
   const subscaleLabel = currentQ.subscaleLabels[currentSubscale];
-  const allSubscaleAnswered = subscaleQuestions.every((q) => currentAnswers[q.id] !== undefined);
+  const isPSFS = currentQ.id === "psfs";
+  const psfsFilled = (id: string) => !!activityLabels[id]?.trim() && currentAnswers[id] !== undefined;
+  const allSubscaleAnswered = isPSFS
+    ? psfsFilled("psfs_1") && subscaleQuestions.every((q) => !activityLabels[q.id]?.trim() || currentAnswers[q.id] !== undefined)
+    : subscaleQuestions.every((q) => currentAnswers[q.id] !== undefined);
   const totalQuestionnaires = applicableQuestionnaires.length;
   const totalSubscales = subscales.length;
   const overallProgress = ((currentQIndex * 100) / totalQuestionnaires) + ((currentSubscaleIndex + 1) / totalSubscales) * (100 / totalQuestionnaires);
@@ -124,7 +130,14 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
     if (currentSubscaleIndex < totalSubscales - 1) {
       setCurrentSubscaleIndex(currentSubscaleIndex + 1);
     } else {
-      const scored = calculateQuestionnaireScore(currentQ, allAnswers[currentQ.id] || {});
+      const rawAnswers = allAnswers[currentQ.id] || {};
+      const answersForScore = currentQ.id === "psfs"
+        ? Object.fromEntries(Object.entries(rawAnswers).filter(([k]) => !!activityLabels[k]?.trim()))
+        : rawAnswers;
+      const scored0 = calculateQuestionnaireScore(currentQ, answersForScore);
+      const scored = currentQ.id === "psfs"
+        ? { ...scored0, activityLabels: Object.fromEntries(Object.keys(answersForScore).map((k) => [k, activityLabels[k].trim()])) }
+        : scored0;
       const result = functionalOnly ? { ...scored, functionalOnly: true, interpretation_pt: `Subescala funcional (dor não coletada). ${scored.interpretation_pt}`, interpretation_en: `Functional subscale (pain not collected). ${scored.interpretation_en}` } : scored;
       const newResults = [...results, result];
       setResults(newResults);
@@ -262,13 +275,21 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
 
         {subscaleQuestions.map((question) => {
           const isODILike = currentQ.id === "odi" || currentQ.id === "ndi";
-          const isSPADI = currentQ.id === "spadi";
+          const isSPADI = currentQ.id === "spadi" || currentQ.id === "psfs";
           const selectedValue = currentAnswers[question.id];
           const prevValue = previousAnswers?.[currentQ.id]?.[question.id];
 
           return (
             <div key={question.id} className="space-y-2">
               <p className="text-sm font-medium">{language === "pt" ? question.text_pt : question.text_en}</p>
+              {currentQ.id === "psfs" && (
+                <Input
+                  value={activityLabels[question.id] || ""}
+                  maxLength={80}
+                  placeholder={tl("Ex.: carregar sacolas, ficar sentado 1h, correr", "E.g. carrying bags, sitting 1h, running")}
+                  onChange={(e) => setActivityLabels((prev) => ({ ...prev, [question.id]: e.target.value }))}
+                />
+              )}
               {isODILike ? (
                 <div className="space-y-1.5">
                   {question.options.map((opt) => {

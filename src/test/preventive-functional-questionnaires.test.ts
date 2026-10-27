@@ -24,3 +24,15 @@ describe("preventive functional questionnaires", () => {
     expect(shouldCollectPainQuestionnaires({ assessmentPurpose: "symptomatic" })).toBe(true);
   });
 });
+
+import { calculateQuestionnaireScore, psfsQuestionnaire } from "@/data/questionnaireData";
+describe("PSFS for spine follow-up", () => {
+  it("appears for lumbar in preventive mode only", () => {
+    expect(getFunctionalQuestionnaires(["lower_back"]).map((q) => q.id)).toContain("psfs");
+    expect(getApplicableQuestionnaires(["lower_back"]).map((q) => q.id)).not.toContain("psfs");
+  });
+  it("scores mean ability × 10", () => {
+    const r = calculateQuestionnaireScore(psfsQuestionnaire, { psfs_1: 6, psfs_2: 8 });
+    expect(r.percentageScore).toBe(70);
+  });
+});
