@@ -23,6 +23,7 @@ import LoadHistoryDialog from "./LoadHistoryDialog";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
 import { savePlannedDose } from "@/lib/periodizationData";
 import { DOSE_CLASS, DOSE_LABEL, TRACK_LABEL } from "./scales";
+import CopyToDaysPicker from "./CopyToDaysPicker";
 
 // Mesma cor por frente em todos os gráficos de carga (ver LoadRecoveryChart).
 const TRACK_FILL: Record<string, string> = {
@@ -173,6 +174,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
   const [rpe, setRpe] = useState(7);
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
+  const [copyDays, setCopyDays] = useState<string[]>([]);
 
   const submit = async () => {
     const min = Number(duration);
@@ -182,21 +184,28 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
     }
     setSaving(true);
     try {
-      await savePlannedDose({
-        patientId,
-        planId,
-        sessionDate: date,
-        track,
-        plannedDurationMin: min,
-        plannedRpe: rpe,
-        plannedLoad: loadLevelFromRpe(rpe, min),
-        title: title.trim() || null,
-      });
+      const dates = [date, ...copyDays.filter((d) => d !== date)];
+      for (const d of dates) {
+        await savePlannedDose({
+          patientId,
+          planId,
+          sessionDate: d,
+          track,
+          plannedDurationMin: min,
+          plannedRpe: rpe,
+          plannedLoad: loadLevelFromRpe(rpe, min),
+          title: title.trim() || null,
+        });
+      }
       setDuration("");
       setTitle("");
+      setCopyDays([]);
       setOpen(false);
       onChanged();
-      toast({ title: "Dose prescrita", description: `Alvo: ${plannedLoad(min, rpe)} unidades.` });
+      toast({
+        title: dates.length > 1 ? `Dose prescrita em ${dates.length} dias` : "Dose prescrita",
+        description: `Alvo: ${plannedLoad(min, rpe)} unidades por sessão.`,
+      });
     } catch (e: any) {
       toast({ title: "Não foi possível prescrever", description: e?.message, variant: "destructive" });
     } finally {
@@ -257,6 +266,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                       <Slider min={0} max={10} step={1} value={[rpe]} onValueChange={([v]) => setRpe(v)} />
                     </div>
                     <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Descrição curta (opcional)" />
+                    <CopyToDaysPicker baseDate={date} value={copyDays} onChange={setCopyDays} />
                     {Number(duration) > 0 && (
                       <p className="text-xs text-muted-foreground">
                         Carga alvo: <strong>{plannedLoad(Number(duration), rpe)}</strong> unidades.
