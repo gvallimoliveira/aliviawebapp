@@ -702,10 +702,14 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                         <div className="space-y-2">
                           <p className="text-sm font-medium text-foreground">Sessões de hoje registradas</p>
                           {todayTargets.filter((t) => t.already_reported).map((t) => (
-                            <div key={t.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                            <button key={t.id} type="button" disabled={!t.reported}
+                              onClick={() => { setFreeMode(false); pickSession(t); }}
+                              className="w-full text-left flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 enabled:hover:border-primary/60">
                               <span className="text-xs text-foreground">{TRACK_LABEL[t.track] || t.track}{t.title ? ` · ${t.title}` : ""}</span>
-                              <Badge variant="secondary" className="shrink-0 text-[10px]">Já registrada</Badge>
-                            </div>
+                              <Badge variant="secondary" className="shrink-0 text-[10px]">
+                                {t.reported ? `${t.reported.rpe}/10 · editar` : "Já registrada"}
+                              </Badge>
+                            </button>
                           ))}
                         </div>
                       )}
@@ -778,7 +782,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                             })}
                           </div>
                           <p className="text-[10px] text-muted-foreground">
-                            Responda pelo que você realmente sentiu — não precisa bater com o alvo.
+                            Responda pelo que você realmente sentiu — não precisa bater com o alvo. Toque de novo na sessão para desmarcar; sessões de hoje já registradas podem ser corrigidas até o fim do dia.
                           </p>
                           <button
                             type="button"
@@ -918,7 +922,7 @@ const PeriodizationCheckin = ({ token: tokenProp, embedded }: { token?: string; 
                       {errorMsg && <p className="text-xs text-destructive">{errorMsg}</p>}
                       <Button className="w-full rounded-xl gap-2" onClick={() => submitSrpe()} disabled={savingSrpe}>
                         {savingSrpe ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                        Registrar sessão
+                        {editingReported ? "Salvar correção" : "Registrar sessão"}
                       </Button>
                     </>
                   )}
