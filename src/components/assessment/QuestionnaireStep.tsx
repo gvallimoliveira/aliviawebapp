@@ -136,7 +136,11 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
         : rawAnswers;
       const scored0 = calculateQuestionnaireScore(currentQ, answersForScore);
       const scored = currentQ.id === "psfs"
-        ? { ...scored0, activityLabels: Object.fromEntries(Object.keys(answersForScore).map((k) => [k, activityLabels[k].trim()])) }
+        ? (() => {
+            const labels = Object.fromEntries(Object.keys(answersForScore).map((k) => [k, activityLabels[k].trim()]));
+            const list = Object.entries(labels).map(([k, l]) => `${l} (${answersForScore[k]}/10)`).join("; ");
+            return { ...scored0, activityLabels: labels, interpretation_pt: `${scored0.interpretation_pt}. Atividades: ${list}`, interpretation_en: `${scored0.interpretation_en}. Activities: ${list}` };
+          })()
         : scored0;
       const result = functionalOnly ? { ...scored, functionalOnly: true, interpretation_pt: `Subescala funcional (dor não coletada). ${scored.interpretation_pt}`, interpretation_en: `Functional subscale (pain not collected). ${scored.interpretation_en}` } : scored;
       const newResults = [...results, result];
