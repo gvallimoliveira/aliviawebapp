@@ -1,4 +1,4 @@
-import { isPreventiveAssessment } from "@/lib/assessmentPurpose";
+import { isPreventiveAssessment, shouldCollectFunctionalQuestionnaires } from "@/lib/assessmentPurpose";
 import { useState, useEffect, useRef, useCallback } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE, PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
