@@ -619,11 +619,11 @@ const Assessment = () => {
     if (assessmentId && results.length > 0) {
       await updateAssessment(assessmentId, { test_results: results as any });
     }
-    setStep("functional_tests");
+    setStep(isPreventiveAssessment(anamnesisData) ? "final_notes" : "functional_tests");
   };
 
   const handleQuestionnaireSkip = () => {
-    setStep("functional_tests");
+    setStep(isPreventiveAssessment(anamnesisData) ? "final_notes" : "functional_tests");
   };
 
   const handleTestsComplete = async (results: TestResult[]) => {
