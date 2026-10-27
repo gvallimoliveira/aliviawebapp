@@ -61,3 +61,20 @@ describe("recoverySignal", () => {
     expect(cardioMatrix(1.6, null, "healthy", false).quadrant).toBe("msk_spike");
   });
 });
+
+import { suggestedCardioProfile, profileLessProtective } from "@/lib/cardioSafety";
+describe("perfil de precaução pela saúde", () => {
+  it("hipertensão sugere hipertenso (70%)", () => {
+    expect(suggestedCardioProfile({ healthConditions: ["hypertension"] })?.profile).toBe("hypertensive");
+  });
+  it("cardiopatia vence hipertensão", () => {
+    expect(suggestedCardioProfile({ healthConditions: ["hypertension", "heart_disease"] })?.profile).toBe("cardiac");
+  });
+  it("sem condições não sugere", () => {
+    expect(suggestedCardioProfile({ healthConditions: ["none"] })).toBeNull();
+  });
+  it("saudável é mais permissivo que hipertenso; cardiopata não", () => {
+    expect(profileLessProtective("healthy", "hypertensive")).toBe(true);
+    expect(profileLessProtective("cardiac", "hypertensive")).toBe(false);
+  });
+});
