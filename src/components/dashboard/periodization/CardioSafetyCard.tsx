@@ -16,7 +16,7 @@ import type { PeriodizationPlan, ReadinessCheckin, SrpeEntry } from "@/lib/perio
 import { acwr, recoverySignal, restingHrStatus } from "@/lib/periodization";
 import {
   CARDIO_PROFILES, DEFAULT_CARDIO_PROFILE, SPO2_ALERT,
-  ageFromBirth, cardioMatrix, checkinSafetyFlags, cardioHealthHint, hrCeiling, profileRule,
+  ageFromBirth, cardioMatrix, profileLessProtective, suggestedCardioProfile, checkinSafetyFlags, cardioHealthHint, hrCeiling, profileRule,
 } from "@/lib/cardioSafety";
 
 interface Props {
@@ -43,12 +43,17 @@ const CardioSafetyCard = ({ patientId, assessments = EMPTY_ASSESSMENTS, patientE
   const [open, setOpen] = useState(false);
   const { health, error: healthError } = usePatientCardioHealth(patientId, assessments, patientEmail, clinicId, open);
   const hint = cardioHealthHint(health?.data);
+  const suggested = suggestedCardioProfile(health?.data);
+  const savedProfile = plan?.cardio_profile ?? null;
+  const inherited = !savedProfile && !!suggested;
+  const baseProfile = savedProfile ?? suggested?.profile ?? DEFAULT_CARDIO_PROFILE;
+  const divergent = !!suggested && profileLessProtective(profile, suggested.profile);
 
   useEffect(() => {
-    setProfile(plan?.cardio_profile ?? DEFAULT_CARDIO_PROFILE);
+    setProfile(baseProfile);
     setOverride(plan?.hr_ceiling_override ? String(plan.hr_ceiling_override) : "");
     setBetaBlocker(!!plan?.beta_blocker);
-  }, [plan?.cardio_profile, plan?.hr_ceiling_override, plan?.beta_blocker]);
+  }, [baseProfile, plan?.hr_ceiling_override, plan?.beta_blocker]);
 
   const age = ageFromBirth(birth);
   const ceil = hrCeiling({ profile, age, override: override ? Number(override) : null });
@@ -113,6 +118,8 @@ const CardioSafetyCard = ({ patientId, assessments = EMPTY_ASSESSMENTS, patientE
                   )}
                 </span>
               )}
+              {inherited && suggested && <span className="block text-xs font-medium text-amber-700 dark:text-amber-400">Perfil por precaução: {suggested.reason.toLowerCase()} no registro de saúde. Confirme e salve.</span>}
+              {divergent && suggested && <span className="block text-xs font-medium text-destructive">⚠️ Saúde registra {suggested.reason.toLowerCase()}, mas o perfil está mais permissivo ({profileRule(profile).label}).</span>}
               {!open && hint && <span className="block text-xs text-muted-foreground break-words">{hint}</span>}
               {!open && healthError && <span className="block text-xs text-destructive">Não foi possível consultar Saúde geral.</span>}
             </span>
@@ -148,6 +155,19 @@ const CardioSafetyCard = ({ patientId, assessments = EMPTY_ASSESSMENTS, patientE
                 <Input type="number" inputMode="numeric" value={override} onChange={(e) => setOverride(e.target.value)} placeholder="opcional" className="h-9 text-sm" disabled={readOnly} />
               </div>
             </div>
+
+            {divergent && suggested && (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-3 space-y-2">
+                <p className="text-xs text-foreground">
+                  O registro de saúde indica <strong>{suggested.reason.toLowerCase()}</strong>. O perfil atual ({profileRule(profile).label}, {Math.round(profileRule(profile).ceilingPct * 100)}%) permite teto mais alto que o recomendado ({profileRule(suggested.profile).label}, {Math.round(profileRule(suggested.profile).ceilingPct * 100)}%).
+                </p>
+                {!readOnly && (
+                  <Button type="button" size="sm" variant="outline" className="rounded-xl" onClick={() => setProfile(suggested.profile)}>
+                    Ajustar para {profileRule(suggested.profile).label}
+                  </Button>
+                )}
+              </div>
+            )}
 
             <div className="rounded-xl border border-border p-3 space-y-1">
               {ceil.ceiling ? (
