@@ -13,6 +13,9 @@ export function usePatientCardioHealth(patientId: string | null | undefined, ass
     setError(false);
     if (!patientId) return;
     const refresh = async () => {
+      try { await load(); } catch { if (!cancelled) setError(true); }
+    };
+    const load = async () => {
       const current = ++request;
       const { data: patient, error: patientError } = await supabase.from("patients").select("email").eq("id", patientId).maybeSingle();
       const email = patientEmail || patient?.email;
@@ -24,7 +27,7 @@ export function usePatientCardioHealth(patientId: string | null | undefined, ass
       setError(!!patientError || !!healthError);
       if (!healthError) setManual(data || []);
     };
-    void refresh().catch(() => { if (!cancelled) setError(true); });
+    void refresh();
     window.addEventListener("reload-pro-patients", refresh);
     window.addEventListener("focus", refresh);
     const channel = supabase.channel(`cardio-health:${patientId}`)
