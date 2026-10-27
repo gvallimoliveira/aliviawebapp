@@ -134,7 +134,7 @@ const MacroTimeline = ({ cycles, planId, planStatus, onChanged, readOnly }: Prop
             );
           })}
           {planId && (
-            <div className={`min-w-[190px] rounded-xl border p-3 border-emerald-500/40 ${planStatus === "completed" ? "bg-emerald-500/10" : "bg-emerald-500/5"}`}>
+            <div className={`min-w-[190px] rounded-xl border p-3 ${planStatus === "completed" ? "border-emerald-500/40 bg-emerald-500/10" : "border-border"}`}>
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                   <GraduationCap className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" />
