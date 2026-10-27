@@ -46,6 +46,8 @@ export interface QuestionnaireResult {
   interpretation_pt: string;
   interpretation_en: string;
   severity: string;
+  /** Preventive mode: only functional subscales collected; pain was NOT measured. */
+  functionalOnly?: boolean;
 }
 
 // === Shared option scales ===

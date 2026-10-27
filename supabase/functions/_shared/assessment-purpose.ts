@@ -30,6 +30,11 @@ export function normalizeAssessmentPurpose<T extends PurposeData & Record<string
 export const shouldCollectPainQuestionnaires = (data: unknown, enabled = true): boolean =>
   enabled && !isPreventiveAssessment(data);
 
+/** Preventive mode with attention/history regions marked: collect only the
+ *  functional (ADL) subscales of region questionnaires — never pain items. */
+export const shouldCollectFunctionalQuestionnaires = (data: unknown, enabled = true): boolean =>
+  enabled && isPreventiveAssessment(data) && ((data as PurposeData).historyRegions?.length ?? 0) > 0;
+
 export const shouldCollectPainSelfTests = (data: unknown, enabled = true): boolean =>
   enabled && !isPreventiveAssessment(data);
 
