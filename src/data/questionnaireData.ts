@@ -48,6 +48,8 @@ export interface QuestionnaireResult {
   severity: string;
   /** Preventive mode: only functional subscales collected; pain was NOT measured. */
   functionalOnly?: boolean;
+  /** PSFS: activity typed by the patient for each rated item. */
+  activityLabels?: Record<string, string>;
 }
 
 // === Shared option scales ===
@@ -1034,6 +1036,9 @@ export function calculateQuestionnaireScore(
     if (questionnaire.id === "odi" || questionnaire.id === "ndi") {
       // ODI/NDI: each item 0-5, percentage = sum / (items * 5) * 100
       subscaleScores[subscale] = Math.round((answers[subscaleQuestions[0].id] ?? 0) / 5 * 100);
+    } else if (questionnaire.id === "psfs") {
+      // PSFS: 0-10 ability per activity, mean × 10 → 0-100 (higher better)
+      subscaleScores[subscale] = Math.round((sum / subscaleQuestions.length) * 10);
     } else if (questionnaire.id === "spadi") {
       // SPADI: each item 0-10
       const maxPossible = subscaleQuestions.length * 10;
@@ -1081,6 +1086,9 @@ export function calculateQuestionnaireScore(
     // HIT-6: raw 36-78 → ((raw-36)/42)*100
     const totalSum = answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
     percentageScore = Math.round(((totalSum - 36) / 42) * 100);
+  } else if (questionnaire.id === "psfs") {
+    const totalSum = answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
+    percentageScore = Math.round((totalSum / answeredQuestions.length) * 10);
   } else if (questionnaire.id === "lefs8") {
     // LEFS-8: (sum / 32) * 100
     const totalSum = answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0);
@@ -1104,7 +1112,7 @@ export function calculateQuestionnaireScore(
     totalScore: answeredQuestions.reduce((acc, q) => acc + (answers[q.id] ?? 0), 0),
     maxScore: answeredQuestions.length * (
       questionnaire.id === "odi" || questionnaire.id === "ndi" ? 5 :
-      questionnaire.id === "spadi" ? 10 :
+      questionnaire.id === "spadi" || questionnaire.id === "psfs" ? 10 :
       questionnaire.id === "quickdash" ? 5 :
       questionnaire.id === "hit6" ? 13 :
       4
@@ -1132,8 +1140,48 @@ export function toFunctionalOnly(q: QuestionnaireDefinition): QuestionnaireDefin
   return { ...q, name: `${q.name} · funcional`, questions };
 }
 
+const PSFS_SCALE: QuestionOption[] = Array.from({ length: 11 }, (_, v) => ({
+  value: v,
+  label_pt: v === 0 ? "0 – Incapaz" : v === 10 ? "10 – Como antes" : String(v),
+  label_en: v === 0 ? "0 – Unable" : v === 10 ? "10 – Pre-injury level" : String(v),
+}));
+
+/** PSFS — Patient-Specific Functional Scale. Function/limitation only, no pain
+ *  items. Validated for low back (Stratford 1995) and neck (Westaway 1998).
+ *  Used ONLY in preventive/follow-up mode for spine attention regions. */
+export const psfsQuestionnaire: QuestionnaireDefinition = {
+  id: "psfs",
+  name: "PSFS",
+  fullName_pt: "Escala Funcional Específica do Paciente (PSFS)",
+  fullName_en: "Patient-Specific Functional Scale (PSFS)",
+  description_pt: "Escreva até 3 atividades do dia a dia que você tem dificuldade ou quer proteger (ex.: carregar peso, ficar sentado muito tempo, correr) e dê uma nota para sua capacidade de fazer cada uma.",
+  description_en: "Write up to 3 daily activities you find difficult or want to protect and rate your ability to perform each one.",
+  reference: "Stratford P, et al. Physiother Can. 1995;47:258-63; Westaway MD, et al. JOSPT. 1998;27(5):331-8.",
+  regionMapping: [
+    "lower_back", "upper_back", "sacral", "lumbar_left", "lumbar_right",
+    "thoracic", "thoracic_left", "thoracic_right", "sacrum",
+    "cervical", "cervical_front", "cervical_left", "cervical_right", "cervical_back",
+  ],
+  scoringDirection: "higher_better",
+  subscaleLabels: { activities: { pt: "Atividades do dia a dia", en: "Daily activities" } },
+  questions: [1, 2, 3].map((n) => ({
+    id: `psfs_${n}`, subscale: "activities",
+    text_pt: `Atividade ${n}${n > 1 ? " (opcional)" : ""}: quão capaz você é de realizá-la hoje?`,
+    text_en: `Activity ${n}${n > 1 ? " (optional)" : ""}: how able are you to perform it today?`,
+    options: PSFS_SCALE,
+  })),
+  interpretation: [
+    { min: 80, max: 100, label_pt: "Boa capacidade nas atividades escolhidas", label_en: "Good ability in the chosen activities", severity: "minimal" },
+    { min: 60, max: 79, label_pt: "Limitação leve nas atividades escolhidas", label_en: "Mild limitation in the chosen activities", severity: "mild" },
+    { min: 40, max: 59, label_pt: "Limitação moderada nas atividades escolhidas", label_en: "Moderate limitation", severity: "moderate" },
+    { min: 0, max: 39, label_pt: "Limitação importante nas atividades escolhidas", label_en: "Marked limitation", severity: "severe" },
+  ],
+};
+
 export function getFunctionalQuestionnaires(regions: string[]): QuestionnaireDefinition[] {
-  return getApplicableQuestionnaires(regions)
+  const list = getApplicableQuestionnaires(regions)
     .map(toFunctionalOnly)
     .filter((q): q is QuestionnaireDefinition => !!q);
+  if (psfsQuestionnaire.regionMapping.some((r) => regions.includes(r))) list.push(psfsQuestionnaire);
+  return list;
 }

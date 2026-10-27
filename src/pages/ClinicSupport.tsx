@@ -66,7 +66,7 @@ const categories: ToolCategory[] = [
         key: "manual_assessment",
         icon: ClipboardList,
         title: "Avaliação manual no consultório",
-        desc: "A avaliação pode continuar a pré-avaliação ou começar do zero. Em pacientes sem dor, selecione prevenção ou acompanhamento: regiões históricas são opcionais, etapas de dor ficam ocultas e, nas regiões de atenção marcadas, só as perguntas de atividades do dia a dia dos questionários (ex.: SPADI de ombro sem os itens de dor) são aplicadas; segurança, saúde e questionários escolhidos pelo profissional continuam. Para o paciente que chega sem ter preenchido o link, você cria a avaliação direto no painel — não precisa de e-mail nem cadastro do paciente. Útil também para idosos e pacientes presenciais.",
+        desc: "A avaliação pode continuar a pré-avaliação ou começar do zero. Em pacientes sem dor, selecione prevenção ou acompanhamento: regiões históricas são opcionais, etapas de dor ficam ocultas e, nas regiões de atenção marcadas, só as perguntas de atividades do dia a dia dos questionários (ex.: SPADI de ombro sem os itens de dor) são aplicadas (na coluna, a escala PSFS de atividades escolhidas pelo paciente); segurança, saúde e questionários escolhidos pelo profissional continuam. Para o paciente que chega sem ter preenchido o link, você cria a avaliação direto no painel — não precisa de e-mail nem cadastro do paciente. Útil também para idosos e pacientes presenciais.",
       },
       {
         key: "red_flags",
