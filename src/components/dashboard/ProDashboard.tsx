@@ -307,7 +307,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       delete next[assessmentId];
       return next;
     });
-    loadPatientAssessments();
+    loadPatientAssessments({ keepCurrent: true });
   };
 
   const loadReferrals = async () => {
@@ -1178,7 +1178,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         onOpenChange={setAddPatientOpen}
         professionalId={professional.id}
         clinicId={isClinicMode ? activeClinic?.clinic_id : undefined}
-        onAdded={() => loadPatientAssessments()}
+        onAdded={() => loadPatientAssessments({ keepCurrent: true })}
       />
 
       {/* Install app instructions dialog */}
