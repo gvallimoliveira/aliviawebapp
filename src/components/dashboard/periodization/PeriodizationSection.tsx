@@ -160,32 +160,9 @@ const PeriodizationSection = ({
   };
 
   const loadedOnceRef = useRef(false);
-  // Marca de rolagem para sobreviver a remontagens do prontuário: se a seção
-  // for desmontada e montada de novo logo após um comando, voltamos ao ponto.
-  const SCROLL_MARK_KEY = "alivia:periodization:scroll";
-  const saveScrollMark = () => {
-    try { sessionStorage.setItem(SCROLL_MARK_KEY, JSON.stringify({ y: window.scrollY, t: Date.now() })); } catch { /* opcional */ }
-  };
-  const restoredMarkRef = useRef(false);
-  useEffect(() => {
-    if (loading || restoredMarkRef.current) return;
-    restoredMarkRef.current = true;
-    let mark: { y: number; t: number } | null = null;
-    try { mark = JSON.parse(sessionStorage.getItem(SCROLL_MARK_KEY) || "null"); } catch { mark = null; }
-    if (!mark || Date.now() - mark.t > 10000 || mark.y < 50) return;
-    const target = mark.y;
-    const until = performance.now() + 1500;
-    let stop = false;
-    const cancel = () => { stop = true; };
-    window.addEventListener("wheel", cancel, { passive: true, once: true });
-    window.addEventListener("touchmove", cancel, { passive: true, once: true });
-    const step = () => {
-      if (stop) return;
-      if (Math.abs(window.scrollY - target) > 4) window.scrollTo({ top: target, behavior: "auto" });
-      if (performance.now() < until) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [loading]);
+  // Só ações do usuário (onChanged) ancoram a rolagem; recargas automáticas não.
+  const userActionRef = useRef(false);
+  const [macroOpen, setMacroOpen] = useState(false);
   const lastTouchedRef = useRef<HTMLElement | null>(null);
   const viewAnchorRef = useRef<HTMLElement | null>(null);
   // Elemento estável perto do centro da tela, usado quando o botão tocado
@@ -221,8 +198,9 @@ const PeriodizationSection = ({
     // macrociclo, realtime) é silenciosa e ancorada no último ponto tocado, para
     // a página nunca "pular para o topo".
     const silent = opts?.silent || loadedOnceRef.current;
-    const keepAnchored = silent ? anchorScroll(anchorTarget, 2200) : null;
-    keepAnchored?.();
+    const fromUser = userActionRef.current;
+    userActionRef.current = false;
+    if (silent && fromUser) anchorScroll(anchorTarget, 1200)();
     if (!silent) setLoading(true);
     const since = new Date();
     since.setUTCDate(since.getUTCDate() - 90);
@@ -304,6 +282,7 @@ const PeriodizationSection = ({
    * empurra mais a página para o topo.
    */
   const refresh = useCallback(() => {
+    userActionRef.current = true;
     void load({ silent: true });
   }, [load]);
 
@@ -319,6 +298,8 @@ const PeriodizationSection = ({
         assessmentId: latestAssessmentId,
         sport: sport.trim() || null,
       });
+      setMacroOpen(true);
+      userActionRef.current = true;
       await load();
       toast({ title: "Periodização criada", description: "Fases do STEPS e checklist de liberação já pré-preenchidos." });
     } catch (e: any) {
@@ -395,23 +376,13 @@ const PeriodizationSection = ({
         lastTouchedRef.current =
           (t.closest("[data-periodization-block]") as HTMLElement | null) ?? t.closest("button,a,[role='button']") ?? t;
         viewAnchorRef.current = pickViewportAnchor();
-        saveScrollMark();
-      }}
-      onClickCapture={(e) => {
-        const t = e.target as HTMLElement;
-        if (t.closest("[role='dialog'],[role='alertdialog']")) return;
-        if (!t.closest("button,a,[role='button'],[role='switch'],[role='checkbox'],[role='tab'],[role='combobox']")) return;
-        // Qualquer comando da seção mantém o ponto tocado fixo na tela
-        // enquanto cards abrem/fecham, salvam ou recarregam.
-        saveScrollMark();
-        anchorScroll(anchorTarget, 2500)();
       }}
     >
       {/* Ordem: conduta → macrociclo → links → carga/prontidão → dose → microciclo; depois a área cardiovascular. */}
       <DailyConductCard patientId={patientId} plan={plan} entries={entries} checkins={checkins} sessions={sessions} />
 
       {plan ? (
-        <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
+        <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} open={macroOpen} onOpenChange={setMacroOpen}>
           <MacroTimeline cycles={cycles} planId={plan.id} planStatus={plan.status} onChanged={refresh} readOnly={readOnly} />
         </PeriodizationCollapsible>
       ) : !readOnly && (
