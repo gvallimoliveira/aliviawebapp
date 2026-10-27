@@ -1,5 +1,5 @@
 import ClinicBrandHeader from "@/components/ClinicBrandHeader";
-import { normalizeAssessmentPurpose, isPreventiveAssessment, shouldCollectPainQuestionnaires, shouldCollectPainSelfTests } from "@/lib/assessmentPurpose";
+import { normalizeAssessmentPurpose, isPreventiveAssessment, shouldCollectPainQuestionnaires, shouldCollectFunctionalQuestionnaires, shouldCollectPainSelfTests } from "@/lib/assessmentPurpose";
 import { useState, useEffect, useMemo, useRef } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
@@ -523,7 +523,7 @@ const ClinicAssessment = () => {
         ...buildMechanismPayload(data),
       });
     }
-    if (shouldCollectPainQuestionnaires(data, reassessHasQuestionnaire)) {
+    if (shouldCollectPainQuestionnaires(data, reassessHasQuestionnaire) || shouldCollectFunctionalQuestionnaires(data, reassessHasQuestionnaire)) {
       setStep("questionnaire");
     } else if (shouldCollectPainSelfTests(data, hasFunctionalTests)) {
       setQuestionnaireResults((originalAssessment?.test_results as any) || []);
@@ -729,7 +729,7 @@ const ClinicAssessment = () => {
             pain_score: isPreventiveAssessment(data) ? null : data.painScore,
           });
         }
-        if (shouldCollectPainQuestionnaires(data, reassessHasQuestionnaire)) {
+        if (shouldCollectPainQuestionnaires(data, reassessHasQuestionnaire) || shouldCollectFunctionalQuestionnaires(data, reassessHasQuestionnaire)) {
           setStep("questionnaire");
         } else if (reassessHasPsychosocial) {
           setQuestionnaireResults((originalAssessment?.test_results as any) || []);
@@ -1002,7 +1002,8 @@ const ClinicAssessment = () => {
 
         {step === "questionnaire" && anamnesisData && (
           <QuestionnaireStep
-            painRegions={anamnesisData.painRegions}
+            painRegions={isPreventiveAssessment(anamnesisData) ? ((anamnesisData as any).historyRegions || []) : anamnesisData.painRegions}
+            functionalOnly={isPreventiveAssessment(anamnesisData)}
             onComplete={handleQuestionnaireComplete}
             onBack={() => reassessHasAnamnesis ? setStep("anamnesis") : setStep("patient_info")}
             onSkip={handleQuestionnaireSkip}

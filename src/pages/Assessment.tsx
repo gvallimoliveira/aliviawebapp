@@ -574,6 +574,13 @@ const Assessment = () => {
         ...buildMechanismPayload(data),
       });
     }
+    if (isPreventiveAssessment(data) && mode === "premium" && shouldCollectFunctionalQuestionnaires(data)) {
+      setQuestionnaireResults([]);
+      setTestResults([]);
+      setExtraQuestionnaireRegions([]);
+      setStep("questionnaire");
+      return;
+    }
     if (isPreventiveAssessment(data)) {
       setQuestionnaireResults([]);
       setTestResults([]);
@@ -1133,7 +1140,8 @@ const Assessment = () => {
               </motion.div>
             )}
             <QuestionnaireStep
-              painRegions={anamnesisData.painRegions}
+              painRegions={isPreventiveAssessment(anamnesisData) ? ((anamnesisData as any).historyRegions || []) : anamnesisData.painRegions}
+              functionalOnly={isPreventiveAssessment(anamnesisData)}
               onComplete={handleQuestionnaireComplete}
               onBack={() => { if (!isUpgradeFlow) setStep("anamnesis"); }}
               onSkip={handleQuestionnaireSkip}
