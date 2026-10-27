@@ -288,13 +288,30 @@ serve(async (req) => {
       const { data: cp } = await supabase.from("periodization_plans")
         .select("cardio_profile, hr_ceiling_override").eq("patient_id", patient.id)
         .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      const { data: pb } = await supabase.from("patients").select("birth_date").eq("id", patient.id).maybeSingle();
+      const { data: pb } = await supabase.from("patients").select("birth_date, email").eq("id", patient.id).maybeSingle();
+      // Sem perfil salvo: precaução pela saúde mais recente (cardiopatia 65% > hipertensão 70%).
+      let profileKey: string = cp?.cardio_profile ?? "healthy";
+      if (!cp?.cardio_profile) {
+        const conds = new Set<string>();
+        const { data: hr } = await supabase.from("patient_health_records").select("health_conditions, recorded_at")
+          .eq("patient_id", patient.id).order("recorded_at", { ascending: false }).limit(1).maybeSingle();
+        let latest: { at: string; list: unknown } | null = hr ? { at: `${hr.recorded_at}T12:00:00`, list: hr.health_conditions } : null;
+        if (pb?.email) {
+          const { data: as } = await supabase.from("assessments").select("anamnesis_data, created_at")
+            .eq("patient_email", pb.email).order("created_at", { ascending: false }).limit(1).maybeSingle();
+          const list = (as?.anamnesis_data as any)?.healthConditions;
+          if (as && Array.isArray(list) && (!latest || as.created_at.slice(0, 10) > latest.at.slice(0, 10))) latest = { at: as.created_at, list };
+        }
+        if (Array.isArray(latest?.list)) (latest!.list as unknown[]).forEach((c) => conds.add(String(c)));
+        if (conds.has("heart_disease")) profileKey = "cardiac";
+        else if (conds.has("hypertension")) profileKey = "hypertensive";
+      }
       let hrCeiling: number | null = cp?.hr_ceiling_override ?? null;
       if (!hrCeiling && pb?.birth_date) {
         const b = new Date(pb.birth_date + "T00:00:00Z"); const n = new Date();
         let age = n.getUTCFullYear() - b.getUTCFullYear();
         if (n.getUTCMonth() < b.getUTCMonth() || (n.getUTCMonth() === b.getUTCMonth() && n.getUTCDate() < b.getUTCDate())) age--;
-        if (age >= 5 && age <= 110) hrCeiling = Math.round((207 - 0.7 * age) * (PCT[cp?.cardio_profile ?? "healthy"] ?? 0.85));
+        if (age >= 5 && age <= 110) hrCeiling = Math.round((207 - 0.7 * age) * (PCT[profileKey] ?? 0.85));
       }
 
       return json({

@@ -24,7 +24,7 @@ export function usePatientCardioHealth(patientId: string | null | undefined, ass
       setError(!!patientError || !!healthError);
       if (!healthError) setManual(data || []);
     };
-    void refresh();
+    void refresh().catch(() => { if (!cancelled) setError(true); });
     window.addEventListener("reload-pro-patients", refresh);
     window.addEventListener("focus", refresh);
     const channel = supabase.channel(`cardio-health:${patientId}`)
