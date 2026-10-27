@@ -30,13 +30,18 @@ export function normalizeAssessmentPurpose<T extends PurposeData & Record<string
 export const shouldCollectPainQuestionnaires = (data: unknown, enabled = true): boolean =>
   enabled && !isPreventiveAssessment(data);
 
+/** Preventive mode with attention/history regions marked: collect only the
+ *  functional (ADL) subscales of region questionnaires — never pain items. */
+export const shouldCollectFunctionalQuestionnaires = (data: unknown, enabled = true): boolean =>
+  enabled && isPreventiveAssessment(data) && ((data as PurposeData).historyRegions?.length ?? 0) > 0;
+
 export const shouldCollectPainSelfTests = (data: unknown, enabled = true): boolean =>
   enabled && !isPreventiveAssessment(data);
 
 export function preventiveReasoningContext(data: PurposeData): string {
   if (!isPreventiveAssessment(data)) return "";
   return `PREVENTIVE ASSESSMENT — patient explicitly reports NO CURRENT PAIN. Goals: ${(data.preventionGoals || []).join(", ")}. Details: ${data.preventionGoalDetails || "not provided"}. Historical injury / attention sites (NOT painful sites): ${(data.historyRegions || []).join(", ") || "none specified"}.
-Do not invent pain, a pain mechanism, disability, pathology or restrictions from history/posture alone. Hidden EVA is NOT measured; null means not collected, never a measured zero. Prior symptomatic assessments and old hypotheses are historical, not proof of current pain. Describe the preventive/functional assessment based on actual findings, including negative findings and explicitly requested questionnaires such as SRS-22r. When no supported pathology exists use a preventive follow-up description instead of a disease diagnosis. Safety/red flags still take precedence. Select functional/preventive objectives (mobility, motor control, strengthening, gradual load exposure), never pain control/modulation for this mode.`;
+Do not invent pain, a pain mechanism, disability, pathology or restrictions from history/posture alone. Hidden EVA is NOT measured; null means not collected, never a measured zero. Prior symptomatic assessments and old hypotheses are historical, not proof of current pain. Describe the preventive/functional assessment based on actual findings, including negative findings and explicitly requested questionnaires such as SRS-22r. Questionnaires flagged functionalOnly contain ONLY the ADL/function subscale of the attention region (pain items were not collected); read them as functional status, never as pain-related disability or a pain score. When no supported pathology exists use a preventive follow-up description instead of a disease diagnosis. Safety/red flags still take precedence. Select functional/preventive objectives (mobility, motor control, strengthening, gradual load exposure), never pain control/modulation for this mode.`;
 }
 
 export const manualPurposeSteps = (data: unknown): number[] =>

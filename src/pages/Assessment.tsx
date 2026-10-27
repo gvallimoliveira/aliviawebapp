@@ -1,4 +1,4 @@
-import { isPreventiveAssessment } from "@/lib/assessmentPurpose";
+import { isPreventiveAssessment, shouldCollectFunctionalQuestionnaires } from "@/lib/assessmentPurpose";
 import { useState, useEffect, useRef, useCallback } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
 import { PREMIUM_PRICE, PREMIUM_PRICE_FORMATTED, PREMIUM_SINGLE_PRICE, PREMIUM_SINGLE_PRICE_FORMATTED } from "@/constants/pricing";
@@ -574,6 +574,13 @@ const Assessment = () => {
         ...buildMechanismPayload(data),
       });
     }
+    if (isPreventiveAssessment(data) && mode === "premium" && shouldCollectFunctionalQuestionnaires(data)) {
+      setQuestionnaireResults([]);
+      setTestResults([]);
+      setExtraQuestionnaireRegions([]);
+      setStep("questionnaire");
+      return;
+    }
     if (isPreventiveAssessment(data)) {
       setQuestionnaireResults([]);
       setTestResults([]);
@@ -612,11 +619,11 @@ const Assessment = () => {
     if (assessmentId && results.length > 0) {
       await updateAssessment(assessmentId, { test_results: results as any });
     }
-    setStep("functional_tests");
+    setStep(isPreventiveAssessment(anamnesisData) ? "final_notes" : "functional_tests");
   };
 
   const handleQuestionnaireSkip = () => {
-    setStep("functional_tests");
+    setStep(isPreventiveAssessment(anamnesisData) ? "final_notes" : "functional_tests");
   };
 
   const handleTestsComplete = async (results: TestResult[]) => {
@@ -1133,7 +1140,8 @@ const Assessment = () => {
               </motion.div>
             )}
             <QuestionnaireStep
-              painRegions={anamnesisData.painRegions}
+              painRegions={isPreventiveAssessment(anamnesisData) ? ((anamnesisData as any).historyRegions || []) : anamnesisData.painRegions}
+              functionalOnly={isPreventiveAssessment(anamnesisData)}
               onComplete={handleQuestionnaireComplete}
               onBack={() => { if (!isUpgradeFlow) setStep("anamnesis"); }}
               onSkip={handleQuestionnaireSkip}

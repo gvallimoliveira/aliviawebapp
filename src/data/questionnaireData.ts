@@ -46,6 +46,8 @@ export interface QuestionnaireResult {
   interpretation_pt: string;
   interpretation_en: string;
   severity: string;
+  /** Preventive mode: only functional subscales collected; pain was NOT measured. */
+  functionalOnly?: boolean;
 }
 
 // === Shared option scales ===
@@ -1112,4 +1114,26 @@ export function calculateQuestionnaireScore(
     interpretation_en: interp.label_en,
     severity: interp.severity,
   };
+}
+
+// =============================================
+// Preventive (no current pain) — functional subscales only
+// =============================================
+
+/** Questionnaires whose ADL/function items stand alone without the pain items.
+ *  ODI, NDI, VISA-A and HIT-6 frame every item around pain/headache, so they
+ *  are never applied in preventive mode (no invented adapted score). */
+const FUNCTIONAL_ONLY_ALLOWED = new Set(["spadi", "koos", "hoos", "faos", "quickdash", "lefs8"]);
+
+export function toFunctionalOnly(q: QuestionnaireDefinition): QuestionnaireDefinition | null {
+  if (!FUNCTIONAL_ONLY_ALLOWED.has(q.id)) return null;
+  const questions = q.questions.filter((it) => it.subscale !== "pain");
+  if (!questions.length) return null;
+  return { ...q, name: `${q.name} · funcional`, questions };
+}
+
+export function getFunctionalQuestionnaires(regions: string[]): QuestionnaireDefinition[] {
+  return getApplicableQuestionnaires(regions)
+    .map(toFunctionalOnly)
+    .filter((q): q is QuestionnaireDefinition => !!q);
 }

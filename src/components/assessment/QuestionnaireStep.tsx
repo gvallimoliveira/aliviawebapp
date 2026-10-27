@@ -7,6 +7,7 @@ import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResult
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   getApplicableQuestionnaires,
+  getFunctionalQuestionnaires,
   calculateQuestionnaireScore,
   type QuestionnaireDefinition,
   type QuestionnaireResult,
@@ -25,9 +26,11 @@ interface QuestionnaireStepProps {
   demoMode?: boolean;
   /** Mock answers keyed by questionnaire id -> question id -> value. */
   autofillAnswers?: Record<string, Record<string, number>>;
+  /** Preventive mode: painRegions are attention/history sites; only functional items. */
+  functionalOnly?: boolean;
 }
 
-const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAnswers, painScoresPerRegion, generalPainScore, extraQuestionnaireRegions, demoMode, autofillAnswers }: QuestionnaireStepProps) => {
+const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAnswers, painScoresPerRegion, generalPainScore, extraQuestionnaireRegions, demoMode, autofillAnswers, functionalOnly }: QuestionnaireStepProps) => {
   const { language } = useLanguage();
   const tl = (pt: string, en: string) => (language === "pt" ? pt : en);
 
@@ -36,6 +39,7 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
   // functional limitation in a low-pain region (extraQuestionnaireRegions),
   // allow one extra questionnaire that covers that region (max 3 total).
   const applicableQuestionnaires = useMemo(() => {
+    if (functionalOnly) return getFunctionalQuestionnaires(painRegions).slice(0, 2);
     const all = getApplicableQuestionnaires(painRegions);
     if (all.length <= 2) return all;
 
@@ -59,7 +63,7 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
       extra = rest.find((q) => q.regionMapping.some((r) => extraRegions.includes(r))) ?? null;
     }
     return extra ? [...top, extra] : top;
-  }, [painRegions, painScoresPerRegion, generalPainScore, extraQuestionnaireRegions]);
+  }, [painRegions, painScoresPerRegion, generalPainScore, extraQuestionnaireRegions, functionalOnly]);
 
   const priorityNames = applicableQuestionnaires.map((q) => q.name).join(" + ");
 
@@ -120,7 +124,8 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
     if (currentSubscaleIndex < totalSubscales - 1) {
       setCurrentSubscaleIndex(currentSubscaleIndex + 1);
     } else {
-      const result = calculateQuestionnaireScore(currentQ, allAnswers[currentQ.id] || {});
+      const scored = calculateQuestionnaireScore(currentQ, allAnswers[currentQ.id] || {});
+      const result = functionalOnly ? { ...scored, functionalOnly: true, interpretation_pt: `Subescala funcional (dor não coletada). ${scored.interpretation_pt}`, interpretation_en: `Functional subscale (pain not collected). ${scored.interpretation_en}` } : scored;
       const newResults = [...results, result];
       setResults(newResults);
       if (currentQIndex < totalQuestionnaires - 1) {
@@ -204,6 +209,7 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
           {language === "pt" ? currentQ.fullName_pt : currentQ.fullName_en}
         </div>
         <p className="text-xs text-muted-foreground">{language === "pt" ? currentQ.description_pt : currentQ.description_en}</p>
+        {functionalOnly && (<p className="text-xs text-primary mt-1">{tl("Sem dor no momento: aplicamos só as perguntas de atividades do dia a dia da região em acompanhamento.", "No current pain: only daily-activity questions for the monitored region are applied.")}</p>)}
       </div>
 
       {/* Subscale header */}

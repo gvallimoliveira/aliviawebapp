@@ -16,6 +16,8 @@ export interface ConductItem {
   action: string;
   /** Por quê, em linguagem simples. */
   why: string;
+  /** Atividades previstas, para exibição em linhas separadas. */
+  planned?: { label: string; minutes: number | null; rpe: number | null }[];
 }
 
 export interface ConductResult {
@@ -86,8 +88,9 @@ export function dailyConduct(opts: {
     items.push({ tone: "info", action: "Peça um check-in atualizado", why: `O último check-in foi há ${checkinAge} dias.` });
   }
   if (todayPlan.length) {
-    const desc = todayPlan.map((s) => `${TRACK_LABEL[s.track] ?? s.track}${s.planned_duration_min ? ` ${s.planned_duration_min} min` : ""}${s.planned_rpe ? ` PSE ${s.planned_rpe}` : ""}`).join(" · ");
-    items.push({ tone: "info", action: "Previsto para hoje", why: desc });
+    const planned = todayPlan.map((s) => ({ label: TRACK_LABEL[s.track] ?? s.track, minutes: s.planned_duration_min ?? null, rpe: s.planned_rpe ?? null }));
+    const desc = planned.map((p) => `${p.label}${p.minutes ? ` ${p.minutes} min` : ""}${p.rpe ? ` PSE ${p.rpe}` : ""}`).join(" · ");
+    items.push({ tone: "info", action: "Previsto para hoje", why: desc, planned });
   }
 
   const order: Record<ConductTone, number> = { stop: 0, reduce: 1, hold: 2, go: 3, info: 4 };
