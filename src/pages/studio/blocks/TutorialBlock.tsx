@@ -131,7 +131,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
         </p>
       </motion.div>
 
-      <div className="relative z-10 flex flex-1 items-end justify-center px-6">
+      <div className="relative z-10 flex flex-1 items-end justify-center overflow-hidden px-6 pb-20">
         {device === "laptop" && (
           <div className="w-[88%] max-w-[380px] translate-y-3 -rotate-2">
             <div className="rounded-t-xl border border-border bg-foreground/90 p-[6px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
