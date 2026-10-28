@@ -494,7 +494,11 @@ const openPhotoBackdrops = (node: HTMLElement) => {
         rect.right >= imageRect.right - 1 &&
         rect.bottom >= imageRect.bottom - 1;
 
-      if (covers && isOpaqueColor(style.backgroundColor) && !seen.has(ancestor)) {
+      /* Só fundos que a foto realmente preenche: um logo pequeno dentro de uma
+         tela de aparelho não pode apagar o fundo da tela no PNG. */
+      const fills =
+        imageRect.width * imageRect.height >= rect.width * rect.height * 0.6;
+      if (covers && fills && isOpaqueColor(style.backgroundColor) && !seen.has(ancestor)) {
         seen.add(ancestor);
         backdrops.push({
           x: rect.left - rootRect.left,
