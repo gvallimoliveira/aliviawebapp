@@ -31,7 +31,11 @@ const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const redirectQuery = new URLSearchParams(location.search).get("redirect");
-  const redirectTo = (location.state as any)?.redirectTo || redirectQuery || "/dashboard";
+  // Only same-site paths ("/..."), never another site ("//x" or "https://x").
+  const rawRedirect = (location.state as any)?.redirectTo || redirectQuery || "/dashboard";
+  const redirectTo = typeof rawRedirect === "string" && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") && !rawRedirect.startsWith("/\\")
+    ? rawRedirect
+    : "/dashboard";
   const { toast } = useToast();
   const redirectingRef = useRef(false);
 
