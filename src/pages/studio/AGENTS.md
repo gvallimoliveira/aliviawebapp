@@ -6,3 +6,4 @@
 - User-inserted Studio images are DOM layers on the shared art surface: background insertions stay behind text with reduced brightness, while composition insertions remain foreground, movable, resizable, and export through the same PNG pipeline.
 - Studio cross-field copy coherence must be enforced by the shared final voice guard and shared block support picker; one global gate prevents brand- or layout-specific repetition and dangling titles.
 - Studio acronym explanations and legacy loss-connector repairs must use shared contextual copy normalization after the final voice guard and in ecosystem construction; one idempotent rule keeps formats readable without altering media metadata.
+- Device mockups in Studio arts get their screen text from `mockScreens.ts` (headline keyword → topic theme for the owner brand; deduplicated feature labels, never audience names, for client brands) so the illustration always matches the art's promise.

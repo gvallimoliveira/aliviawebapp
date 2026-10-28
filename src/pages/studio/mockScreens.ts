@@ -154,9 +154,9 @@ export const fallbackScreen = (
   const seen = new Set<string>();
   const rows: MockRow[] = [];
   for (const f of features) {
-    const candidates = [f.tag ?? "", f.title];
+    const candidates = [f.tag && !f.tag.includes("·") ? f.tag : "", f.title];
     for (const raw of candidates) {
-      const label = raw.split(/\s·\s/).pop()!.trim();
+      const label = raw.trim();
       const key = norm(label);
       if (!key || key.length > 34 || seen.has(key)) continue;
       if (banned.some((b) => b && (key === b || key.includes(b) || b.includes(key)))) continue;
