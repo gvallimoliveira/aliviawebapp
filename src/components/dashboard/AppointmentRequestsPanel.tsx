@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Bell, Check, ChevronDown, Loader2, MessageCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { findOverlaps, fmtMinutes, type AgendaSlot } from "@/lib/appointmentConf
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  type AppointmentRequest, PERIOD_LABEL, formatBrDate, notifyAppointmentRequest, suggestedTime, whatsappLink,
+  type AppointmentRequest, PERIOD_LABEL, formatBrDate, formatRequestCreatedAt, oldestRequestsFirst, notifyAppointmentRequest, suggestedTime, whatsappLink,
 } from "@/lib/appointmentRequests";
 
 interface Props {
@@ -23,6 +23,8 @@ interface Props {
 const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
   const [items, setItems] = useState<AppointmentRequest[]>([]);
   const [expanded, setExpanded] = useState(true);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [listHeight, setListHeight] = useState<number>();
   const [therapists, setTherapists] = useState<{ id: string; full_name: string }[]>([]);
   const [services, setServices] = useState<{ id: string; name: string }[]>([]);
   const [target, setTarget] = useState<AppointmentRequest | null>(null);
@@ -33,6 +35,22 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
   const [serviceId, setServiceId] = useState("none");
   const [busy, setBusy] = useState(false);
   const [daySlots, setDaySlots] = useState<AgendaSlot[]>([]);
+
+  // Measure actual rows: long names/services and wrapped controls must still fit.
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list || !expanded) return;
+    const rows = Array.from(list.children).slice(0, 3);
+    const measure = () => {
+      const first = rows[0];
+      const last = rows[rows.length - 1];
+      if (first && last) setListHeight(last.getBoundingClientRect().bottom - first.getBoundingClientRect().top);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    rows.forEach((row) => observer.observe(row));
+    return () => observer.disconnect();
+  }, [items, expanded]);
 
   useEffect(() => {
     if (!target || !date) { setDaySlots([]); return; }
@@ -64,14 +82,14 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
     let serviceQuery = supabase.from("care_services").select("id, name");
     serviceQuery = clinicId ? serviceQuery.eq("clinic_id", clinicId) : serviceQuery.eq("professional_id", professionalId ?? "").is("clinic_id", null);
     const [{ data, error }, { data: catalog, error: serviceError }] = await Promise.all([
-      q.order("requested_date", { ascending: true }), serviceQuery,
+      q.order("created_at", { ascending: true }).order("id", { ascending: true }), serviceQuery,
     ]);
     if (error || serviceError) {
       toast.error("Não foi possível carregar as solicitações e seus serviços.");
       return;
     }
     const names = new Map((catalog || []).map((service) => [service.id, service.name]));
-    setItems(((data as AppointmentRequest[]) || []).map((request) => ({
+    setItems(oldestRequestsFirst((data as AppointmentRequest[]) || []).map((request) => ({
       ...request, service_name: request.service_id ? names.get(request.service_id) ?? null : null,
     })));
   }, [clinicId, professionalId, scopeReady]);
@@ -157,24 +175,27 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
     <>
       <Card className="border-primary/40">
         <CardContent className="py-3 space-y-3">
-          <button type="button" className="flex w-full items-center gap-2 text-left" onClick={() => setExpanded((v) => !v)}>
-            <Bell className="h-4 w-4 text-primary" />
-            <span className="font-semibold text-sm flex-1">Solicitações de agendamento</span>
-            <Badge>{items.length}</Badge>
-            <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
-          </button>
+          <Button type="button" variant="ghost" className="flex h-auto w-full items-center gap-2 whitespace-normal px-0 text-left hover:bg-transparent" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
+            <Bell className="h-4 w-4 shrink-0 text-primary" />
+            <span className="font-semibold text-sm flex-1 min-w-0">Solicitações de agendamento</span>
+            <Badge className="shrink-0" aria-label={`${items.length} solicitações pendentes`}>{items.length} pendentes</Badge>
+            <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
+          </Button>
           {expanded && (
-            <div className="space-y-2 max-h-[320px] overflow-y-auto">
+            <div ref={listRef} role="region" aria-label="Solicitações pendentes em ordem de chegada" tabIndex={0} className="grid gap-2 overflow-y-auto overscroll-contain [scrollbar-gutter:stable]" style={{ maxHeight: listHeight }}>
               {items.map((r) => {
                 const wa = whatsappLink(r);
                 return (
-                  <div key={r.id} className="rounded-xl border p-3 space-y-2">
+                  <div key={r.id} className="min-w-0 rounded-lg border p-3 space-y-2">
                     <div className="flex flex-wrap items-baseline gap-x-2">
                       <span className="font-medium text-sm">{r.patient_name}</span>
                       <span className="text-xs text-muted-foreground">
                         {formatBrDate(r.requested_date)} · {r.requested_time || (r.requested_period ? PERIOD_LABEL[r.requested_period] : "")}
                       </span>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      Solicitado em <time dateTime={r.created_at}>{formatRequestCreatedAt(r.created_at)}</time>
+                    </p>
                     <p className="text-sm min-w-0 break-words">
                       <span className="text-muted-foreground">Serviço solicitado: </span>
                       <span className="font-medium">{r.service_name || (r.service_id ? "Serviço indisponível no catálogo" : "Não informado")}</span>

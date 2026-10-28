@@ -29,6 +29,22 @@ export const PERIOD_LABEL: Record<RequestPeriod, string> = {
   evening: "Noite",
 };
 
+/** Arrival order, independent of the date the patient wants to book. */
+export function oldestRequestsFirst<T extends Pick<AppointmentRequest, "id" | "created_at">>(requests: readonly T[]): T[] {
+  return [...requests].sort((a, b) =>
+    Date.parse(a.created_at) - Date.parse(b.created_at) || a.id.localeCompare(b.id),
+  );
+}
+
+export function formatRequestCreatedAt(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "Data não disponível";
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }).format(date);
+}
+
 /** Default time suggested for approval when the patient picked only a period. */
 export function suggestedTime(r: Pick<AppointmentRequest, "requested_time" | "requested_period">): string {
   if (r.requested_time) return r.requested_time;

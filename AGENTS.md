@@ -47,6 +47,7 @@
 
 - Adherence links readiness by scoped patient ID (email-less identities use patient:<id>), normalizes only available channels, retains 60-day check-in participants and measures a 14-day window; all ranked patients remain searchable. Frequency uses elapsed month-to-date days from the later of registration/first session; financial drilldowns reuse the same scoped appointments and price resolver as totals.
 - Appointment requests use scoped RPCs/push; approval creates the slot only in Agenda (solo PRO, clinic owner/admin/secretary). Resolve service names from the same scoped catalog, including inactive entries; show the requested service in the card/dialog and preselect its saved ID.
+- AppointmentRequestsPanel shares the arrival-ordered queue across clinic and solo Agenda; measure the first visible rows for its internal scroll viewport so variable content does not expand the page or hide controls.
 - Announcements use scoped server lists, can_handle_appointment_request and server-resolved push recipients.
 - Agenda uses latestRequest to reject stale results. ClinicServicesCard lives only in the manager-visible `care-services` registry entry in Insights → Operação, not Patients/Team, to keep home uncluttered; explicit professional scope isolates solo services.
 - Clinics use idempotent `_shared/clinicProvisioning.ts` for webhook/self-heal; `clinicAdminGroups` separates paid/free/trial, preserving status.
