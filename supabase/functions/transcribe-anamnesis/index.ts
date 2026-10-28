@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getAuthUserId } from "../_shared/caller-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -124,6 +125,26 @@ Deno.serve(async (req) => {
     if (!voice_note_id) {
       return new Response(JSON.stringify({ error: "voice_note_id required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Only the signed-in author of the voice note may transcribe/update it,
+    // and temporary audio must live under that author's own folder.
+    const __callerId = await getAuthUserId(req);
+    if (!__callerId) {
+      return new Response(JSON.stringify({ error: "Autenticação necessária." }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: __note } = await admin
+      .from("assessment_voice_notes").select("id, created_by").eq("id", voice_note_id).maybeSingle();
+    if (!__note || __note.created_by !== __callerId) {
+      return new Response(JSON.stringify({ error: "Acesso negado." }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (storage_path && !String(storage_path).startsWith(`${__callerId}/${voice_note_id}/`)) {
+      return new Response(JSON.stringify({ error: "Caminho inválido." }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     voiceNoteId = voice_note_id;

@@ -3,9 +3,6 @@ project_id = "vjrtsqgnoeehviypkqrf"
 [functions.manage-vip-users]
 verify_jwt = false
 
-[functions.auto-confirm-microsoft-email]
-verify_jwt = false
-
 [functions.create-payment]
 verify_jwt = false
 

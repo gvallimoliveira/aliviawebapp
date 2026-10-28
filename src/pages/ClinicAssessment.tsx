@@ -465,6 +465,7 @@ const ClinicAssessment = () => {
       await supabase.functions.invoke("send-push-notification", {
         body: {
           clinic_id: clinicId,
+          assessment_id: id,
           title: reassessmentId ? "🔁 Nova reavaliação recebida" : "📋 Nova avaliação recebida",
           body: `${patientName || "Paciente"} respondeu o link da clínica.`,
           url: id ? `/assessment/view/${id}` : "/dashboard?tab=clinic",
@@ -491,6 +492,8 @@ const ClinicAssessment = () => {
         await supabase.functions.invoke("send-push-notification", {
           body: {
             clinic_id: clinicId,
+            assessment_id: id,
+            kind: "red_flag",
             title: "🚨 Red flag detectada",
             body: `${patientName || "Paciente"} ativou sinais de alerta na avaliação.`,
             url: id ? `/assessment/view/${id}` : "/dashboard?tab=clinic",

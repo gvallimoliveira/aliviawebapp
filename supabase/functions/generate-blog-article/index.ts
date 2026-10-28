@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireAdmin } from "../_shared/caller-auth.ts";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 
 
@@ -12,6 +13,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const __gate = await requireAdmin(req, corsHeaders);
+    if (__gate instanceof Response) return __gate;
     const { topic, keywords } = await req.json();
     if (!topic) {
       return new Response(JSON.stringify({ error: "Topic is required" }), {

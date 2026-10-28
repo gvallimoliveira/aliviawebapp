@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { clinic_id, service_type, patient_name } = await req.json();
+    const { clinic_id } = await req.json();
 
     if (!clinic_id) {
       return new Response(
@@ -41,6 +41,21 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    // Only notify when a survey for this clinic really arrived just now; the
+    // text is built from that row, never from the request.
+    const { data: recent } = await supabase
+      .from("clinic_feedback_surveys")
+      .select("id, service_type, created_at")
+      .eq("clinic_id", clinic_id)
+      .gte("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!recent) {
+      return new Response(JSON.stringify({ sent: 0 }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const service_type = String(recent.service_type || "").replace(/[^\p{L}\p{N} _-]/gu, "").slice(0, 40);
 
     // Get clinic owner + secretaries
     const { data: members } = await supabase
@@ -74,9 +89,7 @@ Deno.serve(async (req) => {
 
     const serviceLabel = service_type || "serviço";
     const title = "📋 Novo feedback recebido";
-    const body = patient_name
-      ? `${patient_name} enviou um feedback sobre ${serviceLabel}`
-      : `Novo feedback sobre ${serviceLabel} recebido`;
+    const body = `Novo feedback sobre ${serviceLabel} recebido`;
 
     let sent = 0;
     for (const sub of subscriptions) {

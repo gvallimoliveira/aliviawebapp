@@ -1,6 +1,7 @@
 // A5: Stripe Checkout para a assinatura do Chat do Agente (R$ 14,90/mês, 150 msgs).
 // Após pagamento, o stripe-webhook ativa o addon em public.profiles.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { safeOrigin } from "../_shared/caller-auth.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
@@ -44,7 +45,7 @@ serve(async (req) => {
       returnOrigin = String(body?.return_origin || "");
     }
 
-    const origin = returnOrigin || req.headers.get("origin") || "https://aliviawebapp.com.br";
+    const origin = safeOrigin(returnOrigin || req.headers.get("origin"));
 
     if (!token) {
       if (shouldRedirect) return redirectToApp(origin, "error");

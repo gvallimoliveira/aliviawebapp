@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { isInternalCall } from "../_shared/caller-auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const supabase = createClient(
@@ -9,6 +10,11 @@ const supabase = createClient(
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200 });
+  }
+
+  // Scheduled job only: reject anything without the internal secret / service key.
+  if (!isInternalCall(req)) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { "Content-Type": "application/json" } });
   }
 
   try {

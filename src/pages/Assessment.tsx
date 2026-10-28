@@ -599,6 +599,7 @@ const Assessment = () => {
               painRegions: data.painRegions,
               painScoresPerRegion: data.painScoresPerRegion || {},
               language,
+              assessmentId: id || assessmentId,
             },
           });
           if (Array.isArray(detect?.regions)) setExtraQuestionnaireRegions(detect.regions);
@@ -670,7 +671,7 @@ const Assessment = () => {
     inFlightDiagnosisRef.current = true;
     setStep("loading");
     try {
-      const bodyData: any = { anamnesisData: data, testResults: tests, questionnaireResults, mode, language };
+      const bodyData: any = { anamnesisData: data, testResults: tests, questionnaireResults, mode, language, assessmentId: currentAssessmentId || assessmentId };
       // Passo D1 — mecanismo/extensão de dor como contexto clínico para a IA.
       const mechPayload = buildMechanismPayload(data as any);
       if (mechPayload.pain_mechanism) bodyData.painMechanism = mechPayload.pain_mechanism;
@@ -766,7 +767,7 @@ const Assessment = () => {
     setStep("loading_treatment");
     try {
       const { data: result, error } = await supabase.functions.invoke("generate-treatment", {
-        body: { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language },
+        body: { anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, assessmentId },
       });
       if (error) throw error;
       setPendingAIAction(null);

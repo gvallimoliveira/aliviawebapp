@@ -450,12 +450,15 @@ const ProfessionalAssessment = () => {
   };
 
   // Send push notification to professional
-  const notifyProfessional = async () => {
+  const notifyProfessional = async (assessmentRef?: string | null) => {
     if (!professional?.user_id) return;
+    const notifyId = assessmentRef || assessmentId;
+    if (!notifyId) return;
     try {
       await supabase.functions.invoke("send-push-notification", {
         body: {
           user_id: professional.user_id,
+          assessment_id: notifyId,
           title: language === "en" ? "Assessment completed" : "Avaliação concluída",
           body: language === "en"
             ? `Patient ${patientName || "Unknown"} completed the assessment`
@@ -481,6 +484,8 @@ const ProfessionalAssessment = () => {
         await supabase.functions.invoke("send-push-notification", {
           body: {
             user_id: professional.user_id,
+            assessment_id: id,
+            kind: "red_flag",
             title: "🚨 Red flag detectada",
             body: `${patientName || "Paciente"} ativou sinais de alerta. Revise imediatamente.`,
             url: id ? `/assessment/view/${id}` : "/dashboard?tab=professional",

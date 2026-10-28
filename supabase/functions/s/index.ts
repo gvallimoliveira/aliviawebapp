@@ -88,6 +88,26 @@ const htmlResponse = (kind: ErrorKind, status: number) =>
     },
   });
 
+async function creatorStillHasAccess(supabase: any, createdBy: string | null, filePath: string): Promise<boolean> {
+  if (!createdBy) return false;
+  let row: { clinic_id: string | null; professional_id: string | null } | null = null;
+  for (const table of ["patient_photos", "patient_files"]) {
+    const { data } = await supabase.from(table).select("clinic_id, professional_id").eq("file_path", filePath).maybeSingle();
+    if (data) { row = data; break; }
+  }
+  if (!row) return false;
+  if (row.clinic_id) {
+    const { data: m } = await supabase.from("clinic_members").select("user_id")
+      .eq("clinic_id", row.clinic_id).eq("user_id", createdBy).eq("status", "active").maybeSingle();
+    if (m) return true;
+  }
+  if (row.professional_id) {
+    const { data: p } = await supabase.from("professionals").select("user_id").eq("id", row.professional_id).maybeSingle();
+    if (p?.user_id === createdBy) return true;
+  }
+  return false;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -107,7 +127,7 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from("short_links")
-      .select("bucket, file_path, target_url, expires_at")
+      .select("bucket, file_path, target_url, expires_at, created_by")
       .eq("slug", slug)
       .maybeSingle();
 
@@ -129,6 +149,13 @@ Deno.serve(async (req) => {
 
     // Storage short link → sign and redirect
     if (!data.bucket || !data.file_path) {
+      return htmlResponse("not_found", 404);
+    }
+
+    // Re-check, at every open, that the person who shared still has access
+    // to this patient file (removed team members' links stop working, and
+    // deleted files are no longer served).
+    if (!(await creatorStillHasAccess(supabase, data.created_by, data.file_path))) {
       return htmlResponse("not_found", 404);
     }
 

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireUser } from "../_shared/caller-auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
@@ -30,6 +31,8 @@ serve(async (req) => {
   }
 
   try {
+    const __gate = await requireUser(req, corsHeaders);
+    if (__gate instanceof Response) return __gate;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "Missing LOVABLE_API_KEY" }), {

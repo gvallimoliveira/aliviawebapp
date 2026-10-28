@@ -1,4 +1,5 @@
 import { isPreventiveAssessment, normalizeAssessmentPurpose, preventiveReasoningContext } from "../_shared/assessment-purpose.ts";
+import { requireUserOrAssessment, userCanAccessAssessment } from "../_shared/caller-auth.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -20,6 +21,10 @@ serve(async (req) => {
 
   try {
     const { anamnesisData: rawAnamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, forceRefresh, assessmentId, previousBasicDiagnosis, painMechanism: bodyPainMechanism, painExtent: bodyPainExtent } = await req.json();
+    // Signed-in user, or an anonymous patient on a recent assessment link.
+    const __gate = await requireUserOrAssessment(req, corsHeaders, assessmentId);
+    if (__gate instanceof Response) return __gate;
+    const __canPersist = mode === "professional" && !!assessmentId && (__gate.anonAssessment || await userCanAccessAssessment(req, String(assessmentId)));
     const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
     const preventive = isPreventiveAssessment(anamnesisData);
     // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
@@ -39,7 +44,7 @@ serve(async (req) => {
     // Persist the finished assessment server-side so completion never depends
     // on the patient's browser staying open (mobile tabs get suspended).
     const persistAssessment = async (diag: unknown) => {
-      if (!admin || !assessmentId || !diag) return;
+      if (!admin || !assessmentId || !diag || !__canPersist) return;
       try {
         const { error } = await admin
           .from("assessments")

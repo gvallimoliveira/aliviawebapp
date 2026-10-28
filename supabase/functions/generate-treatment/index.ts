@@ -1,4 +1,5 @@
 import { isPreventiveAssessment, normalizeAssessmentPurpose, preventiveReasoningContext } from "../_shared/assessment-purpose.ts";
+import { requireUserOrAssessment } from "../_shared/caller-auth.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -18,7 +19,9 @@ serve(async (req) => {
   }
 
   try {
-    const { anamnesisData: rawAnamnesisData, testResults, questionnaireResults, diagnosis, mode, language, forceRefresh, painMechanism: bodyPainMechanism, painExtent: bodyPainExtent } = await req.json();
+    const { anamnesisData: rawAnamnesisData, testResults, questionnaireResults, diagnosis, mode, language, forceRefresh, painMechanism: bodyPainMechanism, painExtent: bodyPainExtent, assessmentId } = await req.json();
+    const __gate = await requireUserOrAssessment(req, corsHeaders, assessmentId);
+    if (__gate instanceof Response) return __gate;
     const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
     const preventive = isPreventiveAssessment(anamnesisData);
     // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
