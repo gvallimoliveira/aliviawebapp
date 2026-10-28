@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./i18n";
 import "./index.css";
+import { installPermissionErrorWatcher } from "./lib/permissionErrors";
 import { getRestoreTarget, installRouteTracker } from "./lib/sessionPersistence";
 
 const rootElement = document.getElementById("root");
@@ -77,6 +78,7 @@ try {
 }
 
 installRouteTracker();
+installPermissionErrorWatcher();
 
 if (rootElement) {
   createRoot(rootElement).render(<App />);
