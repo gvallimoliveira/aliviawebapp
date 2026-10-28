@@ -6222,6 +6222,11 @@ export type Database = {
         Returns: string
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_any_clinic_clinician: { Args: { _user_id: string }; Returns: boolean }
+      is_clinic_clinician: {
+        Args: { _clinic_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_clinic_member: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
