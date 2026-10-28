@@ -245,7 +245,7 @@ const AppointmentRequestsPanel = ({ clinicId, professionalId }: Props) => {
                 <ul className="space-y-1">
                   {overlaps.map((o, i) => (
                     <li key={o.slot.id || i} className="flex flex-wrap justify-between gap-2 text-muted-foreground">
-                      <span>{fmtMinutes(o.start)}–{fmtMinutes(o.end)} · {o.slot.service_type === "compromisso" ? "Compromisso" : (o.slot.patient_name || "Paciente")}{o.slot.service_type && o.slot.service_type !== "compromisso" ? ` (${o.slot.service_type})` : ""}</span>
+                      <span className="min-w-0 break-words">{fmtMinutes(o.start)}–{fmtMinutes(o.end)} · {o.slot.patient_name?.trim() || (o.slot.service_type === "compromisso" ? "Compromisso" : "Paciente")}{o.slot.service_type ? ` (${o.slot.service_type})` : ""}</span>
                       <span className="text-xs">sobrepõe {o.overlapMin} min</span>
                     </li>
                   ))}
