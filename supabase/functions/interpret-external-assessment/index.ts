@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireUser } from "../_shared/caller-auth.ts";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 
@@ -40,6 +41,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const __gate = await requireUser(req, corsHeaders);
+    if (__gate instanceof Response) return __gate;
     // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
     const creditDecision = await canaryCredits(req, "interpret-external-assessment");
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);

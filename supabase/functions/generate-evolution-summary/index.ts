@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireUser } from "../_shared/caller-auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
@@ -17,6 +18,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const __gate = await requireUser(req, corsHeaders);
+    if (__gate instanceof Response) return __gate;
     const { assessments, language = "pt", forceRefresh, sessionNotes } = await req.json();
 
 

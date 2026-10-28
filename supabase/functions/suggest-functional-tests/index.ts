@@ -2,6 +2,7 @@
 // Uses Lovable AI Gateway. CORS-enabled, public (verify_jwt=false).
 // Cached by input hash for 7 days to avoid repeated identical calls.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireUser } from "../_shared/caller-auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
@@ -16,6 +17,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const __gate = await requireUser(req, corsHeaders);
+    if (__gate instanceof Response) return __gate;
     const creditDecision = await canaryCredits(req, "suggest-functional-tests");
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;

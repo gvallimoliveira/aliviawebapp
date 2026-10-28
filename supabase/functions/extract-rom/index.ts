@@ -3,6 +3,7 @@
 // where values carry their unit ("°" or "cm"). The file is NOT stored.
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { requireUser } from "../_shared/caller-auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
@@ -76,6 +77,8 @@ const withUnit = (v: unknown): string => {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const __gate = await requireUser(req, corsHeaders);
+    if (__gate instanceof Response) return __gate;
     const creditDecision = await canaryCredits(req, "extract-rom");
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;
