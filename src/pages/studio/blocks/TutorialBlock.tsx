@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { BRAND_LOGO, BRAND_NAME } from "../brand";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
+import { fallbackScreen, themedScreen, type MockScreen } from "../mockScreens";
 
 /**
  * TUTORIAL COM PÍLULA (referência: posts "Cansou de preencher [prontuário?]",
@@ -135,7 +136,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
           <div className="w-[88%] max-w-[380px] translate-y-3 -rotate-2">
             <div className="rounded-t-xl border border-border bg-foreground/90 p-[6px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
               <div className="aspect-[16/10] overflow-hidden rounded-md">
-                <Screen title={lead.title} rows={rows} />
+                <Screen screen={screen} />
               </div>
             </div>
             <div className="mx-auto h-2.5 w-[112%] -translate-x-[5%] rounded-b-xl bg-muted" />
@@ -145,7 +146,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
           <div className="w-[78%] max-w-[330px] translate-y-6 rotate-[-6deg]">
             <div className="rounded-[20px] border border-border bg-foreground/90 p-[8px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
               <div className="aspect-[4/3] overflow-hidden rounded-[13px]">
-                <Screen title={lead.title} rows={rows} />
+                <Screen screen={screen} />
               </div>
             </div>
           </div>
@@ -156,7 +157,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
               <div className="relative aspect-[9/17] overflow-hidden rounded-[22px]">
                 <span className="absolute left-1/2 top-1 z-10 h-1.5 w-10 -translate-x-1/2 rounded-full bg-foreground/80" />
                 <div className="h-full pt-3">
-                  <Screen title={lead.title} rows={rows.slice(0, 2)} />
+                  <Screen screen={screen} max={2} />
                 </div>
               </div>
             </div>
@@ -164,11 +165,11 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
         )}
       </div>
 
-      <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2 rounded-full border border-border bg-background/90 py-2 pl-2 pr-4 shadow-lg backdrop-blur">
+      <div className="absolute bottom-6 left-1/2 z-20 flex max-w-[78%] -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-background/90 py-2 pl-2 pr-4 shadow-lg backdrop-blur">
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[11px] text-primary-foreground" aria-hidden>
           ▶
         </span>
-        <span className="text-[11px] font-semibold leading-tight text-foreground">{closing.cta}</span>
+        <span className="truncate text-[11px] font-semibold leading-tight text-foreground">{closing.cta}</span>
         <span className="text-[13px] text-primary" aria-hidden>→</span>
       </div>
     </section>
