@@ -94,18 +94,30 @@ export const readFormatInsights = (raw?: string | null): FormatInsight[] => {
   return out;
 };
 
-/** Mantém o formato legado do banco enquanto a interface edita cada parte separadamente. */
-export const writeFormatInsights = (insights: FormatInsight[]): string =>
-  insights
-    .map((insight) => {
-      const title = clean(insight.title);
-      const beats = insight.beats.map(clean).filter(Boolean);
-      const closing = clean(insight.closing ?? "");
-      if (closing) return [title, ...(beats.length ? beats : [""]), closing].join(" | ");
-      return [title, ...beats].join(" | ");
-    })
-    .filter(Boolean)
-    .join("\n");
+const SECTION_LABELS: Record<string, string> = {
+  pro: "PROFISSIONAL",
+  clinica: "CLÍNICA",
+  academico: "ACADÊMICO",
+  "recem-formado": "RECÉM-FORMADO",
+  paciente: "PACIENTE",
+};
+
+/** Mantém o formato legado do banco (inclusive cabeçalhos de seção). */
+export const writeFormatInsights = (insights: FormatInsight[]): string => {
+  const lines: string[] = [];
+  let current: string | undefined;
+  insights.forEach((insight) => {
+    if (insight.section !== current) {
+      lines.push(insight.section ? `# ${SECTION_LABELS[insight.section] ?? insight.section.toUpperCase()}` : "# GERAL");
+      current = insight.section;
+    }
+    const title = clean(insight.title);
+    const beats = insight.beats.map(clean).filter(Boolean);
+    const closing = clean(insight.closing ?? "");
+    lines.push(closing ? [title, ...(beats.length ? beats : [""]), closing].join(" | ") : [title, ...beats].join(" | "));
+  });
+  return lines.filter(Boolean).join("\n");
+};
 
 /** Palavras dos insights — reforçam a atração do diretor criativo. */
 export const formatInsightWords = (insights: FormatInsight[]): string[] =>
