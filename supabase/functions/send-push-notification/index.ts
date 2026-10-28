@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
     const hasUserToken = Boolean(token && token !== anonKey && token !== serviceRoleKey);
     const isAnonKey = !hasUserToken && (token === anonKey || apikeyHeader === anonKey);
     let callerUserId: string | null = null;
+    let anonLike = false;
 
     if (hasUserToken) {
       const userClient = createClient(supabaseUrl, anonKey, {
@@ -64,12 +65,12 @@ Deno.serve(async (req) => {
       });
       const { data: userData, error: userErr } = await userClient.auth.getUser(token);
       if (userErr || !userData?.user) {
-        return new Response(
-          JSON.stringify({ error: "Unauthorized" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        // Public-key style tokens that are not a session: treated as anonymous;
+        // only the assessment-link path below accepts them.
+        anonLike = true;
+      } else {
+        callerUserId = userData.user.id;
       }
-      callerUserId = userData.user.id;
     }
 
     // Set VAPID details — wrap in try/catch for diagnostics
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
     // using assessment_id): recipients and text come only from the assessment
     // row, never from the request, so nobody can impersonate the clinic.
     const assessmentRef = reqBody.assessment_id ? String(reqBody.assessment_id) : null;
-    if (!isServiceRole && (isAnonKey || assessmentRef)) {
+    if (!isServiceRole && (isAnonKey || anonLike || assessmentRef)) {
       const deny = (msg: string, status = 403) => new Response(JSON.stringify({ error: msg }),
         { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       if (!assessmentRef || !/^[0-9a-f-]{36}$/i.test(assessmentRef)) return deny("assessment_id required", 401);
