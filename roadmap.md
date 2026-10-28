@@ -1,5 +1,8 @@
 # Roadmap
 
+## Lista compacta de solicitações na Agenda
+- [ ] Limitar a três solicitações visíveis com rolagem interna, total e data/hora de criação, em ordem de chegada; conferir PRO e clínica e atualizar ajuda.
+
 ## Revisão do suporte do paciente
 - [x] Ajuda específica para check-in, HEP, solicitações e avisos; localização de histórico, diário, comparação, indicação e plano pessoal corrigida em pt/en/es. Guia para PRO e clínica e dúvidas sobre vínculo acrescentados. Tópicos do paciente e da clínica abertos no navegador, sem erros; traduções presentes e build OK. Somente orientações alteradas, sem mudanças de acesso ou dados.
 
