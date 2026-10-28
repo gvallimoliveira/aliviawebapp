@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { BRAND_LOGO, BRAND_NAME, BRAND_SITE, BRAND_SLOGAN } from "../brand";
 import { sectionHeight, type BlockProps } from "./shared";
+import { fallbackScreen, themedScreen } from "../mockScreens";
 
 /**
  * HUB CONECTADO (referência: "Sua clínica completa na palma da mão" — celular
@@ -30,7 +31,12 @@ const HubBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
   const closing = rng.pick(content.closings);
   const sub = content.subs?.length ? rng.pick(content.subs) : "";
   const kicker = content.kickers?.length ? rng.pick(content.kickers) : "";
-  const lead = features[0];
+  const screen =
+    themedScreen(`${closing.title} ${closing.sub ?? ""}`, features.map((f) => f.topic)) ??
+    fallbackScreen(features, [kicker, ...(content.kickers ?? [])]);
+  /* Selos: rótulo curto e único por módulo, nunca o nome do público. */
+  const badges = fallbackScreen(features, [kicker, ...(content.kickers ?? [])]).rows.map((r) => r.label);
+  if (badges.length < 3) return null;
 
   return (
     <section className={`relative flex ${sectionHeight(format)} flex-col overflow-hidden px-6 pb-6 pt-7 ${SURF[treatment % SURF.length]}`}>
@@ -61,7 +67,7 @@ const HubBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
       <div className="relative z-10 mx-auto my-3 w-full max-w-[460px] flex-1">
         <svg aria-hidden className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <ellipse cx="50" cy="50" rx="40" ry="44" fill="none" stroke="hsl(var(--primary) / 0.25)" strokeWidth="0.4" />
-          {SLOTS.slice(0, features.length - 0).map((s, i) => (
+          {SLOTS.slice(0, Math.min(4, badges.length)).map((s, i) => (
             <line
               key={i}
               x1={s.side === "left" ? 24 : 76}
@@ -81,11 +87,12 @@ const HubBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
               <span className="absolute left-1/2 top-1 h-1.5 w-8 -translate-x-1/2 rounded-full bg-foreground/80" />
               <div className="flex h-full flex-col items-center px-2 pt-5 text-center">
                 <img src={BRAND_LOGO} alt="" className="h-4 w-4 object-contain" />
-                <p className="mt-1 text-[6.5px] font-bold leading-tight text-primary">{lead.title}</p>
+                <p className="mt-1 text-[6.5px] font-bold leading-tight text-primary">{screen.title}</p>
                 <div className="mt-2 w-full space-y-1">
-                  {features.slice(1).map((f, i) => (
-                    <div key={`${f.title}-${i}`} className="rounded border border-border px-1 py-0.5 text-left">
-                      <p className="truncate text-[5px] text-muted-foreground">{f.title}</p>
+                  {screen.rows.slice(0, 3).map((r, i) => (
+                    <div key={`${r.label}-${i}`} className="rounded border border-border px-1 py-0.5 text-left">
+                      <p className="truncate text-[5px] text-muted-foreground">{r.label}</p>
+                      {r.value && <p className="truncate text-[5.5px] font-bold text-foreground">{r.value}</p>}
                     </div>
                   ))}
                 </div>
@@ -99,18 +106,18 @@ const HubBlock = ({ content, rng, treatment, format, picker }: BlockProps) => {
           </div>
         </div>
 
-        {features.slice(0, 4).map((f, i) => {
+        {badges.slice(0, 4).map((label, i) => {
           const s = SLOTS[i];
           return (
             <div
-              key={`b-${f.title}-${i}`}
+              key={`b-${label}-${i}`}
               className={`absolute flex max-w-[30%] items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 shadow-md ${
                 s.side === "left" ? "" : "-translate-x-full"
               }`}
               style={{ left: `${s.x}%`, top: `${s.y}%` }}
             >
               <i className={`block h-3.5 w-3.5 shrink-0 rounded ${DOTS[i % DOTS.length]}`} aria-hidden />
-              <span className="text-[9px] font-semibold leading-tight text-foreground">{f.tag || f.title}</span>
+              <span className="text-[9px] font-semibold leading-tight text-foreground">{label}</span>
             </div>
           );
         })}
