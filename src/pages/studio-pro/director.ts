@@ -793,6 +793,7 @@ export const planBatch = (input: {
      */
     if (!carousel && shotRoute && !closedEditorial) {
       const composed = composeRouteCopy(shotRoute, {
+        brand: brandName,
         seed: `${seed}:art:${index}`,
         rotate: index,
         weightOf,
