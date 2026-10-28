@@ -5588,6 +5588,10 @@ export type Database = {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
       }
+      can_manage_hep: {
+        Args: { _clinic_id: string; _professional_id: string }
+        Returns: boolean
+      }
       can_read_exercise_program: {
         Args: { _program_id: string }
         Returns: boolean
