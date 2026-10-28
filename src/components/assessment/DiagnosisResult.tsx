@@ -83,6 +83,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         .from("assessments")
         .select("clinic_id, professional_id")
         .eq("id", assessmentId)
+        .setHeader("x-assessment-id", assessmentId)
         .maybeSingle();
       if (!a) return {};
       const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");

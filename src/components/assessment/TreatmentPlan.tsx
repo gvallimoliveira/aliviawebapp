@@ -131,6 +131,7 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
         .from("assessments")
         .select("clinic_id, professional_id")
         .eq("id", assessmentId)
+        .setHeader("x-assessment-id", assessmentId)
         .maybeSingle();
       if (!a) return { professionalLogoUrl };
       const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
