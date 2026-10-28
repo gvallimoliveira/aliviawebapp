@@ -891,7 +891,7 @@ const StudioProBrand = () => {
         </div>
 
         {/* Abas */}
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {([
             { id: "criar" as Tab, label: "Criar", icon: Sparkles },
             { id: "artes" as Tab, label: "Artes", icon: Images },
