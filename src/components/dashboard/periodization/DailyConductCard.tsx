@@ -48,13 +48,13 @@ export const DailyConductContent = ({ birth, plan, entries, checkins, sessions }
                 <span className="text-[10px] uppercase tracking-wide rounded px-1.5 py-0.5 bg-muted text-muted-foreground mr-2">{toneLabel[o.tone]}</span>
                 <span className="font-medium text-foreground">{o.action}</span>
                 {o.planned?.length ? (
-                  <div className="mt-2 space-y-1.5">
+                  <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                     {o.planned.map((p, j) => (
-                      <div key={j} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2">
-                        <span className="capitalize text-foreground">{p.label}</span>
-                        <span className="flex gap-1.5">
-                          {p.minutes ? <span className="rounded-md bg-background border px-2 py-0.5 text-xs text-muted-foreground">{p.minutes} min</span> : null}
-                          {p.rpe ? <span className="rounded-md bg-background border px-2 py-0.5 text-xs text-muted-foreground">PSE {p.rpe}</span> : null}
+                      <div key={j} className="flex min-w-0 items-center justify-between gap-2 rounded-lg border bg-muted/30 px-2.5 py-1.5">
+                        <span className="min-w-0 truncate capitalize text-foreground">{p.label}</span>
+                        <span className="flex shrink-0 gap-1">
+                          {p.minutes ? <span className="rounded-md bg-background border px-1.5 py-0.5 text-[11px] text-muted-foreground">{p.minutes} min</span> : null}
+                          {p.rpe ? <span className="rounded-md bg-background border px-1.5 py-0.5 text-[11px] text-muted-foreground">PSE {p.rpe}</span> : null}
                         </span>
                       </div>
                     ))}

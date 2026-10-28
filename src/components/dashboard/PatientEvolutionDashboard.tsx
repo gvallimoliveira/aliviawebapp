@@ -230,7 +230,12 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       return next;
     }, { replace: true });
   }, [setSearchParams]);
-  useEffect(() => { onSelectionChange?.(selectedEmail); }, [selectedEmail, onSelectionChange]);
+  // Avisar o pai só quando o paciente aberto muda de fato. O pai passa uma
+  // função nova a cada render (ex.: ao exibir "Link copiado"), e repetir o
+  // aviso fazia a página rolar de volta ao topo do prontuário.
+  const onSelectionChangeRef = useRef(onSelectionChange);
+  onSelectionChangeRef.current = onSelectionChange;
+  useEffect(() => { onSelectionChangeRef.current?.(selectedEmail); }, [selectedEmail]);
   // Sync with URL: if the `patient` query param is removed (e.g. user taps
   // the Patients tab in the bottom bar), collapse back to the list view.
   const patientParam = searchParams.get("patient");
