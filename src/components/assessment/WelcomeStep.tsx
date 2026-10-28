@@ -25,11 +25,16 @@ export interface WelcomeStepProps {
    * was auto-restored) can intentionally start over.
    */
   onRestart?: () => void;
+  /** LGPD consent scope for professional/clinic links, e.g. "clinic:<id>". Omit to skip (demo). */
+  consentScopeRef?: string;
+  consentType?: "professional_link_assessment" | "clinic_link_assessment";
+  consentSubjectEmail?: string | null;
+  consentSubjectName?: string | null;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const WelcomeStep = ({ mode, professionalName, clinicLogoUrl, clinicName, onContinue, onRestart }: WelcomeStepProps) => {
+const WelcomeStep = ({ mode, professionalName, clinicLogoUrl, clinicName, onContinue, onRestart, consentScopeRef, consentType, consentSubjectEmail, consentSubjectName }: WelcomeStepProps) => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const isPt = language === "pt";
@@ -42,7 +47,8 @@ const WelcomeStep = ({ mode, professionalName, clinicLogoUrl, clinicName, onCont
   const showClinicLogo = !!clinicLogoUrl && failedLogoUrl !== clinicLogoUrl;
   // Only patient self-assessments require the explicit consent.
   // Professional/clinic flows already have a clinical responsible party.
-  const requiresConsent = mode === "basic" || mode === "premium";
+  const isLinkConsent = mode === "professional" && !!consentScopeRef;
+  const requiresConsent = mode === "basic" || mode === "premium" || isLinkConsent;
   const [consent, setConsent] = useState(false);
   const [consentError, setConsentError] = useState(false);
 
@@ -82,7 +88,12 @@ const WelcomeStep = ({ mode, professionalName, clinicLogoUrl, clinicName, onCont
         );
       } catch { /* storage may be unavailable */ }
       // Registro auditável do consentimento (LGPD, art. 8º §1º)
-      void logConsent({
+      void logConsent(isLinkConsent ? {
+        consentType: consentType ?? "professional_link_assessment",
+        subjectEmail: consentSubjectEmail || null,
+        subjectName: consentSubjectName || null,
+        scopeRef: consentScopeRef,
+      } : {
         consentType: "self_assessment",
         subjectEmail: email.trim() || null,
         subjectName: name.trim() || null,
@@ -303,14 +314,26 @@ const WelcomeStep = ({ mode, professionalName, clinicLogoUrl, clinicName, onCont
               <div className="flex-1 text-left">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                   <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                  {language === "es"
+                  {isLinkConsent
+                    ? (language === "es"
+                      ? "Consentimiento para datos de salud (LGPD)"
+                      : language === "en"
+                      ? "Health data consent (LGPD)"
+                      : "Consentimento para dados de saúde (LGPD)")
+                    : language === "es"
                     ? "Reconozco que es una autoevaluación"
                     : language === "en"
                     ? "I acknowledge this is a self-assessment"
                     : "Reconheço que esta é uma autoavaliação"}
                 </div>
                 <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-                  {language === "es"
+                  {isLinkConsent
+                    ? (language === "es"
+                      ? `Autorizo de forma específica y destacada que ${professionalName || "el profesional"} y Aliv.iA traten mis datos de salud (dolor, historial, condiciones y respuestas) solo para esta evaluación y mi atención. Puedo revocar este consentimiento en cualquier momento.`
+                      : language === "en"
+                      ? `I specifically authorize ${professionalName || "the professional"} and Aliv.iA to process my health data (pain, history, conditions and answers) only for this assessment and my care. I may revoke this consent at any time.`
+                      : `Autorizo, de forma específica e destacada, que ${professionalName || "o profissional"} e o Aliv.iA tratem meus dados de saúde (dor, histórico, condições e respostas) apenas para esta avaliação e meu atendimento. Posso revogar este consentimento a qualquer momento.`)
+                    : language === "es"
                     ? "Yo mismo respondo el cuestionario, guiado por el método del app. El resultado no es un diagnóstico médico ni sustituye una consulta presencial. En caso de emergencia, llamaré al 192 (SAMU)."
                     : language === "en"
                     ? "I am answering this questionnaire myself, guided by the app's method. The result is not a medical diagnosis and does not replace an in-person consultation. In an emergency, I will call 192 (SAMU — Brazil)."

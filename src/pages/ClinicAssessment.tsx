@@ -861,6 +861,10 @@ const ClinicAssessment = () => {
         {step === "welcome" && clinic && (
           <WelcomeStep
             mode="professional"
+            consentScopeRef={`clinic:${clinic.id}`}
+            consentType="clinic_link_assessment"
+            consentSubjectEmail={linkedPatient?.email ?? null}
+            consentSubjectName={linkedPatient?.name ?? null}
             professionalName={clinic.name}
             clinicLogoUrl={clinic.logo_url}
             clinicName={clinic.name}
