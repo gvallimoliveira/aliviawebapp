@@ -56,3 +56,43 @@ export const alignCtasToAudience = <T>(content: T, patientVoice: boolean, audien
   };
   return walk(content) as T;
 };
+
+/**
+ * TÍTULOS × PÚBLICO: em arte para fisio/clínica, títulos que falam com quem
+ * sente dor (sua dor, seu quadro, autoavaliação, voltar a treinar…) saem do
+ * repertório. Só remove — nunca esvazia a lista (sobra ao menos um item).
+ */
+const PATIENT_ONLY_TITLE =
+  /autoavalia|\bsua dor\b|\bsuas dores\b|voc[êe] sente|\bte d[óo]i\b|\bseu quadro\b|entender o quadro e seguir|\bsem dor\b|voltar a treinar|seu movimento|seu corpo|sua recupera[çc][ãa]o|seu tratamento|minha avalia|procurar (o )?fisioterapeuta/i;
+
+export const isPatientOnlyTitle = (text: string) => PATIENT_ONLY_TITLE.test(text ?? "");
+
+const titleText = (item: unknown): string => {
+  if (typeof item === "string") return item;
+  if (item && typeof item === "object") {
+    const o = item as Record<string, unknown>;
+    return [o.strong, o.rest, o.title, o.headline].filter((v) => typeof v === "string").join(" ");
+  }
+  return "";
+};
+
+const TITLE_LIST_KEYS = new Set(["headlines", "covers", "quotes", "hooks"]);
+
+export const alignTitlesToAudience = <T>(content: T, patientVoice: boolean): T => {
+  if (patientVoice) return content;
+  const walk = (value: unknown, key?: string): unknown => {
+    if (Array.isArray(value)) {
+      const items = value.map((v) => walk(v));
+      if (key && TITLE_LIST_KEYS.has(key)) {
+        const kept = items.filter((v) => !isPatientOnlyTitle(titleText(v)));
+        return kept.length ? kept : items.slice(0, 1);
+      }
+      return items;
+    }
+    if (value && typeof value === "object") {
+      return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, walk(v, k)]));
+    }
+    return value;
+  };
+  return walk(content) as T;
+};

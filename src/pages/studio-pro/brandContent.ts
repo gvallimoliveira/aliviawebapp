@@ -31,7 +31,7 @@ import { enforceAudienceScope } from "./audienceScope";
 import { finalizeBrandVoice, isVeterinaryContext } from "./veterinaryVoice";
 import { buildEditorialProgression, frameEditorialLoss } from "./narrativeArc";
 import { distinctListItems } from "@/pages/studio/listCoherence";
-import { alignCtasToAudience } from "./ctaAudience";
+import { alignCtasToAudience, alignTitlesToAudience } from "./ctaAudience";
 import { isAliviaCoreBrand as isAliviaCtaBrand } from "./aliviaCoreCharm";
 
 
@@ -2241,7 +2241,7 @@ export const buildSegmentContent = ({
     /* Chamada final fala com o mesmo público da arte (só na marca Aliv.iA,
        que tem paciente e profissional no mesmo kit). */
     const aligned = isAliviaCtaBrand(brand ?? "")
-      ? alignCtasToAudience(owned, patientVoice, relation?.cta || audience?.cta)
+      ? alignTitlesToAudience(alignCtasToAudience(owned, patientVoice, relation?.cta || audience?.cta), patientVoice)
       : owned;
     return proofreadVisible(finalizeBrandVoice(aligned, {
       brand,
