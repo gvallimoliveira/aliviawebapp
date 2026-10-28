@@ -393,6 +393,13 @@
       "when": 1793207729164,
       "tag": "0055_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1793210683091,
+      "tag": "0056_fix_clinic_hep_authorization",
+      "breakpoints": true
     }
   ]
 }

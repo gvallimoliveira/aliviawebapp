@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Erro ao criar HEP na clínica pagante
-- [ ] Reproduzir a recusa de criação, conferir identidade e políticas, corrigir a causa mantendo isolamento e validar criação/leitura do programa.
+- [x] Recusa 403 reproduzida na conta afetada: HEP exigia PRO solo apesar da clínica ativa. Migração 0056 corrige programas e itens pelo escopo clínico, mantém autoria/membros clínicos ativos e pagamento separado do PRO. Edição verifica erros sem trocar clínica. Oito testes de RLS passaram; build OK. Criação real autenticada retornou 201, item e autoria conferidos no banco, link exibiu exercício e marca corretos; registro técnico removido sem alterar pacientes. Envio push e dose no microciclo não executados neste teste para não prescrever/notificar paciente real.
 
 ## Lista compacta de solicitações na Agenda
 - [x] Painel compartilhado PRO/clínica limitado à altura real dos três primeiros pedidos, com rolagem interna, total e data/hora de criação em ordem de chegada. Ajuda pt/en/es atualizada; sete testes passaram e build OK. Clínica autenticada: seis pedidos simulados apenas nas respostas de leitura, três visíveis, ordem correta, rolagem até o último e aprovação aberta sem gravar. Clínica sem pedidos reais; PRO disponível apenas em demo, portanto não houve aprovação real nem validação visual do PRO real.
