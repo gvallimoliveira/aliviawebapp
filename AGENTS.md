@@ -30,6 +30,7 @@
 - Read nested AGENTS.md before editing its directory.
 - Patient links use ClinicBrandHeader/scoped clinicAssessmentTheme, including WelcomeStep. PDFs share section renderers, resolveAssessmentBranding and per-document applyPdfBranding; preserve warnings and clinic isolation.
 - HEP programs persist clinic_id at creation; public branding resolves only through the valid program token, never by guessing a clinic from the professional.
+- HEP writes use can_manage_hep for programs and items: solo requires the author's active PRO subscription; clinic requires active clinical actor/author membership in the stored clinic and an active/trial clinic, never a separate PRO subscription or another clinic's membership.
 
 - Preventive assessments are explicit opt-in via the shared purpose helper; preserve symptomatic defaults, store historical sites separately and unmeasured pain as null, and keep safety and professional-selected questionnaires.
 - Spine logic stays in `spineBiomechanics.ts`; `spinePresentation.ts` shares screen/PDF geometry and dated exams to preserve history.
