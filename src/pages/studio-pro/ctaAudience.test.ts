@@ -15,3 +15,14 @@ describe("CTA alinhada ao público", () => {
     expect(alignCtasToAudience({ cta: "Conhecer o controle de carga" }, false).cta).toBe("Conhecer o controle de carga");
   });
 });
+
+import { alignTitlesToAudience } from "./ctaAudience";
+describe("títulos alinhados ao público", () => {
+  const c = { headlines: [{ strong: "Pronto para entender o quadro e seguir um plano", rest: "" }, { strong: "Avaliação estruturada em minutos", rest: "" }] };
+  it("arte para fisio remove título de paciente", () => {
+    expect(alignTitlesToAudience(c, false).headlines.map((h) => h.strong)).toEqual(["Avaliação estruturada em minutos"]);
+  });
+  it("arte para paciente mantém", () => {
+    expect(alignTitlesToAudience(c, true).headlines).toHaveLength(2);
+  });
+});
