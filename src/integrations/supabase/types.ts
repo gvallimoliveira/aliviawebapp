@@ -6192,6 +6192,7 @@ export type Database = {
         }[]
       }
       referral_code_exists: { Args: { _code: string }; Returns: boolean }
+      request_assessment_id: { Args: never; Returns: string }
       reset_chat_addon_period_if_needed: {
         Args: { _user_id: string }
         Returns: undefined

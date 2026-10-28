@@ -372,6 +372,13 @@
       "when": 1792963663477,
       "tag": "0052_allow_revoking_academic_access_without_crefito",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1793151879003,
+      "tag": "0053_lgpd_scope_anon_assessments",
+      "breakpoints": true
     }
   ]
 }

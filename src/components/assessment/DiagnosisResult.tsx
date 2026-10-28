@@ -83,6 +83,7 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
         .from("assessments")
         .select("clinic_id, professional_id")
         .eq("id", assessmentId)
+        .setHeader("x-assessment-id", assessmentId)
         .maybeSingle();
       if (!a) return {};
       const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
@@ -171,7 +172,9 @@ const DiagnosisResult = ({ diagnosis, mode, onBack, onNewAssessment, onGenerateT
           .from("assessment-reports")
           .upload(filePath, pdfBlob, { contentType: "application/pdf", upsert: true });
         if (uploadError) throw uploadError;
-        publicUrl = supabase.storage.from("assessment-reports").getPublicUrl(filePath).data.publicUrl;
+        const { data: signed, error: signErr } = await supabase.storage.from("assessment-reports").createSignedUrl(filePath, 60 * 60 * 24 * 7);
+        if (signErr || !signed?.signedUrl) throw signErr || new Error("sign_failed");
+        publicUrl = signed.signedUrl;
       } catch (uploadErr) {
         console.warn("Upload failed, downloading locally", uploadErr);
         const url = URL.createObjectURL(pdfBlob);

@@ -245,6 +245,7 @@ const ClinicAssessment = () => {
           .from("assessments")
           .select("patient_name, patient_email, pain_regions, pain_score, anamnesis_data, test_results")
           .eq("id", reassessmentId)
+          .setHeader("x-assessment-id", reassessmentId)
           .eq("clinic_id", clinicId)
           .maybeSingle();
 
@@ -348,6 +349,7 @@ const ClinicAssessment = () => {
         .from("assessments")
         .select("id, status, patient_name, patient_email, pain_regions, pain_score, anamnesis_data, test_results, red_flags")
         .eq("id", resumeId)
+        .setHeader("x-assessment-id", resumeId)
         .eq("clinic_id", clinicId)
         .maybeSingle();
 
@@ -411,9 +413,11 @@ const ClinicAssessment = () => {
     // Reuse existing assessment if resuming or already created in this session
     if (assessmentId) return assessmentId;
     try {
+      const newId = crypto.randomUUID();
       const { data, error } = await supabase
         .from("assessments")
         .insert({
+          id: newId,
           type: "professional",
           status: "in_progress",
           user_id: null,
@@ -425,6 +429,7 @@ const ClinicAssessment = () => {
           original_assessment_id: reassessmentId || null,
         } as any)
         .select("id")
+        .setHeader("x-assessment-id", newId)
         .single();
       if (error) throw error;
       setAssessmentId(data.id);
@@ -446,7 +451,7 @@ const ClinicAssessment = () => {
 
   const updateAssessment = async (id: string, updates: Record<string, any>) => {
     try {
-      const { error } = await supabase.from("assessments").update(updates).eq("id", id);
+      const { error } = await supabase.from("assessments").update(updates).eq("id", id).setHeader("x-assessment-id", id);
       if (error) console.error("Update error:", error);
     } catch (err) {
       console.error("Error updating assessment:", err);
