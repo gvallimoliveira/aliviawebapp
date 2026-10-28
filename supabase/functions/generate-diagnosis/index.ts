@@ -24,7 +24,7 @@ serve(async (req) => {
     // Signed-in user, or an anonymous patient on a recent assessment link.
     const __gate = await requireUserOrAssessment(req, corsHeaders, assessmentId);
     if (__gate instanceof Response) return __gate;
-    const __canPersist = !!assessmentId && (__gate.anonAssessment || await userCanAccessAssessment(req, String(assessmentId)));
+    const __canPersist = mode === "professional" && !!assessmentId && (__gate.anonAssessment || await userCanAccessAssessment(req, String(assessmentId)));
     const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
     const preventive = isPreventiveAssessment(anamnesisData);
     // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
