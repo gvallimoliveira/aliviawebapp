@@ -6221,6 +6221,10 @@ export type Database = {
         Args: { p_batch: string; p_data: Json; p_id?: string; p_table: string }
         Returns: string
       }
+      is_active_clinic_clinician_anywhere: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_any_clinic_clinician: { Args: { _user_id: string }; Returns: boolean }
       is_clinic_clinician: {

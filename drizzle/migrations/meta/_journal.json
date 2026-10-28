@@ -407,6 +407,13 @@
       "when": 1793212258860,
       "tag": "0057_clinic_clinician_access_parity",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1793214917630,
+      "tag": "0058_clinic_referrals_parity",
+      "breakpoints": true
     }
   ]
 }
