@@ -455,16 +455,22 @@ export const composeRouteCopy = (
         const isAliviaBrand = /aliv\.?i?a/i.test(brandName);
         const joinFrames = isAliviaBrand
           ? [
-              `${cap(lexicalPerception)} pode ser a sua rotina. Basta fazer parte do time Aliv.iA.`,
-              `${cap(lexicalPerception)} está mais perto do que parece. É assim no time Aliv.iA.`,
-              `${cap(lexicalPerception)} já é realidade para quem faz parte do time Aliv.iA.`,
+              `${cap(lexicalPerception)} pode ser a sua rotina de trabalho. Está a um passo de distância: venha para o time Aliv.iA.`,
+              `${cap(lexicalPerception)}. Isso já pode acontecer no seu próximo atendimento — venha para o time Aliv.iA.`,
+              `${cap(lexicalPerception)} pode ser o seu dia a dia. Faça parte do time Aliv.iA.`,
+              `${cap(lexicalPerception)}. Essa transformação pode começar hoje: faça parte do time Aliv.iA.`,
+              `${cap(lexicalPerception)} já é a rotina de quem faz parte do time Aliv.iA.`,
+              `${cap(lexicalPerception)}: esse é o dia a dia de quem entrou para o time Aliv.iA.`,
             ]
           : [
-              `${cap(lexicalPerception)} pode ser a sua realidade. Está mais perto do que parece.`,
-              `${cap(lexicalPerception)} pode fazer parte do seu dia a dia, a partir de agora.`,
+              `${cap(lexicalPerception)} pode ser a sua rotina. Está a um passo de distância: dê o primeiro passo.`,
+              `${cap(lexicalPerception)}. Isso já pode acontecer na sua próxima sessão.`,
             ];
         const usefulQuote = joinFrames[frame % joinFrames.length];
         out.quotes = [{ text: terms(usefulQuote) }];
+        // Mesmo tom no fechamento da história, com frase diferente da citação.
+        const closing = joinFrames[(frame + 1) % joinFrames.length];
+        if (out.stories?.[0]) out.stories[0].moral = terms(fit(closing, 120));
       }
       out.kinetic = [{
         kicker: terms(shortKicker(who || "Decisão", 28)),
