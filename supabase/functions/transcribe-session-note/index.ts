@@ -1,6 +1,7 @@
 // Ditado da evolução do paciente: transcreve um trecho curto de áudio (WAV)
 // e devolve APENAS o texto literal. Nada é salvo em banco, o áudio é descartado.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireUser } from "../_shared/caller-auth.ts";
 import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 
 const corsHeaders = {
@@ -35,10 +36,8 @@ Deno.serve(async (req) => {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY missing" }, 500);
 
-  const authHeader = req.headers.get("Authorization") || "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return json({ error: "Autenticação necessária." }, 401);
-  }
+  const __gate = await requireUser(req, corsHeaders);
+  if (__gate instanceof Response) return __gate;
 
   try {
     const body = await req.json().catch(() => ({}));
