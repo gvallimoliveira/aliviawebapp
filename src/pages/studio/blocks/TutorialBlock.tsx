@@ -169,7 +169,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[11px] text-primary-foreground" aria-hidden>
           ▶
         </span>
-        <span className="truncate text-[11px] font-semibold leading-tight text-foreground">{closing.cta}</span>
+        <span className="text-[11px] font-semibold leading-tight text-foreground [text-wrap:balance]">{closing.cta}</span>
         <span className="text-[13px] text-primary" aria-hidden>→</span>
       </div>
     </section>
