@@ -96,6 +96,39 @@ Deno.serve(async (req) => {
     // Appointment requests: recipients and copy are resolved here from the
     // request row; the caller is validated (patient on create, staff on approve).
     let preAuthorizedTargets: string[] | null = null;
+
+    // Assessment-link alerts (patient without login, or any non-service caller
+    // using assessment_id): recipients and text come only from the assessment
+    // row, never from the request, so nobody can impersonate the clinic.
+    const assessmentRef = reqBody.assessment_id ? String(reqBody.assessment_id) : null;
+    if (!isServiceRole && (isAnonKey || assessmentRef)) {
+      const deny = (msg: string, status = 403) => new Response(JSON.stringify({ error: msg }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (!assessmentRef || !/^[0-9a-f-]{36}$/i.test(assessmentRef)) return deny("assessment_id required", 401);
+      const { data: asmt } = await supabase.from("assessments")
+        .select("id, user_id, clinic_id, professional_id, patient_name, created_at")
+        .eq("id", assessmentRef).maybeSingle();
+      const fresh = asmt && Date.now() - new Date(asmt.created_at).getTime() < 48 * 3600 * 1000;
+      if (!asmt || !fresh || (asmt.user_id && asmt.user_id !== callerUserId)) return deny("Forbidden");
+      const targets: string[] = [];
+      if (asmt.clinic_id) {
+        const { data: members } = await supabase.from("clinic_members").select("user_id")
+          .eq("clinic_id", asmt.clinic_id).eq("status", "active").in("role", ["owner", "secretary"]);
+        for (const m of members || []) if (m.user_id) targets.push(m.user_id);
+      } else if (asmt.professional_id) {
+        const { data: p } = await supabase.from("professionals").select("user_id").eq("id", asmt.professional_id).maybeSingle();
+        if (p?.user_id) targets.push(p.user_id);
+      }
+      const who = String(asmt.patient_name || "Paciente").slice(0, 80);
+      const isRedFlag = reqBody.kind === "red_flag" || reqBody.category === "red_flags";
+      title = isRedFlag ? "🚨 Red flag detectada" : "📋 Nova avaliação recebida";
+      body = isRedFlag ? `${who} ativou sinais de alerta na avaliação.` : `${who} respondeu o link de avaliação.`;
+      url = `/assessment/view/${asmt.id}`;
+      tag = `${isRedFlag ? "redflag" : "assessment"}-${asmt.id}`;
+      category = isRedFlag ? "red_flags" : "assessments";
+      user_id = undefined; clinic_id = undefined; email = undefined; conversation_id = undefined;
+      preAuthorizedTargets = targets;
+    }
     const announcementId = reqBody.announcement_id ? String(reqBody.announcement_id) : null;
     if (announcementId) {
       if (!callerUserId) {
