@@ -4923,6 +4923,63 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_feed_calendar: {
+        Row: {
+          brand_id: string
+          created_at: string
+          creation_id: string | null
+          id: string
+          kind: string
+          notes: string | null
+          pillar: string | null
+          posted_at: string | null
+          scheduled_date: string | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          creation_id?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          pillar?: string | null
+          posted_at?: string | null
+          scheduled_date?: string | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          creation_id?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          pillar?: string | null
+          posted_at?: string | null
+          scheduled_date?: string | null
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_feed_calendar_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "studio_brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_feed_calendar_creation_id_fkey"
+            columns: ["creation_id"]
+            isOneToOne: false
+            referencedRelation: "studio_creations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       studio_granted_access: {
         Row: {
           created_at: string
