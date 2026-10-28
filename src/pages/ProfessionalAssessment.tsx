@@ -882,6 +882,10 @@ const ProfessionalAssessment = () => {
         {step === "welcome" && professional && (
           <WelcomeStep
             mode="professional"
+            consentScopeRef={`professional:${professional.id}`}
+            consentType="professional_link_assessment"
+            consentSubjectEmail={linkedPatient?.email ?? null}
+            consentSubjectName={linkedPatient?.name ?? null}
             professionalName={professional.full_name}
             onContinue={() => setStep("patient_info")}
             onRestart={() => {

@@ -10,7 +10,9 @@ export type ConsentType =
   | "self_assessment"
   | "professional_terms"
   | "clinic_terms"
-  | "marketing";
+  | "marketing"
+  | "professional_link_assessment"
+  | "clinic_link_assessment";
 
 export async function logConsent(params: {
   consentType: ConsentType;

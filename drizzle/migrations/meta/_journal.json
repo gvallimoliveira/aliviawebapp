@@ -379,6 +379,13 @@
       "when": 1793151879003,
       "tag": "0053_lgpd_scope_anon_assessments",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1793152261131,
+      "tag": "0054_consent_records_grants",
+      "breakpoints": true
     }
   ]
 }
