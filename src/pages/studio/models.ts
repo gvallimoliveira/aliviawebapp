@@ -47,6 +47,8 @@ export const STUDIO_MODELS: StudioModel[] = [
   { id: "ganchos", label: "Ganchos (frases virais)", hint: "Biblioteca de ganchos de parada de scroll adaptados à marca (ninguém te conta, o erro comum, 90% ignoram…)", kinds: ["hook"] },
   { id: "empilhado", label: "Letras empilhadas (cartaz)", hint: "Palavra repetida em contorno com chapa sólida e tarjas de cor", kinds: ["stackType"] },
   { id: "mockup", label: "Mockup de tela", hint: "Notebook, tablet ou celular", kinds: ["device"] },
+  { id: "tutorial", label: "Tutorial com pílula", hint: "Pergunta com a palavra-chave em pílula, aparelho em cena e botão de chamada", kinds: ["tutorial"] },
+  { id: "hub", label: "Hub conectado", hint: "Celular no centro com os módulos ligados ao redor e chamada larga embaixo", kinds: ["hub"] },
   { id: "notificacoes", label: "Notificações do app", hint: "Pilha de avisos simulando o app da marca", kinds: ["notify"] },
   { id: "escolha", label: "Escolha / interruptores", hint: "Dois botões: hábito antigo x novo", kinds: ["toggle"] },
   { id: "progresso", label: "Progresso / gráfico", hint: "Traçado subindo e furando o platô", kinds: ["trend", "focus"] },

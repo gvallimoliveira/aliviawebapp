@@ -49,6 +49,8 @@ import PercentBlock from "@/pages/studio/blocks/PercentBlock";
 import HookBlock from "@/pages/studio/blocks/HookBlock";
 import StepsBlock from "@/pages/studio/blocks/StepsBlock";
 import DifiBlock from "@/pages/studio/blocks/DifiBlock";
+import TutorialBlock from "@/pages/studio/blocks/TutorialBlock";
+import HubBlock from "@/pages/studio/blocks/HubBlock";
 import type { BlockProps } from "@/pages/studio/blocks/shared";
 import type { BlockKind } from "@/pages/studio/composePage";
 
@@ -109,4 +111,6 @@ export const STUDIO_BLOCKS = {
   outbox: OutboxBlock,
   steps: StepsBlock,
   difi: DifiBlock,
+  tutorial: TutorialBlock,
+  hub: HubBlock,
 } satisfies Record<BlockKind, (props: BlockProps) => JSX.Element>;
