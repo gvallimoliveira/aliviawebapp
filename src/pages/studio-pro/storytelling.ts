@@ -446,9 +446,24 @@ export const composeRouteCopy = (
         moral: terms(fit(cta || proof || turn, 100)),
       }];
       if (lexicalTerm && lexicalPerception) {
-        const usefulQuote = proof
-          ? `${cap(lexicalPerception)} não é só um nome. ${cap(proof)} ajuda a entender a causa e escolher o próximo passo.`
-          : `${cap(lexicalPerception)} é um sinal que merece avaliação, não apenas um rótulo técnico.`;
+        /*
+         * Citação = convite, não correção. Antes saía "X não é só um nome" —
+         * cacoete de negação que não vende. Agora a frase mostra a solução como
+         * realidade próxima, ao alcance de quem entra para a marca.
+         */
+        const brandName = squash(options.brand);
+        const isAliviaBrand = /aliv\.?i?a/i.test(brandName);
+        const joinFrames = isAliviaBrand
+          ? [
+              `${cap(lexicalPerception)} pode ser a sua rotina. Basta fazer parte do time Aliv.iA.`,
+              `${cap(lexicalPerception)} está mais perto do que parece. É assim no time Aliv.iA.`,
+              `${cap(lexicalPerception)} já é realidade para quem faz parte do time Aliv.iA.`,
+            ]
+          : [
+              `${cap(lexicalPerception)} pode ser a sua realidade. Está mais perto do que parece.`,
+              `${cap(lexicalPerception)} pode fazer parte do seu dia a dia, a partir de agora.`,
+            ];
+        const usefulQuote = joinFrames[frame % joinFrames.length];
         out.quotes = [{ text: terms(usefulQuote) }];
       }
       out.kinetic = [{
