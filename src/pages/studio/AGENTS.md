@@ -8,3 +8,4 @@
 - Studio acronym explanations and legacy loss-connector repairs must use shared contextual copy normalization after the final voice guard and in ecosystem construction; one idempotent rule keeps formats readable without altering media metadata.
 - Device mockups in Studio arts get their screen text from `mockScreens.ts` (headline keyword → topic theme for the owner brand; deduplicated feature labels, never audience names, for client brands) so the illustration always matches the art's promise.
 - Studio photo choice treats platform terms in the user's caption as a declared topic (`captionTopics` in `photoMeaning.ts`); a declared match narrows rotation to near-top photos so captioned prints win without AI.
+- Aliv.iA Studio CTAs pass through `studio-pro/ctaAudience.ts` in `finish`: patient-only calls (autoavaliação) never close pro/clinic arts and pro-only calls never close patient arts, because the shared kit mixes both audiences.
