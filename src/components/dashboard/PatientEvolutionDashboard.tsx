@@ -435,16 +435,31 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   }, [professionalId, clinicId, isDemo]);
 
   // Reassign all patient assessments to a new professional within the clinic
-  const handleReassignPatient = async (assessmentIds: string[], targetProId: string) => {
-    if (!targetProId || assessmentIds.length === 0 || !clinicId) return;
+  const handleReassignPatient = async (assessmentIds: string[], targetProId: string, patientRecordId?: string | null) => {
+    if (!targetProId || !clinicId || (assessmentIds.length === 0 && !patientRecordId)) return;
     setReassigning(true);
     try {
-      const { error } = await (supabase.from("assessments") as any)
-        .update({ professional_id: targetProId })
-        .in("id", assessmentIds)
-        .eq("clinic_id", clinicId);
-      if (error) throw error;
-      toast({ title: "Fisioterapeuta atualizado!", description: "Todas as avaliações deste paciente foram reatribuídas." });
+      // Manually registered patients may have no assessments yet: the
+      // responsible therapist lives on the patient registry row.
+      if (patientRecordId) {
+        const { data: updated, error: pErr } = await (supabase.from("patients" as any) as any)
+          .update({ professional_id: targetProId })
+          .eq("id", patientRecordId)
+          .eq("clinic_id", clinicId)
+          .select("id");
+        if (pErr) throw pErr;
+        if (!updated?.length && assessmentIds.length === 0) {
+          throw new Error("Seu perfil não tem permissão para alterar o fisioterapeuta deste paciente.");
+        }
+      }
+      if (assessmentIds.length > 0) {
+        const { error } = await (supabase.from("assessments") as any)
+          .update({ professional_id: targetProId })
+          .in("id", assessmentIds)
+          .eq("clinic_id", clinicId);
+        if (error) throw error;
+      }
+      toast({ title: "Fisioterapeuta atualizado!", description: assessmentIds.length > 0 ? "Paciente e avaliações reatribuídos." : "Fisioterapeuta responsável definido no cadastro." });
       setReassignOpen(false);
       setReassignTargetId("");
       // Trigger reload upstream
