@@ -1,10 +1,22 @@
 import { useRef, useState } from "react";
-import { Crop, Loader2, Pin, Trash2, Upload, X } from "lucide-react";
+import { Crop, Loader2, Pin, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import StudioPhotoEditor from "./StudioPhotoEditor";
 import PhotoFrame from "./blocks/PhotoFrame";
 import { PHOTO_USAGES, type PhotoFraming, type PhotoPatch, type PhotoUsage, type StudioPhoto } from "./photos";
 import { isOfficialPhoto } from "./officialPhotos";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+
+/** Leitura de imagem por IA: exclusiva da conta do dono (gasta crédito de IA). */
+const OWNER_EMAILS = ["gvallimoliveira@gmail.com", "gvallim.fisio@gmail.com"];
+
+/** Junta os temas lidos à legenda, sem duplicar uma leitura anterior. */
+export const mergeAiThemes = (caption: string, themes: string[], summary: string): string => {
+  const base = caption.replace(/\s*Temas:[^\n]*$/i, "").trim();
+  const lead = base || summary.trim();
+  return [lead, themes.length ? `Temas: ${themes.join(", ")}` : ""].filter(Boolean).join(" ").trim();
+};
 
 type Props = {
   photos: StudioPhoto[];
@@ -46,6 +58,25 @@ const StudioPhotos = ({
   onTogglePin,
 }: Props) => {
   const fileRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+  const canAiRead = OWNER_EMAILS.includes((user?.email ?? "").toLowerCase());
+  const [reading, setReading] = useState<string | null>(null);
+  const aiRead = async (photo: StudioPhoto) => {
+    setReading(photo.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("studio-photo-read", {
+        body: { image: photo.src, caption: `${photo.label} ${photo.description}`.trim() },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "Leitura falhou");
+      const next = mergeAiThemes(photo.description, data.themes ?? [], data.summary ?? "");
+      await onEdit(photo.id, { description: next });
+      toast.success(data.themes?.length ? `Temas: ${data.themes.join(", ")}` : "Legenda atualizada");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível ler a imagem");
+    } finally {
+      setReading(null);
+    }
+  };
   const [usage, setUsage] = useState<PhotoUsage>("livre");
   const [label, setLabel] = useState("");
   /** Descrição breve: o que a imagem mostra e onde deve ser usada. */
@@ -325,6 +356,7 @@ const StudioPhotos = ({
                     className="mb-1.5 w-full rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground"
                   />
                   <textarea
+                    key={photo.description}
                     defaultValue={photo.description}
                     disabled={official}
                     rows={2}
@@ -349,11 +381,22 @@ const StudioPhotos = ({
                       ))}
                     </select>
 
+                    {canAiRead && !official && (
+                      <button
+                        type="button"
+                        onClick={() => void aiRead(photo)}
+                        disabled={reading === photo.id}
+                        title="Ler a imagem com IA e completar os temas da legenda"
+                        className="ml-auto rounded-full border border-border p-1.5 text-primary disabled:opacity-50"
+                      >
+                        {reading === photo.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setEditing(photo)}
                       title="Enquadrar (recorte, rotação, área segura)"
-                      className="ml-auto mr-1 rounded-full border border-border p-1.5 text-muted-foreground"
+                      className={`${canAiRead && !official ? "ml-1" : "ml-auto"} mr-1 rounded-full border border-border p-1.5 text-muted-foreground`}
                     >
                       <Crop className="h-3.5 w-3.5" />
                     </button>

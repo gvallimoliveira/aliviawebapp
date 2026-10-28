@@ -16,3 +16,14 @@ describe("legenda manda na escolha da foto", () => {
     }
   });
 });
+
+import { mergeAiThemes } from "@/pages/studio/StudioPhotos";
+describe("leitura de IA na legenda", () => {
+  it("substitui a leitura anterior em vez de acumular", () => {
+    const once = mergeAiThemes("Tela inicial", ["agenda"], "");
+    expect(mergeAiThemes(once, ["avaliação manual"], "")).toBe("Tela inicial Temas: avaliação manual");
+  });
+  it("temas lidos viram assunto declarado", () => {
+    expect(captionTopics({ label: "", description: mergeAiThemes("", ["avaliação manual"], "Print") } as never)).toContain("anamnesis");
+  });
+});
