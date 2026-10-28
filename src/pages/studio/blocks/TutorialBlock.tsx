@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { BRAND_LOGO, BRAND_NAME } from "../brand";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
+import { fallbackScreen, themedScreen, type MockScreen } from "../mockScreens";
 
 /**
  * TUTORIAL COM PÍLULA (referência: posts "Cansou de preencher [prontuário?]",
@@ -32,37 +33,41 @@ const Sparks = ({ side }: { side: "left" | "right" }) => (
   </span>
 );
 
-const Screen = ({ title, rows }: { title: string; rows: string[] }) => (
-  <div className="flex h-full w-full bg-background text-left">
-    <div className="hidden w-[26%] flex-col gap-1.5 border-r border-border bg-secondary/40 p-2 sm:flex">
-      <div className="mb-1 flex items-center gap-1">
-        <img src={BRAND_LOGO} alt="" className="h-3 w-3 object-contain" />
-        <span className="truncate text-[6px] font-semibold uppercase tracking-[0.18em] text-foreground">{BRAND_NAME}</span>
-      </div>
-      {rows.map((r, i) => (
-        <span
-          key={`${r}-${i}`}
-          className={`truncate rounded px-1 py-0.5 text-[5.5px] ${i === 0 ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-        >
-          {r}
-        </span>
-      ))}
-    </div>
-    <div className="flex-1 p-2.5">
-      <p className="text-[8px] font-bold leading-tight text-foreground">{title}</p>
-      <div className="mt-2 grid grid-cols-2 gap-1.5">
+const Screen = ({ screen, max = 4 }: { screen: MockScreen; max?: number }) => {
+  const rows = screen.rows.slice(0, max);
+  return (
+    <div className="flex h-full w-full bg-background text-left [hyphens:none]" style={{ wordBreak: "normal", overflowWrap: "normal" }}>
+      <div className="hidden w-[26%] flex-col gap-1.5 border-r border-border bg-secondary/40 p-2 sm:flex">
+        <div className="mb-1 flex items-center gap-1">
+          <img src={BRAND_LOGO} alt="" className="h-3 w-3 object-contain" />
+          <span className="truncate text-[6px] font-semibold uppercase tracking-[0.18em] text-foreground">{BRAND_NAME}</span>
+        </div>
         {rows.map((r, i) => (
-          <div key={`c-${r}-${i}`} className="rounded border border-border bg-card px-1.5 py-1">
-            <p className="truncate text-[5.5px] text-muted-foreground">{r}</p>
-            <div className="mt-1 h-[3px] w-full rounded-full bg-muted">
-              <div className="h-full rounded-full bg-primary" style={{ width: `${45 + ((i * 19) % 45)}%` }} />
-            </div>
-          </div>
+          <span
+            key={`${r.label}-${i}`}
+            className={`truncate rounded px-1 py-0.5 text-[5.5px] ${i === 0 ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >
+            {r.label}
+          </span>
         ))}
       </div>
+      <div className="flex-1 p-2.5">
+        <p className="text-[8px] font-bold leading-tight text-foreground [text-wrap:balance]">{screen.title}</p>
+        <div className="mt-2 grid grid-cols-2 gap-1.5">
+          {rows.map((r, i) => (
+            <div key={`c-${r.label}-${i}`} className="rounded border border-border bg-card px-1.5 py-1">
+              <p className="truncate text-[5.5px] text-muted-foreground">{r.label}</p>
+              {r.value && <p className="truncate text-[6.5px] font-bold leading-tight text-foreground">{r.value}</p>}
+              <div className="mt-1 h-[3px] w-full rounded-full bg-muted">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${r.pct}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: BlockProps) => {
   if (!content.headlines?.length || !content.closings?.length) return null;
@@ -74,8 +79,10 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
   const h = rng.pick(content.headlines);
   const kicker = content.kickers?.length ? rng.pick(content.kickers) : "";
   const closing = rng.pick(content.closings);
-  const lead = features[0];
-  const rows = features.map((f) => f.tag || f.title);
+  const screen =
+    themedScreen(`${h.strong} ${h.rest}`, features.map((f) => f.topic)) ??
+    fallbackScreen(features, [kicker, ...(content.kickers ?? [])]);
+  if (screen.rows.length < 2) return null;
 
   const ink = primary ? "text-primary-foreground" : "text-foreground";
 
@@ -129,7 +136,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
           <div className="w-[88%] max-w-[380px] translate-y-3 -rotate-2">
             <div className="rounded-t-xl border border-border bg-foreground/90 p-[6px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
               <div className="aspect-[16/10] overflow-hidden rounded-md">
-                <Screen title={lead.title} rows={rows} />
+                <Screen screen={screen} />
               </div>
             </div>
             <div className="mx-auto h-2.5 w-[112%] -translate-x-[5%] rounded-b-xl bg-muted" />
@@ -139,7 +146,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
           <div className="w-[78%] max-w-[330px] translate-y-6 rotate-[-6deg]">
             <div className="rounded-[20px] border border-border bg-foreground/90 p-[8px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
               <div className="aspect-[4/3] overflow-hidden rounded-[13px]">
-                <Screen title={lead.title} rows={rows} />
+                <Screen screen={screen} />
               </div>
             </div>
           </div>
@@ -150,7 +157,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
               <div className="relative aspect-[9/17] overflow-hidden rounded-[22px]">
                 <span className="absolute left-1/2 top-1 z-10 h-1.5 w-10 -translate-x-1/2 rounded-full bg-foreground/80" />
                 <div className="h-full pt-3">
-                  <Screen title={lead.title} rows={rows.slice(0, 2)} />
+                  <Screen screen={screen} max={2} />
                 </div>
               </div>
             </div>
@@ -158,11 +165,11 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
         )}
       </div>
 
-      <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2 rounded-full border border-border bg-background/90 py-2 pl-2 pr-4 shadow-lg backdrop-blur">
+      <div className="absolute bottom-6 left-1/2 z-20 flex max-w-[78%] -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-background/90 py-2 pl-2 pr-4 shadow-lg backdrop-blur">
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[11px] text-primary-foreground" aria-hidden>
           ▶
         </span>
-        <span className="text-[11px] font-semibold leading-tight text-foreground">{closing.cta}</span>
+        <span className="text-[11px] font-semibold leading-tight text-foreground [text-wrap:balance]">{closing.cta}</span>
         <span className="text-[13px] text-primary" aria-hidden>→</span>
       </div>
     </section>
