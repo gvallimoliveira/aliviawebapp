@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import StudioFeedCalendar from "./StudioFeedCalendar";
+import { CalendarDays } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,7 +132,7 @@ type Creation = {
 };
 
 
-type Tab = "criar" | "artes" | "ajustes";
+type Tab = "criar" | "artes" | "calendario" | "ajustes";
 
 /** Quantas linhas a marca já escreveu nos campos de lista do público/tema. */
 const listFieldCount = (a: BrandAudience) =>
@@ -885,14 +887,15 @@ const StudioProBrand = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <span>›</span>
-          <span>{tab === "criar" ? "Criar" : tab === "artes" ? "Artes" : "Ajustes"}</span>
+          <span>{tab === "criar" ? "Criar" : tab === "artes" ? "Artes" : tab === "calendario" ? "Calendário" : "Ajustes"}</span>
         </div>
 
         {/* Abas */}
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {([
             { id: "criar" as Tab, label: "Criar", icon: Sparkles },
             { id: "artes" as Tab, label: "Artes", icon: Images },
+            { id: "calendario" as Tab, label: "Calendário", icon: CalendarDays },
             { id: "ajustes" as Tab, label: "Ajustes da marca", icon: Settings2 },
           ]).map(({ id, label, icon: Icon }) => (
             <Button
@@ -942,6 +945,18 @@ const StudioProBrand = () => {
           </StudioBoundary>
         )}
 
+
+        {tab === "calendario" && (
+          <StudioFeedCalendar
+            brandId={brand.id}
+            creations={creations}
+            previews={previews}
+            onDownload={(art) => {
+              const full = creations.find((c) => c.id === art.id);
+              if (full) void downloadArt(full);
+            }}
+          />
+        )}
 
         {tab === "artes" && (
           <section

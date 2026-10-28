@@ -386,6 +386,13 @@
       "when": 1793152261131,
       "tag": "0054_consent_records_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1793207729164,
+      "tag": "0055_migration",
+      "breakpoints": true
     }
   ]
 }

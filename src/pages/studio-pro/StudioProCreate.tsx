@@ -63,6 +63,7 @@ import { WORLDS, WORLD_IDS, isWorldId, type WorldId } from "@/pages/studio/conte
 import { buildSegmentContent, brandSlogan, enforceEditorialFocus, relationForSegment, pickGlobalAudience } from "./brandContent";
 import { useSegmentMemory } from "./useSegmentMemory";
 import { planBatch, planMultiSegmentBatch } from "./director";
+import { FEED_PRESET_MODELS, isFeedPreset, pillarOfKind, pillarLabel } from "./feedPlan";
 import { formatInsightWords, readFormatInsights } from "./formatInsights";
 import type { TopicId } from "@/pages/studio/topics";
 import { buildBrandDna } from "./brandDnaKit";
@@ -1629,7 +1630,7 @@ const StudioProCreate = ({
           nodes: [node],
         })
       : null;
-    const { error } = await supabase.from("studio_creations").insert({
+    const { data: inserted, error } = await supabase.from("studio_creations").insert({
       user_id: auth.user.id,
       brand_id: brand.id,
       seed: `${seed}${side}:${index}`,
@@ -1650,7 +1651,21 @@ const StudioProCreate = ({
       angle,
       folder: folder === "Todas" ? "Geral" : folder,
       watermarked: watermark,
-    });
+    }).select("id").single();
+    // Preset do Feed Principal: a arte salva entra direto no calendário, no pilar certo.
+    let feedNote = "";
+    const feedPillar = isFeedPreset(models) ? pillarOfKind(kind) : null;
+    if (!error && inserted?.id && feedPillar) {
+      const { error: calErr } = await supabase.from("studio_feed_calendar").insert({
+        brand_id: brand.id,
+        user_id: auth.user.id,
+        kind: "art",
+        creation_id: inserted.id,
+        pillar: feedPillar,
+      });
+      if (calErr) console.warn("[studio-pro] feed calendar", calErr);
+      else feedNote = ` · no calendário (${pillarLabel(feedPillar)})`;
+    }
     setBusy(null);
     if (error) {
       console.error("[studio-pro] save creation", error);
@@ -1662,6 +1677,7 @@ const StudioProCreate = ({
       pngPath
         ? `Arte salva em ${folder === "Todas" ? "Geral" : folder} com PNG e legenda`
         : `Arte salva em ${folder === "Todas" ? "Geral" : folder} (PNG não pôde ser guardado)`,
+      feedNote ? { description: `Entrou no calendário de postagens${feedNote}` } : undefined,
     );
     onSaved?.();
   };
@@ -1859,6 +1875,15 @@ const StudioProCreate = ({
                     onClick={() => setModels([])}
                   >
                     Aleatório
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={isFeedPreset(models) ? "default" : "outline"}
+                    className="h-7 rounded-full text-[11px]"
+                    title="5 pilares do feed: dor do nicho, software na prática, clean, solução completa e educativo. Artes salvas entram no calendário."
+                    onClick={() => setModels([...FEED_PRESET_MODELS])}
+                  >
+                    ★ Feed principal
                   </Button>
                   {STUDIO_MODELS.map((m) => {
                     const disabled =
