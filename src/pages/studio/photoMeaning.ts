@@ -279,8 +279,61 @@ const wordAffinity = (photo: StudioPhoto, words?: string[]): number => {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
   const hits = words.filter((w) => w.length > 3 && hay.includes(w.toLowerCase())).length;
-  return Math.min(0.3, hits * 0.1);
+  return Math.min(0.5, hits * 0.15);
 };
+
+/**
+ * AUTORIDADE DA LEGENDA: termos diretos da plataforma escritos pelo usuário na
+ * legenda/rótulo do print valem como declaração de assunto (peso 1.0). É o
+ * filtro principal com IA desligada: print legendado "avaliação manual" vence
+ * qualquer foto apenas parecida quando a arte fala de avaliação.
+ */
+const CAPTION_LEXICON: { re: RegExp; topics: TopicId[] }[] = [
+  { re: /avaliacao manual|avaliacao presencial|anamnese/, topics: ["anamnesis", "pain-map", "functional-tests"] },
+  { re: /mapa de dor/, topics: ["pain-map"] },
+  { re: /red ?flags?|triagem|sinais de alerta/, topics: ["red-flags", "safety"] },
+  { re: /teste|cluster/, topics: ["functional-tests"] },
+  { re: /questionario|escore|spadi|odi|koos|psfs/, topics: ["questionnaires"] },
+  { re: /fabq|medo/, topics: ["fabq"] },
+  { re: /hipotese|diagnostico/, topics: ["hypothesis", "final-hypothesis", "differential"] },
+  { re: /prontuario|evolucao/, topics: ["clinical-impression", "shared-record", "report"] },
+  { re: /relatorio|pdf|alta/, topics: ["report", "discharge-report"] },
+  { re: /steps|macrociclo|plano de tratamento|periodizacao|microciclo|carga/, topics: ["treatment-plan", "steps-method"] },
+  { re: /d\.?i\.?f\.?i/, topics: ["difi"] },
+  { re: /hep|exercicio|programa domiciliar/, topics: ["hep"] },
+  { re: /diario de dor/, topics: ["pain-diary"] },
+  { re: /agente|chat clinico/, topics: ["clinical-agent"] },
+  { re: /evidencia|pedro|pubmed/, topics: ["evidence-library"] },
+  { re: /voz|ditado|gravacao|transcri/, topics: ["voice-notes"] },
+  { re: /dinamometr|forca|assimetria/, topics: ["dynamometry"] },
+  { re: /reavaliacao/, topics: ["express-reassessment"] },
+  { re: /link de avaliacao|link/, topics: ["assessment-link"] },
+  { re: /agenda|agendamento/, topics: ["agenda"] },
+  { re: /nps|satisfacao/, topics: ["nps"] },
+  { re: /mensage|aviso|comunicado/, topics: ["messaging"] },
+  { re: /saude geral|comorbidade|hipertens/, topics: ["health-general"] },
+];
+
+const captionText = (photo: StudioPhoto) =>
+  `${photo.label ?? ""} ${photo.description ?? ""}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+/** Tópicos que a legenda do usuário declara explicitamente. */
+export const captionTopics = (photo: StudioPhoto): TopicId[] => {
+  const hay = captionText(photo);
+  if (!hay.trim()) return [];
+  return [...new Set(CAPTION_LEXICON.filter((e) => e.re.test(hay)).flatMap((e) => e.topics))];
+};
+
+const captionAffinity = (photo: StudioPhoto, topics: (TopicId | undefined)[]): number => {
+  const wanted = topics.filter(Boolean) as TopicId[];
+  if (!wanted.length) return 0;
+  const declared = captionTopics(photo);
+  return wanted.some((t) => declared.includes(t)) ? 1 : 0;
+};
+
+/** Acima disso a foto tem nexo declarado: só empatados no topo concorrem. */
+const STRONG_MATCH = 1;
+const STRONG_BAND = 0.85;
 
 export const pickPhotoForTopics = (
   photos: StudioPhoto[] | undefined,
@@ -311,7 +364,7 @@ export const pickPhotoForTopics = (
 
   const scored = photos
     .map((photo) => {
-      const semantic = photoAffinity(photo, topics) + wordAffinity(photo, words);
+      const semantic = photoAffinity(photo, topics) + wordAffinity(photo, words) + captionAffinity(photo, topics);
       return {
         photo,
         semantic,
@@ -336,7 +389,7 @@ export const pickPhotoForTopics = (
    * por arte, filtrada pelo registro de rotatividade do lote.
    */
   const best = scored[0].score;
-  const floor = best * CIRCULATION_BAND;
+  const floor = best * (best >= STRONG_MATCH ? STRONG_BAND : CIRCULATION_BAND);
   const pool = scored
     .filter((s) => s.score >= floor)
     .map((s) => s.photo)
