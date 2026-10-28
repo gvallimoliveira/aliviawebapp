@@ -1,5 +1,8 @@
 # Roadmap
 
+## Erro ao criar HEP na clínica pagante
+- [ ] Reproduzir a recusa de criação, conferir identidade e políticas, corrigir a causa mantendo isolamento e validar criação/leitura do programa.
+
 ## Lista compacta de solicitações na Agenda
 - [x] Painel compartilhado PRO/clínica limitado à altura real dos três primeiros pedidos, com rolagem interna, total e data/hora de criação em ordem de chegada. Ajuda pt/en/es atualizada; sete testes passaram e build OK. Clínica autenticada: seis pedidos simulados apenas nas respostas de leitura, três visíveis, ordem correta, rolagem até o último e aprovação aberta sem gravar. Clínica sem pedidos reais; PRO disponível apenas em demo, portanto não houve aprovação real nem validação visual do PRO real.
 
