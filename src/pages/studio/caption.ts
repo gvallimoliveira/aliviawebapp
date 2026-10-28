@@ -174,6 +174,14 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     const line = t ? `${t.lead} ${t.big} ${t.tail}` : `${rng.pick(c.headlines).strong}`;
     return [line, rng.pick(c.subs)];
   },
+  tutorial: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [`${h.strong} ${h.rest}`, rng.pick(c.subs), rng.pick(c.closings).cta];
+  },
+  hub: (c, rng) => {
+    const k = rng.pick(c.closings);
+    return [k.title, c.features.slice(0, 4).map((f) => f.tag || f.title).join(" • "), k.cta];
+  },
   steps: (c, rng) => [
     "STEPS — os 6 degraus da reabilitação: controle da dor, reparo tecidual, mobilidade, força, controle motor e alta.",
     "Cada fase do plano é mapeada a um degrau: você sabe onde está e para onde precisa ir.",

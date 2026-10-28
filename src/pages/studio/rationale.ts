@@ -410,6 +410,16 @@ const SENSE: Record<BlockKind, Sense> = {
     sees: "uma mensagem pronta, como se já tivesse sido enviada",
     job: "encurtar a distância até o primeiro contato",
   },
+  tutorial: {
+    format: "tutorial com pílula",
+    sees: "uma pergunta com a palavra-chave destacada e a tela do sistema em uso",
+    job: "mostrar que a dor da rotina tem solução prática dentro da ferramenta",
+  },
+  hub: {
+    format: "hub conectado",
+    sees: "o celular no centro com os módulos ligados ao redor",
+    job: "mostrar que tudo fica num só lugar, conectado",
+  },
   steps: {
     format: "método em etapas",
     sees: "as etapas do método autoral, nomeadas e em ordem",

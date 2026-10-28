@@ -52,6 +52,8 @@ export type BlockKind =
   | "focus"
   | "diverge"
   | "outbox"
+  | "tutorial"
+  | "hub"
   | "steps"
   | "difi"
   | "closing";
@@ -83,7 +85,9 @@ export const blockKindSupported = (kind: BlockKind, content?: WorldContent): boo
     case "elegantAsk":
     case "notice": return has(content.features);
     case "promoPhone":
-    case "device": return content.features.length >= 2;
+    case "device":
+    case "tutorial": return content.features.length >= 2 && has(content.headlines) && has(content.closings);
+    case "hub": return content.features.length >= 3 && has(content.closings);
     case "phoneSide": return has(content.features) && has(content.closings);
     case "quote":
     case "pullQuote":
@@ -165,6 +169,8 @@ export const TREATMENT_COUNT: Record<BlockKind, number> = {
   focus: 4,
   diverge: 4,
   outbox: 4,
+  tutorial: 4,
+  hub: 4,
   steps: 4,
   difi: 4,
   closing: 4,
@@ -384,6 +390,8 @@ export const composePage = (
     ["focus", 2],
     ["diverge", 1],
     ["outbox", 1],
+    ["tutorial", 2],
+    ["hub", 1],
     // Artes autorais do método — presentes só na marca dona (Aliv.iA).
     ...(exclusive ? ([["steps", 2], ["difi", 2]] as [BlockKind, number][]) : []),
   ];
