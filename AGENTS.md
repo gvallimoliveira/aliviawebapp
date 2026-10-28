@@ -53,3 +53,4 @@
 
 - AI quotas: server policy, atomic FIFO, service-only fulfillment, distinct quota/provider errors. Protected ai_credit_admin_roles controls rollout; empty tiers block nobody. Checkout/fulfillment verify paid items against the shared catalog.
 - Academic revocation preserves absent CREFITO only on inactive, unapproved updates with access off; inserts/activation remain validated. Toggles keep list membership until explicit removal and reload saved state.
+- Edge functions verify callers via `_shared/caller-auth.ts`: requireUser/requireAdmin for dashboard AI, requireUserOrAssessment (recent anonymous assessment id) for patient links, isInternalCall (x-internal-secret) for cron jobs, safeOrigin for payment return URLs; never trust request-supplied recipients or text for notifications.
