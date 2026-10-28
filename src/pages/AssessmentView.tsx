@@ -331,10 +331,10 @@ const AssessmentView = () => {
 
       let pdfUrl = "";
       if (!uploadError) {
-        const { data: urlData } = supabase.storage
+        const { data: urlData } = await supabase.storage
           .from("assessment-reports")
-          .getPublicUrl(filePath);
-        pdfUrl = urlData.publicUrl;
+          .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+        pdfUrl = urlData?.signedUrl || "";
       } else {
         console.warn("PDF upload failed, falling back to local download:", uploadError);
         const url = URL.createObjectURL(pdfBlob);

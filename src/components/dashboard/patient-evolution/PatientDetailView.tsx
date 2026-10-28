@@ -630,8 +630,8 @@ export default function PatientDetailView(props: any) {
           ? await supabase.storage.from("assessment-reports").upload(fileName, blob, { contentType: "application/pdf", upsert: true })
           : { error: new Error("anonymous_upload_blocked") } as any;
         if (!uploadError) {
-          const { data: publicUrl } = supabase.storage.from("assessment-reports").getPublicUrl(fileName);
-          if (publicUrl?.publicUrl) await shareTextOrOpenWhatsApp(`${t("evolution.title")} - ${patient.name}\n${publicUrl.publicUrl}`, "Aliv.iA");
+          const { data: signed } = await supabase.storage.from("assessment-reports").createSignedUrl(fileName, 60 * 60 * 24 * 7);
+          if (signed?.signedUrl) await shareTextOrOpenWhatsApp(`${t("evolution.title")} - ${patient.name}\n${signed.signedUrl}`, "Aliv.iA");
           else toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });
         } else {
           toast({ title: t("evolution.success"), description: language === "pt" ? "O PDF foi baixado para envio manual, pois o anexo direto não ficou disponível neste dispositivo." : "The PDF was downloaded for manual sharing because direct attachment was not available on this device." });

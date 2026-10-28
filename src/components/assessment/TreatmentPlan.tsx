@@ -202,10 +202,11 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
 
         if (uploadError) throw uploadError;
 
-        const { data: urlData } = supabase.storage
+        const { data: urlData, error: signErr } = await supabase.storage
           .from("assessment-reports")
-          .getPublicUrl(filePath);
-        publicUrl = urlData.publicUrl;
+          .createSignedUrl(filePath, 60 * 60 * 24 * 7);
+        if (signErr || !urlData?.signedUrl) throw signErr || new Error("sign_failed");
+        publicUrl = urlData.signedUrl;
       } catch (uploadErr) {
         console.warn("Upload to storage failed, falling back to local download", uploadErr);
         // Fallback: download PDF locally
