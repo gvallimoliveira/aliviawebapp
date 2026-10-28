@@ -644,7 +644,7 @@ const StudioProCreate = ({
       // Mundo oficial já embute o público; sub-nicho mantém o overlay próprio.
       // Mundo oficial já embute o público matriz; qualquer sub-nicho mantém o
       // overlay próprio (dores/desejos/soluções/CTA) por cima do mundo do pai.
-      segment: aliviaWorld && isWorldId(activeSegment) ? GLOBAL_SEGMENT : activeSegment,
+      segment: activeSegment,
       angle,
       positioning: aliviaWorld ? null : brand.positioning,
       // Variedade linguística: cada lote reescreve a roupagem das frases.

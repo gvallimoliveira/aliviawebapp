@@ -38,6 +38,8 @@ export type FormatInsight = {
   beats: string[];
   /** Fecho declarado (última parte quando há 3+ partes). */
   closing?: string;
+  /** Público declarado pelo cabeçalho `# SEÇÃO` (pro, paciente, clinica…). */
+  section?: string;
 };
 
 const clean = (text: string) => text.replace(/\s+/g, " ").trim();
@@ -51,36 +53,71 @@ const slug = (text: string) =>
     .replace(/^-|-$/g, "")
     .slice(0, 48);
 
+/**
+ * Cabeçalhos `# SEÇÃO` declaram o público dono das linhas seguintes. Só os
+ * públicos-matriz conhecidos viram seção; qualquer outro cabeçalho encerra a
+ * seção (linhas voltam a ser globais, julgadas pelo vocabulário).
+ */
+const SECTION_IDS: Array<[RegExp, string]> = [
+  [/^rec[ée]m[-\s]?formad/i, "recem-formado"],
+  [/^paciente/i, "paciente"],
+  [/^profissional|^fisio/i, "pro"],
+  [/^cl[íi]nica/i, "clinica"],
+  [/^acad[êe]mic|^estudante/i, "academico"],
+];
+
+const sectionIdOf = (header: string): string | undefined => {
+  const name = clean(header.replace(/^#+/, ""));
+  return SECTION_IDS.find(([re]) => re.test(name))?.[1];
+};
+
 /** Lê o campo livre do kit (`studio_brands.format_insights`). */
 export const readFormatInsights = (raw?: string | null): FormatInsight[] => {
   if (!raw || !raw.trim()) return [];
-  return raw
-    .split(/\r?\n/)
-    .map((line) => clean(line))
-    .filter((line) => line.length > 2 && !line.startsWith("#"))
-    .map((line) => {
-      const parts = line.split("|").map(clean);
-      const title = parts[0] ?? "";
-      const rest = parts.slice(1);
-      const closing = rest.length >= 2 ? rest[rest.length - 1] : undefined;
-      const beats = closing ? rest.slice(0, -1) : rest;
-      return { id: `insight-${slug(title) || slug(line)}`, title, beats, closing };
-    })
-    .filter((insight) => insight.title.length > 2);
+  let section: string | undefined;
+  const out: FormatInsight[] = [];
+  raw.split(/\r?\n/).forEach((rawLine) => {
+    const line = clean(rawLine);
+    if (line.startsWith("#")) {
+      section = sectionIdOf(line);
+      return;
+    }
+    if (line.length <= 2) return;
+    const parts = line.split("|").map(clean);
+    const title = parts[0] ?? "";
+    const rest = parts.slice(1);
+    const closing = rest.length >= 2 ? rest[rest.length - 1] : undefined;
+    const beats = closing ? rest.slice(0, -1) : rest;
+    if (title.length <= 2) return;
+    out.push({ id: `insight-${slug(title) || slug(line)}`, title, beats, closing, ...(section ? { section } : {}) });
+  });
+  return out;
 };
 
-/** Mantém o formato legado do banco enquanto a interface edita cada parte separadamente. */
-export const writeFormatInsights = (insights: FormatInsight[]): string =>
-  insights
-    .map((insight) => {
-      const title = clean(insight.title);
-      const beats = insight.beats.map(clean).filter(Boolean);
-      const closing = clean(insight.closing ?? "");
-      if (closing) return [title, ...(beats.length ? beats : [""]), closing].join(" | ");
-      return [title, ...beats].join(" | ");
-    })
-    .filter(Boolean)
-    .join("\n");
+const SECTION_LABELS: Record<string, string> = {
+  pro: "PROFISSIONAL",
+  clinica: "CLÍNICA",
+  academico: "ACADÊMICO",
+  "recem-formado": "RECÉM-FORMADO",
+  paciente: "PACIENTE",
+};
+
+/** Mantém o formato legado do banco (inclusive cabeçalhos de seção). */
+export const writeFormatInsights = (insights: FormatInsight[]): string => {
+  const lines: string[] = [];
+  let current: string | undefined;
+  insights.forEach((insight) => {
+    if (insight.section !== current) {
+      lines.push(insight.section ? `# ${SECTION_LABELS[insight.section] ?? insight.section.toUpperCase()}` : "# GERAL");
+      current = insight.section;
+    }
+    const title = clean(insight.title);
+    const beats = insight.beats.map(clean).filter(Boolean);
+    const closing = clean(insight.closing ?? "");
+    lines.push(closing ? [title, ...(beats.length ? beats : [""]), closing].join(" | ") : [title, ...beats].join(" | "));
+  });
+  return lines.filter(Boolean).join("\n");
+};
 
 /** Palavras dos insights — reforçam a atração do diretor criativo. */
 export const formatInsightWords = (insights: FormatInsight[]): string[] =>
@@ -94,16 +131,36 @@ const meaningfulWords = (text: string): string[] =>
     .split(/[^a-z0-9]+/)
     .filter((word) => word.length >= 5 && !["avaliacao", "fisioterapia", "tratamento", "plano", "criterio", "paciente"].includes(word));
 
+/** Ids do próprio público e de todos os seus ancestrais (raiz por último). */
+export const audienceLineage = (audience: BrandAudience, all: BrandAudience[]): string[] => {
+  const chain = [audience.id];
+  const seen = new Set(chain);
+  let current: BrandAudience | undefined = audience;
+  while (current?.parentId && !seen.has(current.parentId)) {
+    seen.add(current.parentId);
+    chain.push(current.parentId);
+    current = all.find((a) => a.id === current!.parentId);
+  }
+  return chain;
+};
+
+/** Público-matriz (raiz) de um público. */
+export const audienceRootId = (audience: BrandAudience, all: BrandAudience[]): string => {
+  const chain = audienceLineage(audience, all);
+  return chain[chain.length - 1];
+};
+
 /**
- * Insights são roteiros prontos e não podem atravessar públicos. Mantemos só
- * os que compartilham vocabulário específico com o público ativo; linhas
- * genéricas permanecem disponíveis quando não citam nenhum outro público.
+ * Insights são roteiros prontos e não podem atravessar públicos. Linha com
+ * seção declarada (`# PACIENTE…`) só vale para aquele público e seus
+ * sub-nichos; linha sem seção é julgada pelo vocabulário.
  */
 export const insightsForAudience = (
   insights: FormatInsight[],
   audience: BrandAudience,
   allAudiences: BrandAudience[],
 ): FormatInsight[] => {
+  const lineage = audienceLineage(audience, allAudiences);
   const textOf = (item: BrandAudience) => [
     item.label, item.keyword, item.description, item.hook, ...(item.hooks ?? []),
     ...(item.pains ?? []), ...(item.desires ?? []), ...(item.proof ?? []),
@@ -116,11 +173,19 @@ export const insightsForAudience = (
       .flatMap((item) => meaningfulWords(textOf(item)))
       .filter((word) => !own.has(word)),
   );
-  return insights.filter((insight) => {
+  const vocabularyFits = (insight: FormatInsight) => {
     const words = meaningfulWords([insight.title, ...insight.beats, insight.closing ?? ""].join(" "));
     const ownHits = words.filter((word) => own.has(word)).length;
     const foreignHits = words.filter((word) => foreign.has(word)).length;
     return ownHits > 0 && ownHits >= foreignHits;
+  };
+  return insights.filter((insight) => {
+    if (insight.section) {
+      if (!lineage.includes(insight.section)) return false;
+      // Diferencial é tema fechado: além da seção, precisa falar do assunto.
+      return audience.editorialGroup ? vocabularyFits(insight) : true;
+    }
+    return vocabularyFits(insight);
   });
 };
 

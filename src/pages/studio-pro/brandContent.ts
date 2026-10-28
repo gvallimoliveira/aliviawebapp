@@ -26,7 +26,7 @@ import { marketStatsFor } from "@/pages/studio/marketFacts";
 import { condensePhrase } from "./textFit";
 import { editorialAudience, removeLeadingHighlightEcho, sentenceLead, shortKicker } from "@/pages/studio/typographyGuards";
 import { intensityFor, type VariationProfile } from "@/pages/studio/variation";
-import { applyFormatInsights, readFormatInsights, scopedFormatInsights } from "./formatInsights";
+import { applyFormatInsights, audienceRootId, readFormatInsights, scopedFormatInsights } from "./formatInsights";
 import { enforceAudienceScope } from "./audienceScope";
 import { finalizeBrandVoice, isVeterinaryContext } from "./veterinaryVoice";
 import { buildEditorialProgression, frameEditorialLoss } from "./narrativeArc";
@@ -2186,14 +2186,25 @@ export const buildSegmentContent = ({
      * arte dirigida a paciente / sub-nicho clínico diz AUTOavaliação. Em qualquer
      * marca, a copy nunca afirma ter "protocolo".
      */
-    const patientVoice = audience?.editorialGroup
+    /* Voz decidida pela árvore do público (raiz "paciente" ⇒ paciente; raiz
+       pro/clínica/acadêmico ⇒ quem atende). Palavras soltas na descrição
+       ("já passou por vários profissionais") nunca invertem o público. */
+    const voiceAudience = audience ?? relation?.audience;
+    const root = voiceAudience ? audienceRootId(voiceAudience, audiences) : undefined;
+    const patientVoice = !isAliviaCtaBrand(brand ?? "")
       ? false
-      : patientVoiceFor(
-          brand,
-          [relation?.keyword, relation?.who, relation?.audience?.label, relation?.audience?.description, relation?.hook]
-            .filter(Boolean)
-            .join(" · "),
-        );
+      : root === "paciente"
+        ? true
+        : root && ["pro", "clinica", "academico"].includes(root)
+          ? false
+          : audience?.editorialGroup
+            ? false
+            : patientVoiceFor(
+                brand,
+                [relation?.keyword, relation?.who, relation?.audience?.label, relation?.audience?.description, relation?.hook]
+                  .filter(Boolean)
+                  .join(" · "),
+              );
     const angled = audience?.editorialGroup ? content : applyAngle(content, angle, relation, brand);
     const done = applyTerminology(
       sanitizeContent(angled, dna.forbidden),

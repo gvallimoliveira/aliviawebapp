@@ -127,7 +127,7 @@ export const useArtRender = ({ brand, seed, segment, angle, variation }: Args) =
       kit: contentKit,
       base: aliviaWorld ? WORLDS[aliviaWorld] : undefined,
       audiences,
-      segment: aliviaWorld && isWorldId(segment) ? GLOBAL_SEGMENT : segment,
+      segment,
       angle,
       positioning: aliviaWorld ? null : brand.positioning,
       variationSeed: `${brand.id}:${seed}:${segment}:${angle}`,
