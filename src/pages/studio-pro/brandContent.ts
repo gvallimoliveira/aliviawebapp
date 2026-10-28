@@ -1261,7 +1261,7 @@ const applyAudience = (
       headlines: [
         { strong: key, rest: `— ${lower1(whatItIs)}` },
         ...mechanisms.slice(0, 3).map((item) => ({ strong: `${key} na prática`, rest: `— ${lower1(item)}.` })),
-        ...benefits.slice(0, 2).map((item) => ({ strong: `Com ${lower1(key)}`, rest: `, ${lower1(item)}.` })),
+        ...benefits.slice(0, 2).map((item) => ({ strong: key, rest: `— ${lower1(item)}.` })),
         ...losses.slice(0, 2).map((item) => ({ strong: `${key}: o custo na rotina`, rest: `— ${lower1(item)}.` })),
       ],
       subs: [

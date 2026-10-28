@@ -57,7 +57,15 @@ const singularOf = (word: string) => {
  * mas é masculino ("o DNA"). Como o gênero de sigla é imprevisível, o revisor
  * declara desconhecido e não mexe no determinante escrito pela marca.
  */
-const isAcronym = (rawWord: string) => /^[A-ZÀ-Ý][A-ZÀ-Ý0-9.]{1,}$/.test(rawWord.replace(/[^A-Za-zÀ-ÿ0-9.]/g, ""));
+const isAcronym = (rawWord: string) => {
+  const w = rawWord.replace(/[^A-Za-zÀ-ÿ0-9.]/g, "");
+  if (!/^[A-ZÀ-Ý][A-ZÀ-Ý0-9.]{1,}$/.test(w)) return false;
+  // Palavra comum em CAIXA ALTA ("AVALIAÇÃO") não é sigla: só a lista conhecida,
+  // pontos/dígitos ou formas curtas sem acento contam como sigla.
+  if (KNOWN_ACRONYMS.has(w)) return true;
+  if (/[.\d]/.test(w)) return true;
+  return w.length <= 4 && !/[À-Ý]/.test(w);
+};
 
 /** Gênero e número do núcleo nominal; `null` quando não há certeza suficiente. */
 export const agreementOf = (rawWord: string): Agreement => {
@@ -128,7 +136,8 @@ const inflect = (form: string, target: Agreement): string => {
   const idx = (target.plural ? 2 : 0) + (target.gender === "f" ? 1 : 0);
   const next = row[idx];
   if (!next) return form;
-  // Preserva a caixa da palavra original.
+  // Preserva a caixa da palavra original (inclusive CAIXA ALTA inteira).
+  if (form.length > 1 && form === form.toLocaleUpperCase("pt-BR")) return next.toLocaleUpperCase("pt-BR");
   if (form[0] === form[0].toUpperCase()) return next.charAt(0).toUpperCase() + next.slice(1);
   return next;
 };
