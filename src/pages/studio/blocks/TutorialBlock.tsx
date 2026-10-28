@@ -32,37 +32,41 @@ const Sparks = ({ side }: { side: "left" | "right" }) => (
   </span>
 );
 
-const Screen = ({ title, rows }: { title: string; rows: string[] }) => (
-  <div className="flex h-full w-full bg-background text-left">
-    <div className="hidden w-[26%] flex-col gap-1.5 border-r border-border bg-secondary/40 p-2 sm:flex">
-      <div className="mb-1 flex items-center gap-1">
-        <img src={BRAND_LOGO} alt="" className="h-3 w-3 object-contain" />
-        <span className="truncate text-[6px] font-semibold uppercase tracking-[0.18em] text-foreground">{BRAND_NAME}</span>
-      </div>
-      {rows.map((r, i) => (
-        <span
-          key={`${r}-${i}`}
-          className={`truncate rounded px-1 py-0.5 text-[5.5px] ${i === 0 ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-        >
-          {r}
-        </span>
-      ))}
-    </div>
-    <div className="flex-1 p-2.5">
-      <p className="text-[8px] font-bold leading-tight text-foreground">{title}</p>
-      <div className="mt-2 grid grid-cols-2 gap-1.5">
+const Screen = ({ screen, max = 4 }: { screen: MockScreen; max?: number }) => {
+  const rows = screen.rows.slice(0, max);
+  return (
+    <div className="flex h-full w-full bg-background text-left [hyphens:none]" style={{ wordBreak: "normal", overflowWrap: "normal" }}>
+      <div className="hidden w-[26%] flex-col gap-1.5 border-r border-border bg-secondary/40 p-2 sm:flex">
+        <div className="mb-1 flex items-center gap-1">
+          <img src={BRAND_LOGO} alt="" className="h-3 w-3 object-contain" />
+          <span className="truncate text-[6px] font-semibold uppercase tracking-[0.18em] text-foreground">{BRAND_NAME}</span>
+        </div>
         {rows.map((r, i) => (
-          <div key={`c-${r}-${i}`} className="rounded border border-border bg-card px-1.5 py-1">
-            <p className="truncate text-[5.5px] text-muted-foreground">{r}</p>
-            <div className="mt-1 h-[3px] w-full rounded-full bg-muted">
-              <div className="h-full rounded-full bg-primary" style={{ width: `${45 + ((i * 19) % 45)}%` }} />
-            </div>
-          </div>
+          <span
+            key={`${r.label}-${i}`}
+            className={`truncate rounded px-1 py-0.5 text-[5.5px] ${i === 0 ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >
+            {r.label}
+          </span>
         ))}
       </div>
+      <div className="flex-1 p-2.5">
+        <p className="text-[8px] font-bold leading-tight text-foreground [text-wrap:balance]">{screen.title}</p>
+        <div className="mt-2 grid grid-cols-2 gap-1.5">
+          {rows.map((r, i) => (
+            <div key={`c-${r.label}-${i}`} className="rounded border border-border bg-card px-1.5 py-1">
+              <p className="truncate text-[5.5px] text-muted-foreground">{r.label}</p>
+              {r.value && <p className="truncate text-[6.5px] font-bold leading-tight text-foreground">{r.value}</p>}
+              <div className="mt-1 h-[3px] w-full rounded-full bg-muted">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${r.pct}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: BlockProps) => {
   if (!content.headlines?.length || !content.closings?.length) return null;
@@ -74,8 +78,10 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
   const h = rng.pick(content.headlines);
   const kicker = content.kickers?.length ? rng.pick(content.kickers) : "";
   const closing = rng.pick(content.closings);
-  const lead = features[0];
-  const rows = features.map((f) => f.tag || f.title);
+  const screen =
+    themedScreen(`${h.strong} ${h.rest}`, features.map((f) => f.topic)) ??
+    fallbackScreen(features, [kicker, ...(content.kickers ?? [])]);
+  if (screen.rows.length < 2) return null;
 
   const ink = primary ? "text-primary-foreground" : "text-foreground";
 
