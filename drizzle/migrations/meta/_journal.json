@@ -442,6 +442,13 @@
       "when": 1793289333095,
       "tag": "0062_restore_gv_admin_trial_renewal",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1793291027281,
+      "tag": "0063_purge_expired_clinic_trial",
+      "breakpoints": true
     }
   ]
 }

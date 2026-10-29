@@ -6365,6 +6365,10 @@ export type Database = {
           year: number
         }[]
       }
+      purge_expired_clinic_trial: {
+        Args: { _clinic_id: string }
+        Returns: boolean
+      }
       referral_code_exists: { Args: { _code: string }; Returns: boolean }
       renew_clinic_invitation: {
         Args: { _invitation_id: string }
