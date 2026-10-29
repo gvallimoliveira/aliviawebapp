@@ -8,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Pen, Upload, Trash2 } from "lucide-react";
+import SignaturePad from "./SignaturePad";
+import { cleanSignatureBlob } from "@/lib/cleanSignature";
 import { isAutoSignEnabled, setAutoSignEnabled } from "@/lib/getResponsibleProfessional";
 
 /**
@@ -25,6 +27,7 @@ const SignatureManager = () => {
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [hasSignature, setHasSignature] = useState(false);
   const [autoSign, setAutoSign] = useState(isAutoSignEnabled());
+  const [drawMode, setDrawMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const t = isPt
@@ -32,12 +35,13 @@ const SignatureManager = () => {
         title: "Assinatura digital",
         desc: "Sua assinatura aparece no rodapé dos PDFs profissionais quando ativada.",
         none: "Nenhuma assinatura cadastrada.",
-        upload: "Enviar PNG (fundo transparente)",
+        upload: "Enviar imagem (PNG ou JPG)",
+        draw: "Assinar na tela",
         replace: "Substituir",
         remove: "Remover",
         autosign_label: "Aplicar minha assinatura nos próximos relatórios",
         autosign_desc: "Você pode ativar/desativar a qualquer momento. Padrão: desativado.",
-        invalid: "Envie um arquivo PNG (máx. 1MB).",
+        invalid: "Envie um arquivo PNG ou JPG (máx. 5MB).",
         saved: "Assinatura salva!",
         removed: "Assinatura removida.",
         upload_error: "Erro ao enviar assinatura.",
@@ -46,12 +50,13 @@ const SignatureManager = () => {
         title: "Digital signature",
         desc: "Your signature appears in the footer of professional PDFs when enabled.",
         none: "No signature registered.",
-        upload: "Upload PNG (transparent background)",
+        upload: "Upload image (PNG or JPG)",
+        draw: "Sign on screen",
         replace: "Replace",
         remove: "Remove",
         autosign_label: "Apply my signature to upcoming reports",
         autosign_desc: "Toggle anytime. Default: off.",
-        invalid: "Upload a PNG file (max 1MB).",
+        invalid: "Upload a PNG or JPG file (max 5MB).",
         saved: "Signature saved!",
         removed: "Signature removed.",
         upload_error: "Could not upload signature.",
@@ -86,17 +91,19 @@ const SignatureManager = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const handleFile = async (file: File) => {
+  const handleFile = async (file: Blob) => {
     if (!user?.id || !path) return;
-    if (file.type !== "image/png" || file.size > 1024 * 1024) {
+    if (!["image/png", "image/jpeg"].includes(file.type) || file.size > 5 * 1024 * 1024) {
       toast({ title: t.invalid, variant: "destructive" });
       return;
     }
     setUploading(true);
     try {
+      // Remove white/checkerboard backgrounds so only the ink reaches the PDF
+      const cleaned = await cleanSignatureBlob(file);
       const { error: upErr } = await supabase.storage
         .from("signatures")
-        .upload(path, file, { upsert: true, contentType: "image/png" });
+        .upload(path, cleaned, { upsert: true, contentType: "image/png" });
       if (upErr) throw upErr;
 
       // Ensure professional record exists, then save path
@@ -127,6 +134,7 @@ const SignatureManager = () => {
         if (error) throw error;
       }
       toast({ title: t.saved });
+      setDrawMode(false);
       await loadCurrent();
     } catch (e: any) {
       toast({ title: t.upload_error, description: e?.message, variant: "destructive" });
@@ -180,11 +188,18 @@ const SignatureManager = () => {
           )}
         </div>
 
+        {drawMode ? (
+          <SignaturePad isPt={isPt} saving={uploading} onSave={handleFile} onCancel={() => setDrawMode(false)} />
+        ) : (
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => setDrawMode(true)} disabled={uploading} className="gap-2">
+            <Pen className="h-4 w-4" />
+            {t.draw}
+          </Button>
           <input
             ref={inputRef}
             type="file"
-            accept="image/png"
+            accept="image/png,image/jpeg"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -215,6 +230,7 @@ const SignatureManager = () => {
             </Button>
           )}
         </div>
+        )}
 
         <div className="flex items-start justify-between gap-4 pt-2 border-t">
           <div>
