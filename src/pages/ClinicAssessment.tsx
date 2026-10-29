@@ -1,3 +1,4 @@
+import { normalizeLinkId } from "@/lib/normalizeLinkId";
 import ClinicBrandHeader from "@/components/ClinicBrandHeader";
 import { normalizeAssessmentPurpose, isPreventiveAssessment, shouldCollectPainQuestionnaires, shouldCollectFunctionalQuestionnaires, shouldCollectPainSelfTests } from "@/lib/assessmentPurpose";
 import { useState, useEffect, useMemo, useRef } from "react";

@@ -1,3 +1,4 @@
+import { normalizeLinkId } from "@/lib/normalizeLinkId";
 import { normalizeAssessmentPurpose, isPreventiveAssessment, shouldCollectPainQuestionnaires, shouldCollectFunctionalQuestionnaires, shouldCollectPainSelfTests } from "@/lib/assessmentPurpose";
 import { useState, useEffect, useMemo, useRef } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
