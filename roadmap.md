@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Assinatura dentro do aviso de trial encerrado
-- [ ] Mostrar planos mensal/anual e checkout direto no aviso, preservando a clínica e a autorização.
-- [ ] Revisar preços, retorno do pagamento, erros e bloqueio; validar o fluxo sem cobrança e atualizar ajuda.
+- [x] Planos mensal/anual no aviso e por botão durante trial; proprietário/admin segue direto ao Stripe. Clínica validada no servidor e transmitida ao provisionamento, retorno/cancelamento no painel e recarga do contexto após pagamento.
+- [x] Doze testes passaram; aviso expirado conferido na conta real com expiração simulada só na leitura, três planos e checkout real aberto sem pagar. Preços Essencial mensal R$197/anual R$1.344 confirmados no Stripe; IDs dos seis preços conferidos por teste. Ajuda pt/en/es atualizada, funções implantadas e build OK. O Stripe abriu mas o valor não apareceu no navegador automatizado; cobrança final/reativação após pagamento não executadas, pois exigem compra autorizada.
 
 ## Trial pessoal do administrador e acesso aos planos
 - [x] Trial da GV Fisio renovado até 13/11/2026; renovação de 15 dias ao acessar/após expirar com a tela aberta, exclusiva do proprietário Guilherme com autoridade admin no servidor; criação preservada.
