@@ -17,6 +17,7 @@ import ConcentrationCard from "./ConcentrationCard";
 import { LtvCard, EmptyChairCard, RevenuePerHourCard, DischargeVsDropoutCard, RecordComplianceCard, useSummaryTiles } from "./ManagementCards";
 import { FrequencyGapCard, ReferralRateCard, LeakageCard, LateCancellationCard, OwnerDependenceCard, BottleneckCard } from "./OpsGrowthCards";
 import ClinicServicesCard from "@/components/dashboard/ClinicServicesCard";
+import PayoutsCard from "./PayoutsCard";
 import { useManagementData, type ManagementData } from "./useManagementData";
 import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
 import ClinicOverviewMetrics from "./ClinicOverviewMetrics";
@@ -51,6 +52,7 @@ const REGISTRY: Entry[] = [
   { id: "steps", cat: "routine", when: ENABLE_PERIODIZATION, render: (c) => <StepsPhaseCard clinicId={c.clinicId} professionalId={c.professionalId} dismissForTeam={c.teamDismiss} /> },
   { id: "discharge-pred", cat: "routine", wide: true, render: (c) => <DischargePredictionCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
   { id: "revenue-goal", cat: "finance", manager: true, wide: true, render: (c) => <RevenueGoalCard clinicId={c.clinicId} professionalId={c.professionalId} /> },
+  { id: "payouts", cat: "finance", manager: true, clinicOnly: true, wide: true, render: (c) => <PayoutsCard key={c.clinicId} d={c.d} clinicId={c.clinicId!} /> },
   { id: "ltv", cat: "finance", manager: true, render: (c) => <LtvCard d={c.d} /> },
   { id: "empty-chair", cat: "finance", manager: true, render: (c) => <EmptyChairCard d={c.d} /> },
   { id: "rev-hour", cat: "finance", manager: true, render: (c) => <RevenuePerHourCard d={c.d} showTeam={c.isClinic} /> },
