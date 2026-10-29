@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Users, UserPlus, Mail, Trash2, Crown, Shield, Stethoscope as StethIcon, ClipboardList, GraduationCap } from "lucide-react";
+import { Users, UserPlus, Mail, Trash2, Crown, Shield, Stethoscope as StethIcon, ClipboardList, GraduationCap, Copy, MessageCircle } from "lucide-react";
 import ClinicSettingsCard from "./ClinicSettingsCard";
+import { buildInviteLink, inviteMessage } from "@/lib/clinicInvite";
 import type { Database } from "@/integrations/supabase/types";
 
 type ClinicRole = Database["public"]["Enums"]["clinic_role"];
@@ -131,6 +132,26 @@ const ClinicTeamManagement = () => {
     fetchTeam();
   };
 
+  // Renova o prazo (7 dias) e entrega o link direto de cadastro do integrante.
+  const shareInvite = async (inv: Invitation, via: "copy" | "whatsapp") => {
+    const { data: token, error } = await (supabase.rpc as any)("renew_clinic_invitation", { _invitation_id: inv.id });
+    if (error || !token) {
+      toast({ title: lang === "pt" ? "Não foi possível gerar o link" : "Could not create link", variant: "destructive" });
+      return;
+    }
+    const link = buildInviteLink(String(token));
+    const clinicName = activeClinic?.clinic_name || "";
+    const msg = inviteMessage(lang, clinicName, roleLabels[inv.role][lang], link);
+    if (via === "whatsapp") {
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
+    } else {
+      try { await navigator.clipboard.writeText(link); } catch { /* ignore */ }
+      toast({ title: lang === "pt" ? "Link copiado" : lang === "es" ? "Enlace copiado" : "Link copied",
+        description: lang === "pt" ? "Válido por 7 dias. Envie ao integrante." : lang === "es" ? "Válido por 7 días." : "Valid for 7 days." });
+    }
+    fetchTeam();
+  };
+
   const handleRoleChange = async (memberId: string, newRole: ClinicRole) => {
     await supabase.from("clinic_members").update({ role: newRole }).eq("id", memberId);
     fetchTeam();
@@ -230,15 +251,25 @@ const ClinicTeamManagement = () => {
           </CardHeader>
           <CardContent className="space-y-2">
             {invitations.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50">
-                <div>
-                  <p className="text-sm font-medium">{inv.email}</p>
+              <div key={inv.id} className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border border-border/50">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{inv.email}</p>
                   <p className="text-xs text-muted-foreground">{roleLabels[inv.role][lang]}</p>
                 </div>
                 {canManage && (
-                  <Button variant="ghost" size="sm" className="text-destructive text-xs" onClick={() => handleCancelInvite(inv.id)}>
-                    {lang === "pt" ? "Cancelar" : "Cancel"}
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <Button type="button" variant="outline" size="sm" className="text-xs h-8" onClick={() => shareInvite(inv, "copy")}>
+                      <Copy className="h-3.5 w-3.5 mr-1" />
+                      {lang === "pt" ? "Copiar link" : lang === "es" ? "Copiar enlace" : "Copy link"}
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" className="text-xs h-8" onClick={() => shareInvite(inv, "whatsapp")}>
+                      <MessageCircle className="h-3.5 w-3.5 mr-1" />
+                      WhatsApp
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" className="text-destructive text-xs h-8" onClick={() => handleCancelInvite(inv.id)}>
+                      {lang === "pt" ? "Cancelar" : lang === "es" ? "Cancelar" : "Cancel"}
+                    </Button>
+                  </div>
                 )}
               </div>
             ))}
