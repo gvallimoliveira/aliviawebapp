@@ -44,17 +44,32 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action: Action = body?.action ?? "inspect";
     const professionalId: string | undefined = body?.professional_id;
+    const clinicId: string | undefined = body?.clinic_id;
     const reason: string | undefined = body?.reason;
     const subscriptionId: string | undefined = body?.subscription_id;
-    if (!professionalId) throw new Error("professional_id é obrigatório");
+    if (!professionalId && !clinicId) throw new Error("professional_id ou clinic_id é obrigatório");
+    const isClinic = !professionalId && !!clinicId;
+    if (isClinic && action !== "guided_diagnose" && action !== "guided_execute") throw new Error("Para clínicas, use o fluxo guiado.");
 
-    const { data: pro, error: proErr } = await admin
-      .from("professionals")
-      .select("id, user_id, email, full_name, subscription_status, subscription_stripe_id, pro_access_expires_at, subscription_grace_until, is_partner, is_partner_account, premium_granted")
-      .eq("id", professionalId)
-      .maybeSingle();
-    if (proErr) throw new Error(proErr.message);
-    if (!pro) throw new Error("Profissional não encontrado");
+    let pro: any;
+    if (isClinic) {
+      const { data: c, error: cErr } = await admin.from("clinics")
+        .select("id, name, owner_user_id, subscription_status, subscription_stripe_id").eq("id", clinicId).maybeSingle();
+      if (cErr) throw new Error(cErr.message);
+      if (!c) throw new Error("Clínica não encontrada");
+      const { data: owner } = await admin.auth.admin.getUserById(c.owner_user_id);
+      pro = { id: c.id, user_id: c.owner_user_id, email: owner?.user?.email ?? null, full_name: c.name, subscription_status: c.subscription_status, subscription_stripe_id: c.subscription_stripe_id };
+      if (!pro.subscription_stripe_id) throw new Error("Esta clínica não tem assinatura no Stripe.");
+    } else {
+      const { data, error: proErr } = await admin
+        .from("professionals")
+        .select("id, user_id, email, full_name, subscription_status, subscription_stripe_id, pro_access_expires_at, subscription_grace_until, is_partner, is_partner_account, premium_granted")
+        .eq("id", professionalId)
+        .maybeSingle();
+      if (proErr) throw new Error(proErr.message);
+      if (!data) throw new Error("Profissional não encontrado");
+      pro = data;
+    }
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not set");
