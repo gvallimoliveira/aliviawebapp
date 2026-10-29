@@ -220,7 +220,6 @@ const ClinicLandingCinematic = () => {
       icon: MessageCircle,
       items: [
         { icon: MessageCircle, title: "Chat integrado", desc: "Conversas dentro da plataforma, organizadas" },
-        { icon: Video, title: "Videochamada P2P", desc: "Teleconsulta com 1 clique, sem instalar nada" },
         { icon: Bell, title: "Notificações push", desc: "Lembretes, alertas clínicos e adesão" },
         { icon: Smile, title: "NPS via link", desc: "Pesquisa de satisfação com dashboard e comentários" },
       ],
@@ -251,7 +250,6 @@ const ClinicLandingCinematic = () => {
   const included = [
     { icon: InfinityIcon, label: "Tratamentos ilimitados" },
     { icon: Sparkles, label: "IA ilimitada" },
-    { icon: Video, label: "Videochamadas" },
     { icon: ImageIcon, label: "Storage de fotos e laudos" },
     { icon: Bell, label: "Push notifications" },
     { icon: Palette, label: "White-label" },
@@ -544,7 +542,7 @@ const ClinicLandingCinematic = () => {
                     ["Avaliações — editar", true, true, false],
                     ["Upload de laudos/fotos", true, true, true],
                     ["Emitir relatórios PDF", true, true, true],
-                    ["Chat e videochamada", true, true, true],
+                    ["Chat com pacientes", true, true, true],
                     ["Importar agenda por foto", true, false, true],
                     ["Pesquisa NPS", true, true, true],
                     ["Gerenciar equipe", true, false, true],
@@ -636,7 +634,7 @@ const ClinicLandingCinematic = () => {
                             "Tudo incluso (sem extras)",
                             "Pré-avaliações por link ilimitadas",
                             "Importação de agenda por foto",
-                            "Chat + videochamada",
+                            "Chat com pacientes",
                             "Relatórios com IA",
                             "NPS e analytics",
                             "White-label completo",
