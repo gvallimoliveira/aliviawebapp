@@ -667,6 +667,7 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
       if (userId) {
         const r = await provisionClinic(supabase, {
           userId,
+          clinicId: session.metadata?.clinic_id || null,
           clinicName: session.metadata?.clinic_name,
           maxMembers: resolveMaxMembers(session.metadata?.max_members),
           subscriptionId: (session.subscription as string) || null,

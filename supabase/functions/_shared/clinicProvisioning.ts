@@ -4,6 +4,7 @@
 // Idempotent: an existing owned clinic is updated, never duplicated.
 
 export interface ProvisionInput {
+  clinicId?: string | null;
   userId: string;
   clinicName?: string | null;
   maxMembers?: number | null;
@@ -28,19 +29,23 @@ export function resolveMaxMembers(v?: number | string | null): number {
 // deno-lint-ignore no-explicit-any
 export async function provisionClinic(admin: any, input: ProvisionInput): Promise<ProvisionResult> {
   const maxMembers = resolveMaxMembers(input.maxMembers);
-  const { data: existing } = await admin
+  let lookup = admin
     .from("clinics")
     .select("id")
-    .eq("owner_user_id", input.userId)
+    .eq("owner_user_id", input.userId);
+  if (input.clinicId) lookup = lookup.eq("id", input.clinicId);
+  const { data: existing, error: lookupError } = await lookup
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
+  if (lookupError) throw new Error(`clinic lookup failed: ${lookupError.message}`);
+  if (input.clinicId && !existing) throw new Error("Checkout clinic does not belong to its owner");
 
   let clinicId: string | null = existing?.id ?? null;
   let created = false;
 
   if (clinicId) {
-    await admin
+    const { error } = await admin
       .from("clinics")
       .update({
         subscription_status: "active",
@@ -48,6 +53,7 @@ export async function provisionClinic(admin: any, input: ProvisionInput): Promis
         max_members: maxMembers,
       })
       .eq("id", clinicId);
+    if (error) throw new Error(`clinic activation failed: ${error.message}`);
   } else {
     const { data: newClinic, error } = await admin
       .from("clinics")

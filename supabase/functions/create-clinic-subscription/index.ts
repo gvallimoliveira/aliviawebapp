@@ -57,7 +57,31 @@ serve(async (req) => {
     logStep("User authenticated", { email: user.email });
 
     const body = await req.json();
-    const { tier, plan, clinic_name } = body;
+    const { tier, plan, clinic_name, clinic_id, source } = body;
+    let targetClinicId: string | null = null;
+    let ownerUserId = user.id;
+    let clinicName = clinic_name;
+    if (clinic_id) {
+      const { data: clinic } = await supabaseAdmin.from("clinics").select("id,name,owner_user_id,subscription_status,subscription_stripe_id").eq("id", clinic_id).maybeSingle();
+      const { data: member } = await supabaseAdmin.from("clinic_members").select("role").eq("clinic_id", clinic_id).eq("user_id", user.id).eq("status", "active").maybeSingle();
+      if (!clinic || (clinic.owner_user_id !== user.id && !["owner", "admin"].includes(member?.role))) {
+        return new Response(JSON.stringify({ error: "Seu perfil não tem autorização para assinar por esta clínica." }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 });
+      }
+      targetClinicId = clinic.id;
+      ownerUserId = clinic.owner_user_id;
+      clinicName = clinic.name;
+      if (clinic.subscription_stripe_id) {
+        const key = Deno.env.get("STRIPE_SECRET_KEY");
+        if (!key) throw new Error("STRIPE_SECRET_KEY not set");
+        const existing = await new Stripe(key, { apiVersion: "2025-08-27.basil" }).subscriptions.retrieve(clinic.subscription_stripe_id);
+        if (["active", "trialing"].includes(existing.status)) {
+          const { error: syncError } = await supabaseAdmin.from("clinics").update({ subscription_status: "active" }).eq("id", targetClinicId);
+          if (syncError) throw syncError;
+          return new Response(JSON.stringify({ already_active: true, clinic_id: targetClinicId }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
+        }
+        if (["past_due", "unpaid", "incomplete", "paused"].includes(existing.status)) throw new Error("Esta clínica já possui uma assinatura pendente. Regularize em Minha Conta → Assinatura e cobrança.");
+      }
+    }
     
     if (!tier || !["small", "medium", "large"].includes(tier)) {
       throw new Error("Invalid tier. Must be small, medium, or large");
@@ -65,7 +89,7 @@ serve(async (req) => {
     if (!plan || !["monthly", "annual"].includes(plan)) {
       throw new Error("Invalid plan. Must be monthly or annual");
     }
-    if (!clinic_name || typeof clinic_name !== "string" || clinic_name.trim().length === 0) {
+    if (!clinicName || typeof clinicName !== "string" || clinicName.trim().length === 0) {
       throw new Error("clinic_name is required");
     }
 
@@ -91,19 +115,23 @@ serve(async (req) => {
     if (customerId) {
       const activeSubs = await stripe.subscriptions.list({
         customer: customerId,
-        status: "active",
+        status: "all",
         limit: 10,
       });
       const activeClinicSub = activeSubs.data.find((s: any) =>
+        ["active", "trialing"].includes(s.status) &&
+        (!targetClinicId || s.metadata?.clinic_id === targetClinicId || (!s.metadata?.clinic_id && s.metadata?.user_id === ownerUserId)) &&
         s.items.data.some((i: any) => Object.values(PRICE_MAP).includes(i.price?.id))
       );
       if (activeClinicSub) {
         logStep("Already has active clinic subscription — refusing to create duplicate", { subId: activeClinicSub.id });
         try {
-          await supabaseAdmin
+          let update = supabaseAdmin
             .from("clinics")
             .update({ subscription_status: "active", subscription_stripe_id: activeClinicSub.id })
-            .eq("owner_user_id", user.id);
+            .eq("owner_user_id", ownerUserId);
+          if (targetClinicId) update = update.eq("id", targetClinicId);
+          await update;
         } catch (e) {
           logStep("DB sync during clinic idempotency failed (non-blocking)", { error: String(e) });
         }
@@ -126,7 +154,9 @@ serve(async (req) => {
             s.status === "open" &&
             s.mode === "subscription" &&
             s.created >= fifteenMinAgo &&
-            s.metadata?.user_id === user.id &&
+            s.metadata?.user_id === ownerUserId &&
+            (s.metadata?.clinic_id || null) === targetClinicId &&
+            s.metadata?.checkout_source === (source === "dashboard" ? "dashboard" : "landing") &&
             s.metadata?.tier === tier &&
             s.metadata?.plan === plan &&
             s.url
@@ -145,7 +175,7 @@ serve(async (req) => {
 
     const origin = safeOrigin(req.headers.get("origin"));
 
-    const idempotencyKey = `create-clinic-${user.id}-${tier}-${plan}-${Math.floor(Date.now() / 60000)}`;
+    const idempotencyKey = `create-clinic-${user.id}-${targetClinicId || "new"}-${source === "dashboard" ? "dashboard" : "landing"}-${tier}-${plan}-${Math.floor(Date.now() / 60000)}`;
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -154,18 +184,23 @@ serve(async (req) => {
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${origin}/dashboard?clinic=success`,
-      cancel_url: `${origin}/clinica?subscription=cancelled`,
+      cancel_url: source === "dashboard" ? `${origin}/dashboard?clinic=cancelled` : `${origin}/clinica?subscription=cancelled#planos`,
       metadata: {
-        user_id: user.id,
+        user_id: ownerUserId,
+        payer_user_id: user.id,
+        clinic_id: targetClinicId || "",
+        checkout_source: source === "dashboard" ? "dashboard" : "landing",
         type: "clinic_subscription",
         tier,
         plan,
-        clinic_name: clinic_name.trim(),
+        clinic_name: clinicName.trim(),
         max_members: String(MAX_MEMBERS[tier]),
       },
       subscription_data: {
         metadata: {
-          user_id: user.id,
+          user_id: ownerUserId,
+          payer_user_id: user.id,
+          clinic_id: targetClinicId || "",
           type: "clinic_subscription",
           tier,
           plan,
