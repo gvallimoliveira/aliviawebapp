@@ -414,6 +414,13 @@
       "when": 1793214917630,
       "tag": "0058_clinic_referrals_parity",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1793235199012,
+      "tag": "0059_clinic_compensation",
+      "breakpoints": true
     }
   ]
 }

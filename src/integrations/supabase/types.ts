@@ -1402,8 +1402,11 @@ export type Database = {
           billing_type: string
           clinic_id: string | null
           created_at: string
+          deduction_pct: number
           id: string
           name: string
+          payout_mode: string | null
+          payout_value: number | null
           price: number
           professional_id: string | null
           service_type: string | null
@@ -1413,8 +1416,11 @@ export type Database = {
           billing_type?: string
           clinic_id?: string | null
           created_at?: string
+          deduction_pct?: number
           id?: string
           name: string
+          payout_mode?: string | null
+          payout_value?: number | null
           price?: number
           professional_id?: string | null
           service_type?: string | null
@@ -1424,8 +1430,11 @@ export type Database = {
           billing_type?: string
           clinic_id?: string | null
           created_at?: string
+          deduction_pct?: number
           id?: string
           name?: string
+          payout_mode?: string | null
+          payout_value?: number | null
           price?: number
           professional_id?: string | null
           service_type?: string | null
@@ -1599,6 +1608,44 @@ export type Database = {
           },
         ]
       }
+      clinic_compensation: {
+        Row: {
+          clinic_id: string
+          id: string
+          monthly_fixed: number
+          professional_id: string
+          session_mode: string
+          session_value: number
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          id?: string
+          monthly_fixed?: number
+          professional_id: string
+          session_mode?: string
+          session_value?: number
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          id?: string
+          monthly_fixed?: number
+          professional_id?: string
+          session_mode?: string
+          session_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_compensation_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_feedback_surveys: {
         Row: {
           clinic_answers: Json
@@ -1765,6 +1812,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "clinic_members_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clinic_payout_adjustments: {
+        Row: {
+          amount: number
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          month: string
+          professional_id: string
+        }
+        Insert: {
+          amount: number
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          month: string
+          professional_id: string
+        }
+        Update: {
+          amount?: number
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          month?: string
+          professional_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_payout_adjustments_clinic_id_fkey"
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
@@ -6237,6 +6325,10 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_any_clinic_clinician: { Args: { _user_id: string }; Returns: boolean }
       is_clinic_clinician: {
+        Args: { _clinic_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_clinic_finance_manager: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: boolean
       }

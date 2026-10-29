@@ -43,6 +43,10 @@ const categories: ToolCategory[] = [
     title: "Totais e relatório em Insights → Resumo",
     desc: "A aba Pacientes fica focada na lista e nos prontuários. Os totais de profissionais, avaliações e pacientes e o Relatório do Período (30, 60 ou 90 dias) estão em Insights → Resumo. A distribuição por status permanece nos gráficos dos Insights, sem repetição na lista de pacientes.",
   }] },
+  { title: "Repasses da equipe", icon: TrendingUp, items: [{ key: "team_payouts", icon: ClipboardList,
+    title: "Faturamento e repasses em Insights → Financeiro",
+    desc: "Dono e administrador definem, para cada profissional, repasse por atendimento (% ou valor fixo) e/ou valor fixo mensal (salário, bolsa de estágio). Em cada serviço é possível descontar impostos/taxas da base e definir uma regra própria. No mês, lance descontos ou adicionais (vale, bônus). O card mostra bruto, descontos, repasse de cada um e o líquido da clínica, e gera o PDF do demonstrativo com cada atendimento realizado.",
+  }] },
   {
     title: "Serviços e solicitações de horário",
     icon: Calendar,
