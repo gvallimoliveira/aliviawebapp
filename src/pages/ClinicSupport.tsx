@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Building2, HelpCircle, Camera, Link2, Smile, Palette, Users, Calendar,
   ClipboardList, AlertTriangle, FileText, Image as ImageIcon, Brain,
-  MessageCircle, Video, Bell, BookOpen, TrendingUp, Shield, CreditCard,
+  MessageCircle, Bell, BookOpen, TrendingUp, Shield, CreditCard,
   UserCog, Stethoscope, FileCheck, Sparkles, Heart, Layers, Mic, Archive,
   Lightbulb, GraduationCap, Activity, Filter, PieChart,
 } from "lucide-react";

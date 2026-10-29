@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SupportContactForm from "@/components/support/SupportContactForm";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, NotebookPen, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, Video, FileEdit, Stamp, Lock, Mic, Archive, Activity, Gauge, FileText, Lightbulb, GraduationCap, Bell, Layers } from "lucide-react";
+import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, NotebookPen, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, FileEdit, Stamp, Lock, Mic, Archive, Activity, Gauge, FileText, Lightbulb, GraduationCap, Bell, Layers } from "lucide-react";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
