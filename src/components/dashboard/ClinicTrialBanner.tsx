@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertTriangle, Clock, Crown, Lock, Sparkles } from "lucide-react";
 import { CLINIC_TRIAL_DAYS, clinicTrialTiming } from "@/lib/clinicTrial";
+
+const purgeDateOf = (startedAt?: string | null) =>
+  startedAt ? new Date(new Date(startedAt).getTime() + (CLINIC_TRIAL_DAYS + 7) * 86400000).toLocaleDateString("pt-BR") : null;
 import ClinicSubscriptionPlans from "./ClinicSubscriptionPlans";
 
 const TRIAL_DAYS = CLINIC_TRIAL_DAYS;
@@ -89,6 +92,9 @@ const ClinicTrialBanner = () => {
               <p className="text-sm text-muted-foreground">
                 Seu trial de {TRIAL_DAYS} dias do Aliv.iA Clinic terminou. Assine agora para continuar usando todas as funcionalidades da clínica.
               </p>
+              <p className="text-xs font-medium text-destructive">
+                Sem assinatura, os dados da clínica serão excluídos definitivamente{purgeDateOf(activeClinic.trial_started_at || activeClinic.created_at) ? ` em ${purgeDateOf(activeClinic.trial_started_at || activeClinic.created_at)}` : " 7 dias após o fim do teste"}.
+              </p>
             </div>
           </div>
         </CardContent>
@@ -128,6 +134,10 @@ const ClinicTrialBanner = () => {
           </div>
           <Progress value={progressPercent} className="h-2" />
         </div>
+
+        <p className={daysLeft <= 1 ? "text-xs font-medium text-destructive" : "text-[11px] text-muted-foreground"}>
+          Regra do teste: sem assinatura, os dados da clínica são excluídos 7 dias após o fim do teste{purgeDateOf(activeClinic.trial_started_at || activeClinic.created_at) ? ` (${purgeDateOf(activeClinic.trial_started_at || activeClinic.created_at)})` : ""}.
+        </p>
 
         {daysLeft <= 5 && (
           <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-200/50">
