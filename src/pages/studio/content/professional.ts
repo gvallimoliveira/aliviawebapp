@@ -628,7 +628,7 @@ const professional: WorldContent = {
       "Não precisa mudar sua forma de atender — só o tempo que você gasta digitando.",
       "Sem instalar nada: funciona no celular, no navegador, no meio da sessão.",
       "Se você já usa planilha e caderno, a migração leva um atendimento.",
-      "Dados do paciente com consentimento registrado e exclusão garantida por LGPD.",
+      "Dados do paciente com consentimento registrado e exclusão a pedido dele.",
     ],
     offers: [
       "Plano Profissional a partir de R$ 67/mês no anual (R$ 97 no mensal).",

@@ -2,6 +2,7 @@ import type { Rng } from "./rng";
 import type { WorldContent } from "./content";
 import type { BlockKind } from "./composePage";
 import { BRAND_SLOGAN } from "./brand";
+import { rankProofsByAxis, stripColdSpecs } from "./captionCoherence";
 
 /**
  * Gera a legenda de venda pronta para o Instagram a partir do conteúdo já
@@ -234,7 +235,9 @@ export const buildCaption = (content: WorldContent, kind: BlockKind, rng: Rng) =
   const [hook, context] = ANGLES[kind](content, rng);
   const { sales } = content;
 
-  const proofs = rng.pickMany(sales.proofs, 3);
+  // Eixo temático: as provas seguem o assunto do gancho (top 5 afins, sorteia 3).
+  const ranked = rankProofsByAxis(`${hook} ${context}`, sales.proofs);
+  const proofs = rng.pickMany(ranked.slice(0, Math.max(3, Math.min(5, ranked.length))), 3);
   const objection = rng.pick(sales.objections);
   const offer = rng.pick(sales.offers);
   const cta = rng.pick(sales.ctas);
@@ -254,5 +257,5 @@ export const buildCaption = (content: WorldContent, kind: BlockKind, rng: Rng) =
     `👉 ${cta}`,
     "",
     tags.map((t) => `#${t}`).join(" "),
-  ].join("\n");
+  ].map(stripColdSpecs).join("\n");
 };
