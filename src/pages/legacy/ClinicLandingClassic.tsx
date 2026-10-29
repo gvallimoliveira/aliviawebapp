@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Building2, ArrowRight, Check, Globe, LogOut, LayoutDashboard,
-  ClipboardList, Video, Calendar, FileText, Users, MessageCircle,
+  ClipboardList, Calendar, FileText, Users, MessageCircle,
   Shield, BarChart3, Activity, Star, HelpCircle, Menu,
   Zap, Clock, Gift, Mail, Phone, CreditCard, Sparkles, Camera,
   Link2, Image as ImageIcon, AlertTriangle, Palette, Heart,
