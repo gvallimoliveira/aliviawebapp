@@ -246,7 +246,7 @@ const faqKeys = [
 
 const AcademicSupport = () => {
   const { user, loading } = useAuth();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const lang = (language as Lang) ?? "pt";
 
@@ -367,6 +367,10 @@ const AcademicSupport = () => {
               {lang === "pt" ? "Perguntas frequentes" : lang === "es" ? "Preguntas frecuentes" : "Frequently asked questions"}
             </h3>
             <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="annual-refund">
+                <AccordionTrigger className="text-left text-base font-medium text-foreground">{t("billing.annual_refund.question")}</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">{t("billing.annual_refund.answer")}</AccordionContent>
+              </AccordionItem>
               {faqKeys.map(({ key, icon: Icon, q, a }) => (
                 <AccordionItem key={key} value={key}>
                   <AccordionTrigger className="text-left text-base font-medium text-foreground gap-3">

@@ -85,7 +85,7 @@ const COPY = {
     perMonth: "mês",
     billedAnnually: "cobrado anualmente",
     cancelAnytime: "Cancele quando quiser.",
-    annualNoRefund: "Pagamento único anual, sem reembolso parcial.",
+    annualRefund: "No anual, em caso de cancelamento, os meses utilizados são descontados pelo valor mensal do plano; o saldo positivo do total anual pago é reembolsado.",
     includes: [
       "Acesso completo ao Agente Clínico com IA e Modo Mentor",
       "Quizzes adaptativos e trilhas de conhecimento por nicho",
@@ -104,7 +104,7 @@ const COPY = {
       { q: "Posso atender paciente real com o Aliv.iA Acadêmico?", a: "Pode treinar avaliação, mas toda conduta clínica em paciente real exige supervisão de um fisioterapeuta com CREFITO ativo. Os PDFs e links públicos saem identificados como acadêmicos justamente para proteger isso." },
       { q: "O modo mentor é só texto ou guia o caso de verdade?", a: "Ele guia. O Mentor te interrompe no momento certo, sugere o próximo teste, pergunta por que você descartou uma hipótese e mostra o porquê. É como ter um professor de raciocínio clínico ao seu lado em cada caso." },
       { q: "As trilhas de conhecimento são quais?", a: "Hoje são 8 trilhas: 3 de base (Anatomia, Biomecânica e Cinesiologia) cobrindo as principais regiões corporais, e 5 clínicas por nicho (ombro, coluna lombar, cervical, quadril e joelho) — todas filtradas por PEDro ≥ 7. Novas trilhas entram conforme o agente é treinado." },
-      { q: "E se eu não conseguir manter o estudo? Posso cancelar?", a: "No plano mensal, você cancela quando quiser, sem multa. No anual o pagamento é único e não tem reembolso parcial — então só assine anual quando souber que vai usar de verdade." },
+      { q: "E se eu não conseguir manter o estudo? Posso cancelar?", a: "Ao cancelar uma assinatura anual, os meses utilizados são recalculados pelo preço mensal do mesmo plano, e o saldo positivo do total anual efetivamente pago é reembolsado. Exemplo: contratou 12 meses e usou 3 → reembolso = total anual pago menos 3 mensalidades, e não 9/12 do total. Se não houver saldo positivo, não há valor a devolver. Solicite o reembolso pelo suporte; cancelar a renovação não gera reembolso automático. Direitos legais aplicáveis são preservados." },
       { q: "Como o Aliv.iA é diferente de um curso ou de só estudar Kapandji?", a: "Curso te dá teoria. O Aliv.iA te força a aplicar essa teoria em um fluxo real de avaliação, com decisões clínicas em sequência, feedback do mentor e correção. É a parte que falta entre saber e fazer." },
     ],
   },
@@ -155,7 +155,7 @@ const COPY = {
     perMonth: "mo",
     billedAnnually: "billed annually",
     cancelAnytime: "Cancel anytime.",
-    annualNoRefund: "Single annual payment, no partial refund.",
+    annualRefund: "For annual plans, on cancellation, used months are deducted at the plan’s monthly rate; the positive balance of the annual amount paid is refunded.",
     includes: [
       "Full access to Clinical AI Agent and Mentor Mode",
       "Adaptive quizzes and knowledge tracks by niche",
@@ -174,7 +174,7 @@ const COPY = {
       { q: "Can I treat real patients with Alivia Academic?", a: "You can practice assessment, but any clinical conduct on real patients requires supervision by a licensed physiotherapist." },
       { q: "Is Mentor mode just text or does it actually guide the case?", a: "It guides. Mentor interrupts you at the right moment, suggests next tests, asks why you ruled out a hypothesis and explains why." },
       { q: "Which knowledge tracks exist?", a: "Today 8 tracks: 3 foundation (Anatomy, Biomechanics, Kinesiology) covering the main body regions, and 5 clinical niches (shoulder, low back, cervical, hip, knee) — all filtered by PEDro ≥ 7." },
-      { q: "What if I can't keep studying? Can I cancel?", a: "On the monthly plan you can cancel anytime, no fee. The annual plan is a single payment with no partial refund." },
+      { q: "What if I can't keep studying? Can I cancel?", a: "When cancelling an annual subscription, used months are recalculated at the same plan’s monthly rate, and the positive balance of the annual amount actually paid is refunded. Example: subscribed for 12 months and used 3 → refund = annual amount paid minus 3 monthly payments, not 9/12 of the total. If no positive balance remains, no refund is due under this calculation. Request a refund through support; cancelling renewal does not automatically issue a refund. Applicable statutory rights are preserved." },
       { q: "How is Alivia different from a course or just studying textbooks?", a: "Courses give you theory. Alivia forces you to apply it in a real assessment flow with sequential clinical decisions, mentor feedback and correction." },
     ],
   },
@@ -225,7 +225,7 @@ const COPY = {
     perMonth: "mes",
     billedAnnually: "facturado anualmente",
     cancelAnytime: "Cancela cuando quieras.",
-    annualNoRefund: "Pago único anual, sin reembolso parcial.",
+    annualRefund: "En el anual, al cancelar, los meses utilizados se descuentan al precio mensual del plan; se reembolsa el saldo positivo del total anual pagado.",
     includes: [
       "Acceso completo al Agente Clínico con IA y Modo Mentor",
       "Quizzes adaptativos y rutas de conocimiento por nicho",
@@ -244,7 +244,7 @@ const COPY = {
       { q: "¿Puedo atender pacientes reales con Alivia Académico?", a: "Puedes practicar evaluación, pero toda conducta clínica en paciente real requiere supervisión de un fisioterapeuta colegiado." },
       { q: "¿El modo mentor es solo texto o guía el caso?", a: "Guía. Te interrumpe en el momento adecuado, sugiere el próximo test y explica el porqué." },
       { q: "¿Cuáles son las rutas de conocimiento?", a: "Hoy 8 rutas: 3 de base (Anatomía, Biomecánica, Kinesiología) y 5 clínicas (hombro, lumbar, cervical, cadera, rodilla), todas filtradas por PEDro ≥ 7." },
-      { q: "¿Y si no logro mantener el estudio? ¿Puedo cancelar?", a: "En el plan mensual cancelas cuando quieras. El anual es pago único sin reembolso parcial." },
+      { q: "¿Y si no logro mantener el estudio? ¿Puedo cancelar?", a: "Al cancelar una suscripción anual, los meses utilizados se recalculan al precio mensual del mismo plan y se reembolsa el saldo positivo del total anual efectivamente pagado. Ejemplo: contrató 12 meses y utilizó 3 → reembolso = total anual pagado menos 3 mensualidades, no 9/12 del total. Si no queda saldo positivo, no hay importe a devolver según este cálculo. Solicite el reembolso al soporte; cancelar la renovación no genera un reembolso automático. Se preservan los derechos legales aplicables." },
       { q: "¿En qué se diferencia Alivia de un curso?", a: "Los cursos dan teoría. Alivia te obliga a aplicarla en un flujo real de evaluación." },
     ],
   },
@@ -647,7 +647,7 @@ const AcademicLandingCinematic = () => {
                   <p className="text-xs text-muted-foreground mb-1">{c.billedAnnually}</p>
                 )}
                 <p className="text-xs text-muted-foreground mb-6">
-                  {billing === "monthly" ? c.cancelAnytime : c.annualNoRefund}
+                  {billing === "monthly" ? c.cancelAnytime : c.annualRefund}
                 </p>
 
                 <ul className="text-left space-y-3 mb-8">
