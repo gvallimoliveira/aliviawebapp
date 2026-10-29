@@ -28,6 +28,7 @@ interface Member {
   is_student?: boolean | null;
   student_institution?: string | null;
   student_period?: string | null;
+  has_signature?: boolean | null;
 }
 
 interface Invitation {
@@ -198,6 +199,13 @@ const ClinicTeamManagement = () => {
                   )}
                   <div className="flex flex-wrap items-center gap-1 mt-1">
                     <Badge variant="outline" className="text-[10px]">{roleLabels[m.role][lang]}</Badge>
+                    {m.role !== "secretary" && (
+                      <Badge variant="outline" className={m.has_signature ? "text-[10px] border-primary/40 text-primary" : "text-[10px] text-muted-foreground"}>
+                        {m.has_signature
+                          ? (lang === "pt" ? "Assinatura cadastrada" : lang === "es" ? "Firma registrada" : "Signature on file")
+                          : (lang === "pt" ? "Assinatura pendente" : lang === "es" ? "Firma pendiente" : "Signature pending")}
+                      </Badge>
+                    )}
                     {(m.is_student && m.role !== "intern") && (
                       <Badge className="text-[10px] bg-primary/10 text-primary border-primary/30 hover:bg-primary/15">
                         {lang === "pt" ? "Acadêmico" : lang === "es" ? "Académico" : "Academic"}
