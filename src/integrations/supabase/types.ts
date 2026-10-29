@@ -5944,6 +5944,7 @@ export type Database = {
           active_profile_mode: string
           email: string
           full_name: string
+          has_signature: boolean
           id: string
           is_student: boolean
           role: Database["public"]["Enums"]["clinic_role"]
