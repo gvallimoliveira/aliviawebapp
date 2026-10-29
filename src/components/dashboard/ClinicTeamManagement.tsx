@@ -109,7 +109,7 @@ const ClinicTeamManagement = () => {
           : (lang === "pt" ? "Convite criado!" : lang === "es" ? "Invitación creada!" : "Invite created!"),
         description: wasAdded
           ? (lang === "pt" ? "O usuário já tinha cadastro e foi adicionado diretamente." : "User already had an account and was added directly.")
-          : (lang === "pt" ? "Quando este e-mail criar cadastro no Aliv.iA, será associado automaticamente à clínica." : "When this email signs up, they will be automatically associated with the clinic."),
+          : (lang === "pt" ? "Envie o link pelo botão WhatsApp ou Copiar link em Convites pendentes: o integrante cria o acesso direto na clínica." : lang === "es" ? "Envía el enlace por WhatsApp o Copiar enlace en Invitaciones pendientes." : "Send the link via WhatsApp or Copy link under Pending invites."),
       });
       setInviteEmail("");
       fetchTeam();
