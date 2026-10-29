@@ -1643,5 +1643,7 @@
   "credits.statusActive": "Bloqueo activo",
   "credits.statusShadow": "Modo observación — nadie es bloqueado",
   "credits.rolloutDesc": "Activa el interruptor general y marca las categorías que exigirán saldo tras cuota + margen (PRO 10%, clínica 20%). Admin y VIP siguen ilimitados.",
-  "credits.rolloutDenied": "Tu cuenta no puede cambiar los límites de IA."
+  "credits.rolloutDenied": "Tu cuenta no puede cambiar los límites de IA.",
+  "support.pro.tool.free_report.title": "Informe fisioterapéutico libre",
+  "support.pro.tool.free_report.desc": "En la ficha del paciente, toca 'Más' (3 puntos) → 'Informe fisioterapéutico'. Elige un modelo (en blanco, derivación, aseguradora o resumen), edita el texto libremente y genera el PDF con tu marca y, si está activada, tu firma digital de Mi cuenta. Ideal para aseguradoras, médicos y derivaciones."
 }

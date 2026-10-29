@@ -1643,5 +1643,7 @@
   "credits.statusActive": "Blocking active",
   "credits.statusShadow": "Observation mode — nobody is blocked",
   "credits.rolloutDesc": "Turn on the master switch and select the categories that require balance after quota + grace (PRO 10%, clinic 20%). Admin and VIP stay unlimited.",
-  "credits.rolloutDenied": "Your account cannot change AI limits."
+  "credits.rolloutDenied": "Your account cannot change AI limits.",
+  "support.pro.tool.free_report.title": "Free-text physiotherapy report",
+  "support.pro.tool.free_report.desc": "In the patient record, tap 'More' (3 dots) → 'Physiotherapy report'. Pick a template (blank, referral, insurance or summary), edit the text freely and generate the PDF with your branding and, if enabled, your digital signature from My account. Ideal for insurers, physicians and referrals."
 }

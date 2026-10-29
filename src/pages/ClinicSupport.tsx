@@ -483,6 +483,10 @@ const faqKeys = [
     a: "Não. Ao se cadastrar, você entra direto no painel — sem esperar email de confirmação. Isso evita atrasos em provedores que costumam filtrar nossos emails. Você ainda pode usar normalmente recuperação de senha e receber notificações no email cadastrado.",
   },
   {
+    q: "Como emito um relatório fisioterapêutico livre (convênio, médico, encaminhamento)?",
+    a: "No prontuário do paciente, toque em 'Mais' (3 pontinhos) → 'Relatório fisioterapêutico'. Escolha um modelo (em branco, encaminhamento, convênio ou resumo do tratamento), edite o texto livremente e gere o PDF com logo e cores da clínica. O relatório sai com o nome, CREFITO e assinatura digital de quem o emite — cada colaborador cadastra a própria assinatura em Minha conta → Assinatura digital, e a aba Equipe mostra quem já cadastrou.",
+  },
+  {
     q: "Como cancelo, retomo ou mudo minha assinatura da clínica para anual?",
     a: "Direto no app: Minha Conta → seção 'Assinatura e cobrança' → card 'Minha assinatura'. Ali aparecem plano, valor, status e data da próxima cobrança, e você pode cancelar (o acesso continua até o fim do período já pago), desfazer um cancelamento agendado, mudar de mensal para anual (com crédito proporcional) ou abrir o portal do Stripe para trocar cartão e baixar recibos. Não precisa acionar o suporte — toda alteração é registrada e a equipe Aliv.iA é avisada na hora.",
   },
