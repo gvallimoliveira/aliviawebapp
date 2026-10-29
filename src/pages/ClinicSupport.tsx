@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Building2, HelpCircle, Camera, Link2, Smile, Palette, Users, Calendar,
   ClipboardList, AlertTriangle, FileText, Image as ImageIcon, Brain,
-  MessageCircle, Video, Bell, BookOpen, TrendingUp, Shield, CreditCard,
+  MessageCircle, Bell, BookOpen, TrendingUp, Shield, CreditCard,
   UserCog, Stethoscope, FileCheck, Sparkles, Heart, Layers, Mic, Archive,
   Lightbulb, GraduationCap, Activity, Filter, PieChart,
 } from "lucide-react";
@@ -276,12 +276,6 @@ const categories: ToolCategory[] = [
         desc: "Mensagens diretas dentro do app, sem expor seu WhatsApp pessoal. Histórico fica vinculado ao prontuário.",
       },
       {
-        key: "video_call",
-        icon: Video,
-        title: "Vídeochamada P2P (telefisioterapia)",
-        desc: "Inicie uma chamada de vídeo direto do chat, sem instalar nada. Ideal para orientação de exercícios à distância e acompanhamento.",
-      },
-      {
         key: "nps_survey",
         icon: Smile,
         title: "Pesquisa de satisfação (NPS) por link",
@@ -495,7 +489,7 @@ const faqKeys = [
 
   {
     q: "Como funciona o trial de 15 dias?",
-    a: "Você ativa o trial sem precisar de cartão de crédito. Tem acesso completo por 15 dias. Ao terminar, o aviso no painel apresenta os planos mensal e anual; dono/admin escolhe o plano e segue diretamente ao pagamento seguro do Stripe, sem passar pela página de apresentação. A clínica, a equipe e os prontuários são preservados. Durante o teste, o botão de assinatura também permite consultar os planos no painel. Na página da clínica, 'Ver planos' leva aos valores.",
+    a: "Você ativa o trial sem precisar de cartão de crédito. Tem acesso completo por 15 dias. Ao terminar, o aviso no painel apresenta os planos mensal e anual; dono/admin escolhe o plano e segue diretamente ao pagamento seguro do Stripe, sem passar pela página de apresentação. A clínica, a equipe e os prontuários ficam guardados por mais 7 dias após o fim do teste; sem assinatura nesse prazo, os dados da clínica são excluídos definitivamente. O lembrete aparece ao ativar o teste, no 14º dia e ao encerrar. Durante o teste, o botão de assinatura também permite consultar os planos no painel. Na página da clínica, 'Ver planos' leva aos valores.",
   },
   {
     q: "Como faço para migrar minha agenda atual para o Aliv.iA Clinic?",
@@ -523,7 +517,7 @@ const faqKeys = [
   },
   {
     q: "O paciente precisa instalar algum app?",
-    a: "Não. O paciente acessa tudo pelo navegador (link de avaliação, programa de exercícios, pesquisa de satisfação, vídeochamada). O Aliv.iA também pode ser instalado como PWA, sem passar por loja de app.",
+    a: "Não. O paciente acessa tudo pelo navegador (link de avaliação, programa de exercícios, pesquisa de satisfação). O Aliv.iA também pode ser instalado como PWA, sem passar por loja de app.",
   },
   {
     q: "Como funciona a pesquisa de satisfação (NPS)?",
@@ -699,7 +693,7 @@ const ClinicSupport = () => {
             <CreditCard className="h-8 w-8 text-primary mx-auto mb-3" />
             <h3 className="text-xl font-bold text-foreground mb-2">Tudo incluso. Sem custo por atendimento.</h3>
             <p className="text-muted-foreground mb-4">
-              IA, tratamentos, armazenamento, vídeochamada, pesquisa de satisfação e white-label estão inclusos no plano da clínica.
+              IA, tratamentos, armazenamento, pesquisa de satisfação e white-label estão inclusos no plano da clínica.
             </p>
             <Button onClick={() => navigate("/clinica#pricing")} className="gap-2 rounded-xl">
               Ver planos e preços

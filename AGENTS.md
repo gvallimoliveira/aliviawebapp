@@ -40,7 +40,7 @@
 - Spine logic stays in `spineBiomechanics.ts`; `spinePresentation.ts` shares screen/PDF geometry and dated exams to preserve history.
 - Imports use service-only write/undo journals to restore merges and reject later edits atomically. ZIP omits source IDs/privileges; local XML parsing rejects DTD/entities and bounds complexity, preserving fields for review.
 
-- Combined imports use the isolated deterministic planner, explicit per-column disposition and server revalidation; bounded idempotent chunks are correlated by actor-scoped operation UUIDs for recovery and whole-set undo. Source codes are metadata, never authority; email-only evolution readers require genuine emails until an additive linkage migration is implemented.
+- Combined imports: deterministic planner, per-column disposition, server revalidation, idempotent chunks keyed by actor-scoped operation UUIDs for recovery/undo; source codes are metadata, never authority.
 - Agenda appointments repeat by inserting real rows sharing series_id (rule in recurrence_rule) via pure appointmentRecurrence.ts; reports/occupancy need no changes and completed sessions are never bulk-deleted.
 - Insights tab renders only through the category registry in `InsightsTab.tsx` (one category + role visibility per entry); financial/quality metrics are pure functions in `managementMetrics.ts` over scoped rows, so new insights stay organized and testable without AI.
 - Read `src/components/dashboard/insights/AGENTS.md` for RPC rules.
@@ -49,7 +49,7 @@
 - Clinic management insights (revenue goal, team stats, concentration, benchmark, conversion funnel) render only for clinic owner/admin (`canManage` on InsightsTab); secretaries keep clinical cards plus occupancy and reactivation, and the PRO solo sees his own management cards.
 - Financial insights resolve prices via `care_services` (clinic/solo catalog, per-session or monthly); monthly fees dilute across that patient's realized sessions of the service in the month (`buildPriceResolver`), default session price is the fallback, and booking picks the service (`professional_appointments.service_id`). `recordCompliance` treats past unclassified slots without a note as pendencies (never 'on time') and returns a null rate when nothing was evaluated.
 
-- Adherence links readiness by scoped patient ID (email-less identities use patient:<id>), normalizes only available channels, retains 60-day check-in participants and measures a 14-day window; all ranked patients remain searchable. Frequency uses elapsed month-to-date days from the later of registration/first session; financial drilldowns reuse the same scoped appointments and price resolver as totals.
+- Adherence links readiness by scoped patient ID (patient:<id> without email) over a 14-day window; frequency uses elapsed month-to-date days; financial drilldowns reuse the totals' scoped appointments and price resolver.
 - Appointment requests use scoped RPCs/push; approval creates the slot only in Agenda (solo PRO, clinic owner/admin/secretary). Resolve service names from the same scoped catalog, including inactive entries; show the requested service in the card/dialog and preselect its saved ID.
 - AppointmentRequestsPanel shares the arrival-ordered queue across clinic and solo Agenda; measure the first visible rows for its internal scroll viewport so variable content does not expand the page or hide controls.
 - Announcements use scoped server lists, can_handle_appointment_request and server-resolved push recipients.
@@ -62,3 +62,5 @@
 - Studio feed calendar: arts saved with the "Feed principal" preset are linked in `studio_feed_calendar`; dates/order come only from pure `placeFeed` in `feedPlan.ts` (pillar rotation, Mon/Wed/Fri, videos as extras), so the HD PNG stays the gallery original.
 - Permission-denied feedback is global via `permissionErrors.ts` (fetch watcher on data/storage/functions, never auth): 403/42501 shows an explicit "profile lacks authority" toast so call sites need no per-screen handling.
 - Clinic agenda: only owner/admin/secretary create, move or delete clinic slots (RLS + guard trigger); clinicians update only status/notes of their own slots, so the front desk keeps control of the grid.
+- Never-paid clinic trials: daily job calls re-validating `purge_expired_clinic_trial` (stages in `_shared/clinicTrialRetention.ts`); delete SET NULL dependents explicitly to avoid solo-scope leaks.
+- Guided cancellation serves PRO and clinics with one `_shared/cancellationPolicy.ts`.

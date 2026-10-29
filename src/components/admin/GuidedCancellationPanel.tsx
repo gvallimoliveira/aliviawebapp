@@ -9,7 +9,7 @@ import {
 import { Loader2, Scale } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-interface Props { professionalId: string; subscriptionId: string | null; reason: string; onDone: (updates: Record<string, any>) => void }
+interface Props { professionalId?: string; clinicId?: string; subscriptionId: string | null; reason: string; onDone: (updates: Record<string, any>) => void }
 
 const brl = (c: number, cur = "brl") => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: cur.toUpperCase() });
 const date = (iso?: string | null) => iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
@@ -20,7 +20,7 @@ const META = {
   monthly_period_end: { label: "Plano mensal — cancelar ao fim do período", action: "Cancelar renovação (acesso até o fim do período)", variant: "secondary" as const },
 };
 
-const GuidedCancellationPanel = ({ professionalId, subscriptionId, reason, onDone }: Props) => {
+const GuidedCancellationPanel = ({ professionalId, clinicId, subscriptionId, reason, onDone }: Props) => {
   const [d, setD] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [acting, setActing] = useState(false);
@@ -28,7 +28,7 @@ const GuidedCancellationPanel = ({ professionalId, subscriptionId, reason, onDon
 
   const call = async (action: string, extra: Record<string, any> = {}) => {
     const { data, error } = await supabase.functions.invoke("admin-manage-subscription", {
-      body: { action, professional_id: professionalId, subscription_id: subscriptionId || undefined, reason: reason || undefined, ...extra },
+      body: { action, ...(professionalId ? { professional_id: professionalId } : { clinic_id: clinicId }), subscription_id: subscriptionId || undefined, reason: reason || undefined, ...extra },
     });
     if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
     if (error) throw new Error(error.message);

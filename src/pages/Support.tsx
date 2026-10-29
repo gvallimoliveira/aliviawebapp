@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SupportContactForm from "@/components/support/SupportContactForm";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, NotebookPen, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, Video, FileEdit, Stamp, Lock, Mic, Archive, Activity, Gauge, FileText, Lightbulb, GraduationCap, Bell, Layers } from "lucide-react";
+import { Heart, Stethoscope, HelpCircle, ClipboardList, Crown, BookOpen, BarChart3, Search, Gift, User, Link2, PieChart, Users, LineChart, FileDown, StickyNote, NotebookPen, CreditCard, UserCog, Infinity, MessageCircle, RefreshCw, Brain, Dumbbell, Palette, TrendingUp, MonitorPlay, Building2, FileEdit, Stamp, Lock, Mic, Archive, Activity, Gauge, FileText, Lightbulb, GraduationCap, Bell, Layers } from "lucide-react";
 import ValidatedQuestionnairesTable from "@/components/ValidatedQuestionnairesTable";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,7 +35,6 @@ const patientTools = [
   { key: "history", icon: ClipboardList },
   { key: "find_professional", icon: Search },
   { key: "messages", icon: MessageCircle },
-  { key: "video_call", icon: Video },
   { key: "referral_code", icon: Gift },
   { key: "notifications", icon: Bell },
   { key: "profile_language", icon: User },
@@ -61,7 +60,6 @@ const proTools = [
   { key: "lifetime_treatment", icon: Infinity },
   { key: "acquire_treatment_badge", icon: Lock },
   { key: "messages", icon: MessageCircle },
-  { key: "video_call", icon: Video },
   { key: "clinical_impression", icon: Brain }, // Help includes reuse of the saved manual impression without AI calls.
   { key: "differential_diagnosis", icon: Brain },
   // Localized FAQ rf22 also explains birthdate-independent dated health reminders and preserved clinician ceilings.
@@ -100,7 +98,7 @@ const proTools = [
 ];
 
 const patientFaqKeys = ["daily_care", "missing_care", "pf_signup", "pf1", "pf2", "pf3", "pf4", "pf5", "annual_refund", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11", "pf12", "pf13"];
-const proFaqKeys = ["profile_isolation", "rf_signup", "rf_student", "rf1", "rf2", "annual_refund", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9", "rf10", "rf11", "rf12", "rf13", "rf14", "rf15", "rf16", "rf17", "rf18", "rf19", "rf20", "rf21", "rf22", "rf23", "rf24", "daily_readiness", "planned_dose_edit", "recurring_appointments", "rf25", "rf26", "rf27", "rf28", "rf29", "rf30"];
+const proFaqKeys = ["profile_isolation", "rf_signup", "rf_student", "rf1", "rf2", "annual_refund", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9", "rf10", "rf11", "rf13", "rf14", "rf15", "rf16", "rf17", "rf18", "rf19", "rf20", "rf21", "rf22", "rf23", "rf24", "daily_readiness", "planned_dose_edit", "recurring_appointments", "rf25", "rf26", "rf27", "rf28", "rf29", "rf30"];
 
 const Support = () => {
   const { t, language } = useLanguage();
