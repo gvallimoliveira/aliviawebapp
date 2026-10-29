@@ -1,5 +1,9 @@
 # Roadmap
 
+## Trial restaurado e aviso de reembolso anual
+- [ ] Restaurar renovação automática exclusiva da GV Fisio e renovar período vencido.
+- [ ] Aviso de saldo reembolsável após descontar meses usados pelo preço mensal nos suportes e seleção anual de paciente/PRO/Acadêmico/clínica; conferir telas e traduções.
+
 ## Assinatura dentro do aviso de trial encerrado
 - [x] Planos mensal/anual no aviso e por botão durante trial; proprietário/admin segue direto ao Stripe. Clínica validada no servidor e transmitida ao provisionamento, retorno/cancelamento no painel e recarga do contexto após pagamento.
 - [x] Doze testes passaram; aviso expirado conferido na conta real com expiração simulada só na leitura, três planos e checkout real aberto sem pagar. Preços Essencial mensal R$197/anual R$1.344 confirmados no Stripe; IDs dos seis preços conferidos por teste. Ajuda pt/en/es atualizada, funções implantadas e build OK. O Stripe abriu mas o valor não apareceu no navegador automatizado; cobrança final/reativação após pagamento não executadas, pois exigem compra autorizada.
