@@ -127,10 +127,10 @@ serve(async (req) => {
 
     // ---- Guided cancellation: diagnose (read-only) or execute the rule-matched path
     if (action === "guided_diagnose" || action === "guided_execute") {
-      const subId = subscriptionId || pro.subscription_stripe_id || activeSubs[0]?.id;
+      const subId = isClinic ? pro.subscription_stripe_id : (subscriptionId || pro.subscription_stripe_id || activeSubs[0]?.id);
       if (!subId) throw new Error("Nenhuma assinatura ativa para diagnosticar.");
       const sub: any = await stripe.subscriptions.retrieve(subId);
-      if (sub.customer !== customerId && customerId) throw new Error("Assinatura não pertence a este profissional.");
+      if (!isClinic && sub.customer !== customerId && customerId) throw new Error("Assinatura não pertence a este profissional.");
       const price = sub.items?.data?.[0]?.price;
       const interval = price?.recurring?.interval === "year" ? "year" : "month";
       // Latest paid invoice of this subscription
@@ -176,7 +176,7 @@ serve(async (req) => {
         refund = await stripe.refunds.create({
           ...(pi ? { payment_intent: pi } : { charge: charge! }),
           amount: plan.refundCents, reason: "requested_by_customer",
-          metadata: { kind: plan.kind, used_months: String(plan.usedMonths), professional_id: pro.id },
+          metadata: { kind: plan.kind, used_months: String(plan.usedMonths), [isClinic ? "clinic_id" : "professional_id"]: pro.id },
         }, { idempotencyKey: `guided-${subId}-${inv.id}-${plan.kind}` });
       }
       let stripeSub: any;
@@ -185,16 +185,22 @@ serve(async (req) => {
         stripeSub = await stripe.subscriptions.update(subId, { cancel_at_period_end: true });
       } else {
         stripeSub = await stripe.subscriptions.cancel(subId);
+        if (isClinic) {
+          Object.assign(upd, { subscription_status: "inactive", subscription_stripe_id: null });
+          const { error: ce } = await admin.from("clinics").update(upd).eq("id", pro.id);
+          if (ce) throw new Error(ce.message);
+        } else {
         const remaining = activeSubs.filter((s) => s.id !== subId);
         if (remaining.length === 0) Object.assign(upd, { subscription_status: "inactive", subscription_stripe_id: null, subscription_grace_until: null, pro_access_expires_at: null });
         else upd.subscription_stripe_id = remaining[0].id;
         const { error: e } = await admin.from("professionals").update(upd).eq("id", pro.id);
         if (e) throw new Error(e.message);
+        }
       }
       await admin.from("subscription_admin_actions").insert({
-        professional_id: pro.id, target_user_id: pro.user_id, target_email: pro.email,
+        professional_id: isClinic ? null : pro.id, target_user_id: pro.user_id, target_email: pro.email,
         action: `guided_${plan.kind}`, reason, stripe_subscription_id: subId,
-        stripe_result: { subscription_status: stripeSub.status, cancel_at_period_end: stripeSub.cancel_at_period_end, refund_id: refund?.id ?? null, refund_cents: plan.refundCents, used_months: plan.usedMonths, deduction_cents: plan.deductionCents, paid_cents: paidCents, period_end: periodEnd },
+        stripe_result: { subscription_status: stripeSub.status, cancel_at_period_end: stripeSub.cancel_at_period_end, refund_id: refund?.id ?? null, refund_cents: plan.refundCents, used_months: plan.usedMonths, deduction_cents: plan.deductionCents, paid_cents: paidCents, period_end: periodEnd, clinic_id: isClinic ? pro.id : null },
         previous_status: pro.subscription_status, new_status: upd.subscription_status ?? pro.subscription_status,
         performed_by: caller.id, performed_by_email: caller.email,
       });
