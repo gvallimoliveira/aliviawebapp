@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Database } from "@/integrations/supabase/types";
+import { clinicTrialTiming } from "@/lib/clinicTrial";
 
 type ClinicRole = Database["public"]["Enums"]["clinic_role"];
 
@@ -14,6 +15,7 @@ interface ClinicMembership {
   subscription_status: string;
   max_members: number;
   created_at: string;
+  trial_started_at: string | null;
   logo_url: string | null;
   phone: string | null;
   address: string | null;
@@ -96,9 +98,12 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch { /* noop */ }
 
     try {
+      // Server validates the exclusive owner + clinic; ordinary accounts are a no-op.
+      const { error: renewalError } = await supabase.rpc("renew_my_admin_clinic_trial");
+      if (renewalError) console.error("Clinic trial renewal failed", renewalError.code);
       const { data: members } = await supabase
         .from("clinic_members")
-        .select("clinic_id, role, clinics(name, subscription_status, max_members, created_at, logo_url, phone, address, operating_hours_start, operating_hours_end, saturday_hours_start, saturday_hours_end, working_days, rooms_count, brand_color)")
+        .select("clinic_id, role, clinics(name, subscription_status, max_members, created_at, trial_started_at, logo_url, phone, address, operating_hours_start, operating_hours_end, saturday_hours_start, saturday_hours_end, working_days, rooms_count, brand_color)")
         .eq("user_id", user.id)
         .eq("status", "active");
 
@@ -109,6 +114,7 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         subscription_status: m.clinics?.subscription_status || "inactive",
         max_members: m.clinics?.max_members || 3,
         created_at: m.clinics?.created_at || new Date().toISOString(),
+        trial_started_at: m.clinics?.trial_started_at || null,
         logo_url: m.clinics?.logo_url || null,
         phone: m.clinics?.phone || null,
         address: m.clinics?.address || null,
@@ -168,6 +174,21 @@ export const ClinicProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => { fetchMemberships(); }, [fetchMemberships]);
 
   const activeClinic = memberships.find((m) => m.clinic_id === activeClinicId) || null;
+
+  useEffect(() => {
+    if (activeClinic?.subscription_status !== "trialing") return;
+    const { expiresAt } = clinicTrialTiming(activeClinic.trial_started_at || activeClinic.created_at);
+    if (expiresAt <= Date.now()) return;
+    const timer = window.setTimeout(() => { void fetchMemberships(); }, expiresAt - Date.now() + 100);
+    const refreshOnReturn = () => {
+      if (document.visibilityState === "visible" && Date.now() >= expiresAt) void fetchMemberships();
+    };
+    document.addEventListener("visibilitychange", refreshOnReturn);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", refreshOnReturn);
+    };
+  }, [activeClinic, fetchMemberships]);
 
   // A clinic therapist (member of at least one clinic) WITHOUT their own
   // PRO profile can preview the autonomous-professional dashboard in demo
