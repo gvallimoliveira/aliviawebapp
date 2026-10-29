@@ -60,7 +60,8 @@ import {
 type ClinicStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "psychosocial" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
 const ClinicAssessment = () => {
-  const { clinicId } = useParams<{ clinicId: string }>();
+  const { clinicId: rawClinicId } = useParams<{ clinicId: string }>();
+  const clinicId = normalizeLinkId(rawClinicId);
   const { t, language, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
