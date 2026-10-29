@@ -1536,7 +1536,7 @@
   "exercise_checklist.prescribed_by": "Prescrito por {name}",
   "exercise_checklist.for_patient": "Para: {name}",
   "support.patient.tool.notifications.title": "Notificações do meu tratamento",
-  "support.patient.tool.notifications.desc": "Em Minha conta → Notificações você ativa os avisos no celular e escolhe o que receber: Meu tratamento e exercícios (lembrete do HEP, diário de dor e marcos de sequência), Minha avaliação (avaliação para retomar, resultado pronto e sugestão de reavaliação), Mensagens do seu fisioterapeuta (chat e videochamada) e Pagamentos (boleto a vencer, pagamento confirmado, premium disponível). Cada opção é independente e vale para todos os seus dispositivos.",
+  "support.patient.tool.notifications.desc": "Em Minha conta → Notificações você ativa os avisos no celular e escolhe o que receber: Meu tratamento e exercícios (lembrete do HEP, diário de dor e marcos de sequência), Minha avaliação (avaliação para retomar, resultado pronto e sugestão de reavaliação), Mensagens do seu fisioterapeuta (chat) e Pagamentos (boleto a vencer, pagamento confirmado, premium disponível). Cada opção é independente e vale para todos os seus dispositivos.",
   "support.pro.tool.notifications.title": "Notificações do profissional",
   "support.pro.tool.notifications.desc": "Em Minha conta → Notificações você controla os avisos clínicos: novas avaliações e reavaliações recebidas pelo seu link, mensagens e ligações, red flags, questionários e exercícios concluídos, além de assinatura e cobrança. Se você também usa o Aliv.iA como paciente, aparece um bloco separado de 'Uso pessoal' com os lembretes do seu próprio tratamento — assim um não desliga o outro.",
   "cine.statement.kicker": "Sem achismos",
