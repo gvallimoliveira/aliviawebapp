@@ -44,7 +44,7 @@ async function selfHealClinic(admin: any, userId: string, email: string): Promis
         maxMembers = md?.max_members ? resolveMaxMembers(md.max_members) : null;
       } catch { /* ignore */ }
       if (!maxMembers && sub.metadata?.tier) maxMembers = TIER_MEMBERS[sub.metadata.tier] ?? null;
-      const r = await provisionClinic(admin, { userId, clinicName, maxMembers, subscriptionId: sub.id });
+      const r = await provisionClinic(admin, { userId, clinicId: sub.metadata?.clinic_id || null, clinicName, maxMembers, subscriptionId: sub.id });
       return r.clinicId;
     }
   }
@@ -153,10 +153,13 @@ serve(async (req) => {
 
           // Update clinic subscription status
           for (const clinic of clinics) {
-            if (clinic.subscription_status !== "active") {
+            if (sub.metadata?.clinic_id && clinic.id !== sub.metadata.clinic_id) continue;
+            if (clinic.subscription_status !== "active" || clinic.subscription_stripe_id !== sub.id) {
+              const sessions = await stripe.checkout.sessions.list({ subscription: sub.id, limit: 1 });
+              const maxMembers = resolveMaxMembers(sessions.data[0]?.metadata?.max_members || TIER_MEMBERS[sub.metadata?.tier]);
               await supabaseAdmin
                 .from("clinics")
-                .update({ subscription_status: "active", subscription_stripe_id: sub.id })
+                .update({ subscription_status: "active", subscription_stripe_id: sub.id, max_members: maxMembers })
                 .eq("id", clinic.id);
             }
           }
