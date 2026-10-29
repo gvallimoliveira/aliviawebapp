@@ -676,6 +676,10 @@ const ClinicSupport = () => {
             Perguntas frequentes
           </h2>
           <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="annual-refund">
+              <AccordionTrigger className="text-left text-base font-medium text-foreground">{t("billing.annual_refund.question")}</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground leading-relaxed">{t("billing.annual_refund.answer")}</AccordionContent>
+            </AccordionItem>
             {faqKeys.map((faq, i) => (
               <AccordionItem key={i} value={`faq-${i}`}>
                 <AccordionTrigger className="text-left text-base font-medium text-foreground">
