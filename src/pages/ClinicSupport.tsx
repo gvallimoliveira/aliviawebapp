@@ -489,7 +489,7 @@ const faqKeys = [
 
   {
     q: "Como funciona o trial de 15 dias?",
-    a: "Você ativa o trial sem precisar de cartão de crédito. Tem acesso completo por 15 dias. Ao terminar, o aviso no painel apresenta os planos mensal e anual; dono/admin escolhe o plano e segue diretamente ao pagamento seguro do Stripe, sem passar pela página de apresentação. A clínica, a equipe e os prontuários são preservados. Durante o teste, o botão de assinatura também permite consultar os planos no painel. Na página da clínica, 'Ver planos' leva aos valores.",
+    a: "Você ativa o trial sem precisar de cartão de crédito. Tem acesso completo por 15 dias. Ao terminar, o aviso no painel apresenta os planos mensal e anual; dono/admin escolhe o plano e segue diretamente ao pagamento seguro do Stripe, sem passar pela página de apresentação. A clínica, a equipe e os prontuários ficam guardados por mais 7 dias após o fim do teste; sem assinatura nesse prazo, os dados da clínica são excluídos definitivamente. O lembrete aparece ao ativar o teste, no 14º dia e ao encerrar. Durante o teste, o botão de assinatura também permite consultar os planos no painel. Na página da clínica, 'Ver planos' leva aos valores.",
   },
   {
     q: "Como faço para migrar minha agenda atual para o Aliv.iA Clinic?",
