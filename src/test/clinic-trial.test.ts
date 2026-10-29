@@ -15,6 +15,8 @@ beforeAll(async () => {
     CREATE FUNCTION public.is_admin(uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT coalesce(current_setting('test.admin',true),'false')::boolean $$;
     CREATE TABLE clinics(id uuid, owner_user_id uuid, subscription_status text, subscription_stripe_id text, created_at timestamptz, updated_at timestamptz);`);
   await db.exec(readFileSync('drizzle/migrations/0060_admin_clinic_trial_renewal.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0061_pause_gv_clinic_trial_renewal_for_review.sql', 'utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0062_restore_gv_admin_trial_renewal.sql', 'utf8'));
 }, 30000);
 afterAll(async () => { await db.close(); });
 beforeEach(async () => {
