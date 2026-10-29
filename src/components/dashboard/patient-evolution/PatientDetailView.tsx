@@ -764,7 +764,7 @@ export default function PatientDetailView(props: any) {
                   </DropdownMenuItem>
                 )}
 
-                {!isDemo && !readOnly && (
+                {!isDemo && (!readOnly || allowManualAssessment) && (
                   <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setFreeReportOpen(true); }}>
                     <FileText className="h-4 w-4 mr-2" /> {language === "pt" ? "Relatório fisioterapêutico" : language === "es" ? "Informe fisioterapéutico" : "Physiotherapy report"}
                   </DropdownMenuItem>
