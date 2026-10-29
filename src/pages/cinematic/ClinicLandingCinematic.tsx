@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,6 +41,7 @@ const ClinicLandingCinematic = () => {
   const { toggleLanguage, language } = useLanguage();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { hash } = useLocation();
   const [billingAnnual, setBillingAnnual] = useState(true);
   const [loading, setLoading] = useState<string | null>(null);
   const [subscribeLoading, setSubscribeLoading] = useState<string | null>(null);
@@ -78,14 +79,13 @@ const ClinicLandingCinematic = () => {
   }, [user]);
 
   useEffect(() => {
-    if (window.location.hash) {
-      const id = window.location.hash.slice(1);
-      // Wait for sections to render
-      setTimeout(() => {
-        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    }
-  }, []);
+    if (!hash) return;
+    const id = hash === "#planos" ? "pricing" : hash.slice(1);
+    const timer = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "instant", block: "start" });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [hash]);
 
   const handleStartTrial = async (tier: "small" | "medium" | "large") => {
     if (!trialEmail.trim()) { toast.error("Informe seu e-mail"); return; }
@@ -279,6 +279,9 @@ const ClinicLandingCinematic = () => {
             <Badge variant="outline" className="text-xs border-primary/30 text-primary">Clinic</Badge>
           </button>
           <div className="flex items-center gap-2 md:gap-3">
+            <Button variant="outline" size="sm" onClick={() => navigate("/clinica#planos")} className="gap-1.5">
+              <CreditCard className="h-4 w-4" />{language === "en" ? "Plans" : language === "es" ? "Planes" : "Ver planos"}
+            </Button>
             {/* Desktop actions */}
             <div className="hidden md:flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1.5 px-2">
@@ -561,7 +564,7 @@ const ClinicLandingCinematic = () => {
         </section>
 
         {/* ============ PRICING ============ */}
-        <section id="pricing" className="py-16 px-4">
+        <section id="pricing" className="py-16 px-4 scroll-mt-20">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-3">
               Planos para cada tamanho de clínica

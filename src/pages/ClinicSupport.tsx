@@ -495,7 +495,7 @@ const faqKeys = [
 
   {
     q: "Como funciona o trial de 15 dias?",
-    a: "Você ativa o trial sem precisar de cartão de crédito. Tem acesso completo a todas as funcionalidades por 15 dias. Ao fim do período, escolhe um plano para continuar — ou seus dados ficam preservados caso retome depois.",
+    a: "Você ativa o trial sem precisar de cartão de crédito. Tem acesso completo a todas as funcionalidades por 15 dias. Ao fim do período, escolhe um plano para continuar — ou seus dados ficam preservados caso retome depois. O botão de assinatura do trial abre diretamente os planos disponíveis. Na página da clínica, use 'Ver planos' no início para consultar os valores.",
   },
   {
     q: "Como faço para migrar minha agenda atual para o Aliv.iA Clinic?",

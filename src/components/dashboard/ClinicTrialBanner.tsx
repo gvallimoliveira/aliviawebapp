@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertTriangle, Clock, Crown, Lock, Sparkles } from "lucide-react";
+import { CLINIC_TRIAL_DAYS, clinicTrialTiming } from "@/lib/clinicTrial";
 
-const TRIAL_DAYS = 15;
+const TRIAL_DAYS = CLINIC_TRIAL_DAYS;
 
 export const useClinicTrial = () => {
   const { activeClinic } = useClinic();
@@ -21,11 +22,7 @@ export const useClinicTrial = () => {
     const isTrialing = activeClinic.subscription_status === "trialing";
     if (!isTrialing) return { daysLeft: 0, daysUsed: 0, isTrialActive: false, isTrialExpired: false, hasSubscription: false };
 
-    const created = new Date(activeClinic.created_at);
-    const now = new Date();
-    const diffMs = now.getTime() - created.getTime();
-    const daysUsed = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const daysLeft = Math.max(0, TRIAL_DAYS - daysUsed);
+    const { daysUsed, daysLeft } = clinicTrialTiming(activeClinic.trial_started_at || activeClinic.created_at);
     const isTrialActive = daysLeft > 0;
     const isTrialExpired = daysLeft === 0;
 

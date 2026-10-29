@@ -1,5 +1,10 @@
 # Roadmap
 
+## Trial pessoal do administrador e acesso aos planos
+- [ ] Renovar trial de 15 dias apenas da clínica GV Fisio do Guilherme, com autorização no servidor.
+- [ ] Corrigir destino dos botões de assinatura para os planos e acrescentar acesso aos valores no início da página.
+- [ ] Validar renovação, isolamento e navegação; atualizar orientação de assinatura.
+
 ## Erro ao criar HEP na clínica pagante
 - [x] Recusa 403 reproduzida na conta afetada: HEP exigia PRO solo apesar da clínica ativa. Migração 0056 corrige programas e itens pelo escopo clínico, mantém autoria/membros clínicos ativos e pagamento separado do PRO. Edição verifica erros sem trocar clínica. Oito testes de RLS passaram; build OK. Criação real autenticada retornou 201, item e autoria conferidos no banco, link exibiu exercício e marca corretos; registro técnico removido sem alterar pacientes. Envio push e dose no microciclo não executados neste teste para não prescrever/notificar paciente real.
 
