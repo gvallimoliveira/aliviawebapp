@@ -110,6 +110,8 @@ interface Props {
   onViewPatient?: (email: string) => void;
   /** Called after evolution save/delete to refresh map/cards */
   onEvolutionChanged?: () => void;
+  /** Clinic clinicians: view data, record attendance/evolution only. */
+  readOnly?: boolean;
 }
 
 const STATUS_OPTIONS = ["scheduled", "completed", "no_show", "no_show_justified"] as const;
@@ -183,7 +185,7 @@ const AppointmentEditorDialog = ({
   professionalId, clinicId, isSimulated, isClinicOnlyMode,
   clinicProfessionals, knownPatients,
   language, isPt, t, serviceMaps,
-  onSubmit, onRequestDelete, onSetStatus, onViewPatient, onEvolutionChanged,
+  onSubmit, onRequestDelete, onSetStatus, onViewPatient, onEvolutionChanged, readOnly = false,
 }: Props) => {
   const { toast } = useToast();
   const isEdit = !!initialApt;
@@ -568,6 +570,12 @@ const AppointmentEditorDialog = ({
               )}
 
               {/* ---- BASIC DATA ---- */}
+              {readOnly && (
+                <p className="text-[11px] text-muted-foreground rounded-md bg-muted/40 px-2.5 py-1.5">
+                  {isPt ? "Data, horário, profissional e serviço são definidos pela recepção/gestão da clínica." : language === "es" ? "Fecha, hora, profesional y servicio los define la recepción/gestión de la clínica." : "Date, time, professional and service are set by clinic front desk/management."}
+                </p>
+              )}
+              <fieldset disabled={readOnly} className="contents">
               <section className="space-y-3">
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
@@ -839,6 +847,8 @@ const AppointmentEditorDialog = ({
                 </div>
               </section>
 
+              </fieldset>
+
               {/* ---- EVOLUTION ---- */}
               {isEdit && hasEvolutionContext && (
                 <section className="rounded-lg border border-emerald-200/60 bg-emerald-50/30 dark:bg-emerald-900/10 p-3 space-y-2.5">
@@ -915,7 +925,7 @@ const AppointmentEditorDialog = ({
           </div>
 
           <DialogFooter className="flex-col-reverse gap-2 sm:flex-row px-4 py-3 sm:px-6 border-t border-border/40">
-            {isEdit && currentApt && (
+            {isEdit && currentApt && !readOnly && (
               <Button variant="outline" size="sm" className="text-xs gap-1.5 sm:mr-auto" onClick={() => onRequestDelete(currentApt.id)}>
                 <Trash2 className="h-3.5 w-3.5 text-destructive" />
                 {t("schedule.delete")}
@@ -927,10 +937,10 @@ const AppointmentEditorDialog = ({
                 <ChevronRight className="h-3 w-3" />
               </Button>
             )}
-            <Button size="sm" className="gap-1.5 rounded-xl text-xs" onClick={handleSave} disabled={saving || !formName.trim()}>
+            {!readOnly && <Button size="sm" className="gap-1.5 rounded-xl text-xs" onClick={handleSave} disabled={saving || !formName.trim()}>
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CalendarIcon className="h-3.5 w-3.5" />}
               {isEdit ? t("schedule.save_edit") : t("schedule.save")}
-            </Button>
+            </Button>}
           </DialogFooter>
         </DialogContent>
       </Dialog>

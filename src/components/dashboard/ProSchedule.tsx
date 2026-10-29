@@ -4,6 +4,7 @@ import { expandRecurrence, splitConflicts } from "@/lib/appointmentRecurrence";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { DEMO_APPOINTMENTS, DEMO_TEAM } from "@/data/mockClinicData";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -299,6 +300,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
   const isClinicOnlyMode = !professionalId && !!clinicId;
+  const { canManageClinic } = useClinic();
+  // Clinic grid governance: only owner/admin/secretary create, move or delete slots.
+  const canEditGrid = isSimulated || !clinicId || canManageClinic;
 
   useEffect(() => {
     if (!clinicId || isSimulated) {
@@ -843,6 +847,11 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     // Only left mouse button or touch/pen
     if (e.pointerType === "mouse" && e.button !== 0) return;
     e.stopPropagation();
+    if (!canEditGrid) {
+      const up = () => { window.removeEventListener("pointerup", up); openEdit(apt); };
+      window.addEventListener("pointerup", up);
+      return;
+    }
 
     const cardEl = e.currentTarget as HTMLElement;
     const startX = e.clientX;
@@ -1061,16 +1070,16 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
               <span className="hidden sm:inline">{isPt ? `Confirmar ${todayScheduledCount}` : `Confirm ${todayScheduledCount}`}</span>
             </Button>
           )}
-          {!isSimulated && (professionalId || isClinicOnlyMode) && (
+          {canEditGrid && !isSimulated && (professionalId || isClinicOnlyMode) && (
             <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setImportModalOpen(true)}>
               <Upload className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{isPt ? "Importar" : "Import"}</span>
             </Button>
           )}
-          <Button size="sm" className="gap-1.5 rounded-xl text-xs shrink-0" onClick={() => openNew()} aria-label={t("schedule.new") as string}>
+          {canEditGrid && <Button size="sm" className="gap-1.5 rounded-xl text-xs shrink-0" onClick={() => openNew()} aria-label={t("schedule.new") as string}>
             <Plus className="h-3.5 w-3.5" />
             {isMobile ? (isPt ? "Novo" : "New") : t("schedule.new")}
-          </Button>
+          </Button>}
         </div>
       </div>
 
@@ -1109,7 +1118,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
 
         <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 ml-auto">
           <GripVertical className="h-3 w-3" />
-          {isMobile
+          {!canEditGrid
+            ? (isPt ? "Agenda gerida pela recepção — toque no atendimento para registrar presença" : language === "es" ? "Agenda gestionada por recepción — toque la cita para registrar asistencia" : "Schedule managed by front desk — tap an appointment to record attendance")
+            : isMobile
             ? (isPt ? "Toque e segure um card para reagendar" : "Touch and hold a card to reschedule")
             : (isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule")}
         </p>
@@ -1190,7 +1201,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                         isOver && "bg-primary/10 ring-1 ring-primary/40"
                       )}
                       onClick={() => {
-                        if (cellApts.length === 0) openNew(day, slot);
+                        if (canEditGrid && cellApts.length === 0) openNew(day, slot);
                       }}
                     >
                       {cellApts.map((apt) => {
@@ -1253,6 +1264,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           serviceMaps={{ labels: SERVICE_TYPE_LABELS, dot: SERVICE_TYPE_DOT }}
           onSubmit={handleSubmitAppointment}
           onRequestDelete={(id) => setDeleteId(id)}
+          readOnly={!canEditGrid}
           onSetStatus={handleSetStatus}
           onViewPatient={onViewPatient}
           onEvolutionChanged={() => setEvolutionReloadTick((v) => v + 1)}
