@@ -67,7 +67,7 @@ const ClinicLandingCinematic = () => {
   useEffect(() => {
     setSeo({
       title: "Aliv.iA Clinic — Plataforma para clínicas de fisio",
-      description: "Importe agenda por foto, link de pré-avaliação, prontuário com IA, chat, vídeo, NPS e white-label. 15 dias grátis sem cartão.",
+      description: "Importe agenda por foto, link de pré-avaliação, prontuário com IA, chat, NPS e white-label. 15 dias grátis sem cartão.",
       url: "https://aliviawebapp.com.br/clinica",
       type: "website",
     });
@@ -101,13 +101,13 @@ const ClinicLandingCinematic = () => {
       if (error) throw error;
       if (data?.success) {
         if (data.is_new_user) {
-          toast.success("Trial de 15 dias ativado! Enviamos um link para definir sua senha.", { duration: 8000 });
+          toast.success("Trial de 15 dias ativado! Enviamos um link para definir sua senha. Sem assinatura em até 7 dias após o fim do teste, os dados da clínica são excluídos.", { duration: 10000 });
         } else if (data.already_exists) {
           toast.info("Você já possui uma clínica! Faça login.");
           try { sessionStorage.setItem("signupOrigin", "clinic"); } catch {}
           navigate("/auth", { state: { redirectTo: "/dashboard" } });
         } else {
-          toast.success("Trial de 15 dias ativado!");
+          toast.success("Trial de 15 dias ativado! Sem assinatura em até 7 dias após o fim do teste, os dados da clínica são excluídos.", { duration: 10000 });
           try { sessionStorage.setItem("signupOrigin", "clinic"); } catch {}
           navigate("/auth", { state: { redirectTo: "/dashboard" } });
         }
@@ -707,7 +707,7 @@ const ClinicLandingCinematic = () => {
             </div>
 
             <p className="text-center text-xs text-muted-foreground mt-6">
-              Apenas e-mail e WhatsApp para começar. Sem cartão de crédito durante o trial.
+              Apenas e-mail e WhatsApp para começar. Sem cartão de crédito durante o trial. Se não assinar em até 7 dias após o fim do teste, os dados da clínica são excluídos.
             </p>
           </div>
         </section>
@@ -730,7 +730,7 @@ const ClinicLandingCinematic = () => {
                 { q: "Posso fazer upload de laudos, exames e fotos do paciente?", a: "Sim. Cada paciente tem uma área de documentos (PDFs, raio-X, ressonância) e fotos categorizadas (postura, lesão, evolução). Limite de 20MB por arquivo." },
                 { q: "Como funciona a pesquisa de satisfação (NPS)?", a: "Você envia um link público da pesquisa por chat, WhatsApp ou e-mail. O paciente responde em 1 minuto. Você acompanha NPS, comentários e identifica promotores num dashboard dedicado." },
                 { q: "Posso personalizar a plataforma com a marca da minha clínica?", a: "Sim — o white-label inclui logotipo, nome, cor da marca, telefone e endereço. Aparece no painel e em todos os PDFs entregues ao paciente." },
-                { q: "O trial de 15 dias é realmente gratuito? Preciso cadastrar cartão?", a: "100% gratuito, sem cartão. Apenas e-mail e WhatsApp. Acesso completo a todas as funcionalidades. Após os 15 dias você decide se assina." },
+                { q: "O trial de 15 dias é realmente gratuito? Preciso cadastrar cartão?", a: "100% gratuito, sem cartão. Apenas e-mail e WhatsApp. Acesso completo a todas as funcionalidades. Após os 15 dias você decide se assina. Sem assinatura em até 7 dias após o fim do teste, os dados da clínica são excluídos definitivamente." },
                 { q: "Posso adicionar minha secretária e outros fisioterapeutas?", a: "Sim! De 3 a ilimitados membros conforme o plano. Cada papel tem permissões: proprietário e secretária gerenciam agenda e equipe; fisioterapeutas focam em avaliações e atendimentos." },
                 { q: "Os tratamentos são cobrados à parte?", a: "Não — no modo Clínica, tratamentos completos com IA, exercícios e PDFs são ilimitados e inclusos em qualquer plano. Sem cobrança por uso." },
                 { q: "Os dados estão seguros e em conformidade com a LGPD?", a: "Sim. Criptografia, servidores seguros, controle de acesso por função (RBAC) e políticas alinhadas com a LGPD e melhores práticas de saúde digital." },
