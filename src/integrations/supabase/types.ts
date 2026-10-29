@@ -1882,6 +1882,7 @@ export type Database = {
           subscription_status: string
           subscription_stripe_id: string | null
           trial_credits_cap: number
+          trial_started_at: string | null
           updated_at: string
           working_days: number[] | null
         }
@@ -1906,6 +1907,7 @@ export type Database = {
           subscription_status?: string
           subscription_stripe_id?: string | null
           trial_credits_cap?: number
+          trial_started_at?: string | null
           updated_at?: string
           working_days?: number[] | null
         }
@@ -1930,6 +1932,7 @@ export type Database = {
           subscription_status?: string
           subscription_stripe_id?: string | null
           trial_credits_cap?: number
+          trial_started_at?: string | null
           updated_at?: string
           working_days?: number[] | null
         }
@@ -6367,6 +6370,7 @@ export type Database = {
         Args: { _invitation_id: string }
         Returns: string
       }
+      renew_my_admin_clinic_trial: { Args: never; Returns: boolean }
       request_assessment_id: { Args: never; Returns: string }
       reset_chat_addon_period_if_needed: {
         Args: { _user_id: string }

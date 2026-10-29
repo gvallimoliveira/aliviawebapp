@@ -421,6 +421,13 @@
       "when": 1793235199012,
       "tag": "0059_clinic_compensation",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1793287840650,
+      "tag": "0060_admin_clinic_trial_renewal",
+      "breakpoints": true
     }
   ]
 }
