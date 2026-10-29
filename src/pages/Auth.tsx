@@ -13,6 +13,21 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import { isValidEmailFormat, suggestEmailFix } from "@/lib/emailValidation";
 import { supabase } from "@/integrations/supabase/client";
 import PasskeyUnlockButton from "@/components/auth/PasskeyUnlockButton";
+import { INVITE_PARAM } from "@/lib/clinicInvite";
+
+const INVITE_ROLE_LABELS: Record<string, Record<"pt" | "en" | "es", string>> = {
+  owner: { pt: "Proprietário", en: "Owner", es: "Propietario" },
+  admin: { pt: "Administrador", en: "Administrator", es: "Administrador" },
+  therapist: { pt: "Fisioterapeuta", en: "Physiotherapist", es: "Fisioterapeuta" },
+  intern: { pt: "Estagiário", en: "Intern", es: "Practicante" },
+  secretary: { pt: "Secretária", en: "Secretary", es: "Secretaria" },
+  osteopath: { pt: "Osteopata", en: "Osteopath", es: "Osteópata" },
+  pilates_instructor: { pt: "Prof. Pilates", en: "Pilates Instructor", es: "Prof. Pilates" },
+  doctor: { pt: "Médico", en: "Doctor", es: "Médico" },
+  rpg_specialist: { pt: "RPG", en: "RPG Specialist", es: "RPG" },
+  massage_therapist: { pt: "Massoterapeuta", en: "Massage Therapist", es: "Masajista" },
+};
+
 
 
 const Auth = () => {
@@ -38,6 +53,41 @@ const Auth = () => {
     : "/dashboard";
   const { toast } = useToast();
   const redirectingRef = useRef(false);
+
+  // Convite direto da equipe da clínica: /auth?convite=TOKEN
+  const inviteToken = new URLSearchParams(location.search).get(INVITE_PARAM);
+  const [invite, setInvite] = useState<{ clinic_name: string; role: string; email: string } | null>(null);
+  useEffect(() => {
+    if (!inviteToken) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase.rpc as any)("get_clinic_invite_preview", { _token: inviteToken });
+      const row = Array.isArray(data) ? data[0] : null;
+      if (cancelled) return;
+      if (!row || row.expired) {
+        toast({
+          title: language === "pt" ? "Convite inválido ou expirado" : language === "es" ? "Invitación inválida o expirada" : "Invalid or expired invite",
+          description: language === "pt" ? "Peça um novo link ao gestor da clínica." : language === "es" ? "Pide un nuevo enlace al gestor." : "Ask the clinic manager for a new link.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setInvite(row);
+      setIsLogin(false);
+      setSignupProfile("clinic");
+      setEmail(row.email);
+      setEmailConfirm(row.email);
+      try {
+        sessionStorage.removeItem("forceStudentMode");
+        sessionStorage.removeItem("forceProfessionalMode");
+        sessionStorage.setItem("signupOrigin", "clinic");
+      } catch { /* noop */ }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inviteToken]);
+  const inviteRoleLabel = invite ? (INVITE_ROLE_LABELS[invite.role]?.[language as "pt" | "en" | "es"] ?? invite.role) : "";
+
 
   // Redirect if already logged in (on mount or when user populates)
   useEffect(() => {
@@ -276,7 +326,7 @@ const Auth = () => {
                 student: "Estudante",
                 studentDesc: "Sou aluno de fisioterapia (Alivia Acadêmico)",
                 clinic: "Clínica",
-                clinicDesc: "Gerencio uma clínica ou equipe",
+                clinicDesc: "Gerencio ou sou integrante de uma clínica no Aliv.iA (fisio, secretária, estagiário)",
               },
               en: {
                 title: "Create your account",
@@ -290,7 +340,7 @@ const Auth = () => {
                 student: "Student",
                 studentDesc: "I am a physiotherapy student (Alivia Academic)",
                 clinic: "Clinic",
-                clinicDesc: "I manage a clinic or team",
+                clinicDesc: "I manage or belong to a clinic team on Aliv.iA (physio, secretary, intern)",
               },
               es: {
                 title: "Crea tu cuenta",
@@ -304,7 +354,7 @@ const Auth = () => {
                 student: "Estudiante",
                 studentDesc: "Soy estudiante de fisioterapia (Alivia Académico)",
                 clinic: "Clínica",
-                clinicDesc: "Gestiono una clínica o equipo",
+                clinicDesc: "Gestiono o integro el equipo de una clínica en Aliv.iA (fisio, secretaria, practicante)",
               },
             }[language as "pt" | "en" | "es"];
 
@@ -413,6 +463,18 @@ const Auth = () => {
                     </p>
                   </div>
                 )}
+                {!isForgotPassword && invite && (
+                  <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-xs text-foreground flex items-start gap-2">
+                    <Building2 className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                    <p className="leading-relaxed">
+                      {language === "pt"
+                        ? <>Você foi convidado para a equipe da <strong>{invite.clinic_name}</strong> como <strong>{inviteRoleLabel}</strong>. {isLogin ? "Entre com o e-mail convidado para acessar a clínica." : "Crie sua senha: ao concluir, você entra direto na clínica, sem plano próprio."}</>
+                        : language === "es"
+                          ? <>Fuiste invitado al equipo de <strong>{invite.clinic_name}</strong> como <strong>{inviteRoleLabel}</strong>. {isLogin ? "Entra con el email invitado." : "Crea tu contraseña: al terminar entras directo a la clínica, sin plan propio."}</>
+                          : <>You were invited to the <strong>{invite.clinic_name}</strong> team as <strong>{inviteRoleLabel}</strong>. {isLogin ? "Sign in with the invited email." : "Create your password: you'll go straight into the clinic, no plan of your own needed."}</>}
+                    </p>
+                  </div>
+                )}
             {isLogin && !isForgotPassword && <PasskeyUnlockButton />}
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
@@ -447,6 +509,7 @@ const Auth = () => {
                     className="pl-10"
                     autoComplete="email"
                     required
+                    readOnly={!!invite && !isLogin}
                     disabled={loading}
                   />
                 </div>

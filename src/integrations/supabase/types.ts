@@ -5824,6 +5824,15 @@ export type Database = {
           started_count: number
         }[]
       }
+      get_clinic_invite_preview: {
+        Args: { _token: string }
+        Returns: {
+          clinic_name: string
+          email: string
+          expired: boolean
+          role: Database["public"]["Enums"]["clinic_role"]
+        }[]
+      }
       get_clinic_kpis: {
         Args: { _clinic_id: string }
         Returns: {
@@ -6262,6 +6271,10 @@ export type Database = {
         }[]
       }
       referral_code_exists: { Args: { _code: string }; Returns: boolean }
+      renew_clinic_invitation: {
+        Args: { _invitation_id: string }
+        Returns: string
+      }
       request_assessment_id: { Args: never; Returns: string }
       reset_chat_addon_period_if_needed: {
         Args: { _user_id: string }
