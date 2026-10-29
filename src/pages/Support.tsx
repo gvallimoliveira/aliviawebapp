@@ -50,6 +50,7 @@ const proTools = [
   { key: "patient_list", icon: Users },
   { key: "evolution_dashboard", icon: Activity }, // Localized help includes read-only summary alerts and dated health caveats.
   { key: "pdf_download", icon: FileDown },
+  { key: "free_report", icon: FileDown },
   { key: "rename_share_assessments", icon: FileEdit },
   { key: "final_hypothesis", icon: Stamp },
   { key: "pro_notes", icon: StickyNote },
