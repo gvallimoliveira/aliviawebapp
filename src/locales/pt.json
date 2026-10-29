@@ -1643,5 +1643,7 @@
   "credits.statusActive": "Bloqueio ativo",
   "credits.statusShadow": "Modo observação — ninguém é bloqueado",
   "credits.rolloutDesc": "Ligue a chave geral e marque as categorias que passam a exigir saldo após cota + margem (PRO 10%, clínica 20%). Admin e VIP seguem ilimitados.",
-  "credits.rolloutDenied": "Sua conta não tem permissão para alterar os limites de IA."
+  "credits.rolloutDenied": "Sua conta não tem permissão para alterar os limites de IA.",
+  "support.pro.tool.free_report.title": "Relatório fisioterapêutico livre",
+  "support.pro.tool.free_report.desc": "No prontuário do paciente, toque em 'Mais' (3 pontinhos) → 'Relatório fisioterapêutico'. Escolha um modelo (em branco, encaminhamento, convênio ou resumo), edite o texto livremente e gere o PDF com sua marca e, se ativada, sua assinatura digital de Minha conta. Ideal para convênios, médicos e encaminhamentos."
 }
