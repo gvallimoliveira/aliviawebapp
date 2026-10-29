@@ -1,3 +1,4 @@
+import { normalizeLinkId } from "@/lib/normalizeLinkId";
 import { normalizeAssessmentPurpose, isPreventiveAssessment, shouldCollectPainQuestionnaires, shouldCollectFunctionalQuestionnaires, shouldCollectPainSelfTests } from "@/lib/assessmentPurpose";
 import { useState, useEffect, useMemo, useRef } from "react";
 import logoAlivia from "@/assets/logo-alivia.png";
@@ -59,7 +60,8 @@ import {
 type ProfStep = "loading_check" | "inactive" | "welcome" | "patient_info" | "redflags" | "redflag_continue" | "redflag_alert" | "anamnesis" | "questionnaire" | "functional_tests" | "psychosocial" | "loading" | "diagnosis_error" | "thank_you" | "resume_summary";
 
 const ProfessionalAssessment = () => {
-  const { professionalId } = useParams<{ professionalId: string }>();
+  const { professionalId: rawProfessionalId } = useParams<{ professionalId: string }>();
+  const professionalId = rawProfessionalId === "demo" ? rawProfessionalId : normalizeLinkId(rawProfessionalId);
   const { t, language, toggleLanguage } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
