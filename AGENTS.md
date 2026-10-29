@@ -1,4 +1,5 @@
 # Architecture decisions
+- Inline clinic checkout uses the landing pricing catalog and server-validated clinic metadata through checkout, webhook and recovery; return refreshes clinic context to prevent duplicate clinics or stale trial locks.
 - Clinic trial renewal uses a server-authorized, owner-and-clinic-scoped RPC on access/expiry and trial_started_at rather than mutating created_at; ordinary customers never receive the administrator exception.
 - Personal patient navigation resolves legacy tabs through patientNavigation; server-scoped care-provider/HEP RPCs determine daily-care presentation, while existing check-in, exercise, scheduling and messaging components retain their own authorization and persistence.
 - Scope clinic and autonomous data before querying or limiting: solo requires clinic_id IS NULL plus professional ownership; clinic requires the selected clinic_id. Reset context-owned screens on switches, and validate agent thread/patient scope server-side independently of user ownership.

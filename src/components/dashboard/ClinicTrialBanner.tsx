@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertTriangle, Clock, Crown, Lock, Sparkles } from "lucide-react";
 import { CLINIC_TRIAL_DAYS, clinicTrialTiming } from "@/lib/clinicTrial";
+import ClinicSubscriptionPlans from "./ClinicSubscriptionPlans";
 
 const TRIAL_DAYS = CLINIC_TRIAL_DAYS;
 
@@ -31,6 +32,7 @@ export const useClinicTrial = () => {
 };
 
 const ClinicTrialBanner = () => {
+  const [showPlans, setShowPlans] = useState(false);
   const { activeClinic, isClinicOwner, setActiveContext, availableContextsCount } = useClinic();
   const { daysLeft, daysUsed, isTrialActive, isTrialExpired, hasSubscription } = useClinicTrial();
   const navigate = useNavigate();
@@ -95,11 +97,8 @@ const ClinicTrialBanner = () => {
               </p>
             </div>
           </div>
-          <Button onClick={handleSubscribe} className="w-full gap-2 rounded-xl" size="lg">
-            <Crown className="h-4 w-4" />
-            Assinar Aliv.iA Clinic agora
-          </Button>
         </CardContent>
+        <div className="px-4 pb-6 sm:px-6"><ClinicSubscriptionPlans /></div>
       </Card>
     );
   }
@@ -147,11 +146,12 @@ const ClinicTrialBanner = () => {
           </div>
         )}
 
-        <Button onClick={handleSubscribe} variant={daysLeft <= 5 ? "default" : "outline"} className="w-full gap-2 rounded-xl" size="sm">
+        {isClinicOwner && <Button onClick={() => setShowPlans((value) => !value)} variant={daysLeft <= 5 ? "default" : "outline"} className="w-full gap-2 rounded-xl" size="sm">
           <Crown className="h-4 w-4" />
           {daysLeft <= 5 ? "Assinar agora — não perca o acesso" : "Assinar Aliv.iA Clinic"}
-        </Button>
+        </Button>}
       </CardContent>
+      {showPlans && isClinicOwner && <div className="px-4 pb-6 sm:px-6"><ClinicSubscriptionPlans /></div>}
     </Card>
   );
 };
@@ -196,7 +196,7 @@ export const ClinicTrialBlockOverlay = () => {
             : "O proprietário precisa reativar a assinatura. Sua conta Aliv.iA continua ativa — você pode usar seu perfil pessoal enquanto isso."}
         </p>
         {ownerView ? (
-          <Button data-trial-cta onClick={() => navigate("/clinica#planos")} className="gap-2 rounded-xl">
+          <Button data-trial-cta onClick={() => document.getElementById("clinic-subscription-plans")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="gap-2 rounded-xl">
             <Crown className="h-4 w-4" />
             Assinar agora
           </Button>

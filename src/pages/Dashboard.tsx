@@ -145,7 +145,7 @@ function buildOnboardingSteps(
 const Dashboard = () => {
   const { user, signOut, loading: authLoading, ready: authReady } = useAuth();
   const { t, toggleLanguage, language } = useLanguage();
-  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary, isClinicOwner, setPendingProfessionalSignup, setIsStudentProfessional } = useClinic();
+  const { memberships, activeClinic, isClinicMode, needsContextSelection, activeContext, setActiveContext, setHasProfessionalProfile, hasProfessionalProfile, availableContextsCount, canManageClinic, isClinicSecretary, isClinicOwner, setPendingProfessionalSignup, setIsStudentProfessional, refetch: refetchClinics } = useClinic();
   const navigate = useNavigate();
   const { hasAccess: hasAgentAccess } = useClinicalAgentAccess();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -249,7 +249,10 @@ const Dashboard = () => {
             data?.is_partner === true ||
             data?.subscription_status === "active" ||
             data?.active === true;
-          if (active) break;
+          if (active) {
+            if (clinicStatus === "success") await refetchClinics();
+            break;
+          }
         } catch {
           // segue para próxima tentativa
         }
