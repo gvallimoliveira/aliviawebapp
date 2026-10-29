@@ -5,6 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import GuidedCancellationPanel from "./GuidedCancellationPanel";
 import { clinicAdminGroup, type ClinicAdminGroup } from "@/lib/clinicAdminGroups";
 
 interface Member { email: string | null; name: string | null; role: string; status: string }
@@ -24,6 +28,8 @@ export default function ClinicManagement({ isPt }: { isPt: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [group, setGroup] = useState<ClinicAdminGroup>("paid");
+  const [cancelTarget, setCancelTarget] = useState<ClinicRow | null>(null);
+  const [reason, setReason] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -89,6 +95,11 @@ export default function ClinicManagement({ isPt }: { isPt: boolean }) {
               <span>{isPt ? "Criada em" : "Created"}: {new Date(c.created_at).toLocaleDateString(isPt ? "pt-BR" : "en-US")}</span>
               {c.subscription_stripe_id && <span className="break-all">{isPt ? "Assinatura" : "Subscription"}: {c.subscription_stripe_id}</span>}
             </div>
+            {c.subscription_stripe_id && (
+              <Button size="sm" variant="outline" onClick={() => { setReason(""); setCancelTarget(c); }}>
+                {isPt ? "Cancelamento guiado" : "Guided cancellation"}
+              </Button>
+            )}
             {c.members.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {c.members.map((m, i) => (
@@ -101,6 +112,19 @@ export default function ClinicManagement({ isPt }: { isPt: boolean }) {
           </div>
         ))}
       </CardContent>
+      <Dialog open={!!cancelTarget} onOpenChange={(o) => !o && setCancelTarget(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{isPt ? "Cancelamento guiado" : "Guided cancellation"} · {cancelTarget?.name}</DialogTitle>
+            <DialogDescription>{isPt ? "Diagnóstico pela regra de reembolso; nada é executado sem sua confirmação." : "Diagnosis by refund rule; nothing runs without your confirmation."}</DialogDescription>
+          </DialogHeader>
+          <Textarea placeholder={isPt ? "Motivo do cancelamento (obrigatório)" : "Cancellation reason (required)"} value={reason} onChange={(e) => setReason(e.target.value)} />
+          {cancelTarget && (
+            <GuidedCancellationPanel clinicId={cancelTarget.id} subscriptionId={cancelTarget.subscription_stripe_id} reason={reason}
+              onDone={(u) => setRows((rs) => rs.map((r) => r.id === cancelTarget.id ? { ...r, ...u } : r))} />
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
