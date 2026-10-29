@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Building2, ArrowRight, Check, Globe, LogOut, LayoutDashboard,
-  ClipboardList, Video, Calendar, FileText, Users, MessageCircle,
+  ClipboardList, Calendar, FileText, Users, MessageCircle,
   Shield, BarChart3, Activity, Star, HelpCircle, Menu,
   Zap, Clock, Gift, Mail, Phone, CreditCard, Sparkles, Camera,
   Link2, Image as ImageIcon, AlertTriangle, Palette, Heart,
@@ -201,7 +201,6 @@ const ClinicLandingClassic = () => {
       icon: MessageCircle,
       items: [
         { icon: MessageCircle, title: "Chat integrado", desc: "Conversas dentro da plataforma, organizadas" },
-        { icon: Video, title: "Videochamada P2P", desc: "Teleconsulta com 1 clique, sem instalar nada" },
         { icon: Bell, title: "Notificações push", desc: "Lembretes, alertas clínicos e adesão" },
         { icon: Smile, title: "NPS via link", desc: "Pesquisa de satisfação com dashboard e comentários" },
       ],
@@ -232,7 +231,6 @@ const ClinicLandingClassic = () => {
   const included = [
     { icon: InfinityIcon, label: "Tratamentos ilimitados" },
     { icon: Sparkles, label: "IA ilimitada" },
-    { icon: Video, label: "Videochamadas" },
     { icon: ImageIcon, label: "Storage de fotos e laudos" },
     { icon: Bell, label: "Push notifications" },
     { icon: Palette, label: "White-label" },
@@ -478,7 +476,7 @@ const ClinicLandingClassic = () => {
                     ["Avaliações — editar", true, true, false],
                     ["Upload de laudos/fotos", true, true, true],
                     ["Emitir relatórios PDF", true, true, true],
-                    ["Chat e videochamada", true, true, true],
+                    ["Chat com pacientes", true, true, true],
                     ["Importar agenda por foto", true, false, true],
                     ["Pesquisa NPS", true, true, true],
                     ["Gerenciar equipe", true, false, true],
@@ -570,7 +568,7 @@ const ClinicLandingClassic = () => {
                             "Tudo incluso (sem extras)",
                             "Pré-avaliações por link ilimitadas",
                             "Importação de agenda por foto",
-                            "Chat + videochamada",
+                            "Chat com pacientes",
                             "Relatórios com IA",
                             "NPS e analytics",
                             "White-label completo",
