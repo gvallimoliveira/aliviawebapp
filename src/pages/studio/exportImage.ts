@@ -323,7 +323,17 @@ const paintImagesOnCanvas = (
 
   for (const image of Array.from(node.querySelectorAll("img"))) {
     if (image.closest('[data-studio-no-export="1"]')) continue;
-    const isForeground = image.dataset.studioExportImageLayer === "foreground";
+    /*
+     * Fotos (acervo ou inseridas pelo usuário) carregam camada explícita.
+     * Todo o resto — logos, símbolos, avatares — vive ACIMA das superfícies
+     * opacas no DOM; pintado como fundo, o raster do cartão o cobriria no PNG
+     * (foi o caso do avatar vazio no bloco de tweet).
+     */
+    const isPhoto =
+      image.dataset.studioPhoto === "1" || !!image.closest('[data-studio-inserted-image="1"]');
+    const isForeground =
+      image.dataset.studioExportImageLayer === "foreground" ||
+      (!isPhoto && image.dataset.studioExportImageLayer !== "backdrop");
     if ((layer === "foreground") !== isForeground) continue;
     const imageReady = image.complete && image.naturalWidth > 0 && image.naturalHeight > 0;
 
