@@ -259,6 +259,7 @@ const Dashboard = () => {
         await new Promise((r) => setTimeout(r, delays[i]));
       }
       if (cancelled) return;
+      if (clinicStatus === "success") await refetchClinics();
       // Limpa os query params para que refreshs futuros não redisparem o sync
       const next = new URLSearchParams(searchParams);
       next.delete("subscription");

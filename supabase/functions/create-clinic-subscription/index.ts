@@ -75,6 +75,8 @@ serve(async (req) => {
         if (!key) throw new Error("STRIPE_SECRET_KEY not set");
         const existing = await new Stripe(key, { apiVersion: "2025-08-27.basil" }).subscriptions.retrieve(clinic.subscription_stripe_id);
         if (["active", "trialing"].includes(existing.status)) {
+          const { error: syncError } = await supabaseAdmin.from("clinics").update({ subscription_status: "active" }).eq("id", targetClinicId);
+          if (syncError) throw syncError;
           return new Response(JSON.stringify({ already_active: true, clinic_id: targetClinicId }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
         }
         if (["past_due", "unpaid", "incomplete", "paused"].includes(existing.status)) throw new Error("Esta clínica já possui uma assinatura pendente. Regularize em Minha Conta → Assinatura e cobrança.");

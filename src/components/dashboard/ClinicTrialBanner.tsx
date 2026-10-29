@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useClinic } from "@/contexts/ClinicContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,13 +34,8 @@ const ClinicTrialBanner = () => {
   const [showPlans, setShowPlans] = useState(false);
   const { activeClinic, isClinicOwner, setActiveContext, availableContextsCount } = useClinic();
   const { daysLeft, daysUsed, isTrialActive, isTrialExpired, hasSubscription } = useClinicTrial();
-  const navigate = useNavigate();
 
   if (!activeClinic || hasSubscription) return null;
-
-  const handleSubscribe = () => {
-    navigate("/clinica#planos");
-  };
 
   const progressPercent = Math.min(100, (daysUsed / TRIAL_DAYS) * 100);
 
@@ -163,7 +157,6 @@ const ClinicTrialBanner = () => {
 export const ClinicTrialBlockOverlay = () => {
   const { isTrialExpired, hasSubscription } = useClinicTrial();
   const { activeClinic, isClinicOwner, setActiveContext, availableContextsCount } = useClinic();
-  const navigate = useNavigate();
 
   if (!activeClinic || hasSubscription || !isTrialExpired) return null;
 
