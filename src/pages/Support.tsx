@@ -100,7 +100,7 @@ const proTools = [
 ];
 
 const patientFaqKeys = ["daily_care", "missing_care", "pf_signup", "pf1", "pf2", "pf3", "pf4", "pf5", "annual_refund", "pf6", "pf7", "pf8", "pf9", "pf10", "pf11", "pf12", "pf13"];
-const proFaqKeys = ["profile_isolation", "rf_signup", "rf_student", "rf1", "rf2", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9", "rf10", "rf11", "rf12", "rf13", "rf14", "rf15", "rf16", "rf17", "rf18", "rf19", "rf20", "rf21", "rf22", "rf23", "rf24", "daily_readiness", "planned_dose_edit", "recurring_appointments", "rf25", "rf26", "rf27", "rf28", "rf29", "rf30"];
+const proFaqKeys = ["profile_isolation", "rf_signup", "rf_student", "rf1", "rf2", "annual_refund", "rf3", "rf4", "rf5", "rf6", "rf7", "rf8", "rf9", "rf10", "rf11", "rf12", "rf13", "rf14", "rf15", "rf16", "rf17", "rf18", "rf19", "rf20", "rf21", "rf22", "rf23", "rf24", "daily_readiness", "planned_dose_edit", "recurring_appointments", "rf25", "rf26", "rf27", "rf28", "rf29", "rf30"];
 
 const Support = () => {
   const { t, language } = useLanguage();
