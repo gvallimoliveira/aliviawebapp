@@ -1,5 +1,9 @@
 # Roadmap
 
+## Assinatura dentro do aviso de trial encerrado
+- [ ] Mostrar planos mensal/anual e checkout direto no aviso, preservando a clínica e a autorização.
+- [ ] Revisar preços, retorno do pagamento, erros e bloqueio; validar o fluxo sem cobrança e atualizar ajuda.
+
 ## Trial pessoal do administrador e acesso aos planos
 - [x] Trial da GV Fisio renovado até 13/11/2026; renovação de 15 dias ao acessar/após expirar com a tela aberta, exclusiva do proprietário Guilherme com autoridade admin no servidor; criação preservada.
 - [x] Botões do trial levam diretamente aos planos (#planos/#pricing compatíveis); 'Ver planos' no início das duas versões da página.
