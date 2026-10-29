@@ -32,7 +32,7 @@ const Index = () => {
     setSeo({
       title: "Aliv.iA Webapp",
       description: "Avaliação musculoesquelética com inteligência artificial. Diagnóstico preliminar e plano de tratamento personalizado em minutos.",
-      url: "https://alivia.app",
+      url: "https://aliviawebapp.com.br",
       type: "website",
     });
     setLandingJsonLd();

@@ -1,4 +1,4 @@
-const SITE_URL = "https://alivia.app";
+const SITE_URL = "https://aliviawebapp.com.br";
 const SITE_NAME = "Aliv.iA";
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
 

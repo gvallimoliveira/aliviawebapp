@@ -9,6 +9,6 @@
   <url><loc>https://aliviawebapp.com.br/professionals</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://aliviawebapp.com.br/blog</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://aliviawebapp.com.br/suporte</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://aliviawebapp.com.br/auth</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
   <url><loc>https://aliviawebapp.com.br/professional/register</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://aliviawebapp.com.br/academico</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
 </urlset>
