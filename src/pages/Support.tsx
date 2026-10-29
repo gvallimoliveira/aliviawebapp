@@ -43,7 +43,7 @@ const patientTools = [
 
 const proTools = [
   { key: "patient_daily_care", icon: Heart },
-  { key: "clinic_overview", icon: BarChart3 },
+  { key: "clinic_overview", icon: BarChart3 }, // Localized clinic help includes direct access to subscription prices.
   { key: "care_services", icon: NotebookPen }, // Localized help covers the bounded arrival-ordered request queue in Calendar.
   { key: "custom_link", icon: Link2 },
   { key: "statistics", icon: BarChart3 },
