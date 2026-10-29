@@ -11,7 +11,9 @@ const log = (step: string, details?: unknown) => {
   console.log(`[ADMIN-MANAGE-SUBSCRIPTION] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-type Action = "inspect" | "cancel_at_period_end" | "cancel_now" | "downgrade_basic" | "reactivate_access";
+import { planCancellation } from "../_shared/cancellationPolicy.ts";
+
+type Action = "inspect" | "cancel_at_period_end" | "cancel_now" | "downgrade_basic" | "reactivate_access" | "guided_diagnose" | "guided_execute";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -106,6 +108,82 @@ serve(async (req) => {
       return new Response(JSON.stringify(snapshot), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ---- Guided cancellation: diagnose (read-only) or execute the rule-matched path
+    if (action === "guided_diagnose" || action === "guided_execute") {
+      const subId = subscriptionId || pro.subscription_stripe_id || activeSubs[0]?.id;
+      if (!subId) throw new Error("Nenhuma assinatura ativa para diagnosticar.");
+      const sub: any = await stripe.subscriptions.retrieve(subId);
+      if (sub.customer !== customerId && customerId) throw new Error("Assinatura não pertence a este profissional.");
+      const price = sub.items?.data?.[0]?.price;
+      const interval = price?.recurring?.interval === "year" ? "year" : "month";
+      // Latest paid invoice of this subscription
+      const invs = await stripe.invoices.list({ subscription: subId, status: "paid", limit: 1 });
+      const inv: any = invs.data[0];
+      const paidCents = inv?.amount_paid ?? 0;
+      const startedAtMs = (inv?.status_transitions?.paid_at ?? sub.start_date ?? sub.created) * 1000;
+      let monthlyPriceCents: number | null = null;
+      let monthlyPriceId: string | null = null;
+      if (interval === "year" && price?.product) {
+        const monthly = await stripe.prices.list({ product: price.product as string, active: true, type: "recurring", limit: 20 });
+        const m = monthly.data.find((p: any) => p.recurring?.interval === "month" && p.currency === price.currency);
+        if (m?.unit_amount != null) { monthlyPriceCents = m.unit_amount; monthlyPriceId = m.id; }
+      }
+      const plan = planCancellation({ interval, startedAtMs, nowMs: Date.now(), paidCents, monthlyPriceCents });
+      const periodEnd = sub.items?.data?.[0]?.current_period_end ? new Date(sub.items.data[0].current_period_end * 1000).toISOString() : null;
+      const diagnosis = {
+        subscription_id: subId, interval, currency: price?.currency ?? "brl",
+        started_at: new Date(startedAtMs).toISOString(), paid_cents: paidCents,
+        invoice_id: inv?.id ?? null, monthly_price_cents: monthlyPriceCents, monthly_price_id: monthlyPriceId,
+        period_end: periodEnd, cancel_at_period_end: sub.cancel_at_period_end, ...plan,
+      };
+      if (action === "guided_diagnose") {
+        return new Response(JSON.stringify({ diagnosis }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (!reason?.trim()) throw new Error("Informe o motivo.");
+      if (plan.needsMonthlyPrice) throw new Error("Preço mensal equivalente não encontrado no Stripe; reembolso parcial não pode ser calculado.");
+      if (body?.expected_kind !== plan.kind || body?.expected_refund_cents !== plan.refundCents) {
+        return new Response(JSON.stringify({ error: "stale_diagnosis", message: "O diagnóstico mudou. Revise e confirme novamente.", diagnosis }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 });
+      }
+      let refund: any = null;
+      if (plan.refundCents > 0) {
+        if (!inv) throw new Error("Fatura paga não encontrada para reembolso.");
+        let pi: string | null = typeof inv.payment_intent === "string" ? inv.payment_intent : inv.payment_intent?.id ?? null;
+        if (!pi) {
+          const pays: any = await (stripe as any).invoicePayments.list({ invoice: inv.id, limit: 5 });
+          const p = pays.data.find((x: any) => x.status === "paid") ?? pays.data[0];
+          const v = p?.payment?.payment_intent;
+          pi = typeof v === "string" ? v : v?.id ?? null;
+        }
+        const charge = !pi && typeof inv.charge === "string" ? inv.charge : null;
+        if (!pi && !charge) throw new Error("Pagamento da fatura não localizado para reembolso.");
+        refund = await stripe.refunds.create({
+          ...(pi ? { payment_intent: pi } : { charge: charge! }),
+          amount: plan.refundCents, reason: "requested_by_customer",
+          metadata: { kind: plan.kind, used_months: String(plan.usedMonths), professional_id: pro.id },
+        }, { idempotencyKey: `guided-${subId}-${inv.id}-${plan.kind}` });
+      }
+      let stripeSub: any;
+      const upd: Record<string, any> = {};
+      if (plan.kind === "monthly_period_end") {
+        stripeSub = await stripe.subscriptions.update(subId, { cancel_at_period_end: true });
+      } else {
+        stripeSub = await stripe.subscriptions.cancel(subId);
+        const remaining = activeSubs.filter((s) => s.id !== subId);
+        if (remaining.length === 0) Object.assign(upd, { subscription_status: "inactive", subscription_stripe_id: null, subscription_grace_until: null, pro_access_expires_at: null });
+        else upd.subscription_stripe_id = remaining[0].id;
+        const { error: e } = await admin.from("professionals").update(upd).eq("id", pro.id);
+        if (e) throw new Error(e.message);
+      }
+      await admin.from("subscription_admin_actions").insert({
+        professional_id: pro.id, target_user_id: pro.user_id, target_email: pro.email,
+        action: `guided_${plan.kind}`, reason, stripe_subscription_id: subId,
+        stripe_result: { subscription_status: stripeSub.status, cancel_at_period_end: stripeSub.cancel_at_period_end, refund_id: refund?.id ?? null, refund_cents: plan.refundCents, used_months: plan.usedMonths, deduction_cents: plan.deductionCents, paid_cents: paidCents, period_end: periodEnd },
+        previous_status: pro.subscription_status, new_status: upd.subscription_status ?? pro.subscription_status,
+        performed_by: caller.id, performed_by_email: caller.email,
+      });
+      return new Response(JSON.stringify({ ok: true, diagnosis, refund_id: refund?.id ?? null, updates: upd }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ---- Guard: destructive actions on Stripe need an explicit target when duplicates exist

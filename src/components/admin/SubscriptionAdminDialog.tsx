@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, ShieldAlert, AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import GuidedCancellationPanel from "./GuidedCancellationPanel";
 
 interface Props {
   professional: any;
@@ -207,6 +208,13 @@ const SubscriptionAdminDialog = ({ professional, open, onOpenChange, onUpdated }
                 rows={2}
               />
             </div>
+
+            <GuidedCancellationPanel
+              professionalId={professional.id}
+              subscriptionId={selectedSub}
+              reason={reason}
+              onDone={(u) => { onUpdated?.(u); void inspect(); }}
+            />
 
             {/* Actions */}
             <div className="grid gap-2">
