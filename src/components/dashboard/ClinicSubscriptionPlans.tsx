@@ -1,3 +1,4 @@
+import AnnualRefundDisclaimer from "@/components/AnnualRefundDisclaimer";
 import { useState } from "react";
 import { Check, CreditCard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ export default function ClinicSubscriptionPlans() {
           <ToggleGroupItem value="annual">Anual</ToggleGroupItem>
         </ToggleGroup>
       </div>
+      <AnnualRefundDisclaimer annual={billing === "annual"} className="text-center" />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {plans.map((plan) => {
           const price = billing === "annual" ? plan.data.annual : plan.data.monthly;

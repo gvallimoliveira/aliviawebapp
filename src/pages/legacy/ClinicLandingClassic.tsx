@@ -1,3 +1,4 @@
+import AnnualRefundDisclaimer from "@/components/AnnualRefundDisclaimer";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -520,6 +521,8 @@ const ClinicLandingClassic = () => {
                 <Badge className="text-xs bg-primary/10 text-primary border-primary/20">~31% OFF</Badge>
               )}
             </div>
+
+            <AnnualRefundDisclaimer annual={billingAnnual} className="text-center mb-5" />
 
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
               className="max-w-2xl mx-auto mb-10 rounded-2xl border-2 border-green-500/30 bg-green-500/5 p-5 text-center">

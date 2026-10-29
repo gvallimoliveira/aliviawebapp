@@ -1,3 +1,4 @@
+import AnnualRefundDisclaimer from "@/components/AnnualRefundDisclaimer";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowRight } from "lucide-react";
@@ -63,6 +64,8 @@ const EarlyCtaSection = () => {
           {billing === "annual" && (
             <p className="text-xs text-muted-foreground mb-1">{t("b2b.billed_annually")}</p>
           )}
+
+          <AnnualRefundDisclaimer annual={billing === "annual"} />
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
             <Button onClick={handleCTA} size="lg" className="rounded-xl gap-2 px-8">
