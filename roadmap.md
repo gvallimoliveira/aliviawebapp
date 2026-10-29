@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Trial restaurado e aviso de reembolso anual
-- [ ] Restaurar renovação automática exclusiva da GV Fisio e renovar período vencido.
-- [ ] Aviso de saldo reembolsável após descontar meses usados pelo preço mensal nos suportes e seleção anual de paciente/PRO/Acadêmico/clínica; conferir telas e traduções.
+- [x] Renovação automática exclusiva restaurada; GV Fisio renovada até 13/11/2026, confirmada no banco e sete testes de isolamento/15 dias aprovados.
+- [x] Aviso anual discreto e suporte pt/en/es para paciente/PRO/Acadêmico/clínica; antigas negativas de reembolso acadêmico corrigidas. Nove testes passaram; seleção anual/mensal no PRO e avisos acadêmico/clínica e suportes conferidos no navegador sem erros. Paciente atualmente oferece mensal/avulso, sem seletor anual; nenhum plano novo criado. Reembolso informado como solicitação ao suporte, sem execução automática de pagamento. Trial restaurado confirmado no banco, não no painel autenticado do proprietário (sessão disponível corresponde a outra conta).
 
 ## Assinatura dentro do aviso de trial encerrado
 - [x] Planos mensal/anual no aviso e por botão durante trial; proprietário/admin segue direto ao Stripe. Clínica validada no servidor e transmitida ao provisionamento, retorno/cancelamento no painel e recarga do contexto após pagamento.
