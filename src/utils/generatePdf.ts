@@ -4203,3 +4203,66 @@ export async function generateMeasurementPdfBlob(options: {
   }
   return doc.output("blob");
 }
+
+/** Relatório fisioterapêutico livre (convênios, encaminhamentos, network médico).
+ *  Mesmo cabeçalho white-label, largura útil e rodapé dos demais relatórios. */
+export async function generateFreeReportPdfBlob(options: {
+  title: string;
+  recipient?: string;
+  patientName: string;
+  patientBirthDate?: string | null;
+  issueDate: string;
+  body: string;
+  language: string;
+} & Pick<PdfOptions, "professionalLogoUrl" | "clinicLogoUrl" | "clinicName" | "brandColor" | "responsibleProfessional">): Promise<Blob> {
+  const doc = createPdfDoc();
+  applyPdfBranding(doc, options.brandColor);
+  const isPt = options.language === "pt";
+  const isEs = options.language === "es";
+  const locale = isPt ? "pt-BR" : isEs ? "es-ES" : "en-US";
+  const logo = options.clinicLogoUrl || options.professionalLogoUrl;
+  const logoData = logo ? await loadExternalImageAsBase64(logo) : await loadLogoBase64();
+  if (logoData) drawBrandLogo(doc, logoData, SECTION_X, 15, 36, 16);
+  doc.setFont("Inter", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(...COLORS.primary);
+  const brandLines = doc.splitTextToSize(options.clinicName || "Aliv.iA", SECTION_TEXT_W - 42);
+  doc.text(brandLines, SECTION_X + 42, 21);
+  let y = Math.max(40, 24 + brandLines.length * 5);
+  y = renderSectionTitle(doc, y, options.title.trim() || (isPt ? "Relatório Fisioterapêutico" : isEs ? "Informe Fisioterapéutico" : "Physiotherapy Report"), COLORS.primary);
+  const SAFE_BOTTOM = 276;
+  const write = (text: string, style: "normal" | "bold" = "normal", gap = 2) => {
+    doc.setFont("Inter", style);
+    doc.setFontSize(9.5);
+    doc.setTextColor(...COLORS.foreground);
+    const lines: string[] = doc.splitTextToSize(text, SECTION_TEXT_W);
+    for (const line of lines) {
+      if (y + 4.6 > SAFE_BOTTOM) { doc.addPage(); y = MARGIN; }
+      doc.text(line, SECTION_X, y);
+      y += 4.6;
+    }
+    y += gap;
+  };
+  const birth = options.patientBirthDate ? new Date(options.patientBirthDate + (options.patientBirthDate.length === 10 ? "T12:00:00" : "")) : null;
+  write(`${isPt || isEs ? "Paciente" : "Patient"}: ${options.patientName}`, "bold", 0.5);
+  if (birth && !isNaN(birth.getTime())) write(`${isPt ? "Data de nascimento" : isEs ? "Fecha de nacimiento" : "Date of birth"}: ${birth.toLocaleDateString(locale)}`, "normal", 0.5);
+  write(`${isPt ? "Data de emissão" : isEs ? "Fecha de emisión" : "Issue date"}: ${new Date(options.issueDate + "T12:00:00").toLocaleDateString(locale)}`, "normal", 4);
+  if (options.recipient?.trim()) write(options.recipient.trim(), "bold", 4);
+  for (const para of options.body.replace(/\r/g, "").split(/\n/)) {
+    if (!para.trim()) { y += 2.5; continue; }
+    write(para, "normal", 1.2);
+  }
+  if (options.responsibleProfessional) await drawResponsibleBlock(doc, y + 6, isPt, options.responsibleProfessional);
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(...COLORS.primary);
+    doc.line(MARGIN, 284, PAGE_WIDTH - MARGIN, 284);
+    doc.setFont("Inter", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(options.clinicName || "Aliv.iA", SECTION_X, 290);
+    doc.text(`${i}/${pages}`, PAGE_WIDTH - SECTION_X, 290, { align: "right" });
+  }
+  return doc.output("blob");
+}
