@@ -235,27 +235,31 @@ export const buildCaption = (content: WorldContent, kind: BlockKind, rng: Rng) =
   const [hook, context] = ANGLES[kind](content, rng);
   const { sales } = content;
 
-  // Eixo temático: as provas seguem o assunto do gancho (top 5 afins, sorteia 3).
-  const ranked = rankProofsByAxis(`${hook} ${context}`, sales.proofs);
-  const proofs = rng.pickMany(ranked.slice(0, Math.max(3, Math.min(5, ranked.length))), 3);
-  const objection = rng.pick(sales.objections);
-  const offer = rng.pick(sales.offers);
-  const cta = rng.pick(sales.ctas);
-  const tags = rng.pickMany(sales.hashtags, 8);
+  // Listas vazias (públicos editoriais sem oferta/objeção) nunca podem quebrar a leva.
+  const list = (v?: string[]) => (Array.isArray(v) ? v.filter((x) => typeof x === "string" && x.trim()) : []);
+  const pickOr = (v?: string[]) => { const l = list(v); return l.length ? rng.pick(l) : ""; };
 
-  return [
+  // Eixo temático: as provas seguem o assunto do gancho (top 5 afins, sorteia 3).
+  const proofPool = list(sales?.proofs);
+  const ranked = rankProofsByAxis(`${hook ?? ""} ${context ?? ""}`, proofPool);
+  const proofs = ranked.length ? rng.pickMany(ranked.slice(0, Math.max(3, Math.min(5, ranked.length))), 3) : [];
+  const objection = pickOr(sales?.objections);
+  const offer = pickOr(sales?.offers);
+  const cta = pickOr(sales?.ctas);
+  const tagPool = list(sales?.hashtags);
+  const tags = tagPool.length ? rng.pickMany(tagPool, 8) : [];
+
+  const lines = [
     hook,
     "",
     context,
     "",
-    `Para ${sales.audience}:`,
-    ...proofs.map((p) => `• ${p}`),
-    "",
-    objection,
-    "",
+    ...(proofs.length ? [`Para ${sales?.audience ?? "você"}:`, ...proofs.map((p) => `• ${p}`), ""] : []),
+    ...(objection ? [objection, ""] : []),
     offer,
-    `👉 ${cta}`,
+    cta ? `👉 ${cta}` : "",
     "",
     tags.map((t) => `#${t}`).join(" "),
-  ].map(stripColdSpecs).join("\n");
+  ].map(stripColdSpecs);
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 };
