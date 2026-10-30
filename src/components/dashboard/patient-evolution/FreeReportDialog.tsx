@@ -9,6 +9,7 @@ import { Loader2, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { localISODate } from "@/lib/periodization";
+import { computePostOpStatus, autoCriteriaFromMeasurements, effectiveCriteria, postOpReportText, type MeasuredAssessment } from "@/lib/postOpTrajectory";
 
 type Template = "blank" | "referral" | "insurance" | "summary";
 
@@ -22,13 +23,15 @@ interface Props {
   clinicId?: string | null;
   professionalId?: string | null;
   language: string;
+  patientId?: string | null;
+  assessments?: MeasuredAssessment[];
 }
 
-const TEMPLATES: Record<Template, { label: string; title: string; body: (p: { name: string; hyp: string; n: number }) => string }> = {
+const TEMPLATES: Record<Template, { label: string; title: string; body: (p: { name: string; hyp: string; n: number; postOp?: string | null }) => string }> = {
   blank: { label: "Em branco", title: "RELATÓRIO FISIOTERAPÊUTICO", body: () => "" },
   referral: {
     label: "Encaminhamento", title: "ENCAMINHAMENTO",
-    body: ({ name, hyp }) => `Prezado(a) colega,\n\nEncaminho o(a) paciente ${name} para avaliação e conduta conjunta.\n\nHipótese fisioterapêutica: ${hyp || "[descrever]"}\n\nConduta realizada até o momento: [descrever]\n\nSolicitação: [descrever]\n\nColoco-me à disposição para troca de informações.`,
+    body: ({ name, hyp, postOp }) => `Prezado(a) colega,\n\nEncaminho o(a) paciente ${name} para avaliação e conduta conjunta.\n\nHipótese fisioterapêutica: ${hyp || "[descrever]"}\n\n${postOp ? postOp + "\n\n" : ""}Conduta realizada até o momento: [descrever]\n\nSolicitação: [descrever]\n\nColoco-me à disposição para troca de informações.`,
   },
   insurance: {
     label: "Convênio", title: "RELATÓRIO FISIOTERAPÊUTICO",
@@ -40,7 +43,7 @@ const TEMPLATES: Record<Template, { label: string; title: string; body: (p: { na
   },
 };
 
-export default function FreeReportDialog({ open, onOpenChange, patientName, patientBirthDate, latestHypothesis, assessmentCount, clinicId, professionalId, language }: Props) {
+export default function FreeReportDialog({ open, onOpenChange, patientName, patientBirthDate, latestHypothesis, assessmentCount, clinicId, professionalId, language, patientId, assessments = [] }: Props) {
   const [template, setTemplate] = useState<Template>("blank");
   const [title, setTitle] = useState(TEMPLATES.blank.title);
   const [recipient, setRecipient] = useState("");
@@ -50,12 +53,26 @@ export default function FreeReportDialog({ open, onOpenChange, patientName, pati
   const [busy, setBusy] = useState(false);
 
   useEffect(() => { if (open) { setIssueDate(localISODate()); } }, [open]);
+  const [postOpText, setPostOpText] = useState<string | null>(null);
+  // Beta admin: o acesso à trajetória é validado no servidor; sem acesso, nada é retornado.
+  useEffect(() => {
+    if (!open || !patientId) return;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase.from("post_op_profiles" as any).select("*").eq("patient_id", patientId).maybeSingle();
+      if (cancel || !data) { if (!cancel) setPostOpText(null); return; }
+      const row = data as any;
+      const crit = effectiveCriteria(row.criteria, autoCriteriaFromMeasurements(assessments, row.surgery_date));
+      setPostOpText(postOpReportText(computePostOpStatus({ ...row, criteria: crit }, localISODate()), row.surgery_date, crit));
+    })();
+    return () => { cancel = true; };
+  }, [open, patientId, assessments]);
 
   const applyTemplate = (t: Template) => {
     if (body.trim() && !window.confirm("Substituir o texto atual pelo modelo?")) return;
     setTemplate(t);
     setTitle(TEMPLATES[t].title);
-    setBody(TEMPLATES[t].body({ name: patientName, hyp: latestHypothesis || "", n: assessmentCount }));
+    setBody(TEMPLATES[t].body({ name: patientName, hyp: latestHypothesis || "", n: assessmentCount, postOp: postOpText }));
   };
 
   const generate = async () => {
@@ -112,7 +129,10 @@ export default function FreeReportDialog({ open, onOpenChange, patientName, pati
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label>Conteúdo</Label>
+              <div className="flex flex-wrap justify-end">
+              {postOpText && <Button type="button" variant="ghost" size="sm" onClick={() => setBody((b) => `${b}${b ? "\n\n" : ""}${postOpText}`)}>Inserir trajetória pós-operatória</Button>}
               {latestHypothesis && <Button type="button" variant="ghost" size="sm" onClick={() => setBody((b) => `${b}${b ? "\n\n" : ""}Hipótese fisioterapêutica: ${latestHypothesis}`)}>Inserir hipótese atual</Button>}
+              </div>
             </div>
             <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={14} className="text-sm leading-relaxed" placeholder="Escreva o relatório…" maxLength={12000} />
           </div>

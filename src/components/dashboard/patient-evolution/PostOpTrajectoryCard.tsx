@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Scissors, AlertTriangle, Target, Pencil } from "lucide-react";
-import { ACL_PHASES, computePostOpStatus } from "@/lib/postOpTrajectory";
+import { ACL_PHASES, computePostOpStatus, autoCriteriaFromMeasurements, effectiveCriteria, type MeasuredAssessment } from "@/lib/postOpTrajectory";
 import { localISODate } from "@/lib/periodization";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,7 +25,7 @@ interface Row {
 }
 
 /** Beta (somente admin, validado no servidor): trajetória pós-operatória do caso. */
-export default function PostOpTrajectoryCard({ patientId, suggestActivate }: { patientId: string; suggestActivate: boolean }) {
+export default function PostOpTrajectoryCard({ patientId, suggestActivate, assessments = [] }: { patientId: string; suggestActivate: boolean; assessments?: MeasuredAssessment[] }) {
   const { toast } = useToast();
   const [allowed, setAllowed] = useState(false);
   const [row, setRow] = useState<Row | null>(null);
@@ -44,7 +44,9 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate }: { p
     return () => { cancel = true; };
   }, [patientId]);
 
-  const status = useMemo(() => (row ? computePostOpStatus(row, localISODate()) : null), [row]);
+  const auto = useMemo(() => (row ? autoCriteriaFromMeasurements(assessments, row.surgery_date) : {}), [row, assessments]);
+  const effective = useMemo(() => effectiveCriteria(row?.criteria, auto), [row, auto]);
+  const status = useMemo(() => (row ? computePostOpStatus({ ...row, criteria: effective }, localISODate()) : null), [row, effective]);
 
   if (!allowed) return null;
 
@@ -146,7 +148,13 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate }: { p
           <p className="flex items-center gap-1 font-medium"><Target className="h-4 w-4 text-primary" /> Próximo marco: {status.phase.nextMilestone}</p>
           <div className="mt-2 space-y-1.5">
             {status.phase.exitCriteria.map((c) => (
-              <label key={c.id} className="flex items-center gap-2"><Checkbox checked={!!row.criteria?.[c.id]} onCheckedChange={(v) => toggle(c.id, !!v)} /> {c.label}</label>
+              <label key={c.id} className="flex items-start gap-2"><Checkbox className="mt-0.5" checked={!!effective[c.id]} onCheckedChange={(v) => toggle(c.id, !!v)} />
+                <span>{c.label}{auto[c.id] && row.criteria?.[c.id] === undefined && (
+                  <span className="block text-[11px] text-muted-foreground">Automático · {auto[c.id].source} · {new Date(auto[c.id].date + "T12:00:00").toLocaleDateString("pt-BR")}</span>
+                )}{auto[c.id] && row.criteria?.[c.id] !== undefined && row.criteria[c.id] !== auto[c.id].value && (
+                  <span className="block text-[11px] text-muted-foreground">Marcação manual (medição indica: {auto[c.id].value ? "atingido" : "pendente"})</span>
+                )}</span>
+              </label>
             ))}
           </div>
           <div className="mt-2 flex items-center gap-2"><Progress value={(status.met / status.total) * 100} className="h-2" /><span className="text-xs text-muted-foreground">{status.met}/{status.total}</span></div>
