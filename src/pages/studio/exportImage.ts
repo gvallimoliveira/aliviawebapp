@@ -868,6 +868,12 @@ export const lockRenderedTextLines = (source: HTMLElement, clone: HTMLElement) =
         span.style.display = "block";
         span.style.setProperty("white-space", "pre", "important");
         span.style.setProperty("width", "max-content", "important");
+        if (style.textAlign === "center") {
+          span.style.marginLeft = "auto";
+          span.style.marginRight = "auto";
+        } else if (["right", "end"].includes(style.textAlign)) {
+          span.style.marginLeft = "auto";
+        }
         /* Não limite a linha a 100%: se a métrica da fonte variar uma fração no
            foreignObject, max-width corta justamente a palavra final ("Com" no
            caso reportado). A largura visual é estabilizada abaixo. */
@@ -893,6 +899,75 @@ export const stabilizeLockedTextMetrics = (clone: HTMLElement) => {
     line.style.setProperty("transform-origin", "left top", "important");
     line.style.setProperty("transform", `scaleX(${scale})`, "important");
   });
+};
+
+/** WebKit offsets CSS box shadows inside SVG foreignObject. Bake only the
+ * shadow into pixels in the static clone, at its original stacking position. */
+export const rasterizeExportShadows = (node: HTMLElement) => {
+  const elements = [node, ...Array.from(node.querySelectorAll<HTMLElement>("*"))];
+  for (const element of elements) {
+    const style = getComputedStyle(element);
+    if (!style.boxShadow || style.boxShadow === "none") continue;
+    const shadows = style.boxShadow.split(/,(?![^()]*\))/).map((value) => {
+      const color = value.match(/rgba?\([^)]*\)/)?.[0];
+      const lengths = value.replace(/rgba?\([^)]*\)/g, "").match(/-?[\d.]+px/g)?.map(Number.parseFloat);
+      if (!color || !lengths || lengths.length < 3 || value.includes("inset")) return null;
+      return { color, x: lengths[0], y: lengths[1], blur: lengths[2], spread: lengths[3] ?? 0 };
+    });
+    // Leave unsupported/inset shadows intact rather than silently dropping them.
+    if (shadows.some((shadow) => !shadow)) continue;
+    const width = element.offsetWidth;
+    const height = element.offsetHeight;
+    if (!width || !height) continue;
+    const pad = Math.ceil(Math.max(...shadows.map((s) => s ? Math.abs(s.x) + Math.abs(s.y) + s.blur * 2 + Math.abs(s.spread) : 0)) + 2);
+    const canvas = document.createElement("canvas");
+    const ratio = safeRatio(width + pad * 2, height + pad * 2, 3);
+    canvas.width = Math.ceil((width + pad * 2) * ratio);
+    canvas.height = Math.ceil((height + pad * 2) * ratio);
+    const context = canvas.getContext("2d");
+    if (!context) continue;
+    const radius = Number.parseFloat(style.borderTopLeftRadius) || 0;
+    for (const shadow of [...shadows].reverse()) {
+      if (!shadow) continue;
+      context.save();
+      context.shadowColor = shadow.color;
+      context.shadowBlur = shadow.blur * ratio;
+      context.shadowOffsetX = shadow.x * ratio;
+      context.shadowOffsetY = shadow.y * ratio;
+      context.fillStyle = "#000";
+      roundedRect(context, (pad - shadow.spread) * ratio, (pad - shadow.spread) * ratio,
+        Math.max(0, width + shadow.spread * 2) * ratio, Math.max(0, height + shadow.spread * 2) * ratio,
+        Math.max(0, radius + shadow.spread) * ratio);
+      context.fill();
+      context.restore();
+    }
+    // Outset shadows never paint the box interior (including translucent boxes).
+    context.globalCompositeOperation = "destination-out";
+    roundedRect(context, pad * ratio, pad * ratio, width * ratio, height * ratio, radius * ratio);
+    context.fill();
+    const layer = document.createElement("div");
+    layer.dataset.studioExportShadow = "1";
+    Object.assign(layer.style, {
+      position: "absolute", left: `${-pad - (Number.parseFloat(style.borderLeftWidth) || 0)}px`,
+      top: `${-pad - (Number.parseFloat(style.borderTopWidth) || 0)}px`,
+      width: `${width + pad * 2}px`, height: `${height + pad * 2}px`,
+      pointerEvents: "none",
+    });
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("viewBox", `0 0 ${canvas.width} ${canvas.height}`);
+    const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    image.setAttribute("href", canvas.toDataURL());
+    image.setAttribute("width", String(canvas.width));
+    image.setAttribute("height", String(canvas.height));
+    svg.append(image);
+    layer.append(svg);
+    if (style.position === "static") element.style.position = "relative";
+    element.style.isolation = "isolate";
+    element.style.setProperty("box-shadow", "none", "important");
+    element.prepend(layer);
+  }
 };
 
 /**
@@ -979,6 +1054,10 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
 
   // Tokens da marca são herdados de wrappers da tela; materialize-os na cópia.
   const computed = getComputedStyle(source);
+  // These are inherited from the preview wrapper, absent on the detached clone.
+  ["text-align", "font-family", "font-size", "font-weight", "line-height", "color", "direction"].forEach((property) => {
+    clone.style.setProperty(property, computed.getPropertyValue(property));
+  });
   for (let i = 0; i < computed.length; i += 1) {
     const property = computed.item(i);
     if (property.startsWith("--")) clone.style.setProperty(property, computed.getPropertyValue(property));
@@ -999,6 +1078,7 @@ export const createStaticExportSurface = async (source: HTMLElement) => {
   await settleLayout();
   stabilizeLockedTextMetrics(clone);
   await settleLayout();
+  rasterizeExportShadows(clone);
 
   return {
     node: clone,
