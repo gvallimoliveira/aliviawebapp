@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Pré-operatório de LCA
-- [ ] Amarrar registro explícito na avaliação à preparação de LCA, com metas por etapa e data cirúrgica opcional, mantendo beta admin.
-- [ ] Preservar dados/relatórios e validar progressão, contagem e persistência; atualizar ajuda pt/en/es.
+- [x] Registro explícito de pré-operatório de LCA na avaliação habilita preparação no prontuário, com três etapas, metas e data cirúrgica opcional; mesma autorização beta/paciente. Região ou início isolados não ativam. Dados guardados separadamente sem alterar pós-operatórios.
+- [x] 21 testes passaram; quadro real montado no navegador autenticado com anamnese técnica: data 20/11 pré-preenchida, 21 dias até cirurgia, metas gravadas/lidas, avanço e etapas futuras conferidos. Paciente técnico removido. Ajuda pt/en/es e inserção em relatório ajustadas, build OK. Avaliação manual completa até prontuário e download PDF não reexecutados; Valéria não alterada.
 
 ## R-LCA — material clínico e organização didática
 - [x] Sete prints transcritos em docs/rlca-referencia-clinica.md com origem, métricas, métodos, objetivos e avançar/manter/regredir; cortes não universais separados da evidência identificada.

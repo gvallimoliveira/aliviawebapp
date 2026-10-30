@@ -32,7 +32,7 @@
 - Load control has one session-entry path (monitored-session block + microcycle shortcut); the load card is read-only plus manual check-in, and cardio analysis appears only when HR data exists.
 - Load-control "Conduta do dia" derives only from `dailyConduct.ts` (safety → recovery → yesterday/effort coherence → ACWR trend); one deterministic priority order keeps the top recommendation consistent and works with a single check-in.
 - TSL 1-min, TC6M and TD6M use only pure `cardioFunctionalTests.ts`; keep record, sheet and reports consistent without AI.
-- Read nested AGENTS.md before editing its directory; Studio copy rules live in src/pages/studio/AGENTS.md.
+- Read nested AGENTS.md before edits; Studio and patient-evolution rules live there.
 - Patient links use ClinicBrandHeader/scoped clinicAssessmentTheme, including WelcomeStep. PDFs share section renderers, resolveAssessmentBranding and per-document applyPdfBranding; preserve warnings and clinic isolation.
 - HEP programs persist clinic_id at creation; public branding resolves only through the valid program token, never by guessing a clinic from the professional.
 - HEP writes use can_manage_hep for programs and items: solo requires the author's active PRO subscription; clinic requires active clinical actor/author membership in the stored clinic and an active/trial clinic, never a separate PRO subscription or another clinic's membership.
