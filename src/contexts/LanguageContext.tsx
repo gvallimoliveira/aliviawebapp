@@ -1,36 +1,50 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import i18n, { changeLanguageSafely } from "@/i18n";
 
-type Language = "pt" | "en" | "es";
+export type Language = "pt" | "en" | "es";
 
 interface LanguageContextType {
   language: Language;
   toggleLanguage: () => void;
+  selectLanguage: (language: Language) => Promise<void>;
   t: (key: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>("pt");
-  const [bundleTick, setBundleTick] = useState(0);
+  const currentLanguage = (): Language => i18n.language === "en" ? "en" : i18n.language === "es" ? "es" : "pt";
+  const [language, setLanguage] = useState<Language>(currentLanguage);
+  const switching = useRef(false);
+
+  useEffect(() => {
+    const sync = () => setLanguage(currentLanguage());
+    i18n.on("languageChanged", sync);
+    return () => { i18n.off("languageChanged", sync); };
+  }, []);
+
+  const selectLanguage = useCallback(async (next: Language) => {
+    if (switching.current) return;
+    switching.current = true;
+    try {
+      await changeLanguageSafely(next);
+    } finally {
+      switching.current = false;
+    }
+  }, []);
 
   const toggleLanguage = useCallback(() => {
-    setLanguage((prev) => {
-      const next = prev === "pt" ? "en" : prev === "en" ? "es" : "pt";
-      // en/es bundles are lazy-loaded; re-render once they are registered.
-      void changeLanguageSafely(next).then(() => setBundleTick((v) => v + 1));
-      return next;
-    });
-  }, []);
+    const prev = currentLanguage();
+    void selectLanguage(prev === "pt" ? "en" : prev === "en" ? "es" : "pt");
+  }, [selectLanguage]);
 
   const t = useCallback(
     (key: string) => i18n.t(key),
-    [language, bundleTick]
+    [language]
   );
 
   return (
-    <LanguageContext.Provider value={{ language, toggleLanguage, t }}>
+    <LanguageContext.Provider value={{ language, toggleLanguage, selectLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );
