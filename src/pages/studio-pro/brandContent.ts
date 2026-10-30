@@ -1,4 +1,4 @@
-import type { WorldContent } from "@/pages/studio/content";
+import { WORLDS, isWorldId, type WorldContent } from "@/pages/studio/content";
 import type { TopicId } from "@/pages/studio/topics";
 import { createRng, type Rng } from "@/pages/studio/rng";
 import { voiceRegister, type VoiceRegister } from "@/pages/studio/lexicon";
@@ -2271,7 +2271,9 @@ export const buildSegmentContent = ({
     const picked = pickGlobalAudience({ audiences, variationSeed, segmentWeights });
     if (picked) {
       const relation = relationFor(picked);
-      return finish(applyAudience(root, brand, picked, relation), relation, picked);
+      const world = audienceRootId(picked, audiences);
+      const official = isAliviaCtaBrand(brand) && world && isWorldId(world) ? WORLDS[world] : undefined;
+      return finish(official && picked.id === world ? official : applyAudience(official ?? root, brand, picked, relation), relation, picked);
     }
     return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
   }
@@ -2280,7 +2282,9 @@ export const buildSegmentContent = ({
   const audience = resolveAudience(audiences, segment);
   if (!audience) return finish(applyGlobal(root, brand, audiences, positioning, dna), relationFor());
   const relation = relationFor(audience);
-  const built = finish(applyAudience(root, brand, audience, relation), relation, audience);
+  const world = audienceRootId(audience, audiences);
+  const official = isAliviaCtaBrand(brand) && world && isWorldId(world) ? WORLDS[world] : undefined;
+  const built = finish(official && audience.id === world ? official : applyAudience(official ?? root, brand, audience, relation), relation, audience);
   /**
    * O sub-nicho de slogan é o único caso em que uma frase entra JÁ PRONTA na
    * arte: ela é a assinatura declarada da marca, então passa depois dos filtros

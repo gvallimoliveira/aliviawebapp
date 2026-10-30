@@ -65,7 +65,7 @@ const proTools = [
   { key: "differential_diagnosis", icon: Brain },
   // Localized FAQ rf22 also explains birthdate-independent dated health reminders and preserved clinician ceilings.
   // HEP/load guidance is localized under support.pro.tool.hep.desc.
-  // Global list-coherence guidance is localized under studio_creative_network.desc.
+  // Final-copy caption and factual-preservation guidance is localized under studio_creative_network.desc.
   { key: "hep", icon: Dumbbell },
   { key: "hep_templates", icon: FileText },
   { key: "ai_test_suggestions", icon: Lightbulb },

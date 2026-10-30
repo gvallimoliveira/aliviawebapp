@@ -1691,16 +1691,28 @@ const StudioProCreate = ({
     }
   };
 
+  // Resolve at click time, after FrozenArt/manual edits, not from another RNG.
+  const captionFor = (indexes: number[]) => {
+    const index = indexes[0];
+    if (index === undefined || !blocks[index]) return "";
+    const visible = indexes.flatMap((i) => {
+      const node = artNode(i);
+      if (!node) return [];
+      return Object.values(readArtText(node)).filter((text) =>
+        text.trim() && !/^[@#]|^\d+(?:\s*\/\s*\d+)?$|^arraste|^aliv\.?ia$|aliviawebapp\.com/i.test(text.trim()));
+    });
+    const directed = director.contentFor(index);
+    const captionContent = isAlivia ? { ...directed, sales: { ...directed.sales, ctas: directed.closings.map((c) => c.cta).filter(Boolean) } } : directed;
+    return buildCaption(captionContent, blocks[index].kind,
+      createRng(`${brand.id}:${seed}:caption:${blocks[index].kind}:${index}`), visible);
+  };
+
   /** Baixa as legendas da versão inteira em um .txt. */
   const downloadCaptions = () => {
     const text = blocks
       .map(({ kind }, i) => {
         // Mesma regra do card: legenda escrita a partir do texto dirigido.
-        const caption = buildCaption(
-          director.contentFor(i),
-          kind,
-          createRng(`${brand.id}:${seed}:caption:${kind}:${i}`),
-        );
+        const caption = captionFor([i]);
         return `# ${String(i + 1).padStart(2, "0")} · ${kind}\n${caption}`;
       })
       .join("\n\n---\n\n");
@@ -2117,11 +2129,6 @@ const StudioProCreate = ({
           // A legenda nasce do MESMO texto que o diretor escreveu para a arte.
           // Antes ela sorteava do acervo inteiro e podia falar de outro público,
           // outra dor e outra oferta do que está escrito na imagem.
-          const caption = buildCaption(
-            director.contentFor(first.index),
-            first.block.kind,
-            createRng(`${brand.id}:${seed}:caption:${first.block.kind}:${first.index}`),
-          );
           const isSaved = group.carousel
             ? indexes.every((i) => saved.has(i))
             : saved.has(first.index);
@@ -2212,7 +2219,7 @@ const StudioProCreate = ({
                   )}
                   PNG
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => copyCaption(caption)}>
+                <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => copyCaption(captionFor(slideIndexes))}>
                   <Type className="mr-1.5 h-3.5 w-3.5" />
                   Legenda
                 </Button>
@@ -2284,7 +2291,7 @@ const StudioProCreate = ({
                   variant={slideSaved ? "secondary" : "default"}
                   className="h-8 rounded-full text-xs"
                   disabled={slideSaved || busy === `save-${item.index}`}
-                  onClick={() => void save(item.index, item.block.kind, caption)}
+                  onClick={() => void save(item.index, item.block.kind, captionFor(slideIndexes))}
                 >
                   {busy === `save-${item.index}` ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -2337,7 +2344,7 @@ const StudioProCreate = ({
                   size="sm"
                   variant="outline"
                   className="h-8 rounded-full text-xs"
-                  onClick={() => copyCaption(caption)}
+                  onClick={() => copyCaption(captionFor(indexes))}
                 >
                   <Type className="mr-1.5 h-3.5 w-3.5" />
                   Legenda
@@ -2443,7 +2450,7 @@ const StudioProCreate = ({
                   variant={isSaved ? "secondary" : "default"}
                   className="h-8 rounded-full text-xs"
                   disabled={isSaved || busy === `save-${first.index}`}
-                  onClick={() => void save(first.index, first.block.kind, caption)}
+                  onClick={() => void save(first.index, first.block.kind, captionFor(indexes))}
                 >
                   {busy === `save-${first.index}` ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />

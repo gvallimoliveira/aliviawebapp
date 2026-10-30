@@ -1,5 +1,10 @@
 # Roadmap
 
+## Studio — linguagem após auditoria de três lotes
+- [x] Escrita natural preserva frases completas e fatos; intervalos/negações protegidos, concordância e corte de frases da pinça corrigidos.
+- [x] Copiar/baixar/salvar legendas usa texto renderizado; objeções soltas removidas, público oficial ligado ao seu acervo em vez de um sorteio independente.
+- [x] Três gerações autenticadas finais: 16, 12 e 13 artes, sem erro de execução; imagens e legendas conferidas. Sem publicar ou salvar na galeria. Ainda há textos promocionais antigos e descrições extensas a revisar editorialmente; não se promete qualidade definitiva de todas as peças.
+
 ## Trial restaurado e aviso de reembolso anual
 - [x] Renovação automática exclusiva restaurada; GV Fisio renovada até 13/11/2026, confirmada no banco e sete testes de isolamento/15 dias aprovados.
 - [x] Aviso anual discreto e suporte pt/en/es para paciente/PRO/Acadêmico/clínica; antigas negativas de reembolso acadêmico corrigidas. Nove testes passaram; seleção anual/mensal no PRO e avisos acadêmico/clínica e suportes conferidos no navegador sem erros. Paciente atualmente oferece mensal/avulso, sem seletor anual; nenhum plano novo criado. Reembolso informado como solicitação ao suporte, sem execução automática de pagamento. Trial restaurado confirmado no banco, não no painel autenticado do proprietário (sessão disponível corresponde a outra conta).

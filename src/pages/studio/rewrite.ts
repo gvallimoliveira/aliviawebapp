@@ -156,7 +156,7 @@ const applyConnectors = (text: string, rng: Rng, naturalness: Naturalness = "exp
 
 const restructure = (sentence: string, rng: Rng, naturalness: Naturalness = "expressive", budget?: FormulaBudget): string => {
   const core = noDot(sentence);
-  const candidates = PATTERNS.map((p) => ({ p, m: core.match(p.re) })).filter((c) => c.m);
+  const candidates = PATTERNS.filter((p) => p.id !== "duas-oracoes").map((p) => ({ p, m: core.match(p.re) })).filter((c) => c.m);
   if (!candidates.length) return sentence;
   const chosen = candidates[rng.int(candidates.length)];
   let outs = chosen.p.outs.map((fn, i) => ({ fn, i }));
@@ -238,6 +238,10 @@ export type RewriteOptions = {
 export const rephrase = (text: string, options: RewriteOptions): string => {
   if (!text || !text.trim()) return text;
   const { register, seed, intensity = 0.58, forbidden = [], naturalness = "expressive", budget, style } = options;
+  // Facts are not rhetorical ingredients. Never rearrange ranges, enumerations,
+  // clinical terminology or negations; natural voice selects complete source copy.
+  const factual = /\d|[;×%]|\b(?:HEP|STEPS|DIF[Ii]|FABQ|ODI|HOOS|LGPD|PubMed)\b|red flags|medicaç|hipertens|cardiopat|diabetes|catastrof|medo.evitaç|obrigat|\bnão\b|\bsem\b/i.test(text);
+  if (naturalness === "natural" || factual) return text.trim().replace(/\s+/g, " ");
   const mode = modeForIntensity(intensity);
 
   text = tameFormulas(text, budget);
