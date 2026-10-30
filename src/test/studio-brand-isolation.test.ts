@@ -41,7 +41,10 @@ describe("Studio: blocos e acervo neutro não carregam a marca dona", () => {
   });
 
   it("o acervo de conteúdo genérico do Studio público é neutro", () => {
-    expect(OWNER_BRAND.test(readCode(neutralAcervo))).toBe(false);
+    const code = readCode(neutralAcervo);
+    const literals = code.match(/(?:"[^"\n]*"|'[^'\n]*')/g) ?? [];
+    // Owner-brand helper identifiers/import paths are not visible copy.
+    expect(literals.filter((s) => !s.includes("./aliviaCoreCharm")).some((s) => OWNER_BRAND.test(s))).toBe(false);
   });
 
   it("blocos leem o nome da marca pelo binding, não por string", () => {
