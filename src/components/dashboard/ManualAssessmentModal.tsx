@@ -2146,9 +2146,9 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                     )}
                   </div>
                   <div>
-                    <Label className="text-xs">{isPt ? "Cirurgias prévias" : "Previous surgeries"}</Label>
+                    <Label className="text-xs">{isPt ? "Cirurgias prévias ou planejadas" : "Previous or planned surgeries"}</Label>
                     <DemoShield on={demoMode} onAutofill={() => autofill(previousSurgeries, MOCK_MANUAL_CASE.previousSurgeries, setPreviousSurgeries, "")}>
-                      <Textarea value={previousSurgeries} onChange={(e) => setPreviousSurgeries(e.target.value)} rows={2} className="mt-1 text-sm" placeholder={onset === "post_surgery" && isPt ? "Ex.: Reconstrução do LCA em 08/10/2026, enxerto de flexores, sutura meniscal. Cirurgião: 1 muleta por 2 semanas." : undefined} />
+                      <Textarea value={previousSurgeries} onChange={(e) => setPreviousSurgeries(e.target.value)} rows={2} className="mt-1 text-sm" placeholder={isPt ? onset === "post_surgery" ? "Ex.: Reconstrução do LCA em 08/10/2026, enxerto de flexores, sutura meniscal. Cirurgião: 1 muleta por 2 semanas." : "Ex.: Pré-operatório de reconstrução do LCA. Cirurgia marcada para 20/11/2026 (se definida). Restrições do cirurgião: ..." : undefined} />
                     </DemoShield>
                     {onset === "post_surgery" && isPt && (
                       <p className="mt-1 text-[11px] text-muted-foreground">Data, enxerto, sutura meniscal e restrições do cirurgião escritos aqui pré-preenchem a trajetória pós-operatória no prontuário.</p>
