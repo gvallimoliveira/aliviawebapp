@@ -3,7 +3,7 @@
  * tempo desde a cirurgia indica a fase esperada, mas a progressão depende
  * dos critérios marcados pelo fisioterapeuta. Nunca libera atividade sozinho.
  */
-export type PostOpSurgery = "acl_reconstruction";
+export type PostOpSurgery = "acl_reconstruction" | "rotator_cuff_repair";
 
 export interface PostOpCriterion { id: string; label: string; }
 export interface PostOpPhase {
@@ -19,7 +19,10 @@ export interface PostOpPhase {
 
 export interface PostOpProfileInput {
   surgery_date: string; // YYYY-MM-DD
+  surgery_type?: string | null;
+  /** LCA: enxerto. Manguito: tamanho da rotura (small_medium | large_massive). */
   graft_type?: string | null;
+  /** LCA: sutura meniscal. Manguito: subescapular reparado. */
   meniscal_repair?: boolean;
   criteria?: Record<string, boolean>;
 }
@@ -105,7 +108,7 @@ export interface PostOpStatus {
   caveats: string[];
 }
 
-export function computePostOpStatus(p: PostOpProfileInput, todayIso: string, phases = ACL_PHASES): PostOpStatus {
+export function computePostOpStatus(p: PostOpProfileInput, todayIso: string, phases = phasesFor(p.surgery_type, p.graft_type)): PostOpStatus {
   const days = daysSince(p.surgery_date, todayIso);
   const week = Math.floor(days / 7) + 1;
   let expected = 0;
@@ -118,6 +121,11 @@ export function computePostOpStatus(p: PostOpProfileInput, todayIso: string, pha
   const phase = phases[current];
   const met = phase.exitCriteria.filter((c) => crit[c.id]).length;
   const caveats: string[] = [];
+  if (p.surgery_type === "rotator_cuff_repair") {
+    if (p.graft_type === "large_massive") caveats.push("Rotura grande/maciça: fases atrasadas em 2 semanas pelo maior risco de re-rotura.");
+    if (p.meniscal_repair) caveats.push("Subescapular reparado: rotação externa passiva limitada a 20–30° nas 6 primeiras semanas; evitar rotação interna resistida até ~12 semanas.");
+    return { days, week, expectedPhaseIndex: expected, currentPhaseIndex: current, phase, met, total: phase.exitCriteria.length, behindSchedule: current < expected, caveats };
+  }
   if (p.meniscal_repair) caveats.push("Sutura meniscal: respeitar limites de flexão e descarga definidos pelo cirurgião.");
   if (p.graft_type === "patellar") caveats.push("Enxerto patelar: monitorar dor anterior/tendão patelar.");
   if (p.graft_type === "hamstring") caveats.push("Enxerto de flexores: progredir força de posteriores com cautela.");
@@ -180,13 +188,14 @@ export function effectiveCriteria(manual: Record<string, boolean> | undefined, a
   return res;
 }
 
-export function postOpReportText(status: PostOpStatus, surgeryDate: string, criteria: Record<string, boolean>): string {
+export function postOpReportText(status: PostOpStatus, surgeryDate: string, criteria: Record<string, boolean>, surgeryType?: string | null): string {
   const d = new Date(surgeryDate + "T12:00:00").toLocaleDateString("pt-BR");
+  const label = (SURGERY_LABELS[(surgeryType as PostOpSurgery) || "acl_reconstruction"] || SURGERY_LABELS.acl_reconstruction).toLowerCase().replace("lca", "LCA");
   const lines = [
-    `Pós-operatório de reconstrução do LCA (cirurgia em ${d}) — semana ${status.week} (D+${status.days}).`,
+    `Pós-operatório de ${label} (cirurgia em ${d}) — semana ${status.week} (D+${status.days}).`,
     `Fase atual: ${status.phase.title}.`,
     `Próximo marco: ${status.phase.nextMilestone}.`,
-    `Critérios da fase (${status.met}/${status.total}):`,
+    `Metas da fase (${status.met}/${status.total}):`,
     ...status.phase.exitCriteria.map((c) => `• ${c.label}: ${criteria[c.id] ? "atingido" : "pendente"}`),
   ];
   if (status.behindSchedule) lines.push("Observação: critérios ainda pendentes em relação ao tempo pós-operatório esperado.");
@@ -195,6 +204,7 @@ export function postOpReportText(status: PostOpStatus, surgeryDate: string, crit
 
 // ---------- Ponte anamnese → trajetória ----------
 export interface PostOpPrefill {
+  surgery_type: PostOpSurgery;
   surgery_date: string | null;
   graft_type: string | null;
   meniscal_repair: boolean;
@@ -215,26 +225,106 @@ export function prefillFromAnamnesis(assessments: Array<{ created_at: string; an
     const an = a.anamnesis_data || {};
     const surg = String(an.previousSurgeries || an.previousTreatments || "");
     const text = [surg, an.history, an.additionalClinicalNotes, an.chiefComplaint].filter(Boolean).join("\n");
-    if (an.onset !== "post_surgery" && !/lca|lce|cruzado|acl/i.test(text)) continue;
+    const isCuff = /manguito|supraespinh|infraespinh|subescapul|rotator cuff/i.test(text);
+    if (an.onset !== "post_surgery" && !isCuff && !/lca|lce|cruzado|acl/i.test(text)) continue;
     let surgery_date: string | null = null;
     const iso = text.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
     const br = text.match(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/);
     if (iso) surgery_date = `${iso[1]}-${iso[2]}-${iso[3]}`;
     else if (br) surgery_date = toIso(+br[1], +br[2], +br[3]);
     if (surgery_date && surgery_date > todayIso) surgery_date = null;
-    const graft_type = /patelar|patellar|osso.?tend[aã]o.?osso|\bbtb\b/i.test(text) ? "patellar"
+    const surgery_type: PostOpSurgery = isCuff ? "rotator_cuff_repair" : "acl_reconstruction";
+    const graft_type = isCuff ? (/maci[çc]|grande|extens|\b[3-9]\s?cm/i.test(text) ? "large_massive" : /pequen|m[eé]di/i.test(text) ? "small_medium" : null) : /patelar|patellar|osso.?tend[aã]o.?osso|\bbtb\b/i.test(text) ? "patellar"
       : /flexor|isquiotib|semitend|gr[aá]cil|hamstring|\bst\b/i.test(text) ? "hamstring"
       : /quadricipital|tend[aã]o do quadr[ií]ceps/i.test(text) ? "quadriceps" : null;
-    const meniscal_repair = /(sutura|reparo)\s+(do\s+|de\s+)?menisc|meniscorrafia/i.test(text);
+    const meniscal_repair = isCuff ? /subescapul/i.test(text) : /(sutura|reparo)\s+(do\s+|de\s+)?menisc|meniscorrafia/i.test(text);
     const restr = text.split(/\n|(?<=[.;])\s+/).map((s) => s.trim())
-      .filter((s) => /restri|muleta|cirurgi[aã]o|m[eé]dico|evitar|proib|sem carga|descarga|brace|[oó]rtese|limite de flex/i.test(s));
-    return { surgery_date, graft_type, meniscal_repair, surgeon_restrictions: restr.length ? restr.join(" ") : null, sourceDate: a.created_at.slice(0, 10) };
+      .filter((s) => /restri|muleta|tip[oó]ia|tenodese|tenotomia|cirurgi[aã]o|m[eé]dico|evitar|proib|sem carga|descarga|brace|[oó]rtese|limite de flex/i.test(s));
+    return { surgery_type, surgery_date, graft_type, meniscal_repair, surgeon_restrictions: restr.length ? restr.join(" ") : null, sourceDate: a.created_at.slice(0, 10) };
   }
   return null;
 }
 
 /** Data em que a fase de índice i passa a ser biologicamente permitida pelo tempo. */
-export function phaseUnlockDate(surgeryDate: string, phaseIndex: number, phases = ACL_PHASES): string {
+export function phaseUnlockDate(surgeryDate: string, phaseIndex: number, phases: PostOpPhase[] = ACL_PHASES): string {
   const ms = Date.UTC(+surgeryDate.slice(0, 4), +surgeryDate.slice(5, 7) - 1, +surgeryDate.slice(8, 10)) + Math.max(0, phases[phaseIndex].fromWeek - 1) * 7 * 86400000;
   return new Date(ms).toISOString().slice(0, 10);
+}
+
+// ---------- Reparo do manguito rotador ----------
+export const ROTATOR_CUFF_PHASES: PostOpPhase[] = [
+  {
+    id: "rc_protection", title: "Proteção máxima e ADM passiva", fromWeek: 0,
+    biologicalNote: "Tendão em cicatrização inicial na inserção óssea: o reparo é mais frágil nas primeiras semanas.",
+    focus: ["Tipóia conforme cirurgião", "ADM passiva dentro dos limites", "Pendulares", "Cotovelo, punho, mão e cervical", "Controle de dor e sono"],
+    avoid: ["ADM ativa do ombro operado", "Levantar peso ou apoiar no braço", "Ultrapassar limites de ADM do cirurgião"],
+    exitCriteria: [
+      { id: "rc_pain_rest", label: "Dor controlada em repouso e no sono" },
+      { id: "rc_prom_elev", label: "Elevação passiva ≥ 120°" },
+      { id: "rc_prom_er", label: "Rotação externa passiva ≈ 30–45° (respeitar subescapular)" },
+      { id: "rc_no_stiff", label: "Sem sinais de rigidez/capsulite" },
+    ],
+    nextMilestone: "ADM ativa-assistida e ativa",
+  },
+  {
+    id: "rc_active", title: "ADM ativa-assistida e ativa", fromWeek: 7,
+    focus: ["Desmame da tipóia", "Ativa-assistida → ativa", "Isométricos submáximos", "Controle escapular"],
+    avoid: ["Fortalecimento resistido do manguito", "Movimentos bruscos ou carga acima do ombro"],
+    exitCriteria: [
+      { id: "rc_arom_140", label: "Elevação ativa ≥ 140° sem encolher o ombro" },
+      { id: "rc_prom_full", label: "ADM passiva próxima do lado oposto" },
+      { id: "rc_pain_adl", label: "Dor ≤ 3/10 nas atividades do dia a dia" },
+    ],
+    nextMilestone: "Fortalecimento inicial",
+  },
+  {
+    id: "rc_strength", title: "Fortalecimento inicial", fromWeek: 13,
+    biologicalNote: "Integração tendão-osso ocorre por volta de 12–16 semanas: carga progressiva e monitorada.",
+    focus: ["Manguito e escapulares com elástico/carga leve", "Resistência muscular", "Propriocepção"],
+    avoid: ["Carga pesada acima da cabeça", "Arremesso ou esporte de contato"],
+    exitCriteria: [
+      { id: "rc_strength_80", label: "Força de rotação externa/interna ≥ 80% do lado oposto" },
+      { id: "rc_arom_full", label: "ADM ativa completa sem dor" },
+    ],
+    nextMilestone: "Fortalecimento avançado e gesto funcional",
+  },
+  {
+    id: "rc_advanced", title: "Fortalecimento avançado e gesto funcional", fromWeek: 17,
+    focus: ["Carga progressiva", "Pliometria de membro superior", "Gesto do trabalho/esporte"],
+    avoid: ["Retorno total a esporte ou trabalho pesado sem critério"],
+    exitCriteria: [
+      { id: "rc_strength_90", label: "Força ≥ 90% do lado oposto" },
+      { id: "rc_functional_tests", label: "Testes funcionais de membro superior satisfatórios" },
+      { id: "rc_psych_ready", label: "Confiança/prontidão para retomar a atividade" },
+    ],
+    nextMilestone: "Retorno às atividades de alta demanda",
+  },
+  {
+    id: "rc_return", title: "Retorno às atividades / alta", fromWeek: 25,
+    biologicalNote: "Tempo sozinho não libera: decisão por avaliação funcional e cirurgião.",
+    focus: ["Retorno gradual ao esporte/trabalho", "Manutenção de força"],
+    avoid: ["Liberação baseada apenas em tempo"],
+    exitCriteria: [
+      { id: "rc_battery", label: "Avaliação funcional completa" },
+      { id: "rc_surgeon_clearance", label: "Liberação do cirurgião" },
+    ],
+    nextMilestone: "Alta",
+  },
+];
+
+export const SURGERY_LABELS: Record<PostOpSurgery, string> = {
+  acl_reconstruction: "Reconstrução do LCA",
+  rotator_cuff_repair: "Reparo do manguito rotador",
+};
+
+/**
+ * Fases do caso. Manguito: rotura grande/maciça (graft_type = "large_massive")
+ * atrasa cada fase após a primeira em 2 semanas.
+ */
+export function phasesFor(surgery: string | null | undefined, graftOrSize?: string | null): PostOpPhase[] {
+  if (surgery === "rotator_cuff_repair") {
+    if (graftOrSize !== "large_massive") return ROTATOR_CUFF_PHASES;
+    return ROTATOR_CUFF_PHASES.map((p, i) => (i === 0 ? p : { ...p, fromWeek: p.fromWeek + 2 }));
+  }
+  return ACL_PHASES;
 }
