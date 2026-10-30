@@ -189,8 +189,13 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
                   {row.surgeon_restrictions && <li>• Cirurgião: {row.surgeon_restrictions}</li>}
                 </ul>
               ) : null}
-              <div>
-                <p className="flex items-center gap-1 font-medium"><Target className="h-4 w-4 text-primary" /> {isCurrent ? "Critérios para o próximo marco" : "Critérios de saída"}: {ph.nextMilestone}</p>
+              <div className="grid gap-3 sm:grid-cols-2 text-xs">
+                <div><p className="font-medium mb-1">{isCurrent ? "O que trabalhar agora" : "O que se trabalha nesta fase"}</p>{ph.focus.map((f) => <p key={f}>• {f}</p>)}</div>
+                <div><p className="font-medium mb-1">Evitar nesta fase</p>{ph.avoid.map((f) => <p key={f}>• {f}</p>)}</div>
+              </div>
+              <div className="rounded-md border border-dashed p-3">
+                <p className="flex items-center gap-1 font-medium"><Target className="h-4 w-4 text-primary" /> Metas para liberar a etapa seguinte</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">São construídas ao longo desta fase — não são exigidas no início. Próximo marco: {ph.nextMilestone}.</p>
                 <div className="mt-2 space-y-1.5">
                   {ph.exitCriteria.map((c) => isCurrent ? (
                     <label key={c.id} className="flex items-start gap-2"><Checkbox className="mt-0.5" checked={!!effective[c.id]} onCheckedChange={(v) => toggle(c.id, !!v)} />
@@ -206,11 +211,7 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
                     </p>
                   ))}
                 </div>
-                {isCurrent && <div className="mt-2 flex items-center gap-2"><Progress value={(status.met / status.total) * 100} className="h-2" /><span className="text-xs text-muted-foreground">{status.met}/{status.total}</span></div>}
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 text-xs">
-                <div><p className="font-medium mb-1">{isCurrent ? "Foco agora" : "Foco da fase"}</p>{ph.focus.map((f) => <p key={f}>• {f}</p>)}</div>
-                <div><p className="font-medium mb-1">Evitar nesta fase</p>{ph.avoid.map((f) => <p key={f}>• {f}</p>)}</div>
+                {isCurrent && <div className="mt-2 flex items-center gap-2"><Progress value={(status.met / status.total) * 100} className="h-2" /><span className="text-xs text-muted-foreground">{status.met}/{status.total} metas</span></div>}
               </div>
             </>
           );
