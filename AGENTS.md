@@ -2,8 +2,8 @@
 - Clinic checkout shares landing prices and server-validated metadata through checkout/recovery; refresh context on return to avoid duplicates.
 - Annual refund notices share localized policy keys across support/landings; annualRefund.ts is the reference calculation, not automatic payment execution.
 - Clinic trial renewal uses a server-authorized, owner-and-clinic-scoped RPC on access/expiry and trial_started_at rather than mutating created_at; ordinary customers never receive the administrator exception.
-- Personal patient navigation resolves legacy tabs through patientNavigation; server-scoped care-provider/HEP RPCs determine daily-care presentation, while existing check-in, exercise, scheduling and messaging components retain their own authorization and persistence.
-- Scope clinic and autonomous data before querying or limiting: solo requires clinic_id IS NULL plus professional ownership; clinic requires the selected clinic_id. Reset context-owned screens on switches, and validate agent thread/patient scope server-side independently of user ownership.
+- Patient navigation uses patientNavigation and scoped care-provider/HEP RPCs; care components retain authorization and persistence.
+- Scope before querying/limiting: solo clinic_id IS NULL + ownership; clinic selected clinic_id. Reset screens on switches; validate agent thread/patient scope server-side.
 - Microcycle dose edits reuse savePlannedDose with the existing session ID and preserved date, track and metadata; never write perceived load when changing a target.
 - Check-in reopening locks existing patient/day readiness until explicit editing; the existing unique patient/date upsert keeps one daily response. Dose displays retain perceived load for zero-target sessions without inventing a target or adherence verdict.
 - Record-summary alerts preserve assessment-specific dismissal audits across history; health caveats reuse healthHistory formatting and Saúde geral recency (latest day, manual precedence) without new risk calculations or AI.
@@ -64,3 +64,4 @@
 - Clinic agenda: only owner/admin/secretary create, move or delete clinic slots (RLS + guard trigger); clinicians update only status/notes of their own slots, so the front desk keeps control of the grid.
 - Never-paid clinic trials: daily job calls re-validating `purge_expired_clinic_trial` (stages in `_shared/clinicTrialRetention.ts`); delete SET NULL dependents explicitly to avoid solo-scope leaks.
 - Guided cancellation serves PRO and clinics with one `_shared/cancellationPolicy.ts`.
+- Clinic report identity lives in clinic_members, editable through self/owner/admin RPCs; shared issuer resolution reads the member and their own signature without requiring a council or substituting the owner. Identity stays separate from subscription privileges.
