@@ -8,6 +8,7 @@ import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 import { formatHealthHistoryForPrompt } from "../_shared/health-history.ts";
 import { buildProfessionalContext } from "../_shared/professional-context.ts";
+import { buildRlcaReference, RLCA_REFERENCE_VERSION } from "../_shared/rlca-reference.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,7 +59,7 @@ serve(async (req) => {
       }
     };
 
-    const cachePayload = { v: "dx-purpose-v2", anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null, painMechanism: bodyPainMechanism ?? null, painExtent: bodyPainExtent ?? null };
+    const cachePayload = { v: "dx-purpose-v2", reference: RLCA_REFERENCE_VERSION, anamnesisData, testResults, questionnaireResults, mode, language, additionalInfo, redFlags: bodyRedFlags, redFlagsDismissed, previousBasicDiagnosis: previousBasicDiagnosis?.hypothesis || null, painMechanism: bodyPainMechanism ?? null, painExtent: bodyPainExtent ?? null };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ diagnosis: unknown }>(admin, "generate-diagnosis", cachePayload);
       if (cached) {
@@ -685,7 +686,7 @@ Generate the diagnostic hypothesis in valid JSON format.`;
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: systemPrompt + buildRlcaReference({ anamnesisData, additionalInfo, questionnaireResults }) },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3,

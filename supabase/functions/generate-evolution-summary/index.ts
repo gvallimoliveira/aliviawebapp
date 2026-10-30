@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 import { describeStrength, describeRom } from "../_shared/objective-tests.ts";
+import { buildRlcaReference, RLCA_REFERENCE_VERSION } from "../_shared/rlca-reference.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,7 +37,7 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
-    const cachePayload = { v: PROMPT_VERSION, assessments, language, sessionNotes };
+    const cachePayload = { v: PROMPT_VERSION, reference: RLCA_REFERENCE_VERSION, assessments, language, sessionNotes };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<Record<string, unknown>>(admin, "generate-evolution-summary", cachePayload);
       if (cached) {
@@ -128,7 +129,7 @@ Generate the deep evolution report now, sweeping ALL data above.`;
     const { callAiWithFallback } = await import("../_shared/ai-fallback.ts");
     const response = await callAiWithFallback(LOVABLE_API_KEY, {
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: systemPrompt + buildRlcaReference(userPrompt) },
         { role: "user", content: userPrompt },
       ],
       tools: [

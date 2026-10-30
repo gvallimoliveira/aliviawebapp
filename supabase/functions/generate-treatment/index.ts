@@ -7,6 +7,7 @@ import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { logAiTokenUsage } from "../_shared/ai-fallback.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 import { formatHealthHistoryForPrompt } from "../_shared/health-history.ts";
+import { buildRlcaReference, RLCA_REFERENCE_VERSION } from "../_shared/rlca-reference.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,7 +54,7 @@ serve(async (req) => {
       : typeof (resolvedMechanism as any)?.pain_extent === "number"
         ? (resolvedMechanism as any).pain_extent
         : null;
-    const cachePayload = { v: "treatment-purpose-v2", anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, painMechanism: resolvedMechanism, painExtent: resolvedExtent };
+    const cachePayload = { v: "treatment-purpose-v2", reference: RLCA_REFERENCE_VERSION, anamnesisData, testResults, questionnaireResults, diagnosis, mode, language, painMechanism: resolvedMechanism, painExtent: resolvedExtent };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ treatmentPlan: unknown }>(admin, "generate-treatment", cachePayload);
       if (cached) {
@@ -440,6 +441,7 @@ ${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]
 - Relieving factors: ${anamnesisData?.relievingFactors || "Not specified"}
 - Activity level: ${anamnesisData?.activityLevel}
 - Onset: ${anamnesisData?.onset}
+- Previous surgeries / surgical restrictions: ${anamnesisData?.previousSurgeries ?? anamnesisData?.previous_surgeries ?? "Not recorded"}
 ${formatHealthHistoryForPrompt(anamnesisData)}
 - Gym access: ${hasGym ? "Yes — has access to gym with free weights and resistance machines" : "No — no gym access, exercises should be bodyweight or use resistance bands"}
 
@@ -476,7 +478,7 @@ Generate a personalized 3-phase treatment plan in valid JSON format. Focus exerc
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: systemPrompt + buildRlcaReference({ anamnesisData, diagnosis, questionnaireResults }) },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3,
