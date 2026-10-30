@@ -48,7 +48,8 @@ const COLD_TERMS: Array<[RegExp, string]> = [
 ];
 
 /** Remove specs técnicas frias da copy, preservando o sentido. Idempotente. */
-export const stripColdSpecs = (text: string): string => {
+export const stripColdSpecs = (text: string | null | undefined): string => {
+  if (typeof text !== "string") return "";
   let out = text;
   for (const [re, rep] of COLD_TERMS) out = out.replace(re, rep);
   return out.replace(/\s+([.,;])/g, "$1").replace(/\s{2,}/g, " ").trim();
