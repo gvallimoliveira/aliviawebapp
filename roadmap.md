@@ -1,5 +1,10 @@
 # Roadmap
 
+## R-LCA — material clínico e organização didática
+- [ ] Transcrever os sete prints, preservar origem e separar metas apresentadas de evidências e ressalvas.
+- [ ] Preparar referência compartilhada para raciocínio clínico existente; não criar agora a futura seção ortopédica.
+- [ ] Conferir integração e limites sem alterar dados clínicos ou liberar atividades automaticamente.
+
 ## Idioma — equipe e agenda no iPhone privado
 - [x] Menu deixa de trocar PT→EN em um toque: escolha explícita PT/EN/ES compartilhada entre menus e painel. Contexto segue o idioma efetivo após carregar traduções, sem efeitos dentro de atualização de estado ou toques concorrentes. Imagens mostram idioma geral em inglês; não foi possível confirmar o toque que originou a mudança no aparelho.
 - [x] Conta Sifeg autenticada em WebKit móvel, sessão nova com navegador en-US: identificação na equipe e edição de Diego Ramos no PRO demo abertas em português, sem salvar dados. Menu abriu sem mudar idioma; escolha English e retorno Português conferidos. Dez testes passaram, build OK. iPhone físico não testado.
