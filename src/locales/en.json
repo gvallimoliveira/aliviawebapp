@@ -1645,5 +1645,7 @@
   "credits.rolloutDesc": "Turn on the master switch and select the categories that require balance after quota + grace (PRO 10%, clinic 20%). Admin and VIP stay unlimited.",
   "credits.rolloutDenied": "Your account cannot change AI limits.",
   "support.pro.tool.free_report.title": "Free-text physiotherapy report",
-  "support.pro.tool.free_report.desc": "In the patient record, tap 'More' (3 dots) → 'Physiotherapy report'. Pick a template (blank, referral, insurance or summary), edit the text freely and generate the PDF with your branding and, if enabled, your digital signature from My account. Ideal for insurers, physicians and referrals."
+  "support.pro.tool.free_report.desc": "In the patient record, tap 'More' (3 dots) → 'Physiotherapy report'. Pick a template, edit the text and generate the PDF with the professional or clinic branding and the issuer's identity. When enabled, the signature image belongs to the issuer and is saved in My account. A missing council never replaces a staff issuer with the owner.",
+  "support.pro.tool.report_identity.title": "Full name and council on reports",
+  "support.pro.tool.report_identity.desc": "Clinic staff enter their full name in My account → Clinic report identity. If applicable, select CREFITO, CREF, CRM or Other and enter the number and region; otherwise select No council. Owners and administrators can also edit these details with the pencil in Team. Each staff member saves their own signature in My account → Digital signature, by upload or drawing on screen. Details are scoped to each clinic and do not require a personal PRO subscription. Solo PRO reports use the name and CREFITO from the professional's own profile."
 }

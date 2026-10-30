@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { displayCrefito, hasRealCrefito } from "@/lib/crefito";
+import { displayCrefito } from "@/lib/crefito";
 import type { ResponsibleProfessional } from "@/utils/generatePdf";
 
 
