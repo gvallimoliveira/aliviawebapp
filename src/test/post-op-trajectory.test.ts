@@ -59,3 +59,22 @@ describe("prefillFromAnamnesis", () => {
     expect(phaseUnlockDate("2026-10-08", 1)).toBe("2026-11-05");
   });
 });
+
+import { phasesFor, ROTATOR_CUFF_PHASES } from "@/lib/postOpTrajectory";
+describe("manguito rotador", () => {
+  it("rotura grande/maciça atrasa fases em 2 semanas", () => {
+    expect(phasesFor("rotator_cuff_repair", "large_massive")[1].fromWeek).toBe(ROTATOR_CUFF_PHASES[1].fromWeek + 2);
+    expect(phasesFor("rotator_cuff_repair", "large_massive")[0].fromWeek).toBe(0);
+  });
+  it("metas cumpridas não pulam proteção do tendão (semana 4)", () => {
+    const crit = Object.fromEntries(ROTATOR_CUFF_PHASES[0].exitCriteria.map((c) => [c.id, true]));
+    const s = computePostOpStatus({ surgery_type: "rotator_cuff_repair", surgery_date: "2026-10-01", criteria: crit }, "2026-10-25");
+    expect(s.phase.id).toBe("rc_protection");
+  });
+  it("anamnese com manguito pré-seleciona a cirurgia", () => {
+    const p = prefillFromAnamnesis([{ created_at: "2026-10-20", anamnesis_data: { onset: "post_surgery", previousSurgeries: "Reparo do manguito rotador (supraespinhal) em 01/10/2026, rotura grande. Tipóia por 6 semanas." } }], "2026-10-30");
+    expect(p?.surgery_type).toBe("rotator_cuff_repair");
+    expect(p?.graft_type).toBe("large_massive");
+    expect(p?.surgery_date).toBe("2026-10-01");
+  });
+});
