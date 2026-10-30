@@ -3809,6 +3809,56 @@ export type Database = {
           },
         ]
       }
+      pre_op_profiles: {
+        Row: {
+          created_at: string
+          created_by: string
+          criteria: Json
+          graft_type: string | null
+          id: string
+          meniscal_repair: boolean
+          patient_id: string
+          planned_surgery_date: string | null
+          surgeon_restrictions: string | null
+          surgery_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          criteria?: Json
+          graft_type?: string | null
+          id?: string
+          meniscal_repair?: boolean
+          patient_id: string
+          planned_surgery_date?: string | null
+          surgeon_restrictions?: string | null
+          surgery_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          criteria?: Json
+          graft_type?: string | null
+          id?: string
+          meniscal_repair?: boolean
+          patient_id?: string
+          planned_surgery_date?: string | null
+          surgeon_restrictions?: string | null
+          surgery_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_op_profiles_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: true
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_addons: {
         Row: {
           addon_type: string
