@@ -16,12 +16,12 @@ const AXIS_WORDS: Record<CaptionAxis, string[]> = {
   load: ["carga", "prontidão", "check-in", "treino", "periodiza", "sessão", "recupera"],
 };
 
-const norm = (s: string) => s.toLowerCase();
+const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 export const detectAxes = (text: string): CaptionAxis[] => {
   const t = norm(text);
   return (Object.keys(AXIS_WORDS) as CaptionAxis[])
-    .map((axis) => ({ axis, score: AXIS_WORDS[axis].filter((w) => t.includes(w)).length }))
+    .map((axis) => ({ axis, score: AXIS_WORDS[axis].filter((w) => t.includes(norm(w))).length }))
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
     .map((x) => x.axis);
@@ -34,9 +34,17 @@ export const rankProofsByAxis = (hookText: string, proofs: string[]): string[] =
   const words = axes.flatMap((a, i) => AXIS_WORDS[a].map((w) => ({ w, weight: axes.length - i })));
   const scored = proofs.map((p, idx) => {
     const t = norm(p);
-    return { p, idx, score: words.reduce((s, { w, weight }) => (t.includes(w) ? s + weight : s), 0) };
+    return { p, idx, score: words.reduce((s, { w, weight }) => (t.includes(norm(w)) ? s + weight : s), 0) };
   });
   return scored.sort((a, b) => b.score - a.score || a.idx - b.idx).map((x) => x.p);
+};
+
+/** No padding: a proof needs a concrete shared topic, not just a broad axis. */
+export const relatedCaptionProofs = (anchor: string, proofs: string[]): string[] => {
+  const stop = new Set(["para", "como", "mais", "voce", "paciente", "clinica", "profissional", "alivia", "esse", "essa", "programa", "antes", "depois"]);
+  const tokens = (s: string) => norm(s).split(/[^a-z0-9]+/).filter((w) => w.length > 3 && !stop.has(w));
+  const words = new Set(tokens(anchor));
+  return rankProofsByAxis(anchor, proofs).filter((p) => tokens(p).some((w) => words.has(w))).slice(0, 2);
 };
 
 const COLD_TERMS: Array<[RegExp, string]> = [

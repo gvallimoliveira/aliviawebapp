@@ -2,7 +2,7 @@ import type { Rng } from "./rng";
 import type { WorldContent } from "./content";
 import type { BlockKind } from "./composePage";
 import { BRAND_SLOGAN } from "./brand";
-import { rankProofsByAxis, stripColdSpecs } from "./captionCoherence";
+import { rankProofsByAxis, stripColdSpecs, relatedCaptionProofs } from "./captionCoherence";
 
 /**
  * Gera a legenda de venda pronta para o Instagram a partir do conteúdo já
@@ -231,8 +231,11 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
   },
 };
 
-export const buildCaption = (content: WorldContent, kind: BlockKind, rng: Rng) => {
-  const [hook, context] = ANGLES[kind](content, rng);
+export const buildCaption = (content: WorldContent, kind: BlockKind, rng: Rng, visibleCopy?: string[]) => {
+  const visible = [...new Set((visibleCopy ?? []).map((s) => s.trim()).filter(Boolean))];
+  const [hook, context] = visible.length
+    ? [visible[0], visible.slice(1).join("\n")]
+    : ANGLES[kind](content, rng);
   const { sales } = content;
 
   // Listas vazias (públicos editoriais sem oferta/objeção) nunca podem quebrar a leva.
@@ -242,8 +245,7 @@ export const buildCaption = (content: WorldContent, kind: BlockKind, rng: Rng) =
   // Eixo temático: as provas seguem o assunto do gancho (top 5 afins, sorteia 3).
   const proofPool = list(sales?.proofs);
   const ranked = rankProofsByAxis(`${hook ?? ""} ${context ?? ""}`, proofPool);
-  const proofs = ranked.length ? rng.pickMany(ranked.slice(0, Math.max(3, Math.min(5, ranked.length))), 3) : [];
-  const objection = pickOr(sales?.objections);
+  const proofs = relatedCaptionProofs(`${hook ?? ""} ${context ?? ""}`, ranked);
   const offer = pickOr(sales?.offers);
   const cta = pickOr(sales?.ctas);
   const tagPool = list(sales?.hashtags);
@@ -254,9 +256,8 @@ export const buildCaption = (content: WorldContent, kind: BlockKind, rng: Rng) =
     "",
     context,
     "",
-    ...(proofs.length ? [`Para ${sales?.audience ?? "você"}:`, ...proofs.map((p) => `• ${p}`), ""] : []),
-    ...(objection ? [objection, ""] : []),
-    offer,
+    ...(!visible.length && proofs.length ? [...proofs.map((p) => `• ${p}`), ""] : []),
+    ...(!visible.length && offer ? [offer] : []),
     cta ? `👉 ${cta}` : "",
     "",
     tags.map((t) => `#${t}`).join(" "),
