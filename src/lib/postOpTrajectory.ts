@@ -192,3 +192,49 @@ export function postOpReportText(status: PostOpStatus, surgeryDate: string, crit
   if (status.behindSchedule) lines.push("Observação: critérios ainda pendentes em relação ao tempo pós-operatório esperado.");
   return lines.join("\n");
 }
+
+// ---------- Ponte anamnese → trajetória ----------
+export interface PostOpPrefill {
+  surgery_date: string | null;
+  graft_type: string | null;
+  meniscal_repair: boolean;
+  surgeon_restrictions: string | null;
+  sourceDate: string | null;
+}
+
+const toIso = (d: number, m: number, y: number) => {
+  const yy = y < 100 ? 2000 + y : y;
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  return `${yy}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+};
+
+/** Extrai dados da cirurgia já escritos na anamnese (avaliação mais recente com contexto cirúrgico). Nunca inventa: campo ausente fica vazio. */
+export function prefillFromAnamnesis(assessments: Array<{ created_at: string; anamnesis_data?: any }>, todayIso: string): PostOpPrefill | null {
+  const sorted = [...assessments].filter((a) => a?.created_at).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  for (const a of sorted) {
+    const an = a.anamnesis_data || {};
+    const surg = String(an.previousSurgeries || an.previousTreatments || "");
+    const text = [surg, an.history, an.additionalClinicalNotes, an.chiefComplaint].filter(Boolean).join("\n");
+    if (an.onset !== "post_surgery" && !/lca|lce|cruzado|acl/i.test(text)) continue;
+    let surgery_date: string | null = null;
+    const iso = text.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+    const br = text.match(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/);
+    if (iso) surgery_date = `${iso[1]}-${iso[2]}-${iso[3]}`;
+    else if (br) surgery_date = toIso(+br[1], +br[2], +br[3]);
+    if (surgery_date && surgery_date > todayIso) surgery_date = null;
+    const graft_type = /patelar|patellar|osso.?tend[aã]o.?osso|\bbtb\b/i.test(text) ? "patellar"
+      : /flexor|isquiotib|semitend|gr[aá]cil|hamstring|\bst\b/i.test(text) ? "hamstring"
+      : /quadricipital|tend[aã]o do quadr[ií]ceps/i.test(text) ? "quadriceps" : null;
+    const meniscal_repair = /(sutura|reparo)\s+(do\s+|de\s+)?menisc|meniscorrafia/i.test(text);
+    const restr = text.split(/\n|(?<=[.;])\s+/).map((s) => s.trim())
+      .filter((s) => /restri|muleta|cirurgi[aã]o|m[eé]dico|evitar|proib|sem carga|descarga|brace|[oó]rtese|limite de flex/i.test(s));
+    return { surgery_date, graft_type, meniscal_repair, surgeon_restrictions: restr.length ? restr.join(" ") : null, sourceDate: a.created_at.slice(0, 10) };
+  }
+  return null;
+}
+
+/** Data em que a fase de índice i passa a ser biologicamente permitida pelo tempo. */
+export function phaseUnlockDate(surgeryDate: string, phaseIndex: number, phases = ACL_PHASES): string {
+  const ms = Date.UTC(+surgeryDate.slice(0, 4), +surgeryDate.slice(5, 7) - 1, +surgeryDate.slice(8, 10)) + Math.max(0, phases[phaseIndex].fromWeek - 1) * 7 * 86400000;
+  return new Date(ms).toISOString().slice(0, 10);
+}
