@@ -150,6 +150,8 @@ interface AnamnesisData extends PurposeData {
 export interface ResponsibleProfessional {
   name: string;
   crefito?: string;
+  councilType?: string;
+  councilNumber?: string;
   /** Optional signature image as data URL (PNG with transparent bg).
    *  When present, rendered above the signature line. */
   signatureImageDataUrl?: string;
@@ -202,14 +204,15 @@ async function drawResponsibleBlock(
   isPt: boolean,
   prof: ResponsibleProfessional
 ): Promise<number> {
-  const hasSignature = !!prof.signatureImageDataUrl;
+  const signature = prof.signatureImageDataUrl;
+  const hasSignature = !!signature;
   // Measure signature once so we know how much vertical room to reserve
   const sigBoxMaxW = 60;
   const sigBoxMaxH = 18;
   let sigDrawW = 0;
   let sigDrawH = 0;
-  if (hasSignature) {
-    const dims = await _measureImage(prof.signatureImageDataUrl!);
+  if (signature) {
+    const dims = await _measureImage(signature);
     const fit = fitContain(dims.natW, dims.natH, sigBoxMaxW, sigBoxMaxH);
     sigDrawW = fit.w;
     sigDrawH = fit.h;
@@ -228,10 +231,10 @@ async function drawResponsibleBlock(
   const lineX = (PAGE_WIDTH - lineW) / 2;
 
   // Embed signature image (aspect-ratio preserved) just above the line
-  if (hasSignature && sigDrawW > 0) {
+  if (signature && sigDrawW > 0) {
     const imgX = (PAGE_WIDTH - sigDrawW) / 2;
     try {
-      doc.addImage(prof.signatureImageDataUrl!, "PNG", imgX, y, sigDrawW, sigDrawH, undefined, "FAST");
+      doc.addImage(signature, "PNG", imgX, y, sigDrawW, sigDrawH, undefined, "FAST");
     } catch {
       // ignore image errors and fall back to text block
     }
@@ -259,9 +262,11 @@ async function drawResponsibleBlock(
     if (prof.studentPeriod) pieces.push(prof.studentPeriod);
     credentialTxt = pieces.join(" · ");
   } else {
-    credentialTxt = prof.crefito
+    credentialTxt = prof.councilNumber
+      ? `${prof.councilType === "OTHER" ? (isPt ? "Registro profissional" : "Professional registration") : prof.councilType || "CREFITO"}: ${prof.councilNumber}`
+      : prof.crefito
       ? `CREFITO: ${prof.crefito}`
-      : (isPt ? "CREFITO não cadastrado" : "CREFITO not registered");
+      : "";
   }
   credentialTxt = truncateToWidth(doc, credentialTxt, CONTENT_WIDTH - 4);
   doc.text(credentialTxt, PAGE_WIDTH / 2, y, { align: "center" });
