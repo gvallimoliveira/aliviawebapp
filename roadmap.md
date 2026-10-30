@@ -1,5 +1,9 @@
 # Roadmap
 
+## Idioma — equipe e agenda no iPhone privado
+- [ ] Corrigir a origem da troca indevida de idioma, preservando a escolha explícita e mantendo telas e formulários sincronizados.
+- [ ] Validar edição da identificação na equipe e agendamento no PRO demo em sessão privada equivalente; executar regressões.
+
 ## Relatórios — identidade e assinatura dos colaboradores
 - [x] Resolução compartilhada preserva o emissor e a assinatura mesmo sem conselho; marca da clínica mantida. Causa: Sifeg tinha assinatura salva, mas CREFITO provisório fazia o emissor cair no dono.
 - [x] Nome completo e conselho/número em Minha conta e edição por dono/admin na Equipe, separados por clínica; autorização no servidor e ajuda pt/en/es.
