@@ -1701,7 +1701,9 @@ const StudioProCreate = ({
       return Object.values(readArtText(node)).filter((text) =>
         text.trim() && !/^[@#]|^\d+(?:\s*\/\s*\d+)?$|^arraste|^aliv\.?ia$|aliviawebapp\.com/i.test(text.trim()));
     });
-    return buildCaption(director.contentFor(index), blocks[index].kind,
+    const directed = director.contentFor(index);
+    const captionContent = isAlivia ? { ...directed, sales: { ...directed.sales, ctas: directed.closings.map((c) => c.cta).filter(Boolean) } } : directed;
+    return buildCaption(captionContent, blocks[index].kind,
       createRng(`${brand.id}:${seed}:caption:${blocks[index].kind}:${index}`), visible);
   };
 

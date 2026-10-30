@@ -38,7 +38,8 @@ const punchOf = (raw: string): string | null => {
   const clean = first.replace(/[.]+$/, "").trim();
   if (!clean) return null;
   const words = clean.split(/\s+/);
-  const short = words.length > 9 ? words.slice(0, 9).join(" ") : clean;
+  if (words.length > 9) return null;
+  const short = clean;
   if (short.length > 64 || short.length < 6) return null;
   return short;
 };

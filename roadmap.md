@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Studio — linguagem após auditoria de três lotes
-- [ ] Proteger fatos e construções gramaticais contra reescrita destrutiva; corrigir cortes de títulos.
-- [ ] Alinhar legendas ao texto efetivamente renderizado, sem objeções soltas ou argumentos de outros temas.
-- [ ] Executar regressões e conferir três novas gerações autenticadas; registrar limites da validação.
+- [x] Escrita natural preserva frases completas e fatos; intervalos/negações protegidos, concordância e corte de frases da pinça corrigidos.
+- [x] Copiar/baixar/salvar legendas usa texto renderizado; objeções soltas removidas, público oficial ligado ao seu acervo em vez de um sorteio independente.
+- [x] Três gerações autenticadas finais: 16, 12 e 13 artes, sem erro de execução; imagens e legendas conferidas. Sem publicar ou salvar na galeria. Ainda há textos promocionais antigos e descrições extensas a revisar editorialmente; não se promete qualidade definitiva de todas as peças.
 
 ## Trial restaurado e aviso de reembolso anual
 - [x] Renovação automática exclusiva restaurada; GV Fisio renovada até 13/11/2026, confirmada no banco e sete testes de isolamento/15 dias aprovados.
