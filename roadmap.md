@@ -1,5 +1,8 @@
 # Roadmap
 
+## Studio — sombras no PNG
+- [x] Falha de sombras deslocadas reproduzida em WebKit; sombras convertidas em camada estável no exportador compartilhado, texto centralizado preservado. Download PNG real comparado antes/depois e regressões de exportação aprovadas; aparelho físico não testado.
+
 ## Studio — linguagem após auditoria de três lotes
 - [x] Escrita natural preserva frases completas e fatos; intervalos/negações protegidos, concordância e corte de frases da pinça corrigidos.
 - [x] Copiar/baixar/salvar legendas usa texto renderizado; objeções soltas removidas, público oficial ligado ao seu acervo em vez de um sorteio independente.

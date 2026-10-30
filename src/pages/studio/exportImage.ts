@@ -934,7 +934,7 @@ export const rasterizeExportShadows = (node: HTMLElement) => {
       context.shadowBlur = shadow.blur * ratio;
       context.shadowOffsetX = shadow.x * ratio;
       context.shadowOffsetY = shadow.y * ratio;
-      context.fillStyle = shadow.color;
+      context.fillStyle = "#000";
       roundedRect(context, (pad - shadow.spread) * ratio, (pad - shadow.spread) * ratio,
         Math.max(0, width + shadow.spread * 2) * ratio, Math.max(0, height + shadow.spread * 2) * ratio,
         Math.max(0, radius + shadow.spread) * ratio);
