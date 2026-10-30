@@ -1,5 +1,8 @@
 # Roadmap
 
+## Studio — manual editorial Aliv.iA atualizado
+- [x] Interpretar com IA executado na conta de Guilherme; resultado revisado editorialmente antes do salvamento final. Manual atualizado com recursos recentes e limites reais, nove públicos/subnichos com frases completas e 14 diálogos por público. Os 34 públicos/temas originais, logo, cores, fontes e slogan foram preservados; salvamento e recarga conferidos pela tela e leitura autenticada, sem erros. Não realizada nova auditoria de lotes nesta tarefa.
+
 ## Studio — sombras no PNG
 - [x] Falha de sombras deslocadas reproduzida em WebKit; sombras convertidas em camada estável no exportador compartilhado, texto centralizado preservado. Download PNG real comparado antes/depois e regressões de exportação aprovadas; aparelho físico não testado.
 
