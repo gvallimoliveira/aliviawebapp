@@ -952,7 +952,7 @@ export const rasterizeExportShadows = (node: HTMLElement) => {
       top: `${-pad - (Number.parseFloat(style.borderTopWidth) || 0)}px`,
       width: `${width + pad * 2}px`, height: `${height + pad * 2}px`,
       backgroundImage: `url(${canvas.toDataURL()})`, backgroundSize: "100% 100%",
-      pointerEvents: "none", zIndex: "-1",
+      pointerEvents: "none",
     });
     if (style.position === "static") element.style.position = "relative";
     element.style.isolation = "isolate";
