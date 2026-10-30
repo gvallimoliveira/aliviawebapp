@@ -10,7 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Users, UserPlus, Mail, Trash2, Crown, Shield, Stethoscope as StethIcon, ClipboardList, GraduationCap, Copy, MessageCircle } from "lucide-react";
+import { Users, UserPlus, Mail, Trash2, Crown, Shield, Stethoscope as StethIcon, ClipboardList, GraduationCap, Copy, MessageCircle, Pencil } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ClinicReportIdentityForm, type ClinicReportMember } from "@/components/account/ClinicReportIdentity";
 import ClinicSettingsCard from "./ClinicSettingsCard";
 import { buildInviteLink, inviteMessage } from "@/lib/clinicInvite";
 import type { Database } from "@/integrations/supabase/types";
@@ -68,6 +70,8 @@ const ClinicTeamManagement = () => {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<ClinicRole>("therapist");
   const [sending, setSending] = useState(false);
+  const [identities, setIdentities] = useState<ClinicReportMember[]>([]);
+  const [editing, setEditing] = useState<ClinicReportMember | null>(null);
 
   const canManage = canManageClinic;
   const lang = language as "pt" | "en" | "es";
@@ -81,6 +85,8 @@ const ClinicTeamManagement = () => {
       console.error("[ClinicTeamManagement] members error", memErr);
     }
     setMembers((mems as Member[]) || []);
+    const { data: reportMembers } = await supabase.rpc("get_clinic_report_members", { _clinic_id: activeClinic.clinic_id });
+    setIdentities(Array.isArray(reportMembers) ? reportMembers as unknown as ClinicReportMember[] : []);
 
     const { data: invs } = await supabase
       .from("clinic_invitations")
@@ -193,7 +199,8 @@ const ClinicTeamManagement = () => {
               <div className="flex items-center gap-3 min-w-0">
                 {m.is_student ? <GraduationCap className="h-3.5 w-3.5 text-primary" /> : roleIcon(m.role)}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{m.full_name || m.email || "—"}</p>
+                  <p className="text-sm font-medium truncate">{identities.find(i => i.id === m.id)?.full_name || m.full_name || m.email || "—"}</p>
+                  {identities.find(i => i.id === m.id)?.council_number && <p className="text-xs text-muted-foreground">{identities.find(i => i.id === m.id)?.council_type}: {identities.find(i => i.id === m.id)?.council_number}</p>}
                   {m.full_name && m.email && (
                     <p className="text-xs text-muted-foreground truncate">{m.email}</p>
                   )}
@@ -219,6 +226,9 @@ const ClinicTeamManagement = () => {
                   )}
                 </div>
               </div>
+              {(m.user_id === user?.id || activeClinic.role === "owner" || activeClinic.role === "admin") && (
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" title={lang === "pt" ? "Editar identificação nos relatórios" : lang === "es" ? "Editar identificación en informes" : "Edit report identity"} aria-label={lang === "pt" ? `Editar dados de ${m.full_name || m.email}` : `Edit details for ${m.full_name || m.email}`} onClick={() => setEditing(identities.find(i => i.id === m.id) || { id: m.id, user_id: m.user_id, full_name: m.full_name, council_type: null, council_number: null })}><Pencil className="h-4 w-4" /></Button>
+              )}
               {canManage && m.user_id !== user?.id && (
                 <div className="flex items-center gap-2 shrink-0">
                   <Select value={m.role} onValueChange={(v) => handleRoleChange(m.id, v as ClinicRole)}>
@@ -365,6 +375,7 @@ const ClinicTeamManagement = () => {
           </CardContent>
         </Card>
       )}
+      <Dialog open={!!editing} onOpenChange={o => { if (!o) setEditing(null); }}><DialogContent><DialogHeader><DialogTitle>{lang === "pt" ? "Identificação nos relatórios" : lang === "es" ? "Identificación en informes" : "Report identity"}</DialogTitle></DialogHeader>{editing && <ClinicReportIdentityForm key={editing.id} member={editing} onSaved={() => { setEditing(null); fetchTeam(); }} />}</DialogContent></Dialog>
     </div>
   );
 };

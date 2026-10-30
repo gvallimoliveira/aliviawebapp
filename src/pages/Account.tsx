@@ -26,6 +26,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import SignatureManager from "@/components/account/SignatureManager";
+import ClinicReportIdentity from "@/components/account/ClinicReportIdentity";
 import StudentAccessCard from "@/components/account/StudentAccessCard";
 import AcademicPerformanceCard from "@/components/account/AcademicPerformanceCard";
 import PasskeyAccountCard from "@/components/account/PasskeyAccountCard";
@@ -424,6 +425,7 @@ const Account = () => {
         </Card>
 
         <SectionTitle icon={Stethoscope}>{t.sec_professional}</SectionTitle>
+        <ClinicReportIdentity />
         <SignatureManager />
 
         <div className="mt-6">
