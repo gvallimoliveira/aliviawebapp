@@ -678,6 +678,10 @@ const ClinicSupport = () => {
               <AccordionTrigger className="text-left text-base font-medium text-foreground">{t("billing.annual_refund.question")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground leading-relaxed">{t("billing.annual_refund.answer")}</AccordionContent>
             </AccordionItem>
+            <AccordionItem value="acl-preoperative">
+              <AccordionTrigger className="text-left text-base font-medium text-foreground">{t("support.pro.tool.acl_preoperative.title")}</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground leading-relaxed">{t("support.pro.tool.acl_preoperative.desc")}</AccordionContent>
+            </AccordionItem>
             {faqKeys.map((faq, i) => (
               <AccordionItem key={i} value={`faq-${i}`}>
                 <AccordionTrigger className="text-left text-base font-medium text-foreground">

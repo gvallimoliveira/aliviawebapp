@@ -14,6 +14,7 @@ import { phasesFor, SURGERY_LABELS, computePostOpStatus, autoCriteriaFromMeasure
 import { Lock, CheckCircle2, Info } from "lucide-react";
 import { localISODate } from "@/lib/periodization";
 import { useToast } from "@/hooks/use-toast";
+import { prefillAclPreoperative } from "@/lib/aclPreoperative";
 
 interface Row {
   id?: string;
@@ -84,7 +85,7 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
   };
 
   if (!row && !editing) {
-    if (!suggestActivate) return null;
+    if (!suggestActivate || prefillAclPreoperative(assessments as any)) return null;
     return (
       <Card id="sec-pos-operatorio" className="scroll-mt-24 border-dashed">
         <CardContent className="py-3 flex items-center justify-between gap-3">
