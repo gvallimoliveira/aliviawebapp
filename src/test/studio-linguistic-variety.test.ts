@@ -45,7 +45,8 @@ describe("variedade linguística do motor criativo", () => {
     }
     // Antes eram 5 headlines fixas por marca. O acervo genérico deixou de completar
     // o briefing real, então a variedade vem só de material da própria marca.
-    expect(seen.size).toBeGreaterThan(80);
+    // Complete source phrases are preferred over hundreds of synonym mutations.
+    expect(seen.size).toBeGreaterThan(40);
   }, 30_000);
 
   it("mantém a mesma arte para a mesma seed (determinismo)", () => {
@@ -94,7 +95,7 @@ describe("variedade linguística do motor criativo", () => {
 
   it("normaliza o perfil e mantém a ordem baixa, média e alta", () => {
     const profile = normalizeVariationProfile({ headlines: "high", support: "invalid", actions: "low" });
-    expect(profile).toEqual({ headlines: "high", support: "medium", actions: "low" });
+    expect(profile).toEqual({ headlines: "high", support: "medium", actions: "low", naturalness: "natural" });
     expect(intensityFor("low")).toBeLessThan(intensityFor("medium"));
     expect(intensityFor("medium")).toBeLessThan(intensityFor("high"));
   });

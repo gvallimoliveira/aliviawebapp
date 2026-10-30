@@ -791,7 +791,9 @@ export const planBatch = (input: {
      * compostas com a tensão/entrega/prova/desejo desta arte entram na frente
      * do acervo. Frase já muito usada pela marca (memória) é descartada.
      */
-    if (!carousel && shotRoute && !closedEditorial) {
+    // Official audience pools already contain reviewed product copy. A free
+    // brand-level route can mention another feature and must not override them.
+    if (!carousel && shotRoute && !closedEditorial && !/^aliv\s*\.?\s*ia$/i.test(brandName ?? "")) {
       const composed = composeRouteCopy(shotRoute, {
         brand: brandName,
         seed: `${seed}:art:${index}`,

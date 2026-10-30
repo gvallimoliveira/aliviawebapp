@@ -27,7 +27,7 @@ const FEM_EXCEPTIONS = new Set([
   "razão","razões","decisão","sessão","lesão","pressão","tensão","condição","evolução","reabilitação",
   "função","atenção","intenção","opção","solução","questão","gestão","conclusão","precisão",
   "mão","nação","paixão","estação","rotina","meta","tarde","chance","ordem","paz","dose","face",
-  "carne","fome","sorte","morte","frente","ponte","dúvida","pele","tarefa",
+  "carne","fome","sorte","morte","frente","ponte","dúvida","pele","tarefa","região",
 ]);
 
 const PLURAL_EXCEPTIONS = new Set(["mês","país","gás","atrás","através","depois","pois","mais","menos","vez","luz","cruz","paz","após","ninguém","lápis","ônibus","vírus","tênis","status","campus","atlas"]);
@@ -72,13 +72,14 @@ export const agreementOf = (rawWord: string): Agreement => {
   if (isAcronym(rawWord)) return null;
   const word = rawWord.toLowerCase().replace(/[^a-zà-ÿ]/g, "");
   if (!word || word.length < 3) return null;
+  if (/^(?:dois|duas|três|quatro|cinco|seis|sete|oito|nove|dez)$/.test(word)) return null;
 
   const plural = isPlural(word);
   const base = plural ? singularOf(word) : word;
 
   if (MASC_EXCEPTIONS.has(base)) return { gender: "m", plural };
   if (FEM_EXCEPTIONS.has(base) || FEM_EXCEPTIONS.has(word)) return { gender: "f", plural };
-  if (/(ção|dade|agem|tude|ência|ância|eza|ice|ura|ite|ose)$/.test(base)) return { gender: "f", plural };
+  if (/(ção|dade|agem|tude|ência|ância|eza|ice|ura|ose)$/.test(base)) return { gender: "f", plural };
   if (/(mento|ismo|ário|eiro|dor|ão)$/.test(base)) return { gender: "m", plural };
   if (base.endsWith("a")) return { gender: "f", plural };
   if (base.endsWith("o")) return { gender: "m", plural };

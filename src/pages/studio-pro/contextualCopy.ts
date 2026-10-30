@@ -18,7 +18,7 @@ export const clarifyStudioCopy = <T>(value: T, key = ""): T => {
   const revised = Object.fromEntries(Object.entries(source).map(([childKey, child]) =>
     [childKey, clarifyStudioCopy(child, childKey)]));
   const visible = [...VISIBLE].map((field) => typeof revised[field] === "string" ? revised[field] as string : "").join(" ");
-  if (/\bHEP\b/i.test(visible) && !/programa de exerc[ií]cios domiciliares/i.test(visible)) {
+  if (revised.value === undefined && /\bHEP\b/i.test(visible) && !/programa de exerc[ií]cios domiciliares/i.test(visible)) {
     const support = SUPPORTS.find((field) => typeof revised[field] === "string" && (revised[field] as string).trim());
     if (support) {
       const text = revised[support] as string;
