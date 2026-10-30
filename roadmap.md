@@ -1,5 +1,10 @@
 # Roadmap
 
+## Studio — linguagem após auditoria de três lotes
+- [ ] Proteger fatos e construções gramaticais contra reescrita destrutiva; corrigir cortes de títulos.
+- [ ] Alinhar legendas ao texto efetivamente renderizado, sem objeções soltas ou argumentos de outros temas.
+- [ ] Executar regressões e conferir três novas gerações autenticadas; registrar limites da validação.
+
 ## Trial restaurado e aviso de reembolso anual
 - [x] Renovação automática exclusiva restaurada; GV Fisio renovada até 13/11/2026, confirmada no banco e sete testes de isolamento/15 dias aprovados.
 - [x] Aviso anual discreto e suporte pt/en/es para paciente/PRO/Acadêmico/clínica; antigas negativas de reembolso acadêmico corrigidas. Nove testes passaram; seleção anual/mensal no PRO e avisos acadêmico/clínica e suportes conferidos no navegador sem erros. Paciente atualmente oferece mensal/avulso, sem seletor anual; nenhum plano novo criado. Reembolso informado como solicitação ao suporte, sem execução automática de pagamento. Trial restaurado confirmado no banco, não no painel autenticado do proprietário (sessão disponível corresponde a outra conta).
