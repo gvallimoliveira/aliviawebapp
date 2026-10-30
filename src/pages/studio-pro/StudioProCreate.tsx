@@ -2127,11 +2127,6 @@ const StudioProCreate = ({
           // A legenda nasce do MESMO texto que o diretor escreveu para a arte.
           // Antes ela sorteava do acervo inteiro e podia falar de outro público,
           // outra dor e outra oferta do que está escrito na imagem.
-          const caption = buildCaption(
-            director.contentFor(first.index),
-            first.block.kind,
-            createRng(`${brand.id}:${seed}:caption:${first.block.kind}:${first.index}`),
-          );
           const isSaved = group.carousel
             ? indexes.every((i) => saved.has(i))
             : saved.has(first.index);
@@ -2222,7 +2217,7 @@ const StudioProCreate = ({
                   )}
                   PNG
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => copyCaption(caption)}>
+                <Button size="sm" variant="outline" className="h-8 rounded-full text-xs" onClick={() => copyCaption(captionFor(slideIndexes))}>
                   <Type className="mr-1.5 h-3.5 w-3.5" />
                   Legenda
                 </Button>

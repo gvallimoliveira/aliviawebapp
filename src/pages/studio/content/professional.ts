@@ -463,7 +463,7 @@ const professional: WorldContent = {
         "Mostrou para a esposa. Mostrou para o médico.",
       ],
       turn: "Voltou no mês seguinte pedindo para continuar — agora com metas.",
-      moral: "Quem vê o próprio progresso não abandona o plano.",
+      moral: "O histórico comparável apoia a conversa sobre os próximos passos do cuidado.",
       topic: "report",
     },
     {
