@@ -1,5 +1,10 @@
 # Roadmap
 
+## Relatórios — identidade e assinatura dos colaboradores
+- [ ] Corrigir resolução do emissor sem substituir colaborador pelo dono; manter marca da clínica.
+- [ ] Cadastrar nome completo e conselho/número dos colaboradores com autorização e suporte pt/en/es.
+- [ ] Conferir cadastro, recarga e PDF autenticado com assinatura; testar isolamento e ausência de conselho.
+
 ## Studio — manual editorial Aliv.iA atualizado
 - [x] Interpretar com IA executado na conta de Guilherme; resultado revisado editorialmente antes do salvamento final. Manual atualizado com recursos recentes e limites reais, nove públicos/subnichos com frases completas e 14 diálogos por público. Os 34 públicos/temas originais, logo, cores, fontes e slogan foram preservados; salvamento e recarga conferidos pela tela e leitura autenticada, sem erros. Não realizada nova auditoria de lotes nesta tarefa.
 
