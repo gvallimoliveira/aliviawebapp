@@ -951,9 +951,18 @@ export const rasterizeExportShadows = (node: HTMLElement) => {
       position: "absolute", left: `${-pad - (Number.parseFloat(style.borderLeftWidth) || 0)}px`,
       top: `${-pad - (Number.parseFloat(style.borderTopWidth) || 0)}px`,
       width: `${width + pad * 2}px`, height: `${height + pad * 2}px`,
-      backgroundImage: `url(${canvas.toDataURL()})`, backgroundSize: "100% 100%",
       pointerEvents: "none",
     });
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("viewBox", `0 0 ${canvas.width} ${canvas.height}`);
+    const image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    image.setAttribute("href", canvas.toDataURL());
+    image.setAttribute("width", String(canvas.width));
+    image.setAttribute("height", String(canvas.height));
+    svg.append(image);
+    layer.append(svg);
     if (style.position === "static") element.style.position = "relative";
     element.style.isolation = "isolate";
     element.style.setProperty("box-shadow", "none", "important");
