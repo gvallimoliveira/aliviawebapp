@@ -1,6 +1,6 @@
 // Curated decision support, not eligibility logic. Screenshot transcription lives
 // in docs/rlca-referencia-clinica.md; unverified numerical cutoffs stay there.
-export const RLCA_REFERENCE_VERSION = "rlca-2026-10-30-v1";
+export const RLCA_REFERENCE_VERSION = "rlca-2026-10-30-v2";
 
 export function isRlcaRelevant(context: unknown): boolean {
   const text = (typeof context === "string" ? context : JSON.stringify(context ?? ""))
