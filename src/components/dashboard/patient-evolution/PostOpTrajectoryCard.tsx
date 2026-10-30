@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Scissors, AlertTriangle, Target, Pencil } from "lucide-react";
-import { ACL_PHASES, computePostOpStatus, autoCriteriaFromMeasurements, effectiveCriteria, prefillFromAnamnesis, phaseUnlockDate, type MeasuredAssessment } from "@/lib/postOpTrajectory";
+import { phasesFor, SURGERY_LABELS, computePostOpStatus, autoCriteriaFromMeasurements, effectiveCriteria, prefillFromAnamnesis, phaseUnlockDate, type MeasuredAssessment } from "@/lib/postOpTrajectory";
 import { Lock, CheckCircle2, Info } from "lucide-react";
 import { localISODate } from "@/lib/periodization";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 interface Row {
   id?: string;
   patient_id: string;
+  surgery_type: string;
   surgery_date: string;
   graft_type: string | null;
   meniscal_repair: boolean;
@@ -47,7 +48,11 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
     return () => { cancel = true; };
   }, [patientId]);
 
-  const auto = useMemo(() => (row ? autoCriteriaFromMeasurements(assessments, row.surgery_date) : {}), [row, assessments]);
+  const isCuff = row?.surgery_type === "rotator_cuff_repair";
+  const ACL_PHASES = useMemo(() => phasesFor(row?.surgery_type, row?.graft_type), [row?.surgery_type, row?.graft_type]);
+  const surgeryLabel = SURGERY_LABELS[(row?.surgery_type as keyof typeof SURGERY_LABELS) || "acl_reconstruction"] ?? SURGERY_LABELS.acl_reconstruction;
+  // Leitura automática das medições só existe para joelho (LCA).
+  const auto = useMemo(() => (row && !isCuff ? autoCriteriaFromMeasurements(assessments, row.surgery_date) : {}), [row, assessments, isCuff]);
   const effective = useMemo(() => effectiveCriteria(row?.criteria, auto), [row, auto]);
   const status = useMemo(() => (row ? computePostOpStatus({ ...row, criteria: effective }, localISODate()) : null), [row, effective]);
 
@@ -68,6 +73,7 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
     setPrefilled(pre?.sourceDate ?? null);
     setDraft({
       patient_id: patientId,
+      surgery_type: pre?.surgery_type ?? "acl_reconstruction",
       surgery_date: pre?.surgery_date ?? localISODate(),
       graft_type: pre?.graft_type ?? null,
       meniscal_repair: pre?.meniscal_repair ?? false,
@@ -99,21 +105,49 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
               <Info className="h-4 w-4 text-primary shrink-0" /> Pré-preenchido a partir da anamnese de {new Date(prefilled + "T12:00:00").toLocaleDateString("pt-BR")}. Confira e edite antes de salvar; o que não estava escrito ficou em branco.
             </p>
           )}
-          <div><Label className="text-xs">Cirurgia</Label><Input value="Reconstrução do LCA" disabled className="mt-1" /></div>
-          <div><Label className="text-xs">Data da cirurgia</Label><Input type="date" max={localISODate()} value={draft.surgery_date} onChange={(e) => setDraft({ ...draft, surgery_date: e.target.value })} className="mt-1" /></div>
           <div>
-            <Label className="text-xs">Enxerto</Label>
-            <Select value={draft.graft_type ?? "unknown"} onValueChange={(v) => setDraft({ ...draft, graft_type: v === "unknown" ? null : v })}>
+            <Label className="text-xs">Cirurgia</Label>
+            <Select value={draft.surgery_type} onValueChange={(v) => setDraft({ ...draft, surgery_type: v, graft_type: null, meniscal_repair: false, criteria: {} })}>
               <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="unknown">Não informado</SelectItem>
-                <SelectItem value="patellar">Tendão patelar</SelectItem>
-                <SelectItem value="hamstring">Flexores (isquiotibiais)</SelectItem>
-                <SelectItem value="quadriceps">Quadricipital</SelectItem>
+                <SelectItem value="acl_reconstruction">{SURGERY_LABELS.acl_reconstruction}</SelectItem>
+                <SelectItem value="rotator_cuff_repair">{SURGERY_LABELS.rotator_cuff_repair}</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <label className="flex items-center gap-2 text-sm mt-6"><Checkbox checked={draft.meniscal_repair} onCheckedChange={(v) => setDraft({ ...draft, meniscal_repair: !!v })} /> Sutura meniscal associada</label>
+          <div><Label className="text-xs">Data da cirurgia</Label><Input type="date" max={localISODate()} value={draft.surgery_date} onChange={(e) => setDraft({ ...draft, surgery_date: e.target.value })} className="mt-1" /></div>
+          {draft.surgery_type === "rotator_cuff_repair" ? (
+            <>
+              <div>
+                <Label className="text-xs">Tamanho da rotura</Label>
+                <Select value={draft.graft_type ?? "unknown"} onValueChange={(v) => setDraft({ ...draft, graft_type: v === "unknown" ? null : v })}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unknown">Não informado</SelectItem>
+                    <SelectItem value="small_medium">Pequena/média (&lt; 3 cm)</SelectItem>
+                    <SelectItem value="large_massive">Grande/maciça (≥ 3 cm ou 2+ tendões)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <label className="flex items-center gap-2 text-sm mt-6"><Checkbox checked={draft.meniscal_repair} onCheckedChange={(v) => setDraft({ ...draft, meniscal_repair: !!v })} /> Subescapular reparado</label>
+            </>
+          ) : (
+            <>
+              <div>
+                <Label className="text-xs">Enxerto</Label>
+                <Select value={draft.graft_type ?? "unknown"} onValueChange={(v) => setDraft({ ...draft, graft_type: v === "unknown" ? null : v })}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unknown">Não informado</SelectItem>
+                    <SelectItem value="patellar">Tendão patelar</SelectItem>
+                    <SelectItem value="hamstring">Flexores (isquiotibiais)</SelectItem>
+                    <SelectItem value="quadriceps">Quadricipital</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <label className="flex items-center gap-2 text-sm mt-6"><Checkbox checked={draft.meniscal_repair} onCheckedChange={(v) => setDraft({ ...draft, meniscal_repair: !!v })} /> Sutura meniscal associada</label>
+            </>
+          )}
           <div className="sm:col-span-2"><Label className="text-xs">Restrições do cirurgião</Label><Textarea rows={2} value={draft.surgeon_restrictions ?? ""} onChange={(e) => setDraft({ ...draft, surgeon_restrictions: e.target.value || null })} className="mt-1" /></div>
           <div className="sm:col-span-2 flex justify-end gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>Cancelar</Button>
@@ -132,7 +166,7 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base flex items-center gap-2 flex-wrap">
-            <Scissors className="h-4 w-4 text-primary" /> Pós-operatório: Reconstrução do LCA <Badge variant="outline">Beta</Badge>
+            <Scissors className="h-4 w-4 text-primary" /> Pós-operatório: {surgeryLabel} <Badge variant="outline">Beta</Badge>
           </CardTitle>
           <div className="flex items-center gap-2">
             <Badge>Semana {status.week} · D+{status.days}</Badge>
@@ -163,7 +197,7 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
               </div>
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-xs text-muted-foreground">{isCurrent ? "Fase atual" : idx < cur ? "Fase anterior (concluída)" : `Próxima etapa · a partir de ${fmt(phaseUnlockDate(row.surgery_date, idx))}`}</p>
+                  <p className="text-xs text-muted-foreground">{isCurrent ? "Fase atual" : idx < cur ? "Fase anterior (concluída)" : `Próxima etapa · a partir de ${fmt(phaseUnlockDate(row.surgery_date, idx, ACL_PHASES))}`}</p>
                   <p className="font-semibold">{ph.title}</p>
                   {ph.biologicalNote && <p className="text-xs text-muted-foreground mt-1">{ph.biologicalNote}</p>}
                 </div>
@@ -178,7 +212,7 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
                 <div className="flex gap-2 rounded-lg border border-primary/30 bg-primary/5 p-2 text-xs">
                   <Lock className="h-4 w-4 text-primary shrink-0" />
                   <span>
-                    <b>Critérios cumpridos — paciente pronto para avançar.</b> A fase "{ACL_PHASES[nextIdx].title}" fica disponível a partir de {fmt(phaseUnlockDate(row.surgery_date, nextIdx))} (semana {ACL_PHASES[nextIdx].fromWeek}), respeitando o tempo de proteção biológica do enxerto. Até lá: manter as conquistas desta fase e preparar a transição.{" "}
+                    <b>Critérios cumpridos — paciente pronto para avançar.</b> A fase "{ACL_PHASES[nextIdx].title}" fica disponível a partir de {fmt(phaseUnlockDate(row.surgery_date, nextIdx, ACL_PHASES))} (semana {ACL_PHASES[nextIdx].fromWeek}), respeitando o tempo de proteção biológica {isCuff ? "do reparo do tendão" : "do enxerto"}. Até lá: manter as conquistas desta fase e preparar a transição.{" "}
                     <button type="button" className="underline" onClick={() => setViewIdx(nextIdx)}>Ver próxima etapa</button>
                   </span>
                 </div>

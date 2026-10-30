@@ -62,8 +62,9 @@ export default function FreeReportDialog({ open, onOpenChange, patientName, pati
       const { data } = await supabase.from("post_op_profiles" as any).select("*").eq("patient_id", patientId).maybeSingle();
       if (cancel || !data) { if (!cancel) setPostOpText(null); return; }
       const row = data as any;
-      const crit = effectiveCriteria(row.criteria, autoCriteriaFromMeasurements(assessments, row.surgery_date));
-      setPostOpText(postOpReportText(computePostOpStatus({ ...row, criteria: crit }, localISODate()), row.surgery_date, crit));
+      const auto = row.surgery_type === "rotator_cuff_repair" ? {} : autoCriteriaFromMeasurements(assessments, row.surgery_date);
+      const crit = effectiveCriteria(row.criteria, auto);
+      setPostOpText(postOpReportText(computePostOpStatus({ ...row, criteria: crit }, localISODate()), row.surgery_date, crit, row.surgery_type));
     })();
     return () => { cancel = true; };
   }, [open, patientId, assessments]);
