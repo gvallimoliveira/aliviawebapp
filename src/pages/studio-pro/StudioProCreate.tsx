@@ -1986,7 +1986,30 @@ const StudioProCreate = ({
             )}
           </div>
           </div>}
-          {/* Camada 3 — avançado (escrita, IA do kit, aprendizado). */}
+          {/*
+            LEITURA DE IA DO KIT (só conta admin), sempre visível fora do
+            "Avançado". Desligada, o diretor trabalha 100% local e sem crédito.
+          */}
+          {canUseBrief && (
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2">
+              <div className="min-w-0">
+                <p className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground">
+                  <Sparkles className="h-3 w-3 text-primary" />
+                  Direção com IA {briefOn ? (briefLoading ? "· lendo o kit…" : "· ligada") : "· desligada"}
+                </p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {briefLearned
+                    ? "Leitura do kit guardada: continua valendo com a IA desligada."
+                    : "Ligue para a IA ler o kit e melhorar as frases do lote."}
+                  {learning.count > 0 ? ` ${learning.count} correção(ões) de texto aprendidas.` : ""}
+                </p>
+              </div>
+              <Button type="button" size="sm" variant={briefOn ? "secondary" : "default"} className="h-7 rounded-full text-[11px]" onClick={toggleBrief}>
+                {briefOn ? "Desligar" : "Ligar IA"}
+              </Button>
+            </div>
+          )}
+          {/* Camada 3 — avançado (escrita, aprendizado). */}
           <button
             type="button"
             onClick={() => setAdvancedOpen((v) => !v)}
@@ -2005,28 +2028,6 @@ const StudioProCreate = ({
             samples={variationSamples}
             style={brandStyle}
           />
-          {/*
-            LEITURA DE IA DO KIT (só conta admin). Desligado, o diretor criativo
-            trabalha 100% local e sem consumo de crédito — o padrão de todos.
-          */}
-          {canUseBrief && (
-            <div className="mt-2">
-              <button
-                type="button"
-                onClick={toggleBrief}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground underline-offset-2 hover:underline"
-              >
-                <Sparkles className="h-3 w-3" />
-                Direção com IA: {briefOn ? (briefLoading ? "lendo o kit…" : "ligada") : "desligada"}
-              </button>
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                {briefLearned
-                  ? "Leitura do kit guardada: continua valendo com a IA desligada."
-                  : "Ligue uma vez para a IA ler o kit; o aprendizado fica guardado na marca."}
-                {learning.count > 0 ? ` ${learning.count} correção(ões) de texto aprendidas.` : ""}
-              </p>
-            </div>
-          )}
 
           {/* Transparência da linhagem: o usuário vê quando a versão herdou favorito. */}
           <p className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">

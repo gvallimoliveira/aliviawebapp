@@ -1203,6 +1203,23 @@ const StudioProBrand = () => {
                 </div>
               );
             })()}
+            {/* Atalho sempre visível: a IA relê manual/questionário e reescreve o kit. */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+              <p className="max-w-md text-xs text-muted-foreground">
+                A IA lê o manual, o questionário e o site e reescreve os públicos, ganchos e chamadas
+                da marca para você revisar.
+              </p>
+              <Button
+                variant="default"
+                size="sm"
+                className="rounded-full"
+                onClick={interpretBrand}
+                disabled={interpreting || saving}
+              >
+                {interpreting ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+                Interpretar com IA
+              </Button>
+            </div>
             {/* ================= 1. COMECE POR AQUI ================= */}
             <BrandSection
               step={1}
