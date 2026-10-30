@@ -1779,10 +1779,13 @@ export type Database = {
         Row: {
           accepted_at: string | null
           clinic_id: string
+          council_number: string | null
+          council_type: string | null
           created_at: string
           id: string
           invited_at: string
           invited_by: string | null
+          report_full_name: string | null
           role: Database["public"]["Enums"]["clinic_role"]
           status: string
           user_id: string
@@ -1790,10 +1793,13 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           clinic_id: string
+          council_number?: string | null
+          council_type?: string | null
           created_at?: string
           id?: string
           invited_at?: string
           invited_by?: string | null
+          report_full_name?: string | null
           role?: Database["public"]["Enums"]["clinic_role"]
           status?: string
           user_id: string
@@ -1801,10 +1807,13 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           clinic_id?: string
+          council_number?: string | null
+          council_type?: string | null
           created_at?: string
           id?: string
           invited_at?: string
           invited_by?: string | null
+          report_full_name?: string | null
           role?: Database["public"]["Enums"]["clinic_role"]
           status?: string
           user_id?: string
@@ -5963,6 +5972,11 @@ export type Database = {
           total_sessions: number
         }[]
       }
+      get_clinic_report_issuer: {
+        Args: { _clinic_id: string; _user_id: string }
+        Returns: Json
+      }
+      get_clinic_report_members: { Args: { _clinic_id: string }; Returns: Json }
       get_clinic_role: {
         Args: { _clinic_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["clinic_role"]
@@ -6393,6 +6407,15 @@ export type Database = {
           _snapshot: Json
         }
         Returns: string
+      }
+      save_clinic_report_identity: {
+        Args: {
+          _council_number?: string
+          _council_type?: string
+          _full_name: string
+          _member_id: string
+        }
+        Returns: undefined
       }
       search_marketplace_professionals: {
         Args: { _city?: string; _state?: string }
