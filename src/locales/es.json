@@ -1645,5 +1645,7 @@
   "credits.rolloutDesc": "Activa el interruptor general y marca las categorías que exigirán saldo tras cuota + margen (PRO 10%, clínica 20%). Admin y VIP siguen ilimitados.",
   "credits.rolloutDenied": "Tu cuenta no puede cambiar los límites de IA.",
   "support.pro.tool.free_report.title": "Informe fisioterapéutico libre",
-  "support.pro.tool.free_report.desc": "En la ficha del paciente, toca 'Más' (3 puntos) → 'Informe fisioterapéutico'. Elige un modelo (en blanco, derivación, aseguradora o resumen), edita el texto libremente y genera el PDF con tu marca y, si está activada, tu firma digital de Mi cuenta. Ideal para aseguradoras, médicos y derivaciones."
+  "support.pro.tool.free_report.desc": "En la ficha del paciente, toca 'Más' (3 puntos) → 'Informe fisioterapéutico'. Elige un modelo, edita el texto y genera el PDF con la marca del profesional o de la clínica y la identificación del emisor. Si está activada, la firma pertenece al emisor y se guarda en Mi cuenta. La falta de consejo nunca sustituye al colaborador por el dueño.",
+  "support.pro.tool.report_identity.title": "Nombre completo y consejo en informes",
+  "support.pro.tool.report_identity.desc": "Cada colaborador introduce su nombre completo en Mi cuenta → Identificación en informes de la clínica. Si tiene consejo, selecciona CREFITO, CREF, CRM u Otro e indica número y región; si no, selecciona Sin consejo. Dueño y administrador también editan estos datos con el lápiz en Equipo. Cada colaborador guarda su propia firma en Mi cuenta → Firma digital, por imagen o dibujando en pantalla. Los datos se separan por clínica y no exigen PRO personal. En PRO autónomo se usa el nombre y CREFITO del perfil profesional propio."
 }

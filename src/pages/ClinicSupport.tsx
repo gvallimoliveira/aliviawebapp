@@ -484,7 +484,7 @@ const faqKeys = [
   },
   {
     q: "Como emito um relatório fisioterapêutico livre (convênio, médico, encaminhamento)?",
-    a: "No prontuário do paciente, toque em 'Mais' (3 pontinhos) → 'Relatório fisioterapêutico'. Escolha um modelo (em branco, encaminhamento, convênio ou resumo do tratamento), edite o texto livremente e gere o PDF com logo e cores da clínica. O relatório sai com o nome, CREFITO e assinatura digital de quem o emite — cada colaborador cadastra a própria assinatura em Minha conta → Assinatura digital, e a aba Equipe mostra quem já cadastrou.",
+    a: "No prontuário do paciente, toque em 'Mais' (3 pontinhos) → 'Relatório fisioterapêutico'. Escolha um modelo, edite o texto e gere o PDF com a marca da clínica. Em Minha conta → Identificação nos relatórios da clínica, informe nome completo e conselho/número quando houver. Dono/admin também podem editar esses dados na Equipe pelo lápis. A assinatura é cadastrada pelo próprio colaborador em Minha conta → Assinatura digital. O emissor não é substituído pelo dono por faltar conselho.",
   },
   {
     q: "Como cancelo, retomo ou mudo minha assinatura da clínica para anual?",
@@ -681,10 +681,10 @@ const ClinicSupport = () => {
             {faqKeys.map((faq, i) => (
               <AccordionItem key={i} value={`faq-${i}`}>
                 <AccordionTrigger className="text-left text-base font-medium text-foreground">
-                  {i === 0 ? t("support.pro.faq.profile_isolation.q") : faq.q}
+                  {i === 0 ? t("support.pro.faq.profile_isolation.q") : faq.q === "Como emito um relatório fisioterapêutico livre (convênio, médico, encaminhamento)?" ? t("support.pro.tool.free_report.title") : faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
-                  {i === 0 ? t("support.pro.faq.profile_isolation.a") : faq.a}
+                  {i === 0 ? t("support.pro.faq.profile_isolation.a") : faq.q === "Como emito um relatório fisioterapêutico livre (convênio, médico, encaminhamento)?" ? <>{t("support.pro.tool.free_report.desc")}<p className="mt-3">{t("support.pro.tool.report_identity.desc")}</p></> : faq.a}
                 </AccordionContent>
               </AccordionItem>
             ))}

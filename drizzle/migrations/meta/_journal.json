@@ -463,6 +463,13 @@
       "when": 1793330372890,
       "tag": "0065_clinic_report_member_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1793330794082,
+      "tag": "0066_guard_clinic_report_identity",
+      "breakpoints": true
     }
   ]
 }
