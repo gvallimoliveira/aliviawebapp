@@ -1,3 +1,4 @@
+import PostOpTrajectoryCard from "./PostOpTrajectoryCard";
 import { careScope } from "@/lib/careScope";
 import React from "react";
 import PreventiveAssessmentSummary from "@/components/assessment/PreventiveAssessmentSummary";
@@ -1370,6 +1371,13 @@ export default function PatientDetailView(props: any) {
         );
       })()}
 
+
+      {!isDemo && patient?.patientRecord?.id && (
+        <PostOpTrajectoryCard
+          patientId={patient.patientRecord.id}
+          suggestActivate={(patient.assessments || []).some((x: any) => /post_surgery|lca|lce|cruzado|acl/i.test(JSON.stringify([x?.anamnesis_data?.onset, x?.anamnesis_data?.previousSurgeries, x?.anamnesis_data?.chiefComplaint])))}
+        />
+      )}
 
       <PatientHorizontalRow label={language === "pt" ? "Anamnese e saúde geral" : language === "es" ? "Anamnesis y salud general" : "Anamnesis and general health"}>
       {/* Anamnese resumida da última avaliação — colapsável (Extra C: atalho ver completa) */}
