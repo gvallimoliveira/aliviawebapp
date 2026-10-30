@@ -1,5 +1,9 @@
 # Roadmap
 
+## Pré-operatório de LCA
+- [ ] Amarrar registro explícito na avaliação à preparação de LCA, com metas por etapa e data cirúrgica opcional, mantendo beta admin.
+- [ ] Preservar dados/relatórios e validar progressão, contagem e persistência; atualizar ajuda pt/en/es.
+
 ## R-LCA — material clínico e organização didática
 - [x] Sete prints transcritos em docs/rlca-referencia-clinica.md com origem, métricas, métodos, objetivos e avançar/manter/regredir; cortes não universais separados da evidência identificada.
 - [x] Referência curada compartilhada no chat, impressão, hipótese, plano e relatório evolutivo; histórico cirúrgico preservado e cache versionado sem reescrever relatórios salvos. Futura seção ortopédica não criada.
