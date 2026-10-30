@@ -3759,6 +3759,56 @@ export type Database = {
           },
         ]
       }
+      post_op_profiles: {
+        Row: {
+          created_at: string
+          created_by: string
+          criteria: Json
+          graft_type: string | null
+          id: string
+          meniscal_repair: boolean
+          patient_id: string
+          surgeon_restrictions: string | null
+          surgery_date: string
+          surgery_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          criteria?: Json
+          graft_type?: string | null
+          id?: string
+          meniscal_repair?: boolean
+          patient_id: string
+          surgeon_restrictions?: string | null
+          surgery_date: string
+          surgery_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          criteria?: Json
+          graft_type?: string | null
+          id?: string
+          meniscal_repair?: boolean
+          patient_id?: string
+          surgeon_restrictions?: string | null
+          surgery_date?: string
+          surgery_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_op_profiles_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: true
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_addons: {
         Row: {
           addon_type: string
@@ -5696,6 +5746,7 @@ export type Database = {
         Args: { _program_id: string }
         Returns: boolean
       }
+      can_use_post_op_beta: { Args: never; Returns: boolean }
       claim_studio_brand_invites: { Args: never; Returns: number }
       clear_assessment_progress: {
         Args: { _scope_key: string }
