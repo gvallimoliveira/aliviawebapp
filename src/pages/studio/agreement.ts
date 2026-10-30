@@ -27,7 +27,7 @@ const FEM_EXCEPTIONS = new Set([
   "razão","razões","decisão","sessão","lesão","pressão","tensão","condição","evolução","reabilitação",
   "função","atenção","intenção","opção","solução","questão","gestão","conclusão","precisão",
   "mão","nação","paixão","estação","rotina","meta","tarde","chance","ordem","paz","dose","face",
-  "carne","fome","sorte","morte","frente","ponte","dúvida","pele","tarefa","região",
+  "carne","fome","sorte","morte","frente","ponte","dúvida","pele","tarefa","região","versão",
 ]);
 
 const PLURAL_EXCEPTIONS = new Set(["mês","país","gás","atrás","através","depois","pois","mais","menos","vez","luz","cruz","paz","após","ninguém","lápis","ônibus","vírus","tênis","status","campus","atlas"]);
@@ -163,6 +163,8 @@ export const fixAgreement = (text: string): string => {
     if (!raw) continue;
     const key = raw.toLowerCase();
     if (!INDEX.has(key)) continue;
+    // Preposition in "levado a sério" is not a feminine article.
+    if (key === "a" && wordAt(i + 2).toLowerCase() === "sério") continue;
 
     // Encontra o núcleo: pula modificadores flexionáveis.
     const chain: number[] = [i];
