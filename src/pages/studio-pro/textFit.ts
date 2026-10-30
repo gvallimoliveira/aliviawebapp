@@ -43,7 +43,11 @@ export const condensePhrase = (text: string | null | undefined, max = 90): strin
 
   // 1) primeira frase
   const sentence = stripEdges(clean.split(/(?<=[.!?])\s/)[0] ?? clean);
-  if (sentence.length <= max) return trimDanglingFiller(sentence) || sentence;
+  if (sentence.length <= max) return sentence;
+
+  // A label-like prefix ("HEP conectado ao") is not a complete short version.
+  // Keep the source sentence: AutoFit handles its size without losing meaning.
+  if (/\b(?:HEP|STEPS|D\.I\.F\.I)\b|\d/.test(sentence)) return sentence;
 
   // 2) fronteiras naturais de cláusula, do maior trecho que couber
   const boundary = /[,;:–—]| que | para | com | e /gi;
@@ -65,7 +69,8 @@ export const condensePhrase = (text: string | null | undefined, max = 90): strin
     acc = next;
   }
   const fitted = trimDanglingFiller(acc);
-  if (fitted) return fitted;
+  if (fitted && !/\b(?:conectad[oa]|enviado|entre|antes|depois)$/i.test(fitted)) return fitted;
+  if (acc) return sentence;
 
   // 4) última saída: primeira palavra cortada, ainda sem reticências
   return stripEdges(words[0]?.slice(0, max) ?? "");

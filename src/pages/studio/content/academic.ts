@@ -133,7 +133,7 @@ const academic: WorldContent = {
     { tag: "D.I.F.I", title: "Dor, inibição, fraqueza e incapacidade", description: "Quatro eixos conectados: um pode alimentar o seguinte e indicar onde a conduta precisa agir.", topic: "difi" },
     { tag: "RED FLAGS", title: "Aprenda a reconhecer o que não é fisioterapia", description: "Triagem de sinais de alerta em toda avaliação, sem exceção.", topic: "red-flags" },
     { tag: "SAÚDE GERAL", title: "Comorbidade muda a conduta", description: "Hipertensão, diabetes, cardiopatia e medicação contínua no raciocínio.", topic: "health-general" },
-    { tag: "FABQ-BRASIL", title: "Medo-evitação com escore e corte", description: "Aprenda a interpretar catastrofização sem rotular o paciente.", topic: "fabq" },
+    { tag: "FABQ-BRASIL", title: "Medo-evitação com escore e corte", description: "Aprenda a interpretar crenças de medo-evitação sem rotular o paciente.", topic: "fabq" },
     { tag: "DINAMOMETRIA", title: "Força medida e comparada entre lados", description: "Leitura de assimetria com critério objetivo de risco.", topic: "dynamometry" },
     { tag: "ALTA", title: "Relatório de evolução comparativa", description: "Como demonstrar resultado do início ao fim do acompanhamento.", topic: "discharge-report" },
     { tag: "IMPRESSÃO CLÍNICA", title: "A síntese que o preceptor cobra de você", description: "Leitura longitudinal do caso considerando testes extras e observações de cada sessão.", topic: "clinical-impression" },

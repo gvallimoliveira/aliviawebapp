@@ -376,7 +376,7 @@ export const ALIVIA_PRO_HOOKS: StudioHook[] = [
   },
   {
     hook: "Retorno do paciente",
-    strong: "Paciente que vê a própria evolução em números não abandona no meio",
+    strong: "Mostrar a evolução ajuda a conversar sobre a continuidade do cuidado",
     rest: ".",
     sub: "Histórico comparável transforma sensação em progresso visível.",
     cta: "Mostrar a evolução medida",

@@ -156,6 +156,7 @@ const applyConnectors = (text: string, rng: Rng, naturalness: Naturalness = "exp
 
 const restructure = (sentence: string, rng: Rng, naturalness: Naturalness = "expressive", budget?: FormulaBudget): string => {
   const core = noDot(sentence);
+  const candidates = PATTERNS.filter((p) => p.id !== "duas-oracoes").map((p) => ({ p, m: core.match(p.re) })).filter((c) => c.m);
   if (!candidates.length) return sentence;
   const chosen = candidates[rng.int(candidates.length)];
   let outs = chosen.p.outs.map((fn, i) => ({ fn, i }));
