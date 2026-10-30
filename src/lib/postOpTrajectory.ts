@@ -124,3 +124,71 @@ export function computePostOpStatus(p: PostOpProfileInput, todayIso: string, pha
   if (p.graft_type === "quadriceps") caveats.push("Enxerto quadricipital: monitorar dor no sítio doador do quadríceps.");
   return { days, week, expectedPhaseIndex: expected, currentPhaseIndex: current, phase, met, total: phase.exitCriteria.length, behindSchedule: current < expected, caveats };
 }
+
+// ---------- Leitura automática das medições do prontuário ----------
+export interface MeasuredAssessment {
+  created_at: string;
+  anamnesis_data?: {
+    romTable?: Array<{ joint?: string; leftValue?: string; rightValue?: string }>;
+    strengthTable?: Array<{ movement?: string; leftValue?: string; rightValue?: string }>;
+  } | null;
+}
+export interface AutoCriterion { value: boolean; source: string; date: string; }
+
+const num = (v?: string) => { const n = parseFloat(String(v ?? "").replace(",", ".")); return Number.isFinite(n) ? n : null; };
+const isKnee = (s: string) => /joelho|knee|rodilla/i.test(s);
+const isExt = (s: string) => /extens|extension|extensi/i.test(s);
+const isQuad = (s: string) => /quadr[ií]ceps|quadriceps|cu[aá]driceps/i.test(s) || (isKnee(s) && isExt(s));
+
+/**
+ * Marca critérios a partir da medição mais recente feita após a cirurgia.
+ * Só usa critérios com corte explícito no próprio critério: extensão simétrica (±2°)
+ * e força de quadríceps pelo índice de simetria (menor/maior lado) ≥ 80% / ≥ 90%.
+ */
+export function autoCriteriaFromMeasurements(assessments: MeasuredAssessment[], surgeryDate: string): Record<string, AutoCriterion> {
+  const out: Record<string, AutoCriterion> = {};
+  const sorted = [...assessments]
+    .filter((a) => a.created_at && a.created_at.slice(0, 10) >= surgeryDate)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  for (const a of sorted) {
+    const date = a.created_at.slice(0, 10);
+    if (!out.full_extension) {
+      const r = (a.anamnesis_data?.romTable || []).find((x) => isKnee(x.joint || "") && isExt(x.joint || ""));
+      const l = num(r?.leftValue), rt = num(r?.rightValue);
+      if (r && l !== null && rt !== null) out.full_extension = { value: Math.abs(l - rt) <= 2, source: `Extensão do joelho E ${l}° / D ${rt}°`, date };
+    }
+    if (!out.quad_lsi_80) {
+      const s = (a.anamnesis_data?.strengthTable || []).find((x) => isQuad(x.movement || ""));
+      const l = num(s?.leftValue), rt = num(s?.rightValue);
+      if (s && l !== null && rt !== null && Math.max(l, rt) > 0) {
+        const lsi = Math.round((Math.min(l, rt) / Math.max(l, rt)) * 100);
+        const source = `Quadríceps: simetria ${lsi}% (E ${l} / D ${rt})`;
+        out.quad_lsi_80 = { value: lsi >= 80, source, date };
+        out.quad_lsi_90 = { value: lsi >= 90, source, date };
+      }
+    }
+    if (out.full_extension && out.quad_lsi_80) break;
+  }
+  return out;
+}
+
+/** Marcação manual do fisioterapeuta prevalece; sem marcação, usa a medição. */
+export function effectiveCriteria(manual: Record<string, boolean> | undefined, auto: Record<string, AutoCriterion>): Record<string, boolean> {
+  const res: Record<string, boolean> = {};
+  for (const [k, v] of Object.entries(auto)) res[k] = v.value;
+  for (const [k, v] of Object.entries(manual || {})) res[k] = v;
+  return res;
+}
+
+export function postOpReportText(status: PostOpStatus, surgeryDate: string, criteria: Record<string, boolean>): string {
+  const d = new Date(surgeryDate + "T12:00:00").toLocaleDateString("pt-BR");
+  const lines = [
+    `Pós-operatório de reconstrução do LCA (cirurgia em ${d}) — semana ${status.week} (D+${status.days}).`,
+    `Fase atual: ${status.phase.title}.`,
+    `Próximo marco: ${status.phase.nextMilestone}.`,
+    `Critérios da fase (${status.met}/${status.total}):`,
+    ...status.phase.exitCriteria.map((c) => `• ${c.label}: ${criteria[c.id] ? "atingido" : "pendente"}`),
+  ];
+  if (status.behindSchedule) lines.push("Observação: critérios ainda pendentes em relação ao tempo pós-operatório esperado.");
+  return lines.join("\n");
+}

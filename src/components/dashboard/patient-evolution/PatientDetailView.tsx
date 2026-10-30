@@ -789,7 +789,7 @@ export default function PatientDetailView(props: any) {
 
       {/* Seletor de escopo do Relatório de Evolução: período rápido ou avaliações específicas.
           Evita misturar quadros clínicos antigos com o quadro atual no comparativo. */}
-      <FreeReportDialog open={freeReportOpen} onOpenChange={setFreeReportOpen} patientName={patient.name} patientBirthDate={patient?.patientRecord?.birth_date ?? null} latestHypothesis={latestWithDiagnosis?.final_hypothesis || latestWithDiagnosis?.diagnosis?.hypothesis || null} assessmentCount={patient.assessments?.length || 0} clinicId={clinicId} professionalId={professionalId} language={language} />
+      <FreeReportDialog open={freeReportOpen} onOpenChange={setFreeReportOpen} patientName={patient.name} patientBirthDate={patient?.patientRecord?.birth_date ?? null} latestHypothesis={latestWithDiagnosis?.final_hypothesis || latestWithDiagnosis?.diagnosis?.hypothesis || null} assessmentCount={patient.assessments?.length || 0} patientId={patient?.patientRecord?.id ?? null} assessments={patient.assessments || []} clinicId={clinicId} professionalId={professionalId} language={language} />
       <Dialog open={evolutionPickerOpen} onOpenChange={(o) => { if (!evolutionLoading) setEvolutionPickerOpen(o); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1375,6 +1375,7 @@ export default function PatientDetailView(props: any) {
       {!isDemo && patient?.patientRecord?.id && (
         <PostOpTrajectoryCard
           patientId={patient.patientRecord.id}
+          assessments={patient.assessments || []}
           suggestActivate={(patient.assessments || []).some((x: any) => /post_surgery|lca|lce|cruzado|acl/i.test(JSON.stringify([x?.anamnesis_data?.onset, x?.anamnesis_data?.previousSurgeries, x?.anamnesis_data?.chiefComplaint])))}
         />
       )}
