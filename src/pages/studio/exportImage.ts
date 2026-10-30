@@ -930,13 +930,12 @@ export const rasterizeExportShadows = (node: HTMLElement) => {
     for (const shadow of [...shadows].reverse()) {
       if (!shadow) continue;
       context.save();
-      // Move the source shape outside the canvas; only its shadow lands inside.
-      const shift = canvas.width * 2;
       context.shadowColor = shadow.color;
       context.shadowBlur = shadow.blur * ratio;
-      context.shadowOffsetX = shadow.x * ratio + shift;
+      context.shadowOffsetX = shadow.x * ratio;
       context.shadowOffsetY = shadow.y * ratio;
-      roundedRect(context, (pad - shadow.spread) * ratio - shift, (pad - shadow.spread) * ratio,
+      context.fillStyle = shadow.color;
+      roundedRect(context, (pad - shadow.spread) * ratio, (pad - shadow.spread) * ratio,
         Math.max(0, width + shadow.spread * 2) * ratio, Math.max(0, height + shadow.spread * 2) * ratio,
         Math.max(0, radius + shadow.spread) * ratio);
       context.fill();
