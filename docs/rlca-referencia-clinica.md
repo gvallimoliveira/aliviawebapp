@@ -91,4 +91,17 @@ Relacionar D.I.F.I (dor/derrame → inibição → perda de capacidade → limit
 
 ## Escopo desta referência
 
-A futura seção de pós-operatório ortopédico não é criada por este documento. A referência deve apoiar respostas contextualizadas sem criar escores, normas inéditas, métricas fictícias ou modificar históricos. Fontes científicas complementares e pontos de integração serão registrados após conferência.
+A futura seção de pós-operatório ortopédico não é criada por este documento. A referência apoia respostas contextualizadas sem criar escores, normas inéditas, métricas fictícias ou modificar históricos.
+
+## Conferência bibliográfica complementar
+
+- **Kotsifaki et al., 2023 — Aspetar clinical practice guideline on rehabilitation after anterior cruciate ligament reconstruction.** DOI 10.1136/bjsports-2022-106158; PMID 36731908. https://pubmed.ncbi.nlm.nih.gov/36731908/ — CCA em arco limitado 90°–45° pode começar na semana 4; não equivale a extensão terminal resistida pesada liberada. Critérios propostos para corrida incluem **LSI >80%**, além de amplitude, derrame e desempenho sem dor; não são garantia validada de segurança individual.
+- **Meredith et al., 2020 — Panther Symposium ACL Injury Return to Sport Consensus Group.** DOI 10.1007/s00167-020-06009-1; PMID 32347344. https://pubmed.ncbi.nlm.nih.gov/32347344/ — decisão multidimensional, não apenas tempo; retorno à participação, esporte e desempenho são etapas distintas.
+- **Grindem et al., 2016 — Delaware–Oslo ACL cohort study.** DOI 10.1136/bjsports-2016-096031; PMID 27162233. https://pubmed.ncbi.nlm.nih.gov/27162233/ — associação entre adiar retorno ao esporte com pivô até 9 meses e menor taxa de nova lesão de joelho; não prova causal individual nem ausência de risco depois.
+- **Beischer et al., 2020 — Young athletes who return to sport before 9 months…** DOI 10.2519/jospt.2020.9071; PMID 32005095. https://pubmed.ncbi.nlm.nih.gov/32005095/ — coorte de atletas de 15–30 anos em esportes exigentes para o joelho; associação com nova lesão de LCA no retorno precoce. Corrigendum: DOI 10.2519/jospt.2020.50.7.411; PMID 32605465. Não generalizar como previsão de risco individual.
+
+Nenhuma nota PEDro foi atribuída. Diretriz, consenso e coortes não devem receber notas inventadas. Não foram confirmadas derivações universais para IQ:QD 60%, ACL-RSI 76, IKDC 90, Y Balance 4 cm ou Teste T 11–12 s; esses valores permanecem exclusivamente na transcrição da fonte educacional, fora do bloco clínico autorizado enviado à IA.
+
+## Integração
+
+`supabase/functions/_shared/rlca-reference.ts` fornece seleção por contexto explícito de LCA e referência curada para chat, impressão clínica, hipótese, plano e relatório evolutivo. Histórico cirúrgico é preservado na impressão, plano e contexto resumido do chat. A referência não prova que cirurgia foi realizada. Chaves de cache versionadas afetam solicitações novas, sem regenerar relatórios salvos. Não houve inserção dos prints como artigos científicos validados na biblioteca.
