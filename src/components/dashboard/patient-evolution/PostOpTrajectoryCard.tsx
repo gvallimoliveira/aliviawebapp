@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Scissors, AlertTriangle, Target, Pencil } from "lucide-react";
-import { ACL_PHASES, computePostOpStatus, autoCriteriaFromMeasurements, effectiveCriteria, type MeasuredAssessment } from "@/lib/postOpTrajectory";
+import { ACL_PHASES, computePostOpStatus, autoCriteriaFromMeasurements, effectiveCriteria, prefillFromAnamnesis, phaseUnlockDate, type MeasuredAssessment } from "@/lib/postOpTrajectory";
+import { Lock, CheckCircle2, Info } from "lucide-react";
 import { localISODate } from "@/lib/periodization";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,6 +32,8 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
   const [row, setRow] = useState<Row | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Row | null>(null);
+  const [prefilled, setPrefilled] = useState<string | null>(null);
+  const [viewIdx, setViewIdx] = useState<number | null>(null);
 
   useEffect(() => {
     let cancel = false;
@@ -60,7 +63,17 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
   };
 
   const startEdit = () => {
-    setDraft(row ?? { patient_id: patientId, surgery_date: localISODate(), graft_type: null, meniscal_repair: false, surgeon_restrictions: null, criteria: {} });
+    if (row) { setDraft(row); setPrefilled(null); setEditing(true); return; }
+    const pre = prefillFromAnamnesis(assessments as any, localISODate());
+    setPrefilled(pre?.sourceDate ?? null);
+    setDraft({
+      patient_id: patientId,
+      surgery_date: pre?.surgery_date ?? localISODate(),
+      graft_type: pre?.graft_type ?? null,
+      meniscal_repair: pre?.meniscal_repair ?? false,
+      surgeon_restrictions: pre?.surgeon_restrictions ?? null,
+      criteria: {},
+    });
     setEditing(true);
   };
 
