@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Relatórios — identidade e assinatura dos colaboradores
-- [ ] Corrigir resolução do emissor sem substituir colaborador pelo dono; manter marca da clínica.
-- [ ] Cadastrar nome completo e conselho/número dos colaboradores com autorização e suporte pt/en/es.
-- [ ] Conferir cadastro, recarga e PDF autenticado com assinatura; testar isolamento e ausência de conselho.
+- [x] Resolução compartilhada preserva o emissor e a assinatura mesmo sem conselho; marca da clínica mantida. Causa: Sifeg tinha assinatura salva, mas CREFITO provisório fazia o emissor cair no dono.
+- [x] Nome completo e conselho/número em Minha conta e edição por dono/admin na Equipe, separados por clínica; autorização no servidor e ajuda pt/en/es.
+- [x] Cadastro de Sifeg salvo sem inventar dados, recarga conferida e encaminhamento real de Aline baixado com marca GV Fisio e assinatura de Sifeg; dez testes aprovados, build OK. Servidor recusou alteração do dono por Sifeg, registro fictício e acesso a outra clínica. Nome completo/número reais de Sifeg não fornecidos; mantido cadastro existente. Edição pelo dono/admin e aparelho físico não exercitados.
 
 ## Studio — manual editorial Aliv.iA atualizado
 - [x] Interpretar com IA executado na conta de Guilherme; resultado revisado editorialmente antes do salvamento final. Manual atualizado com recursos recentes e limites reais, nove públicos/subnichos com frases completas e 14 diálogos por público. Os 34 públicos/temas originais, logo, cores, fontes e slogan foram preservados; salvamento e recarga conferidos pela tela e leitura autenticada, sem erros. Não realizada nova auditoria de lotes nesta tarefa.
