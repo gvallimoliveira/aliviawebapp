@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import logoAlivia from "@/assets/logo-alivia.png";
 import InstallAppDialog from "@/components/InstallAppDialog";
+import LanguageSelector from "@/components/LanguageSelector";
 import { preloadProfessionalLanding } from "@/lib/professionalLandingLoader";
 
 const Header = () => {
@@ -208,14 +209,7 @@ const Header = () => {
               <HelpCircle className="h-4 w-4" />
               {t("support.badge")}
             </button>
-            <button
-              onClick={() => { toggleLanguage(); setMobileOpen(false); }}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
-            >
-              <Globe className="h-4 w-4" />
-              {language === "pt" ? "Idioma: Português" : language === "en" ? "Language: English" : "Idioma: Español"}
-              <span className="ml-auto text-xs text-primary">→ {language === "pt" ? "EN" : language === "en" ? "ES" : "PT"}</span>
-            </button>
+            <LanguageSelector className="justify-start gap-3 w-full h-auto px-3 py-2.5 text-muted-foreground" onSelected={() => setMobileOpen(false)} />
             {user && (
               <button
                 onClick={() => go("/admin")}

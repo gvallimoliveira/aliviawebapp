@@ -1,6 +1,6 @@
 # Architecture decisions
 - Clinic checkout shares landing prices and server-validated metadata through checkout/recovery; refresh context on return to avoid duplicates.
-- Annual refund notices share localized policy keys across support/landings; annualRefund.ts is the reference calculation, not automatic payment execution.
+- Annual refunds share support/landing keys; annualRefund.ts calculates, never pays.
 - Clinic trial renewal uses a server-authorized, owner-and-clinic-scoped RPC on access/expiry and trial_started_at rather than mutating created_at; ordinary customers never receive the administrator exception.
 - Patient navigation uses patientNavigation and scoped care-provider/HEP RPCs; care components retain authorization and persistence.
 - Scope before querying/limiting: solo clinic_id IS NULL + ownership; clinic selected clinic_id. Reset screens on switches; validate agent thread/patient scope server-side.
@@ -12,9 +12,10 @@
 
 - Cardiovascular ceiling reminders combine the record's assessments and ID/email-linked dated health records via `usePatientCardioHealth`; structured conditions never auto-select a clinician profile, infer control, or fabricate an age-based ceiling.
 
-- Aliv.iA/Studio copy uses canonical `aliviaDifferentials.ts` IDs; handoff copy must not duplicate features or imply duplicate entry.
+- Studio copy uses aliviaDifferentials.ts IDs; never imply duplicate entry.
 - Manual assessment and record share diagnosis.clinicalImpression; sync saved updates and regenerate only on request to avoid duplicate credits.
-- Record paired sections share a horizontal row; preserve forms and shortcut reveals.
+- Record paired sections share a row; preserve forms/shortcuts.
+- Language selectors require explicit choice; LanguageContext follows i18next languageChanged after bundle loading to synchronize forms/navigation.
 - Patient regional pain charts and comparisons share one chronological data helper; explicit regional measurements must never be replaced by an invented regional score from a multi-region global average.
 - HEP metrics share `hepLoad.ts` across panel/microcycle.
 - Professional sessions use only `saveProfessionalSession` in `periodizationData.ts`: merge same-date/track check-ins and link plans to avoid duplicate load. TRIMP/sRPE math stays in `cardioLoad.ts`.

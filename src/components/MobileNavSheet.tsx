@@ -10,6 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import logoAlivia from "@/assets/logo-alivia.png";
 import InstallAppDialog from "@/components/InstallAppDialog";
+import LanguageSelector from "@/components/LanguageSelector";
 
 /**
  * Reusable mobile navigation Sheet — matches the structure used in Header.tsx
@@ -147,10 +148,7 @@ const MobileNavSheet = ({ open: controlledOpen, onOpenChange, hideTrigger, trigg
             <button onClick={() => go("/privacidade")} className={item}>
               <Shield className="h-4 w-4" />{L.privacy}
             </button>
-            <button onClick={() => { toggleLanguage(); setOpen(false); }} className={item}>
-              <Globe className="h-4 w-4" />{L.lang}
-              <span className="ml-auto text-xs text-primary">→ {langNext}</span>
-            </button>
+            <LanguageSelector className={`${item} justify-start w-full h-auto`} onSelected={() => setOpen(false)} />
             {user && (
               <button onClick={() => go("/admin")} className={item}>
                 <ShieldCheck className="h-4 w-4" />Admin

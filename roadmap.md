@@ -1,5 +1,9 @@
 # Roadmap
 
+## Idioma — equipe e agenda no iPhone privado
+- [x] Menu deixa de trocar PT→EN em um toque: escolha explícita PT/EN/ES compartilhada entre menus e painel. Contexto segue o idioma efetivo após carregar traduções, sem efeitos dentro de atualização de estado ou toques concorrentes. Imagens mostram idioma geral em inglês; não foi possível confirmar o toque que originou a mudança no aparelho.
+- [x] Conta Sifeg autenticada em WebKit móvel, sessão nova com navegador en-US: identificação na equipe e edição de Diego Ramos no PRO demo abertas em português, sem salvar dados. Menu abriu sem mudar idioma; escolha English e retorno Português conferidos. Dez testes passaram, build OK. iPhone físico não testado.
+
 ## Relatórios — identidade e assinatura dos colaboradores
 - [x] Resolução compartilhada preserva o emissor e a assinatura mesmo sem conselho; marca da clínica mantida. Causa: Sifeg tinha assinatura salva, mas CREFITO provisório fazia o emissor cair no dono.
 - [x] Nome completo e conselho/número em Minha conta e edição por dono/admin na Equipe, separados por clínica; autorização no servidor e ajuda pt/en/es.

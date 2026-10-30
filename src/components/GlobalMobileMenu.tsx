@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import logoAlivia from "@/assets/logo-alivia.png";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import InstallAppDialog from "@/components/InstallAppDialog";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const HIDDEN_PATH_PREFIXES = [
   "/assessment",
@@ -290,17 +291,7 @@ const GlobalMobileMenu = () => {
               <Shield className="h-4 w-4" />
               {L.privacy}
             </button>
-            <button
-              onClick={() => {
-                toggleLanguage();
-                setOpen(false);
-              }}
-              className={itemCls}
-            >
-              <Globe className="h-4 w-4" />
-              {L.language}
-              <span className="ml-auto text-xs text-primary">→ {L.languageNext}</span>
-            </button>
+            <LanguageSelector className={`${itemCls} justify-start w-full h-auto`} onSelected={() => setOpen(false)} />
             {user && (
               <button onClick={() => go("/admin")} className={itemCls}>
                 <ShieldCheck className="h-4 w-4" />
