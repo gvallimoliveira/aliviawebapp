@@ -42,3 +42,20 @@ describe("auto criteria", () => {
     expect(effectiveCriteria({ quad_lsi_80: false }, { quad_lsi_80: { value: true, source: "", date: "" } }).quad_lsi_80).toBe(false);
   });
 });
+
+import { prefillFromAnamnesis, phaseUnlockDate } from "@/lib/postOpTrajectory";
+describe("prefillFromAnamnesis", () => {
+  it("lê data, enxerto, menisco e restrições da anamnese pós-operatória", () => {
+    const p = prefillFromAnamnesis([{ created_at: "2026-10-30T10:00:00Z", anamnesis_data: { onset: "post_surgery", previousSurgeries: "Reconstrução do LCA em 08/10/2026 com enxerto de flexores e sutura meniscal. Cirurgião: 1 muleta por 2 semanas." } }], "2026-10-30");
+    expect(p).toMatchObject({ surgery_date: "2026-10-08", graft_type: "hamstring", meniscal_repair: true });
+    expect(p?.surgeon_restrictions).toContain("muleta");
+  });
+  it("não inventa dados ausentes nem usa casos sem contexto cirúrgico", () => {
+    expect(prefillFromAnamnesis([{ created_at: "2026-10-30", anamnesis_data: { onset: "gradual", chiefComplaint: "lombalgia" } }], "2026-10-30")).toBeNull();
+    const p = prefillFromAnamnesis([{ created_at: "2026-10-30", anamnesis_data: { onset: "post_surgery", previousSurgeries: "LCA" } }], "2026-10-30");
+    expect(p).toMatchObject({ surgery_date: null, graft_type: null, meniscal_repair: false, surgeon_restrictions: null });
+  });
+  it("fase de força libera na semana 5 (D+28)", () => {
+    expect(phaseUnlockDate("2026-10-08", 1)).toBe("2026-11-05");
+  });
+});

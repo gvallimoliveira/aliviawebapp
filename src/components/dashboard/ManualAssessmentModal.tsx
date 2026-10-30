@@ -2148,8 +2148,11 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
                   <div>
                     <Label className="text-xs">{isPt ? "Cirurgias prévias" : "Previous surgeries"}</Label>
                     <DemoShield on={demoMode} onAutofill={() => autofill(previousSurgeries, MOCK_MANUAL_CASE.previousSurgeries, setPreviousSurgeries, "")}>
-                      <Textarea value={previousSurgeries} onChange={(e) => setPreviousSurgeries(e.target.value)} rows={2} className="mt-1 text-sm" />
+                      <Textarea value={previousSurgeries} onChange={(e) => setPreviousSurgeries(e.target.value)} rows={2} className="mt-1 text-sm" placeholder={onset === "post_surgery" && isPt ? "Ex.: Reconstrução do LCA em 08/10/2026, enxerto de flexores, sutura meniscal. Cirurgião: 1 muleta por 2 semanas." : undefined} />
                     </DemoShield>
+                    {onset === "post_surgery" && isPt && (
+                      <p className="mt-1 text-[11px] text-muted-foreground">Data, enxerto, sutura meniscal e restrições do cirurgião escritos aqui pré-preenchem a trajetória pós-operatória no prontuário.</p>
+                    )}
                   </div>
                 </div>
                 <div>

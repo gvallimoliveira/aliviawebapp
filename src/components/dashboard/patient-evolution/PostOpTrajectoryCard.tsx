@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Scissors, AlertTriangle, Target, Pencil } from "lucide-react";
-import { ACL_PHASES, computePostOpStatus, autoCriteriaFromMeasurements, effectiveCriteria, type MeasuredAssessment } from "@/lib/postOpTrajectory";
+import { ACL_PHASES, computePostOpStatus, autoCriteriaFromMeasurements, effectiveCriteria, prefillFromAnamnesis, phaseUnlockDate, type MeasuredAssessment } from "@/lib/postOpTrajectory";
+import { Lock, CheckCircle2, Info } from "lucide-react";
 import { localISODate } from "@/lib/periodization";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,6 +32,8 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
   const [row, setRow] = useState<Row | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Row | null>(null);
+  const [prefilled, setPrefilled] = useState<string | null>(null);
+  const [viewIdx, setViewIdx] = useState<number | null>(null);
 
   useEffect(() => {
     let cancel = false;
@@ -60,7 +63,17 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
   };
 
   const startEdit = () => {
-    setDraft(row ?? { patient_id: patientId, surgery_date: localISODate(), graft_type: null, meniscal_repair: false, surgeon_restrictions: null, criteria: {} });
+    if (row) { setDraft(row); setPrefilled(null); setEditing(true); return; }
+    const pre = prefillFromAnamnesis(assessments as any, localISODate());
+    setPrefilled(pre?.sourceDate ?? null);
+    setDraft({
+      patient_id: patientId,
+      surgery_date: pre?.surgery_date ?? localISODate(),
+      graft_type: pre?.graft_type ?? null,
+      meniscal_repair: pre?.meniscal_repair ?? false,
+      surgeon_restrictions: pre?.surgeon_restrictions ?? null,
+      criteria: {},
+    });
     setEditing(true);
   };
 
@@ -81,6 +94,11 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
       <Card id="sec-pos-operatorio" className="scroll-mt-24">
         <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Scissors className="h-4 w-4 text-primary" /> Dados da cirurgia</CardTitle></CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
+          {prefilled && (
+            <p className="sm:col-span-2 flex gap-2 rounded-lg bg-primary/5 border border-primary/20 p-2 text-xs">
+              <Info className="h-4 w-4 text-primary shrink-0" /> Pré-preenchido a partir da anamnese de {new Date(prefilled + "T12:00:00").toLocaleDateString("pt-BR")}. Confira e edite antes de salvar; o que não estava escrito ficou em branco.
+            </p>
+          )}
           <div><Label className="text-xs">Cirurgia</Label><Input value="Reconstrução do LCA" disabled className="mt-1" /></div>
           <div><Label className="text-xs">Data da cirurgia</Label><Input type="date" max={localISODate()} value={draft.surgery_date} onChange={(e) => setDraft({ ...draft, surgery_date: e.target.value })} className="mt-1" /></div>
           <div>
@@ -123,47 +141,81 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
         </div>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
-        <div className="flex gap-1">
-          {ACL_PHASES.map((ph, i) => (
-            <div key={ph.id} title={ph.title} className={`h-2 flex-1 rounded-full ${i < status.currentPhaseIndex ? "bg-primary" : i === status.currentPhaseIndex ? "bg-primary/60" : "bg-muted"}`} />
-          ))}
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Fase atual</p>
-          <p className="font-semibold">{status.phase.title}</p>
-          {status.phase.biologicalNote && <p className="text-xs text-muted-foreground mt-1">{status.phase.biologicalNote}</p>}
-        </div>
-        {status.behindSchedule && (
-          <div className="flex gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2 text-xs">
-            <AlertTriangle className="h-4 w-4 text-destructive shrink-0" /> O tempo pós-operatório já indicaria a fase "{ACL_PHASES[status.expectedPhaseIndex].title}", mas critérios desta fase ainda estão pendentes.
-          </div>
-        )}
-        {status.caveats.length > 0 || row.surgeon_restrictions ? (
-          <ul className="text-xs space-y-1 text-muted-foreground">
-            {status.caveats.map((c) => <li key={c}>• {c}</li>)}
-            {row.surgeon_restrictions && <li>• Cirurgião: {row.surgeon_restrictions}</li>}
-          </ul>
-        ) : null}
-        <div>
-          <p className="flex items-center gap-1 font-medium"><Target className="h-4 w-4 text-primary" /> Próximo marco: {status.phase.nextMilestone}</p>
-          <div className="mt-2 space-y-1.5">
-            {status.phase.exitCriteria.map((c) => (
-              <label key={c.id} className="flex items-start gap-2"><Checkbox className="mt-0.5" checked={!!effective[c.id]} onCheckedChange={(v) => toggle(c.id, !!v)} />
-                <span>{c.label}{auto[c.id] && row.criteria?.[c.id] === undefined && (
-                  <span className="block text-[11px] text-muted-foreground">Automático · {auto[c.id].source} · {new Date(auto[c.id].date + "T12:00:00").toLocaleDateString("pt-BR")}</span>
-                )}{auto[c.id] && row.criteria?.[c.id] !== undefined && row.criteria[c.id] !== auto[c.id].value && (
-                  <span className="block text-[11px] text-muted-foreground">Marcação manual (medição indica: {auto[c.id].value ? "atingido" : "pendente"})</span>
-                )}</span>
-              </label>
-            ))}
-          </div>
-          <div className="mt-2 flex items-center gap-2"><Progress value={(status.met / status.total) * 100} className="h-2" /><span className="text-xs text-muted-foreground">{status.met}/{status.total}</span></div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 text-xs">
-          <div><p className="font-medium mb-1">Foco agora</p>{status.phase.focus.map((f) => <p key={f}>• {f}</p>)}</div>
-          <div><p className="font-medium mb-1">Evitar nesta fase</p>{status.phase.avoid.map((f) => <p key={f}>• {f}</p>)}</div>
-        </div>
-        <p className="text-[11px] text-muted-foreground">Guia de raciocínio: não libera atividades automaticamente. Decisões dependem da avaliação e do cirurgião.</p>
+        {(() => {
+          const cur = status.currentPhaseIndex;
+          const idx = viewIdx ?? cur;
+          const ph = ACL_PHASES[idx];
+          const fmt = (iso: string) => new Date(iso + "T12:00:00").toLocaleDateString("pt-BR");
+          const isCurrent = idx === cur;
+          const allMet = status.met === status.total;
+          const nextIdx = cur + 1;
+          const timeLocked = isCurrent && allMet && nextIdx < ACL_PHASES.length && nextIdx > status.expectedPhaseIndex;
+          return (
+            <>
+              <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${ACL_PHASES.length}, minmax(0,1fr))` }}>
+                {ACL_PHASES.map((p, i) => (
+                  <button type="button" key={p.id} onClick={() => setViewIdx(i === cur ? null : i)} className="text-left group" aria-label={`Ver fase ${p.title}`}>
+                    <div className={`h-2 rounded-full ${i < cur ? "bg-primary" : i === cur ? "bg-primary/60" : "bg-muted"} ${i === idx ? "ring-2 ring-primary/40 ring-offset-1" : ""}`} />
+                    <p className={`mt-1 text-[10px] leading-tight ${i === idx ? "font-semibold text-foreground" : "text-muted-foreground"} hidden sm:block`}>{p.title}</p>
+                    <p className="text-[10px] text-muted-foreground">sem. {p.fromWeek || 1}+</p>
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">{isCurrent ? "Fase atual" : idx < cur ? "Fase anterior (concluída)" : `Próxima etapa · a partir de ${fmt(phaseUnlockDate(row.surgery_date, idx))}`}</p>
+                  <p className="font-semibold">{ph.title}</p>
+                  {ph.biologicalNote && <p className="text-xs text-muted-foreground mt-1">{ph.biologicalNote}</p>}
+                </div>
+                {!isCurrent && <Button type="button" variant="outline" size="sm" onClick={() => setViewIdx(null)}>Voltar à fase atual</Button>}
+              </div>
+              {isCurrent && status.behindSchedule && (
+                <div className="flex gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-2 text-xs">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0" /> O tempo pós-operatório já indicaria a fase "{ACL_PHASES[status.expectedPhaseIndex].title}", mas critérios desta fase ainda estão pendentes.
+                </div>
+              )}
+              {timeLocked && (
+                <div className="flex gap-2 rounded-lg border border-primary/30 bg-primary/5 p-2 text-xs">
+                  <Lock className="h-4 w-4 text-primary shrink-0" />
+                  <span>
+                    <b>Critérios cumpridos — paciente pronto para avançar.</b> A fase "{ACL_PHASES[nextIdx].title}" fica disponível a partir de {fmt(phaseUnlockDate(row.surgery_date, nextIdx))} (semana {ACL_PHASES[nextIdx].fromWeek}), respeitando o tempo de proteção biológica do enxerto. Até lá: manter as conquistas desta fase e preparar a transição.{" "}
+                    <button type="button" className="underline" onClick={() => setViewIdx(nextIdx)}>Ver próxima etapa</button>
+                  </span>
+                </div>
+              )}
+              {isCurrent && (status.caveats.length > 0 || row.surgeon_restrictions) ? (
+                <ul className="text-xs space-y-1 text-muted-foreground">
+                  {status.caveats.map((c) => <li key={c}>• {c}</li>)}
+                  {row.surgeon_restrictions && <li>• Cirurgião: {row.surgeon_restrictions}</li>}
+                </ul>
+              ) : null}
+              <div>
+                <p className="flex items-center gap-1 font-medium"><Target className="h-4 w-4 text-primary" /> {isCurrent ? "Critérios para o próximo marco" : "Critérios de saída"}: {ph.nextMilestone}</p>
+                <div className="mt-2 space-y-1.5">
+                  {ph.exitCriteria.map((c) => isCurrent ? (
+                    <label key={c.id} className="flex items-start gap-2"><Checkbox className="mt-0.5" checked={!!effective[c.id]} onCheckedChange={(v) => toggle(c.id, !!v)} />
+                      <span>{c.label}{auto[c.id] && row.criteria?.[c.id] === undefined && (
+                        <span className="block text-[11px] text-muted-foreground">Automático · {auto[c.id].source} · {fmt(auto[c.id].date)}</span>
+                      )}{auto[c.id] && row.criteria?.[c.id] !== undefined && row.criteria[c.id] !== auto[c.id].value && (
+                        <span className="block text-[11px] text-muted-foreground">Marcação manual (medição indica: {auto[c.id].value ? "atingido" : "pendente"})</span>
+                      )}</span>
+                    </label>
+                  ) : (
+                    <p key={c.id} className="flex items-start gap-2 text-muted-foreground">
+                      {effective[c.id] ? <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" /> : <span className="h-4 w-4 mt-0.5 shrink-0 rounded-full border" />} {c.label}
+                    </p>
+                  ))}
+                </div>
+                {isCurrent && <div className="mt-2 flex items-center gap-2"><Progress value={(status.met / status.total) * 100} className="h-2" /><span className="text-xs text-muted-foreground">{status.met}/{status.total}</span></div>}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 text-xs">
+                <div><p className="font-medium mb-1">{isCurrent ? "Foco agora" : "Foco da fase"}</p>{ph.focus.map((f) => <p key={f}>• {f}</p>)}</div>
+                <div><p className="font-medium mb-1">Evitar nesta fase</p>{ph.avoid.map((f) => <p key={f}>• {f}</p>)}</div>
+              </div>
+            </>
+          );
+        })()}
+        <p className="text-[11px] text-muted-foreground">Guia de raciocínio: toque nas etapas para ver objetivos anteriores e seguintes. Não libera atividades automaticamente; decisões dependem da avaliação e do cirurgião.</p>
       </CardContent>
     </Card>
   );
