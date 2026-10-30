@@ -63,12 +63,14 @@ export default function FreeReportDialog({ open, onOpenChange, patientName, pati
     setBusy(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Entre na sua conta para emitir o relatório.");
       const { resolveAssessmentBranding } = await import("@/lib/resolveAssessmentBranding");
       const { resolveResponsibleProfessional } = await import("@/lib/getResponsibleProfessional");
       const { generateFreeReportPdfBlob } = await import("@/utils/generatePdf");
       // Emissor = quem está logado: cada colaborador da clínica assina o próprio relatório.
       const branding = await resolveAssessmentBranding({ clinicId: clinicId || null, professionalId: clinicId ? null : professionalId || null, userId: user?.id || null });
       const responsible = await resolveResponsibleProfessional({ userId: user?.id || null, clinicId: clinicId || null, includeSignature: withSignature });
+      if (!responsible?.name) throw new Error("Cadastre seu nome completo em Minha conta antes de emitir o relatório.");
       const blob = await generateFreeReportPdfBlob({
         title, recipient, patientName, patientBirthDate, issueDate, body, language,
         clinicLogoUrl: branding.clinicLogoUrl, professionalLogoUrl: branding.professionalLogoUrl,

@@ -48,7 +48,7 @@ async function fetchSignatureDataUrl(signaturePath: string): Promise<string | nu
  *
  * Rules:
  * - Solo PRO / clinic therapist with their own professional record → use their record.
- * - Clinic owner / secretary → fallback to the clinic owner's professional record.
+ * - Clinic reports resolve the requested member; a missing council never changes the issuer.
  * - If `includeSignature` is true (or auto-sign pref is on), tries to embed signature image.
  */
 export async function resolveResponsibleProfessional(opts: {
@@ -68,6 +68,22 @@ export async function resolveResponsibleProfessional(opts: {
   includeSignature?: boolean;
 }): Promise<ResponsibleProfessional | undefined> {
   const wantSig = opts.includeSignature ?? isAutoSignEnabled();
+  if (opts.clinicId && opts.userId) {
+    const { data, error } = await supabase.rpc("get_clinic_report_issuer", { _clinic_id: opts.clinicId, _user_id: opts.userId });
+    if (error) throw error;
+    const row = data as { full_name?: string; council_type?: string; council_number?: string; signature_image_url?: string; is_student?: boolean; active_profile_mode?: string; student_institution?: string; student_period?: string } | null;
+    if (!row?.full_name) return undefined;
+    const signatureImageDataUrl = wantSig && row.signature_image_url ? await fetchSignatureDataUrl(row.signature_image_url) : null;
+    return {
+      name: row.full_name,
+      councilType: row.council_type || undefined,
+      councilNumber: row.council_number || undefined,
+      signatureImageDataUrl: signatureImageDataUrl || undefined,
+      isStudent: (row.active_profile_mode ?? (row.is_student ? "student" : "professional")) === "student",
+      studentInstitution: row.student_institution || undefined,
+      studentPeriod: row.student_period || undefined,
+    };
+  }
   // Active mode wins over capability: a partner with both PRO+Academic
   // liberated only shows as student when active_profile_mode === 'student'.
   const isActiveStudent = (row: any) =>
@@ -83,7 +99,7 @@ export async function resolveResponsibleProfessional(opts: {
   } | null = null;
 
   // Students don't need a CREFITO to be considered the responsible
-  if (opts.ownProfessional?.full_name && (hasRealCrefito(opts.ownProfessional?.crefito) || opts.ownProfessional?.is_student)) {
+  if (opts.ownProfessional?.full_name) {
     resolved = {
       name: opts.ownProfessional.full_name,
       crefito: displayCrefito(opts.ownProfessional.crefito),
@@ -101,7 +117,7 @@ export async function resolveResponsibleProfessional(opts: {
       .select("full_name, crefito, signature_image_url, is_student, active_profile_mode, student_institution, student_period")
       .eq("user_id", opts.userId)
       .maybeSingle();
-    if (mine?.full_name && (hasRealCrefito(mine?.crefito) || (mine as any)?.is_student)) {
+    if (mine?.full_name) {
       resolved = {
         name: mine.full_name,
         crefito: displayCrefito(mine.crefito),
@@ -114,7 +130,7 @@ export async function resolveResponsibleProfessional(opts: {
     }
   }
 
-  if (!resolved) {
+  if (!resolved && !opts.userId) {
     let ownerUserId = opts.clinicOwnerUserId || null;
     if (!ownerUserId && opts.clinicId) {
       const { data: rows } = await (supabase as any).rpc("get_clinics_public", { _ids: [opts.clinicId] });
