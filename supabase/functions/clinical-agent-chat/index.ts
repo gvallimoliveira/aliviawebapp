@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 import { mechanismSummary } from "../_shared/pain-mechanism.ts";
+import { buildRlcaReference } from "../_shared/rlca-reference.ts";
 
 function normalizeAnamnesis(raw: any) {
   if (!raw || typeof raw !== "object") return raw;
@@ -78,6 +79,7 @@ function compactAssessmentForPrompt(a: any) {
     aggravating_factors: anamnesis?.aggravatingFactors || [],
     relieving_factors: anamnesis?.relievingFactors || [],
     pain_duration: anamnesis?.painDuration || anamnesis?.onset || null,
+    surgical_history: scrub(anamnesis?.previousSurgeries || anamnesis?.previousTreatments || ""),
     functional_tests_text: extractFunctionalTestsText(a),
     questionnaires,
     hypothesis: a.final_hypothesis || diagnosis?.hypothesis || diagnosis?.condition || null,
@@ -1001,7 +1003,10 @@ ${SECURITY_POLICY}`;
       .from("agent_settings").select("preferred_niches").eq("user_id", user.id).maybeSingle();
     const evidence = await searchEvidence(adminClient, LOVABLE_API_KEY, userMsg, settings?.preferred_niches);
 
-    const systemPrompt = buildSystemPrompt(patientCtx, evidence, !!thread.mentor_mode);
+    const referenceContext = [userMsg, patientCtx, ...(history || []).map((m: any) =>
+      m.role === "user" ? m.parts : null)];
+    const systemPrompt = buildSystemPrompt(patientCtx, evidence, !!thread.mentor_mode)
+      + buildRlcaReference(referenceContext);
 
     const messages = [
       { role: "system", content: systemPrompt },

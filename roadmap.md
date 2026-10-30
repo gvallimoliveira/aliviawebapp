@@ -1,5 +1,10 @@
 # Roadmap
 
+## R-LCA — material clínico e organização didática
+- [x] Sete prints transcritos em docs/rlca-referencia-clinica.md com origem, métricas, métodos, objetivos e avançar/manter/regredir; cortes não universais separados da evidência identificada.
+- [x] Referência curada compartilhada no chat, impressão, hipótese, plano e relatório evolutivo; histórico cirúrgico preservado e cache versionado sem reescrever relatórios salvos. Futura seção ortopédica não criada.
+- [x] Cinco funções implantadas; chamadas autenticadas com caso fictício retornaram 200 e chat lido pela tela. Primeiro teste trouxe corte psicológico não sustentado: instruções reforçadas e reteste não o repetiu. Planos condicionaram fases avançadas à avaliação/liberação. Trinta testes passaram, build OK; nenhum prontuário alterado. Não garante todas as respostas futuras nem valida todos os cortes dos prints; emissão de PDF/fluxo completo de avaliação não reexecutados.
+
 ## Idioma — equipe e agenda no iPhone privado
 - [x] Menu deixa de trocar PT→EN em um toque: escolha explícita PT/EN/ES compartilhada entre menus e painel. Contexto segue o idioma efetivo após carregar traduções, sem efeitos dentro de atualização de estado ou toques concorrentes. Imagens mostram idioma geral em inglês; não foi possível confirmar o toque que originou a mudança no aparelho.
 - [x] Conta Sifeg autenticada em WebKit móvel, sessão nova com navegador en-US: identificação na equipe e edição de Diego Ramos no PRO demo abertas em português, sem salvar dados. Menu abriu sem mudar idioma; escolha English e retorno Português conferidos. Dez testes passaram, build OK. iPhone físico não testado.

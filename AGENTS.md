@@ -1,13 +1,14 @@
 # Architecture decisions
 - Clinic checkout shares landing prices and server-validated metadata through checkout/recovery; refresh context on return to avoid duplicates.
 - Annual refunds share support/landing keys; annualRefund.ts calculates, never pays.
-- Clinic trial renewal uses a server-authorized, owner-and-clinic-scoped RPC on access/expiry and trial_started_at rather than mutating created_at; ordinary customers never receive the administrator exception.
-- Patient navigation uses patientNavigation and scoped care-provider/HEP RPCs; care components retain authorization and persistence.
+- Trial renewal uses an owner/clinic-scoped RPC on access/expiry and trial_started_at, never created_at; no customer admin exception.
+- Patient navigation uses patientNavigation and scoped care-provider/HEP RPCs; retain authorization/persistence.
+- Clinical AI shares versioned `_shared/rlca-reference.ts`; separate screenshot claims from evidence, retain surgical context, never automate clearance or replace saved reports.
 - Scope before querying/limiting: solo clinic_id IS NULL + ownership; clinic selected clinic_id. Reset screens on switches; validate agent thread/patient scope server-side.
 - Microcycle dose edits reuse savePlannedDose with the existing session ID and preserved date, track and metadata; never write perceived load when changing a target.
 - Check-in reopening locks existing patient/day readiness until explicit editing; the existing unique patient/date upsert keeps one daily response. Dose displays retain perceived load for zero-target sessions without inventing a target or adherence verdict.
 - Record-summary alerts preserve assessment-specific dismissal audits across history; health caveats reuse healthHistory formatting and Saúde geral recency (latest day, manual precedence) without new risk calculations or AI.
-- Record-summary STEPS uses the fetched plan status: completed means discharge before any macro-cycle fallback, so insight and record discharge decisions remain consistent without rewriting history.
+- Record-summary STEPS prioritizes fetched completed status before macro-cycle fallback; preserve history.
 - Clinic demos: viewer-scoped fixtures, local math, no live writes/AI; match latest assessment/safety or stay empty.
 
 - Cardiovascular ceiling reminders combine the record's assessments and ID/email-linked dated health records via `usePatientCardioHealth`; structured conditions never auto-select a clinician profile, infer control, or fabricate an age-based ceiling.
