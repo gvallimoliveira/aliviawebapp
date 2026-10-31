@@ -12,6 +12,7 @@ import { Pencil, Target, CalendarClock } from "lucide-react";
 import { ACL_PREOP_PHASES, computePreOpStatus, prefillAclPreoperative, type SurgicalAssessment } from "@/lib/aclPreoperative";
 import { localISODate } from "@/lib/periodization";
 import { useToast } from "@/hooks/use-toast";
+import { phasesFor } from "@/lib/postOpTrajectory";
 
 interface Preparation {
   patient_id: string;
@@ -20,13 +21,14 @@ interface Preparation {
   criteria: Record<string, boolean>;
 }
 
-export default function AclPreoperativeCard({ patientId, assessments }: { patientId: string; assessments: SurgicalAssessment[] }) {
+export default function AclPreoperativeCard({ patientId, assessments, onConfirmSurgery }: { patientId: string; assessments: SurgicalAssessment[]; onConfirmSurgery: () => void }) {
   const { toast } = useToast();
   const [allowed, setAllowed] = useState(false);
   const [row, setRow] = useState<Preparation | null>(null);
   const [draft, setDraft] = useState<Preparation | null>(null);
   const [view, setView] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [futurePhase, setFuturePhase] = useState<number | null>(null);
   const prefill = prefillAclPreoperative(assessments);
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function AclPreoperativeCard({ patientId, assessments }: { patien
   return <Card id="sec-pre-operatorio" className="scroll-mt-24">
     <CardHeader className="pb-2">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <CardTitle className="text-base flex flex-wrap items-center gap-2"><CalendarClock className="h-4 w-4 text-primary" /> Pré-operatório: Reconstrução do LCA <Badge variant="outline">Beta</Badge></CardTitle>
+        <CardTitle className="text-base flex flex-wrap items-center gap-2"><CalendarClock className="h-4 w-4 text-primary" /> Trajetória cirúrgica: Reconstrução do LCA <Badge variant="outline">Pré-operatório</Badge><Badge variant="outline">Beta</Badge></CardTitle>
         {row && <Button size="icon" variant="ghost" className="h-7 w-7" onClick={edit} aria-label="Editar preparação cirúrgica"><Pencil className="h-3.5 w-3.5" /></Button>}
       </div>
     </CardHeader>
@@ -80,6 +82,13 @@ export default function AclPreoperativeCard({ patientId, assessments }: { patien
         {status.preparationComplete && <p className="text-xs text-primary">Metas de preparação registradas. Mantenha as conquistas e confirme a conduta com a equipe cirúrgica. Isso não autoriza cirurgia nem ativa o pós-operatório automaticamente.</p>}
         <p className="text-xs text-muted-foreground">Bloqueio, falseio novo ou piora importante exigem reavaliação. As etapas organizam a preparação individual; o cirurgião define indicação e momento da cirurgia.</p>
       </> : null}
+      {!draft && <div className="space-y-3 border-t pt-3">
+        <p className="font-medium">Após a cirurgia · etapas seguintes</p>
+        <div className="flex flex-wrap gap-2">{phasesFor("acl_reconstruction").map((item, i) => <Button key={item.id} size="sm" variant={futurePhase === i ? "secondary" : "outline"} className="h-auto whitespace-normal text-xs" onClick={() => setFuturePhase(futurePhase === i ? null : i)}>{item.title}</Button>)}</div>
+        {futurePhase !== null && (() => { const future = phasesFor("acl_reconstruction")[futurePhase]; return <div className="space-y-2 text-xs"><p className="font-semibold">{future.title} · etapa futura</p><div className="grid gap-3 sm:grid-cols-2"><div><p className="font-medium">Objetivos após a cirurgia</p>{future.focus.map(item => <p key={item}>• {item}</p>)}</div><div><p className="font-medium">Cuidados dessa etapa</p>{future.avoid.map(item => <p key={item}>• {item}</p>)}</div></div><p>Metas a construir nessa etapa futura, não exigidas na preparação:</p>{future.exitCriteria.map(goal => <p key={goal.id}>• {goal.label}</p>)}</div>; })()}
+        <p className="text-xs text-muted-foreground">Estas etapas não estão vigentes. A data planejada não comprova realização; confirme a cirurgia, o enxerto e as restrições para iniciar o pós-operatório.</p>
+        <Button variant="outline" onClick={onConfirmSurgery}>Registrar cirurgia realizada</Button>
+      </div>}
     </CardContent>
   </Card>;
 }

@@ -15,6 +15,7 @@ import { Lock, CheckCircle2, Info } from "lucide-react";
 import { localISODate } from "@/lib/periodization";
 import { useToast } from "@/hooks/use-toast";
 import { prefillAclPreoperative } from "@/lib/aclPreoperative";
+import AclPreoperativeCard from "./AclPreoperativeCard";
 
 interface Row {
   id?: string;
@@ -39,6 +40,7 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
 
   useEffect(() => {
     let cancel = false;
+    setAllowed(false); setRow(null); setEditing(false); setDraft(null); setViewIdx(null);
     (async () => {
       const { data: ok } = await supabase.rpc("can_use_post_op_beta" as any);
       if (cancel || !ok) return;
@@ -68,14 +70,14 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
     setEditing(false);
   };
 
-  const startEdit = () => {
+  const startEdit = (fromPreparation = false) => {
     if (row) { setDraft(row); setPrefilled(null); setEditing(true); return; }
     const pre = prefillFromAnamnesis(assessments as any, localISODate());
     setPrefilled(pre?.sourceDate ?? null);
     setDraft({
       patient_id: patientId,
       surgery_type: pre?.surgery_type ?? "acl_reconstruction",
-      surgery_date: pre?.surgery_date ?? localISODate(),
+      surgery_date: fromPreparation ? "" : pre?.surgery_date ?? "",
       graft_type: pre?.graft_type ?? null,
       meniscal_repair: pre?.meniscal_repair ?? false,
       surgeon_restrictions: pre?.surgeon_restrictions ?? null,
@@ -85,12 +87,13 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
   };
 
   if (!row && !editing) {
-    if (!suggestActivate || prefillAclPreoperative(assessments as any)) return null;
+    if (prefillAclPreoperative(assessments)) return <AclPreoperativeCard patientId={patientId} assessments={assessments} onConfirmSurgery={() => startEdit(true)} />;
+    if (!suggestActivate) return null;
     return (
       <Card id="sec-pos-operatorio" className="scroll-mt-24 border-dashed">
         <CardContent className="py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm"><Scissors className="h-4 w-4 text-primary" /> Caso pós-operatório? Ative a trajetória do processo. <Badge variant="outline">Beta</Badge></div>
-          <Button type="button" size="sm" onClick={startEdit}>Ativar</Button>
+          <Button type="button" size="sm" onClick={() => startEdit()}>Ativar</Button>
         </CardContent>
       </Card>
     );
@@ -171,7 +174,7 @@ export default function PostOpTrajectoryCard({ patientId, suggestActivate, asses
           </CardTitle>
           <div className="flex items-center gap-2">
             <Badge>Semana {status.week} · D+{status.days}</Badge>
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={startEdit} aria-label="Editar cirurgia"><Pencil className="h-3.5 w-3.5" /></Button>
+            <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit()} aria-label="Editar cirurgia"><Pencil className="h-3.5 w-3.5" /></Button>
           </div>
         </div>
       </CardHeader>

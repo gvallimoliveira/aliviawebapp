@@ -5,6 +5,8 @@
 // not tied to a body region, so they can also be applied manually at any time.
 
 import { isPreventiveAssessment } from "@/lib/assessmentPurpose";
+import { manualQuestionnaireSelection } from "@/lib/manualQuestionnaireSelection";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Loader2, Lightbulb, Sparkles, Clock, ChevronDown, ChevronUp, Link as LinkIcon, Check, Heart, Footprints, Brain, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -91,6 +93,7 @@ const SpecialtyQuestionnairesPanel = forwardRef<SpecialtyPanelHandle, Props>(
     const [openId, setOpenId] = useState<string | null>(null);
     const [draftAnswers, setDraftAnswers] = useState<Record<string, number>>({});
     const [copied, setCopied] = useState<string | null>(null);
+    const [requestedId, setRequestedId] = useState<string | null>(null);
 
     useImperativeHandle(ref, () => ({
       getScheduled: () => scheduled,
@@ -218,8 +221,8 @@ const SpecialtyQuestionnairesPanel = forwardRef<SpecialtyPanelHandle, Props>(
     };
 
     const openQ = useMemo(() => (openId ? getSpecialtyQuestionnaire(openId) : null), [openId]);
-    const preventiveManual: Suggestion[] = preventive ? SPECIALTY_QUESTIONNAIRES.filter(q => !isApplied(q.id)).map(q => ({ id: q.id, domain: q.domain, name: q.name, reason: language === "pt" ? "Indicação do profissional" : language === "es" ? "Indicación del profesional" : "Professional selection", avgMinutes: q.avgMinutes })) : [];
-    const visibleSuggestions = suggestions.filter((s) => !isApplied(s.id));
+    const preventiveManual: Suggestion[] = preventive ? manualQuestionnaireSelection(SPECIALTY_QUESTIONNAIRES, requestedId, applied.map(q => q.questionnaireId)).map(q => ({ id: q.id, domain: q.domain, name: q.name, reason: language === "pt" ? "Indicação do profissional — confirme pertinência à condição e ao objetivo antes de aplicar." : language === "es" ? "Selección profesional — confirma pertinencia para la condición y el objetivo." : "Professional selection — confirm relevance to the condition and goal.", avgMinutes: q.avgMinutes })) : [];
+    const visibleSuggestions = preventive ? [] : suggestions.filter((s) => !isApplied(s.id));
 
     // Psychosocial instruments (yellow flags) are profile-based, not region-based:
     // always offer them manually, even when the AI didn't flag anything.
@@ -339,7 +342,7 @@ const SpecialtyQuestionnairesPanel = forwardRef<SpecialtyPanelHandle, Props>(
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
             <Lightbulb className="h-3.5 w-3.5 text-primary" />
-            {isPt ? "Questionários complementares (Cardio / Geriátrico / Psicossocial)" : "Complementary questionnaires (Cardio / Geri / Psychosocial)"}
+            {preventive ? (isPt ? "Questionários complementares · indicação individual" : language === "es" ? "Cuestionarios complementarios · indicación individual" : "Complementary questionnaires · individual indication") : isPt ? "Questionários complementares (Cardio / Geriátrico / Psicossocial)" : "Complementary questionnaires (Cardio / Geri / Psychosocial)"}
           </div>
           {!preventive && <Button
             type="button"
@@ -376,7 +379,12 @@ const SpecialtyQuestionnairesPanel = forwardRef<SpecialtyPanelHandle, Props>(
           </div>
         )}
 
-        {preventive && <div className="space-y-2">{preventiveManual.map(renderCard)}</div>}
+        {preventive && <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">{isPt ? "A ausência de dor não indica uma lista de questionários. Nenhum instrumento complementar é sugerido automaticamente. Use apenas quando houver indicação específica; escalas de dor ou medo relacionado à dor não equivalem à prontidão psicológica para LCA. Remover itens do KOOS não preserva automaticamente sua validação." : language === "es" ? "La ausencia de dolor no indica una lista de cuestionarios. Ningún instrumento complementario se recomienda automáticamente. Confirma la indicación específica; miedo al dolor no equivale a preparación psicológica para LCA. Quitar ítems de KOOS no conserva automáticamente su validación." : "No pain does not justify a questionnaire list. No complementary instrument is automatically recommended. Confirm the specific indication; pain-related fear is not ACL psychological readiness. Removing KOOS items does not automatically preserve validation."}</p>
+          <Label htmlFor="manual-questionnaire">{isPt ? "Escolha profissional (opcional)" : language === "es" ? "Selección profesional (opcional)" : "Professional choice (optional)"}</Label>
+          <Select value={requestedId ?? "none"} onValueChange={id => { setRequestedId(id === "none" ? null : id); setOpenId(null); }}><SelectTrigger id="manual-questionnaire"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">{isPt ? "Nenhum instrumento selecionado" : language === "es" ? "Ningún instrumento seleccionado" : "No instrument selected"}</SelectItem>{SPECIALTY_QUESTIONNAIRES.filter(q => !isApplied(q.id)).map(q => <SelectItem key={q.id} value={q.id}>{q.name}</SelectItem>)}</SelectContent></Select>
+          {preventiveManual.map(renderCard)}
+        </div>}
 
         {!preventive && manualPsychosocial.length > 0 && (
           <div className="space-y-2 pt-1 border-t border-border/50">
