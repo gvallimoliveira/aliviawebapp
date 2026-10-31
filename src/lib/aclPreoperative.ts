@@ -62,14 +62,14 @@ export interface SurgicalAssessment { created_at: string; anamnesis_data?: any; 
 export function prefillAclPreoperative(assessments: SurgicalAssessment[]) {
   for (const assessment of [...assessments].sort((a, b) => b.created_at.localeCompare(a.created_at))) {
     const an = assessment.anamnesis_data ?? {};
-    const parts = [an.history, an.chiefComplaint, an.previousSurgeries, an.additionalClinicalNotes].filter(Boolean).map(String);
+    const parts = [an.preventionGoalDetails, an.history, an.chiefComplaint, an.previousSurgeries, an.additionalClinicalNotes].filter(Boolean).map(String);
     const context = parts.find((part) => /\bLCA\b|ligamento cruzado anterior|\bACL\b/i.test(part) && /pr[eé][ -]?operat|prehab|pre[ -]?operat|aguarda.{0,40}(cirurgia|reconstru)|cirurgia.{0,30}(marcada|agendada|prevista)|prepara.{0,40}(cirurgia|reconstru)/i.test(part));
     if (!context || /n[aã]o.{0,15}(est[aá].{0,5})?(em )?pr[eé][ -]?operat|sem.{0,15}(cirurgia|indica[çc][aã]o cir[uú]rgica)/i.test(context)) continue;
     if (/p[oó]s[ -]?operat|cirurgia realizada|submetid[oa]|foi operad[oa]/i.test(context)) continue;
     // Only a date attached to scheduling, never an unrelated birth/exam date.
-    const scheduled = context.match(/(?:cirurgia|reconstru[çc][aã]o|procedimento)\s*(?:do LCA\s*)?(?:marcad[ao]|agendad[ao]|previst[ao]|programad[ao])?\s*(?:para|em|:)?\s*(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/i);
+    const scheduled = parts.join("\n").match(/(?:cirurgia|reconstru[çc][aã]o|procedimento)\s*(?:do LCA\s*)?(?:marcad[ao]|agendad[ao]|previst[ao]|programad[ao])?\s*(?:para|em|:)?\s*(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/(?:\d{4}|\d{2}))\b/i);
     let date = scheduled?.[1] ?? null;
-    if (date?.includes("/")) { const [d, m, y] = date.split("/"); date = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`; }
+    if (date?.includes("/")) { const [d, m, y] = date.split("/"); date = `${y.length === 2 ? `20${y}` : y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`; }
     if (date && !validDate(date)) date = null;
     const restrictions = parts.join("\n").split(/\n|(?<=[.;])\s+/).filter((part) => /restri|cirurgi[aã]o|evitar|muleta|bloqueio|sem carga/i.test(part));
     return { planned_surgery_date: date, surgeon_restrictions: restrictions.join(" ") || null, sourceDate: assessment.created_at.slice(0, 10) };

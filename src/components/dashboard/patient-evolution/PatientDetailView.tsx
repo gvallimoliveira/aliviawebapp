@@ -1,5 +1,4 @@
 import PostOpTrajectoryCard from "./PostOpTrajectoryCard";
-import AclPreoperativeCard from "./AclPreoperativeCard";
 import { careScope } from "@/lib/careScope";
 import React from "react";
 import PreventiveAssessmentSummary from "@/components/assessment/PreventiveAssessmentSummary";
@@ -1372,10 +1371,6 @@ export default function PatientDetailView(props: any) {
         );
       })()}
 
-
-      {!isDemo && patient?.patientRecord?.id && (
-        <AclPreoperativeCard patientId={patient.patientRecord.id} assessments={patient.assessments || []} />
-      )}
 
       {!isDemo && patient?.patientRecord?.id && (
         <PostOpTrajectoryCard

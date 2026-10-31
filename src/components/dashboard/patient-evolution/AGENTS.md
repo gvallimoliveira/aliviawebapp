@@ -2,3 +2,4 @@
 - Cardiovascular views refresh via `usePatientBirthDate` on edits/refocus, preserving unsaved inputs.
 - Post-op trajectory (beta) is gated server-side by can_use_post_op_beta; the pure postOpTrajectory.ts engine never advances a phase past elapsed time nor clears activity automatically.
 - ACL preparation uses aclPreoperative.ts and separate pre_op_profiles under the same beta/patient RLS; scheduled dates never become performed-surgery dates or automatically activate postoperative care.
+- PostOpTrajectoryCard owns the surgical journey entry: explicit ACL preparation includes preventionGoalDetails, displays future postoperative phases read-only, and requires a performed date to transition; pre-op history remains stored separately.

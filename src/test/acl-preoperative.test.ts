@@ -3,6 +3,16 @@ import { ACL_PREOP_PHASES, computePreOpStatus, prefillAclPreoperative } from "@/
 
 const assessment = (text: string) => [{ created_at: "2026-10-30", anamnesis_data: { history: text } }];
 describe("ACL preparation", () => {
+  it("recognizes testagem externa's preventive goal and separately scheduled date", () => {
+    expect(prefillAclPreoperative([{ created_at: "2026-10-31", anamnesis_data: {
+      assessmentPurpose: "prevention", preventionGoalDetails: "Pré operatório da cirurgia de reconstrução do LCA",
+      history: "Rotura do ligamento dia 10/09/26. Jogando futsal, cirurgia marcada para 12/12/26.",
+      previousSurgeries: "cirurgia marcada para 12/12/26.", historyRegions: ["right_knee"],
+    } }])).toMatchObject({ planned_surgery_date: "2026-12-12" });
+  });
+  it("does not infer preparation from preventive knee interest without explicit ACL surgery", () => {
+    expect(prefillAclPreoperative([{ created_at: "2026-10-31", anamnesis_data: { assessmentPurpose: "prevention", historyRegions: ["right_knee"], preventionGoalDetails: "Fortalecer joelho" } }])).toBeNull();
+  });
   it("counts 21 days until planned surgery, with no postoperative counters", () => {
     const status = computePreOpStatus({ planned_surgery_date: "2026-11-20" }, "2026-10-30");
     expect(status.daysUntilSurgery).toBe(21);
