@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Pré-operatório LCA — avaliação testagem externa
-- [ ] Corrigir reconhecimento dos dados reais da avaliação e reunir preparação/etapas pós-operatórias na trajetória, mantendo confirmação da cirurgia e beta admin.
-- [ ] Restringir sugestões de questionários ao contexto clínico; preservar instrumentos completos e seleção profissional.
-- [ ] Testar regras e verificar o prontuário autenticado sem alterar a avaliação original.
+- [x] Reconhecimento inclui preventionGoalDetails e data marcada em outro campo, inclusive 12/12/26; trajetória reúne preparação e etapas pós-operatórias consultáveis, mantendo confirmação da cirurgia/data realizada e beta admin.
+- [x] Lista genérica sem dor substituída por escolha profissional opcional, sem instrumentos automáticos nem adaptação de KOOS; respostas históricas preservadas e ajuda pt/en/es atualizada.
+- [x] 39 testes passaram, build OK. Conta administradora do paciente: ativação e recarga conferidas, 42 dias até 12/12/2026, fase futura aberta; preparação mantida no paciente de teste sem marcar metas. Formulário de cirurgia abriu sem data inventada e foi cancelado, nenhum pós-operatório criado. Etapa de questionários percorrida sem lista genérica; avaliação/hipótese/impressão originais não alteradas. Nova avaliação completa e cirurgia real não gravadas; iPhone físico não testado.
 
 ## Pré-operatório de LCA
 - [x] Registro explícito de pré-operatório de LCA na avaliação habilita preparação no prontuário, com três etapas, metas e data cirúrgica opcional; mesma autorização beta/paciente. Região ou início isolados não ativam. Dados guardados separadamente sem alterar pós-operatórios.
