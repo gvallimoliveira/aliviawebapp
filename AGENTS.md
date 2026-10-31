@@ -38,7 +38,7 @@
 - HEP writes use can_manage_hep for programs and items: solo requires the author's active PRO subscription; clinic requires active clinical actor/author membership in the stored clinic and an active/trial clinic, never a separate PRO subscription or another clinic's membership.
 - Clinic-scoped clinical access (HEP, own appointments, session notes, photos/files edits, own notes) uses is_clinic_clinician/can_manage_hep: active clinical membership in an active/trial clinic replaces a personal PRO subscription; new pro-only policies must add this clinic path.
 
-- Preventive assessments are explicit opt-in via the shared purpose helper; preserve symptomatic defaults, store historical sites separately and unmeasured pain as null, and keep safety and professional-selected questionnaires.
+- Prevention is explicit via purpose helper: preserve symptoms, historical sites, null unmeasured pain and safety. Painless catalogs use manualQuestionnaireSelection, not blanket recommendations; altered instruments are not validated.
 - Spine logic stays in `spineBiomechanics.ts`; `spinePresentation.ts` shares screen/PDF geometry and dated exams to preserve history.
 - Imports use service-only write/undo journals to restore merges and reject later edits atomically. ZIP omits source IDs/privileges; local XML parsing rejects DTD/entities and bounds complexity, preserving fields for review.
 
