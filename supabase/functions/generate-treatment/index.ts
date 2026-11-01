@@ -1,5 +1,5 @@
 import { isPreventiveAssessment, normalizeAssessmentPurpose, preventiveReasoningContext } from "../_shared/assessment-purpose.ts";
-import { requireUserOrAssessment } from "../_shared/caller-auth.ts";
+import { requireUserOrAssessment, userCanAccessAssessment } from "../_shared/caller-auth.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -26,7 +26,9 @@ serve(async (req) => {
     const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
     const preventive = isPreventiveAssessment(anamnesisData);
     // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
-    const creditDecision = await canaryCredits(req, "generate-treatment");
+    const creditDecision = await canaryCredits(req, "generate-treatment", {
+      metadata: { assessment_id: __gate.anonAssessment || (assessmentId && await userCanAccessAssessment(req, String(assessmentId))) ? assessmentId : null },
+    });
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;
 
