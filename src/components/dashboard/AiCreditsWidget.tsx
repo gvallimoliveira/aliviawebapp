@@ -156,8 +156,6 @@ const AiCreditsWidget = () => {
   const included = status?.included ?? 0;
   const purchased = status?.purchased ?? 0;
   const pooled = !!status?.pooled;
-  const perMember = status?.per_member ?? included;
-  const clinicMembers = status?.clinic_members ?? 0;
   const personalUsed = status?.personal_used ?? total;
   // Shield: never under-report. If the aggregate and the itemized rows disagree,
   // show the larger value (the itemized list is the raw ledger).
@@ -252,8 +250,8 @@ const AiCreditsWidget = () => {
             {pooled && (
               <p className="text-[11px] text-muted-foreground">
                 {isPt
-                  ? `Saldo compartilhado: ${status?.clinical_members ?? clinicMembers} clínicos × ${perMember} + ${status?.secretary_members ?? 0} secretárias × ${perMember / 2} = ${included} créditos/mês.`
-                  : `Shared balance: ${status?.clinical_members ?? clinicMembers} clinicians × ${perMember} + ${status?.secretary_members ?? 0} secretaries × ${perMember / 2} = ${included} credits/month.`}
+                  ? `Saldo total da clínica: ${included} créditos/mês, compartilhados pela equipe.`
+                  : `Total clinic balance: ${included} credits/month, shared by the team.`}
               </p>
             )}
             <div className="flex items-end justify-between gap-2">

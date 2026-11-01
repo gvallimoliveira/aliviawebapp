@@ -93,7 +93,7 @@ const proTools = [
   { key: "insights_adherence", icon: Activity },
   { key: "insights_benchmark", icon: Gauge },
   { key: "insights_revenue", icon: BarChart3 },
-  { key: "ai_credits", icon: Gauge }, // Shared localized quota, warnings, margin and paid top-up guidance.
+  { key: "ai_credits", icon: Gauge }, // Localized monthly/annual quotas, fixed clinic pools and current top-up prices.
   { key: "studio_carousel", icon: Palette },
   { key: "studio_creative_network", icon: Brain },
   { key: "studio_ecosystem", icon: Layers },

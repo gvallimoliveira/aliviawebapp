@@ -484,6 +484,13 @@
       "when": 1793403324239,
       "tag": "0068_acl_preoperative_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1793573018409,
+      "tag": "0069_revise_ai_credit_quotas_and_packages",
+      "breakpoints": true
     }
   ]
 }
