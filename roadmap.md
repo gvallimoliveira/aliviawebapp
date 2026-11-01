@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Cotas e pacotes de IA — novembro
-- [ ] Atualizar PRO 30/33, Acadêmico 20/22, clínicas Small 80, Medium 120, Large 200 compartilhados; manter margem e bloqueios atuais.
-- [ ] Ajustar pacotes 15/R$39, 30/R$69, 60/R$129 no Stripe e catálogo; preservar compras antigas.
-- [ ] Atualizar telas/suporte pt/en/es e validar saldo, autorização e checkout sem cobrança.
+- [x] PRO 30/33, Acadêmico 20/22, clínicas Small 80, Medium 120, Large 200 compartilhados; migração 0069 e cotas correntes atualizadas, sem apagar consumo ou saldo comprado. Margens e bloqueios atuais mantidos.
+- [x] Pacotes 15/R$39, 30/R$69, 60/R$129 criados no Stripe, catálogo compartilhado e funções implantadas; webhook verifica pares exatos de ID/preço atual ou anterior para preservar sessões pendentes.
+- [x] Telas/suporte pt/en/es atualizados; 41 testes passaram, build OK. Conta administradora → clínica → Insights → pacotes → Stripe Mini R$39 verificados sem cobrança. Conta admin continua ilimitada; saldo não-VIP e pools testados em banco isolado, não na tela real de assinante. Compra paga/liberação real continua pendente de compra autorizada; demais bloqueadores antigos abaixo não fazem parte desta revisão.
 
 ## Admin — consumo recente e avaliações gratuitas
 - [x] Hoje (São Paulo), Últimas 24h, tabela das 100 chamadas recentes e atualização a cada minuto visível/manual; consultas concorrentes protegidas. Conta real: 30d → Hoje → 24h → 7d → atualizar → Leads conferidos, sem erros. Hoje/24h realmente sem chamadas; 7d mostra 43 registros. 401 sem sessão e janela inválida recusados; build OK.
