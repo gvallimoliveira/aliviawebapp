@@ -837,7 +837,7 @@ serve(async (req) => {
       // Fetch basic leads
       const { data, error } = await supabaseClient
         .from("assessments")
-        .select("id, patient_email, created_at, status, pain_score, pain_regions")
+        .select("id, patient_name, patient_email, created_at, status, pain_score, pain_regions")
         .eq("type", "basic")
         .not("patient_email", "is", null)
         .order("created_at", { ascending: false })

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,9 @@ import {
 } from "recharts";
 
 interface Stats {
+  window?: string;
+  updated_at?: string;
+  recent_calls?: { id: string; created_at: string; function_name: string; credits: number; caller: string; patient_name: string | null; patient_email: string | null; source: string }[];
   window_days: number;
   total_rows: number;
   total_credits: number;
@@ -36,7 +39,8 @@ interface Stats {
 }
 
 const DecisionCard = ({ stats, t }: { stats: Stats; t: (pt: string, en: string) => string }) => {
-  const b = stats.quota_bands!;
+  const b = stats.quota_bands;
+  if (!b) return null;
   const items = [
     { label: t("Abaixo de 50%", "Under 50%"), v: b.under50, cls: "text-primary" },
     { label: "50–80%", v: b.b50_80, cls: "text-foreground" },
@@ -109,37 +113,47 @@ const DecisionCard = ({ stats, t }: { stats: Stats; t: (pt: string, en: string) 
   );
 };
 
-const WINDOWS = [7, 30, 90];
+const WINDOWS = ["today", "24h", "7d", "30d", "90d"] as const;
+type UsageWindow = typeof WINDOWS[number];
 
 const AdminAiUsage = ({ isPt }: { isPt: boolean }) => {
-  const [days, setDays] = useState(30);
+  const [window, setWindow] = useState<UsageWindow>("30d");
+  const requestId = useRef(0);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async (d: number) => {
+  const load = async (w: UsageWindow, quiet = false) => {
+    const id = ++requestId.current;
+    if (!quiet) setStats(null);
     setLoading(true);
     setError(null);
     try {
       const { data, error } = await supabase.functions.invoke(
         "admin-ai-usage-stats",
-        { body: { days: d } },
+        { body: { window: w } },
       );
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      setStats(data as Stats);
+      if (id === requestId.current) setStats(data as Stats);
     } catch (e: any) {
-      setError(e.message || "Erro");
+      if (id === requestId.current) setError(e.message || "Erro");
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   };
 
   useEffect(() => {
-    load(days);
-  }, [days]);
+    load(window);
+    const timer = globalThis.setInterval(() => {
+      if (document.visibilityState === "visible") load(window, true);
+    }, 60000);
+    return () => { globalThis.clearInterval(timer); requestId.current++; };
+  }, [window]);
 
   const t = (pt: string, en: string) => (isPt ? pt : en);
+  const windowLabel = window === "today" ? t("Hoje · São Paulo", "Today · São Paulo") : window === "24h" ? t("Últimas 24h", "Last 24h") : t(`Últimos ${window.slice(0, -1)} dias`, `Last ${window.slice(0, -1)} days`);
+  const sourceLabel = (source: string) => ({ public_basic: t("Avaliação básica pública", "Public basic assessment"), clinic_link: t("Link da clínica", "Clinic link"), professional_link: t("Link profissional", "Professional link"), assessment: t("Avaliação", "Assessment"), unlinked_anonymous: t("Sem conta · avaliação não vinculada", "No account · assessment not linked"), clinic_account: t("Conta da clínica", "Clinic account"), account: t("Conta autenticada", "Signed-in account") }[source] || source);
 
   return (
     <div className="space-y-6">
@@ -156,18 +170,18 @@ const AdminAiUsage = ({ isPt }: { isPt: boolean }) => {
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {WINDOWS.map((w) => (
             <Button
               key={w}
-              variant={days === w ? "default" : "outline"}
+              variant={window === w ? "default" : "outline"}
               size="sm"
-              onClick={() => setDays(w)}
+              onClick={() => setWindow(w)}
             >
-              {w}d
+              {w === "today" ? t("Hoje", "Today") : w === "24h" ? t("Últimas 24h", "Last 24h") : w}
             </Button>
           ))}
-          <Button variant="ghost" size="icon" onClick={() => load(days)} disabled={loading}>
+          <Button variant="ghost" size="icon" aria-label={t("Atualizar consumo", "Refresh usage")} onClick={() => load(window, true)} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
@@ -188,6 +202,7 @@ const AdminAiUsage = ({ isPt }: { isPt: boolean }) => {
       {stats && (
         <>
           {/* KPI cards */}
+          <p className="text-xs text-muted-foreground">{windowLabel}{stats.updated_at && ` · ${t("Atualizado", "Updated")} ${new Date(stats.updated_at).toLocaleString(isPt ? "pt-BR" : "en-US", { timeZone: "America/Sao_Paulo" })}`}</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <KpiCard
               icon={<Zap className="h-4 w-4" />}
@@ -213,8 +228,21 @@ const AdminAiUsage = ({ isPt }: { isPt: boolean }) => {
 
           {stats.quota_bands && <DecisionCard stats={stats} t={t} />}
 
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-base">{t("Chamadas recentes", "Recent calls")}</CardTitle><CardDescription>{t("Até 100 registros mais recentes · horário de São Paulo · créditos internos Aliv.iA, não saldo Lovable", "Up to 100 latest records · São Paulo time · Aliv.iA internal credits, not Lovable balance")}</CardDescription></CardHeader>
+            <CardContent><div className="max-h-96 overflow-auto"><Table>
+              <TableHeader><TableRow><TableHead>{t("Data / hora", "Date / time")}</TableHead><TableHead>{t("Quem / paciente", "Caller / patient")}</TableHead><TableHead>{t("Origem / função", "Source / function")}</TableHead><TableHead className="text-right">{t("Créditos", "Credits")}</TableHead></TableRow></TableHeader>
+              <TableBody>{stats.recent_calls?.map(call => <TableRow key={call.id}>
+                <TableCell className="whitespace-nowrap text-xs">{new Date(call.created_at).toLocaleString(isPt ? "pt-BR" : "en-US", { timeZone: "America/Sao_Paulo" })}</TableCell>
+                <TableCell className="min-w-48 text-xs"><p className="break-words">{call.caller}</p>{call.patient_name && <p className="font-medium break-words">{call.patient_name}</p>}{call.patient_email && <p className="text-muted-foreground break-all">{call.patient_email}</p>}</TableCell>
+                <TableCell className="text-xs"><p>{sourceLabel(call.source)}</p><p className="font-mono text-muted-foreground">{call.function_name}</p></TableCell>
+                <TableCell className="text-right">{call.credits.toFixed(2)}</TableCell>
+              </TableRow>)}{!stats.recent_calls?.length && <TableRow><TableCell colSpan={4} className="py-6 text-center text-muted-foreground">{t("Nenhuma chamada no período.", "No calls in this period.")}</TableCell></TableRow>}</TableBody>
+            </Table></div></CardContent>
+          </Card>
+
           {/* AI Accountant — interpretation & recommendations */}
-          <AccountantCard stats={stats} days={days} isPt={isPt} />
+          {window !== "today" && window !== "24h" && <AccountantCard stats={stats} days={stats.window_days} isPt={isPt} />}
 
 
           {/* Daily chart */}
@@ -224,7 +252,7 @@ const AdminAiUsage = ({ isPt }: { isPt: boolean }) => {
                 {t("Consumo diário", "Daily consumption")}
               </CardTitle>
               <CardDescription>
-                {t(`Últimos ${days} dias`, `Last ${days} days`)}
+                {windowLabel}
               </CardDescription>
             </CardHeader>
             <CardContent>

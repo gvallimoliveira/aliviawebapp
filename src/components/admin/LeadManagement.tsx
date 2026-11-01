@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 interface Lead {
   id: string;
   patient_email: string;
+  patient_name: string | null;
   created_at: string;
   status: string;
   pain_score: number | null;
@@ -45,7 +46,7 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
     noLeads: "Nenhum lead capturado ainda.",
     exportCsv: "Exportar CSV",
     shareWa: "Enviar via WhatsApp",
-    search: "Buscar por e-mail...",
+    search: "Buscar por nome ou e-mail...",
     inProgress: "Em andamento",
     completed: "Completa",
     totalLeads: "Total de Leads",
@@ -63,7 +64,7 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
     noLeads: "No leads captured yet.",
     exportCsv: "Export CSV",
     shareWa: "Share via WhatsApp",
-    search: "Search by email...",
+    search: "Search by name or email...",
     inProgress: "In progress",
     completed: "Completed",
     totalLeads: "Total Leads",
@@ -95,7 +96,7 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
   };
 
   const filtered = leads.filter((l) =>
-    l.patient_email.toLowerCase().includes(search.toLowerCase())
+    `${l.patient_name || ""} ${l.patient_email}`.toLowerCase().includes(search.toLowerCase())
   );
 
   const exportCsv = () => {
@@ -239,7 +240,7 @@ const LeadManagement = ({ language }: LeadManagementProps) => {
                 <TableBody>
                   {filtered.map((lead) => (
                     <TableRow key={lead.id}>
-                      <TableCell className="font-medium">{lead.patient_email}</TableCell>
+                      <TableCell><p className="font-medium">{lead.patient_name || "—"}</p><p className="text-muted-foreground break-all">{lead.patient_email}</p></TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {new Date(lead.created_at).toLocaleDateString(isPt ? "pt-BR" : "en-US")}
                       </TableCell>
