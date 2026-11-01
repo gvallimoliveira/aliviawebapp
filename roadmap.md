@@ -1,5 +1,9 @@
 # Roadmap
 
+## Admin — consumo recente e avaliações gratuitas
+- [ ] Filtros Hoje (São Paulo) e Últimas 24h, chamadas detalhadas e atualização do painel.
+- [ ] Identificar avaliações públicas pelo nome/e-mail já registrados, sem expor dados fora do admin; verificar percurso autenticado e testes.
+
 ## Pré-operatório LCA — avaliação testagem externa
 - [x] Reconhecimento inclui preventionGoalDetails e data marcada em outro campo, inclusive 12/12/26; trajetória reúne preparação e etapas pós-operatórias consultáveis, mantendo confirmação da cirurgia/data realizada e beta admin.
 - [x] Lista genérica sem dor substituída por escolha profissional opcional, sem instrumentos automáticos nem adaptação de KOOS; respostas históricas preservadas e ajuda pt/en/es atualizada.
