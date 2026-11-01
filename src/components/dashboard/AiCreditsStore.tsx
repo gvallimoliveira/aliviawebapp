@@ -5,6 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useSearchParams } from "react-router-dom";
 import { AI_CREDIT_REFRESH } from "@/lib/aiCreditPolicy";
 import { ENABLE_CHAT_ADDON } from "@/lib/featureFlags";
+import { AI_CREDIT_PACKAGES } from "../../../supabase/functions/_shared/ai-credit-catalog";
 import {
   Dialog,
   DialogContent,
@@ -28,12 +29,11 @@ interface Pkg {
   highlight?: boolean;
 }
 
-// 2026-07: pacotes são um COMPLEMENTO da assinatura (60 cr/mês inclusos).
-// Escala pequena e preço/crédito crescente — o menor é o mais recomendado.
+// Display and checkout share the authoritative package catalog.
 const PACKAGES: Pkg[] = [
-  { key: "mini", credits: 15, price_brl: 29, badge: "Mais recomendado", highlight: true },
-  { key: "plus", credits: 30, price_brl: 59 },
-  { key: "pro", credits: 60, price_brl: 89 },
+  { key: "mini", ...AI_CREDIT_PACKAGES.mini, badge: "Mais recomendado", highlight: true },
+  { key: "plus", ...AI_CREDIT_PACKAGES.plus },
+  { key: "pro", ...AI_CREDIT_PACKAGES.pro },
 ];
 
 // Estimativa de capacidade por pacote (avaliação completa ≈ 0,70 créditos:

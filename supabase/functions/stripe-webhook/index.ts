@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { AI_CREDIT_PACKAGES } from "../_shared/ai-credit-catalog.ts";
+import { paidCreditPackage } from "../_shared/ai-credit-catalog.ts";
 import { provisionClinic, resolveMaxMembers } from "../_shared/clinicProvisioning.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -683,10 +683,10 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
         break;
       }
       const packageKey = session.metadata?.package_key || "";
-      const pkg = AI_CREDIT_PACKAGES[packageKey];
-      if (!pkg || session.payment_status !== "paid" || session.currency !== "brl" || session.amount_total !== pkg.price_brl * 100) throw new Error("Invalid paid credit package");
+      if (session.payment_status !== "paid" || session.currency !== "brl") throw new Error("Invalid paid credit package");
       const lines = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
-      if (lines.data.length !== 1 || lines.data[0]?.price?.id !== pkg.price_id || lines.data[0]?.quantity !== 1) throw new Error("Credit package line item mismatch");
+      const pkg = paidCreditPackage(packageKey, lines.data[0]?.price?.id, session.amount_total);
+      if (!pkg || lines.data.length !== 1 || lines.data[0]?.quantity !== 1) throw new Error("Credit package line item mismatch");
       const credits = pkg.credits;
       const priceBrl = pkg.price_brl;
 
