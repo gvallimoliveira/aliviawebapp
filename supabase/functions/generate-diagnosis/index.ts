@@ -29,7 +29,9 @@ serve(async (req) => {
     const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
     const preventive = isPreventiveAssessment(anamnesisData);
     // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
-    const creditDecision = await canaryCredits(req, "generate-diagnosis");
+    const creditDecision = await canaryCredits(req, "generate-diagnosis", {
+      metadata: { assessment_id: __gate.anonAssessment || (assessmentId && await userCanAccessAssessment(req, String(assessmentId))) ? assessmentId : null },
+    });
     const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
     if (quotaBlock) return quotaBlock;
 

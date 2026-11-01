@@ -1,5 +1,9 @@
 # Roadmap
 
+## Admin — consumo recente e avaliações gratuitas
+- [x] Hoje (São Paulo), Últimas 24h, tabela das 100 chamadas recentes e atualização a cada minuto visível/manual; consultas concorrentes protegidas. Conta real: 30d → Hoje → 24h → 7d → atualizar → Leads conferidos, sem erros. Hoje/24h realmente sem chamadas; 7d mostra 43 registros. 401 sem sessão e janela inválida recusados; build OK.
+- [x] Diagnóstico/tratamento gravam apenas referência autorizada de avaliação; admin resolve nome/e-mail e distingue link institucional de fluxo básico. Nome salvo também ao iniciar avaliação; Leads mostra nome existente e busca nome/e-mail. 47 testes distintos passaram. Registro anônimo antigo não contém assessment_id: impossível atribuí-lo com certeza, mantido sem vínculo sem inventar. Nova avaliação completa até IA não criada para evitar gravação clínica/custo; identificação de uma nova chamada ainda não exercitada ponta a ponta, aparelho físico não testado.
+
 ## Pré-operatório LCA — avaliação testagem externa
 - [x] Reconhecimento inclui preventionGoalDetails e data marcada em outro campo, inclusive 12/12/26; trajetória reúne preparação e etapas pós-operatórias consultáveis, mantendo confirmação da cirurgia/data realizada e beta admin.
 - [x] Lista genérica sem dor substituída por escolha profissional opcional, sem instrumentos automáticos nem adaptação de KOOS; respostas históricas preservadas e ajuda pt/en/es atualizada.
