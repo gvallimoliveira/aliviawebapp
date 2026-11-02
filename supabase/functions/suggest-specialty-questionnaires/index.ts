@@ -79,9 +79,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const creditDecision = await canaryCredits(req, "suggest-specialty-questionnaires");
-    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
-    if (quotaBlock) return quotaBlock;
+    // Regra 100% local (catálogo + gatilhos): não consome créditos de IA.
     const { anamnesisData, additionalInfo } = await req.json();
     if (!anamnesisData) {
       return new Response(JSON.stringify({ suggestions: [] }), {
