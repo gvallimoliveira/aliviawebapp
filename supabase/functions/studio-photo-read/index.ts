@@ -8,6 +8,7 @@
  */
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { visionRequest } from "../_shared/economical-vision.ts";
 
 const OWNER_EMAILS = ["gvallimoliveira@gmail.com", "gvallim.fisio@gmail.com"];
 
@@ -41,46 +42,23 @@ Deno.serve(async (req) => {
       return json({ error: "Imagem inválida" }, 400);
     }
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+    const instructions = [
+      "Esta imagem é um print ou foto usada nas artes de marketing do Aliv.iA (software de fisioterapia).",
+      "Diga quais temas da lista ela mostra de fato (máximo 3, o principal primeiro) e descreva em uma frase curta o que aparece.",
+      "Use a legenda do usuário como contexto, mas só marque tema visível ou declarado nela.",
+      `Legenda do usuário: ${caption || "(vazia)"}`,
+    ].join("\n");
+    const schema = {
+      type: "object", additionalProperties: false, required: ["themes", "summary"],
+      properties: {
+        themes: { type: "array", items: { type: "string", enum: THEMES } },
+        summary: { type: "string" },
+      },
+    };
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey, "X-Lovable-AIG-SDK": "fetch" },
-      body: JSON.stringify({
-        model: "openai/gpt-6-astra",
-        stream: true,
-        store: false,
-        reasoning: { effort: "low" },
-        input: [{
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: [
-                "Esta imagem é um print ou foto usada nas artes de marketing do Aliv.iA (software de fisioterapia).",
-                "Diga quais temas da lista ela mostra de fato (máximo 3, o principal primeiro) e descreva em uma frase curta o que aparece.",
-                "Use a legenda do usuário como contexto, mas só marque tema visível ou declarado nela.",
-                `Legenda do usuário: ${caption || "(vazia)"}`,
-              ].join("\n"),
-            },
-            { type: "input_image", image_url: image },
-          ],
-        }],
-        text: {
-          format: {
-            type: "json_schema",
-            name: "photo_read",
-            strict: true,
-            schema: {
-              type: "object",
-              additionalProperties: false,
-              required: ["themes", "summary"],
-              properties: {
-                themes: { type: "array", items: { type: "string", enum: THEMES } },
-                summary: { type: "string" },
-              },
-            },
-          },
-        },
-      }),
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(visionRequest(instructions, image, "Leia a imagem.", "photo_read", schema, true)),
     });
 
     if (!res.ok) {
@@ -96,8 +74,8 @@ Deno.serve(async (req) => {
       if (!payload || payload === "[DONE]") continue;
       try {
         const evt = JSON.parse(payload);
-        if (evt.type === "response.output_text.delta" && typeof evt.delta === "string") text += evt.delta;
-        if (evt.type === "response.completed" && !text && typeof evt.response?.output_text === "string") text = evt.response.output_text;
+        const delta = evt.choices?.[0]?.delta?.content;
+        if (typeof delta === "string") text += delta;
       } catch { /* parcial */ }
     }
     let out: { themes?: string[]; summary?: string } = {};
