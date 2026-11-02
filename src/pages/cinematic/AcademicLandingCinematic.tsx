@@ -651,7 +651,7 @@ const AcademicLandingCinematic = () => {
                   {billing === "monthly" ? c.cancelAnytime : c.annualRefund}
                 </p>
 
-                <CreditsSufficiency plan="academic" className="mb-6" />
+                <CreditsSufficiency plan="academic" annual={billing === "annual"} className="mb-6" />
                 <ul className="text-left space-y-3 mb-8">
                   {c.includes.map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-foreground">

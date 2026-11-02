@@ -66,4 +66,5 @@
 - Clinic agenda: only owner/admin/secretary create, move or delete clinic slots (RLS + guard trigger); clinicians update only status/notes of their own slots, so the front desk keeps control of the grid.
 - Never-paid clinic trials: daily job calls re-validating `purge_expired_clinic_trial` (stages in `_shared/clinicTrialRetention.ts`); delete SET NULL dependents explicitly to avoid solo-scope leaks.
 - Guided cancellation serves PRO and clinics with one `_shared/cancellationPolicy.ts`.
-- Clinic report identity lives in clinic_members, editable through self/owner/admin RPCs; shared issuer resolution reads the member and their own signature without requiring a council or substituting the owner. Identity stays separate from subscription privileges.
+- Clinic report identity: clinic_members + self/owner/admin RPCs; issuer uses their signature, no council or owner fallback, independent of subscription.
+- Both landing layouts show CreditsSufficiency by billing interval in pricing to keep allowances visible.

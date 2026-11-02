@@ -1,4 +1,5 @@
 import { useState } from "react";
+import CreditsSufficiency from "@/components/CreditsSufficiency";
 import { motion } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +79,7 @@ const PricingSection = () => {
                 {billing === "monthly" ? t("b2b.cta_cancel") : t("b2b.annual_no_refund")}
               </p>
 
+              <CreditsSufficiency plan="pro" annual={billing === "annual"} className="mb-6" />
               <ul className="text-left space-y-3 mb-8">
                 {PRICING_INCLUDES.map((key, i) => (
                   <motion.li
