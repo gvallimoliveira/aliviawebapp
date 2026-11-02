@@ -3,11 +3,11 @@
 - Annual refunds share support/landing keys; annualRefund.ts calculates, never pays.
 - Trial renewal uses an owner/clinic-scoped RPC on access/expiry and trial_started_at, never created_at; no customer admin exception.
 - Patient navigation uses patientNavigation and scoped care-provider/HEP RPCs; retain authorization/persistence.
-- Clinical AI shares versioned `_shared/rlca-reference.ts`; separate screenshot claims from evidence, retain surgical context, never automate clearance or replace saved reports.
+- Clinical AI shares `_shared/rlca-reference.ts`; separate claims/evidence, retain surgery context; no automated clearance/report replacement.
 - Scope before querying/limiting: solo clinic_id IS NULL + ownership; clinic selected clinic_id. Reset screens on switches; validate agent thread/patient scope server-side.
 - Microcycle dose edits reuse savePlannedDose with the existing session ID and preserved date, track and metadata; never write perceived load when changing a target.
 - Check-in reopening locks existing patient/day readiness until explicit editing; the existing unique patient/date upsert keeps one daily response. Dose displays retain perceived load for zero-target sessions without inventing a target or adherence verdict.
-- Record-summary alerts preserve assessment-specific dismissal audits across history; health caveats reuse healthHistory formatting and Saúde geral recency (latest day, manual precedence) without new risk calculations or AI.
+- Record alerts retain dismissal audits; health caveats share healthHistory and latest-day/manual precedence, without new risk math/AI.
 - Record-summary STEPS prioritizes fetched completed status before macro-cycle fallback; preserve history.
 - Clinic demos: viewer-scoped fixtures, local math, no live writes/AI; match latest assessment/safety or stay empty.
 
@@ -16,8 +16,8 @@
 - Studio copy uses aliviaDifferentials.ts IDs; never imply duplicate entry.
 - Manual assessment and record share diagnosis.clinicalImpression; sync saved updates and regenerate only on request to avoid duplicate credits.
 - Record paired sections share a row; preserve forms/shortcuts.
-- Language selectors require explicit choice; LanguageContext follows i18next languageChanged after bundle loading to synchronize forms/navigation.
-- Patient regional pain charts and comparisons share one chronological data helper; explicit regional measurements must never be replaced by an invented regional score from a multi-region global average.
+- Language selection is explicit; LanguageContext follows i18next languageChanged after bundle loading for form/navigation parity.
+- Pain charts/comparisons share chronological data; never invent regional scores from global averages.
 - HEP metrics share `hepLoad.ts` across panel/microcycle.
 - Professional sessions use only `saveProfessionalSession` in `periodizationData.ts`: merge same-date/track check-ins and link plans to avoid duplicate load. TRIMP/sRPE math stays in `cardioLoad.ts`.
 - "Today" in load control is always the local/Brazil calendar date (`localISODate` client-side, America/Sao_Paulo in the check-in function), never `toISOString()`; UTC rolls to tomorrow after 21h in Brazil.
@@ -42,8 +42,8 @@
 - Spine logic stays in `spineBiomechanics.ts`; `spinePresentation.ts` shares screen/PDF geometry and dated exams to preserve history.
 - Imports use service-only write/undo journals to restore merges and reject later edits atomically. ZIP omits source IDs/privileges; local XML parsing rejects DTD/entities and bounds complexity, preserving fields for review.
 
-- Combined imports: deterministic planner, per-column disposition, server revalidation, idempotent chunks keyed by actor-scoped operation UUIDs for recovery/undo; source codes are metadata, never authority.
-- Agenda appointments repeat by inserting real rows sharing series_id (rule in recurrence_rule) via pure appointmentRecurrence.ts; reports/occupancy need no changes and completed sessions are never bulk-deleted.
+- Combined imports use per-column deterministic planning, server revalidation, actor-scoped idempotent chunks for undo/recovery; source codes never confer authority.
+- Agenda recurrence inserts rows via appointmentRecurrence.ts with series_id/recurrence_rule; preserve reports/occupancy and completed sessions.
 - Insights tab renders only through the category registry in `InsightsTab.tsx` (one category + role visibility per entry); financial/quality metrics are pure functions in `managementMetrics.ts` over scoped rows, so new insights stay organized and testable without AI.
 - Read `src/components/dashboard/insights/AGENTS.md` for RPC rules.
 - Assessment-to-agenda conversion uses `get_assessment_agenda_conversion` in both care scopes, counting first completed assessments and treatment appointments within 7 days of the assessment by email or linked assessment, never names; `get_assessment_unscheduled_list` names those without a 7-day appointment. This prevents reassessment inflation and false conversions across profiles.
@@ -68,3 +68,7 @@
 - Guided cancellation serves PRO and clinics with one `_shared/cancellationPolicy.ts`.
 - Clinic report identity: clinic_members + self/owner/admin RPCs; issuer uses their signature, no council or owner fallback, independent of subscription.
 - Landings share CreditsSufficiency: practical AI examples, not quotas; no unlimited claims.
+
+- Basic quota: service-only ledger, email transaction lock, survives deletion; diagnosis needs reserved ID; anonymous read/write needs x-assessment-id within 48h.
+- Photo uploads share preparePhoto; record/Studio dimensions, transparent/original fallback; exclude signatures/PDFs/measurement imports.
+- Image reads share economical-vision on zero-retention chat; clinical/measurement models unchanged.
