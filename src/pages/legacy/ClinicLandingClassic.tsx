@@ -1,4 +1,5 @@
 import AnnualRefundDisclaimer from "@/components/AnnualRefundDisclaimer";
+import CreditsSufficiency from "@/components/CreditsSufficiency";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -230,7 +231,7 @@ const ClinicLandingClassic = () => {
   // "Tudo incluso"
   const included = [
     { icon: InfinityIcon, label: "Tratamentos ilimitados" },
-    { icon: Sparkles, label: "IA ilimitada" },
+    { icon: Sparkles, label: "Créditos de IA inclusos" },
     { icon: ImageIcon, label: "Storage de fotos e laudos" },
     { icon: Bell, label: "Push notifications" },
     { icon: Palette, label: "White-label" },
@@ -521,6 +522,7 @@ const ClinicLandingClassic = () => {
             </div>
 
             <AnnualRefundDisclaimer annual={billingAnnual} className="text-center mb-5" />
+            <CreditsSufficiency plan="clinic" className="mb-6" />
 
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
               className="max-w-2xl mx-auto mb-10 rounded-2xl border-2 border-green-500/30 bg-green-500/5 p-5 text-center">

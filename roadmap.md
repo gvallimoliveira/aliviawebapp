@@ -1,5 +1,8 @@
 # Roadmap
 
+## Visibilidade dos créditos nas landings
+- [ ] Mostrar créditos junto aos preços nas páginas realmente usadas de PRO, Acadêmico e Clínica, incluindo versões preservadas; atualizar informação ao escolher mensal/anual e conferir no navegador.
+
 ## Cotas e pacotes de IA — novembro
 - [x] PRO 30/33, Acadêmico 20/22, clínicas Small 80, Medium 120, Large 200 compartilhados; migração 0069 e cotas correntes atualizadas, sem apagar consumo ou saldo comprado. Margens e bloqueios atuais mantidos.
 - [x] Pacotes 15/R$39, 30/R$69, 60/R$129 criados no Stripe, catálogo compartilhado e funções implantadas; webhook verifica pares exatos de ID/preço atual ou anterior para preservar sessões pendentes.

@@ -1,4 +1,5 @@
 import AnnualRefundDisclaimer from "@/components/AnnualRefundDisclaimer";
+import CreditsSufficiency from "@/components/CreditsSufficiency";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -559,6 +560,7 @@ const ProfessionalLandingClassic = () => {
                   {billing === "monthly" ? t("b2b.cta_cancel") : t("b2b.annual_no_refund")}
                 </p>
 
+                <CreditsSufficiency plan="pro" annual={billing === "annual"} className="mb-6" />
                 <ul className="text-left space-y-3 mb-8">
                   {pricingIncludes.map((key, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-foreground">

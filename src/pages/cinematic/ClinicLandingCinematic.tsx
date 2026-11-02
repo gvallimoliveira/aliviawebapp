@@ -250,7 +250,7 @@ const ClinicLandingCinematic = () => {
   // "Tudo incluso"
   const included = [
     { icon: InfinityIcon, label: "Tratamentos ilimitados" },
-    { icon: Sparkles, label: "IA ilimitada" },
+    { icon: Sparkles, label: "Créditos de IA inclusos" },
     { icon: ImageIcon, label: "Storage de fotos e laudos" },
     { icon: Bell, label: "Push notifications" },
     { icon: Palette, label: "White-label" },
@@ -493,10 +493,10 @@ const ClinicLandingCinematic = () => {
               className="rounded-3xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 p-8 md:p-10">
               <div className="text-center mb-8">
                 <Badge className="mb-3 bg-primary text-primary-foreground gap-1.5">
-                  <Check className="h-3 w-3" /> Tudo incluso, sem extras
+                  <Check className="h-3 w-3" /> Recursos inclusos no plano
                 </Badge>
                 <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                  Sem cobranças por uso. Sem surpresas.
+                  Sem cobranças automáticas de excedentes.
                 </h2>
                 <p className="text-muted-foreground">
                   No modo Clínica, tudo abaixo está incluso em qualquer plano.

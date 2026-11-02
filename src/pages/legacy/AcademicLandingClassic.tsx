@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import CreditsSufficiency from "@/components/CreditsSufficiency";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -605,6 +606,7 @@ const AcademicLandingClassic = () => {
                   {billing === "monthly" ? c.cancelAnytime : c.annualRefund}
                 </p>
 
+                <CreditsSufficiency plan="academic" annual={billing === "annual"} className="mb-6" />
                 <ul className="text-left space-y-3 mb-8">
                   {c.includes.map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-foreground">
