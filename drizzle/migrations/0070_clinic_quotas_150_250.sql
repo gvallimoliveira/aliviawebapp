@@ -1,0 +1,3 @@
+CREATE OR REPLACE FUNCTION public.get_included_credits_for_tier(_tier text)
+ RETURNS integer LANGUAGE sql IMMUTABLE SET search_path TO 'public'
+AS $function$ SELECT CASE _tier WHEN 'partner' THEN 25 WHEN 'pro_monthly' THEN 30 WHEN 'pro_annual' THEN 33 WHEN 'academic_monthly' THEN 20 WHEN 'academic_annual' THEN 22 WHEN 'clinic_small' THEN 80 WHEN 'clinic_medium' THEN 150 WHEN 'clinic_large' THEN 250 WHEN 'premium_b2c' THEN 15 ELSE 0 END $function$;
