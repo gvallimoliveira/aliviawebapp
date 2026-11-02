@@ -25,13 +25,7 @@ serve(async (req) => {
     if (__gate instanceof Response) return __gate;
     const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
     const preventive = isPreventiveAssessment(anamnesisData);
-    // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
-    const creditDecision = await canaryCredits(req, "generate-treatment", {
-      metadata: { assessment_id: __gate.anonAssessment || (assessmentId && await userCanAccessAssessment(req, String(assessmentId))) ? assessmentId : null },
-    });
-    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
-    if (quotaBlock) return quotaBlock;
-
+    
     // --- Content-addressed cache (TTL 30d) ---
     // Key = hash of the full clinical payload (anamnesis + tests + questionnaires
     // + diagnosis). Any update to the patient's record changes the key and forces
@@ -65,6 +59,14 @@ serve(async (req) => {
         });
       }
     }
+
+    // Economia: respostas reaproveitadas (cache) não consomem créditos.
+    // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
+    const creditDecision = await canaryCredits(req, "generate-treatment", {
+      metadata: { assessment_id: __gate.anonAssessment || (assessmentId && await userCanAccessAssessment(req, String(assessmentId))) ? assessmentId : null },
+    });
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
 
 
     const lang = language === "es" ? "Spanish" : language === "en" ? "English" : "Portuguese (Brazil)";

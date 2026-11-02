@@ -19,10 +19,7 @@ serve(async (req) => {
   try {
     const __gate = await requireUser(req, corsHeaders);
     if (__gate instanceof Response) return __gate;
-    const creditDecision = await canaryCredits(req, "suggest-functional-tests");
-    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
-    if (quotaBlock) return quotaBlock;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const {
@@ -51,6 +48,11 @@ serve(async (req) => {
         });
       }
     }
+
+    // Economia: respostas reaproveitadas (cache) não consomem créditos.
+    const creditDecision = await canaryCredits(req, "suggest-functional-tests");
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
 
     const isPt = language === "pt";
     const isEs = language === "es";
