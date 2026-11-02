@@ -1,5 +1,8 @@
 # Roadmap
 
+## Comunicação de capacidade da IA nas landings
+- [ ] Combinar parágrafo e cards com ícones em PRO, Clínica e Acadêmico (ambos os layouts), sem destacar números de créditos, com exemplos estimados e pacote opcional; conferir páginas públicas.
+
 ## Visibilidade dos créditos nas landings
 - [x] Créditos destacados junto aos preços em PRO, Acadêmico e Clínica, nos dois layouts; mensal/anual mostra 30/33 e 20/22, clínicas 80/150/250. Páginas públicas atuais verificadas em 1280px e 440px, sem transbordamento ou erros; 41 testes passaram e build OK. Layouts preservados não abertos; publicação não solicitada.
 
