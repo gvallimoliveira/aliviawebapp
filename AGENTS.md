@@ -11,7 +11,7 @@
 - Record-summary STEPS prioritizes fetched completed status before macro-cycle fallback; preserve history.
 - Clinic demos: viewer-scoped fixtures, local math, no live writes/AI; match latest assessment/safety or stay empty.
 
-- Cardiovascular ceiling reminders combine the record's assessments and ID/email-linked dated health records via `usePatientCardioHealth`; structured conditions never auto-select a clinician profile, infer control, or fabricate an age-based ceiling.
+- Cardio ceiling reminders use `usePatientCardioHealth` over assessments and ID/email-linked dated health; never auto-select profiles, infer condition control or invent age-based ceilings.
 
 - Studio copy uses aliviaDifferentials.ts IDs; never imply duplicate entry.
 - Manual assessment and record share diagnosis.clinicalImpression; sync saved updates and regenerate only on request to avoid duplicate credits.
