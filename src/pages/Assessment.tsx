@@ -529,9 +529,11 @@ const Assessment = () => {
   const createAssessment = async () => {
     if (assessmentId) return assessmentId;
     try {
+      const newId = crypto.randomUUID();
       const { data, error } = await supabase
         .from("assessments")
         .insert({
+          id: newId,
           type: mode,
           status: "in_progress",
           user_id: user?.id || null,
@@ -542,7 +544,8 @@ const Assessment = () => {
           red_flags: resolveRedFlagPayload() as any,
         })
         .select("id")
-        .single();
+        .single()
+        .setHeader("x-assessment-id", newId);
       if (error) throw error;
       setAssessmentId(data.id);
       return data.id;
@@ -566,7 +569,8 @@ const Assessment = () => {
       const { error } = await supabase
         .from("assessments")
         .update(updates)
-        .eq("id", id);
+        .eq("id", id)
+        .setHeader("x-assessment-id", id);
       if (error) throw error;
     } catch (err) {
       console.error("Error updating assessment:", err);
