@@ -38,6 +38,21 @@ serve(async (req) => {
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
 
+    // Basic AI requires the persisted quota reservation; a signed-in caller
+    // cannot bypass the public quota by omitting the assessment identifier.
+    if (mode === "basic") {
+      const { data: basic } = admin && assessmentId
+        ? await admin.from("assessments").select("id,type,user_id,created_at").eq("id", assessmentId).maybeSingle()
+        : { data: null };
+      const { data: reservation } = admin && basic?.type === "basic"
+        ? await admin.from("public_basic_assessment_usage").select("assessment_id").eq("assessment_id", basic.id).maybeSingle()
+        : { data: null };
+      const authorized = basic && (basic.user_id === __gate.userId || (!basic.user_id && Date.now() - new Date(basic.created_at).getTime() < 48 * 60 * 60 * 1000));
+      if (!authorized || !reservation) return new Response(JSON.stringify({ error: "basic_assessment_required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Persist the finished assessment server-side so completion never depends
     // on the patient's browser staying open (mobile tabs get suspended).
     const persistAssessment = async (diag: unknown) => {
