@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Visibilidade dos créditos nas landings
-- [ ] Mostrar créditos junto aos preços nas páginas realmente usadas de PRO, Acadêmico e Clínica, incluindo versões preservadas; atualizar informação ao escolher mensal/anual e conferir no navegador.
+- [x] Créditos destacados junto aos preços em PRO, Acadêmico e Clínica, nos dois layouts; mensal/anual mostra 30/33 e 20/22, clínicas 80/150/250. Páginas públicas atuais verificadas em 1280px e 440px, sem transbordamento ou erros; 41 testes passaram e build OK. Layouts preservados não abertos; publicação não solicitada.
 
 ## Cotas e pacotes de IA — novembro
 - [x] PRO 30/33, Acadêmico 20/22, clínicas Small 80, Medium 120, Large 200 compartilhados; migração 0069 e cotas correntes atualizadas, sem apagar consumo ou saldo comprado. Margens e bloqueios atuais mantidos.
