@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Info, Wallet, Infinity as InfinityIcon, AlertTriangle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import AiCreditsStore from "./AiCreditsStore";
-import { AI_CREDIT_REFRESH, graceRatio } from "@/lib/aiCreditPolicy";
+import { AI_CREDIT_REFRESH } from "@/lib/aiCreditPolicy";
 
 interface UsageRow {
   function_name: string;
