@@ -28,6 +28,7 @@ const patientTools = [
   { key: "appointments", icon: NotebookPen },
   { key: "notices", icon: Bell },
   { key: "basic_assessment", icon: ClipboardList },
+  { key: "free_quota", icon: Shield },
   { key: "premium_assessment", icon: Crown },
   { key: "premium_status", icon: Crown },
   { key: "pain_diary", icon: BookOpen },
@@ -50,6 +51,7 @@ const proTools = [
   { key: "patient_list", icon: Users },
   { key: "evolution_dashboard", icon: Activity }, // Localized help includes read-only summary alerts and dated health caveats.
   { key: "pdf_download", icon: FileDown },
+  { key: "photo_optimization", icon: FileText },
   { key: "free_report", icon: FileDown },
   { key: "acl_preoperative", icon: Activity },
   { key: "report_identity", icon: UserCog },

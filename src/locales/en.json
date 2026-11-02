@@ -1,4 +1,12 @@
 {
+  "assessment.free_limit": "You have already started 2 free assessments with this email in the last 30 days. Try again when the oldest assessment reaches 30 days, or explore care options.",
+  "assessment.email_required": "Enter a valid email to start the free assessment.",
+  "support.patient.tool.free_quota.title": "Free assessments per email",
+  "support.patient.tool.free_quota.desc": "Public basic assessments allow up to 2 starts per email in a rolling 30-day window. Resuming the same assessment does not use another slot. Professional and clinic links and premium assessments are excluded.",
+  "support.pro.tool.photo_optimization.title": "Lighter photos in records and Studio",
+  "support.pro.tool.photo_optimization.desc": "New record photos are optimized before upload, up to 1600 pixels on the longest side; Studio photos retain up to 2400 pixels for artwork quality. PNG transparency is preserved. If conversion fails or increases file size, the original is uploaded. Existing photos, PDFs, signatures, dynamometry and ROM imports are unchanged. Upload original reports as Documents when fine detail matters.",
+  "clinic.support.tool.photo_optimization.title": "Lighter photos in records and Studio",
+  "clinic.support.tool.photo_optimization.desc": "New record photos are optimized up to 1600 pixels on the longest side; Studio uses 2400 pixels. PNG transparency and fallback originals are preserved. Existing photos, PDFs, signatures, dynamometry and ROM are unchanged. Reports requiring fine detail should be uploaded as original documents.",
   "billing.annual_refund.notice": "For annual plans, on cancellation, used months are deducted at the plan’s monthly rate; the positive balance of the annual amount paid is refunded.",
   "billing.annual_refund.question": "How do annual subscription refunds work?",
   "billing.annual_refund.answer": "When cancelling an annual subscription, used months are recalculated at the same plan’s monthly rate, and the positive balance of the annual amount actually paid is refunded. Example: subscribed for 12 months and used 3 → refund = annual amount paid minus 3 monthly payments, not 9/12 of the total. If no positive balance remains, no refund is due under this calculation. Request a refund through support; cancelling renewal does not automatically issue a refund. Applicable statutory rights are preserved.",

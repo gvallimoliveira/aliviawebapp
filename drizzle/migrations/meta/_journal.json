@@ -498,6 +498,13 @@
       "when": 1793578347294,
       "tag": "0070_clinic_quotas_150_250",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1793581604709,
+      "tag": "0071_public_basic_assessment_quota",
+      "breakpoints": true
     }
   ]
 }

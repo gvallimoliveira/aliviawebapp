@@ -91,6 +91,11 @@ const categories: ToolCategory[] = [
     icon: FileText,
     items: [
       {
+        key: "photo_optimization", icon: ImageIcon,
+        title: "Fotos mais leves no prontuário e Studio",
+        desc: "Fotos novas são otimizadas antes do envio; PNGs mantêm transparência, documentos originais, assinaturas e importações clínicas não são alterados.",
+      },
+      {
         key: "compact_record",
         icon: Layers,
         title: "Prontuário compacto e dor por região",

@@ -1,4 +1,12 @@
 {
+  "assessment.free_limit": "Você já iniciou 2 avaliações gratuitas com este e-mail nos últimos 30 dias. Tente novamente quando a avaliação mais antiga completar 30 dias ou consulte as opções de acompanhamento.",
+  "assessment.email_required": "Informe um e-mail válido para iniciar a avaliação gratuita.",
+  "support.patient.tool.free_quota.title": "Avaliações gratuitas por e-mail",
+  "support.patient.tool.free_quota.desc": "A avaliação básica pública permite iniciar até 2 avaliações por e-mail a cada 30 dias corridos. Retomar a mesma avaliação não usa uma nova vaga. Avaliações por links profissionais e de clínicas e avaliações premium não entram nesse limite.",
+  "support.pro.tool.photo_optimization.title": "Fotos mais leves no prontuário e Studio",
+  "support.pro.tool.photo_optimization.desc": "Novas fotos do prontuário são otimizadas antes do envio, até 1600 pixels no lado maior. No Studio, até 2400 pixels para preservar o acabamento das artes. PNGs mantêm transparência; se a conversão falhar ou aumentar o arquivo, o original é enviado. Fotos antigas, PDFs, assinaturas e importações de dinamometria e ADM não são alterados. Para examinar detalhes finos de laudos, envie o documento original na seção Documentos.",
+  "clinic.support.tool.photo_optimization.title": "Fotos mais leves no prontuário e Studio",
+  "clinic.support.tool.photo_optimization.desc": "Novas fotos do prontuário são otimizadas até 1600 pixels no lado maior; no Studio, até 2400 pixels. PNGs mantêm transparência e falhas preservam o original. Fotos antigas, PDFs, assinaturas, dinamometria e ADM não mudam. Laudos que exigem detalhes finos devem ser enviados como documento original.",
   "billing.annual_refund.notice": "No anual, em caso de cancelamento, os meses utilizados são descontados pelo valor mensal do plano; o saldo positivo do total anual pago é reembolsado.",
   "billing.annual_refund.question": "Como funciona o reembolso da assinatura anual?",
   "billing.annual_refund.answer": "Ao cancelar uma assinatura anual, os meses utilizados são recalculados pelo preço mensal do mesmo plano, e o saldo positivo do total anual efetivamente pago é reembolsado. Exemplo: contratou 12 meses e usou 3 → reembolso = total anual pago menos 3 mensalidades, e não 9/12 do total. Se não houver saldo positivo, não há valor a devolver. Solicite o reembolso pelo suporte; cancelar a renovação não gera reembolso automático. Direitos legais aplicáveis são preservados.",

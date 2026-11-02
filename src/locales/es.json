@@ -1,4 +1,12 @@
 {
+  "assessment.free_limit": "Ya inició 2 evaluaciones gratuitas con este correo en los últimos 30 días. Intente de nuevo cuando la más antigua cumpla 30 días o consulte las opciones de seguimiento.",
+  "assessment.email_required": "Ingrese un correo válido para iniciar la evaluación gratuita.",
+  "support.patient.tool.free_quota.title": "Evaluaciones gratuitas por correo",
+  "support.patient.tool.free_quota.desc": "La evaluación básica pública permite iniciar hasta 2 evaluaciones por correo en 30 días corridos. Retomar la misma evaluación no consume otra plaza. Los enlaces profesionales y de clínicas y las evaluaciones premium quedan fuera de este límite.",
+  "support.pro.tool.photo_optimization.title": "Fotos más ligeras en registros y Studio",
+  "support.pro.tool.photo_optimization.desc": "Las fotos nuevas del registro se optimizan antes del envío hasta 1600 píxeles en el lado mayor; Studio conserva hasta 2400 píxeles para las artes. Se mantiene la transparencia PNG. Si la conversión falla o aumenta el tamaño, se envía el original. Fotos anteriores, PDF, firmas e importaciones de dinamometría y ADM no cambian. Envíe informes originales en Documentos cuando necesite detalles finos.",
+  "clinic.support.tool.photo_optimization.title": "Fotos más ligeras en registros y Studio",
+  "clinic.support.tool.photo_optimization.desc": "Las fotos nuevas del registro se optimizan hasta 1600 píxeles en el lado mayor; Studio utiliza 2400 píxeles. Se conserva transparencia PNG y el original si falla la conversión. Fotos anteriores, PDF, firmas, dinamometría y ADM no cambian. Envíe informes con detalles finos como documentos originales.",
   "billing.annual_refund.notice": "En el anual, al cancelar, los meses utilizados se descuentan al precio mensual del plan; se reembolsa el saldo positivo del total anual pagado.",
   "billing.annual_refund.question": "¿Cómo funciona el reembolso de la suscripción anual?",
   "billing.annual_refund.answer": "Al cancelar una suscripción anual, los meses utilizados se recalculan al precio mensual del mismo plan y se reembolsa el saldo positivo del total anual efectivamente pagado. Ejemplo: contrató 12 meses y utilizó 3 → reembolso = total anual pagado menos 3 mensualidades, no 9/12 del total. Si no queda saldo positivo, no hay importe a devolver según este cálculo. Solicite el reembolso al soporte; cancelar la renovación no genera un reembolso automático. Se preservan los derechos legales aplicables.",

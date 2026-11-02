@@ -4312,6 +4312,24 @@ export type Database = {
         }
         Relationships: []
       }
+      public_basic_assessment_usage: {
+        Row: {
+          assessment_id: string
+          email_key: string
+          used_at: string
+        }
+        Insert: {
+          assessment_id: string
+          email_key: string
+          used_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          email_key?: string
+          used_at?: string
+        }
+        Relationships: []
+      }
       push_delivery_log: {
         Row: {
           category: string | null

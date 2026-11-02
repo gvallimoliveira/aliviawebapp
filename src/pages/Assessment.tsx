@@ -527,6 +527,7 @@ const Assessment = () => {
   };
 
   const createAssessment = async () => {
+    if (assessmentId) return assessmentId;
     try {
       const { data, error } = await supabase
         .from("assessments")
@@ -547,6 +548,15 @@ const Assessment = () => {
       return data.id;
     } catch (err) {
       console.error("Error creating assessment:", err);
+      const message = err && typeof err === "object" && "message" in err ? String(err.message) : "";
+      toast({
+        title: t("diagnosis.error_title"),
+        description: message.includes("free_assessment_limit")
+          ? t("assessment.free_limit")
+          : message.includes("basic_assessment_email_required")
+            ? t("assessment.email_required") : t("diagnosis.error_desc"),
+        variant: "destructive",
+      });
       return null;
     }
   };
@@ -566,6 +576,7 @@ const Assessment = () => {
   const handleAnamnesisComplete = async (data: AnamnesisData) => {
     setAnamnesisData(data);
     const id = await createAssessment();
+    if (!id) return;
     if (id) {
       await updateAssessment(id, {
         anamnesis_data: data as any,

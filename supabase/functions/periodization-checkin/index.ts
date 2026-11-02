@@ -10,6 +10,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { visionRequest } from "../_shared/economical-vision.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,15 +58,10 @@ async function readCardioPrint(body: any): Promise<Response> {
     properties: { duration_min: num, distance_km: num, avg_hr: num, max_hr: num, hr_1min_after: num, avg_power_w: num, spo2: num, suggested_rpe: num, zone_minutes: { type: ["array", "null"], items: { type: "number" } }, summary: { type: "string" } },
   };
   const instructions = "Você lê prints de monitor cardíaco, relógio, esteira, bicicleta, app de treino ou oxímetro. Extraia apenas o que estiver visível: duração total em minutos, distância em km, FC média e máxima (bpm), FC 1 minuto após o fim do esforço / recuperação (bpm, só se aparecer como valor absoluto), potência média em watts (bicicleta/ergômetro), SpO2 (%) e minutos em cada zona de FC Z1..Z5 (array de 5 números, ou null se não houver zonas visíveis; se o print mostrar mm:ss, converta para minutos decimais, ex.: 12:30 → 12.5). Sugira PSE 0-10 só se houver base (zonas, FC relativa ou esforço informado), senão null. summary: uma frase curta em português sem citar marcas. Nunca invente valores.";
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Lovable-API-Key": key, Authorization: `Bearer ${key}`, "X-Lovable-AIG-SDK": "fetch" },
-    body: JSON.stringify({
-      model: "openai/gpt-6-astra", instructions,
-      input: [{ role: "user", content: [{ type: "input_text", text: "Leia os dados do treino." }, { type: "input_image", image_url: `data:${mime};base64,${img}` }] }],
-      reasoning: { effort: "low" }, store: false, stream: false,
-      text: { format: { type: "json_schema", name: "cardio", strict: true, schema } },
-    }),
+    body: JSON.stringify(visionRequest(instructions, `data:${mime};base64,${img}`, "Leia os dados do treino.", "cardio", schema, false)),
   });
   if (!resp.ok) {
     const t = await resp.text().catch(() => "");
@@ -73,8 +69,7 @@ async function readCardioPrint(body: any): Promise<Response> {
     return json({ error: resp.status === 402 ? "ai_credits" : resp.status === 429 ? "ai_rate_limited" : "ai_failed" }, resp.status === 402 || resp.status === 429 ? resp.status : 502);
   }
   const data = await resp.json();
-  let out = typeof data.output_text === "string" ? data.output_text : "";
-  if (!out) for (const o of data.output || []) for (const c of o.content || []) if (typeof c.text === "string") out += c.text;
+  const out = data.choices?.[0]?.message?.content ?? "";
   let r: any;
   try { r = JSON.parse(out); } catch { return json({ error: "ai_unreadable" }, 502); }
   const rng = (v: unknown, lo: number, hi: number) => (typeof v === "number" && v >= lo && v <= hi ? Math.round(v * 10) / 10 : null);

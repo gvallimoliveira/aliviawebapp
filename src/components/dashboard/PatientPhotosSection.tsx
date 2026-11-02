@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Image as ImageIcon, Upload, Trash2, Loader2, AlertCircle, Camera, Pencil, Share2, Download } from "lucide-react";
 import { downloadStorageFile } from "@/lib/downloadFile";
+import { preparePhoto } from "@/lib/preparePhoto";
 import { createShortShareLink } from "@/lib/shortLink";
 import { DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -104,13 +105,14 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
 
     setUploading(true);
     try {
+      const payload = await preparePhoto(file);
       const prefix = clinicId ? `clinic/${clinicId}` : `pro/${professionalId}`;
       const safeEmail = patientEmail.replace(/[^a-zA-Z0-9@._-]/g, "_");
-      const filePath = `${prefix}/${safeEmail}/${Date.now()}_${file.name}`;
+      const filePath = `${prefix}/${safeEmail}/${Date.now()}_${payload.name}`;
 
       const { error: uploadError } = await supabase.storage
         .from("patient-photos")
-        .upload(filePath, file, { contentType: file.type });
+        .upload(filePath, payload, { contentType: payload.type });
       if (uploadError) throw uploadError;
 
       const { error: dbError } = await (supabase.from("patient_photos" as any) as any).insert({
@@ -118,14 +120,17 @@ const PatientPhotosSection = ({ patientEmail, patientName, clinicId, professiona
         professional_id: clinicId ? null : professionalId || null,
         patient_email: patientEmail,
         patient_name: patientName || null,
-        file_name: file.name,
+        file_name: payload.name,
         file_path: filePath,
-        file_size_bytes: file.size,
-        mime_type: file.type,
+        file_size_bytes: payload.size,
+        mime_type: payload.type,
         category,
         uploaded_by: user.id,
       });
-      if (dbError) throw dbError;
+      if (dbError) {
+        await supabase.storage.from("patient-photos").remove([filePath]);
+        throw dbError;
+      }
 
       toast({ title: isPt ? "Foto enviada!" : "Photo uploaded!" });
       loadPhotos();
