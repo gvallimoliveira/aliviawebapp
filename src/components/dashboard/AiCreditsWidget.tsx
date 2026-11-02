@@ -166,7 +166,6 @@ const AiCreditsWidget = () => {
   const remaining = Math.max(included - used, 0);
   const pct = included > 0 ? Math.floor((used / included) * 100) : (status?.pct ?? 0);
 
-  const buffer = Math.round(((status?.grace_ratio ?? graceRatio(status?.tier ?? "", pooled)) - 1) * 100);
   const daysToReset = status?.period_end
     ? Math.max(0, Math.ceil((new Date(status.period_end).getTime() - Date.now()) / 86400000))
     : null;
