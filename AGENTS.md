@@ -1,8 +1,8 @@
 # Architecture decisions
 - Clinic checkout shares landing prices and server-validated metadata through checkout/recovery; refresh context on return to avoid duplicates.
-- Annual refunds share support/landing keys; annualRefund.ts calculates, never pays.
+- Annual refunds share copy keys; annualRefund.ts calculates, never pays.
 - Trial renewal uses an owner/clinic-scoped RPC on access/expiry and trial_started_at, never created_at; no customer admin exception.
-- Patient navigation uses patientNavigation and scoped care-provider/HEP RPCs; retain authorization/persistence.
+- Patient navigation shares patientNavigation/scoped care-provider and HEP RPCs; retain auth/persistence.
 - Clinical AI shares `_shared/rlca-reference.ts`; separate claims/evidence, retain surgery context; no automated clearance/report replacement.
 - Scope before querying/limiting: solo clinic_id IS NULL + ownership; clinic selected clinic_id. Reset screens on switches; validate agent thread/patient scope server-side.
 - Microcycle dose edits reuse savePlannedDose with the existing session ID and preserved date, track and metadata; never write perceived load when changing a target.
@@ -18,7 +18,7 @@
 - Record paired sections share a row; preserve forms/shortcuts.
 - Language selection is explicit; LanguageContext follows i18next languageChanged after bundle loading for form/navigation parity.
 - Pain charts/comparisons share chronological data; never invent regional scores from global averages.
-- HEP metrics share `hepLoad.ts` across panel/microcycle.
+- HEP metrics share hepLoad.ts across panel/microcycle.
 - Professional sessions use only `saveProfessionalSession` in `periodizationData.ts`: merge same-date/track check-ins and link plans to avoid duplicate load. TRIMP/sRPE math stays in `cardioLoad.ts`.
 - "Today" in load control is always the local/Brazil calendar date (`localISODate` client-side, America/Sao_Paulo in the check-in function), never `toISOString()`; UTC rolls to tomorrow after 21h in Brazil.
 - Dose adherence (`adherenceByTrack`) counts only sessions up to local today with sRPE; unanswered/upcoming never count as underdose nor push alerts. Patient sRPE: today + 7 prior days, server-enforced.

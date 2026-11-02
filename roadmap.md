@@ -1,11 +1,11 @@
 # Roadmap
 
 ## Proteção de caixa — imagens, gratuidade e cobrança
-- [ ] Leitura de imagens com modelo econômico verificado, sem alterar raciocínio clínico, dinamometria ou ADM.
-- [ ] Até duas avaliações básicas públicas por e-mail a cada 30 dias, com controle atômico no servidor e aviso claro.
-- [ ] Compressão de fotos antes do envio, preservando transparência, documentos e falhas de decodificação.
-- [ ] Verificar/configurar recuperação de cobrança antes do cancelamento e avisos do Stripe quando disponíveis, sem domínio de e-mail inventado.
-- [ ] Atualizar ajuda pt/en/es, testar regras e conferir percurso e implantação.
+- [x] Gemini 3.8 Flash verificado no catálogo privado, superfície chat sem retenção; leitura de monitor e Studio implantadas. Print fictício: cinco valores exatos; Studio autenticado retornou temas e resumo. Raciocínio clínico, dinamometria, ADM e importação de treino preservados.
+- [x] Duas avaliações básicas por e-mail/30 dias, ledger após exclusão, trava transacional e retomada por ID; início anônimo → duas gravações → terceira recusada → edição/leitura real conferidos. Avaliações técnicas removidas. Não percorrida nova anamnese completa até diagnóstico nem concorrência contra PostgreSQL real.
+- [x] Fotos novas otimizadas no prontuário (1600px) e Studio (2400px), transparência/original de reserva mantidos; navegador comprovou redução 141386 → 12010 bytes. Arquivos antigos, documentos, assinaturas e medições preservados; upload real de foto em prontuário não executado.
+- [ ] Recuperação Stripe: opções de tentativas/avisos são configuradas somente no painel Stripe, não expostas pela API disponível. Aguardam usuário configurar em Revenue recovery: tentativas nos dias 3/5/7 e cancelamento após esgotamento; avisos de pagamento falho com link hospedado podem usar o próprio Stripe. Nenhuma fatura automática aberta hoje; sem cobrar clientes manualmente ou criar rotina concorrente com Stripe.
+- [x] Ajuda PRO/clínica/paciente pt/en/es atualizada; testes de quota e fotos aprovados, build OK, suporte aberto. Não publicada nova versão.
 
 ## Comunicação de capacidade da IA nas landings
 - [x] Parágrafo por público e dois cards com ícones em PRO, Clínica e Acadêmico (ambos os layouts), pt/en/es, sem destacar cotas numéricas; combinações alternativas estimadas, saldo na conta e pacote opcional preservados. Páginas públicas conferidas em 1280px e 440px, sem transbordamento ou erros; 41 testes passaram e build OK. Layouts antigos e idiomas EN/ES não abertos no navegador; publicação não solicitada.
