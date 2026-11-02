@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { preparePhoto } from "@/lib/preparePhoto";
 
 /**
  * BIBLIOTECA DE FOTOS DO STUDIO
@@ -151,9 +152,6 @@ export const listPhotos = async (brandId?: string): Promise<StudioPhoto[]> => {
 
 /** Teto por arquivo: cabe um JPG de câmera ou um PNG pesado de tela. */
 export const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
-/** Acima disso a foto é reduzida no navegador antes de subir. */
-const DOWNSCALE_ABOVE_BYTES = 2.5 * 1024 * 1024;
-const MAX_EDGE = 2400;
 
 /** Quantas fotos o usuário já tem no acervo (para o contador do plano). */
 export const countPhotos = async (): Promise<number> => {
@@ -162,33 +160,6 @@ export const countPhotos = async (): Promise<number> => {
     .select("id", { count: "exact", head: true });
   if (error) throw error;
   return count ?? 0;
-};
-
-/**
- * Reduz fotos grandes mantendo nitidez suficiente para o export PNG (lado maior
- * 2400 px). Falha de canvas nunca impede o envio: devolve o arquivo original.
- */
-const downscale = async (file: File): Promise<Blob> => {
-  if (file.size <= DOWNSCALE_ABOVE_BYTES) return file;
-  try {
-    const bitmap = await createImageBitmap(file);
-    const factor = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-    const width = Math.round(bitmap.width * factor);
-    const height = Math.round(bitmap.height * factor);
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return file;
-    ctx.drawImage(bitmap, 0, 0, width, height);
-    bitmap.close?.();
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92),
-    );
-    return blob && blob.size < file.size ? blob : file;
-  } catch {
-    return file;
-  }
 };
 
 /** Envia uma foto para a pasta do usuário e registra os metadados. */
@@ -204,17 +175,15 @@ export const uploadPhoto = async (
   const uid = auth.user?.id;
   if (!uid) throw new Error("Sessão expirada — entre novamente.");
 
-  const payload = await downscale(file);
-  const jpeg = payload !== file;
-  const ext = jpeg
-    ? "jpg"
-    : (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+  // 2400px retains detail for HD artwork; clinical photos use 1600px.
+  const payload = await preparePhoto(file, 2400);
+  const ext = (payload.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
   const storagePath = `${uid}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext || "jpg"}`;
 
   const { error: upErr } = await supabase.storage
     .from(PHOTO_BUCKET)
     .upload(storagePath, payload, {
-      contentType: jpeg ? "image/jpeg" : file.type || "image/jpeg",
+      contentType: payload.type || "image/jpeg",
       upsert: false,
     });
   if (upErr) throw upErr;
