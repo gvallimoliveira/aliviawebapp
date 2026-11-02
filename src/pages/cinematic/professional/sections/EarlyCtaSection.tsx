@@ -1,3 +1,4 @@
+import CreditsSufficiency from "@/components/CreditsSufficiency";
 import AnnualRefundDisclaimer from "@/components/AnnualRefundDisclaimer";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -66,6 +67,7 @@ const EarlyCtaSection = () => {
           )}
 
           <AnnualRefundDisclaimer annual={billing === "annual"} />
+          <CreditsSufficiency plan="pro" className="mt-4" />
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
             <Button onClick={handleCTA} size="lg" className="rounded-xl gap-2 px-8">
