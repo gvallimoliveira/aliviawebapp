@@ -47,7 +47,7 @@ export default function AiCreditMonitor() {
     <DialogDescription>{t(status?.hard_enabled ? "credits.recovery" : "credits.noticeShadow")}</DialogDescription>
   </DialogHeader>
     {status?.period_end && <p className="text-sm text-muted-foreground">{t("credits.renews")} {new Date(status.period_end).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { timeZone: "America/Sao_Paulo" })}.</p>}
-    {status && (status.grace_ratio ?? 1) > 1 && <p className="text-sm text-muted-foreground">{t("credits.margin")} {Math.round(((status.grace_ratio ?? 1) - 1) * 100)}%.</p>}
+
     {status?.can_buy ? <Button className="w-full" onClick={() => { setOpen(false); setStoreOpen(true); }}>{t("credits.buy")}</Button> : <p className="text-sm text-muted-foreground">{t("credits.askManager")}</p>}
     <Button variant="outline" onClick={() => setOpen(false)}>{t("credits.close")}</Button>
   </DialogContent></Dialog><AiCreditsStore controlledOpen={storeOpen} onControlledOpenChange={setStoreOpen} /></>;
