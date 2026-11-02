@@ -29,6 +29,7 @@ describe("compra → saldo → consumo real em ambiente isolado",()=>{
   await db.exec(readFileSync('drizzle/migrations/0049_ai_credit_rollout_preparation.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0050_secure_ai_credit_rollout_roles.sql','utf8'));
   await db.exec(readFileSync('drizzle/migrations/0069_revise_ai_credit_quotas_and_packages.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0070_clinic_quotas_150_250.sql','utf8'));
   await db.exec(`INSERT INTO ai_credit_admin_roles VALUES ('${vip}','admin');`);
  },60000);
  afterAll(async()=>{await db.close();});
