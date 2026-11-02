@@ -1,5 +1,12 @@
 # Roadmap
 
+## Proteção de caixa — imagens, gratuidade e cobrança
+- [ ] Leitura de imagens com modelo econômico verificado, sem alterar raciocínio clínico, dinamometria ou ADM.
+- [ ] Até duas avaliações básicas públicas por e-mail a cada 30 dias, com controle atômico no servidor e aviso claro.
+- [ ] Compressão de fotos antes do envio, preservando transparência, documentos e falhas de decodificação.
+- [ ] Verificar/configurar recuperação de cobrança antes do cancelamento e avisos do Stripe quando disponíveis, sem domínio de e-mail inventado.
+- [ ] Atualizar ajuda pt/en/es, testar regras e conferir percurso e implantação.
+
 ## Comunicação de capacidade da IA nas landings
 - [x] Parágrafo por público e dois cards com ícones em PRO, Clínica e Acadêmico (ambos os layouts), pt/en/es, sem destacar cotas numéricas; combinações alternativas estimadas, saldo na conta e pacote opcional preservados. Páginas públicas conferidas em 1280px e 440px, sem transbordamento ou erros; 41 testes passaram e build OK. Layouts antigos e idiomas EN/ES não abertos no navegador; publicação não solicitada.
 
