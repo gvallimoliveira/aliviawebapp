@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Info, Wallet, Infinity as InfinityIcon, AlertTriangle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import AiCreditsStore from "./AiCreditsStore";
-import { AI_CREDIT_REFRESH, graceRatio } from "@/lib/aiCreditPolicy";
+import { AI_CREDIT_REFRESH } from "@/lib/aiCreditPolicy";
 
 interface UsageRow {
   function_name: string;
@@ -166,7 +166,6 @@ const AiCreditsWidget = () => {
   const remaining = Math.max(included - used, 0);
   const pct = included > 0 ? Math.floor((used / included) * 100) : (status?.pct ?? 0);
 
-  const buffer = Math.round(((status?.grace_ratio ?? graceRatio(status?.tier ?? "", pooled)) - 1) * 100);
   const daysToReset = status?.period_end
     ? Math.max(0, Math.ceil((new Date(status.period_end).getTime() - Date.now()) / 86400000))
     : null;
@@ -304,18 +303,33 @@ const AiCreditsWidget = () => {
               </div>
             )}
             {pct >= 100 && (
-              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2">
-                <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
-                <p className="text-[11px] leading-relaxed text-destructive-foreground/90">
-                  {isPt
-                    ? `Cota mensal atingida. ${buffer ? `Margem de continuidade: ${buffer}%. ` : ""}${status?.hard_enabled ? "Após a margem, o uso depende de pacotes ou renovação." : "Nenhum bloqueio está ativo; o uso continua normalmente."}`
-                    : `Monthly allowance reached. ${buffer ? `Continuity buffer: ${buffer}%. ` : ""}${status?.hard_enabled ? "After the buffer, use requires packs or renewal." : "No blocking is active; usage continues normally."}`}
-
-                </p>
+              <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-2">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-[11px] leading-relaxed text-foreground">
+                    {canBuy
+                      ? (isPt
+                        ? "Os créditos do mês acabaram. Para seguir usando a IA sem interrupção, adicione um pacote."
+                        : "This month's credits are used up. Add a pack to keep using AI without interruption.")
+                      : (isPt
+                        ? "Os créditos do mês acabaram. Peça ao gestor da clínica para adicionar um pacote."
+                        : "This month's credits are used up. Ask the clinic manager to add a pack.")}
+                  </p>
+                </div>
+                {canBuy && (
+                  <AiCreditsStore
+                    trigger={
+                      <Button size="sm" className="w-full gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        {isPt ? "Adicionar pacote agora" : "Add a pack now"}
+                      </Button>
+                    }
+                  />
+                )}
               </div>
             )}
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              {isPt ? `Renovação${daysToReset !== null ? ` em ${daysToReset} dias` : " mensal"}. Pacotes valem 12 meses e são consumidos após a cota e a margem. Compra sempre manual, sem cobrança automática. ${status?.hard_enabled ? "Limite ativo para este perfil." : "Bloqueios desligados para este perfil."}` : `Renewal${daysToReset !== null ? ` in ${daysToReset} days` : " monthly"}. Packs last 12 months and are used after the allowance and buffer. Purchases are manual, never automatic. ${status?.hard_enabled ? "Limits active for this profile." : "Blocking disabled for this profile."}`}
+              {isPt ? `Renovação${daysToReset !== null ? ` em ${daysToReset} dias` : " mensal"}. Pacotes valem 12 meses e são usados quando os créditos do mês acabam. Compra sempre manual, sem cobrança automática.` : `Renewal${daysToReset !== null ? ` in ${daysToReset} days` : " monthly"}. Packs last 12 months and are used once monthly credits run out. Purchases are manual, never automatic.`}
             </p>
           </div>
         )}

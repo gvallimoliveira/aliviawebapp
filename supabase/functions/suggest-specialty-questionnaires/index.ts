@@ -3,7 +3,6 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -79,9 +78,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const creditDecision = await canaryCredits(req, "suggest-specialty-questionnaires");
-    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
-    if (quotaBlock) return quotaBlock;
+    // Regra 100% local (catálogo + gatilhos): não consome créditos de IA.
     const { anamnesisData, additionalInfo } = await req.json();
     if (!anamnesisData) {
       return new Response(JSON.stringify({ suggestions: [] }), {

@@ -491,6 +491,13 @@
       "when": 1793573018409,
       "tag": "0069_revise_ai_credit_quotas_and_packages",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1793578347294,
+      "tag": "0070_clinic_quotas_150_250",
+      "breakpoints": true
     }
   ]
 }

@@ -28,13 +28,7 @@ serve(async (req) => {
     const __canPersist = mode === "professional" && !!assessmentId && (__gate.anonAssessment || await userCanAccessAssessment(req, String(assessmentId)));
     const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
     const preventive = isPreventiveAssessment(anamnesisData);
-    // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
-    const creditDecision = await canaryCredits(req, "generate-diagnosis", {
-      metadata: { assessment_id: __gate.anonAssessment || (assessmentId && await userCanAccessAssessment(req, String(assessmentId))) ? assessmentId : null },
-    });
-    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
-    if (quotaBlock) return quotaBlock;
-
+    
     // --- Content-addressed cache (TTL 30d) ---
     // The cache key is a hash of the FULL clinical payload. Any change in the
     // patient's record (anamnesis, tests, questionnaires, red flags, language)
@@ -71,6 +65,14 @@ serve(async (req) => {
         });
       }
     }
+
+    // Economia: respostas reaproveitadas (cache) não consomem créditos.
+    // Fase 5.3 (canário): decisão de crédito em modo shadow — nunca bloqueia.
+    const creditDecision = await canaryCredits(req, "generate-diagnosis", {
+      metadata: { assessment_id: __gate.anonAssessment || (assessmentId && await userCanAccessAssessment(req, String(assessmentId))) ? assessmentId : null },
+    });
+    const quotaBlock = creditBlockResponse(creditDecision, corsHeaders);
+    if (quotaBlock) return quotaBlock;
 
     const redFlagsList: string[] = Array.isArray(bodyRedFlags)
       ? bodyRedFlags
