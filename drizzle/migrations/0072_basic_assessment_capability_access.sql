@@ -1,0 +1,2 @@
+CREATE POLICY "Basic assessment capability read" ON public.assessments FOR SELECT TO anon,authenticated USING (id=public.request_assessment_id() AND type='basic' AND user_id IS NULL AND created_at > now()-interval '48 hours');
+CREATE POLICY "Basic assessment capability update" ON public.assessments FOR UPDATE TO anon,authenticated USING (id=public.request_assessment_id() AND type='basic' AND user_id IS NULL AND created_at > now()-interval '48 hours') WITH CHECK (id=public.request_assessment_id() AND type='basic' AND user_id IS NULL);

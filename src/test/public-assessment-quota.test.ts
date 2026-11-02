@@ -34,6 +34,11 @@ describe('public basic quota: two per email per rolling 30 days', () => {
     await expect(insert('other@test.invalid')).rejects.toThrow('free_assessment_limit');
   });
   it('rejects blank email', async () => { await expect(insert('')).rejects.toThrow('basic_assessment_email_required'); });
+  it('accepts only two of three simultaneous creation requests', async () => {
+    const results = await Promise.allSettled([insert('parallel@test.invalid'), insert('parallel@test.invalid'), insert('parallel@test.invalid')]);
+    expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(2);
+    expect(results.filter(r => r.status === 'rejected')).toHaveLength(1);
+  });
   it('does not trust supplied creation dates', async () => {
     const r = await db.query<{fresh:boolean}>("insert into assessments(type,patient_email,created_at) values ('basic','date@test.invalid',now()-interval '60 days') returning created_at > now()-interval '1 minute' as fresh");
     expect(r.rows[0].fresh).toBe(true);

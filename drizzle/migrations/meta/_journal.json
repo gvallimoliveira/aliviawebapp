@@ -505,6 +505,13 @@
       "when": 1793581604709,
       "tag": "0071_public_basic_assessment_quota",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1793581837454,
+      "tag": "0072_basic_assessment_capability_access",
+      "breakpoints": true
     }
   ]
 }
