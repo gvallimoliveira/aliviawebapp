@@ -34,7 +34,7 @@ describe("compra → saldo → consumo real em ambiente isolado",()=>{
  },60000);
  afterAll(async()=>{await db.close();});
  it.each([['pro_monthly',30],['pro_annual',33],['academic_monthly',20],['academic_annual',22],['clinic_small',80],['clinic_medium',150],['clinic_large',250]])("cota %s = %s",async(tier,included)=>{expect((await db.query<{n:number}>('select get_included_credits_for_tier($1) n',[tier])).rows[0].n).toBe(included);});
- it("Medium e Large mantêm pool fixo",async()=>{for(const [size,amount] of [[6,120],[12,200]]){await db.query('update clinics set max_members=$1 where id=$2::uuid',[size,clinic]);expect((await status(owner)).included).toBe(amount);}await db.query('update clinics set max_members=3 where id=$1::uuid',[clinic]);});
+ it("Medium e Large mantêm pool fixo",async()=>{for(const [size,amount] of [[6,150],[12,250]]){await db.query('update clinics set max_members=$1 where id=$2::uuid',[size,clinic]);expect((await status(owner)).included).toBe(amount);}await db.query('update clinics set max_members=3 where id=$1::uuid',[clinic]);});
  it("não altera compras antigas",async()=>{await db.query('select fulfill_ai_credit_package($1::uuid,null,$2,null,$3,15,29)',[partner,'test-legacy','mini']);expect((await db.query<{n:number}>('select price_paid::int n from ai_credit_packages where stripe_session_id=$1',['test-legacy'])).rows[0].n).toBe(29);await db.query("update ai_credit_packages set expires_at=now()-interval '1 day' where stripe_session_id=$1",['test-legacy']);});
  it("parceiro recebe 25, não infinito",async()=>{const s=await status(partner);expect(s.included).toBe(25);expect(s.unlimited).toBe(false);expect(s.can_buy).toBe(true);});
  it("apenas VIP/admin fica ilimitado",async()=>expect((await status(vip)).unlimited).toBe(true));
