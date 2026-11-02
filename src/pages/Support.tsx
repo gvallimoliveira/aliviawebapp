@@ -28,7 +28,7 @@ const patientTools = [
   { key: "appointments", icon: NotebookPen },
   { key: "notices", icon: Bell },
   { key: "basic_assessment", icon: ClipboardList },
-  { key: "free_quota", icon: Shield },
+  { key: "free_quota", icon: Lock },
   { key: "premium_assessment", icon: Crown },
   { key: "premium_status", icon: Crown },
   { key: "pain_diary", icon: BookOpen },
