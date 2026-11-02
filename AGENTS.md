@@ -67,4 +67,4 @@
 - Never-paid clinic trials: daily job calls re-validating `purge_expired_clinic_trial` (stages in `_shared/clinicTrialRetention.ts`); delete SET NULL dependents explicitly to avoid solo-scope leaks.
 - Guided cancellation serves PRO and clinics with one `_shared/cancellationPolicy.ts`.
 - Clinic report identity: clinic_members + self/owner/admin RPCs; issuer uses their signature, no council or owner fallback, independent of subscription.
-- Both landing layouts show CreditsSufficiency by billing interval in pricing to keep allowances visible.
+- Landings share CreditsSufficiency: practical AI examples, not quotas; no unlimited claims.
