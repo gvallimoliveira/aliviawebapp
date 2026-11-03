@@ -1,5 +1,9 @@
 # Roadmap
 
+## Landings — refinamento editorial e preços da clínica
+- [ ] Refinar trechos intermediários de PRO, Clínica e Paciente com benefício humano e respaldo técnico, sem ampliar as páginas.
+- [ ] Aproximar mensal/anual dos preços da clínica e verificar alteração dos três planos no celular/computador, preservando valores e contratação.
+
 ## Blog — estrutura GEO sem reescrever artigos
 - [x] Sete publicados e três rascunhos inventariados; Semrush BR e orientação Google pesquisados, estratégia/limites em docs/blog-geo-strategy.md. Avaliação: 480/mês KD21; renda: 20/mês KD0, SERP desconhecida; referência: dados desconhecidos.
 - [x] Sumário derivado, links relacionados e trilha de desejos; schema com corpo/seções/autor institucional/breadcrumbs; sitemap estático ampliado aos sete publicados. Textos, títulos, slugs, resumos e publicação no banco preservados.
