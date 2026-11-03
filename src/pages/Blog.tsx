@@ -51,22 +51,21 @@ const Blog = () => {
       setPosts(fetched);
       setLoading(false);
 
-      if (fetched.length > 0) {
-        setBlogListJsonLd(
-          fetched.map((p) => ({
-            title: p.title_pt,
-            url: `${SEO_CONSTANTS.SITE_URL}/blog/${p.slug}`,
-            image: p.cover_image_url || undefined,
-            date: p.published_at || undefined,
-          }))
-        );
-      }
     };
     fetchPosts();
   }, []);
 
   const getTitle = (p: BlogPost) => (language === "en" && p.title_en) ? p.title_en : p.title_pt;
   const getExcerpt = (p: BlogPost) => (language === "en" && p.excerpt_en) ? p.excerpt_en : p.excerpt_pt;
+
+  useEffect(() => {
+    setBlogListJsonLd(posts.map(p => ({
+      title: language === "en" && p.title_en ? p.title_en : p.title_pt,
+      url: `${SEO_CONSTANTS.SITE_URL}/blog/${p.slug}`,
+      image: p.cover_image_url || undefined,
+      date: p.published_at || undefined,
+    })));
+  }, [posts, language]);
 
   return (
     <div className="min-h-screen bg-background">
