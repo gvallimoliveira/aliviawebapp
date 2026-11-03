@@ -70,5 +70,5 @@
 - Landings share CreditsSufficiency: practical AI examples, not quotas; no unlimited claims.
 
 - Basic quota: service-only ledger, email transaction lock, survives deletion; diagnosis needs reserved ID; anonymous read/write needs x-assessment-id within 48h.
-- Photo uploads share preparePhoto; record/Studio dimensions, transparent/original fallback; exclude signatures/PDFs/measurement imports.
-- Image reads share economical-vision on zero-retention chat; clinical/measurement models unchanged.
+- Photos: preparePhoto, record/Studio size, transparency/fallback; exclude signatures/PDFs/measurements. Vision: economical-vision zero-retention chat; clinical/measurement models unchanged.
+- Blog: blogStructure derives anchors/links/schema, preserves bodies; published-only URLs.
