@@ -40,6 +40,8 @@ function addJsonLd(data: Record<string, unknown>) {
 }
 
 export function setSeo({ title, description, url, image, type = "website", publishedAt, author, tags }: SeoParams) {
+  removeJsonLd();
+  document.querySelectorAll('meta[property^="article:"]').forEach(el => el.remove());
   document.title = title;
 
   // Canonical tag
@@ -126,18 +128,24 @@ export function setBlogPostJsonLd(post: {
   publishedAt?: string;
   author: string;
   tags?: string[];
+  language?: string;
+  articleBody?: string;
+  sections?: { id: string; title: string }[];
 }) {
   addJsonLd({
     "@context": "https://schema.org",
+    "@graph": [{
     "@type": "BlogPosting",
+    "@id": `${post.url}#article`,
     headline: post.title,
     description: post.description,
     url: post.url,
-    image: post.image || DEFAULT_IMAGE,
+    image: post.image || undefined,
     datePublished: post.publishedAt,
     author: {
-      "@type": "Person",
+      "@type": post.author === SITE_NAME ? "Organization" : "Person",
       name: post.author,
+      ...(post.author === SITE_NAME ? { url: SITE_URL } : {}),
     },
     publisher: {
       "@type": "Organization",
@@ -145,10 +153,24 @@ export function setBlogPostJsonLd(post: {
       url: SITE_URL,
     },
     keywords: post.tags?.join(", "),
+    inLanguage: post.language || "pt-BR",
+    articleBody: post.articleBody,
+    hasPart: post.sections?.map(section => ({
+      "@type": "WebPageElement", "@id": `${post.url}#${section.id}`,
+      name: section.title, url: `${post.url}#${section.id}`,
+    })),
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": post.url,
     },
+    }, {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: SITE_NAME, item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE_URL}/blog` },
+        { "@type": "ListItem", position: 3, name: post.title, item: post.url },
+      ],
+    }],
   });
 }
 

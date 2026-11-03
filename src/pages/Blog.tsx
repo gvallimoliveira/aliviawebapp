@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "lucide-react";
 import { setSeo, setBlogListJsonLd, SEO_CONSTANTS } from "@/lib/seo";
+import { availableBlogIntents } from "@/lib/blogStructure";
 
 interface BlogPost {
   id: string;
@@ -29,10 +30,10 @@ const Blog = () => {
   useEffect(() => {
     setSeo({
       title: language === "pt"
-        ? "Blog | Aliv.iA — Artigos sobre dor e fisioterapia"
+        ? "Blog Aliv.iA | Avaliação fisioterapêutica, carreira e reabilitação"
         : "Blog | Aliv.iA — Articles about pain and physiotherapy",
       description: language === "pt"
-        ? "Artigos sobre dor musculoesquelética, fisioterapia, exercícios e bem-estar. Dicas de especialistas para cuidar da sua saúde."
+        ? "Explore avaliação fisioterapêutica, valor da consulta particular, desenvolvimento profissional e reabilitação nos artigos do Aliv.iA."
         : "Articles about musculoskeletal pain, physiotherapy, exercises and wellness. Expert tips to take care of your health.",
       url: `${SEO_CONSTANTS.SITE_URL}/blog`,
       type: "website",
@@ -50,16 +51,6 @@ const Blog = () => {
       setPosts(fetched);
       setLoading(false);
 
-      if (fetched.length > 0) {
-        setBlogListJsonLd(
-          fetched.map((p) => ({
-            title: p.title_pt,
-            url: `${SEO_CONSTANTS.SITE_URL}/blog/${p.slug}`,
-            image: p.cover_image_url || undefined,
-            date: p.published_at || undefined,
-          }))
-        );
-      }
     };
     fetchPosts();
   }, []);
@@ -67,12 +58,29 @@ const Blog = () => {
   const getTitle = (p: BlogPost) => (language === "en" && p.title_en) ? p.title_en : p.title_pt;
   const getExcerpt = (p: BlogPost) => (language === "en" && p.excerpt_en) ? p.excerpt_en : p.excerpt_pt;
 
+  useEffect(() => {
+    setBlogListJsonLd(posts.map(p => ({
+      title: language === "en" && p.title_en ? p.title_en : p.title_pt,
+      url: `${SEO_CONSTANTS.SITE_URL}/blog/${p.slug}`,
+      image: p.cover_image_url || undefined,
+      date: p.published_at || undefined,
+    })));
+  }, [posts, language]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container py-12 max-w-4xl">
         <h1 className="text-3xl font-bold text-foreground mb-2">{t("blog.title")}</h1>
         <p className="text-muted-foreground mb-8">{t("blog.subtitle")}</p>
+
+        {language === "pt" && availableBlogIntents(posts).length > 0 && <nav aria-label="Perguntas de carreira e prática clínica" className="border-y border-border py-5 mb-8">
+          <h2 className="text-lg font-semibold mb-4">Carreira e prática clínica</h2>
+          <ul className="grid gap-5 md:grid-cols-3">{availableBlogIntents(posts).map(intent => <li key={intent.slug}>
+            <Link to={`/blog/${intent.slug}`} className="text-primary font-medium hover:underline">{intent.question}</Link>
+            <p className="text-sm text-muted-foreground mt-1">{intent.context}</p>
+          </li>)}</ul>
+        </nav>}
 
         {loading ? (
           <div className="flex justify-center py-16">

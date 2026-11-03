@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { setSeo, setBlogPostJsonLd, SEO_CONSTANTS } from "@/lib/seo";
+import { structureBlogContent, relatedBlogPosts } from "@/lib/blogStructure";
 
 interface Post {
   id: string;
@@ -28,21 +29,40 @@ const BlogPost = () => {
   const { language, t } = useLanguage();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const [publishedPosts, setPublishedPosts] = useState<Post[]>([]);
+  const contentLanguage = language === "en" && post?.content_en ? "en" : "pt";
+  const structured = useMemo(() => structureBlogContent(
+    post ? (contentLanguage === "en" ? post.content_en || post.content_pt : post.content_pt) : ""
+  ), [post, contentLanguage]);
+  const related = post ? relatedBlogPosts(post, publishedPosts) : [];
 
   useEffect(() => {
     const fetchPost = async () => {
       if (!slug) return;
+      setLoading(true);
+      setPost(null);
       const { data } = await supabase
         .from("blog_posts")
         .select("*")
         .eq("slug", slug)
         .eq("published", true)
         .maybeSingle();
+      if (!active) return;
       setPost(data as Post | null);
       setLoading(false);
     };
+    let active = true;
     fetchPost();
+    return () => { active = false; };
   }, [slug]);
+
+  useEffect(() => {
+    let active = true;
+    supabase.from("blog_posts").select("id, slug, title_pt, title_en, tags")
+      .eq("published", true).order("published_at", { ascending: false })
+      .then(({ data }) => { if (active) setPublishedPosts((data || []) as Post[]); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (!post) return;
@@ -69,11 +89,13 @@ const BlogPost = () => {
       publishedAt: post.published_at || undefined,
       author: post.author_name,
       tags: post.tags,
+      language: contentLanguage === "en" ? "en" : "pt-BR",
+      articleBody: structured.text,
+      sections: structured.sections,
     });
-  }, [post, language]);
+  }, [post, language, contentLanguage, structured]);
 
   const getTitle = (p: Post) => (language === "en" && p.title_en) ? p.title_en : p.title_pt;
-  const getContent = (p: Post) => (language === "en" && p.content_en) ? p.content_en : p.content_pt;
 
   if (loading) {
     return (
@@ -106,7 +128,8 @@ const BlogPost = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <article className="container py-10 max-w-3xl">
+      <main className="container py-10 max-w-3xl">
+      <article lang={contentLanguage === "en" ? "en" : "pt-BR"}>
         <Link to="/blog" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft className="h-4 w-4" />
           {t("blog.back")}
@@ -124,10 +147,10 @@ const BlogPost = () => {
 
         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
           {post.published_at && (
-            <span className="flex items-center gap-1">
+            <time dateTime={post.published_at} className="flex items-center gap-1">
               <Calendar className="h-3.5 w-3.5" />
               {t("blog.published_at")} {new Date(post.published_at).toLocaleDateString(language === "pt" ? "pt-BR" : "en-US")}
-            </span>
+            </time>
           )}
           <span>{t("blog.by")} {post.author_name}</span>
         </div>
@@ -140,11 +163,27 @@ const BlogPost = () => {
           </div>
         )}
 
+        {structured.sections.length > 1 && (
+          <nav aria-label={language === "en" ? "In this article" : language === "es" ? "En este artículo" : "Neste artigo"} className="border-y border-border py-5 mb-8">
+            <h2 className="font-semibold mb-3">{language === "en" ? "In this article" : language === "es" ? "En este artículo" : "Neste artigo"}</h2>
+            <ul className="space-y-2 text-sm">
+              {structured.sections.map(section => <li key={section.id} className={section.level === 3 ? "pl-4" : ""}>
+                <a href={`#${section.id}`} className="text-primary hover:underline">{section.title}</a>
+              </li>)}
+            </ul>
+          </nav>
+        )}
+
         <div
-          className="prose prose-neutral dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: getContent(post) }}
+          className="prose prose-neutral dark:prose-invert max-w-none [&_h2]:scroll-mt-28 [&_h3]:scroll-mt-28"
+          dangerouslySetInnerHTML={{ __html: structured.html }}
         />
       </article>
+      {related.length > 0 && <nav aria-label={language === "en" ? "Related articles" : language === "es" ? "Artículos relacionados" : "Artigos relacionados"} className="border-t border-border mt-10 pt-6">
+        <h2 className="text-xl font-semibold mb-4">{language === "en" ? "Related articles" : language === "es" ? "Artículos relacionados" : "Artigos relacionados"}</h2>
+        <ul className="space-y-3">{related.map(p => <li key={p.slug}><Link to={`/blog/${p.slug}`} className="text-primary hover:underline">{getTitle(p)}</Link></li>)}</ul>
+      </nav>}
+      </main>
       <Footer />
     </div>
   );
