@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "lucide-react";
 import { setSeo, setBlogListJsonLd, SEO_CONSTANTS } from "@/lib/seo";
 import { availableBlogIntents } from "@/lib/blogStructure";
+import BlogDashboardReturn from "@/components/blog/BlogDashboardReturn";
 
 interface BlogPost {
   id: string;
@@ -71,6 +72,7 @@ const Blog = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container py-12 max-w-4xl">
+        <div className="mb-6"><BlogDashboardReturn /></div>
         <h1 className="text-3xl font-bold text-foreground mb-2">{t("blog.title")}</h1>
         <p className="text-muted-foreground mb-8">{t("blog.subtitle")}</p>
 

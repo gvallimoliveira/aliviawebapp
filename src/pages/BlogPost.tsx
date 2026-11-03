@@ -10,6 +10,7 @@ import { setSeo, setBlogPostJsonLd, SEO_CONSTANTS } from "@/lib/seo";
 import { structureBlogContent, relatedBlogPosts } from "@/lib/blogStructure";
 import BlogShareBar from "@/components/blog/BlogShareBar";
 import BlogPostCta from "@/components/blog/BlogPostCta";
+import BlogDashboardReturn from "@/components/blog/BlogDashboardReturn";
 
 interface Post {
   id: string;
@@ -120,7 +121,10 @@ const BlogPost = () => {
           <p className="text-muted-foreground mb-6">
             {language === "pt" ? "Artigo não encontrado." : "Article not found."}
           </p>
-          <Link to="/blog" className="text-primary hover:underline">{t("blog.back")}</Link>
+          <div className="flex flex-wrap justify-center items-center gap-4">
+            <BlogDashboardReturn />
+            <Link to="/blog" className="text-primary hover:underline">{t("blog.back")}</Link>
+          </div>
         </main>
         <Footer />
       </div>
@@ -132,10 +136,13 @@ const BlogPost = () => {
       <Header />
       <main className="container py-10 max-w-3xl">
       <article lang={contentLanguage === "en" ? "en" : "pt-BR"}>
-        <Link to="/blog" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
-          <ArrowLeft className="h-4 w-4" />
-          {t("blog.back")}
-        </Link>
+        <div className="flex flex-wrap items-center gap-4 mb-6">
+          <BlogDashboardReturn />
+          <Link to="/blog" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            {t("blog.back")}
+          </Link>
+        </div>
 
         {post.cover_image_url && (
           <img
@@ -184,6 +191,7 @@ const BlogPost = () => {
         />
         <BlogShareBar url={`${SEO_CONSTANTS.SITE_URL}/blog/${post.slug}`} title={getTitle(post)} className="mt-10 border-t border-border pt-6" />
         <BlogPostCta tags={post.tags || []} />
+        <div className="mt-6"><BlogDashboardReturn /></div>
       </article>
       {related.length > 0 && <nav aria-label={language === "en" ? "Related articles" : language === "es" ? "Artículos relacionados" : "Artigos relacionados"} className="border-t border-border mt-10 pt-6">
         <h2 className="text-xl font-semibold mb-4">{language === "en" ? "Related articles" : language === "es" ? "Artículos relacionados" : "Artigos relacionados"}</h2>
