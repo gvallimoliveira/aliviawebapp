@@ -25,6 +25,7 @@ import logoAlivia from "@/assets/logo-alivia.png";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import InstallAppDialog from "@/components/InstallAppDialog";
 import LanguageSelector from "@/components/LanguageSelector";
+import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
 
 const HIDDEN_PATH_PREFIXES = [
   "/assessment",
@@ -228,6 +229,9 @@ const GlobalMobileMenu = () => {
           </SheetHeader>
 
           <nav className="flex flex-col gap-0.5 p-2 overflow-y-auto flex-1">
+            {user && path.startsWith("/dashboard") && (
+              <ClinicContextSelector variant="list" onSelected={() => setOpen(false)} />
+            )}
             {user && (
               <button onClick={() => go("/dashboard")} className={primaryCls}>
                 <LayoutDashboard className="h-4 w-4" />

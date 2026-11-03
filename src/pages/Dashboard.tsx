@@ -811,9 +811,10 @@ const Dashboard = () => {
         <div className="container flex h-16 items-center justify-between">
           <button onClick={() => navigate("/")} className="flex items-center gap-2">
             <img src={logoAlivia} alt="Aliv.iA" className="h-9" />
-            <span className="text-xl font-bold text-foreground">Aliv.iA</span>
+            <span className="text-xl font-bold text-foreground hidden min-[400px]:inline">Aliv.iA</span>
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <ClinicContextSelector variant="chip" />
             <LanguageSelector className="gap-1.5 hidden md:inline-flex" />
             <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} title={t("support.badge")} className="hidden md:inline-flex">
               <HelpCircle className="h-4 w-4" />
@@ -834,7 +835,6 @@ const Dashboard = () => {
       </header>
 
       <main className="container py-8 px-4 space-y-8 max-w-7xl">
-        <ClinicContextSelector />
         
         {professional?.subscription_grace_until && new Date(professional.subscription_grace_until) > new Date() && professional?.subscription_status !== "active" && (
           <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/30">
