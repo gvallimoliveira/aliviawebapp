@@ -146,26 +146,26 @@ const ClinicLandingCinematic = () => {
   const differentiators = [
     {
       icon: Camera,
-      title: "Importe sua agenda por foto",
-      desc: "Tire um print do seu app atual (Google Agenda, planilha, WhatsApp). A IA lê e importa todos os agendamentos em segundos.",
-      tag: "Exclusivo",
+      title: "Troque de sistema sem redigitar a agenda",
+      desc: "Envie uma imagem da agenda atual. A IA organiza os horários para sua equipe revisar e confirmar antes de importar.",
+      tag: "Menos retrabalho",
     },
     {
       icon: Link2,
-      title: "Link de pré-avaliação personalizado",
-      desc: "Envie um link único por paciente. Ele preenche anamnese, dor, testes e questionários antes da consulta. Você ganha 30 minutos.",
-      tag: "Único no mercado",
+      title: "Comece a consulta conhecendo a história",
+      desc: "O paciente responde à anamnese e aos questionários aplicáveis por um link da clínica. Você retoma essas informações na avaliação, sem pedir tudo de novo.",
+      tag: "Pré-avaliação",
     },
     {
       icon: Smile,
-      title: "Pesquisa de satisfação (NPS) por link",
-      desc: "Envie a pesquisa por link ou chat. Dashboard com NPS, comentários e identificação de pacientes promotores.",
+      title: "Ouça quem está sendo atendido",
+      desc: "Acompanhe o NPS e os comentários recebidos por link. Descubra o que o paciente valoriza e onde a experiência precisa melhorar.",
       tag: "Diferencial",
     },
     {
       icon: Palette,
-      title: "White-label completo",
-      desc: "Sua marca, suas cores, seu logotipo no painel e em todos os PDFs entregues ao paciente.",
+      title: "Sua clínica presente em cada entrega",
+      desc: "Links e relatórios levam a identidade da clínica. O PDF preserva o nome e a assinatura do profissional que o emitiu, quando cadastrados.",
       tag: "Personalizável",
     },
   ];
@@ -385,7 +385,7 @@ const ClinicLandingCinematic = () => {
         <KineticStatement
           kicker="Cada fisioterapeuta atende de um jeito?"
           word="padrão"
-          caption="Mesmo raciocínio clínico para toda a equipe, prontuários auditáveis e indicadores de adesão e desfecho que você consegue mostrar ao médico que encaminha."
+          caption="Uma estrutura comum com STEPS e D.I.F.I., sem apagar o julgamento de cada fisioterapeuta. Registros de evolução ajudam a equipe a dar continuidade ao cuidado."
         />
 
 
@@ -395,13 +395,13 @@ const ClinicLandingCinematic = () => {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
               <Badge className="mb-4 bg-primary/10 text-primary border-primary/30 gap-1.5">
-                <Sparkles className="h-3 w-3" /> Diferenciais exclusivos
+                <Sparkles className="h-3 w-3" /> Na rotina da clínica
               </Badge>
               <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-3">
-                Funções que ninguém mais oferece
+                Menos trabalho entre um atendimento e outro
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Pequenos detalhes que transformam o dia a dia da sua clínica.
+                Da primeira informação ao relatório: organize o cuidado sem espalhar a história do paciente.
               </p>
             </div>
 
@@ -434,10 +434,10 @@ const ClinicLandingCinematic = () => {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-3">
-                Tudo que sua clínica precisa
+                Agenda, prontuário e equipe no mesmo lugar
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Substitua planilhas, WhatsApp e múltiplos sistemas por uma solução integrada e em conformidade com a LGPD.
+                Consulte horários, registros e mensagens sem perder o contexto. Cada pessoa acessa o que sua função permite.
               </p>
             </div>
 
@@ -518,10 +518,10 @@ const ClinicLandingCinematic = () => {
         <section className="py-16 px-4 bg-muted/30">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-3">
-              Permissões por função
+              Trabalho em equipe, com responsabilidades claras
             </h2>
             <p className="text-center text-muted-foreground mb-8">
-              Cada membro da equipe acessa exatamente o que precisa.
+              A recepção organiza a agenda; o fisioterapeuta registra o cuidado. Os acessos respeitam as permissões de cada função.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm border border-border rounded-xl overflow-hidden bg-background">
@@ -568,39 +568,25 @@ const ClinicLandingCinematic = () => {
               Planos para cada tamanho de clínica
             </h2>
             <p className="text-center text-muted-foreground mb-8">
-              Comece pequeno e escale conforme sua equipe cresce.
+              Escolha pelo tamanho da equipe. Os recursos de cuidado estão presentes em todos os planos.
             </p>
 
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <span className={`text-sm font-medium ${!billingAnnual ? "text-foreground" : "text-muted-foreground"}`}>Mensal</span>
-              <button
-                onClick={() => setBillingAnnual(!billingAnnual)}
-                className={`relative inline-flex h-7 w-14 shrink-0 rounded-full transition-colors ${billingAnnual ? "bg-primary" : "bg-muted-foreground/30"}`}
-              >
-                <span className={`pointer-events-none absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${billingAnnual ? "translate-x-7" : "translate-x-0.5"}`} />
-              </button>
-              <span className={`text-sm font-medium ${billingAnnual ? "text-foreground" : "text-muted-foreground"}`}>Anual</span>
-              {billingAnnual && (
-                <Badge className="text-xs bg-primary/10 text-primary border-primary/20">~31% OFF</Badge>
-              )}
-            </div>
+            <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground mb-5">
+              <Gift className="h-4 w-4 shrink-0 text-primary" />
+              Teste por 15 dias, sem cartão. Depois, escolha seu plano.
+            </p>
 
-            <AnnualRefundDisclaimer annual={billingAnnual} className="text-center mb-5" />
-            <CreditsSufficiency plan="clinic" className="mb-6" />
-
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}
-              className="max-w-2xl mx-auto mb-10 rounded-2xl border-2 border-green-500/30 bg-green-500/5 p-5 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Zap className="h-5 w-5 text-green-600" />
-                <span className="text-lg font-bold text-foreground">Teste grátis por 15 dias</span>
+            <div>
+              <div className="sticky top-20 z-30 -mx-4 mb-6 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md">
+                <div role="group" aria-label={language === "en" ? "Billing period" : language === "es" ? "Periodo de pago" : "Período de cobrança"} className="flex items-center justify-center gap-2">
+                  <Button variant={!billingAnnual ? "default" : "outline"} size="sm" aria-pressed={!billingAnnual} onClick={() => setBillingAnnual(false)} className="min-w-24">
+                    {language === "en" ? "Monthly" : language === "es" ? "Mensual" : "Mensal"}
+                  </Button>
+                  <Button variant={billingAnnual ? "default" : "outline"} size="sm" aria-pressed={billingAnnual} onClick={() => setBillingAnnual(true)} className="min-w-24">
+                    {language === "en" ? "Annual" : "Anual"}
+                  </Button>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-1">
-                Acesso completo a todas as funcionalidades. Sem cartão de crédito. Cancele quando quiser.
-              </p>
-              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-                <Clock className="h-3 w-3" /> Oferta por tempo limitado — restam poucas vagas na sua região
-              </p>
-            </motion.div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {tiers.map((tier, i) => {
@@ -631,7 +617,7 @@ const ClinicLandingCinematic = () => {
                         <Badge variant="outline" className="w-fit mb-4 text-xs">{tier.members}</Badge>
                         <ul className="space-y-2 mb-6 flex-1">
                           {[
-                            "Tudo incluso (sem extras)",
+                            "Recursos clínicos inclusos",
                             "Pré-avaliações por link ilimitadas",
                             "Importação de agenda por foto",
                             "Chat com pacientes",
@@ -706,8 +692,13 @@ const ClinicLandingCinematic = () => {
               })}
             </div>
 
+            </div>
+
+            <AnnualRefundDisclaimer annual={billingAnnual} className="text-center mt-5" />
+            <CreditsSufficiency plan="clinic" className="mt-6" />
+
             <p className="text-center text-xs text-muted-foreground mt-6">
-              Apenas e-mail e WhatsApp para começar. Sem cartão de crédito durante o trial. Se não assinar em até 7 dias após o fim do teste, os dados da clínica são excluídos.
+              E-mail, WhatsApp e CNPJ para começar. Sem cartão de crédito durante o teste. Se não assinar em até 7 dias após o fim do teste, os dados da clínica são excluídos.
             </p>
           </div>
         </section>
@@ -732,7 +723,7 @@ const ClinicLandingCinematic = () => {
                 { q: "Posso personalizar a plataforma com a marca da minha clínica?", a: "Sim — o white-label inclui logotipo, nome, cor da marca, telefone e endereço. Aparece no painel e em todos os PDFs entregues ao paciente." },
                 { q: "O trial de 15 dias é realmente gratuito? Preciso cadastrar cartão?", a: "100% gratuito, sem cartão. Apenas e-mail e WhatsApp. Acesso completo a todas as funcionalidades. Após os 15 dias você decide se assina. Sem assinatura em até 7 dias após o fim do teste, os dados da clínica são excluídos definitivamente." },
                 { q: "Posso adicionar minha secretária e outros fisioterapeutas?", a: "Sim! De 3 a ilimitados membros conforme o plano. Cada papel tem permissões: proprietário e secretária gerenciam agenda e equipe; fisioterapeutas focam em avaliações e atendimentos." },
-                { q: "Os tratamentos são cobrados à parte?", a: "Não — no modo Clínica, tratamentos completos com IA, exercícios e PDFs são ilimitados e inclusos em qualquer plano. Sem cobrança por uso." },
+                { q: "Os tratamentos são cobrados à parte?", a: "Os tratamentos fazem parte do plano da clínica, sem compra individual por paciente. As funções de IA usam um saldo compartilhado pela equipe; se precisar ampliar esse uso, o pacote extra é opcional e não há cobrança automática." },
                 { q: "Os dados estão seguros e em conformidade com a LGPD?", a: "Sim. Criptografia, servidores seguros, controle de acesso por função (RBAC) e políticas alinhadas com a LGPD e melhores práticas de saúde digital." },
                 { q: "A agenda funciona no celular?", a: "Sim. Drag-and-drop com toque (mobile) e mouse (desktop). 3 dias no celular, 7 dias no desktop. Tudo responsivo." },
                 { q: "Posso trocar de plano depois?", a: "Sim, upgrade ou downgrade a qualquer momento. Cobrança proporcional ao período restante." },
@@ -753,8 +744,8 @@ const ClinicLandingCinematic = () => {
         {/* ============ FINAL CTA CINEMATOGRÁFICO ============ */}
         <CinematicClosing
           kicker="Aliv.iA Clinic"
-          heading="Pronto para transformar sua clínica?"
-          sub="15 dias grátis, sem cartão, sem compromisso. Importe sua agenda em 1 minuto e comece hoje."
+          heading="Mais tempo para cuidar. Mais clareza para gerir."
+          sub="Experimente a agenda, o prontuário e os indicadores na rotina da sua equipe. 15 dias grátis, sem cartão."
           note="Vagas limitadas por região"
           primaryLabel="Começar agora"
           onPrimary={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
