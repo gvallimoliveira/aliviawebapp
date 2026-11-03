@@ -430,30 +430,32 @@ const ClinicLandingCinematic = () => {
           </div>
         </section>
 
-        <HorizontalShowcase
-          kicker="Dentro do painel da clínica"
-          heading="Operação inteira, em movimento"
-          items={featureCategories.flatMap((c) => c.items).slice(0, 10).map((f) => ({
-            icon: f.icon,
-            title: f.title,
-            description: f.desc,
-          }))}
-        />
-
-
-
-        {/* ============ FEATURES POR CATEGORIA ============ */}
+        {/* ============ FEATURES POR CATEGORIA (recolhido por padrão) ============ */}
         <section className="py-16 px-4 bg-muted/30">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
               <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-3">
                 Tudo que sua clínica precisa
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Substitua planilhas, WhatsApp e múltiplos sistemas por uma solução completa e integrada.
+                Substitua planilhas, WhatsApp e múltiplos sistemas por uma solução integrada e em conformidade com a LGPD.
               </p>
             </div>
 
+            <div className="flex flex-wrap justify-center gap-2 mb-6">
+              {featureCategories.map((cat, ci) => (
+                <Badge key={ci} variant="outline" className="gap-1.5 px-3 py-1 text-xs">
+                  <cat.icon className="h-3.5 w-3.5 text-primary" /> {cat.title}
+                </Badge>
+              ))}
+            </div>
+            <div className="text-center mb-8">
+              <Button variant="outline" className="rounded-xl" onClick={() => setShowAllFeatures((v) => !v)} aria-expanded={showAllFeatures}>
+                {showAllFeatures ? "Ocultar lista completa" : "Ver todas as funções"}
+              </Button>
+            </div>
+
+            {showAllFeatures && (
             <div className="space-y-10">
               {featureCategories.map((cat, ci) => (
                 <motion.div key={ci} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
@@ -479,6 +481,7 @@ const ClinicLandingCinematic = () => {
                 </motion.div>
               ))}
             </div>
+            )}
           </div>
         </section>
 
