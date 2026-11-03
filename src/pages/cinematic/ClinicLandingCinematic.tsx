@@ -348,13 +348,13 @@ const ClinicLandingCinematic = () => {
               </Badge>
 
               <h1 className="mb-6 text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
-                Sua clínica inteira
-                <span className="block text-primary">em uma plataforma inteligente</span>
+                O paciente melhora na 3ª sessão e some.
+                <span className="block text-primary">Você só descobre no fechamento do mês.</span>
               </h1>
 
               <p className="mx-auto mb-6 max-w-2xl text-base text-background/70 md:text-lg">
-                Importe sua agenda atual em 1 minuto. Envie pré-avaliações por link.
-                Prontuário com IA, chat, vídeo e NPS — tudo com a sua marca.
+                Alertas de risco de evasão, conduta padronizada pelo método STEPS e D.I.F.I.,
+                relatórios com CREFITO e assinatura de cada fisioterapeuta — tudo com a marca da sua clínica.
               </p>
 
               <div className="mb-8">
@@ -384,14 +384,9 @@ const ClinicLandingCinematic = () => {
         <BrandMarquee />
 
         <KineticStatement
-          kicker="Com sistema inteligente"
-          word="escala"
-          caption="Uma clínica com raciocínio clínico, automação e marca própria cresce sem depender do trabalho manual de cada fisioterapeuta."
-        />
-
-        <ScrollWords
-          kicker="Por que trocar de sistema"
-          text="Mudar para o Aliv.iA Clinic significa transformar dados em decisão. Capture pacientes com um link de pré-avaliação personalizado, acompanhe a satisfação com pesquisa NPS por link e otimize a operação com insights clínicos preditivos — tudo em um único painel, com a marca da sua clínica em cada ponto de contato."
+          kicker="Cada fisioterapeuta atende de um jeito?"
+          word="padrão"
+          caption="Mesmo raciocínio clínico para toda a equipe, prontuários auditáveis e indicadores de adesão e desfecho que você consegue mostrar ao médico que encaminha."
         />
 
 
