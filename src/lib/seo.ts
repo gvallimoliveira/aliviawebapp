@@ -1,6 +1,7 @@
 const SITE_URL = "https://aliviawebapp.com.br";
 const SITE_NAME = "Aliv.iA";
-const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
+const DEFAULT_IMAGE = `${SITE_URL}/__l5e/assets-v1/654b9831-689b-42de-9c8a-db4280be2c44/alivia-social-logo.jpg`;
+const LOGO = `${SITE_URL}/favicon.png`;
 
 interface SeoParams {
   title: string;
@@ -30,8 +31,8 @@ function removeJsonLd() {
   document.querySelectorAll('script[data-seo="jsonld"]').forEach((el) => el.remove());
 }
 
+// Schemas stack: setSeo() clears them once per page, each helper appends one.
 function addJsonLd(data: Record<string, unknown>) {
-  removeJsonLd();
   const script = document.createElement("script");
   script.type = "application/ld+json";
   script.setAttribute("data-seo", "jsonld");
@@ -180,7 +181,7 @@ export function setOrganizationJsonLd() {
     "@type": "Organization",
     name: SITE_NAME,
     url: SITE_URL,
-    logo: `${SITE_URL}/og-image.png`,
+    logo: LOGO,
     sameAs: [
       "https://www.instagram.com/alivia.fisioapp",
       "https://instagram.com/gvallim.fisioterapia",
@@ -199,7 +200,7 @@ export function setMedicalBusinessJsonLd() {
     "@type": "MedicalBusiness",
     name: SITE_NAME,
     url: SITE_URL,
-    logo: `${SITE_URL}/og-image.png`,
+    logo: LOGO,
     description:
       "Avaliação musculoesquelética com inteligência artificial. Diagnóstico preliminar e plano de tratamento personalizado em minutos.",
     medicalSpecialty: "Musculoskeletal",
@@ -228,6 +229,24 @@ export function setFAQPageJsonLd(faqs: { question: string; answer: string }[]) {
         text: faq.answer,
       },
     })),
+  });
+}
+
+export function setSoftwareJsonLd(p: { name: string; url: string; description: string; audience: string; features: string[]; price?: string }) {
+  addJsonLd({
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: p.name,
+    url: p.url,
+    description: p.description,
+    applicationCategory: "HealthApplication",
+    applicationSubCategory: "Fisioterapia",
+    operatingSystem: "Web, iOS, Android (PWA)",
+    inLanguage: ["pt-BR", "en", "es"],
+    audience: { "@type": "Audience", audienceType: p.audience },
+    featureList: p.features,
+    ...(p.price ? { offers: { "@type": "Offer", price: p.price, priceCurrency: "BRL" } } : {}),
+    publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
   });
 }
 

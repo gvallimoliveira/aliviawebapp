@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { setSeo, setMedicalBusinessJsonLd, setOrganizationJsonLd } from "@/lib/seo";
+import { setSeo, setOrganizationJsonLd, setSoftwareJsonLd } from "@/lib/seo";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,12 +67,17 @@ const ClinicLandingCinematic = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Aliv.iA Clinic — Plataforma para clínicas de fisio",
-      description: "Importe agenda por foto, link de pré-avaliação, prontuário com IA, chat, NPS e white-label. 15 dias grátis sem cartão.",
+      title: "Software para clínica de fisioterapia: agenda, prontuário e equipe | Aliv.iA",
+      description: "Agenda, prontuário multiprofissional, pré-avaliação online, NPS, indicadores de retenção e sua marca nos relatórios. 15 dias grátis, sem cartão.",
       url: "https://aliviawebapp.com.br/clinica",
       type: "website",
     });
-    setMedicalBusinessJsonLd();
+    setSoftwareJsonLd({
+      name: "Aliv.iA Clínica", url: "https://aliviawebapp.com.br/clinica", price: "197",
+      description: "Plataforma para clínicas de fisioterapia com agenda, prontuário compartilhado, equipe, indicadores e white-label.",
+      audience: "Clínicas de fisioterapia",
+      features: ["Agenda da equipe e importação por foto", "Link institucional de pré-avaliação", "Prontuário multiprofissional", "Assinatura digital por colaborador", "Indicadores de retenção e financeiro", "Pesquisa NPS", "Relatórios com a marca da clínica", "Permissões por função"],
+    });
     setOrganizationJsonLd();
   }, []);
 

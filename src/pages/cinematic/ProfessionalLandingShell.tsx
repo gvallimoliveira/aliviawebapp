@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { setMedicalBusinessJsonLd, setOrganizationJsonLd, setSeo } from "@/lib/seo";
+import { setOrganizationJsonLd, setSeo, setSoftwareJsonLd } from "@/lib/seo";
 
 const ProfessionalLandingBody = lazy(() => import("./ProfessionalLandingBody"));
 
@@ -19,12 +19,17 @@ const ProfessionalLandingShell = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Aliv.iA Webapp — Para Profissionais",
-      description: "Receba pacientes com anamnese, mapa de dor e questionários prontos. Economize 30 min por consulta com o painel profissional Aliv.iA.",
-      url: `${window.location.origin}/profissionais`,
+      title: "Prontuário e avaliação com IA para fisioterapeutas | Aliv.iA",
+      description: "Receba o paciente com anamnese, mapa de dor e questionários validados (Oswestry, LEFS, DASH, KOOS) prontos. Raciocínio clínico STEPS e D.I.F.I., Red Flags e controle de carga.",
+      url: "https://aliviawebapp.com.br/profissionais",
       type: "website",
     });
-    setMedicalBusinessJsonLd();
+    setSoftwareJsonLd({
+      name: "Aliv.iA PRO", url: "https://aliviawebapp.com.br/profissionais",
+      description: "Prontuário eletrônico e raciocínio clínico com IA especializada em fisioterapia para fisioterapeutas autônomos.",
+      audience: "Fisioterapeutas autônomos",
+      features: ["Pré-avaliação online do paciente", "Questionários validados (Oswestry, LEFS, DASH, KOOS)", "Triagem de Red Flags", "Raciocínio clínico STEPS e D.I.F.I.", "Prontuário e evolução", "Controle de carga (sRPE, ACWR)", "Relatórios em PDF com sua marca", "Agenda"],
+    });
     setOrganizationJsonLd();
   }, []);
 
