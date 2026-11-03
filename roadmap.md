@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Blog — estrutura GEO sem reescrever artigos
-- [ ] Verificar artigos publicados e entrega para buscadores; pesquisar intenções no Brasil.
-- [ ] Melhorar estrutura, metadados e conexões preservando textos e URLs.
-- [ ] Validar percurso blog → artigo → seções/relacionados e preservação do conteúdo.
+- [x] Sete publicados e três rascunhos inventariados; Semrush BR e orientação Google pesquisados, estratégia/limites em docs/blog-geo-strategy.md. Avaliação: 480/mês KD21; renda: 20/mês KD0, SERP desconhecida; referência: dados desconhecidos.
+- [x] Sumário derivado, links relacionados e trilha de desejos; schema com corpo/seções/autor institucional/breadcrumbs; sitemap estático ampliado aos sete publicados. Textos, títulos, slugs, resumos e publicação no banco preservados.
+- [x] Blog → consulta → seção → artigo relacionado conferidos com artigos reais; desktop/celular sem transbordamento ou erros; seis testes passaram, build OK. Não publicada; indexação/citações em IA não verificadas. HTML inicial para robôs sem JS não resolvido (exige mudança arquitetural separada). Conteúdo promocional antigo/teleatendimento preservado pela restrição editorial do pedido.
 
 ## Proteção de caixa — imagens, gratuidade e cobrança
 - [x] Gemini 3.8 Flash verificado no catálogo privado, superfície chat sem retenção; leitura de monitor e Studio implantadas. Print fictício: cinco valores exatos; Studio autenticado retornou temas e resumo. Raciocínio clínico, dinamometria, ADM e importação de treino preservados.
