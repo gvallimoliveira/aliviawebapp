@@ -1,4 +1,5 @@
 import { careScope } from "@/lib/careScope";
+import BlogPillCard from "@/components/dashboard/BlogPillCard";
 import { useState, useEffect, useMemo, useRef } from "react";
 import AddPatientModal from "./AddPatientModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -840,6 +841,8 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
       {!isDemoMode && (
         <>
+          {/* Experimental blog pill — remove this line + BlogPillCard.tsx to undo */}
+          {!isSimulated && <BlogPillCard />}
           {/* Status bar */}
           {/* Status bar — faixa slim de 1 linha: selo do plano + status + renovação + ações */}
           <Card data-onboarding="pro-welcome" className="border-emerald-200 bg-emerald-500/5">
