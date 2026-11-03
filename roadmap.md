@@ -1,5 +1,10 @@
 # Roadmap
 
+## Blog — estrutura GEO sem reescrever artigos
+- [ ] Verificar artigos publicados e entrega para buscadores; pesquisar intenções no Brasil.
+- [ ] Melhorar estrutura, metadados e conexões preservando textos e URLs.
+- [ ] Validar percurso blog → artigo → seções/relacionados e preservação do conteúdo.
+
 ## Proteção de caixa — imagens, gratuidade e cobrança
 - [x] Gemini 3.8 Flash verificado no catálogo privado, superfície chat sem retenção; leitura de monitor e Studio implantadas. Print fictício: cinco valores exatos; Studio autenticado retornou temas e resumo. Raciocínio clínico, dinamometria, ADM e importação de treino preservados.
 - [x] Duas avaliações básicas por e-mail/30 dias, ledger após exclusão, trava transacional e retomada por ID; início anônimo → duas gravações → terceira recusada → edição/leitura real conferidos. Avaliações técnicas removidas. Não percorrida nova anamnese completa até diagnóstico nem concorrência contra PostgreSQL real.
