@@ -31,8 +31,6 @@ import ScrollProgress from "@/components/scroll/ScrollProgress";
 import Reveal from "@/components/scroll/Reveal";
 import BrandMarquee from "@/components/scroll/BrandMarquee";
 import KineticStatement from "@/components/scroll/KineticStatement";
-import ScrollWords from "@/components/scroll/ScrollWords";
-import HorizontalShowcase from "@/components/scroll/HorizontalShowcase";
 import CinematicClosing from "@/components/scroll/CinematicClosing";
 
 const fadeUp = {
@@ -46,6 +44,7 @@ const ClinicLandingCinematic = () => {
   const navigate = useNavigate();
   const { hash } = useLocation();
   const [billingAnnual, setBillingAnnual] = useState(true);
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [subscribeLoading, setSubscribeLoading] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
