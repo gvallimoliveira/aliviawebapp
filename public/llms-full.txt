@@ -1,0 +1,50 @@
+# Aliv.iA — descrição completa
+
+> Aliv.iA é uma plataforma brasileira de fisioterapia com IA especializada, treinada sobre competências do fisioterapeuta (não é uma IA genérica). Site: https://aliviawebapp.com.br
+
+## O que é
+
+Sistema de raciocínio clínico com alma de fisioterapeuta. Reúne pré-avaliação online do paciente, prontuário, agenda, controle de carga, relatórios e gestão de equipe. A IA organiza informações e sugere hipóteses; a decisão é sempre do profissional. Não substitui consulta nem diagnóstico médico.
+
+## Metodologia
+
+- STEPS: fases do tratamento, da proteção à alta.
+- D.I.F.I.: Dor, Inibição, Fraqueza e Incapacidade como eixos de leitura do caso.
+- Triagem obrigatória de sinais de alerta (Red Flags) em toda avaliação.
+- Questionários validados conforme a região e o caso, como Oswestry, LEFS, DASH e KOOS.
+
+## Para fisioterapeutas autônomos (PRO) — /profissionais
+
+- Link de pré-avaliação: o paciente responde anamnese, mapa de dor e questionários antes da consulta.
+- Hipótese clínica e impressão clínica de apoio, editáveis pelo profissional.
+- Prontuário com evolução, gráficos de dor e reavaliação.
+- Controle de carga com sRPE, prontidão diária e ACWR.
+- Relatórios em PDF com a marca e a assinatura do profissional.
+
+## Para clínicas — /clinica
+
+- Agenda da equipe, inclusive importação por foto.
+- Link institucional de pré-avaliação e prontuário compartilhado.
+- Permissões por função (dono, administrador, secretaria, fisioterapeuta).
+- Assinatura digital e registro profissional (CREFITO/CREF) de cada colaborador nos relatórios.
+- Indicadores de retenção, conversão, ocupação e financeiro; pesquisa NPS.
+- Relatórios com a marca da clínica. Teste de 15 dias, sem cartão. Planos a partir de R$197/mês.
+
+## Para pacientes — /para-pacientes
+
+- Avaliação de dor online em cerca de 15 minutos.
+- Triagem de sinais de alerta antes de qualquer orientação.
+- Orientação inicial e indicação de quando procurar atendimento presencial.
+
+## Para estudantes — /academico
+
+- Treino de raciocínio clínico com casos e modo mentor.
+
+## Privacidade
+
+Dados tratados conforme a LGPD; sem scripts de rastreamento de sessão.
+
+## Links
+
+- Blog: https://aliviawebapp.com.br/blog
+- Suporte: https://aliviawebapp.com.br/suporte

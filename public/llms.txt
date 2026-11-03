@@ -1,20 +1,19 @@
 # Aliv.iA
 
-> Sistema de raciocínio clínico com IA para fisioterapia: avaliação musculoesquelética, diagnóstico preliminar baseado em evidência e plano de tratamento personalizado em minutos. Para pacientes, profissionais autônomos e clínicas.
+> Sistema de raciocínio clínico com alma de fisioterapeuta: IA especializada em fisioterapia para pré-avaliação, prontuário, controle de carga e gestão de clínicas. Para fisioterapeutas autônomos, clínicas, estudantes e pacientes no Brasil (pt-BR, com versões em inglês e espanhol).
+
+O Aliv.iA organiza o raciocínio clínico pela metodologia STEPS (fases do tratamento) e D.I.F.I. (Dor, Inibição, Fraqueza, Incapacidade). Toda avaliação inclui triagem obrigatória de sinais de alerta (Red Flags). A IA apoia o fisioterapeuta e não substitui consulta, diagnóstico médico nem decisão profissional.
+
+Versão detalhada para assistentes de IA: [llms-full.txt](/llms-full.txt)
 
 ## Pages
 
-- [Home](/): Visão geral do Aliv.iA com seleção de perfil (paciente, profissional, clínica).
-- [Para Pacientes](/para-pacientes): Avaliação de dor com IA, diário de dor e plano personalizado.
-- [Para Profissionais](/profissionais): Painel PRO com anamnese, mapa de dor, prontuário e progressão de exercícios.
-- [Para Clínicas](/clinica): Plataforma multi-profissional com agenda, prontuário, NPS, white-label e 15 dias grátis sem cartão.
-- [Demo da Clínica](/clinica/demo): Ambiente simulado com dados fictícios para experimentar o produto clínica.
-- [Buscar Profissionais](/professionals): Marketplace de fisioterapeutas cadastrados.
-- [Blog](/blog): Conteúdo clínico sobre dor, reabilitação e prática baseada em evidência.
-- [Suporte](/suporte): Canal de atendimento ao usuário.
-- [Suporte Clínicas](/clinica/suporte): Atendimento dedicado a clientes do plano clínica.
-
-## Optional
-
-- [Entrar](/auth): Login e cadastro.
-- [Cadastro Profissional](/professional/register): Onboarding de fisioterapeutas autônomos.
+- [Para Profissionais](/profissionais): Prontuário e avaliação com IA para fisioterapeutas autônomos; questionários validados (Oswestry, LEFS, DASH, KOOS), Red Flags, STEPS, D.I.F.I. e controle de carga.
+- [Para Clínicas](/clinica): Software para clínicas de fisioterapia com agenda, prontuário multiprofissional, indicadores, NPS e relatórios com a marca da clínica; 15 dias grátis sem cartão.
+- [Para Pacientes](/para-pacientes): Avaliação de dor online em cerca de 15 minutos com triagem de sinais de alerta e orientação inicial.
+- [Acadêmico](/academico): Treino de raciocínio clínico para estudantes de fisioterapia.
+- [Demo da Clínica](/clinica/demo): Ambiente simulado com dados fictícios.
+- [Buscar Profissionais](/professionals): Fisioterapeutas cadastrados.
+- [Blog](/blog): Artigos sobre dor, reabilitação e prática baseada em evidência.
+- [Suporte](/suporte): Ajuda ao usuário.
+- [Suporte Clínicas](/clinica/suporte): Ajuda para clientes do plano clínica.
