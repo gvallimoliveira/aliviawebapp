@@ -71,4 +71,4 @@
 
 - Basic quota: service-only ledger, email transaction lock, survives deletion; diagnosis needs reserved ID; anonymous read/write needs x-assessment-id within 48h.
 - Photos: preparePhoto, record/Studio size, transparency/fallback; exclude signatures/PDFs/measurements. Vision: economical-vision zero-retention chat; clinical/measurement models unchanged.
-- Blog: blogStructure derives anchors/links/schema, preserves bodies; published-only URLs.
+- Blog: preserve bodies/published URLs; BlogDashboardReturn links signed-in users to /dashboard.
