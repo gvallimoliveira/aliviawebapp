@@ -119,10 +119,10 @@ const ClinicContextSelector = ({ variant = "default", onSelected }: Props) => {
           }
         >
           {variant === "chip" ? (
-            <span className="flex items-center gap-1.5 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0 whitespace-nowrap">
               <CurrentIcon className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{current.short}</span>
-            </span>
+              <div className="truncate">{current.short}</div>
+            </div>
           ) : (
             <SelectValue />
           )}
