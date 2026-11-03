@@ -16,9 +16,7 @@ const BenefitsSection = lazy(() => import("./professional/sections/BenefitsSecti
 const PanelShowcaseSection = lazy(() => import("./professional/sections/PanelShowcaseSection"));
 const EvidenceLibrarySection = lazy(() => import("./professional/sections/EvidenceLibrarySection"));
 const HowItWorksSection = lazy(() => import("./professional/sections/HowItWorksSection"));
-const FeaturesGridSection = lazy(() => import("./professional/sections/FeaturesGridSection"));
 const RoiSection = lazy(() => import("./professional/sections/RoiSection"));
-const QuestionnairesSection = lazy(() => import("./professional/sections/QuestionnairesSection"));
 const PricingSection = lazy(() => import("./professional/sections/PricingSection"));
 const FaqSection = lazy(() => import("./professional/sections/FaqSection"));
 const ClosingSection = lazy(() => import("./professional/sections/ClosingSection"));
@@ -34,12 +32,10 @@ const ProfessionalLandingBody = () => (
     <LazySection minHeight={600}><PanelShowcaseSection /></LazySection>
     <LazySection minHeight={520}><EvidenceLibrarySection /></LazySection>
     <LazySection minHeight={700}><HowItWorksSection /></LazySection>
-    <LazySection minHeight={620}><FeaturesGridSection /></LazySection>
 
     <LgpdBadge />
 
     <LazySection minHeight={640}><RoiSection /></LazySection>
-    <LazySection minHeight={420}><QuestionnairesSection /></LazySection>
     <LazySection minHeight={760}><PricingSection /></LazySection>
     <LazySection minHeight={520}><FaqSection /></LazySection>
     <BlogHighlights audience="professional" />
