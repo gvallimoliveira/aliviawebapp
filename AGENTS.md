@@ -1,5 +1,5 @@
 # Architecture decisions
-- Clinic checkout shares landing prices and server-validated metadata through checkout/recovery; refresh context on return to avoid duplicates.
+- Clinic checkout shares prices/validated metadata; refresh on return. Landing billing stays sticky within price cards; credit/refund details follow them.
 - Annual refunds share copy keys; annualRefund.ts calculates, never pays.
 - Trial renewal uses an owner/clinic-scoped RPC on access/expiry and trial_started_at, never created_at; no customer admin exception.
 - Patient navigation shares patientNavigation/scoped care-provider and HEP RPCs; retain auth/persistence.
@@ -67,8 +67,8 @@
 - Never-paid clinic trials: daily job calls re-validating `purge_expired_clinic_trial` (stages in `_shared/clinicTrialRetention.ts`); delete SET NULL dependents explicitly to avoid solo-scope leaks.
 - Guided cancellation serves PRO and clinics with one `_shared/cancellationPolicy.ts`.
 - Clinic report identity: clinic_members + self/owner/admin RPCs; issuer uses their signature, no council or owner fallback, independent of subscription.
-- Landings share CreditsSufficiency: practical AI examples, not quotas; no unlimited claims.
+- Landings share CreditsSufficiency: practical examples, not quotas or unlimited claims.
 
 - Basic quota: service-only ledger, email transaction lock, survives deletion; diagnosis needs reserved ID; anonymous read/write needs x-assessment-id within 48h.
 - Photos: preparePhoto, record/Studio size, transparency/fallback; exclude signatures/PDFs/measurements. Vision: economical-vision zero-retention chat; clinical/measurement models unchanged.
-- Blog: preserve bodies/published URLs; BlogDashboardReturn links signed-in users to /dashboard.
+- Blog: preserve bodies/URLs; BlogDashboardReturn sends signed-in users to /dashboard.
