@@ -6,6 +6,7 @@ import { CLINIC_SMALL, CLINIC_MEDIUM, CLINIC_LARGE } from '@/constants/clinicPri
 const mocks = vi.hoisted(() => ({ invoke: vi.fn(), refetch: vi.fn(), manager: true }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke: mocks.invoke } } }));
 vi.mock('@/contexts/ClinicContext', () => ({ useClinic: () => ({ activeClinic: { clinic_id: 'clinic-a', clinic_name: 'Clinic A' }, isClinicOwner: mocks.manager, refetch: mocks.refetch }) }));
+vi.mock('@/contexts/LanguageContext', () => ({ useLanguage: () => ({ language: 'pt', t: (key: string) => key }) }));
 afterEach(() => { cleanup(); vi.clearAllMocks(); mocks.manager = true; });
 describe('clinic inline checkout', () => {
   it('sends annual plan with the selected clinic and dashboard return context', async () => {
