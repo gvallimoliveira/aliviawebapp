@@ -94,7 +94,7 @@ const BlogHighlights = ({ audience }: { audience: BlogAudience }) => {
               to={`/blog/${p.slug}`}
               className="group flex h-full flex-col rounded-2xl border border-border/60 bg-card/60 p-5 transition-colors hover:border-primary/40 hover:bg-card"
             >
-              {p.tags?.[0] && <span className="mb-3 text-xs font-medium capitalize text-primary">{p.tags[0]}</span>}
+              {p.tags?.[0] && <span className="mb-3 text-xs font-medium text-primary">{p.tags[0].charAt(0).toUpperCase() + p.tags[0].slice(1)}</span>}
               <span className="flex-1 font-medium leading-snug text-foreground group-hover:text-primary">
                 {language === "en" && p.title_en ? p.title_en : p.title_pt}
               </span>
