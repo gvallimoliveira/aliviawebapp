@@ -1,4 +1,5 @@
 import { lazy } from "react";
+import BlogHighlights from "@/components/blog/BlogHighlights";
 import BrandMarquee from "@/components/scroll/BrandMarquee";
 import LgpdBadge from "@/components/LgpdBadge";
 import LazySection from "./professional/LazySection";
@@ -41,6 +42,7 @@ const ProfessionalLandingBody = () => (
     <LazySection minHeight={420}><QuestionnairesSection /></LazySection>
     <LazySection minHeight={760}><PricingSection /></LazySection>
     <LazySection minHeight={520}><FaqSection /></LazySection>
+    <BlogHighlights audience="professional" />
     <LazySection minHeight={700}><ClosingSection /></LazySection>
   </>
 );

@@ -1,4 +1,5 @@
 import CreditsSufficiency from "@/components/CreditsSufficiency";
+import BlogHighlights from "@/components/blog/BlogHighlights";
 import AnnualRefundDisclaimer from "@/components/AnnualRefundDisclaimer";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -766,6 +767,7 @@ const ClinicLandingCinematic = () => {
 
       </main>
 
+      <BlogHighlights audience="clinic" />
       <InstallAppSection />
 
       <LgpdBadge />
