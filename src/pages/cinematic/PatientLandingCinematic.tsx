@@ -13,6 +13,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import FaqSection from "@/components/FaqSection";
 import SocialSection from "@/components/SocialSection";
 import Footer from "@/components/Footer";
+import BlogHighlights from "@/components/blog/BlogHighlights";
 import StickyCTA from "@/components/StickyCTA";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import LgpdBadge from "@/components/LgpdBadge";
@@ -242,6 +243,7 @@ const PatientLandingCinematic = () => {
         <LgpdBadge />
       </main>
 
+      <BlogHighlights audience="patient" />
       <InstallAppSection />
       <Footer />
       <StickyCTA showProfessional={false} />

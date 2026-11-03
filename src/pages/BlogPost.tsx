@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { setSeo, setBlogPostJsonLd, SEO_CONSTANTS } from "@/lib/seo";
 import { structureBlogContent, relatedBlogPosts } from "@/lib/blogStructure";
+import BlogShareBar from "@/components/blog/BlogShareBar";
+import BlogPostCta from "@/components/blog/BlogPostCta";
 
 interface Post {
   id: string;
@@ -155,6 +157,8 @@ const BlogPost = () => {
           <span>{t("blog.by")} {post.author_name}</span>
         </div>
 
+        <BlogShareBar url={`${SEO_CONSTANTS.SITE_URL}/blog/${post.slug}`} title={getTitle(post)} className="mb-6" />
+
         {post.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-8">
             {post.tags.map((tag) => (
@@ -178,6 +182,8 @@ const BlogPost = () => {
           className="prose prose-neutral dark:prose-invert max-w-none [&_h2]:scroll-mt-28 [&_h3]:scroll-mt-28"
           dangerouslySetInnerHTML={{ __html: structured.html }}
         />
+        <BlogShareBar url={`${SEO_CONSTANTS.SITE_URL}/blog/${post.slug}`} title={getTitle(post)} className="mt-10 border-t border-border pt-6" />
+        <BlogPostCta tags={post.tags || []} />
       </article>
       {related.length > 0 && <nav aria-label={language === "en" ? "Related articles" : language === "es" ? "Artículos relacionados" : "Artigos relacionados"} className="border-t border-border mt-10 pt-6">
         <h2 className="text-xl font-semibold mb-4">{language === "en" ? "Related articles" : language === "es" ? "Artículos relacionados" : "Artigos relacionados"}</h2>
