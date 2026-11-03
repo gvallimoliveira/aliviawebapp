@@ -1,5 +1,9 @@
 # Roadmap
 
+## Landings — refinamento editorial e preços da clínica
+- [x] Textos intermediários PRO/Paciente revisados em pt/en/es e clínica em português, com cenas reais e respaldo técnico; sem novas seções. Removidas promessas absolutas de diferenciação/tempo e esclarecido saldo de IA no FAQ da clínica.
+- [x] Mensal/anual imediatamente acima dos preços, fixo somente durante os três cards; créditos/reembolso depois, teste reduzido a uma linha. Três planos alternados em 440px/1280px, formulário de teste aberto sem enviar; páginas sem erros, sete testes e build OK. Pagamento real não executado; EN/ES não abertos no navegador; versão não publicada.
+
 ## Blog — estrutura GEO sem reescrever artigos
 - [x] Sete publicados e três rascunhos inventariados; Semrush BR e orientação Google pesquisados, estratégia/limites em docs/blog-geo-strategy.md. Avaliação: 480/mês KD21; renda: 20/mês KD0, SERP desconhecida; referência: dados desconhecidos.
 - [x] Sumário derivado, links relacionados e trilha de desejos; schema com corpo/seções/autor institucional/breadcrumbs; sitemap estático ampliado aos sete publicados. Textos, títulos, slugs, resumos e publicação no banco preservados.
