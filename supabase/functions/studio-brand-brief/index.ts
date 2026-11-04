@@ -10,9 +10,7 @@
  */
 
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { createClient } from "npm:@supabase/supabase-js@2";
-
-const ADMIN_EMAILS = ["gvallimoliveira@gmail.com", "gvallim.fisio@gmail.com"];
+import { requireAdmin } from "../_shared/caller-auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -27,15 +25,9 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "AI indisponível" }, 500);
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: userData } = await supabase.auth.getUser();
-    const email = userData.user?.email?.toLowerCase();
-    if (!email || !ADMIN_EMAILS.includes(email)) return json({ error: "Sem permissão" }, 403);
+    // Server-side admin role check (never trust the account e-mail alone).
+    const auth = await requireAdmin(req, corsHeaders);
+    if (auth instanceof Response) return auth;
 
     const body = await req.json().catch(() => ({}));
     const kit = body?.kit ?? {};
