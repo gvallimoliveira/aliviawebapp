@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import PhysioTechShortcut from "@/components/PhysioTechShortcut";
 import logoAlivia from "@/assets/logo-alivia.png";
 import AppVersionBadge from "@/components/AppVersionBadge";
 import InstallAppDialog from "@/components/InstallAppDialog";
@@ -238,6 +239,7 @@ const GlobalMobileMenu = () => {
                 {L.dashboard}
               </button>
             )}
+            {user && <PhysioTechShortcut variant="menu" className={itemCls} onOpened={() => setOpen(false)} />}
             <button onClick={() => go("/")} className={itemCls}>
               <Home className="h-4 w-4" />
               {L.home}
