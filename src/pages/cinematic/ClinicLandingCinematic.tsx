@@ -109,7 +109,9 @@ const ClinicLandingCinematic = () => {
         if (data.is_new_user) {
           toast.success("Trial de 15 dias ativado! Enviamos um link para definir sua senha. Sem assinatura em até 7 dias após o fim do teste, os dados da clínica são excluídos.", { duration: 10000 });
         } else if (data.already_exists) {
-          toast.info("Você já possui uma clínica! Faça login.");
+          toast.info(data.requires_login
+            ? "Este e-mail já tem uma conta. Entre com ela para ativar o trial da clínica."
+            : "Você já possui uma clínica! Faça login.");
           try { sessionStorage.setItem("signupOrigin", "clinic"); } catch {}
           navigate("/auth", { state: { redirectTo: "/dashboard" } });
         } else {

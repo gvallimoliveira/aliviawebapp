@@ -52,9 +52,18 @@ serve(async (req) => {
 
     const { data: pending, error: pErr } = await supabase
       .from("pending_questionnaires")
-      .select("id, questionnaire_id, domain, status, suggested_reason, completed_at")
+      .select("id, questionnaire_id, domain, status, suggested_reason, completed_at, created_at")
       .eq("assessment_id", assessmentId);
     if (pErr) return json({ error: "load_failed" }, 500);
+
+    // The link only works while the professional has open requests on this
+    // assessment (created in the last 30 days). Without an open request the
+    // assessment id grants no read or write access at all.
+    const OPEN_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+    const openRows = (pending ?? []).filter((p: any) =>
+      p.status === "pending" && Date.now() - new Date(p.created_at).getTime() < OPEN_WINDOW_MS
+    );
+    if (openRows.length === 0) return json({ error: "assessment_not_found" }, 404);
 
     if (action === "load") {
       const { data: clinic } = assessment.clinic_id ? await supabase.from("clinics").select("name,logo_url,brand_color").eq("id", assessment.clinic_id).maybeSingle() : { data: null };
@@ -70,8 +79,15 @@ serve(async (req) => {
     }
 
     if (action === "submit_general") {
-      const results = Array.isArray(body.results) ? body.results : [];
+      // Accept only results for questionnaires the professional actually requested.
+      const openGeneralIds = new Set(
+        openRows.filter((p: any) => p.domain === "general").map((p: any) => p.questionnaire_id),
+      );
+      const results = (Array.isArray(body.results) ? body.results : [])
+        .filter((r: any) => r && typeof r.questionnaireId === "string" && openGeneralIds.has(r.questionnaireId))
+        .slice(0, 20);
       if (results.length === 0) return json({ error: "empty_results" }, 400);
+      if (JSON.stringify(results).length > 200_000) return json({ error: "payload_too_large" }, 413);
 
       // Merge with existing test_results, replacing entries with the same
       // questionnaireId so a patient can resubmit if the link is reused.
@@ -115,8 +131,9 @@ serve(async (req) => {
     if (action === "submit_specialty") {
       const { questionnaireId, answers, score } = body;
       if (typeof questionnaireId !== "string") return json({ error: "invalid_questionnaire" }, 400);
-      const row = (pending ?? []).find((p) => p.questionnaire_id === questionnaireId && p.domain !== "general");
+      const row = openRows.find((p: any) => p.questionnaire_id === questionnaireId && p.domain !== "general");
       if (!row) return json({ error: "pending_not_found" }, 404);
+      if (JSON.stringify({ answers, score }).length > 100_000) return json({ error: "payload_too_large" }, 413);
       if (row.status === "completed") return json({ error: "already_completed" }, 409);
       const { error: upErr } = await supabase
         .from("pending_questionnaires")
@@ -135,6 +152,6 @@ serve(async (req) => {
     return json({ error: "unknown_action" }, 400);
   } catch (err) {
     console.error("assessment-pending-questionnaires error:", err);
-    return json({ error: String(err) }, 500);
+    return json({ error: "internal_error" }, 500);
   }
 });

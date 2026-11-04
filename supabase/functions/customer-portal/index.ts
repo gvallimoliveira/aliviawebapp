@@ -57,7 +57,7 @@ serve(async (req) => {
     // premium): id salvo no banco -> metadata.user_id -> e-mails conhecidos.
     const ctx = await resolveStripeContext(stripe, supabaseClient, user);
     if (!ctx.primaryCustomerId) {
-      log("no customer", { email: user.email });
+      log("no customer", { userId: user.id });
       return json({
         error: "no_customer",
         message: "Não encontramos um cadastro de pagamento vinculado à sua conta. Se seu acesso é de cortesia (parceiro, acadêmico ou concedido), não há faturas para gerenciar.",

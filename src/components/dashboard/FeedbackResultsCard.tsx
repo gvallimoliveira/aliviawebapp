@@ -55,7 +55,11 @@ const exportToCSV = (feedbacks: any[], lang: string) => {
       ca.cleanliness || "", ca.scheduling || "", ca.environment || "",
       sa.observations || "", pa.observations || "", ca.observations || "",
       f.general_observations || "",
-    ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+    ].map((v) => {
+      const cell = String(v);
+      const safe = /^[=+\-@\t\r]/.test(cell) ? `'${cell}` : cell;
+      return `"${safe.replace(/"/g, '""')}"`;
+    }).join(",");
   });
 
   const csv = [headers.join(","), ...rows].join("\n");
@@ -68,6 +72,11 @@ const exportToCSV = (feedbacks: any[], lang: string) => {
   URL.revokeObjectURL(url);
 };
 
+const escHtml = (v: unknown) =>
+  String(v ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!)
+  );
+
 const exportToPDF = (feedbacks: any[], nps: number, recommends: number, detractors: number) => {
   // Generate a printable HTML and use window.print
   const rows = feedbacks.map((f) => {
@@ -75,14 +84,14 @@ const exportToPDF = (feedbacks: any[], nps: number, recommends: number, detracto
     const pa = (f.professional_answers || {}) as any;
     const ca = (f.clinic_answers || {}) as any;
     return `<tr>
-      <td>${new Date(f.created_at).toLocaleDateString("pt-BR")}</td>
-      <td>${f.patient_name || "Anônimo"}</td>
-      <td>${SERVICE_LABELS[f.service_type] || f.service_type}</td>
-      <td>${sa.quality || "-"}</td>
-      <td>${sa.recommend || "-"}</td>
-      <td>${pa.communication || "-"}</td>
-      <td>${ca.cleanliness || "-"}</td>
-      <td>${f.general_observations ? f.general_observations.slice(0, 60) : "-"}</td>
+      <td>${escHtml(new Date(f.created_at).toLocaleDateString("pt-BR"))}</td>
+      <td>${escHtml(f.patient_name || "Anônimo")}</td>
+      <td>${escHtml(SERVICE_LABELS[f.service_type] || f.service_type)}</td>
+      <td>${escHtml(sa.quality || "-")}</td>
+      <td>${escHtml(sa.recommend || "-")}</td>
+      <td>${escHtml(pa.communication || "-")}</td>
+      <td>${escHtml(ca.cleanliness || "-")}</td>
+      <td>${escHtml(f.general_observations ? String(f.general_observations).slice(0, 60) : "-")}</td>
     </tr>`;
   }).join("");
 
@@ -103,9 +112,9 @@ const exportToPDF = (feedbacks: any[], nps: number, recommends: number, detracto
     <h1>Relatório de Feedback da Clínica</h1>
     <p style="color:#666;font-size:11px">Gerado em ${new Date().toLocaleDateString("pt-BR")} — ${feedbacks.length} respostas</p>
     <div class="summary">
-      <div class="metric"><div class="val" style="color:${nps >= 0 ? "#059669" : "#ef4444"}">${nps}</div><div class="lbl">NPS</div></div>
-      <div class="metric"><div class="val" style="color:#059669">${recommends}</div><div class="lbl">Promotores</div></div>
-      <div class="metric"><div class="val" style="color:#ef4444">${detractors}</div><div class="lbl">Detratores</div></div>
+      <div class="metric"><div class="val" style="color:${nps >= 0 ? "#059669" : "#ef4444"}">${Number(nps) || 0}</div><div class="lbl">NPS</div></div>
+      <div class="metric"><div class="val" style="color:#059669">${Number(recommends) || 0}</div><div class="lbl">Promotores</div></div>
+      <div class="metric"><div class="val" style="color:#ef4444">${Number(detractors) || 0}</div><div class="lbl">Detratores</div></div>
     </div>
     <table>
       <thead><tr><th>Data</th><th>Paciente</th><th>Serviço</th><th>Qualidade</th><th>Recomenda</th><th>Comunicação</th><th>Limpeza</th><th>Observações</th></tr></thead>

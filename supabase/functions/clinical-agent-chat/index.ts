@@ -1010,7 +1010,8 @@ ${SECURITY_POLICY}`;
 
     const messages = [
       { role: "system", content: systemPrompt },
-      ...(history || []).map((m: any) => ({
+      // Only user/assistant turns are replayed; stored system/tool rows are never trusted.
+      ...(history || []).filter((m: any) => m.role === "user" || m.role === "assistant").map((m: any) => ({
         role: m.role,
         content: Array.isArray(m.parts)
           ? m.parts.filter((p: any) => p.type === "text").map((p: any) => p.text).join("\n")

@@ -98,6 +98,8 @@ function toCsv(rows: any[]): string {
   const escape = (v: any) => {
     if (v === null || v === undefined) return "";
     let s = typeof v === "object" ? JSON.stringify(v) : String(v);
+    // Neutralise spreadsheet formulas (CSV injection).
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
     if (/[",\n;]/.test(s)) s = `"${s.replace(/"/g, '""')}"`;
     return s;
   };

@@ -6,10 +6,13 @@ export type AssessmentLinkContext = {
   clinicId?: string | null;
 };
 
-const generateToken = () =>
-  (typeof crypto !== "undefined" && (crypto as any).randomUUID
-    ? (crypto as any).randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+const generateToken = (): string => {
+  if ((crypto as any).randomUUID) return (crypto as any).randomUUID();
+  // Fallback: 128 bits from the cryptographic RNG (never Math.random/time).
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+};
 
 const baseUrl = ({ professionalId, clinicId }: AssessmentLinkContext) => {
   const origin = getPublicOrigin();
