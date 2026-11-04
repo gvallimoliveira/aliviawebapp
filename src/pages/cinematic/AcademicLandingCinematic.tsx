@@ -261,9 +261,9 @@ const AcademicLandingCinematic = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Aliv.iA Acadêmico — Treine seu raciocínio clínico desde a graduação",
+      title: "Plataforma para Estudantes de Fisioterapia | Aliv.iA Acadêmico",
       description:
-        "Plataforma para estudantes de fisioterapia: agente clínico com IA, modo mentor, casos simulados, trilhas e avaliações padrão-ouro. Da teoria à prática, mais rápido.",
+        "Casos clínicos simulados, agente de raciocínio clínico e questionários padrão-ouro para estudantes e recém-formados em fisioterapia. Da teoria ao consultório.",
       url: `${window.location.origin}/academico`,
       type: "website",
     });

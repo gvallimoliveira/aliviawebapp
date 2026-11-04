@@ -19,8 +19,8 @@ const ProfessionalLandingShell = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Prontuário e avaliação com IA para fisioterapeutas | Aliv.iA",
-      description: "Receba o paciente com anamnese, mapa de dor e questionários validados (Oswestry, LEFS, DASH, KOOS) prontos. Raciocínio clínico STEPS e D.I.F.I., Red Flags e controle de carga.",
+      title: "Software para Fisioterapeutas: Prontuário e Avaliação | Aliv.iA",
+      description: "Prontuário eletrônico para fisioterapeutas autônomos. Anamnese prévia, questionários validados (Oswestry, LEFS, DASH), escalas de dor e conduta clínica rápida.",
       url: "https://aliviawebapp.com.br/profissionais",
       type: "website",
     });

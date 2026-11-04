@@ -67,8 +67,8 @@ const ClinicLandingCinematic = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Software para clínica de fisioterapia: agenda, prontuário e equipe | Aliv.iA",
-      description: "Agenda, prontuário multiprofissional, pré-avaliação online, NPS, indicadores de retenção e sua marca nos relatórios. 15 dias grátis, sem cartão.",
+      title: "Sistema para Clínica de Fisioterapia: Agenda e Prontuário | Aliv.iA",
+      description: "Software de gestão para clínicas de fisioterapia: agenda integrada, prontuário da equipe, pré-avaliação online, NPS e relatórios com sua marca. Teste 15 dias.",
       url: "https://aliviawebapp.com.br/clinica",
       type: "website",
     });
