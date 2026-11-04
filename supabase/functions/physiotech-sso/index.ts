@@ -55,9 +55,9 @@ Deno.serve(async (req) => {
       if (!UUID_RE.test(body.patientId)) return json({ error: "bad patient" }, 400);
       // RLS-scoped read: only patients this professional can already see.
       const { data } = await userClient.from("patients")
-        .select("id, name, email, birth_date").eq("id", body.patientId).maybeSingle();
+        .select("id, full_name, email, birth_date").eq("id", body.patientId).maybeSingle();
       if (!data) return json({ error: "patient not accessible" }, 403);
-      patient = { aliviaPatientId: data.id, name: data.name, email: data.email ?? null, birthDate: data.birth_date ?? null };
+      patient = { aliviaPatientId: data.id, name: data.full_name, email: data.email ?? null, birthDate: data.birth_date ?? null };
     }
 
     const payload = {
