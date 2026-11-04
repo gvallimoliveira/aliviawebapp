@@ -132,7 +132,7 @@ The email should:
         }
 
         const aiData = await aiResponse.json();
-        const emailBody = aiData.choices?.[0]?.message?.content || "";
+        const emailBody = sanitizeEmailHtml(aiData.choices?.[0]?.message?.content || "");
 
         const subject = lang === "pt"
           ? `Aliv.iA — Semana ${weekNumber}: Como você está?`
