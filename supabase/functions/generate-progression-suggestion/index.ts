@@ -82,8 +82,15 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .gte("completed_at", fourteenDaysAgo);
 
-    // Get active exercise programs for context
-    const { data: programs } = await supabase
+    // Get active exercise programs for context — only programs tied to this
+    // user's own assessments (service-role client bypasses RLS).
+    const { data: ownAssessments } = await supabase
+      .from("assessments")
+      .select("id")
+      .eq("user_id", user.id)
+      .limit(200);
+    const ownAssessmentIds = (ownAssessments || []).map((a: any) => a.id);
+    const { data: programs } = ownAssessmentIds.length === 0 ? { data: [] as any[] } : await supabase
       .from("exercise_programs")
       .select(`
         id, notes, 
@@ -91,6 +98,7 @@ Deno.serve(async (req) => {
           exercise:exercise_library(name_pt, name_en, category, difficulty, body_region)
         )
       `)
+      .in("assessment_id", ownAssessmentIds)
       .gt("expires_at", new Date().toISOString())
       .limit(3);
 
