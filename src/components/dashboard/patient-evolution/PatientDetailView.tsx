@@ -339,6 +339,8 @@ export default function PatientDetailView(props: any) {
   // Seleção do escopo do Relatório de Evolução (quais avaliações entram no comparativo)
   const [evolutionPickerOpen, setEvolutionPickerOpen] = React.useState(false);
   const [freeReportOpen, setFreeReportOpen] = React.useState(false);
+  const { user: physioTechUser } = usePhysioTechAuth();
+  const physioTechVip = isFallbackVip(physioTechUser?.email);
   const [evolutionSelectedIds, setEvolutionSelectedIds] = React.useState<string[]>([]);
   const [evolutionPeriod, setEvolutionPeriod] = React.useState<"all" | "30" | "60" | "90" | "custom">("all");
 
