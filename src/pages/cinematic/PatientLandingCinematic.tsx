@@ -27,7 +27,7 @@ import BrandMarquee from "@/components/scroll/BrandMarquee";
 import ClosingCta from "@/components/scroll/ClosingCta";
 
 
-import { setSeo, setOrganizationJsonLd } from "@/lib/seo";
+import { setSeo, setOrganizationJsonLd, setPatientHealthJsonLd, setFAQPageJsonLd } from "@/lib/seo";
 import { showNavOverlay, subscribeNavOverlay } from "@/lib/navigationOverlay";
 
 const PatientLandingCinematic = () => {
@@ -82,12 +82,20 @@ const PatientLandingCinematic = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Triagem de Dor Online: Entenda Seus Sintomas | Aliv.iA",
-      description: "Faça uma triagem da sua dor muscular ou articular em cerca de 15 minutos, com sinais de alerta e orientação para sua consulta. Não substitui o fisioterapeuta.",
+      title: "Avaliação de Dor e Fisioterapia Online: Lombar, Ciático, Joelho | Aliv.iA",
+      description: "Dor na lombar, ciático, pescoço, joelho, ombro ou quadril? Faça uma autoavaliação guiada de fisioterapia em 15 minutos, com sinais de alerta e próximos passos.",
       url: "https://aliviawebapp.com.br/para-pacientes",
       type: "website",
     });
     setOrganizationJsonLd();
+    setPatientHealthJsonLd("https://aliviawebapp.com.br/para-pacientes");
+    setFAQPageJsonLd([
+      { question: "Como avaliar minha dor nas costas ou lombar online?", answer: "Na autoavaliação do Aliv.iA você marca a dor no mapa do corpo, responde perguntas guiadas e testes simples de movimento. Em cerca de 15 minutos recebe uma orientação inicial e um relatório para levar ao fisioterapeuta. Não substitui a consulta." },
+      { question: "Quando a dor lombar ou ciática exige atendimento urgente?", answer: "Procure atendimento imediato se houver perda de força progressiva na perna, alteração no controle da urina ou fezes, dormência na região íntima, febre, perda de peso sem explicação ou dor após trauma forte. A autoavaliação rastreia esses sinais de alerta antes de qualquer orientação." },
+      { question: "A autoavaliação serve para dor no pescoço, ombro, joelho, quadril ou pé?", answer: "Sim. Ela cobre as queixas musculoesqueléticas mais comuns: lombar, ciático, cervical, torácica, ombro, quadril, joelho, punho e mão, fascite plantar e dor crônica." },
+      { question: "Como saber se preciso de fisioterapia?", answer: "Se a dor limita movimentos do dia a dia, volta com frequência ou dura mais de algumas semanas, a fisioterapia costuma ajudar. A autoavaliação organiza seus sintomas e mostra quando procurar um fisioterapeuta." },
+      { question: "A autoavaliação é gratuita?", answer: "Existe uma avaliação básica gratuita e uma avaliação completa paga, com relatório detalhado e plano de cuidados inicial." },
+    ]);
   }, []);
 
   // Defer demo preload until the landing has settled (window load + idle).

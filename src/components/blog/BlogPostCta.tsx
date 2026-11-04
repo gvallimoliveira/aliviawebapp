@@ -2,12 +2,17 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const PATIENT_TAGS = ["dor lombar", "ciatalgia", "dor crônica", "pós-operatório", "recuperação", "saúde da coluna"];
+const PATIENT_TAGS = [
+  "dor lombar", "lombalgia", "ciatalgia", "nervo ciatico", "nervo ciático", "hernia de disco", "hérnia de disco",
+  "dor cervical", "cervicalgia", "dor no pescoço", "dor no joelho", "dor no ombro", "dor no quadril",
+  "fascite plantar", "dor no calcanhar", "dorsalgia", "dor nas costas", "tendinite", "túnel do carpo",
+  "dor crônica", "pós-operatório", "recuperação", "saúde da coluna",
+];
 
 const COPY = {
   pt: {
     pro: { text: "O Aliv.iA leva esse raciocínio para a sua rotina: avaliação estruturada, controle de carga e evolução do paciente num só lugar.", cta: "Conhecer a plataforma", to: "/profissionais" },
-    patient: { text: "Quer entender a sua dor com mais clareza? Faça uma avaliação guiada pelo Aliv.iA e leve o resultado ao seu fisioterapeuta.", cta: "Conhecer a avaliação", to: "/para-pacientes" },
+    patient: { text: "Sentiu que esse texto fala da sua dor? Faça a autoavaliação guiada em 15 minutos: ela checa sinais de alerta e entrega um relatório para levar ao fisioterapeuta.", cta: "Fazer minha autoavaliação", to: "/para-pacientes" },
   },
   en: {
     pro: { text: "Aliv.iA brings this reasoning into your routine: structured assessment, load control and patient progress in one place.", cta: "Explore the platform", to: "/profissionais" },
