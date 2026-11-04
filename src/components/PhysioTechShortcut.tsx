@@ -5,9 +5,7 @@ import { ScanLine, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isFallbackVip } from "@/lib/vipEmails";
 
-// Swap for the published PhysioTech URL once it goes live.
-export const PHYSIOTECH_URL =
-  "https://id-preview--2e585974-c9ce-48f0-af5f-f66789d35c64.lovable.app";
+export const PHYSIOTECH_URL = "https://physiotechapp.lovable.app";
 
 interface Props {
   variant: "menu" | "card";
