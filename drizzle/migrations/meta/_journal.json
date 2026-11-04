@@ -512,6 +512,13 @@
       "when": 1793581837454,
       "tag": "0072_basic_assessment_capability_access",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1793822997289,
+      "tag": "0073_migration",
+      "breakpoints": true
     }
   ]
 }
