@@ -1,11 +1,30 @@
 // Experimental VIP-only shortcut to PhysioTech (imaging & thermography).
-// To undo: delete this file and the two <PhysioTechShortcut /> lines
-// (GlobalMobileMenu.tsx and ProDashboard.tsx).
+// Opens PhysioTech with a short-lived single sign-on ticket; when a patientId
+// is given (patient record), the ticket also carries that patient so the
+// report is linked. Without patientId (menu/dashboard) no patient is linked.
 import { ScanLine, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isFallbackVip } from "@/lib/vipEmails";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const PHYSIOTECH_URL = "https://physiotechapp.lovable.app";
+
+export async function openPhysioTech(patientId?: string | null) {
+  // Open synchronously so mobile browsers don't block the popup.
+  const win = window.open("about:blank", "_blank");
+  try {
+    const { data, error } = await supabase.functions.invoke("physiotech-sso", {
+      body: { action: "issue", patientId: patientId || undefined },
+    });
+    if (error || !data?.ticket) throw error || new Error("no ticket");
+    const url = `${PHYSIOTECH_URL}/sso?ticket=${encodeURIComponent(data.ticket)}`;
+    if (win) win.location.href = url; else window.location.href = url;
+  } catch {
+    if (win) win.location.href = PHYSIOTECH_URL;
+    toast.error("Não foi possível entrar automaticamente no PhysioTech.");
+  }
+}
 
 interface Props {
   variant: "menu" | "card";
@@ -18,7 +37,7 @@ const PhysioTechShortcut = ({ variant, className = "", onOpened }: Props) => {
   if (!isFallbackVip(user?.email)) return null;
 
   const open = () => {
-    window.open(PHYSIOTECH_URL, "_blank", "noopener,noreferrer");
+    void openPhysioTech(null);
     onOpened?.();
   };
 
