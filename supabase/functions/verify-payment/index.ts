@@ -134,7 +134,19 @@ serve(async (req) => {
         });
       }
 
-      // Handle premium subscription verification
+      // Handle premium subscription verification.
+      // Only premium checkout sessions created for this caller may unlock premium.
+      const premiumType = session.metadata?.payment_type;
+      const isPremiumSession =
+        !paymentType &&
+        (premiumType === "monthly" || premiumType === "single") &&
+        session.metadata?.user_id === user.id;
+      if (!isPremiumSession) {
+        return new Response(JSON.stringify({ paid: false, error: "session_not_premium" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       // First check if there's already an awaiting_payment assessment to promote
       const pendingAssessmentId = session.metadata?.pending_assessment_id;
       
