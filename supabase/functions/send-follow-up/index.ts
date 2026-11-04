@@ -8,6 +8,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Escape everything, then re-enable only attribute-free basic formatting tags.
+function sanitizeEmailHtml(raw: string): string {
+  const cleaned = String(raw).replace(/```(?:html)?/gi, "");
+  const escaped = cleaned.replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!)
+  );
+  return escaped.replace(
+    /&lt;(\/?)(p|br|strong|em|b|i|ul|ol|li)\s*(\/?)&gt;/gi,
+    (_m, close, tag, self) => `<${close}${tag.toLowerCase()}${self ? " /" : ""}>`,
+  );
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
