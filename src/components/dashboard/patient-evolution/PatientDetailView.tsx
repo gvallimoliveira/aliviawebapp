@@ -39,7 +39,7 @@ import RecordSummaryDialog from "./RecordSummaryDialog";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Gauge, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
+import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Gauge, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, ScanLine, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import FreeReportDialog from "./FreeReportDialog";
 import { openPhysioTech } from "@/components/PhysioTechShortcut";
 import { isFallbackVip } from "@/lib/vipEmails";
@@ -341,6 +341,25 @@ export default function PatientDetailView(props: any) {
   const [freeReportOpen, setFreeReportOpen] = React.useState(false);
   const { user: physioTechUser } = usePhysioTechAuth();
   const physioTechVip = isFallbackVip(physioTechUser?.email);
+  // Sempre resolve o ID do paciente (inclusive pacientes antigos/vindos de link),
+  // para que o PhysioTech abra já vinculado a este prontuário.
+  const resolvePatientIdForPhysioTech = async (): Promise<string | null> => {
+    if (patient?.patientRecord?.id) return patient.patientRecord.id;
+    const sb = supabase as any;
+    let lookup = sb.from("patients").select("id").limit(1);
+    lookup = patient?.email ? lookup.eq("email", patient.email) : lookup.eq("full_name", patient?.name);
+    if (clinicId) lookup = lookup.eq("clinic_id", clinicId);
+    else if (professionalId) lookup = lookup.eq("professional_id", professionalId).is("clinic_id", null);
+    const { data } = await lookup.maybeSingle();
+    if (data?.id) return data.id;
+    if (!patient?.name && !patient?.email) return null;
+    const payload: Record<string, string> = { full_name: patient.name || patient.email };
+    if (patient.email) payload.email = patient.email;
+    if (clinicId) payload.clinic_id = clinicId;
+    else if (professionalId) payload.professional_id = professionalId;
+    const { data: created } = await sb.from("patients").insert(payload).select("id").single();
+    return created?.id || null;
+  };
   const [evolutionSelectedIds, setEvolutionSelectedIds] = React.useState<string[]>([]);
   const [evolutionPeriod, setEvolutionPeriod] = React.useState<"all" | "30" | "60" | "90" | "custom">("all");
 
@@ -698,6 +717,13 @@ export default function PatientDetailView(props: any) {
           {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
           <Button variant="outline" size="sm" className="gap-1.5 shrink-0 hidden md:inline-flex border-primary/30 text-primary hover:bg-primary/10" onClick={handleQuickEvolution}><NotebookPen className="h-4 w-4" /> {language === "pt" ? "Registrar evolução" : language === "es" ? "Registrar evolución" : "Log evolution"}</Button>
+          {!isDemo && physioTechVip && (
+            <Button variant="outline" size="sm" className="gap-1.5 shrink-0 border-primary/30 text-primary hover:bg-primary/10" onClick={async () => {
+              const id = await resolvePatientIdForPhysioTech();
+              if (!id) { toast({ title: "Paciente ainda não cadastrado no prontuário" }); return; }
+              void openPhysioTech(id);
+            }}><ScanLine className="h-4 w-4" /> PhysioTech</Button>
+          )}
           {((!readOnly || allowManualAssessment) || isDemo) && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={openManualAssessment}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
           {(latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2 || (hasAgentAccess && !isDemo) || !isDemo) && (
             <DropdownMenu modal={false}>
@@ -773,11 +799,6 @@ export default function PatientDetailView(props: any) {
                 {!isDemo && (!readOnly || allowManualAssessment) && (
                   <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setFreeReportOpen(true); }}>
                     <FileText className="h-4 w-4 mr-2" /> {language === "pt" ? "Relatório fisioterapêutico" : language === "es" ? "Informe fisioterapéutico" : "Physiotherapy report"}
-                  </DropdownMenuItem>
-                )}
-                {!isDemo && patient?.patientRecord?.id && physioTechVip && (
-                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); void openPhysioTech(patient.patientRecord.id); }}>
-                    <ExternalLink className="h-4 w-4 mr-2" /> PhysioTech · laudo deste paciente
                   </DropdownMenuItem>
                 )}
                 {latestWithDiagnosis && (
