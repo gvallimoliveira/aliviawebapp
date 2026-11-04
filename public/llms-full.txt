@@ -32,9 +32,26 @@ Sistema de raciocínio clínico com alma de fisioterapeuta. Reúne pré-avaliaç
 
 ## Para pacientes — /para-pacientes
 
-- Avaliação de dor online em cerca de 15 minutos.
-- Triagem de sinais de alerta antes de qualquer orientação.
-- Orientação inicial e indicação de quando procurar atendimento presencial.
+Autoavaliação de dor guiada por fisioterapia, em cerca de 15 minutos, para quem sente dor e quer entender o que está acontecendo antes ou durante o tratamento. Versão básica gratuita; avaliação completa paga com relatório detalhado.
+
+Queixas cobertas (as mais buscadas no Brasil):
+1. Dor lombar / lombalgia / coluna travada
+2. Dor ciática / ciatalgia / dor que desce pela perna (inclui suspeita de hérnia de disco)
+3. Dor cervical / no pescoço / torcicolo
+4. Dor no joelho (condromalácia, menisco, artrose, tendinite patelar)
+5. Dor no ombro (bursite, tendinite do manguito rotador, impacto)
+6. Dor no quadril (bursite trocantérica, dor na virilha)
+7. Fascite plantar / dor no calcanhar
+8. Dor torácica nas costas / entre as escápulas (dorsalgia)
+9. Dor no punho e na mão (De Quervain, LER/DORT, túnel do carpo)
+10. Dor crônica (mais de 3 meses) e pós-operatórios ortopédicos
+
+O que a pessoa recebe:
+- Triagem de sinais de alerta (Red Flags) antes de qualquer orientação; casos de alerta são orientados a buscar atendimento presencial.
+- Mapa corporal da dor, questionários e testes simples de movimento.
+- Hipótese inicial explicada em linguagem simples, cuidados iniciais e indicação de quando procurar um fisioterapeuta.
+- Relatório em PDF para levar à consulta.
+Não substitui consulta, diagnóstico médico nem fisioterapeuta.
 
 ## Para estudantes — /academico
 

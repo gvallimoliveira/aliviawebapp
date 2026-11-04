@@ -10,7 +10,7 @@ Versão detalhada para assistentes de IA: [llms-full.txt](/llms-full.txt)
 
 - [Para Profissionais](/profissionais): Prontuário e avaliação com IA para fisioterapeutas autônomos; questionários validados (Oswestry, LEFS, DASH, KOOS), Red Flags, STEPS, D.I.F.I. e controle de carga.
 - [Para Clínicas](/clinica): Software para clínicas de fisioterapia com agenda, prontuário multiprofissional, indicadores, NPS e relatórios com a marca da clínica; 15 dias grátis sem cartão.
-- [Para Pacientes](/para-pacientes): Avaliação de dor online em cerca de 15 minutos com triagem de sinais de alerta e orientação inicial.
+- [Para Pacientes](/para-pacientes): Autoavaliação de dor e fisioterapia online (cerca de 15 minutos) para dor lombar, ciática, cervical, torácica, ombro, quadril, joelho, punho/mão, fascite plantar e dor crônica; triagem de sinais de alerta, mapa de dor, testes simples de movimento e relatório para levar ao fisioterapeuta. Versão básica gratuita.
 - [Acadêmico](/academico): Treino de raciocínio clínico para estudantes de fisioterapia.
 - [Demo da Clínica](/clinica/demo): Ambiente simulado com dados fictícios.
 - [Buscar Profissionais](/professionals): Fisioterapeutas cadastrados.

@@ -250,4 +250,39 @@ export function setSoftwareJsonLd(p: { name: string; url: string; description: s
   });
 }
 
+/** Top musculoskeletal pain complaints searched in Brazil (patient landing SEO/GEO). */
+export const PAIN_CONDITIONS = [
+  { name: "Dor lombar (lombalgia)", alt: ["dor nas costas", "coluna travada"] },
+  { name: "Dor ciática (ciatalgia)", alt: ["nervo ciático", "dor que desce pela perna"] },
+  { name: "Dor cervical (cervicalgia)", alt: ["dor no pescoço", "torcicolo"] },
+  { name: "Dor no joelho", alt: ["condromalácia", "menisco", "artrose no joelho"] },
+  { name: "Dor no ombro", alt: ["bursite no ombro", "tendinite do manguito rotador"] },
+  { name: "Dor no quadril", alt: ["bursite trocantérica", "dor na virilha"] },
+  { name: "Fascite plantar", alt: ["dor no calcanhar", "esporão"] },
+  { name: "Dor nas costas torácica (dorsalgia)", alt: ["dor entre as escápulas", "meio das costas"] },
+  { name: "Dor no punho e na mão", alt: ["tendinite de De Quervain", "LER/DORT", "túnel do carpo"] },
+  { name: "Dor crônica", alt: ["dor persistente há mais de 3 meses", "dores difusas"] },
+];
+
+export function setPatientHealthJsonLd(url: string) {
+  addJsonLd({
+    "@context": "https://schema.org",
+    "@type": "MedicalWebPage",
+    name: "Autoavaliação de dor e fisioterapia online",
+    url,
+    inLanguage: "pt-BR",
+    audience: { "@type": "PeopleAudience", audienceType: "Pessoas com dor musculoesquelética" },
+    specialty: "Physiotherapy",
+    about: PAIN_CONDITIONS.map((c) => ({ "@type": "MedicalCondition", name: c.name, alternateName: c.alt })),
+    mainEntity: {
+      "@type": "WebApplication",
+      name: "Autoavaliação de dor Aliv.iA",
+      applicationCategory: "HealthApplication",
+      operatingSystem: "Web",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "BRL", description: "Avaliação básica gratuita" },
+    },
+    publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+  });
+}
+
 export const SEO_CONSTANTS = { SITE_URL, SITE_NAME, DEFAULT_IMAGE };
