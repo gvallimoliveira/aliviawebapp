@@ -55,7 +55,11 @@ const exportToCSV = (feedbacks: any[], lang: string) => {
       ca.cleanliness || "", ca.scheduling || "", ca.environment || "",
       sa.observations || "", pa.observations || "", ca.observations || "",
       f.general_observations || "",
-    ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+    ].map((v) => {
+      const cell = String(v);
+      const safe = /^[=+\-@\t\r]/.test(cell) ? `'${cell}` : cell;
+      return `"${safe.replace(/"/g, '""')}"`;
+    }).join(",");
   });
 
   const csv = [headers.join(","), ...rows].join("\n");
