@@ -82,8 +82,8 @@ const PatientLandingCinematic = () => {
 
   useEffect(() => {
     setSeo({
-      title: "Avaliação de dor online com triagem segura | Aliv.iA",
-      description: "Responda em cerca de 15 minutos, com triagem de sinais de alerta, e receba uma orientação inicial sobre sua dor e por onde começar. Não substitui a consulta.",
+      title: "Triagem de Dor Online: Entenda Seus Sintomas | Aliv.iA",
+      description: "Faça uma triagem da sua dor muscular ou articular em cerca de 15 minutos, com sinais de alerta e orientação para sua consulta. Não substitui o fisioterapeuta.",
       url: "https://aliviawebapp.com.br/para-pacientes",
       type: "website",
     });
