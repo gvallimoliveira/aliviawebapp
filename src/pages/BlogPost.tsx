@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Header from "@/components/Header";
@@ -187,7 +188,7 @@ const BlogPost = () => {
 
         <div
           className="prose prose-neutral dark:prose-invert max-w-none [&_h2]:scroll-mt-28 [&_h3]:scroll-mt-28"
-          dangerouslySetInnerHTML={{ __html: structured.html }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(structured.html) }}
         />
         <BlogShareBar url={`${SEO_CONSTANTS.SITE_URL}/blog/${post.slug}`} title={getTitle(post)} className="mt-10 border-t border-border pt-6" />
         <BlogPostCta tags={post.tags || []} />
