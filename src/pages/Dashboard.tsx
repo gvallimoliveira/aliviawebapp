@@ -72,6 +72,7 @@ import { Search, CalendarDays, Megaphone } from "lucide-react";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { hasRealCrefito, isPlaceholderCrefito } from "@/lib/crefito";
 import { usePatientCare } from "@/hooks/usePatientCare";
+import { OfficialAssessmentButton, IndependentSelfAssessmentPill } from "@/components/dashboard/LinkedPatientAssessment";
 import { resolvePatientTab } from "@/lib/patientNavigation";
 
 
@@ -749,7 +750,7 @@ const Dashboard = () => {
       {/* Evolution Summary Card (da condição em foco) */}
       <EvolutionSummary assessments={conditionAssessments} />
       
-      <QuickActions hasPremiumAccess={premiumAccess?.has_access} premiumLoading={premiumLoading} />
+      {!patientCare.linked && <QuickActions hasPremiumAccess={premiumAccess?.has_access} premiumLoading={premiumLoading} />}
       {!patientCare.linked && <ReferralCard availableDiscount={premiumAccess?.available_discount} />}
 
       {/* Exercise Checklist */}
@@ -781,6 +782,8 @@ const Dashboard = () => {
         conditionLabels={conditionLabelById}
         onDeleted={(ids) => setAssessments((prev) => prev.filter((a) => !ids.includes(a.id)))}
       />
+
+      {patientCare.linked && <IndependentSelfAssessmentPill />}
 
       {patientCare.linked && (
         <details className="border-t border-border pt-4">
@@ -1306,9 +1309,12 @@ const Dashboard = () => {
           patientCare.loading ? <TabFallback /> :
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {patientCare.linked && patientCare.names.length > 0 && (
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Stethoscope className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                <span className="min-w-0 break-words">{t("dashboard.patient_followed_by")} <span className="font-medium text-foreground">{patientCare.names.join(" · ")}</span></span>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Stethoscope className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                  <span className="min-w-0 break-words">{t("dashboard.patient_followed_by")} <span className="font-medium text-foreground">{patientCare.names.join(" · ")}</span></span>
+                </div>
+                <OfficialAssessmentButton providers={patientCare.providers} />
               </div>
             )}
             <TabsList className={cn("w-full grid h-auto p-1", patientCare.linked ? "grid-cols-4" : "grid-cols-3")}>
