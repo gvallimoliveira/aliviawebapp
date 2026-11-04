@@ -585,7 +585,7 @@ serve(async (req) => {
     // Set partner status
     if (action === "set_partner") {
       const { email, professional_id, is_partner } = body;
-      log("set_partner", { email, professional_id, is_partner });
+      log("set_partner", { professional_id, is_partner });
 
       let targetId = professional_id;
 
@@ -619,7 +619,7 @@ serve(async (req) => {
             // professional profile and notify them that PRO has been granted.
             if (createError.message?.includes("already been registered")) {
               const existingUser = await findAuthUserByEmail(supabaseClient, normalizedEmail);
-              log("Existing auth lookup", { found: !!existingUser, email: normalizedEmail });
+              log("Existing auth lookup", { found: !!existingUser });
               if (!existingUser) {
                 return new Response(JSON.stringify({ error: createError.message }), {
                   status: 400,
@@ -822,7 +822,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({ email: normalizedEmail }),
       });
-      log("Manual recovery resend", { email: normalizedEmail, status: resetRes.status });
+      log("Manual recovery resend", { status: resetRes.status });
       if (!resetRes.ok) {
         const errBody = await resetRes.text();
         throw new Error(`Recovery email failed: ${errBody}`);
@@ -936,12 +936,25 @@ serve(async (req) => {
         });
       }
 
-      const { error } = await supabaseClient
+      // Only public, unlinked basic leads may be removed here — never patient,
+      // professional or clinic assessments.
+      const { data: deleted, error } = await supabaseClient
         .from("assessments")
         .delete()
-        .eq("id", id);
+        .eq("id", String(id))
+        .eq("type", "basic")
+        .is("user_id", null)
+        .is("professional_id", null)
+        .is("clinic_id", null)
+        .select("id");
 
       if (error) throw error;
+      if (!deleted || deleted.length === 0) {
+        return new Response(JSON.stringify({ error: "Lead not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
