@@ -41,6 +41,9 @@ import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Gauge, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import FreeReportDialog from "./FreeReportDialog";
+import { openPhysioTech } from "@/components/PhysioTechShortcut";
+import { isFallbackVip } from "@/lib/vipEmails";
+import { useAuth as usePhysioTechAuth } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
 import { Bar, BarChart, CartesianGrid, LabelList, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -768,6 +771,11 @@ export default function PatientDetailView(props: any) {
                 {!isDemo && (!readOnly || allowManualAssessment) && (
                   <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setFreeReportOpen(true); }}>
                     <FileText className="h-4 w-4 mr-2" /> {language === "pt" ? "Relatório fisioterapêutico" : language === "es" ? "Informe fisioterapéutico" : "Physiotherapy report"}
+                  </DropdownMenuItem>
+                )}
+                {!isDemo && patient?.patientRecord?.id && physioTechVip && (
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); void openPhysioTech(patient.patientRecord.id); }}>
+                    <ExternalLink className="h-4 w-4 mr-2" /> PhysioTech · laudo deste paciente
                   </DropdownMenuItem>
                 )}
                 {latestWithDiagnosis && (
