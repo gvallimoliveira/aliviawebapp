@@ -449,6 +449,16 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const action = payload?.action || "alert";
 
+    const callerIsAdmin = async () => {
+      if (!callerUser?.email) return false;
+      const emails = await adminEmails();
+      return emails.some((e) => e.toLowerCase() === callerUser!.email!.toLowerCase());
+    };
+
+    if (action === "sweep" || action === "ticket") {
+      // Ticket alerts are dispatched server-side (trigger/cron) or by admins only.
+      if (!isService && !(await callerIsAdmin())) return json({ error: "Forbidden" }, 403);
+    }
     if (action === "sweep") return json(await sweep());
     if (action === "ticket") {
       if (!payload?.ticket_id) return json({ error: "ticket_id required" }, 400);
@@ -509,6 +519,6 @@ Deno.serve(async (req) => {
     return json({ error: "unknown action" }, 400);
   } catch (err) {
     log("ERROR", String(err));
-    return json({ error: String(err) }, 500);
+    return json({ error: "Internal error" }, 500);
   }
 });
