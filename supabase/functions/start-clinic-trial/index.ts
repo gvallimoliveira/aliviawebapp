@@ -53,7 +53,7 @@ serve(async (req) => {
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedPhone = phone?.trim() || null;
 
-    logStep("Trial request", { email: normalizedEmail, tier, phone: normalizedPhone, cnpj: normalizedCnpj });
+    logStep("Trial request", { tier });
 
     // Check if user already exists in auth
     let userId: string;
@@ -70,6 +70,20 @@ serve(async (req) => {
     }
 
     if (existingUser) {
+      // An existing account can only receive a clinic when its owner is signed in.
+      const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+      let callerId: string | null = null;
+      if (token && token !== Deno.env.get("SUPABASE_ANON_KEY")) {
+        const { data: callerData } = await supabaseAdmin.auth.getUser(token);
+        callerId = callerData?.user?.id ?? null;
+      }
+      if (callerId !== existingUser.id) {
+        logStep("Existing account requires sign-in");
+        return new Response(
+          JSON.stringify({ success: true, already_exists: true, requires_login: true }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       userId = existingUser.id;
       logStep("Existing user found", { userId });
     } else {
