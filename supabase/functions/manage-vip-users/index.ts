@@ -7,7 +7,10 @@ const corsHeaders = {
 };
 
 const log = (step: string, details?: any) => {
-  const d = details ? ` - ${JSON.stringify(details)}` : '';
+  // Redact any e-mail address before it reaches server logs.
+  const d = details
+    ? ` - ${JSON.stringify(details).replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email]")}`
+    : '';
   console.log(`[MANAGE-VIP] ${step}${d}`);
 };
 
