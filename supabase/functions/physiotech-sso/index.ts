@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
       patient, nonce: crypto.randomUUID(), exp: Date.now() + TTL_MS,
     };
     const p = b64u(new TextEncoder().encode(JSON.stringify(payload)));
-    return json({ ticket: `${p}.${await hmac(p)}` });
+    return json({ ticket: `${p}.${await hmac(p)}`, entitlement: ent });
   } catch (e) {
     console.error("physiotech-sso", e);
     return json({ error: "internal" }, 500);
