@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Edição de cadastro — Lucas Kegele
-- [ ] Corrigir a identidade do paciente durante edição e recarga; testar renomeação sem novo cadastro.
-- [ ] Conferir duplicata do Lucas e preservar todos os vínculos/histórico ao resolver o cadastro vazio.
+- [x] Edição atualiza o ID original e os IDs das avaliações do prontuário, incluindo sem e-mail; nome/chave/seleção atualizados juntos. Busca por ID não cria substituto após erro ou ausência. Onze testes aprovados, build OK.
+- [x] Duplicata vazia removida após conferir vínculos; avaliação e três agendamentos corrigidos, cadastro original preservado. Conta do profissional → Lucas → Dados cadastrais → editar/salvar Lucas Kegele → recarregar/reabrir conferidos: avaliação, nascimento, ocupação e frequência mantidos. Não publicada.
 
 ## Landings — refinamento editorial e preços da clínica
 - [x] Textos intermediários PRO/Paciente revisados em pt/en/es e clínica em português, com cenas reais e respaldo técnico; sem novas seções. Removidas promessas absolutas de diferenciação/tempo e esclarecido saldo de IA no FAQ da clínica.
