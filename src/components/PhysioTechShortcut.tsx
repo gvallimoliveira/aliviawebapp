@@ -18,6 +18,12 @@ export async function openPhysioTech(patientId?: string | null) {
       body: { action: "issue", patientId: patientId || undefined },
     });
     if (error || !data?.ticket) throw error || new Error("no ticket");
+    // Soft paywall: franchise/trial exhausted → explain and offer the add-on.
+    if (data.entitlement && data.entitlement.remaining === 0) {
+      win?.close();
+      window.dispatchEvent(new CustomEvent("physiotech:upgrade", { detail: data.entitlement }));
+      return;
+    }
     const url = `${PHYSIOTECH_URL}/sso?ticket=${encodeURIComponent(data.ticket)}`;
     if (win) win.location.href = url; else window.location.href = url;
   } catch {

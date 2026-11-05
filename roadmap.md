@@ -144,3 +144,8 @@
 - [x] Financeiro: detalhar pacientes, dias, horários e valores de LTV/cadeira vazia com os mesmos dados dos totais.
 - [x] 29 testes passaram, incluindo execução SQL e isolamento; ajuda pt/en/es; UI autenticada da clínica sem erros.
 - [ ] Conferir visualmente Francisco/Fábio e detalhes financeiros com dados: conta disponível não possui os perfis PRO desses pacientes e clínica acessível não tem preços/casos representativos. Aguarda acesso ao perfil correspondente.
+
+## PhysioTech — franquia e add-on (beta fechado)
+- [x] Regra única de direito (lista manual ilimitada; add-on; anual 3/mês por 6 meses; mensal 1 degustação); envio de laudo bloqueado ao esgotar; aviso com desconto no app.
+- [x] Add-ons no Stripe: mensal R$89/139, anual R$590/990; ativação e cancelamento pelo webhook. Conta VIP conferida como ilimitada. Checkout real e franquia não testados (só lista liberada tem acesso).
+- [ ] Lançamento geral: remover a trava da lista manual no SSO e no botão — aguarda decisão do Guilherme.

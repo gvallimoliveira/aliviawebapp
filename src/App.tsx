@@ -1,3 +1,4 @@
+import PhysioTechUpgradeDialog from "@/components/PhysioTechUpgradeDialog";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -130,6 +131,7 @@ const App = () => {
           <TooltipProvider>
             <SplashScreen />
             <Toaster />
+            <PhysioTechUpgradeDialog />
             <Sonner />
             <NavigationOverlay />
             <BrowserRouter>

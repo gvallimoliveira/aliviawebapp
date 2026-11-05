@@ -3724,6 +3724,36 @@ export type Database = {
           },
         ]
       }
+      physiotech_addons: {
+        Row: {
+          billing: string
+          current_period_end: string | null
+          status: string
+          stripe_subscription_id: string | null
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing: string
+          current_period_end?: string | null
+          status?: string
+          stripe_subscription_id?: string | null
+          tier: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing?: string
+          current_period_end?: string | null
+          status?: string
+          stripe_subscription_id?: string | null
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       physiotech_reports: {
         Row: {
           clinic_id: string | null
