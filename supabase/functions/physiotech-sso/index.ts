@@ -9,8 +9,10 @@ const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-// Manual allowlist (VIP + individually released). Partners are NOT automatic.
-const VIP = ["gvallimoliveira@gmail.com", "gvallim.fisio@gmail.com", "decosancho@gmail.com", "sancho.derique@gmail.com"];
+import { getPhysioTechEntitlement, PHYSIOTECH_ALLOWLIST } from "../_shared/physiotechEntitlement.ts";
+// Beta gate: only the manual allowlist may open PhysioTech for now.
+// Partners are NOT automatic. Remove this gate at general launch.
+const VIP = PHYSIOTECH_ALLOWLIST;
 const TTL_MS = 2 * 60 * 1000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -69,8 +71,12 @@ Deno.serve(async (req) => {
       };
     }
 
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const ent = await getPhysioTechEntitlement(admin, u!.user!.id, email);
+
     const payload = {
       iss: "alivia", sub: u!.user!.id, email,
+      plan: ent.plan, entitlement: { kind: ent.kind, limit: ent.limit, used: ent.used, remaining: ent.remaining },
       name: (u!.user!.user_metadata as any)?.full_name ?? null,
       patient, nonce: crypto.randomUUID(), exp: Date.now() + TTL_MS,
     };

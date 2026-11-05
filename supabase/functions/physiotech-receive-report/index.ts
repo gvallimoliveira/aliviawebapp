@@ -2,6 +2,7 @@
 // Aliv.iA record: PDF in patient_files + structured row in physiotech_reports.
 // Auth: `reportToken` issued by physiotech-sso (HMAC, bound to sender + patient).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { canSendReport, getPhysioTechEntitlement } from "../_shared/physiotechEntitlement.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -52,6 +53,10 @@ Deno.serve(async (req) => {
     if (!patient) return json({ error: "patient not found" }, 404);
     const { data: allowed } = await admin.rpc("can_access_patient", { _patient_id: patient.id, _user_id: tok.sub });
     if (!allowed) return json({ error: "forbidden" }, 403);
+
+    const { data: sender } = await admin.auth.admin.getUserById(tok.sub);
+    const ent = await getPhysioTechEntitlement(admin, tok.sub, sender?.user?.email || "");
+    if (!canSendReport(ent)) return json({ error: "quota_exhausted", entitlement: ent }, 402);
 
     // Copy the PDF into Aliv.iA storage (PhysioTech URLs may be temporary).
     let fileId: string | null = null;
