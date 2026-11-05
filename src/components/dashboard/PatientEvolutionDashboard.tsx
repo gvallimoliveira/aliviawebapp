@@ -1,4 +1,5 @@
 import { careScope } from "@/lib/careScope";
+import type { RegistrationSaved } from "@/lib/patientRegistration";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import SessionNotesSection from "./SessionNotesSection";
 import PatientListView from "./patient-evolution/PatientListView";
@@ -199,12 +200,13 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   // refetch do componente pai (a lista vinha de um array memoizado, então
   // mutar/splicar não re-renderizava nada).
   const [locallyDeletedIds, setLocallyDeletedIds] = useState<string[]>([]);
+  const [registrationUpdates, setRegistrationUpdates] = useState<Record<string, { patient_name: string; patient_email: string | null }>>({});
   const assessments = useMemo(
     () =>
       (rawAssessments || [])
         .filter((a) => !locallyDeletedIds.includes(a.id) && (isDemo || (clinicId ? a.clinic_id === clinicId : !a.clinic_id && a.professional_id === professionalId)))
-        .map((a) => normalizeAssessment(a) as any),
-    [rawAssessments, locallyDeletedIds, clinicId, professionalId, isDemo]
+        .map((a) => normalizeAssessment(registrationUpdates[a.id] ? { ...a, ...registrationUpdates[a.id] } : a) as any),
+    [rawAssessments, locallyDeletedIds, registrationUpdates, clinicId, professionalId, isDemo]
   );
 
   const { t, language } = useLanguage();
@@ -230,6 +232,24 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       return next;
     }, { replace: true });
   }, [setSearchParams]);
+  useEffect(() => {
+    setRegistrationUpdates({});
+  }, [clinicId, professionalId]);
+  useEffect(() => {
+    const handleSaved = (event: Event) => {
+      const saved = (event as CustomEvent<RegistrationSaved>).detail;
+      if (!saved || saved.clinicId !== (clinicId || null) || (!clinicId && saved.professionalId !== professionalId)) return;
+      setRegistrationUpdates((prev) => {
+        const next = { ...prev };
+        saved.assessmentIds.forEach((id) => { next[id] = { patient_name: saved.name, patient_email: saved.email }; });
+        return next;
+      });
+      setPatientsTableData((prev) => prev.map((row) => row.id === saved.patientId ? { ...row, full_name: saved.name, email: saved.email } : row));
+      if (selectedEmail === saved.oldKey) setSelectedEmail(saved.newKey);
+    };
+    window.addEventListener("patient-registration-saved", handleSaved);
+    return () => window.removeEventListener("patient-registration-saved", handleSaved);
+  }, [clinicId, professionalId, selectedEmail, setSelectedEmail]);
   // Avisar o pai só quando o paciente aberto muda de fato. O pai passa uma
   // função nova a cada render (ex.: ao exibir "Link copiado"), e repetir o
   // aviso fazia a página rolar de volta ao topo do prontuário.

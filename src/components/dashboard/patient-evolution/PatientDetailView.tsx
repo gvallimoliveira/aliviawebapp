@@ -367,12 +367,13 @@ export default function PatientDetailView(props: any) {
   const fetchPatientRow = React.useCallback(async (id?: string | null) => {
     const sb = supabase as any;
     if (id) {
-      const { data } = await careScope(sb
+      const { data, error } = await careScope(sb
         .from("patients")
         .select("id, full_name, email, cpf, birth_date, phone, address, sex, occupation, prescribed_weekly_frequency, referral_source")
         .eq("id", id), clinicId, professionalId)
         .maybeSingle();
-      if (data) return data;
+      if (error) throw error;
+      return data || null;
     }
     let lookup = sb
       .from("patients")
@@ -382,7 +383,8 @@ export default function PatientDetailView(props: any) {
     else lookup = lookup.eq("full_name", patient.name);
     if (clinicId) lookup = lookup.eq("clinic_id", clinicId);
     else if (professionalId) lookup = lookup.eq("professional_id", professionalId).is("clinic_id", null);
-    const { data } = await lookup.maybeSingle();
+    const { data, error } = await lookup.maybeSingle();
+    if (error) throw error;
     return data || null;
   }, [patient?.email, patient?.name, clinicId, professionalId]);
 
@@ -398,7 +400,8 @@ export default function PatientDetailView(props: any) {
     occupation: row.occupation ?? null,
     prescribed_weekly_frequency: row.prescribed_weekly_frequency ?? null,
     referral_source: row.referral_source ?? null,
-  }), [patient?.name, patient?.email]);
+    assessmentIds: (patient?.assessments || []).map((a: any) => a.id),
+  }), [patient?.name, patient?.email, patient?.assessments]);
 
   const openRegistrationModal = React.useCallback(async () => {
     if (registrationLoading) return;
@@ -408,7 +411,7 @@ export default function PatientDetailView(props: any) {
       // Sempre busca a versão mais recente do banco (sem cache)
       let row: any = await fetchPatientRow(patient?.patientRecord?.id);
 
-      if (!row?.id && (patient?.name || patient?.email)) {
+      if (!row?.id && !patient?.patientRecord?.id && (patient?.name || patient?.email)) {
         const payload: Record<string, any> = { full_name: patient.name || patient.email || "Paciente" };
         if (patient?.email) payload.email = patient.email;
         if (clinicId) payload.clinic_id = clinicId;

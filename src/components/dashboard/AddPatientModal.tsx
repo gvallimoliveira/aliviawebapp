@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, UserPlus, Pencil, Eye, Lock, Mail, Phone, MapPin, IdCard, Cake, User, Briefcase } from "lucide-react";
 import { formatCpf, formatPhone } from "@/utils/masks";
+import { updatePatientRegistration } from "@/lib/patientRegistration";
 
 export interface PatientToEdit {
   id: string;
@@ -26,6 +27,7 @@ export interface PatientToEdit {
   occupation?: string | null;
   prescribed_weekly_frequency?: number | null;
   referral_source?: string | null;
+  assessmentIds?: string[];
 }
 
 const REFERRAL_OPTIONS = [
@@ -135,7 +137,7 @@ const AddPatientModal = ({
   };
 
   const handleSave = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || saving) return;
     setSaving(true);
     try {
       const nextName = name.trim();
@@ -153,27 +155,9 @@ const AddPatientModal = ({
         referral_source: referral || null,
       };
 
-      if (isEdit) {
-        const { error } = await (supabase.from("patients" as any) as any)
-          .update(patientRow)
-          .eq("id", editPatient!.id);
-        if (error) throw error;
-
-        const oldName = (editPatient!.full_name || "").trim();
-        const oldEmail = (editPatient!.email || "").trim();
-        const nameChanged = oldName !== nextName;
-        const emailChanged = oldEmail !== (nextEmail || "");
-
-        if (oldEmail && (nameChanged || emailChanged)) {
-          await supabase.from("assessments")
-            .update({ patient_name: nextName, patient_email: nextEmail || oldEmail } as any)
-            .eq(clinicId ? "clinic_id" : "professional_id", clinicId || professionalId)
-            .eq("patient_email", oldEmail);
-          await (supabase.from("professional_appointments" as any) as any)
-            .update({ patient_name: nextName, patient_email: nextEmail })
-            .eq(clinicId ? "clinic_id" : "professional_id", clinicId || professionalId)
-            .eq("patient_email", oldEmail);
-        }
+      if (editPatient) {
+        const saved = await updatePatientRegistration(editPatient, patientRow, professionalId, clinicId);
+        window.dispatchEvent(new CustomEvent("patient-registration-saved", { detail: saved }));
       } else {
         if (clinicId) patientRow.clinic_id = clinicId;
         else patientRow.professional_id = professionalId;

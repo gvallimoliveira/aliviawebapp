@@ -346,7 +346,7 @@ export default function PatientListView(props: any) {
                             {showIncomplete && !readOnly && (
                               <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-200 gap-1 cursor-pointer hover:bg-orange-500/20 transition-colors" onClick={(e) => {
                                 e.stopPropagation();
-                                const rec = patientRec || { id: "", full_name: p.name, email: p.email || null };
+                                const rec = { ...(patientRec || { id: "", full_name: p.name, email: p.email || null }), assessmentIds: p.assessments.map((a: any) => a.id) };
                                 setEditPatientData(rec);
                                 setAddPatientOpen(true);
                               }}>
