@@ -9,7 +9,8 @@ const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-const VIP = ["gvallimoliveira@gmail.com", "gvallim.fisio@gmail.com"];
+// Manual allowlist (VIP + individually released). Partners are NOT automatic.
+const VIP = ["gvallimoliveira@gmail.com", "gvallim.fisio@gmail.com", "decosancho@gmail.com", "sancho.derique@gmail.com"];
 const TTL_MS = 2 * 60 * 1000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
