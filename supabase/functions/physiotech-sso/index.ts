@@ -74,10 +74,28 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const ent = await getPhysioTechEntitlement(admin, u!.user!.id, email);
 
+    // Professional identity + signature (own record only; never another member's).
+    let professional: Record<string, unknown> | null = null;
+    const { data: prof } = await admin.from("professionals")
+      .select("full_name, crefito, signature_image_url").eq("user_id", u!.user!.id).maybeSingle();
+    if (prof) {
+      let signatureUrl: string | null = null;
+      if (prof.signature_image_url) {
+        const { data: s } = await admin.storage.from("signatures").createSignedUrl(prof.signature_image_url, 3600);
+        signatureUrl = s?.signedUrl ?? null;
+      }
+      professional = {
+        name: prof.full_name ?? null,
+        councilType: prof.crefito ? "CREFITO" : null,
+        councilNumber: prof.crefito ?? null,
+        signatureUrl, // PNG transparente, válido por 1h — PhysioTech deve copiar para o próprio storage
+      };
+    }
+
     const payload = {
-      iss: "alivia", sub: u!.user!.id, email,
+      iss: "alivia", sub: u!.user!.id, email, professional,
       plan: ent.plan, entitlement: { kind: ent.kind, limit: ent.limit, used: ent.used, remaining: ent.remaining },
-      name: (u!.user!.user_metadata as any)?.full_name ?? null,
+      name: (professional?.name as string) ?? (u!.user!.user_metadata as any)?.full_name ?? null,
       patient, nonce: crypto.randomUUID(), exp: Date.now() + TTL_MS,
     };
     const p = b64u(new TextEncoder().encode(JSON.stringify(payload)));
