@@ -526,6 +526,13 @@
       "when": 1793837137925,
       "tag": "0074_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1793838408169,
+      "tag": "0075_physiotech_addons",
+      "breakpoints": true
     }
   ]
 }
