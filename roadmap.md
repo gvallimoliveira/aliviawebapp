@@ -1,5 +1,9 @@
 # Roadmap
 
+## Edição de cadastro — Lucas Kegele
+- [ ] Corrigir a identidade do paciente durante edição e recarga; testar renomeação sem novo cadastro.
+- [ ] Conferir duplicata do Lucas e preservar todos os vínculos/histórico ao resolver o cadastro vazio.
+
 ## Landings — refinamento editorial e preços da clínica
 - [x] Textos intermediários PRO/Paciente revisados em pt/en/es e clínica em português, com cenas reais e respaldo técnico; sem novas seções. Removidas promessas absolutas de diferenciação/tempo e esclarecido saldo de IA no FAQ da clínica.
 - [x] Mensal/anual imediatamente acima dos preços, fixo somente durante os três cards; créditos/reembolso depois, teste reduzido a uma linha. Três planos alternados em 440px/1280px, formulário de teste aberto sem enviar; páginas sem erros, sete testes e build OK. Pagamento real não executado; EN/ES não abertos no navegador; versão não publicada.
