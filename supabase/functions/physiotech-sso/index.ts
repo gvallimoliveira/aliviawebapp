@@ -57,7 +57,15 @@ Deno.serve(async (req) => {
       const { data } = await userClient.from("patients")
         .select("id, full_name, email, birth_date").eq("id", body.patientId).maybeSingle();
       if (!data) return json({ error: "patient not accessible" }, 403);
-      patient = { aliviaPatientId: data.id, name: data.full_name, email: data.email ?? null, birthDate: data.birth_date ?? null };
+      // Long-lived (180d) token bound to this professional + patient; PhysioTech
+      // stores it with the patient and sends it back with each report.
+      const rp = b64u(new TextEncoder().encode(JSON.stringify({
+        t: "report", sub: u!.user!.id, pid: data.id, exp: Date.now() + 180 * 86400000,
+      })));
+      patient = {
+        aliviaPatientId: data.id, name: data.full_name, email: data.email ?? null, birthDate: data.birth_date ?? null,
+        reportToken: `${rp}.${await hmac(rp)}`,
+      };
     }
 
     const payload = {
