@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ScanLine, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import { PhysioTechIcon } from "@/components/PhysioTechShortcut";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +28,7 @@ const PhysioTechReportsSection = ({ patientId }: { patientId?: string | null }) 
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <ScanLine className="h-4 w-4 text-primary" /> Exames complementares (PhysioTech)
+          <PhysioTechIcon /> Exames complementares (PhysioTech)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">

@@ -1,7 +1,7 @@
 // Soft paywall shown when the PhysioTech franchise (annual) or trial (monthly)
 // is used up. Prices mirror mem://business/physiotech-commercial-model.
 import { useEffect, useState } from "react";
-import { ScanLine } from "lucide-react";
+import { PhysioTechIcon } from "@/components/PhysioTechShortcut";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +37,7 @@ const PhysioTechUpgradeDialog = () => {
     <Dialog open={!!ent} onOpenChange={(o) => !o && setEnt(null)}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><ScanLine className="h-5 w-5 text-primary" /> {title}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><PhysioTechIcon className="h-5 w-5" /> {title}</DialogTitle>
           <DialogDescription>
             {p
               ? `Continue usando o PhysioTech com ${base === "annual" ? "~50%" : "30%"} de desconto por ser assinante Aliv.iA, na mesma fatura.`
