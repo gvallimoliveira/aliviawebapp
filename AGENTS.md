@@ -72,4 +72,4 @@
 - Basic quota: service-only ledger, email transaction lock, survives deletion; diagnosis needs reserved ID; anonymous read/write needs x-assessment-id within 48h.
 - Photos: preparePhoto, record/Studio size, transparency/fallback; exclude signatures/PDFs/measurements. Vision: economical-vision zero-retention chat; clinical/measurement models unchanged.
 - Blog: preserve bodies/URLs; BlogDashboardReturn sends signed-in users to /dashboard.
-- PhysioTech entitlement (allowlist, add-on, annual franchise, monthly trial) lives only in supabase/functions/_shared/physiotechEntitlement.ts; SSO, report receiver and checkout share it so limits never diverge.
+- PhysioTech entitlement lives only in `_shared/physiotechEntitlement.ts` so limits never diverge.
