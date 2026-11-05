@@ -4,7 +4,7 @@
 // report is linked. Without patientId (menu/dashboard) no patient is linked.
 import { ScanLine, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { isFallbackVip } from "@/lib/vipEmails";
+import { canUsePhysioTech } from "@/lib/physiotechAccess";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -34,7 +34,7 @@ interface Props {
 
 const PhysioTechShortcut = ({ variant, className = "", onOpened }: Props) => {
   const { user } = useAuth();
-  if (!isFallbackVip(user?.email)) return null;
+  if (!canUsePhysioTech(user?.email)) return null;
 
   const open = () => {
     void openPhysioTech(null);

@@ -43,7 +43,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Gauge, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, ScanLine, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import FreeReportDialog from "./FreeReportDialog";
 import { openPhysioTech } from "@/components/PhysioTechShortcut";
-import { isFallbackVip } from "@/lib/vipEmails";
+import { canUsePhysioTech } from "@/lib/physiotechAccess";
 import { useAuth as usePhysioTechAuth } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
@@ -341,7 +341,7 @@ export default function PatientDetailView(props: any) {
   const [evolutionPickerOpen, setEvolutionPickerOpen] = React.useState(false);
   const [freeReportOpen, setFreeReportOpen] = React.useState(false);
   const { user: physioTechUser } = usePhysioTechAuth();
-  const physioTechVip = isFallbackVip(physioTechUser?.email);
+  const physioTechVip = canUsePhysioTech(physioTechUser?.email);
   // Sempre resolve o ID do paciente (inclusive pacientes antigos/vindos de link),
   // para que o PhysioTech abra já vinculado a este prontuário.
   const resolvePatientIdForPhysioTech = async (): Promise<string | null> => {
