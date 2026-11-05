@@ -3724,6 +3724,72 @@ export type Database = {
           },
         ]
       }
+      physiotech_reports: {
+        Row: {
+          clinic_id: string | null
+          conclusion: string | null
+          created_at: string
+          exam_date: string | null
+          exam_title: string | null
+          exam_type: string
+          file_id: string | null
+          id: string
+          images: Json
+          metrics: Json
+          patient_id: string
+          pdf_url: string | null
+          professional_id: string | null
+          sent_by: string
+        }
+        Insert: {
+          clinic_id?: string | null
+          conclusion?: string | null
+          created_at?: string
+          exam_date?: string | null
+          exam_title?: string | null
+          exam_type: string
+          file_id?: string | null
+          id?: string
+          images?: Json
+          metrics?: Json
+          patient_id: string
+          pdf_url?: string | null
+          professional_id?: string | null
+          sent_by: string
+        }
+        Update: {
+          clinic_id?: string | null
+          conclusion?: string | null
+          created_at?: string
+          exam_date?: string | null
+          exam_title?: string | null
+          exam_type?: string
+          file_id?: string | null
+          id?: string
+          images?: Json
+          metrics?: Json
+          patient_id?: string
+          pdf_url?: string | null
+          professional_id?: string | null
+          sent_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "physiotech_reports_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "patient_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "physiotech_reports_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_restrictions: {
         Row: {
           created_at: string
