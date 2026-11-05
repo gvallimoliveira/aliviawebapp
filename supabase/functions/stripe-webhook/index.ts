@@ -752,6 +752,21 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
       break;
     }
 
+    case "physiotech_addon": {
+      const meta = (session.metadata || {}) as Record<string, string>;
+      if (!userId) { log("physiotech_addon: missing user_id"); break; }
+      const end = new Date();
+      if (meta.billing === "annual") end.setFullYear(end.getFullYear() + 1); else end.setMonth(end.getMonth() + 1);
+      await supabase.from("physiotech_addons").upsert({
+        user_id: userId, tier: meta.tier === "pro" ? "pro" : "essencial",
+        billing: meta.billing === "annual" ? "annual" : "monthly", status: "active",
+        stripe_subscription_id: (session.subscription as string) || null,
+        current_period_end: end.toISOString(), updated_at: new Date().toISOString(),
+      });
+      log("physiotech_addon activated", { userId, tier: meta.tier });
+      break;
+    }
+
     default:
       log("Unknown payment type, skipping fulfillment", { paymentType });
   }
@@ -771,6 +786,20 @@ async function handleSubscriptionLifecycle(sub: Stripe.Subscription, eventType: 
   const isActive = sub.status === "active" || sub.status === "trialing";
 
   log("subscription lifecycle", { eventType, subId: sub.id, status: sub.status, isProSub, isChatAddonSub });
+
+  // PhysioTech add-on lifecycle (identified by subscription metadata)
+  if ((sub.metadata as any)?.type === "physiotech_addon") {
+    const uid = (sub.metadata as any)?.user_id;
+    if (uid) {
+      await supabase.from("physiotech_addons").update({
+        status: isActive ? "active" : "inactive",
+        current_period_end: (sub as any).current_period_end ? new Date((sub as any).current_period_end * 1000).toISOString() : null,
+        stripe_subscription_id: isActive ? sub.id : null, updated_at: new Date().toISOString(),
+      }).eq("user_id", uid);
+      log("physiotech_addon lifecycle", { uid, isActive });
+    }
+    return;
+  }
 
   // A5: Chat addon lifecycle
   if (isChatAddonSub) {
