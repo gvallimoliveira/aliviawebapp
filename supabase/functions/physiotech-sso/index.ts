@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     const payload = {
       iss: "alivia", sub: u!.user!.id, email, professional,
       plan: ent.plan, entitlement: { kind: ent.kind, limit: ent.limit, used: ent.used, remaining: ent.remaining },
-      name: (u!.user!.user_metadata as any)?.full_name ?? null,
+      name: (professional?.name as string) ?? (u!.user!.user_metadata as any)?.full_name ?? null,
       patient, nonce: crypto.randomUUID(), exp: Date.now() + TTL_MS,
     };
     const p = b64u(new TextEncoder().encode(JSON.stringify(payload)));
