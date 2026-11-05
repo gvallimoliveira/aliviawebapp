@@ -2,7 +2,12 @@
 // Opens PhysioTech with a short-lived single sign-on ticket; when a patientId
 // is given (patient record), the ticket also carries that patient so the
 // report is linked. Without patientId (menu/dashboard) no patient is linked.
-import { ScanLine, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
+import physiotechIcon from "@/assets/physiotech-icon.png";
+
+export const PhysioTechIcon = ({ className = "h-4 w-4" }: { className?: string }) => (
+  <img src={physiotechIcon} alt="" aria-hidden="true" className={`${className} shrink-0 rounded-[22%] object-cover`} />
+);
 import { useAuth } from "@/contexts/AuthContext";
 import { canUsePhysioTech } from "@/lib/physiotechAccess";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +55,7 @@ const PhysioTechShortcut = ({ variant, className = "", onOpened }: Props) => {
   if (variant === "menu") {
     return (
       <button type="button" onClick={open} className={className}>
-        <ScanLine className="h-4 w-4" />
+        <PhysioTechIcon />
         <span className="flex-1 text-left">PhysioTech · Imagem & Termografia</span>
         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
           Beta VIP
@@ -65,9 +70,7 @@ const PhysioTechShortcut = ({ variant, className = "", onOpened }: Props) => {
       onClick={open}
       className={`flex w-full items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 text-left transition-colors hover:bg-muted ${className}`}
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        <ScanLine className="h-4 w-4" />
-      </span>
+      <PhysioTechIcon className="h-8 w-8" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium text-foreground">PhysioTech</span>
         <span className="block truncate text-xs text-muted-foreground">

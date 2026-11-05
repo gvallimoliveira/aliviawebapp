@@ -42,7 +42,7 @@ import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Gauge, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, ScanLine, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import FreeReportDialog from "./FreeReportDialog";
-import { openPhysioTech } from "@/components/PhysioTechShortcut";
+import { openPhysioTech, PhysioTechIcon } from "@/components/PhysioTechShortcut";
 import { canUsePhysioTech } from "@/lib/physiotechAccess";
 import { useAuth as usePhysioTechAuth } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -726,7 +726,7 @@ export default function PatientDetailView(props: any) {
               const id = await resolvePatientIdForPhysioTech();
               if (!id) { toast({ title: "Paciente ainda não cadastrado no prontuário" }); return; }
               void openPhysioTech(id);
-            }}><ScanLine className="h-4 w-4" /> PhysioTech</Button>
+            }}><PhysioTechIcon /> PhysioTech</Button>
           )}
           {((!readOnly || allowManualAssessment) || isDemo) && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={openManualAssessment}><FilePlus className="h-4 w-4" /> {language === "pt" ? "Avaliação manual" : language === "es" ? "Evaluación manual" : "Manual assessment"}</Button>}
           {(latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2 || (hasAgentAccess && !isDemo) || !isDemo) && (
