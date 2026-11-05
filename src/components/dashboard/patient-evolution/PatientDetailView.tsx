@@ -23,6 +23,7 @@ import ExternalAssessmentUploadModal from "../ExternalAssessmentUploadModal";
 import AddPatientModal, { type PatientToEdit } from "../AddPatientModal";
 import FinalHypothesisEditor from "../FinalHypothesisEditor";
 import PatientFilesSection from "../PatientFilesSection";
+import PhysioTechReportsSection from "./PhysioTechReportsSection";
 import PatientStrengthSection from "./PatientStrengthSection";
 import PatientRomSection from "./PatientRomSection";
 import PatientPhotosSection from "../PatientPhotosSection";
@@ -1626,6 +1627,12 @@ export default function PatientDetailView(props: any) {
       </div>
 
 
+
+      {!isDemo && (patient as any)?.patientRecord?.id && (
+        <div id="sec-physiotech" className="scroll-mt-24 min-w-0">
+          <PhysioTechReportsSection patientId={(patient as any).patientRecord.id} />
+        </div>
+      )}
 
       {/* Arquivos e fotos (bloco documental) */}
       <div id="sec-arquivos" className="scroll-mt-24 min-w-0">
