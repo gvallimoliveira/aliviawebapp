@@ -1,9 +1,9 @@
 # Roadmap
 
 ## Studio — relevância comercial PhysioTech
-- [ ] Conferir manual, kit salvo e seleção dos argumentos/ganchos por público.
-- [ ] Refinar interpretação e priorização comercial sem inventar recursos nem gerar artes com IA.
-- [ ] Conferir marca real, geração e regressões; preservar artes e identidade existentes.
+- [x] Kit PhysioTech real conferido na conta proprietária autorizada: oferta, públicos e diferenciais presentes; PDF original não é persistido pelo importador e não foi relido.
+- [x] Prioridade compartilhada por oferta/desejo/público, biblioteca dirigida de 56 ganchos e prova ligada ao benefício; Readiness não confunde escore Doppler. Software mantém vocabulário de produto e não recebe léxico clínico genérico. Interpretação futura reforçada e função implantada, sem reinterpretar ou sobrescrever a marca atual; ajuda pt/en/es atualizada.
+- [x] Geração autenticada → gestor/esportivo → biblioteca em Mensagem conferidos, sem erros de execução; celular sem transbordamento; 63 testes passaram e build OK. Artes, kit, fotos e identidade não gravados nem publicação realizada. Dois testes adicionais antigos de subnichos esperam “avaliação” onde a regra vigente retorna “autoavaliação”; mantidos sem alterar regra/copy. Heurística editorial não prevê conversão; revisão textual fina de formatos legados e novo upload/interpretação do PDF não realizados.
 
 ## Studio — oferta com faixas diagonais
 - [x] Modelo Oferta / faixas diagonais registrado no motor compartilhado, com oferta declarada e cores da marca, sem desconto/prazo da referência. Ajuda PRO/clínica pt/en/es atualizada; 54 testes passaram, build OK. Conta real → marca → seleção → geração → PNG baixado e celular sem transbordamento conferidos; quebra da faixa no PNG corrigida. Não salvou artes nem publicou; textos editoriais antigos do kit preservados.
