@@ -18,10 +18,17 @@ async function notifyAdmin(payload: Record<string, unknown>) {
     const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const resp = await fetch(`${url}/functions/v1/notify-admin`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+        // Service-role bearer alone is rejected by notify-admin in this runtime;
+        // the internal secret is the authoritative server-to-server credential.
+        "x-internal-secret": Deno.env.get("INTERNAL_ALERT_SECRET") ?? "",
+      },
       body: JSON.stringify({ action: "alert", ...payload }),
     });
-    await resp.text();
+    const out = await resp.text();
+    if (!resp.ok) console.error("notifyAdmin rejected", resp.status, out.slice(0, 200));
   } catch (e) {
     log("notifyAdmin failed (non-blocking)", { error: String(e) });
   }
