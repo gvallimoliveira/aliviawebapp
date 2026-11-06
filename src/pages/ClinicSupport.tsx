@@ -90,6 +90,7 @@ const categories: ToolCategory[] = [
     title: "Prontuário e documentos",
     icon: FileText,
     items: [
+      { key: "physiotech_files", icon: FileText, title: "Laudos PhysioTech salvos no prontuário", desc: "Nos acessos liberados ao PhysioTech, o envio do laudo guarda uma cópia permanente do PDF no Aliv.iA, inclusive sem e-mail do paciente. Abra o PDF em Exames complementares ou baixe em Documentos. A exclusão autorizada em qualquer dessas seções remove o PDF e o bloco clínico do Aliv.iA, sem alterar o exame original no PhysioTech." },
       {
         key: "photo_optimization", icon: ImageIcon,
         title: "Fotos mais leves no prontuário e Studio",

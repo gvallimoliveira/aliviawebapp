@@ -3,6 +3,7 @@
 // Auth: `reportToken` issued by physiotech-sso (HMAC, bound to sender + patient).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { canSendReport, getPhysioTechEntitlement } from "../_shared/physiotechEntitlement.ts";
+import { persistReportPdf } from "../_shared/physiotechFiles.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -59,36 +60,22 @@ Deno.serve(async (req) => {
     if (!canSendReport(ent)) return json({ error: "quota_exhausted", entitlement: ent }, 402);
 
     // Copy the PDF into Aliv.iA storage (PhysioTech URLs may be temporary).
-    let fileId: string | null = null;
-    if (pdfUrl && patient.email) {
-      try {
-        const r = await fetch(pdfUrl);
-        const buf = new Uint8Array(await r.arrayBuffer());
-        if (r.ok && buf.byteLength > 0 && buf.byteLength <= 20 * 1024 * 1024) {
-          const prefix = patient.clinic_id ? `clinic/${patient.clinic_id}` : `pro/${patient.professional_id}`;
-          const name = `PhysioTech_${examType}_${examDate.slice(0, 10)}.pdf`;
-          const path = `${prefix}/${patient.email}/physiotech_${Date.now()}.pdf`;
-          const up = await admin.storage.from("patient-files").upload(path, buf, { contentType: "application/pdf" });
-          if (!up.error) {
-            const { data: row } = await admin.from("patient_files").insert({
-              clinic_id: patient.clinic_id, professional_id: patient.clinic_id ? null : patient.professional_id,
-              patient_email: patient.email, patient_name: patient.full_name, file_name: name, file_path: path,
-              file_size_bytes: buf.byteLength, mime_type: "application/pdf", uploaded_by: tok.sub,
-              description: `Laudo PhysioTech — ${examTitle || examType}`,
-            }).select("id").single();
-            fileId = row?.id ?? null;
-          }
-        }
-      } catch (e) { console.error("pdf copy failed", e); }
-    }
+    if (!pdfUrl) return json({ error: "pdf_required" }, 400);
+    let attachment;
+    try { attachment = await persistReportPdf(admin, patient, tok.sub, pdfUrl, examType, examDate, examTitle); }
+    catch (e) { return json({ error: e instanceof Error ? e.message : "pdf_copy_failed", pdfAttached: false }, 422); }
 
     const { data: rep, error } = await admin.from("physiotech_reports").insert({
       patient_id: patient.id, clinic_id: patient.clinic_id, professional_id: patient.professional_id,
       sent_by: tok.sub, exam_type: examType, exam_title: examTitle, exam_date: examDate,
-      conclusion, metrics, images, pdf_url: pdfUrl, file_id: fileId,
+      conclusion, metrics, images, pdf_url: null, file_id: attachment.fileId,
     }).select("id").single();
-    if (error) throw error;
-    return json({ ok: true, reportId: rep.id, pdfAttached: !!fileId });
+    if (error) {
+      await admin.from("patient_files").delete().eq("id", attachment.fileId);
+      await admin.storage.from("patient-files").remove([attachment.path]);
+      throw error;
+    }
+    return json({ ok: true, reportId: rep.id, pdfAttached: true });
   } catch (e) {
     console.error("physiotech-receive-report", e);
     return json({ error: "internal" }, 500);

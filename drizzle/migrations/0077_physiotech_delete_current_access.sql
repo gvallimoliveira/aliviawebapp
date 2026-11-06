@@ -1,0 +1,1 @@
+ALTER POLICY "Sender deletes physiotech reports" ON public.physiotech_reports USING (sent_by = auth.uid() AND public.can_access_patient(patient_id, auth.uid()));

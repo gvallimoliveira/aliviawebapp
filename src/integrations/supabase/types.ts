@@ -3029,6 +3029,7 @@ export type Database = {
           id: string
           mime_type: string
           patient_email: string
+          patient_id: string | null
           patient_name: string | null
           professional_id: string | null
           uploaded_by: string
@@ -3043,6 +3044,7 @@ export type Database = {
           id?: string
           mime_type?: string
           patient_email: string
+          patient_id?: string | null
           patient_name?: string | null
           professional_id?: string | null
           uploaded_by: string
@@ -3057,6 +3059,7 @@ export type Database = {
           id?: string
           mime_type?: string
           patient_email?: string
+          patient_id?: string | null
           patient_name?: string | null
           professional_id?: string | null
           uploaded_by?: string
@@ -3067,6 +3070,13 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_files_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
           {

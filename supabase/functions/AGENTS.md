@@ -1,1 +1,2 @@
 - PhysioTech entitlement lives only in `_shared/physiotechEntitlement.ts`; SSO, report receiver and checkout share it so limits never diverge.
+- PhysioTech PDFs share physiotechFiles.ts for validated permanent copies by patient ID; report-file signs local files and checks document deletion authority, preventing expired-source dependencies.

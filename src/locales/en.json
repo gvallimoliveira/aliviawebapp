@@ -1,4 +1,8 @@
 {
+  "support.pro.tool.physiotech_files.title": "Permanent PhysioTech reports",
+  "support.pro.tool.physiotech_files.desc": "For authorized users, sending a report from PhysioTech stores a permanent PDF copy in Aliv.iA, including patients without email. Open it in Complementary exams or download in Documents. Authorized deletion removes both PDF and clinical block from Aliv.iA, not the original PhysioTech exam.",
+  "clinic.support.tool.physiotech_files.title": "Permanent PhysioTech reports",
+  "clinic.support.tool.physiotech_files.desc": "Sent PDFs are stored permanently, including patients without email. Open in Complementary exams or download in Documents. Authorized deletion removes the Aliv.iA PDF and clinical block, not the original PhysioTech exam. Access remains limited to authorized users.",
   "assessment.free_limit": "You have already started 2 free assessments with this email in the last 30 days. Try again when the oldest assessment reaches 30 days, or explore care options.",
   "assessment.email_required": "Enter a valid email to start the free assessment.",
   "support.patient.tool.free_quota.title": "Free assessments per email",
