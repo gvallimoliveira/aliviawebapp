@@ -25,9 +25,8 @@ const OfferRibbonBlock = ({ content, rng, treatment, format }: BlockProps) => {
     <section className={`relative flex ${sectionHeight(format)} flex-col ${dark ? "bg-foreground text-background" : "bg-background text-foreground"}`}>
       <div aria-hidden="true" className="pointer-events-none relative h-[19%] shrink-0 overflow-hidden">
         <div className="absolute -left-[5%] top-[38%] h-7 w-[110%] rotate-[10deg] bg-accent/40" />
-        <div className="absolute -left-[5%] top-[38%] flex h-8 w-[110%] -rotate-[7deg] items-center justify-center bg-primary text-primary-foreground">
-          <span className="px-8 text-center text-xs font-bold uppercase leading-tight">{ribbon}</span>
-        </div>
+        <div className="absolute -left-[5%] top-[38%] h-8 w-[110%] -rotate-[7deg] bg-primary" />
+        <p className="absolute inset-x-[8%] top-[38%] py-2 text-center text-xs font-bold uppercase leading-tight text-primary-foreground">{ribbon}</p>
       </div>
       <div className={`relative flex min-h-0 flex-1 flex-col justify-center gap-5 ${blockPadding(format)} !pt-4`}>
         <h2 className={`break-words text-center ${titleSize} font-extrabold uppercase leading-[1.05] [overflow-wrap:anywhere]`}>
@@ -35,8 +34,8 @@ const OfferRibbonBlock = ({ content, rng, treatment, format }: BlockProps) => {
           {headline.rest && <span className="block">{headline.rest}</span>}
         </h2>
         <div className="flex items-center gap-3" data-studio-fit-visual="1">
-          <Symbol aria-hidden="true" className={`h-16 w-16 shrink-0 ${dark ? "text-primary" : "text-foreground"}`} strokeWidth={1.5} />
-          <p className="min-w-0 flex-1 break-words rounded-lg bg-primary px-4 py-4 text-center text-xl font-extrabold leading-tight text-primary-foreground [overflow-wrap:anywhere]">{offer}</p>
+          <Symbol aria-hidden="true" className={`h-16 w-16 shrink-0 ${dark ? "text-background" : "text-foreground"}`} strokeWidth={1.5} />
+          <p className={`min-w-0 flex-1 break-words rounded-lg px-4 py-4 text-center text-xl font-extrabold leading-tight [overflow-wrap:anywhere] ${dark ? "bg-background text-foreground" : "bg-primary text-primary-foreground"}`}>{offer}</p>
         </div>
         <p className="break-words text-center text-sm font-bold uppercase leading-snug">{closing.cta}</p>
         {BRAND_HANDLE && <p className="text-center text-xs leading-normal">{BRAND_HANDLE}</p>}

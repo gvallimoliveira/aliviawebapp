@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Studio — oferta com faixas diagonais
-- [ ] Adicionar modelo selecionável com identidade da marca e oferta declarada; preservar edição/exportação compartilhadas, atualizar ajuda e testar geração e PNG.
+- [x] Modelo Oferta / faixas diagonais registrado no motor compartilhado, com oferta declarada e cores da marca, sem desconto/prazo da referência. Ajuda PRO/clínica pt/en/es atualizada; 54 testes passaram, build OK. Conta real → marca → seleção → geração → PNG baixado e celular sem transbordamento conferidos; quebra da faixa no PNG corrigida. Não salvou artes nem publicou; textos editoriais antigos do kit preservados.
 
 ## PhysioTech — laudos permanentes do Lucas
 - [x] Cópia permanente por ID inclusive sem e-mail; PDF obrigatório, validação de origem/formato/20MB, falhas não registram sucesso. Abertura assina somente cópia local; exclusão autorizada remove PDF e bloco clínico, preservando original PhysioTech. Ajuda pt/en/es atualizada; funções implantadas, cinco testes e build OK.
