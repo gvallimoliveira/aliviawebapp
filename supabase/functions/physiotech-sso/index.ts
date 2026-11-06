@@ -30,6 +30,18 @@ async function hmac(data: string) {
   return b64u(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data)));
 }
 
+// Latest readiness check-in of the patient (raw 0-10 scales, as stored).
+async function latestCheckin(client: any, patientId: string) {
+  const { data } = await client.from("readiness_checkins")
+    .select("checkin_date, readiness, fatigue, sleep, soreness, pain, stress, note")
+    .eq("patient_id", patientId).order("checkin_date", { ascending: false }).limit(1).maybeSingle();
+  if (!data) return null;
+  return {
+    checkinDate: data.checkin_date, readiness: data.readiness, fatigue: data.fatigue, sleep: data.sleep,
+    soreness: data.soreness, pain: data.pain, stress: data.stress, note: data.note,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
@@ -41,6 +53,16 @@ Deno.serve(async (req) => {
       const payload = JSON.parse(fromB64u(p));
       if (Date.now() > payload.exp) return json({ error: "expired" }, 401);
       return json({ ok: true, payload });
+    }
+
+    // "checkin" (PhysioTech server, "Atualizar check-in"): reportToken → latest check-in.
+    if (body.action === "checkin") {
+      const [p, sig] = String(body.reportToken || "").split(".");
+      if (!p || !sig || (await hmac(p)) !== sig) return json({ error: "invalid token" }, 401);
+      const tok = JSON.parse(fromB64u(p));
+      if (tok.t !== "report" || Date.now() > tok.exp) return json({ error: "expired token" }, 401);
+      const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      return json({ ok: true, aliviaPatientId: tok.pid, checkin: await latestCheckin(admin, tok.pid) });
     }
 
     // issue
@@ -68,6 +90,7 @@ Deno.serve(async (req) => {
       patient = {
         aliviaPatientId: data.id, name: data.full_name, email: data.email ?? null, birthDate: data.birth_date ?? null,
         reportToken: `${rp}.${await hmac(rp)}`,
+        checkin: await latestCheckin(userClient, data.id),
       };
     }
 
