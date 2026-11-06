@@ -1,5 +1,10 @@
 # Roadmap
 
+## Studio — essência e demonstração de produtos
+- [x] Política compartilhada reserva pelo menos 90% das unidades editoriais de software para fatos declarados do produto; carrosséis contam uma vez e lotes pequenos arredondam para cima. Inclui Aliv.iA com acervos canônicos por público; sem alterar kits salvos ou cobrança.
+- [x] Públicos, segurança clínica, marcas de atendimento e geração local preservados; ajuda pt/en/es e sete testes novos. 117 testes distintos aprovados; build OK. Regra arquitetural registrada no AGENTS do Studio (raiz sem espaço).
+- [x] Conta real → Aliv.iA → Profissional → 19 artes → PNG conferidos, sem erros; celular sem transbordamento. Não salvou artes nem publicou. PhysioTech não está acessível na sessão atual (só Aliv.iA): geração real dessa marca não verificada nesta rodada; extrator usa os mesmos campos do manual e foi testado com capacidades declaradas. Acabamento/contraste de formatos antigos não revisados globalmente.
+
 ## Studio — relevância comercial PhysioTech
 - [x] Kit PhysioTech real conferido na conta proprietária autorizada: oferta, públicos e diferenciais presentes; PDF original não é persistido pelo importador e não foi relido.
 - [x] Prioridade compartilhada por oferta/desejo/público, biblioteca dirigida de 56 ganchos e prova ligada ao benefício; Readiness não confunde escore Doppler. Software mantém vocabulário de produto e não recebe léxico clínico genérico. Interpretação futura reforçada e função implantada, sem reinterpretar ou sobrescrever a marca atual; ajuda pt/en/es atualizada.

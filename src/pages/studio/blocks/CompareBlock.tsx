@@ -37,19 +37,19 @@ const CompareBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
 
           <div className={stacked ? "flex flex-col gap-4" : "relative grid gap-4 md:grid-cols-2"}>
             <div className="rounded-2xl border border-border bg-muted/60 p-6">
-              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground">Antes</p>
+              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground">{compare.labels?.[0] || "Antes"}</p>
               <ul className="flex flex-col gap-3">
                 {compare.before.map((item, i) => (
                   <li key={`${item}-${i}`} className="flex items-start gap-2.5 text-sm text-muted-foreground md:text-base">
-                    <X className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-                    <span className="line-through decoration-muted-foreground/40">{item}</span>
+                    {!compare.factual && <X className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />}
+                    <span className={compare.factual ? "" : "line-through decoration-muted-foreground/40"}>{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             <div className="rounded-2xl border border-primary/25 bg-primary/5 p-6">
-              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-primary">Com {BRAND_NAME}</p>
+              <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.28em] text-primary">{compare.labels?.[1] || `Com ${BRAND_NAME}`}</p>
               <ul className="flex flex-col gap-3">
                 {compare.after.map((item, i) => (
                   <li key={`${item}-${i}`} className="flex items-start gap-2.5 text-sm font-medium text-foreground md:text-base">
@@ -60,7 +60,7 @@ const CompareBlock = ({ content, rng, treatment, format, picker, persona }: Bloc
               </ul>
             </div>
 
-            {versus && (
+            {versus && !compare.factual && (
               <div
                 aria-hidden
                 className="pointer-events-none absolute left-1/2 top-1/2 z-10 hidden h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-primary/30 bg-background text-[11px] font-bold tracking-[0.2em] text-primary shadow-md md:flex"

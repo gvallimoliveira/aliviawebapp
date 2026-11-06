@@ -108,6 +108,8 @@ export type StudioEcosystem = {
 
 
 export type WorldContent = {
+  /** Declared, audience-scoped software capabilities for product education. */
+  productFacts?: { title: string; description: string; benefit?: string; topic?: TopicId }[];
   id: WorldId;
   label: string;
   /** Lista fechada de prints oficiais permitidos neste pacote editorial. */
@@ -124,7 +126,7 @@ export type WorldContent = {
   triptychs: { heading: string; panels: { word: string; line: string; topic: TopicId }[] }[];
   /** Frases de tipografia-herói com uma palavra em destaque (TypoBlock). */
   typos: { lead: string; big: string; tail: string }[];
-  compare: { title: string; before: string[]; after: string[]; topics?: TopicId[] }[];
+  compare: { title: string; before: string[]; after: string[]; topics?: TopicId[]; labels?: [string, string]; factual?: boolean }[];
   journeys: { kicker: string; heading: string; steps: StudioStep[] }[];
   features: {
     tag: string;

@@ -34,6 +34,7 @@ import { distinctListItems } from "@/pages/studio/listCoherence";
 import { alignCtasToAudience, alignTitlesToAudience } from "./ctaAudience";
 import { isAliviaCoreBrand as isAliviaCtaBrand } from "./aliviaCoreCharm";
 import { commercialAudienceHooks, prioritizeCommercialAudience } from "./commercialPriority";
+import { isSoftwareProduct, productFactsFor } from "./productFocus";
 
 
 
@@ -2257,7 +2258,10 @@ export const buildSegmentContent = ({
     const aligned = isAliviaCtaBrand(brand ?? "")
       ? alignTitlesToAudience(alignCtasToAudience(owned, patientVoice, relation?.cta || audience?.cta), patientVoice)
       : owned;
-    return proofreadVisible(finalizeBrandVoice(aligned, {
+    const productReady = isSoftwareProduct(dna, "", brand) && audience?.id !== SLOGAN_SEGMENT
+      ? { ...aligned, productFacts: productFactsFor(aligned, dna, audience, brand) }
+      : aligned;
+    return proofreadVisible(finalizeBrandVoice(productReady, {
       brand,
       domain: veterinary ? "veterinária" : "",
     })) as WorldContent;

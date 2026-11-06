@@ -46,6 +46,7 @@ import { finalizeBrandVoice } from "./veterinaryVoice";
 
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
 import { matchesMsk, mskLines } from "./mskLexicon";
+import { focusProductContent, isSoftwareProduct, productFactsFor, productUnitPlan } from "./productFocus";
 
 
 export const DIRECTOR_AXES = [
@@ -425,6 +426,8 @@ const SALES_QUOTA = { proofs: 3, objections: 3, offers: 2, ctas: 2 } as const;
 type SalesSlot = keyof typeof SALES_QUOTA;
 
 export type ArtShot = {
+  /** Editorial allocation, not a claim about marketing performance. */
+  productFocused?: boolean;
   axis: DirectorAxis;
   axisLabel: string;
   /** Palavras que a foto desta arte deveria sustentar. */
@@ -641,7 +644,16 @@ export const planBatch = (input: {
     .filter(Boolean)
     .join(" · ");
   const domainProbe = normalize([domain, dna?.niche, dna?.description, dna?.presentation, dna?.offer].filter(Boolean).join(" · "));
-  const softwareDomain = /\b(software|saas|aplicativo|app)\b/.test(domainProbe);
+  const softwareDomain = isSoftwareProduct(dna, domainProbe, brandName);
+  const productFacts = content.productFacts ?? (softwareDomain ? productFactsFor(content, dna, relationAudience, brandName) : []);
+  const productStream = createStream(productFacts, `${seed}:product-facts`, weightOf);
+  const unitKeys = Array.from({ length: Math.max(0, count) }, (_, index) => {
+    const slide = blocks?.[index]?.slide;
+    return slide ? `carousel:${slide.group}` : `art:${index}`;
+  });
+  const units = [...new Set(unitKeys)];
+  const focusedUnits = productUnitPlan(units.length);
+  const productFocusAt = (index: number) => softwareDomain && productFacts.length > 0 && focusedUnits[units.indexOf(unitKeys[index])];
   const humanClinicalDomain = !softwareDomain && /fisioter|reabilita|musculoesquel|ortopedi|terapia manual|medicina esportiva/.test(domainProbe)
     && !/veterin|animal|pet|canin|felin/.test(domainProbe);
   const isVestibular = humanClinicalDomain && matchesVestibular(lexProbe);
@@ -691,7 +703,9 @@ export const planBatch = (input: {
     if (block.kind !== "carousel" || block.slide === undefined || carouselByGroup.has(block.slide.group)) return;
     // O roteiro é escolhido pelo diretor, não pelo índice visual: isso aplica a
     // memória entre lotes e ainda mantém roteiros distintos dentro desta leva.
-    const groupAxis = wheel[(block.slide.group + offset) % wheel.length];
+    const blockIndex = blocks.indexOf(block);
+    const productFocused = productFocusAt(blockIndex);
+    const groupAxis = productFocused ? "como-trabalho" : wheel[(block.slide.group + offset) % wheel.length];
     const selected = carouselStreamFor(Math.max(1, block.slide.total - 2)).take({
       axis: groupAxis,
       extra,
@@ -701,7 +715,7 @@ export const planBatch = (input: {
     const scriptWords = selected
       ? normalize(flatten(selected)).split(/[^a-z0-9]+/).filter((word) => word.length > 4)
       : [];
-    const selectedHook = closedEditorial ? undefined : carouselHookStream.take({
+    const selectedHook = closedEditorial || productFocused ? undefined : carouselHookStream.take({
       axis: groupAxis,
       // O gancho precisa combinar com a tese do roteiro, não apenas pertencer à
       // marca. Palavras do próprio carrossel pesam junto com dor/desejo/prova.
@@ -716,10 +730,28 @@ export const planBatch = (input: {
       salt: `group:${block.slide.group}:hook`,
     });
     if (selected) {
+      const fact = productFocused && !closedEditorial
+        ? productStream.take({ axis: groupAxis, extra, voice, salt: `carousel-product:${block.slide.group}` })
+        : undefined;
+      // Keep the existing slide count and media metadata; replace generic
+      // rhetorical scripts with a declared capability, not an invented case.
+      const productScript = fact ? {
+        ...selected,
+        kicker: brandName || content.label,
+        title: fact.title,
+        coverSub: fact.description,
+        slides: selected.slides.map((slide, index) => ({
+          ...slide,
+          heading: index === 0 ? "O que faz" : "Na prática",
+          body: index === 0 ? fact.title : fact.description || fact.title,
+          ...(fact.topic !== slide.topic ? { topic: fact.topic, photoIds: undefined } : {}),
+        })),
+        cta: { title: brandName || content.label, sub: relation?.cta || content.sales.ctas[0] || "" },
+      } : selected;
       carouselByGroup.set(
         block.slide.group,
-        closedEditorial
-          ? dedupeCarouselSlides(selected as WorldContent["carousels"][number])
+        closedEditorial || productFocused
+          ? dedupeCarouselSlides(productScript as WorldContent["carousels"][number])
           : directCarouselWithHook(selected as WorldContent["carousels"][number], selectedHook, relation as Relation | undefined),
       );
     }
@@ -746,7 +778,8 @@ export const planBatch = (input: {
   };
 
   const shots: ArtShot[] = Array.from({ length: Math.max(0, count) }, (_, index) => {
-    const axis = wheel[(index + offset) % wheel.length];
+    const productFocused = productFocusAt(index);
+    const axis = productFocused ? (["quem-sou", "como-trabalho", "prova"] as const)[units.indexOf(unitKeys[index]) % 3] : wheel[(index + offset) % wheel.length];
     const shotRoute = takeRoute(axis, index, extra);
     const shotExtra = [...extra, ...(shotRoute?.vocabulary ?? [])].slice(0, 96);
 
@@ -754,6 +787,12 @@ export const planBatch = (input: {
     const carousel = block?.kind === "carousel" && block.slide !== undefined
       ? carouselByGroup.get(block.slide.group)
       : undefined;
+    const productFact = productFocused && !carousel
+      ? productStream.take({ axis, extra: shotExtra, voice, salt: `product:${index}` })
+      : undefined;
+    const shotContent = productFact
+      ? focusProductContent(content, productFact, brandName || content.label, relation?.cta || content.sales.ctas[0] || "")
+      : content;
 
     /** Reserva `quota` itens de um acervo — nenhum outro da leva os repete. */
     const claim = (key: string, items: readonly unknown[] | undefined, quota: number): unknown[] => {
@@ -779,9 +818,9 @@ export const planBatch = (input: {
       reserved.carousels = [carousel];
     } else {
       (Object.keys(SLOT_QUOTA) as ListSlot[]).forEach((slot) => {
-        const items = content[slot] as readonly unknown[] | undefined;
-        const picked = claim(slot, items, SLOT_QUOTA[slot]);
-        if (picked.length > 0) {
+        const items = shotContent[slot] as readonly unknown[] | undefined;
+        const picked = claim(productFact ? `product:${index}:${slot}` : slot, items, productFact ? Math.min(items?.length ?? 0, SLOT_QUOTA[slot]) : SLOT_QUOTA[slot]);
+        if (picked.length > 0 || productFact) {
           (reserved as Record<string, unknown>)[slot] = picked;
         }
       });
@@ -794,7 +833,7 @@ export const planBatch = (input: {
      */
     // Official audience pools already contain reviewed product copy. A free
     // brand-level route can mention another feature and must not override them.
-    if (!carousel && shotRoute && !closedEditorial && !/^aliv\s*\.?\s*ia$/i.test(brandName ?? "")) {
+    if (!carousel && !productFact && shotRoute && !closedEditorial && !/^aliv\s*\.?\s*ia$/i.test(brandName ?? "")) {
       const composed = composeRouteCopy(shotRoute, {
         brand: brandName,
         seed: `${seed}:art:${index}`,
@@ -856,10 +895,10 @@ export const planBatch = (input: {
     }
 
     let sales: WorldSales | undefined;
-    if (content.sales && !carousel) {
-      sales = { ...content.sales };
+    if (shotContent.sales && !carousel) {
+      sales = { ...shotContent.sales };
       (Object.keys(SALES_QUOTA) as SalesSlot[]).forEach((slot) => {
-        const picked = claim(`sales.${slot}`, content.sales?.[slot], SALES_QUOTA[slot]) as string[];
+        const picked = claim(productFact ? `product:${index}:sales.${slot}` : `sales.${slot}`, shotContent.sales?.[slot], productFact ? Math.min(shotContent.sales[slot].length, SALES_QUOTA[slot]) : SALES_QUOTA[slot]) as string[];
         if (picked.length > 0 && sales) sales[slot] = picked;
       });
       if (lexicon && sales) sales.ctas = [...new Set([...lexicon.ctas, ...(sales.ctas ?? [])])];
@@ -912,6 +951,7 @@ export const planBatch = (input: {
     ];
 
     return {
+      productFocused,
       axis,
       axisLabel: AXIS_LABEL[axis],
       affinity,
