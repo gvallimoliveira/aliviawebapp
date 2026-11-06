@@ -1,12 +1,12 @@
 import logoAlivia from "@/assets/logo-alivia.png";
-import physiotechIcon from "@/assets/physiotech-studio-icon.png.asset.json";
+import physiotechIcon from "@/assets/physiotech-icon.png";
 
 /** Official asset mirrors: external sites can display an image yet deny export fetches (CORS). */
 export const resolveStudioBrandAsset = (source: string): string => {
   try {
     const url = new URL(source);
     if (url.origin === "https://physiotechapp.lovable.app" && url.pathname === "/apple-touch-icon.png") {
-      return physiotechIcon.url;
+      return physiotechIcon;
     }
   } catch {
     // Relative and data URLs already belong to the application's asset flow.

@@ -1,5 +1,5 @@
 # Studio rules
-- Official external asset mirrors resolve by exact source URL in `brand.ts`, including legacy export snapshots; use same-origin asset pointers because an image may display cross-origin but fail SVG/canvas export without CORS.
+- Official external asset mirrors resolve by exact source URL in `brand.ts`, including legacy export snapshots; reuse existing bundled official assets because an image may display cross-origin but fail SVG/canvas export without CORS.
 - Product copy splits declared exam enumerations into individual facts with scope retained in support; display vocabulary never uses sentence fragments. Touch PNG delivery prepares the shared raster first and requests a fresh gesture for file delivery, because Safari expires activation during rendering.
 - Software product education shares `studio-pro/productFocus.ts` and counts carousel groups once; use only declared/scoped capabilities (canonical owner packages), preserving media metadata and never interpreting symptoms as product features.
 - Client-brand commercial prioritization and audience hook libraries share `studio-pro/commercialPriority.ts`; rank only declared audience/offer facts locally and never overwrite saved kits or infer efficacy/conversion.
