@@ -25,6 +25,7 @@ import PhotoVeilBlock from "@/pages/studio/blocks/PhotoVeilBlock";
 import SearchBlock from "@/pages/studio/blocks/SearchBlock";
 import AskBoxBlock from "@/pages/studio/blocks/AskBoxBlock";
 import PromoPhoneBlock from "@/pages/studio/blocks/PromoPhoneBlock";
+import OfferRibbonBlock from "@/pages/studio/blocks/OfferRibbonBlock";
 import StackTypeBlock from "@/pages/studio/blocks/StackTypeBlock";
 import DeviceBlock from "@/pages/studio/blocks/DeviceBlock";
 import DoorBlock from "@/pages/studio/blocks/DoorBlock";
@@ -87,6 +88,7 @@ export const STUDIO_BLOCKS = {
   search: SearchBlock,
   askbox: AskBoxBlock,
   promoPhone: PromoPhoneBlock,
+  offerRibbon: OfferRibbonBlock,
   stackType: StackTypeBlock,
   tweet: TweetBlock,
   phoneSide: PhoneSideBlock,

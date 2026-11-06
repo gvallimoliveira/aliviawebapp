@@ -78,6 +78,10 @@ const ANGLES: Record<BlockKind, (c: WorldContent, rng: Rng) => string[]> = {
     rng.pick([...(c.sales?.offers ?? []), rng.pick(c.subs)]),
     rng.pick(c.features).description,
   ],
+  offerRibbon: (c, rng) => {
+    const h = rng.pick(c.headlines);
+    return [`${h.strong} ${h.rest}`.trim(), rng.pick(c.sales.offers)];
+  },
   stackType: (c, rng) => {
     const h = rng.pick(c.headlines);
     return [`${h.strong} ${h.rest}`, rng.pick(c.subs)];

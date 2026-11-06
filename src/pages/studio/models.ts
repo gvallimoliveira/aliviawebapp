@@ -36,6 +36,7 @@ export const STUDIO_MODELS: StudioModel[] = [
   { id: "busca", label: "Barra de busca", hint: "Pergunta digitada com sugestões", kinds: ["search"] },
   { id: "perguntas", label: "Caixa de perguntas", hint: "Sticker de pergunta convidando o público a mandar a dúvida", kinds: ["askbox"] },
   { id: "promocao", label: "Promoção / plano na tela", hint: "Produto ou assinatura na tela do celular com a palavra da oferta", kinds: ["promoPhone"] },
+  { id: "ofertafaixas", label: "Oferta / faixas diagonais", hint: "Faixas cruzadas, título grande e condição comercial em destaque, com as cores da marca", kinds: ["offerRibbon"] },
   { id: "tweet", label: "Post de rede (tweet)", hint: "Print de um post curto com avatar, @, horário e barra de ações", kinds: ["tweet"] },
   { id: "ladoalado", label: "Celular + explicação", hint: "Aparelho de um lado e título, texto e chamada do outro", kinds: ["phoneSide"] },
   { id: "recado", label: "Recado importante", hint: "Cartão de aviso com selo de exclamação sobre chapa de cor", kinds: ["notice"] },

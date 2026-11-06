@@ -144,6 +144,12 @@ const categories: ToolCategory[] = [
         desc: "O Studio conecta público, cena, problema, explicação, prova e próximo passo antes de escrever. Nos Diferenciais Aliv.iA, cada arte permanece em uma única funcionalidade e reaproveita argumentos das páginas da marca. Em Criar, as legendas copiadas, baixadas e salvas usam o texto da própria arte, incluindo ajustes manuais, sem acrescentar objeções soltas ou argumentos de outro tema. A escrita natural preserva frases completas; números, intervalos e informações clínicas não passam pela reescrita retórica. Em marcas veterinárias, o texto fala com o tutor e mantém o pet como centro do cuidado. A geração é local, sem créditos extras de IA. Listas e comparações mantêm ideias complementares, sem inventar itens para preencher espaço.",
       },
       {
+        key: "studio_offer_ribbon",
+        icon: Palette,
+        title: "Studio: oferta com faixas diagonais",
+        desc: "Em Criar, selecione Oferta / faixas diagonais: faixas cruzadas, título grande e condição comercial em destaque com as cores da marca. O texto utiliza ofertas já declaradas no kit, sem copiar descontos ou datas do modelo de referência. A arte mantém os ajustes de texto, salvamento e download em PNG.",
+      },
+      {
         key: "studio_ecosystem",
         icon: Layers,
         title: "Studio: Ecossistema de soluções",

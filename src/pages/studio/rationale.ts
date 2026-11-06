@@ -281,6 +281,13 @@ const SENSE: Record<BlockKind, Sense> = {
     needs: (c) => some(c.headlines),
     needsLabel: "frases curtas da marca",
   },
+  offerRibbon: {
+    format: "oferta com faixas diagonais",
+    sees: "faixas cruzadas no topo, título grande e condição comercial em destaque",
+    job: "dar visibilidade a uma oferta real da marca e ao próximo passo",
+    needs: (c) => some(c.sales?.offers) && some(c.headlines) && some(c.closings),
+    needsLabel: "oferta declarada pela marca, título e chamada",
+  },
   tweet: {
     format: "post de rede social",
     sees: "o print de um post curto da marca, com avatar, @, horário e barra de ações",

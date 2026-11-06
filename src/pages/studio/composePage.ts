@@ -30,6 +30,7 @@ export type BlockKind =
   | "search"
   | "askbox"
   | "promoPhone"
+  | "offerRibbon"
   | "stackType"
   | "tweet"
   | "phoneSide"
@@ -87,6 +88,7 @@ export const blockKindSupported = (kind: BlockKind, content?: WorldContent): boo
     case "promoPhone":
     case "device":
     case "tutorial": return content.features.length >= 2 && has(content.headlines) && has(content.closings);
+    case "offerRibbon": return content.sales.offers.some((line) => line.trim()) && has(content.headlines) && content.closings.some((line) => line.cta.trim());
     case "hub": return content.features.length >= 3 && has(content.closings);
     case "phoneSide": return has(content.features) && has(content.closings);
     case "quote":
@@ -147,6 +149,7 @@ export const TREATMENT_COUNT: Record<BlockKind, number> = {
   search: 4,
   askbox: 4,
   promoPhone: 3,
+  offerRibbon: 2,
   stackType: 4,
   tweet: 4,
   phoneSide: 3,
@@ -370,6 +373,7 @@ export const composePage = (
     ["search", 2],
     ["askbox", 2],
     ["promoPhone", 1],
+    ["offerRibbon", 1],
     ["stackType", 2],
     ["tweet", 2],
     ["phoneSide", 2],

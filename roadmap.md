@@ -1,5 +1,8 @@
 # Roadmap
 
+## Studio — oferta com faixas diagonais
+- [ ] Adicionar modelo selecionável com identidade da marca e oferta declarada; preservar edição/exportação compartilhadas, atualizar ajuda e testar geração e PNG.
+
 ## PhysioTech — laudos permanentes do Lucas
 - [x] Cópia permanente por ID inclusive sem e-mail; PDF obrigatório, validação de origem/formato/20MB, falhas não registram sucesso. Abertura assina somente cópia local; exclusão autorizada remove PDF e bloco clínico, preservando original PhysioTech. Ajuda pt/en/es atualizada; funções implantadas, cinco testes e build OK.
 - [x] Quatro laudos originais de Lucas recuperados usando sessão própria no PhysioTech; quatro cópias locais de 10–14MB confirmadas. Conta real → Lucas → SSO com paciente correto → reenviar exame real → pdfAttached true → recarga → PDF local 200 → exclusão só da nova duplicata conferidos; quatro originais preservados. Todos os PDFs abertos e download em Documentos verificado; visual desktop/celular conferido. Nova tela ainda precisa publicar; demais usuários antigos não recuperados nesta tarefa, aparelhos físicos e perfis de terceiros não testados.
