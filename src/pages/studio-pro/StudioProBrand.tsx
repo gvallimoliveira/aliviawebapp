@@ -1456,6 +1456,10 @@ const StudioProBrand = () => {
                     <BrandHooksCard
                       brandName={brand.name}
                       ingredients={{
+                        audiences: brand.content_source === "alivia" ? undefined : audiences,
+                        briefAnswers,
+                        description: form.description || undefined,
+                        positioning: form.positioning || undefined,
                         niche: form.niche || undefined,
                         audience: audiences[0]?.label,
                         pain: audiences[0]?.pains?.[0],

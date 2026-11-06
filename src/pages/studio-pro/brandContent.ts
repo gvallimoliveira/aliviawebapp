@@ -33,6 +33,7 @@ import { buildEditorialProgression, frameEditorialLoss } from "./narrativeArc";
 import { distinctListItems } from "@/pages/studio/listCoherence";
 import { alignCtasToAudience, alignTitlesToAudience } from "./ctaAudience";
 import { isAliviaCoreBrand as isAliviaCtaBrand } from "./aliviaCoreCharm";
+import { commercialAudienceHooks, prioritizeCommercialAudience } from "./commercialPriority";
 
 
 
@@ -1101,7 +1102,7 @@ export const buildBrandContent = (
     brand,
     [
       ...curatedHooksFor(brand),
-      ...composeHooks({
+      ...(audiences.length ? commercialAudienceHooks(audiences, dna) : composeHooks({
         brand,
         niche,
         audience: editorialAudience(dna.primaryAudience, {
@@ -1116,7 +1117,7 @@ export const buildBrandContent = (
         belief: dna.belief || dna.positioning,
         keyword: words[0],
         cta: dna.cta,
-      }),
+      })),
     ].filter((hook, i, all) => all.findIndex((h) => h.strong === hook.strong) === i),
   );
 
@@ -1624,6 +1625,7 @@ const applyAudience = (
   return {
     ...base,
     label: `${brand} · ${who}`,
+    hooks: isAliviaCtaBrand(brand) ? base.hooks : commercialAudienceHooks([audience], { forbidden: [] }),
     kickers: [KEY, `PARA ${KEY}`, `${KEY} · ${brand.toUpperCase()}`, ...tail(base.kickers)],
     // Cauda genérica limitada: comunicação dirigida não pode ser diluída.
     headlines: [...headlines, ...tail(base.headlines)].slice(0, 12),
@@ -2154,6 +2156,7 @@ export const buildSegmentContent = ({
     briefAnswers: kit.briefAnswers,
   });
   const root = base ?? buildBrandContent(kit, variation, audiences);
+  if (!isAliviaCtaBrand(brand)) audiences = audiences.map((audience) => prioritizeCommercialAudience(audience, dna));
   const relationFor = (audience?: BrandAudience) =>
     pickRelation({ audience, audiences, dna, brand, angle, seed: variationSeed, keywordMatrix: kit.keywordMatrix, reasoningMatrix: kit.reasoningMatrix });
 

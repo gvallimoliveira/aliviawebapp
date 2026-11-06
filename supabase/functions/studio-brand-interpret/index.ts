@@ -550,7 +550,7 @@ Deno.serve(async (req) => {
     const { data: brand, error: brandError } = await supabase
       .from("studio_brands")
       .select(
-        "id, user_id, name, niche, tone, description, source_url, instagram_handle, topics, audiences, colors, logo_url",
+        "id, user_id, name, niche, tone, description, source_url, instagram_handle, topics, audiences, colors, logo_url, brief_answers, slogan",
       )
       .eq("id", brandId)
       .maybeSingle();
@@ -649,6 +649,8 @@ Regras:
 - PRECISÃO DE TOM (regra dura): o hexadecimal escrito no manual é a verdade. Copie caractere por caractere, sem arredondar dígito nem trocar por um tom "parecido". Se o manual trouxer CMYK, RGB ou Pantone junto do hexadecimal, o hexadecimal manda. Se houver SÓ RGB, converta exatamente (rgb(184,115,51) = #B87333). Se a amostra aparecer apenas impressa, sem código, devolva o tom mais próximo que conseguir ler da amostra — o dono da marca refina depois com o conta-gotas.
 
 - Nunca invente números, prêmios, certificações ou depoimentos.
+- PRIORIDADE COMERCIAL POR PÚBLICO: não transforme o manual em um inventário de funções com o mesmo peso. Em desires e proof, coloque primeiro os ganhos mais ligados ao motivo principal de contratar e ao problema cotidiano desse público, depois as funções operacionais acessórias. Diferencial é uma capacidade concreta sustentada pelo material, ligada a um benefício desejado; privacidade, suporte e administração podem apoiar a decisão, mas não substituem a proposta central quando esta estiver documentada. Não invente retorno financeiro, eficácia clínica nem validação do software.
+- GANCHOS: varie entre desejo concreto, obstáculo cotidiano, capacidade diferenciadora e demonstração verificável. Use os argumentos mais relevantes do manual para cada público, não frases genéricas como "tentativa e erro", "já tentou de tudo" ou "é normal" sem uma cena real declarada. Não confunda segurança técnica com garantia clínica, nem acompanhamento de exames com autorização automática para retorno ao esporte. Preserve o julgamento do profissional.
 - Se a marca lida com saúde, nunca prometa cura nem diagnóstico definitivo.
 
 Tipografia (campo obrigatório quando existe manual anexado): procure a seção de tipografia/fontes do documento e devolva em "font_family" o nome EXATO da fonte de TÍTULOS e em "font_body" a de TEXTO CORRIDO, quando o manual trouxer duas (ex.: "Outfit" e "Figtree"). Aceite variações escritas como "Família tipográfica", "Tipografia", "Fonte principal", "Display", "Headline", "Corpo". Nomes de peso ("Outfit SemiBold") devem devolver só a família ("Outfit"). Só devolva "" se o briefing realmente não citar nenhuma fonte.

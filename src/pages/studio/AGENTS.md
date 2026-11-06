@@ -1,4 +1,5 @@
 # Studio rules
+- Client-brand commercial prioritization and audience hook libraries share `studio-pro/commercialPriority.ts`; rank only declared audience/offer facts locally and never overwrite saved kits or infer efficacy/conversion.
 - Studio copy lists use the shared `listCoherence.ts` guard at final voice review and rendering; semantic deduplication keeps original complementary arguments without padding or modifying media metadata.
 - Studio list editing targets the text leaf rather than the icon-bearing row and rejects positional snapshots with mismatched slot counts; this preserves icons and prevents stale edits shifting into labels after deduplication.
 - Studio PNG exports must always use the shared static export surface in `exportImage.ts`; one pipeline prevents preview/download drift across individual, batch, carousel, thumbnail, and gallery flows.

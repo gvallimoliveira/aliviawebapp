@@ -13,6 +13,7 @@ import { methodPlainLine } from "./methodPlain";
 import { pickMatrixContext } from "./contentMatrices";
 
 import { editorialAudience } from "@/pages/studio/typographyGuards";
+import { relatedCommercialItem } from "./commercialPriority";
 
 export type NarrativeRouteKind =
   | "pain-to-desire"
@@ -187,8 +188,9 @@ export const buildNarrativeRoute = ({
   const pick = (pool: string[]) => pool.length ? pool[rng.int(pool.length)] : undefined;
   const tension = clean(matrix.reasoning?.scene) || pick(pains);
   const desire = clean(matrix.reasoning?.outcome) || pick(desires);
-  const proof = clean(matrix.reasoning?.bridge) || pick(proofs);
-  const feature = clean(matrix.reasoning?.mechanism) || pick(features);
+  const isAlivia = /aliv\.?i?a/i.test(brand ?? "");
+  const proof = clean(matrix.reasoning?.bridge) || (isAlivia ? pick(proofs) : relatedCommercialItem(desire, proofs) || (desire ? undefined : pick(proofs)));
+  const feature = clean(matrix.reasoning?.mechanism) || (!isAlivia && audience ? proof || desire : pick(features));
   const scene = clean(matrix.reasoning?.scene) || pick(scenes);
   const objection = pick(objections);
   const stakes = pick(stakesPool);
@@ -196,7 +198,6 @@ export const buildNarrativeRoute = ({
   // O vizinho fornece apenas afinidade semântica; seu rótulo e sua fala nunca
   // entram na copy do público ativo.
   const bridgeWords = neighbor ? audienceWords(neighbor) : [];
-  const isAlivia = /aliv\.?i?a/i.test(brand ?? "");
   const aliviaLinks = isAlivia
     ? ALIVIA_DESIRE_LINKS
         .map((link) => ({ link, score: overlap(tokens(tension, desire, proof, feature), tokens(...link)) }))

@@ -641,7 +641,8 @@ export const planBatch = (input: {
     .filter(Boolean)
     .join(" · ");
   const domainProbe = normalize([domain, dna?.niche, dna?.description, dna?.presentation, dna?.offer].filter(Boolean).join(" · "));
-  const humanClinicalDomain = /fisioter|reabilita|musculoesquel|ortopedi|terapia manual|medicina esportiva/.test(domainProbe)
+  const softwareDomain = /\b(software|saas|aplicativo|app)\b/.test(domainProbe);
+  const humanClinicalDomain = !softwareDomain && /fisioter|reabilita|musculoesquel|ortopedi|terapia manual|medicina esportiva/.test(domainProbe)
     && !/veterin|animal|pet|canin|felin/.test(domainProbe);
   const isVestibular = humanClinicalDomain && matchesVestibular(lexProbe);
   const lexiconFor = (index: number) => {
@@ -800,7 +801,26 @@ export const planBatch = (input: {
         rotate: index,
         weightOf,
       });
+      if (softwareDomain) {
+        // A SaaS sells a concrete capability, not clinical care. Keep complete
+        // source facts instead of rhetorical truncation or unrelated care copy.
+        const benefit = cleanLine(shotRoute.desire);
+        const proof = cleanLine(shotRoute.proof);
+        const title = index % 2 === 0 ? benefit || proof : proof || benefit;
+        const support = title === benefit ? proof : benefit;
+        const cta = shotRoute.cta || relation?.cta || "";
+        const facts = [...new Set([benefit, proof].filter(Boolean))];
+        if (title) {
+          reserved.headlines = [{ strong: title, rest: "" }];
+          reserved.subs = support ? [support] : [];
+          reserved.hooks = [{ hook: shotRoute.audienceLabel, strong: title, rest: ".", sub: support || undefined, cta }];
+          reserved.closings = [{ title: benefit || title, sub: proof, cta }];
+          reserved.features = facts.map((fact) => ({ tag: shotRoute.audienceLabel, title: fact, description: fact === benefit ? proof : benefit, topic: undefined }));
+          reserved.lists = [{ heading: title, items: facts.filter((fact) => fact !== title), closing: cta }];
+        }
+      }
       (Object.keys(composed) as (keyof typeof composed)[]).forEach((slot) => {
+        if (softwareDomain && ["headlines", "subs", "hooks", "closings", "features", "lists"].includes(slot)) return;
         const items = (composed[slot] ?? []) as unknown[];
         if (!items.length) return;
         const quota = SLOT_QUOTA[slot as ListSlot] ?? items.length;

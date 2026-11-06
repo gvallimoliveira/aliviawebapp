@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,9 @@ import {
   removeCustomHook,
   saveHookPrefs,
 } from "@/pages/studio/hookStore";
+import type { BrandAudience } from "./audiences";
+import { buildBrandDna } from "./brandDnaKit";
+import { commercialAudienceHooks } from "./commercialPriority";
 
 
 /**
@@ -41,6 +44,10 @@ export type BrandHooksIngredients = {
   offer?: string;
   belief?: string;
   cta?: string;
+  audiences?: BrandAudience[];
+  briefAnswers?: unknown;
+  description?: string;
+  positioning?: string;
 };
 
 const buildLibrary = (
@@ -52,7 +59,7 @@ const buildLibrary = (
   [
     ...custom,
     ...curatedHooksFor(brandName, { patientVoice }),
-    ...composeHooks({ brand: brandName, ...ing }),
+    ...(ing.audiences?.length ? commercialAudienceHooks(ing.audiences, buildBrandDna({ ...ing, briefAnswers: ing.briefAnswers })) : composeHooks({ brand: brandName, ...ing })),
   ]
     .map(tightenHook)
     .filter((hook, i, all) => all.findIndex((h) => h.strong === hook.strong) === i);
@@ -87,6 +94,12 @@ const HookList = ({
   );
 
   const [draft, setDraft] = useState({ strong: "", sub: "", cta: "" });
+
+  useEffect(() => {
+    const active = applyHookPrefs(brandName, library, { patientVoice });
+    const rest = library.filter((hook) => !active.some((item) => hookKey(item) === hookKey(hook)));
+    setOrder([...active, ...rest]);
+  }, [brandName, library, patientVoice]);
 
   const persist = (nextOrder: StudioHook[], nextOff: Set<string>) => {
     saveHookPrefs(

@@ -18,6 +18,8 @@ export type TopicCandidate = {
   specificity: number;
   /** 0..1 — quanto esse assunto já foi usado pela marca. */
   coverageUsed: number;
+  /** Editorial relevance to a desired benefit, not predicted conversion. */
+  benefitRelevance?: number;
 };
 
 export const SALES_VALUE_WEIGHTS = {
@@ -26,6 +28,7 @@ export const SALES_VALUE_WEIGHTS = {
   proofBonus: 2,
   specificity: 1.5,
   coveragePenalty: -4,
+  benefitRelevance: 8,
 } as const;
 
 export const salesValueScore = (candidate: TopicCandidate): number =>
@@ -33,6 +36,7 @@ export const salesValueScore = (candidate: TopicCandidate): number =>
   Math.min(1, candidate.objectionProximity) * SALES_VALUE_WEIGHTS.objectionProximity +
   (candidate.hasProof ? SALES_VALUE_WEIGHTS.proofBonus : 0) +
   Math.min(1, Math.max(0, candidate.specificity)) * SALES_VALUE_WEIGHTS.specificity +
+  Math.min(1, Math.max(0, candidate.benefitRelevance ?? 0)) * SALES_VALUE_WEIGHTS.benefitRelevance +
   Math.min(1, Math.max(0, candidate.coverageUsed)) * SALES_VALUE_WEIGHTS.coveragePenalty;
 
 /** Ordena do assunto mais vendável ao menos; empate resolve pelo id. */

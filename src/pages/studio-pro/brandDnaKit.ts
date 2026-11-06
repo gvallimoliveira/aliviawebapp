@@ -291,7 +291,8 @@ export const offerWords = (dna: BrandDna, brandName = ""): OfferWords => {
 
   let kind: OfferKind = "serviço";
   if (hasAny(text, PRODUCT_TERMS)) kind = "produto";
-  if (hasAny(text, SERVICE_TERMS)) kind = "atendimento";
+  // Explicit software identity wins over references to the clinical field it serves.
+  if (hasAny(text, SERVICE_TERMS) && !/\b(software|saas|aplicativo|app)\b/i.test(text)) kind = "atendimento";
   else if (hasAny(text, PROGRAM_TERMS) && kind !== "produto") kind = "programa";
 
   const personal = kind !== "produto" && isPersonalBrand(brandName, dna);

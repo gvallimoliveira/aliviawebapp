@@ -16,6 +16,7 @@ import { buildNarrativeRoutes, type NarrativeRoute } from "./synapses";
 import { matchesVestibular, mentionsPainAsSymptom } from "./vestibularLexicon";
 import { editorialAudience } from "@/pages/studio/typographyGuards";
 import { rankTopics } from "./topicScore";
+import { commercialAffinity, commercialRelevance, prioritizeCommercialAudience } from "./commercialPriority";
 
 
 export type Relation = {
@@ -73,6 +74,8 @@ export const pickRelation = ({
   keywordMatrix?: unknown;
   reasoningMatrix?: unknown;
 }): Relation => {
+  const officialBrand = /aliv\.?i?a/i.test(brand);
+  if (audience && !officialBrand) audience = prioritizeCommercialAudience(audience, dna);
   const rng = createRng(`relation:${seed ?? "static"}:${audience?.id ?? "brand"}:${angle}`);
   const routes = buildNarrativeRoutes({ audience, audiences, dna, brand, seed: seed ?? "static", keywordMatrix, reasoningMatrix });
   /**
@@ -84,15 +87,17 @@ export const pickRelation = ({
     routes.map((item, index) => ({
       id: `${index}:${item.signature}`,
       route: item,
-      painFrequency: [item.tension, item.scene, item.stakes].filter(Boolean).length,
+      painFrequency: officialBrand ? [item.tension, item.scene, item.stakes].filter(Boolean).length : item.tension ? [dna.pain, ...(audience?.pains ?? []), ...(audience?.scenes ?? [])]
+        .filter((source) => source && commercialAffinity(item.tension ?? "", [source]) >= 0.8).length : 0,
       objectionProximity: item.objection ? 1 : 0,
       hasProof: Boolean(item.proof || item.feature),
       specificity:
         [item.lexicalTerm, item.trigger, item.scene].filter(Boolean).length / 3,
       coverageUsed: 0,
+      benefitRelevance: audience && !officialBrand ? Math.min(1, commercialRelevance([item.desire, item.proof].filter(Boolean).join(" "), audience, dna) / 14) : 0,
     })),
   ).map((entry) => entry.route);
-  const route = rankedRoutes[seed ? rng.int(Math.max(1, Math.ceil(rankedRoutes.length / 2))) : 0] ?? routes[0];
+  const route = rankedRoutes[officialBrand && seed ? rng.int(Math.max(1, Math.ceil(rankedRoutes.length / 2))) : 0] ?? routes[0];
 
 
   const vestibular = matchesVestibular([
