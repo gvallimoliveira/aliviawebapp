@@ -1,5 +1,10 @@
 # Roadmap
 
+## Studio — relevância comercial PhysioTech
+- [ ] Conferir manual, kit salvo e seleção dos argumentos/ganchos por público.
+- [ ] Refinar interpretação e priorização comercial sem inventar recursos nem gerar artes com IA.
+- [ ] Conferir marca real, geração e regressões; preservar artes e identidade existentes.
+
 ## Studio — oferta com faixas diagonais
 - [x] Modelo Oferta / faixas diagonais registrado no motor compartilhado, com oferta declarada e cores da marca, sem desconto/prazo da referência. Ajuda PRO/clínica pt/en/es atualizada; 54 testes passaram, build OK. Conta real → marca → seleção → geração → PNG baixado e celular sem transbordamento conferidos; quebra da faixa no PNG corrigida. Não salvou artes nem publicou; textos editoriais antigos do kit preservados.
 
