@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect } from "vitest";
 import { fetchReportPdf, patientFileKey, reportSource, MAX_REPORT_BYTES } from "../../supabase/functions/_shared/physiotechFiles";
 const url = "https://ofjtgoobymkuujimtxoy.supabase.co/storage/v1/object/sign/exam-images/user/reports/exam.pdf?token=test";
