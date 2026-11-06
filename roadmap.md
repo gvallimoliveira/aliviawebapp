@@ -1,5 +1,10 @@
 # Roadmap
 
+## Studio — download e leitura PhysioTech
+- [x] PNG real baixado em desktop e celular simulado; captura revelou texto ausente por animações de entrada no clone e foi corrigida, PNG final com texto conferido. Celular prepara primeiro e oferece novo toque para entregar. Erro original do iPhone não reproduzido; aparelho físico e marca PhysioTech não disponíveis na sessão (somente Aliv.iA).
+- [x] Enumerações de exames viram fatos individuais, com região preservada no apoio; destaque PhysioTech com seis palavras aprovadas. 60 testes passaram; kit e artes salvas preservados, publicação não feita.
+- [x] Manual é interpretado como texto, sem extração automática de imagens; galeria aceita imagens separadas, informado ao usuário.
+
 ## Studio — essência e demonstração de produtos
 - [x] Política compartilhada reserva pelo menos 90% das unidades editoriais de software para fatos declarados do produto; carrosséis contam uma vez e lotes pequenos arredondam para cima. Inclui Aliv.iA com acervos canônicos por público; sem alterar kits salvos ou cobrança.
 - [x] Públicos, segurança clínica, marcas de atendimento e geração local preservados; ajuda pt/en/es e sete testes novos. 117 testes distintos aprovados; build OK. Regra arquitetural registrada no AGENTS do Studio (raiz sem espaço).

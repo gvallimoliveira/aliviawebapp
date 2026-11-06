@@ -763,6 +763,11 @@ export const paintStrokeTextOnCanvas = (
 export const freezeMotion = (node: HTMLElement) => {
   const restores: Array<() => void> = [];
   const layers = Array.from(node.querySelectorAll<HTMLElement>('[data-studio-motion="1"]'));
+  // Individual blocks also have reveal animations, outside StudioMotion.
+  // A clone has no IntersectionObserver: opacity:0 can otherwise stay forever.
+  node.querySelectorAll<HTMLElement>('[style]').forEach((element) => {
+    if (element.style.opacity === "0" && !layers.includes(element)) layers.push(element);
+  });
   if (node.dataset.studioMotion === "1") layers.push(node);
 
   for (const layer of layers) {

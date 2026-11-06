@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { productUnitPlan, productFactsFor, isSoftwareProduct } from "../productFocus";
+import { productUnitPlan, productFactsFor, isSoftwareProduct, productDisplayWords, splitProductFact } from "../productFocus";
 import { buildBrandDna } from "../brandDnaKit";
 import { buildSegmentContent } from "../brandContent";
 import { planBatch } from "../director";
@@ -11,6 +11,15 @@ const kit = { name: "Produto novo", description: "Software de análise de exames
 const dna = buildBrandDna(kit);
 
 describe("foco de divulgação de produtos", () => {
+  it("usa somente as seis palavras aprovadas no destaque PhysioTech", () => {
+    expect(productDisplayWords("PhysioTech", "Assinatura de software com análise assistida")).toEqual(["Tecnologia", "Termografia", "Ressonância", "Ultrassom", "Análise", "Tecido"]);
+    expect(productDisplayWords("Outra marca", "Agenda integrada")).not.toContain("Termografia");
+  });
+  it("separa exames declarados sem perder a região de interesse", () => {
+    const facts = splitProductFact({ title: "PhysioTech analisa Termografia, Ultrassonografia e Ressonância magnética na região de interesse do tratamento.", description: "Conferência pelo profissional" });
+    expect(facts.map((fact) => fact.title)).toEqual(["PhysioTech analisa Termografia", "PhysioTech analisa Ultrassonografia", "PhysioTech analisa Ressonância magnética"]);
+    expect(facts.every((fact) => fact.description.includes("na região de interesse do tratamento"))).toBe(true);
+  });
   it("reserva 90% das unidades e arredonda lotes pequenos para cima", () => {
     expect(productUnitPlan(10).filter(Boolean)).toHaveLength(9);
     expect(productUnitPlan(20).filter(Boolean)).toHaveLength(18);

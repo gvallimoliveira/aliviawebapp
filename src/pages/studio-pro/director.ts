@@ -46,7 +46,7 @@ import { finalizeBrandVoice } from "./veterinaryVoice";
 
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
 import { matchesMsk, mskLines } from "./mskLexicon";
-import { focusProductContent, isSoftwareProduct, productFactsFor, productUnitPlan } from "./productFocus";
+import { conciseProductLine, focusProductContent, isSoftwareProduct, productFactsFor, productUnitPlan, splitProductFact } from "./productFocus";
 
 
 export const DIRECTOR_AXES = [
@@ -645,7 +645,7 @@ export const planBatch = (input: {
     .join(" · ");
   const domainProbe = normalize([domain, dna?.niche, dna?.description, dna?.presentation, dna?.offer].filter(Boolean).join(" · "));
   const softwareDomain = isSoftwareProduct(dna, domainProbe, brandName);
-  const productFacts = content.productFacts ?? (softwareDomain ? productFactsFor(content, dna, relationAudience, brandName) : []);
+  const productFacts = (content.productFacts ?? (softwareDomain ? productFactsFor(content, dna, relationAudience, brandName) : [])).flatMap(splitProductFact);
   const productStream = createStream(productFacts, `${seed}:product-facts`, weightOf);
   const unitKeys = Array.from({ length: Math.max(0, count) }, (_, index) => {
     const slide = blocks?.[index]?.slide;
@@ -738,12 +738,12 @@ export const planBatch = (input: {
       const productScript = fact ? {
         ...selected,
         kicker: brandName || content.label,
-        title: fact.title,
-        coverSub: fact.description,
+        title: conciseProductLine(fact.title),
+        coverSub: conciseProductLine(fact.description),
         slides: selected.slides.map((slide, index) => ({
           ...slide,
           heading: index === 0 ? "O que faz" : "Na prática",
-          body: index === 0 ? fact.title : fact.description || fact.title,
+          body: conciseProductLine(index === 0 ? fact.title : fact.description || fact.title),
           ...(fact.topic !== slide.topic ? { topic: fact.topic, photoIds: undefined } : {}),
         })),
         cta: { title: brandName || content.label, sub: relation?.cta || content.sales.ctas[0] || "" },

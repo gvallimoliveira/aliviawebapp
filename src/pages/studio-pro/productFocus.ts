@@ -6,6 +6,27 @@ import { commercialAffinity, relatedCommercialItem } from "./commercialPriority"
 
 export type ProductFact = { title: string; description: string; benefit?: string; topic?: WorldContent["features"][number]["topic"] };
 const clean = (value?: string) => (value ?? "").trim().replace(/\s+/g, " ");
+/** Prefer a complete clause, never a character/word cut or a lost safety qualifier. */
+export const conciseProductLine = (value: string) => {
+  const text = clean(value);
+  if (text.length <= 100) return text;
+  if (/\b(sem|não|somente|apenas|profissional|assistid[ao]|região de interesse)\b/i.test(text)) return text;
+  const clauses = text.split(/;|(?<=[.!?])\s+/).filter(Boolean);
+  return clauses.find((line) => line.length <= 100) ?? text;
+};
+export const productDisplayWords = (brand: string, text: string): string[] => {
+  if (/^physio\s*tech$/i.test(brand.trim())) return ["Tecnologia", "Termografia", "Ressonância", "Ultrassom", "Análise", "Tecido"];
+  const stop = /^(software|assinatura|plataforma|aplicativo|assistida|clínico|clínica|sistema|produto)$/i;
+  return [...new Set(text.match(/[\p{L}]{5,}/gu) ?? [])].filter((word) => !stop.test(word)).slice(0, 6);
+};
+/** Split declared modality enumerations, keeping the original scope in support. */
+export const splitProductFact = (fact: ProductFact): ProductFact[] => {
+  const match = fact.title.match(/^(.*?)\b(analisa|análise(?: assistida(?: por IA)?)? de)\s+(termografia[^.!?]*?)(\s+na região\b.*|[.!?]?)$/i);
+  if (!match) return [fact];
+  const modalities = match[3].split(/,\s*|\s+e\s+/).map(clean).filter(Boolean);
+  if (modalities.length < 2 || !modalities.every((item) => /^(termografia|ultrassonografia|ultrassom|ressonância magnética)$/i.test(item))) return [fact];
+  return modalities.map((modality) => ({ ...fact, title: clean(`${match[1]}${match[2]} ${modality}`), description: clean([match[4], fact.description].filter(Boolean).join(". ")) }));
+};
 const sentences = (value?: string) => (value ?? "").split(/\n+|;|(?<=[.!?])\s+(?=[A-ZÀ-Ú])/).map(clean).filter((line) => line.length >= 12);
 export const isSoftwareProduct = (dna?: BrandDna, domain = "", brand = "") =>
   /^aliv\s*\.?\s*ia$/i.test(brand) || /\b(software|saas|aplicativo|app)\b/i.test([domain, dna?.presentation, dna?.description, dna?.offer, dna?.positioning].join(" "));
@@ -30,7 +51,7 @@ export const productFactsFor = (content: WorldContent, dna?: BrandDna, audience?
       .map((line, index) => ({ line, index, score: commercialAffinity(line, [title]) }))
       .filter((item) => item.score > 0).sort((a, b) => b.score - a.score || a.index - b.index)[0]?.line;
     return { title, description: benefit || support || identity || "", benefit };
-  });
+  }).flatMap(splitProductFact);
 };
 
 /** A carousel is a single publication regardless of its number of slides. */
@@ -39,8 +60,8 @@ export const productUnitPlan = (units: number): boolean[] =>
 
 /** Narrow every text-bearing format to the same declared fact and its support. */
 export const focusProductContent = (content: WorldContent, fact: ProductFact, brand: string, cta: string): WorldContent => {
-  const title = clean(fact.title);
-  const support = clean(fact.description) === title ? "" : clean(fact.description);
+  const title = conciseProductLine(fact.title);
+  const support = clean(fact.description) === title ? "" : conciseProductLine(fact.description);
   const lines = [...new Set([title, support].filter(Boolean))];
   const topic = fact.topic;
   const feature = content.features.find((item) => item.title === fact.title && item.topic === topic);
@@ -55,7 +76,7 @@ export const focusProductContent = (content: WorldContent, fact: ProductFact, br
     features: [feature ?? { tag: brand, title, description: support, topic }],
     hooks: [{ hook: brand, strong: title, rest: "", sub: support || undefined, cta }],
     typos: [{ lead: brand, big, tail }],
-    kinetic: [{ kicker: brand, word: big, caption: [tail, support].filter(Boolean).join(" "), topic }],
+    kinetic: (productDisplayWords(brand, [title, support].join(" ")).length ? productDisplayWords(brand, [title, support].join(" ")) : [big]).map((word) => ({ kicker: brand, word, caption: title, topic })),
     quotes: [{ text: [title, support].filter(Boolean).join(" "), topic }],
     marquee: [lines],
     closings: [{ title, sub: support, cta }],

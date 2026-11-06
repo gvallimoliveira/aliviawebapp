@@ -29,6 +29,8 @@ import { PRODUCT } from "./product";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { renderNodeToPngBlob } from "@/pages/studio/exportImage";
 import {
   STUDIO_BLOCKS,
   StudioMotion,
@@ -315,6 +317,7 @@ const StudioProCreate = ({
   const [format, setFormat] = useState<StudioFormat>(restored.current.format ?? "free");
   const [seed, setSeed] = useState(() => restored.current.seed ?? randomSeed());
   const [busy, setBusy] = useState<string | null>(null);
+  const [readyDownload, setReadyDownload] = useState<{ blob: Blob; fileName: string } | null>(null);
   /** Índices das artes já salvas nesta versão — evita cliques duplicados. */
   const [saved, setSaved] = useState<Set<number>>(() => new Set());
   const wrapper = useRef<HTMLDivElement>(null);
@@ -1561,14 +1564,20 @@ const StudioProCreate = ({
     if (!node) return;
     setBusy(`png-${index}`);
     try {
-      await exportNodeAsPng(
-        node as HTMLElement,
-        `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}-${String(index + 1).padStart(2, "0")}-${kind}.png`,
-      );
-      toast.success("Arte exportada em alta resolução");
+      const fileName = `${brand.name.replace(/\s+/g, "-").toLowerCase()}-${seed}-${String(index + 1).padStart(2, "0")}-${kind}.png`;
+      if (window.matchMedia("(pointer: coarse)").matches) {
+        const { blob } = await renderNodeToPngBlob(node);
+        // Safari requires a NEW user gesture after asynchronous rendering.
+        setReadyDownload({ blob, fileName });
+      } else {
+        await exportNodeAsPng(node, fileName);
+        toast.success("Arte exportada em alta resolução");
+      }
     } catch (error) {
       console.error("[studio-pro] export", error);
-      toast.error("Não foi possível exportar esta arte.");
+      toast.error(error instanceof Error && error.message === "png-render-timeout"
+        ? "A imagem demorou para ficar pronta. Tente novamente."
+        : "Não foi possível preparar o PNG desta arte. Tente novamente.");
     } finally {
       setBusy(null);
     }
@@ -2632,6 +2641,17 @@ const StudioProCreate = ({
       </div>
 
 
+      <Dialog open={readyDownload !== null} onOpenChange={(open) => { if (!open) setReadyDownload(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>PNG pronto</DialogTitle>
+          <Button onClick={() => {
+            if (!readyDownload) return;
+            void deliver(readyDownload.blob, readyDownload.fileName).then(() => setReadyDownload(null)).catch(() => toast.error("Não foi possível salvar o PNG. Tente novamente."));
+          }}>
+            <Download className="mr-2 h-4 w-4" /> Baixar PNG
+          </Button>
+        </DialogContent>
+      </Dialog>
       <ArtPhotoSwapDialog
         open={swapTarget !== null}
         onOpenChange={(v) => !v && setSwapTarget(null)}

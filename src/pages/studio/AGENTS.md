@@ -1,4 +1,5 @@
 # Studio rules
+- Product copy splits declared exam enumerations into individual facts with scope retained in support; display vocabulary never uses sentence fragments. Touch PNG delivery prepares the shared raster first and requests a fresh gesture for file delivery, because Safari expires activation during rendering.
 - Software product education shares `studio-pro/productFocus.ts` and counts carousel groups once; use only declared/scoped capabilities (canonical owner packages), preserving media metadata and never interpreting symptoms as product features.
 - Client-brand commercial prioritization and audience hook libraries share `studio-pro/commercialPriority.ts`; rank only declared audience/offer facts locally and never overwrite saved kits or infer efficacy/conversion.
 - Studio copy lists use the shared `listCoherence.ts` guard at final voice review and rendering; semantic deduplication keeps original complementary arguments without padding or modifying media metadata.
