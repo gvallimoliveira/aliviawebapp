@@ -1,5 +1,9 @@
 # Roadmap
 
+## PhysioTech — laudos permanentes do Lucas
+- [ ] Corrigir cópia e abertura para pacientes sem e-mail; permitir exclusão como documentos.
+- [ ] Recuperar os laudos existentes de Lucas e testar a ponte autenticada entre os projetos.
+
 ## Edição de cadastro — Lucas Kegele
 - [x] Edição atualiza o ID original e os IDs das avaliações do prontuário, incluindo sem e-mail; nome/chave/seleção atualizados juntos. Busca por ID não cria substituto após erro ou ausência. Onze testes aprovados, build OK.
 - [x] Duplicata vazia removida após conferir vínculos; avaliação e três agendamentos corrigidos, cadastro original preservado. Conta do profissional → Lucas → Dados cadastrais → editar/salvar Lucas Kegele → recarregar/reabrir conferidos: avaliação, nascimento, ocupação e frequência mantidos. Não publicada.
