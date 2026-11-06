@@ -1,5 +1,8 @@
 # Roadmap
 
+## Studio — falha persistente de PNG PhysioTech
+- [ ] Reproduzir com a logo real, corrigir o recurso externo sem CORS e conferir PNG com logo/texto, incluindo marcas existentes e regressão de outra marca.
+
 ## Studio — download e leitura PhysioTech
 - [x] PNG real baixado em desktop e celular simulado; captura revelou texto ausente por animações de entrada no clone e foi corrigida, PNG final com texto conferido. Celular prepara primeiro e oferece novo toque para entregar. Erro original do iPhone não reproduzido; aparelho físico e marca PhysioTech não disponíveis na sessão (somente Aliv.iA).
 - [x] Enumerações de exames viram fatos individuais, com região preservada no apoio; destaque PhysioTech com seis palavras aprovadas. 60 testes passaram; kit e artes salvas preservados, publicação não feita.

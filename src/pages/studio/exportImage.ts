@@ -1,4 +1,5 @@
 import { toCanvas, getFontEmbedCSS } from "html-to-image";
+import { resolveStudioBrandAsset } from "./brand";
 
 /** iOS/Safari abortam canvas muito grandes. Mantemos folga sobre os limites reais. */
 const MAX_DIMENSION = 4096;
@@ -99,12 +100,13 @@ const inlineImages = async (node: HTMLElement) => {
       const original = img.getAttribute("src");
       if (!original || original.startsWith("data:")) return;
 
-      let dataUrl = dataUrlCache.get(original);
+      const source = resolveStudioBrandAsset(original);
+      let dataUrl = dataUrlCache.get(source);
       if (!dataUrl) {
         const controller = new AbortController();
         const abort = window.setTimeout(() => controller.abort(), 6_000);
         try {
-          const res = await fetch(original, { cache: "force-cache", signal: controller.signal });
+          const res = await fetch(source, { cache: "force-cache", signal: controller.signal });
           if (!res.ok) throw new Error(`image-http-${res.status}`);
           const blob = await res.blob();
           dataUrl = await new Promise<string>((resolve, reject) => {
@@ -113,7 +115,7 @@ const inlineImages = async (node: HTMLElement) => {
             reader.onerror = () => reject(reader.error);
             reader.readAsDataURL(blob);
           });
-          dataUrlCache.set(original, dataUrl);
+          dataUrlCache.set(source, dataUrl);
         } catch {
           return;
         } finally {
@@ -152,12 +154,13 @@ const inlineImages = async (node: HTMLElement) => {
     svgImages.map(async (el) => {
       const original = el.getAttribute("href") ?? el.getAttribute("xlink:href");
       if (!original || original.startsWith("data:")) return;
-      let dataUrl = dataUrlCache.get(original);
+      const source = resolveStudioBrandAsset(original);
+      let dataUrl = dataUrlCache.get(source);
       if (!dataUrl) {
         const controller = new AbortController();
         const abort = window.setTimeout(() => controller.abort(), 6_000);
         try {
-          const res = await fetch(original, { cache: "force-cache", signal: controller.signal });
+          const res = await fetch(source, { cache: "force-cache", signal: controller.signal });
           if (!res.ok) throw new Error(`image-http-${res.status}`);
           const blob = await res.blob();
           dataUrl = await new Promise<string>((resolve, reject) => {
@@ -166,7 +169,7 @@ const inlineImages = async (node: HTMLElement) => {
             reader.onerror = () => reject(reader.error);
             reader.readAsDataURL(blob);
           });
-          dataUrlCache.set(original, dataUrl);
+          dataUrlCache.set(source, dataUrl);
         } catch {
           // Sem como embutir: remove do clone para não derrubar o download.
           el.remove();

@@ -1,4 +1,18 @@
 import logoAlivia from "@/assets/logo-alivia.png";
+import physiotechIcon from "@/assets/physiotech-studio-icon.png.asset.json";
+
+/** Official asset mirrors: external sites can display an image yet deny export fetches (CORS). */
+export const resolveStudioBrandAsset = (source: string): string => {
+  try {
+    const url = new URL(source);
+    if (url.origin === "https://physiotechapp.lovable.app" && url.pathname === "/apple-touch-icon.png") {
+      return physiotechIcon.url;
+    }
+  } catch {
+    // Relative and data URLs already belong to the application's asset flow.
+  }
+  return source;
+};
 
 /**
  * MÓDULO ÚNICO DE MARCA DO STUDIO
@@ -66,8 +80,8 @@ const BLANK_LOGO =
 export const applyStudioBrandTheme = (theme: StudioBrandTheme) => {
   BRAND_NAME = theme.name || NEUTRAL_NAME;
   BRAND_SLOGAN = theme.slogan || "";
-  BRAND_LOGO = theme.logo || BLANK_LOGO;
-  BRAND_MARK = theme.mark || theme.logo || "";
+  BRAND_LOGO = resolveStudioBrandAsset(theme.logo || BLANK_LOGO);
+  BRAND_MARK = resolveStudioBrandAsset(theme.mark || theme.logo || "");
   BRAND_HANDLE = theme.handle?.trim()
     ? (theme.handle.trim().startsWith("@") ? theme.handle.trim() : `@${theme.handle.trim()}`)
     : theme.name || NEUTRAL_NAME;
