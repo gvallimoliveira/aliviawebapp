@@ -1,4 +1,8 @@
 {
+  "support.pro.tool.physiotech_files.title": "Laudos PhysioTech permanentes",
+  "support.pro.tool.physiotech_files.desc": "Para usuários liberados, enviar o laudo pelo PhysioTech guarda uma cópia permanente do PDF no Aliv.iA, mesmo sem e-mail do paciente. Abra em Exames complementares ou baixe em Documentos. Excluir, com permissão, remove o PDF e o bloco clínico do Aliv.iA, sem alterar o exame original no PhysioTech.",
+  "clinic.support.tool.physiotech_files.title": "Laudos PhysioTech permanentes",
+  "clinic.support.tool.physiotech_files.desc": "O PDF enviado fica salvo permanentemente, inclusive sem e-mail do paciente. Abra em Exames complementares ou baixe em Documentos. A exclusão autorizada remove PDF e bloco clínico do Aliv.iA, não o exame original no PhysioTech. Acesso segue restrito aos usuários liberados.",
   "assessment.free_limit": "Você já iniciou 2 avaliações gratuitas com este e-mail nos últimos 30 dias. Tente novamente quando a avaliação mais antiga completar 30 dias ou consulte as opções de acompanhamento.",
   "assessment.email_required": "Informe um e-mail válido para iniciar a avaliação gratuita.",
   "support.patient.tool.free_quota.title": "Avaliações gratuitas por e-mail",

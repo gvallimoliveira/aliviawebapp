@@ -1633,14 +1633,14 @@ export default function PatientDetailView(props: any) {
 
       {!isDemo && (patient as any)?.patientRecord?.id && (
         <div id="sec-physiotech" className="scroll-mt-24 min-w-0">
-          <PhysioTechReportsSection patientId={(patient as any).patientRecord.id} />
+          <PhysioTechReportsSection patientId={(patient as any).patientRecord.id} readOnly={readOnly} />
         </div>
       )}
 
       {/* Arquivos e fotos (bloco documental) */}
       <div id="sec-arquivos" className="scroll-mt-24 min-w-0">
       <PatientHorizontalRow label={language === "pt" ? "Documentos e fotos do paciente" : language === "es" ? "Documentos y fotos del paciente" : "Patient documents and photos"}>
-      {selectedEmail && <PatientFilesSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} isDemo={isDemo} />}
+      {selectedEmail && <PatientFilesSection patientId={(patient as any)?.patientRecord?.id} patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} isDemo={isDemo} />}
       {selectedEmail && !isDemo && <PatientPhotosSection patientEmail={selectedEmail} patientName={patient?.name} clinicId={clinicId} professionalId={professionalId} readOnly={readOnly} />}
       </PatientHorizontalRow>
       </div>

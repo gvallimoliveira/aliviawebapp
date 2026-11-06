@@ -19,6 +19,7 @@ import { downloadStorageFile } from "@/lib/downloadFile";
 import { createShortShareLink } from "@/lib/shortLink";
 
 interface PatientFilesSectionProps {
+  patientId?: string | null;
   patientEmail: string;
   patientName?: string;
   clinicId?: string | null;
@@ -41,7 +42,7 @@ interface PatientFile {
 const MAX_FILES = 20;
 const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20MB
 
-const PatientFilesSection = ({ patientEmail, patientName, clinicId, professionalId, readOnly: readOnlyProp, isDemo }: PatientFilesSectionProps) => {
+const PatientFilesSection = ({ patientId, patientEmail, patientName, clinicId, professionalId, readOnly: readOnlyProp, isDemo }: PatientFilesSectionProps) => {
   const readOnly = readOnlyProp || isDemo;
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -58,7 +59,13 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
 
   useEffect(() => {
     loadFiles();
-  }, [patientEmail, clinicId, professionalId]);
+  }, [patientId, patientEmail, clinicId, professionalId]);
+
+  useEffect(() => {
+    const refresh = () => { loadFiles(); };
+    window.addEventListener("patient-files-changed", refresh);
+    return () => window.removeEventListener("patient-files-changed", refresh);
+  }, [patientId, patientEmail, clinicId, professionalId]);
 
   const loadFiles = async () => {
     setLoading(true);
@@ -69,7 +76,9 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
       setLoading(false);
       return;
     }
-    let query = supabase.from("patient_files").select("*").eq("patient_email", patientEmail);
+    let query = supabase.from("patient_files").select("*");
+    if (patientId) query = query.or(`patient_id.eq.${patientId},and(patient_id.is.null,patient_email.eq.${JSON.stringify(patientEmail)})`);
+    else query = query.eq("patient_email", patientEmail);
     if (clinicId) query = query.eq("clinic_id", clinicId);
     else if (professionalId) query = query.eq("professional_id", professionalId);
     const { data } = await query.order("created_at", { ascending: false });
@@ -118,6 +127,7 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
       if (uploadError) throw uploadError;
 
       const { error: dbError } = await supabase.from("patient_files").insert({
+        patient_id: patientId || null,
         clinic_id: clinicId || null,
         professional_id: clinicId ? null : professionalId || null,
         patient_email: patientEmail,
@@ -152,11 +162,21 @@ const PatientFilesSection = ({ patientEmail, patientName, clinicId, professional
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await supabase.storage.from("patient-files").remove([deleteTarget.file_path]);
-    await supabase.from("patient_files").delete().eq("id", deleteTarget.id);
+    const { data: report } = await supabase.from("physiotech_reports").select("id").eq("file_id", deleteTarget.id).maybeSingle();
+    let error;
+    if (report) {
+      const result = await supabase.functions.invoke("physiotech-report-file", { body: { reportId: report.id, action: "delete" } });
+      error = result.error || (result.data?.ok ? null : new Error("delete_failed"));
+    } else {
+      const result = await supabase.from("patient_files").delete().eq("id", deleteTarget.id).select("id");
+      error = result.error || (result.data?.length ? null : new Error("forbidden"));
+      if (!error) { const result = await supabase.storage.from("patient-files").remove([deleteTarget.file_path]); error = result.error; }
+    }
+    if (error) { toast({ title: lang === "pt" ? "Não foi possível excluir o arquivo" : "Could not delete file", variant: "destructive" }); return; }
     toast({ title: lang === "pt" ? "Arquivo removido" : "File removed" });
     setDeleteTarget(null);
     loadFiles();
+    window.dispatchEvent(new Event("patient-files-changed"));
   };
 
   const handleShare = async (file: PatientFile) => {
