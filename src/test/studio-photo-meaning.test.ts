@@ -27,4 +27,19 @@ describe("nexo entre foto e assunto", () => {
     const laser = photo({ description: "Aplicação de laserterapia no atendimento" });
     expect(pickPhotoForTopics([laser], 0, ["questionnaires"])).toBeUndefined();
   });
+
+  it("usa prints genéricos do produto em educação de software sem tópico clínico", () => {
+    const screen = photo({ label: "Prints do sistema", description: "Interface do sistema, usar para ilustrar o produto", usage: "produto" });
+    expect(pickPhotoForTopics([screen], 0, [undefined], undefined, undefined, ["software"])?.id).toBe("foto");
+  });
+
+  it("não transforma prints genéricos em prova de qualquer assunto clínico", () => {
+    const screen = photo({ label: "Prints do sistema", description: "Interface do sistema, usar para ilustrar o produto", usage: "produto" });
+    expect(pickPhotoForTopics([screen], 0, ["dynamometry"])).toBeUndefined();
+  });
+
+  it("preserva o assunto de um print específico mesmo em divulgação de software", () => {
+    const screen = photo({ label: "Prints do sistema — Agenda", description: "Interface do sistema, usar para ilustrar o produto", usage: "produto" });
+    expect(pickPhotoForTopics([screen], 0, [undefined], undefined, undefined, ["software"])).toBeUndefined();
+  });
 });

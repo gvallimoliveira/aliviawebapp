@@ -945,6 +945,11 @@ export const planBatch = (input: {
     ].filter((t) => t.trim().length > 0);
 
     const affinity = [
+      // Product facts often have no clinical topic. Match images against what
+      // this art actually says, not an unrelated audience pain/creative axis.
+      ...(productFocused && softwareDomain ? ["software"] : []),
+      ...normalize(productFact ? `${productFact.title} ${productFact.description}` : carouselCopy.join(" "))
+        .split(/[^a-z0-9]+/).filter((w) => w.length > 3),
       ...AXIS_WORDS[axis],
       ...normalize(relText).split(/[^a-z0-9]+/).filter((w) => w.length > 3),
       ...(shotRoute?.vocabulary ?? []),

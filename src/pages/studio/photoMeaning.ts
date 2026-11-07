@@ -279,7 +279,14 @@ const wordAffinity = (photo: StudioPhoto, words?: string[]): number => {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
   const hits = words.filter((w) => w.length > 3 && hay.includes(w.toLowerCase())).length;
-  return Math.min(0.5, hits * 0.15);
+  // A user-declared general product interface can illustrate product education
+  // without borrowing a clinical topic. Specific exams/procedures stay scoped.
+  const generalInterface = photo.usage === "produto"
+    && /interface do sistema|prints? do sistema|tela (?:geral|inicial) (?:do|da) (?:sistema|app|aplicativo|plataforma)/.test(hay)
+    && !restrictionOf(photo)
+    && captionTopics(photo).length === 0;
+  const productEducation = words.includes("software");
+  return Math.min(0.5, hits * 0.15 + (generalInterface && productEducation ? 0.35 : 0));
 };
 
 /**

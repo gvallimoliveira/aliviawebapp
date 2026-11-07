@@ -46,6 +46,8 @@ describe("foco de divulgação de produtos", () => {
     expect(direction.shots.map((shot) => shot.reserved)).toEqual(planBatch(input).shots.map((shot) => shot.reserved));
     expect(JSON.stringify(content)).toBe(before);
     expect(direction.contentFor(0).features[0].title).not.toBe("Dor no joelho");
+    expect(direction.shots[0].affinity).toContain("software");
+    expect(direction.shots[0].affinity).toContain("análise".normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
   });
   it("conta os slides do carrossel como uma única unidade", () => {
     const blocks = Array.from({ length: 14 }, (_, index) => index < 5
