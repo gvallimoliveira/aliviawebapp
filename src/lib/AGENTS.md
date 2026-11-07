@@ -1,0 +1,1 @@
+- Mobile text shares call shareTextNowOrOpenWhatsApp with no await before it (prefetch short links); iOS drops the share sheet once the tap gesture expires.
