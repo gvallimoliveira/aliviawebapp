@@ -1,5 +1,11 @@
 # Roadmap
 
+## Studio — 50 Tons de Verde
+- [ ] Controle da película de fotos até zero, persistido nas artes e PNG.
+- [ ] Filtrar linguagem por modelo de negócio sem contaminar hospedagem com software/serviços clínicos.
+- [ ] Refinar os dois temas editoriais existentes com o kit real, preservando identidade, fotos e temas.
+- [ ] Validar geração, edição, persistência e PNG com a marca real; atualizar ajuda.
+
 ## Studio — exclusão de fotos da marca
 - [x] Controles separados e lixeira de 40px no celular; confirmação/cancelamento e feedback de falha, retorno do ID excluído verificado. Conta própria → marca Aliv.iA → foto técnica enviada → cancelar → confirmar → recarregar conferidos; foto e arquivo técnicos removidos, acervo original preservado. Dez testes passaram, build OK. PhysioTech não disponível nesta sessão; regra compartilhada em todas as marcas. iPhone físico não testado; limpeza de arquivos enviados por outro membro permanece best-effort com aviso interno, sem ampliar permissões.
 
