@@ -406,3 +406,37 @@ export const pickPhotoForTopics = (
 
 
 
+
+const SCREEN_RE = /\b(prints?|screenshots?|capturas? de tela|telas?|interface|dashboard|painel|sistema|aplicativo|app|plataforma|software|modulo|relatorio)\b/;
+const plain = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+/** Print de tela declarado pelo usuário (uso "produto" + legenda de interface, ou legenda explícita de print). */
+export const isScreenPhoto = (photo: StudioPhoto): boolean => {
+  const hay = plain(`${photo.label ?? ""} ${photo.description ?? ""}`);
+  if (/\b(prints?|screenshots?|capturas? de tela)\b/.test(hay)) return true;
+  return photo.usage === "produto" && SCREEN_RE.test(hay);
+};
+
+/**
+ * TELA DO APARELHO: só prints do sistema entram em notebook/tablet/celular —
+ * nunca retrato ou foto de atendimento. Primeiro o print que fala do assunto
+ * da arte; sem casamento, um print genérico (sem legenda específica/restrição)
+ * ilustra a interface. Sem prints, o bloco usa a maquete tipográfica.
+ */
+export const pickScreenPhoto = (
+  photos: StudioPhoto[] | undefined,
+  index: number,
+  topics: (TopicId | undefined)[],
+  artKey?: string,
+  words?: string[],
+): StudioPhoto | undefined => {
+  const screens = (photos ?? []).filter(isScreenPhoto);
+  if (screens.length === 0) return undefined;
+  const matched = pickPhotoForTopics(screens, index, topics, ["produto"], artKey, [...(words ?? []), "software"]);
+  if (matched) return matched;
+  const generic = screens.filter((p) => !restrictionOf(p) && captionTopics(p).length === 0);
+  if (generic.length === 0) return undefined;
+  const salt = artKey ? spread(artKey, 11) : index;
+  const pool = [...generic].sort((a, b) => spread(a.id, salt) - spread(b.id, salt));
+  return claimPhoto(artKey, pool, photos?.length ?? pool.length);
+};

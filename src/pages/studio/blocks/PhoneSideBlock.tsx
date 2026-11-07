@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { BRAND_LOGO, BRAND_NAME, BRAND_SITE } from "../brand";
-import { pickPhotoForTopics } from "../photoMeaning";
+import { pickPhotoForTopics, pickScreenPhoto } from "../photoMeaning";
 import PhotoFrame from "./PhotoFrame";
 import { blockPadding, sectionHeight, type BlockProps } from "./shared";
 
@@ -24,7 +24,9 @@ const PhoneSideBlock = ({ content, rng, treatment, format, picker, photos, artKe
   const [feature] = picker.pick(content.features, 1, rng, (f) => [f.topic]);
   if (!feature) return null;
   const closing = rng.pick(content.closings);
-  const photo = pickPhotoForTopics(photos, treatment + rng.int(7), [feature.topic], undefined, artKey, shot?.affinity);
+  const seed = treatment + rng.int(7);
+  const screenPhoto = pickScreenPhoto(photos, seed, [feature.topic], artKey, shot?.affinity);
+  const photo = screenPhoto ?? pickPhotoForTopics(photos, seed, [feature.topic], undefined, artKey, shot?.affinity);
 
   const dark = treatment === 1;
   const stage = dark ? "hsl(var(--foreground))" : treatment === 2 ? "hsl(var(--primary))" : "hsl(var(--background))";
@@ -62,7 +64,7 @@ const PhoneSideBlock = ({ content, rng, treatment, format, picker, photos, artKe
             >
               <div className="relative h-full w-full overflow-hidden rounded-[1.6rem] bg-background">
                 {photo ? (
-                  <PhotoFrame photo={photo} className="h-full w-full rounded-none" imgClassName="" />
+                  <PhotoFrame photo={screenPhoto ? { ...photo, safeArea: "none" } : photo} className="h-full w-full rounded-none" imgClassName="" exportLayer="foreground" />
                 ) : (
                   <div className="flex h-full w-full flex-col p-3">
                     <div className="flex items-center gap-1.5">

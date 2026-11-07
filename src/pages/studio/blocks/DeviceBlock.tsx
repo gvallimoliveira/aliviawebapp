@@ -2,14 +2,17 @@ import { motion } from "framer-motion";
 import { BRAND_LOGO, BRAND_NAME } from "../brand";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
+import { pickScreenPhoto } from "../photoMeaning";
+import PhotoFrame from "./PhotoFrame";
+import type { StudioPhoto } from "../photos";
 
 /**
  * MOCKUP DE DISPOSITIVO (referência: notebook, tablet e celular em cena limpa)
  *
  * Mostra o produto "aberto" na tela — notebook, tablet ou celular — em um
- * ambiente de luz suave. A tela NUNCA usa screenshot real: é uma maquete
- * tipográfica da interface montada com o conteúdo editorial da marca, então
- * funciona para qualquer cliente do Studio sem depender de captura de tela.
+ * ambiente de luz suave. Quando o acervo tem prints do sistema (uso "Produto"
+ * com legenda de tela/interface), o print real ocupa a tela do aparelho; sem
+ * prints, a tela vira uma maquete tipográfica com o conteúdo da marca.
  *
  * Tratamentos: 0 notebook · 1 tablet · 2 celular
  */
@@ -58,7 +61,12 @@ const ScreenUi = ({
   </div>
 );
 
-const DeviceBlock = ({ content, rng, treatment, format, persona, picker }: BlockProps) => {
+/** Print real na tela, sem véu de texto (a tela não recebe tipografia por cima). */
+const ScreenShot = ({ photo }: { photo: StudioPhoto }) => (
+  <PhotoFrame photo={{ ...photo, safeArea: "none" }} className="h-full w-full rounded-none" exportLayer="foreground" />
+);
+
+const DeviceBlock = ({ content, rng, treatment, format, persona, picker, photos, artKey, shot }: BlockProps) => {
   if (!content.features?.length || !content.kickers?.length || !content.subs?.length) return null;
   const device = DEVICES[treatment % DEVICES.length];
   const features = picker.pick(content.features, 4, rng, (f) => [f.topic]);
@@ -66,6 +74,9 @@ const DeviceBlock = ({ content, rng, treatment, format, persona, picker }: Block
 
   const lead = features[0];
   const rows = features.slice(1).map((f) => f.title);
+  const screenPhoto = pickScreenPhoto(photos, treatment + rng.int(5), [lead.topic], artKey, shot?.affinity);
+  const screen = (compact?: boolean) =>
+    screenPhoto ? <ScreenShot photo={screenPhoto} /> : <ScreenUi title={lead.description} rows={rows} compact={compact} />;
 
   return (
     <section
@@ -100,32 +111,33 @@ const DeviceBlock = ({ content, rng, treatment, format, persona, picker }: Block
         </h2>
 
         {device === "laptop" && (
-          <div className="w-full max-w-[330px]">
-            <div className="rounded-t-xl border border-border bg-foreground/90 p-[6px] shadow-[0_40px_80px_-50px_hsl(var(--foreground)/0.8)]">
-              <div className="aspect-[16/10] overflow-hidden rounded-lg">
-                <ScreenUi title={lead.description} rows={rows} compact />
-              </div>
+          <div className="w-full max-w-[400px]">
+            <div className="relative rounded-t-2xl border border-border bg-foreground/90 px-[7px] pb-[7px] pt-[12px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
+              <span aria-hidden className="absolute left-1/2 top-[4px] h-1 w-1 -translate-x-1/2 rounded-full bg-background/40" />
+              <div className="aspect-[16/10] overflow-hidden rounded-md">{screen(true)}</div>
             </div>
-            <div className="mx-auto h-2 w-[112%] -translate-x-[5%] rounded-b-xl bg-muted" />
+            <div className="relative mx-auto h-3 w-[114%] -translate-x-[6%] rounded-b-2xl bg-gradient-to-b from-muted to-muted-foreground/30">
+              <span aria-hidden className="absolute left-1/2 top-0 h-1 w-14 -translate-x-1/2 rounded-b-md bg-muted-foreground/30" />
+            </div>
           </div>
         )}
 
         {device === "tablet" && (
-          <div className="w-full max-w-[250px] rotate-[-2deg]">
-            <div className="rounded-[22px] border border-border bg-foreground/90 p-[8px] shadow-[0_40px_80px_-50px_hsl(var(--foreground)/0.8)]">
-              <div className="aspect-[3/4] overflow-hidden rounded-[16px]">
-                <ScreenUi title={lead.description} rows={rows} />
-              </div>
+          <div className="w-full max-w-[290px] rotate-[-2deg]">
+            <div className="rounded-[24px] border border-border bg-foreground/90 p-[10px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
+              <div className={`${screenPhoto ? "aspect-[4/3]" : "aspect-[3/4]"} overflow-hidden rounded-[14px]`}>{screen()}</div>
             </div>
           </div>
         )}
 
         {device === "phone" && (
-          <div className="w-full max-w-[190px]">
-            <div className="rounded-[28px] border border-border bg-foreground/90 p-[7px] shadow-[0_40px_80px_-50px_hsl(var(--foreground)/0.8)]">
-              <div className="relative aspect-[9/19] overflow-hidden rounded-[22px]">
-                <span className="absolute left-1/2 top-1 z-10 h-1.5 w-10 -translate-x-1/2 rounded-full bg-foreground/80" />
-                <ScreenUi title={lead.description} rows={rows} compact />
+          <div className="relative w-full max-w-[200px]">
+            <span aria-hidden className="absolute -left-[3px] top-[22%] h-8 w-[3px] rounded-l bg-foreground/70" />
+            <span aria-hidden className="absolute -right-[3px] top-[28%] h-12 w-[3px] rounded-r bg-foreground/70" />
+            <div className="rounded-[30px] border border-border bg-foreground/90 p-[7px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
+              <div className="relative aspect-[9/19] overflow-hidden rounded-[24px]">
+                <span className="absolute left-1/2 top-1.5 z-10 h-2 w-12 -translate-x-1/2 rounded-full bg-foreground" />
+                {screen(true)}
               </div>
             </div>
           </div>

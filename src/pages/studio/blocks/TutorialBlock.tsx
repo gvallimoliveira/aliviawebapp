@@ -3,6 +3,8 @@ import { BRAND_LOGO, BRAND_NAME } from "../brand";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
 import { fallbackScreen, themedScreen, type MockScreen } from "../mockScreens";
+import { pickScreenPhoto } from "../photoMeaning";
+import PhotoFrame from "./PhotoFrame";
 
 /**
  * TUTORIAL COM PÍLULA (referência: posts "Cansou de preencher [prontuário?]",
@@ -69,7 +71,7 @@ const Screen = ({ screen, max = 4 }: { screen: MockScreen; max?: number }) => {
   );
 };
 
-const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: BlockProps) => {
+const TutorialBlock = ({ content, rng, treatment, format, persona, picker, photos, artKey, shot }: BlockProps) => {
   if (!content.headlines?.length || !content.closings?.length) return null;
   const features = picker.pick(content.features, 4, rng, (f) => [f.topic]);
   if (features.length < 2) return null;
@@ -82,7 +84,15 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
   const screen =
     themedScreen(`${h.strong} ${h.rest}`, features.map((f) => f.topic)) ??
     fallbackScreen(features, [kicker, ...(content.kickers ?? [])]);
-  if (screen.rows.length < 2) return null;
+  const shotPhoto = pickScreenPhoto(photos, treatment + rng.int(5), features.map((f) => f.topic), artKey, shot?.affinity);
+  if (!shotPhoto && screen.rows.length < 2) return null;
+  /** Print real do sistema na tela; sem print, maquete tipográfica coerente com o título. */
+  const show = (max?: number) =>
+    shotPhoto ? (
+      <PhotoFrame photo={{ ...shotPhoto, safeArea: "none" }} className="h-full w-full rounded-none" exportLayer="foreground" />
+    ) : (
+      <Screen screen={screen} max={max} />
+    );
 
   const ink = primary ? "text-primary-foreground" : "text-foreground";
 
@@ -136,7 +146,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
           <div className="w-[88%] max-w-[380px] translate-y-3 -rotate-2">
             <div className="rounded-t-xl border border-border bg-foreground/90 p-[6px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
               <div className="aspect-[16/10] overflow-hidden rounded-md">
-                <Screen screen={screen} />
+                {show()}
               </div>
             </div>
             <div className="mx-auto h-2.5 w-[112%] -translate-x-[5%] rounded-b-xl bg-muted" />
@@ -146,7 +156,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
           <div className="w-[78%] max-w-[330px] translate-y-6 rotate-[-6deg]">
             <div className="rounded-[20px] border border-border bg-foreground/90 p-[8px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
               <div className="aspect-[4/3] overflow-hidden rounded-[13px]">
-                <Screen screen={screen} />
+                {show()}
               </div>
             </div>
           </div>
@@ -156,9 +166,7 @@ const TutorialBlock = ({ content, rng, treatment, format, persona, picker }: Blo
             <div className="rounded-[28px] border border-border bg-foreground/90 p-[7px] shadow-[0_40px_80px_-40px_hsl(var(--foreground)/0.8)]">
               <div className="relative aspect-[9/17] overflow-hidden rounded-[22px]">
                 <span className="absolute left-1/2 top-1 z-10 h-1.5 w-10 -translate-x-1/2 rounded-full bg-foreground/80" />
-                <div className="h-full pt-3">
-                  <Screen screen={screen} max={2} />
-                </div>
+                <div className={`h-full ${shotPhoto ? "" : "pt-3"}`}>{show(2)}</div>
               </div>
             </div>
           </div>
