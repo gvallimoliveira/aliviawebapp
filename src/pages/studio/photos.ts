@@ -249,10 +249,20 @@ export const updatePhoto = async (id: string, patch: PhotoPatch) => {
 };
 
 export const deletePhoto = async (photo: StudioPhoto) => {
-  const { error } = await supabase.from("studio_photos").delete().eq("id", photo.id);
+  const { data, error } = await supabase.from("studio_photos").delete().eq("id", photo.id).select("id");
   if (error) throw error;
+  if (!data?.some((row) => row.id === photo.id)) {
+    throw new Error("A foto não foi removida. Atualize o acervo e confira seu acesso à marca.");
+  }
   srcCache.delete(photo.storagePath);
-  await supabase.storage.from(PHOTO_BUCKET).remove([photo.storagePath]);
+  // Metadata deletion is authoritative; a shared member may not own the file.
+  // Do not restore a removed gallery entry if best-effort file cleanup fails.
+  try {
+    const { error: storageError } = await supabase.storage.from(PHOTO_BUCKET).remove([photo.storagePath]);
+    if (storageError) console.warn("[studio] foto removida do acervo; limpeza do arquivo pendente", storageError);
+  } catch (storageError) {
+    console.warn("[studio] foto removida do acervo; limpeza do arquivo pendente", storageError);
+  }
 };
 
 /**

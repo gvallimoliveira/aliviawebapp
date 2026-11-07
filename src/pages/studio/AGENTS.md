@@ -1,4 +1,5 @@
 # Studio rules
+- Photo management keeps usage selectors separate from fixed-size actions on narrow screens; deletion confirms first, reports failures, and verifies the returned database ID before changing the gallery or cleaning storage, preventing clipped controls and silent zero-row deletes.
 - Product-focused software shots send their actual fact vocabulary to photo affinity; user-declared generic product interfaces may illustrate product education without fake clinical topics, while specific caption/procedure restrictions remain scoped.
 - Official external asset mirrors resolve by exact source URL in `brand.ts`, including legacy export snapshots; reuse existing bundled official assets because an image may display cross-origin but fail SVG/canvas export without CORS.
 - Product copy splits declared exam enumerations into individual facts with scope retained in support; display vocabulary never uses sentence fragments. Touch PNG delivery prepares the shared raster first and requests a fresh gesture for file delivery, because Safari expires activation during rendering.

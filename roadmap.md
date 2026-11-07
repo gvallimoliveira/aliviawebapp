@@ -1,5 +1,8 @@
 # Roadmap
 
+## Studio — exclusão de fotos da marca
+- [x] Controles separados e lixeira de 40px no celular; confirmação/cancelamento e feedback de falha, retorno do ID excluído verificado. Conta própria → marca Aliv.iA → foto técnica enviada → cancelar → confirmar → recarregar conferidos; foto e arquivo técnicos removidos, acervo original preservado. Dez testes passaram, build OK. PhysioTech não disponível nesta sessão; regra compartilhada em todas as marcas. iPhone físico não testado; limpeza de arquivos enviados por outro membro permanece best-effort com aviso interno, sem ampliar permissões.
+
 ## Studio — acervo PhysioTech na geração
 - [x] Conta proprietária → PhysioTech: sete prints carregados, mas zero fotos nas artes por falta de tópico/afinidade da copy de produto. Diretor agora envia o fato real à seleção; interfaces gerais declaradas podem ilustrar software, sem inventar tópico clínico nem liberar prints específicos em temas errados. Fotos em destaque: 9–12 imagens renderizadas; PNG real de 4,4 MB baixado e inspecionado com foto/texto/logo. 51 testes passaram, build OK; kit/fotos/artes salvas preservados. Publicação e iPhone físico não executados.
 

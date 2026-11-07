@@ -7,6 +7,8 @@ import { PHOTO_USAGES, type PhotoFraming, type PhotoPatch, type PhotoUsage, type
 import { isOfficialPhoto } from "./officialPhotos";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 
 /** Leitura de imagem por IA: exclusiva da conta do dono (gasta crédito de IA). */
 const OWNER_EMAILS = ["gvallimoliveira@gmail.com", "gvallim.fisio@gmail.com"];
@@ -84,6 +86,21 @@ const StudioPhotos = ({
   const [busy, setBusy] = useState(false);
   /** Foto aberta no editor de enquadramento (recorte, rotação, área segura). */
   const [editing, setEditing] = useState<StudioPhoto | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<StudioPhoto | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const handleRemove = async () => {
+    if (!pendingRemoval || removing) return;
+    setRemoving(true);
+    try {
+      await onRemove(pendingRemoval);
+      setPendingRemoval(null);
+      toast.success("Foto removida do acervo");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível remover a foto. Tente novamente.");
+    } finally {
+      setRemoving(false);
+    }
+  };
   /** Arquivos escolhidos e ainda não enviados (miniatura + informações). */
   const [staged, setStaged] = useState<{ file: File; preview: string }[]>([]);
   /** IDs das fotos enviadas nesta sessão — sobem para o topo da lista. */
@@ -345,7 +362,7 @@ const StudioPhotos = ({
                     </button>
                   )}
                 </div>
-                <div className="p-2">
+                <div className="min-w-0 p-2">
                   <input
                     defaultValue={photo.label}
                     disabled={official}
@@ -367,12 +384,12 @@ const StudioPhotos = ({
                     placeholder="O que aparece e em quais assuntos usar"
                     className="mb-1.5 w-full resize-none rounded-md border border-border bg-card px-2 py-1 text-[10px] leading-snug text-foreground"
                   />
-                  <div className="flex items-center justify-between">
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                     <select
                       value={photo.usage}
                       disabled={official}
                       onChange={(e) => void onEdit(photo.id, { usage: e.target.value as PhotoUsage })}
-                      className="rounded-md border border-border bg-card px-1.5 py-1 text-base text-muted-foreground md:text-[10px]"
+                      className="h-10 w-full min-w-0 rounded-md border border-border bg-card px-1.5 py-1 text-base text-muted-foreground md:text-[10px]"
                     >
                       {PHOTO_USAGES.map((u) => (
                         <option key={u.id} value={u.id}>
@@ -381,35 +398,44 @@ const StudioPhotos = ({
                       ))}
                     </select>
 
+                    <div className="flex w-full flex-wrap justify-end gap-1">
                     {canAiRead && !official && (
-                      <button
+                      <Button
+                        variant="outline"
+                        size="icon"
                         type="button"
                         onClick={() => void aiRead(photo)}
                         disabled={reading === photo.id}
                         title="Ler a imagem com IA e completar os temas da legenda"
-                        className="ml-auto rounded-full border border-border p-1.5 text-primary disabled:opacity-50"
+                        className="shrink-0 text-primary"
                       >
                         {reading === photo.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                      </button>
+                      </Button>
                     )}
-                    <button
+                    <Button
+                      variant="outline"
+                      size="icon"
                       type="button"
                       onClick={() => setEditing(photo)}
                       title="Enquadrar (recorte, rotação, área segura)"
-                      className={`${canAiRead && !official ? "ml-1" : "ml-auto"} mr-1 rounded-full border border-border p-1.5 text-muted-foreground`}
+                      className="shrink-0 text-muted-foreground"
                     >
                       <Crop className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                     {!official && (
-                      <button
+                      <Button
+                        variant="outline"
+                        size="icon"
                         type="button"
-                        onClick={() => void onRemove(photo)}
+                        onClick={() => setPendingRemoval(photo)}
                         title="Remover foto"
-                        className="rounded-full border border-border p-1.5 text-muted-foreground"
+                        aria-label={`Remover foto ${photo.label}`}
+                        className="shrink-0 text-destructive"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     )}
+                    </div>
                   </div>
                 </div>
               </li>
@@ -419,6 +445,24 @@ const StudioPhotos = ({
           </ul>
         )}
       </div>
+
+      <AlertDialog open={pendingRemoval !== null} onOpenChange={(open) => { if (!open && !removing) setPendingRemoval(null); }}>
+        <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover foto do acervo?</AlertDialogTitle>
+            <AlertDialogDescription className="break-words">
+              A foto “{pendingRemoval?.label || "Sem rótulo"}” não será usada nas próximas gerações. As artes já salvas serão mantidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removing}>Cancelar</AlertDialogCancel>
+            <Button variant="destructive" disabled={removing} onClick={() => void handleRemove()}>
+              {removing ? <Loader2 className="animate-spin" /> : <Trash2 />}
+              {removing ? "Removendo…" : "Remover foto"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {editing && (
         <StudioPhotoEditor
