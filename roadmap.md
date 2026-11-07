@@ -1,5 +1,8 @@
 # Roadmap
 
+## Studio — acervo PhysioTech na geração
+- [ ] Reproduzir com o acervo real, corrigir a seleção/uso de fotos e validar geração e PNG sem alterar o kit ou as fotos salvas.
+
 ## Studio — falha persistente de PNG PhysioTech
 - [x] Falha reproduzida com a URL real da logo PhysioTech: imagem visível, fetch bloqueado por CORS e export-failed. Resolução por URL exata usa cópia oficial idêntica já existente no Aliv.iA; vale para tema e snapshots antigos no exportador. Conta proprietária real → PhysioTech → PNG desktop e celular simulado baixados e inspecionados com texto/logo (2160×2160 e 2160×2703); 22 testes passaram, incluindo isolamento de outras marcas, build OK. Não alterou kit, artes salvas nem projeto PhysioTech. iPhone físico e download real de outra marca não exercitados; avisos de CSS remoto de fontes não impediram o download. Requer publicar Aliv.iA.
 
