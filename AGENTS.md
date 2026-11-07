@@ -72,3 +72,4 @@
 - Basic quota: service-only ledger, email transaction lock, survives deletion; diagnosis needs reserved ID; anonymous read/write needs x-assessment-id within 48h.
 - Photos: preparePhoto, record/Studio size, transparency/fallback; exclude signatures/PDFs/measurements. Vision: economical-vision zero-retention chat; clinical/measurement models unchanged.
 - Blog: preserve bodies/URLs; BlogDashboardReturn sends signed-in users to /dashboard.
+- Mobile text shares call shareTextNowOrOpenWhatsApp with no await before it (prefetch short links); iOS drops the share sheet once the tap gesture expires.

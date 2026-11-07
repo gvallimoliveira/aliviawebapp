@@ -20,7 +20,7 @@ import {
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
 import { HEP_TEMPLATES, type HepTemplate } from "@/data/hepTemplates";
-import { openWhatsAppDeferred } from "@/lib/whatsappShare";
+import { shareTextNowOrOpenWhatsApp } from "@/lib/whatsappShare";
 import { useAuth } from "@/contexts/AuthContext";
 import { isFallbackVip } from "@/lib/vipEmails";
 import { summarizeHep, spreadSessionDates, loadLevelFromTargetRpe } from "@/lib/hepLoad";
@@ -137,6 +137,20 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const [notes, setNotes] = useState("");
   const [domain, setDomain] = useState("physio");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [shortHepLink, setShortHepLink] = useState<string | null>(null);
+
+  // Prepare the short link right after creation so the share tap needs no await
+  // (iOS drops the share sheet when the tap gesture expires).
+  useEffect(() => {
+    setShortHepLink(null);
+    if (!generatedLink) return;
+    let cancelled = false;
+    import("@/lib/shortLink")
+      .then(({ createShortAppLink }) => createShortAppLink(generatedLink, { ttlSeconds: 60 * 60 * 24 * 90 }))
+      .then((short) => { if (!cancelled && short) setShortHepLink(short); })
+      .catch((err) => console.warn("[hep] short link failed", err));
+    return () => { cancelled = true; };
+  }, [generatedLink]);
   const [copied, setCopied] = useState(false);
   const isEditing = !!editProgramId;
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
@@ -870,32 +884,19 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
   const handleCopy = async () => {
     if (!generatedLink) return;
     // HEP links expire in 3 months (the program is meant to be refreshed)
-    const { createShortAppLink } = await import("@/lib/shortLink");
-    const short = await createShortAppLink(generatedLink, { ttlSeconds: 60 * 60 * 24 * 90 });
-    await navigator.clipboard.writeText(short);
+    await navigator.clipboard.writeText(shortHepLink ?? generatedLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleWhatsApp = async () => {
+  const handleWhatsApp = () => {
     if (!generatedLink) return;
-    // Reserve the WhatsApp tab synchronously inside the user gesture
-    // so mobile browsers don't block the popup after the awaited shortlink call.
-    const wa = openWhatsAppDeferred();
-    try {
-      const { createShortAppLink } = await import("@/lib/shortLink");
-      const short = await createShortAppLink(generatedLink, { ttlSeconds: 60 * 60 * 24 * 90 });
-      const text = `Olá ${patientName}! Preparei seu programa de exercícios domiciliares. Acesse aqui: ${short}`;
-      wa.send(text);
-    } catch (err) {
-      console.error("[hep] whatsapp share failed", err);
-      wa.abort();
-      toast({
-        title: "Não foi possível abrir o WhatsApp",
-        description: "Tente novamente em alguns segundos.",
-        variant: "destructive",
-      });
-    }
+    // No await here: iOS only opens its share sheet while the tap is active.
+    // The short link is prepared as soon as the program is created; until it
+    // is ready, the full program link is shared instead.
+    const link = shortHepLink ?? generatedLink;
+    const text = `Olá ${patientName}! Preparei seu programa de exercícios domiciliares. Acesse aqui: ${link}`;
+    shareTextNowOrOpenWhatsApp(text, "Programa de exercícios");
   };
 
   const handleClose = () => {

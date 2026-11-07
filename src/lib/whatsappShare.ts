@@ -104,6 +104,36 @@ export async function shareTextOrOpenWhatsApp(text: string, title?: string): Pro
   window.location.href = buildUrl(text);
 }
 
+/** True on phones/tablets where the OS share sheet is the expected UX. */
+export function prefersNativeShare(): boolean {
+  if (typeof navigator === "undefined" || typeof navigator.share !== "function") return false;
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return window.matchMedia("(pointer: coarse)").matches;
+}
+
+/**
+ * Share ready-made text from inside a click handler, with NO await before
+ * this call: iOS only opens the share sheet while the tap gesture is still
+ * active. Touch devices get the native sheet (WhatsApp, Mensagens…); desktop
+ * opens WhatsApp Web with the text prefilled.
+ */
+export function shareTextNowOrOpenWhatsApp(text: string, title?: string): void {
+  if (prefersNativeShare()) {
+    navigator.share(title ? { title, text } : { text }).catch((error) => {
+      if (isAbortError(error)) return;
+      console.warn("Native text share failed, falling back to WhatsApp URL.", error);
+      window.location.href = buildUrl(text);
+    });
+    return;
+  }
+  try {
+    if (window.open(buildUrl(text), "_blank")) return;
+  } catch {
+    // fall through
+  }
+  window.location.href = buildUrl(text);
+}
+
 export function openWhatsAppDeferred(): DeferredWhatsApp {
   // Reserve a tab synchronously so the browser treats it as a user-initiated
   // navigation. about:blank is allowed during a gesture even on mobile.
