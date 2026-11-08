@@ -21,9 +21,17 @@ describe('background photo light', () => {
   it('missing values retain the existing full treatment and midpoint is proportional', () => {
     expect(photoLightValues().brightness).toBeCloseTo(0.82);
     expect(photoLightValues().amount).toBe(1);
-    expect(photoLightValues().opacity).toBe(0.9);
+    expect(photoLightValues().opacity).toBe(1);
     expect(photoLightValues(50).brightness).toBeCloseTo(0.91);
     expect(photoLightValues(50).amount).toBe(0.5);
+  });
+  it('keeps backgrounds opaque and neutral at every shade, without brand-color bleed', () => {
+    const node = document.createElement('div');
+    node.innerHTML = '<section data-studio-photo-background="1"><img data-studio-photo="1"></section>';
+    applyPhotoShade(node, 100);
+    expect(node.querySelector('img')?.style.opacity).toBe('1');
+    expect(node.querySelector('img')?.style.filter).toBe('brightness(0.8200000000000001) saturate(1) contrast(1)');
+    expect(photoLightValues(100).saturation).toBe(1);
   });
   it('saves zero in the DOM and reads it after serialization without changing other images', () => {
     const node = document.createElement('div');

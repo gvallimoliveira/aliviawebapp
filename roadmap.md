@@ -1,5 +1,9 @@
 # Roadmap
 
+## Studio — película e fundo no PNG
+- [x] Safari reproduzido sem Canvas.filter: fotos cruas no foreignObject cobriam o repinte filtrado; superfícies translúcidas também lavavam/tonalizavam o PNG. Fotos de fundo pintadas uma vez, fallback de filtros em pixels, fundo neutro/opaco e todas as cores de superfícies ancestrais recompostas atrás da foto.
+- [x] Inserções suprimem decoração reversivelmente e reaplicam o escurecimento escolhido após o render; snapshots guardam os estilos originais. Conta autorizada Aliv.iA → inserir foto → PNG real → remover conferidos; 12 PNGs Chromium/WebKit (0/50/100, gradiente e inserção) comparados por pixels, texto preservado e 35 testes aprovados, build OK. Foto anexada usada apenas na sessão, sem gravar acervo/artes. 50 Tons não disponível na sessão autorizada; mecanismo compartilhado validado, iPhone físico e publicação não executados.
+
 ## Studio — foto invisível no modelo de moldura
 - [x] Erro reproduzido: modelo cinético usava seção 150vh/sticky da landing, deixando a foto fora do quadro. Agora usa seção própria do Studio; seletor reinicia modo/slot e não trata inserções recriadas como fotos originais.
 - [x] Conta real Aliv.iA → foto local → fundo → trocar → primeiro plano → PNG → celular 390×844 conferidos, imagens visíveis; 11 testes passaram, build OK. Acervos/artes salvas preservados. Marca 50 Tons indisponível na sessão autorizada: reproduzido e validado no mesmo modelo compartilhado, não em sua marca. Não publicado nem testado em iPhone físico.

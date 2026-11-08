@@ -66,6 +66,18 @@ describe("imagem inserida em arte textual", () => {
     applyInsertedArtImage(root);
     expect(root.querySelector("[data-studio-inserted-image]")).toBeNull();
   });
+  it('covers decorative patterns and restores them on removal without hiding text or the logo', () => {
+    document.body.innerHTML = '<div id="art"><section><div id="pattern" aria-hidden="true" style="position:absolute;background-image:linear-gradient(red,blue)"></div><img id="logo" data-brand-logo="1"><h2>Texto</h2></section></div>';
+    const root = document.getElementById('art');
+    const pattern = root?.querySelector<HTMLElement>('#pattern');
+    const original = pattern?.getAttribute('style');
+    applyInsertedArtImage(root, insertion('background'));
+    expect(pattern?.style.display).toBe('none');
+    expect(root?.querySelector<HTMLElement>('#logo')?.style.display).not.toBe('none');
+    expect(root?.querySelector('h2')?.style.display).not.toBe('none');
+    applyInsertedArtImage(root);
+    expect(pattern?.getAttribute('style')).toBe(original);
+  });
 
   it("não trata inserções recriadas como slots originais de substituição", () => {
     document.body.innerHTML = '<div id="art"><section><img data-studio-photo="1" src="original.png" /></section></div>';

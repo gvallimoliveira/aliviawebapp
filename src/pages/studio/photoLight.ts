@@ -2,7 +2,7 @@
 export const normalizePhotoShade = (value = 100) => Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 100;
 export const photoLightValues = (value = 100) => {
   const amount = normalizePhotoShade(value) / 100;
-  return { amount, brightness: 1 - 0.18 * amount, saturation: 1 - 0.15 * amount, opacity: 1 - 0.1 * amount };
+  return { amount, brightness: 1 - 0.18 * amount, saturation: 1, opacity: 1 };
 };
 export const photoBackgrounds = (node: HTMLElement | null): HTMLElement[] => {
   if (!node) return [];
@@ -19,7 +19,7 @@ export const applyPhotoShade = (node: HTMLElement | null, value = 100) => {
     });
     surface.querySelectorAll<HTMLImageElement>('img[data-studio-photo="1"]').forEach((img) => {
       const inserted = surface.hasAttribute('data-studio-inserted-image');
-      img.style.filter = `brightness(${inserted ? 1 - 0.58 * amount : brightness}) saturate(${inserted ? 1 - 0.18 * amount : saturation}) contrast(${1 + 0.02 * amount})`;
+      img.style.filter = `brightness(${inserted ? 1 - 0.58 * amount : brightness}) saturate(${saturation}) contrast(1)`;
       img.style.opacity = String(inserted ? 1 : opacity);
     });
   });

@@ -1,5 +1,6 @@
 import { toCanvas, getFontEmbedCSS } from "html-to-image";
 import { resolveStudioBrandAsset } from "./brand";
+import { filteredPhotoSource } from "./photoFilter";
 
 /** iOS/Safari abortam canvas muito grandes. Mantemos folga sobre os limites reais. */
 const MAX_DIMENSION = 4096;
@@ -360,8 +361,12 @@ const paintImagesOnCanvas = (
     const height = Math.max(0, (rect.height - borderTop - borderBottom) * scaleY);
     if (!width || !height) continue;
 
-    const sourceWidth = image.naturalWidth;
-    const sourceHeight = image.naturalHeight;
+    const cssFilter = style.filter && style.filter !== "none" ? style.filter : "none";
+    const source = imageReady && cssFilter !== "none" && !("filter" in context)
+      ? filteredPhotoSource(image, cssFilter, width, height)
+      : image;
+    const sourceWidth = source instanceof HTMLCanvasElement ? source.width : image.naturalWidth;
+    const sourceHeight = source instanceof HTMLCanvasElement ? source.height : image.naturalHeight;
     let sx = 0;
     let sy = 0;
     let sw = sourceWidth;
@@ -377,7 +382,8 @@ const paintImagesOnCanvas = (
     const frameStyle = photoFrame ? getComputedStyle(photoFrame) : style;
     const radius = (Number.parseFloat(frameStyle.borderTopLeftRadius) || 0) * Math.min(scaleX, scaleY);
     context.save();
-    context.globalAlpha = Number.parseFloat(style.opacity) || 1;
+    const alpha = Number.parseFloat(style.opacity);
+    context.globalAlpha = Number.isFinite(alpha) ? alpha : 1;
     if (photoMask === "popout") popoutPath(context, x, y, width, height);
     else roundedRect(context, x, y, width, height, radius);
     context.clip();
@@ -412,8 +418,7 @@ const paintImagesOnCanvas = (
      * rasteriza a versão tratada e este repinte colava a foto original em cima,
      * o que parecia uma segunda mão duplicada.
      */
-    const cssFilter = style.filter && style.filter !== "none" ? style.filter : "";
-    if (cssFilter && "filter" in context) {
+    if ("filter" in context) {
       (context as CanvasRenderingContext2D & { filter: string }).filter = cssFilter;
     }
     if (photoFrame) {
@@ -439,9 +444,9 @@ const paintImagesOnCanvas = (
       const fit = Math.min(width / sourceWidth, height / sourceHeight);
       const drawWidth = sourceWidth * fit;
       const drawHeight = sourceHeight * fit;
-      context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+      context.drawImage(source, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
     } else {
-      context.drawImage(image, sx, sy, sw, sh, x, y, width, height);
+      context.drawImage(source, sx, sy, sw, sh, x, y, width, height);
     }
     context.restore();
     painted.push({ x, y, width, height });
@@ -511,7 +516,9 @@ const openPhotoBackdrops = (node: HTMLElement) => {
          tela de aparelho não pode apagar o fundo da tela no PNG. */
       const fills =
         imageRect.width * imageRect.height >= rect.width * rect.height * 0.6;
-      if (covers && fills && isOpaqueColor(style.backgroundColor) && !seen.has(ancestor)) {
+      // Even translucent template surfaces belong behind the photo. Leaving
+      // accent/40 or card/70 in the raster tinted/washed out the PNG only.
+      if (covers && fills && (parseCssColor(style.backgroundColor)?.[3] ?? 0) > 0 && !seen.has(ancestor)) {
         seen.add(ancestor);
         backdrops.push({
           x: rect.left - rootRect.left,
@@ -1114,9 +1121,8 @@ const renderStaticNodeToBlob = async (
   const backgroundColor = getComputedStyle(document.body).backgroundColor || "#ffffff";
   const { specs, restore } = hideCssStrokes(node);
   const { backdrops, restore: restoreBackdrops } = openPhotoBackdrops(node);
-  const insertedImages = Array.from(
-    node.querySelectorAll<HTMLImageElement>('[data-studio-inserted-image="1"] img[data-studio-photo="1"]'),
-  );
+  const insertedImages = Array.from(node.querySelectorAll<HTMLImageElement>('img[data-studio-photo="1"]'))
+    .filter((image) => image.dataset.studioExportImageLayer !== "foreground" || !!image.closest('[data-studio-inserted-image="1"]'));
   const insertedVisibility = insertedImages.map((image) => image.style.visibility);
 
   /*
@@ -1133,9 +1139,9 @@ const renderStaticNodeToBlob = async (
 
   let output: HTMLCanvasElement;
   try {
-    /* A imagem inserida é repintada diretamente no canvas. Retirá-la apenas do
-       raster evita a duplicação/subpixel que o WebKit mostrava como uma faixa
-       sombreada à direita da composição. */
+    /* Every backdrop photo is painted exactly once. A raw photo left in the
+       foreignObject could cover its filtered canvas copy on Safari. Overlays
+       stay visible in the raster, above photos and below text. */
     insertedImages.forEach((image) => { image.style.visibility = "hidden"; });
     /* Raster SEM fundo opaco: ele precisa de transparência para que a foto
        possa ser composta por baixo da película já rasterizada. */

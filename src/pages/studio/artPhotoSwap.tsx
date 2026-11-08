@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { ImageIcon, Layers3, Trash2, Upload } from "lucide-react";
 import type { PhotoFraming } from "./photos";
+import { applyPhotoShade, readPhotoShade } from "./photoLight";
 
 export type SwapPhoto = PhotoFraming & { src: string; label?: string };
 /** Arte -> posição da foto -> imagem escolhida. */
@@ -58,6 +59,33 @@ export const applyArtPhotoSwaps = (node: HTMLElement | null, swaps?: Record<numb
 const INSERT_ATTR = "data-studio-inserted-image";
 const insertionListeners = new WeakMap<HTMLElement, AbortController>();
 
+/** Persist originals in the snapshot as well, so removal restores the template. */
+const restoreCoveredBackground = (node: HTMLElement) => {
+  node.querySelectorAll<HTMLElement>('[data-studio-covered-background]').forEach((element) => {
+    const original = element.dataset.studioCoveredBackground;
+    if (original) element.setAttribute('style', original);
+    else element.removeAttribute('style');
+    element.removeAttribute('data-studio-covered-background');
+  });
+};
+const coverDecorativeBackground = (surface: HTMLElement) => {
+  const remember = (element: HTMLElement) => {
+    element.dataset.studioCoveredBackground = element.getAttribute('style') ?? '';
+  };
+  if (getComputedStyle(surface).backgroundImage !== 'none') {
+    remember(surface);
+    surface.style.setProperty('background-image', 'none', 'important');
+  }
+  surface.querySelectorAll<HTMLElement>('[aria-hidden]').forEach((element) => {
+    if (element.getAttribute('aria-hidden') === 'false' || element.closest('[data-studio-inserted-image]')) return;
+    if (element.matches('[data-studio-overlay]') || element.querySelector('[data-studio-overlay], [data-studio-photo]')) return;
+    // Decorative layers only; never hide text, the main logo or image controls.
+    if (getComputedStyle(element).position !== 'absolute') return;
+    remember(element);
+    element.style.setProperty('display', 'none', 'important');
+  });
+};
+
 const insertionSurface = (node: HTMLElement) => {
   const sections = Array.from(node.querySelectorAll<HTMLElement>("section"));
   const rootRect = node.getBoundingClientRect();
@@ -70,9 +98,11 @@ const insertionSurface = (node: HTMLElement) => {
 /** Insere imagem em qualquer arte, inclusive nas que nasceram somente com texto. */
 export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: InsertedArtImage) => {
   if (!node) return;
+  const shade = readPhotoShade(node);
   insertionListeners.get(node)?.abort();
   insertionListeners.delete(node);
   node.querySelector(`[${INSERT_ATTR}]`)?.remove();
+  restoreCoveredBackground(node);
   if (!insertion) return;
 
   const surface = insertionSurface(node);
@@ -103,6 +133,7 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
 
   if (getComputedStyle(surface).position === "static") surface.style.position = "relative";
   if (insertion.mode === "background") {
+    coverDecorativeBackground(surface);
     /* A camada entra dentro da superfície visual, não atrás do bloco opaco. O
        texto continua acima porque os filhos originais recebem um plano próprio. */
     Object.assign(layer.style, { inset: "0", zIndex: "0", borderRadius: "inherit" });
@@ -113,6 +144,7 @@ export const applyInsertedArtImage = (node: HTMLElement | null, insertion?: Inse
       if (!getComputedStyle(child).zIndex || getComputedStyle(child).zIndex === "auto") child.style.zIndex = "1";
     });
     surface.prepend(layer);
+    applyPhotoShade(node, shade);
   } else {
     const frameHeight = () => {
       const rect = node.getBoundingClientRect();
