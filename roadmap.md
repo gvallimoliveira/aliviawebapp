@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Studio — textos e destaques da hospedagem
-- [ ] Corrigir origem de links como argumentos, palavras genéricas e escrita das roupas de cama/banho; revisar kit real preservando os dois temas e demais dados.
-- [ ] Conferir testes e geração dos formatos anexados com palavras temáticas legíveis.
+- [x] Hospedagem usa destaque do assunto, nunca o verbo/adjetivo mais longo; corrige toleras→toalhas e roupas da cama→roupas de cama. Contato sem rastreamento e cartaz com frase completa. Kit real: acrescentado Roupa de cama e banho aos destaques de Interna da casa; demais campos, temas, fotos e destino preservados. Textos atuais do kit já estavam escritos corretamente.
+- [x] Conta proprietária → 50 Tons → Interna da casa → Minimalista + Letras empilhadas → geração real conferida com destaque completo e endereço curto; imagens desktop e celular 390px legíveis. 20 testes aprovados (11 novamente após correção do teste), build OK. Não publicou, não alterou artes salvas nem testou iPhone físico; artes anteriores exigem nova versão ou edição.
 
 ## Studio — circulação da biblioteca de ganchos
 - [x] Hospedagem preserva biblioteca ativa do tema em vez de substituí-la por poucos fatos; rotação prioriza inéditos com identidade estável e histórico sem decaimento, inclusive em lotes rápidos. Ganchos únicos não são deslocados pelas rotas; prioridade factual de software preservada.

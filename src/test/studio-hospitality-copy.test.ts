@@ -16,7 +16,7 @@ describe('hospitality subject selection', () => {
       .toBe('Cinco quartos com toalhas e roupas de cama inclusas para acomodar a família.');
   });
   it('never promotes booking links into stay facts or supporting arguments', () => {
-    const dna = buildBrandDna({ name: 'Casa', niche: 'Hospedagem', briefAnswers: { oferta: 'Casa inteira com cinco quartos', apresentacao: 'https://www.airbnb.com.br/rooms/16286879?utm_source=ig&fbclid=tracking' } });
+    const dna = buildBrandDna({ niche: 'Hospedagem', briefAnswers: { oferta: 'Casa inteira com cinco quartos', apresentacao: 'https://www.airbnb.com.br/rooms/16286879?utm_source=ig&fbclid=tracking' } });
     expect(hospitalityFacts(dna)).toEqual([{ title: 'Casa inteira com cinco quartos', description: '' }]);
   });
   it('preserves the booking destination label without tracking parameters', () => {

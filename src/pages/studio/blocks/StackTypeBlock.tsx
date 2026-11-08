@@ -18,7 +18,8 @@ import { displayWord, displayWordContainer, displayWordStyle } from "../typograp
 const StackTypeBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
   if (!content.headlines?.length || !content.kickers?.length) return null;
   const headline = rng.pick(content.headlines);
-  const display = content.kinetic?.length ? rng.pick(content.kinetic) : undefined;
+  const sameSubject = content.kinetic?.filter((item) => item.caption === headline.strong) ?? [];
+  const display = sameSubject.length ? rng.pick(sameSubject) : undefined;
   /**
    * REGRA DURA: a palavra-cartaz aparece INTEIRA. Palavra longa não é quebrada
    * ao meio (ver `typographyGuards`) — o corpo da letra cai e, se nem assim
