@@ -44,6 +44,18 @@ export let BRAND_SLOGAN: string = ALIVIA_SLOGAN;
 export let BRAND_HANDLE: string = ALIVIA_HANDLE;
 export let BRAND_SITE: string = ALIVIA_SITE;
 
+/** Contact text is not a tracking URL; keep the destination in the saved kit. */
+export const studioSiteLabel = (source: string): string => {
+  try {
+    const url = new URL(/^https?:\/\//i.test(source) ? source : `https://${source}`);
+    const path = url.pathname.replace(/\/$/, '');
+    const label = `${url.hostname}${path}`;
+    return label.length <= 64 ? label : url.hostname;
+  } catch {
+    return source.split(/[?#]/)[0].trim();
+  }
+};
+
 export type StudioBrandTheme = {
   name: string;
   slogan: string;
@@ -85,7 +97,7 @@ export const applyStudioBrandTheme = (theme: StudioBrandTheme) => {
   BRAND_HANDLE = theme.handle?.trim()
     ? (theme.handle.trim().startsWith("@") ? theme.handle.trim() : `@${theme.handle.trim()}`)
     : theme.name || NEUTRAL_NAME;
-  BRAND_SITE = (theme.site || "").replace(/^https?:\/\//, "").replace(/\/$/, "") || theme.name || NEUTRAL_NAME;
+  BRAND_SITE = theme.site ? studioSiteLabel(theme.site) : theme.name || NEUTRAL_NAME;
 };
 
 /** Volta para a marca Aliv.iA (Studio interno). */

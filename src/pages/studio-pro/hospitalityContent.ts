@@ -8,14 +8,33 @@ import { focusProductContent, type ProductFact } from './productFocus';
 import { commercialAffinity, commercialAudienceHooks } from './commercialPriority';
 import { applyHookPrefs } from '@/pages/studio/hookStore';
 
-const clean = (text: string) => text.trim().replace(/\s+/g, ' ');
+export const cleanHospitalityCopy = (text: string) => text.trim().replace(/\s+/g, ' ')
+  .replace(/\btoleras\b/gi, 'toalhas').replace(/\broupas da cama\b/gi, 'roupas de cama');
+const clean = cleanHospitalityCopy;
+
+/** A display phrase names the actual amenity, never the longest verb/adjective. */
+export const hospitalityDisplayTerms = (fact: ProductFact, audience?: BrandAudience): string[] => {
+  const title = clean(fact.title);
+  if (/\b(?:roupas? de cama|toalhas?|roupas? de banho)\b/i.test(title)) return ['Roupa de cama e banho'];
+  const declared = audience?.editorialGroup ? highlightTermsFor(audience) : [];
+  const matching = declared.filter((term) => title.toLocaleLowerCase().includes(term.toLocaleLowerCase()));
+  if (matching.length) return matching;
+  const amenities: [RegExp, string][] = [
+    [/\bquartos?\b/i, 'Quartos'], [/\bsuítes?\b/i, 'Suítes'], [/\bcozinha\b/i, 'Cozinha completa'],
+    [/\bpiscina\b/i, 'Piscina'], [/\bsauna\b/i, 'Sauna'], [/\bchurrasqueira\b/i, 'Churrasqueira'],
+    [/\bmirante\b/i, 'Mirante'], [/\bbanheiros?\b/i, 'Banheiros'], [/\bvaranda\b/i, 'Varanda'],
+    [/\bvista.{0,20}mar\b/i, 'Vista para o mar'],
+  ];
+  const matched = amenities.find(([pattern]) => pattern.test(title));
+  return matched ? [matched[1]] : [audience?.keyword || audience?.label || 'Hospedagem'];
+};
 export const hospitalityFacts = (dna: BrandDna, audience?: BrandAudience): ProductFact[] => {
   // A theme is a closed editorial package: don't borrow another room/amenity.
   const source = audience?.editorialGroup
     ? [...(audience.proof ?? []), ...(audience.desires ?? []), audience.description ?? '']
     : [...(audience?.proof ?? []), ...(audience?.desires ?? []), dna.presentation ?? '', dna.offer ?? '', dna.belief ?? ''];
   const lines = [...new Set(source.flatMap((text) => text.split(/\n|;|(?<=[.!?])\s+(?=[A-ZÀ-Ú])/)).map(clean))]
-    .filter((line) => line.length >= 8 && !hospitalityMismatch(line) && !/garanti|segurança total|silêncio absoluto|zero preocupa|avistar.*golfin/i.test(line));
+    .filter((line) => line.length >= 8 && !/https?:\/\/|www\.|utm_|fbclid=/i.test(line) && !hospitalityMismatch(line) && !/garanti|segurança total|silêncio absoluto|zero preocupa|avistar.*golfin/i.test(line));
   return lines.map((title) => {
     const support = lines.filter((line) => line !== title).map((line, index) => ({ line, index, score: commercialAffinity(line, [title]) }))
       .sort((a, b) => b.score - a.score || a.index - b.index)[0]?.line ?? '';
@@ -23,12 +42,13 @@ export const hospitalityFacts = (dna: BrandDna, audience?: BrandAudience): Produ
   });
 };
 export const focusHospitalityFact = (content: WorldContent, fact: ProductFact, brand: string, cta: string, audience?: BrandAudience): WorldContent => {
-  const focused = focusProductContent(content, fact, brand, cta);
-  const terms = audience?.editorialGroup ? highlightTermsFor(audience) : [];
+  const normalizedFact = { ...fact, title: clean(fact.title), description: clean(fact.description) };
+  const focused = focusProductContent(content, normalizedFact, brand, cta);
+  const terms = hospitalityDisplayTerms(normalizedFact, audience);
   return {
     ...focused,
-    kinetic: terms.length ? terms.map((word) => ({ kicker: brand, word, caption: fact.title, topic: undefined })) : focused.kinetic,
-    typos: terms.length ? terms.map((big) => ({ lead: brand, big, tail: fact.title })) : focused.typos,
+    kinetic: terms.map((word) => ({ kicker: brand, word, caption: normalizedFact.title, topic: undefined })),
+    typos: terms.map((big) => ({ lead: brand, big, tail: normalizedFact.title })),
     compare: focused.compare.map((item) => ({ ...item, labels: ['A casa', 'Sua estadia'] })),
   };
 };

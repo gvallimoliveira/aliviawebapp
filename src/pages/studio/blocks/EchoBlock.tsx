@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { personaSurface, sectionHeight, type BlockProps } from "./shared";
 import { TextureLayer } from "./Texture";
-import { displayWord, displayWordContainer, displayWordStyle } from "../typographyGuards";
+import { displayWordContainer, displayWordStyle } from "../typographyGuards";
 
 /**
  * Echo block — a palavra-chave do ecossistema repetida em coluna: todas as
@@ -21,7 +21,7 @@ const REPETITIONS = 7;
 const EchoBlock = ({ content, rng, treatment, format, persona, picker }: BlockProps) => {
   const [item] = picker.pick(content.kinetic, 1, rng, (k) => [k.topic]);
   /* Palavra inteira, sempre: corpo da letra calculado pelo comprimento. */
-  const word = displayWord(item.word, 14) || item.word.toUpperCase();
+  const word = item.word.toUpperCase();
   const dark = treatment === 1;
   const filledAt = Math.floor(REPETITIONS / 2);
 

@@ -18,21 +18,17 @@ import { displayWord, displayWordContainer, displayWordStyle } from "../typograp
 const StackTypeBlock = ({ content, rng, treatment, format, persona }: BlockProps) => {
   if (!content.headlines?.length || !content.kickers?.length) return null;
   const headline = rng.pick(content.headlines);
+  const display = content.kinetic?.length ? rng.pick(content.kinetic) : undefined;
   /**
    * REGRA DURA: a palavra-cartaz aparece INTEIRA. Palavra longa não é quebrada
    * ao meio (ver `typographyGuards`) — o corpo da letra cai e, se nem assim
    * couber, o motor escolhe outra palavra da frase.
    */
-  const word = displayWord(headline.strong, 12);
+  const word = display?.word.toUpperCase() || displayWord(headline.strong, 12);
   if (word.length < 3) return null;
   const wordStyle = displayWordStyle(word, { widthPct: 98, maxRem: 5.6 });
 
-  const tail = headline.rest
-    .replace(/[.]+$/g, "")
-    .split(/\s+/)
-    .slice(0, 3)
-    .join(" ")
-    .toUpperCase();
+  const tail = display?.caption || [headline.strong, headline.rest].filter(Boolean).join(' ');
   const detail = rng.pick([BRAND_HANDLE, BRAND_SITE]);
   const kicker = rng.pick(content.kickers);
 
@@ -110,10 +106,9 @@ const StackTypeBlock = ({ content, rng, treatment, format, persona }: BlockProps
 
           {tail && (
             <span
-              className="mt-1 inline-block px-3 py-1.5 text-lg font-extrabold uppercase tracking-[0.06em] md:text-3xl"
+              className="mt-6 max-w-full text-base font-medium leading-relaxed md:text-lg"
               style={{
-                backgroundColor: ink,
-                color: dark || primary ? "hsl(var(--foreground))" : "hsl(var(--primary-foreground))",
+                color: ink,
               }}
             >
               {tail}
@@ -121,7 +116,7 @@ const StackTypeBlock = ({ content, rng, treatment, format, persona }: BlockProps
           )}
 
           <p className="mt-8 text-sm font-extrabold uppercase tracking-[0.12em] md:text-lg">{kicker}</p>
-          <p className="mt-10 text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-90 md:text-xs">
+          <p className="mt-10 max-w-full break-words text-xs font-semibold opacity-90 md:text-sm">
             {detail}
           </p>
         </motion.div>

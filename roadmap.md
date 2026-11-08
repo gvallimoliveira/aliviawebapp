@@ -1,5 +1,9 @@
 # Roadmap
 
+## Studio — textos e destaques da hospedagem
+- [ ] Corrigir origem de links como argumentos, palavras genéricas e escrita das roupas de cama/banho; revisar kit real preservando os dois temas e demais dados.
+- [ ] Conferir testes e geração dos formatos anexados com palavras temáticas legíveis.
+
 ## Studio — circulação da biblioteca de ganchos
 - [x] Hospedagem preserva biblioteca ativa do tema em vez de substituí-la por poucos fatos; rotação prioriza inéditos com identidade estável e histórico sem decaimento, inclusive em lotes rápidos. Ganchos únicos não são deslocados pelas rotas; prioridade factual de software preservada.
 - [x] 42 testes aprovados: circulação de 60 ganchos em dez lotes sem repetição, identidade registrada, determinismo, temas isolados, desativação e histórico antes/depois de salvar. Ajuda pt/en/es atualizada, build OK. Conta autorizada → Aliv.iA → modelo Ganchos → Nova versão conferidos com arte visível; 50 Tons não disponível nesta sessão (só Aliv.iA), portanto seu kit real não foi exercitado. Sem alterações em kits, fotos ou artes salvas; não publicado.

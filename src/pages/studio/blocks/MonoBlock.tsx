@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import type { CSSProperties } from "react";
 import { sectionHeight, type BlockProps } from "./shared";
 import { BRAND_LOGO, BRAND_NAME, BRAND_SLOGAN, brandWordmarkParts } from "../brand";
+import { displayWordContainer, displayWordStyle } from "../typographyGuards";
 
 /**
  * Mono block — "Edição Mono": o black & white adaptado do Aliv.iA.
@@ -112,7 +113,7 @@ const MonoEcho = ({ content, rng, picker, format, textureIndex }: MonoProps) => 
           className="flex flex-col items-center"
         >
           <p className="mb-8 text-[11px] font-semibold uppercase tracking-[0.32em] text-mono-mid">{item.kicker}</p>
-          <div aria-label={word} className="flex select-none flex-col items-center text-center">
+          <div aria-label={word} className="flex select-none flex-col items-center text-center" style={displayWordContainer}>
             {Array.from({ length: REPETITIONS }, (_, i) => {
               const filled = i === filledAt;
               return (
@@ -120,7 +121,8 @@ const MonoEcho = ({ content, rng, picker, format, textureIndex }: MonoProps) => 
                   key={i}
                   aria-hidden={!filled}
                   data-studio-stroke={filled ? undefined : "1"}
-                  className={`whitespace-nowrap text-5xl font-bold leading-[1.02] tracking-tight md:text-8xl ${
+                  style={displayWordStyle(word, { widthPct: 96, maxRem: 6 })}
+                  className={`font-bold leading-[1.02] tracking-tight ${
                     filled
                       ? "text-primary"
                       : "text-transparent [-webkit-text-stroke:1.5px_hsl(var(--mono-paper)/0.3)]"
