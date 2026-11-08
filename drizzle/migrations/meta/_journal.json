@@ -547,6 +547,13 @@
       "when": 1793926931034,
       "tag": "0077_physiotech_delete_current_access",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1794142952330,
+      "tag": "0078_studio_vip_photo_capacity_300",
+      "breakpoints": true
     }
   ]
 }
