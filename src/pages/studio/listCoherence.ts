@@ -35,6 +35,12 @@ export const finalizeListCoherence = <T>(value: T, key = ""): T => {
   if (!value || typeof value !== "object") return value;
   const revised = Object.fromEntries(Object.entries(value).map(([field, child]) =>
     [field, finalizeListCoherence(child, field)]));
+  const lead = ["headline", "title", "heading"].map((field) => revised[field]).find((text): text is string => typeof text === "string" && text.trim().length > 0);
+  if (lead && Array.isArray(revised.items) && revised.items.every((item) => typeof item === "string")) {
+    // A list develops its title; an item restating it is repetition, not an argument.
+    const developing = (revised.items as string[]).filter((item) => !repeatsListIdea(lead, item));
+    if (developing.length) revised.items = developing;
+  }
   if (Array.isArray(revised.items) && revised.items.every((item) => typeof item === "string") && typeof revised.heading === "string") {
     revised.heading = revised.heading.replace(/^\d+(?=\s)/, String(revised.items.length));
   }

@@ -7,6 +7,8 @@ import { hospitalityMismatch, isHospitalityBusiness } from './businessFit';
 import { focusProductContent, type ProductFact } from './productFocus';
 import { commercialAffinity, commercialAudienceHooks } from './commercialPriority';
 import { applyHookPrefs } from '@/pages/studio/hookStore';
+import { distinctListItems, repeatsListIdea } from '@/pages/studio/listCoherence';
+import { textSimilarity } from './narrativeArc';
 
 export const cleanHospitalityCopy = (text: string) => text.trim().replace(/\s+/g, ' ')
   .replace(/\btoleras\b/gi, 'toalhas').replace(/\broupas da cama\b/gi, 'roupas de cama');
@@ -33,10 +35,15 @@ export const hospitalityFacts = (dna: BrandDna, audience?: BrandAudience): Produ
   const source = audience?.editorialGroup
     ? [...(audience.proof ?? []), ...(audience.desires ?? []), audience.description ?? '']
     : [...(audience?.proof ?? []), ...(audience?.desires ?? []), dna.presentation ?? '', dna.offer ?? '', dna.belief ?? ''];
-  const lines = [...new Set(source.flatMap((text) => text.split(/\n|;|(?<=[.!?])\s+(?=[A-ZÀ-Ú])/)).map(clean))]
-    .filter((line) => line.length >= 8 && !/https?:\/\/|www\.|utm_|fbclid=/i.test(line) && !hospitalityMismatch(line) && !/garanti|segurança total|silêncio absoluto|zero preocupa|avistar.*golfin/i.test(line));
+  const split = (texts: string[]) => distinctListItems([...new Set(texts.flatMap((text) => text.split(/\n|;|(?<=[.!?])\s+(?=[A-ZÀ-Ú])/)).map(clean))]
+    .filter((line) => line.length >= 8 && !/https?:\/\/|www\.|utm_|fbclid=/i.test(line) && !hospitalityMismatch(line) && !/garanti|segurança total|silêncio absoluto|zero preocupa|avistar.*golfin/i.test(line)));
+  const lines = split(source);
+  // Message step (presentation/offer/belief/positioning) explains the facts; it supports, never becomes another amenity title.
+  const message = split([dna.presentation ?? '', dna.offer ?? '', dna.belief ?? '', dna.positioning ?? '']);
+  const echoes = (a: string, b: string) => repeatsListIdea(a, b) || textSimilarity(a, b) >= 0.6;
   return lines.map((title) => {
-    const support = lines.filter((line) => line !== title).map((line, index) => ({ line, index, score: commercialAffinity(line, [title]) }))
+    const support = distinctListItems([...lines, ...message]).filter((line) => line !== title && !echoes(line, title))
+      .map((line, index) => ({ line, index, score: commercialAffinity(line, [title]) + (message.includes(line) ? 0.5 : 0) }))
       .sort((a, b) => b.score - a.score || a.index - b.index)[0]?.line ?? '';
     return { title, description: support };
   });

@@ -226,7 +226,8 @@ export const removeTitleDescriptionEcho = (title: string, description: string): 
 
   const rawWords = comparable.trim().split(/\s+/);
   const remainder = rawWords.slice(openingSize).join(" ").replace(/^[,;:.!?–—\s]+/, "").trim();
-  if (!remainder) return "Esse ponto ganha sentido quando orienta a próxima decisão.";
+  // Nothing new beyond the title: drop the support instead of a generic filler.
+  if (!remainder) return "";
 
   const revised = bridgeDescription(title, remainder);
   return revised.replace(/\.\s*\.$/, ".");

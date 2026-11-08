@@ -26,3 +26,4 @@
 - Studio captions use rendered copy at click/download/save time; legacy content-only paths keep only related proofs and omit standalone objections so captions cannot contradict the art.
 - Natural voice preserves complete source sentences; factual and clinical copy bypasses rhetorical rewriting, and official Aliv.iA audience pools cannot be overridden by free brand-level routes because those can leak another feature or audience.
 - Device mockups (notebook/tablet/phone) show only real system prints via `pickScreenPhoto` (usage Produto + screen caption) as a foreground layer; without prints they fall back to `mockScreens.ts`, so portraits never appear inside a screen.
+- Echo removal never substitutes generic filler (empty support instead); hospitality supports prefer declared Message-step lines (presentation/offer/belief/positioning) that don't restate the title, and lists drop items restating their headline, so arts build an idea instead of repeating it.
