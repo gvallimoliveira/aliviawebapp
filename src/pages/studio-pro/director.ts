@@ -47,6 +47,8 @@ import { finalizeBrandVoice } from "./veterinaryVoice";
 import { matchesVestibular, mentionsPainAsSymptom, vestibularLines } from "./vestibularLexicon";
 import { matchesMsk, mskLines } from "./mskLexicon";
 import { conciseProductLine, focusProductContent, isSoftwareProduct, productFactsFor, productUnitPlan, splitProductFact } from "./productFocus";
+import { isHospitalityBusiness } from "./businessFit";
+import { focusHospitalityFact, hospitalityFacts } from "./hospitalityContent";
 
 
 export const DIRECTOR_AXES = [
@@ -645,6 +647,9 @@ export const planBatch = (input: {
     .join(" · ");
   const domainProbe = normalize([domain, dna?.niche, dna?.description, dna?.presentation, dna?.offer].filter(Boolean).join(" · "));
   const softwareDomain = isSoftwareProduct(dna, domainProbe, brandName);
+  const hospitalityDomain = isHospitalityBusiness(dna);
+  const stayFacts = dna && hospitalityDomain ? hospitalityFacts(dna, relationAudience) : [];
+  const stayStream = createStream(stayFacts, `${seed}:stay-facts`, weightOf);
   const productFacts = (content.productFacts ?? (softwareDomain ? productFactsFor(content, dna, relationAudience, brandName) : [])).flatMap(splitProductFact);
   const productStream = createStream(productFacts, `${seed}:product-facts`, weightOf);
   const unitKeys = Array.from({ length: Math.max(0, count) }, (_, index) => {
@@ -715,7 +720,7 @@ export const planBatch = (input: {
     const scriptWords = selected
       ? normalize(flatten(selected)).split(/[^a-z0-9]+/).filter((word) => word.length > 4)
       : [];
-    const selectedHook = closedEditorial || productFocused ? undefined : carouselHookStream.take({
+    const selectedHook = closedEditorial || productFocused || hospitalityDomain ? undefined : carouselHookStream.take({
       axis: groupAxis,
       // O gancho precisa combinar com a tese do roteiro, não apenas pertencer à
       // marca. Palavras do próprio carrossel pesam junto com dor/desejo/prova.
@@ -750,7 +755,7 @@ export const planBatch = (input: {
       } : selected;
       carouselByGroup.set(
         block.slide.group,
-        closedEditorial || productFocused
+        closedEditorial || productFocused || hospitalityDomain
           ? dedupeCarouselSlides(productScript as WorldContent["carousels"][number])
           : directCarouselWithHook(selected as WorldContent["carousels"][number], selectedHook, relation as Relation | undefined),
       );
@@ -790,7 +795,10 @@ export const planBatch = (input: {
     const productFact = productFocused && !carousel
       ? productStream.take({ axis, extra: shotExtra, voice, salt: `product:${index}` })
       : undefined;
-    const shotContent = productFact
+    const stayFact = hospitalityDomain && !carousel ? stayStream.take({ axis, extra: shotExtra, voice, salt: `stay:${index}` }) : undefined;
+    const shotContent = stayFact
+      ? focusHospitalityFact(content, stayFact, brandName || content.label, relation?.cta || content.sales.ctas[0] || "", relationAudience)
+      : productFact
       ? focusProductContent(content, productFact, brandName || content.label, relation?.cta || content.sales.ctas[0] || "")
       : content;
 
@@ -819,8 +827,8 @@ export const planBatch = (input: {
     } else {
       (Object.keys(SLOT_QUOTA) as ListSlot[]).forEach((slot) => {
         const items = shotContent[slot] as readonly unknown[] | undefined;
-        const picked = claim(productFact ? `product:${index}:${slot}` : slot, items, productFact ? Math.min(items?.length ?? 0, SLOT_QUOTA[slot]) : SLOT_QUOTA[slot]);
-        if (picked.length > 0 || productFact) {
+        const picked = claim(productFact || stayFact ? `fact:${index}:${slot}` : slot, items, productFact || stayFact ? Math.min(items?.length ?? 0, SLOT_QUOTA[slot]) : SLOT_QUOTA[slot]);
+        if (picked.length > 0 || productFact || stayFact) {
           (reserved as Record<string, unknown>)[slot] = picked;
         }
       });
@@ -833,7 +841,7 @@ export const planBatch = (input: {
      */
     // Official audience pools already contain reviewed product copy. A free
     // brand-level route can mention another feature and must not override them.
-    if (!carousel && !productFact && shotRoute && !closedEditorial && !/^aliv\s*\.?\s*ia$/i.test(brandName ?? "")) {
+    if (!carousel && !productFact && !hospitalityDomain && shotRoute && !closedEditorial && !/^aliv\s*\.?\s*ia$/i.test(brandName ?? "")) {
       const composed = composeRouteCopy(shotRoute, {
         brand: brandName,
         seed: `${seed}:art:${index}`,
@@ -985,11 +993,14 @@ export const planBatch = (input: {
       if (!shot) return content;
       const cached = directed.get(index);
       if (cached) return cached;
-      const next = finalizeBrandVoice<WorldContent>({
+      const source = finalizeBrandVoice<WorldContent>({
         ...content,
         ...shot.reserved,
         ...(shot.sales ? { sales: shot.sales } : {}),
       }, { brand: brandName, domain });
+      const next = dna && hospitalityDomain
+        ? { ...source, metrics: [], stats: [], productFacts: undefined, ecosystems: [], sales: { ...source.sales, offers: [] } }
+        : source;
       directed.set(index, next);
       return next;
     },

@@ -45,6 +45,8 @@ import {
 } from "./artSnapshot";
 import type { ArtRenderBrand } from "./artRender";
 import { reflowStaticArtwork } from "@/pages/studio/AutoFit";
+import PhotoShadeControl from "@/pages/studio/PhotoShadeControl";
+import { applyPhotoShade, readPhotoShade } from "@/pages/studio/photoLight";
 
 export type EditableArt = {
   id: string;
@@ -146,13 +148,14 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
     [art.snapshot],
   );
   const [format, setFormat] = useState<StudioFormat>(
-    isFormat(art.format) ? art.format : isFormat(snapshot?.format) ? (snapshot!.format as StudioFormat) : "1x1",
+    isFormat(art.format) ? art.format : snapshot && isFormat(snapshot.format) ? snapshot.format : "1x1",
   );
   const [htmls, setHtmls] = useState<string[] | null>(null);
   const [editing, setEditing] = useState(false);
   /** Modo de arrastar texto pela alça (não pelo corpo do texto). */
   const [moving, setMoving] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [photoShades, setPhotoShades] = useState<Record<number, number>>({});
   const editBefore = useRef<Record<number, ArtTextEditSnapshot>>({});
   const textBeforeEdit = useRef<Record<number, ArtTextEdits>>({});
   const learning = useCopyLearning(brand.id);
@@ -163,7 +166,16 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
     let alive = true;
     (async () => {
       const loaded = await loadArtSnapshot(snapshot);
-      if (alive) setHtmls(loaded);
+      if (alive) {
+        const levels: Record<number, number> = {};
+        loaded.forEach((html, pos) => {
+          const holder = document.createElement("div");
+          holder.innerHTML = html;
+          levels[pos] = readPhotoShade(holder);
+        });
+        setPhotoShades(levels);
+        setHtmls(loaded);
+      }
     })();
     return () => {
       alive = false;
@@ -176,9 +188,12 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
   useEffect(() => {
     (htmls ?? []).forEach((_, pos) => {
       const node = stageOf(pos);
-      if (node) applyArtTextSizes(node);
+      if (node) {
+        applyArtTextSizes(node);
+        if (photoShades[pos] !== undefined) applyPhotoShade(node, photoShades[pos]);
+      }
     });
-  }, [htmls, format]);
+  }, [htmls, format, photoShades]);
 
   const startEdit = () => {
     stopMove(false);
@@ -496,6 +511,11 @@ const StudioArtEditor = ({ brand, art, onClose, onSaved }: Props) => {
                       format={format}
                       domId={`studio-art-edit-${pos}`}
                     />
+                    {(html.includes('data-studio-photo-background') || html.includes('data-studio-inserted-image')) &&
+                      <PhotoShadeControl value={photoShades[pos] ?? readPhotoShade(stageOf(pos))} onChange={(value) => {
+                        applyPhotoShade(stageOf(pos), value);
+                        setPhotoShades((prev) => ({ ...prev, [pos]: value }));
+                      }} />}
                   </div>
                 ))}
               </div>

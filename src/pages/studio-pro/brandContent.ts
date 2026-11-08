@@ -35,6 +35,7 @@ import { alignCtasToAudience, alignTitlesToAudience } from "./ctaAudience";
 import { isAliviaCoreBrand as isAliviaCtaBrand } from "./aliviaCoreCharm";
 import { commercialAudienceHooks, prioritizeCommercialAudience } from "./commercialPriority";
 import { isSoftwareProduct, productFactsFor } from "./productFocus";
+import { hospitalityContent } from "./hospitalityContent";
 
 
 
@@ -1123,7 +1124,7 @@ export const buildBrandContent = (
   );
 
 
-  return sanitizeContent(merged, dna.forbidden);
+  return hospitalityContent(sanitizeContent(merged, dna.forbidden), dna, undefined, brand);
 };
 
 
@@ -2261,10 +2262,10 @@ export const buildSegmentContent = ({
     const productReady = isSoftwareProduct(dna, "", brand) && audience?.id !== SLOGAN_SEGMENT
       ? { ...aligned, productFacts: productFactsFor(aligned, dna, audience, brand) }
       : aligned;
-    return proofreadVisible(finalizeBrandVoice(productReady, {
+    return hospitalityContent(proofreadVisible(finalizeBrandVoice(productReady, {
       brand,
       domain: veterinary ? "veterinária" : "",
-    })) as WorldContent;
+    })) as WorldContent, dna, audience, brand);
 
   };
 

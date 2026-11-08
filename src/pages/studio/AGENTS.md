@@ -1,4 +1,6 @@
 # Studio rules
+- Hospitality identity is resolved from declared niche/offer in `studio-pro/businessFit.ts`; `hospitalityContent.ts` supplies scoped stay facts before rendering and the director skips service-result routes, preventing incidental booking software from changing the business model.
+- Background-photo lighting shares `photoLight.ts`: DOM overlay opacity and image filters reach zero shade together; per-brand defaults and per-art session overrides are serialized in the existing HTML snapshot, keeping preview, gallery edits and PNG identical without new database fields.
 - Photo management keeps usage selectors separate from fixed-size actions on narrow screens; deletion confirms first, reports failures, and verifies the returned database ID before changing the gallery or cleaning storage, preventing clipped controls and silent zero-row deletes.
 - Product-focused software shots send their actual fact vocabulary to photo affinity; user-declared generic product interfaces may illustrate product education without fake clinical topics, while specific caption/procedure restrictions remain scoped.
 - Official external asset mirrors resolve by exact source URL in `brand.ts`, including legacy export snapshots; reuse existing bundled official assets because an image may display cross-origin but fail SVG/canvas export without CORS.

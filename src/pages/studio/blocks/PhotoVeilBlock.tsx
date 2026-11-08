@@ -51,6 +51,7 @@ const PhotoVeilBlock = ({ content, rng, treatment, format, persona, picker, phot
 
   return (
     <section
+      data-studio-photo-background="1"
       className={`relative flex ${sectionHeight(format)} ${justify} overflow-hidden`}
       style={{ backgroundColor: "hsl(var(--studio-deep-surface, var(--primary)))" }}
     >

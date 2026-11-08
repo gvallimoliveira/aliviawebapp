@@ -3,6 +3,7 @@ import type { WorldContent } from "@/pages/studio/content/types";
 import type { BrandAudience } from "./audiences";
 import type { BrandDna } from "./brandDnaKit";
 import { commercialAffinity, relatedCommercialItem } from "./commercialPriority";
+import { isHospitalityBusiness } from "./businessFit";
 
 export type ProductFact = { title: string; description: string; benefit?: string; topic?: WorldContent["features"][number]["topic"] };
 const clean = (value?: string) => (value ?? "").trim().replace(/\s+/g, " ");
@@ -29,7 +30,7 @@ export const splitProductFact = (fact: ProductFact): ProductFact[] => {
 };
 const sentences = (value?: string) => (value ?? "").split(/\n+|;|(?<=[.!?])\s+(?=[A-ZÀ-Ú])/).map(clean).filter((line) => line.length >= 12);
 export const isSoftwareProduct = (dna?: BrandDna, domain = "", brand = "") =>
-  /^aliv\s*\.?\s*ia$/i.test(brand) || /\b(software|saas|aplicativo|app)\b/i.test([domain, dna?.presentation, dna?.description, dna?.offer, dna?.positioning].join(" "));
+  !isHospitalityBusiness(dna) && (/^aliv\s*\.?\s*ia$/i.test(brand) || /\b(software|saas|aplicativo|app)\b/i.test([domain, dna?.presentation, dna?.description, dna?.offer, dna?.positioning].join(" ")));
 
 /** Owner packages have already been scoped/reviewed; never borrow free kit facts. */
 export const productFactsFor = (content: WorldContent, dna?: BrandDna, audience?: BrandAudience, brand = ""): ProductFact[] => {

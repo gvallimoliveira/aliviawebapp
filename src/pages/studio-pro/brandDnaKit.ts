@@ -11,6 +11,7 @@
  */
 
 import { readBriefAnswers, type BriefAnswers } from "./brandQuestionnaire";
+import { isHospitalityBusiness } from "./businessFit";
 
 export type BrandDna = {
   /** Como a marca se apresenta em uma frase (quem sou). */
@@ -213,7 +214,7 @@ export const dnaVocabulary = (dna: BrandDna): string[] => {
  * mentoria falam "programa". Isso evita tanto o "produto" desumano numa marca
  * de fisioterapia quanto o "atendimento" errado num SaaS como o Aliv.iA Studio.
  */
-export type OfferKind = "produto" | "atendimento" | "programa" | "serviço";
+export type OfferKind = "produto" | "atendimento" | "programa" | "serviço" | "hospedagem";
 
 export type OfferWords = {
   kind: OfferKind;
@@ -284,6 +285,11 @@ const isPersonalBrand = (brandName: string, dna: BrandDna) => {
 };
 
 export const offerWords = (dna: BrandDna, brandName = ""): OfferWords => {
+  if (isHospitalityBusiness(dna)) return {
+    kind: "hospedagem", noun: "hospedagem", possessive: "a hospedagem",
+    stepsLabel: "detalhes da estadia", closingLabel: "check-out", caseWord: "estadia",
+    yourCase: "a sua estadia", conductPhrase: "recebe os hóspedes",
+  };
   const text = [dna.offer, dna.presentation, dna.description, dna.positioning, dna.niche, brandName]
     .filter(Boolean)
     .join(" ")
@@ -356,6 +362,11 @@ export type OperationWords = {
 };
 
 export const operationWords = (dna: BrandDna, brandName = ""): OperationWords => {
+  if (isHospitalityBusiness(dna)) return {
+    who: "hóspede", whoPlural: "hóspedes", firstStep: "consulta de disponibilidade",
+    planWord: "estadia", reviewWord: "conferência da reserva", encounterWord: "estadia",
+    deliverable: "informações da casa", cycleLabel: "por estadia",
+  };
   const domain = [dna.niche, dna.description, dna.presentation, dna.offer, brandName]
     .filter(Boolean)
     .join(" ")

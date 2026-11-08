@@ -31,6 +31,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { renderNodeToPngBlob } from "@/pages/studio/exportImage";
+import PhotoShadeControl from "@/pages/studio/PhotoShadeControl";
+import { applyPhotoShade } from "@/pages/studio/photoLight";
 import {
   STUDIO_BLOCKS,
   StudioMotion,
@@ -257,6 +259,8 @@ type PersistedCreateState = {
   pinnedPhotos?: string[];
   /** Filtro "fotos do acervo em destaque": metade das artes com foto de fundo. */
   photoFirst?: boolean;
+  photoShade?: number;
+  artPhotoShades?: Record<string, number>;
   /** Estado da seção extensa de diferenciais. */
   differentialsOpen?: boolean;
   ecosystemRecipe?: AliviaEcosystemRecipeId;
@@ -369,6 +373,16 @@ const StudioProCreate = ({
    * como plano de fundo. Fica salvo por marca junto das outras preferências.
    */
   const [photoFirst, setPhotoFirst] = useState<boolean>(restored.current.photoFirst ?? false);
+  const [photoShade, setPhotoShade] = useState(restored.current.photoShade ?? 100);
+  const [artPhotoShades, setArtPhotoShades] = useState<Record<string, number>>(restored.current.artPhotoShades ?? {});
+  const shadeFor = (index: number) => artPhotoShades[`${seed}:${generationKey}:${index}`] ?? photoShade;
+  const changeArtShade = (index: number, value: number) => {
+    setArtPhotoShades((prev) => ({ ...prev, [`${seed}:${generationKey}:${index}`]: value }));
+    applyPhotoShade(artNode(index), value);
+  };
+  useEffect(() => {
+    writePersisted(brand.id, { photoShade, artPhotoShades });
+  }, [brand.id, photoShade, artPhotoShades]);
   useEffect(() => {
     writePersisted(brand.id, { photoFirst });
   }, [brand.id, photoFirst]);
@@ -1289,6 +1303,7 @@ const StudioProCreate = ({
       if (node) {
         applyArtTextSizes(node);
         applyArtMoves(node);
+        applyPhotoShade(node, shadeFor(i));
       }
     });
   });
@@ -2088,6 +2103,7 @@ const StudioProCreate = ({
                 ? " Filtro ligado: metade das artes deste lote usa foto do acervo como plano de fundo."
                 : " Ligue o filtro para forçar metade das artes com foto de fundo.")}
           </p>
+          {photos.length > 0 && <PhotoShadeControl label="Escurecimento das fotos de fundo" value={photoShade} onChange={setPhotoShade} />}
 
 
 
@@ -2470,6 +2486,8 @@ const StudioProCreate = ({
                   {isSaved ? "Salvo" : "Salvar na marca"}
                 </Button>
               </div>}
+              {!group.carousel && (first.block.kind === "photoVeil" || imageInsertions[first.index]?.mode === "background") &&
+                <PhotoShadeControl value={shadeFor(first.index)} onChange={(value) => changeArtShade(first.index, value)} />}
 
               {/* Leitura de sentido: a explicação que o motor consegue dar da arte. */}
               {SHOW_WHY && whyOpen === first.index && (() => {

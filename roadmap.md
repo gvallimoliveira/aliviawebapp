@@ -1,10 +1,10 @@
 # Roadmap
 
 ## Studio — 50 Tons de Verde
-- [ ] Controle da película de fotos até zero, persistido nas artes e PNG.
-- [ ] Filtrar linguagem por modelo de negócio sem contaminar hospedagem com software/serviços clínicos.
-- [ ] Refinar os dois temas editoriais existentes com o kit real, preservando identidade, fotos e temas.
-- [ ] Validar geração, edição, persistência e PNG com a marca real; atualizar ajuda.
+- [x] Controle 0–100% por lote e arte; zero remove película e filtros da imagem, sem exportador reativar overlay invisível. Preferência por marca e ajuste por arte persistem; galeria lê HTML salvo.
+- [x] Hospedagem reconhecida pela oferta/nicho, não pelo aplicativo de reservas. Conteúdo e diretor usam fatos da casa/estadia e ignoram rotas genéricas de resultados; interpretação futura atualizada e implantada.
+- [x] Área de lazer e Interna da casa refinadas no kit real: IDs, nomes, outros públicos, identidade e 30 fotos preservados. Capacidade mantém até 12 / até 18 sob consulta; sem promessas de segurança total ou avistamento.
+- [x] Conta proprietária → ambos os temas → fotos em destaque → película zero → PNG → salvar → galeria → editar para 100 → reabrir conferidos. Celular 390×844 sem overflow, nenhum erro de execução; 68 testes distintos passaram (33 novamente após ajustes). Ajuda pt/en/es atualizada. Três artes técnicas removidas; original preservada. iPhone físico e publicação não executados. Afinidade depende das legendas declaradas; não foi feita nova interpretação visual das 30 fotos.
 
 ## Studio — exclusão de fotos da marca
 - [x] Controles separados e lixeira de 40px no celular; confirmação/cancelamento e feedback de falha, retorno do ID excluído verificado. Conta própria → marca Aliv.iA → foto técnica enviada → cancelar → confirmar → recarregar conferidos; foto e arquivo técnicos removidos, acervo original preservado. Dez testes passaram, build OK. PhysioTech não disponível nesta sessão; regra compartilhada em todas as marcas. iPhone físico não testado; limpeza de arquivos enviados por outro membro permanece best-effort com aviso interno, sem ampliar permissões.

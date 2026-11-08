@@ -769,7 +769,7 @@ export const freezeMotion = (node: HTMLElement) => {
   // Individual blocks also have reveal animations, outside StudioMotion.
   // A clone has no IntersectionObserver: opacity:0 can otherwise stay forever.
   node.querySelectorAll<HTMLElement>('[style]').forEach((element) => {
-    if (element.style.opacity === "0" && !layers.includes(element)) layers.push(element);
+    if (element.style.opacity === "0" && !element.hasAttribute("data-studio-overlay") && !layers.includes(element)) layers.push(element);
   });
   if (node.dataset.studioMotion === "1") layers.push(node);
 
