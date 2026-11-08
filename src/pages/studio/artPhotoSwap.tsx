@@ -6,7 +6,7 @@
  * troca é reaplicada depois de cada re-render. Upload do aparelho (só admin)
  * fica apenas nesta sessão: não entra no acervo nem consome cota.
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ImageIcon, Layers3, Trash2, Upload } from "lucide-react";
@@ -27,7 +27,8 @@ export type InsertedArtImage = {
 export type ArtImageInsertions = Record<number, InsertedArtImage>;
 
 export const artPhotoSlots = (node: HTMLElement | null) =>
-  node ? Array.from(node.querySelectorAll<HTMLImageElement>('img[data-studio-photo="1"]')) : [];
+  node ? Array.from(node.querySelectorAll<HTMLImageElement>('img[data-studio-photo="1"]'))
+    .filter((img) => !img.closest('[data-studio-inserted-image="1"]')) : [];
 
 const scaleOf = (p: SwapPhoto) => {
   const rad = (p.rotation * Math.PI) / 180;
@@ -264,13 +265,25 @@ type Props = {
   onPick: (slot: number, photo: SwapPhoto, mode: "replace" | InsertedImageMode) => void;
 };
 
+/** Never dispatch a replacement against a missing/stale slot. */
+export const resolvePhotoPick = (slotCount: number, slot: number, mode: "replace" | InsertedImageMode) => ({
+  slot: Math.max(0, Math.min(slot, Math.max(0, slotCount - 1))),
+  mode: mode === "replace" && slotCount === 0 ? "composition" as const : mode,
+});
+
 export const ArtPhotoSwapDialog = ({ open, onOpenChange, slotCount, photos, allowDevice, hasInsertion, onRemoveInsertion, onPick }: Props) => {
   const [slot, setSlot] = useState(0);
   const [mode, setMode] = useState<"replace" | InsertedImageMode>(slotCount ? "replace" : "composition");
   const fileRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    setSlot(0);
+    setMode(slotCount > 0 ? "replace" : "composition");
+  }, [open, slotCount]);
 
   const pick = (p: SwapPhoto) => {
-    onPick(slot, p, mode);
+    const target = resolvePhotoPick(slotCount, slot, mode);
+    onPick(target.slot, p, target.mode);
     onOpenChange(false);
   };
 

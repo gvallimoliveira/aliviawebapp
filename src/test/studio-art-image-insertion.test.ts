@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { applyInsertedArtImage, type InsertedArtImage } from "@/pages/studio/artPhotoSwap";
+import { applyInsertedArtImage, artPhotoSlots, resolvePhotoPick, type InsertedArtImage } from "@/pages/studio/artPhotoSwap";
 
 const insertion = (mode: "background" | "composition"): InsertedArtImage => ({
   mode,
@@ -11,6 +11,16 @@ const insertion = (mode: "background" | "composition"): InsertedArtImage => ({
 
 describe("imagem inserida em arte textual", () => {
   afterEach(() => { document.body.innerHTML = ""; });
+
+  it("insere em primeiro plano quando a próxima arte não tem foto para substituir", () => {
+    expect(resolvePhotoPick(0, 2, "replace")).toEqual({ slot: 0, mode: "composition" });
+  });
+
+  it("limita a substituição às fotos existentes na arte atual", () => {
+    expect(resolvePhotoPick(1, 2, "replace")).toEqual({ slot: 0, mode: "replace" });
+    expect(resolvePhotoPick(2, 1, "replace")).toEqual({ slot: 1, mode: "replace" });
+    expect(resolvePhotoPick(0, 0, "background").mode).toBe("background");
+  });
 
   it("cria um fundo escurecido atrás do texto", () => {
     document.body.innerHTML = '<div id="art"><section><h2>Texto</h2></section></div>';
@@ -55,5 +65,12 @@ describe("imagem inserida em arte textual", () => {
     applyInsertedArtImage(root, insertion("composition"));
     applyInsertedArtImage(root);
     expect(root.querySelector("[data-studio-inserted-image]")).toBeNull();
+  });
+
+  it("não trata inserções recriadas como slots originais de substituição", () => {
+    document.body.innerHTML = '<div id="art"><section><img data-studio-photo="1" src="original.png" /></section></div>';
+    const root = document.getElementById("art");
+    applyInsertedArtImage(root, insertion("background"));
+    expect(artPhotoSlots(root).map((img) => img.getAttribute("src"))).toEqual(["original.png"]);
   });
 });

@@ -1,4 +1,5 @@
 # Studio rules
+- Studio kinetic art uses its own frame-sized section, never the landing's viewport-height sticky statement; manual image dialogs reset their mode/slot on opening and reject replacement of nonexistent slots, preventing off-frame photos and silent swaps across templates.
 - Hospitality identity is resolved from declared niche/offer in `studio-pro/businessFit.ts`; `hospitalityContent.ts` supplies scoped stay facts before rendering and the director skips service-result routes, preventing incidental booking software from changing the business model.
 - Background-photo lighting shares `photoLight.ts`: DOM overlay opacity and image filters reach zero shade together; per-brand defaults and per-art session overrides are serialized in the existing HTML snapshot, keeping preview, gallery edits and PNG identical without new database fields.
 - Photo management keeps usage selectors separate from fixed-size actions on narrow screens; deletion confirms first, reports failures, and verifies the returned database ID before changing the gallery or cleaning storage, preventing clipped controls and silent zero-row deletes.

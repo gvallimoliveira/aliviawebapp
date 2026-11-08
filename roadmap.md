@@ -1,5 +1,9 @@
 # Roadmap
 
+## Studio — foto invisível no modelo de moldura
+- [x] Erro reproduzido: modelo cinético usava seção 150vh/sticky da landing, deixando a foto fora do quadro. Agora usa seção própria do Studio; seletor reinicia modo/slot e não trata inserções recriadas como fotos originais.
+- [x] Conta real Aliv.iA → foto local → fundo → trocar → primeiro plano → PNG → celular 390×844 conferidos, imagens visíveis; 11 testes passaram, build OK. Acervos/artes salvas preservados. Marca 50 Tons indisponível na sessão autorizada: reproduzido e validado no mesmo modelo compartilhado, não em sua marca. Não publicado nem testado em iPhone físico.
+
 ## Studio — 50 Tons de Verde
 - [x] Controle 0–100% por lote e arte; zero remove película e filtros da imagem, sem exportador reativar overlay invisível. Preferência por marca e ajuste por arte persistem; galeria lê HTML salvo.
 - [x] Hospedagem reconhecida pela oferta/nicho, não pelo aplicativo de reservas. Conteúdo e diretor usam fatos da casa/estadia e ignoram rotas genéricas de resultados; interpretação futura atualizada e implantada.
