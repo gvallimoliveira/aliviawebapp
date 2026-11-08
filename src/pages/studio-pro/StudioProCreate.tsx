@@ -1142,6 +1142,7 @@ const StudioProCreate = ({
   useEffect(() => {
     if (!batchInputsReady) return;
     const signatures = director.shots.flatMap((shot) => [
+      ...(shot.hookSignatures ?? []),
       ...shot.copy.map((line) => phraseSignature(line)),
       ...(shot.reserved.carousels ?? []).map((carousel) => phraseSignature(carousel.id ?? carousel)),
       ...(shot.routeSignature ? [phraseSignature(shot.routeSignature)] : []),

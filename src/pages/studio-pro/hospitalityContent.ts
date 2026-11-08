@@ -5,7 +5,8 @@ import { highlightTermsFor } from './audiences';
 import type { BrandDna } from './brandDnaKit';
 import { hospitalityMismatch, isHospitalityBusiness } from './businessFit';
 import { focusProductContent, type ProductFact } from './productFocus';
-import { commercialAffinity } from './commercialPriority';
+import { commercialAffinity, commercialAudienceHooks } from './commercialPriority';
+import { applyHookPrefs } from '@/pages/studio/hookStore';
 
 const clean = (text: string) => text.trim().replace(/\s+/g, ' ');
 export const hospitalityFacts = (dna: BrandDna, audience?: BrandAudience): ProductFact[] => {
@@ -42,7 +43,11 @@ export const hospitalityContent = (content: WorldContent, dna: BrandDna, audienc
   const slides = facts.slice(0, 4).map((fact) => ({ heading: fact.title, body: fact.description }));
   return {
     ...base,
-    headlines: pick('headlines'), subs: pick('subs'), features: pick('features'), hooks: pick('hooks'),
+    headlines: pick('headlines'), subs: pick('subs'), features: pick('features'),
+    // The library shown in Message must survive factual hospitality focusing.
+    // An active theme supplies only its own hooks, never another room's facts.
+    hooks: applyHookPrefs(brand, audience ? commercialAudienceHooks([audience], dna) : content.hooks)
+      .filter((hook) => !hospitalityMismatch([hook.strong, hook.rest, hook.sub].filter(Boolean).join(' '))),
     kinetic: pick('kinetic'), typos: pick('typos'), closings: pick('closings'), quotes: pick('quotes'),
     metrics: [], stats: [], ecosystems: [], productFacts: undefined,
     lists: [{ heading: audience?.label || 'Conheça a casa', items: facts.slice(0, 5).map((fact) => fact.title), closing: cta }],

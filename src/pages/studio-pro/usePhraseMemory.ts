@@ -61,6 +61,12 @@ export const usePhraseMemory = (brandId?: string) => {
     const map = new Map<string, number>();
     const now = Date.now();
     rows.forEach((row) => {
+      // Hook coverage is a repertoire cycle, not a 30-day popularity contest.
+      // Every unused hook must get a turn before already circulated hooks.
+      if (row.signature.startsWith("hook:")) {
+        map.set(row.signature, 1 / (1 + row.uses));
+        return;
+      }
       const ageDays = (now - new Date(row.last_used_at).getTime()) / 86_400_000;
       const decay = Math.max(0, 1 - ageDays / DECAY_DAYS); // 1 = agora, 0 = esquecido
       const penalty = Math.min(0.9, 0.35 * row.uses * decay);
@@ -93,6 +99,12 @@ export const usePhraseMemory = (brandId?: string) => {
       .from("studio_phrase_memory")
       .upsert(payload, { onConflict: "brand_id,signature" });
     if (!error) {
+      batch.forEach(([signature, count]) => {
+        if (!signature.startsWith("hook:")) return;
+        const remaining = (optimistic.current.get(signature) ?? 0) - count;
+        if (remaining > 0) optimistic.current.set(signature, remaining);
+        else optimistic.current.delete(signature);
+      });
       setRows((prev) => {
         const next = new Map(prev.map((r) => [r.signature, r] as const));
         payload.forEach((p) => next.set(p.signature, { signature: p.signature, uses: p.uses, last_used_at: p.last_used_at }));
@@ -107,13 +119,17 @@ export const usePhraseMemory = (brandId?: string) => {
         const persisted = weights.get(signature) ?? 1;
         const justUsed = optimistic.current.get(signature) ?? 0;
         if (justUsed === 0) return persisted;
+        if (signature.startsWith("hook:")) return 1 / (1 / persisted + justUsed);
         // Frase já usada nesta leva praticamente sai do sorteio.
         return Math.max(0.02, persisted * Math.pow(0.15, justUsed));
       },
       startBatch: (key) => {
         if (batchKey.current === key) return;
         batchKey.current = key;
-        optimistic.current.clear();
+        // Unflushed hook exposure must survive rapid consecutive generations.
+        for (const signature of optimistic.current.keys()) {
+          if (!signature.startsWith("hook:")) optimistic.current.delete(signature);
+        }
       },
       record: (signatures) => {
         signatures.forEach((sig) => optimistic.current.set(sig, (optimistic.current.get(sig) ?? 0) + 1));

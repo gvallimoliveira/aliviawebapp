@@ -35,7 +35,7 @@ import type { StudioCarousel, WorldContent, WorldSales } from "@/pages/studio/co
 import type { StudioHook } from "@/pages/studio/hooks";
 import type { ComposedBlock } from "@/pages/studio/composePage";
 import { createRng } from "@/pages/studio/rng";
-import { phraseSignature } from "@/pages/studio/picker";
+import { hookSignature, phraseSignature } from "@/pages/studio/picker";
 import { lowerInitial } from "@/pages/studio/grammar";
 import { carouselClosingCopy, carouselCoverCopy, isOrphanCommand, joinCopyParts } from "@/pages/studio/typographyGuards";
 import { stripFieldLabels, type BrandDna } from "./brandDnaKit";
@@ -346,6 +346,7 @@ const createStream = <T>(
   seedKey: string,
   weightOf?: (signature: string) => number,
   signatureOf: (item: T) => string = phraseSignature,
+  freshFirst = false,
 ) => {
   const pool = items.map((item, index) => ({
     item,
@@ -377,10 +378,10 @@ const createStream = <T>(
           aired.reduce((worst, previous) => Math.max(worst, similarity(entry.text, previous)), 0) * 8 +
           rng.next() * 0.9,
       }))
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => (freshFirst ? b.entry.fresh - a.entry.fresh : 0) || b.score - a.score);
 
     const chosen =
-      scored.find((s) => aired.every((previous) => similarity(s.entry.text, previous) < TOO_SIMILAR))?.entry ??
+      scored.find((s) => (!freshFirst || s.entry.fresh === scored[0].entry.fresh) && aired.every((previous) => similarity(s.entry.text, previous) < TOO_SIMILAR))?.entry ??
       scored[0].entry;
     used.add(chosen.index);
     aired.push(chosen.text);
@@ -428,6 +429,8 @@ const SALES_QUOTA = { proofs: 3, objections: 3, offers: 2, ctas: 2 } as const;
 type SalesSlot = keyof typeof SALES_QUOTA;
 
 export type ArtShot = {
+  /** Only hooks actually supplied to a visible publication, not spare slots. */
+  hookSignatures?: string[];
   /** Editorial allocation, not a claim about marketing performance. */
   productFocused?: boolean;
   axis: DirectorAxis;
@@ -650,6 +653,7 @@ export const planBatch = (input: {
   const hospitalityDomain = isHospitalityBusiness(dna);
   const stayFacts = dna && hospitalityDomain ? hospitalityFacts(dna, relationAudience) : [];
   const stayStream = createStream(stayFacts, `${seed}:stay-facts`, weightOf);
+  const libraryHookStream = createStream<StudioHook>(content.hooks ?? [], `${seed}:library-hooks`, weightOf, hookSignature, true);
   const productFacts = (content.productFacts ?? (softwareDomain ? productFactsFor(content, dna, relationAudience, brandName) : [])).flatMap(splitProductFact);
   const productStream = createStream(productFacts, `${seed}:product-facts`, weightOf);
   const unitKeys = Array.from({ length: Math.max(0, count) }, (_, index) => {
@@ -796,8 +800,14 @@ export const planBatch = (input: {
       ? productStream.take({ axis, extra: shotExtra, voice, salt: `product:${index}` })
       : undefined;
     const stayFact = hospitalityDomain && !carousel ? stayStream.take({ axis, extra: shotExtra, voice, salt: `stay:${index}` }) : undefined;
-    const shotContent = stayFact
-      ? focusHospitalityFact(content, stayFact, brandName || content.label, relation?.cta || content.sales.ctas[0] || "", relationAudience)
+    const libraryHook = !carousel && (hospitalityDomain || (!productFocused && block?.kind === "hook"))
+      ? libraryHookStream.take({ axis, extra: shotExtra, voice, salt: `visible-hook:${index}` })
+      : undefined;
+    const hookStayFact = hospitalityDomain && libraryHook
+      ? { title: joinCopyParts(libraryHook.strong, libraryHook.rest), description: libraryHook.sub || "" }
+      : stayFact;
+    const shotContent = hookStayFact
+      ? focusHospitalityFact(content, hookStayFact, brandName || content.label, libraryHook?.cta || relation?.cta || content.sales.ctas[0] || "", relationAudience)
       : productFact
       ? focusProductContent(content, productFact, brandName || content.label, relation?.cta || content.sales.ctas[0] || "")
       : content;
@@ -883,6 +893,9 @@ export const planBatch = (input: {
     // Variações e textos escritos pela rota entram depois do acervo-base. A
     // revisão precisa rodar aqui também para que o texto usado no nexo da foto
     // seja exatamente o mesmo que chegará à arte.
+    // Route copy must not silently displace the library hook selected for the
+    // hook format. One visible hook means one recorded identity.
+    if (libraryHook) reserved.hooks = [libraryHook];
     Object.assign(reserved, finalizeBrandVoice(reserved, { brand: brandName, domain }));
 
     /**
@@ -964,6 +977,7 @@ export const planBatch = (input: {
     ];
 
     return {
+      hookSignatures: libraryHook ? [hookSignature(libraryHook)] : [],
       productFocused,
       axis,
       axisLabel: AXIS_LABEL[axis],

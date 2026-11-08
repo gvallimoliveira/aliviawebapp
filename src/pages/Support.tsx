@@ -99,7 +99,7 @@ const proTools = [
   { key: "ai_credits", icon: Gauge }, // Localized monthly/annual quotas, fixed clinic pools and current top-up prices.
   { key: "studio_carousel", icon: Palette },
   { key: "studio_offer_ribbon", icon: Palette },
-  { key: "studio_creative_network", icon: Brain },
+  { key: "studio_creative_network", icon: Brain }, // Localized help includes active-theme hook rotation.
   { key: "studio_ecosystem", icon: Layers },
   { key: "studio_cardiorespiratory", icon: Activity },
 ];

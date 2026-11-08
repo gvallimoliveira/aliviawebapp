@@ -1,5 +1,9 @@
 # Roadmap
 
+## Studio — circulação da biblioteca de ganchos
+- [x] Hospedagem preserva biblioteca ativa do tema em vez de substituí-la por poucos fatos; rotação prioriza inéditos com identidade estável e histórico sem decaimento, inclusive em lotes rápidos. Ganchos únicos não são deslocados pelas rotas; prioridade factual de software preservada.
+- [x] 42 testes aprovados: circulação de 60 ganchos em dez lotes sem repetição, identidade registrada, determinismo, temas isolados, desativação e histórico antes/depois de salvar. Ajuda pt/en/es atualizada, build OK. Conta autorizada → Aliv.iA → modelo Ganchos → Nova versão conferidos com arte visível; 50 Tons não disponível nesta sessão (só Aliv.iA), portanto seu kit real não foi exercitado. Sem alterações em kits, fotos ou artes salvas; não publicado.
+
 ## Studio — película e fundo no PNG
 - [x] Safari reproduzido sem Canvas.filter: fotos cruas no foreignObject cobriam o repinte filtrado; superfícies translúcidas também lavavam/tonalizavam o PNG. Fotos de fundo pintadas uma vez, fallback de filtros em pixels, fundo neutro/opaco e todas as cores de superfícies ancestrais recompostas atrás da foto.
 - [x] Inserções suprimem decoração reversivelmente e reaplicam o escurecimento escolhido após o render; snapshots guardam os estilos originais. Conta autorizada Aliv.iA → inserir foto → PNG real → remover conferidos; 12 PNGs Chromium/WebKit (0/50/100, gradiente e inserção) comparados por pixels, texto preservado e 35 testes aprovados, build OK. Foto anexada usada apenas na sessão, sem gravar acervo/artes. 50 Tons não disponível na sessão autorizada; mecanismo compartilhado validado, iPhone físico e publicação não executados.

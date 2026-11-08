@@ -50,6 +50,10 @@ export const phraseSignature = (item: unknown): string => {
   return (h >>> 0).toString(36);
 };
 
+/** Stable across layout, CTA/support edits and factual focusing. */
+export const hookSignature = (hook: { strong: string; rest?: string }): string =>
+  `hook:${phraseSignature(`${hook.strong} ${hook.rest ?? ""}`.trim().replace(/[.!?…]+$/, ""))}`;
+
 export const createPicker = (
   coverage: CoverageIndex,
   collect: (topics: TopicId[]) => void,
