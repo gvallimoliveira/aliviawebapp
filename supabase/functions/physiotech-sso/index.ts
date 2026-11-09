@@ -4,11 +4,8 @@
 // action "verify" (called by PhysioTech's server): checks the signature/expiry
 //   and returns the payload. No shared secret needs to leave Aliv.iA.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders as cors } from "npm:@supabase/supabase-js@2/cors";
+import { optionalPatientLoads } from "./loads.ts";
 import { getPhysioTechEntitlement, PHYSIOTECH_ALLOWLIST } from "../_shared/physiotechEntitlement.ts";
 // Beta gate: only the manual allowlist may open PhysioTech for now.
 // Partners are NOT automatic. Remove this gate at general launch.
@@ -23,8 +20,10 @@ const b64u = (buf: ArrayBuffer | Uint8Array) =>
 const fromB64u = (s: string) => atob(s.replace(/-/g, "+").replace(/_/g, "/"));
 
 async function hmac(data: string) {
+  const secret = Deno.env.get("PHYSIOTECH_SSO_SECRET");
+  if (!secret) throw new Error("Missing SSO signing secret");
   const key = await crypto.subtle.importKey(
-    "raw", new TextEncoder().encode(Deno.env.get("PHYSIOTECH_SSO_SECRET")!),
+    "raw", new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
   );
   return b64u(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data)));
@@ -62,7 +61,10 @@ Deno.serve(async (req) => {
       const tok = JSON.parse(fromB64u(p));
       if (tok.t !== "report" || Date.now() > tok.exp) return json({ error: "expired token" }, 401);
       const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-      return json({ ok: true, aliviaPatientId: tok.pid, checkin: await latestCheckin(admin, tok.pid) });
+      const [checkin, loads] = await Promise.all([
+        latestCheckin(admin, tok.pid), optionalPatientLoads(admin, tok.pid),
+      ]);
+      return json({ ok: true, aliviaPatientId: tok.pid, checkin, ...loads });
     }
 
     // issue
@@ -71,8 +73,9 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: auth } },
     });
     const { data: u } = await userClient.auth.getUser(auth.replace(/^Bearer\s+/i, ""));
-    const email = u?.user?.email?.toLowerCase();
-    if (!email) return json({ error: "unauthorized" }, 401);
+    const user = u?.user;
+    const email = user?.email?.toLowerCase();
+    if (!user || !email) return json({ error: "unauthorized" }, 401);
     if (!VIP.includes(email)) return json({ error: "forbidden" }, 403);
 
     let patient: Record<string, unknown> | null = null;
@@ -85,22 +88,25 @@ Deno.serve(async (req) => {
       // Long-lived (180d) token bound to this professional + patient; PhysioTech
       // stores it with the patient and sends it back with each report.
       const rp = b64u(new TextEncoder().encode(JSON.stringify({
-        t: "report", sub: u!.user!.id, pid: data.id, exp: Date.now() + 180 * 86400000,
+        t: "report", sub: user.id, pid: data.id, exp: Date.now() + 180 * 86400000,
       })));
+      const [checkin, loads] = await Promise.all([
+        latestCheckin(userClient, data.id), optionalPatientLoads(userClient, data.id),
+      ]);
       patient = {
         aliviaPatientId: data.id, name: data.full_name, email: data.email ?? null, birthDate: data.birth_date ?? null,
         reportToken: `${rp}.${await hmac(rp)}`,
-        checkin: await latestCheckin(userClient, data.id),
+        checkin, ...loads,
       };
     }
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const ent = await getPhysioTechEntitlement(admin, u!.user!.id, email);
+    const ent = await getPhysioTechEntitlement(admin, user.id, email);
 
     // Professional identity + signature (own record only; never another member's).
     let professional: Record<string, unknown> | null = null;
     const { data: prof } = await admin.from("professionals")
-      .select("full_name, crefito, signature_image_url").eq("user_id", u!.user!.id).maybeSingle();
+      .select("full_name, crefito, signature_image_url").eq("user_id", user.id).maybeSingle();
     if (prof) {
       let signatureUrl: string | null = null;
       if (prof.signature_image_url) {
@@ -116,9 +122,9 @@ Deno.serve(async (req) => {
     }
 
     const payload = {
-      iss: "alivia", sub: u!.user!.id, email, professional,
+      iss: "alivia", sub: user.id, email, professional,
       plan: ent.plan, entitlement: { kind: ent.kind, limit: ent.limit, used: ent.used, remaining: ent.remaining },
-      name: (professional?.name as string) ?? (u!.user!.user_metadata as any)?.full_name ?? null,
+      name: (professional?.name as string) ?? user.user_metadata?.full_name ?? null,
       patient, nonce: crypto.randomUUID(), exp: Date.now() + TTL_MS,
     };
     const p = b64u(new TextEncoder().encode(JSON.stringify(payload)));

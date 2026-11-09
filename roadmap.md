@@ -1,5 +1,9 @@
 # Roadmap
 
+## PhysioTech — sessões sRPE e ACWR
+- [x] Cargas opcionais em issue/patient e checkin/raiz, pelo paciente autorizado/pid do token; 35 dias inclusivos, até 200 registros já unificados, sem agrupar frentes diferentes. Consulta limitada a 2s; erros omitem ambos os campos.
+- [x] Função implantada; 13 testes passaram (paridade com periodization.ts, data de São Paulo, limites, histórico insuficiente, sessão unificada e falhas). Issue → verify → checkin reais retornaram 200, paciente do token e campos corretos; conta autorizada sem sessões recentes, portanto retorno real não vazio/ACWR numérico e visualização no PhysioTech não exercitados. Sem gravações clínicas; ajuda pt/en/es atualizada, build OK.
+
 ## Studio — textos e destaques da hospedagem
 - [x] Hospedagem usa destaque do assunto, nunca o verbo/adjetivo mais longo; corrige toleras→toalhas e roupas da cama→roupas de cama. Contato sem rastreamento e cartaz com frase completa. Kit real: acrescentado Roupa de cama e banho aos destaques de Interna da casa; demais campos, temas, fotos e destino preservados. Textos atuais do kit já estavam escritos corretamente.
 - [x] Conta proprietária → 50 Tons → Interna da casa → Minimalista + Letras empilhadas → geração real conferida com destaque completo e endereço curto; imagens desktop e celular 390px legíveis. 20 testes aprovados (11 novamente após correção do teste), build OK. Não publicou, não alterou artes salvas nem testou iPhone físico; artes anteriores exigem nova versão ou edição.
