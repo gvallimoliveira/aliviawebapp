@@ -72,4 +72,3 @@
 - Basic quota: service-only ledger, email transaction lock, survives deletion; diagnosis needs reserved ID; anonymous read/write needs x-assessment-id within 48h.
 - Photos: preparePhoto, record/Studio size, transparency/fallback; exclude signatures/PDFs/measurements. Vision: economical-vision zero-retention chat; clinical/measurement models unchanged.
 - Blog: preserve bodies/URLs; BlogDashboardReturn sends signed-in users to /dashboard.
-- Clinical impression may add PhysioTech reports via physiotechContext.ts as optional context; absence/errors yield no block, keeping the existing prompt and cache.

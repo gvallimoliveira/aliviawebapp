@@ -2,3 +2,4 @@
 - PhysioTech PDFs share physiotechFiles.ts for validated permanent copies by patient ID; report-file signs local files and checks document deletion authority, preventing expired-source dependencies.
 - PhysioTech SSO loads use local loads.ts, parity-tested against periodization.ts, São Paulo dates and existing merged sRPE rows; bounded optional reads never break issue/checkin.
 - PhysioTech SSO maps non-email patient identifiers to null via patientMetadata.ts without changing stored records; optional contact must not invalidate patient-linked login.
+- Clinical impression adds PhysioTech reports only via generate-clinical-impression/physiotechContext.ts; absent/failed reads add no block, keeping prompt and cache unchanged.
