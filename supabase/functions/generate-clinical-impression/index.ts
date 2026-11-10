@@ -6,6 +6,7 @@ import { callAiWithFallback } from "../_shared/ai-fallback.ts";
 import { buildProfessionalContext } from "../_shared/professional-context.ts";
 import { buildRlcaReference, RLCA_REFERENCE_VERSION } from "../_shared/rlca-reference.ts";
 import { canaryCredits, creditBlockResponse } from "../_shared/ai-credits.ts";
+import { buildPhysioTechBlock } from "./physiotechContext.ts";
 import { getCachedAiResponse, setCachedAiResponse, AI_CACHE_TTL_30D } from "../_shared/ai-cache.ts";
 
 const corsHeaders = {
@@ -123,7 +124,7 @@ serve(async (req) => {
 
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { anamnesisData: rawAnamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, voiceNotes, forceRefresh } = await req.json();
+    const { anamnesisData: rawAnamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, voiceNotes, forceRefresh, physiotechReports } = await req.json();
     const anamnesisData = normalizeAssessmentPurpose(rawAnamnesisData || {});
     const preventive = isPreventiveAssessment(anamnesisData);
 
@@ -131,7 +132,7 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const admin = SUPABASE_URL && SERVICE_KEY ? createClient(SUPABASE_URL, SERVICE_KEY) : null;
-    const cachePayload = { v: PROMPT_VERSION, reference: RLCA_REFERENCE_VERSION, anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, voiceNotes };
+    const cachePayload = { v: PROMPT_VERSION, reference: RLCA_REFERENCE_VERSION, anamnesisData, painRegions, painScore, questionnaireResults, diagnosis, language, assessmentTimeline, sessionNotes, voiceNotes, physiotechReports: buildPhysioTechBlock(physiotechReports) || undefined };
     if (admin && !forceRefresh) {
       const cached = await getCachedAiResponse<{ clinicalImpression: { overview: string; therapeuticObjectives: string[] } }>(
         admin,
@@ -284,6 +285,8 @@ ${preventiveReasoningContext(anamnesisData)}
     // Session evolution notes are intentionally excluded from the impression.
     void sessionNotes;
     lines.push(...buildProfessionalContext(anamnesisData));
+    const physiotechBlock = buildPhysioTechBlock(physiotechReports);
+    if (physiotechBlock) lines.push(physiotechBlock);
 
     const vNotes = (Array.isArray(voiceNotes) ? voiceNotes : [])
       .filter((v: any) => (v?.transcript || "").trim().length > 0 || (v?.summary && typeof v.summary === "object"))

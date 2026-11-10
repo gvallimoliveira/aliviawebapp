@@ -291,6 +291,21 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         // Session notes are intentionally not used in the clinical impression.
         const sessionNotes: never[] = [];
         const voiceNotes = await fetchVoiceNotes();
+        // Optional PhysioTech exams: any failure falls back to the existing flow.
+        let physiotechReports: unknown[] | undefined;
+        try {
+          const email = String((assessment as any).patient_email || "").trim().toLowerCase();
+          const { data: pats } = email
+            ? await supabase.from("patients").select("id").ilike("email", email).limit(5)
+            : { data: null };
+          const ids = (pats || []).map((p: any) => p.id);
+          if (ids.length) {
+            const { data: reps } = await supabase.from("physiotech_reports")
+              .select("exam_type, exam_title, exam_date, conclusion, metrics")
+              .in("patient_id", ids).order("exam_date", { ascending: false }).limit(5);
+            if (reps?.length) physiotechReports = reps;
+          }
+        } catch { physiotechReports = undefined; }
         const { data, error } = await supabase.functions.invoke("generate-clinical-impression", {
           body: {
             anamnesisData: assessment.anamnesis_data,
@@ -302,6 +317,7 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
             assessmentTimeline: buildTimeline(),
             sessionNotes,
             voiceNotes,
+            physiotechReports,
             forceRefresh,
           },
         });
