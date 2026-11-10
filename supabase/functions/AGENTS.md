@@ -1,3 +1,4 @@
 - PhysioTech entitlement lives only in `_shared/physiotechEntitlement.ts`; SSO, report receiver and checkout share it so limits never diverge.
 - PhysioTech PDFs share physiotechFiles.ts for validated permanent copies by patient ID; report-file signs local files and checks document deletion authority, preventing expired-source dependencies.
 - PhysioTech SSO loads use local loads.ts, parity-tested against periodization.ts, São Paulo dates and existing merged sRPE rows; bounded optional reads never break issue/checkin.
+- PhysioTech SSO maps non-email patient identifiers to null via patientMetadata.ts without changing stored records; optional contact must not invalidate patient-linked login.

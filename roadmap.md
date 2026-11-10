@@ -1,5 +1,9 @@
 # Roadmap
 
+## PhysioTech — ticket inválido no paciente Exemplo
+- [x] Reproduzido issue 200 → PhysioTech 401 (Dados do ticket inválidos) com o proprietário e oito cargas reais; e-mail não válido no cadastro bloqueava o schema do destinatário. Normalizar somente o contato enviado para null, preservando cadastro, ID, check-in e cargas.
+- [x] Função implantada; 11 testes passaram, build OK. Mesmo proprietário/paciente: ticket com contato null e oito cargas → PhysioTech 200 → página Exemplo carregada em computador e celular 390px; check-in recebido. Cadastro original preservado, sem editar sessão clínica. iPhone físico não testado; apresentação das cargas no gráfico do outro projeto não auditada nesta correção de acesso.
+
 ## PhysioTech — sessões sRPE e ACWR
 - [x] Cargas opcionais em issue/patient e checkin/raiz, pelo paciente autorizado/pid do token; 35 dias inclusivos, até 200 registros já unificados, sem agrupar frentes diferentes. Consulta limitada a 2s; erros omitem ambos os campos.
 - [x] Função implantada; 13 testes passaram (paridade com periodization.ts, data de São Paulo, limites, histórico insuficiente, sessão unificada e falhas). Issue → verify → checkin reais retornaram 200, paciente do token e campos corretos; conta autorizada sem sessões recentes, portanto retorno real não vazio/ACWR numérico e visualização no PhysioTech não exercitados. Sem gravações clínicas; ajuda pt/en/es atualizada, build OK.

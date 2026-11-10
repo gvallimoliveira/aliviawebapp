@@ -6,6 +6,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders as cors } from "npm:@supabase/supabase-js@2/cors";
 import { optionalPatientLoads } from "./loads.ts";
+import { optionalPatientEmail } from "./patientMetadata.ts";
 import { getPhysioTechEntitlement, PHYSIOTECH_ALLOWLIST } from "../_shared/physiotechEntitlement.ts";
 // Beta gate: only the manual allowlist may open PhysioTech for now.
 // Partners are NOT automatic. Remove this gate at general launch.
@@ -94,7 +95,7 @@ Deno.serve(async (req) => {
         latestCheckin(userClient, data.id), optionalPatientLoads(userClient, data.id),
       ]);
       patient = {
-        aliviaPatientId: data.id, name: data.full_name, email: data.email ?? null, birthDate: data.birth_date ?? null,
+        aliviaPatientId: data.id, name: data.full_name, email: optionalPatientEmail(data.email), birthDate: data.birth_date ?? null,
         reportToken: `${rp}.${await hmac(rp)}`,
         checkin, ...loads,
       };
