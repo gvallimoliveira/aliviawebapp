@@ -1,5 +1,9 @@
 # Roadmap
 
+## Agenda — nome específico do serviço no modal
+- [x] Serviço exibe o nome personalizado do catálogo (Recovery), com seleção por ID sincronizada ao valor; tipos salvos, filtros e preços preservados. Categoria genérica apenas como fallback de registro antigo sem serviço resolvido.
+- [x] 15 regressões da agenda/ditado/evolução passaram; build OK. Modal autenticado em 855×670 com catálogo isolado: Recovery no campo e na lista, sem Personalizado. Nenhuma gravação real nem publicação; cadastro real Recovery não alterado.
+
 ## Agenda — evolução em aberto confirma comparecimento
 - [x] Evolução disponível em aberto; salvar texto não vazio confirma Compareceu somente após persistência. Falha de status avisa e mantém evolução sem duplicar; classificação manual existente preservada.
 - [x] 15 testes aprovados (salvamento, rascunho, vazio, falhas, classificações existentes e regressões de agenda/ditado), build OK. Clínica autenticada → modal em aberto → salvar → Compareceu conferidos em 855×670 com respostas isoladas para não escrever em prontuários reais. Ajuda pt/en/es atualizada. Gravação real e métricas com atendimento real não exercitadas; sem publicação.

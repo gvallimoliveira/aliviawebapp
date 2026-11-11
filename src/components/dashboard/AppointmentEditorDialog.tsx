@@ -811,14 +811,35 @@ const AppointmentEditorDialog = ({
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{isPt ? "Serviço" : "Service"}</label>
-                    <Select value={formServiceType} onValueChange={setFormServiceType}>
+                    <Select
+                      value={formServiceType === "personalizado" && careServices.some(s => s.id === formServiceId)
+                        ? `svc:${formServiceId}` : formServiceType}
+                      onValueChange={(value) => {
+                        if (value.startsWith("svc:")) {
+                          setFormServiceType("personalizado");
+                          setFormServiceId(value.slice(4));
+                        } else {
+                          if (formServiceType === "personalizado") setFormServiceId("__none__");
+                          setFormServiceType(value);
+                        }
+                      }}
+                    >
                       <SelectTrigger className="mt-1 text-xs h-9"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {Object.entries(serviceMaps.labels).map(([key, labels]) => (
+                        {Object.entries(serviceMaps.labels).filter(([key]) => key !== "personalizado" ||
+                          (formServiceType === "personalizado" && !careServices.some(s => s.id === formServiceId))).map(([key, labels]) => (
                           <SelectItem key={key} value={key}>
                             <span className="flex items-center gap-2">
                               <span className={cn("w-2 h-2 rounded-full", serviceMaps.dot[key])} />
                               {labels[language] || labels.en}
+                            </span>
+                          </SelectItem>
+                        ))}
+                        {careServices.filter(s => s.service_type === "personalizado").map(s => (
+                          <SelectItem key={`svc:${s.id}`} value={`svc:${s.id}`}>
+                            <span className="flex items-center gap-2">
+                              <span className={cn("w-2 h-2 rounded-full", serviceMaps.dot.personalizado)} />
+                              {s.name}
                             </span>
                           </SelectItem>
                         ))}
