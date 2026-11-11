@@ -306,7 +306,8 @@ const AppointmentEditorDialog = ({
     // Evolution
     if (hasEvolutionContext) {
       (async () => {
-        const evolutionEmail = normalizeEvolutionEmail(apt.patient_email!);
+        if (!apt.patient_email) return;
+        const evolutionEmail = normalizeEvolutionEmail(apt.patient_email);
         const effectiveProId = apt.professional_id || professionalId || "";
         try {
           const aptDayStart = `${apt.appointment_date}T00:00:00`;
@@ -403,6 +404,8 @@ const AppointmentEditorDialog = ({
     try {
       await onSetStatus(currentApt.id, status);
       if (aliveRef.current) setCurrentApt(prev => prev ? { ...prev, status } : prev);
+    } catch (e: any) {
+      toast({ title: isPt ? "Não foi possível atualizar o comparecimento" : language === "es" ? "No se pudo actualizar la asistencia" : "Could not update attendance", description: e?.message, variant: "destructive" });
     } finally {
       if (aliveRef.current) setStatusUpdating(null);
     }
@@ -478,9 +481,26 @@ const AppointmentEditorDialog = ({
         }
       }
 
+      // Once saved, retain the note even if attendance fails: retrying must not duplicate it.
+      if (aliveRef.current) {
+        setEvoExistingContent(newContent);
+        setEvoText("");
+      }
+      if (currentApt.status === "scheduled") {
+        try {
+          await onSetStatus(currentApt.id, "completed");
+          if (aliveRef.current) setCurrentApt(prev => prev ? { ...prev, status: "completed" } : prev);
+        } catch (statusError: any) {
+          onEvolutionChanged?.();
+          toast({
+            title: isPt ? "Evolução salva; comparecimento não atualizado" : language === "es" ? "Evolución guardada; asistencia no actualizada" : "Evolution saved; attendance not updated",
+            description: isPt ? "A evolução foi preservada. Tente marcar Compareceu novamente." : language === "es" ? "La evolución se conservó. Intente marcar Asistió nuevamente." : "The evolution was kept. Try marking Attended again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
       if (!aliveRef.current) return;
-      setEvoExistingContent(newContent);
-      setEvoText("");
       toast({ title: isPt ? "Evolução registrada" : language === "es" ? "Evolución registrada" : "Evolution saved" });
       onEvolutionChanged?.();
     } catch (e: any) {
@@ -553,7 +573,7 @@ const AppointmentEditorDialog = ({
                         <button
                           key={st}
                           type="button"
-                          disabled={!!statusUpdating}
+                          disabled={!!statusUpdating || evoSaving}
                           onClick={() => handleSetStatusLocal(st)}
                           className={cn(
                             "flex items-center justify-center gap-1.5 rounded-md border px-2 py-2 text-[11px] font-medium transition-all",
@@ -915,7 +935,7 @@ const AppointmentEditorDialog = ({
                           type="button" size="sm"
                           className="text-xs gap-1.5 h-8"
                           onClick={handleSaveEvolution}
-                          disabled={evoSaving || !evoText.trim()}
+                          disabled={evoSaving || !!statusUpdating || !evoText.trim()}
                         >
                           {evoSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
                           {isPt ? "Salvar evolução" : language === "es" ? "Guardar" : "Save evolution"}
@@ -942,7 +962,7 @@ const AppointmentEditorDialog = ({
               </Button>
             )}
             {isEdit && currentApt?.patient_email && onViewPatient && (
-              <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => { onViewPatient(currentApt.patient_email!); onClose(); }}>
+              <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => { if (currentApt.patient_email) onViewPatient(currentApt.patient_email); onClose(); }}>
                 {t("schedule.view_patient")}
                 <ChevronRight className="h-3 w-3" />
               </Button>

@@ -800,10 +800,12 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
       return;
     }
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
-    await (supabase.from("professional_appointments" as any) as any)
+    const { data, error } = await (supabase.from("professional_appointments" as any) as any)
       .update({ status: newStatus })
-      .eq("id", id);
+      .eq("id", id).select("id").single();
+    if (error) throw error;
+    if (!data) throw new Error("Não foi possível confirmar o comparecimento salvo.");
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
   };
 
 

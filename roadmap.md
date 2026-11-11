@@ -1,5 +1,9 @@
 # Roadmap
 
+## Agenda — evolução em aberto confirma comparecimento
+- [x] Evolução disponível em aberto; salvar texto não vazio confirma Compareceu somente após persistência. Falha de status avisa e mantém evolução sem duplicar; classificação manual existente preservada.
+- [x] 15 testes aprovados (salvamento, rascunho, vazio, falhas, classificações existentes e regressões de agenda/ditado), build OK. Clínica autenticada → modal em aberto → salvar → Compareceu conferidos em 855×670 com respostas isoladas para não escrever em prontuários reais. Ajuda pt/en/es atualizada. Gravação real e métricas com atendimento real não exercitadas; sem publicação.
+
 ## PhysioTech — ticket inválido no paciente Exemplo
 - [x] Reproduzido issue 200 → PhysioTech 401 (Dados do ticket inválidos) com o proprietário e oito cargas reais; e-mail não válido no cadastro bloqueava o schema do destinatário. Normalizar somente o contato enviado para null, preservando cadastro, ID, check-in e cargas.
 - [x] Função implantada; 11 testes passaram, build OK. Mesmo proprietário/paciente: ticket com contato null e oito cargas → PhysioTech 200 → página Exemplo carregada em computador e celular 390px; check-in recebido. Cadastro original preservado, sem editar sessão clínica. iPhone físico não testado; apresentação das cargas no gráfico do outro projeto não auditada nesta correção de acesso.
