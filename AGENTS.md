@@ -72,4 +72,3 @@
 - Basic quota: service-only ledger, email transaction lock, survives deletion; diagnosis needs reserved ID; anonymous read/write needs x-assessment-id within 48h.
 - Photos: preparePhoto, record/Studio size, transparency/fallback; exclude signatures/PDFs/measurements. Vision: economical-vision zero-retention chat; clinical/measurement models unchanged.
 - Blog: preserve bodies/URLs; BlogDashboardReturn sends signed-in users to /dashboard.
-- Agenda crowded slots (3+ in one hour) and custom catalog services ("personalizado", filtered by service_id) use pure helpers in `appointmentTime.ts`; overlap lanes, drag targets and financial pricing stay unchanged.
