@@ -64,3 +64,29 @@ export function cardPixelHeight(durationMinutes: number, hourPx: number, concurr
   const natural = (dur / 60) * hourPx - 2;
   return Math.max(concurrent ? MIN_CONCURRENT_CARD_HEIGHT_PX : MIN_CARD_HEIGHT_PX, natural);
 }
+
+/** From this many appointments starting in the same hour, the slot grows and uses a 2-column grid. */
+export const CROWDED_SLOT_THRESHOLD = 3;
+export const CROWDED_ROW_PX = 52;
+
+/** Height of an hour row: grows only when some day has a crowded slot (2 cards per line). */
+export function slotRowHeight(maxCountInSlot: number, hourPx: number): number {
+  if (maxCountInSlot < CROWDED_SLOT_THRESHOLD) return hourPx;
+  return Math.max(hourPx, Math.ceil(maxCountInSlot / 2) * CROWDED_ROW_PX);
+}
+
+/** Grid position (2 columns) for the index-th appointment of a crowded slot, or null when not crowded. */
+export function crowdedSlotPosition(index: number, count: number): { col: number; row: number; top: number; height: number } | null {
+  if (count < CROWDED_SLOT_THRESHOLD) return null;
+  const row = Math.floor(index / 2);
+  return { col: index % 2, row, top: row * CROWDED_ROW_PX + 1, height: CROWDED_ROW_PX - 3 };
+}
+
+/** Custom catalog services (e.g. "Recovery") use this agenda type and filter by their own catalog ID. */
+export const CUSTOM_SERVICE_TYPE = "personalizado";
+
+/** Agenda filter key for an appointment: custom services by catalog ID, others by type (legacy default physio). */
+export function serviceFilterKey(apt: { service_type?: string | null; service_id?: string | null }): string {
+  if (apt.service_type === CUSTOM_SERVICE_TYPE && apt.service_id) return `svc:${apt.service_id}`;
+  return apt.service_type || "fisioterapia";
+}

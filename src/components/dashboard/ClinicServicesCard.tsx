@@ -26,6 +26,7 @@ const CATEGORIES: { v: string; dot: string; pt: string; en: string; es: string }
   { v: "osteopatia", dot: "bg-orange-500", pt: "Osteopatia", en: "Osteopathy", es: "Osteopatía" },
   { v: "massoterapia", dot: "bg-pink-500", pt: "Massoterapia", en: "Massage Therapy", es: "Masoterapia" },
   { v: "rpg", dot: "bg-indigo-500", pt: "RPG", en: "RPG", es: "RPG" },
+  { v: "personalizado", dot: "bg-sky-500", pt: "Personalizado (filtro próprio)", en: "Custom (own filter)", es: "Personalizado (filtro propio)" },
 ];
 
 /**
@@ -127,7 +128,7 @@ const ClinicServicesCard = ({ professionalId }: { professionalId?: string } = {}
       <CardContent className="space-y-4">
         <p className="text-xs text-muted-foreground">
           {t(
-            "Serviços ativos ficam disponíveis aos pacientes vinculados ao solicitar um horário. Valores avulsos ou mensais alimentam os indicadores financeiros.",
+            "Serviços ativos ficam disponíveis aos pacientes vinculados ao solicitar um horário. Valores avulsos ou mensais alimentam os indicadores financeiros. Tipo \"Personalizado\" cria um filtro com o nome do serviço na agenda (ex.: Recovery).",
             "Active services are available to linked patients when requesting an appointment. Per-session or monthly prices feed financial indicators.",
             "Los servicios activos están disponibles para pacientes vinculados al solicitar una cita. Los precios por sesión o mensuales alimentan los indicadores financieros.")}
         </p>
@@ -162,7 +163,7 @@ const ClinicServicesCard = ({ professionalId }: { professionalId?: string } = {}
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px_110px_130px_auto] gap-2 items-end border-t border-border pt-3">
           <div>
             <Label className="text-xs">{t("Nome do serviço", "Service name", "Nombre del servicio")}</Label>
-            <Input aria-label={t("Nome do serviço", "Service name", "Nombre del servicio")} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Ex.: Fisioterapia, Pilates...", "E.g.: Physio, Pilates...", "Ej.: Fisioterapia, Pilates...")} className="h-9 mt-1" />
+            <Input aria-label={t("Nome do serviço", "Service name", "Nombre del servicio")} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Ex.: Recovery, Pilates...", "E.g.: Recovery, Pilates...", "Ej.: Recovery, Pilates...")} className="h-9 mt-1" />
           </div>
           <div>
             <Label className="text-xs">{t("Tipo na agenda", "Agenda type", "Tipo en agenda")}</Label>

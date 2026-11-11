@@ -21,6 +21,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import DictationBar from "./DictationBar";
 import {
   CalendarIcon, Loader2, Trash2, Pencil, Check, ChevronRight, ChevronsUpDown,
   CheckCircle2, XCircle, AlertCircle, Clock,
@@ -68,7 +69,7 @@ export interface AppointmentEditorPayload {
   clinic_id?: string;
 }
 
-interface CareServiceOption { id: string; name: string; price: number; billing_type: string }
+interface CareServiceOption { id: string; name: string; price: number; billing_type: string; service_type?: string | null }
 
 export interface AppointmentEditorExtras {
   cpf: string;
@@ -216,7 +217,7 @@ const AppointmentEditorDialog = ({
     let alive = true;
     (async () => {
       let q = (supabase.from("care_services" as any) as any)
-        .select("id, name, price, billing_type").eq("active", true).order("name");
+        .select("id, name, price, billing_type, service_type").eq("active", true).order("name");
       if (clinicId) q = q.eq("clinic_id", clinicId);
       else q = q.eq("professional_id", professionalId).is("clinic_id", null);
       const { data } = await q;
@@ -807,7 +808,12 @@ const AppointmentEditorDialog = ({
                   {careServices.length > 0 && !isCommitment && (
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">{isPt ? "Serviço (valor)" : language === "es" ? "Servicio (valor)" : "Service (price)"}</label>
-                      <Select value={formServiceId} onValueChange={setFormServiceId}>
+                      <Select value={formServiceId} onValueChange={(v) => {
+                        setFormServiceId(v);
+                        const picked = careServices.find((s) => s.id === v);
+                        if (picked?.service_type === "personalizado") setFormServiceType("personalizado");
+                        else if (formServiceType === "personalizado") setFormServiceType(picked?.service_type || "fisioterapia");
+                      }}>
                         <SelectTrigger className="mt-1 text-xs h-9"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__none__">{isPt ? "Sem serviço do catálogo" : "No catalog service"}</SelectItem>
@@ -883,6 +889,10 @@ const AppointmentEditorDialog = ({
                           <pre className="whitespace-pre-wrap mt-2 max-h-40 overflow-y-auto font-sans text-foreground/80">{evoExistingContent}</pre>
                         </details>
                       )}
+                      <DictationBar
+                        allowObservation={false}
+                        onAppend={(_target, appender) => setEvoText((c) => appender(c))}
+                      />
                       <Textarea
                         value={evoText}
                         onChange={(e) => setEvoText(e.target.value)}

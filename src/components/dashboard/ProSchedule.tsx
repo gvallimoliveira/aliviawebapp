@@ -1,4 +1,4 @@
-import { toMinutes, endTimeFrom, assignLanes, cardPixelHeight } from "@/lib/appointmentTime";
+import { toMinutes, endTimeFrom, assignLanes, cardPixelHeight, slotRowHeight, crowdedSlotPosition, serviceFilterKey, CUSTOM_SERVICE_TYPE } from "@/lib/appointmentTime";
 import { createLatestRequestGate } from "@/lib/latestRequest";
 import { expandRecurrence, splitConflicts } from "@/lib/appointmentRecurrence";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -42,6 +42,7 @@ interface Appointment {
   status: string;
   created_at: string;
   service_type?: string;
+  service_id?: string | null;
 }
 
 type EvolutionKind = "assessment" | "note";
@@ -163,6 +164,7 @@ const SERVICE_TYPE_COLORS: Record<string, string> = {
   osteopatia: "border-l-4 border-l-orange-500",
   massoterapia: "border-l-4 border-l-pink-500",
   rpg: "border-l-4 border-l-indigo-500",
+  personalizado: "border-l-4 border-l-sky-500",
   compromisso: "border-l-4 border-l-muted-foreground opacity-80",
 };
 
@@ -173,6 +175,7 @@ const SERVICE_TYPE_DOT: Record<string, string> = {
   osteopatia: "bg-orange-500",
   massoterapia: "bg-pink-500",
   rpg: "bg-indigo-500",
+  personalizado: "bg-sky-500",
   compromisso: "bg-muted-foreground",
 };
 
@@ -183,6 +186,7 @@ const SERVICE_TYPE_LABELS: Record<string, Record<string, string>> = {
   osteopatia: { pt: "Osteopatia", en: "Osteopathy", es: "Osteopatía" },
   massoterapia: { pt: "Massoterapia", en: "Massage Therapy", es: "Masoterapia" },
   rpg: { pt: "RPG", en: "RPG", es: "RPG" },
+  personalizado: { pt: "Personalizado", en: "Custom", es: "Personalizado" },
   compromisso: { pt: "Compromisso", en: "Commitment", es: "Compromiso" },
 };
 
@@ -258,8 +262,21 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [knownPatients, setKnownPatients] = useState<KnownPatient[]>([]);
   const [serviceFilters, setServiceFilters] = useState<string[]>([]);
-  const isServiceVisible = (type?: string | null) =>
-    serviceFilters.length === 0 || serviceFilters.includes(type || "fisioterapia");
+  const [customServices, setCustomServices] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    if (isSimulated || (!clinicId && !professionalId)) { setCustomServices([]); return; }
+    let alive = true;
+    (async () => {
+      let q = (supabase.from("care_services" as any) as any)
+        .select("id, name").eq("active", true).eq("service_type", CUSTOM_SERVICE_TYPE).order("name");
+      q = clinicId ? q.eq("clinic_id", clinicId) : q.is("clinic_id", null).eq("professional_id", professionalId);
+      const { data } = await q;
+      if (alive) setCustomServices(Array.isArray(data) ? data : []);
+    })();
+    return () => { alive = false; };
+  }, [clinicId, professionalId, isSimulated]);
+  const isServiceVisible = (apt: { service_type?: string | null; service_id?: string | null }) =>
+    serviceFilters.length === 0 || serviceFilters.includes(serviceFilterKey(apt));
   const toggleServiceFilter = (key: string) =>
     setServiceFilters((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   const [formProfessionalId, setFormProfessionalId] = useState(professionalId || "");
@@ -1093,7 +1110,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         >
           {isPt ? "Todos" : "All"}
         </button>
-        {Object.entries(SERVICE_TYPE_LABELS).map(([key, labels]) => {
+        {[
+          ...Object.entries(SERVICE_TYPE_LABELS).filter(([key]) => key !== CUSTOM_SERVICE_TYPE),
+          ...customServices.map((cs) => [`svc:${cs.id}`, { pt: cs.name, en: cs.name, es: cs.name }] as [string, Record<string, string>]),
+        ].map(([key, labels]) => {
           const active = serviceFilters.includes(key);
           return (
             <button
@@ -1104,7 +1124,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 active ? "bg-foreground text-background border-foreground" : "border-border text-muted-foreground hover:bg-muted"
               )}
             >
-              <span className={cn("w-2 h-2 rounded-full", SERVICE_TYPE_DOT[key])} />
+              <span className={cn("w-2 h-2 rounded-full", SERVICE_TYPE_DOT[key.startsWith("svc:") ? CUSTOM_SERVICE_TYPE : key])} />
               {labels[language] || labels.en}
               {active && <Check className="h-3 w-3" />}
             </button>
@@ -1167,7 +1187,13 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
             </div>
           ) : (
-            timeSlots.map((slot) => (
+            timeSlots.map((slot) => {
+              const rowMax = Math.max(0, ...days.map((d) => {
+                const ds = format(d, "yyyy-MM-dd");
+                return getAptsForSlot(appointments.filter((a) => a.appointment_date === ds && isServiceVisible(a)), slot).length;
+              }));
+              const rowPx = slotRowHeight(rowMax, HOUR_PX);
+              return (
               <div
                 key={slot}
                 className={cn("grid border-b border-border/20", isMobile ? "grid-cols-[40px_repeat(3,1fr)]" : "grid-cols-[48px_repeat(7,1fr)]")}
@@ -1181,7 +1207,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                 {days.map((day) => {
                   const dateStr = format(day, "yyyy-MM-dd");
                   const filteredApts = appointments.filter(
-                    (a) => a.appointment_date === dateStr && isServiceVisible(a.service_type),
+                    (a) => a.appointment_date === dateStr && isServiceVisible(a),
                   );
                   const cellApts = getAptsForSlot(filteredApts, slot);
                   const lanes = assignLanes(filteredApts.map((a) => {
@@ -1195,7 +1221,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                       key={`${dateStr}-${slot}`}
                       data-cell-date={dateStr}
                       data-cell-hour={slot}
-                      style={{ height: HOUR_PX }}
+                      style={{ height: rowPx }}
                       className={cn(
                         "relative border-l border-border/20 min-w-0 transition-colors cursor-pointer hover:bg-muted/30",
                         isOver && "bg-primary/10 ring-1 ring-primary/40"
@@ -1204,8 +1230,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                         if (canEditGrid && cellApts.length === 0) openNew(day, slot);
                       }}
                     >
-                      {cellApts.map((apt) => {
+                      {[...cellApts].sort((a, b) => (toMinutes(a.appointment_time) ?? 0) - (toMinutes(b.appointment_time) ?? 0)).map((apt, idx, arr) => {
                         const st = toMinutes(apt.appointment_time) ?? 0;
+                        const crowd = crowdedSlotPosition(idx, arr.length);
                         const dur = Math.max(15, apt.duration_minutes || 50);
                         const ln = lanes.get(apt.id) ?? { lane: 0, lanes: 1 };
                         const concurrent = ln.lanes > 1;
@@ -1215,7 +1242,12 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                           <div
                             key={apt.id}
                             className={cn("absolute flex", forcedMin ? "z-[6]" : "z-[5]")}
-                            style={{
+                            style={crowd ? {
+                              top: crowd.top,
+                              height: crowd.height,
+                              left: `calc(${crowd.col * 50}% + 2px)`,
+                              width: "calc(50% - 4px)",
+                            } : {
                               top: ((st % 60) / 60) * HOUR_PX + 1,
                               height: h,
                               left: `calc(${(ln.lane / ln.lanes) * 100}% + 2px)`,
@@ -1238,7 +1270,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                   );
                 })}
               </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
