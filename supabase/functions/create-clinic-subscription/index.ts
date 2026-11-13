@@ -183,6 +183,7 @@ serve(async (req) => {
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
+      allow_promotion_codes: true,
       success_url: `${origin}/dashboard?clinic=success`,
       cancel_url: source === "dashboard" ? `${origin}/dashboard?clinic=cancelled` : `${origin}/clinica?subscription=cancelled#planos`,
       metadata: {
