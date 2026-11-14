@@ -489,6 +489,11 @@ const Dashboard = () => {
       }
       if (effectiveOrigin === "clinic" && !hasAnyClinic) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
+        // Subscribe-first: plan chosen on the landing goes straight to checkout.
+        const { takePendingClinicPlan, startClinicCheckout } = await import("@/lib/clinicCheckout");
+        const pendingClinic = takePendingClinicPlan();
+        if (pendingClinic && (await startClinicCheckout(pendingClinic))) return;
+        if (cancelled) return;
         navigate("/clinica#pricing", { replace: true });
         return;
       }

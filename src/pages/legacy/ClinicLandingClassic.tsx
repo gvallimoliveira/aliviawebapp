@@ -1,3 +1,4 @@
+import { savePendingClinicPlan } from "@/lib/clinicCheckout";
 import AnnualRefundDisclaimer from "@/components/AnnualRefundDisclaimer";
 import CreditsSufficiency from "@/components/CreditsSufficiency";
 import { useState, useEffect } from "react";
@@ -107,8 +108,9 @@ const ClinicLandingClassic = () => {
 
   const handleSubscribe = async (tier: "small" | "medium" | "large") => {
     if (!user) {
+      savePendingClinicPlan({ tier, plan: billingAnnual ? "annual" : "monthly" });
       try { sessionStorage.setItem("signupOrigin", "clinic"); } catch {}
-      navigate("/auth", { state: { redirectTo: "/clinica" } });
+      navigate("/auth", { state: { redirectTo: "/dashboard" } });
       return;
     }
     setSubscribeLoading(tier);
@@ -632,8 +634,8 @@ const ClinicLandingClassic = () => {
                           Sem cartão de crédito • Sem compromisso
                         </p>
 
-                        <Button variant="outline" size="sm" onClick={() => handleSubscribe(tier.key)} disabled={subscribeLoading !== null}
-                          className="w-full text-sm gap-1.5 border-primary/30 text-primary hover:bg-primary/5">
+                        <Button variant="secondary" onClick={() => handleSubscribe(tier.key)} disabled={subscribeLoading !== null}
+                          className="w-full rounded-xl gap-1.5">
                           <CreditCard className="h-3.5 w-3.5" />
                           {subscribeLoading === tier.key ? "Redirecionando..." : "Assinar agora"}
                         </Button>
