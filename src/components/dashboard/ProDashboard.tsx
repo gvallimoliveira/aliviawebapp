@@ -1,3 +1,4 @@
+import RegistrationRequiredDialog, { goToRegistration } from "@/components/dashboard/RegistrationRequiredDialog";
 import { careScope } from "@/lib/careScope";
 import BlogPillCard from "@/components/dashboard/BlogPillCard";
 import PhysioTechShortcut from "@/components/PhysioTechShortcut";
@@ -417,7 +418,10 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     return Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
   }, [professional?.created_at]);
 
+  const registrationPending = (professional as any)?.registration_pending === true && !isClinicMode && !isDemoMode;
+  const [registrationGateOpen, setRegistrationGateOpen] = useState(false);
   const copyLink = () => {
+    if (registrationPending) { setRegistrationGateOpen(true); return; }
     const link = `${getPublicOrigin()}/assessment/professional/${professional.id}`;
     navigator.clipboard.writeText(link);
     setLinkCopied(true);
@@ -737,6 +741,19 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   // Active subscriber dashboard
   return (
     <div className="space-y-6">
+      <RegistrationRequiredDialog open={registrationGateOpen} onOpenChange={setRegistrationGateOpen} feature="O link de avaliação" />
+      {registrationPending && (
+        <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 flex items-center gap-3 flex-wrap">
+          <p className="text-sm text-foreground flex-1 min-w-[200px]">
+            <span className="font-semibold">Complete seu cadastro profissional.</span>{" "}
+            <span className="text-muted-foreground">Agente de raciocínio, agenda e pacientes já estão liberados. Avaliações e exercícios liberam após informar o CREFITO ou ativar o modo Acadêmico.</span>
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => goToRegistration(navigate)}>Informar CREFITO</Button>
+            <Button size="sm" variant="outline" onClick={() => goToRegistration(navigate, true)}>Sou estudante</Button>
+          </div>
+        </div>
+      )}
       {/* Academic mode banner — student professionals */}
       {!isDemoMode && ((professional as any)?.active_profile_mode === "student" || (!(professional as any)?.active_profile_mode && professional?.is_student)) && (
         <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-background px-4 py-2.5 flex items-center gap-2.5 flex-wrap">
@@ -989,6 +1006,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
               <Button
                 size="icon"
                 onClick={() => {
+                  if (registrationPending) { setRegistrationGateOpen(true); return; }
                   const link = isClinicMode && activeClinic
                     ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
                     : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
@@ -1007,6 +1025,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
               <Button
                 size="icon"
                 onClick={async () => {
+                  if (registrationPending) { setRegistrationGateOpen(true); return; }
                   const link = isClinicMode && activeClinic
                     ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
                     : `${getPublicOrigin()}/assessment/professional/${professional.id}`;

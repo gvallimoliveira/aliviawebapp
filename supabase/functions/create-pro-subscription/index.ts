@@ -118,9 +118,32 @@ serve(async (req) => {
       }
     }
 
+    // Subscribe-first: guarantee a (pending) professional row so the webhook
+    // can activate it. CREFITO/academic data is collected after payment.
+    try {
+      const admin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } },
+      );
+      const { data: existingPro } = await admin.from("professionals").select("id").eq("user_id", user.id).maybeSingle();
+      if (!existingPro) {
+        const { data: prof } = await admin.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
+        const fullName = (prof?.full_name || (user.user_metadata as any)?.full_name || user.email.split("@")[0] || "Profissional").toString().slice(0, 120);
+        const { error: insErr } = await admin.from("professionals").insert({
+          user_id: user.id, full_name: fullName, city: "", state: "", email: user.email,
+          active: true, approved: false, registration_pending: true,
+        });
+        if (insErr) logStep("Pending professional insert failed (non-blocking)", { error: insErr.message });
+        else logStep("Pending professional row created");
+      }
+    } catch (e) {
+      logStep("Pending professional ensure failed (non-blocking)", { error: String(e) });
+    }
+
     const origin = safeOrigin(req.headers.get("origin"));
 
-    const successUrl = `${origin}/dashboard?subscription=success`;
+    const successUrl = `${origin}/dashboard?tab=professional&subscription=success`;
 
     // ── Idempotência 2: sessão de Checkout recente e ainda aberta ─────────
     // Evita gerar segunda cobrança quando o usuário volta e clica de novo
@@ -188,7 +211,7 @@ serve(async (req) => {
       ],
       mode: sessionMode,
       success_url: successUrl,
-      cancel_url: `${origin}/dashboard?subscription=cancelled`,
+      cancel_url: `${origin}/dashboard?tab=professional&subscription=cancelled`,
       metadata: {
         user_id: user.id,
         plan,

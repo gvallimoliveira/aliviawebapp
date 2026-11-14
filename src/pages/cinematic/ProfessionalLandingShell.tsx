@@ -39,12 +39,15 @@ const ProfessionalLandingShell = () => {
   }, []);
 
   const handleCTA = () => {
+    // Plan choice lives in the pricing card, which opens checkout directly.
+    const pricing = document.getElementById("pricing");
+    if (pricing) { pricing.scrollIntoView({ behavior: "smooth" }); return; }
     if (user) {
       navigate("/dashboard?tab=professional");
       return;
     }
     try { sessionStorage.setItem("signupOrigin", "professional"); } catch {}
-    navigate("/auth", { state: { redirectTo: "/dashboard?tab=professional" } });
+    navigate("/auth", { state: { redirectTo: "/dashboard" } });
   };
 
   return (

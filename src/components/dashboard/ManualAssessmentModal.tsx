@@ -1,3 +1,5 @@
+import { useRegistrationPending } from "@/hooks/useRegistrationPending";
+import RegistrationRequiredDialog from "@/components/dashboard/RegistrationRequiredDialog";
 import AssessmentPurposeFields, { purposeCopy } from "@/components/assessment/AssessmentPurposeFields";
 import PainMap from "@/components/assessment/PainMap";
 import { isPreventiveAssessment, normalizeAssessmentPurpose, manualPurposeSteps, preventiveReasoningContext, type PurposeData } from "@/lib/assessmentPurpose";
@@ -214,7 +216,7 @@ const STEPS = [
   { id: "diagnostico", label: "Diagnóstico" },
 ];
 
-const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, patientId, editAssessment, prefillData, onSaved, demoMode = false, continuationOfLink = false }: ManualAssessmentModalProps & { continuationOfLink?: boolean }) => {
+const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, patientId, editAssessment, prefillData, onSaved, demoMode = false, continuationOfLink = false }: ManualAssessmentModalProps & { continuationOfLink?: boolean }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { language, t } = useLanguage();
@@ -3281,6 +3283,16 @@ const ManualAssessmentModal = ({ open, onOpenChange, professionalId, clinicId, p
     </>
 
   );
+};
+
+const ManualAssessmentModal = (props: ManualAssessmentModalProps & { continuationOfLink?: boolean }) => {
+  const gated = props.open && !props.demoMode && !props.clinicId && !props.editAssessment;
+  const pending = useRegistrationPending(gated);
+  if (gated && pending === null) return null;
+  if (gated && pending) {
+    return <RegistrationRequiredDialog open onOpenChange={props.onOpenChange} feature="Criar avaliação" />;
+  }
+  return <ManualAssessmentModalInner {...props} />;
 };
 
 export default ManualAssessmentModal;

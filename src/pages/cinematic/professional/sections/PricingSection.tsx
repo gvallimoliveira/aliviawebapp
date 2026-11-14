@@ -14,6 +14,7 @@ const PricingSection = () => {
   const { t } = useLanguage();
   const { handleCTA } = useProfessionalCta();
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
+  const [loading, setLoading] = useState(false);
 
   const priceFormatted = billing === "monthly"
     ? `R$${PRO_PLAN_PRICE}`
@@ -93,7 +94,7 @@ const PricingSection = () => {
                 ))}
               </ul>
 
-              <Button onClick={handleCTA} size="lg" className="w-full rounded-xl gap-2 text-base">
+              <Button onClick={() => { setLoading(true); void handleCTA(billing).finally(() => setLoading(false)); }} disabled={loading} size="lg" className="w-full rounded-xl gap-2 text-base">
                 {t("b2b.hero_cta")}
                 <ArrowRight className="h-4 w-4" />
               </Button>

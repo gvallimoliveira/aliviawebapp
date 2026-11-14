@@ -70,7 +70,7 @@ const EarlyCtaSection = () => {
           <CreditsSufficiency plan="pro" annual={billing === "annual"} className="mt-4" />
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
-            <Button onClick={handleCTA} size="lg" className="rounded-xl gap-2 px-8">
+            <Button onClick={() => void handleCTA()} size="lg" className="rounded-xl gap-2 px-8">
               {t("b2b.hero_cta")}
               <ArrowRight className="h-4 w-4" />
             </Button>

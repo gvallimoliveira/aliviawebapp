@@ -1,19 +1,22 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { savePendingProPlan, startProCheckout, type ProPlan } from "@/lib/proCheckout";
 
 /** Shared CTA behaviour for every block of the professional landing. */
 export const useProfessionalCta = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const handleCTA = useCallback(() => {
+  const handleCTA = useCallback(async (plan: ProPlan = "annual") => {
     if (user) {
-      navigate("/dashboard?tab=professional");
+      const ok = await startProCheckout(plan);
+      if (!ok) navigate("/dashboard?tab=professional");
       return;
     }
+    savePendingProPlan(plan);
     try { sessionStorage.setItem("signupOrigin", "professional"); } catch { /* noop */ }
-    navigate("/auth", { state: { redirectTo: "/dashboard?tab=professional" } });
+    navigate("/auth", { state: { redirectTo: "/dashboard" } });
   }, [navigate, user]);
 
   const scrollToPricing = useCallback(() => {

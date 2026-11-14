@@ -1,3 +1,5 @@
+import { useRegistrationPending } from "@/hooks/useRegistrationPending";
+import RegistrationRequiredDialog from "@/components/dashboard/RegistrationRequiredDialog";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -122,7 +124,7 @@ const regionLabels: Record<string, Record<string, string>> = {
   general: { pt: "Geral", en: "General", es: "General" },
 };
 
-const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId, clinicId, demoMode = false }: Props) => {
+const CreateExerciseProgramModalInner = ({ open, onOpenChange, professionalId, patientName, assessmentId, editProgramId, clinicId, demoMode = false }: Props) => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -1579,6 +1581,16 @@ const CreateExerciseProgramModal = ({ open, onOpenChange, professionalId, patien
 
 
 
+};
+
+const CreateExerciseProgramModal = (props: Props) => {
+  const gated = props.open && !props.demoMode && !props.clinicId;
+  const pending = useRegistrationPending(gated);
+  if (gated && pending === null) return null;
+  if (gated && pending) {
+    return <RegistrationRequiredDialog open onOpenChange={props.onOpenChange} feature="A prescrição de exercícios" />;
+  }
+  return <CreateExerciseProgramModalInner {...props} />;
 };
 
 export default CreateExerciseProgramModal;

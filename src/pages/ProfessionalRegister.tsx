@@ -943,6 +943,12 @@ const ProfessionalRegister = () => {
                   Pular por agora
                 </Button>
               )}
+              {existing?.registration_pending && (
+                <Button type="button" variant="ghost" className="w-full rounded-xl" disabled={saving}
+                  onClick={() => navigate("/dashboard?tab=professional", { replace: true })}>
+                  Concluir depois e ir ao painel PRO
+                </Button>
+              )}
             </form>
           </CardContent>
         </Card>

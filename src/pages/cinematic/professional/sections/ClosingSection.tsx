@@ -28,7 +28,7 @@ const ClosingSection = () => {
             : "Anamnese, red flags, mapa de dor, questionários validados e raciocínio com IA — prontos antes do paciente entrar."
         }
         primaryLabel={t("b2b.hero_cta")}
-        onPrimary={handleCTA}
+        onPrimary={() => void handleCTA()}
         secondaryLabel={t("b2b.pricing_title")}
         onSecondary={scrollToPricing}
       />
