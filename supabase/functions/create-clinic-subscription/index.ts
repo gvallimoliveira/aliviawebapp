@@ -185,7 +185,7 @@ serve(async (req) => {
       mode: "subscription",
       allow_promotion_codes: true,
       success_url: `${origin}/dashboard?clinic=success`,
-      cancel_url: source === "dashboard" ? `${origin}/dashboard?clinic=cancelled` : `${origin}/clinica?subscription=cancelled#planos`,
+      cancel_url: `${origin}/dashboard?clinic=cancelled`,
       metadata: {
         user_id: ownerUserId,
         payer_user_id: user.id,

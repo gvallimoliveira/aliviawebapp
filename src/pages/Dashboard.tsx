@@ -25,6 +25,7 @@ import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 import ConfirmEmailBanner from "@/components/dashboard/ConfirmEmailBanner";
 
 import ClinicContextSelector from "@/components/dashboard/ClinicContextSelector";
+import ClinicActivationScreen from "@/components/dashboard/ClinicActivationScreen";
 import SoloUpgradeBanner from "@/components/dashboard/SoloUpgradeBanner";
 import ClinicTrialBanner, { ClinicTrialBlockOverlay, useClinicTrial } from "@/components/dashboard/ClinicTrialBanner";
 // Lazy — only rendered when the corresponding tab/section opens
@@ -175,6 +176,7 @@ const Dashboard = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
+  const [clinicActivation, setClinicActivation] = useState<null | { tier?: "small" | "medium" | "large"; plan?: "monthly" | "annual" }>(null);
   const [allConversationIds, setAllConversationIds] = useState<string[]>([]);
   const [hasAutoSwitchedPro, setHasAutoSwitchedPro] = useState(false);
   const [clinicSubTab, setClinicSubTab] = useState<string>("team");
@@ -494,8 +496,14 @@ const Dashboard = () => {
         const pendingClinic = takePendingClinicPlan();
         if (pendingClinic && (await startClinicCheckout(pendingClinic))) return;
         if (cancelled) return;
-        navigate("/clinica#pricing", { replace: true });
+        // Never bounce back to the landing: show the in-app activation screen.
+        setClinicActivation(pendingClinic ?? {});
+        setDashboardLoading(false);
+        setPremiumLoading(false);
         return;
+      }
+      if (!hasAnyClinic && searchParams.get("clinic") === "cancelled") {
+        setClinicActivation({});
       }
       // Sempre que a origem é "profissional" e ainda não existe linha em
       // public.professionals, mantemos o flag ligado para que o seletor de
@@ -717,6 +725,7 @@ const Dashboard = () => {
   }
 
   if (!user) return null;
+  if (clinicActivation) return <ClinicActivationScreen initialTier={clinicActivation.tier} initialPlan={clinicActivation.plan} />;
 
   const handleSignOut = async () => {
     await signOut();
