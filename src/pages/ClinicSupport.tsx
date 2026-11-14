@@ -432,6 +432,10 @@ const categories: ToolCategory[] = [
 
 const faqKeys = [
   {
+    q: "A equipe da clínica precisa de PRO ou CREFITO cadastrado para usar a clínica?",
+    a: "Não. A trava de cadastro profissional pendente vale só para quem assina o PRO autônomo antes de informar CREFITO ou modo Acadêmico. Na clínica, a equipe usa avaliações, links institucionais e prescrição de exercícios normalmente, conforme a função de cada um.",
+  },
+  {
     q: "Os pacientes da clínica aparecem no PRO autônomo?",
     a: "Não. Pacientes, agenda, evoluções, programas de exercícios e conversas do agente ficam separados pelo perfil selecionado. Atribuir um paciente da clínica a um fisioterapeuta não o transforma em paciente particular. Consulte os registros no perfil da clínica; o histórico é preservado.",
   },
