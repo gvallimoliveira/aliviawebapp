@@ -30,11 +30,17 @@ serve(async (req) => {
     const trialSub = subs.data.find((s: any) => s.items.data.some((i: any) => PRO_PRODUCT_IDS.includes(i.price?.product as string)));
     if (!trialSub) return json({ error: "no_trial" }, 404);
 
+    // Same subscription, no new one: trial_end="now" moves the first charge
+    // (the one scheduled for the end of the trial) to today and restarts the
+    // billing cycle from today. There is no extra charge at the old trial end.
+    // error_if_incomplete: if the card fails, Stripe rejects the change and the
+    // trial stays exactly as it was. The idempotency key makes double clicks a
+    // single operation.
     const updated = await stripe.subscriptions.update(trialSub.id, {
       trial_end: "now",
       payment_behavior: "error_if_incomplete",
       proration_behavior: "none",
-    });
+    }, { idempotencyKey: `pro-end-trial-${trialSub.id}` });
     if (updated.status !== "active") return json({ error: "payment_failed", status: updated.status }, 402);
 
     await admin.from("professionals").update({

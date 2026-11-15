@@ -63,6 +63,8 @@ const t = (language: string) => {
       type_student: "Acadêmico",
       type_active: "Assinante ativo",
       type_grace: "Em carência",
+      type_trial: "Teste PRO 7 dias",
+      trial_until: "Teste até",
       type_canceled: "Cancelado",
       type_basic: "Básico (sem assinatura)",
       lifetime: "Tratamento vitalício",
@@ -107,6 +109,8 @@ const t = (language: string) => {
       type_student: "Academic",
       type_active: "Active subscriber",
       type_grace: "In grace period",
+      type_trial: "PRO 7-day trial",
+      trial_until: "Trial until",
       type_canceled: "Canceled",
       type_basic: "Basic (no subscription)",
       lifetime: "Lifetime treatment",
@@ -123,18 +127,19 @@ const t = (language: string) => {
 
 type SortKey = "recent" | "oldest" | "az" | "za";
 
-type ClientType = "partner" | "student" | "active" | "grace" | "canceled" | "basic";
+type ClientType = "partner" | "student" | "trial" | "active" | "grace" | "canceled" | "basic";
 
 const TYPE_META: Record<ClientType, { labelKey: string; className: string; Icon: any }> = {
   partner: { labelKey: "type_partner", className: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400", Icon: Crown },
   student: { labelKey: "type_student", className: "border-primary/40 bg-primary/5 text-primary", Icon: GraduationCap },
+  trial: { labelKey: "type_trial", className: "border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-400", Icon: Clock },
   active: { labelKey: "type_active", className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400", Icon: ShieldCheck },
   grace: { labelKey: "type_grace", className: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400", Icon: Clock },
   canceled: { labelKey: "type_canceled", className: "border-destructive/40 bg-destructive/10 text-destructive", Icon: XCircle },
   basic: { labelKey: "type_basic", className: "border-border bg-muted text-muted-foreground", Icon: Circle },
 };
 
-const TYPE_ORDER: ClientType[] = ["active", "grace", "partner", "student", "canceled", "basic"];
+const TYPE_ORDER: ClientType[] = ["trial", "active", "grace", "partner", "student", "canceled", "basic"];
 
 const classifyClient = (p: any): ClientType => {
   const now = Date.now();
@@ -146,6 +151,8 @@ const classifyClient = (p: any): ClientType => {
   if (p?.is_partner || p?.is_partner_account || p?.premium_granted) return "partner";
   if (p?.is_student) return "student";
 
+  // Teste PRO de 7 dias (cartão no Stripe) ainda em andamento.
+  if (p?.pro_trial_ends_at && new Date(p.pro_trial_ends_at).getTime() > now) return "trial";
   if (status === "active" || status === "trialing" || (expires != null && expires > now)) return "active";
   if (grace != null && grace > now) return "grace";
   if (status === "canceled" || status === "cancelled" || status === "past_due" || status === "unpaid") return "canceled";
@@ -220,7 +227,7 @@ const ProfessionalManagement = ({ language }: Props) => {
   }, [professionals, query, sort, typeFilter]);
 
   const counts = useMemo(() => {
-    const acc: Record<ClientType, number> = { partner: 0, student: 0, active: 0, grace: 0, canceled: 0, basic: 0 };
+    const acc: Record<ClientType, number> = { partner: 0, student: 0, trial: 0, active: 0, grace: 0, canceled: 0, basic: 0 };
     professionals.forEach((p) => { acc[classifyClient(p)] += 1; });
     return acc;
   }, [professionals]);
@@ -372,6 +379,11 @@ const ProfessionalManagement = ({ language }: Props) => {
                               ? String(p.subscription_status).replace(/_/g, " ")
                               : labels.no_subscription}
                           </p>
+                          {p.pro_trial_ends_at && new Date(p.pro_trial_ends_at).getTime() > Date.now() && (
+                            <p className="text-sky-700 dark:text-sky-400">
+                              {labels.trial_until}: {fmtDate(p.pro_trial_ends_at, language)}
+                            </p>
+                          )}
                           {fmtDate(p.pro_access_expires_at, language) && (
                             <p className="text-muted-foreground">
                               {labels.expires}: {fmtDate(p.pro_access_expires_at, language)}

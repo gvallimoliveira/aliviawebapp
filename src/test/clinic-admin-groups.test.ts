@@ -9,7 +9,10 @@ describe("admin clinic groups", () => {
     expect(clinicAdminGroup({ subscription_stripe_id: null, subscription_status: "active" })).toBe("partners");
   });
   it("does not call trial or inactive clinics partners with access", () => {
-    for (const subscription_status of ["trialing", "trial", "inactive", null]) {
+    for (const subscription_status of ["trialing", "trial"]) {
+      expect(clinicAdminGroup({ subscription_stripe_id: null, subscription_status })).toBe("trial");
+    }
+    for (const subscription_status of ["inactive", null]) {
       expect(clinicAdminGroup({ subscription_stripe_id: null, subscription_status })).toBe("other");
     }
   });

@@ -51,7 +51,7 @@ export default function ClinicManagement({ isPt }: { isPt: boolean }) {
   const counts = rows.reduce((acc, row) => {
     acc[clinicAdminGroup(row)] += 1;
     return acc;
-  }, { paid: 0, partners: 0, other: 0 });
+  }, { paid: 0, partners: 0, trial: 0, other: 0 });
 
   const active = rows.filter((r) => r.subscription_status === "active").length;
 
@@ -66,12 +66,13 @@ export default function ClinicManagement({ isPt }: { isPt: boolean }) {
           {rows.length} {isPt ? "clínica(s)" : "clinic(s)"} · {active} {isPt ? "ativa(s)" : "active"}
         </CardDescription>
         <Tabs value={group} onValueChange={(value) => {
-          if (value === "paid" || value === "partners" || value === "other") setGroup(value);
+          if (value === "paid" || value === "partners" || value === "trial" || value === "other") setGroup(value);
         }}>
           <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
             <TabsTrigger value="paid" className="whitespace-normal text-center">{isPt ? "Assinantes pagantes" : "Paid subscribers"} ({counts.paid})</TabsTrigger>
             <TabsTrigger value="partners" className="whitespace-normal text-center">{isPt ? "Parceiros com acesso" : "Partners with access"} ({counts.partners})</TabsTrigger>
-            <TabsTrigger value="other" className="whitespace-normal text-center">{isPt ? "Em teste / inativas" : "Trial / inactive"} ({counts.other})</TabsTrigger>
+            <TabsTrigger value="trial" className="whitespace-normal text-center">{isPt ? "Em teste grátis" : "Free trial"} ({counts.trial})</TabsTrigger>
+            <TabsTrigger value="other" className="whitespace-normal text-center">{isPt ? "Inativas" : "Inactive"} ({counts.other})</TabsTrigger>
           </TabsList>
         </Tabs>
         <Input placeholder={isPt ? "Buscar por nome ou e-mail" : "Search by name or email"} value={q} onChange={(e) => setQ(e.target.value)} className="mt-2" />
