@@ -72,4 +72,4 @@
 - Basic quota: service-only ledger, email transaction lock, survives deletion; diagnosis needs reserved ID; anonymous read/write needs x-assessment-id within 48h.
 - Photos: preparePhoto, record/Studio size, transparency/fallback; exclude signatures/PDFs/measurements. Vision: economical-vision zero-retention chat; clinical/measurement models unchanged.
 - Blog: preserve bodies/URLs; BlogDashboardReturn sends signed-in users to /dashboard.
-- PRO 7-day trial: professionals.pro_trial_ends_at (service-only, synced from Stripe trialing) makes get_user_credit_status cap included at 5 with no margin and always block, independent of the credit rollout flag; pro-end-trial ends the trial early with an immediate charge.
+- PRO trial: service-only pro_trial_ends_at caps credit status at 5, always blocking; pro-end-trial charges early.
