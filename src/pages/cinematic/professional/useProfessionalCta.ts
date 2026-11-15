@@ -8,13 +8,13 @@ export const useProfessionalCta = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const handleCTA = useCallback(async (plan: ProPlan = "annual") => {
+  const handleCTA = useCallback(async (plan: ProPlan = "annual", trial = false) => {
     if (user) {
-      const ok = await startProCheckout(plan);
+      const ok = await startProCheckout(plan, trial);
       if (!ok) navigate("/dashboard?tab=professional");
       return;
     }
-    savePendingProPlan(plan);
+    savePendingProPlan(plan, trial);
     try { sessionStorage.setItem("signupOrigin", "professional"); } catch { /* noop */ }
     navigate("/auth", { state: { redirectTo: "/dashboard" } });
   }, [navigate, user]);

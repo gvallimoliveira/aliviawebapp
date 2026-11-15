@@ -483,8 +483,9 @@ const Dashboard = () => {
       if (effectiveOrigin === "professional" && !nextProfessional && !hasAnyClinic && !skipped) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
         // Subscribe-first: go straight to checkout; CREFITO/academic comes after.
-        const { takePendingProPlan, startProCheckout } = await import("@/lib/proCheckout");
-        const redirected = await startProCheckout(takePendingProPlan() ?? "annual");
+        const { takePendingProPlan, takePendingProTrial, startProCheckout } = await import("@/lib/proCheckout");
+        const pendingPlan = takePendingProPlan() ?? "annual";
+        const redirected = await startProCheckout(pendingPlan, takePendingProTrial());
         if (redirected || cancelled) return;
         navigate("/professional/register", { replace: true });
         return;

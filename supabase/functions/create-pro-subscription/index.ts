@@ -39,9 +39,11 @@ serve(async (req) => {
     // Parse plan type and optional coupon from body
     let plan: "monthly" | "annual" = "monthly";
     let couponCode: string | undefined;
+    let wantsTrial = false;
     try {
       const body = await req.json();
       if (body?.plan === "annual") plan = "annual";
+      if (body?.trial === true) wantsTrial = true;
       if (typeof body?.coupon === "string" && body.coupon.trim()) {
         couponCode = body.coupon.trim().toUpperCase();
       }
@@ -78,10 +80,11 @@ serve(async (req) => {
       const PRO_PRODUCT_IDS = ["prod_UHdISwfBcfWftS", "prod_UA4lNoezZmPwvs"];
       const activeSubs = await stripe.subscriptions.list({
         customer: customerId,
-        status: "active",
-        limit: 10,
+        status: "all",
+        limit: 20,
       });
       const activePro = activeSubs.data.find((s: any) =>
+        ["active", "trialing"].includes(s.status) &&
         s.items.data.some((i: any) => PRO_PRODUCT_IDS.includes(i.price?.product as string))
       );
       if (activePro) {
@@ -141,6 +144,25 @@ serve(async (req) => {
       logStep("Pending professional ensure failed (non-blocking)", { error: String(e) });
     }
 
+    // Trial de 7 dias só para quem nunca teve assinatura PRO (evita trial repetido).
+    let trialEligible = false;
+    if (wantsTrial) {
+      trialEligible = true;
+      if (customerId) {
+        try {
+          const PRO_IDS = ["prod_UHdISwfBcfWftS", "prod_UA4lNoezZmPwvs"];
+          const past = await stripe.subscriptions.list({ customer: customerId, status: "all", limit: 50 });
+          if (past.data.some((s: any) => s.items.data.some((i: any) => PRO_IDS.includes(i.price?.product as string)))) {
+            trialEligible = false;
+            logStep("Trial refused: customer already had PRO");
+          }
+        } catch (e) {
+          trialEligible = false;
+          logStep("Trial eligibility check failed — charging normally", { error: String(e) });
+        }
+      }
+    }
+
     const origin = safeOrigin(req.headers.get("origin"));
 
     const successUrl = `${origin}/dashboard?tab=professional&subscription=success`;
@@ -163,6 +185,7 @@ serve(async (req) => {
             s.created >= fifteenMinAgo &&
             s.metadata?.user_id === user.id &&
             s.metadata?.plan === plan &&
+            (s.metadata?.trial === "1") === trialEligible &&
             s.url
         );
         if (openMatch?.url) {
@@ -197,7 +220,7 @@ serve(async (req) => {
     // requisições concorrentes (double-click / retry de rede) gerem duas
     // sessões — e, portanto, duas assinaturas — para o mesmo usuário/plano
     // no mesmo minuto.
-    const idempotencyKey = `create-pro-${user.id}-${plan}-${Math.floor(Date.now() / 60000)}`;
+    const idempotencyKey = `create-pro-${user.id}-${plan}-${trialEligible ? "t" : "n"}-${Math.floor(Date.now() / 60000)}`;
 
     const sessionParams: any = {
       customer: customerId,
@@ -216,8 +239,10 @@ serve(async (req) => {
         user_id: user.id,
         plan,
         type: plan === "annual" ? "pro_annual" : "pro_subscription",
+        trial: trialEligible ? "1" : "0",
       },
       subscription_data: {
+        ...(trialEligible ? { trial_period_days: 7 } : {}),
         metadata: {
           user_id: user.id,
           plan,
@@ -238,7 +263,7 @@ serve(async (req) => {
 
     logStep("Checkout session created", { sessionId: session.id, idempotencyKey });
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ url: session.url, trial: trialEligible, trial_refused: wantsTrial && !trialEligible }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

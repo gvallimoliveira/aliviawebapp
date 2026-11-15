@@ -14,7 +14,11 @@ const PricingSection = () => {
   const { t } = useLanguage();
   const { handleCTA } = useProfessionalCta();
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<null | "trial" | "now">(null);
+  const go = (trial: boolean) => {
+    setLoading(trial ? "trial" : "now");
+    void handleCTA(billing, trial).finally(() => setLoading(null));
+  };
 
   const priceFormatted = billing === "monthly"
     ? `R$${PRO_PLAN_PRICE}`
@@ -94,10 +98,15 @@ const PricingSection = () => {
                 ))}
               </ul>
 
-              <Button onClick={() => { setLoading(true); void handleCTA(billing).finally(() => setLoading(false)); }} disabled={loading} size="lg" className="w-full rounded-xl gap-2 text-base">
-                {t("b2b.hero_cta")}
+              <Button type="button" onClick={() => go(true)} disabled={loading !== null} size="lg" className="w-full rounded-xl gap-2 text-base">
+                {t("b2b.trial_cta")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
+              <p className="text-xs text-muted-foreground mt-2 mb-4">{t("b2b.trial_cta_note")}</p>
+              <Button type="button" variant="outline" onClick={() => go(false)} disabled={loading !== null} size="lg" className="w-full rounded-xl text-base">
+                {t("b2b.subscribe_now_cta")}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">{t("b2b.subscribe_now_note")}</p>
             </CardContent>
           </Card>
         </motion.div>

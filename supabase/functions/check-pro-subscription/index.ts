@@ -165,13 +165,14 @@ serve(async (req) => {
 
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      status: "active",
-      limit: 10,
+      status: "all",
+      limit: 20,
     });
 
     // Filter only Pro subscriptions (monthly or annual product)
     const proProductIds = ["prod_UHdISwfBcfWftS", "prod_UA4lNoezZmPwvs"];
     const proSub = subscriptions.data.find((sub: any) =>
+      ["active", "trialing"].includes(sub.status) &&
       sub.items.data.some((item: any) => proProductIds.includes(item.price.product as string))
     );
     const hasActiveSub = !!proSub;
@@ -216,6 +217,7 @@ serve(async (req) => {
       subscribed: hasActiveSub,
       subscription_end: subscriptionEnd,
       grace_until: graceUntilOut,
+      is_trial: proSub?.status === "trialing",
       premium_granted: proData?.premium_granted || false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

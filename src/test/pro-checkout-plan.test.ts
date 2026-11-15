@@ -13,3 +13,16 @@ describe("subscribe-first plan memory", () => {
     expect(takePendingProPlan()).toBeNull();
   });
 });
+
+import { takePendingProTrial } from "@/lib/proCheckout";
+describe("pending PRO trial choice", () => {
+  it("keeps the trial choice through signup and clears it once read", () => {
+    savePendingProPlan("monthly", true);
+    expect(takePendingProTrial()).toBe(true);
+    expect(takePendingProTrial()).toBe(false);
+  });
+  it("defaults to immediate payment", () => {
+    savePendingProPlan("annual");
+    expect(takePendingProTrial()).toBe(false);
+  });
+});
