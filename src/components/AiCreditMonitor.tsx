@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import AiCreditsStore from "@/components/dashboard/AiCreditsStore";
+import ProTrialActivateButton from "@/components/account/ProTrialActivateButton";
 export default function AiCreditMonitor() {
   const { user } = useAuth();
   const { language, t } = useLanguage();
@@ -29,8 +30,8 @@ export default function AiCreditMonitor() {
       const key = `${user.id}:${s.clinic_id ?? "solo"}:${s.period_start}:${level}`;
       if (seen.current.has(key)) return;
       seen.current.add(key);
-      toast.info(t(level === 100 ? "credits.notice100" : "credits.notice80"), {
-        description: t(s.hard_enabled ? "credits.noticeActive" : "credits.noticeShadow"),
+      toast.info(t(s.trial ? (level === 100 ? "credits.trialNotice100" : "credits.trialNotice80") : level === 100 ? "credits.notice100" : "credits.notice80"), {
+        description: t(s.trial ? "credits.trialExplain" : s.hard_enabled ? "credits.noticeActive" : "credits.noticeShadow"),
         action: level === 100 ? { label: t("credits.details"), onClick: () => setOpen(true) } : undefined,
       });
     };
@@ -42,6 +43,15 @@ export default function AiCreditMonitor() {
     window.addEventListener("focus", load);
     return () => { alive = false; clearInterval(timer); window.removeEventListener(AI_CREDIT_REFRESH, load); window.removeEventListener(AI_CREDIT_BLOCKED, block); window.removeEventListener("focus", load); };
   }, [user?.id, location.pathname, t]);
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { timeZone: "America/Sao_Paulo" });
+  if (status?.trial) return <><Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-w-md"><DialogHeader>
+    <DialogTitle>{t("credits.trialNotice100")}</DialogTitle>
+    <DialogDescription>{t("credits.trialExplain")}</DialogDescription>
+  </DialogHeader>
+    {status.trial_ends_at && <p className="text-sm text-muted-foreground">{t("credits.trialEnds")} {fmtDate(status.trial_ends_at)}.</p>}
+    <ProTrialActivateButton className="w-full" onDone={() => setOpen(false)} />
+    <Button variant="outline" onClick={() => setOpen(false)}>{t("credits.trialWait")}</Button>
+  </DialogContent></Dialog></>;
   return <><Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-w-md"><DialogHeader>
     <DialogTitle>{t("credits.notice100")}</DialogTitle>
     <DialogDescription>{t(status?.hard_enabled ? "credits.recovery" : "credits.noticeShadow")}</DialogDescription>

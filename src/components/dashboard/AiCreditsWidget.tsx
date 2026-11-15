@@ -9,6 +9,7 @@ import { Sparkles, Info, Wallet, Infinity as InfinityIcon, AlertTriangle } from 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import AiCreditsStore from "./AiCreditsStore";
 import { AI_CREDIT_REFRESH } from "@/lib/aiCreditPolicy";
+import ProTrialActivateButton from "@/components/account/ProTrialActivateButton";
 
 interface UsageRow {
   function_name: string;
@@ -18,6 +19,8 @@ interface UsageRow {
 
 interface CreditStatus {
   grace_ratio?: number;
+  trial?: boolean;
+  trial_ends_at?: string | null;
   hard_enabled?: boolean;
   can_buy?: boolean;
   clinical_members?: number;
@@ -292,6 +295,16 @@ const AiCreditsWidget = () => {
               </p>
             )}
             {/* Fase 5.2 — warning a 80% (sem bloqueio) */}
+            {status?.trial && (
+              <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-2">
+                <p className="text-[11px] leading-relaxed text-foreground">
+                  {isPt
+                    ? "Teste grátis: 5 créditos de IA. Os créditos totais são liberados quando a assinatura começar — ou agora, ativando a assinatura (cobrança na hora)."
+                    : "Free trial: 5 AI credits. Full credits unlock when your subscription starts — or now, by activating it (charged immediately)."}
+                </p>
+                <ProTrialActivateButton className="w-full h-8 text-xs" />
+              </div>
+            )}
             {pct >= 80 && pct < 100 && (
               <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2">
                 <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />

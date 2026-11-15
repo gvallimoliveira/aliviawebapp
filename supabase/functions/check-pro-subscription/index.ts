@@ -190,6 +190,9 @@ serve(async (req) => {
     const updatePayload: Record<string, any> = {
       subscription_status: hasActiveSub ? "active" : "inactive",
       subscription_stripe_id: subscriptionId,
+      // Teste de 7 dias: guarda o fim para limitar créditos de IA a 5.
+      pro_trial_ends_at: proSub?.status === "trialing" && (proSub as any).trial_end
+        ? new Date((proSub as any).trial_end * 1000).toISOString() : null,
     };
 
     let graceUntilOut: string | null = null;
@@ -218,6 +221,7 @@ serve(async (req) => {
       subscription_end: subscriptionEnd,
       grace_until: graceUntilOut,
       is_trial: proSub?.status === "trialing",
+      trial_end: proSub?.status === "trialing" && (proSub as any).trial_end ? new Date((proSub as any).trial_end * 1000).toISOString() : null,
       premium_granted: proData?.premium_granted || false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

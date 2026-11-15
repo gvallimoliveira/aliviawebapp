@@ -1667,9 +1667,20 @@
   "support.pro.tool.acl_preoperative.title": "Pré-operatório de LCA (beta restrito)",
   "support.pro.tool.acl_preoperative.desc": "Disponível apenas para o administrador durante a validação. Registre explicitamente pré-operatório de reconstrução do LCA no objetivo do acompanhamento, história, queixa ou cirurgias planejadas da avaliação manual; joelho no mapa não basta. No prontuário, ative a trajetória e confira data planejada opcional e restrições. A preparação tem três etapas com metas progressivas, sem liberar cirurgia. As etapas pós-operatórias ficam consultáveis na mesma trajetória, mas só passam a vigentes após registrar a cirurgia realizada e sua data, enxerto e restrições. A data planejada conta dias até a cirurgia, nunca dias pós-operatórios. Em avaliações sem dor, questionários complementares ficam disponíveis apenas por escolha individual do profissional, não como recomendações genéricas; retirar itens do KOOS não preserva automaticamente sua validação. A trajetória pode ser inserida no relatório livre/encaminhamento.",
   "b2b.trial_cta": "Iniciar teste de 7 dias grátis",
-  "b2b.trial_cta_note": "R$ 0,00 hoje • cartão cadastrado no Stripe • cancele em até 7 dias sem cobrança",
+  "b2b.trial_cta_note": "R$ 0,00 hoje • 5 créditos de IA no teste • cancele em até 7 dias sem cobrança",
   "b2b.subscribe_now_cta": "Assinar PRO agora",
   "b2b.subscribe_now_note": "Pagamento imediato e ativação na hora",
   "support.pro.faq.rf_trial.q": "Como funciona o teste grátis de 7 dias do PRO?",
-  "support.pro.faq.rf_trial.a": "Na página PRO há dois botões: \"Iniciar teste de 7 dias grátis\" e \"Assinar PRO agora\". No teste, você cadastra o cartão no pagamento seguro (Stripe), paga R$ 0,00 hoje e usa o PRO por 7 dias. Antes do fim, o Stripe envia um e-mail de aviso. Se não cancelar, a primeira cobrança do plano escolhido (mensal ou anual) acontece no 8º dia. Para cancelar sem cobrança, use o link do e-mail ou \"Gerenciar assinatura\" no seu perfil do Aliv.iA, em 1 clique. O teste vale uma vez por conta; quem já assinou o PRO antes é cobrado normalmente. Em \"Assinar PRO agora\" o pagamento é imediato."
+  "support.pro.faq.rf_trial.a": "Na página PRO há dois botões: \"Iniciar teste de 7 dias grátis\" e \"Assinar PRO agora\". No teste, você cadastra o cartão no pagamento seguro (Stripe), paga R$ 0,00 hoje e usa o PRO por 7 dias. Antes do fim, o Stripe envia um e-mail de aviso. Se não cancelar, a primeira cobrança do plano escolhido (mensal ou anual) acontece no 8º dia. Para cancelar sem cobrança, use o link do e-mail ou \"Gerenciar assinatura\" no seu perfil do Aliv.iA, em 1 clique. O teste vale uma vez por conta; quem já assinou o PRO antes é cobrado normalmente. Em \"Assinar PRO agora\" o pagamento é imediato. Durante o teste, a IA tem 5 créditos; quando a assinatura começa, todos os créditos do plano são liberados. Se quiser antes, use \"Ativar assinatura PRO agora\" (cobrança na hora).",
+  "credits.trialNotice80": "Você está perto do limite de 5 créditos do teste",
+  "credits.trialNotice100": "Os 5 créditos de IA do teste acabaram",
+  "credits.trialExplain": "No teste grátis de 7 dias, a IA tem 5 créditos. Ao fim do teste, a assinatura começa sozinha e libera todos os créditos do plano. Se quiser tudo agora, ative a assinatura antes: a cobrança é feita na hora.",
+  "credits.trialEnds": "Seu teste termina em",
+  "credits.trialActivate": "Ativar assinatura PRO agora",
+  "credits.trialWait": "Esperar o fim do teste",
+  "credits.trialConfirm": "Ativar a assinatura PRO agora? A cobrança do plano escolhido é feita imediatamente no cartão cadastrado e todos os créditos de IA são liberados.",
+  "credits.trialActivated": "Assinatura PRO ativada. Créditos de IA liberados.",
+  "credits.trialPaymentFailed": "O cartão não aprovou a cobrança. Atualize o cartão em Gerenciar assinatura e tente de novo.",
+  "credits.trialActivateError": "Não foi possível ativar agora. Tente de novo em instantes.",
+  "credits.trialWidget": "Teste grátis: 5 créditos de IA. Os créditos totais são liberados quando a assinatura começar."
 }

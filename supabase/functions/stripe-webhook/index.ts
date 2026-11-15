@@ -894,6 +894,8 @@ async function handleSubscriptionLifecycle(sub: Stripe.Subscription, eventType: 
           subscription_stripe_id: sub.id,
           approved: true,
           subscription_grace_until: null,
+          pro_trial_ends_at: sub.status === "trialing" && (sub as any).trial_end
+            ? new Date((sub as any).trial_end * 1000).toISOString() : null,
         })
         .eq("id", proRow.id);
       log("PRO subscription reactivated", { proId: proRow.id });

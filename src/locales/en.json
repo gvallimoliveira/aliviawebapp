@@ -1667,9 +1667,20 @@
   "support.pro.tool.acl_preoperative.title": "ACL preoperative preparation (restricted beta)",
   "support.pro.tool.acl_preoperative.desc": "Administrator-only during validation. Explicitly record ACL preoperative preparation in follow-up goal details, history, complaint or planned surgeries; knee location alone is insufficient. Activate the journey and review the optional planned date and restrictions. Three preparation stages have progressive goals, never surgical clearance. Future postoperative stages are viewable in the same journey, but become current only after recording the performed surgery date, graft and restrictions. Planned dates count days until surgery, never postoperative days. Painless assessments offer complementary questionnaires only by individual professional choice, not blanket recommendations; removing KOOS items does not automatically preserve validation. The journey can be inserted into free-text/referral reports.",
   "b2b.trial_cta": "Start 7-day free trial",
-  "b2b.trial_cta_note": "R$ 0.00 today • card saved on Stripe • cancel within 7 days at no charge",
+  "b2b.trial_cta_note": "R$ 0.00 today • 5 AI credits during trial • cancel within 7 days at no charge",
   "b2b.subscribe_now_cta": "Subscribe to PRO now",
   "b2b.subscribe_now_note": "Immediate payment and instant activation",
   "support.pro.faq.rf_trial.q": "How does the 7-day PRO free trial work?",
-  "support.pro.faq.rf_trial.a": "The PRO page has two buttons: \"Start 7-day free trial\" and \"Subscribe to PRO now\". With the trial, you add your card on the secure Stripe checkout, pay R$ 0.00 today and use PRO for 7 days. Before it ends, Stripe emails you a reminder. If you don't cancel, the first charge for your chosen plan (monthly or annual) happens on day 8. To cancel at no cost, use the email link or \"Manage subscription\" in your Aliv.iA profile, in one click. The trial is once per account; previous PRO subscribers are charged normally. \"Subscribe to PRO now\" charges immediately."
+  "support.pro.faq.rf_trial.a": "The PRO page has two buttons: \"Start 7-day free trial\" and \"Subscribe to PRO now\". With the trial, you add your card on the secure Stripe checkout, pay R$ 0.00 today and use PRO for 7 days. Before it ends, Stripe emails you a reminder. If you don't cancel, the first charge for your chosen plan (monthly or annual) happens on day 8. To cancel at no cost, use the email link or \"Manage subscription\" in your Aliv.iA profile, in one click. The trial is once per account; previous PRO subscribers are charged normally. \"Subscribe to PRO now\" charges immediately. During the trial, AI has 5 credits; once the subscription starts, all plan credits unlock. To unlock earlier, use \"Activate PRO subscription now\" (charged immediately).",
+  "credits.trialNotice80": "You're close to the 5-credit trial limit",
+  "credits.trialNotice100": "Your 5 trial AI credits are used up",
+  "credits.trialExplain": "During the 7-day free trial, AI has 5 credits. When the trial ends, your subscription starts automatically and unlocks all plan credits. Want everything now? Activate your subscription early: you're charged immediately.",
+  "credits.trialEnds": "Your trial ends on",
+  "credits.trialActivate": "Activate PRO subscription now",
+  "credits.trialWait": "Wait for trial to end",
+  "credits.trialConfirm": "Activate PRO now? Your chosen plan is charged immediately to the saved card and all AI credits are unlocked.",
+  "credits.trialActivated": "PRO subscription activated. AI credits unlocked.",
+  "credits.trialPaymentFailed": "The card declined the charge. Update it in Manage subscription and try again.",
+  "credits.trialActivateError": "Couldn't activate right now. Please try again shortly.",
+  "credits.trialWidget": "Free trial: 5 AI credits. Full credits unlock when your subscription starts."
 }

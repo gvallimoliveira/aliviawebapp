@@ -211,6 +211,7 @@ export type CreditDecision = {
   enforced: boolean;
   blocked: boolean; // true apenas quando o tier está na allowlist && !ok
   tier?: string;
+  trial?: boolean;
   path_taken: CreditPath;
   latency_ms: number;
   metadata?: Record<string, unknown>;
@@ -444,6 +445,7 @@ export async function assertCreditsAvailable(
       used: number;
       purchased: number;
       clinic_id: string | null;
+      trial?: boolean;
     };
 
     if (s.unlimited) {
@@ -480,7 +482,9 @@ export async function assertCreditsAvailable(
       });
     }
 
-    const blockable = canBlock(cfg, s.tier);
+    // O teste PRO de 7 dias bloqueia sempre ao fim dos 5 créditos, mesmo com o
+    // rollout geral em modo sombra.
+    const blockable = s.trial === true || canBlock(cfg, s.tier);
 
     const available = creditAvailability({ ...s, pooled: !!s.clinic_id && s.tier.startsWith("clinic_") }, cost);
     return finalize(admin, userId, {
@@ -489,9 +493,10 @@ export async function assertCreditsAvailable(
       remaining: available.remaining,
       reason: available.sufficient ? "sufficient" : "insufficient",
       path_taken: s.clinic_id ? "clinic_quota_check" : "quota_check", tier: s.tier,
+      trial: s.trial === true,
       metadata: { included: s.included, used: s.used, purchased: s.purchased,
         clinic_id: s.clinic_id, grace_ratio: available.ratio, grace_limit: available.limit,
-        blockable, enforced_tiers: cfg.tiers },
+        blockable, enforced_tiers: cfg.tiers, trial: s.trial === true },
     });
 
   } catch (e) {
@@ -554,7 +559,7 @@ export async function canaryCredits(
 /** Only an application quota block carries this code; provider funding errors are distinct. */
 export function creditBlockResponse(decision: CreditDecision, cors: Record<string, string>): Response | null {
   if (!decision.blocked) return null;
-  return new Response(JSON.stringify({ error: "alivia_credit_limit", tier: decision.tier }), {
+  return new Response(JSON.stringify({ error: "alivia_credit_limit", tier: decision.tier, trial: decision.trial === true }), {
     status: 402, headers: { ...cors, "Content-Type": "application/json" },
   });
 }

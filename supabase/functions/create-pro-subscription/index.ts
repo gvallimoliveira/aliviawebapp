@@ -100,6 +100,8 @@ serve(async (req) => {
             subscription_stripe_id: activePro.id,
             approved: true,
             subscription_grace_until: null,
+            pro_trial_ends_at: activePro.status === "trialing" && (activePro as any).trial_end
+              ? new Date((activePro as any).trial_end * 1000).toISOString() : null,
           };
           // Se for anual, propaga expiração
           const isAnnual = activePro.items.data.some((i: any) => i.price?.recurring?.interval === "year");
