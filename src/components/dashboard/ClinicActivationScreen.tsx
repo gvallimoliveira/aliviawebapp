@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Building2, CreditCard, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +20,38 @@ const ClinicActivationScreen = ({ initialTier, initialPlan }: { initialTier?: Cl
   const [plan, setPlan] = useState<ClinicPlan>(initialPlan ?? "annual");
   const [loading, setLoading] = useState<ClinicTier | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [trialOpen, setTrialOpen] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [cnpj, setCnpj] = useState("");
+  const [trialLoading, setTrialLoading] = useState(false);
+
+  const startTrial = async () => {
+    const digits = cnpj.replace(/\D/g, "");
+    if (!phone.trim()) { toast({ title: "Informe seu WhatsApp", variant: "destructive" }); return; }
+    if (digits.length !== 14) { toast({ title: "Informe um CNPJ válido (14 dígitos)", variant: "destructive" }); return; }
+    setTrialLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("start-clinic-trial", {
+        body: { tier: initialTier ?? "medium", email: user?.email ?? "", phone: phone.trim(), cnpj: digits },
+      });
+      if (error) throw error;
+      if (data?.requires_login) throw new Error("Entre novamente na sua conta e tente de novo.");
+      if (!data?.success) throw new Error(data?.message || "Não foi possível ativar o teste.");
+      try { sessionStorage.removeItem("clinicActivationSkipped"); } catch {}
+      window.location.replace("/dashboard?tab=clinic");
+    } catch (e: any) {
+      let msg = e?.message || "Tente novamente.";
+      try { const body = await e?.context?.json?.(); if (body?.message) msg = body.message; } catch {}
+      toast({ title: "Não foi possível ativar o teste", description: msg, variant: "destructive" });
+      setTrialLoading(false);
+    }
+  };
+
+  const skip = () => {
+    try { sessionStorage.setItem("clinicActivationSkipped", "1"); } catch {}
+    window.location.replace("/dashboard?context=personal");
+  };
 
   const subscribe = async (tier: ClinicTier) => {
     setLoading(tier);
@@ -66,11 +101,26 @@ const ClinicActivationScreen = ({ initialTier, initialPlan }: { initialTier?: Cl
           ))}
         </div>
 
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-3">
           <p className="text-sm text-muted-foreground">Prefere testar antes?</p>
-          <Button type="button" variant="outline" className="rounded-xl gap-2" onClick={() => (window.location.href = "/clinica#pricing")}>
-            <Sparkles className="h-4 w-4" /> Começar 15 dias grátis
-          </Button>
+          {trialOpen ? (
+            <div className="mx-auto max-w-sm space-y-2 text-left">
+              <Input value={user?.email ?? ""} disabled />
+              <Input placeholder="WhatsApp" value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
+              <Input placeholder="CNPJ" value={cnpj} onChange={(e) => setCnpj(e.target.value)} inputMode="numeric" />
+              <Button type="button" className="w-full rounded-xl gap-2" disabled={trialLoading} onClick={() => void startTrial()}>
+                {trialLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Ativar 15 dias grátis
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">Sem cartão de crédito. Sem assinatura em até 7 dias após o fim do teste, os dados da clínica são excluídos.</p>
+            </div>
+          ) : (
+            <Button type="button" variant="outline" className="rounded-xl gap-2" onClick={() => setTrialOpen(true)}>
+              <Sparkles className="h-4 w-4" /> Começar 15 dias grátis
+            </Button>
+          )}
+          <div>
+            <Button type="button" variant="link" className="text-muted-foreground" onClick={skip}>Fazer isso depois e ir para o painel</Button>
+          </div>
         </div>
       </div>
     </div>

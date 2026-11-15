@@ -95,6 +95,7 @@ const ClinicLandingClassic = () => {
         } else {
           toast.success("Trial de 15 dias ativado! Sem assinatura em até 7 dias após o fim do teste, os dados da clínica são excluídos.", { duration: 10000 });
           try { sessionStorage.setItem("signupOrigin", "clinic"); } catch {}
+          if (user) { window.location.replace("/dashboard?tab=clinic"); return; }
           navigate("/auth", { state: { redirectTo: "/dashboard" } });
         }
         setTrialForm(null);

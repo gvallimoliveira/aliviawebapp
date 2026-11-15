@@ -490,7 +490,9 @@ const Dashboard = () => {
         navigate("/professional/register", { replace: true });
         return;
       }
-      if (effectiveOrigin === "clinic" && !hasAnyClinic) {
+      let activationSkipped = false;
+      try { activationSkipped = sessionStorage.getItem("clinicActivationSkipped") === "1"; } catch {}
+      if (effectiveOrigin === "clinic" && !hasAnyClinic && !activationSkipped) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
         // Subscribe-first: plan chosen on the landing goes straight to checkout.
         const { takePendingClinicPlan, startClinicCheckout } = await import("@/lib/clinicCheckout");
