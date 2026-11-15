@@ -16,12 +16,12 @@ const TIERS = [
 ];
 
 /** Shown to signed-in clinic sign-ups who have no clinic yet (checkout paused/cancelled). */
-const ClinicActivationScreen = ({ initialTier, initialPlan }: { initialTier?: ClinicTier; initialPlan?: ClinicPlan }) => {
+const ClinicActivationScreen = ({ initialTier, initialPlan, initialTrialOpen }: { initialTier?: ClinicTier; initialPlan?: ClinicPlan; initialTrialOpen?: boolean }) => {
   const [plan, setPlan] = useState<ClinicPlan>(initialPlan ?? "annual");
   const [loading, setLoading] = useState<ClinicTier | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const [trialOpen, setTrialOpen] = useState(false);
+  const [trialOpen, setTrialOpen] = useState(!!initialTrialOpen);
   const [phone, setPhone] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [trialLoading, setTrialLoading] = useState(false);

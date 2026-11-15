@@ -176,7 +176,13 @@ const Dashboard = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [clinicLinkCopied, setClinicLinkCopied] = useState(false);
   const [isSimulated, setIsSimulated] = useState(false);
-  const [clinicActivation, setClinicActivation] = useState<null | { tier?: "small" | "medium" | "large"; plan?: "monthly" | "annual" }>(null);
+  const [clinicActivation, setClinicActivation] = useState<null | { tier?: "small" | "medium" | "large"; plan?: "monthly" | "annual"; trial?: boolean }>(null);
+  const [clinicPending, setClinicPending] = useState(false);
+  const openClinicActivation = (trial: boolean) => {
+    try { sessionStorage.removeItem("clinicActivationSkipped"); } catch {}
+    setClinicActivation({ trial });
+    window.scrollTo(0, 0);
+  };
   const [allConversationIds, setAllConversationIds] = useState<string[]>([]);
   const [hasAutoSwitchedPro, setHasAutoSwitchedPro] = useState(false);
   const [clinicSubTab, setClinicSubTab] = useState<string>("team");
@@ -492,6 +498,7 @@ const Dashboard = () => {
       }
       let activationSkipped = false;
       try { activationSkipped = sessionStorage.getItem("clinicActivationSkipped") === "1"; } catch {}
+      setClinicPending(effectiveOrigin === "clinic" && !hasAnyClinic);
       if (effectiveOrigin === "clinic" && !hasAnyClinic && !activationSkipped) {
         try { sessionStorage.removeItem("signupOrigin"); } catch {}
         // Subscribe-first: plan chosen on the landing goes straight to checkout.
@@ -728,7 +735,7 @@ const Dashboard = () => {
   }
 
   if (!user) return null;
-  if (clinicActivation) return <ClinicActivationScreen initialTier={clinicActivation.tier} initialPlan={clinicActivation.plan} />;
+  if (clinicActivation) return <ClinicActivationScreen initialTier={clinicActivation.tier} initialPlan={clinicActivation.plan} initialTrialOpen={clinicActivation.trial} />;
 
   const handleSignOut = async () => {
     await signOut();
@@ -838,7 +845,7 @@ const Dashboard = () => {
             <span className="text-xl font-bold text-foreground hidden min-[400px]:inline">Aliv.iA</span>
           </button>
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <ClinicContextSelector variant="chip" />
+            <ClinicContextSelector variant="chip" clinicPending={clinicPending && !isClinicMode} onClinicActivate={() => openClinicActivation(true)} />
             <LanguageSelector className="gap-1.5 hidden md:inline-flex" />
             <Button variant="ghost" size="icon" onClick={() => navigate("/suporte")} title={t("support.badge")} className="hidden md:inline-flex">
               <HelpCircle className="h-4 w-4" />
@@ -908,6 +915,23 @@ const Dashboard = () => {
               >
                 Completar cadastro
               </Button>
+            </CardContent>
+          </Card>
+        )}
+        {clinicPending && !isClinicMode && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="flex flex-col gap-3 px-5 py-5 sm:flex-row sm:items-center">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <h3 className="text-sm font-semibold text-foreground">Sua clínica ainda não foi ativada</h3>
+                <p className="text-xs text-muted-foreground">Você começou pelo Aliv.iA Clínica. Ative o teste de 15 dias grátis (sem cartão) ou conclua a assinatura para liberar agenda, prontuários e equipe.</p>
+              </div>
+              <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                <Button size="sm" className="rounded-xl" onClick={() => openClinicActivation(true)}>Começar 15 dias grátis</Button>
+                <Button size="sm" variant="outline" className="rounded-xl" onClick={() => openClinicActivation(false)}>Concluir assinatura</Button>
+              </div>
             </CardContent>
           </Card>
         )}

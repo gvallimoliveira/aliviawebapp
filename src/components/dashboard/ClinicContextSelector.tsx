@@ -13,9 +13,12 @@ interface Props {
   variant?: Variant;
   /** Chamado após qualquer troca (ex.: fechar o menu lateral). */
   onSelected?: () => void;
+  /** Clinic sign-up without a clinic yet: shows a "Clínica" entry that opens activation. */
+  clinicPending?: boolean;
+  onClinicActivate?: () => void;
 }
 
-const ClinicContextSelector = ({ variant = "default", onSelected }: Props) => {
+const ClinicContextSelector = ({ variant = "default", onSelected, clinicPending, onClinicActivate }: Props) => {
   const {
     memberships, activeClinic, activeContext, setActiveContext,
     hasProfessionalProfile, availableContextsCount, canAccessProDemo,
@@ -25,7 +28,7 @@ const ClinicContextSelector = ({ variant = "default", onSelected }: Props) => {
   const navigate = useNavigate();
 
   // Hide selector when only one context exists
-  if (availableContextsCount < 2) return null;
+  if (availableContextsCount < 2 && !clinicPending) return null;
 
   const lang = language as "pt" | "en" | "es";
   const labels = ({
@@ -44,6 +47,7 @@ const ClinicContextSelector = ({ variant = "default", onSelected }: Props) => {
     if (v === "solo") setActiveContext("personal");
     else if (v === "pro") setActiveContext("professional");
     else if (v === "pro_demo") setActiveContext("professional_demo");
+    else if (v === "clinic_activate") onClinicActivate?.();
     else if (v === "pro_register") {
       try { sessionStorage.removeItem("signupOrigin"); } catch {}
       navigate("/professional/register");
@@ -60,6 +64,7 @@ const ClinicContextSelector = ({ variant = "default", onSelected }: Props) => {
     ...(hasProfessionalProfile ? [{ value: "pro", icon: ProIcon, label: isStudentProfessional ? labels.student : labels.pro, short: isStudentProfessional ? labels.studentShort : labels.proShort }] : []),
     ...(canAccessProDemo ? [{ value: "pro_demo", icon: Stethoscope, label: labels.pro, short: `${labels.proShort} ${labels.demo}`, badge: "demo" as const }] : []),
     ...(pendingProfessionalSignup && !hasProfessionalProfile ? [{ value: "pro_register", icon: UserPlus, label: labels.proRegister, short: labels.proRegister, badge: "pending" as const }] : []),
+    ...(clinicPending && memberships.length === 0 ? [{ value: "clinic_activate", icon: Building2, label: lang === "en" ? "Clinic (activate)" : lang === "es" ? "Clínica (activar)" : "Clínica (ativar teste)", short: lang === "en" ? "Clinic" : "Clínica", badge: "pending" as const }] : []),
     ...memberships.map((m) => ({ value: m.clinic_id, icon: Building2, label: m.clinic_name, short: m.clinic_name })),
   ];
 
