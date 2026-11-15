@@ -231,7 +231,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     mode: session.mode,
   });
 
-  if (session.payment_status === "paid") {
+  // Trial PRO de 7 dias: o Checkout termina sem cobrança ("no_payment_required").
+  // Só vale para assinaturas; demais produtos continuam exigindo "paid".
+  const trialStart = session.mode === "subscription" && session.payment_status === "no_payment_required";
+  if (session.payment_status === "paid" || trialStart) {
     await fulfillOrder(session);
     EdgeRuntime.waitUntil(alertSale(session, "sync"));
   } else {
@@ -492,6 +495,15 @@ async function applyReferralToSubscriber(referrerUserId: string, couponId: strin
   }
 }
 
+/** Fim do teste de 7 dias, se a assinatura estiver em "trialing"; senão null. */
+async function trialEndFor(subscriptionId: string | null): Promise<string | null> {
+  if (!subscriptionId) return null;
+  try {
+    const sub: any = await stripe.subscriptions.retrieve(subscriptionId);
+    return sub.status === "trialing" && sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+  } catch { return null; }
+}
+
 /**
  * Fulfill the order based on the payment type stored in session metadata.
  */
@@ -548,6 +560,7 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
             subscription_status: "active",
             subscription_stripe_id: subscriptionId,
             approved: true,
+            pro_trial_ends_at: await trialEndFor(subscriptionId),
           })
           .eq("user_id", userId);
         log("Pro subscription fulfilled", { userId, subscriptionId });
@@ -585,6 +598,7 @@ async function fulfillOrder(session: Stripe.Checkout.Session) {
             subscription_stripe_id: session.subscription as string || null,
             approved: true,
             pro_access_expires_at: expiresAt,
+            pro_trial_ends_at: await trialEndFor((session.subscription as string) || null),
           })
           .eq("user_id", userId);
         log("Pro annual fulfilled", { userId, expiresAt });
