@@ -5,7 +5,7 @@ export interface AiCreditStatus {
   clinic_id: string | null; pooled?: boolean; per_member?: number;
   clinical_members?: number; secretary_members?: number; personal_used?: number;
   grace_ratio?: number; hard_enabled?: boolean; can_buy?: boolean;
-  trial?: boolean; trial_ends_at?: string | null;
+  trial?: boolean; clinic_trial?: boolean; trial_ends_at?: string | null;
 }
 export function creditThreshold(s: Pick<AiCreditStatus, "unlimited" | "included" | "used">): 0 | 80 | 100 {
   if (s.unlimited || s.included <= 0) return 0;
