@@ -2,3 +2,5 @@
 - Agenda crowded slots (3+ in one hour) and custom catalog services ("personalizado", filtered by service_id) use pure helpers in `appointmentTime.ts`; overlap lanes, drag targets and financial pricing stay unchanged.
 - Agenda evolution is independent of attendance status; after saving a nonempty note for a scheduled slot, use the checked status callback to mark completed. Retain saved content on status failure to avoid duplicate notes; never count drafts as attendance.
 - Appointment service selectors display scoped custom catalog names using service_id, while persisting the original service_type for filtering and pricing compatibility.
+
+- Clinic trial entry uses clinicTrialEntry.ts for session-only noncredential drafts and shared CNPJ validation; authenticate before provisioning, resume through /clinica/ativar-teste and clear stale paid checkout intent to prevent accidental billing.

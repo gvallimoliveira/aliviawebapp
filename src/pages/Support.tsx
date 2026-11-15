@@ -43,7 +43,7 @@ const patientTools = [
 
 const proTools = [
   { key: "patient_daily_care", icon: Heart },
-  { key: "clinic_overview", icon: BarChart3 }, // Localized help covers inline trial checkout and preservation of clinic records.
+  { key: "clinic_overview", icon: BarChart3 }, // Localized help covers authenticated trial resumption, checkout and record preservation.
   { key: "care_services", icon: NotebookPen }, // Localized help covers requests and attendance confirmed by saved evolution in open appointments.
   { key: "custom_link", icon: Link2 },
   { key: "statistics", icon: BarChart3 },

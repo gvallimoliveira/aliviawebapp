@@ -51,6 +51,7 @@ const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
 const Support = lazy(() => import("./pages/Support"));
 const UpgradeWelcome = lazy(() => import("./pages/UpgradeWelcome"));
 const ClinicLanding = lazy(() => import("./pages/ClinicLanding"));
+const ClinicTrialEntry = lazy(() => import("./pages/ClinicTrialEntry"));
 const ClinicSupport = lazy(() => import("./pages/ClinicSupport"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const ClinicAssessment = lazy(() => import("./pages/ClinicAssessment"));
@@ -179,6 +180,7 @@ const App = () => {
                   <Route path="/suporte" element={<Support />} />
                   <Route path="/upgrade-welcome" element={<UpgradeWelcome />} />
                   <Route path="/clinica" element={<ClinicLanding />} />
+                  <Route path="/clinica/ativar-teste" element={<ClinicTrialEntry />} />
                   <Route path="/clinica/suporte" element={<ClinicSupport />} />
                   <Route path="/clinica/demo" element={<ClinicDemo />} />
                   <Route path="/assessment/clinic/:clinicId" element={<ClinicAssessment />} />

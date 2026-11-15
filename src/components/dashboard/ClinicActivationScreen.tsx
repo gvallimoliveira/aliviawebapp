@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Building2, CreditCard, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { startClinicCheckout, type ClinicPlan, type ClinicTier } from "@/lib/clinicCheckout";
 import { useToast } from "@/hooks/use-toast";
 import { CLINIC_SMALL, CLINIC_MEDIUM, CLINIC_LARGE } from "@/constants/clinicPricing";
+import { activateClinicTrial, normalizeAndValidateCnpj, INVALID_CNPJ_MESSAGE } from "@/lib/clinicTrialEntry";
 
 const TIERS = [
   { id: "small" as ClinicTier, name: "Essencial", members: "Até 3 clínicos + 1 secretária", data: CLINIC_SMALL },
@@ -27,17 +27,13 @@ const ClinicActivationScreen = ({ initialTier, initialPlan, initialTrialOpen }: 
   const [trialLoading, setTrialLoading] = useState(false);
 
   const startTrial = async () => {
-    const digits = cnpj.replace(/\D/g, "");
+    const digits = normalizeAndValidateCnpj(cnpj);
     if (!phone.trim()) { toast({ title: "Informe seu WhatsApp", variant: "destructive" }); return; }
-    if (digits.length !== 14) { toast({ title: "Informe um CNPJ válido (14 dígitos)", variant: "destructive" }); return; }
+    if (!digits) { toast({ title: INVALID_CNPJ_MESSAGE, variant: "destructive" }); return; }
     setTrialLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("start-clinic-trial", {
-        body: { tier: initialTier ?? "medium", email: user?.email ?? "", phone: phone.trim(), cnpj: digits },
-      });
-      if (error) throw error;
-      if (data?.requires_login) throw new Error("Entre novamente na sua conta e tente de novo.");
-      if (!data?.success) throw new Error(data?.message || "Não foi possível ativar o teste.");
+      const data = await activateClinicTrial({ tier: initialTier ?? "medium", plan, email: user?.email ?? "", phone: phone.trim(), cnpj: digits });
+      if (data.requires_login || data.requires_signup || !data.clinic_id) throw new Error("Entre novamente na sua conta e tente de novo.");
       try { sessionStorage.removeItem("clinicActivationSkipped"); } catch {}
       window.location.replace("/dashboard?tab=clinic");
     } catch (e: any) {

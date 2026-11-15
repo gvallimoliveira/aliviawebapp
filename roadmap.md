@@ -1,5 +1,10 @@
 # Roadmap
 
+## Entrada contínua no trial da clínica
+- [x] Validar CNPJ antes do envio e apresentar erros amigáveis em todas as entradas.
+- [x] Preservar e-mail, WhatsApp, CNPJ e plano na sessão; login/cadastro seguido de ativação autenticada e painel da clínica, sem nova escolha de perfil.
+- [x] Ajuda pt/en/es atualizada; 17 testes aprovados e build OK. Cadastro real no computador e login real no celular abriram a mesma clínica; 20 créditos, plano, início do trial, ausência de duplicação e rejeição de conta divergente conferidos. Contas/clínicas técnicas removidas. Não publicado; aparelho físico e cobrança Stripe não exercitados nesta tarefa.
+
 ## Agenda — nome específico do serviço no modal
 - [x] Serviço exibe o nome personalizado do catálogo (Recovery), com seleção por ID sincronizada ao valor; tipos salvos, filtros e preços preservados. Categoria genérica apenas como fallback de registro antigo sem serviço resolvido.
 - [x] 15 regressões da agenda/ditado/evolução passaram; build OK. Modal autenticado em 855×670 com catálogo isolado: Recovery no campo e na lista, sem Personalizado. Nenhuma gravação real nem publicação; cadastro real Recovery não alterado.

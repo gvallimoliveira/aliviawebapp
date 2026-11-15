@@ -1,3 +1,4 @@
+import { activateClinicTrial, CLINIC_TRIAL_ENTRY, readPendingClinicTrial, savePendingClinicTrial } from "@/lib/clinicTrialEntry";
 import { savePendingClinicPlan } from "@/lib/clinicCheckout";
 import CreditsSufficiency from "@/components/CreditsSufficiency";
 import BlogHighlights from "@/components/blog/BlogHighlights";
@@ -55,6 +56,16 @@ const ClinicLandingCinematic = () => {
   const [trialPhone, setTrialPhone] = useState("");
   const [trialCnpj, setTrialCnpj] = useState("");
 
+  useEffect(() => {
+    const pending = readPendingClinicTrial();
+    if (!pending) return;
+    setTrialEmail(pending.email);
+    setTrialPhone(pending.phone);
+    setTrialCnpj(pending.cnpj);
+    setBillingAnnual(pending.plan === "annual");
+    setTrialForm(pending.tier);
+  }, []);
+
   // Hero cinematográfico (parallax + fade no scroll)
   const heroRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
@@ -96,35 +107,18 @@ const ClinicLandingCinematic = () => {
   }, [hash]);
 
   const handleStartTrial = async (tier: "small" | "medium" | "large") => {
-    if (!trialEmail.trim()) { toast.error("Informe seu e-mail"); return; }
-    if (!trialPhone.trim()) { toast.error("Informe seu WhatsApp"); return; }
-    const cnpjDigits = trialCnpj.replace(/\D/g, "");
-    if (cnpjDigits.length !== 14) { toast.error("Informe um CNPJ válido (14 dígitos)"); return; }
+    if (loading) return;
     setLoading(tier);
     try {
-      const { data, error } = await supabase.functions.invoke("start-clinic-trial", {
-        body: { tier, email: trialEmail.trim(), phone: trialPhone.trim(), cnpj: cnpjDigits },
-      });
-      if (error) throw error;
-      if (data?.success) {
-        if (data.is_new_user) {
-          toast.success("Trial de 15 dias ativado! Enviamos um link para definir sua senha. Sem assinatura em até 7 dias após o fim do teste, os dados da clínica são excluídos.", { duration: 10000 });
-        } else if (data.already_exists) {
-          toast.info(data.requires_login
-            ? "Este e-mail já tem uma conta. Entre com ela para ativar o trial da clínica."
-            : "Você já possui uma clínica! Faça login.");
-          try { sessionStorage.setItem("signupOrigin", "clinic"); } catch {}
-          navigate("/auth", { state: { redirectTo: "/dashboard" } });
-        } else {
-          toast.success("Trial de 15 dias ativado! Sem assinatura em até 7 dias após o fim do teste, os dados da clínica são excluídos.", { duration: 10000 });
-          try { sessionStorage.setItem("signupOrigin", "clinic"); } catch {}
-          if (user) { window.location.replace("/dashboard?tab=clinic"); return; }
-          navigate("/auth", { state: { redirectTo: "/dashboard" } });
-        }
-        setTrialForm(null);
-      }
-    } catch (e: any) {
-      toast.error(e.message || "Erro ao processar");
+      savePendingClinicTrial({ tier, plan: billingAnnual ? "annual" : "monthly", email: trialEmail, phone: trialPhone, cnpj: trialCnpj });
+      if (user) { navigate(CLINIC_TRIAL_ENTRY); return; }
+      const pending = readPendingClinicTrial();
+      if (!pending) throw new Error("Não foi possível guardar seus dados. Permita o armazenamento desta página e tente novamente.");
+      const result = await activateClinicTrial(pending);
+      const mode = result.requires_signup ? "signup" : "login";
+      navigate(`/auth?clinic_trial=1&mode=${mode}&redirect=${encodeURIComponent(CLINIC_TRIAL_ENTRY)}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível continuar. Tente novamente.");
     } finally {
       setLoading(null);
     }

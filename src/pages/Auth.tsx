@@ -14,6 +14,7 @@ import { isValidEmailFormat, suggestEmailFix } from "@/lib/emailValidation";
 import { supabase } from "@/integrations/supabase/client";
 import PasskeyUnlockButton from "@/components/auth/PasskeyUnlockButton";
 import { INVITE_PARAM } from "@/lib/clinicInvite";
+import { CLINIC_TRIAL_ENTRY, readPendingClinicTrial } from "@/lib/clinicTrialEntry";
 
 const INVITE_ROLE_LABELS: Record<string, Record<"pt" | "en" | "es", string>> = {
   owner: { pt: "Proprietário", en: "Owner", es: "Propietario" },
@@ -45,9 +46,19 @@ const Auth = () => {
   const { t, toggleLanguage, language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+  const trialEntry = new URLSearchParams(location.search).get("clinic_trial") === "1";
+  useEffect(() => {
+    if (!trialEntry) return;
+    const pending = readPendingClinicTrial();
+    if (!pending) return;
+    setEmail(pending.email);
+    setEmailConfirm(pending.email);
+    setSignupProfile("clinic");
+    setIsLogin(new URLSearchParams(location.search).get("mode") !== "signup");
+  }, [trialEntry, location.search]);
   const redirectQuery = new URLSearchParams(location.search).get("redirect");
   // Only same-site paths ("/..."), never another site ("//x" or "https://x").
-  const rawRedirect = (location.state as any)?.redirectTo || redirectQuery || "/dashboard";
+  const rawRedirect = trialEntry ? CLINIC_TRIAL_ENTRY : (location.state as any)?.redirectTo || redirectQuery || "/dashboard";
   const redirectTo = typeof rawRedirect === "string" && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") && !rawRedirect.startsWith("/\\")
     ? rawRedirect
     : "/dashboard";
@@ -663,7 +674,7 @@ const Auth = () => {
                     setIsLogin(next);
                     // Ao entrar no modo cadastro, volta sempre para o seletor
                     // de perfil (Pessoal / Profissional / Clínica).
-                    if (!next) setSignupProfile(null);
+                    if (!next) setSignupProfile(trialEntry ? "clinic" : null);
                   }}
                   className="text-sm text-primary hover:underline"
                   disabled={loading}
