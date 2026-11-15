@@ -1,4 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { AI_CREDIT_REFRESH } from "@/lib/aiCreditPolicy";
 import { useClinic } from "@/contexts/ClinicContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +40,20 @@ const ClinicTrialBanner = () => {
   const [showPlans, setShowPlans] = useState(false);
   const { activeClinic, isClinicOwner, setActiveContext, availableContextsCount } = useClinic();
   const { daysLeft, daysUsed, isTrialActive, isTrialExpired, hasSubscription } = useClinicTrial();
+  const { user } = useAuth();
+  const [credits, setCredits] = useState<{ used: number; included: number } | null>(null);
+  useEffect(() => {
+    if (!user?.id || hasSubscription) return;
+    let alive = true;
+    const load = async () => {
+      const { data } = await supabase.rpc("get_user_credit_status", { _user_id: user.id });
+      const s = data as { clinic_trial?: boolean; used?: number; included?: number } | null;
+      if (alive) setCredits(s?.clinic_trial ? { used: Number(s.used ?? 0), included: Number(s.included ?? 20) } : null);
+    };
+    void load();
+    window.addEventListener(AI_CREDIT_REFRESH, load);
+    return () => { alive = false; window.removeEventListener(AI_CREDIT_REFRESH, load); };
+  }, [user?.id, hasSubscription, activeClinic?.clinic_id]);
 
   if (!activeClinic || hasSubscription) return null;
 
@@ -134,6 +151,23 @@ const ClinicTrialBanner = () => {
           </div>
           <Progress value={progressPercent} className="h-2" />
         </div>
+
+        {credits && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Créditos de IA da equipe</span>
+              <span className="font-medium text-foreground">
+                {credits.used.toFixed(1)}/{credits.included} usados · {Math.max(credits.included - credits.used, 0).toFixed(0)} restantes
+              </span>
+            </div>
+            <Progress value={credits.included > 0 ? Math.min(100, (credits.used / credits.included) * 100) : 0} className="h-2" />
+            <p className="text-[11px] text-muted-foreground">
+              {credits.used >= credits.included
+                ? "Créditos do teste esgotados. Assine para liberar a franquia completa do plano."
+                : `${credits.included} créditos de IA inclusos no teste para toda a equipe. A franquia completa do plano é liberada ao assinar.`}
+            </p>
+          </div>
+        )}
 
         <p className={daysLeft <= 1 ? "text-xs font-medium text-destructive" : "text-[11px] text-muted-foreground"}>
           Regra do teste: sem assinatura, os dados da clínica são excluídos 7 dias após o fim do teste{purgeDateOf(activeClinic.trial_started_at || activeClinic.created_at) ? ` (${purgeDateOf(activeClinic.trial_started_at || activeClinic.created_at)})` : ""}.

@@ -76,7 +76,8 @@ const ProMetricsSection = ({ professionalId, clinicId }: Props) => {
     );
   }
 
-  if (assessments.length === 0) return null;
+  // Credits stay visible even before the first assessment.
+  if (assessments.length === 0) return <AiCreditsWidget />;
 
   return (
     <div className="space-y-4">
