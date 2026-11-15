@@ -664,7 +664,7 @@ const ClinicLandingCinematic = () => {
                               />
                             </div>
                             <p className="text-[11px] text-muted-foreground -mt-1">
-                              CNPJ obrigatório (MEI também é aceito). Limite de 75 créditos de IA durante o trial.
+                              CNPJ obrigatório (MEI também é aceito). Limite de 20 créditos de IA durante o trial.
                             </p>
                             <Button onClick={() => handleStartTrial(tier.key)} disabled={loading !== null} className="w-full rounded-xl">
                               {loading === tier.key ? "Processando..." : "Ativar trial grátis"}

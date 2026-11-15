@@ -20,6 +20,7 @@ interface UsageRow {
 interface CreditStatus {
   grace_ratio?: number;
   trial?: boolean;
+  clinic_trial?: boolean;
   trial_ends_at?: string | null;
   hard_enabled?: boolean;
   can_buy?: boolean;
@@ -295,7 +296,16 @@ const AiCreditsWidget = () => {
               </p>
             )}
             {/* Fase 5.2 — warning a 80% (sem bloqueio) */}
-            {status?.trial && (
+            {status?.clinic_trial && (
+              <div className="space-y-1 rounded-md border border-primary/30 bg-primary/5 p-2">
+                <p className="text-[11px] leading-relaxed text-foreground">
+                  {isPt
+                    ? "Teste grátis da clínica: 20 créditos de IA para toda a equipe. Os créditos totais do plano são liberados ao assinar."
+                    : "Clinic free trial: 20 AI credits shared by the team. Full plan credits unlock when you subscribe."}
+                </p>
+              </div>
+            )}
+            {status?.trial && !status?.clinic_trial && (
               <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-2">
                 <p className="text-[11px] leading-relaxed text-foreground">
                   {isPt

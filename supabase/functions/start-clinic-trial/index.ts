@@ -162,7 +162,7 @@ serve(async (req) => {
         max_members: maxMembers,
         phone: normalizedPhone,
         cnpj: normalizedCnpj,
-        trial_credits_cap: 75, // A5: cota de IA durante o trial
+        trial_credits_cap: 20, // A5: cota de IA durante o trial
       })
       .select("id")
       .single();
