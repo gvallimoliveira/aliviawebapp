@@ -4261,6 +4261,7 @@ export type Database = {
           phone: string | null
           premium_granted: boolean
           pro_access_expires_at: string | null
+          pro_trial_ends_at: string | null
           profile_photo_url: string | null
           registration_pending: boolean
           signature_image_url: string | null
@@ -4302,6 +4303,7 @@ export type Database = {
           phone?: string | null
           premium_granted?: boolean
           pro_access_expires_at?: string | null
+          pro_trial_ends_at?: string | null
           profile_photo_url?: string | null
           registration_pending?: boolean
           signature_image_url?: string | null
@@ -4343,6 +4345,7 @@ export type Database = {
           phone?: string | null
           premium_granted?: boolean
           pro_access_expires_at?: string | null
+          pro_trial_ends_at?: string | null
           profile_photo_url?: string | null
           registration_pending?: boolean
           signature_image_url?: string | null
