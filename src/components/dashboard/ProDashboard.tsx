@@ -781,6 +781,47 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
       {/* Demo mode — link de pré-avaliação em evidência */}
       {isDemoMode && (
         <>
+          <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <CardContent className="py-5 px-5 relative">
+              <div className="flex items-start gap-4 flex-wrap">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 shrink-0">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 min-w-[200px] space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-lg font-bold text-foreground">Modo Demonstração</h3>
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide">
+                      Demo
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Você está conhecendo o <span className="font-semibold text-foreground">Painel Profissional Autônomo</span> com dados de exemplo.
+                    Assine o plano PRO para atender pacientes particulares com seu link próprio, agenda, mensagens e relatórios em PDF.
+                  </p>
+                  <div className="rounded-xl border border-primary/20 bg-background/70 px-3 py-2.5 text-xs text-muted-foreground space-y-1.5">
+                    <p className="font-semibold text-foreground">O PRO é o seu consultório particular, fora da clínica</p>
+                    <p>Fazer parte de uma clínica (como equipe ou dono) não inclui o PRO. Ele é opcional, para quem também atende por conta própria.</p>
+                    <ul className="list-disc pl-4 space-y-0.5">
+                      <li><span className="font-medium text-foreground">Ambientes separados:</span> você troca entre clínica e PRO no seletor do topo.</li>
+                      <li><span className="font-medium text-foreground">Créditos de IA separados:</span> o uso no PRO não consome os créditos da clínica, e vice-versa.</li>
+                      <li><span className="font-medium text-foreground">Dados separados:</span> pacientes, agenda e prontuários particulares nunca aparecem para a clínica.</li>
+                    </ul>
+                  </div>
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    <Button onClick={() => user ? handleSubscribe("annual") : navigate("/profissionais#planos")} disabled={checkoutLoading} className="rounded-xl gap-2">
+                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+                      Plano anual ({PRO_PLAN_ANNUAL_PRICE_FORMATTED})
+                    </Button>
+                    <Button variant="outline" onClick={() => user ? handleSubscribe("monthly") : navigate("/profissionais#planos")} disabled={checkoutLoading} className="rounded-xl gap-2">
+                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      Plano mensal ({PRO_PLAN_PRICE_FORMATTED})
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden relative">
             <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <CardContent className="py-4 px-5 relative flex items-start gap-3 flex-wrap">
@@ -822,38 +863,6 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
             </CardContent>
           </Card>
 
-          <Card className="border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <CardContent className="py-5 px-5 relative">
-              <div className="flex items-start gap-4 flex-wrap">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 shrink-0">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1 min-w-[200px] space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-lg font-bold text-foreground">Modo Demonstração</h3>
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-[10px] uppercase tracking-wide">
-                      Demo
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Você está conhecendo o <span className="font-semibold text-foreground">Painel Profissional Autônomo</span> com dados de exemplo.
-                    Assine o plano PRO para atender pacientes particulares com seu link próprio, agenda, mensagens e relatórios em PDF.
-                  </p>
-                  <div className="flex items-center gap-2 pt-1 flex-wrap">
-                    <Button onClick={() => user ? handleSubscribe("annual") : navigate("/profissionais#planos")} disabled={checkoutLoading} className="rounded-xl gap-2">
-                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
-                      Plano anual ({PRO_PLAN_ANNUAL_PRICE_FORMATTED})
-                    </Button>
-                    <Button variant="outline" onClick={() => user ? handleSubscribe("monthly") : navigate("/profissionais#planos")} disabled={checkoutLoading} className="rounded-xl gap-2">
-                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                      Plano mensal ({PRO_PLAN_PRICE_FORMATTED})
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </>
       )}
 

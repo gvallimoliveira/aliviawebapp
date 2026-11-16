@@ -1236,18 +1236,18 @@ const Dashboard = () => {
                   style={{ gridTemplateColumns: `repeat(${(showInsightsTab ? 4 : 3) + (hasAgentAccess ? 1 : 0)}, 1fr)` }}
                 >
                   <TabsTrigger value="professional" className="gap-1.5 text-xs" data-onboarding="pro-tab-trigger">
-                    <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>
+                    <Stethoscope className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_professional")}</span>{isProDemo && <span className="ml-1 rounded bg-accent/40 px-1 text-[9px] font-semibold uppercase text-accent-foreground">Demo</span>}
                   </TabsTrigger>
                   <TabsTrigger value="agenda" className="gap-1.5 text-xs" data-onboarding="pro-tab-agenda">
-                    <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>
+                    <CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_agenda")}</span>{isProDemo && <span className="ml-1 rounded bg-accent/40 px-1 text-[9px] font-semibold uppercase text-accent-foreground">Demo</span>}
                   </TabsTrigger>
                   {showInsightsTab && (
                     <TabsTrigger value="insights" className="gap-1.5 text-xs" data-onboarding="pro-tab-insights">
-                      <Sparkles className="h-4 w-4" /><span className="hidden sm:inline">Insights</span>
+                      <Sparkles className="h-4 w-4" /><span className="hidden sm:inline">Insights</span>{isProDemo && <span className="ml-1 rounded bg-accent/40 px-1 text-[9px] font-semibold uppercase text-accent-foreground">Demo</span>}
                     </TabsTrigger>
                   )}
                   <TabsTrigger value="messages" className="gap-1.5 relative text-xs" data-onboarding="pro-tab-messages">
-                    <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{unreadBadge}
+                    <MessageCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("dashboard.tab_messages")}</span>{isProDemo && <span className="ml-1 rounded bg-accent/40 px-1 text-[9px] font-semibold uppercase text-accent-foreground">Demo</span>}{unreadBadge}
                   </TabsTrigger>
                   {hasAgentAccess && (
                     <button
@@ -1256,13 +1256,12 @@ const Dashboard = () => {
                       data-onboarding="pro-tab-agent"
                       className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-background/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
-                      <Brain className="h-4 w-4" /><span className="hidden sm:inline">Agente</span>
+                      <Brain className="h-4 w-4" /><span className="hidden sm:inline">Agente</span>{isProDemo && <span className="ml-1 rounded bg-accent/40 px-1 text-[9px] font-semibold uppercase text-accent-foreground">Demo</span>}
                     </button>
                   )}
 
                 </TabsList>
                 <TabsContent value="professional" className="space-y-6">
-                  {isProDemo && <DemoUpsellBanner section="pro-patients" variant="pro" />}
                   {!isProDemo && !hasProAccess && <TryProDemoCard section="Pacientes" />}
                   <ProDashboard
                     professional={proStub}
