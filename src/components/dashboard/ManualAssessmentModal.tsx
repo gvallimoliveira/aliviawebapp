@@ -31,6 +31,7 @@ import { createShortAppLink } from "@/lib/shortLink";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { regionsByView } from "@/components/assessment/painMapData";
 import QuestionnaireStep from "@/components/assessment/QuestionnaireStep";
+import QuestionnaireAnswersView from "@/components/assessment/QuestionnaireAnswersView";
 import { useVoiceRecorderSession } from "@/contexts/VoiceRecorderContext";
 import { useAutosaveDraft } from "@/hooks/useAutosaveDraft";
 import DraftResumeBanner from "@/components/common/DraftResumeBanner";
@@ -372,6 +373,8 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
 
   // Questionários (mesmo fluxo da avaliação premium/link)
   const [questionnaireResults, setQuestionnaireResults] = useState<QuestionnaireResult[]>([]);
+  const [showQDetails, setShowQDetails] = useState(false);
+  const [confirmReapplyOpen, setConfirmReapplyOpen] = useState(false);
   // Quando ligado, os questionários ficam pendentes e são enviados ao paciente
   // via link único após salvar a avaliação. Auto-sugerido com 3+ regiões.
   const [deferQuestionnaires, setDeferQuestionnaires] = useState(false);
@@ -2748,6 +2751,24 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
                             );
                           })}
                         </ul>
+                        <div className="flex gap-1 rounded-md bg-background/60 p-0.5 w-fit">
+                          <Button type="button" size="sm" variant={showQDetails ? "ghost" : "secondary"} className="h-7 px-3 text-xs" onClick={() => setShowQDetails(false)}>
+                            {isPt ? "Ver resumo" : "Summary"}
+                          </Button>
+                          <Button type="button" size="sm" variant={showQDetails ? "secondary" : "ghost"} className="h-7 px-3 text-xs" onClick={() => setShowQDetails(true)}>
+                            {isPt ? "Ver detalhes" : "Details"}
+                          </Button>
+                        </div>
+                        {showQDetails && (
+                          <div className="space-y-4 rounded-md border bg-background p-3">
+                            {questionnaireResults.map((r: QuestionnaireResult) => (
+                              <div key={r.questionnaireId} className="space-y-2">
+                                <p className="text-sm font-bold text-primary">{r.questionnaireName}</p>
+                                <QuestionnaireAnswersView result={r} isPt={isPt} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         <p className="text-[11px] text-muted-foreground">
                           {isPt
                             ? "As respostas estão salvas nesta avaliação e serão consideradas pela IA. Não é necessário reaplicar."
@@ -2757,13 +2778,32 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
                           size="sm"
                           variant="ghost"
                           className="h-7 px-2 text-xs text-muted-foreground"
-                          onClick={() => {
-                            if (!confirm(isPt ? "Reaplicar e sobrescrever as respostas atuais?" : "Reapply and overwrite current answers?")) return;
-                            setQuestionnaireResults([]);
-                          }}
+                          type="button"
+                          onClick={() => setConfirmReapplyOpen(true)}
                         >
                           {isPt ? "Reaplicar manualmente" : "Reapply manually"}
                         </Button>
+                        <AlertDialog open={confirmReapplyOpen} onOpenChange={setConfirmReapplyOpen}>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{isPt ? "Apagar as respostas anteriores?" : "Erase previous answers?"}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {isPt
+                                  ? "Ao reaplicar, as respostas já registradas (inclusive as enviadas pelo paciente via link) serão apagadas desta avaliação e substituídas pelas novas ao salvar. Essa ação não pode ser desfeita."
+                                  : "Reapplying erases the recorded answers (including those sent by the patient) and replaces them on save. This cannot be undone."}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{isPt ? "Manter respostas" : "Keep answers"}</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => { setShowQDetails(false); setQuestionnaireResults([]); }}
+                              >
+                                {isPt ? "Apagar e reaplicar" : "Erase and reapply"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     ) : (
                       <QuestionnaireStep
