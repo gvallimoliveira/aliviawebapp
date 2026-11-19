@@ -1114,6 +1114,8 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
     const charts: {
       name: string;
+      questionnaireId: string;
+      regionMapping: string[];
       displayTitle: string;
       contextLabel: string;
       totalKey: string;
@@ -1174,6 +1176,8 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
       charts.push({
         name,
+        questionnaireId: info.questionnaireId,
+        regionMapping: qDef?.regionMapping || [],
         displayTitle,
         contextLabel,
         totalKey,
@@ -1350,6 +1354,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
       setNotes={setNotes}
       getPendingTreatmentAssessments={getPendingTreatmentAssessments}
       latestAnamnesisFields={latestAnamnesisFields}
+      getAnamnesisFields={getAnamnesisFields}
       latestAssessment={latestAssessment}
       painData={painData}
       selectedEmail={selectedEmail}

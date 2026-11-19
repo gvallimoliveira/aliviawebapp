@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { WORK_DEMAND_IDS, workDemandLabel } from "@/lib/participationContext";
+import { WORK_DEMAND_IDS, workDemandLabel, parseWorkDemands, toggleWorkDemand } from "@/lib/participationContext";
 import { motion } from "framer-motion";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -1091,10 +1091,10 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
               </div>
             </div>
             <div className="space-y-3">
-              <Label>{language === "en" ? "Your work routine (optional)" : language === "es" ? "Tu rutina de trabajo (opcional)" : "Sua rotina de trabalho (opcional)"}</Label>
+              <Label>{language === "en" ? "Your work routine (up to 2, optional)" : language === "es" ? "Tu rutina de trabajo (hasta 2, opcional)" : "Sua rotina de trabalho (até 2 opções, opcional)"}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {WORK_DEMAND_IDS.map((id) => (
-                  <Button key={id} type="button" variant={data.workDemand === id ? "default" : "outline"} size="sm" className="rounded-xl h-auto py-2.5 whitespace-normal" onClick={() => setData({ ...data, workDemand: data.workDemand === id ? "" : id })}>
+                  <Button key={id} type="button" variant={parseWorkDemands(data.workDemand).includes(id) ? "default" : "outline"} size="sm" className="rounded-xl h-auto py-2.5 whitespace-normal" onClick={() => setData({ ...data, workDemand: toggleWorkDemand(data.workDemand, id) })}>
                     {workDemandLabel(id, language)}
                   </Button>
                 ))}

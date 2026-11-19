@@ -282,7 +282,8 @@ export default function PatientDetailView(props: any) {
     lifetimeTreatment,
     setNotes,
     getPendingTreatmentAssessments,
-    latestAnamnesisFields,
+    latestAnamnesisFields: currentAnamnesisFields,
+    getAnamnesisFields,
     latestAssessment,
     selectedEmail,
     questionnaireEvolution,
@@ -312,6 +313,24 @@ export default function PatientDetailView(props: any) {
   } = props;
 
   const [manualAssessmentOpen, setManualAssessmentOpen] = React.useState(false);
+  // Gaveta do ciclo: avaliação em foco no prontuário (padrão = atual).
+  const [viewedAssessmentId, setViewedAssessmentId] = React.useState<string | null>(null);
+  const [showOtherQuestionnaires, setShowOtherQuestionnaires] = React.useState(false);
+  React.useEffect(() => { setViewedAssessmentId(null); setShowOtherQuestionnaires(false); }, [patient?.groupKey]);
+  const viewedAssessment = React.useMemo(() => viewedAssessmentId ? (patient?.assessments || []).find((a: any) => a.id === viewedAssessmentId) || null : null, [viewedAssessmentId, patient?.assessments]);
+  const isViewingHistory = !!viewedAssessment && viewedAssessment.id !== latestAssessment?.id;
+  const drawerAssessment = viewedAssessment || latestAssessment;
+  const latestAnamnesisFields = viewedAssessment && typeof getAnamnesisFields === "function" ? getAnamnesisFields(viewedAssessment) : currentAnamnesisFields;
+  const drawerCharts = React.useMemo(() => {
+    const all = questionnaireEvolution || [];
+    const regions: string[] = Array.isArray(drawerAssessment?.pain_regions) ? drawerAssessment.pain_regions : [];
+    const ownIds = new Set(((Array.isArray(drawerAssessment?.test_results) ? drawerAssessment.test_results : drawerAssessment?.test_results ? [drawerAssessment.test_results] : []) as any[]).map((r: any) => r?.questionnaireId).filter(Boolean));
+    const related = (c: any) => ownIds.has(c.questionnaireId) || (Array.isArray(c.regionMapping) && c.regionMapping.some((r: string) => regions.includes(r)));
+    const shown = all.filter(related);
+    // Sem nenhum questionário relacionado, mantém o comportamento anterior.
+    if (shown.length === 0) return { shown: all, hidden: [] as any[] };
+    return { shown, hidden: all.filter((c: any) => !related(c)) };
+  }, [questionnaireEvolution, drawerAssessment]);
   // Nível de atenção de "Saúde geral" reportado pelo card — recalculado sempre
   // que o profissional salva alterações (condição controlada != não manejada).
   const [healthRisk, setHealthRisk] = React.useState<HealthRiskAssessment | null>(null);
@@ -1258,7 +1277,7 @@ export default function PatientDetailView(props: any) {
       )}
 
       {(() => {
-        const target = latestWithDiagnosis || latestAssessment;
+        const target = isViewingHistory ? viewedAssessment : (latestWithDiagnosis || latestAssessment);
         if (!target) return null;
         const hasHypothesis = !!target.diagnosis?.hypothesis;
 
@@ -1418,7 +1437,7 @@ export default function PatientDetailView(props: any) {
 
       <PatientHorizontalRow label={language === "pt" ? "Anamnese e saúde geral" : language === "es" ? "Anamnesis y salud general" : "Anamnesis and general health"}>
       {/* Anamnese resumida da última avaliação — colapsável (Extra C: atalho ver completa) */}
-      {(latestAnamnesisFields.length > 0 || isPreventiveAssessment(latestAssessment?.anamnesis_data)) && (
+      {(latestAnamnesisFields.length > 0 || isPreventiveAssessment(drawerAssessment?.anamnesis_data)) && (
         <Card id="sec-anamnese" className="scroll-mt-24">
 
           <CardContent className="py-3">
@@ -1428,8 +1447,8 @@ export default function PatientDetailView(props: any) {
               header={
                 <div className="flex flex-wrap items-start justify-between gap-2 pr-2">
                   <div>
-                    <div className="text-base font-semibold flex items-center gap-2"><ClipboardList className="h-4 w-4 text-primary" />Anamnese — Última Avaliação</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{new Date(latestAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</div>
+                    <div className="text-base font-semibold flex items-center gap-2"><ClipboardList className="h-4 w-4 text-primary" />{isViewingHistory ? "Anamnese — Avaliação selecionada" : "Anamnese — Última Avaliação"}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{new Date(drawerAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</div>
                   </div>
                   {latestWithDiagnosis && (
                     <Button variant="ghost" size="sm" className="gap-1.5 -mt-1 -mr-2 text-xs shrink-0" onClick={(e) => { e.stopPropagation(); navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email)); }}>
@@ -1482,7 +1501,8 @@ export default function PatientDetailView(props: any) {
 
 
 
-      <div id="sec-timeline" className="scroll-mt-24"><AssessmentTimeline assessments={patient.assessments} onSelect={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} /></div>
+      <div id="sec-timeline" className="scroll-mt-24 space-y-2"><AssessmentTimeline assessments={patient.assessments} selectedId={drawerAssessment?.id ?? null} onSelect={(id) => { setViewedAssessmentId(id === latestAssessment?.id ? null : id); setShowOtherQuestionnaires(false); }} onOpenReport={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
+        {isViewingHistory && <div className="sticky top-16 z-20 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300"><span>Você está vendo a avaliação de <strong>{new Date(viewedAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</strong>{viewedAssessment.diagnosis?.hypothesis ? ` (${String(viewedAssessment.diagnosis.hypothesis).slice(0, 60)})` : ""}. Anamnese, hipótese e questionários mostram este ciclo.</span><Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => setViewedAssessmentId(null)}>Voltar para a avaliação atual</Button></div>}</div>
 
       <div id="sec-evolucao-dor" className="scroll-mt-24"><PatientPainEvolution assessments={patient.assessments} /></div>
 
@@ -1501,7 +1521,7 @@ export default function PatientDetailView(props: any) {
       <div className="flex flex-wrap justify-end gap-2">
         <MeasurementReportButton kind="questionnaires" assessments={patient.assessments} patientName={patient.name} clinicId={clinicId} professionalId={professionalId} />
       </div>
-      {questionnaireEvolution.length > 0 ? questionnaireEvolution.map((chart: any) => (
+      {drawerCharts.shown.length > 0 ? [...drawerCharts.shown, ...(showOtherQuestionnaires ? drawerCharts.hidden : [])].map((chart: any) => (
         <Card key={chart.displayTitle}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -1556,7 +1576,7 @@ export default function PatientDetailView(props: any) {
             )}
           </CardContent>
         </Card>
-      )) : <Card className="border-dashed"><CardContent className="py-6 text-center"><ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p><p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p></CardContent></Card>}
+      )).concat(drawerCharts.hidden.length > 0 ? [<div key="__other-q" className="flex justify-center"><Button type="button" variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setShowOtherQuestionnaires((v) => !v)}>{showOtherQuestionnaires ? "Ocultar questionários de outras regiões" : `Ver questionários de outras regiões/ciclos (${drawerCharts.hidden.length})`}</Button></div>] : []) : <Card className="border-dashed"><CardContent className="py-6 text-center"><ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p><p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p></CardContent></Card>}
       </div>
 
       {/* Questionários complementares / psicossocial (FABQ) */}

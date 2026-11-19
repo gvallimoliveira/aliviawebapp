@@ -16,10 +16,25 @@ export const workDemandLabel = (id: string, lang: string = "pt"): string => {
   return lang === "en" ? l.en : lang === "es" ? l.es : l.pt;
 };
 
+/** Rotina pode ser híbrida: até 2 opções, gravadas como "a,b". Afastado é exclusivo. */
+export const parseWorkDemands = (v?: string | null): string[] =>
+  (v || "").split(",").map((x) => x.trim()).filter((x) => (WORK_DEMAND_IDS as readonly string[]).includes(x)).slice(0, 2);
+
+export const toggleWorkDemand = (current: string | undefined | null, id: string): string => {
+  const list = parseWorkDemands(current);
+  if (list.includes(id)) return list.filter((x) => x !== id).join(",");
+  if (id === "away_from_work") return id;
+  const rest = list.filter((x) => x !== "away_from_work");
+  return [...rest, id].slice(-2).join(",");
+};
+
+export const workDemandsLabel = (v: string | undefined | null, lang: string = "pt"): string =>
+  parseWorkDemands(v).map((id) => workDemandLabel(id, lang)).join(" + ");
+
 /** Linha para o raciocínio da IA (pt), vazia quando nada foi informado. */
 export const formatParticipationContext = (d: { workDemand?: string; participationGoal?: string }): string => {
   const parts: string[] = [];
-  const w = workDemandLabel(d.workDemand || "", "pt");
+  const w = workDemandsLabel(d.workDemand, "pt");
   if (w) parts.push(`Demanda do trabalho/rotina: ${w}`);
   const g = (d.participationGoal || "").trim();
   if (g) parts.push(`Atividade/participação que mais faz falta: ${g}`);

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Calendar, ChevronRight } from "lucide-react";
+import { Activity, Calendar, ChevronRight, FileText } from "lucide-react";
 
 interface Assessment {
   id: string;
@@ -17,6 +17,8 @@ interface Assessment {
 interface Props {
   assessments: Assessment[];
   onSelect?: (assessmentId: string) => void;
+  onOpenReport?: (assessmentId: string) => void;
+  selectedId?: string | null;
 }
 
 const REGION_SHORT: Record<string, string> = {
@@ -43,14 +45,13 @@ const painColor = (score: number | null) => {
   return "bg-destructive/15 text-destructive";
 };
 
-const AssessmentTimeline = ({ assessments, onSelect }: Props) => {
+const AssessmentTimeline = ({ assessments, onSelect, onOpenReport, selectedId }: Props) => {
   const items = useMemo(() => {
     return assessments
       .filter((a) => !a.archived_at)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 5)
-      // Display oldest → newest left-to-right
-      .reverse();
+      .slice(0, 5);
+      // Mais recente (atual) primeiro, à esquerda
   }, [assessments]);
 
   if (items.length < 2) return null;
@@ -63,7 +64,7 @@ const AssessmentTimeline = ({ assessments, onSelect }: Props) => {
           Linha do Tempo
         </CardTitle>
         <CardDescription className="text-xs">
-          Últimas {items.length} avaliações — da mais antiga para a mais recente
+          Últimas {items.length} avaliações — da atual para a mais antiga. Toque para ver o ciclo.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -74,15 +75,19 @@ const AssessmentTimeline = ({ assessments, onSelect }: Props) => {
             const regions = (a.pain_regions || []).slice(0, 3);
             const extra = (a.pain_regions || []).length - regions.length;
             const hypothesis = a.diagnosis?.hypothesis;
-            const isLatest = idx === items.length - 1;
+            const isLatest = idx === 0;
+            const isSelected = selectedId ? selectedId === a.id : isLatest;
 
             return (
-              <button
+              <div
                 key={a.id}
-                type="button"
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
                 onClick={() => onSelect?.(a.id)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect?.(a.id); } }}
                 className={`group relative shrink-0 snap-start w-44 sm:w-auto text-left rounded-xl border bg-card p-3 transition-all hover:border-primary/40 hover:shadow-sm ${
-                  isLatest ? "border-primary/40 ring-1 ring-primary/20" : "border-border/60"
+                  isSelected ? "border-primary ring-2 ring-primary/30 bg-primary/5" : "border-border/60"
                 }`}
               >
                 {isLatest && (
@@ -119,8 +124,12 @@ const AssessmentTimeline = ({ assessments, onSelect }: Props) => {
                     )}
                   </div>
                 )}
-                <ChevronRight className="absolute bottom-2 right-2 h-3.5 w-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </button>
+                {onOpenReport ? (
+                  <button type="button" aria-label="Abrir avaliação completa" title="Abrir avaliação completa" onClick={(e) => { e.stopPropagation(); onOpenReport(a.id); }} className="absolute bottom-1.5 right-1.5 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-primary">
+                    <FileText className="h-3.5 w-3.5" />
+                  </button>
+                ) : <ChevronRight className="absolute bottom-2 right-2 h-3.5 w-3.5 text-muted-foreground/40" />}
+              </div>
             );
           })}
         </div>

@@ -1,5 +1,5 @@
 import { useRegistrationPending } from "@/hooks/useRegistrationPending";
-import { WORK_DEMAND_IDS, workDemandLabel, formatParticipationContext } from "@/lib/participationContext";
+import { WORK_DEMAND_IDS, workDemandLabel, formatParticipationContext, parseWorkDemands, toggleWorkDemand } from "@/lib/participationContext";
 import RegistrationRequiredDialog from "@/components/dashboard/RegistrationRequiredDialog";
 import AssessmentPurposeFields, { purposeCopy } from "@/components/assessment/AssessmentPurposeFields";
 import PainMap from "@/components/assessment/PainMap";
@@ -2270,12 +2270,12 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
                   </div>
                 </div>
                 <div>
-                  <Label className="text-xs">{isPt ? "Rotina de trabalho (participação/ambiente)" : "Work routine (participation/environment)"}</Label>
+                  <Label className="text-xs">{isPt ? "Rotina de trabalho — até 2 (participação/ambiente)" : "Work routine (participation/environment)"}</Label>
                   <div className="mt-1 grid grid-cols-2 gap-2">
                     {WORK_DEMAND_IDS.map((id) => (
-                      <Button key={id} type="button" size="sm" variant={workDemand === id ? "default" : "outline"}
+                      <Button key={id} type="button" size="sm" variant={parseWorkDemands(workDemand).includes(id) ? "default" : "outline"}
                         className="h-auto min-h-9 py-1.5 rounded-lg text-xs justify-start whitespace-normal text-left" disabled={demoMode}
-                        onClick={() => setWorkDemand(workDemand === id ? "" : id)}>
+                        onClick={() => setWorkDemand(toggleWorkDemand(workDemand, id))}>
                         {workDemandLabel(id, language)}
                       </Button>
                     ))}
