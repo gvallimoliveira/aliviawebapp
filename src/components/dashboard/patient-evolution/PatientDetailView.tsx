@@ -49,7 +49,7 @@ import { openPhysioTech, PhysioTechIcon } from "@/components/PhysioTechShortcut"
 import { canUsePhysioTech } from "@/lib/physiotechAccess";
 import { useAuth as usePhysioTechAuth } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { ClinicalImpressionCard, TreatmentPaidRetry, TreatmentUnlockCTA } from "./shared";
+import { ClinicalImpressionCard, TreatmentPaidRetry } from "./shared";
 import { Bar, BarChart, CartesianGrid, LabelList, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { buildReassessmentLink, buildResumeAssessmentLink } from "@/lib/assessmentLinks";
 import ReassessmentConfigDialog from "./ReassessmentConfigDialog";
@@ -766,8 +766,6 @@ export default function PatientDetailView(props: any) {
             <h3 className="text-lg font-semibold text-foreground">{patient.name}</h3>
             {patient.assessments.some((a: any) => a.treatment_plan) ? (
               <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1"><FileCheck className="h-3 w-3" /> Tratamento Liberado</Badge>
-            ) : patient.assessments.some((a: any) => a.diagnosis) ? (
-              <Badge variant="outline" role="button" tabIndex={0} title={language === "pt" ? "Clique para ir ao card de compra do plano" : language === "es" ? "Clic para ir al card de compra del plan" : "Click to jump to the purchase card"} className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1 cursor-pointer hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400" onClick={(e) => { e.stopPropagation(); handleAcquireBadgeClick({ name: patient.name, email: patient.email, groupKey: patient.groupKey, assessments: patient.assessments }); }} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); handleAcquireBadgeClick({ name: patient.name, email: patient.email, groupKey: patient.groupKey, assessments: patient.assessments }); } }}><Lock className="h-3 w-3" /> {language === "pt" ? "Adquirir Tratamento" : language === "es" ? "Adquirir Tratamiento" : "Unlock Treatment"}</Badge>
             ) : null}
           </div>
           <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {patient.email}<span className="mx-1">•</span>{patient.assessments.length} {t("pro.assessments_count")}</p>
@@ -1342,16 +1340,7 @@ export default function PatientDetailView(props: any) {
           }
           if (!a.diagnosis) return null;
           const label = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || null;
-          return (
-            <TreatmentUnlockCTA
-              assessmentId={a.id}
-              lifetimeTreatment={lifetimeTreatment}
-              clinicMode={!!clinicId}
-              compact
-              conditionLabel={label}
-              onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); }}
-            />
-          );
+          return null;
         })();
 
         return (
@@ -1371,69 +1360,6 @@ export default function PatientDetailView(props: any) {
               )}
             </div>
 
-            {/* Outras condições sem plano — link discreto e colapsável */}
-            {(() => {
-              const allPending = getPendingTreatmentAssessments(patient.assessments);
-              const rawOthers = latestWithDiagnosis ? allPending.filter((a: any) => a.id !== latestWithDiagnosis.id) : allPending;
-              const normRegions = (a: any): string[] => Array.isArray(a.pain_regions) ? [...a.pain_regions].map((r: any) => String(r).toLowerCase().trim()).filter(Boolean).sort() : [];
-              const latestRegions = new Set(latestWithDiagnosis ? normRegions(latestWithDiagnosis) : []);
-              const sortedDesc = [...rawOthers].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-              const seenRegionKeys = new Set<string>();
-              const others: any[] = [];
-              for (const a of sortedDesc) {
-                const regions = normRegions(a);
-                if (latestRegions.size > 0 && regions.some((r) => latestRegions.has(r))) continue;
-                const key = regions.length > 0 ? regions.join("|") : "__no_region__";
-                if (seenRegionKeys.has(key)) continue;
-                seenRegionKeys.add(key);
-                others.push(a);
-              }
-              if (others.length === 0) return null;
-              const isClinic = !!clinicId;
-              const headerLabel = language === "pt"
-                ? `Outras condições sem plano — ${others.length}`
-                : language === "es"
-                  ? `Otras condiciones sin plan — ${others.length}`
-                  : `Other conditions without a plan — ${others.length}`;
-              return (
-                <Card className="border-border/60">
-                  <CardContent className="py-2 px-4">
-                    <CollapsibleSection
-                      storageKey={`patient:${patient.groupKey || patient.email}:other-conditions`}
-                      header={<div className="text-xs text-muted-foreground">{headerLabel}</div>}
-                    >
-                      <div className="space-y-2 pt-2">
-                        {others.map((a: any) => {
-                          const dateStr = new Date(a.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "short", year: "numeric" });
-                          const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—";
-                          const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0 ? a.pain_regions.join(", ") : null;
-                          return (
-                            <div key={a.id} className="rounded-lg border border-border/60 bg-muted/20 p-3">
-                              <div className="flex items-start justify-between gap-2 flex-wrap">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-semibold text-foreground">{dateStr}</p>
-                                  <p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>
-                                  {region && <p className="text-[10px] text-muted-foreground mt-0.5">{language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}</p>}
-                                </div>
-                                {a.pain_score != null && <Badge variant="outline" className="text-[10px] shrink-0">{language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10</Badge>}
-                              </div>
-                              <TreatmentUnlockCTA
-                                assessmentId={a.id}
-                                lifetimeTreatment={lifetimeTreatment}
-                                clinicMode={isClinic}
-                                compact
-                                conditionLabel={hypothesis !== "—" ? hypothesis : null}
-                                onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); }}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CollapsibleSection>
-                  </CardContent>
-                </Card>
-              );
-            })()}
 
             <div id="sec-impressao-clinica" className="scroll-mt-24">
               <ClinicalImpressionCard
@@ -1766,7 +1692,6 @@ export default function PatientDetailView(props: any) {
 
       <AlertDialog open={!!deleteConfirmPatient} onOpenChange={(open) => { if (!open) setDeleteConfirmPatient(null); }}><AlertDialogContent onClick={(e) => e.stopPropagation()}><AlertDialogHeader><AlertDialogTitle>Confirmar exclusão permanente</AlertDialogTitle><AlertDialogDescription>Tem certeza que deseja excluir <span className="font-semibold">{deleteConfirmPatient?.name}</span> e todas as suas {deleteConfirmPatient?.assessmentIds.length} avaliação(ões)?<br /><br /><span className="text-destructive font-medium">Esta ação é irreversível. Todos os dados de avaliações, planos de tratamento, exercícios e notas serão permanentemente apagados.</span></AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={!!deletingPatient} onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5" disabled={!!deletingPatient} onClick={(e) => { e.stopPropagation(); if (deleteConfirmPatient) handleDeletePatient(deleteConfirmPatient.groupKey, deleteConfirmPatient.assessmentIds); }}>{deletingPatient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}Excluir permanentemente</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <AlertDialog open={!!deleteAssessmentTarget} onOpenChange={(open) => !open && setDeleteAssessmentTarget(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{language === "pt" ? "Excluir avaliação?" : "Delete assessment?"}</AlertDialogTitle><AlertDialogDescription>{language === "pt" ? `A avaliação de ${deleteAssessmentTarget?.date} será removida permanentemente, junto com notas e programas de exercícios vinculados. Esta ação não pode ser desfeita.` : `The assessment from ${deleteAssessmentTarget?.date} will be permanently removed, along with linked notes and exercise programs. This cannot be undone.`}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{language === "pt" ? "Cancelar" : "Cancel"}</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2" disabled={!!deletingAssessmentId} onClick={(e) => { e.preventDefault(); if (deleteAssessmentTarget) handleDeleteAssessment(deleteAssessmentTarget.id); }}>{deletingAssessmentId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}{language === "pt" ? "Excluir permanentemente" : "Delete permanently"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-      <Dialog open={!!treatmentPicker} onOpenChange={(open) => { if (!open) setTreatmentPicker(null); }}><DialogContent className="max-w-lg"><DialogHeader><DialogTitle>{language === "pt" ? "Selecione a avaliação a desbloquear" : language === "es" ? "Seleccione la evaluación a desbloquear" : "Select the assessment to unlock"}</DialogTitle><DialogDescription>{language === "pt" ? `${treatmentPicker?.patientName ?? ""} possui mais de uma avaliação sem plano de tratamento. Escolha de qual avaliação deseja adquirir o plano.` : language === "es" ? `${treatmentPicker?.patientName ?? ""} tiene más de una evaluación sin plan de tratamiento. Elija de cuál desea adquirir el plan.` : `${treatmentPicker?.patientName ?? ""} has more than one assessment without a treatment plan. Choose which one to unlock.`}</DialogDescription></DialogHeader><div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">{treatmentPicker?.assessments.map((a: any) => { const dateStr = new Date(a.created_at).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US", { day: "2-digit", month: "short", year: "numeric" }); const hypothesis = a.final_hypothesis || a.diagnosis?.hypothesis || a.diagnosis?.title || "—"; const region = Array.isArray(a.pain_regions) && a.pain_regions.length > 0 ? a.pain_regions.join(", ") : null; return <div key={a.id} className="rounded-xl border border-border bg-card p-3 space-y-2"><div className="flex items-start justify-between gap-2"><div className="space-y-1 min-w-0"><p className="text-xs font-semibold text-foreground">{dateStr}</p><p className="text-xs text-muted-foreground line-clamp-2">{hypothesis}</p>{region && <p className="text-[10px] text-muted-foreground mt-0.5">{language === "pt" ? "Região: " : language === "es" ? "Región: " : "Region: "}{region}</p>}</div>{a.pain_score != null && <Badge variant="outline" className="text-[10px] shrink-0">{language === "pt" ? "Dor " : language === "es" ? "Dolor " : "Pain "}{a.pain_score}/10</Badge>}</div><TreatmentUnlockCTA assessmentId={a.id} lifetimeTreatment={lifetimeTreatment} clinicMode={!!clinicId} onUnlocked={(treatmentPlan) => { a.treatment_plan = treatmentPlan; a.payment_status = "treatment_paid"; setNotes((prev: any) => ({ ...prev })); setTreatmentPicker(null); }} /></div>; })}</div><DialogFooter><Button variant="ghost" onClick={() => setTreatmentPicker(null)}>{language === "pt" ? "Fechar" : language === "es" ? "Cerrar" : "Close"}</Button></DialogFooter></DialogContent></Dialog>
 
       {/* FAB mobile: registrar evolução em 1 toque, acima da barra de abas inferior */}
       <button

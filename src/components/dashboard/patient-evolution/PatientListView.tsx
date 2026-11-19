@@ -323,25 +323,7 @@ export default function PatientListView(props: any) {
                             {trend === "stable" && <Badge variant="outline" className="text-[10px]">Estável</Badge>}
                             {realAssessments.some((a: any) => a.treatment_plan) ? (
                               <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1"><FileCheck className="h-3 w-3" /> Tratamento Liberado</Badge>
-                            ) : realAssessments.some((a: any) => a.diagnosis) ? (
-
-                              <Badge
-                                variant="outline"
-                                role="button"
-                                tabIndex={0}
-                                title={language === "pt" ? "Clique para adquirir o plano de tratamento" : language === "es" ? "Clic para adquirir el plan de tratamiento" : "Click to acquire the treatment plan"}
-                                className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200 gap-1 cursor-pointer hover:bg-amber-500/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
-                                onClick={(e) => { e.stopPropagation(); handleAcquireBadgeClick({ name: p.name, email: p.email, groupKey: p.groupKey, assessments: p.assessments }); }}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleAcquireBadgeClick({ name: p.name, email: p.email, groupKey: p.groupKey, assessments: p.assessments });
-                                  }
-                                }}
-                              >
-                                <Lock className="h-3 w-3" /> {language === "pt" ? "Adquirir Tratamento" : language === "es" ? "Adquirir Tratamiento" : "Unlock Treatment"}
-                              </Badge>
+                            
                             ) : null}
                             {showIncomplete && !readOnly && (
                               <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600 border-orange-200 gap-1 cursor-pointer hover:bg-orange-500/20 transition-colors" onClick={(e) => {
