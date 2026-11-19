@@ -1,5 +1,11 @@
 # Roadmap
 
+## Guia da plataforma para IA de vídeos
+- [x] Incorporar missão a partir da direção do fundador: soluções em fisioterapia que resolvam dores diárias do profissional e do paciente; redação identificada como sugerida, não oficial.
+- [x] Gerar DOCX detalhado: 23 capítulos, 24 páginas e cerca de 7.400 palavras com conceito, soluções, funcionalidades, públicos, posicionamento e missão.
+- [x] Incluir 13 roteiros e orientações separados para profissionais, clínicas, pacientes e acadêmicos, com limites de demonstração e privacidade.
+- [x] Validação estrutural e integridade do Word aprovadas; todas as 24 páginas convertidas e inspecionadas, sem cortes ou páginas vazias. Preço anual PRO divergente nas fontes e aprovação final de missão/visão sinalizados no documento. Percursos de gravação são orientações para a outra IA, não novas verificações autenticadas de todos os módulos.
+
 ## Tema na Minha conta
 - [x] Seletor Tema escuro em Minha conta, preferência neste navegador e claro como padrão; ajuda pt/en/es atualizada. Conta real autenticada: ativar → recarregar → desativar → recarregar conferidos em 1280px e 390px sem overflow; build OK. Studio preservado. Acabamento de todas as telas e iPhone físico não auditados; não publicado.
 
