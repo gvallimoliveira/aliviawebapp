@@ -1322,7 +1322,7 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
     if (demoMode) { demoUpsellToast(); return; }
     setGeneratingDx(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-diagnosis", {
+      const invokeDx = () => supabase.functions.invoke("generate-diagnosis", {
         body: {
           // Edge function expects `anamnesisData` (not `anamnesis`) and reads
           // painRegions / painScore / painTypes from inside it.
@@ -1339,6 +1339,13 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
           painExtent: preventive ? null : computePainExtent(painRegions).surfacePercent || null,
         },
       });
+      // One automatic retry: a dropped connection on a slow reply is served from
+      // the server cache on the second call (same payload, no extra credit).
+      let { data, error } = await invokeDx();
+      if (error) {
+        await new Promise((r) => setTimeout(r, 1500));
+        ({ data, error } = await invokeDx());
+      }
       if (error) throw error;
       const dx = data?.diagnosis || data;
       if (dx && typeof dx === "object" && (dx.hypothesis || dx.summary)) {

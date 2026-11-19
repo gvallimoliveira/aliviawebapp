@@ -43,9 +43,9 @@ export default function AssessmentPendingQuestionnaires() {
   const [submitting, setSubmitting] = useState(false);
   const [generalDone, setGeneralDone] = useState(false);
 
-  const reload = async () => {
+  const reload = async (afterSubmit = false) => {
     if (!assessmentId) return;
-    setLoading(true);
+    if (!afterSubmit) setLoading(true);
     try {
       const { data: resp, error: err } = await supabase.functions.invoke(
         "assessment-pending-questionnaires",
@@ -55,7 +55,8 @@ export default function AssessmentPendingQuestionnaires() {
       if (resp?.error) throw new Error(resp.error);
       setData(resp);
     } catch (e: any) {
-      setError(e?.message || "not_found");
+      // After a successful submit, keep the "all done" screen instead of an error.
+      if (!afterSubmit) setError(e?.message || "not_found");
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ export default function AssessmentPendingQuestionnaires() {
           ? "Seu profissional receberá os resultados automaticamente."
           : "Your professional will receive the results automatically.",
       });
-      await reload();
+      await reload(true);
     } catch (e: any) {
       toast({
         title: isPt ? "Erro ao enviar" : "Submission failed",
@@ -211,7 +212,7 @@ export default function AssessmentPendingQuestionnaires() {
                 row={row}
                 assessmentId={data.assessment.id}
                 isPt={isPt}
-                onSubmitted={reload}
+                onSubmitted={() => reload(true)}
               />
             ))}
           </>

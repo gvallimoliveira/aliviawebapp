@@ -12,7 +12,7 @@ import { localISODate } from "@/lib/periodization";
 import { preOpReportText } from "@/lib/aclPreoperative";
 import { computePostOpStatus, autoCriteriaFromMeasurements, effectiveCriteria, postOpReportText, type MeasuredAssessment } from "@/lib/postOpTrajectory";
 
-type Template = "blank" | "referral" | "insurance" | "summary";
+type Template = "blank" | "referral" | "insurance" | "inss" | "summary";
 
 interface Props {
   open: boolean;
@@ -28,7 +28,7 @@ interface Props {
   assessments?: MeasuredAssessment[];
 }
 
-const TEMPLATES: Record<Template, { label: string; title: string; body: (p: { name: string; hyp: string; n: number; postOp?: string | null }) => string }> = {
+const TEMPLATES: Record<Template, { label: string; title: string; body: (p: { name: string; hyp: string; n: number; postOp?: string | null; latest?: any }) => string }> = {
   blank: { label: "Em branco", title: "RELATÓRIO FISIOTERAPÊUTICO", body: () => "" },
   referral: {
     label: "Encaminhamento", title: "ENCAMINHAMENTO",
@@ -38,11 +38,63 @@ const TEMPLATES: Record<Template, { label: string; title: string; body: (p: { na
     label: "Convênio", title: "RELATÓRIO FISIOTERAPÊUTICO",
     body: ({ name, hyp }) => `À operadora de saúde,\n\nO(a) paciente ${name} encontra-se em acompanhamento fisioterapêutico.\n\nHipótese fisioterapêutica: ${hyp || "[descrever]"}\n\nEvolução e achados funcionais: [descrever]\n\nJustificativa para continuidade: [descrever]\n\nFrequência proposta: [nº] sessões/semana por [nº] semanas.\n\nObjetivos terapêuticos: [descrever]`,
   },
+  inss: {
+    label: "Laudo pericial / INSS", title: "RELATÓRIO FISIOTERAPÊUTICO PARA FINS PERICIAIS",
+    body: ({ name, hyp, latest }) => inssBody(name, hyp, latest),
+  },
   summary: {
     label: "Resumo do tratamento", title: "DECLARAÇÃO DE ACOMPANHAMENTO",
     body: ({ name, n }) => `Declaro, para os devidos fins, que ${name} está em acompanhamento fisioterapêutico, com ${n} avaliação(ões) registrada(s).\n\nPeríodo: [início] a [fim]\n\nSituação atual: [descrever]`,
   },
 };
+
+/** Monta o laudo pericial com os dados reais da avaliação mais recente; campos sem dado ficam como [descrever]. */
+function inssBody(name: string, hyp: string, a: any): string {
+  const an = a?.anamnesis_data || {};
+  const dx = a?.diagnosis || {};
+  const fill = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : "[descrever]");
+  const evalDate = a?.created_at ? new Date(a.created_at).toLocaleDateString("pt-BR") : "[data]";
+  const complaint = [an.chiefComplaint, an.additionalComplaint].filter((x: any) => typeof x === "string" && x.trim()).join(" ");
+  const rom = (Array.isArray(an.romTable) ? an.romTable : []).filter((r: any) => r?.joint).map((r: any) => `- ${r.joint}: esquerdo ${r.leftValue || "—"}° / direito ${r.rightValue || "—"}°`);
+  const strength = (Array.isArray(an.strengthTable) ? an.strengthTable : []).filter((r: any) => r?.movement).map((r: any) => `- ${r.movement}: esquerdo ${r.leftValue || "—"} kgf / direito ${r.rightValue || "—"} kgf`);
+  const scales = (Array.isArray(a?.test_results) ? a.test_results : []).filter((t: any) => t?.questionnaireName).map((t: any) => `- ${t.questionnaireName}: ${t.totalScore ?? "—"}/${t.maxScore ?? "—"}${t.interpretation_pt ? ` (${t.interpretation_pt})` : ""}`);
+  const deficits = [
+    rom.length ? `Amplitude de movimento:\n${rom.join("\n")}` : "",
+    strength.length ? `Força muscular (dinamometria):\n${strength.join("\n")}` : "",
+    typeof an.functionalTests === "string" && an.functionalTests.trim() ? `Testes funcionais:\n${an.functionalTests.trim()}` : "",
+    scales.length ? `Escalas funcionais validadas:\n${scales.join("\n")}` : "",
+  ].filter(Boolean).join("\n\n") || "[descrever]";
+  const objectives = Array.isArray(dx.clinicalImpression?.therapeuticObjectives) && dx.clinicalImpression.therapeuticObjectives.length
+    ? dx.clinicalImpression.therapeuticObjectives.map((o: string) => `- ${o}`).join("\n") : "[descrever]";
+  return `Declaro, para fins de perícia médica, que ${name} encontra-se em acompanhamento fisioterapêutico sob minha responsabilidade, com avaliação realizada em ${evalDate}.
+
+1. HISTÓRICO E QUADRO CLÍNICO
+Queixa principal: ${fill(complaint)}
+Histórico do agravo: ${fill(an.history)}
+Tempo de evolução: ${fill(an.duration || an.painDuration)}
+Intensidade da dor (EVA): ${a?.pain_score ?? an.painScore ?? "[nº]"}/10
+Fatores de piora: ${fill(an.aggravatingFactors)}
+
+2. IMPRESSÃO CLÍNICA
+${fill(dx.clinicalImpression?.overview || dx.summary)}
+
+3. PRINCIPAIS DÉFICITS FUNCIONAIS
+${deficits}
+
+4. DIAGNÓSTICO CINÉTICO-FUNCIONAL (HIPÓTESE FISIOTERAPÊUTICA)
+${fill(hyp)}
+
+5. OBJETIVOS DO TRATAMENTO
+${objectives}
+
+6. CONDUTAS REALIZADAS
+[descrever: recursos e técnicas aplicados, nº de sessões e período]
+
+7. LIMITAÇÕES FUNCIONAIS E CONCLUSÃO
+Os achados acima configuram limitação funcional para [descrever atividades: marcha prolongada, ortostatismo, carga, atividade laboral]. Indica-se a continuidade do tratamento fisioterapêutico, ${"[nº]"} sessões/semana por ${"[nº]"} semanas, com reavaliação ao final do período.
+
+Este relatório descreve a condição cinético-funcional observada e não substitui a avaliação médico-pericial.`;
+}
 
 export default function FreeReportDialog({ open, onOpenChange, patientName, patientBirthDate, latestHypothesis, assessmentCount, clinicId, professionalId, language, patientId, assessments = [] }: Props) {
   const [template, setTemplate] = useState<Template>("blank");
@@ -75,11 +127,12 @@ export default function FreeReportDialog({ open, onOpenChange, patientName, pati
     return () => { cancel = true; };
   }, [open, patientId, assessments]);
 
+  const latestAssessment = [...(assessments as any[])].filter((a) => a?.diagnosis).sort((x, y) => String(y.created_at).localeCompare(String(x.created_at)))[0] || null;
   const applyTemplate = (t: Template) => {
     if (body.trim() && !window.confirm("Substituir o texto atual pelo modelo?")) return;
     setTemplate(t);
     setTitle(TEMPLATES[t].title);
-    setBody(TEMPLATES[t].body({ name: patientName, hyp: latestHypothesis || "", n: assessmentCount, postOp: postOpText }));
+    setBody(TEMPLATES[t].body({ name: patientName, hyp: latestHypothesis || "", n: assessmentCount, postOp: postOpText, latest: latestAssessment }));
   };
 
   const generate = async () => {

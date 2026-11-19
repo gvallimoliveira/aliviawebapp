@@ -710,6 +710,8 @@ Generate the diagnostic hypothesis in valid JSON format.`;
         ],
         temperature: 0.3,
         max_tokens: 2500,
+        // Short structured label: low reasoning keeps replies fast (rich manual cases took ~10s).
+        reasoning_effort: "low",
       }),
     });
 

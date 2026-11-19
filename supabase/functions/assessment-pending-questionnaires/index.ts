@@ -63,7 +63,13 @@ serve(async (req) => {
     const openRows = (pending ?? []).filter((p: any) =>
       p.status === "pending" && Date.now() - new Date(p.created_at).getTime() < OPEN_WINDOW_MS
     );
-    if (openRows.length === 0) return json({ error: "assessment_not_found" }, 404);
+    // A finished link still loads (read-only "all done" screen) inside the window,
+    // so a patient who just submitted never sees "invalid link".
+    const recentRows = (pending ?? []).filter((p: any) =>
+      Date.now() - new Date(p.created_at).getTime() < OPEN_WINDOW_MS
+    );
+    if (action === "load" && recentRows.length === 0) return json({ error: "assessment_not_found" }, 404);
+    if (action !== "load" && openRows.length === 0) return json({ error: "assessment_not_found" }, 404);
 
     if (action === "load") {
       const { data: clinic } = assessment.clinic_id ? await supabase.from("clinics").select("name,logo_url,brand_color").eq("id", assessment.clinic_id).maybeSingle() : { data: null };
@@ -74,7 +80,7 @@ serve(async (req) => {
           pain_regions: assessment.pain_regions ?? [],
           patient_name: assessment.patient_name,
         },
-        pending: pending ?? [],
+        pending: recentRows,
       });
     }
 
