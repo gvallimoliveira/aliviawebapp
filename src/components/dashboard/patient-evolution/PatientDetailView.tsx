@@ -1276,6 +1276,8 @@ export default function PatientDetailView(props: any) {
         />
       )}
 
+      <div id="sec-timeline" className="scroll-mt-24 space-y-2"><AssessmentTimeline assessments={patient.assessments} selectedId={drawerAssessment?.id ?? null} onSelect={(id) => { setViewedAssessmentId(id === latestAssessment?.id ? null : id); setShowOtherQuestionnaires(false); }} onOpenReport={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
+        {isViewingHistory && <div role="status" className="sticky top-16 z-20 flex flex-wrap items-center justify-between gap-2 rounded-full border border-primary/25 bg-background/85 backdrop-blur-md px-3 py-1.5 text-xs text-foreground shadow-sm"><span className="flex items-center gap-1.5 min-w-0"><RotateCcw className="h-3.5 w-3.5 text-primary shrink-0" /><span className="truncate">Inspecionando o ciclo de <strong>{new Date(viewedAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}</strong>{viewedAssessment.diagnosis?.hypothesis ? ` · ${String(viewedAssessment.diagnosis.hypothesis).slice(0, 48)}` : ""}</span></span><Button type="button" size="sm" variant="ghost" className="h-7 rounded-full text-xs text-primary hover:bg-primary/10" onClick={() => setViewedAssessmentId(null)}>Voltar ao ciclo atual</Button></div>}</div>
       {(() => {
         const target = isViewingHistory ? viewedAssessment : (latestWithDiagnosis || latestAssessment);
         if (!target) return null;
@@ -1501,8 +1503,6 @@ export default function PatientDetailView(props: any) {
 
 
 
-      <div id="sec-timeline" className="scroll-mt-24 space-y-2"><AssessmentTimeline assessments={patient.assessments} selectedId={drawerAssessment?.id ?? null} onSelect={(id) => { setViewedAssessmentId(id === latestAssessment?.id ? null : id); setShowOtherQuestionnaires(false); }} onOpenReport={(id) => navigate(buildAssessmentViewUrl(id, props.selectedEmail))} />
-        {isViewingHistory && <div className="sticky top-16 z-20 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300"><span>Você está vendo a avaliação de <strong>{new Date(viewedAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</strong>{viewedAssessment.diagnosis?.hypothesis ? ` (${String(viewedAssessment.diagnosis.hypothesis).slice(0, 60)})` : ""}. Anamnese, hipótese e questionários mostram este ciclo.</span><Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => setViewedAssessmentId(null)}>Voltar para a avaliação atual</Button></div>}</div>
 
       <div id="sec-evolucao-dor" className="scroll-mt-24"><PatientPainEvolution assessments={patient.assessments} /></div>
 
@@ -1511,14 +1511,15 @@ export default function PatientDetailView(props: any) {
 
       {/* Mapa de Dor comparativo (agrupa logo após a linha do tempo) */}
       <div id="sec-mapa-dor" className="scroll-mt-24">
-      {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Stethoscope className="h-4 w-4 text-primary" />Mapa de Dor — Comparativo</CardTitle></CardHeader><CardContent><div className="flex items-start gap-4 overflow-x-auto overscroll-x-contain snap-x snap-mandatory pb-2 [scrollbar-width:thin]">{patient.assessments.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => <div key={a.id} className="w-56 max-w-[85%] shrink-0 snap-start text-center space-y-2"><p className="text-xs font-medium text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}{a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}</p><PainMapView painRegions={a.pain_regions} compact /></div>)}</div></CardContent></Card>}
+      {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Stethoscope className="h-4 w-4 text-primary" />Mapa de Dor — Comparativo</CardTitle></CardHeader><CardContent><div className="flex items-start gap-4 overflow-x-auto overscroll-x-contain snap-x snap-mandatory pb-2 [scrollbar-width:thin]">{patient.assessments.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => <div key={a.id} className={`w-56 max-w-[85%] shrink-0 snap-start text-center space-y-2 rounded-xl p-2 transition-colors ${a.id === drawerAssessment?.id && patient.assessments.length > 1 ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}><p className="text-xs font-medium text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}{a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}</p><PainMapView painRegions={a.pain_regions} compact /></div>)}</div></CardContent></Card>}
       </div>
 
 
 
       {/* Evolução de questionários funcionais */}
       <div id="sec-questionarios" className="scroll-mt-24 space-y-5">
-      <div className="flex flex-wrap justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">{(drawerAssessment?.pain_regions || []).length > 0 ? <>Questionários do {isViewingHistory ? "ciclo selecionado" : "ciclo atual"}: <span className="font-medium text-foreground">{(drawerAssessment.pain_regions as string[]).slice(0, 3).map((r) => r.replace(/_/g, " ")).join(", ")}</span></> : null}</p>
         <MeasurementReportButton kind="questionnaires" assessments={patient.assessments} patientName={patient.name} clinicId={clinicId} professionalId={professionalId} />
       </div>
       {drawerCharts.shown.length > 0 ? [...drawerCharts.shown, ...(showOtherQuestionnaires ? drawerCharts.hidden : [])].map((chart: any) => (
@@ -1576,7 +1577,7 @@ export default function PatientDetailView(props: any) {
             )}
           </CardContent>
         </Card>
-      )).concat(drawerCharts.hidden.length > 0 ? [<div key="__other-q" className="flex justify-center"><Button type="button" variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setShowOtherQuestionnaires((v) => !v)}>{showOtherQuestionnaires ? "Ocultar questionários de outras regiões" : `Ver questionários de outras regiões/ciclos (${drawerCharts.hidden.length})`}</Button></div>] : []) : <Card className="border-dashed"><CardContent className="py-6 text-center"><ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p><p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p></CardContent></Card>}
+      )).concat(drawerCharts.hidden.length > 0 ? [<div key="__other-q" className="flex justify-center"><Button type="button" variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setShowOtherQuestionnaires((v) => !v)}>{showOtherQuestionnaires ? "Ocultar questionários de outros ciclos" : `Ver questionários de outros ciclos (${drawerCharts.hidden.length})`}</Button></div>] : []) : <Card className="border-dashed"><CardContent className="py-6 text-center"><ClipboardList className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" /><p className="text-sm text-muted-foreground">Nenhum questionário funcional foi aplicado nessas avaliações.</p><p className="text-xs text-muted-foreground/60 mt-1">Questionários são aplicados automaticamente quando o paciente preenche o mapa de dor.</p></CardContent></Card>}
       </div>
 
       {/* Questionários complementares / psicossocial (FABQ) */}
