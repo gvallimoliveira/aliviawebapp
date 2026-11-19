@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity, ArrowDownAZ, ArrowDownWideNarrow, Archive, ArchiveRestore, Calendar, ChevronRight, Download, Dumbbell, Eye, EyeOff, FileCheck, FilePlus, Link2, Loader2, Lock, Mail, NotebookPen, Pencil, Plus, Search, User } from "lucide-react";
+import { Activity, ArrowDownAZ, ArrowDownWideNarrow, Archive, ArchiveRestore, Calendar, ChevronRight, Download, Dumbbell, Eye, EyeOff, FileCheck, FilePlus, Link2, Loader2, Lock, NotebookPen, Pencil, Plus, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -260,9 +260,6 @@ export default function PatientListView(props: any) {
 
               {filteredPatients.map((p: any) => {
                 const realAssessments = realAssessmentsOf(p);
-                const firstScore = realAssessments[0]?.pain_score;
-                const lastScore = realAssessments[realAssessments.length - 1]?.pain_score;
-                const trend = firstScore != null && lastScore != null ? (lastScore < firstScore ? "improving" : lastScore > firstScore ? "worsening" : "stable") : null;
                 const isHidden = hiddenKeys.has(p.groupKey);
                 const patientRec = p.patientRecord;
                 const isIncomplete = patientRec && (!patientRec.email || !patientRec.cpf || !patientRec.phone);
@@ -326,9 +323,6 @@ export default function PatientListView(props: any) {
                             {realAssessments.length > 0 && (
                               <Badge variant="outline" className="text-[10px]">{realAssessments.length} {t("pro.assessments_count")}</Badge>
                             )}
-                            {trend === "improving" && <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200">Melhorando</Badge>}
-                            {trend === "worsening" && <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">Piorando</Badge>}
-                            {trend === "stable" && <Badge variant="outline" className="text-[10px]">Estável</Badge>}
                             {realAssessments.some((a: any) => a.treatment_plan) ? (
                               <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1"><FileCheck className="h-3 w-3" /> Tratamento Liberado</Badge>
                             
@@ -347,7 +341,6 @@ export default function PatientListView(props: any) {
                             {pct != null && p.assessments.some((a: any) => a.user_id) && <Badge variant="outline" className={`text-[10px] gap-1 ${color}`}><Dumbbell className="h-3 w-3" /> {pct}% {language === "pt" ? "adesão" : "adherence"}</Badge>}
                           </div>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {p.email}</span>
                             <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{t("pro.last_assessment")}: {new Date(p.lastDate).toLocaleDateString("pt-BR")}</span>
                           </div>
                         </div>

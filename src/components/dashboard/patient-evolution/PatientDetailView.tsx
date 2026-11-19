@@ -772,16 +772,7 @@ export default function PatientDetailView(props: any) {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {(latestWithDiagnosis || latestAssessment) && <Button variant="ghost" size="sm" className="gap-1.5 shrink-0 text-primary hover:text-primary hover:bg-primary/10" onClick={() => setRecordSummaryOpen(true)}><Sparkles className="h-4 w-4" /> {language === "pt" ? "Resumo" : language === "es" ? "Resumen" : "Summary"}</Button>}
-          {latestWithDiagnosis && <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}><FileText className="h-4 w-4" /> {t("pro.view_full_assessment")}</Button>}
-          <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => { setEditingHepId(null); setHepModalOpen(true); }}><Dumbbell className="h-4 w-4" /> Exercícios</Button>
-          <Button variant="outline" size="sm" className="gap-1.5 shrink-0 hidden md:inline-flex border-primary/30 text-primary hover:bg-primary/10" onClick={handleQuickEvolution}><NotebookPen className="h-4 w-4" /> {language === "pt" ? "Registrar evolução" : language === "es" ? "Registrar evolución" : "Log evolution"}</Button>
-          {!isDemo && physioTechVip && (
-            <Button variant="outline" size="sm" className="gap-1.5 shrink-0 border-primary/30 text-primary hover:bg-primary/10" onClick={async () => {
-              const id = await resolvePatientIdForPhysioTech();
-              if (!id) { toast({ title: "Paciente ainda não cadastrado no prontuário" }); return; }
-              void openPhysioTech(id);
-            }}><PhysioTechIcon /> PhysioTech</Button>
-          )}
+          <Button variant="outline" size="sm" className="gap-1.5 shrink-0 border-primary/30 text-primary hover:bg-primary/10" onClick={handleQuickEvolution}><NotebookPen className="h-4 w-4" /> {language === "pt" ? "+ Evolução" : language === "es" ? "+ Evolución" : "+ Evolution"}</Button>
           {(((!readOnly || allowManualAssessment) || isDemo) || latestWithDiagnosis || patient.assessments.filter((a: any) => a.diagnosis).length >= 2 || (hasAgentAccess && !isDemo) || !isDemo) && (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
@@ -793,6 +784,23 @@ export default function PatientDetailView(props: any) {
               <DropdownMenuContent align="end" sideOffset={4} collisionPadding={8} className="w-56 z-[60]">
                 <DropdownMenuLabel className="text-[11px] text-muted-foreground">{language === "pt" ? "Outras ações" : "Other actions"}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {latestWithDiagnosis && (
+                  <DropdownMenuItem onSelect={() => navigate(buildAssessmentViewUrl(latestWithDiagnosis.id, patient.email))}>
+                    <FileText className="h-4 w-4 mr-2" /> {t("pro.view_full_assessment")}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onSelect={() => { setEditingHepId(null); setHepModalOpen(true); }}>
+                  <Dumbbell className="h-4 w-4 mr-2" /> Exercícios
+                </DropdownMenuItem>
+                {!isDemo && physioTechVip && (
+                  <DropdownMenuItem onSelect={async () => {
+                    const id = await resolvePatientIdForPhysioTech();
+                    if (!id) { toast({ title: "Paciente ainda não cadastrado no prontuário" }); return; }
+                    void openPhysioTech(id);
+                  }}>
+                    <span className="mr-2 inline-flex"><PhysioTechIcon /></span> PhysioTech
+                  </DropdownMenuItem>
+                )}
                 {((!readOnly || allowManualAssessment) || isDemo) && (
                   <DropdownMenuItem onSelect={() => openManualAssessment()}>
                     <FilePlus className="h-4 w-4 mr-2" />
