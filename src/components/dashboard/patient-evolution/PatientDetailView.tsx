@@ -42,6 +42,7 @@ import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generat
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
 import { cycleAssessments, cycleWindow, inWindow } from "@/lib/assessmentCycle";
+import { regionalPainLabel } from "@/lib/regionalPainEvolution";
 import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Gauge, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, ScanLine, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import FreeReportDialog from "./FreeReportDialog";
 import { openPhysioTech, PhysioTechIcon } from "@/components/PhysioTechShortcut";
@@ -86,9 +87,10 @@ interface DiagnosticHypothesisBlockProps {
   isDemo?: boolean;
   /** Convite discreto de plano de tratamento renderizado dentro do card. */
   treatmentInvite?: React.ReactNode;
+  isHistory?: boolean;
 }
 
-const DiagnosticHypothesisBlock = ({ assessment, isDemo, treatmentInvite }: DiagnosticHypothesisBlockProps) => {
+const DiagnosticHypothesisBlock = ({ assessment, isDemo, treatmentInvite, isHistory }: DiagnosticHypothesisBlockProps) => {
   const canEdit = propsUseCanEditFinalHypothesis(assessment);
   const [localFinal, setLocalFinal] = React.useState<string | null>(assessment.final_hypothesis ?? null);
   const [localFinalAt, setLocalFinalAt] = React.useState<string | null>(assessment.final_hypothesis_at ?? null);
@@ -116,7 +118,7 @@ const DiagnosticHypothesisBlock = ({ assessment, isDemo, treatmentInvite }: Diag
           {hasOverride && <Badge variant="secondary" className="text-[10px] ml-1">Revisada pelo fisioterapeuta</Badge>}
         </CardTitle>
         {assessmentDate && (
-          <CardDescription className="text-xs">Caso atual — avaliação de {assessmentDate}</CardDescription>
+          <CardDescription className="text-xs">{isHistory ? "Ciclo selecionado" : "Caso atual"} — avaliação de {assessmentDate}</CardDescription>
         )}
       </CardHeader>
       <CardContent className="space-y-2">
@@ -340,6 +342,20 @@ export default function PatientDetailView(props: any) {
     return () => { cancelled = true; };
   }, [checkinPatientId, isDemo]);
   const visibleCheckins = React.useMemo(() => cycleRange ? cycleCheckins.filter((c) => inWindow(c.date, cycleRange)) : cycleCheckins, [cycleCheckins, cycleRange]);
+  // Diário de dor do paciente: só entradas ligadas a avaliações deste ciclo (leitura liberada pelo vínculo).
+  const [diaryEntries, setDiaryEntries] = React.useState<{ date: string; pain: number; assessmentId: string }[]>([]);
+  const assessmentIdsKey = allAssessments.map((a: any) => a.id).join(",");
+  React.useEffect(() => {
+    let cancelled = false;
+    const ids = assessmentIdsKey ? assessmentIdsKey.split(",") : [];
+    if (!ids.length || isDemo) { setDiaryEntries([]); return; }
+    (async () => {
+      const { data } = await (supabase.from("pain_diary_entries") as any).select("logged_at, pain_score, assessment_id").in("assessment_id", ids).order("logged_at", { ascending: true }).limit(500);
+      if (!cancelled) setDiaryEntries(((data || []) as any[]).filter((r) => typeof r.pain_score === "number").map((r) => ({ date: r.logged_at, pain: r.pain_score, assessmentId: r.assessment_id })));
+    })();
+    return () => { cancelled = true; };
+  }, [assessmentIdsKey, isDemo]);
+  const visibleDiary = React.useMemo(() => { const ids = new Set(cycleList.map((a: any) => a.id)); return diaryEntries.filter((d) => ids.has(d.assessmentId)); }, [diaryEntries, cycleList]);
   const latestAnamnesisFields = viewedAssessment && typeof getAnamnesisFields === "function" ? getAnamnesisFields(viewedAssessment) : currentAnamnesisFields;
   const drawerCharts = React.useMemo(() => {
     const all = questionnaireEvolution || [];
@@ -1342,7 +1358,7 @@ export default function PatientDetailView(props: any) {
           <>
             <div ref={treatmentSectionRef} id="treatment-unlock-section" className={`scroll-mt-24 transition-shadow rounded-xl ${treatmentHighlight ? "ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse" : ""}`}>
               {hasHypothesis ? (
-                <DiagnosticHypothesisBlock assessment={target} isDemo={isDemo} treatmentInvite={treatmentInvite} />
+                <DiagnosticHypothesisBlock assessment={target} isDemo={isDemo} treatmentInvite={isViewingHistory ? null : treatmentInvite} isHistory={isViewingHistory} />
               ) : (
                 <GenerateHypothesisCard
                   assessment={target}
@@ -1524,7 +1540,7 @@ export default function PatientDetailView(props: any) {
 
 
 
-      <div id="sec-evolucao-dor" className="scroll-mt-24">{hiddenCycleCount > 0 && <div className="flex justify-end -mb-2"><Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => setShowAllCycles((v) => !v)}>{showAllCycles ? "Mostrar só este ciclo" : `Incluir outros ciclos (${hiddenCycleCount})`}</Button></div>}<PatientPainEvolution assessments={cycleList} checkins={visibleCheckins} /></div>
+      <div id="sec-evolucao-dor" className="scroll-mt-24">{hiddenCycleCount > 0 && <div className="flex justify-end -mb-2"><Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => setShowAllCycles((v) => !v)}>{showAllCycles ? "Mostrar só este ciclo" : `Incluir outros ciclos (${hiddenCycleCount})`}</Button></div>}<PatientPainEvolution assessments={cycleList} checkins={visibleCheckins} diary={visibleDiary} /></div>
 
       {/* Passo F1 — evolução longitudinal do mecanismo de dor */}
       <div id="sec-mecanismo-dor" className="scroll-mt-24"><MechanismEvolutionCard assessments={cycleList} /></div>
@@ -1539,7 +1555,7 @@ export default function PatientDetailView(props: any) {
       {/* Evolução de questionários funcionais */}
       <div id="sec-questionarios" className="scroll-mt-24 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">{(drawerAssessment?.pain_regions || []).length > 0 ? <>Questionários do {isViewingHistory ? "ciclo selecionado" : "ciclo atual"}: <span className="font-medium text-foreground">{(drawerAssessment.pain_regions as string[]).slice(0, 3).map((r) => r.replace(/_/g, " ")).join(", ")}</span></> : null}</p>
+        <p className="text-xs text-muted-foreground">{(drawerAssessment?.pain_regions || []).length > 0 ? <>Questionários do {isViewingHistory ? "ciclo selecionado" : "ciclo atual"}: <span className="font-medium text-foreground">{(drawerAssessment.pain_regions as string[]).slice(0, 3).map((r) => regionalPainLabel(r, language, t)).join(", ")}</span></> : null}</p>
         <MeasurementReportButton kind="questionnaires" assessments={patient.assessments} patientName={patient.name} clinicId={clinicId} professionalId={professionalId} />
       </div>
       {drawerCharts.shown.length > 0 ? [...drawerCharts.shown, ...(showOtherQuestionnaires ? drawerCharts.hidden : [])].map((chart: any) => (

@@ -7,20 +7,26 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { buildRegionalPainEvolution, regionalPainLabel, type RegionalPainAssessment } from "@/lib/regionalPainEvolution";
 
 export interface CheckinPainPoint { date: string; pain: number }
-export default function PatientPainEvolution({ assessments, checkins = [] }: { assessments: RegionalPainAssessment[]; checkins?: CheckinPainPoint[] }) {
+export default function PatientPainEvolution({ assessments, checkins = [], diary = [] }: { assessments: RegionalPainAssessment[]; checkins?: CheckinPainPoint[]; diary?: CheckinPainPoint[] }) {
   const { language, t } = useLanguage();
   const base = useMemo(() => buildRegionalPainEvolution(assessments), [assessments]);
   // Check-ins do paciente entram como série própria (dor relatada no dia), sem misturar com a nota da avaliação.
   const { series, points } = useMemo(() => {
-    const valid = checkins.filter((c) => typeof c.pain === "number" && Number.isFinite(c.pain));
-    if (!valid.length) return base;
-    const key = "checkin";
-    const ck = { key, regionId: "__checkin", measurements: valid.map((c) => ({ date: `${c.date}T12:00:00`, score: c.pain })).sort((a, b) => a.date.localeCompare(b.date)) };
-    const pts: Record<string, string | number | null>[] = [...base.points.map((p) => ({ ...p, [key]: null } as Record<string, string | number | null>)), ...ck.measurements.map((m) => { const p: Record<string, string | number | null> = { date: m.date, [key]: m.score }; for (const s of base.series) p[s.key] = null; return p; })]
-      .sort((a, b) => Date.parse(String(a.date)) - Date.parse(String(b.date)));
-    return { series: [...base.series, ck], points: pts };
-  }, [base, checkins]);
-  const label = (id: string) => id === "__checkin" ? (language === "pt" ? "Check-in do paciente" : language === "es" ? "Check-in del paciente" : "Patient check-in") : regionalPainLabel(id, language, t);
+    const extra = [
+      { regionId: "__checkin", key: "checkin", list: checkins },
+      { regionId: "__diary", key: "diary", list: diary },
+    ].map((e) => ({ ...e, list: e.list.filter((c) => typeof c.pain === "number" && Number.isFinite(c.pain)) })).filter((e) => e.list.length);
+    if (!extra.length) return base;
+    const extraSeries = extra.map((e) => ({ key: e.key, regionId: e.regionId, measurements: e.list.map((c) => ({ date: `${c.date}T12:00:00`, score: c.pain })).sort((a, b) => a.date.localeCompare(b.date)) }));
+    const allKeys = [...base.series.map((x) => x.key), ...extraSeries.map((x) => x.key)];
+    const blank = () => Object.fromEntries(allKeys.map((k) => [k, null])) as Record<string, string | number | null>;
+    const pts: Record<string, string | number | null>[] = [
+      ...base.points.map((p) => ({ ...blank(), ...p })),
+      ...extraSeries.flatMap((x) => x.measurements.map((m) => ({ ...blank(), date: m.date, [x.key]: m.score }))),
+    ].sort((a, b) => Date.parse(String(a.date)) - Date.parse(String(b.date)));
+    return { series: [...base.series, ...extraSeries], points: pts };
+  }, [base, checkins, diary]);
+  const label = (id: string) => id === "__diary" ? (language === "pt" ? "Diário de dor do paciente" : language === "es" ? "Diario de dolor del paciente" : "Patient pain diary") : id === "__checkin" ? (language === "pt" ? "Check-in do paciente" : language === "es" ? "Check-in del paciente" : "Patient check-in") : regionalPainLabel(id, language, t);
   const [hidden, setHidden] = useState<string[]>([]);
   const chartRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(0);
@@ -61,7 +67,7 @@ export default function PatientPainEvolution({ assessments, checkins = [] }: { a
           <XAxis dataKey="date" tickFormatter={date} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} minTickGap={24} padding={xPadding} />
           <YAxis domain={[0, 10]} ticks={[0, 2, 4, 6, 8, 10]} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
           <Tooltip labelFormatter={value => new Date(String(value)).toLocaleDateString(locale)} formatter={(value: number, name: string) => [`${value}/10`, name]} contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))", maxWidth: 240, whiteSpace: "normal" }} />
-          {series.map((s, i) => { const color = `hsl(var(--chart-${i % 6 + 1}))`; return <Line key={s.key} dataKey={s.key} name={label(s.regionId)} hide={hidden.includes(s.key)} stroke={color} strokeDasharray={i >= 6 ? "5 3" : undefined} type="monotone" strokeWidth={2.5} dot={{ r: 5, fill: color, strokeWidth: 2, stroke: "hsl(var(--card))" }} activeDot={{ r: 7, fill: color, strokeWidth: 2, stroke: "hsl(var(--card))" }} connectNulls={s.regionId === "__checkin"} isAnimationActive={false} />; })}
+          {series.map((s, i) => { const color = `hsl(var(--chart-${i % 6 + 1}))`; return <Line key={s.key} dataKey={s.key} name={label(s.regionId)} hide={hidden.includes(s.key)} stroke={color} strokeDasharray={i >= 6 ? "5 3" : undefined} type="monotone" strokeWidth={2.5} dot={{ r: 5, fill: color, strokeWidth: 2, stroke: "hsl(var(--card))" }} activeDot={{ r: 7, fill: color, strokeWidth: 2, stroke: "hsl(var(--card))" }} connectNulls={s.regionId.startsWith("__")} isAnimationActive={false} />; })}
         </LineChart></ResponsiveContainer>
       </div>
       <div id="sec-regioes-dor" className="scroll-mt-24 divide-y divide-border">

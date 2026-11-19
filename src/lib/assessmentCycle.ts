@@ -5,13 +5,27 @@
  */
 export interface CycleAssessment { id: string; created_at: string; pain_regions?: string[] | null }
 
-const regionsOf = (a: CycleAssessment) => new Set((a.pain_regions || []).filter(Boolean));
+const rawRegions = (a: CycleAssessment) => (a.pain_regions || []).filter(Boolean);
+
+/** Reavaliações sem mapa de dor herdam as regiões da avaliação anterior mais próxima (mesmo caso). */
+function effectiveRegions<T extends CycleAssessment>(all: T[]): Map<string, Set<string>> {
+  const sorted = [...all].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+  const out = new Map<string, Set<string>>();
+  let last = new Set<string>();
+  for (const a of sorted) {
+    const own = rawRegions(a);
+    if (own.length) last = new Set(own);
+    out.set(a.id, own.length ? new Set(own) : new Set(last));
+  }
+  return out;
+}
 
 export function cycleAssessments<T extends CycleAssessment>(all: T[], anchor: T | null | undefined): T[] {
   if (!anchor) return all;
-  const own = regionsOf(anchor);
-  if (own.size === 0) return all.filter((a) => a.id === anchor.id);
-  return all.filter((a) => a.id === anchor.id || [...regionsOf(a)].some((r) => own.has(r)));
+  const eff = effectiveRegions(all);
+  const own = eff.get(anchor.id) ?? new Set(rawRegions(anchor));
+  if (own.size === 0) return all.filter((a) => a.id === anchor.id || (eff.get(a.id)?.size ?? 0) === 0);
+  return all.filter((a) => a.id === anchor.id || [...(eff.get(a.id) ?? [])].some((r) => own.has(r)));
 }
 
 /** Janela: da 1ª avaliação do ciclo até a próxima avaliação de outra queixa depois da âncora (exclusiva). */

@@ -21,4 +21,12 @@ describe("gaveta do ciclo", () => {
   it("ciclo atual fica aberto até hoje", () => {
     expect(cycleWindow(A, A[2])).toEqual({ start: "2026-11-19", end: null });
   });
+  it("reavaliação sem mapa de dor continua no ciclo do joelho", () => {
+    const B = [
+      { id: "k1", created_at: "2026-08-21T10:00:00Z", pain_regions: ["knee_left"] },
+      { id: "k2", created_at: "2026-10-25T10:00:00Z", pain_regions: [] },
+      { id: "k3", created_at: "2026-11-16T10:00:00Z", pain_regions: null },
+    ];
+    expect(cycleAssessments(B, B[2]).map((a) => a.id)).toEqual(["k1", "k2", "k3"]);
+  });
 });

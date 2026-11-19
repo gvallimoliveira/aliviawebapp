@@ -227,3 +227,4 @@
 - [x] Regra única de direito (lista manual ilimitada; add-on; anual 3/mês por 6 meses; mensal 1 degustação); envio de laudo bloqueado ao esgotar; aviso com desconto no app.
 - [x] Add-ons no Stripe: mensal R$89/139, anual R$590/990; ativação e cancelamento pelo webhook. Conta VIP conferida como ilimitada. Checkout real e franquia não testados (só lista liberada tem acesso).
 - [ ] Lançamento geral: remover a trava da lista manual no SSO e no botão — aguarda decisão do Guilherme.
+- [x] Diário de dor do paciente visível ao profissional (só entradas ligadas a avaliação acessível) no gráfico de dor do ciclo
