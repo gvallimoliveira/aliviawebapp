@@ -1,0 +1,2 @@
+ALTER TABLE public.pending_questionnaires DROP CONSTRAINT IF EXISTS pending_questionnaires_domain_check;
+ALTER TABLE public.pending_questionnaires ADD CONSTRAINT pending_questionnaires_domain_check CHECK (domain = ANY (ARRAY['general'::text, 'cardio'::text, 'geri'::text, 'psychosocial'::text, 'spine'::text]));

@@ -1984,7 +1984,7 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
             )}
 
             {/* Banner de questionários pendentes vinculados a esta avaliação */}
-            {isEditing && pendingCount && pendingCount.total > 0 && (
+            {isEditing && step === 0 && pendingCount && pendingCount.total > 0 && (
               <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 space-y-2">
                 <div className="flex items-start gap-2">
                   <ClipboardList className="h-4 w-4 mt-0.5 text-primary shrink-0" />
