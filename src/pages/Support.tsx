@@ -42,6 +42,7 @@ const patientTools = [
 ];
 
 const proTools = [
+  { key: "load_monitoring_opt_in", icon: Gauge },
   { key: "patient_daily_care", icon: Heart },
   { key: "clinic_overview", icon: BarChart3 }, // Localized help covers authenticated trial resumption, checkout and record preservation.
   { key: "care_services", icon: NotebookPen }, // Localized help covers requests and attendance confirmed by saved evolution in open appointments.

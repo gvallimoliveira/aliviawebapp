@@ -589,6 +589,13 @@
       "when": 1795067394543,
       "tag": "0083_pain_diary_care_team_read",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1795103536635,
+      "tag": "0084_patient_load_monitoring_opt_in",
+      "breakpoints": true
     }
   ]
 }

@@ -35,6 +35,10 @@ type ToolCategory = {
 };
 
 const categories: ToolCategory[] = [
+  { title: "Controle de carga", icon: Activity, items: [{ key: "load_monitoring_opt_in", icon: Activity,
+    title: "Ativar controle de carga por paciente",
+    desc: "No prontuário, em Carga e periodização, toque em Ativar para este paciente. Não é preciso refazer a avaliação. Novos pacientes começam com o módulo recolhido; quem já tem registros de acompanhamento permanece ativado. A equipe clínica de clínica ativa ou em teste pode ativar ou desativar, sem PRO pessoal; secretaria apenas consulta. Desativar recolhe o módulo e preserva planos, sessões, check-ins, testes e links existentes. Reativar recupera o histórico. Isso não registra alta nem interrompe os links do paciente ou preparador: gerencie os links na seção própria quando necessário.",
+  }] },
   { title: "Perfil pessoal do paciente", icon: Heart, items: [{ key: "patient_daily_care", icon: Activity,
     title: "Rotina diária e evolução em abas",
     desc: "O paciente vinculado abre em Hoje, com check-in de carga e prontidão e os exercícios prescritos. Minha Evolução reúne condições, avaliações e histórico. Agendamentos mantém os pedidos de horário e Mensagens & Avisos reúne conversas e comunicados. As ofertas de plano pessoal deixam de ocupar o topo. Os registros e as permissões existentes são preservados.",

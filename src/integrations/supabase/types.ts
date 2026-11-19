@@ -3263,6 +3263,7 @@ export type Database = {
           id: string
           import_batch_id: string | null
           is_study_case: boolean
+          load_monitoring_enabled: boolean
           notes: string | null
           occupation: string | null
           phone: string | null
@@ -3285,6 +3286,7 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           is_study_case?: boolean
+          load_monitoring_enabled?: boolean
           notes?: string | null
           occupation?: string | null
           phone?: string | null
@@ -3307,6 +3309,7 @@ export type Database = {
           id?: string
           import_batch_id?: string | null
           is_study_case?: boolean
+          load_monitoring_enabled?: boolean
           notes?: string | null
           occupation?: string | null
           phone?: string | null
@@ -5922,6 +5925,10 @@ export type Database = {
         Args: { _clinic_id: string; _professional_id: string }
         Returns: boolean
       }
+      can_manage_patient_load: {
+        Args: { _clinic_id: string; _professional_id: string }
+        Returns: boolean
+      }
       can_read_exercise_program: {
         Args: { _program_id: string }
         Returns: boolean
@@ -6665,6 +6672,15 @@ export type Database = {
           specialties: string[]
           state: string
         }[]
+      }
+      set_patient_load_monitoring: {
+        Args: {
+          _clinic_id?: string
+          _enabled: boolean
+          _patient_id: string
+          _professional_id?: string
+        }
+        Returns: boolean
       }
       studio_brand_credit_status: {
         Args: { p_brand_id: string }

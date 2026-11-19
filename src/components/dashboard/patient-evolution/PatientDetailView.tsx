@@ -33,7 +33,7 @@ import PatientPainEvolution from "./PatientPainEvolution";
 import PatientHorizontalRow from "./PatientHorizontalRow";
 import SessionNotesSection from "../SessionNotesSection";
 import VoiceNoteCard from "../VoiceNoteCard";
-import PeriodizationSection from "../periodization/PeriodizationSection";
+import LoadMonitoringGate from "../periodization/LoadMonitoringGate";
 import { ENABLE_PERIODIZATION } from "@/lib/featureFlags";
 import PainMapView from "@/components/assessment/PainMapView";
 import AssessmentSummaryView from "@/components/assessment/AssessmentSummaryView";
@@ -1654,12 +1654,8 @@ export default function PatientDetailView(props: any) {
 
       {/* Carga e periodização (sRPE, prontidão, ACWR e ciclos) */}
       {ENABLE_PERIODIZATION && (
-        <div id="sec-periodizacao" className="scroll-mt-24 space-y-3">
-          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Gauge className="h-4 w-4 text-primary" />
-            {language === "pt" ? "Carga e periodização" : language === "es" ? "Carga y periodización" : "Load & periodization"}
-          </h4>
-          <PeriodizationSection
+          <LoadMonitoringGate
+            key={`${clinicId ?? professionalId}:${patient?.patientRecord?.id ?? selectedEmail ?? patient?.name}`}
             assessments={patient?.assessments}
             patientId={patient?.patientRecord?.id ?? null}
             patientName={patient?.name ?? null}
@@ -1670,7 +1666,6 @@ export default function PatientDetailView(props: any) {
             readOnly={readOnly}
             isDemo={isDemo}
           />
-        </div>
       )}
 
 
