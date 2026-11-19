@@ -1,4 +1,5 @@
 import { useRegistrationPending } from "@/hooks/useRegistrationPending";
+import { WORK_DEMAND_IDS, workDemandLabel, formatParticipationContext } from "@/lib/participationContext";
 import RegistrationRequiredDialog from "@/components/dashboard/RegistrationRequiredDialog";
 import AssessmentPurposeFields, { purposeCopy } from "@/components/assessment/AssessmentPurposeFields";
 import PainMap from "@/components/assessment/PainMap";
@@ -287,6 +288,8 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
   const [healthConditionsOtherControl, setHealthConditionsOtherControl] = useState("");
   const [usesContinuousMedication, setUsesContinuousMedication] = useState("");
   const [occupation, setOccupation] = useState("");
+  const [workDemand, setWorkDemand] = useState("");
+  const [participationGoal, setParticipationGoal] = useState("");
   const [complementaryExams, setComplementaryExams] = useState("");
 
   // Dor
@@ -723,7 +726,7 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
 
   const draftState = {
     purpose, step, chiefComplaint, additionalComplaint, history, duration, onset, aggravating, relieving,
-    medications, previousSurgeries, comorbidities, occupation, complementaryExams,
+    medications, previousSurgeries, comorbidities, occupation, workDemand, participationGoal, complementaryExams,
     healthConditions, healthConditionsOther, healthConditionsOtherOnset,
     healthConditionsOtherControl, usesContinuousMedication,
     painScore, painType, painTypes, painRegions, painScoresPerRegion, painTypesPerRegion, painRegionRefinements,
@@ -739,7 +742,7 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
     const texts = [
       s.chiefComplaint, s.additionalComplaint, s.history, s.duration, s.onset,
       s.aggravating, s.relieving, s.medications, s.previousSurgeries, s.comorbidities,
-      s.occupation, s.complementaryExams, s.healthConditionsOther,
+      s.occupation, s.workDemand, s.participationGoal, s.complementaryExams, s.healthConditionsOther,
       s.healthConditionsOtherOnset, s.healthConditionsOtherControl,
       s.usesContinuousMedication, s.functionalTests, s.additionalClinicalNotes,
       s.clinicalImpression, s.diagnosisText, s.treatmentText,
@@ -811,6 +814,8 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
     setHealthConditionsOtherControl((p as any).healthConditionsOtherControl ?? "");
     setUsesContinuousMedication((p as any).usesContinuousMedication ?? "");
     setOccupation(p.occupation ?? "");
+    setWorkDemand((p as any).workDemand ?? "");
+    setParticipationGoal((p as any).participationGoal ?? "");
     setComplementaryExams(p.complementaryExams ?? "");
     setPainScore(p.painScore ?? 5);
     setPainTypes(
@@ -874,6 +879,8 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
     setHealthConditionsOtherControl(an.healthConditionsOtherControl || "");
     setUsesContinuousMedication(an.usesContinuousMedication || (an.medications ? "yes" : ""));
     setOccupation(an.occupation || "");
+    setWorkDemand(an.workDemand || "");
+    setParticipationGoal(an.participationGoal || "");
     setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
     setPainTypes(
@@ -987,6 +994,8 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
     setHealthConditionsOtherControl(an.healthConditionsOtherControl || "");
     setUsesContinuousMedication(an.usesContinuousMedication || (an.medications ? "yes" : ""));
     setOccupation(an.occupation || "");
+    setWorkDemand(an.workDemand || "");
+    setParticipationGoal(an.participationGoal || "");
     setComplementaryExams(an.complementaryExams || "");
     setPainScore(typeof a.pain_score === "number" ? a.pain_score : 5);
     setPainTypes(
@@ -1257,6 +1266,8 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
     usesContinuousMedication,
     continuousMedications: usesContinuousMedication === "no" ? "" : medications,
     occupation,
+    workDemand,
+    participationGoal,
     complementaryExams,
     painType: effectivePainTypes[0] || "",
     painTypes: effectivePainTypes,
@@ -1447,6 +1458,7 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
         aggravating && `Piora com: ${aggravating}`,
         relieving && `Alivia com: ${relieving}`,
         occupation && `Ocupação: ${occupation}`,
+        formatParticipationContext({ workDemand, participationGoal }),
         formatHealthConditions({ healthConditions, healthConditionsOther, healthConditionsOtherOnset, healthConditionsOtherControl }, "pt") &&
           `Condições de saúde: ${formatHealthConditions({ healthConditions, healthConditionsOther, healthConditionsOtherOnset, healthConditionsOtherControl }, "pt")}`,
         formatContinuousMedication({ usesContinuousMedication, continuousMedications: medications }, "pt") &&
@@ -2258,6 +2270,23 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
                   </div>
                 </div>
                 <div>
+                  <Label className="text-xs">{isPt ? "Rotina de trabalho (participação/ambiente)" : "Work routine (participation/environment)"}</Label>
+                  <div className="mt-1 grid grid-cols-2 gap-2">
+                    {WORK_DEMAND_IDS.map((id) => (
+                      <Button key={id} type="button" size="sm" variant={workDemand === id ? "default" : "outline"}
+                        className="h-auto min-h-9 py-1.5 rounded-lg text-xs justify-start whitespace-normal text-left" disabled={demoMode}
+                        onClick={() => setWorkDemand(workDemand === id ? "" : id)}>
+                        {workDemandLabel(id, language)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                {!preventive && <div>
+                  <Label className="text-xs">{isPt ? "Atividade que mais faz falta hoje" : "Activity most missed today"}</Label>
+                  <Input value={participationGoal} onChange={(e) => setParticipationGoal(e.target.value.slice(0, 200))} maxLength={200} disabled={demoMode}
+                    placeholder={isPt ? "Ex.: trabalhar 2h sem dor, correr, brincar com o filho" : "E.g. work 2h pain-free, run, play with my child"} className="mt-1 text-sm h-9" />
+                </div>}
+                <div>
                   <Label className="text-xs">{isPt ? "Exames complementares" : "Complementary exams"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(complementaryExams, MOCK_MANUAL_CASE.complementaryExams, setComplementaryExams, "")}>
                     <Textarea
@@ -2646,7 +2675,7 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
                   onChange={(e) => setAdditionalClinicalNotes(e.target.value)}
                   rows={14}
                   placeholder={isPt
-                    ? "Registre achados relevantes que não se encaixam nos campos acima: contexto familiar, suspeita clínica específica, compensações observadas, sinais comportamentais, fatores de adesão, hipóteses iniciais, raciocínio narrativo, etc."
+                    ? "Registre achados relevantes que não se encaixam nos campos acima: fatores ambientais (barreiras no trabalho/casa, mobiliário, transporte), suporte familiar, fatores pessoais/comportamentais, suspeita clínica específica, compensações observadas, sinais comportamentais, fatores de adesão, hipóteses iniciais, raciocínio narrativo, etc."
                     : "Record relevant findings that don't fit the fields above: family context, specific clinical suspicion, observed compensations, behavioral signs, adherence factors, initial hypotheses, narrative reasoning, etc."}
                   className="text-sm min-h-[240px]"
                   disabled={demoMode}

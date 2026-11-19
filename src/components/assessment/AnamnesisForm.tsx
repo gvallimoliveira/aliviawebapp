@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { WORK_DEMAND_IDS, workDemandLabel } from "@/lib/participationContext";
 import { motion } from "framer-motion";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -73,6 +74,9 @@ export interface AnamnesisData extends PurposeData {
   healthConditionsOtherControl?: string;
   usesContinuousMedication?: string;
   continuousMedications?: string;
+  /** CIF participação/ambiente (opcionais). */
+  workDemand?: string;
+  participationGoal?: string;
   /** Passos B2/B3 — triagem leiga de mecanismo de dor. */
   painMechanism?: LiteMechanismAnswers;
 }
@@ -1085,6 +1089,20 @@ const AnamnesisForm = ({ mode, onComplete, onBack, initialPainRegions, initialCh
                   </Button>
                 ))}
               </div>
+            </div>
+            <div className="space-y-3">
+              <Label>{language === "en" ? "Your work routine (optional)" : language === "es" ? "Tu rutina de trabajo (opcional)" : "Sua rotina de trabalho (opcional)"}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {WORK_DEMAND_IDS.map((id) => (
+                  <Button key={id} type="button" variant={data.workDemand === id ? "default" : "outline"} size="sm" className="rounded-xl h-auto py-2.5 whitespace-normal" onClick={() => setData({ ...data, workDemand: data.workDemand === id ? "" : id })}>
+                    {workDemandLabel(id, language)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{language === "en" ? "Which activity do you miss most today? (optional)" : language === "es" ? "¿Qué actividad más extrañas hoy? (opcional)" : "Qual atividade mais faz falta hoje? (opcional)"}</Label>
+              <Input value={data.participationGoal || ""} onChange={(e) => setData({ ...data, participationGoal: e.target.value.slice(0, 200) })} maxLength={200} placeholder={language === "en" ? "E.g. work without pain, run, play with my kids" : language === "es" ? "Ej.: trabajar sin dolor, correr, jugar con mis hijos" : "Ex.: trabalhar sem dor, correr, brincar com meu filho"} />
             </div>
           </div>
         );

@@ -635,7 +635,8 @@ ${Object.entries(anamnesisData.painRegionRefinements).map(([k, v]: [string, any]
 - Aggravating factors: ${anamnesisData.aggravatingFactors || "Not specified"}
 - Relieving factors: ${anamnesisData.relievingFactors || "Not specified"}
 - Activity level: ${anamnesisData.activityLevel}
-- Pain score (0-10) — general/overall: ${anamnesisData.painScore}
+${anamnesisData.workDemand || anamnesisData.participationGoal || anamnesisData.occupation ? `- CIF participation/environment context: occupation=${anamnesisData.occupation || "n/a"}; work demand=${anamnesisData.workDemand || "n/a"} (sitting|standing|physical_load|away_from_work); activity/participation most missed="${anamnesisData.participationGoal || "n/a"}". Link findings to this participation and set functional goals around it; never invent work restrictions.
+` : ""}- Pain score (0-10) — general/overall: ${anamnesisData.painScore}
 - Pain score mode: ${painScoreMode}${painScoreMode === "per_region" && Object.keys(painScoresPerRegion).length > 0 ? `
 - **PAIN INTENSITY PER BODY REGION (USE THIS AS PRIMARY PAIN INPUT — the general score above is only an average/reference):**
 ${Object.entries(painScoresPerRegion).map(([k, v]) => `    • ${k}: ${v}/10`).join("\n")}
