@@ -298,7 +298,7 @@ export default function PatientListView(props: any) {
                 return (
                   <Card
                     key={p.groupKey}
-                    className={`relative overflow-hidden cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
+                    className={`relative overflow-hidden [overflow:clip] cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
                     onClick={() => {
                       if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
                       setSelectedEmail(p.email || p.groupKey);
