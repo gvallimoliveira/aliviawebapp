@@ -66,32 +66,48 @@ function inssBody(name: string, hyp: string, a: any): string {
   ].filter(Boolean).join("\n\n") || "[descrever]";
   const objectives = Array.isArray(dx.clinicalImpression?.therapeuticObjectives) && dx.clinicalImpression.therapeuticObjectives.length
     ? dx.clinicalImpression.therapeuticObjectives.map((o: string) => `- ${o}`).join("\n") : "[descrever]";
-  return `Declaro, para fins de perícia médica, que ${name} encontra-se em acompanhamento fisioterapêutico sob minha responsabilidade, com avaliação realizada em ${evalDate}.
+  const pain = a?.pain_score ?? an.painScore;
+  const job = [an.occupation, an.profession, an.workDemands].filter((x: any) => typeof x === "string" && x.trim()).join(" — ");
+  const personal = [an.age ? `Idade: ${an.age} anos` : "", typeof an.lifestyle === "string" && an.lifestyle.trim() ? `Hábitos: ${an.lifestyle.trim()}` : "",
+    scales.filter((l: string) => /fabq|tampa|kinesio|cinesio/i.test(l)).join("; ")].filter(Boolean).join("\n") || "[descrever: idade, escolaridade, crenças/medo-evitação, expectativas]";
+  return `Declaro, para fins de perícia médica, que ${name} encontra-se em acompanhamento fisioterapêutico sob minha responsabilidade, com avaliação realizada em ${evalDate}. Este relatório segue o modelo biopsicossocial da Classificação Internacional de Funcionalidade, Incapacidade e Saúde (CIF/OMS).
 
-1. HISTÓRICO E QUADRO CLÍNICO
+1. CONDIÇÃO DE SAÚDE
 Queixa principal: ${fill(complaint)}
 Histórico do agravo: ${fill(an.history)}
 Tempo de evolução: ${fill(an.duration || an.painDuration)}
-Intensidade da dor (EVA): ${a?.pain_score ?? an.painScore ?? "[nº]"}/10
-Fatores de piora: ${fill(an.aggravatingFactors)}
+CID informado pelo médico assistente: [informar, se houver]
 
 2. IMPRESSÃO CLÍNICA
 ${fill(dx.clinicalImpression?.overview || dx.summary)}
 
-3. PRINCIPAIS DÉFICITS FUNCIONAIS
+3. FUNÇÕES E ESTRUTURAS DO CORPO (CIF b/s)
+Dor (b280): EVA ${pain ?? "[nº]"}/10. Fatores de piora: ${fill(an.aggravatingFactors)}
 ${deficits}
 
-4. DIAGNÓSTICO CINÉTICO-FUNCIONAL (HIPÓTESE FISIOTERAPÊUTICA)
+4. LIMITAÇÃO DE ATIVIDADES (CIF d — capacidade)
+[descrever tarefas limitadas com base nos achados: marcha prolongada, ortostatismo, agachar, subir escadas, carregar peso]
+
+5. RESTRIÇÃO DE PARTICIPAÇÃO (CIF d8 — trabalho e vida social)
+Ocupação e exigências: ${fill(job)}
+[descrever o impacto no desempenho laboral e nas atividades de vida diária]
+
+6. FATORES CONTEXTUAIS
+Ambientais (barreiras/facilitadores — CIF e): [descrever posto de trabalho, deslocamento, escadas, rede de apoio]
+Pessoais:
+${personal}
+
+7. DIAGNÓSTICO CINÉTICO-FUNCIONAL (HIPÓTESE FISIOTERAPÊUTICA)
 ${fill(hyp)}
 
-5. OBJETIVOS DO TRATAMENTO
+8. OBJETIVOS DO TRATAMENTO
 ${objectives}
 
-6. CONDUTAS REALIZADAS
+9. CONDUTAS REALIZADAS
 [descrever: recursos e técnicas aplicados, nº de sessões e período]
 
-7. LIMITAÇÕES FUNCIONAIS E CONCLUSÃO
-Os achados acima configuram limitação funcional para [descrever atividades: marcha prolongada, ortostatismo, carga, atividade laboral]. Indica-se a continuidade do tratamento fisioterapêutico, ${"[nº]"} sessões/semana por ${"[nº]"} semanas, com reavaliação ao final do período.
+10. CONCLUSÃO E PROGNÓSTICO FUNCIONAL
+Os achados relacionam a condição de saúde às deficiências de função descritas, com consequente limitação de atividades e restrição de participação em [descrever]. Indica-se a continuidade do tratamento fisioterapêutico, [nº] sessões/semana por [nº] semanas, com reavaliação ao final do período. Prognóstico funcional estimado: [descrever].
 
 Este relatório descreve a condição cinético-funcional observada e não substitui a avaliação médico-pericial.`;
 }

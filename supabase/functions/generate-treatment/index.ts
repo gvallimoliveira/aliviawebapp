@@ -1,3 +1,4 @@
+import { CIF_REASONING } from "../_shared/cif-reasoning.ts";
 import { isPreventiveAssessment, normalizeAssessmentPurpose, preventiveReasoningContext } from "../_shared/assessment-purpose.ts";
 import { requireUserOrAssessment, userCanAccessAssessment } from "../_shared/caller-auth.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
@@ -482,7 +483,7 @@ Generate a personalized 3-phase treatment plan in valid JSON format. Focus exerc
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: systemPrompt + buildRlcaReference({ anamnesisData, diagnosis, questionnaireResults }) },
+          { role: "system", content: systemPrompt + buildRlcaReference({ anamnesisData, diagnosis, questionnaireResults }) + CIF_REASONING },
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3,

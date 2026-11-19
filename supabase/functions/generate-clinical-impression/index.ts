@@ -1,3 +1,4 @@
+import { CIF_REASONING } from "../_shared/cif-reasoning.ts";
 import { isPreventiveAssessment, normalizeAssessmentPurpose, preventiveReasoningContext } from "../_shared/assessment-purpose.ts";
 import { requireUser } from "../_shared/caller-auth.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -343,7 +344,7 @@ ${preventiveReasoningContext(anamnesisData)}
 
     const response = await callAiWithFallback(LOVABLE_API_KEY, {
       messages: [
-        { role: "system", content: systemPrompt + buildRlcaReference(userPrompt) },
+        { role: "system", content: systemPrompt + buildRlcaReference(userPrompt) + CIF_REASONING },
         { role: "user", content: userPrompt },
       ],
       tools,

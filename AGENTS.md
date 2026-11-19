@@ -67,3 +67,4 @@
 - Photos: preparePhoto, record/Studio size, transparency/fallback; exclude signatures/PDFs/measurements. Vision: economical-vision zero-retention chat; clinical/measurement models unchanged.
 - Blog: preserve bodies/URLs; BlogDashboardReturn sends signed-in users to /dashboard.
 - PRO trial: pro_trial_ends_at caps AI credits at 5 (always blocks).
+- AI clinical texts append `_shared/cif-reasoning.ts` (CIF ↔ D.I.F.I ↔ STEPS relational guide) to every reasoning prompt; the INSS report template uses CIF sections; codes only when data exists, never invented.

@@ -1,3 +1,4 @@
+import { CIF_REASONING } from "../_shared/cif-reasoning.ts";
 import { canUseAgentScope } from "../_shared/agent-care-scope.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
@@ -1006,7 +1007,7 @@ ${SECURITY_POLICY}`;
     const referenceContext = [userMsg, patientCtx, ...(history || []).map((m: any) =>
       m.role === "user" ? m.parts : null)];
     const systemPrompt = buildSystemPrompt(patientCtx, evidence, !!thread.mentor_mode)
-      + buildRlcaReference(referenceContext);
+      + buildRlcaReference(referenceContext) + CIF_REASONING;
 
     const messages = [
       { role: "system", content: systemPrompt },

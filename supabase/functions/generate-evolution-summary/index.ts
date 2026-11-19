@@ -1,3 +1,4 @@
+import { CIF_REASONING } from "../_shared/cif-reasoning.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireUser } from "../_shared/caller-auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -129,7 +130,7 @@ Generate the deep evolution report now, sweeping ALL data above.`;
     const { callAiWithFallback } = await import("../_shared/ai-fallback.ts");
     const response = await callAiWithFallback(LOVABLE_API_KEY, {
       messages: [
-        { role: "system", content: systemPrompt + buildRlcaReference(userPrompt) },
+        { role: "system", content: systemPrompt + buildRlcaReference(userPrompt) + CIF_REASONING },
         { role: "user", content: userPrompt },
       ],
       tools: [
