@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea";
 import AddPatientModal from "../AddPatientModal";
 import ManualAssessmentModal from "../ManualAssessmentModal";
+import logoAlivia from "@/assets/logo-alivia.png";
 
 export default function PatientListView(props: any) {
   const {
@@ -297,7 +298,7 @@ export default function PatientListView(props: any) {
                 return (
                   <Card
                     key={p.groupKey}
-                    className={`cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
+                    className={`relative overflow-hidden cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
                     onClick={() => {
                       if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
                       setSelectedEmail(p.email || p.groupKey);
@@ -309,7 +310,14 @@ export default function PatientListView(props: any) {
                     onMouseUp={readOnly ? undefined : cancelLongPress}
                     onMouseLeave={readOnly ? undefined : cancelLongPress}
                   >
-                    <CardContent className="py-3 px-4">
+                    <img
+                      src={logoAlivia}
+                      alt=""
+                      aria-hidden
+                      draggable={false}
+                      className="pointer-events-none select-none absolute -right-6 top-1/2 -translate-y-1/2 h-[135%] w-auto object-contain opacity-[0.07] group-hover:opacity-[0.12] transition-opacity duration-300 z-0"
+                    />
+                    <CardContent className="relative z-10 py-3 px-4">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
                         <div className="flex-1 min-w-0 space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
