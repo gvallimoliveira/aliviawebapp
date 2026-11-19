@@ -1695,5 +1695,10 @@
   "credits.trialActivated": "Suscripción PRO activada. Créditos de IA liberados.",
   "credits.trialPaymentFailed": "La tarjeta rechazó el cobro. Actualízala en Gestionar suscripción e inténtalo de nuevo.",
   "credits.trialActivateError": "No se pudo activar ahora. Inténtalo de nuevo en un momento.",
-  "credits.trialWidget": "Prueba gratis: 5 créditos de IA. Los créditos completos se liberan cuando empieza la suscripción."
+  "credits.trialWidget": "Prueba gratis: 5 créditos de IA. Los créditos completos se liberan cuando empieza la suscripción.",
+  "account.theme.dark": "Tema oscuro",
+  "support.patient.tool.theme.title": "Tema claro y oscuro",
+  "support.patient.tool.theme.desc": "En Mi Cuenta, activa o desactiva Tema oscuro. La elección se guarda en este navegador; el tema claro sigue como predeterminado.",
+  "support.pro.tool.theme.title": "Tema claro y oscuro",
+  "support.pro.tool.theme.desc": "En Mi Cuenta, activa o desactiva Tema oscuro. La elección se guarda en este navegador; el tema claro sigue como predeterminado."
 }

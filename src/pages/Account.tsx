@@ -38,6 +38,7 @@ import ImportDataCard from "@/components/dashboard/ImportDataCard";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useIsProfessionalAccount } from "@/hooks/useIsProfessionalAccount";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
+import ThemeToggle from "@/components/account/ThemeToggle";
 
 import InstallAppDialog from "@/components/InstallAppDialog";
 import { Bell, BellOff, Send, Smartphone, Download } from "lucide-react";
@@ -267,6 +268,7 @@ const Account = () => {
         </div>
 
         <SectionTitle icon={User}>{t.sec_account}</SectionTitle>
+        <ThemeToggle />
 
         <Card className="mb-6">
           <CardHeader>

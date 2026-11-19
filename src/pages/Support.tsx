@@ -22,6 +22,7 @@ import InstallAppCard from "@/components/InstallAppCard";
 type SupportProfile = "patient" | "professional" | null;
 
 const patientTools = [
+  { key: "theme", icon: Palette },
   { key: "daily_care", icon: Activity },
   { key: "checkin", icon: Gauge },
   { key: "prescribed_exercises", icon: Dumbbell },
@@ -42,6 +43,7 @@ const patientTools = [
 ];
 
 const proTools = [
+  { key: "theme", icon: Palette },
   { key: "load_monitoring_opt_in", icon: Gauge },
   { key: "patient_daily_care", icon: Heart },
   { key: "clinic_overview", icon: BarChart3 }, // Localized help covers authenticated trial resumption, checkout and record preservation.

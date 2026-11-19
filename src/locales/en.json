@@ -1695,5 +1695,10 @@
   "credits.trialActivated": "PRO subscription activated. AI credits unlocked.",
   "credits.trialPaymentFailed": "The card declined the charge. Update it in Manage subscription and try again.",
   "credits.trialActivateError": "Couldn't activate right now. Please try again shortly.",
-  "credits.trialWidget": "Free trial: 5 AI credits. Full credits unlock when your subscription starts."
+  "credits.trialWidget": "Free trial: 5 AI credits. Full credits unlock when your subscription starts.",
+  "account.theme.dark": "Dark theme",
+  "support.patient.tool.theme.title": "Light and dark theme",
+  "support.patient.tool.theme.desc": "In My Account, turn Dark theme on or off. Your choice is saved in this browser; light remains the default.",
+  "support.pro.tool.theme.title": "Light and dark theme",
+  "support.pro.tool.theme.desc": "In My Account, turn Dark theme on or off. Your choice is saved in this browser; light remains the default."
 }

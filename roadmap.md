@@ -1,9 +1,12 @@
 # Roadmap
 
+## Tema na Minha conta
+- [x] Seletor Tema escuro em Minha conta, preferência neste navegador e claro como padrão; ajuda pt/en/es atualizada. Conta real autenticada: ativar → recarregar → desativar → recarregar conferidos em 1280px e 390px sem overflow; build OK. Studio preservado. Acabamento de todas as telas e iPhone físico não auditados; não publicado.
+
 ## Etapa 3 — controle de carga opcional no prontuário
 - [x] Ativar/desativar por paciente diretamente no prontuário, com persistência e isolamento clínica/PRO; histórico preservado e 28 pacientes já acompanhados mantidos ativos. Ativar não cria plano STEPS nem link automaticamente.
 - [x] Módulo completo só monta quando ativado; ajuda pt/en/es atualizada. Clínica autenticada sem PRO pessoal → paciente técnico novo → ativar → recarregar → desativar → recarregar → reativar conferidos em desktop/celular 390px; paciente técnico removido e ausência confirmada. Testes de SQL/permissões e persistência aprovados; build OK. PRO real e iPhone físico não exercitados, sem publicação. Erros preexistentes de consulta de templates/exclusão com professional_id vazio observados fora do controle de carga, não alterados nesta etapa.
-- Etapa 4 — isolamento do Studio fica para o próximo pedido; não faz parte desta rodada.
+- Etapa 4 — sem alteração: usuário não identifica vazamento do Studio; isolamento adicional sem problema concreto não se justifica.
 - [x] Conferência adicional: ativação/desativação e abertura/fechamento do formulário de sessão monitorada nos temas claro/escuro em 1280px e 390px; capturas inspecionadas, sem gravar sessões clínicas. Segundo paciente técnico removido.
 
 ## Entrada contínua no trial da clínica

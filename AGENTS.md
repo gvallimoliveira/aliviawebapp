@@ -1,4 +1,5 @@
 # Architecture decisions
+- Theme uses one next-themes class provider and a browser-local preference with light default; account toggle never changes auth or clinical data.
 - Patient load opt-in uses scoped `set_patient_load_monitoring` and a lazy record gate; keep existing users enabled, never tie visibility to plan status or delete history/links when hiding.
 - Clinic checkout shares prices/validated metadata; refresh on return. Landing billing stays sticky within price cards; credit/refund details follow them.
 - Annual refunds share copy keys; annualRefund.ts calculates, never pays.

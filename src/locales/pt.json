@@ -1695,5 +1695,10 @@
   "credits.trialActivated": "Assinatura PRO ativada. Créditos de IA liberados.",
   "credits.trialPaymentFailed": "O cartão não aprovou a cobrança. Atualize o cartão em Gerenciar assinatura e tente de novo.",
   "credits.trialActivateError": "Não foi possível ativar agora. Tente de novo em instantes.",
-  "credits.trialWidget": "Teste grátis: 5 créditos de IA. Os créditos totais são liberados quando a assinatura começar."
+  "credits.trialWidget": "Teste grátis: 5 créditos de IA. Os créditos totais são liberados quando a assinatura começar.",
+  "account.theme.dark": "Tema escuro",
+  "support.patient.tool.theme.title": "Tema claro e escuro",
+  "support.patient.tool.theme.desc": "Em Minha conta, ative ou desative Tema escuro. A escolha fica salva neste navegador; o tema claro continua como padrão.",
+  "support.pro.tool.theme.title": "Tema claro e escuro",
+  "support.pro.tool.theme.desc": "Em Minha conta, ative ou desative Tema escuro. A escolha fica salva neste navegador; o tema claro continua como padrão."
 }
