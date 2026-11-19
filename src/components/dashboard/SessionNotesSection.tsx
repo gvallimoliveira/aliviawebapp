@@ -37,15 +37,20 @@ interface NoteTemplate {
 interface SessionNotesSectionProps {
   professionalId: string;
   patientEmail: string;
+  /** Gaveta do ciclo: mostra só evoluções dentro da janela [start, end). */
+  dateRange?: { start: string | null; end: string | null } | null;
   isDemo?: boolean;
   /** Em modo clínica os registros são da equipe: leitura e escrita usam o clinic_id. */
   clinicId?: string | null;
 }
 
-const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }: SessionNotesSectionProps) => {
+const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId, dateRange }: SessionNotesSectionProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [notes, setNotes] = useState<SessionNote[]>([]);
+  const visibleNotes = dateRange && (dateRange.start || dateRange.end)
+    ? notes.filter((n) => (!dateRange.start || n.session_date >= dateRange.start) && (!dateRange.end || n.session_date < dateRange.end))
+    : notes;
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingNote, setEditingNote] = useState<SessionNote | null>(null);
@@ -452,17 +457,17 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
           <div className="flex justify-center py-4">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
-        ) : notes.length === 0 ? (
+        ) : visibleNotes.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-3">{t("session_notes.empty")}</p>
         ) : (
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2 px-0.5">
               <p className="text-[11px] text-muted-foreground">
-                {notes.length} registro{notes.length === 1 ? "" : "s"} · última sessão em{" "}
-                {new Date(notes[0].session_date + "T12:00:00").toLocaleDateString("pt-BR")}
+                {visibleNotes.length} registro{visibleNotes.length === 1 ? "" : "s"} · última sessão em{" "}
+                {new Date(visibleNotes[0].session_date + "T12:00:00").toLocaleDateString("pt-BR")}
               </p>
             </div>
-            {notes.slice(0, 3).map((note) => (
+            {visibleNotes.slice(0, 3).map((note) => (
               <SessionNoteItem
                 key={note.id}
                 note={note}
@@ -473,7 +478,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
                 authorName={clinicId ? authors[(note as any).professional_id] : undefined}
               />
             ))}
-            {notes.length > 3 && (
+            {visibleNotes.length > 3 && (
               <Button
                 variant="outline"
                 size="sm"
@@ -481,7 +486,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
                 onClick={() => setShowHistory(true)}
               >
                 <History className="h-3.5 w-3.5" />
-                Ver histórico completo ({notes.length})
+                Ver histórico completo ({visibleNotes.length})
               </Button>
             )}
           </div>
@@ -492,7 +497,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId }:
       <SessionNotesHistoryModal
         open={showHistory}
         onOpenChange={setShowHistory}
-        notes={notes}
+        notes={visibleNotes}
         onEdit={startEdit}
         onRepeat={handleRepeat}
         onDelete={setDeleteId}

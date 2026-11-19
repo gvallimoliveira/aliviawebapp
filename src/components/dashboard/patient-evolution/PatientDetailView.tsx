@@ -41,6 +41,7 @@ import RecordSummaryDialog from "./RecordSummaryDialog";
 import { generateEvolutionPdfBlob, type EvolutionSummary } from "@/utils/generatePdf";
 import { mockEvolutionSummary } from "@/data/mockPatientData";
 import { supabase } from "@/integrations/supabase/client";
+import { cycleAssessments, cycleWindow, inWindow } from "@/lib/assessmentCycle";
 import { Activity, AlertTriangle, HeartPulse, Archive, ArchiveRestore, ArrowLeft, Brain, CheckCircle2, ChevronRight, Circle, ClipboardList, Copy, Dumbbell, ExternalLink, Eye, EyeOff, FileCheck, FilePlus, FileText, FileUp, Gauge, Loader2, Lock, Mail, MessageCircle, MoreVertical, NotebookPen, Pencil, RefreshCw, RotateCcw, ScanLine, Share2, Sparkles, Stethoscope, Trash2, TrendingUp, UserCog, Users } from "lucide-react";
 import FreeReportDialog from "./FreeReportDialog";
 import { openPhysioTech, PhysioTechIcon } from "@/components/PhysioTechShortcut";
@@ -320,6 +321,25 @@ export default function PatientDetailView(props: any) {
   const viewedAssessment = React.useMemo(() => viewedAssessmentId ? (patient?.assessments || []).find((a: any) => a.id === viewedAssessmentId) || null : null, [viewedAssessmentId, patient?.assessments]);
   const isViewingHistory = !!viewedAssessment && viewedAssessment.id !== latestAssessment?.id;
   const drawerAssessment = viewedAssessment || latestAssessment;
+  // Gaveta do ciclo: dor, mecanismo, mapa e evoluções seguem a queixa da avaliação em foco.
+  const [showAllCycles, setShowAllCycles] = React.useState(false);
+  React.useEffect(() => { setShowAllCycles(false); }, [patient?.groupKey, viewedAssessmentId]);
+  const allAssessments: any[] = patient?.assessments || [];
+  const cycleList = React.useMemo(() => showAllCycles ? allAssessments : cycleAssessments(allAssessments, drawerAssessment), [allAssessments, drawerAssessment, showAllCycles]);
+  const cycleRange = React.useMemo(() => showAllCycles ? null : cycleWindow(allAssessments, drawerAssessment), [allAssessments, drawerAssessment, showAllCycles]);
+  const hiddenCycleCount = allAssessments.length - cycleAssessments(allAssessments, drawerAssessment).length;
+  const [cycleCheckins, setCycleCheckins] = React.useState<{ date: string; pain: number }[]>([]);
+  const checkinPatientId = patient?.patientRecord?.id || null;
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!checkinPatientId || isDemo) { setCycleCheckins([]); return; }
+    (async () => {
+      const { data } = await (supabase.from("readiness_checkins") as any).select("checkin_date, pain").eq("patient_id", checkinPatientId).not("pain", "is", null).order("checkin_date", { ascending: true }).limit(400);
+      if (!cancelled) setCycleCheckins(((data || []) as any[]).map((r) => ({ date: r.checkin_date, pain: r.pain })));
+    })();
+    return () => { cancelled = true; };
+  }, [checkinPatientId, isDemo]);
+  const visibleCheckins = React.useMemo(() => cycleRange ? cycleCheckins.filter((c) => inWindow(c.date, cycleRange)) : cycleCheckins, [cycleCheckins, cycleRange]);
   const latestAnamnesisFields = viewedAssessment && typeof getAnamnesisFields === "function" ? getAnamnesisFields(viewedAssessment) : currentAnamnesisFields;
   const drawerCharts = React.useMemo(() => {
     const all = questionnaireEvolution || [];
@@ -1504,14 +1524,14 @@ export default function PatientDetailView(props: any) {
 
 
 
-      <div id="sec-evolucao-dor" className="scroll-mt-24"><PatientPainEvolution assessments={patient.assessments} /></div>
+      <div id="sec-evolucao-dor" className="scroll-mt-24">{hiddenCycleCount > 0 && <div className="flex justify-end -mb-2"><Button type="button" variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => setShowAllCycles((v) => !v)}>{showAllCycles ? "Mostrar só este ciclo" : `Incluir outros ciclos (${hiddenCycleCount})`}</Button></div>}<PatientPainEvolution assessments={cycleList} checkins={visibleCheckins} /></div>
 
       {/* Passo F1 — evolução longitudinal do mecanismo de dor */}
-      <div id="sec-mecanismo-dor" className="scroll-mt-24"><MechanismEvolutionCard assessments={patient.assessments} /></div>
+      <div id="sec-mecanismo-dor" className="scroll-mt-24"><MechanismEvolutionCard assessments={cycleList} /></div>
 
       {/* Mapa de Dor comparativo (agrupa logo após a linha do tempo) */}
       <div id="sec-mapa-dor" className="scroll-mt-24">
-      {patient.assessments.some((a: any) => a.pain_regions?.length > 0) && <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Stethoscope className="h-4 w-4 text-primary" />Mapa de Dor — Comparativo</CardTitle></CardHeader><CardContent><div className="flex items-start gap-4 overflow-x-auto overscroll-x-contain snap-x snap-mandatory pb-2 [scrollbar-width:thin]">{patient.assessments.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => <div key={a.id} className={`w-56 max-w-[85%] shrink-0 snap-start text-center space-y-2 rounded-xl p-2 transition-colors ${a.id === drawerAssessment?.id && patient.assessments.length > 1 ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}><p className="text-xs font-medium text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}{a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}</p><PainMapView painRegions={a.pain_regions} compact /></div>)}</div></CardContent></Card>}
+      {cycleList.some((a: any) => a.pain_regions?.length > 0) && <Card><CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Stethoscope className="h-4 w-4 text-primary" />Mapa de Dor — Comparativo</CardTitle></CardHeader><CardContent><div className="flex items-start gap-4 overflow-x-auto overscroll-x-contain snap-x snap-mandatory pb-2 [scrollbar-width:thin]">{cycleList.filter((a: any) => a.pain_regions?.length > 0).map((a: any) => <div key={a.id} className={`w-56 max-w-[85%] shrink-0 snap-start text-center space-y-2 rounded-xl p-2 transition-colors ${a.id === drawerAssessment?.id && patient.assessments.length > 1 ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}><p className="text-xs font-medium text-muted-foreground">{new Date(a.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}{a.pain_score != null && <span className="ml-1.5 text-foreground font-semibold">• Dor: {a.pain_score}/10</span>}</p><PainMapView painRegions={a.pain_regions} compact /></div>)}</div></CardContent></Card>}
       </div>
 
 
@@ -1612,7 +1632,7 @@ export default function PatientDetailView(props: any) {
 
       {/* Notas de sessão */}
       <div id="sec-notas-sessao" className="scroll-mt-24">
-      {selectedEmail && <SessionNotesSection professionalId={professionalId} patientEmail={selectedEmail} isDemo={isDemo} clinicId={clinicId} />}
+      {selectedEmail && <SessionNotesSection professionalId={professionalId} patientEmail={selectedEmail} isDemo={isDemo} clinicId={clinicId} dateRange={cycleRange} />}
       </div>
 
       {/* Dinamometria — sempre disponível no prontuário (upload PDF/foto ou registro manual) */}
