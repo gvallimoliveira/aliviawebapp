@@ -155,7 +155,7 @@ export interface ResponsibleProfessional {
   /** Optional signature image as data URL (PNG with transparent bg).
    *  When present, rendered above the signature line. */
   signatureImageDataUrl?: string;
-  /** Student access flag. When true, PDF shows "Alivia Acadêmico" disclaimer
+  /** Student access flag. When true, PDF shows "Aliv.iA Acadêmico" disclaimer
    *  instead of CREFITO and adds a top banner identifying the academic report. */
   isStudent?: boolean;
   studentInstitution?: string;
@@ -257,7 +257,7 @@ async function drawResponsibleBlock(
   doc.setTextColor(...COLORS.muted);
   let credentialTxt: string;
   if (prof.isStudent) {
-    const pieces = ["Alivia Acadêmico"];
+    const pieces = ["Aliv.iA Acadêmico"];
     if (prof.studentInstitution) pieces.push(prof.studentInstitution);
     if (prof.studentPeriod) pieces.push(prof.studentPeriod);
     credentialTxt = pieces.join(" · ");
@@ -2603,8 +2603,8 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
       responsibleProfessional.studentPeriod,
     ].filter(Boolean).join(" · ");
     const bannerLabel = isPt
-      ? `Alivia Acadêmico · Avaliação realizada por estudante — ${studentSuffix}`
-      : `Alivia Academic · Assessment by student — ${studentSuffix}`;
+      ? `Aliv.iA Acadêmico · Avaliação realizada por estudante — ${studentSuffix}`
+      : `Aliv.iA Academic · Assessment by student — ${studentSuffix}`;
     const maxBannerW = CONTENT_WIDTH - 12;
     let truncated = bannerLabel;
     if (doc.getTextWidth(truncated) > maxBannerW) {

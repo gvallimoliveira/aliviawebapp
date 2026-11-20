@@ -555,7 +555,7 @@ const PartnerCard = ({ partner, t, togglingMap, onToggle, onResendPassword, onRe
         {partner.is_student && (
           <p className="text-xs text-primary mt-0.5 flex items-center gap-1">
             <GraduationCap className="h-3 w-3" />
-            🎓 Alivia Acadêmico
+            🎓 Aliv.iA Acadêmico
             {effectiveActiveMode && (
               <span className="text-[10px] text-muted-foreground ml-1">
                 · {t.operating_as} <strong>{effectiveActiveMode === "student" ? t.mode_student : t.mode_professional}</strong>

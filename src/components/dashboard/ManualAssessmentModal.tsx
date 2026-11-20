@@ -215,7 +215,7 @@ const STEPS = [
   { id: "adm", label: "Mobilidade articular (ADM)" },
   { id: "testes", label: "Testes funcionais" },
   { id: "dinamometria", label: "Dinamometria" },
-  { id: "diagnostico", label: "Diagnóstico" },
+  { id: "diagnostico", label: "Hipótese" },
 ];
 
 const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinicId, patientName, patientEmail, patientId, editAssessment, prefillData, onSaved, demoMode = false, continuationOfLink = false }: ManualAssessmentModalProps & { continuationOfLink?: boolean }) => {
@@ -1376,7 +1376,7 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
         setDiagnosisText(raw);
         aiDiagnosisBaselineRef.current = raw;
       }
-      toast({ title: isPt ? "Diagnóstico gerado!" : "Diagnosis generated!" });
+      toast({ title: isPt ? "Hipótese gerada!" : "Hypothesis generated!" });
     } catch (err: any) {
       toast({ title: isPt ? "Erro na IA" : "AI error", description: err.message, variant: "destructive" });
     } finally {
@@ -1889,8 +1889,8 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
   };
 
   const stepLabels = isPt
-    ? ["Anamnese", "Red Flags", "Mapa de dor", "Intensidade & Tipo", "Observações clínicas", "Questionários", "Mobilidade articular (ADM)", "Testes funcionais", "Dinamometria", "Diagnóstico"]
-    : ["Anamnesis", "Red Flags", "Pain map", "Intensity & Type", "Clinical observations", "Questionnaires", "Joint mobility (ROM)", "Functional tests", "Dynamometry", "Diagnosis"];
+    ? ["Anamnese", "Red Flags", "Mapa de dor", "Intensidade & Tipo", "Observações clínicas", "Questionários", "Mobilidade articular (ADM)", "Testes funcionais", "Dinamometria", "Hipótese"]
+    : ["Anamnesis", "Red Flags", "Pain map", "Intensity & Type", "Clinical observations", "Questionnaires", "Joint mobility (ROM)", "Functional tests", "Dynamometry", "Hypothesis"];
 
   return (
     <>
@@ -3090,10 +3090,10 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
                 </div>
                 <Button onClick={generateAIDiagnosis} disabled={generatingDx} variant="outline" size="sm" className="gap-2">
                   {generatingDx ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                  {isPt ? "Gerar diagnóstico com IA" : "Generate diagnosis with AI"}
+                  {isPt ? "Gerar hipótese com IA" : "Generate hypothesis with AI"}
                 </Button>
                 <div>
-                  <Label className="text-xs">{isPt ? "Diagnóstico / Hipótese" : "Diagnosis / Hypothesis"}</Label>
+                  <Label className="text-xs">{isPt ? "Hipótese clínica" : "Clinical hypothesis"}</Label>
                   <DemoShield on={demoMode} onAutofill={() => autofill(diagnosisText, MOCK_MANUAL_CASE.diagnosisText, setDiagnosisText, "")}>
                     <Textarea value={diagnosisText} onChange={(e) => setDiagnosisText(e.target.value)} rows={8} className="mt-1 text-sm" />
                   </DemoShield>

@@ -1,3 +1,4 @@
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -151,7 +152,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
   const health = summaryHealthRecord(assessments, healthRecords);
   const impression = summaryImpression(assessment?.diagnosis?.clinicalImpression);
   const hep = latestByCreated(heps);
-  const hepLink = hep ? `${window.location.origin}/hep/${hep.token}` : null;
+  const hepLink = hep ? `${getPublicOrigin()}/hep/${hep.token}` : null;
   const hasLoad = load.entries.length > 0 || load.checkins.length > 0 || load.sessions.length > 0;
   const phase = currentStepsPhase(load.cycles, load.plan);
   const painfulTests = summaryPainfulTests(assessment).map((id) => { const def = functionalTests.find((ft) => ft.id === id); return def ? i18n.t(def.nameKey) : id; });

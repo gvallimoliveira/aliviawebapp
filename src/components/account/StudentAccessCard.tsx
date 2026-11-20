@@ -18,7 +18,7 @@ import { hasRealCrefito } from "@/lib/crefito";
 
 /**
  * "Acesso Estudante" — toggle that turns a regular professional account into an
- * Alivia Acadêmico account: CREFITO becomes optional, marketplace listing is
+ * Aliv.iA Acadêmico account: CREFITO becomes optional, marketplace listing is
  * disabled, and PDFs/links display the academic disclaimer.
  *
  * Lock rule: once a professional has registered with a CREFITO, the toggle is
@@ -50,7 +50,7 @@ const StudentAccessCard = () => {
 
   const t = isPt
     ? {
-        title: "Acesso Estudante — Alivia Acadêmico",
+        title: "Acesso Estudante — Aliv.iA Acadêmico",
         desc: "Para estudantes de fisioterapia ainda sem CREFITO. Ativa o selo acadêmico; as ferramentas profissionais só liberam com assinatura PRO ativa, exceto parceiro acadêmico habilitado pelo admin.",
         toggle: "Sou estudante de fisioterapia",
         toggle_hint: "Desative para cadastrar seu CREFITO e ter acesso ao painel exclusivamente profissional",
@@ -77,8 +77,8 @@ const StudentAccessCard = () => {
         vip_badge: "VIP · alternância livre",
         vip_desc: "Conta de teste: alternar não apaga seu CREFITO nem seus dados.",
         no_sub_title: "O selo acadêmico não substitui a assinatura PRO",
-        no_sub_desc: "O modo Alivia Acadêmico é apenas um identificador visual nos PDFs e links públicos. Para liberar as ferramentas PRO (painel de pacientes, IA clínica, programas de exercício, prontuário) você precisa de uma assinatura ativa.",
-        no_sub_note: "É a mesma assinatura PRO do fisioterapeuta formado — mesmo produto, mesmo preço. Enquanto você não cadastrar seu CREFITO, seu perfil continua identificado como Alivia Acadêmico em PDFs e links públicos. Ao registrar o CREFITO depois, o selo acadêmico some automaticamente e a conta passa a operar como Profissional, sem nova cobrança.",
+        no_sub_desc: "O modo Aliv.iA Acadêmico é apenas um identificador visual nos PDFs e links públicos. Para liberar as ferramentas PRO (painel de pacientes, IA clínica, programas de exercício, prontuário) você precisa de uma assinatura ativa.",
+        no_sub_note: "É a mesma assinatura PRO do fisioterapeuta formado — mesmo produto, mesmo preço. Enquanto você não cadastrar seu CREFITO, seu perfil continua identificado como Aliv.iA Acadêmico em PDFs e links públicos. Ao registrar o CREFITO depois, o selo acadêmico some automaticamente e a conta passa a operar como Profissional, sem nova cobrança.",
         no_sub_cta: "Assinar PRO (anual)",
         no_sub_cta_monthly: "Ver plano mensal",
         mode_title: "Perfil ativo agora",
@@ -86,10 +86,10 @@ const StudentAccessCard = () => {
         mode_pro: "Profissional",
         mode_pro_desc: "PDFs e links exibem CREFITO; aparece no marketplace.",
         mode_student: "Acadêmico",
-        mode_student_desc: "PDFs e links exibem o selo Alivia Acadêmico; sai do marketplace.",
+        mode_student_desc: "PDFs e links exibem o selo Aliv.iA Acadêmico; sai do marketplace.",
       }
     : {
-        title: "Student Access — Alivia Academic",
+        title: "Student Access — Aliv.iA Academic",
         desc: "For physiotherapy students without a CREFITO yet. Enables the academic seal; professional tools unlock only with an active PRO subscription, except admin-enabled academic partners.",
         toggle: "I am a physiotherapy student",
         toggle_hint: "Disable to register your CREFITO and access the exclusively professional panel",
@@ -116,8 +116,8 @@ const StudentAccessCard = () => {
         vip_badge: "VIP · free toggle",
         vip_desc: "Test account: toggling does not erase your CREFITO or data.",
         no_sub_title: "The academic seal does not replace a PRO subscription",
-        no_sub_desc: "Alivia Academic mode is only a visual identifier on PDFs and public links. To unlock PRO tools (patient panel, clinical AI, exercise programs, chart) you need an active subscription.",
-        no_sub_note: "This is the same PRO subscription used by licensed physiotherapists — same product, same price. As long as you don't register your CREFITO, your profile stays labeled as Alivia Academic on PDFs and public links. When you later add a CREFITO, the academic seal is removed automatically and the account starts operating as Professional, with no extra charge.",
+        no_sub_desc: "Aliv.iA Academic mode is only a visual identifier on PDFs and public links. To unlock PRO tools (patient panel, clinical AI, exercise programs, chart) you need an active subscription.",
+        no_sub_note: "This is the same PRO subscription used by licensed physiotherapists — same product, same price. As long as you don't register your CREFITO, your profile stays labeled as Aliv.iA Academic on PDFs and public links. When you later add a CREFITO, the academic seal is removed automatically and the account starts operating as Professional, with no extra charge.",
         no_sub_cta: "Subscribe to PRO (annual)",
         no_sub_cta_monthly: "See monthly plan",
         mode_title: "Active profile right now",
@@ -125,7 +125,7 @@ const StudentAccessCard = () => {
         mode_pro: "Professional",
         mode_pro_desc: "PDFs and links show CREFITO; listed on the marketplace.",
         mode_student: "Academic",
-        mode_student_desc: "PDFs and links show the Alivia Academic seal; hidden from marketplace.",
+        mode_student_desc: "PDFs and links show the Aliv.iA Academic seal; hidden from marketplace.",
       };
 
   useEffect(() => {

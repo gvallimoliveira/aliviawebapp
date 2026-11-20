@@ -41,7 +41,7 @@ interface ClinicContextType {
   // New: unified context selector
   hasProfessionalProfile: boolean;
   setHasProfessionalProfile: (v: boolean) => void;
-  // True when the professional profile is in Alivia Acadêmico (student) mode.
+  // True when the professional profile is in Aliv.iA Acadêmico (student) mode.
   // Drives label/icon swap in ContextSelectionModal & ClinicContextSelector.
   isStudentProfessional: boolean;
   setIsStudentProfessional: (v: boolean) => void;

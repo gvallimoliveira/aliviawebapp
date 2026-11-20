@@ -60,6 +60,8 @@ const AppVersionBadge = ({ className = "", align = "center" }: Props) => {
   const alignClass =
     align === "left" ? "text-left" : align === "right" ? "text-right" : "text-center";
 
+  if (isDev) return null;
+
   return (
     <button
       type="button"

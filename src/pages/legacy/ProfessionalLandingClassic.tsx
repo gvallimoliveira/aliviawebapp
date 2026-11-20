@@ -304,10 +304,10 @@ const ProfessionalLandingClassic = () => {
               </div>
               <p className="text-sm text-amber-700/90 leading-relaxed">
                 {language === "pt"
-                  ? "Ao assinar o Plano Profissional, você pode ativar o modo Alivia Acadêmico e usar todas as ferramentas PRO com selo acadêmico — ideal para prática supervisionada e estágios."
+                  ? "Ao assinar o Plano Profissional, você pode ativar o modo Aliv.iA Acadêmico e usar todas as ferramentas PRO com selo acadêmico — ideal para prática supervisionada e estágios."
                   : language === "es"
-                  ? "Al suscribirte al Plan Profesional, puedes activar el modo Alivia Académico y usar todas las herramientas PRO con sello académico — ideal para práctica supervisada y pasantías."
-                  : "By subscribing to the Professional Plan, you can activate Alivia Academic mode and use all PRO tools with an academic seal — ideal for supervised practice and internships."}
+                  ? "Al suscribirte al Plan Profesional, puedes activar el modo Aliv.iA Académico y usar todas las herramientas PRO con sello académico — ideal para práctica supervisada y pasantías."
+                  : "By subscribing to the Professional Plan, you can activate Aliv.iA Academic mode and use all PRO tools with an academic seal — ideal for supervised practice and internships."}
               </p>
             </div>
           </motion.div>

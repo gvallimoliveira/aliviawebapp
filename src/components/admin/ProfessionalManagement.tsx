@@ -408,7 +408,7 @@ const ProfessionalManagement = ({ language }: Props) => {
                           {p.is_student ? (
                             <Badge variant="outline" className="text-[10px] border-primary/40 text-primary bg-primary/5 gap-1">
                               <GraduationCap className="h-3 w-3" />
-                              Alivia Acadêmico
+                              Aliv.iA Acadêmico
                             </Badge>
                           ) : p.crefito ? (
                             <>

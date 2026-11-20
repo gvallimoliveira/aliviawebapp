@@ -427,7 +427,7 @@ const ExerciseProgram = () => {
         {(program?.professional?.active_profile_mode ?? (program?.professional?.is_student ? "student" : "professional")) === "student" && (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
             <p className="font-semibold">
-              {language === "pt" ? "Alivia Acadêmico" : language === "es" ? "Alivia Académico" : "Alivia Academic"}
+              {language === "pt" ? "Aliv.iA Acadêmico" : language === "es" ? "Aliv.iA Académico" : "Aliv.iA Academic"}
             </p>
             <p className="text-xs opacity-90 mt-0.5">
               {language === "pt"

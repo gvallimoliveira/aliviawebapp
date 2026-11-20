@@ -1270,21 +1270,21 @@ const BlurredTreatmentPreview = ({
   const fakePhases = [
     {
       title: isPt ? "Fase 1 — Curto Prazo" : "Phase 1 — Short Term",
-      duration: isPt ? "1-2 semanas" : "1-2 weeks",
+      duration: isPt ? "1–2 semanas" : "1-2 weeks",
       exercises: isPt
         ? ["Controle de dor e inflamação", "Mobilização articular suave", "Exercícios respiratórios"]
         : ["Pain and inflammation control", "Gentle joint mobilization", "Breathing exercises"],
     },
     {
       title: isPt ? "Fase 2 — Médio Prazo" : "Phase 2 — Medium Term",
-      duration: isPt ? "3-6 semanas" : "3-6 weeks",
+      duration: isPt ? "3–6 semanas" : "3-6 weeks",
       exercises: isPt
         ? ["Fortalecimento progressivo", "Exercícios de estabilidade", "Alongamentos específicos", "Treino de controle motor"]
         : ["Progressive strengthening", "Stability exercises", "Specific stretches", "Motor control training"],
     },
     {
       title: isPt ? "Fase 3 — Longo Prazo" : "Phase 3 — Long Term",
-      duration: isPt ? "7-12 semanas" : "7-12 weeks",
+      duration: isPt ? "7–12 semanas" : "7-12 weeks",
       exercises: isPt
         ? ["Força específica para atividade", "Retorno à atividade plena", "Programa de prevenção"]
         : ["Activity-specific strength", "Full return to activity", "Prevention program"],
@@ -1306,7 +1306,7 @@ const BlurredTreatmentPreview = ({
             <div key={i} className="p-3 rounded-lg bg-muted/30 border border-border/50 blur-[6px] select-none pointer-events-none">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-semibold text-sm text-foreground">{phase.title}</p>
-                <span className="text-xs text-muted-foreground">{phase.duration}</span>
+                <span className="text-xs text-muted-foreground">{language === "en" ? phase.duration : String(phase.duration ?? "").replace(/(\d+)\s*-\s*(\d+)/g, "$1–$2").replace(/\bweeks?\b/gi, language === "es" ? "semanas" : "semanas")}</span>
               </div>
               <ul className="space-y-1">
                 {phase.exercises.map((ex, j) => (

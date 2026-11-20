@@ -10,7 +10,7 @@ interface TryProDemoCardProps {
 
 /**
  * Compact CTA shown to professionals without an active PRO subscription
- * (with or without Alivia Acadêmico mode). Sends them to the public Pro demo.
+ * (with or without Aliv.iA Acadêmico mode). Sends them to the public Pro demo.
  */
 const TryProDemoCard = ({ section, className }: TryProDemoCardProps) => {
   const navigate = useNavigate();

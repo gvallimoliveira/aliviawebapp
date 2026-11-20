@@ -79,7 +79,7 @@ const ProfessionalRegister = () => {
   });
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // Alivia Acadêmico (student mode) — secondary entry point right in the registration modal
+  // Aliv.iA Acadêmico (student mode) — secondary entry point right in the registration modal
   const [isStudent, setIsStudent] = useState(false);
   const [studentInstitution, setStudentInstitution] = useState("");
   const [studentPeriod, setStudentPeriod] = useState("");
@@ -292,7 +292,7 @@ const ProfessionalRegister = () => {
       return;
     }
 
-    // ───────── Alivia Acadêmico branch ─────────
+    // ───────── Aliv.iA Acadêmico branch ─────────
     // Student mode skips CREFITO / CPF / social_media validations.
     if (isStudent) {
       if (!studentInstitution.trim() || !studentPeriod.trim()) {
@@ -530,7 +530,7 @@ const ProfessionalRegister = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* ─────── Alivia Acadêmico toggle ─────── */}
+              {/* ─────── Aliv.iA Acadêmico toggle ─────── */}
               <div className={`rounded-xl border p-3 ${isStudent ? "bg-primary/5 border-primary/40" : "bg-muted/30 border-border"}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2.5 min-w-0">
@@ -539,7 +539,7 @@ const ProfessionalRegister = () => {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold">Sou estudante — Alivia Acadêmico</p>
+                        <p className="text-sm font-semibold">Sou estudante — Aliv.iA Acadêmico</p>
                         {isVip && (
                           <Badge className="text-[10px] bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-100 gap-1">
                             <Sparkles className="h-3 w-3" /> VIP · alternância livre

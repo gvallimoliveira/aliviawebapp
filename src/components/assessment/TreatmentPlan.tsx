@@ -329,7 +329,7 @@ const TreatmentPlan = ({ plan, diagnosis, assessmentId, anamnesisData, painRegio
                       <CardTitle className="text-base">{t(`treatment.phase.${phase.id}`)}</CardTitle>
                       <div className="flex items-center gap-1 mt-0.5">
                         <Clock className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{phase.duration}</span>
+                        <span className="text-xs text-muted-foreground">{language === "en" ? phase.duration : String(phase.duration ?? "").replace(/(\d+)\s*-\s*(\d+)/g, "$1–$2").replace(/\bweeks?\b/gi, language === "es" ? "semanas" : "semanas")}</span>
                       </div>
                     </div>
                   </div>

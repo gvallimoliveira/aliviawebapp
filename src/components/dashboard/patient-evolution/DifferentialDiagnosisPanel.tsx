@@ -196,7 +196,7 @@ const DifferentialDiagnosisPanel = ({
         >
           <GitCompareArrows className="h-3.5 w-3.5 text-primary" />
           <span>
-            {confidenceLabelPt({ diagnosis: dx })} — {data ? "diagnósticos diferenciais" : "ver diagnósticos diferenciais"}
+            {confidenceLabelPt({ diagnosis: dx })} — {data ? "hipóteses diferenciais" : "ver hipóteses diferenciais"}
           </span>
           {data ? (open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : null}
         </button>

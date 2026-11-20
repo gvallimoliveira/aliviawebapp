@@ -183,7 +183,7 @@ const PatientDemoDialogs = ({
                       <Brain className="h-4 w-4 text-primary" />
                       <h4 className="text-sm font-semibold text-foreground">Hipótese preliminar (IA)</h4>
                       <Badge variant="outline" className="text-[10px] ml-auto bg-emerald-500/10 text-emerald-700 border-emerald-200">
-                        Confiança: {openAssessment.confidence}
+                        Confiança: {({ high: "alta", medium: "moderada", moderate: "moderada", low: "baixa", alta: "alta", média: "moderada", moderada: "moderada", baixa: "baixa" } as Record<string, string>)[String(openAssessment.confidence).toLowerCase()] ?? openAssessment.confidence}
                       </Badge>
                     </div>
                     <p className="text-sm text-foreground leading-relaxed">{openAssessment.hypothesis}</p>

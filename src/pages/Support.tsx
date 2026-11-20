@@ -262,7 +262,7 @@ const Support = () => {
                   <div className="rounded-2xl bg-primary/10 p-4 group-hover:bg-primary/20 transition-colors">
                     <GraduationCap className="h-8 w-8 text-primary" />
                   </div>
-                  <h2 className="text-xl font-semibold text-foreground">Alivia Acadêmico</h2>
+                  <h2 className="text-xl font-semibold text-foreground">Aliv.iA Acadêmico</h2>
                   <p className="text-sm text-muted-foreground">
                     {language === "pt"
                       ? "Suporte para alunos: assinatura PRO, CREFITO, selo acadêmico, supervisão e transição profissional."

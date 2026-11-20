@@ -526,7 +526,7 @@ const faqKeys = [
   },
   {
     q: "Posso adicionar estudantes de fisioterapia como estagiários na minha clínica?",
-    a: "Sim. Estudantes ativam o modo 'Acesso Estudante — Alivia Acadêmico' em Minha Conta (informam nome, instituição e período) e ficam isentos do CREFITO. Ao adicioná-los à equipe, escolha o papel 'Estagiário (Acadêmico)' no seletor — ele tem as mesmas permissões do Fisioterapeuta (acesso a pacientes, prontuários, agenda e documentos), mas deixa claro para a equipe que aquela pessoa é um aluno em formação. Todos os PDFs gerados por esse estagiário saem com o selo 'Alivia Acadêmico · Instituição · Período' no lugar do CREFITO. O estagiário não aparece na busca pública do marketplace e segue usando o link institucional da clínica como qualquer outro membro.",
+    a: "Sim. Estudantes ativam o modo 'Acesso Estudante — Aliv.iA Acadêmico' em Minha Conta (informam nome, instituição e período) e ficam isentos do CREFITO. Ao adicioná-los à equipe, escolha o papel 'Estagiário (Acadêmico)' no seletor — ele tem as mesmas permissões do Fisioterapeuta (acesso a pacientes, prontuários, agenda e documentos), mas deixa claro para a equipe que aquela pessoa é um aluno em formação. Todos os PDFs gerados por esse estagiário saem com o selo 'Aliv.iA Acadêmico · Instituição · Período' no lugar do CREFITO. O estagiário não aparece na busca pública do marketplace e segue usando o link institucional da clínica como qualquer outro membro.",
   },
   {
     q: "Preciso enviar o link de pré-avaliação institucional ou posso usar meu link pessoal?",

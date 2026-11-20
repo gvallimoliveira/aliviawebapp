@@ -1,3 +1,4 @@
+import { getPublicOrigin } from "@/lib/getPublicOrigin";
 import { useRegistrationPending } from "@/hooks/useRegistrationPending";
 import RegistrationRequiredDialog from "@/components/dashboard/RegistrationRequiredDialog";
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -843,7 +844,7 @@ const CreateExerciseProgramModalInner = ({ open, onOpenChange, professionalId, p
         console.warn("[hep] planned dose sync failed", err);
       }
 
-      const link = `${window.location.origin}/hep/${programToken}`;
+      const link = `${getPublicOrigin()}/hep/${programToken}`;
       setGeneratedLink(link);
       void draft.discard();
 

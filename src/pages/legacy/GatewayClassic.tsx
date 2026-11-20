@@ -344,7 +344,7 @@ const GatewayClassic = () => {
                 className="relative w-full rounded-xl gap-2 text-base bg-amber-500 text-white hover:bg-amber-600 pointer-events-none"
                 tabIndex={-1}
               >
-                {language === "pt" ? "Conhecer Aliv.iA Acadêmico" : language === "es" ? "Conocer Alivia Académico" : "Discover Alivia Academic"}
+                {language === "pt" ? "Conhecer Aliv.iA Acadêmico" : language === "es" ? "Conocer Aliv.iA Académico" : "Discover Aliv.iA Academic"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </motion.div>
