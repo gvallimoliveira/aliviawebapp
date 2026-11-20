@@ -253,7 +253,7 @@ const ClinicLandingCinematic = () => {
 
   // "Tudo incluso"
   const included = [
-    { icon: InfinityIcon, label: "Tratamentos ilimitados" },
+    { icon: InfinityIcon, label: "Tratamentos sem cobrança por paciente" },
     { icon: Sparkles, label: "Créditos de IA inclusos" },
     { icon: ImageIcon, label: "Storage de fotos e laudos" },
     { icon: Bell, label: "Push notifications" },
@@ -265,7 +265,7 @@ const ClinicLandingCinematic = () => {
   const tiers = [
     { key: "small" as const, name: "Essencial", desc: "Para consultórios pequenos", members: "Até 3 membros", data: CLINIC_SMALL, popular: false },
     { key: "medium" as const, name: "Profissional", desc: "Para clínicas em crescimento", members: "4 a 8 membros", data: CLINIC_MEDIUM, popular: true },
-    { key: "large" as const, name: "Enterprise", desc: "Para grandes clínicas", members: "9+ membros (ilimitado)", data: CLINIC_LARGE, popular: false },
+    { key: "large" as const, name: "Enterprise", desc: "Para grandes clínicas", members: "9+ membros", data: CLINIC_LARGE, popular: false },
   ];
 
   return (
@@ -379,7 +379,6 @@ const ClinicLandingCinematic = () => {
                   <Activity className="h-4 w-4" /> Experimentar Demo
                 </Button>
               </div>
-              <p className="mt-3 text-xs text-background/50">Vagas limitadas por região</p>
             </motion.div>
           </div>
         </section>
@@ -622,7 +621,7 @@ const ClinicLandingCinematic = () => {
                         <ul className="space-y-2 mb-6 flex-1">
                           {[
                             "Recursos clínicos inclusos",
-                            "Pré-avaliações por link ilimitadas",
+                            "Pré-avaliações por link inclusas",
                             "Importação de agenda por foto",
                             "Chat com pacientes",
                             "Relatórios com IA",
@@ -726,7 +725,7 @@ const ClinicLandingCinematic = () => {
                 { q: "Como funciona a pesquisa de satisfação (NPS)?", a: "Você envia um link público da pesquisa por chat, WhatsApp ou e-mail. O paciente responde em 1 minuto. Você acompanha NPS, comentários e identifica promotores num dashboard dedicado." },
                 { q: "Posso personalizar a plataforma com a marca da minha clínica?", a: "Sim — o white-label inclui logotipo, nome, cor da marca, telefone e endereço. Aparece no painel e em todos os PDFs entregues ao paciente." },
                 { q: "O trial de 15 dias é realmente gratuito? Preciso cadastrar cartão?", a: "100% gratuito, sem cartão. Apenas e-mail e WhatsApp. Acesso completo a todas as funcionalidades. Após os 15 dias você decide se assina. Sem assinatura em até 7 dias após o fim do teste, os dados da clínica são excluídos definitivamente." },
-                { q: "Posso adicionar minha secretária e outros fisioterapeutas?", a: "Sim! De 3 a ilimitados membros conforme o plano. Cada papel tem permissões: proprietário e secretária gerenciam agenda e equipe; fisioterapeutas focam em avaliações e atendimentos." },
+                { q: "Posso adicionar minha secretária e outros fisioterapeutas?", a: "Sim! O número de membros varia conforme o plano. Cada papel tem permissões: proprietário e secretária gerenciam agenda e equipe; fisioterapeutas focam em avaliações e atendimentos." },
                 { q: "Os tratamentos são cobrados à parte?", a: "Os tratamentos fazem parte do plano da clínica, sem compra individual por paciente. As funções de IA usam um saldo compartilhado pela equipe; se precisar ampliar esse uso, o pacote extra é opcional e não há cobrança automática." },
                 { q: "Os dados estão seguros e em conformidade com a LGPD?", a: "Sim. Criptografia, servidores seguros, controle de acesso por função (RBAC) e políticas alinhadas com a LGPD e melhores práticas de saúde digital." },
                 { q: "A agenda funciona no celular?", a: "Sim. Drag-and-drop com toque (mobile) e mouse (desktop). 3 dias no celular, 7 dias no desktop. Tudo responsivo." },
@@ -750,7 +749,6 @@ const ClinicLandingCinematic = () => {
           kicker="Aliv.iA Clinic"
           heading="Mais tempo para cuidar. Mais clareza para gerir."
           sub="Experimente a agenda, o prontuário e os indicadores na rotina da sua equipe. 15 dias grátis, sem cartão."
-          note="Vagas limitadas por região"
           primaryLabel="Começar agora"
           onPrimary={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
           secondaryLabel="Ver demo"

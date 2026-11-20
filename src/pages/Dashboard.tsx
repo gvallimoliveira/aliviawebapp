@@ -1192,7 +1192,7 @@ const Dashboard = () => {
                   {isStudentLocked && (
                     <div className="mx-auto max-w-md rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 text-left text-xs space-y-1.5">
                       <p className="font-semibold text-amber-900 flex items-center gap-1.5">
-                        🎓 Selo Alivia Acadêmico não libera assinatura
+                        🎓 Selo Aliv.iA Acadêmico não libera assinatura
                       </p>
                       <p className="text-amber-900/85 leading-relaxed">
                         O modo Acadêmico é só um identificador visual nos seus PDFs e links. Para usar as ferramentas PRO, assine o plano profissional e mantenha o modo Acadêmico ativo enquanto ainda não tem CREFITO.

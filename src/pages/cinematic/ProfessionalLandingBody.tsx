@@ -16,7 +16,6 @@ const BenefitsSection = lazy(() => import("./professional/sections/BenefitsSecti
 const PanelShowcaseSection = lazy(() => import("./professional/sections/PanelShowcaseSection"));
 const EvidenceLibrarySection = lazy(() => import("./professional/sections/EvidenceLibrarySection"));
 const HowItWorksSection = lazy(() => import("./professional/sections/HowItWorksSection"));
-const RoiSection = lazy(() => import("./professional/sections/RoiSection"));
 const PricingSection = lazy(() => import("./professional/sections/PricingSection"));
 const FaqSection = lazy(() => import("./professional/sections/FaqSection"));
 const ClosingSection = lazy(() => import("./professional/sections/ClosingSection"));
@@ -35,7 +34,6 @@ const ProfessionalLandingBody = () => (
 
     <LgpdBadge />
 
-    <LazySection minHeight={640}><RoiSection /></LazySection>
     <LazySection minHeight={760}><PricingSection /></LazySection>
     <LazySection minHeight={520}><FaqSection /></LazySection>
     <BlogHighlights audience="professional" />

@@ -9,7 +9,6 @@ import MethodologySection from "@/components/MethodologySection";
 import ComparisonSection from "@/components/ComparisonSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import UpgradeFlowSection from "@/components/UpgradeFlowSection";
-import TestimonialsSection from "@/components/TestimonialsSection";
 import FaqSection from "@/components/FaqSection";
 import SocialSection from "@/components/SocialSection";
 import Footer from "@/components/Footer";
@@ -240,7 +239,6 @@ const PatientLandingCinematic = () => {
         <Reveal><MethodologySection /></Reveal>
         <Reveal><HowItWorksSection /></Reveal>
         <Reveal scale><UpgradeFlowSection /></Reveal>
-        <Reveal><TestimonialsSection /></Reveal>
         <ClosingCta />
         <Reveal><FaqSection /></Reveal>
         <Reveal><SocialSection /></Reveal>

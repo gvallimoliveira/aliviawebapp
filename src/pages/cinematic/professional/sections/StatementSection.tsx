@@ -6,8 +6,8 @@ const StatementSection = () => {
 
   return (
     <KineticStatement
-      kicker={language === "en" ? "Less time" : language === "es" ? "Menos tiempo" : "Em menos tempo"}
-      word={language === "en" ? "More results" : language === "es" ? "Más resultados" : "Com mais resultados"}
+      kicker={language === "en" ? "Less time writing" : language === "es" ? "Menos tiempo anotando" : "Menos tempo anotando"}
+      word={language === "en" ? "More time examining" : language === "es" ? "Más tiempo examinando" : "Mais tempo examinando"}
       caption={
         language === "en"
           ? "The time you get back on every visit when anamnesis, pain map and questionnaires arrive already done."

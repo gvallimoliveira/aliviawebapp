@@ -377,7 +377,7 @@ const GatewayModern = () => {
                 </li>
                 <li className="flex items-start gap-2 text-sm text-foreground">
                   <FlaskConical className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-                  {language === "pt" ? "Casos clínicos simulados ilimitados" : language === "es" ? "Casos clínicos simulados ilimitados" : "Unlimited simulated clinical cases"}
+                  {language === "pt" ? "Casos simulados para praticar todo dia" : language === "es" ? "Casos simulados para practicar cada día" : "Simulated cases to practice every day"}
                 </li>
                 <li className="flex items-start gap-2 text-sm text-foreground">
                   <BookOpen className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
@@ -393,7 +393,7 @@ const GatewayModern = () => {
                 className="relative w-full rounded-xl gap-2 text-base bg-amber-500 text-white hover:bg-amber-600 pointer-events-none"
                 tabIndex={-1}
               >
-                {language === "pt" ? "Conhecer Aliv.iA Acadêmico" : language === "es" ? "Conocer Alivia Académico" : "Discover Alivia Academic"}
+                {language === "pt" ? "Conhecer Aliv.iA Acadêmico" : language === "es" ? "Conocer Aliv.iA Académico" : "Discover Aliv.iA Academic"}
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </motion.div>

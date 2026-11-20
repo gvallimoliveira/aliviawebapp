@@ -335,7 +335,7 @@ const Auth = () => {
                 professional: "Profissional",
                 professionalDesc: "Sou fisioterapeuta autônomo",
                 student: "Estudante",
-                studentDesc: "Sou aluno de fisioterapia (Alivia Acadêmico)",
+                studentDesc: "Sou aluno de fisioterapia (Aliv.iA Acadêmico)",
                 clinic: "Clínica",
                 clinicDesc: "Gerencio ou sou integrante de uma clínica no Aliv.iA (fisio, secretária, estagiário)",
               },
@@ -349,7 +349,7 @@ const Auth = () => {
                 professional: "Professional",
                 professionalDesc: "I am an autonomous physiotherapist",
                 student: "Student",
-                studentDesc: "I am a physiotherapy student (Alivia Academic)",
+                studentDesc: "I am a physiotherapy student (Aliv.iA Academic)",
                 clinic: "Clinic",
                 clinicDesc: "I manage or belong to a clinic team on Aliv.iA (physio, secretary, intern)",
               },
@@ -363,7 +363,7 @@ const Auth = () => {
                 professional: "Profesional",
                 professionalDesc: "Soy fisioterapeuta autónomo",
                 student: "Estudiante",
-                studentDesc: "Soy estudiante de fisioterapia (Alivia Académico)",
+                studentDesc: "Soy estudiante de fisioterapia (Aliv.iA Académico)",
                 clinic: "Clínica",
                 clinicDesc: "Gestiono o integro el equipo de una clínica en Aliv.iA (fisio, secretaria, practicante)",
               },
@@ -467,10 +467,10 @@ const Auth = () => {
                     <Sparkles className="h-4 w-4 mt-0.5 shrink-0" />
                     <p className="leading-relaxed">
                       {language === "pt"
-                        ? "Modo acadêmico já vem ativado no próximo passo. Seus PDFs e link público exibirão o selo Alivia Acadêmico com sua instituição e período."
+                        ? "Modo acadêmico já vem ativado no próximo passo. Seus PDFs e link público exibirão o selo Aliv.iA Acadêmico com sua instituição e período."
                         : language === "es"
-                          ? "El modo académico ya viene activado en el siguiente paso. Tus PDFs y enlace público mostrarán el sello Alivia Académico con tu institución y período."
-                          : "Academic mode is already enabled in the next step. Your PDFs and public link will show the Alivia Academic seal with your institution and term."}
+                          ? "El modo académico ya viene activado en el siguiente paso. Tus PDFs y enlace público mostrarán el sello Aliv.iA Académico con tu institución y período."
+                          : "Academic mode is already enabled in the next step. Your PDFs and public link will show the Aliv.iA Academic seal with your institution and term."}
                     </p>
                   </div>
                 )}
