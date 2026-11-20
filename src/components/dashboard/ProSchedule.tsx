@@ -281,7 +281,6 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
     setServiceFilters((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   const [formProfessionalId, setFormProfessionalId] = useState(professionalId || "");
   const [evolutionReloadTick, setEvolutionReloadTick] = useState(0);
-  const [demoEvolutionNotes, setDemoEvolutionNotes] = useState<Record<string, string>>({});
 
   // ---- Appointment modal: single source of truth, fresh per open ----
   type ModalState = {
@@ -1304,8 +1303,6 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
           onSetStatus={handleSetStatus}
           onViewPatient={onViewPatient}
           onEvolutionChanged={() => setEvolutionReloadTick((v) => v + 1)}
-          demoEvolutionContent={modalState.apt ? demoEvolutionNotes[modalState.apt.id] : undefined}
-          onDemoEvolutionChange={(id, content) => setDemoEvolutionNotes(prev => ({ ...prev, [id]: content }))}
         />
       )}
 
