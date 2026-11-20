@@ -1306,7 +1306,7 @@ const BlurredTreatmentPreview = ({
             <div key={i} className="p-3 rounded-lg bg-muted/30 border border-border/50 blur-[6px] select-none pointer-events-none">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-semibold text-sm text-foreground">{phase.title}</p>
-                <span className="text-xs text-muted-foreground">{language === "en" ? phase.duration : String(phase.duration ?? "").replace(/(\d+)\s*-\s*(\d+)/g, "$1–$2").replace(/\bweeks?\b/gi, language === "es" ? "semanas" : "semanas")}</span>
+                <span className="text-xs text-muted-foreground">{!isPt ? phase.duration : String(phase.duration ?? "").replace(/(\d+)\s*-\s*(\d+)/g, "$1–$2").replace(/\bweeks?\b/gi, "semanas")}</span>
               </div>
               <ul className="space-y-1">
                 {phase.exercises.map((ex, j) => (
