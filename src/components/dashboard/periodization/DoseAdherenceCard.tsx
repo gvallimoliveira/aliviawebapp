@@ -20,6 +20,7 @@ import {
 import { CHART_WINDOW_DAYS, TEXT_WINDOW_DAYS, groupByDay, inWindow, recentDaysWindow } from "@/lib/loadWindows";
 import DayGroupList, { type DayGroup } from "./DayGroupList";
 import LoadHistoryDialog from "./LoadHistoryDialog";
+import type { LoadHistoryData } from "./LoadHistoryDialog";
 import type { PeriodizationSession, SrpeEntry } from "@/lib/periodizationData";
 import { savePlannedDose } from "@/lib/periodizationData";
 import { DOSE_CLASS, DOSE_LABEL, TRACK_LABEL } from "./scales";
@@ -41,6 +42,7 @@ interface Props {
   entries: SrpeEntry[];
   onChanged: () => void;
   readOnly?: boolean;
+  demoHistory?: LoadHistoryData;
 }
 
 const addDays = (iso: string, n: number): string => {
@@ -83,7 +85,7 @@ const DoseTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, readOnly }: Props) => {
+const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, readOnly, demoHistory }: Props) => {
   const { toast } = useToast();
   const today = localISODate();
   // Janela padrão: 7 dias corridos terminando hoje (ou nos últimos dias com dado).
@@ -413,7 +415,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
                 <p className="text-xs font-medium text-foreground">
                   Sessão por sessão <span className="font-normal text-muted-foreground">· {recentGroups.fallback ? "dias mais recentes com registro" : "últimos 3 dias"}</span>
                 </p>
-                <LoadHistoryDialog patientId={patientId} />
+                <LoadHistoryDialog patientId={patientId} demoData={demoHistory} />
               </div>
               {recentGroups.groups.length ? <DayGroupList groups={recentGroups.groups} /> : (
                 <p className="text-[11px] text-muted-foreground">Nenhuma sessão planejada nos últimos 3 dias.</p>

@@ -365,6 +365,7 @@ const Support = () => {
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground leading-relaxed pl-7">
                         {t(`support.${profile === "patient" ? "patient" : "pro"}.tool.${key}.desc`)}
+                        {profile !== "patient" && (key === "simulated_env" || key === "clinic_demo") && <p className="mt-2">{t("support.pro.tool.clinic_demo.updated_scenarios")}</p>}
                       </AccordionContent>
                     </AccordionItem>
                   ))}

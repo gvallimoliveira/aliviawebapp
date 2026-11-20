@@ -67,7 +67,7 @@ const MicroWeekGrid = ({
   demoActions,
 }: Props) => {
   const { toast } = useToast();
-  const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()));
+  const [weekStart, setWeekStart] = useState(() => mondayOf(new Date(`${localISODate()}T12:00:00Z`)));
   const [editing, setEditing] = useState<{ date: string; session?: PeriodizationSession } | null>(null);
   const [track, setTrack] = useState("physio");
   const [title, setTitle] = useState("");
@@ -395,8 +395,8 @@ const MicroWeekGrid = ({
           <Button type="button" size="sm" variant="outline" className="rounded-xl gap-1 h-8 text-[11px]" onClick={() => setWeekStart(addDays(weekStart, -7))}>
             <ChevronLeft className="h-3.5 w-3.5" /> Semana anterior
           </Button>
-          {weekStart !== mondayOf(new Date()) && (
-            <Button type="button" size="sm" variant="ghost" className="h-8 text-[11px]" onClick={() => setWeekStart(mondayOf(new Date()))}>
+          {weekStart !== mondayOf(new Date(`${localISODate()}T12:00:00Z`)) && (
+            <Button type="button" size="sm" variant="ghost" className="h-8 text-[11px]" onClick={() => setWeekStart(mondayOf(new Date(`${localISODate()}T12:00:00Z`)))}>
               Semana atual
             </Button>
           )}

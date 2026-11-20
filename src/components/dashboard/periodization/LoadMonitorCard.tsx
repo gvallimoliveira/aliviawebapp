@@ -16,6 +16,7 @@ import { CHART_WINDOW_DAYS, recentDaysWindow } from "@/lib/loadWindows";
 import { loadRecoverySeries } from "@/lib/loadRecovery";
 import LoadRecoveryChart from "./LoadRecoveryChart";
 import LoadHistoryDialog from "./LoadHistoryDialog";
+import type { LoadHistoryData } from "./LoadHistoryDialog";
 
 interface Props {
   patientId: string;
@@ -24,9 +25,10 @@ interface Props {
   checkins: ReadinessCheckin[];
   onChanged: () => void;
   readOnly?: boolean;
+  demoHistory?: LoadHistoryData;
 }
 
-const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, readOnly }: Props) => {
+const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, readOnly, demoHistory }: Props) => {
   const { toast } = useToast();
   const status = useMemo(() => loadStatus(entries, checkins), [entries, checkins]);
   const hr = useMemo(() => restingHrStatus(checkins), [checkins]);
@@ -206,7 +208,7 @@ const LoadMonitorCard = ({ patientId, planId, entries, checkins, onChanged, read
             <p className="text-xs font-medium text-foreground">
               Carga diária × recuperação (PSR) <span className="font-normal text-muted-foreground">· 7 dias · {chartWindow.total} sRPE</span>
             </p>
-            <LoadHistoryDialog patientId={patientId} />
+            <LoadHistoryDialog patientId={patientId} demoData={demoHistory} />
           </div>
           {chartWindow.fallback && (
             <p className="mb-1 text-[10px] text-muted-foreground">Sem registros nos últimos 7 dias — exibindo os mais recentes.</p>

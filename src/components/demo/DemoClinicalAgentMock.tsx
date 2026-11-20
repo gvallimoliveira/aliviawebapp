@@ -8,360 +8,18 @@ import {
   UserPlus, BookOpen, Stethoscope, ChevronRight, Send, Lock, ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DEMO_CLINICAL_THREADS, DEMO_DEEP_REPLIES, type DemoTool, type DemoMessage, type DemoThread } from "@/data/demoClinicalConversations";
 
-type Tool =
-  | { kind: "hep"; title: string; items: string[] }
-  | { kind: "tests"; title: string; items: string[] }
-  | { kind: "link"; title: string; patient: string }
-  | { kind: "evidence"; title: string; refs: string[] };
-
-type Msg = {
-  role: "user" | "assistant";
-  text: string;
-  tool?: Tool;
-  suggestions?: string[]; // next user picks
-};
-
-type Thread = {
-  id: string;
-  title: string;
-  preview: string;
-  updatedAt: string;
-  patient?: string;
-  messages: Msg[];
-};
-
-// ───────── Scripted threads (pre-baked history) ─────────
-const PREBAKED: Thread[] = [
-  {
-    id: "t1",
-    title: "Lombalgia crônica — Sra. Joana, 58a",
-    preview: "HEP fase 2 com progressão de carga…",
-    updatedAt: "Hoje, 09:12",
-    patient: "Joana M.",
-    messages: [
-      { role: "user", text: "Paciente com lombalgia crônica há 8 meses, irradiação até glúteo, melhora com extensão. Próximos passos?" },
-      {
-        role: "assistant",
-        text: "Padrão sugestivo de **preferência direcional em extensão** (McKenzie — síndrome derangement posterior). Sugiro confirmar com teste repetido em extensão em pé e prono press-up, e monitorar centralização da dor.",
-        tool: { kind: "tests", title: "Testes sugeridos", items: ["Repeated extension in standing (REIS)", "Prone press-up x10", "Slump test", "ODI baseline"] },
-      },
-      { role: "user", text: "Confirmei centralização. Gera HEP fase inicial." },
-      {
-        role: "assistant",
-        text: "HEP fase 1 baseado em McKenzie + estabilização segmentar. 2x/dia, reavaliar em 7 dias.",
-        tool: {
-          kind: "hep", title: "HEP gerado — Fase 1 (7 dias)",
-          items: ["Prone press-up — 3x10", "Cat-camel — 2x10", "Bird-dog — 3x8/lado", "Marcha estacionária — 3x60s"],
-        },
-      },
-      { role: "user", text: "Após 7 dias melhorou 40%. Progressão?" },
-      {
-        role: "assistant",
-        text: "Excelente resposta. Avançar para **fase 2 com carga progressiva** (HSR-like). Mantém preferência direcional como manutenção.",
-        tool: {
-          kind: "hep", title: "HEP gerado — Fase 2 (14 dias)",
-          items: ["Hip hinge com bastão — 3x10", "Deadlift romeno c/ halter leve — 3x8", "Prancha lateral — 3x30s", "Press-up de manutenção — 1x10"],
-        },
-        suggestions: ["Quando reavaliar ODI?", "Critérios de alta", "E se a dor voltar?"],
-      },
-    ],
-  },
-  {
-    id: "t2",
-    title: "Tendinopatia patelar — atleta amador",
-    preview: "Protocolo HSR de 12 semanas…",
-    updatedAt: "Ontem, 18:40",
-    patient: "Rafael S.",
-    messages: [
-      { role: "user", text: "Corredor 32a, dor anterior no joelho ao agachar e descer escada. VISA-P 52." },
-      {
-        role: "assistant",
-        text: "Quadro compatível com **tendinopatia patelar reativa**. Evidência forte para Heavy Slow Resistance (HSR) — Kongsgaard et al. Sugere-se 12 semanas, 3x/semana.",
-        tool: { kind: "evidence", title: "Base de evidência (PEDro ≥ 7)", refs: ["Kongsgaard 2009 — HSR vs excêntrico", "Malliaras 2015 — Loading programs review", "JOSPT 2023 — Patellar tendinopathy CPG"] },
-      },
-      { role: "user", text: "Vincula ao paciente Rafael e gera HEP." },
-      {
-        role: "assistant",
-        text: "Paciente vinculado. HEP semanas 1–4 (carga 70–75% 1RM, 6 reps lentas).",
-        tool: { kind: "link", title: "Paciente vinculado", patient: "Rafael S. — Tendinopatia patelar" },
-      },
-      {
-        role: "assistant",
-        text: "Programa enviado para o painel do paciente:",
-        tool: {
-          kind: "hep", title: "HEP — HSR fase 1",
-          items: ["Leg press tempo 3-0-3 — 4x6", "Agachamento búlgaro 3-0-3 — 3x6", "Panturrilha unipodal — 3x12", "Alongamento quadríceps — 2x30s"],
-        },
-        suggestions: ["Como progredir na semana 5?", "Indicador de sobrecarga", "Devo suspender corrida?"],
-      },
-    ],
-  },
-  {
-    id: "t3",
-    title: "Ombro — suspeita de manguito",
-    preview: "Bateria de testes especiais sugerida…",
-    updatedAt: "2 dias",
-    messages: [
-      { role: "user", text: "Mulher 47a, dor noturna no ombro D, dificuldade pentear cabelo. Bateria de testes?" },
-      {
-        role: "assistant",
-        text: "Quadro suspeito de **disfunção do manguito rotador**. Sugiro cluster de testes com boa especificidade.",
-        tool: { kind: "tests", title: "Cluster sugerido", items: ["Jobe (supraespinhal)", "Lift-off / Belly-press (subescapular)", "Hornblower (redondo menor)", "Hawkins-Kennedy", "Painful arc"] },
-      },
-      { role: "user", text: "Jobe + e Hawkins +. ODI funcional?" },
-      {
-        role: "assistant",
-        text: "Para ombro, prefiro **DASH** ou **SPADI** como PROM. ODI é para coluna lombar.",
-      },
-      { role: "user", text: "Ok, gera HEP conservador inicial." },
-      {
-        role: "assistant",
-        text: "HEP conservador — fase analgésica + ativação escapular.",
-        tool: {
-          kind: "hep", title: "HEP — Ombro fase 1 (10 dias)",
-          items: ["Pêndulo Codman — 2x60s", "Retração escapular isométrica — 3x10", "Rotação externa c/ elástico — 3x12", "Serrátil wall slide — 3x10"],
-        },
-        suggestions: ["Quando iniciar fortalecimento progressivo?", "Critério para encaminhar imagem", "Educação em dor para paciente"],
-      },
-    ],
-  },
-  {
-    id: "t4",
-    title: "Discussão de caso — red flags?",
-    preview: "Triagem de bandeiras vermelhas em cervical…",
-    updatedAt: "5 dias",
-    messages: [
-      { role: "user", text: "Paciente 62a, cervicalgia + parestesia em MMSS bilateral, perda de destreza fina. Devo prosseguir?" },
-      {
-        role: "assistant",
-        text: "⚠️ Sinais sugestivos de **mielopatia cervical** (parestesia bilateral + perda de destreza). É **red flag** — recomendo NÃO progredir tratamento e encaminhar para avaliação médica/imagem urgente.",
-        tool: { kind: "tests", title: "Testes de mielopatia (se for examinar)", items: ["Hoffmann", "Reflexos hiperativos MMII", "Marcha em tandem", "Lhermitte"] },
-      },
-      { role: "user", text: "Como justificar o encaminhamento no prontuário?" },
-      {
-        role: "assistant",
-        text: "Sugestão de redação: *\"Identificadas bandeiras vermelhas para mielopatia cervical (parestesia bilateral em MMSS, perda de destreza fina). Conduta: suspensão da terapia manual cervical e encaminhamento imediato para avaliação neurocirúrgica com RM de coluna cervical.\"*",
-      },
-      { role: "user", text: "Existe evidência sobre atraso diagnóstico?" },
-      {
-        role: "assistant",
-        text: "Sim, atraso no diagnóstico de mielopatia cervical degenerativa está associado a pior recuperação funcional pós-cirúrgica.",
-        tool: { kind: "evidence", title: "Referências", refs: ["Fehlings 2017 — AOSpine CSM guidelines", "Tetreault 2015 — Predictors of outcome in DCM"] },
-        suggestions: ["Modelo de carta de encaminhamento", "Como reavaliar pós-cirurgia?", "Outros red flags em cervical"],
-      },
-    ],
-  },
-];
-
-// ───────── New-conversation suggestion cascades ─────────
-type Cascade = { topic: string; steps: Msg[] };
-
-const NEW_CASCADES: Cascade[] = [
-  {
-    topic: "Paciente com dor no joelho ao correr",
-    steps: [
-      {
-        role: "assistant",
-        text: "Ótimo. Para refinar o raciocínio, me conta: dor é **anterior, medial, lateral ou posterior**? E aparece logo no início ou após determinada distância?",
-      },
-      { role: "user", text: "Anterior, aparece após 3km e piora descendo." },
-      {
-        role: "assistant",
-        text: "Padrão clássico de sobrecarga femoropatelar. Sugiro avaliar **controle de quadril** e **carga de treino**.",
-        tool: { kind: "tests", title: "Testes sugeridos", items: ["Single leg squat", "Step-down test", "Y-balance", "Hip abduction strength (dinamômetro)"] },
-      },
-      { role: "user", text: "Single leg squat com valgo dinâmico evidente." },
-      {
-        role: "assistant",
-        text: "Confirma hipótese de **dor femoropatelar com déficit de controle proximal**. Gera HEP focado em quadril + gestão de carga.",
-        tool: {
-          kind: "hep", title: "HEP — 4 semanas",
-          items: ["Ponte unilateral — 3x10", "Clamshell c/ elástico — 3x15", "Step-down lento — 3x8", "Reduzir volume de corrida em 30%"],
-        },
-        suggestions: ["Critério de retorno à corrida", "E se a dor não ceder?", "Sugere outro PROM?"],
-      },
-    ],
-  },
-  {
-    topic: "Gerar HEP de estabilização lombar",
-    steps: [
-      {
-        role: "assistant",
-        text: "Para qual fase? **Inicial** (controle motor), **intermediária** (resistência) ou **avançada** (força com carga)?",
-      },
-      { role: "user", text: "Inicial. Paciente sedentário, sem dor irradiada." },
-      {
-        role: "assistant",
-        text: "HEP de controle motor, baixa carga, 2x/dia.",
-        tool: {
-          kind: "hep", title: "HEP — Estabilização fase 1",
-          items: ["Respiração diafragmática — 2x10", "Bracing abdominal supino — 3x10", "Bird-dog — 3x8/lado", "Glute bridge — 3x12"],
-        },
-      },
-      { role: "user", text: "Quero vincular ao paciente Carlos." },
-      {
-        role: "assistant",
-        text: "Paciente vinculado e programa enviado ao painel dele.",
-        tool: { kind: "link", title: "Paciente vinculado", patient: "Carlos R. — Lombalgia mecânica" },
-        suggestions: ["Progressão para fase 2", "Como medir adesão?", "Educação em dor para paciente"],
-      },
-    ],
-  },
-  {
-    topic: "Quais testes para suspeita de lesão de LCA?",
-    steps: [
-      {
-        role: "assistant",
-        text: "Cluster com melhor acurácia para LCA combina três testes. Há derrame articular agudo?",
-        tool: { kind: "tests", title: "Cluster sugerido", items: ["Lachman (mais sensível)", "Pivot shift (mais específico)", "Gaveta anterior", "Avaliar derrame (sulco patelar)"] },
-      },
-      { role: "user", text: "Sim, derrame moderado. Lachman positivo." },
-      {
-        role: "assistant",
-        text: "Alta probabilidade de lesão de LCA. **Conduta inicial:** controle de edema, recuperação de ADM e ativação do quadríceps antes de qualquer decisão cirúrgica.",
-        tool: { kind: "evidence", title: "Evidência", refs: ["Filbay & Grindem 2019 — ACL rehab", "JOSPT 2017 — ACL CPG"] },
-      },
-      { role: "user", text: "Gera HEP pré-operatório." },
-      {
-        role: "assistant",
-        text: "HEP pré-op (\"prehab\") — foco em ADM, quadríceps e propriocepção.",
-        tool: {
-          kind: "hep", title: "HEP — Prehab LCA (3 semanas)",
-          items: ["Extensão passiva c/ toalha — 3x60s", "Quad sets isométrico — 4x10s x10", "SLR — 3x10", "Mini squat 0-45° — 3x10", "Bike estacionária sem carga — 10 min"],
-        },
-        suggestions: ["Critérios para retorno ao esporte", "PROM ideal para LCA", "Diferença entre cirúrgico e conservador"],
-      },
-    ],
-  },
-  {
-    topic: "Educação em dor para paciente crônico",
-    steps: [
-      {
-        role: "assistant",
-        text: "Educação em neurociência da dor (PNE) tem evidência forte para dor crônica. Que linguagem o paciente usa para descrever a dor?",
-      },
-      { role: "user", text: "Diz que sente \"como se a coluna fosse quebrar\"." },
-      {
-        role: "assistant",
-        text: "Linguagem catastrofizante — alvo importante. Sugiro 3 conceitos centrais nas próximas sessões: **dor ≠ dano**, **sensibilização central** e **segurança do movimento**.",
-        tool: { kind: "evidence", title: "Referências", refs: ["Moseley & Butler 2015 — Explain Pain", "Louw 2016 — PNE systematic review"] },
-      },
-      { role: "user", text: "Material para enviar ao paciente?" },
-      {
-        role: "assistant",
-        text: "Posso gerar um resumo em linguagem acessível, com 5 mensagens-chave e analogias (alarme de incêndio, sistema de proteção).",
-        suggestions: ["Gerar resumo agora", "Como medir crenças?", "Combinar com exercício?"],
-      },
-    ],
-  },
-];
-
-// ───────── Scripted replies to follow-up suggestions ─────────
-// Each suggestion gets a real, specific answer; then a farewell with PRO CTA closes the loop.
-const SCRIPTED_REPLIES: Record<string, Msg> = {
-  // t1 — Lombalgia
-  "Quando reavaliar ODI?": {
-    role: "assistant",
-    text: "Reavalie o **ODI a cada 4 semanas**. Diferença mínima clinicamente importante: **10 pontos**. Combine com NPRS e teste de centralização para decidir progressão.",
-  },
-  "Critérios de alta": {
-    role: "assistant",
-    text: "Critérios sugeridos: **ODI < 20%**, NPRS ≤ 2/10 nas AVDs, retorno completo às atividades funcionais e **autogestão** demonstrada (paciente sabe regredir/progredir HEP sozinho).",
-  },
-  "E se a dor voltar?": {
-    role: "assistant",
-    text: "Recidiva leve: **regredir 1 fase** do HEP por 5–7 dias + reforçar preferência direcional. Se piora >50% ou novo sintoma neurológico, reavaliação presencial imediata.",
-  },
-  // t2 — Tendinopatia patelar
-  "Como progredir na semana 5?": {
-    role: "assistant",
-    text: "Semana 5–8: aumentar para **80–85% 1RM, 4x6 reps**, tempo 3-0-3 mantido. Introduzir agachamento com barra. Monitorar dor 24h pós-treino (regra do <3/10).",
-  },
-  "Indicador de sobrecarga": {
-    role: "assistant",
-    text: "Sinais: **dor >5/10 durante exercício**, dor matinal aumentando >2 pontos, ou piora funcional progressiva por 3 sessões. Reduzir carga em 20% e reavaliar.",
-  },
-  "Devo suspender corrida?": {
-    role: "assistant",
-    text: "Não suspender totalmente. **Reduzir volume em 30–50%** e manter terreno plano. Suspender apenas se dor durante corrida >3/10 ou claudicação.",
-  },
-  // t3 — Ombro
-  "Quando iniciar fortalecimento progressivo?": {
-    role: "assistant",
-    text: "Quando: **dor noturna ausente**, ADM ativa indolor >120° de flexão e teste isométrico de RE indolor a 30°. Tipicamente 2–3 semanas na fase analgésica.",
-  },
-  "Critério para encaminhar imagem": {
-    role: "assistant",
-    text: "Encaminhar **USG/RM** se: trauma agudo com fraqueza significativa, ausência de progresso após 6 semanas de conservador, ou suspeita de ruptura completa (drop arm +).",
-  },
-  "Educação em dor para paciente": {
-    role: "assistant",
-    text: "Mensagens-chave: **dor ≠ dano tecidual**, movimento é seguro e necessário, sono e estresse modulam dor. Use analogias (sistema de alarme calibrado).",
-  },
-  // t4 — Red flags cervical
-  "Modelo de carta de encaminhamento": {
-    role: "assistant",
-    text: "*\"Encaminho a/o paciente [nome], [idade] anos, com quadro de cervicalgia associada a parestesia bilateral em MMSS e perda de destreza fina, sugestivos de **mielopatia cervical degenerativa**. Solicito avaliação neurocirúrgica com **RM de coluna cervical** em caráter de urgência. Terapia manual cervical suspensa. À disposição.\"*",
-  },
-  "Como reavaliar pós-cirurgia?": {
-    role: "assistant",
-    text: "Pós-op: aguardar liberação do cirurgião (geralmente 4–6 sem). Reavaliar **mJOA**, **Nurick** e testes de marcha. Reabilitação focada em propriocepção cervical, equilíbrio e força de MMSS progressiva.",
-  },
-  "Outros red flags em cervical": {
-    role: "assistant",
-    text: "Sinais de alerta cervical: **drop attack**, disfagia/disartria, nistagmo, ataxia, **5 D's e 3 N's** (insuficiência vertebrobasilar), febre + dor noturna constante (infecção/neoplasia), trauma de alto impacto.",
-  },
-  // cascade tails
-  "Critério de retorno à corrida": {
-    role: "assistant",
-    text: "Critérios: **single leg squat sem valgo**, salto unipodal indolor x10, força de abdutores ≥85% do contralateral e ausência de dor nas AVDs. Retorno gradual com **regra dos 10%/semana**.",
-  },
-  "E se a dor não ceder?": {
-    role: "assistant",
-    text: "Após 6 semanas sem melhora: reavaliar hipótese (descartar plica, condromalácia grau III, Hoffa), considerar **USG/RM**, e investigar fatores psicossociais (catastrofização, cinesiofobia).",
-  },
-  "Sugere outro PROM?": {
-    role: "assistant",
-    text: "Para dor femoropatelar: **KOOS-PF** (específico) ou **AKPS/Kujala**. Combine com NPRS para dor e escala de cinesiofobia (TSK-11) se suspeitar de medo do movimento.",
-  },
-  "Progressão para fase 2": {
-    role: "assistant",
-    text: "Fase 2 (resistência, 3–6 sem): bird-dog dinâmico 3x12, prancha lateral 3x30s, dead bug com carga, ponte unipodal 3x10. Frequência 4–5x/sem.",
-  },
-  "Como medir adesão?": {
-    role: "assistant",
-    text: "Use o **HEP no app** (registro automático) + autorreporte semanal. Meta: ≥80% das sessões. Se <60%, conversar sobre barreiras (tempo, dor, motivação) e simplificar o programa.",
-  },
-  "Critérios para retorno ao esporte": {
-    role: "assistant",
-    text: "Pós-LCA: **≥9 meses**, LSI ≥90% em força de quadríceps, bateria de saltos (hop tests) ≥90%, ACL-RSI ≥65 e ausência de derrame. Retorno faseado com treino de agilidade.",
-  },
-  "PROM ideal para LCA": {
-    role: "assistant",
-    text: "**KOOS** (5 subescalas) + **IKDC** subjetivo são padrão-ouro. Adicionar **ACL-RSI** para prontidão psicológica antes do retorno ao esporte.",
-  },
-  "Diferença entre cirúrgico e conservador": {
-    role: "assistant",
-    text: "Evidência atual (KANON, Frobell): em pacientes não-atletas, **reabilitação inicial + cirurgia tardia se necessário** tem resultados equivalentes a cirurgia precoce. Decisão compartilhada considerando demanda esportiva e instabilidade funcional.",
-  },
-  "Gerar resumo agora": {
-    role: "assistant",
-    text: "**Resumo para o paciente:**\n• Sua dor é real, mas **não significa dano novo**.\n• O sistema nervoso pode ficar 'mais sensível' — como um alarme calibrado demais.\n• **Movimento é remédio**, mesmo quando dói um pouco.\n• Sono, estresse e humor mudam a percepção de dor.\n• Progresso vem em ondas — recaídas são normais.",
-  },
-  "Como medir crenças?": {
-    role: "assistant",
-    text: "Use **PCS** (catastrofização), **TSK-11** (cinesiofobia) e **PSEQ** (autoeficácia). Reavalie a cada 4–6 semanas — mudança nessas escalas costuma preceder melhora funcional.",
-  },
-  "Combinar com exercício?": {
-    role: "assistant",
-    text: "Sim — **PNE + exercício graduado** tem efeito superior a qualquer um isolado. Use exposição gradual a movimentos temidos e reforce sucessos com feedback positivo durante a sessão.",
-  },
-};
+type Tool = DemoTool;
+type Msg = DemoMessage;
+type Thread = DemoThread;
+const PREBAKED = DEMO_CLINICAL_THREADS;
+const NEW_CASCADES = DEMO_CLINICAL_THREADS.map(thread => ({ topic: thread.title, steps: thread.messages.slice(1) }));
+const SCRIPTED_REPLIES = DEMO_DEEP_REPLIES;
 
 const FAREWELL_MSG: Msg = {
   role: "assistant",
-  text: "👀 Esta foi uma simulação. No modo real, eu cruzaria estes pontos com o **histórico do paciente** e a **base de evidências PEDro ≥ 7** atualizada, gerando HEP/testes prontos para o painel. **Assine PRO** para usar com seus pacientes reais.",
+  text: "Esta conversa é roteirizada e não gravou dados de pacientes. No modo real, o profissional revisa o histórico, as evidências disponíveis e as propostas antes de aplicar qualquer conduta.",
 };
 
 
@@ -414,9 +72,10 @@ function ToolCard({ tool }: { tool: Tool }) {
   );
 }
 
-const DemoClinicalAgentMock = () => {
-  const [threads, setThreads] = useState<Thread[]>(PREBAKED);
-  const [activeId, setActiveId] = useState<string>(PREBAKED[0].id);
+const DemoClinicalAgentMock = ({ patientNames }: { patientNames?: string[] }) => {
+  const available = patientNames ? PREBAKED.filter(t => !t.patient || patientNames.includes(t.patient)) : PREBAKED;
+  const [threads, setThreads] = useState<Thread[]>(available);
+  const [activeId, setActiveId] = useState<string>(available[0]?.id ?? "");
   const [isNew, setIsNew] = useState(false);
   const [pending, setPending] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
@@ -442,7 +101,7 @@ const DemoClinicalAgentMock = () => {
       messages: [{
         role: "assistant",
         text: "Olá! Sou o **Agente de Raciocínio Clínico** da Aliv.iA. Posso discutir casos (com anonimização automática), sugerir testes, gerar HEP baseado em evidências e vincular pacientes. Por onde quer começar?",
-        suggestions: NEW_CASCADES.map((c) => c.topic),
+        suggestions: NEW_CASCADES.filter(c => available.some(t => t.title === c.topic)).map((c) => c.topic),
       }],
     };
     setThreads((prev) => [thread, ...prev]);
@@ -476,7 +135,7 @@ const DemoClinicalAgentMock = () => {
     } else {
       // Play a real scripted reply (if available) and then the farewell + PRO CTA.
       const reply = SCRIPTED_REPLIES[text];
-      const steps: Msg[] = reply ? [reply, FAREWELL_MSG] : [FAREWELL_MSG];
+      const steps: Msg[] = reply ? [reply] : [FAREWELL_MSG];
       steps.forEach((step, idx) => {
         setTimeout(() => {
           setThreads((prev) => prev.map((t) => t.id === active.id

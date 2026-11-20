@@ -18,7 +18,7 @@ interface Props {
 const COPY: Record<Section, { title: string; desc: string }> = {
   agenda:        { title: "Agenda multiprofissional",                   desc: "Visualize a semana da equipe e arraste os atendimentos para reagendar — tudo num único calendário compartilhado." },
   patients:      { title: "Pool de pacientes compartilhado",            desc: "Triagem por secretária, atribuição rápida e prontuário com IA — tudo numa fila única da clínica." },
-  insights:      { title: "Insights de IA exclusivos da clínica",       desc: "Risco de evasão, previsão de alta, ocupação e benchmarks de mercado — gerados a cada acesso." },
+  insights:      { title: "Insights clínicos e de gestão",       desc: "Carga, prontidão, fases STEPS e operação, organizados por categoria — sem consumir créditos de IA." },
   messages:      { title: "Chat seguro com pacientes",                  desc: "Conversas centralizadas por equipe, com videochamada nativa e disclaimer de responsabilidade." },
   clinic:        { title: "Configurações white-label",                  desc: "Logo, cor da marca, equipe, link institucional, gestão financeira e exportação de dados." },
   management:    { title: "KPIs e gráficos em tempo real",              desc: "Faturamento, ticket médio, ocupação e produtividade por profissional — atualizados ao vivo." },
@@ -26,7 +26,7 @@ const COPY: Record<Section, { title: string; desc: string }> = {
   team:          { title: "Equipe e configurações da clínica",          desc: "Convide até 8 fisios + secretárias, defina horários, especialidades e branding em minutos." },
   link:          { title: "Link institucional anti-abuso",              desc: "Pacientes triados entram no pool da clínica — não no perfil pessoal de um terapeuta." },
   "pro-agenda":  { title: "Agenda PRO com drag-and-drop",               desc: "Organize sua semana e reagende arrastando os cards — visão diária e semanal dos seus pacientes particulares." },
-  "pro-insights":{ title: "Insights de IA para autônomos",              desc: "Veja risco de evasão, previsão de alta e meta de faturamento direto no painel." },
+  "pro-insights":{ title: "Insights para autônomos",              desc: "Acompanhe seus pacientes e sua operação por categoria, com cálculos locais e sem consumir créditos de IA." },
   "pro-messages":{ title: "Mensagens com pacientes (PRO)",              desc: "Chat seguro + videochamada, dentro da Aliv.iA, sem WhatsApp pessoal." },
   "pro-patients":{ title: "Prontuário com IA e relatório de evolução",  desc: "Anamnese assistida por voz, plano de tratamento adaptativo e PDF white-label." },
   "agente":      { title: "Agente de Raciocínio Clínico (PRO)",         desc: "Discuta casos (com anonimização automática), gere HEP baseado em evidências e vincule pacientes — direto no chat." },

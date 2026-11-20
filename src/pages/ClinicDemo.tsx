@@ -443,7 +443,7 @@ const ClinicDemo = () => {
           {/* ─── Insights ─── */}
           {allowedTabs.includes("insights") && <TabsContent value="insights" className="space-y-5">
             <DemoUpsellBanner section="insights" />
-            <DemoInsightsMock variant="clinic" />
+            <DemoInsightsMock variant="clinic" appointments={appointments} />
             <DemoFeedbackMock />
           </TabsContent>}
 
@@ -456,7 +456,7 @@ const ClinicDemo = () => {
           {/* ─── Agente ─── */}
           {allowedTabs.includes("agente") && <TabsContent value="agente" className="space-y-5">
             <DemoUpsellBanner section="agente" />
-            <DemoClinicalAgentMock />
+            <DemoClinicalAgentMock key={viewerRole + filterTherapist} patientNames={Array.from(new Set(recordAssessments.map(a => a.patient_name)))} />
           </TabsContent>}
 
 

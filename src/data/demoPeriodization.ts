@@ -1,6 +1,7 @@
 import { localISODate, loadLevelFromRpe, trainingLoad } from "@/lib/periodization";
 import { mockPatientAssessments } from "@/data/mockPatientData";
 import { demoLoadProfiles } from "./demoLoadProfiles";
+import { DEMO_STEPS } from "./demoSteps";
 import type { PeriodizationCycle, PeriodizationPlan, PeriodizationSession, SrpeEntry, ReadinessCheckin } from "@/lib/periodizationData";
 
 /** Deterministic pseudo-random [0,1) per date so the demo is stable across renders. */
@@ -29,12 +30,16 @@ export function createDemoPeriodization(today = localISODate(), key = "patient",
   const plan: PeriodizationPlan = {
     id: planId, patient_id: patientId, professional_id: null, clinic_id: null, assessment_id: assessment?.id ?? null,
     title: profile?.title ?? "Sem cenário de carga revisado", sport: profile?.sport ?? null, injured_limb: profile?.limb ?? null,
-    start_date: day(today, -(profile?.historyDays ?? 0)), end_date: null, status: "active",
-    notes: profile ? `Cenário de carga fictício, não prescrição. Doses e prontidão ilustrativas; dor atual e fase alinhadas à avaliação. ${profile.notes}` : "Sem dados de carga para esta avaliação.", created_at: `${today}T12:00:00Z`,
+    start_date: day(today, -(profile?.historyDays ?? 0)), end_date: profile?.step === 6 ? today : null, status: profile?.step === 6 ? "completed" : "active",
+    notes: profile ? `Cenário de carga fictício, não prescrição. ${profile.goal}. ${profile.notes}` : "Sem dados de carga para esta avaliação.", created_at: `${today}T12:00:00Z`,
   };
-  const cycles: PeriodizationCycle[] = profile ? [{ id: `${planId}-current`, plan_id: planId, parent_id: null,
-    level: "macro", name: profile.phase, goal: profile.goal, exit_criteria: null,
-    start_date: today, end_date: null, sort_order: 0, is_current: true }] : [];
+  const cycles: PeriodizationCycle[] = profile ? DEMO_STEPS.slice(0, 5).map((step, index) => ({
+    id: `${planId}-step-${index + 1}`, plan_id: planId, parent_id: null, level: "macro",
+    name: step.name, goal: step.goal, exit_criteria: null,
+    // Only the current phase is dated; future transitions are not promised.
+    start_date: profile.step === index + 1 ? today : null, end_date: null,
+    sort_order: index, is_current: profile.step === index + 1,
+  })) : [];
   const sessions: PeriodizationSession[] = [];
   const entries: SrpeEntry[] = [];
   const checkins: ReadinessCheckin[] = [];
@@ -59,6 +64,10 @@ export function createDemoPeriodization(today = localISODate(), key = "patient",
     fatigueDebt = Math.max(0, fatigueDebt - 1);
     const planned = [...profile.sessions, ...(profile.concurrent ?? [])].filter(s => s.weekday === weekday);
     let doses = planned;
+    // Explicit recovery days make the planned microcycle readable without adding load.
+    if (offset >= -6 && doses.length === 0) {
+      doses = [{ weekday, track: "physio", title: "Recuperação — sem treino planejado", minutes: 0, rpe: 0 }];
+    }
     // João reported abandoning physio and running >10 km: show poor adherence, not a healthy six-day week.
     if (assessment?.id === "demo-002b" && offset < -2) {
       doses = weekday === 0 ? [{ weekday, track: "sport", title: "Corrida longa relatada — sobrecarga, não recomendação", minutes: 70, rpe: 8 }] : [];
@@ -75,7 +84,7 @@ export function createDemoPeriodization(today = localISODate(), key = "patient",
         title: dose.title,
         planned_load: loadLevelFromRpe(rpe, duration), planned_duration_min: duration, planned_rpe: rpe,
         planned_target_load: trainingLoad(duration, rpe), exercise_program_id: null, notes: profile.notes, created_source: "professional" });
-      if (offset >= 0) return;
+      if (offset >= 0 || duration === 0) return;
       const v = noise(`${id}:dose`);
       if (v < 0.12) return; // skipped: no record
       let realMin = duration, realRpe = rpe, label = "dose certa";

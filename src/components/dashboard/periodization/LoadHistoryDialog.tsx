@@ -13,11 +13,17 @@ import { DOSE_LABEL, TRACK_LABEL } from "./scales";
 
 const fmt = (iso: string) => iso.split("-").reverse().join("/");
 
+export interface LoadHistoryData {
+  entries: SrpeEntry[];
+  sessions: PeriodizationSession[];
+  checkins: ReadinessCheckin[];
+}
+
 /**
  * Histórico completo do controle de carga, sob demanda. Nada é apagado: abre nos
  * últimos 45 dias e navega para blocos anteriores de 45 em 45 dias.
  */
-const LoadHistoryDialog = ({ patientId, label = "Ver histórico" }: { patientId: string; label?: string }) => {
+const LoadHistoryDialog = ({ patientId, label = "Ver histórico", demoData }: { patientId: string; label?: string; demoData?: LoadHistoryData }) => {
   const [open, setOpen] = useState(false);
   const [days, setDays] = useState(String(HISTORY_BLOCK_DAYS));
   const [track, setTrack] = useState("all");
@@ -34,6 +40,10 @@ const LoadHistoryDialog = ({ patientId, label = "Ver histórico" }: { patientId:
 
   useEffect(() => {
     if (!open) return;
+    if (demoData) {
+      setLoading(false);
+      return;
+    }
     let alive = true;
     setLoading(true);
     Promise.all([
@@ -50,11 +60,14 @@ const LoadHistoryDialog = ({ patientId, label = "Ver histórico" }: { patientId:
       setLoading(false);
     });
     return () => { alive = false; };
-  }, [open, patientId, from, to]);
+  }, [open, patientId, from, to, demoData]);
 
   const byTrack = <T extends { track?: string | null }>(xs: T[]) => (track === "all" ? xs : xs.filter((x) => (x.track || "physio") === track));
-  const entries = byTrack(data.entries);
-  const sessions = byTrack(data.sessions);
+  const source = demoData ?? data;
+  const inPeriod = (date: string) => date >= from && date <= to;
+  const entries = byTrack(source.entries.filter(e => inPeriod(e.session_date)));
+  const sessions = byTrack(source.sessions.filter(s => inPeriod(s.session_date)));
+  const checkins = source.checkins.filter(c => inPeriod(c.checkin_date));
   const series = useMemo(() => rollingDailySeries(entries, from, to), [entries, from, to]);
   const total = series.reduce((a, d) => a + d.total, 0);
 
@@ -67,7 +80,7 @@ const LoadHistoryDialog = ({ patientId, label = "Ver histórico" }: { patientId:
         date: p.session.session_date.slice(0, 10),
         key: `p-${p.session.id}`,
         left: `${TRACK_LABEL[p.session.track as string] || p.session.track}${p.session.title ? ` · ${p.session.title}` : ""}`,
-        right: `${p.plannedLoad} → ${p.ratio !== null ? `${p.realLoad} · ${DOSE_LABEL[p.verdict!]}` : p.session.session_date > today ? "a realizar" : "sem resposta"}`,
+        right: `${p.plannedLoad} → ${p.ratio !== null ? `${p.realLoad} · ${p.verdict ? DOSE_LABEL[p.verdict] : "—"}` : p.session.session_date > today ? "a realizar" : "sem resposta"}`,
         load: p.ratio !== null ? p.realLoad : 0,
         pending: p.ratio === null && p.session.session_date <= today,
       })),
@@ -81,7 +94,7 @@ const LoadHistoryDialog = ({ patientId, label = "Ver histórico" }: { patientId:
           load: trainingLoad(e.duration_min, e.rpe),
           pending: false,
         })),
-      ...(track === "all" ? data.checkins : []).map((c) => ({
+      ...(track === "all" ? checkins : []).map((c) => ({
         date: c.checkin_date,
         key: `c-${c.id}`,
         left: "Check-in",
@@ -104,7 +117,7 @@ const LoadHistoryDialog = ({ patientId, label = "Ver histórico" }: { patientId:
         rows: g.items.map((r) => ({ key: r.key, left: r.left, right: r.right })),
       };
     });
-  }, [sessions, entries, data.checkins, track, today]);
+  }, [sessions, entries, checkins, track, today]);
 
   return (
     <>

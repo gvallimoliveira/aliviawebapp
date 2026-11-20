@@ -28,7 +28,8 @@ export default function LoadMonitoringGate(props: Props) {
     setState(null);
     setFailed(false);
     if (isDemo) {
-      setState({ patientId: null, enabled: false, canManage: true });
+      // Curated demo scenarios are visible even in the read-only clinic preview.
+      setState({ patientId: null, enabled: true, canManage: true });
       return;
     }
     fetchLoadMonitoring({ patientId, patientName, patientEmail, professionalId, clinicId })

@@ -1,5 +1,10 @@
 # Roadmap
 
+## Demos — carga, raciocínio e insights
+- [x] Semanas com atividades e recuperação; cinco fases clínicas + Alta terminal, manutenção para altas e histórico de 70 dias nos casos adequados. Carlos preserva ausência de histórico após investigação recente. Dois botões de histórico usam as mesmas sessões locais; carga visível também na clínica somente leitura.
+- [x] Quatro conversas aprofundadas com decisões, D.I.F.I/STEPS e ressalvas; respostas encadeadas, conversas filtradas aos pacientes do terapeuta. Insights em seis categorias com sinais derivados dos exemplos e valores rastreáveis da agenda fictícia; ajuda pt/en/es atualizada.
+- [x] 74 testes aprovados e build OK. PRO/clínica em 1280×1800 e 440×667: macrociclo → próxima semana → dois históricos → período anterior/filtro → seis categorias → resposta aprofundada, sem erros nem consultas de carga/IA. Dose alterada/reaberta em 25 minutos localmente e conversas do terapeuta isoladas, zero gravações reais. Não publicado; iPhone físico não testado. Demo continua roteirizado e não replica todos os cards/RPCs do painel real.
+
 ## Landing profissional — velocidade e assinatura
 - [x] Remover esperas visuais, placeholders e rolagem presa; celular 440×667 e computador 1280×1800 com zero seções ocultas antes de rolar, sem overflow nem erros de execução.
 - [x] Assinatura como botão principal; teste secundário no início, oferta antecipada e preços, com cartão e renovação informados. Plano mensal escolhido preservado nos dois caminhos.

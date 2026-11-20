@@ -16,6 +16,7 @@ const DemoPeriodizationSection = ({ patientName, assessmentId }: { patientName?:
   const fixture = useMemo(() => createDemoPeriodization(undefined, patientName ?? "patient", assessmentId), [patientName, assessmentId]);
   const [sessions, setSessions] = useState(fixture.sessions);
   const [entries, setEntries] = useState(fixture.entries);
+  const history = useMemo(() => ({ sessions, entries, checkins: fixture.checkins }), [sessions, entries, fixture.checkins]);
   const noop = () => {};
   return <div className="space-y-3" onClickCapture={event => {
     const target = event.target as HTMLElement;
@@ -26,18 +27,18 @@ const DemoPeriodizationSection = ({ patientName, assessmentId }: { patientName?:
     <p className="text-xs text-muted-foreground">{fixture.plan.notes}</p>
     <DailyConductContent birth={null} plan={fixture.plan} entries={entries} checkins={fixture.checkins} sessions={sessions} />
     <PeriodizationCollapsible title="Macrociclo (fases do STEPS)" icon={<Gauge className="h-4 w-4 text-primary" />} defaultOpen={false}>
-      <MacroTimeline cycles={fixture.cycles} planId={fixture.plan.id} onChanged={noop} readOnly />
+      <MacroTimeline cycles={fixture.cycles} planId={fixture.plan.id} planStatus={fixture.plan.status} onChanged={noop} readOnly />
     </PeriodizationCollapsible>
     <PeriodizationCollapsible title="Carga e prontidão" icon={<Gauge className="h-4 w-4 text-primary" />}>
-      <LoadMonitorCard patientId={fixture.patientId} entries={entries} checkins={fixture.checkins} onChanged={noop} readOnly />
+      <LoadMonitorCard patientId={fixture.patientId} entries={entries} checkins={fixture.checkins} demoHistory={history} onChanged={noop} readOnly />
     </PeriodizationCollapsible>
     <PeriodizationCollapsible title="Dose planejada e percebida" icon={<Gauge className="h-4 w-4 text-primary" />}>
-      <DoseAdherenceCard patientId={fixture.patientId} sessions={sessions} entries={entries} onChanged={noop} readOnly />
+      <DoseAdherenceCard patientId={fixture.patientId} sessions={sessions} entries={entries} demoHistory={history} onChanged={noop} readOnly />
     </PeriodizationCollapsible>
     <PeriodizationCollapsible title="Microciclo da semana" icon={<Plus className="h-4 w-4 text-primary" />}>
       <MicroWeekGrid patientId={fixture.patientId} planId={fixture.plan.id} sessions={sessions} entries={entries}
         onChanged={noop} patientName={patientName} professionalName="Equipe FisioVida · Demo" sport={fixture.plan.sport}
-        currentPhase={fixture.cycles.find(c => c.is_current)?.name} demoActions={{
+        currentPhase={fixture.plan.status === "completed" ? "Alta" : fixture.cycles.find(c => c.is_current)?.name} demoActions={{
           saveDose: dose => {
             const duration = dose.plannedDurationMin;
             const session: PeriodizationSession = { id: dose.id ?? crypto.randomUUID(), patient_id: fixture.patientId,

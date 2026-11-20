@@ -47,19 +47,19 @@ describe("demo scenarios follow the latest assessment, never the same generic pr
     const scenario = createDemoPeriodization(today, String(name));
     expect(scenario.plan.assessment_id).toBe(id);
     expect(scenario.checkins.find(c => c.checkin_date === today)?.pain).toBe(pain);
-    expect(scenario.cycles.filter(c => c.is_current)).toHaveLength(1);
-    expect(scenario.cycles[0].start_date).toBe(today);
+    expect(scenario.cycles.filter(c => c.is_current)).toHaveLength(scenario.plan.status === "completed" ? 0 : 1);
+    if (scenario.plan.status !== "completed") expect(scenario.cycles.find(c => c.is_current)?.start_date).toBe(today);
     expect(scenario.entries.every(e => e.session_date < today)).toBe(true);
   });
   it("Maria is in maintenance, not active generic strengthening", () => {
     const scenario = createDemoPeriodization(today, "Maria Silva");
-    expect(scenario.cycles[0].name).toBe("Manutenção e prevenção secundária");
-    expect(scenario.sessions.filter(s => s.track === "physio").every(s => s.title?.includes("domiciliar"))).toBe(true);
+    expect(scenario.plan.status).toBe("completed");
+    expect(scenario.sessions.filter(s => s.track === "physio" && (s.planned_target_load ?? 0) > 0).every(s => s.title?.includes("domiciliar"))).toBe(true);
   });
   it("João has historical overload but no future running prescription", () => {
     const scenario = createDemoPeriodization(today, "João Santos");
     expect(scenario.entries.some(e => e.track === "sport" && e.training_load === 560)).toBe(true);
-    expect(scenario.sessions.filter(s => s.session_date >= today).every(s => s.track === "physio" && s.planned_rpe === 2)).toBe(true);
+    expect(scenario.sessions.filter(s => s.session_date >= today && (s.planned_target_load ?? 0) > 0).every(s => s.track === "physio" && s.planned_rpe === 2)).toBe(true);
     expect(scenario.checkins.at(-1)?.readiness).toBe(4);
   });
   it("Carlos has no fabricated exercise history before today's medical investigation", () => {
@@ -71,7 +71,8 @@ describe("demo scenarios follow the latest assessment, never the same generic pr
   });
   it("Roberto remains in preparation, without full sports release", () => {
     const scenario = createDemoPeriodization(today, "Roberto Tavares");
-    expect(scenario.cycles[0].name).toBe("Força específica e transição esportiva");
+    expect(scenario.cycles.find(c => c.is_current)?.sort_order).toBe(4);
+    expect(scenario.plan.status).toBe("active");
     expect(scenario.sessions.some(s => s.track === "sport")).toBe(false);
   });
   it("Juliana only starts fictional running after her latest RTS release", () => {
@@ -81,7 +82,7 @@ describe("demo scenarios follow the latest assessment, never the same generic pr
   });
   it("Helena has home maintenance without gym access or uncontrolled progression", () => {
     const scenario = createDemoPeriodization(today, "Helena Rocha");
-    expect(scenario.sessions.every(s => s.track === "physio" && s.planned_rpe === 2 && s.title?.includes("domiciliar"))).toBe(true);
+    expect(scenario.sessions.filter(s => (s.planned_target_load ?? 0) > 0).every(s => s.track === "physio" && s.planned_rpe === 2 && s.title?.includes("domiciliar"))).toBe(true);
     expect(scenario.plan.notes).toContain("Asma sem acompanhamento");
   });
   it("unknown or older assessment has no unreviewed generic load", () => {
