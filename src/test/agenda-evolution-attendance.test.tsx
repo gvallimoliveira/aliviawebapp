@@ -14,10 +14,10 @@ const appointment: AptInput = {
   duration_minutes: 50, notes: null, type: "in_person", status: "scheduled", created_at: "2026-11-11",
 };
 
-function open(status = "scheduled", onSetStatus = vi.fn().mockResolvedValue(undefined)) {
+function open(status = "scheduled", onSetStatus = vi.fn().mockResolvedValue(undefined), isSimulated = false) {
   render(<AppointmentEditorDialog open onClose={vi.fn()} initialApt={{ ...appointment, status }}
     defaultDate={new Date("2026-11-11T12:00:00")} defaultTime="14:00" professionalId="pro-1"
-    isSimulated={false} isClinicOnlyMode={false} clinicProfessionals={[]}
+    isSimulated={isSimulated} isClinicOnlyMode={false} clinicProfessionals={[]}
     knownPatients={[{ name: appointment.patient_name, email: "patient@example.com" }]}
     language="pt" isPt t={k => k} serviceMaps={{ labels: { fisioterapia: { pt: "Fisioterapia" } }, dot: {} }}
     onSubmit={vi.fn()} onRequestDelete={vi.fn()} onSetStatus={onSetStatus} />);
@@ -85,5 +85,11 @@ describe("evolution confirms attendance in open appointments", () => {
     await saveNote();
     await waitFor(() => expect(mocks.toast).toHaveBeenCalledWith({ title: "Evolução registrada" }));
     expect(setStatus).not.toHaveBeenCalled();
+  });
+  it("PRO demo agenda saves evolution locally and marks attended", async () => {
+    const setStatus = open("scheduled", vi.fn().mockResolvedValue(undefined), true);
+    await saveNote();
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
+    expect(mocks.from.mock.calls.some(([table]) => table === "professional_notes" || table === "session_notes")).toBe(false);
   });
 });

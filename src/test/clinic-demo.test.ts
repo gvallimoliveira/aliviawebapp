@@ -54,7 +54,7 @@ describe("demo scenarios follow the latest assessment, never the same generic pr
   it("Maria is in maintenance, not active generic strengthening", () => {
     const scenario = createDemoPeriodization(today, "Maria Silva");
     expect(scenario.cycles[0].name).toBe("Manutenção e prevenção secundária");
-    expect(scenario.sessions.every(s => s.track === "physio" && s.title?.includes("domiciliar"))).toBe(true);
+    expect(scenario.sessions.filter(s => s.track === "physio").every(s => s.title?.includes("domiciliar"))).toBe(true);
   });
   it("João has historical overload but no future running prescription", () => {
     const scenario = createDemoPeriodization(today, "João Santos");
@@ -87,5 +87,13 @@ describe("demo scenarios follow the latest assessment, never the same generic pr
   it("unknown or older assessment has no unreviewed generic load", () => {
     expect(createDemoPeriodization(today, "unknown").sessions).toHaveLength(0);
     expect(createDemoPeriodization(today, "Maria Silva", "demo-001").entries).toHaveLength(0);
+  });
+  it("demo history shows concurrent activities, dose variation and oscillating readiness", () => {
+    const scenario = createDemoPeriodization(today, "Maria Silva");
+    expect(new Set(scenario.sessions.map(s => s.track)).size).toBeGreaterThan(1);
+    const notes = scenario.entries.map(e => e.notes || "");
+    expect(notes.some(n => n.includes("subdose"))).toBe(true);
+    expect(notes.some(n => n.includes("superdose"))).toBe(true);
+    expect(new Set(scenario.checkins.map(c => c.readiness)).size).toBeGreaterThan(2);
   });
 });

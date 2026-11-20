@@ -303,8 +303,11 @@ const AppointmentEditorDialog = ({
       } catch { /* ignore */ }
     })();
 
-    // Evolution
-    if (hasEvolutionContext) {
+    // Evolution — demo keeps notes in memory only (fictional IDs are not real records).
+    if (hasEvolutionContext && isSimulated) {
+      setEvoAssessmentId(`demo-evo-${apt.id}`);
+      setEvoLoading(false);
+    } else if (hasEvolutionContext) {
       (async () => {
         if (!apt.patient_email) return;
         const evolutionEmail = normalizeEvolutionEmail(apt.patient_email);
@@ -459,14 +462,14 @@ const AppointmentEditorDialog = ({
       const stamp = `${currentApt.appointment_date} ${currentApt.appointment_time?.slice(0, 5) || "12:00"}`;
       const entry = `[${stamp}]\n${evoText.trim()}`;
       const newContent = evoExistingContent ? `${evoExistingContent}\n\n${entry}` : entry;
-      const { error } = await supabase.from("professional_notes").upsert(
+      const { error } = isSimulated ? { error: null } : await supabase.from("professional_notes").upsert(
         { professional_id: effectiveProId, assessment_id: evoAssessmentId, content: newContent, updated_at: new Date().toISOString() },
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;
 
       // Also mirror to session_notes so it appears in the patient's evolution record
-      if (currentApt.patient_email) {
+      if (currentApt.patient_email && !isSimulated) {
         try {
           await (supabase.from("session_notes" as any) as any).insert({
             professional_id: effectiveProId,
