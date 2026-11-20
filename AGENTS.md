@@ -13,6 +13,7 @@
 - Record alerts retain dismissal audits; health caveats share healthHistory and latest-day/manual precedence, without new risk math/AI.
 - Record-summary STEPS prioritizes fetched completed status before macro-cycle fallback; preserve history.
 - Clinic demos: viewer-scoped fixtures, local math, no live writes/AI; match latest assessment/safety or stay empty.
+- Demo clinical appointments reuse AppointmentEditorDialog with parent-owned local evolution notes; reopening/deleting never touches live records, while reception retains its nonclinical dialog.
 - Demo load history receives the same local sessions/check-ins as the record; demo STEPS use five clinical phases plus terminal discharge, never a discharge cycle. Demo insights derive signals from those fixtures, not stale hand-entered percentages.
 
 - Cardio ceiling reminders use `usePatientCardioHealth` over assessments and ID/email-linked dated health; never auto-select profiles, infer condition control or invent age-based ceilings.

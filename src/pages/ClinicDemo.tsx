@@ -32,6 +32,8 @@ import DemoFeedbackMock from "@/components/demo/DemoFeedbackMock";
 import DemoDailySummaryMock from "@/components/demo/DemoDailySummaryMock";
 import DemoClinicalAgentMock from "@/components/demo/DemoClinicalAgentMock";
 import PatientEvolutionDashboard from "@/components/dashboard/PatientEvolutionDashboard";
+import AppointmentEditorDialog from "@/components/dashboard/AppointmentEditorDialog";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { mockPatientAssessments } from "@/data/mockPatientData";
 import ExportDataCard from "@/components/dashboard/ExportDataCard";
 import ImportDataCard from "@/components/dashboard/ImportDataCard";
@@ -75,6 +77,7 @@ function getTimeSlots(apts: typeof DEMO_APPOINTMENTS): string[] {
 const ClinicDemo = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, language } = useLanguage();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("agenda");
   const [viewerRole, setViewerRole] = useState<ClinicDemoRole>("owner");
@@ -89,6 +92,7 @@ const ClinicDemo = () => {
   const [appointments, setAppointments] = useState(DEMO_APPOINTMENTS);
   const [assessments, setAssessments] = useState(DEMO_CLINIC_ASSESSMENTS);
   const [selectedApt, setSelectedApt] = useState<(typeof DEMO_APPOINTMENTS)[0] | null>(null);
+  const [demoEvolutionNotes, setDemoEvolutionNotes] = useState<Record<string, string>>({});
   const [linkCopied, setLinkCopied] = useState(false);
   const [filterTherapist, setFilterTherapist] = useState<string>("all");
 
@@ -667,7 +671,35 @@ const ClinicDemo = () => {
       </main>
 
       {/* Appointment detail dialog */}
-      <Dialog open={!!selectedApt} onOpenChange={(o) => !o && setSelectedApt(null)}>
+      {selectedApt && viewerRole !== "secretary" && (
+        <AppointmentEditorDialog
+          key={selectedApt.id}
+          open
+          onClose={() => setSelectedApt(null)}
+          initialApt={selectedApt}
+          defaultDate={new Date(selectedApt.appointment_date + "T12:00:00")}
+          defaultTime={selectedApt.appointment_time.slice(0, 5)}
+          clinicId={DEMO_CLINIC.id}
+          isSimulated
+          isClinicOnlyMode
+          readOnly
+          clinicProfessionals={therapists}
+          knownPatients={appointments.map(a => ({ name: a.patient_name, email: a.patient_email }))}
+          language={language}
+          isPt={language === "pt"}
+          t={t}
+          serviceMaps={{ labels: { fisioterapia: { pt: "Fisioterapia", en: "Physiotherapy", es: "Fisioterapia" } }, dot: { fisioterapia: "bg-primary" } }}
+          onSubmit={async () => false}
+          onRequestDelete={() => {}}
+          onSetStatus={(id, status) => {
+            setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+            setSelectedApt(prev => prev?.id === id ? { ...prev, status } : prev);
+          }}
+          demoEvolutionContent={demoEvolutionNotes[selectedApt.id]}
+          onDemoEvolutionChange={(id, content) => setDemoEvolutionNotes(prev => ({ ...prev, [id]: content }))}
+        />
+      )}
+      <Dialog open={!!selectedApt && viewerRole === "secretary"} onOpenChange={(o) => !o && setSelectedApt(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

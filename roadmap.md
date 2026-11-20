@@ -1,5 +1,9 @@
 # Roadmap
 
+## Agenda demo — evolução no card
+- [ ] Conectar evolução no agendamento da clínica e manter notas locais ao reabrir nos dois demos, sem consultas/gravações reais; preservar recepção sem conteúdo clínico.
+- [ ] Testar abrir → preencher → salvar → Compareceu → fechar/reabrir → excluir, em computador/celular, e regressões da Agenda.
+
 ## Demos — carga, raciocínio e insights
 - [x] Semanas com atividades e recuperação; cinco fases clínicas + Alta terminal, manutenção para altas e histórico de 70 dias nos casos adequados. Carlos preserva ausência de histórico após investigação recente. Dois botões de histórico usam as mesmas sessões locais; carga visível também na clínica somente leitura.
 - [x] Quatro conversas aprofundadas com decisões, D.I.F.I/STEPS e ressalvas; respostas encadeadas, conversas filtradas aos pacientes do terapeuta. Insights em seis categorias com sinais derivados dos exemplos e valores rastreáveis da agenda fictícia; ajuda pt/en/es atualizada.

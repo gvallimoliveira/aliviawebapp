@@ -14,10 +14,14 @@ const appointment: AptInput = {
   duration_minutes: 50, notes: null, type: "in_person", status: "scheduled", created_at: "2026-11-11",
 };
 
-function open(status = "scheduled", onSetStatus = vi.fn().mockResolvedValue(undefined), isSimulated = false) {
-  render(<AppointmentEditorDialog open onClose={vi.fn()} initialApt={{ ...appointment, status }}
+function open(status = "scheduled", onSetStatus = vi.fn().mockResolvedValue(undefined), isSimulated = false,
+  demo = { clinic: false, content: "", onChange: vi.fn() }) {
+  render(<AppointmentEditorDialog open onClose={vi.fn()} initialApt={{ ...appointment, status,
+      professional_id: demo.clinic ? "clinic-therapist" : appointment.professional_id }}
     defaultDate={new Date("2026-11-11T12:00:00")} defaultTime="14:00" professionalId="pro-1"
-    isSimulated={isSimulated} isClinicOnlyMode={false} clinicProfessionals={[]}
+    isSimulated={isSimulated} isClinicOnlyMode={demo.clinic} clinicId={demo.clinic ? "demo-clinic" : undefined}
+    readOnly={demo.clinic} clinicProfessionals={[]}
+    demoEvolutionContent={demo.content} onDemoEvolutionChange={demo.onChange}
     knownPatients={[{ name: appointment.patient_name, email: "patient@example.com" }]}
     language="pt" isPt t={k => k} serviceMaps={{ labels: { fisioterapia: { pt: "Fisioterapia" } }, dot: {} }}
     onSubmit={vi.fn()} onRequestDelete={vi.fn()} onSetStatus={onSetStatus} />);
@@ -91,5 +95,22 @@ describe("evolution confirms attendance in open appointments", () => {
     await saveNote();
     await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
     expect(mocks.from.mock.calls.some(([table]) => table === "professional_notes" || table === "session_notes")).toBe(false);
+  });
+  it("clinic demo records evolution in an open reception-managed slot without live reads or writes", async () => {
+    const onChange = vi.fn();
+    const setStatus = open("scheduled", vi.fn(), true, { clinic: true, content: "", onChange });
+    await saveNote();
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
+    expect(onChange).toHaveBeenCalledWith("apt-1", "[2026-11-11 14:00]\nMobilização realizada, paciente tolerou bem.");
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+  it("demo notes read back after reopening and deletion stays local", async () => {
+    const onChange = vi.fn();
+    open("completed", vi.fn(), true, { clinic: true,
+      content: "[2026-11-11 14:00]\nMobilização realizada, paciente tolerou bem.", onChange });
+    fireEvent.click(await screen.findByRole("button", { name: "Excluir última" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Excluir$/ }));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith("apt-1", ""));
+    expect(mocks.from).not.toHaveBeenCalled();
   });
 });

@@ -111,6 +111,9 @@ interface Props {
   onViewPatient?: (email: string) => void;
   /** Called after evolution save/delete to refresh map/cards */
   onEvolutionChanged?: () => void;
+  /** Parent-owned demo notes survive closing the dialog, without live queries/writes. */
+  demoEvolutionContent?: string;
+  onDemoEvolutionChange?: (appointmentId: string, content: string) => void;
   /** Clinic clinicians: view data, record attendance/evolution only. */
   readOnly?: boolean;
 }
@@ -187,6 +190,7 @@ const AppointmentEditorDialog = ({
   clinicProfessionals, knownPatients,
   language, isPt, t, serviceMaps,
   onSubmit, onRequestDelete, onSetStatus, onViewPatient, onEvolutionChanged, readOnly = false,
+  demoEvolutionContent = "", onDemoEvolutionChange,
 }: Props) => {
   const { toast } = useToast();
   const isEdit = !!initialApt;
@@ -255,7 +259,7 @@ const AppointmentEditorDialog = ({
   const [evoLoading, setEvoLoading] = useState(hasEvolutionContext);
   const [evoError, setEvoError] = useState(false);
   const [evoAssessmentId, setEvoAssessmentId] = useState<string | null>(null);
-  const [evoExistingContent, setEvoExistingContent] = useState("");
+  const [evoExistingContent, setEvoExistingContent] = useState(isSimulated ? demoEvolutionContent : "");
   const [evoText, setEvoText] = useState("");
   const [evoSaving, setEvoSaving] = useState(false);
   const [evoDeleting, setEvoDeleting] = useState(false);
@@ -284,7 +288,7 @@ const AppointmentEditorDialog = ({
     if (!apt) return;
 
     // Patient extras
-    (async () => {
+    if (!isSimulated) (async () => {
       try {
         let query = (supabase.from("patients" as any) as any).select("*");
         if (clinicId) query = query.eq("clinic_id", clinicId);
@@ -468,6 +472,8 @@ const AppointmentEditorDialog = ({
       );
       if (error) throw error;
 
+      if (isSimulated) onDemoEvolutionChange?.(currentApt.id, newContent);
+
       // Also mirror to session_notes so it appears in the patient's evolution record
       if (currentApt.patient_email && !isSimulated) {
         try {
@@ -520,14 +526,15 @@ const AppointmentEditorDialog = ({
     try {
       const targetIdx = evoEntries.lastIndexOf(lastEvoEntry);
       const remaining = evoEntries.filter((_, i) => i !== targetIdx).map(e => e.raw).join("\n\n");
-      const { error } = await supabase.from("professional_notes").upsert(
+      const { error } = isSimulated ? { error: null } : await supabase.from("professional_notes").upsert(
         { professional_id: effectiveProId, assessment_id: evoAssessmentId, content: remaining, updated_at: new Date().toISOString() },
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;
+      if (isSimulated) onDemoEvolutionChange?.(currentApt.id, remaining);
 
       // Mirror delete to session_notes (best-effort): remove matching entry for this appointment
-      try {
+      if (!isSimulated) try {
         const targetContent = lastEvoEntry.content?.trim();
         let delQ: any = (supabase.from("session_notes" as any) as any).delete().eq("appointment_id", currentApt.id);
         if (targetContent) delQ = delQ.eq("content", targetContent);
