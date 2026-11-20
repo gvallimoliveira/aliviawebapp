@@ -610,6 +610,13 @@
       "when": 1795215551276,
       "tag": "0086_harden_credit_status_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1795218809183,
+      "tag": "0087_scope_patient_active_exercise_programs",
+      "breakpoints": true
     }
   ]
 }

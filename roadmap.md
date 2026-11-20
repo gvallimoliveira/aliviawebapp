@@ -1,5 +1,9 @@
 # Roadmap
 
+## Segurança — exercícios ativos do próprio paciente
+- [x] Somente o alerta selecionado: identidade obrigatória, correspondência de nome limitada à clínica/PRO autônomo e avaliação de outra pessoa nunca substituída pelo nome. Execução anônima bloqueada; dados e programas ativos preservados.
+- [x] Mudança confirmada no banco e 16 testes de isolamento/permissões aprovados; build OK. Scanner ainda lista a função por executar com privilégios do proprietário; testes validam filtros internos. Demais alertas não alterados; interface do paciente não exercitada nesta tarefa.
+
 ## Agenda PRO real — evolução sem e-mail
 - [x] Removido bloqueio para pacientes sem e-mail; avaliação por nome exato no mesmo escopo/ligação explícita, compromissos pessoais excluídos. Avaliação auxiliar só criada ao salvar, nunca ao abrir. Ajustes do demo desfeitos.
 - [x] Conta PRO real → Agenda → Sonia recreio sem e-mail → formulário/rascunho → fechar/reabrir conferidos em 1280×1800 e 390×844, zero gravações clínicas/erros. 21 testes aprovados incluindo salvamento/comparecimento e criação apenas explícita; build OK. Salvamento real não executado para não inserir evolução fictícia; não publicado.

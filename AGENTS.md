@@ -6,6 +6,7 @@
 - Annual refunds share copy keys; annualRefund.ts calculates, never pays.
 - Trial renewal uses an owner/clinic-scoped RPC on access/expiry and trial_started_at, never created_at; no customer admin exception.
 - Patient navigation shares patientNavigation/scoped care-provider and HEP RPCs; retain auth/persistence.
+- Patient HEP name fallback must match clinic/solo scope and never override assessment ownership, preventing namesake exposure.
 - Clinical AI shares `_shared/rlca-reference.ts`; separate claims/evidence, retain surgery context; no automated clearance/report replacement.
 - Scope before querying/limiting: solo clinic_id IS NULL + ownership; clinic selected clinic_id. Reset screens on switches; validate agent thread/patient scope server-side.
 - Microcycle dose edits reuse savePlannedDose with the existing session ID and preserved date, track and metadata; never write perceived load when changing a target.
