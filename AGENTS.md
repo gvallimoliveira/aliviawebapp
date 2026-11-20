@@ -70,3 +70,4 @@
 - Blog: preserve bodies/URLs; BlogDashboardReturn sends signed-in users to /dashboard.
 - PRO trial: pro_trial_ends_at caps AI credits at 5 (always blocks).
 - AI clinical texts append `_shared/cif-reasoning.ts` (CIF ↔ D.I.F.I ↔ STEPS relational guide) to every reasoning prompt; the INSS report template uses CIF sections; codes only when data exists, never invented.
+- Public landing text for non-JS crawlers comes from `seo/page-snapshots.json`, written per route by `plugins/staticPagesPlugin.ts` at build; refresh the snapshot when landing copy changes, because stale noscript text misinforms social/AI readers.
