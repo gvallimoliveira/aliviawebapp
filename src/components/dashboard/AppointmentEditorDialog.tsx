@@ -45,6 +45,7 @@ export interface AptInput {
   service_id?: string | null;
   series_id?: string | null;
   recurrence_rule?: unknown;
+  assessment_id?: string | null;
 }
 
 interface KnownPatient { name: string; email: string }
@@ -251,10 +252,13 @@ const AppointmentEditorDialog = ({
   const patientPickerContainerRef = useRef<HTMLDivElement | null>(null);
 
   // ---- Evolution state ----
-  const hasEvolutionContext = !!(currentApt?.patient_email && (currentApt?.professional_id || professionalId));
+  const hasEvolutionContext = !!(currentApt && currentApt.service_type !== "compromisso" &&
+    (currentApt.patient_email?.trim() || currentApt.patient_name.trim()) &&
+    (currentApt.professional_id || professionalId));
   const [evoLoading, setEvoLoading] = useState(hasEvolutionContext);
   const [evoError, setEvoError] = useState(false);
   const [evoAssessmentId, setEvoAssessmentId] = useState<string | null>(null);
+  const pendingEvolutionAssessment = useRef<Record<string, unknown> | null>(null);
   const [evoExistingContent, setEvoExistingContent] = useState("");
   const [evoText, setEvoText] = useState("");
   const [evoSaving, setEvoSaving] = useState(false);
@@ -309,8 +313,7 @@ const AppointmentEditorDialog = ({
       setEvoLoading(false);
     } else if (hasEvolutionContext) {
       (async () => {
-        if (!apt.patient_email) return;
-        const evolutionEmail = normalizeEvolutionEmail(apt.patient_email);
+        const evolutionEmail = apt.patient_email?.trim() ? normalizeEvolutionEmail(apt.patient_email) : null;
         const effectiveProId = apt.professional_id || professionalId || "";
         try {
           const aptDayStart = `${apt.appointment_date}T00:00:00`;
@@ -319,9 +322,10 @@ const AppointmentEditorDialog = ({
 
           let sameDayQuery = supabase.from("assessments")
             .select("id, created_at")
-            .eq("patient_email", evolutionEmail)
             .gte("created_at", aptDayStart).lte("created_at", aptDayEnd)
             .order("created_at", { ascending: false }).limit(1);
+          sameDayQuery = evolutionEmail ? sameDayQuery.eq("patient_email", evolutionEmail)
+            : sameDayQuery.eq("patient_name", apt.patient_name.trim());
           if (clinicId) sameDayQuery = sameDayQuery.eq("clinic_id", clinicId);
           else sameDayQuery = sameDayQuery.eq("professional_id", effectiveProId).is("clinic_id", null);
           const { data: sameDayRows } = await sameDayQuery;
@@ -330,12 +334,22 @@ const AppointmentEditorDialog = ({
           if (!assessmentId) {
             let latestQuery = supabase.from("assessments")
               .select("id, created_at")
-              .eq("patient_email", evolutionEmail)
               .order("created_at", { ascending: false }).limit(1);
+            latestQuery = evolutionEmail ? latestQuery.eq("patient_email", evolutionEmail)
+              : latestQuery.eq("patient_name", apt.patient_name.trim());
             if (clinicId) latestQuery = latestQuery.eq("clinic_id", clinicId);
             else latestQuery = latestQuery.eq("professional_id", effectiveProId).is("clinic_id", null);
             const { data: latestRows } = await latestQuery;
             assessmentId = latestRows?.[0]?.id || null;
+          }
+
+          // A saved appointment link disambiguates names and keeps subsequent entries together.
+          if (apt.assessment_id) {
+            let linkedQuery = supabase.from("assessments").select("id").eq("id", apt.assessment_id);
+            if (clinicId) linkedQuery = linkedQuery.eq("clinic_id", clinicId);
+            else linkedQuery = linkedQuery.eq("professional_id", effectiveProId).is("clinic_id", null);
+            const { data: linkedRows } = await linkedQuery.limit(1);
+            if (linkedRows?.[0]) assessmentId = linkedRows[0].id;
           }
 
           if (!assessmentId) {
@@ -349,16 +363,15 @@ const AppointmentEditorDialog = ({
               anamnesis_data: { quickEvolutionOnly: true, placeholder: true, source: "schedule", appointment_id: apt.id },
               created_at: aptCreatedAt,
             };
-            const { data: created, error } = await supabase.from("assessments").insert(ins).select("id").single();
-            if (error) throw error;
-            assessmentId = created.id;
+            // Opening an appointment must not create a clinical record. Create on explicit save only.
+            pendingEvolutionAssessment.current = ins;
           }
 
 
-          const { data: existingRows } = await supabase.from("professional_notes")
+          const { data: existingRows } = assessmentId ? await supabase.from("professional_notes")
             .select("content, professional_id, updated_at")
             .eq("assessment_id", assessmentId)
-            .order("updated_at", { ascending: false }).limit(5);
+            .order("updated_at", { ascending: false }).limit(5) : { data: [] };
           const matching = existingRows?.find((r: any) => r.professional_id === effectiveProId) || existingRows?.[0];
 
           if (cancelled || !aliveRef.current) return;
@@ -454,16 +467,26 @@ const AppointmentEditorDialog = ({
   };
 
   const handleSaveEvolution = async () => {
-    if (!currentApt || !evoAssessmentId || !evoText.trim()) return;
+    if (!currentApt || !evoText.trim() || (!evoAssessmentId && !pendingEvolutionAssessment.current)) return;
     const effectiveProId = currentApt.professional_id || professionalId || "";
     if (!effectiveProId) return;
     setEvoSaving(true);
     try {
+      let assessmentId = evoAssessmentId;
+      if (!assessmentId && pendingEvolutionAssessment.current) {
+        const { data: created, error } = await supabase.from("assessments")
+          .insert(pendingEvolutionAssessment.current as any).select("id").single();
+        if (error) throw error;
+        assessmentId = created.id;
+        setEvoAssessmentId(assessmentId);
+        pendingEvolutionAssessment.current = null;
+      }
+      if (!assessmentId) return;
       const stamp = `${currentApt.appointment_date} ${currentApt.appointment_time?.slice(0, 5) || "12:00"}`;
       const entry = `[${stamp}]\n${evoText.trim()}`;
       const newContent = evoExistingContent ? `${evoExistingContent}\n\n${entry}` : entry;
       const { error } = isSimulated ? { error: null } : await supabase.from("professional_notes").upsert(
-        { professional_id: effectiveProId, assessment_id: evoAssessmentId, content: newContent, updated_at: new Date().toISOString() },
+        { professional_id: effectiveProId, assessment_id: assessmentId, content: newContent, updated_at: new Date().toISOString() },
         { onConflict: "professional_id,assessment_id" }
       );
       if (error) throw error;

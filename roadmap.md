@@ -1,5 +1,9 @@
 # Roadmap
 
+## Agenda PRO real — evolução sem e-mail
+- [x] Removido bloqueio para pacientes sem e-mail; avaliação por nome exato no mesmo escopo/ligação explícita, compromissos pessoais excluídos. Avaliação auxiliar só criada ao salvar, nunca ao abrir. Ajustes do demo desfeitos.
+- [x] Conta PRO real → Agenda → Sonia recreio sem e-mail → formulário/rascunho → fechar/reabrir conferidos em 1280×1800 e 390×844, zero gravações clínicas/erros. 21 testes aprovados incluindo salvamento/comparecimento e criação apenas explícita; build OK. Salvamento real não executado para não inserir evolução fictícia; não publicado.
+
 ## Demos — carga, raciocínio e insights
 - [x] Semanas com atividades e recuperação; cinco fases clínicas + Alta terminal, manutenção para altas e histórico de 70 dias nos casos adequados. Carlos preserva ausência de histórico após investigação recente. Dois botões de histórico usam as mesmas sessões locais; carga visível também na clínica somente leitura.
 - [x] Quatro conversas aprofundadas com decisões, D.I.F.I/STEPS e ressalvas; respostas encadeadas, conversas filtradas aos pacientes do terapeuta. Insights em seis categorias com sinais derivados dos exemplos e valores rastreáveis da agenda fictícia; ajuda pt/en/es atualizada.

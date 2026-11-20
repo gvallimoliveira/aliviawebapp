@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, cleanup } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AppointmentEditorDialog, { type AptInput } from "@/components/dashboard/AppointmentEditorDialog";
 
-const mocks = vi.hoisted(() => ({ from: vi.fn(), toast: vi.fn(), failNote: false }));
+const mocks = vi.hoisted(() => ({ from: vi.fn(), toast: vi.fn(), failNote: false, noAssessment: false }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mocks.from } }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: mocks.toast }) }));
 vi.mock("@/components/dashboard/DictationBar", () => ({ default: () => null }));
@@ -14,8 +14,9 @@ const appointment: AptInput = {
   duration_minutes: 50, notes: null, type: "in_person", status: "scheduled", created_at: "2026-11-11",
 };
 
-function open(status = "scheduled", onSetStatus = vi.fn().mockResolvedValue(undefined), isSimulated = false) {
-  render(<AppointmentEditorDialog open onClose={vi.fn()} initialApt={{ ...appointment, status }}
+function open(status = "scheduled", onSetStatus = vi.fn().mockResolvedValue(undefined), isSimulated = false,
+  overrides: Partial<AptInput> = {}) {
+  render(<AppointmentEditorDialog open onClose={vi.fn()} initialApt={{ ...appointment, status, ...overrides }}
     defaultDate={new Date("2026-11-11T12:00:00")} defaultTime="14:00" professionalId="pro-1"
     isSimulated={isSimulated} isClinicOnlyMode={false} clinicProfessionals={[]}
     knownPatients={[{ name: appointment.patient_name, email: "patient@example.com" }]}
@@ -26,15 +27,16 @@ function open(status = "scheduled", onSetStatus = vi.fn().mockResolvedValue(unde
 
 beforeEach(() => {
   mocks.failNote = false;
+  mocks.noAssessment = false;
   mocks.toast.mockReset();
   mocks.from.mockReset().mockImplementation((table: string) => {
-    const result = table === "assessments" ? { data: [{ id: "assessment-1" }], error: null }
+    const result = table === "assessments" ? { data: mocks.noAssessment ? [] : [{ id: "assessment-1" }], error: null }
       : { data: [], error: null };
     const chain: Record<string, any> = {};
     for (const method of ["select", "eq", "is", "gte", "lte", "order", "limit"]) chain[method] = vi.fn(() => chain);
     chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve);
     chain.upsert = vi.fn(async () => ({ error: mocks.failNote ? new Error("note failed") : null }));
-    chain.insert = vi.fn(async () => ({ error: null }));
+    chain.insert = vi.fn(() => ({ error: null, select: () => ({ single: async () => ({ data: { id: "new-assessment" }, error: null }) }) }));
     return chain;
   });
 });
@@ -91,5 +93,32 @@ describe("evolution confirms attendance in open appointments", () => {
     await saveNote();
     await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
     expect(mocks.from.mock.calls.some(([table]) => table === "professional_notes" || table === "session_notes")).toBe(false);
+  });
+  it("real PRO patient without email can record evolution and confirm attendance", async () => {
+    const setStatus = open("scheduled", vi.fn(), false, { patient_email: null });
+    await saveNote();
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
+    const queries = mocks.from.mock.results.filter((_, i) => mocks.from.mock.calls[i][0] === "assessments");
+    expect(queries[0].value.eq).toHaveBeenCalledWith("patient_name", "Paciente teste");
+    expect(queries[0].value.eq).toHaveBeenCalledWith("professional_id", "pro-1");
+    expect(queries[0].value.is).toHaveBeenCalledWith("clinic_id", null);
+    expect(mocks.from.mock.calls.some(([table]) => table === "session_notes")).toBe(false);
+  });
+  it("personal commitments never offer a clinical evolution", () => {
+    open("scheduled", vi.fn(), false, { patient_email: null, service_type: "compromisso" });
+    expect(screen.queryByPlaceholderText("Descreva o que foi feito neste atendimento...")).not.toBeInTheDocument();
+    expect(mocks.from.mock.calls.some(([table]) => table === "assessments")).toBe(false);
+  });
+  it("opening a no-email appointment never creates an assessment; explicit save does", async () => {
+    mocks.noAssessment = true;
+    const setStatus = open("scheduled", vi.fn(), false, { patient_email: null });
+    await screen.findByPlaceholderText("Descreva o que foi feito neste atendimento...");
+    const chains = () => mocks.from.mock.results.filter((_, i) => mocks.from.mock.calls[i][0] === "assessments");
+    expect(chains().every(result => result.value.insert.mock.calls.length === 0)).toBe(true);
+    await saveNote();
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
+    const inserted = chains().flatMap(result => result.value.insert.mock.calls);
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0][0]).toMatchObject({ patient_email: null, patient_name: "Paciente teste", professional_id: "pro-1", clinic_id: null });
   });
 });
