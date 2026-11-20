@@ -603,6 +603,13 @@
       "when": 1795144919173,
       "tag": "0085_revoke_legacy_admin_inventory",
       "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1795215551276,
+      "tag": "0086_harden_credit_status_functions",
+      "breakpoints": true
     }
   ]
 }
