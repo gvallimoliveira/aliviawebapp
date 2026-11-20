@@ -41,7 +41,7 @@ const ProfessionalLandingShell = () => {
   const handleCTA = () => {
     // Plan choice lives in the pricing card, which opens checkout directly.
     const pricing = document.getElementById("pricing");
-    if (pricing) { pricing.scrollIntoView({ behavior: "smooth" }); return; }
+    if (pricing) { pricing.scrollIntoView({ behavior: "instant" }); return; }
     if (user) {
       navigate("/dashboard?tab=professional");
       return;
@@ -57,7 +57,7 @@ const ProfessionalLandingShell = () => {
       <main>
         <section className="relative min-h-[620px] overflow-hidden py-20 md:min-h-[670px] md:py-28">
           <div className="blur-blob absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/20" />
-          <div className="container relative z-10 mx-auto max-w-4xl px-4 text-center animate-fade-in motion-reduce:animate-none">
+          <div className="container relative z-10 mx-auto max-w-4xl px-4 text-center">
             <Badge variant="outline" className="mb-6 border-primary/30 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
               <Stethoscope className="mr-1.5 h-3.5 w-3.5" />
               {t("b2b.badge")}
@@ -70,7 +70,7 @@ const ProfessionalLandingShell = () => {
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Button onClick={handleCTA} size="lg" className="gap-2 rounded-xl px-8 text-base">
-                {t("b2b.hero_cta")}
+                {t("b2b.subscribe_now_cta")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="lg" className="gap-2 rounded-xl px-8 text-base" onClick={() => navigate("/profissionais/demo")}>
@@ -81,6 +81,9 @@ const ProfessionalLandingShell = () => {
                 {t("b2b.hero_login")}
               </Button>
             </div>
+            <Button variant="link" onClick={handleCTA} className="mt-3 h-auto whitespace-normal text-sm text-muted-foreground">
+              {t("b2b.trial_cta")}
+            </Button>
           </div>
         </section>
         {loadBody ? (

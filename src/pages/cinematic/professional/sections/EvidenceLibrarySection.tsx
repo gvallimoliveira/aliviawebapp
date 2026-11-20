@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { BookOpen, Filter, ShieldCheck, Sparkles, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import Reveal from "@/components/scroll/Reveal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { EVIDENCE_NICHES, fadeUp } from "../content";
 
@@ -45,7 +44,7 @@ const EvidenceLibrarySection = () => {
                 <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 text-primary mt-0.5 shrink-0" />{language === "pt" ? "Mesma base usada pela IA do Aliv.iA" : language === "es" ? "Misma base usada por la IA de Aliv.iA" : "Same base the Aliv.iA AI uses"}</li>
               </ul>
             </div>
-            <Reveal y={20} delay={0.1}>
+            <div>
               <div className="rounded-2xl border border-border/60 bg-card/90 backdrop-blur-sm p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -66,7 +65,7 @@ const EvidenceLibrarySection = () => {
                     : "New niches are added as more studies clear curation."}
                 </p>
               </div>
-            </Reveal>
+            </div>
           </div>
         </motion.div>
       </div>

@@ -1680,7 +1680,7 @@
   "support.pro.tool.acl_preoperative.title": "Pré-operatório de LCA (beta restrito)",
   "support.pro.tool.acl_preoperative.desc": "Disponível apenas para o administrador durante a validação. Registre explicitamente pré-operatório de reconstrução do LCA no objetivo do acompanhamento, história, queixa ou cirurgias planejadas da avaliação manual; joelho no mapa não basta. No prontuário, ative a trajetória e confira data planejada opcional e restrições. A preparação tem três etapas com metas progressivas, sem liberar cirurgia. As etapas pós-operatórias ficam consultáveis na mesma trajetória, mas só passam a vigentes após registrar a cirurgia realizada e sua data, enxerto e restrições. A data planejada conta dias até a cirurgia, nunca dias pós-operatórios. Em avaliações sem dor, questionários complementares ficam disponíveis apenas por escolha individual do profissional, não como recomendações genéricas; retirar itens do KOOS não preserva automaticamente sua validação. A trajetória pode ser inserida no relatório livre/encaminhamento.",
   "b2b.trial_cta": "Iniciar teste de 7 dias grátis",
-  "b2b.trial_cta_note": "R$ 0,00 hoje • 5 créditos de IA no teste • cancele em até 7 dias sem cobrança",
+  "b2b.trial_cta_note": "Com cartão • R$ 0,00 hoje • 5 créditos de IA • cobrança do plano escolhido no 8º dia se não cancelar",
   "b2b.subscribe_now_cta": "Assinar PRO agora",
   "b2b.subscribe_now_note": "Pagamento imediato e ativação na hora",
   "support.pro.faq.rf_trial.q": "Como funciona o teste grátis de 7 dias do PRO?",

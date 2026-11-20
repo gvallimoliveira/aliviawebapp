@@ -1,5 +1,10 @@
 # Roadmap
 
+## Landing profissional — velocidade e assinatura
+- [x] Remover esperas visuais, placeholders e rolagem presa; celular 440×667 e computador 1280×1800 com zero seções ocultas antes de rolar, sem overflow nem erros de execução.
+- [x] Assinatura como botão principal; teste secundário no início, oferta antecipada e preços, com cartão e renovação informados. Plano mensal escolhido preservado nos dois caminhos.
+- [x] Texto para buscadores sincronizado, 9 regressões aprovadas; quatro caminhos (oferta/preços × assinatura/teste) chegam ao cadastro com escolha correta. Não realizada cobrança, publicação ou medição em iPhone/rede móvel reais.
+
 ## Guia da plataforma para IA de vídeos
 - [x] Incorporar missão a partir da direção do fundador: soluções em fisioterapia que resolvam dores diárias do profissional e do paciente; redação identificada como sugerida, não oficial.
 - [x] Gerar DOCX detalhado: 23 capítulos, 24 páginas e cerca de 7.400 palavras com conceito, soluções, funcionalidades, públicos, posicionamento e missão.

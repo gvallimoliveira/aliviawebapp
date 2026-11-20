@@ -20,7 +20,7 @@ export const useProfessionalCta = () => {
   }, [navigate, user]);
 
   const scrollToPricing = useCallback(() => {
-    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("pricing")?.scrollIntoView({ behavior: "instant" });
   }, []);
 
   return { handleCTA, scrollToPricing };

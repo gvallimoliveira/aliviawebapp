@@ -64,12 +64,12 @@ export const EVIDENCE_NICHES = [
   "Tornozelo", "Cotovelo", "Punho", "Pélvica", "Temporomandibular",
 ];
 
-/** Shared entrance variant — only opacity/transform, capped stagger. */
+/** Keep professional landing content readable immediately, even on fast scroll. */
 export const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i: number) => ({
+  hidden: { opacity: 1, y: 0 },
+  visible: () => ({
     opacity: 1,
     y: 0,
-    transition: { delay: Math.min(i, 6) * 0.07, duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { duration: 0 },
   }),
 };

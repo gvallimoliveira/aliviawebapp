@@ -98,15 +98,15 @@ const PricingSection = () => {
                 ))}
               </ul>
 
-              <Button type="button" onClick={() => go(true)} disabled={loading !== null} size="lg" className="w-full rounded-xl gap-2 text-base">
-                {t("b2b.trial_cta")}
+              <Button type="button" onClick={() => go(false)} disabled={loading !== null} size="lg" className="w-full rounded-xl gap-2 text-base">
+                {t("b2b.subscribe_now_cta")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
-              <p className="text-xs text-muted-foreground mt-2 mb-4">{t("b2b.trial_cta_note")}</p>
-              <Button type="button" variant="outline" onClick={() => go(false)} disabled={loading !== null} size="lg" className="w-full rounded-xl text-base">
-                {t("b2b.subscribe_now_cta")}
+              <p className="text-xs text-muted-foreground mt-2 mb-4">{t("b2b.subscribe_now_note")}</p>
+              <Button type="button" variant="outline" onClick={() => go(true)} disabled={loading !== null} className="w-full rounded-xl h-auto min-h-10 whitespace-normal py-2">
+                {t("b2b.trial_cta")}
               </Button>
-              <p className="text-xs text-muted-foreground mt-2">{t("b2b.subscribe_now_note")}</p>
+              <p className="text-xs text-muted-foreground mt-2">{t("b2b.trial_cta_note")}</p>
             </CardContent>
           </Card>
         </motion.div>

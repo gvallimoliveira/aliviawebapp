@@ -1680,7 +1680,7 @@
   "support.pro.tool.acl_preoperative.title": "Preparación preoperatoria de LCA (beta restringida)",
   "support.pro.tool.acl_preoperative.desc": "Solo para el administrador durante validación. Registra explícitamente preparación preoperatoria de LCA en detalles del objetivo, historia, motivo o cirugías planeadas; rodilla en el mapa no basta. Activa la trayectoria y revisa fecha planeada opcional y restricciones. Tres etapas de preparación tienen metas progresivas, sin autorizar cirugía. Las etapas postoperatorias se consultan en la misma trayectoria, pero solo pasan a vigentes al registrar fecha de cirugía realizada, injerto y restricciones. Fechas planeadas cuentan días hasta la cirugía, nunca días postoperatorios. Sin dolor, los cuestionarios complementarios son una elección individual del profesional, no recomendaciones generales; quitar ítems de KOOS no conserva automáticamente la validación. La trayectoria puede insertarse en informes libres/de derivación.",
   "b2b.trial_cta": "Iniciar prueba gratis de 7 días",
-  "b2b.trial_cta_note": "R$ 0,00 hoy • 5 créditos de IA en la prueba • cancela en 7 días sin cargo",
+  "b2b.trial_cta_note": "Con tarjeta • R$ 0,00 hoy • 5 créditos de IA • cobro del plan elegido el día 8 si no cancelas",
   "b2b.subscribe_now_cta": "Suscribirse a PRO ahora",
   "b2b.subscribe_now_note": "Pago inmediato y activación al instante",
   "support.pro.faq.rf_trial.q": "¿Cómo funciona la prueba gratis de 7 días de PRO?",

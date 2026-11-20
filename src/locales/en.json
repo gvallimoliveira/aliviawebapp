@@ -1680,7 +1680,7 @@
   "support.pro.tool.acl_preoperative.title": "ACL preoperative preparation (restricted beta)",
   "support.pro.tool.acl_preoperative.desc": "Administrator-only during validation. Explicitly record ACL preoperative preparation in follow-up goal details, history, complaint or planned surgeries; knee location alone is insufficient. Activate the journey and review the optional planned date and restrictions. Three preparation stages have progressive goals, never surgical clearance. Future postoperative stages are viewable in the same journey, but become current only after recording the performed surgery date, graft and restrictions. Planned dates count days until surgery, never postoperative days. Painless assessments offer complementary questionnaires only by individual professional choice, not blanket recommendations; removing KOOS items does not automatically preserve validation. The journey can be inserted into free-text/referral reports.",
   "b2b.trial_cta": "Start 7-day free trial",
-  "b2b.trial_cta_note": "R$ 0.00 today • 5 AI credits during trial • cancel within 7 days at no charge",
+  "b2b.trial_cta_note": "Card required • R$ 0.00 today • 5 AI credits • chosen plan charged on day 8 unless canceled",
   "b2b.subscribe_now_cta": "Subscribe to PRO now",
   "b2b.subscribe_now_note": "Immediate payment and instant activation",
   "support.pro.faq.rf_trial.q": "How does the 7-day PRO free trial work?",

@@ -70,8 +70,8 @@ const EarlyCtaSection = () => {
           <CreditsSufficiency plan="pro" annual={billing === "annual"} className="mt-4" />
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
-            <Button onClick={() => void handleCTA()} size="lg" className="rounded-xl gap-2 px-8">
-              {t("b2b.hero_cta")}
+            <Button onClick={() => void handleCTA(billing, false)} size="lg" className="rounded-xl gap-2 px-8">
+              {t("b2b.subscribe_now_cta")}
               <ArrowRight className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="lg" className="rounded-xl gap-2 text-muted-foreground" onClick={scrollToPricing}>
@@ -79,6 +79,10 @@ const EarlyCtaSection = () => {
               <ArrowDown className="h-4 w-4" />
             </Button>
           </div>
+          <Button variant="link" onClick={() => void handleCTA(billing, true)} className="mt-3 h-auto whitespace-normal text-sm text-muted-foreground">
+            {t("b2b.trial_cta")}
+          </Button>
+          <p className="text-xs text-muted-foreground mt-1">{t("b2b.trial_cta_note")}</p>
         </motion.div>
       </div>
     </section>
