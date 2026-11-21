@@ -354,7 +354,7 @@ const AppointmentEditorDialog = ({
 
           if (!assessmentId) {
             const ins: any = {
-              type: "professional", status: "draft", user_id: null,
+              type: "professional", status: "in_progress", user_id: null,
               professional_id: clinicId ? null : effectiveProId,
               clinic_id: clinicId || null,
               payment_status: "covered",

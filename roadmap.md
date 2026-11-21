@@ -1,5 +1,9 @@
 # Roadmap
 
+## Agenda real — erro ao salvar evolução (PRO e clínica)
+- [x] Erro reproduzido autenticado: avaliação auxiliar usava draft, proibido por assessments_status_check; agora usa in_progress (não simula avaliação completa), somente ao salvar explicitamente. PRO/clínica compartilham o mesmo editor; escopos e permissões preservados.
+- [x] 33 testes aprovados, incluindo status real e clínica com/sem e-mail; build OK. Conta real PRO e proprietário da clínica → agendamento técnico → evolução salva → recarga/reabertura → Compareceu confirmado; autoria/escopo e espelho session_notes da clínica conferidos. Reabertura também em 390×844; registros técnicos removidos. Não publicado; iPhone físico e conta de terapeuta sem PRO pessoal não exercitados nesta rodada.
+
 ## Segurança — exercícios ativos do próprio paciente
 - [x] Somente o alerta selecionado: identidade obrigatória, correspondência de nome limitada à clínica/PRO autônomo e avaliação de outra pessoa nunca substituída pelo nome. Execução anônima bloqueada; dados e programas ativos preservados.
 - [x] Mudança confirmada no banco e 16 testes de isolamento/permissões aprovados; build OK. Scanner ainda lista a função por executar com privilégios do proprietário; testes validam filtros internos. Demais alertas não alterados; interface do paciente não exercitada nesta tarefa.

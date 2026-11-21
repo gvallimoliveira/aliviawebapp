@@ -15,10 +15,10 @@ const appointment: AptInput = {
 };
 
 function open(status = "scheduled", onSetStatus = vi.fn().mockResolvedValue(undefined), isSimulated = false,
-  overrides: Partial<AptInput> = {}) {
+  overrides: Partial<AptInput> = {}, clinicId: string | null = null) {
   render(<AppointmentEditorDialog open onClose={vi.fn()} initialApt={{ ...appointment, status, ...overrides }}
     defaultDate={new Date("2026-11-11T12:00:00")} defaultTime="14:00" professionalId="pro-1"
-    isSimulated={isSimulated} isClinicOnlyMode={false} clinicProfessionals={[]}
+    isSimulated={isSimulated} isClinicOnlyMode={!!clinicId} clinicId={clinicId} clinicProfessionals={[]}
     knownPatients={[{ name: appointment.patient_name, email: "patient@example.com" }]}
     language="pt" isPt t={k => k} serviceMaps={{ labels: { fisioterapia: { pt: "Fisioterapia" } }, dot: {} }}
     onSubmit={vi.fn()} onRequestDelete={vi.fn()} onSetStatus={onSetStatus} />);
@@ -36,7 +36,15 @@ beforeEach(() => {
     for (const method of ["select", "eq", "is", "gte", "lte", "order", "limit"]) chain[method] = vi.fn(() => chain);
     chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve);
     chain.upsert = vi.fn(async () => ({ error: mocks.failNote ? new Error("note failed") : null }));
-    chain.insert = vi.fn(() => ({ error: null, select: () => ({ single: async () => ({ data: { id: "new-assessment" }, error: null }) }) }));
+    chain.insert = vi.fn((payload: Record<string, unknown>) => {
+      // Mirror the actual database constraint so an unsupported status fails the save.
+      const invalidStatus = table === "assessments" &&
+        !["in_progress", "diagnosis_complete", "completed", "red_flagged"].includes(String(payload.status));
+      return { error: null, select: () => ({ single: async () => ({
+        data: invalidStatus ? null : { id: "new-assessment" },
+        error: invalidStatus ? new Error('assessments_status_check') : null,
+      }) }) };
+    });
     return chain;
   });
 });
@@ -119,6 +127,25 @@ describe("evolution confirms attendance in open appointments", () => {
     await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
     const inserted = chains().flatMap(result => result.value.insert.mock.calls);
     expect(inserted).toHaveLength(1);
-    expect(inserted[0][0]).toMatchObject({ patient_email: null, patient_name: "Paciente teste", professional_id: "pro-1", clinic_id: null });
+    expect(inserted[0][0]).toMatchObject({ status: "in_progress", patient_email: null, patient_name: "Paciente teste", professional_id: "pro-1", clinic_id: null });
+  });
+  it.each([null, "patient@example.com"])("clinic evolution creates an incomplete assessment in the clinic scope (email: %s)", async patientEmail => {
+    mocks.noAssessment = true;
+    const setStatus = open("scheduled", vi.fn(), false,
+      { patient_email: patientEmail, clinic_id: "clinic-1" }, "clinic-1");
+    await saveNote();
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
+    const queries = mocks.from.mock.results.filter((_, i) => mocks.from.mock.calls[i][0] === "assessments");
+    expect(queries[0].value.eq).toHaveBeenCalledWith("clinic_id", "clinic-1");
+    expect(queries[0].value.eq).not.toHaveBeenCalledWith("professional_id", "pro-1");
+    const inserted = queries.flatMap(result => result.value.insert.mock.calls);
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0][0]).toMatchObject({
+      type: "professional", status: "in_progress", payment_status: "covered",
+      clinic_id: "clinic-1", professional_id: null, patient_email: patientEmail,
+    });
+    const notes = mocks.from.mock.results.filter((_, i) => mocks.from.mock.calls[i][0] === "professional_notes");
+    expect(notes.some(result => result.value.upsert.mock.calls.some(([payload]: [Record<string, unknown>]) =>
+      payload.assessment_id === "new-assessment" && payload.professional_id === "pro-1"))).toBe(true);
   });
 });
