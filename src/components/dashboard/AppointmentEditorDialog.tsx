@@ -257,9 +257,9 @@ const AppointmentEditorDialog = ({
     (currentApt.professional_id || professionalId));
   const [evoLoading, setEvoLoading] = useState(hasEvolutionContext);
   const [evoError, setEvoError] = useState(false);
-  const [evoAssessmentId, setEvoAssessmentId] = useState<string | null>(null);
-  const pendingEvolutionAssessment = useRef<Record<string, unknown> | null>(null);
-  const [evoExistingContent, setEvoExistingContent] = useState("");
+  const [evoReady, setEvoReady] = useState(false);
+  const [evoNotes, setEvoNotes] = useState<{ id: string; content: string; stamp: string }[]>([]);
+  const [evoLegacyContent, setEvoLegacyContent] = useState("");
   const [evoText, setEvoText] = useState("");
   const [evoSaving, setEvoSaving] = useState(false);
   const [evoDeleting, setEvoDeleting] = useState(false);
@@ -309,74 +309,35 @@ const AppointmentEditorDialog = ({
 
     // Evolution — demo keeps notes in memory only (fictional IDs are not real records).
     if (hasEvolutionContext && isSimulated) {
-      setEvoAssessmentId(`demo-evo-${apt.id}`);
+      setEvoReady(true);
       setEvoLoading(false);
     } else if (hasEvolutionContext) {
       (async () => {
-        const evolutionEmail = apt.patient_email?.trim() ? normalizeEvolutionEmail(apt.patient_email) : null;
         const effectiveProId = apt.professional_id || professionalId || "";
         try {
-          const aptDayStart = `${apt.appointment_date}T00:00:00`;
-          const aptDayEnd = `${apt.appointment_date}T23:59:59`;
-          const aptCreatedAt = `${apt.appointment_date}T${apt.appointment_time?.slice(0, 5) || "12:00"}:00`;
+          // Agenda evolution is a session note in the record; it never creates an assessment.
+          let notesQuery = (supabase.from("session_notes" as any) as any)
+            .select("id, content, created_at")
+            .eq("appointment_id", apt.id)
+            .order("created_at", { ascending: true });
+          notesQuery = clinicId ? notesQuery.eq("clinic_id", clinicId)
+            : notesQuery.eq("professional_id", effectiveProId).is("clinic_id", null);
+          const { data: noteRows, error: notesError } = await notesQuery;
+          if (notesError) throw notesError;
+          const stamp = `${apt.appointment_date} ${apt.appointment_time?.slice(0, 5) || "12:00"}`;
 
-          let sameDayQuery = supabase.from("assessments")
-            .select("id, created_at")
-            .gte("created_at", aptDayStart).lte("created_at", aptDayEnd)
-            .order("created_at", { ascending: false }).limit(1);
-          sameDayQuery = evolutionEmail ? sameDayQuery.eq("patient_email", evolutionEmail)
-            : sameDayQuery.eq("patient_name", apt.patient_name.trim());
-          if (clinicId) sameDayQuery = sameDayQuery.eq("clinic_id", clinicId);
-          else sameDayQuery = sameDayQuery.eq("professional_id", effectiveProId).is("clinic_id", null);
-          const { data: sameDayRows } = await sameDayQuery;
-
-          let assessmentId = sameDayRows?.[0]?.id || null;
-          if (!assessmentId) {
-            let latestQuery = supabase.from("assessments")
-              .select("id, created_at")
-              .order("created_at", { ascending: false }).limit(1);
-            latestQuery = evolutionEmail ? latestQuery.eq("patient_email", evolutionEmail)
-              : latestQuery.eq("patient_name", apt.patient_name.trim());
-            if (clinicId) latestQuery = latestQuery.eq("clinic_id", clinicId);
-            else latestQuery = latestQuery.eq("professional_id", effectiveProId).is("clinic_id", null);
-            const { data: latestRows } = await latestQuery;
-            assessmentId = latestRows?.[0]?.id || null;
-          }
-
-          // A saved appointment link disambiguates names and keeps subsequent entries together.
+          // Read-only legacy entries previously stored on an assessment-linked note.
+          let legacy = "";
           if (apt.assessment_id) {
-            let linkedQuery = supabase.from("assessments").select("id").eq("id", apt.assessment_id);
-            if (clinicId) linkedQuery = linkedQuery.eq("clinic_id", clinicId);
-            else linkedQuery = linkedQuery.eq("professional_id", effectiveProId).is("clinic_id", null);
-            const { data: linkedRows } = await linkedQuery.limit(1);
-            if (linkedRows?.[0]) assessmentId = linkedRows[0].id;
+            const { data: legacyRows } = await supabase.from("professional_notes")
+              .select("content, professional_id").eq("assessment_id", apt.assessment_id).limit(5);
+            const m = legacyRows?.find((r: any) => r.professional_id === effectiveProId) || legacyRows?.[0];
+            legacy = (m?.content || "").trim();
           }
-
-          if (!assessmentId) {
-            const ins: any = {
-              type: "professional", status: "in_progress", user_id: null,
-              professional_id: clinicId ? null : effectiveProId,
-              clinic_id: clinicId || null,
-              payment_status: "covered",
-              patient_name: apt.patient_name || null,
-              patient_email: evolutionEmail,
-              anamnesis_data: { quickEvolutionOnly: true, placeholder: true, source: "schedule", appointment_id: apt.id },
-              created_at: aptCreatedAt,
-            };
-            // Opening an appointment must not create a clinical record. Create on explicit save only.
-            pendingEvolutionAssessment.current = ins;
-          }
-
-
-          const { data: existingRows } = assessmentId ? await supabase.from("professional_notes")
-            .select("content, professional_id, updated_at")
-            .eq("assessment_id", assessmentId)
-            .order("updated_at", { ascending: false }).limit(5) : { data: [] };
-          const matching = existingRows?.find((r: any) => r.professional_id === effectiveProId) || existingRows?.[0];
-
           if (cancelled || !aliveRef.current) return;
-          setEvoAssessmentId(assessmentId);
-          setEvoExistingContent(matching?.content || "");
+          setEvoNotes((noteRows || []).map((r: any) => ({ id: r.id, content: r.content || "", stamp })));
+          setEvoLegacyContent(legacy);
+          setEvoReady(true);
           setEvoLoading(false);
         } catch (e: any) {
           if (cancelled || !aliveRef.current) return;
@@ -392,12 +353,12 @@ const AppointmentEditorDialog = ({
   }, []);
 
   // ---- Derived ----
-  const evoEntries = useMemo(() => parseEvolutionEntries(evoExistingContent), [evoExistingContent]);
-  const appointmentEvoEntries = useMemo(
-    () => currentApt ? evoEntries.filter(e => matchesAppointmentEvolution(e, currentApt)) : [],
-    [evoEntries, currentApt]
-  );
-  const lastEvoEntry = appointmentEvoEntries[appointmentEvoEntries.length - 1] || null;
+  const evoExistingContent = useMemo(() => {
+    const own = evoNotes.map(n => `[${n.stamp}]\n${n.content}`).join("\n\n");
+    return [evoLegacyContent, own].filter(Boolean).join("\n\n");
+  }, [evoNotes, evoLegacyContent]);
+  const appointmentEvoEntries = evoNotes;
+  const lastEvoEntry = evoNotes[evoNotes.length - 1] || null;
 
   // ---- Handlers ----
   const patientKeyOf = (p: { name: string; email: string }) =>
@@ -467,49 +428,33 @@ const AppointmentEditorDialog = ({
   };
 
   const handleSaveEvolution = async () => {
-    if (!currentApt || !evoText.trim() || (!evoAssessmentId && !pendingEvolutionAssessment.current)) return;
+    if (!currentApt || !evoText.trim() || !evoReady) return;
     const effectiveProId = currentApt.professional_id || professionalId || "";
     if (!effectiveProId) return;
+    const patientKey = currentApt.patient_email?.trim()
+      ? normalizeEvolutionEmail(currentApt.patient_email)
+      : currentApt.patient_name.trim();
+    if (!patientKey) return;
     setEvoSaving(true);
     try {
-      let assessmentId = evoAssessmentId;
-      if (!assessmentId && pendingEvolutionAssessment.current) {
-        const { data: created, error } = await supabase.from("assessments")
-          .insert(pendingEvolutionAssessment.current as any).select("id").single();
-        if (error) throw error;
-        assessmentId = created.id;
-        setEvoAssessmentId(assessmentId);
-        pendingEvolutionAssessment.current = null;
-      }
-      if (!assessmentId) return;
       const stamp = `${currentApt.appointment_date} ${currentApt.appointment_time?.slice(0, 5) || "12:00"}`;
-      const entry = `[${stamp}]\n${evoText.trim()}`;
-      const newContent = evoExistingContent ? `${evoExistingContent}\n\n${entry}` : entry;
-      const { error } = isSimulated ? { error: null } : await supabase.from("professional_notes").upsert(
-        { professional_id: effectiveProId, assessment_id: assessmentId, content: newContent, updated_at: new Date().toISOString() },
-        { onConflict: "professional_id,assessment_id" }
-      );
-      if (error) throw error;
-
-      // Also mirror to session_notes so it appears in the patient's evolution record
-      if (currentApt.patient_email && !isSimulated) {
-        try {
-          await (supabase.from("session_notes" as any) as any).insert({
-            professional_id: effectiveProId,
-            clinic_id: clinicId || null,
-            patient_email: normalizeEvolutionEmail(currentApt.patient_email),
-            appointment_id: currentApt.id,
-            session_date: currentApt.appointment_date,
-            content: evoText.trim(),
-          });
-        } catch (mirrorErr) {
-          console.warn("[evolution] failed to mirror to session_notes", mirrorErr);
-        }
+      const content = evoText.trim();
+      let newId = `demo-${Date.now()}`;
+      if (!isSimulated) {
+        const { data: created, error } = await (supabase.from("session_notes" as any) as any).insert({
+          professional_id: effectiveProId,
+          clinic_id: clinicId || null,
+          patient_email: patientKey,
+          appointment_id: currentApt.id,
+          session_date: currentApt.appointment_date,
+          content,
+        }).select("id").single();
+        if (error) throw error;
+        newId = created.id;
       }
-
       // Once saved, retain the note even if attendance fails: retrying must not duplicate it.
       if (aliveRef.current) {
-        setEvoExistingContent(newContent);
+        setEvoNotes(prev => [...prev, { id: newId, content, stamp }]);
         setEvoText("");
       }
       if (currentApt.status === "scheduled") {
@@ -537,30 +482,15 @@ const AppointmentEditorDialog = ({
   };
 
   const handleDeleteLastEvolution = async () => {
-    if (!currentApt || !evoAssessmentId || !lastEvoEntry) return;
-    const effectiveProId = currentApt.professional_id || professionalId || "";
+    if (!currentApt || !lastEvoEntry) return;
     setEvoDeleting(true);
     try {
-      const targetIdx = evoEntries.lastIndexOf(lastEvoEntry);
-      const remaining = evoEntries.filter((_, i) => i !== targetIdx).map(e => e.raw).join("\n\n");
-      const { error } = await supabase.from("professional_notes").upsert(
-        { professional_id: effectiveProId, assessment_id: evoAssessmentId, content: remaining, updated_at: new Date().toISOString() },
-        { onConflict: "professional_id,assessment_id" }
-      );
-      if (error) throw error;
-
-      // Mirror delete to session_notes (best-effort): remove matching entry for this appointment
-      try {
-        const targetContent = lastEvoEntry.content?.trim();
-        let delQ: any = (supabase.from("session_notes" as any) as any).delete().eq("appointment_id", currentApt.id);
-        if (targetContent) delQ = delQ.eq("content", targetContent);
-        await delQ;
-      } catch (mirrorErr) {
-        console.warn("[evolution] failed to mirror delete to session_notes", mirrorErr);
+      if (!isSimulated) {
+        const { error } = await (supabase.from("session_notes" as any) as any).delete().eq("id", lastEvoEntry.id);
+        if (error) throw error;
       }
-
       if (!aliveRef.current) return;
-      setEvoExistingContent(remaining);
+      setEvoNotes(prev => prev.filter(n => n.id !== lastEvoEntry.id));
       toast({ title: isPt ? "Última evolução excluída" : language === "es" ? "Última evolución eliminada" : "Last evolution deleted" });
       onEvolutionChanged?.();
     } catch (e: any) {

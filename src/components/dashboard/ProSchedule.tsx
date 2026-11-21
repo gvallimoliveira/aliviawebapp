@@ -398,6 +398,29 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   }, [fetchAppointments, isSimulated]);
 
   const [evolutionMap, setEvolutionMap] = useState<Map<string, EvolutionInfo>>(new Map());
+  // Agenda evolutions are session notes linked to the appointment (any patient, with or without e-mail).
+  const [sessionNoteMap, setSessionNoteMap] = useState<Map<string, EvolutionInfo>>(new Map());
+  useEffect(() => {
+    if (isSimulated) { setSessionNoteMap(new Map()); return; }
+    const ids = appointments.map(a => a.id).filter(Boolean);
+    if (ids.length === 0) { setSessionNoteMap(new Map()); return; }
+    let cancelled = false;
+    (async () => {
+      const map = new Map<string, EvolutionInfo>();
+      for (let i = 0; i < ids.length; i += 200) {
+        const { data } = await (supabase.from("session_notes" as any) as any)
+          .select("appointment_id, content, created_at").in("appointment_id", ids.slice(i, i + 200));
+        (data || []).forEach((r: any) => {
+          const prev = map.get(r.appointment_id);
+          if (!prev || new Date(r.created_at).getTime() > new Date(prev.at).getTime()) {
+            map.set(r.appointment_id, { at: r.created_at, content: r.content || "", kind: "note" } as EvolutionInfo);
+          }
+        });
+      }
+      if (!cancelled) setSessionNoteMap(map);
+    })();
+    return () => { cancelled = true; };
+  }, [appointments, isSimulated, evolutionReloadTick]);
   useEffect(() => {
     if (isSimulated) { setEvolutionMap(new Map()); return; }
     const emails = Array.from(new Set(appointments.map(a => a.patient_email).filter(Boolean))) as string[];
@@ -1263,7 +1286,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                               onPointerDownCard={handleCardPointerDown}
                               isMobile={isMobile}
                               isPt={isPt}
-                              evolution={apt.patient_email ? (evolutionMap.get(buildEvolutionKey(apt.patient_email, apt.appointment_date, apt.appointment_time)) || evolutionMap.get(buildEvolutionDayKey(apt.patient_email, apt.appointment_date))) : undefined}
+                              evolution={sessionNoteMap.get(apt.id) || (apt.patient_email ? (evolutionMap.get(buildEvolutionKey(apt.patient_email, apt.appointment_date, apt.appointment_time)) || evolutionMap.get(buildEvolutionDayKey(apt.patient_email, apt.appointment_date))) : undefined)}
                             />
                           </div>
                         );

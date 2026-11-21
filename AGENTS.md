@@ -10,7 +10,7 @@
 - Clinical AI shares `_shared/rlca-reference.ts`; separate claims/evidence, retain surgery context; no automated clearance/report replacement.
 - Scope before querying/limiting: solo clinic_id IS NULL + ownership; clinic selected clinic_id. Reset screens on switches; validate agent thread/patient scope server-side.
 - Microcycle dose edits reuse savePlannedDose with the existing session ID and preserved date, track and metadata; never write perceived load when changing a target.
-- Agenda evolution accepts no-email patients via scoped exact-name/assessment links; exclude personal commitments; missing assessments use in_progress only on explicit save, never on opening.
+- Agenda evolution saves only scoped `session_notes` by appointment_id (patient key = email, else exact name); never create assessments; excludes personal commitments; legacy assessment-linked notes stay read-only.
 - Check-in reopening locks existing patient/day readiness until explicit editing; the existing unique patient/date upsert keeps one daily response. Dose displays retain perceived load for zero-target sessions without inventing a target or adherence verdict.
 - Record alerts retain dismissal audits; health caveats share healthHistory and latest-day/manual precedence, without new risk math/AI.
 - Record-summary STEPS prioritizes fetched completed status before macro-cycle fallback; preserve history.

@@ -36,19 +36,19 @@ beforeEach(() => {
     for (const method of ["select", "eq", "is", "gte", "lte", "order", "limit"]) chain[method] = vi.fn(() => chain);
     chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve);
     chain.upsert = vi.fn(async () => ({ error: mocks.failNote ? new Error("note failed") : null }));
-    chain.insert = vi.fn((payload: Record<string, unknown>) => {
-      // Mirror the actual database constraint so an unsupported status fails the save.
-      const invalidStatus = table === "assessments" &&
-        !["in_progress", "diagnosis_complete", "completed", "red_flagged"].includes(String(payload.status));
-      return { error: null, select: () => ({ single: async () => ({
-        data: invalidStatus ? null : { id: "new-assessment" },
-        error: invalidStatus ? new Error('assessments_status_check') : null,
-      }) }) };
-    });
+    chain.insert = vi.fn(() => ({ select: () => ({ single: async () => ({
+      data: mocks.failNote ? null : { id: "new-note" },
+      error: mocks.failNote ? new Error("note failed") : null,
+    }) }) }));
+    chain.delete = vi.fn(() => chain);
     return chain;
   });
 });
 afterEach(cleanup);
+
+const inserts = (table: string) => mocks.from.mock.results
+  .filter((_, i) => mocks.from.mock.calls[i][0] === table)
+  .flatMap(r => r.value.insert.mock.calls.map((c: unknown[]) => c[0]));
 
 async function saveNote() {
   const field = await screen.findByPlaceholderText("Descreva o que foi feito neste atendimento...");
@@ -62,7 +62,8 @@ describe("evolution confirms attendance in open appointments", () => {
     const setStatus = open();
     await saveNote();
     await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
-    expect(mocks.from.mock.calls.some(([table]) => table === "professional_notes")).toBe(true);
+    expect(inserts("session_notes")[0]).toMatchObject({ appointment_id: "apt-1", patient_email: "patient@example.com", professional_id: "pro-1", clinic_id: null, session_date: "2026-11-11" });
+    expect(inserts("assessments")).toHaveLength(0);
   });
   it("empty/whitespace evolution never changes attendance", async () => {
     const setStatus = open();
@@ -102,50 +103,23 @@ describe("evolution confirms attendance in open appointments", () => {
     await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
     expect(mocks.from.mock.calls.some(([table]) => table === "professional_notes" || table === "session_notes")).toBe(false);
   });
-  it("real PRO patient without email can record evolution and confirm attendance", async () => {
+  it("PRO patient without email records the evolution keyed by name, never as an assessment", async () => {
     const setStatus = open("scheduled", vi.fn(), false, { patient_email: null });
     await saveNote();
     await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
-    const queries = mocks.from.mock.results.filter((_, i) => mocks.from.mock.calls[i][0] === "assessments");
-    expect(queries[0].value.eq).toHaveBeenCalledWith("patient_name", "Paciente teste");
-    expect(queries[0].value.eq).toHaveBeenCalledWith("professional_id", "pro-1");
-    expect(queries[0].value.is).toHaveBeenCalledWith("clinic_id", null);
-    expect(mocks.from.mock.calls.some(([table]) => table === "session_notes")).toBe(false);
+    expect(inserts("session_notes")[0]).toMatchObject({ patient_email: "Paciente teste", professional_id: "pro-1", clinic_id: null });
+    expect(mocks.from.mock.calls.some(([table]) => table === "assessments")).toBe(false);
   });
   it("personal commitments never offer a clinical evolution", () => {
     open("scheduled", vi.fn(), false, { patient_email: null, service_type: "compromisso" });
     expect(screen.queryByPlaceholderText("Descreva o que foi feito neste atendimento...")).not.toBeInTheDocument();
+    expect(mocks.from.mock.calls.some(([table]) => table === "session_notes")).toBe(false);
+  });
+  it.each([null, "patient@example.com"])("clinic evolution is a clinic session note, never an assessment (email: %s)", async patientEmail => {
+    const setStatus = open("scheduled", vi.fn(), false, { patient_email: patientEmail, clinic_id: "clinic-1" }, "clinic-1");
+    await saveNote();
+    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
+    expect(inserts("session_notes")[0]).toMatchObject({ clinic_id: "clinic-1", appointment_id: "apt-1", patient_email: patientEmail ?? "Paciente teste" });
     expect(mocks.from.mock.calls.some(([table]) => table === "assessments")).toBe(false);
-  });
-  it("opening a no-email appointment never creates an assessment; explicit save does", async () => {
-    mocks.noAssessment = true;
-    const setStatus = open("scheduled", vi.fn(), false, { patient_email: null });
-    await screen.findByPlaceholderText("Descreva o que foi feito neste atendimento...");
-    const chains = () => mocks.from.mock.results.filter((_, i) => mocks.from.mock.calls[i][0] === "assessments");
-    expect(chains().every(result => result.value.insert.mock.calls.length === 0)).toBe(true);
-    await saveNote();
-    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
-    const inserted = chains().flatMap(result => result.value.insert.mock.calls);
-    expect(inserted).toHaveLength(1);
-    expect(inserted[0][0]).toMatchObject({ status: "in_progress", patient_email: null, patient_name: "Paciente teste", professional_id: "pro-1", clinic_id: null });
-  });
-  it.each([null, "patient@example.com"])("clinic evolution creates an incomplete assessment in the clinic scope (email: %s)", async patientEmail => {
-    mocks.noAssessment = true;
-    const setStatus = open("scheduled", vi.fn(), false,
-      { patient_email: patientEmail, clinic_id: "clinic-1" }, "clinic-1");
-    await saveNote();
-    await waitFor(() => expect(setStatus).toHaveBeenCalledWith("apt-1", "completed"));
-    const queries = mocks.from.mock.results.filter((_, i) => mocks.from.mock.calls[i][0] === "assessments");
-    expect(queries[0].value.eq).toHaveBeenCalledWith("clinic_id", "clinic-1");
-    expect(queries[0].value.eq).not.toHaveBeenCalledWith("professional_id", "pro-1");
-    const inserted = queries.flatMap(result => result.value.insert.mock.calls);
-    expect(inserted).toHaveLength(1);
-    expect(inserted[0][0]).toMatchObject({
-      type: "professional", status: "in_progress", payment_status: "covered",
-      clinic_id: "clinic-1", professional_id: null, patient_email: patientEmail,
-    });
-    const notes = mocks.from.mock.results.filter((_, i) => mocks.from.mock.calls[i][0] === "professional_notes");
-    expect(notes.some(result => result.value.upsert.mock.calls.some(([payload]: [Record<string, unknown>]) =>
-      payload.assessment_id === "new-assessment" && payload.professional_id === "pro-1"))).toBe(true);
   });
 });
