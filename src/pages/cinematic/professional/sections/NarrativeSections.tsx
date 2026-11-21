@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Smartphone, Camera, FileUp, Link2, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, Check, Smartphone, Camera, FileUp, Link2, ShieldCheck, X, MessageCircle, BarChart3 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type L = { pt: string; en: string; es: string };
@@ -19,49 +19,68 @@ const SimulatedTag = () => {
 /** Patient report vs. what the record shows between visits. */
 export const ReportVsDataSection = () => {
   const tx = useTx();
-  const rows: { label: L; said: L; shown: L }[] = [
+  const rows: { label: L; said: L; shown: L; detail: L }[] = [
     {
       label: { pt: "Exercícios em casa", en: "Home exercises", es: "Ejercicios en casa" },
       said: { pt: "“Fiz quase todo dia.”", en: "“I did them almost every day.”", es: "“Los hice casi todos los días.”" },
-      shown: { pt: "2 de 5 sessões registradas na semana", en: "2 of 5 sessions logged this week", es: "2 de 5 sesiones registradas en la semana" },
+      shown: { pt: "5 sessões planejadas · 2 registradas", en: "5 sessions planned · 2 logged", es: "5 sesiones planificadas · 2 registradas" },
+      detail: { pt: "Você compara o planejado com o registrado e pergunta sobre as outras sessões — falta de registro não significa falta de exercício.", en: "Compare the plan with the logs and ask about the other sessions — an absent log does not mean exercise was skipped.", es: "Comparas lo planificado con lo registrado y preguntas por las otras sesiones: sin registro no significa sin ejercicio." },
     },
     {
       label: { pt: "Dor", en: "Pain", es: "Dolor" },
       said: { pt: "“Continua igual.”", en: "“It's the same.”", es: "“Sigue igual.”" },
-      shown: { pt: "Pico de dor no dia seguinte ao jogo", en: "Pain spike the day after the match", es: "Pico de dolor al día siguiente del partido" },
+      shown: { pt: "Dor informada: 3/10 na sexta · 7/10 no domingo", en: "Reported pain: 3/10 Friday · 7/10 Sunday", es: "Dolor informado: 3/10 el viernes · 7/10 el domingo" },
+      detail: { pt: "As notas mostram uma variação que o relato geral não detalha. Você investiga o que mudou nesses dias.", en: "The scores reveal a change the general account does not detail. You explore what changed on those days.", es: "Las notas muestran una variación que el relato general no detalla. Investigas qué cambió esos días." },
     },
     {
       label: { pt: "Recuperação", en: "Recovery", es: "Recuperación" },
       said: { pt: "“Tá tudo tranquilo.”", en: "“Everything's fine.”", es: "“Todo tranquilo.”" },
-      shown: { pt: "Prontidão em queda há 3 check-ins", en: "Readiness dropping for 3 check-ins", es: "Disposición en caída hace 3 check-ins" },
+      shown: { pt: "Recuperação percebida: 8 → 5 → 3 de 10", en: "Perceived recovery: 8 → 5 → 3 out of 10", es: "Recuperación percibida: 8 → 5 → 3 de 10" },
+      detail: { pt: "Três respostas consecutivas indicam que ele se sente menos recuperado. Você retoma esse ponto antes de definir a carga da sessão.", en: "Three consecutive responses indicate the patient feels less recovered. You discuss this before setting the session load.", es: "Tres respuestas consecutivas indican que se siente menos recuperado. Retomas este punto antes de definir la carga de la sesión." },
     },
   ];
   return (
     <section className="py-16 md:py-20">
       <div className="container mx-auto max-w-4xl px-4">
-        <p className="mb-3 text-center text-sm font-medium text-primary">{tx({ pt: "O relato × o registro", en: "Report × record", es: "El relato × el registro" })}</p>
+        <p className="mb-3 text-center text-sm font-medium text-primary">{tx({ pt: "Relato do paciente × métricas no Aliv.iA", en: "Patient account × metrics in Aliv.iA", es: "Relato del paciente × métricas en Aliv.iA" })}</p>
         <h2 className="mb-4 text-center text-3xl font-bold leading-tight text-foreground md:text-4xl">
-          {tx({ pt: "O paciente lembra do jeito que dá. O registro não arredonda.", en: "Patients remember as best they can. The record doesn't round off.", es: "El paciente recuerda como puede. El registro no redondea." })}
+          {tx({ pt: "Entenda o que aconteceu entre as consultas.", en: "Understand what happened between visits.", es: "Entiende qué pasó entre las consultas." })}
         </h2>
         <p className="mx-auto mb-10 max-w-2xl text-center text-muted-foreground">
           {tx({
-            pt: "Entre uma sessão e outra, o paciente responde o check-in pelo celular em menos de um minuto, sem baixar app. Você chega na consulta sabendo o que aconteceu.",
-            en: "Between sessions, the patient answers the check-in on their phone in under a minute, no app to install. You start the visit knowing what happened.",
-            es: "Entre sesiones, el paciente responde el check-in en el celular en menos de un minuto, sin descargar app. Llegas a la consulta sabiendo qué pasó.",
+            pt: "Na consulta, o paciente conta como passou a semana. No Aliv.iA, as notas de dor, de recuperação e os registros de exercício ajudam você a aprofundar essa conversa, com datas e números.",
+            en: "At the visit, the patient tells you how the week went. In Aliv.iA, pain scores, recovery scores and exercise logs help you explore that account with dates and numbers.",
+            es: "En la consulta, el paciente cuenta cómo pasó la semana. En Aliv.iA, las notas de dolor, de recuperación y los registros de ejercicio te ayudan a profundizar esa conversación, con fechas y números.",
           })}
         </p>
         <div className="space-y-3">
           {rows.map((r) => (
-            <div key={r.label.pt} className="grid gap-3 rounded-2xl border border-border bg-card p-4 md:grid-cols-[140px_1fr_1fr] md:items-center">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tx(r.label)}</p>
-              <p className="text-base italic text-muted-foreground">{tx(r.said)}</p>
-              <p className="flex items-center gap-2 text-base font-semibold text-foreground">
-                <ArrowRight className="h-4 w-4 shrink-0 text-primary" />{tx(r.shown)}
-              </p>
-            </div>
+            <article key={r.label.pt} className="overflow-hidden rounded-lg border border-border bg-card">
+              <h3 className="border-b border-border px-5 py-3 text-sm font-semibold text-foreground">{tx(r.label)}</h3>
+              <div className="grid md:grid-cols-[1fr_1.4fr]">
+                <div className="p-5">
+                  <p className="mb-3 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <MessageCircle aria-hidden="true" className="h-4 w-4 shrink-0" />
+                    {tx({ pt: "O paciente conta na consulta", en: "What the patient says at the visit", es: "Lo que cuenta en la consulta" })}
+                  </p>
+                  <p className="text-lg italic text-foreground">{tx(r.said)}</p>
+                </div>
+                <div className="border-t border-border bg-primary/5 p-5 md:border-l md:border-t-0">
+                  <p className="mb-3 flex items-center gap-2 text-xs font-medium text-primary">
+                    <BarChart3 aria-hidden="true" className="h-4 w-4 shrink-0" />
+                    {tx({ pt: "O Aliv.iA organiza os registros da semana", en: "Aliv.iA organizes the week's logs", es: "Aliv.iA organiza los registros de la semana" })}
+                  </p>
+                  <p className="text-base font-semibold leading-relaxed text-foreground">{tx(r.shown)}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{tx(r.detail)}</p>
+                </div>
+              </div>
+            </article>
           ))}
         </div>
-        <div className="mt-5 text-center"><SimulatedTag /></div>
+        <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-relaxed text-muted-foreground">
+          {tx({ pt: "Os dados dependem do que o paciente responde e registra pelo celular, sem baixar app. Eles complementam a escuta e a avaliação clínica — não são uma medição automática.", en: "Data depends on what the patient answers and logs on their phone, with no app to install. It complements listening and clinical assessment — it is not automatic measurement.", es: "Los datos dependen de lo que el paciente responde y registra en el celular, sin descargar app. Complementan la escucha y la evaluación clínica: no son una medición automática." })}
+        </p>
+        <div className="mt-4 text-center"><SimulatedTag /></div>
       </div>
     </section>
   );
