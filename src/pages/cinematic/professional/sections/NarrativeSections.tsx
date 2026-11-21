@@ -16,6 +16,32 @@ const SimulatedTag = () => {
   );
 };
 
+const EvidenceStrip = () => {
+  const tx = useTx();
+  const items: { n: string; text: L; src: string }[] = [
+    { n: "39% × 16%", text: { pt: "dos pacientes com lombalgia crônica disseram ter feito todos os exercícios × percepção dos fisioterapeutas. Só 15% demonstraram o programa corretamente.", en: "of chronic low back pain patients said they did all exercises × physiotherapists' perception. Only 15% demonstrated the program correctly.", es: "de los pacientes con lumbalgia crónica dijeron haber hecho todos los ejercicios × percepción de los fisioterapeutas. Solo 15% demostró el programa correctamente." }, src: "Peek et al., Physiother Theory Pract, 2019" },
+    { n: "70%", text: { pt: "é quanto a não adesão pode chegar em programas domiciliares sem supervisão.", en: "is how high non-adherence can reach in unsupervised home programs.", es: "es cuánto puede llegar la no adhesión en programas domiciliarios sin supervisión." }, src: "Essery et al., Disabil Rehabil, 2017 · Ley & Putz, Syst Rev, 2024" },
+    { n: "36%", text: { pt: "de adesão num programa domiciliar com idosas no Brasil (UFMG), mesmo com 86% de retenção.", en: "adherence in a home program for older women in Brazil (UFMG), despite 86% retention.", es: "de adhesión en un programa domiciliario con mujeres mayores en Brasil (UFMG), aun con 86% de retención." }, src: "Picorelli et al., Fisioter Pesqui, 2015" },
+  ];
+  return (
+    <div className="mt-10">
+      <p className="mb-4 text-center text-sm font-medium text-primary">{tx({ pt: "O que a pesquisa mostra", en: "What research shows", es: "Lo que muestra la investigación" })}</p>
+      <div className="grid gap-4 md:grid-cols-3">
+        {items.map((i) => (
+          <div key={i.n} className="rounded-2xl border border-border bg-card p-5">
+            <p className="mb-2 text-2xl font-bold text-primary">{i.n}</p>
+            <p className="text-sm leading-relaxed text-foreground">{tx(i.text)}</p>
+            <p className="mt-3 text-[11px] text-muted-foreground">{i.src}</p>
+          </div>
+        ))}
+      </div>
+      <p className="mx-auto mt-4 max-w-2xl text-center text-xs leading-relaxed text-muted-foreground">
+        {tx({ pt: "Revisão de ensaios clínicos indica que acrescentar acompanhamento digital ao programa domiciliar provavelmente aumenta a adesão no curto prazo; no longo prazo, o efeito é incerto (Lang et al., Arch Physiother, 2022).", en: "A review of trials indicates adding digital follow-up to home programs probably increases short-term adherence; long-term effect is uncertain (Lang et al., Arch Physiother, 2022).", es: "Una revisión de ensayos indica que añadir seguimiento digital al programa domiciliario probablemente aumenta la adhesión a corto plazo; a largo plazo, el efecto es incierto (Lang et al., Arch Physiother, 2022)." })}
+      </p>
+    </div>
+  );
+};
+
 /** Patient report vs. what the record shows between visits. */
 export const ReportVsDataSection = () => {
   const tx = useTx();
@@ -81,6 +107,7 @@ export const ReportVsDataSection = () => {
           {tx({ pt: "Os dados dependem do que o paciente responde e registra pelo celular, sem baixar app. Eles complementam a escuta e a avaliação clínica — não são uma medição automática.", en: "Data depends on what the patient answers and logs on their phone, with no app to install. It complements listening and clinical assessment — it is not automatic measurement.", es: "Los datos dependen de lo que el paciente responde y registra en el celular, sin descargar app. Complementan la escucha y la evaluación clínica: no son una medición automática." })}
         </p>
         <div className="mt-4 text-center"><SimulatedTag /></div>
+        <EvidenceStrip />
       </div>
     </section>
   );
