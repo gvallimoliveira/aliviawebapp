@@ -194,7 +194,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
             </>}
           </Section>
 
-          <Section icon={<Stethoscope className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Hipótese diagnóstica", "Diagnostic hypothesis", "Hipótesis diagnóstica")}>
+          <Section icon={<Stethoscope className="h-3.5 w-3.5 text-primary" />} title={tr(l, "Hipótese clínica preliminar", "Preliminary clinical hypothesis", "Hipótesis clínica preliminar")}>
             {hypothesis ? <p className="text-sm text-foreground whitespace-pre-line">{hypothesis}</p> : empty(tr(l, "Sem hipótese registrada.", "No hypothesis recorded.", "Sin hipótesis registrada."))}
           </Section>
 
