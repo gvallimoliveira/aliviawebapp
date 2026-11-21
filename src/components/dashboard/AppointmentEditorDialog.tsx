@@ -964,7 +964,7 @@ const AppointmentEditorDialog = ({
               </span>
               {lastEvoEntry && (
                 <span className="block mt-2 rounded-md border border-border/40 bg-muted/40 p-2 text-xs whitespace-pre-wrap max-h-40 overflow-y-auto font-mono">
-                  {lastEvoEntry.raw}
+                  {`[${lastEvoEntry.stamp}]\n${lastEvoEntry.content}`}
                 </span>
               )}
             </AlertDialogDescription>
