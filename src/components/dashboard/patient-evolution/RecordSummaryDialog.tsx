@@ -85,7 +85,7 @@ const RecordSummaryDialog = ({ open, onOpenChange, language: l, patientName, pat
           if (patientId && patientEmail) query = query.or(`patient_id.eq.${patientId},patient_email.eq.${patientEmail}`);
           else if (patientId) query = query.eq("patient_id", patientId);
           else query = query.eq("patient_email", patientEmail);
-          const { data, error } = await careScope(query, clinicId, professionalId);
+          const { data, error } = await (clinicId ? query.eq("clinic_id", clinicId) : query.is("clinic_id", null));
           if (error) throw error;
           if (!cancelled) setHealthRecords(data || []);
         }
