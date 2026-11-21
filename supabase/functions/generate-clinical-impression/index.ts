@@ -17,7 +17,7 @@ const corsHeaders = {
 };
 
 /** Bump when the prompt/data blocks change so cached impressions are regenerated. */
-const PROMPT_VERSION = "ci-v6-purpose";
+const PROMPT_VERSION = "ci-v7-clinical-hypothesis";
 
 const num = (v: unknown): number | null => {
   if (v == null) return null;
@@ -178,15 +178,16 @@ serve(async (req) => {
 
 Rules:
 ${preventiveReasoningContext(anamnesisData)}
-- Write a substantive overview (8-14 lines, in flowing clinical prose separated into short paragraphs) integrating: chief complaint, onset, pain characteristics and intensity per region, duration, functional questionnaire scores, and diagnostic hypothesis.${multiAssessment ? "\n- When multiple assessments exist, describe the clinical trajectory over time: whether the patient improved, worsened, or remained stable, referencing specific score changes." : ""}
+- Write a substantive overview (8-14 lines, in flowing clinical prose separated into short paragraphs) integrating: chief complaint, onset, pain characteristics and intensity per region, duration, functional questionnaire scores, and the preliminary clinical hypothesis.${multiAssessment ? "\n- When multiple assessments exist, describe the clinical trajectory over time: whether the patient improved, worsened, or remained stable, referencing specific score changes." : ""}
 - OBJECTIVE TESTS ARE MANDATORY CONTENT when present. If dynamometry (strength) data is provided, you MUST dedicate an explicit part of the overview to it: cite the actual values (mean and best in kgf), the number of trials and reliability (CV% — above 15% means questionable reproducibility), left/right asymmetries and agonist/antagonist ratios within the same side, naming the movements. Interpret asymmetries above 10% as clinically relevant (deficit/inhibition per D.I.F.I) and state which side and which movement is deficient. Never treat these numbers as a footnote and never omit them.
 - If range of motion (ROM) data is provided, likewise discuss it explicitly: which joints/movements are restricted, side comparison, and how the restriction relates to the hypothesis and to the strength findings.
-- Explicitly CORRELATE the objective findings (strength, ROM) with the symptoms, the functional scores and the diagnostic hypothesis — do not list data without interpreting it.
+- Explicitly CORRELATE the objective findings (strength, ROM) with the symptoms, the functional scores and the preliminary clinical hypothesis — do not list data without interpreting it.
 - The physiotherapist's own observations and exam/test findings are PRIMARY expert sources: integrate them explicitly (including negative findings) and let them guide the reasoning. Also integrate complementary questionnaires (e.g. SRS-22r) with their scores. Do not use session evolution notes.
 - If anamnesis interview voice transcripts/summaries are provided, treat them as a PRIMARY source: they capture the patient's own words during the consultation. Integrate anything clinically relevant that is NOT already in the structured fields — nuances of onset and mechanism, direct quotes about pain behavior, psychosocial context, beliefs, goals and expectations. Do not quote them verbatim at length; synthesize.
 - Only comment on data actually provided. Never invent values. If dynamometry or ROM was not recorded, do not speculate about them.
 - Do NOT mention specific exercises, treatment techniques, or therapeutic approaches.
 - Select exactly 2 main therapeutic objectives from this list ONLY: ${preventive ? "exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar" : "controle do quadro álgico, reequilibrar tensões miofasciais, exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar, modulação da dor"}.
+- TERMINOLOGY: never write "diagnosis", "diagnostic hypothesis", "hipótese diagnóstica", "diagnóstico" or "hipótesis diagnóstica". Use "preliminary clinical hypothesis" / "hipótese clínica preliminar" / "hipótesis clínica preliminar" (or "hipótese fisioterapêutica").
 - Respond in ${langLabel}.
 - Use the tool provided to return the structured output.${timelineInstruction}`;
 
@@ -232,7 +233,7 @@ ${preventiveReasoningContext(anamnesisData)}
     push("Visual aura", anamnesisData?.hasVisualAura);
     push("Nausea", anamnesisData?.hasNausea);
     push("Headache crisis frequency", anamnesisData?.headacheCrisisFrequency);
-    push("Diagnostic hypothesis", diagnosis?.hypothesis);
+    push("Preliminary clinical hypothesis", diagnosis?.hypothesis);
     push("Diagnostic summary", diagnosis?.summary);
     if (Array.isArray(questionnaireResults) && questionnaireResults.length > 0) {
       lines.push(`- Questionnaire results: ${JSON.stringify(questionnaireResults)}`);

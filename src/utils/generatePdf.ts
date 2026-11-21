@@ -960,28 +960,28 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Queixa Adicional" : "Additional Complaint", value: anamnesis.customComplaint });
   }
   if (anamnesis.onset) {
-    fields.push({ label: isPt ? "Modo de Inicio" : "Onset", value: translateKey(anamnesis.onset, isPt) });
+    fields.push({ label: isPt ? "Modo de Início" : "Onset", value: translateKey(anamnesis.onset, isPt) });
   }
   const _healthLang = isPt ? "pt" : "en";
   const _healthConditions = formatHealthConditions(anamnesis, _healthLang);
   if (_healthConditions) {
-    fields.push({ label: isPt ? "Condicoes de Saude" : "Health Conditions", value: _healthConditions });
+    fields.push({ label: isPt ? "Condições de Saúde" : "Health Conditions", value: _healthConditions });
   }
   const _continuousMed = formatContinuousMedication(anamnesis, _healthLang);
   if (_continuousMed) {
-    fields.push({ label: isPt ? "Medicacao de Uso Continuo" : "Continuous Medication", value: _continuousMed });
+    fields.push({ label: isPt ? "Medicação de Uso Contínuo" : "Continuous Medication", value: _continuousMed });
   }
   if (!isPreventiveAssessment(anamnesis) && anamnesis.painScore != null) {
-    fields.push({ label: isPt ? "Nivel de Dor (EVA)" : "Pain Level (VAS)", value: `${anamnesis.painScore}/10` });
+    fields.push({ label: isPt ? "Nível de Dor (EVA)" : "Pain Level (VAS)", value: `${anamnesis.painScore}/10` });
   }
   if (anamnesis.painTypes?.length) {
     fields.push({ label: isPt ? "Tipos de Dor" : "Pain Types", value: anamnesis.painTypes.map(p => translateKey(p, isPt)).join(", ") });
   }
   if (anamnesis.evolution) {
-    fields.push({ label: isPt ? "Evolucao" : "Evolution", value: translateKey(anamnesis.evolution, isPt) });
+    fields.push({ label: isPt ? "Evolução" : "Evolution", value: translateKey(anamnesis.evolution, isPt) });
   }
   if (anamnesis.painDuration) {
-    fields.push({ label: isPt ? "Duracao da Dor" : "Pain Duration", value: translateKey(anamnesis.painDuration, isPt) });
+    fields.push({ label: isPt ? "Duração da Dor" : "Pain Duration", value: translateKey(anamnesis.painDuration, isPt) });
   }
   if (anamnesis.aggravatingFactors) {
     fields.push({ label: isPt ? "Fatores Agravantes" : "Aggravating Factors", value: anamnesis.aggravatingFactors });
@@ -990,22 +990,22 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Fatores Aliviantes" : "Relieving Factors", value: anamnesis.relievingFactors });
   }
   if (anamnesis.activityLevel) {
-    fields.push({ label: isPt ? "Nivel de Atividade" : "Activity Level", value: translateKey(anamnesis.activityLevel, isPt) });
+    fields.push({ label: isPt ? "Nível de Atividade" : "Activity Level", value: translateKey(anamnesis.activityLevel, isPt) });
   }
   if (anamnesis.hasGymAccess) {
-    fields.push({ label: isPt ? "Acesso a Academia" : "Gym Access", value: translateKey(anamnesis.hasGymAccess, isPt) });
+    fields.push({ label: isPt ? "Acesso à Academia" : "Gym Access", value: translateKey(anamnesis.hasGymAccess, isPt) });
   }
   if (anamnesis.sex) {
-    fields.push({ label: isPt ? "Sexo Biologico" : "Biological Sex", value: translateKey(anamnesis.sex, isPt) });
+    fields.push({ label: isPt ? "Sexo Biológico" : "Biological Sex", value: translateKey(anamnesis.sex, isPt) });
   }
   if (anamnesis.ageRange) {
-    fields.push({ label: isPt ? "Faixa Etaria" : "Age Range", value: translateKey(anamnesis.ageRange, isPt) });
+    fields.push({ label: isPt ? "Faixa Etária" : "Age Range", value: translateKey(anamnesis.ageRange, isPt) });
   }
   if (anamnesis.painPattern) {
-    fields.push({ label: isPt ? "Padrao da Dor" : "Pain Pattern", value: translateKey(anamnesis.painPattern, isPt) });
+    fields.push({ label: isPt ? "Padrão da Dor" : "Pain Pattern", value: translateKey(anamnesis.painPattern, isPt) });
   }
   if (anamnesis.painWeeklyFrequency) {
-    fields.push({ label: isPt ? "Frequencia Semanal" : "Weekly Frequency", value: translateKey(anamnesis.painWeeklyFrequency, isPt) });
+    fields.push({ label: isPt ? "Frequência Semanal" : "Weekly Frequency", value: translateKey(anamnesis.painWeeklyFrequency, isPt) });
   }
   if (anamnesis.painNightWaking) {
     fields.push({ label: isPt ? "Dor Noturna (Acorda)" : "Night Pain (Waking)", value: translateKey(anamnesis.painNightWaking, isPt) });
@@ -1017,10 +1017,10 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
     fields.push({ label: isPt ? "Aura Visual" : "Visual Aura", value: translateKey(anamnesis.hasVisualAura, isPt) });
   }
   if (anamnesis.hasNausea) {
-    fields.push({ label: isPt ? "Nausea nas Crises" : "Nausea During Episodes", value: translateKey(anamnesis.hasNausea, isPt) });
+    fields.push({ label: isPt ? "Náusea nas Crises" : "Nausea During Episodes", value: translateKey(anamnesis.hasNausea, isPt) });
   }
   if (anamnesis.headacheCrisisFrequency) {
-    fields.push({ label: isPt ? "Frequencia de Crises" : "Crisis Frequency", value: translateKey(anamnesis.headacheCrisisFrequency, isPt) });
+    fields.push({ label: isPt ? "Frequência de Crises" : "Crisis Frequency", value: translateKey(anamnesis.headacheCrisisFrequency, isPt) });
   }
   if (!isPreventiveAssessment(anamnesis) && anamnesis.painRegions?.length) {
     const regionLabels = anamnesis.painRegions.map(id => {
@@ -1030,13 +1030,13 @@ function renderAnamnesisSection(doc: jsPDF, y: number, anamnesis: AnamnesisData,
       }
       return id;
     });
-    fields.push({ label: isPt ? "Regioes de Dor" : "Pain Regions", value: regionLabels.join(", ") });
+    fields.push({ label: isPt ? "Regiões de Dor" : "Pain Regions", value: regionLabels.join(", ") });
   }
   if (!isPreventiveAssessment(anamnesis) && anamnesis.painScoreMode === "per_region" && anamnesis.painScoresPerRegion && Object.keys(anamnesis.painScoresPerRegion).length > 0) {
     const regionScores = Object.entries(anamnesis.painScoresPerRegion)
       .map(([key, score]) => `${painRegionLabel(key, isPt)}: ${score}/10`)
       .join(", ");
-    fields.push({ label: isPt ? "Dor por Regiao" : "Pain by Region", value: regionScores });
+    fields.push({ label: isPt ? "Dor por Região" : "Pain by Region", value: regionScores });
   }
 
   if (fields.length === 0) return y;
@@ -2979,7 +2979,7 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
       doc.setFont("Inter", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...COLORS.foreground);
-      doc.text(isPt ? "Orientacoes Gerais" : "General Guidelines", SECTION_X, y);
+      doc.text(isPt ? "Orientações Gerais" : "General Guidelines", SECTION_X, y);
       y += 6;
       doc.setFont("Inter", "normal");
       doc.setFontSize(8);
@@ -2996,7 +2996,7 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
     // Progression Criteria
     if (treatmentPlan.progressionCriteria) {
       y = checkPage(doc, y, 20);
-      y = renderSubSection(doc, y, isPt ? "Criterios de Progressao" : "Progression Criteria", treatmentPlan.progressionCriteria);
+      y = renderSubSection(doc, y, isPt ? "Critérios de Progressão" : "Progression Criteria", treatmentPlan.progressionCriteria);
     }
   } // end if (treatmentPlan)
 
@@ -3072,7 +3072,7 @@ async function _buildPdfDoc({ diagnosis, painMechanism, painExtent, finalHypothe
         ? "AUTOAVALIAÇÃO — Este relatório foi gerado a partir de uma autoavaliação preenchida pelo próprio usuário, processada por sistema de inteligência artificial baseado em método clínico. As hipóteses e sugestões NÃO constituem diagnóstico médico nem substituem consulta presencial. Devem ser validadas por um profissional habilitado antes de serem seguidas. Em caso de dor intensa, piora dos sintomas, trauma recente ou qualquer emergência, procure atendimento imediato ou ligue 192 (SAMU)."
         : "SELF-ASSESSMENT — This report was generated from a self-assessment completed by the user, processed by an artificial intelligence system based on a clinical method. The hypotheses and suggestions do NOT constitute a medical diagnosis and do not replace an in-person consultation. They must be validated by a qualified professional before being followed. In case of severe pain, worsening symptoms, recent trauma, or any emergency, seek immediate care or call your local emergency number (192 in Brazil — SAMU).")
     : (isPt
-        ? "Este relatório foi gerado por um sistema de inteligência artificial e tem caráter exclusivamente informativo e educacional. Ele NÃO substitui uma consulta médica, avaliação fisioterapêutica presencial ou qualquer outro atendimento profissional de saúde. As hipóteses diagnósticas e sugestões de tratamento apresentadas devem ser validadas por um profissional habilitado antes de serem seguidas. Em caso de dor intensa, piora dos sintomas ou qualquer emergência, procure atendimento médico imediatamente."
+        ? "Este relatório foi gerado por um sistema de inteligência artificial e tem caráter exclusivamente informativo e educacional. Ele NÃO substitui uma consulta médica, avaliação fisioterapêutica presencial ou qualquer outro atendimento profissional de saúde. As hipóteses clínicas preliminares e sugestões de conduta apresentadas devem ser validadas por um profissional habilitado antes de serem seguidas. Em caso de dor intensa, piora dos sintomas ou qualquer emergência, procure atendimento médico imediatamente."
         : "This report was generated by an artificial intelligence system and is for informational and educational purposes only. It does NOT replace a medical consultation, in-person physiotherapy assessment, or any other professional healthcare. The diagnostic hypotheses and treatment suggestions presented must be validated by a qualified professional before being followed. In case of severe pain, worsening symptoms, or any emergency, seek medical attention immediately.");
 
   y = drawTextCard(doc, y, disclaimerText, {
@@ -3204,7 +3204,7 @@ function renderPainMechanismBlock(
       ? `\n${isPt ? "Critérios marcados na triagem" : "Criteria marked in screening"}:\n${criteriaLabels.join("\n")}`
       : null,
     `\n${isPt
-      ? "Classificação por critérios clínicos (Kosek 2021 / Finnerup 2016). Complementa a hipótese diagnóstica — não a substitui."
+      ? "Classificação por critérios clínicos (Kosek 2021 / Finnerup 2016). Complementa a hipótese clínica preliminar — não a substitui."
       : "Classification based on clinical criteria (Kosek 2021 / Finnerup 2016). Complements the diagnostic hypothesis — does not replace it."}`,
   ].filter(Boolean).join("\n");
 
