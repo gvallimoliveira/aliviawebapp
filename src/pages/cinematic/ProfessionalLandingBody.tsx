@@ -11,10 +11,9 @@ import LgpdBadge from "@/components/LgpdBadge";
 import StatementSection from "./professional/sections/StatementSection";
 import EarlyCtaSection from "./professional/sections/EarlyCtaSection";
 import ReasoningSection from "./professional/sections/ReasoningSection";
-import BenefitsSection from "./professional/sections/BenefitsSection";
 import PanelShowcaseSection from "./professional/sections/PanelShowcaseSection";
 import EvidenceLibrarySection from "./professional/sections/EvidenceLibrarySection";
-import HowItWorksSection from "./professional/sections/HowItWorksSection";
+import { ReportVsDataSection, ContrastSection, RoutineSection, ProofSection, ObjectionsSection } from "./professional/sections/NarrativeSections";
 import PricingSection from "./professional/sections/PricingSection";
 import FaqSection from "./professional/sections/FaqSection";
 import ClosingSection from "./professional/sections/ClosingSection";
@@ -24,12 +23,15 @@ const ProfessionalLandingBody = () => (
     <BrandMarquee />
 
     <StatementSection />
+    <ReportVsDataSection />
+    <ContrastSection />
     <EarlyCtaSection />
+    <RoutineSection />
+    <ProofSection />
     <ReasoningSection />
-    <BenefitsSection />
+    <ObjectionsSection />
     <PanelShowcaseSection />
     <EvidenceLibrarySection />
-    <HowItWorksSection />
 
     <LgpdBadge />
 
