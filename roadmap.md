@@ -1,5 +1,9 @@
 # Roadmap
 
+## Patient check-in — no_patient response
+- [x] Reproduced `my_link` 404 on the affected signed-in personal account and confirmed zero linked patients. Returns 200 with token null without creating patients/links; real patient/link lookup failures remain 500 and authentication remains required. Existing patient links unchanged.
+- [x] Deployed and verified the same account → personal profile → usable dashboard at 1280×1800 and 440×667: 200/null, no failing requests, JS errors or overflow; invalid authentication still returns 401. Nineteen regressions passed including existing solo/clinic links, creation failures and daily readiness; build OK. No clinical writes or AI calls. Live linked-patient submission and physical phone not exercised; existing linked path covered by tests.
+
 ## Primeiros Passos — fase 1
 - [x] Checklist no PRO e clínica: cinco marcos clínicos, atalhos aos formulários existentes, descarte e progresso isolado por conta/perfil. Secretaria recebe link, cadastro e agenda; dados existentes contam, rascunhos/HEP vazio/compromissos não. Sem créditos de IA para o guia; preferências locais, marcos lidos dos registros.
 - [x] Tutorial antigo desativado por flag sem apagar código; gate de biometria não aguarda tutorial desativado. Minha conta reabre Primeiros Passos sem apagar progresso, inclusive com atalhos após conclusão. Ajuda pt/en/es atualizada.

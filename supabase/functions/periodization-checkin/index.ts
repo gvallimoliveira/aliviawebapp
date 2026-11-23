@@ -11,6 +11,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { visionRequest } from "../_shared/economical-vision.ts";
+import { getPatientCheckinLink } from "./myLink.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -105,30 +106,8 @@ serve(async (req) => {
       const email = userData?.user?.email?.toLowerCase().trim();
       if (userErr || !email) return json({ error: "unauthorized" }, 401);
 
-      const { data: patientRow } = await supabase
-        .from("patients")
-        .select("id")
-        .ilike("email", email)
-        .limit(1)
-        .maybeSingle();
-      if (!patientRow) return json({ error: "no_patient" }, 404);
-
-      const { data: existing } = await supabase
-        .from("periodization_links")
-        .select("token")
-        .eq("patient_id", patientRow.id)
-        .eq("audience", "patient")
-        .eq("active", true)
-        .limit(1)
-        .maybeSingle();
-      if (existing?.token) return json({ token: existing.token });
-
-      const newToken = crypto.randomUUID();
-      const { error: insertErr } = await supabase
-        .from("periodization_links")
-        .insert({ patient_id: patientRow.id, plan_id: null, audience: "patient", token: newToken, active: true });
-      if (insertErr) return json({ error: "link_create_failed" }, 500);
-      return json({ token: newToken });
+      const result = await getPatientCheckinLink(supabase, email);
+      return json(result.body, result.status);
     }
 
     // Profissional lança sessão medida com monitor cardíaco pelo prontuário.
