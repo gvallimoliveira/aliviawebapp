@@ -43,6 +43,7 @@ const patientTools = [
 ];
 
 const proTools = [
+  { key: "first_steps", icon: ClipboardList },
   { key: "theme", icon: Palette },
   { key: "load_monitoring_opt_in", icon: Gauge },
   { key: "patient_daily_care", icon: Heart },

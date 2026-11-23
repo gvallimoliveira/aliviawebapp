@@ -3,6 +3,9 @@
 
 export const ENABLE_VIDEO_CALL = true;
 
+// Retained for rollback; first steps replace the automatic guided tour.
+export const ENABLE_GUIDED_TOUR = false;
+
 // Clinical reasoning AI agent. Liberado para profissionais, estudantes e clínicas.
 // VIP users always bypass this flag (see useClinicalAgentAccess hook).
 export const ENABLE_CLINICAL_AGENT = true;

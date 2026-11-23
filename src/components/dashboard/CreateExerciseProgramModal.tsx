@@ -846,6 +846,7 @@ const CreateExerciseProgramModalInner = ({ open, onOpenChange, professionalId, p
 
       const link = `${getPublicOrigin()}/hep/${programToken}`;
       setGeneratedLink(link);
+      window.dispatchEvent(new CustomEvent("alivia:first-steps-refresh"));
       void draft.discard();
 
       // Notify the patient that a new HEP is available (push, resolved by email)

@@ -6,7 +6,7 @@ import React from "react";
 import PreventiveAssessmentSummary from "@/components/assessment/PreventiveAssessmentSummary";
 import { isPreventiveAssessment } from "@/lib/assessmentPurpose";
 import { hasSpineContent } from "@/lib/spineBiomechanics";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePreserveScrollOnResume } from "@/hooks/usePreserveScrollOnResume";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -744,6 +744,28 @@ export default function PatientDetailView(props: any) {
       window.dispatchEvent(new CustomEvent("alivia:open-session-note"));
     }, 350);
   };
+
+  // Consume explicit checklist shortcuts only after this scoped record mounts.
+  const [firstStepParams, setFirstStepParams] = useSearchParams();
+  const firstStepAction = firstStepParams.get("gettingStarted");
+  React.useEffect(() => {
+    if (isDemo || readOnly || !["record", "hep", "load"].includes(firstStepAction ?? "")) return;
+    if (firstStepAction === "hep") { setEditingHepId(null); setHepModalOpen(true); }
+    const timer = window.setTimeout(() => {
+      if (firstStepAction === "record") {
+        document.getElementById("sec-notas-sessao")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.dispatchEvent(new CustomEvent("alivia:open-session-note"));
+      } else if (firstStepAction === "load") {
+        document.getElementById("sec-periodizacao")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      setFirstStepParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("gettingStarted");
+        return next;
+      }, { replace: true });
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [firstStepAction, patient.groupKey, isDemo, readOnly, setFirstStepParams, setEditingHepId, setHepModalOpen]);
 
   return (
     // lg:pl-[68px] abre espaço para a trilha fixa de atalhos (left-2 + w-[52px]),

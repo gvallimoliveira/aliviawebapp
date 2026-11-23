@@ -39,6 +39,9 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useIsProfessionalAccount } from "@/hooks/useIsProfessionalAccount";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
 import ThemeToggle from "@/components/account/ThemeToggle";
+import { useClinic } from "@/contexts/ClinicContext";
+import { ENABLE_GUIDED_TOUR } from "@/lib/featureFlags";
+import { restoreGettingStarted } from "@/lib/gettingStarted";
 
 import InstallAppDialog from "@/components/InstallAppDialog";
 import { Bell, BellOff, Send, Smartphone, Download } from "lucide-react";
@@ -61,7 +64,8 @@ const SectionTitle = ({
 const Account = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t: guideText } = useLanguage();
+  const { activeClinic, isClinicMode } = useClinic();
   const isPt = language === "pt";
 
   const [password, setPassword] = useState("");
@@ -461,7 +465,21 @@ const Account = () => {
         <SectionTitle icon={HelpCircle}>{t.sec_help}</SectionTitle>
 
 
-        <Card className="mt-6">
+        {(isProfessional === true || isClinicMode) && <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2"><RotateCcw className="h-4 w-4" />{guideText("first_steps.title")}</CardTitle>
+            <CardDescription>{guideText("first_steps.account_desc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button type="button" variant="outline" size="sm" className="gap-2" disabled={!user || (!isClinicMode && !proBackup?.id)} onClick={() => {
+              if (!user) return;
+              restoreGettingStarted({ userId: user.id, clinicId: isClinicMode ? activeClinic?.clinic_id : null, professionalId: proBackup?.id });
+              navigate("/dashboard");
+            }}><RotateCcw className="h-4 w-4" />{guideText("first_steps.restore")}</Button>
+          </CardContent>
+        </Card>}
+
+        {ENABLE_GUIDED_TOUR && <Card className="mt-6">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <RotateCcw className="h-4 w-4" />
@@ -490,7 +508,7 @@ const Account = () => {
               Reiniciar tour
             </Button>
           </CardContent>
-        </Card>
+        </Card>}
 
         <div className="mt-6 flex justify-center">
           <AppVersionBadge />

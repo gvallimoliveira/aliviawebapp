@@ -630,6 +630,10 @@ const ClinicSupport = () => {
 
         {/* Categorias */}
         <section className="max-w-4xl mx-auto mb-10 space-y-2">
+          <h2 className="text-lg font-semibold text-foreground">{t("support.pro.tool.first_steps.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("clinic.support.tool.first_steps.desc")}</p>
+        </section>
+        <section className="max-w-4xl mx-auto mb-10 space-y-2">
           <h2 className="text-lg font-semibold text-foreground">{t("support.pro.tool.theme.title")}</h2>
           <p className="text-sm text-muted-foreground">{t("support.pro.tool.theme.desc")}</p>
         </section>

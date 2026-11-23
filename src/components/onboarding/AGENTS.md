@@ -1,0 +1,2 @@
+# First steps
+- First steps read scoped persisted milestones, never create clinical data or count clicks as saves; local preferences are user/scope keyed, and shortcuts reuse existing record forms to preserve permissions and avoid duplicate workflows.

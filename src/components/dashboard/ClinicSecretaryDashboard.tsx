@@ -19,6 +19,8 @@ import PatientEvolutionDashboard from "./PatientEvolutionDashboard";
 import { generateAssessmentPdf } from "@/utils/generatePdf";
 import { useToast } from "@/hooks/use-toast";
 import { getPublicOrigin } from "@/lib/getPublicOrigin";
+import { useAuth } from "@/contexts/AuthContext";
+import { markGettingStartedLinkCopied } from "@/lib/gettingStarted";
 
 interface ClinicSecretaryDashboardProps {
   /** When true, hide owner/secretary-only widgets (feedback, reports, analytics, donut). */
@@ -26,6 +28,7 @@ interface ClinicSecretaryDashboardProps {
 }
 
 const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSecretaryDashboardProps = {}) => {
+  const { user } = useAuth();
   const { activeClinic, canManageClinic, isClinicOwner, isClinicSecretary } = useClinic();
   // Hide privileged widgets either when explicitly restricted OR when the current
   // user is not an owner/secretary of the active clinic (defense in depth).
@@ -88,10 +91,12 @@ const ClinicSecretaryDashboard = ({ restrictedTherapistView = false }: ClinicSec
   const copyClinicLink = () => {
     if (!activeClinic) return;
     const link = `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`;
-    navigator.clipboard.writeText(link);
-    setLinkCopied(true);
-    toast({ title: lang === "pt" ? "Link copiado!" : "Link copied!" });
-    setTimeout(() => setLinkCopied(false), 2000);
+    void navigator.clipboard.writeText(link).then(() => {
+      if (user?.id) markGettingStartedLinkCopied({ userId: user.id, clinicId: activeClinic.clinic_id });
+      setLinkCopied(true);
+      toast({ title: lang === "pt" ? "Link copiado!" : "Link copied!" });
+      setTimeout(() => setLinkCopied(false), 2000);
+    }).catch(() => toast({ title: lang === "pt" ? "Não foi possível copiar o link" : "Could not copy the link", variant: "destructive" }));
   };
 
   const handleAssignProfessional = async (assessmentId: string, professionalId: string) => {

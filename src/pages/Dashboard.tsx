@@ -38,6 +38,7 @@ const AssessmentComparison = lazy(() => import("@/components/dashboard/Assessmen
 const ProDashboard = lazy(() => import("@/components/dashboard/ProDashboard"));
 const MessagesTab = lazy(() => import("@/components/dashboard/MessagesTab"));
 const OnboardingTour = lazy(() => import("@/components/onboarding/OnboardingTour"));
+const GettingStarted = lazy(() => import("@/components/onboarding/GettingStarted"));
 const ClinicTeamManagement = lazy(() => import("@/components/dashboard/ClinicTeamManagement"));
 const AppointmentRequestsPanel = lazy(() => import("@/components/dashboard/AppointmentRequestsPanel"));
 const ClinicSecretaryDashboard = lazy(() => import("@/components/dashboard/ClinicSecretaryDashboard"));
@@ -75,6 +76,7 @@ import { hasRealCrefito, isPlaceholderCrefito } from "@/lib/crefito";
 import { usePatientCare } from "@/hooks/usePatientCare";
 import { OfficialAssessmentButton, IndependentSelfAssessmentPill } from "@/components/dashboard/LinkedPatientAssessment";
 import { resolvePatientTab } from "@/lib/patientNavigation";
+import { markGettingStartedLinkCopied } from "@/lib/gettingStarted";
 
 
 const TabFallback = () => (
@@ -991,6 +993,13 @@ const Dashboard = () => {
               </TabsTrigger>
             </TabsList>
 
+            {!isSimulated && !needsContextSelection && user && (
+              <GettingStarted key={`first-steps:${user.id}:clinic:${activeClinic.clinic_id}`}
+                userId={user.id} professionalId={professional?.id} clinicId={activeClinic.clinic_id}
+                clinical={!isClinicSecretary && (isClinicOwner || !!professional?.id)}
+                canSchedule={canManageClinic || isClinicSecretary} hasAgent={hasAgentAccess} />
+            )}
+
             {/* Agenda */}
             <TabsContent value="agenda" className="space-y-6">
               <ClinicTrialBanner />
@@ -1102,9 +1111,11 @@ const Dashboard = () => {
                           <Button
                             onClick={() => {
                               const link = `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`;
-                              navigator.clipboard.writeText(link);
-                              setClinicLinkCopied(true);
-                              setTimeout(() => setClinicLinkCopied(false), 2000);
+                              void navigator.clipboard.writeText(link).then(() => {
+                                if (user?.id) markGettingStartedLinkCopied({ userId: user.id, clinicId: activeClinic.clinic_id });
+                                setClinicLinkCopied(true);
+                                setTimeout(() => setClinicLinkCopied(false), 2000);
+                              });
                             }}
                             variant="outline"
                             className="gap-1.5 rounded-xl shrink-0"
@@ -1261,6 +1272,11 @@ const Dashboard = () => {
                   )}
 
                 </TabsList>
+                {!isProDemo && !isSimulated && hasProAccess && user && professional?.id && !needsContextSelection && (
+                  <GettingStarted key={`first-steps:${user.id}:solo:${professional.id}`}
+                    userId={user.id} professionalId={professional.id} clinical canSchedule hasAgent={hasAgentAccess}
+                    registrationPending={professional.registration_pending === true} />
+                )}
                 <TabsContent value="professional" className="space-y-6">
                   {!isProDemo && !hasProAccess && <TryProDemoCard section="Pacientes" />}
                   <ProDashboard

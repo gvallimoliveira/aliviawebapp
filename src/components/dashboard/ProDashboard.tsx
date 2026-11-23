@@ -1,5 +1,6 @@
 import RegistrationRequiredDialog, { goToRegistration } from "@/components/dashboard/RegistrationRequiredDialog";
 import { careScope } from "@/lib/careScope";
+import { markGettingStartedLinkCopied } from "@/lib/gettingStarted";
 import BlogPillCard from "@/components/dashboard/BlogPillCard";
 import PhysioTechShortcut from "@/components/PhysioTechShortcut";
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -423,10 +424,12 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   const copyLink = () => {
     if (registrationPending) { setRegistrationGateOpen(true); return; }
     const link = `${getPublicOrigin()}/assessment/professional/${professional.id}`;
-    navigator.clipboard.writeText(link);
-    setLinkCopied(true);
-    toast({ title: t("referral.copied") });
-    setTimeout(() => setLinkCopied(false), 2000);
+    void navigator.clipboard.writeText(link).then(() => {
+      if (user?.id) markGettingStartedLinkCopied({ userId: user.id, professionalId: professional.id });
+      setLinkCopied(true);
+      toast({ title: t("referral.copied") });
+      setTimeout(() => setLinkCopied(false), 2000);
+    }).catch(() => toast({ title: t("first_steps.copy_error"), variant: "destructive" }));
   };
 
   const handleDownloadPdf = async (assessment: any) => {
@@ -1019,10 +1022,12 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                   const link = isClinicMode && activeClinic
                     ? `${getPublicOrigin()}/assessment/clinic/${activeClinic.clinic_id}`
                     : `${getPublicOrigin()}/assessment/professional/${professional.id}`;
-                  navigator.clipboard.writeText(link);
-                  setLinkCopied(true);
-                  toast({ title: t("referral.copied") });
-                  setTimeout(() => setLinkCopied(false), 2000);
+                  void navigator.clipboard.writeText(link).then(() => {
+                    if (user?.id) markGettingStartedLinkCopied({ userId: user.id, professionalId: professional.id, clinicId: isClinicMode ? activeClinic?.clinic_id : null });
+                    setLinkCopied(true);
+                    toast({ title: t("referral.copied") });
+                    setTimeout(() => setLinkCopied(false), 2000);
+                  }).catch(() => toast({ title: t("first_steps.copy_error"), variant: "destructive" }));
                 }}
                 variant="outline"
                 title={linkCopied ? t("referral.copied") : t("referral.copy_link")}

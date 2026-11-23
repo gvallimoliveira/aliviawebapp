@@ -22,6 +22,7 @@ import SessionNoteItem, { SessionNoteData } from "./SessionNoteItem";
 import SessionNotesHistoryModal from "./SessionNotesHistoryModal";
 import DictationBar from "./DictationBar";
 import { anchorScroll } from "@/hooks/useScrollAnchor";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 type SessionNote = SessionNoteData;
@@ -46,6 +47,7 @@ interface SessionNotesSectionProps {
 
 const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId, dateRange }: SessionNotesSectionProps) => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [notes, setNotes] = useState<SessionNote[]>([]);
   const visibleNotes = dateRange && (dateRange.start || dateRange.end)
@@ -102,13 +104,13 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId, d
 
 
   const fetchTemplates = useCallback(async () => {
-    if (isDemo) return;
+    if (isDemo || !user?.id) { setTemplates([]); return; }
     const { data } = await (supabase.from("session_note_templates" as any) as any)
       .select("id, name, content, observation")
-      .eq("professional_id", professionalId)
+      .eq("owner_user_id", user.id)
       .order("name", { ascending: true });
     setTemplates((data as NoteTemplate[]) || []);
-  }, [professionalId, isDemo]);
+  }, [user?.id, isDemo]);
 
   useEffect(() => { fetchTemplates(); }, [fetchTemplates]);
 
@@ -136,18 +138,19 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId, d
   };
 
   const saveAsTemplate = async () => {
-    if (!formContent.trim()) return;
+    if (!formContent.trim() || !user?.id) return;
     const name = window.prompt("Nome do modelo de evolução:");
     if (!name?.trim()) return;
     const restore = anchorScroll(() => cardRef.current, 2000);
     setSavingTemplate(true);
     try {
-      await (supabase.from("session_note_templates" as any) as any).insert({
-        professional_id: professionalId,
+      const { error } = await (supabase.from("session_note_templates" as any) as any).insert({
+        owner_user_id: user.id,
         name: name.trim(),
         content: formContent,
         observation: formObservation || null,
       });
+      if (error) throw error;
       setHint(`Modelo "${name.trim()}" salvo.`);
       await fetchTemplates();
     } catch {
@@ -223,6 +226,7 @@ const SessionNotesSection = ({ professionalId, patientEmail, isDemo, clinicId, d
       setHint(null);
       const restore = anchorScroll(() => cardRef.current, 1500);
       await fetchNotes();
+      window.dispatchEvent(new CustomEvent("alivia:first-steps-refresh"));
       restore();
     } catch {
       toast({ title: t("session_notes.error"), variant: "destructive" });

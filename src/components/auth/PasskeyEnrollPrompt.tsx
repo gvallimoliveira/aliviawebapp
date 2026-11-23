@@ -13,6 +13,7 @@ import {
   dismissEnrollPrompt,
 } from "@/lib/passkey";
 import { toast } from "sonner";
+import { ENABLE_GUIDED_TOUR } from "@/lib/featureFlags";
 
 /**
  * Mostra um diálogo único oferecendo cadastrar passkey (digital/face)
@@ -54,7 +55,7 @@ export default function PasskeyEnrollPrompt() {
       if (path === "/dashboard") {
         if (clinicLoading || needsContextSelection) return true;
         const onboardingKey = `onboarding_${currentOnboardingContext()}_completed_v2`;
-        if (localStorage.getItem(onboardingKey) !== "true") return true;
+        if (ENABLE_GUIDED_TOUR && localStorage.getItem(onboardingKey) !== "true") return true;
       }
       // Any open Radix dialog/sheet/alert dialog blocks us.
       if (document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]')) return true;

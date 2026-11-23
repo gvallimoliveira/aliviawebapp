@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { ENABLE_GUIDED_TOUR } from "@/lib/featureFlags";
 
 export interface OnboardingStep {
   targetId: string;
@@ -12,6 +13,7 @@ export interface OnboardingStep {
 export const useOnboarding = (storageKey: string, steps: OnboardingStep[]) => {
   const [currentStep, setCurrentStep] = useState(() => {
     if (typeof window === "undefined") return -1;
+    if (!ENABLE_GUIDED_TOUR) return -1;
     const completed = localStorage.getItem(storageKey);
     return completed === "true" ? -1 : 0;
   });
@@ -21,13 +23,14 @@ export const useOnboarding = (storageKey: string, steps: OnboardingStep[]) => {
   // every subsequent entry stays silent.
   const lastKeyRef = useRef(storageKey);
   useEffect(() => {
+    if (!ENABLE_GUIDED_TOUR) { setCurrentStep(-1); return; }
     if (lastKeyRef.current === storageKey) return;
     lastKeyRef.current = storageKey;
     const completed = localStorage.getItem(storageKey);
     setCurrentStep(completed === "true" ? -1 : 0);
   }, [storageKey]);
 
-  const isActive = currentStep >= 0 && currentStep < steps.length;
+  const isActive = ENABLE_GUIDED_TOUR && currentStep >= 0 && currentStep < steps.length;
 
   const next = useCallback(() => {
     setCurrentStep((prev) => {
@@ -45,6 +48,7 @@ export const useOnboarding = (storageKey: string, steps: OnboardingStep[]) => {
   }, [storageKey]);
 
   const restart = useCallback(() => {
+    if (!ENABLE_GUIDED_TOUR) return;
     localStorage.removeItem(storageKey);
     setCurrentStep(0);
   }, [storageKey]);

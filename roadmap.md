@@ -1,5 +1,11 @@
 # Roadmap
 
+## Primeiros Passos — fase 1
+- [x] Checklist no PRO e clínica: cinco marcos clínicos, atalhos aos formulários existentes, descarte e progresso isolado por conta/perfil. Secretaria recebe link, cadastro e agenda; dados existentes contam, rascunhos/HEP vazio/compromissos não. Sem créditos de IA para o guia; preferências locais, marcos lidos dos registros.
+- [x] Tutorial antigo desativado por flag sem apagar código; gate de biometria não aguarda tutorial desativado. Minha conta reabre Primeiros Passos sem apagar progresso, inclusive com atalhos após conclusão. Ajuda pt/en/es atualizada.
+- [x] Conta PRO real e clínica própria: cadastro → seleção de paciente → evolução → HEP → carga → Agente → descarte → recarga → reabertura conferidos em 1280×1800 e 390×844. Progresso real PRO 5/5 e clínica 4/5; sem erros, sem overflow e zero gravações clínicas. Testes de marcos/isolamento/tour e regressões aprovados, build OK. Conta totalmente nova validada nas regras de estado vazio, não criada com assinatura; secretaria validada em testes, não em sessão própria. Salvamentos clínicos, aparelho físico e publicação não executados nesta tarefa.
+- [x] Erro de modelos de evolução encontrado no percurso: leitura/gravação usavam professional_id inexistente; agora usam owner_user_id do usuário autenticado, conforme a tabela existente. Erro ausente no reteste PRO/clínica, modelos/permissões preservados.
+
 ## Prontuário — seleção, duplicidade e Marina Duarte
 - [x] Impressão acompanha a gaveta selecionada, inclusive gravação e contexto histórico; não gera automaticamente nem usa impressão de outra data. Contexto clínico atual continua aceitando novos exames/gravações.
 - [x] Rafael confirmado como mesma pessoa: cadastro original preservado com 3 avaliações, plano, 7 sessões planejadas e link; e-mail consolidado e 5 agendamentos vinculados. Duplicata sem dependentes removida atomicamente com proteção de escopo e observação da união; lista/prontuário conferidos na conta real.

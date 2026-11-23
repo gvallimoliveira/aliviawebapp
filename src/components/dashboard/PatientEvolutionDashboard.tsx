@@ -338,6 +338,17 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressFiredRef = useRef(false);
   const [addPatientOpen, setAddPatientOpen] = useState(false);
+  const gettingStartedAction = searchParams.get("gettingStarted");
+  useEffect(() => {
+    if (gettingStartedAction !== "patient" || isDemo || (readOnly && !canAddPatient)) return;
+    setEditPatientData(null);
+    setAddPatientOpen(true);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("gettingStarted");
+      return next;
+    }, { replace: true });
+  }, [gettingStartedAction, isDemo, readOnly, canAddPatient, setSearchParams]);
   const [manualAssessmentTarget, setManualAssessmentTarget] = useState<{ name: string; email?: string } | null>(null);
    const [editPatientData, setEditPatientData] = useState<PatientToEdit | null>(null);
    const [newPatientName, setNewPatientName] = useState("");
