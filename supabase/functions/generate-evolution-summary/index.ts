@@ -14,7 +14,7 @@ const corsHeaders = {
 };
 
 /** Bump when the prompt/data blocks change so cached summaries are regenerated. */
-const PROMPT_VERSION = "evo-v2-deep";
+const PROMPT_VERSION = "evo-v3-clinical-hypothesis";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -64,13 +64,14 @@ serve(async (req) => {
 
 Mandatory rules:
 - Write in ${langLabel}, in clinical prose, professional and objective. No bullet lists inside the text fields; use short paragraphs.
-- "narrative": 12-20 lines. Cover the FULL timeline (all assessments provided, oldest → newest): initial clinical picture, what changed at each relevant moment, pain intensity trajectory (per region when available), evolution of the diagnostic hypothesis, and current status.
+- "narrative": 12-20 lines. Cover the FULL timeline (all assessments provided, oldest → newest): initial clinical picture, what changed at each relevant moment, pain intensity trajectory (per region when available), evolution of the preliminary clinical hypothesis, and current status.
 - "anamnesisSynthesis": synthesise the key anamnesis findings across assessments — chief complaint, onset, pain behaviour/pattern, aggravating and relieving factors, activity level, previous treatments, intercurrences — and how they changed over the period.
 - "questionnaireAnalysis": interpret the functional questionnaires longitudinally: name each scale, cite first and last score with the direction of change, state whether the change is clinically meaningful, and highlight the worst-performing subscales when provided. Never omit a scale that was applied twice.
 - "objectiveFindings": interpret dynamometry and ROM data when provided, citing the ACTUAL numbers (mean/best kgf, number of trials, CV%, L/R asymmetry, agonist/antagonist balance) and comparing timepoints when data exists at more than one. Asymmetry >10% is a clinically relevant deficit (D.I.F.I); CV >15% means questionable reproducibility. If no objective test data was provided, return an empty string — never invent values.
 - "sessionNotesSynthesis": when therapist session/evolution notes are provided, extract the clinically useful signal (response to load, pain behaviour between sessions, adherence, intercurrences) and summarise the treatment course. If none provided, return an empty string.
 - "conclusion": 4-8 lines correlating everything — symptoms, function, objective tests and clinical course — and justifying the recommendation. Point out remaining deficits and next clinical steps.
-- Only comment on data actually provided. Never invent scores, values, dates or interventions.`;
+- Only comment on data actually provided. Never invent scores, values, dates or interventions.
+- TERMINOLOGY: never write "diagnosis", "diagnostic hypothesis", "hipótese diagnóstica", "diagnóstico" or "hipótesis diagnóstica". Always use "preliminary clinical hypothesis" / "hipótese clínica preliminar" / "hipótesis clínica preliminar" (or "hipótese fisioterapêutica" in Portuguese).`;
 
     const fmtQ = (qs: any) =>
       Array.isArray(qs) && qs.length > 0
@@ -92,8 +93,8 @@ Mandatory rules:
         lines.push(`Pain per region: ${Object.entries(a.pain_scores_per_region).map(([k, v]) => `${k} ${v}/10`).join(", ")}`);
       }
       lines.push(`Pain regions: ${(a.pain_regions || []).join(", ") || "N/A"}`);
-      lines.push(`Diagnostic hypothesis: ${a.hypothesis || "N/A"}`);
-      if (a.diagnosis_summary) lines.push(`Diagnostic summary: ${String(a.diagnosis_summary).slice(0, 1200)}`);
+      lines.push(`Preliminary clinical hypothesis: ${a.hypothesis || "N/A"}`);
+      if (a.diagnosis_summary) lines.push(`Clinical summary: ${String(a.diagnosis_summary).slice(0, 1200)}`);
       if (a.anamnesis && typeof a.anamnesis === "object") {
         const entries = Object.entries(a.anamnesis).filter(([, v]) =>
           v != null && !(typeof v === "string" && !v.trim()) && !(Array.isArray(v) && v.length === 0));
