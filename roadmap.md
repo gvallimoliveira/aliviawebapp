@@ -1,5 +1,12 @@
 # Roadmap
 
+## Prontuário — seleção, duplicidade e Marina Duarte
+- [x] Impressão acompanha a gaveta selecionada, inclusive gravação e contexto histórico; não gera automaticamente nem usa impressão de outra data. Contexto clínico atual continua aceitando novos exames/gravações.
+- [x] Rafael confirmado como mesma pessoa: cadastro original preservado com 3 avaliações, plano, 7 sessões planejadas e link; e-mail consolidado e 5 agendamentos vinculados. Duplicata sem dependentes removida atomicamente com proteção de escopo e observação da união; lista/prontuário conferidos na conta real.
+- [x] Aviso indevido causado por UPDATE em avaliação já completed: notificações agora exigem transição comprovada, com baseline por profissional e suporte a payload.old vazio. Salvamento real no PRO com resposta de IA controlada confirmou ausência do aviso; geração real de IA não consumida nesta conferência.
+- [x] Marina dentista do PRO marcada como fictícia: 3 avaliações históricas + medições na atual, 5 evoluções, 25 sessões planejadas, 20 realizadas (2335 sRPE), 28 check-ins e cinco fases STEPS + Alta terminal. Melhora parcial e recrudescência mantêm lombar 7/ombro 6 atuais; sem FC/teto inventados. Homônima professora da clínica não alterada.
+- [x] 29 testes aprovados; build OK. Conta PRO real em 1280×1800 e 390×844: recarga → gaveta atual/histórica → ADM/dinamometria → fases → próxima semana → histórico confirmados. Controle de sessão planejada cabe no celular, sem overflow. Clínica não tinha paciente com múltiplas avaliações para repetir gavetas; componente é compartilhado, mas essa conferência clínica ficou não exercitada. Não publicado; iPhone físico não testado.
+
 ## Agenda real — erro ao salvar evolução (PRO e clínica)
 - [x] Erro reproduzido autenticado: avaliação auxiliar usava draft, proibido por assessments_status_check; agora usa in_progress (não simula avaliação completa), somente ao salvar explicitamente. PRO/clínica compartilham o mesmo editor; escopos e permissões preservados.
 - [x] 33 testes aprovados, incluindo status real e clínica com/sem e-mail; build OK. Conta real PRO e proprietário da clínica → agendamento técnico → evolução salva → recarga/reabertura → Compareceu confirmado; autoria/escopo e espelho session_notes da clínica conferidos. Reabertura também em 390×844; registros técnicos removidos. Não publicado; iPhone físico e conta de terapeuta sem PRO pessoal não exercitados nesta rodada.

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { isNewAssessmentCompletion } from "@/lib/assessmentCompletionNotification";
 
 /**
  * Foreground real-time notifications.
@@ -31,7 +32,7 @@ export function useRealtimeNotifications() {
 
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     let proId: string | null = null;
     let cancelled = false;
@@ -94,6 +95,16 @@ export function useRealtimeNotifications() {
 
       // --- Assessments channel (professional only) ---
       if (proId) {
+        // Seed actual statuses before interpreting updates. An impression edit
+        // on an already-completed row is not a newly received assessment.
+        const statuses = new Map<string, string>();
+        const baselineReady = supabase.from("assessments")
+          .select("id, status").eq("professional_id", proId)
+          .then(({ data }) => {
+            for (const row of data || []) {
+              if (!statuses.has(row.id)) statuses.set(row.id, row.status);
+            }
+          });
         const asmCh = supabase
           .channel(`rt-asm-${user.id}`)
           // Only notify when the patient FINISHES (status -> completed).
@@ -101,6 +112,13 @@ export function useRealtimeNotifications() {
           // created as soon as the patient opens the link, which produced
           // "nova avaliação recebida" before anything was filled in.
 
+          .on("postgres_changes", {
+            event: "INSERT", schema: "public", table: "assessments",
+            filter: `professional_id=eq.${proId}`,
+          }, (payload) => {
+            const row = payload.new;
+            if (typeof row.id === "string" && typeof row.status === "string") statuses.set(row.id, row.status);
+          })
           .on(
             "postgres_changes",
             {
@@ -109,15 +127,14 @@ export function useRealtimeNotifications() {
               table: "assessments",
               filter: `professional_id=eq.${proId}`,
             },
-            (payload) => {
-              
+            async (payload) => {
+              await baselineReady;
+              if (cancelled) return;
               const row: any = payload.new;
               if (!row) return;
-              const ad = row.anamnesis_data;
-              if (ad && typeof ad === "object" && (ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder)) return;
-              // payload.old may be empty (replica identity), so rely on the new
-              // status plus a local dedupe set.
-              if (row.status !== "completed") return;
+              const previousStatus = payload.old?.status ?? statuses.get(row.id);
+              statuses.set(row.id, row.status);
+              if (!isNewAssessmentCompletion(row, previousStatus)) return;
               if (notifiedRef.has(row.id)) return;
               notifiedRef.add(row.id);
 
@@ -141,7 +158,7 @@ export function useRealtimeNotifications() {
       cancelled = true;
       channels.forEach((c) => supabase.removeChannel(c));
     };
-  }, [user, navigate]);
+  }, [user?.id, navigate]);
 }
 
 export default useRealtimeNotifications;

@@ -7,7 +7,7 @@ vi.mock("@/lib/periodizationData", () => ({ savePlannedDose: vi.fn() }));
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
   BarChart: ({ data }: any) => <div data-testid="dose-chart">{JSON.stringify(data)}</div>,
-  Bar: () => null, CartesianGrid: () => null, Legend: () => null,
+  Bar: () => null, Cell: () => null, CartesianGrid: () => null, Legend: () => null,
   Tooltip: () => null, XAxis: () => null, YAxis: () => null,
 }));
 

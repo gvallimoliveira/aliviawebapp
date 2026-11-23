@@ -219,7 +219,7 @@ const DoseAdherenceCard = ({ patientId, planId, sessions, entries, onChanged, re
     <Card>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
             <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => setShift((v) => v - 1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>

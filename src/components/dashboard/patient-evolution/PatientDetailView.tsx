@@ -1328,6 +1328,7 @@ export default function PatientDetailView(props: any) {
         {isViewingHistory && <div role="status" className="sticky top-16 z-20 flex flex-wrap items-center justify-between gap-2 rounded-full border border-primary/25 bg-background/85 backdrop-blur-md px-3 py-1.5 text-xs text-foreground shadow-sm"><span className="flex items-center gap-1.5 min-w-0"><RotateCcw className="h-3.5 w-3.5 text-primary shrink-0" /><span className="truncate">Inspecionando o ciclo de <strong>{new Date(viewedAssessment.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}</strong>{viewedAssessment.diagnosis?.hypothesis ? ` · ${String(viewedAssessment.diagnosis.hypothesis).slice(0, 48)}` : ""}</span></span><Button type="button" size="sm" variant="ghost" className="h-7 rounded-full text-xs text-primary hover:bg-primary/10" onClick={() => setViewedAssessmentId(null)}>Voltar ao ciclo atual</Button></div>}</div>
       {(() => {
         const target = isViewingHistory ? viewedAssessment : (latestWithDiagnosis || latestAssessment);
+        const impressionTarget = drawerAssessment || target;
         if (!target) return null;
         const hasHypothesis = !!target.diagnosis?.hypothesis;
 
@@ -1377,10 +1378,12 @@ export default function PatientDetailView(props: any) {
 
             <div id="sec-impressao-clinica" className="scroll-mt-24">
               <ClinicalImpressionCard
-                assessment={latestAssessment || target}
-                existingImpression={(latestAssessment || target).diagnosis?.clinicalImpression}
-                allAssessments={patient?.assessments}
+                key={impressionTarget.id}
+                assessment={impressionTarget}
+                existingImpression={impressionTarget.diagnosis?.clinicalImpression}
+                allAssessments={(patient?.assessments || []).filter((a: any) => new Date(a.created_at).getTime() <= new Date(impressionTarget.created_at).getTime())}
                 isDemo={isDemo}
+                isHistory={isViewingHistory}
               />
             </div>
 

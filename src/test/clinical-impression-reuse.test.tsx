@@ -41,4 +41,18 @@ describe("manual clinical impression reuse", () => {
     expect(screen.queryByText("Impressão inicial")).toBeNull();
     expect(invoke).not.toHaveBeenCalled();
   });
+
+  it("switches saved impressions across dates of the same patient without generating", () => {
+    const current = { id: "current", patient_email: "same@example.com" };
+    const historical = { id: "historical", patient_email: "same@example.com" };
+    const previous = { overview: "Impressão histórica", therapeuticObjectives: ["Objetivo anterior"] };
+    const { rerender } = render(<ClinicalImpressionCard assessment={current} existingImpression={generated} />);
+    rerender(<ClinicalImpressionCard assessment={historical} existingImpression={previous} />);
+    expect(screen.queryByText("Impressão inicial")).toBeNull();
+    expect(screen.getByText("Impressão histórica")).toBeTruthy();
+    rerender(<ClinicalImpressionCard assessment={current} existingImpression={generated} />);
+    expect(screen.queryByText("Impressão histórica")).toBeNull();
+    expect(screen.getByText("Impressão inicial")).toBeTruthy();
+    expect(invoke).not.toHaveBeenCalled();
+  });
 });

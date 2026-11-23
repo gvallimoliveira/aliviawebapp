@@ -8,6 +8,7 @@ import { PRO_TREATMENT_PRICE_FORMATTED } from "@/constants/pricing";
 import { mockClinicalImpressions } from "@/data/mockPatientData";
 import { useEffect, useState } from "react";
 import { Brain, FileCheck, Loader2, Lock, RefreshCw, Sparkles } from "lucide-react";
+import { careScope } from "@/lib/careScope";
 
 export function normalizeTestResults(tr: any): any[] {
   if (Array.isArray(tr)) return tr;
@@ -191,11 +192,12 @@ export const TreatmentPaidRetry = ({ assessmentId, onGenerated }: {
   );
 };
 
-export const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments, isDemo }: {
+export const ClinicalImpressionCard = ({ assessment, existingImpression, allAssessments, isDemo, isHistory }: {
   assessment: any;
   existingImpression?: { overview: string; therapeuticObjectives: string[] } | null;
   allAssessments?: any[];
   isDemo?: boolean;
+  isHistory?: boolean;
 }) => {
   const { toast } = useToast();
   const { language } = useLanguage();
@@ -256,11 +258,13 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         ),
       ) as string[];
       if (ids.length === 0) return undefined;
-      const { data } = await supabase
+      let query = supabase
         .from("assessment_voice_notes")
         .select("created_at, transcript, summary")
         .eq("status", "ready")
-        .in("assessment_id", ids)
+        .in("assessment_id", ids);
+      if (isHistory) query = query.lte("created_at", assessment.created_at);
+      const { data } = await query
         .order("created_at", { ascending: true })
         .limit(5);
       const notes = (data || []).filter(
@@ -296,13 +300,15 @@ export const ClinicalImpressionCard = ({ assessment, existingImpression, allAsse
         try {
           const email = String((assessment as any).patient_email || "").trim().toLowerCase();
           const { data: pats } = email
-            ? await supabase.from("patients").select("id").ilike("email", email).limit(5)
+            ? await careScope(supabase.from("patients").select("id").ilike("email", email), assessment.clinic_id, assessment.professional_id).limit(5)
             : { data: null };
           const ids = (pats || []).map((p: any) => p.id);
           if (ids.length) {
-            const { data: reps } = await supabase.from("physiotech_reports")
+            let reportsQuery = supabase.from("physiotech_reports")
               .select("exam_type, exam_title, exam_date, conclusion, metrics")
-              .in("patient_id", ids).order("exam_date", { ascending: false }).limit(5);
+              .in("patient_id", ids);
+            if (isHistory) reportsQuery = reportsQuery.lte("exam_date", assessment.created_at);
+            const { data: reps } = await reportsQuery.order("exam_date", { ascending: false }).limit(5);
             if (reps?.length) physiotechReports = reps;
           }
         } catch { physiotechReports = undefined; }
