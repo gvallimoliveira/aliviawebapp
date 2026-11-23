@@ -115,7 +115,7 @@ const DiagnosticHypothesisBlock = ({ assessment, isDemo, treatmentInvite, isHist
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Stethoscope className="h-4 w-4 text-primary" />
-          Hipótese Diagnóstica
+          Hipótese clínica preliminar
           {hasOverride && <Badge variant="secondary" className="text-[10px] ml-1">Revisada pelo fisioterapeuta</Badge>}
         </CardTitle>
         {assessmentDate && (
@@ -218,7 +218,7 @@ const GenerateHypothesisCard = ({ assessment, isDemo, onGenerated }: GenerateHyp
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <Stethoscope className="h-4 w-4 text-primary" />
-          Hipótese Diagnóstica
+          Hipótese clínica preliminar
         </CardTitle>
         <CardDescription className="text-xs">
           Esta avaliação foi salva sem hipótese. Gere agora com IA usando os dados de anamnese, dor e questionários.
@@ -1027,7 +1027,7 @@ export default function PatientDetailView(props: any) {
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
                           {language === "pt"
-                            ? (hasAnamnesis ? "Avaliação incompleta — sem hipótese diagnóstica" : "Avaliação incompleta — anamnese pendente")
+                            ? (hasAnamnesis ? "Avaliação incompleta — sem hipótese clínica preliminar" : "Avaliação incompleta — anamnese pendente")
                             : language === "es"
                             ? (hasAnamnesis ? "Evaluación incompleta — sin hipótesis" : "Evaluación incompleta — anamnesis pendiente")
                             : (hasAnamnesis ? "Incomplete assessment — no hypothesis" : "Incomplete assessment — anamnesis pending")}
@@ -1066,7 +1066,7 @@ export default function PatientDetailView(props: any) {
                       <div className="flex items-center gap-2">
                         {hasReasoning ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> : <Circle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                         <span className={hasReasoning ? "text-foreground" : "text-muted-foreground"}>
-                          {language === "pt" ? "Hipótese diagnóstica" : language === "es" ? "Hipótesis diagnóstica" : "Diagnostic hypothesis"}
+                          {language === "pt" ? "Hipótese clínica preliminar" : language === "es" ? "Hipótesis clínica preliminar" : "Preliminary clinical hypothesis"}
                           {!hasReasoning && hasImpression && ` — ${language === "pt" ? "apenas impressão clínica" : language === "es" ? "solo impresión clínica" : "clinical impression only"}`}
                         </span>
                       </div>
