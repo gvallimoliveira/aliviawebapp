@@ -176,7 +176,7 @@ const QuestionnaireStep = ({ painRegions, onComplete, onBack, onSkip, previousAn
           <Award className="h-10 w-10 text-primary mx-auto" />
           <h3 className="text-xl font-bold">{tl("Resultados dos Questionários", "Questionnaire Results")}</h3>
           <p className="text-sm text-muted-foreground">
-            {tl("Estes scores ajudarão a refinar seu diagnóstico e plano de tratamento.", "These scores will help refine your diagnosis and treatment plan.")}
+            {tl("Estes scores ajudarão a refinar a hipótese clínica e o plano de tratamento.", "These scores will help refine the clinical hypothesis and treatment plan.")}
           </p>
         </div>
         <div className="space-y-4">

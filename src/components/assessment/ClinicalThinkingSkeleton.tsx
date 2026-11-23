@@ -9,7 +9,7 @@ const MESSAGES: Record<Phase, Record<string, string[]>> = {
   diagnosis: {
     pt: [
       "Organizando seus achados clínicos…",
-      "Cruzando sintomas com a base PEDro ≥ 7…",
+      "Cruzando sintomas com evidências científicas…",
       "Comparando hipóteses diferenciais (D.I.F.I)…",
       "Aplicando o raciocínio STEPS…",
       "Avaliando red flags e ressalvas…",
@@ -18,7 +18,7 @@ const MESSAGES: Record<Phase, Record<string, string[]>> = {
     ],
     en: [
       "Organizing your clinical findings…",
-      "Cross-checking symptoms with PEDro ≥ 7 evidence…",
+      "Cross-checking symptoms with scientific evidence…",
       "Comparing differential hypotheses (D.I.F.I)…",
       "Applying the STEPS reasoning framework…",
       "Screening red flags and caveats…",
@@ -27,7 +27,7 @@ const MESSAGES: Record<Phase, Record<string, string[]>> = {
     ],
     es: [
       "Organizando tus hallazgos clínicos…",
-      "Cruzando síntomas con la base PEDro ≥ 7…",
+      "Cruzando síntomas con evidencia científica…",
       "Comparando hipótesis diferenciales (D.I.F.I)…",
       "Aplicando el razonamiento STEPS…",
       "Evaluando red flags y reservas…",

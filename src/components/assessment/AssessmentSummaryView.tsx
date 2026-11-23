@@ -228,7 +228,7 @@ const AssessmentSummaryView = ({
           <div className="flex items-center gap-2 flex-wrap">
             <Brain className={`h-4 w-4 ${hypothesisSuppressed ? "text-amber-700" : "text-primary"}`} />
             <h4 className="text-sm font-semibold text-foreground">
-              {isPt ? "Hipótese diagnóstica (IA)" : "Diagnostic hypothesis (AI)"}
+              {isPt ? "Hipótese clínica preliminar (IA)" : "Preliminary clinical hypothesis (AI)"}
             </h4>
             {hypothesisSuppressed ? (
               <Badge variant="outline" className="text-[10px] ml-auto bg-amber-100 text-amber-800 border-amber-300">
