@@ -1,2 +1,3 @@
 # First steps
 - First steps read scoped persisted milestones, never create clinical data or count clicks as saves; local preferences are user/scope keyed, and shortcuts reuse existing record forms to preserve permissions and avoid duplicate workflows.
+- The record milestone offers session notes and manual assessment as separate patient-picker shortcuts; either persisted record completes the same milestone, while the manual shortcut reuses the record's pre-assessment continuation choice.

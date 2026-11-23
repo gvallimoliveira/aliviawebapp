@@ -117,7 +117,7 @@ export default function GettingStarted({ clinical, canSchedule, hasAgent, regist
   };
   const hasPatient = (facts.patients ?? 0) > 0;
   const actionButton = (action: GettingStartedAction, label: string) => (
-    <Button type="button" size="sm" variant="outline" className="h-9 gap-1.5 shrink-0" onClick={() => start(action)}>
+    <Button type="button" size="sm" variant="outline" className="min-h-9 h-auto max-w-full gap-1.5 whitespace-normal text-left py-2" onClick={() => start(action)}>
       {t(label)}<ChevronRight className="h-3.5 w-3.5" />
     </Button>
   );
@@ -154,7 +154,10 @@ export default function GettingStarted({ clinical, canSchedule, hasAgent, regist
                     {t(registrationPending ? "first_steps.registration" : "first_steps.copy")}
                   </Button>}
                   {step.id === "patient" && actionButton("patient", "first_steps.add")}
-                  {step.id === "record" && actionButton(hasPatient ? "record" : "patient", hasPatient ? "first_steps.register" : "first_steps.add")}
+                  {step.id === "record" && <>
+                    {actionButton("record", "first_steps.record_visit")}
+                    {actionButton("manual-assessment", "first_steps.manual_assessment")}
+                  </>}
                   {step.id === "hep" && actionButton(hasPatient ? "hep" : "patient", hasPatient ? (registrationPending ? "first_steps.registration" : "first_steps.create_hep") : "first_steps.add")}
                   {step.id === "followup" && <>
                     {actionButton(hasPatient ? "load" : "patient", hasPatient ? "first_steps.load" : "first_steps.add")}

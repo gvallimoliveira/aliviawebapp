@@ -1,5 +1,5 @@
 export type GettingStartedStepId = "link" | "patient" | "record" | "hep" | "followup" | "appointment";
-export type GettingStartedAction = "patient" | "record" | "hep" | "load" | "appointment";
+export type GettingStartedAction = "patient" | "record" | "manual-assessment" | "hep" | "load" | "appointment";
 
 export interface GettingStartedScope {
   userId: string;

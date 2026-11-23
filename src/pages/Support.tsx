@@ -43,7 +43,7 @@ const patientTools = [
 ];
 
 const proTools = [
-  { key: "first_steps", icon: ClipboardList },
+  { key: "first_steps", icon: ClipboardList }, // Localized help distinguishes session-note and manual-assessment shortcuts in step 3.
   { key: "theme", icon: Palette },
   { key: "load_monitoring_opt_in", icon: Gauge },
   { key: "patient_daily_care", icon: Heart },

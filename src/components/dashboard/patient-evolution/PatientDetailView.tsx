@@ -749,7 +749,17 @@ export default function PatientDetailView(props: any) {
   const [firstStepParams, setFirstStepParams] = useSearchParams();
   const firstStepAction = firstStepParams.get("gettingStarted");
   React.useEffect(() => {
-    if (isDemo || readOnly || !["record", "hep", "load"].includes(firstStepAction ?? "")) return;
+    if (isDemo || !["record", "manual-assessment", "hep", "load"].includes(firstStepAction ?? "")) return;
+    if (readOnly && !(firstStepAction === "manual-assessment" && allowManualAssessment)) return;
+    if (firstStepAction === "manual-assessment") {
+      openManualAssessment();
+      setFirstStepParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("gettingStarted");
+        return next;
+      }, { replace: true });
+      return;
+    }
     if (firstStepAction === "hep") { setEditingHepId(null); setHepModalOpen(true); }
     const timer = window.setTimeout(() => {
       if (firstStepAction === "record") {
@@ -765,7 +775,7 @@ export default function PatientDetailView(props: any) {
       }, { replace: true });
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [firstStepAction, patient.groupKey, isDemo, readOnly, setFirstStepParams, setEditingHepId, setHepModalOpen]);
+  }, [firstStepAction, patient.groupKey, isDemo, readOnly, allowManualAssessment, openManualAssessment, setFirstStepParams, setEditingHepId, setHepModalOpen]);
 
   return (
     // lg:pl-[68px] abre espaço para a trilha fixa de atalhos (left-2 + w-[52px]),

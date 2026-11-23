@@ -77,6 +77,17 @@ describe("first steps account and scope isolation", () => {
     expect(new URL(gettingStartedDestination(null, "load", "ana@example.test"), "https://example.test").searchParams.get("tab")).toBe("professional");
     expect(new URL(gettingStartedDestination("clinic-a", "appointment"), "https://example.test").searchParams.get("tab")).toBe("agenda");
   });
+  for (const clinicId of [null, "clinic-a"]) {
+    it(`keeps visit and manual assessment as separate shortcuts in ${clinicId ? "clinic" : "solo"} scope`, () => {
+      const visit = new URL(gettingStartedDestination(clinicId, "record", "Ana sem e-mail"), "https://example.test");
+      const manual = new URL(gettingStartedDestination(clinicId, "manual-assessment", "Ana sem e-mail"), "https://example.test");
+      expect(visit.searchParams.get("gettingStarted")).toBe("record");
+      expect(manual.searchParams.get("gettingStarted")).toBe("manual-assessment");
+      expect(manual.searchParams.get("patient")).toBe("Ana sem e-mail");
+      expect(manual.searchParams.get("tab")).toBe(clinicId ? "patients" : "professional");
+      expect(visit.searchParams.get("patient")).toBe(manual.searchParams.get("patient"));
+    });
+  }
   it("keeps the old automatic tour inactive, including after restart", () => {
     const { result } = renderHook(() => useOnboarding("onboarding_professional_completed_v2", [{ targetId: "patients", titleKey: "title", descriptionKey: "desc" }]));
     expect(result.current.isActive).toBe(false);

@@ -1,5 +1,9 @@
 # Roadmap
 
+## Primeiros Passos — item 3 com duas opções
+- [x] Registrar atendimento e Avaliação manual no PRO e clínica, com seleção de paciente e caminhos existentes separados; qualquer registro salvo conclui o mesmo marco, rascunhos não. Avaliação manual mantém a escolha de continuar pré-avaliação existente.
+- [x] Ajuda pt/en/es atualizada e tutorial mantido desativado. Quarenta e um testes aprovados; build OK. Conta PRO e clínica próprias → guia → seleção real de paciente → avaliação manual e nota de atendimento verificados em 1280×1800 e 440×667, sem erros ou gravações clínicas. Secretaria coberta por teste, não por sessão própria. Salvamento clínico não repetido nesta alteração de atalhos; aparelho físico e publicação não executados.
+
 ## Patient check-in — no_patient response
 - [x] Sweep completed: personal tabs, both check-in mounts, HEP, contacts/requests, First Steps, record load/history, public patient/coach actions, print/import callers, agent HEP, PhysioTech and reminder/delivery jobs read. Ten live database definitions reviewed; six empty-patient RPCs returned 200/[]; no additional violation of this rule. Inventory/verification limits in docs/checkin-empty-state-audit.md. Sixty-one regressions passed; health → appointments → messages → notices verified on desktop/mobile; invalid public check-in/HEP display readable errors. No jobs, notifications, AI, permissions, settings or records changed; live linked submission and physical devices still unverified.
 - [x] Reproduced `my_link` 404 on the affected signed-in personal account and confirmed zero linked patients. Returns 200 with token null without creating patients/links; real patient/link lookup failures remain 500 and authentication remains required. Existing patient links unchanged.
