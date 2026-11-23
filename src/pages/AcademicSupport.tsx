@@ -69,9 +69,9 @@ const tools = [
     icon: FileText,
     title: { pt: "Casos de Estudo & Trilhas", en: "Study Cases & Tracks", es: "Casos de Estudio y Pistas" },
     desc: {
-      pt: "Biblioteca de casos clínicos por trilha (lombalgia, ombro, joelho, neuro etc.) para treinar diagnóstico e plano de tratamento usando o framework STEPS/D.I.F.I.",
-      en: "Library of clinical cases grouped by track (low back, shoulder, knee, neuro, etc.) to practice diagnosis and treatment planning with the STEPS/D.I.F.I. framework.",
-      es: "Biblioteca de casos clínicos por pistas (lumbalgia, hombro, rodilla, neuro, etc.) para entrenar diagnóstico y plan de tratamiento con el framework STEPS/D.I.F.I.",
+      pt: "Biblioteca de casos clínicos por trilha (lombalgia, ombro, joelho, neuro etc.) para treinar a formulação da hipótese clínica preliminar e o plano de tratamento usando o framework STEPS/D.I.F.I.",
+      en: "Library of clinical cases grouped by track (low back, shoulder, knee, neuro, etc.) to practice formulating a preliminary clinical hypothesis and planning treatment with the STEPS/D.I.F.I. framework.",
+      es: "Biblioteca de casos clínicos por pistas (lumbalgia, hombro, rodilla, neuro, etc.) para entrenar la formulación de la hipótesis clínica preliminar y el plan de tratamiento con el framework STEPS/D.I.F.I.",
     },
   },
   {

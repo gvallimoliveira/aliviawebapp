@@ -80,7 +80,7 @@ const categories: ToolCategory[] = [
         key: "red_flags",
         icon: AlertTriangle,
         title: "Triagem automática de Red Flags",
-        desc: "O sistema cruza sintomas e responde com alertas de sinais de alarme (neurológicos, viscerais, oncológicos). Em links de clínica e na avaliação manual, a avaliação NÃO é interrompida: o sinal de alarme fica registrado no prontuário/PDF e a hipótese diagnóstica vem destacada como 'sob ressalva — requer aval médico'. Qualquer terapeuta da clínica pode dispensar a red flag (ex.: paciente com acompanhamento médico ativo) registrando justificativa; o histórico fica visível como 'Dispensada em DD/MM por Dr(a). X'. Em avaliações feitas pelo próprio paciente final (sem profissional), o fluxo continua interrompendo por segurança.",
+        desc: "O sistema cruza sintomas e responde com alertas de sinais de alarme (neurológicos, viscerais, oncológicos). Em links de clínica e na avaliação manual, a avaliação NÃO é interrompida: o sinal de alarme fica registrado no prontuário/PDF e a hipótese clínica preliminar vem destacada como 'sob ressalva — requer aval médico'. Qualquer terapeuta da clínica pode dispensar a red flag (ex.: paciente com acompanhamento médico ativo) registrando justificativa; o histórico fica visível como 'Dispensada em DD/MM por Dr(a). X'. Em avaliações feitas pelo próprio paciente final (sem profissional), o fluxo continua interrompendo por segurança.",
       },
       {
         key: "agenda_import",
@@ -193,20 +193,20 @@ const categories: ToolCategory[] = [
       {
         key: "ai_diagnosis",
         icon: Sparkles,
-        title: "Hipótese diagnóstica assistida por IA",
+        title: "Hipótese clínica preliminar assistida por IA",
         desc: "A IA aplica os frameworks STEPS e D.I.F.I sobre os dados da avaliação e sugere uma hipótese clínica com nível de confiança. Você revisa, ajusta e valida — o raciocínio final é sempre seu.",
       },
       {
         key: "final_hypothesis",
         icon: FileCheck,
-        title: "Hipótese diagnóstica final (sobrescrever IA)",
-        desc: "Você (owner ou terapeuta da clínica) pode concordar com a hipótese da IA ou sobrescrevê-la com seu próprio diagnóstico direto no prontuário do paciente ou na visualização da avaliação. A hipótese final aparece em destaque internamente, substitui totalmente a sugestão da IA no PDF entregue ao paciente e no compartilhamento por WhatsApp — a sugestão original da IA fica visível apenas para a equipe, em uma linha discreta. Secretárias não têm permissão para editar (decisão clínica). Editável a qualquer momento, com sincronização imediata em todos os pontos do sistema.",
+        title: "Hipótese clínica preliminar (sobrescrever IA)",
+        desc: "Você (owner ou terapeuta da clínica) pode concordar com a hipótese da IA ou sobrescrevê-la com sua própria hipótese clínica preliminar direto no prontuário do paciente ou na visualização da avaliação. A hipótese final aparece em destaque internamente, substitui totalmente a sugestão da IA no PDF entregue ao paciente e no compartilhamento por WhatsApp — a sugestão original da IA fica visível apenas para a equipe, em uma linha discreta. Secretárias não têm permissão para editar (decisão clínica). Editável a qualquer momento, com sincronização imediata em todos os pontos do sistema.",
       },
       {
         key: "treatment_plan",
         icon: Stethoscope,
         title: "Plano de tratamento sugerido",
-        desc: "Com base no diagnóstico, a IA propõe condutas em fases (educação, controle de dor, ativação, fortalecimento, retorno funcional). Inclui exercícios e progressões.",
+        desc: "Com base na hipótese clínica preliminar, a IA propõe condutas em fases (educação, controle de dor, ativação, fortalecimento, retorno funcional). Inclui exercícios e progressões.",
       },
       {
         key: "ai_test_suggestions",
@@ -223,8 +223,8 @@ const categories: ToolCategory[] = [
       {
         key: "differential_diagnosis",
         icon: Brain,
-        title: "Diagnóstico diferencial assistido",
-        desc: "Quando a confiança da hipótese da IA é baixa ou moderada, o card da hipótese diagnóstica (e a etapa de diagnóstico da avaliação manual) oferece um botão discreto para gerar 2 a 4 hipóteses concorrentes. Cada uma vem com plausibilidade, por que compete, o que fala contra e discriminadores práticos (testes/perguntas). O profissional pode adotar uma delas como hipótese final, enviar os discriminadores para as observações da sessão e decidir se o bloco entra no PDF. Não aparece em hipóteses de alta confiança.",
+        title: "Hipóteses clínicas preliminares concorrentes",
+        desc: "Quando a confiança da hipótese da IA é baixa ou moderada, o card da hipótese clínica preliminar (e a etapa de hipótese clínica preliminar da avaliação manual) oferece um botão discreto para gerar 2 a 4 hipóteses concorrentes. Cada uma vem com plausibilidade, por que compete, o que fala contra e discriminadores práticos (testes/perguntas). O profissional pode adotar uma delas como hipótese final, enviar os discriminadores para as observações da sessão e decidir se o bloco entra no PDF. Não aparece em hipóteses de alta confiança.",
       },
       {
         key: "evolution_report",
@@ -236,7 +236,7 @@ const categories: ToolCategory[] = [
         key: "academic_mentor",
         icon: GraduationCap,
         title: "Modo acadêmico e trilhas do Mentor",
-        desc: "Estudantes com PRO ativo, parceiros acadêmicos habilitados pelo admin e profissionais PRO podem estudar pelo Agente com /professor, /quiz, /caso, /traduzir e /trilha [tema] [1-5]. As trilhas entregam aulas didáticas por módulo — conceitos, avaliação, diagnóstico, tratamento e caso aplicado — com XP por conclusão.",
+        desc: "Estudantes com PRO ativo, parceiros acadêmicos habilitados pelo admin e profissionais PRO podem estudar pelo Agente com /professor, /quiz, /caso, /traduzir e /trilha [tema] [1-5]. As trilhas entregam aulas didáticas por módulo — conceitos, avaliação, hipótese clínica preliminar, tratamento e caso aplicado — com XP por conclusão.",
       },
       {
         key: "evidence_library",

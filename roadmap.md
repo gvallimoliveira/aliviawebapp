@@ -265,3 +265,7 @@
 - [x] Add-ons no Stripe: mensal R$89/139, anual R$590/990; ativação e cancelamento pelo webhook. Conta VIP conferida como ilimitada. Checkout real e franquia não testados (só lista liberada tem acesso).
 - [ ] Lançamento geral: remover a trava da lista manual no SSO e no botão — aguarda decisão do Guilherme.
 - [x] Diário de dor do paciente visível ao profissional (só entradas ligadas a avaliação acessível) no gráfico de dor do ciclo
+
+## Suporte e FAQ — terminologia clínica
+- [x] Substituir diagnóstico atribuído ao sistema por hipótese clínica preliminar nos textos de paciente, PRO, clínica e acadêmico, em pt/en/es; preservar avisos sobre diagnóstico presencial e limites clínicos.
+- [x] Suporte PRO/clínica aberto no computador; suporte paciente, FAQ público e suporte acadêmico abertos no celular, com texto atualizado e zero erros de execução. Traduções pt/en/es e build OK conferidos; EN/ES não abertos no navegador. Falta publicar.
