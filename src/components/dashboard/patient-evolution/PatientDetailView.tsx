@@ -182,7 +182,7 @@ const GenerateHypothesisCard = ({ assessment, isDemo, onGenerated }: GenerateHyp
     setLoading(true);
     try {
       if (isDemo) {
-        const demoDx = { hypothesis: "Hipótese diagnóstica simulada (demo)", summary: "Resumo demo.", confidence: "medium", manual: true };
+        const demoDx = { hypothesis: "Hipótese clínica preliminar simulada (demo)", summary: "Resumo demo.", confidence: "medium", manual: true };
         onGenerated(demoDx);
         return;
       }
