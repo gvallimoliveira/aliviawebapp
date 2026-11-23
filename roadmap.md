@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Patient check-in — no_patient response
+- [x] Sweep completed: personal tabs, both check-in mounts, HEP, contacts/requests, First Steps, record load/history, public patient/coach actions, print/import callers, agent HEP, PhysioTech and reminder/delivery jobs read. Ten live database definitions reviewed; six empty-patient RPCs returned 200/[]; no additional violation of this rule. Inventory/verification limits in docs/checkin-empty-state-audit.md. Sixty-one regressions passed; health → appointments → messages → notices verified on desktop/mobile; invalid public check-in/HEP display readable errors. No jobs, notifications, AI, permissions, settings or records changed; live linked submission and physical devices still unverified.
 - [x] Reproduced `my_link` 404 on the affected signed-in personal account and confirmed zero linked patients. Returns 200 with token null without creating patients/links; real patient/link lookup failures remain 500 and authentication remains required. Existing patient links unchanged.
 - [x] Deployed and verified the same account → personal profile → usable dashboard at 1280×1800 and 440×667: 200/null, no failing requests, JS errors or overflow; invalid authentication still returns 401. Nineteen regressions passed including existing solo/clinic links, creation failures and daily readiness; build OK. No clinical writes or AI calls. Live linked-patient submission and physical phone not exercised; existing linked path covered by tests.
 
