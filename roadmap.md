@@ -1,5 +1,10 @@
 # Roadmap
 
+## Equipe Enterprise e traduções pontuais
+- [x] Removido somente ∞: título passa a (2/Enterprise); contagem, plano, limites e permissões preservados.
+- [x] Status completed usa a tradução já existente; surgery/less_1 adicionados em pt/en/es e ao caminho próprio da anamnese, mantendo valores salvos e a distinção entre menos de uma vez e uma vez ou menos por semana.
+- [x] 47 regressões aprovadas, build OK e diff sem erros. Conta própria → Equipe conferida; Enterprise validado com limite simulado somente na resposta de leitura em desktop/celular. Demo Helena → anamnese conferida nos três idiomas e dois tamanhos, sem chaves cruas/erros JS. Tradução de completed verificada no motor de idiomas; card clínico sem atribuição não disponível no perfil gestor da sessão, portanto não exercitado pela tela. Nenhuma gravação clínica ou mudança de acesso; microfone/gênero não alterados. Publicação e aparelho físico não executados.
+
 ## Lote 1 — cadastro demo, datas reais e linguagem clínica
 - [x] Cadastro/edição demo em memória por usuário/escopo, compartilhado entre atalhos e lista, sem avaliações artificiais ou gravações reais. Corrigidos também leitura com UUID fictício, link, arquivar/restaurar/excluir e nota rápida que acionavam caminhos reais. Recarregar remove cadastros fictícios; PRO/clínica continuam no caminho original de gravação. Busca por nome completo corrigida durante o percurso, CPF/telefone preservados.
 - [x] Data de última avaliação derivada somente de avaliações reais com data válida; placeholders vazios não contam, registros legados com conteúdo clínico continuam disponíveis. Ordenação e filtros existentes preservados, sem transformar data de cadastro em avaliação.

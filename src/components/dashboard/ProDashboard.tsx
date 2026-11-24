@@ -1095,7 +1095,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {format(new Date(a.created_at), "dd/MM/yyyy HH:mm")}
-                    {a.status && ` · ${a.status}`}
+                    {a.status && ` · ${a.status === "completed" ? t("dashboard.completed") : a.status}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

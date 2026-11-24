@@ -22,6 +22,7 @@ const REGION_LABELS: Record<string, { pt: string; en: string }> = (() => {
 })();
 import QuestionnaireResultCard from "@/components/assessment/QuestionnaireResultCard";
 import { useLanguage } from "@/contexts/LanguageContext";
+import i18n from "@/i18n";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,6 +93,7 @@ function translateKey(key: string): string {
     "anamnesis.onset.gradual": "Início gradual",
     "anamnesis.onset.trauma": "Trauma / Lesão",
     "anamnesis.onset.post_surgery": "Pós-operatório",
+    "anamnesis.onset.surgery": String(i18n.t("anamnesis.onset.surgery")),
     "anamnesis.pain_type.local": "Dor local",
     "anamnesis.pain_type.radiating": "Dor irradiada",
     "anamnesis.pain_type.burning": "Queimação",
@@ -125,6 +127,7 @@ function translateKey(key: string): string {
     "anamnesis.weekly_freq.4_6": "4-6x/semana",
     "anamnesis.weekly_freq.2_3": "2-3x/semana",
     "anamnesis.weekly_freq.1_or_less": "1x/semana ou menos",
+    "anamnesis.weekly_freq.less_1": String(i18n.t("anamnesis.weekly_freq.less_1")),
     "anamnesis.night_waking.frequent": "Sim, frequentemente",
     "anamnesis.night_waking.sometimes": "Às vezes",
     "anamnesis.night_waking.no": "Não",

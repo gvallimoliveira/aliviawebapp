@@ -193,7 +193,7 @@ const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "tea
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />
-            {lang === "pt" ? "Equipe clínica" : lang === "es" ? "Equipo clínico" : "Clinical team"} ({seatsUsed}/{isUnlimited ? "∞ Enterprise" : activeClinic.max_members})
+            {lang === "pt" ? "Equipe clínica" : lang === "es" ? "Equipo clínico" : "Clinical team"} ({seatsUsed}/{isUnlimited ? "Enterprise" : activeClinic.max_members})
             {!isUnlimited && (
               <span className="text-sm font-normal text-muted-foreground">
                 · {lang === "pt" ? "Secretária" : lang === "es" ? "Secretaria" : "Secretary"} {secretarySeats}/1
