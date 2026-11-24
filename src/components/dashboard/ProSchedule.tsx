@@ -2,6 +2,9 @@ import { toMinutes, endTimeFrom, assignLanes, cardPixelHeight, slotRowHeight, cr
 import { createLatestRequestGate } from "@/lib/latestRequest";
 import { expandRecurrence, splitConflicts } from "@/lib/appointmentRecurrence";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import AgendaStartHelp from "@/components/onboarding/AgendaStartHelp";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useClinic } from "@/contexts/ClinicContext";
@@ -317,7 +320,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
   // Clinic professionals for secretary mode
   const [clinicProfessionals, setClinicProfessionals] = useState<{ id: string; full_name: string }[]>([]);
   const isClinicOnlyMode = !professionalId && !!clinicId;
-  const { canManageClinic } = useClinic();
+  const { canManageClinic, isClinicSecretary, isClinicOwner } = useClinic();
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   // Clinic grid governance: only owner/admin/secretary create, move or delete slots.
   const canEditGrid = isSimulated || !clinicId || canManageClinic;
 
@@ -606,6 +611,17 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
       defaultTime: time || "09:00",
     });
   }, []);
+
+  const firstStepsTarget = searchParams.get("gettingStarted");
+  useEffect(() => {
+    if (firstStepsTarget !== "appointment" || !canEditGrid || isSimulated) return;
+    openNew();
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("gettingStarted");
+      return next;
+    }, { replace: true });
+  }, [firstStepsTarget, canEditGrid, isSimulated, openNew, setSearchParams]);
 
   const openEdit = useCallback((apt: Appointment) => {
     modalSessionRef.current += 1;
@@ -1170,6 +1186,14 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             : (isPt ? "Arraste os cards para reagendar" : "Drag cards to reschedule")}
         </p>
       </div>
+
+      {user && <AgendaStartHelp
+        key={`${user.id}:${clinicId ?? professionalId}`}
+        scopeKey={`${user.id}:${clinicId ? `clinic:${clinicId}` : `solo:${professionalId}`}`}
+        appointments={appointments} loading={loading} hasError={!!loadError}
+        canSchedule={canEditGrid} clinical={!isClinicSecretary && (!!professionalId || isClinicOwner)} demo={isSimulated}
+        onNew={() => openNew(startDate)}
+      />}
 
       {/* Time-slot grid */}
       {loadError && (

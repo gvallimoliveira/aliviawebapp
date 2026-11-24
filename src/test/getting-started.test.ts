@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { gettingStartedDestination, gettingStartedKey, gettingStartedSteps, readGettingStartedPreferences, restoreGettingStarted, writeGettingStartedPreferences,
-  type GettingStartedFacts } from "@/lib/gettingStarted";
+  clinicIdentityReady, agendaGuidanceState, type GettingStartedFacts } from "@/lib/gettingStarted";
 import { renderHook, act, cleanup } from "@testing-library/react";
 import { useOnboarding } from "@/hooks/useOnboarding";
 
@@ -11,8 +11,8 @@ beforeEach(() => localStorage.clear());
 afterEach(cleanup);
 
 describe("first steps persisted milestones", () => {
-  it("offers five clinical milestones with none completed for an empty account", () => {
-    expect(steps().map((step) => step.id)).toEqual(["link", "patient", "record", "hep", "followup"]);
+  it("offers four clinical milestones without load in the initial checklist", () => {
+    expect(steps().map((step) => step.id)).toEqual(["link", "patient", "record", "hep"]);
     expect(completed(empty)).toEqual([]);
   });
   it("copying the link completes only that step, not patient registration or care", () => {
@@ -30,12 +30,12 @@ describe("first steps persisted milestones", () => {
   it("a saved HEP with items completes only the exercise milestone", () => {
     expect(completed({ ...empty, heps: 1 })).toEqual(["hep"]);
   });
-  it("a recorded load session completes experimentation", () => {
-    expect(completed({ ...empty, loads: 1 })).toEqual(["followup"]);
+  it("a recorded load session does not change initial checklist progress", () => {
+    expect(completed({ ...empty, loads: 1 })).toEqual([]);
   });
-  it("a replied Agent conversation is the alternative to a load session", () => {
-    expect(completed({ ...empty, conversations: 1 })).toEqual(["followup"]);
-    expect(gettingStartedSteps({ ...empty, conversations: 1 }, false, true, true, false).find((step) => step.id === "followup")?.complete).toBe(false);
+  it("Agent replies do not change initial checklist progress", () => {
+    expect(completed({ ...empty, conversations: 1 })).toEqual([]);
+    expect(gettingStartedSteps(empty, false, true, true, false)).toEqual(steps());
   });
   it("failed queries remain unknown rather than reporting zero or completing a step", () => {
     expect(steps({ ...empty, heps: null }).find((step) => step.id === "hep")?.complete).toBeNull();
@@ -47,6 +47,52 @@ describe("first steps persisted milestones", () => {
   });
   it("read-only staff do not get a scheduling action", () => {
     expect(gettingStartedSteps(empty, false, false, false, true).map((step) => step.id)).toEqual(["link", "patient"]);
+  });
+});
+
+describe("clinic operational activation", () => {
+  const managerSteps = (facts: GettingStartedFacts) => gettingStartedSteps(facts, false, true, true, true, true);
+  it("replaces clinical tasks with five operational tasks for owner/admin", () => {
+    expect(managerSteps(empty).map((step) => step.id)).toEqual(["identity", "team", "services", "link", "appointment"]);
+    expect(managerSteps({ ...empty, notes: 4, heps: 2, loads: 8 }).filter((step) => step.complete).map((step) => step.id)).toEqual([]);
+  });
+  it("uses persisted operational facts for completion", () => {
+    expect(managerSteps({ ...empty, identity: true, team: 1, services: 1, appointments: 1 }).filter((step) => step.complete).map((step) => step.id)).toEqual(["identity", "team", "services", "appointment"]);
+    expect(managerSteps({ ...empty, identity: false, team: 0, services: null }).slice(0, 3).map((step) => step.complete)).toEqual([false, false, null]);
+  });
+  it("requires saved clinic name, logo, phone and opening/closing times for identity", () => {
+    const clinic = { name: "Clinic", logo_url: "logo", phone: "123", operating_hours_start: "08:00", operating_hours_end: "18:00" };
+    expect(clinicIdentityReady(clinic)).toBe(true);
+    for (const field of Object.keys(clinic)) expect(clinicIdentityReady({ ...clinic, [field]: "" })).toBe(false);
+    expect(clinicIdentityReady(null)).toBe(false);
+  });
+  it("routes operations to existing clinic and Insights screens with explicit clinic context", () => {
+    for (const [action, tab] of [["identity", "clinic"], ["team", "clinic"], ["services", "insights"], ["appointment", "agenda"]] as const) {
+      const path = new URL(gettingStartedDestination("clinic-a", action), "https://example.test");
+      expect(path.searchParams.get("tab")).toBe(tab);
+      expect(path.searchParams.get("clinicId")).toBe("clinic-a");
+      expect(path.searchParams.get("context")).toBe("clinic");
+      expect(path.searchParams.get("gettingStarted")).toBe(action);
+    }
+  });
+});
+
+describe("contextual Agenda guidance", () => {
+  const state = (appointments: { status: string; service_type?: string | null }[], loading = false, error = false, canSchedule = true, clinical = true, dismissed = false, demo = false) => agendaGuidanceState(appointments, loading, error, canSchedule, clinical, dismissed, demo);
+  it("offers an empty-period shortcut only when permitted, excluding commitments and cancelled care", () => {
+    expect(state([{ status: "scheduled", service_type: "compromisso" }, { status: "cancelled", service_type: "fisioterapia" }]).empty).toBe(true);
+    expect(state([{ status: "scheduled", service_type: null }]).empty).toBe(false);
+    expect(state([], false, false, false).empty).toBe(false);
+  });
+  it("never interprets loading, errors or demo as an empty real schedule", () => {
+    expect(state([], true).empty).toBe(false);
+    expect(state([], false, true).empty).toBe(false);
+    expect(state([], false, false, true, true, false, true)).toEqual({ empty: false, tip: false });
+  });
+  it("shows the clinical tip independently of scheduling rights but never for reception or after dismissal", () => {
+    expect(state([], false, false, false).tip).toBe(true);
+    expect(state([], false, false, true, false).tip).toBe(false);
+    expect(state([], false, false, true, true, true).tip).toBe(false);
   });
 });
 

@@ -19,13 +19,16 @@ type Props = GettingStartedScope & {
   canSchedule: boolean;
   hasAgent: boolean;
   registrationPending?: boolean;
+  manager?: boolean;
+  onNavigate?: (destination: string) => void;
 };
 const emptyFacts: GettingStartedFacts = { patients: null, assessments: null, notes: null, heps: null, loads: null, conversations: null, appointments: null };
 
-export default function GettingStarted({ clinical, canSchedule, hasAgent, registrationPending, ...scope }: Props) {
+export default function GettingStarted({ clinical, canSchedule, hasAgent, registrationPending, manager = false, onNavigate, ...scope }: Props) {
   const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const goTo = onNavigate ?? navigate;
   const key = gettingStartedKey(scope);
   const [preferences, setPreferences] = useState(() => readGettingStartedPreferences(key));
   const [picker, setPicker] = useState<GettingStartedAction | null>(null);
@@ -49,13 +52,13 @@ export default function GettingStarted({ clinical, canSchedule, hasAgent, regist
   }, [key]);
 
   const factsQuery = useQuery({
-    queryKey: ["first-steps", key, clinical, hasAgent],
-    queryFn: () => fetchGettingStartedFacts(scope, clinical, hasAgent),
+    queryKey: ["first-steps", key, clinical, manager],
+    queryFn: () => fetchGettingStartedFacts(scope, clinical, hasAgent, manager),
     enabled: !preferences.dismissed,
     staleTime: 15_000,
     refetchInterval: (query) => {
       const facts = query.state.data;
-      return facts && gettingStartedSteps(facts, !!preferences.copiedLink, clinical, canSchedule, hasAgent).every((step) => step.complete === true) ? false : 30_000;
+      return facts && gettingStartedSteps(facts, !!preferences.copiedLink, clinical, canSchedule, hasAgent, manager).every((step) => step.complete === true) ? false : 30_000;
     },
   });
   useEffect(() => {
@@ -83,7 +86,7 @@ export default function GettingStarted({ clinical, canSchedule, hasAgent, regist
   });
 
   const facts = factsQuery.data ?? emptyFacts;
-  const steps = gettingStartedSteps(facts, !!preferences.copiedLink, clinical, canSchedule, hasAgent);
+  const steps = gettingStartedSteps(facts, !!preferences.copiedLink, clinical, canSchedule, hasAgent, manager);
   const completed = steps.filter((step) => step.complete === true).length;
   const unknown = steps.some((step) => step.complete === null);
   if (preferences.dismissed || (completed === steps.length && !preferences.review)) return null;
@@ -107,8 +110,8 @@ export default function GettingStarted({ clinical, canSchedule, hasAgent, regist
   };
   const start = (action: GettingStartedAction) => {
     if (action === "hep" && registrationPending) { navigate("/professional/register"); return; }
-    if (action === "patient" || action === "appointment") {
-      navigate(gettingStartedDestination(scope.clinicId, action));
+    if (["patient", "appointment", "identity", "team", "services"].includes(action)) {
+      goTo(gettingStartedDestination(scope.clinicId, action));
     } else {
       setSearch("");
       setSearchTerm("");
@@ -124,10 +127,10 @@ export default function GettingStarted({ clinical, canSchedule, hasAgent, regist
 
   return (
     <>
-      <section aria-label={t("first_steps.title")} className="border-y border-border bg-muted/20 px-3 py-4 sm:px-5">
+      <section aria-label={t(manager ? "first_steps.operations_title" : "first_steps.title")} className="border-y border-border bg-muted/20 px-3 py-4 sm:px-5">
         <div className="flex items-center gap-2.5">
           <ListChecks className="h-5 w-5 text-primary shrink-0" />
-          <h2 className="min-w-0 flex-1 text-base font-semibold text-foreground">{t("first_steps.title")}</h2>
+          <h2 className="min-w-0 flex-1 text-base font-semibold text-foreground">{t(manager ? "first_steps.operations_title" : "first_steps.title")}</h2>
           <span aria-live="polite" className="text-xs font-medium text-muted-foreground whitespace-nowrap">
             {factsQuery.isPending ? t("first_steps.loading") : `${completed}/${steps.length}`}
           </span>
@@ -144,8 +147,8 @@ export default function GettingStarted({ clinical, canSchedule, hasAgent, regist
                 {step.complete ? <Check className="h-3.5 w-3.5" /> : index + 1}
               </span>
               <div className="min-w-0 flex-1 basis-40">
-                <h3 className="text-sm font-medium text-foreground">{t(`first_steps.${step.id}.title`)}</h3>
-                {!step.complete && <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{t(`first_steps.${step.id}.desc${step.id === "followup" && !hasAgent ? "_load" : ""}`)}</p>}
+                <h3 className="text-sm font-medium text-foreground">{t(`first_steps.${step.id === "link" && scope.clinicId ? "clinic_link" : step.id}.title`)}</h3>
+                {!step.complete && <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{t(`first_steps.${step.id === "link" && scope.clinicId ? "clinic_link" : step.id}.desc`)}</p>}
               </div>
               {step.complete && !preferences.review ? <span className="text-xs text-primary">{t("first_steps.done")}</span> :
                 <div className="flex flex-wrap items-center justify-end gap-2 ml-auto">
@@ -159,12 +162,9 @@ export default function GettingStarted({ clinical, canSchedule, hasAgent, regist
                     {actionButton("manual-assessment", "first_steps.manual_assessment")}
                   </>}
                   {step.id === "hep" && actionButton(hasPatient ? "hep" : "patient", hasPatient ? (registrationPending ? "first_steps.registration" : "first_steps.create_hep") : "first_steps.add")}
-                  {step.id === "followup" && <>
-                    {actionButton(hasPatient ? "load" : "patient", hasPatient ? "first_steps.load" : "first_steps.add")}
-                    {hasAgent && <Button type="button" size="sm" variant="ghost" className="h-9 gap-1" onClick={() => navigate("/agente")}>
-                      {t("first_steps.agent")}<ChevronRight className="h-3.5 w-3.5" />
-                    </Button>}
-                  </>}
+                  {step.id === "identity" && actionButton("identity", "first_steps.configure")}
+                  {step.id === "team" && actionButton("team", "first_steps.invite")}
+                  {step.id === "services" && actionButton("services", "first_steps.services")}
                   {step.id === "appointment" && actionButton("appointment", "first_steps.agenda")}
                 </div>}
             </li>
@@ -195,7 +195,7 @@ export default function GettingStarted({ clinical, canSchedule, hasAgent, regist
                 <Button type="button" key={patient.id} variant="ghost" className="w-full h-auto min-h-11 justify-between gap-3 py-3 text-left whitespace-normal"
                   onClick={() => {
                     if (!picker) return;
-                    navigate(gettingStartedDestination(scope.clinicId, picker, patient.email || patient.full_name || patient.id));
+                    goTo(gettingStartedDestination(scope.clinicId, picker, patient.email || patient.full_name || patient.id));
                     setPicker(null);
                   }}>
                   <span className="min-w-0 break-words">{patient.full_name}</span><ChevronRight className="h-4 w-4 shrink-0" />

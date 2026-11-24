@@ -1,5 +1,5 @@
-export type GettingStartedStepId = "link" | "patient" | "record" | "hep" | "followup" | "appointment";
-export type GettingStartedAction = "patient" | "record" | "manual-assessment" | "hep" | "load" | "appointment";
+export type GettingStartedStepId = "link" | "patient" | "record" | "hep" | "appointment" | "identity" | "team" | "services";
+export type GettingStartedAction = "patient" | "record" | "manual-assessment" | "hep" | "load" | "appointment" | "identity" | "team" | "services";
 
 export interface GettingStartedScope {
   userId: string;
@@ -15,6 +15,9 @@ export interface GettingStartedFacts {
   loads: number | null;
   conversations: number | null;
   appointments: number | null;
+  identity?: boolean | null;
+  team?: number | null;
+  services?: number | null;
 }
 
 export interface GettingStartedPreferences {
@@ -55,7 +58,14 @@ function anyCompleted(...counts: (number | null)[]): boolean | null {
   return counts.some((count) => count === null) ? null : false;
 }
 
-export function gettingStartedSteps(facts: GettingStartedFacts, copiedLink: boolean, clinical: boolean, canSchedule: boolean, hasAgent: boolean) {
+export function gettingStartedSteps(facts: GettingStartedFacts, copiedLink: boolean, clinical: boolean, canSchedule: boolean, _hasAgent: boolean, manager = false) {
+  if (manager) return [
+    { id: "identity" as const, complete: facts.identity ?? null },
+    { id: "team" as const, complete: anyCompleted(facts.team ?? null) },
+    { id: "services" as const, complete: anyCompleted(facts.services ?? null) },
+    { id: "link" as const, complete: copiedLink || anyCompleted(facts.assessments) },
+    ...(canSchedule ? [{ id: "appointment" as const, complete: anyCompleted(facts.appointments) }] : []),
+  ];
   const steps: { id: GettingStartedStepId; complete: boolean | null }[] = [
     { id: "link", complete: copiedLink || anyCompleted(facts.assessments) },
     { id: "patient", complete: anyCompleted(facts.patients, facts.assessments) },
@@ -64,7 +74,6 @@ export function gettingStartedSteps(facts: GettingStartedFacts, copiedLink: bool
     steps.push(
       { id: "record", complete: anyCompleted(facts.assessments, facts.notes) },
       { id: "hep", complete: anyCompleted(facts.heps) },
-      { id: "followup", complete: anyCompleted(facts.loads, ...(hasAgent ? [facts.conversations] : [])) },
     );
   } else if (canSchedule) {
     steps.push({ id: "appointment", complete: anyCompleted(facts.appointments) });
@@ -73,8 +82,22 @@ export function gettingStartedSteps(facts: GettingStartedFacts, copiedLink: bool
 }
 
 export function gettingStartedDestination(clinicId: string | null | undefined, action: GettingStartedAction, patientKey?: string) {
-  const params = new URLSearchParams({ tab: action === "appointment" ? "agenda" : clinicId ? "patients" : "professional" });
+  const tab = action === "appointment" ? "agenda" : action === "services" ? "insights" : action === "identity" || action === "team" ? "clinic" : clinicId ? "patients" : "professional";
+  const params = new URLSearchParams({ tab, context: clinicId ? "clinic" : "professional" });
+  if (clinicId) params.set("clinicId", clinicId);
   if (patientKey) params.set("patient", patientKey);
-  if (action !== "appointment") params.set("gettingStarted", action);
+  params.set("gettingStarted", action);
   return `/dashboard?${params.toString()}`;
+}
+
+export function clinicIdentityReady(clinic: { name?: string | null; logo_url?: string | null; phone?: string | null; operating_hours_start?: string | null; operating_hours_end?: string | null } | null) {
+  return !!(clinic?.name?.trim() && clinic.logo_url && clinic.phone?.trim() && clinic.operating_hours_start && clinic.operating_hours_end);
+}
+
+export function agendaGuidanceState(appointments: { service_type?: string | null; status: string }[], loading: boolean, hasError: boolean, canSchedule: boolean, clinical: boolean, dismissed: boolean, demo = false) {
+  const care = appointments.filter((appointment) => appointment.service_type !== "compromisso" && appointment.status !== "cancelled");
+  return {
+    empty: !demo && !loading && !hasError && care.length === 0 && canSchedule,
+    tip: !demo && !loading && !hasError && clinical && !dismissed,
+  };
 }

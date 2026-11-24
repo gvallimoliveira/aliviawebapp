@@ -1,17 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchGettingStartedFacts, fetchGettingStartedPatients } from "@/lib/gettingStartedData";
 
-const mock = vi.hoisted(() => ({ from: vi.fn(), errorTable: "", requests: [] as { table: string; calls: [string, ...unknown[]][] }[] }));
+const mock = vi.hoisted(() => ({ from: vi.fn(), errorTable: "", counts: {} as Record<string, number>, requests: [] as { table: string; calls: [string, ...unknown[]][] }[] }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mock.from } }));
 beforeEach(() => {
   mock.errorTable = "";
   mock.requests = [];
+  mock.counts = {};
   mock.from.mockReset().mockImplementation((table: string) => {
     const request = { table, calls: [] as [string, ...unknown[]][] };
     mock.requests.push(request);
     const chain: Record<string, any> = {};
-    for (const method of ["select", "eq", "is", "in", "or", "not", "neq", "order", "limit"]) chain[method] = (...args: unknown[]) => { request.calls.push([method, ...args]); return chain; };
-    chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: [], count: table === "patients" ? 1 : 0, error: table === mock.errorTable ? new Error("read failed") : null }).then(resolve);
+    for (const method of ["select", "eq", "is", "in", "or", "not", "neq", "order", "limit", "gt", "maybeSingle"]) chain[method] = (...args: unknown[]) => { request.calls.push([method, ...args]); return chain; };
+    chain.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ data: table === "clinics" ? { name: "Clinic", logo_url: "logo", phone: "123", operating_hours_start: "08:00", operating_hours_end: "18:00" } : [], count: mock.counts[table] ?? (table === "patients" ? 1 : 0), error: table === mock.errorTable ? new Error("read failed") : null }).then(resolve);
     return chain;
   });
 });
@@ -24,8 +25,7 @@ describe("first steps data reads", () => {
       expect(calls(table)).toContainEqual(["eq", "professional_id", "p"]);
       expect(calls(table)).toContainEqual(["is", "clinic_id", null]);
     }
-    expect(calls("srpe_entries")).toContainEqual(["is", "patients.clinic_id", null]);
-    expect(calls("srpe_entries")).toContainEqual(["eq", "patients.professional_id", "p"]);
+    expect(mock.requests.map((request) => request.table)).not.toContain("srpe_entries");
   });
   it("clinic reads are isolated by selected clinic even without a PRO profile", async () => {
     const result = await fetchGettingStartedFacts({ userId: "u", clinicId: "clinic-a" }, true, true);
@@ -34,14 +34,14 @@ describe("first steps data reads", () => {
       expect(calls(table)).toContainEqual(["eq", "clinic_id", "clinic-a"]);
       expect(calls(table).some((c) => c[1] === "professional_id")).toBe(false);
     }
-    expect(calls("srpe_entries")).toContainEqual(["eq", "patients.clinic_id", "clinic-a"]);
+    expect(mock.requests.map((request) => request.table)).not.toContain("srpe_entries");
   });
-  it("Agent progress is owned by the viewer, scoped and based on replies, not empty threads", async () => {
-    await fetchGettingStartedFacts({ userId: "u", clinicId: "clinic-a" }, true, true);
-    expect(calls("agent_messages")).toContainEqual(["eq", "agent_threads.user_id", "u"]);
-    expect(calls("agent_messages")).toContainEqual(["eq", "agent_threads.clinic_id", "clinic-a"]);
-    expect(calls("agent_messages")).toContainEqual(["eq", "role", "assistant"]);
-    expect(calls("agent_messages")).toContainEqual(["neq", "parts", "[]"]);
+  it("does not query load or Agent tables for initial checklist progress", async () => {
+    const result = await fetchGettingStartedFacts({ userId: "u", clinicId: "clinic-a" }, true, true);
+    expect(mock.requests.map((request) => request.table)).not.toContain("agent_messages");
+    expect(mock.requests.map((request) => request.table)).not.toContain("srpe_entries");
+    expect(result.loads).toBe(0);
+    expect(result.conversations).toBe(0);
   });
   it("assessment progress excludes drafts and synthetic placeholders", async () => {
     await fetchGettingStartedFacts({ userId: "u", professionalId: "p" }, true, true);
@@ -85,5 +85,29 @@ describe("first steps data reads", () => {
   it("patient search preserves a complete email address", async () => {
     await fetchGettingStartedPatients({ userId: "u", professionalId: "p" }, "ana@example.test");
     expect(calls("patients")).toContainEqual(["or", "full_name.ilike.%ana@example.test%,email.ilike.%ana@example.test%"]);
+  });
+  it("reads only operational records for the selected manager clinic", async () => {
+    const result = await fetchGettingStartedFacts({ userId: "u", clinicId: "clinic-a" }, true, true, true);
+    expect(result.identity).toBe(true);
+    expect(mock.requests.map((request) => request.table)).toEqual(["clinics", "clinic_members", "clinic_invitations", "care_services", "assessments", "professional_appointments"]);
+    expect(calls("clinics")).toContainEqual(["eq", "id", "clinic-a"]);
+    for (const table of ["clinic_members", "clinic_invitations", "care_services", "assessments", "professional_appointments"]) expect(calls(table)).toContainEqual(["eq", "clinic_id", "clinic-a"]);
+    expect(calls("clinic_members")).toContainEqual(["neq", "user_id", "u"]);
+    expect(calls("clinic_members")).toContainEqual(["eq", "status", "active"]);
+    expect(calls("clinic_invitations").find((call) => call[0] === "gt")?.[1]).toBe("expires_at");
+    expect(calls("care_services")).toContainEqual(["eq", "active", true]);
+    expect(calls("professional_appointments")).toContainEqual(["neq", "status", "cancelled"]);
+  });
+  it("a valid pending invitation completes inviting without requiring an active teammate", async () => {
+    mock.counts.clinic_invitations = 1;
+    const result = await fetchGettingStartedFacts({ userId: "u", clinicId: "clinic-a" }, false, false, true);
+    expect(result.team).toBe(1);
+    expect(result.notes).toBe(0);
+  });
+  it("keeps operational lookup failures unknown", async () => {
+    mock.errorTable = "clinic_members";
+    expect((await fetchGettingStartedFacts({ userId: "u", clinicId: "clinic-a" }, false, false, true)).team).toBeNull();
+    mock.errorTable = "clinics";
+    expect((await fetchGettingStartedFacts({ userId: "u", clinicId: "clinic-a" }, false, false, true)).identity).toBeNull();
   });
 });

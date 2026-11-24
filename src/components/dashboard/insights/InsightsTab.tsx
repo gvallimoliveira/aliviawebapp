@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Sparkles, LayoutGrid, Users, Stethoscope, Wallet, Award, Settings2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import ChurnRiskCard from "./ChurnRiskCard";
@@ -84,6 +85,14 @@ const InsightsTab = ({ clinicId, professionalId, fullClinicMode = false, canMana
   const storeKey = `insights-cat:${scopeKey}`;
   const [cat, setCatState] = useState<Cat>(() => (sessionStorage.getItem(storeKey) as Cat) || "summary");
   const setCat = (c: Cat) => { setCatState(c); sessionStorage.setItem(storeKey, c); };
+  const [searchParams] = useSearchParams();
+  const firstStepsTarget = searchParams.get("gettingStarted");
+  useEffect(() => {
+    if (firstStepsTarget === "services" && isManager) {
+      setCatState("operations");
+      sessionStorage.setItem(storeKey, "operations");
+    }
+  }, [firstStepsTarget, isManager, storeKey]);
 
   const ctx: Ctx = { clinicId, professionalId, scopeKey, isManager, isClinic, teamDismiss: canManage && isClinic, d };
   const entries = REGISTRY.filter((e) => e.when !== false && (!e.manager || isManager) && (!e.clinicOnly || (isClinic && fullClinicMode)));

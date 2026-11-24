@@ -15,10 +15,10 @@ const empty: GettingStartedFacts = { patients: 0, assessments: 0, notes: 0, heps
 const scope = { userId: "signed-in-user", professionalId: "solo-pro" };
 const clients: QueryClient[] = [];
 
-function show(clinicId: string | null, clinical = true) {
+function show(clinicId: string | null, clinical = true, manager = false, onNavigate?: (destination: string) => void) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   clients.push(client);
-  return render(<QueryClientProvider client={client}><GettingStarted {...scope} clinicId={clinicId} clinical={clinical} canSchedule hasAgent /></QueryClientProvider>);
+  return render(<QueryClientProvider client={client}><GettingStarted {...scope} clinicId={clinicId} clinical={clinical} canSchedule hasAgent manager={manager} onNavigate={onNavigate} /></QueryClientProvider>);
 }
 
 beforeEach(() => {
@@ -63,5 +63,23 @@ describe("first steps visit/manual choice", () => {
     await waitFor(() => expect(fetchFacts).toHaveBeenCalled());
     expect(screen.queryByRole("button", { name: "Registrar atendimento" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Avaliação manual" })).toBeNull();
+  });
+  for (const [label, action, tab] of [["Configurar clínica", "identity", "clinic"], ["Abrir equipe", "team", "clinic"], ["Serviços e valores", "services", "insights"], ["Abrir agenda", "appointment", "agenda"]]) {
+    it(`opens the manager ${action} destination without falsely recording progress`, async () => {
+      show("selected-clinic", true, true);
+      fireEvent.click(await screen.findByRole("button", { name: label }));
+      const destination = new URL(navigate.mock.calls[0][0], "https://example.test");
+      expect(destination.searchParams.get("tab")).toBe(tab);
+      expect(destination.searchParams.get("clinicId")).toBe("selected-clinic");
+      expect(destination.searchParams.get("gettingStarted")).toBe(action);
+      expect(readGettingStartedPreferences(gettingStartedKey({ ...scope, clinicId: "selected-clinic" })).copiedLink).toBe(false);
+    });
+  }
+  it("delegates dashboard tab synchronization before navigation", async () => {
+    const onNavigate = vi.fn();
+    show("selected-clinic", true, true, onNavigate);
+    fireEvent.click(await screen.findByRole("button", { name: "Serviços e valores" }));
+    expect(onNavigate).toHaveBeenCalledWith(expect.stringContaining("gettingStarted=services"));
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

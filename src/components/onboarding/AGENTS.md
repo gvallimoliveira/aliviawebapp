@@ -1,3 +1,4 @@
 # First steps
 - First steps read scoped persisted milestones, never create clinical data or count clicks as saves; local preferences are user/scope keyed, and shortcuts reuse existing record forms to preserve permissions and avoid duplicate workflows.
 - The record milestone offers session notes and manual assessment as separate patient-picker shortcuts; either persisted record completes the same milestone, while the manual shortcut reuses the record's pre-assessment continuation choice.
+- Clinic owner/admin uses operational milestones from the selected clinic; clinicians use four clinical milestones and reception its existing restricted steps. Load/Agent are not activation requirements, so optional tools never prevent completion. Agenda hints use the actual unfiltered date range, not a claim of no lifetime bookings; shortcuts reuse the grid editor and preserve grid governance.

@@ -628,10 +628,14 @@ const ClinicSupport = () => {
           </Button>
         </div>
 
-        {/* First Steps help includes both scoped step-3 paths; clinical role visibility remains unchanged. */}
+        {/* Role-specific activation guides keep clinical and operational milestones separate. */}
         <section className="max-w-4xl mx-auto mb-10 space-y-2">
           <h2 className="text-lg font-semibold text-foreground">{t("support.pro.tool.first_steps.title")}</h2>
           <p className="text-sm text-muted-foreground">{t("clinic.support.tool.first_steps.desc")}</p>
+        </section>
+        <section className="max-w-4xl mx-auto mb-10 space-y-2">
+          <h2 className="text-lg font-semibold text-foreground">{t("support.pro.tool.agenda_start.title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("clinic.support.tool.agenda_start.desc")}</p>
         </section>
         <section className="max-w-4xl mx-auto mb-10 space-y-2">
           <h2 className="text-lg font-semibold text-foreground">{t("support.pro.tool.theme.title")}</h2>

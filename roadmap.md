@@ -1,5 +1,11 @@
 # Roadmap
 
+## Primeiros Passos por função + orientação na Agenda
+- [x] Quatro marcos clínicos sem carga/Agente no checklist inicial, preservando ferramentas e histórico no prontuário.
+- [x] Dono/admin: dados e marca salvos, outro integrante ativo ou convite válido, serviço ativo, link institucional e agendamento não cancelado. Secretaria mantém recepção; terapeuta mantém os quatro marcos clínicos, sem exigir PRO pessoal. Atalhos reutilizam Clínica → Equipe & Config e Insights → Operação, sem novos formulários/permissões.
+- [x] Atalho e dica somente na Agenda: período realmente vazio de atendimentos não cancelados, sem confundir filtro/compromisso/erro/carregamento com primeiro uso; novo formulário recebe início do período exibido. Dica descreve os rótulos reais de evolução sem criar avaliação, descartável por usuário/escopo no navegador.
+- [x] Ajuda pt/en/es atualizada, tutorial antigo desativado; 91 testes aprovados, build OK. Conta PRO e clínica própria → reabrir guia → quatro/cinco marcos → configuração/equipe/serviços em Operação → novo agendamento → período vazio → formulário com data correta → dispensar dica → recarregar verificados em 1280×1800 e 440×667, sem erros, requisições falhas ou overflow. Nenhum dado clínico, convite, marca, serviço ou agendamento gravado. Terapeuta/secretaria cobertos nas regras/testes, não em sessões próprias; criação/salvamento final, aparelho físico e publicação não executados nesta alteração de atalhos.
+
 ## Primeiros Passos — item 3 com duas opções
 - [x] Registrar atendimento e Avaliação manual no PRO e clínica, com seleção de paciente e caminhos existentes separados; qualquer registro salvo conclui o mesmo marco, rascunhos não. Avaliação manual mantém a escolha de continuar pré-avaliação existente.
 - [x] Ajuda pt/en/es atualizada e tutorial mantido desativado. Quarenta e um testes aprovados; build OK. Conta PRO e clínica próprias → guia → seleção real de paciente → avaliação manual e nota de atendimento verificados em 1280×1800 e 440×667, sem erros ou gravações clínicas. Secretaria coberta por teste, não por sessão própria. Salvamento clínico não repetido nesta alteração de atalhos; aparelho físico e publicação não executados.

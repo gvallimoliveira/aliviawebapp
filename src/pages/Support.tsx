@@ -43,7 +43,8 @@ const patientTools = [
 ];
 
 const proTools = [
-  { key: "first_steps", icon: ClipboardList }, // Localized help distinguishes session-note and manual-assessment shortcuts in step 3.
+  { key: "first_steps", icon: ClipboardList }, // Localized help covers four clinical milestones and contextual Agenda guidance.
+  { key: "agenda_start", icon: NotebookPen },
   { key: "theme", icon: Palette },
   { key: "load_monitoring_opt_in", icon: Gauge },
   { key: "patient_daily_care", icon: Heart },

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,7 +62,7 @@ const roleIcon = (role: ClinicRole) => {
   return <ClipboardList className="h-3.5 w-3.5" />;
 };
 
-const ClinicTeamManagement = () => {
+const ClinicTeamManagement = ({ focusTarget }: { focusTarget?: "identity" | "team" }) => {
   const { activeClinic, refetch, canManageClinic } = useClinic();
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -75,6 +76,13 @@ const ClinicTeamManagement = () => {
 
   const canManage = canManageClinic;
   const lang = language as "pt" | "en" | "es";
+  const [searchParams] = useSearchParams();
+  const firstStepsTarget = focusTarget ?? searchParams.get("gettingStarted");
+  useEffect(() => {
+    if (!canManage || !activeClinic || !["identity", "team"].includes(firstStepsTarget ?? "")) return;
+    const frame = requestAnimationFrame(() => document.getElementById(`clinic-start-${firstStepsTarget}`)?.scrollIntoView({ block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, [firstStepsTarget, activeClinic?.clinic_id, canManage]);
 
   const fetchTeam = async () => {
     if (!activeClinic) return;
@@ -178,10 +186,10 @@ const ClinicTeamManagement = () => {
   return (
     <div className="space-y-6">
       {/* Clinic settings */}
-      <ClinicSettingsCard />
+      <div id="clinic-start-identity" className="scroll-mt-24"><ClinicSettingsCard /></div>
 
       {/* Team members */}
-      <Card>
+      <Card id="clinic-start-team" className="scroll-mt-24">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5" />

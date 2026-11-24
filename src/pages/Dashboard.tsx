@@ -188,7 +188,28 @@ const Dashboard = () => {
   const [allConversationIds, setAllConversationIds] = useState<string[]>([]);
   const [hasAutoSwitchedPro, setHasAutoSwitchedPro] = useState(false);
   const [clinicSubTab, setClinicSubTab] = useState<string>("team");
+  const [clinicStartFocus, setClinicStartFocus] = useState<{ clinicId: string; target: "identity" | "team" } | null>(null);
+  const firstStepsTarget = searchParams.get("gettingStarted");
+  useEffect(() => {
+    if (isClinicMode && isClinicOwner && (firstStepsTarget === "identity" || firstStepsTarget === "team")) setClinicSubTab("team");
+  }, [isClinicMode, isClinicOwner, firstStepsTarget]);
   const [patientContactTab, setPatientContactTab] = useState(() => tabFromUrl === "notices" && !convFromUrl ? "notices" : "conversations");
+  const navigateFirstSteps = (destination: string) => {
+    const params = new URL(destination, window.location.origin).searchParams;
+    const nextTab = params.get("tab");
+    const target = params.get("gettingStarted");
+    if (isClinicOwner && activeClinic) {
+      if (target === "identity" || target === "team") {
+        setClinicSubTab("team");
+        setClinicStartFocus({ clinicId: activeClinic.clinic_id, target });
+      } else setClinicStartFocus(null);
+      if (target === "services") {
+        try { sessionStorage.setItem(`insights-cat:${activeClinic.clinic_id}`, "operations"); } catch { /* URL intent remains the fallback. */ }
+      }
+    }
+    if (nextTab) setActiveTab(nextTab);
+    navigate(destination);
+  };
 
   // Tutorial estritamente ligado ao contexto ativo. Cada modo tem sua
   // própria chave de "concluído" — assim aparece UMA ÚNICA vez no
@@ -997,7 +1018,7 @@ const Dashboard = () => {
               <GettingStarted key={`first-steps:${user.id}:clinic:${activeClinic.clinic_id}`}
                 userId={user.id} professionalId={professional?.id} clinicId={activeClinic.clinic_id}
                 clinical={!isClinicSecretary && (isClinicOwner || !!professional?.id)}
-                canSchedule={canManageClinic || isClinicSecretary} hasAgent={hasAgentAccess} />
+                canSchedule={canManageClinic || isClinicSecretary} hasAgent={hasAgentAccess} manager={isClinicOwner} onNavigate={navigateFirstSteps} />
             )}
 
             {/* Agenda */}
@@ -1091,7 +1112,7 @@ const Dashboard = () => {
                   </TabsList>
 
                   <TabsContent value="team" className="space-y-6">
-                    <ClinicTeamManagement />
+                    <ClinicTeamManagement focusTarget={clinicStartFocus?.clinicId === activeClinic.clinic_id ? clinicStartFocus.target : undefined} />
                   </TabsContent>
 
                   <TabsContent value="link" className="space-y-4">
@@ -1275,7 +1296,7 @@ const Dashboard = () => {
                 {!isProDemo && !isSimulated && hasProAccess && user && professional?.id && !needsContextSelection && (
                   <GettingStarted key={`first-steps:${user.id}:solo:${professional.id}`}
                     userId={user.id} professionalId={professional.id} clinical canSchedule hasAgent={hasAgentAccess}
-                    registrationPending={professional.registration_pending === true} />
+                    registrationPending={professional.registration_pending === true} onNavigate={navigateFirstSteps} />
                 )}
                 <TabsContent value="professional" className="space-y-6">
                   {!isProDemo && !hasProAccess && <TryProDemoCard section="Pacientes" />}
