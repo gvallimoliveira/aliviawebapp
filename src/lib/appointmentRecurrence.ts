@@ -65,12 +65,52 @@ export function expandRecurrence(start: string, rule: RecurrenceRule): string[] 
   return out;
 }
 
-/** Splits occurrences into free dates and dates whose slot is already taken. */
-export function splitConflicts(
-  dates: string[], time: string,
-  taken: { appointment_date: string; appointment_time: string | null }[],
-) {
-  const hhmm = time.slice(0, 5);
-  const busy = new Set(taken.filter((a) => (a.appointment_time || "").slice(0, 5) === hhmm).map((a) => a.appointment_date));
-  return { free: dates.filter((d) => !busy.has(d)), conflicts: dates.filter((d) => busy.has(d)) };
+export interface RecurrenceSlot {
+  time: string;
+  professional_id?: string | null;
+  patient_name?: string | null;
+  patient_email?: string | null;
+}
+export interface SlotOccupant {
+  appointment_date: string;
+  appointment_time: string | null;
+  professional_id?: string | null;
+  patient_name?: string | null;
+  patient_email?: string | null;
+}
+
+const norm = (v: string | null | undefined) => (v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+/** Same person: e-mails decide when both exist; otherwise the exact (normalized) name. */
+const samePatient = (a: RecurrenceSlot, b: SlotOccupant) => {
+  const ea = norm(a.patient_email), eb = norm(b.patient_email);
+  if (ea && eb) return ea === eb;
+  const na = norm(a.patient_name);
+  return !!na && na === norm(b.patient_name);
+};
+
+/**
+ * Plans a series over slots that may already hold other appointments.
+ * Simultaneous appointments are allowed (groups, parallel care), so a busy
+ * slot never drops a date. Only a true duplicate is skipped: the same patient,
+ * with the same professional, already booked at that date and time.
+ * `shared` lists created dates that sit beside another appointment of the
+ * same professional (informational only).
+ */
+export function planRecurrenceDates(dates: string[], slot: RecurrenceSlot, taken: SlotOccupant[]) {
+  const hhmm = slot.time.slice(0, 5);
+  const pro = slot.professional_id ?? null;
+  const duplicate = new Set<string>();
+  const busy = new Set<string>();
+  for (const a of taken) {
+    if ((a.appointment_time || "").slice(0, 5) !== hhmm) continue;
+    if ((a.professional_id ?? null) !== pro) continue;
+    if (samePatient(slot, a)) duplicate.add(a.appointment_date);
+    else busy.add(a.appointment_date);
+  }
+  const free = dates.filter((d) => !duplicate.has(d));
+  return {
+    free,
+    duplicates: dates.filter((d) => duplicate.has(d)),
+    shared: free.filter((d) => busy.has(d)),
+  };
 }

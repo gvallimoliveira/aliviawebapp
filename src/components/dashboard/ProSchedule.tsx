@@ -1,6 +1,6 @@
 import { toMinutes, endTimeFrom, assignLanes, cardPixelHeight, slotRowHeight, crowdedSlotPosition, serviceFilterKey, CUSTOM_SERVICE_TYPE } from "@/lib/appointmentTime";
 import { createLatestRequestGate } from "@/lib/latestRequest";
-import { expandRecurrence, splitConflicts } from "@/lib/appointmentRecurrence";
+import { expandRecurrence, planRecurrenceDates, type SlotOccupant } from "@/lib/appointmentRecurrence";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -240,6 +240,38 @@ function getAptsForSlot(apts: Appointment[], slotHour: string): Appointment[] {
     const ah = parseInt(a.appointment_time?.slice(0, 2) || "0", 10);
     return ah === h;
   });
+}
+
+type RecurrencePayload = { appointment_time: string; professional_id: string | null; patient_name: string; patient_email: string | null };
+/** Appointments already sitting on the series' dates at the same hour:minute, in the same care scope. */
+async function fetchSeriesOccupants(dates: string[], payload: RecurrencePayload, clinicId: string | null | undefined): Promise<SlotOccupant[]> {
+  if (!dates.length) return [];
+  const hhmm = payload.appointment_time.slice(0, 5);
+  let q = (supabase.from("professional_appointments" as any) as any)
+    .select("appointment_date, appointment_time, professional_id, patient_name, patient_email")
+    .in("appointment_date", dates).neq("status", "cancelled")
+    .gte("appointment_time", `${hhmm}:00`).lte("appointment_time", `${hhmm}:59`);
+  if (clinicId) q = q.eq("clinic_id", clinicId);
+  else q = q.eq("professional_id", payload.professional_id).is("clinic_id", null);
+  const { data, error } = await q;
+  // Without the occupancy read we cannot rule out duplicates: abort instead of guessing.
+  if (error) throw error;
+  return (data as SlotOccupant[]) || [];
+}
+const shortDates = (ds: string[]) => ds.map((d) => d.split("-").reverse().slice(0, 2).join("/")).join(", ");
+function seriesNotes(language: string, duplicates: string[], shared: string[]): string | undefined {
+  const parts: string[] = [];
+  if (duplicates.length) {
+    parts.push(language === "pt" ? `${duplicates.length} data(s) puladas porque este paciente já estava agendado nesse horário: ${shortDates(duplicates)}.`
+      : language === "es" ? `${duplicates.length} fecha(s) omitidas porque este paciente ya tenía cita en ese horario: ${shortDates(duplicates)}.`
+      : `${duplicates.length} date(s) skipped because this patient was already booked at that time: ${shortDates(duplicates)}.`);
+  }
+  if (shared.length) {
+    parts.push(language === "pt" ? `${shared.length} data(s) dividem o horário com outro atendimento.`
+      : language === "es" ? `${shared.length} fecha(s) comparten el horario con otra cita.`
+      : `${shared.length} date(s) share the time with another appointment.`);
+  }
+  return parts.length ? parts.join(" ") : undefined;
 }
 
 const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, isSimulated = false }: ProScheduleProps) => {
@@ -657,6 +689,7 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         return true;
       }
 
+      let seriesToast: { title: string; description?: string; variant?: "destructive"; duration?: number } | null = null;
       const isCommitmentPayload = payload.service_type === "compromisso";
       const trimmedEmail = (payload.patient_email || "").trim();
       const patientRow: any = {
@@ -676,7 +709,9 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         const rule = extras.recurrence;
         if (rule) {
           const tbl = () => (supabase.from("professional_appointments" as any) as any);
-          const current = appointments.find((a: any) => a.id === editId) as any;
+          // Read the series from the saved row: the on-screen list can be older than this dialog.
+          const { data: savedRow, error: savedErr } = await tbl().select("series_id").eq("id", editId).maybeSingle();
+          const current = savedErr ? (appointments.find((a: any) => a.id === editId) as any) : savedRow;
           const existingSeries: string | null = current?.series_id ?? null;
           // Replace only future, still-scheduled occurrences of this series; realized sessions stay.
           if (existingSeries) {
@@ -690,28 +725,21 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
             const seriesId = existingSeries || crypto.randomUUID();
             await tbl().update({ series_id: seriesId, recurrence_rule: rule }).eq("id", editId);
             const all = expandRecurrence(payload.appointment_date, rule).filter((d) => d !== payload.appointment_date);
-            let created = 0; let conflicts: string[] = [];
-            if (all.length) {
-              let q = tbl().select("appointment_date, appointment_time").in("appointment_date", all).neq("status", "cancelled");
-              if (clinicId) q = q.eq("clinic_id", clinicId); else q = q.eq("professional_id", effectiveProfId).is("clinic_id", null);
-              if (clinicId && effectiveProfId) q = q.eq("professional_id", effectiveProfId);
-              const { data: taken } = await q;
-              const split = splitConflicts(all, payload.appointment_time, taken || []);
-              conflicts = split.conflicts;
-              const rows = split.free.map((d) => ({ ...payload, appointment_date: d, service_type: payload.service_type || "fisioterapia", series_id: seriesId, recurrence_rule: rule, status: "scheduled" }));
-              if (rows.length) {
-                const { error } = await tbl().insert(rows);
-                if (error) throw error;
-              }
-              created = rows.length;
+            let created = 0;
+            const taken = await fetchSeriesOccupants(all, payload, clinicId);
+            const plan = planRecurrenceDates(all, { time: payload.appointment_time, professional_id: payload.professional_id, patient_name: payload.patient_name, patient_email: payload.patient_email }, taken);
+            const rows = plan.free.map((d) => ({ ...payload, appointment_date: d, service_type: payload.service_type || "fisioterapia", series_id: seriesId, recurrence_rule: rule, status: "scheduled" }));
+            if (rows.length) {
+              const { error } = await tbl().insert(rows);
+              if (error) throw error;
             }
-            toast({
+            created = rows.length;
+            const note = seriesNotes(language, plan.duplicates, plan.shared);
+            seriesToast = {
               title: language === "pt" ? `Repetição ajustada: ${created} próximo(s) agendamento(s)` : `Recurrence updated: ${created} upcoming`,
-              description: conflicts.length
-                ? (language === "pt" ? `${conflicts.length} data(s) já ocupada(s) foram puladas: ${conflicts.map((d) => d.split("-").reverse().slice(0, 2).join("/")).join(", ")}` : `${conflicts.length} busy date(s) skipped`)
-                : undefined,
-              duration: conflicts.length ? 9000 : 4000,
-            });
+              description: note,
+              duration: note ? 9000 : 4000,
+            };
           }
         }
         if (!isCommitmentPayload && (trimmedEmail || payload.patient_name)) {
@@ -732,26 +760,23 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         const rule = extras.recurrence;
         if (rule && rule.freq !== "none") {
           const all = expandRecurrence(payload.appointment_date, rule);
-          let q = (supabase.from("professional_appointments" as any) as any)
-            .select("appointment_date, appointment_time")
-            .in("appointment_date", all).neq("status", "cancelled");
-          if (clinicId) q = q.eq("clinic_id", clinicId); else q = q.eq("professional_id", effectiveProfId).is("clinic_id", null);
-          if (clinicId && effectiveProfId) q = q.eq("professional_id", effectiveProfId);
-          const { data: taken } = await q;
-          const { free, conflicts } = splitConflicts(all, payload.appointment_time, taken || []);
+          const taken = await fetchSeriesOccupants(all, payload, clinicId);
+          const { free, duplicates, shared } = planRecurrenceDates(all, { time: payload.appointment_time, professional_id: payload.professional_id, patient_name: payload.patient_name, patient_email: payload.patient_email }, taken);
           const seriesId = crypto.randomUUID();
           const rows = free.map((d) => ({ ...payload, appointment_date: d, service_type: payload.service_type || "fisioterapia", series_id: seriesId, recurrence_rule: rule }));
           if (rows.length) {
             const { error } = await (supabase.from("professional_appointments" as any) as any).insert(rows);
             if (error) throw error;
           }
-          toast({
-            title: language === "pt" ? `${rows.length} atendimento(s) criados na série` : `${rows.length} appointment(s) created`,
-            description: conflicts.length
-              ? (language === "pt" ? `${conflicts.length} data(s) já ocupada(s) nesse horário foram puladas: ${conflicts.map((d) => d.split("-").reverse().slice(0, 2).join("/")).join(", ")}` : `${conflicts.length} busy date(s) skipped`)
-              : undefined,
-            duration: conflicts.length ? 9000 : 4000,
-          });
+          const note = seriesNotes(language, duplicates, shared);
+          seriesToast = {
+            title: rows.length
+              ? (language === "pt" ? `${rows.length} atendimento(s) criados na série` : language === "es" ? `${rows.length} cita(s) creadas en la serie` : `${rows.length} appointment(s) created`)
+              : (language === "pt" ? "Nenhum atendimento novo foi criado" : language === "es" ? "No se creó ninguna cita nueva" : "No new appointment was created"),
+            description: note,
+            variant: rows.length ? undefined : "destructive",
+            duration: note ? 9000 : 4000,
+          };
         } else {
           const { error } = await (supabase.from("professional_appointments" as any) as any).insert(payload);
           if (error) throw error;
@@ -772,7 +797,8 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
         }
       }
 
-      toast({ title: isEdit ? t("schedule.updated") : t("schedule.created") });
+      // The series summary is the last word: the generic confirmation used to replace it on screen.
+      toast(seriesToast ?? { title: isEdit ? t("schedule.updated") : t("schedule.created") });
       closeAppointmentModal();
       setKnownPatients((prev) => {
         if (trimmedEmail && !prev.find((p) => p.email === trimmedEmail)) {
@@ -1275,8 +1301,10 @@ const ProSchedule = ({ professionalId, clinicId, patientEmails, onViewPatient, i
                         "relative border-l border-border/20 min-w-0 transition-colors cursor-pointer hover:bg-muted/30",
                         isOver && "bg-primary/10 ring-1 ring-primary/40"
                       )}
-                      onClick={() => {
-                        if (canEditGrid && cellApts.length === 0) openNew(day, slot);
+                      onClick={(e) => {
+                        // Free area of the hour (cards stop their own clicks): add another appointment,
+                        // including beside existing ones, since simultaneous care is allowed.
+                        if (canEditGrid && e.target === e.currentTarget) openNew(day, slot);
                       }}
                     >
                       {[...cellApts].sort((a, b) => (toMinutes(a.appointment_time) ?? 0) - (toMinutes(b.appointment_time) ?? 0)).map((apt, idx, arr) => {

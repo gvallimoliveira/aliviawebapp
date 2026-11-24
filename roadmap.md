@@ -318,3 +318,13 @@
 ## Suporte e FAQ — terminologia clínica
 - [x] Substituir diagnóstico atribuído ao sistema por hipótese clínica preliminar nos textos de paciente, PRO, clínica e acadêmico, em pt/en/es; preservar avisos sobre diagnóstico presencial e limites clínicos.
 - [x] Suporte PRO/clínica aberto no computador; suporte paciente, FAQ público e suporte acadêmico abertos no celular, com texto atualizado e zero erros de execução. Traduções pt/en/es e build OK conferidos; EN/ES não abertos no navegador. Falta publicar.
+
+## Agenda — repetição com horários simultâneos
+- [x] Causa confirmada nos dados: a série pulava toda data em que o profissional já tinha outro paciente no horário, e o aviso era substituído na tela.
+- [x] Série agora cria todas as datas; só pula duplicata real (mesmo paciente, profissional e horário). Clique na área livre de um horário ocupado abre novo agendamento.
+- [ ] Séries antigas que ficaram incompletas na clínica do cliente não foram refeitas: aguarda decisão do Guilherme (não dá para distinguir datas puladas de datas apagadas de propósito).
+
+## Vínculo paciente ↔ profissional (adiado a pedido do Guilherme)
+- [ ] Encerrar/desvincular acompanhamento: hoje `get_my_care_providers()` liga o paciente por e-mail a qualquer registro histórico, então o painel pessoal segue "acompanhado" após a alta. Proposta: estado da relação separado do prontuário (ativo / encerrado pelo profissional / desvinculado pelo paciente), RPC retornando só vínculos ativos, histórico do profissional preservado, confirmação explícita do paciente.
+- [ ] Vários fisioterapeutas ao mesmo tempo: a base já retorna mais de um provedor; falta separar exercícios por profissional/queixa, contextualizar o banner e manter o check-in diário único com dor por região.
+- [ ] Ordem combinada: primeiro desvinculação, depois experiência multi-profissional. Aguarda o Guilherme retomar; começar pela especificação da desvinculação.

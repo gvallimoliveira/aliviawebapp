@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { expandRecurrence, splitConflicts } from "@/lib/appointmentRecurrence";
+import { expandRecurrence, planRecurrenceDates } from "@/lib/appointmentRecurrence";
 
 describe("appointment recurrence", () => {
   it("weekly for 10 sessions", () => {
@@ -27,9 +27,43 @@ describe("appointment recurrence", () => {
   it("no repeat returns single date", () => {
     expect(expandRecurrence("2026-10-23", { freq: "none" })).toEqual(["2026-10-23"]);
   });
-  it("detects taken slots", () => {
-    const r = splitConflicts(["2026-10-23", "2026-10-30"], "09:00", [{ appointment_date: "2026-10-30", appointment_time: "09:00:00" }]);
-    expect(r.conflicts).toEqual(["2026-10-30"]);
-    expect(r.free).toEqual(["2026-10-23"]);
+});
+
+describe("recurring series over occupied slots", () => {
+  const dates = ["2026-12-01", "2026-12-08", "2026-12-15"];
+  const ana = { time: "09:00", professional_id: "pro-1", patient_name: "Ana Lima", patient_email: null };
+
+  it("creates every date when another patient already has the same weekly time", () => {
+    const taken = dates.map((d) => ({ appointment_date: d, appointment_time: "09:00:00", professional_id: "pro-1", patient_name: "Bruno Reis", patient_email: null }));
+    const r = planRecurrenceDates(dates, ana, taken);
+    expect(r.free).toEqual(dates);
+    expect(r.duplicates).toEqual([]);
+    expect(r.shared).toEqual(dates);
+  });
+  it("skips only the dates where the same patient is already booked at that time", () => {
+    const r = planRecurrenceDates(dates, ana, [
+      { appointment_date: "2026-12-08", appointment_time: "09:00:00", professional_id: "pro-1", patient_name: " ana  lima ", patient_email: null },
+    ]);
+    expect(r.free).toEqual(["2026-12-01", "2026-12-15"]);
+    expect(r.duplicates).toEqual(["2026-12-08"]);
+  });
+  it("different e-mails are different patients even with the same name", () => {
+    const r = planRecurrenceDates(dates, { ...ana, patient_email: "ana@a.com" }, [
+      { appointment_date: "2026-12-08", appointment_time: "09:00", professional_id: "pro-1", patient_name: "Ana Lima", patient_email: "outra@a.com" },
+    ]);
+    expect(r.free).toEqual(dates);
+  });
+  it("another professional's slot never interferes", () => {
+    const r = planRecurrenceDates(dates, ana, [
+      { appointment_date: "2026-12-08", appointment_time: "09:00", professional_id: "pro-2", patient_name: "Ana Lima", patient_email: null },
+    ]);
+    expect(r.free).toEqual(dates);
+    expect(r.shared).toEqual([]);
+  });
+  it("a different time on the same day is not a conflict", () => {
+    const r = planRecurrenceDates(dates, ana, [
+      { appointment_date: "2026-12-08", appointment_time: "10:00", professional_id: "pro-1", patient_name: "Ana Lima", patient_email: null },
+    ]);
+    expect(r.free).toEqual(dates);
   });
 });

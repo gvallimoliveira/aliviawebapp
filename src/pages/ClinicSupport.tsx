@@ -449,7 +449,7 @@ const faqKeys = [
   },
   {
     q: "Posso criar atendimentos que se repetem?",
-    a: "Sim. Ao criar um atendimento, use o campo \"Não se repete\" para escolher toda semana, dias escolhidos, a cada 2 semanas ou todo mês, e quando termina (após N sessões ou em uma data; máximo de 60 sessões ou 6 meses). Datas já ocupadas no mesmo horário são puladas e avisadas. Na importação por print, o seletor \"Repetir os selecionados\" aplica a repetição a todos os marcados. Ao excluir, escolha \"Só este\" ou \"Este e os seguintes\"; sessões realizadas são mantidas.",
+    a: "Sim. Ao criar um atendimento, use o campo \"Não se repete\" para escolher toda semana, dias escolhidos, a cada 2 semanas ou todo mês, e quando termina (após N sessões ou em uma data; máximo de 60 sessões ou 6 meses). Horários simultâneos são permitidos: a série é criada mesmo que outro paciente já esteja no mesmo horário (o aviso informa quantas datas dividem o horário). Só é pulada a data em que o mesmo paciente já estava agendado nesse horário com o mesmo profissional. Na importação por print, o seletor \"Repetir os selecionados\" aplica a repetição a todos os marcados. Ao excluir, escolha \"Só este\" ou \"Este e os seguintes\"; sessões realizadas são mantidas.",
   },
   {
     q: "A prontidão é respondida a cada atividade?",

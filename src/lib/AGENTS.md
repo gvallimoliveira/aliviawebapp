@@ -8,3 +8,4 @@
 - Demo patient registrations share an in-memory user/practice-scoped external store; never invoke real writes/events or persist them across reloads, so demo shortcuts and records cannot contaminate live care.
 - Last-assessment labels use patientAssessmentDates over real assessments only; registration dates stay available for existing sorting/filtering but never masquerade as assessments.
 - Marketplace hiding is a dedicated admin-only flag on the professional (set through the admin RPC, guarded by trigger against self-edits); never reuse approval/active/subscription fields for it, so hiding a test account cannot change access. `marketplaceVisibility.ts` mirrors the search function's eligibility for the admin badge: change both together.
+- Busy slots never drop recurring-series dates (simultaneous care is valid): `planRecurrenceDates` skips only same patient + same professional + same time, and the series summary is the final toast, so skipped dates are never silent.
