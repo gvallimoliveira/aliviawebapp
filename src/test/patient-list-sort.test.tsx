@@ -19,7 +19,7 @@ const patients = [
   { groupKey: "carla", name: "Carla Dias", email: "carla@x.com", lastDate: "2026-10-20T12:00:00Z", patientRecord: record("3", "Carla Dias", "carla@x.com"), assessments: [] },
 ];
 
-function renderList() {
+function renderList(searchQuery = "") {
   const noop = vi.fn();
   const props = {
     t: (key: string) => key,
@@ -30,7 +30,7 @@ function renderList() {
     setShowHidden: noop,
     statusFilter: "all",
     setStatusFilter: noop,
-    searchQuery: "",
+    searchQuery,
     setSearchQuery: noop,
     readOnly: false,
     canAddPatient: false,
@@ -100,5 +100,13 @@ describe("patient list default ordering", () => {
     fireEvent.click(screen.getByTitle("Ordem alfabética"));
     fireEvent.click(screen.getByTitle("Avaliação mais recente"));
     expect(order()).toEqual(["Carla Dias", "Bruno Lima", "Ana Bezerra"]);
+  });
+
+  it("finds a full patient name with spaces", () => {
+    expect(renderList("Ana Bezerra").order()).toEqual(["Ana Bezerra"]);
+  });
+
+  it("keeps CPF and phone searches ignoring formatting", () => {
+    expect(renderList("111.111.111").order()).toEqual(["Ana Bezerra"]);
   });
 });

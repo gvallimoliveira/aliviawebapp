@@ -1156,7 +1156,7 @@ const Dashboard = () => {
                             "Paciente acessa o link e preenche a avaliação",
                             "A avaliação aparece no pool da clínica como 'Sem atribuição'",
                             "Secretária ou proprietário atribui a um fisioterapeuta",
-                            "O diagnóstico IA é gerado automaticamente ao completar",
+                            t("clinic.how_it_works.hypothesis"),
                             "O plano de tratamento é gratuito (incluso na assinatura)",
                           ].map((step, i) => (
                             <div key={i} className="flex items-start gap-2">

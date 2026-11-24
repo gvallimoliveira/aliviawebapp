@@ -1,4 +1,9 @@
 {
+  "clinic.how_it_works.hypothesis": "La IA sugiere una hipótesis clínica preliminar al finalizar la evaluación, para revisión del fisioterapeuta",
+  "support.pro.tool.demo_registration.title": "Registro en la demo",
+  "support.pro.tool.demo_registration.desc": "Agregar o editar un registro en la demo cambia solo la lista simulada de esta página. Recargar elimina estos cambios. No crea pacientes reales ni evaluaciones y no consume créditos de IA; los datos de clínica y profesional independiente permanecen separados.",
+  "support.pro.tool.patient_assessment_dates.title": "Fecha de la última evaluación",
+  "support.pro.tool.patient_assessment_dates.desc": "Última evaluación aparece solo cuando existe una evaluación registrada con fecha válida. El registro del paciente no es una evaluación y los registros auxiliares vacíos no cuentan. El orden reciente y los filtros conservan sus criterios actuales.",
   "first_steps.operations_title": "Primeros Pasos de la clínica",
   "first_steps.configure": "Configurar clínica",
   "first_steps.invite": "Abrir equipo",

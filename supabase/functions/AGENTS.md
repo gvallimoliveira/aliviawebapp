@@ -4,3 +4,4 @@
 - PhysioTech SSO maps non-email patient identifiers to null via patientMetadata.ts without changing stored records; optional contact must not invalidate patient-linked login.
 - Clinical impression adds PhysioTech reports only via generate-clinical-impression/physiotechContext.ts; absent/failed reads add no block, keeping prompt and cache unchanged.
 - Check-in `my_link` uses authenticated identity and `periodization-checkin/myLink.ts`: no linked patient returns 200 with token null and no writes, while lookup failures remain errors, so self-service accounts do not trigger false runtime failures.
+- Agent and impression prompts append clinical-hypothesis-policy.ts after reference blocks; AI interpretations stay preliminary without rewriting measured facts, clinician diagnoses or historical records.

@@ -615,7 +615,7 @@ const ClinicDemo = () => {
                         "Paciente acessa o link e preenche a avaliação",
                         "A avaliação aparece no pool da clínica como 'Sem atribuição'",
                         "Secretária ou proprietário atribui a um fisioterapeuta",
-                        "O diagnóstico IA é gerado automaticamente ao completar",
+                        "A IA sugere uma hipótese clínica preliminar ao concluir a avaliação, para revisão do fisioterapeuta",
                         "O plano de tratamento é gratuito (incluso na assinatura)",
                       ].map((step, i) => (
                         <div key={i} className="flex items-start gap-2">

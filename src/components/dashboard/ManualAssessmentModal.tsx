@@ -2682,8 +2682,9 @@ const ManualAssessmentModalInner = ({ open, onOpenChange, professionalId, clinic
                 />
                 <p className="text-[11px] text-muted-foreground">
                   {isPt
-                    ? "Estas observações são utilizadas pela IA ao gerar a impressão clínica, o diagnóstico e a sugestão de testes funcionais."
-                    : "These observations are used by the AI when generating the clinical impression, diagnosis and functional test suggestions."}
+                    ? "Estas observações ajudam a IA a elaborar a impressão clínica, a hipótese clínica preliminar e sugestões de testes funcionais para revisão do profissional."
+                    : language === "es" ? "Estas observaciones ayudan a la IA a elaborar la impresión clínica, la hipótesis clínica preliminar y sugerencias de pruebas funcionales para revisión del profesional."
+                    : "These observations help AI develop the clinical impression, preliminary clinical hypothesis and functional test suggestions for professional review."}
                 </p>
               </div>
             )}

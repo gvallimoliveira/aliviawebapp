@@ -646,6 +646,8 @@ const ClinicSupport = () => {
           <p className="text-sm text-muted-foreground">{t("support.pro.tool.clinic_demo.desc")}</p>
           <p className="text-sm text-muted-foreground">{t("support.pro.tool.clinic_demo.clinical_alignment")}</p>
           <p className="text-sm text-muted-foreground">{t("support.pro.tool.clinic_demo.updated_scenarios")}</p>
+          <p className="text-sm text-muted-foreground">{t("support.pro.tool.demo_registration.desc")}</p>
+          <p className="text-sm text-muted-foreground">{t("support.pro.tool.patient_assessment_dates.desc")}</p>
         </section>
         <div className="max-w-4xl mx-auto mb-16">
           <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">

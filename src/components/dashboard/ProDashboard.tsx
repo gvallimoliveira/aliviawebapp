@@ -179,7 +179,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
     checkSubscription();
     loadPatientAssessments();
     loadReferrals();
-  }, [isClinicMode, activeClinic?.clinic_id, professional.id]);
+  }, [isClinicMode, activeClinic?.clinic_id, professional.id, isSimulated, isDemoMode]);
 
   // Debounce realtime refetches to avoid storms when multiple therapists
   // update assessments at the same time (clinic with 5+ active fisios).
@@ -197,7 +197,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
   // Realtime: auto-refresh patient assessments on changes
   useEffect(() => {
-    if (isSimulated || !professional?.id) return;
+    if (isSimulated || isDemoMode || !professional?.id) return;
     const channel = supabase
       .channel(`pro-assessments-${professional.id}`)
       .on(
@@ -213,7 +213,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         realtimeRefetchTimer.current = null;
       }
     };
-  }, [professional?.id, isSimulated]);
+  }, [professional?.id, isSimulated, isDemoMode]);
 
   // Realtime for clinic assessments
   useEffect(() => {
@@ -230,6 +230,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   }, [activeClinic?.clinic_id, isClinicMode, isSimulated]);
 
   const checkSubscription = async () => {
+    if (isDemoMode) { setSubLoading(false); return; }
     try {
       const { data, error } = await supabase.functions.invoke("check-pro-subscription");
       if (error) throw error;
@@ -254,6 +255,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
 
   const loadPatientAssessments = async (opts?: { keepCurrent?: boolean }) => {
     const request = ++assessmentRequest.current;
+    if (isSimulated || isDemoMode) { setPatientAssessments([]); return; }
     // Só limpa ao trocar de escopo; recargas em tempo real mantêm o prontuário
     // aberto montado (limpar aqui desmontava o prontuário e voltava ao topo).
     if (!opts?.keepCurrent) setPatientAssessments([]);
@@ -315,6 +317,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
   };
 
   const loadReferrals = async () => {
+    if (isSimulated || isDemoMode) { setReferrals([]); setReferralProfiles({}); return; }
     if (isClinicMode) { setReferrals([]); setReferralProfiles({}); return; }
     const { data: refs } = await (supabase.from("professional_referrals" as any) as any)
       .select("id, patient_user_id, professional_id, assessment_id, status, created_at")
@@ -1217,6 +1220,7 @@ const ProDashboard = ({ professional, hideForClinicTabs = false, isSimulated: is
         onOpenChange={setAddPatientOpen}
         professionalId={professional.id}
         clinicId={isClinicMode ? activeClinic?.clinic_id : undefined}
+        demoMode={showingSimulated}
         onAdded={() => loadPatientAssessments({ keepCurrent: true })}
       />
 

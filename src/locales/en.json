@@ -1,4 +1,9 @@
 {
+  "clinic.how_it_works.hypothesis": "AI suggests a preliminary clinical hypothesis when the assessment is completed, for physiotherapist review",
+  "support.pro.tool.demo_registration.title": "Demo registration",
+  "support.pro.tool.demo_registration.desc": "Adding or editing a registration in the demo changes only the simulated list on this page. Reloading clears these changes. It creates no real patients or assessments and uses no AI credits; solo and clinic data stay separate.",
+  "support.pro.tool.patient_assessment_dates.title": "Last assessment date",
+  "support.pro.tool.patient_assessment_dates.desc": "Last assessment appears only when a recorded assessment has a valid date. Registration is not an assessment, and empty auxiliary records do not count. Recent ordering and filters keep their current criteria.",
   "first_steps.operations_title": "Clinic First Steps",
   "first_steps.configure": "Configure clinic",
   "first_steps.invite": "Open team",

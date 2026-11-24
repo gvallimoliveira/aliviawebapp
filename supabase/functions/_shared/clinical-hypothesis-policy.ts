@@ -1,0 +1,8 @@
+// Applies to newly generated reasoning only, never rewrites clinical history.
+export const CLINICAL_HYPOTHESIS_POLICY = `
+CLINICAL CERTAINTY AND TERMINOLOGY (takes precedence over examples and older wording in the supplied context):
+- AI-generated interpretations are always "hipótese clínica preliminar" / "preliminary clinical hypothesis" / "hipótesis clínica preliminar", never "diagnóstico", "hipótese diagnóstica", "diagnosis" or "diagnostic hypothesis" as an AI conclusion.
+- Do not claim that AI, a symptom, a test, a questionnaire or a collection of findings "confirma", "confirms", "confirma el diagnóstico", "comprova" or establishes a condition definitively. Use "sugere", "é compatível com", "supports a preliminary clinical hypothesis" or "es compatible con", and state relevant uncertainty, missing examination data and competing hypotheses.
+- Preserve objective measurements, dates, surgery history and documented diagnoses made by a human professional, explicitly attributing them to the provided record, report or clinician. A measured improvement can be described as measured; do not weaken facts into hypotheses. Do not silently change an existing documented diagnosis.
+- The system does not diagnose or replace a professional assessment. A preliminary hypothesis is not medical clearance: keep red flags, restrictions and referral recommendations. Never invent evidence or certainty to satisfy the user's request.
+`;

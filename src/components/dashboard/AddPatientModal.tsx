@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, UserPlus, Pencil, Eye, Lock, Mail, Phone, MapPin, IdCard, Cake, User, Briefcase } from "lucide-react";
 import { formatCpf, formatPhone } from "@/utils/masks";
 import { updatePatientRegistration } from "@/lib/patientRegistration";
+import { useAuth } from "@/contexts/AuthContext";
+import { demoPatientScope, saveDemoPatient } from "@/lib/demoPatientRegistration";
 
 export interface PatientToEdit {
   id: string;
@@ -49,6 +51,7 @@ interface AddPatientModalProps {
   readOnly?: boolean;
   /** Controls whether the "Editar" toggle is shown in read-only mode. Default: true (solo) / role-based (clinic). */
   canEdit?: boolean;
+  demoMode?: boolean;
 }
 
 function calcAge(birth: string | null | undefined): number | null {
@@ -79,8 +82,10 @@ const AddPatientModal = ({
   onCreateManualAssessment,
   readOnly = false,
   canEdit = true,
+  demoMode = false,
 }: AddPatientModalProps) => {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const { toast } = useToast();
   const isPt = language === "pt";
   const isEs = language === "es";
@@ -154,6 +159,19 @@ const AddPatientModal = ({
         prescribed_weekly_frequency: frequency ? Number(frequency) : null,
         referral_source: referral || null,
       };
+
+      if (demoMode) {
+        saveDemoPatient(demoPatientScope(user?.id, professionalId, clinicId), {
+          ...patientRow, assessmentIds: editPatient?.assessmentIds,
+        }, editPatient || undefined);
+        toast({
+          title: tr("Cadastro simulado salvo", "Simulated registration saved", "Registro simulado guardado"),
+          description: tr("Somente nesta demonstração; recarregar a página remove as alterações.", "Only in this demo; reloading clears the changes.", "Solo en esta demo; recargar elimina los cambios."),
+        });
+        // Do not invoke real refresh callbacks, registration events or AI shortcuts.
+        handleClose();
+        return;
+      }
 
       if (editPatient) {
         const saved = await updatePatientRegistration(editPatient, patientRow, professionalId, clinicId);

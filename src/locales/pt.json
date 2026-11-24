@@ -1,4 +1,9 @@
 {
+  "clinic.how_it_works.hypothesis": "A IA sugere uma hipótese clínica preliminar ao concluir a avaliação, para revisão do fisioterapeuta",
+  "support.pro.tool.demo_registration.title": "Cadastro na demonstração",
+  "support.pro.tool.demo_registration.desc": "Adicionar ou editar um cadastro na demonstração altera apenas a lista simulada nesta página. Recarregar remove essas alterações. Não cria pacientes reais, avaliações ou consumo de IA; os dados do PRO e da clínica permanecem separados.",
+  "support.pro.tool.patient_assessment_dates.title": "Data da última avaliação",
+  "support.pro.tool.patient_assessment_dates.desc": "Última avaliação aparece somente quando há uma avaliação registrada com data válida. A data de cadastro não é uma avaliação e registros auxiliares vazios não contam. A ordenação por recentes e os filtros mantêm seus critérios atuais.",
   "first_steps.operations_title": "Primeiros Passos da clínica",
   "first_steps.configure": "Configurar clínica",
   "first_steps.invite": "Abrir equipe",

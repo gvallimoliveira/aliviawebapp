@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import AddPatientModal from "../AddPatientModal";
 import ManualAssessmentModal from "../ManualAssessmentModal";
 import logoAlivia from "@/assets/logo-alivia.png";
+import { isPlaceholderAssessment, lastRealAssessmentDate } from "@/lib/patientAssessmentDates";
 
 export default function PatientListView(props: any) {
   const {
@@ -154,26 +155,6 @@ export default function PatientListView(props: any) {
       </div>
 
       {(() => {
-        const isPlaceholderAssessment = (a: any) => {
-          const ad = a?.anamnesis_data;
-          if (!ad || typeof ad !== "object") return false;
-          const flagged = !!(ad.externalPatient || ad.quickEvolutionOnly || ad.placeholder);
-          if (!flagged) return false;
-          // A record flagged as placeholder but that already carries real clinical
-          // content (diagnosis, pain data, questionnaires, strength table…) must NOT
-          // be hidden — otherwise it becomes an unreachable "ghost" assessment.
-          const hasRealContent = !!(
-            a.diagnosis ||
-            a.treatment_plan ||
-            a.pain_score != null ||
-            (Array.isArray(a.pain_regions) && a.pain_regions.length > 0) ||
-            (Array.isArray(ad.strengthTable) && ad.strengthTable.length > 0) ||
-            a.test_results ||
-            a.questionnaire_results
-          );
-          return !hasRealContent;
-        };
-
         const realAssessmentsOf = (p: any) =>
           (p.assessments || []).filter((a: any) => !isPlaceholderAssessment(a));
 
@@ -192,11 +173,12 @@ export default function PatientListView(props: any) {
             if (statusFilter === "inactive" && isActive) return false;
           }
           if (!searchQuery.trim()) return true;
+          const textQuery = searchQuery.trim().toLowerCase();
           const q = searchQuery.toLowerCase().replace(/[.\-/()\s]/g, "");
           const rec = p.patientRecord;
           const cpfRaw = (rec?.cpf || "").replace(/\D/g, "");
           const phoneRaw = (rec?.phone || "").replace(/\D/g, "");
-          return p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q) || cpfRaw.includes(q) || phoneRaw.includes(q);
+          return p.name.toLowerCase().includes(textQuery) || p.email.toLowerCase().includes(textQuery) || cpfRaw.includes(q) || phoneRaw.includes(q);
         });
 
         const VISIBLE_LIMIT = 8;
@@ -260,6 +242,7 @@ export default function PatientListView(props: any) {
 
               {filteredPatients.map((p: any) => {
                 const realAssessments = realAssessmentsOf(p);
+                const lastAssessmentDate = lastRealAssessmentDate(realAssessments);
                 const isHidden = hiddenKeys.has(p.groupKey);
                 const patientRec = p.patientRecord;
                 const isIncomplete = patientRec && (!patientRec.email || !patientRec.cpf || !patientRec.phone);
@@ -298,7 +281,7 @@ export default function PatientListView(props: any) {
                     className={`relative overflow-hidden [overflow:clip] cursor-pointer hover:shadow-md transition-all hover:border-primary/20 group select-none ${isHidden ? "opacity-50" : ""}`}
                     onClick={() => {
                       if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
-                      setSelectedEmail(p.email || p.groupKey);
+                      setSelectedEmail(isDemo ? p.groupKey : p.email || p.groupKey);
                     }}
                     onTouchStart={readOnly ? undefined : startLongPress}
                     onTouchEnd={readOnly ? undefined : cancelLongPress}
@@ -341,7 +324,7 @@ export default function PatientListView(props: any) {
                             {pct != null && p.assessments.some((a: any) => a.user_id) && <Badge variant="outline" className={`text-[10px] gap-1 ${color}`}><Dumbbell className="h-3 w-3" /> {pct}% {language === "pt" ? "adesão" : "adherence"}</Badge>}
                           </div>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{t("pro.last_assessment")}: {new Date(p.lastDate).toLocaleDateString("pt-BR")}</span>
+                            {lastAssessmentDate && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{t("pro.last_assessment")}: {new Date(lastAssessmentDate).toLocaleDateString(language === "pt" ? "pt-BR" : language === "es" ? "es-ES" : "en-US")}</span>}
                           </div>
                         </div>
                         <div className="flex w-full flex-wrap items-center gap-1 pt-1 shrink-0 sm:w-auto sm:flex-nowrap sm:justify-end sm:self-auto sm:pt-0 -mr-1 sm:mr-0">
@@ -353,6 +336,7 @@ export default function PatientListView(props: any) {
                           {(!readOnly || allowAssessmentLink) && patientRec && (
                             <Button variant="ghost" size="icon" className="h-8 w-8" title={language === "pt" ? "Copiar link de avaliação personalizado" : "Copy personalized assessment link"} onClick={async (e) => {
                               e.stopPropagation();
+                              if (isDemo) { toast({ title: t("pro.demo_notice") }); return; }
                               try {
                                 const token = await ensurePatientAssessmentToken(patientRec);
                                 const link = buildPersonalizedAssessmentLink({ professionalId, clinicId }, token);
@@ -408,6 +392,7 @@ export default function PatientListView(props: any) {
         }}
         professionalId={professionalId}
         clinicId={clinicId}
+        demoMode={!!isDemo}
         onAdded={() => { window.dispatchEvent(new CustomEvent("reload-pro-patients")); }}
         editPatient={editPatientData}
         onCreateManualAssessment={(p: any) => setManualAssessmentTarget(p)}

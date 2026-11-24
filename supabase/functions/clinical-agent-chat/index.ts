@@ -1,4 +1,5 @@
 import { CIF_REASONING } from "../_shared/cif-reasoning.ts";
+import { CLINICAL_HYPOTHESIS_POLICY } from "../_shared/clinical-hypothesis-policy.ts";
 import { canUseAgentScope } from "../_shared/agent-care-scope.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { callAiWithFallback } from "../_shared/ai-fallback.ts";
@@ -343,7 +344,7 @@ ESTILO DE CONVERSA (MUITO IMPORTANTE):
 - PRIORIZE RESPOSTAS CURTAS E RÁPIDAS. Responda em no máximo ~150-250 palavras por mensagem. Se o tema exigir mais profundidade, entregue UMA parte agora (a mais importante) e termine com "Quer que eu detalhe X em seguida?" para o usuário pedir o próximo bloco. NUNCA produza monólogos longos — o usuário sente que travou.
 - Bullets curtos > parágrafos longos. Evite repetir o que já foi dito.
 ${patientCtx
-  ? `- HÁ PACIENTE VINCULADO. Você JÁ TEM acesso ao prontuário (diagnóstico, impressão clínica, métricas de dor, regiões, questionários, testes funcionais, plano, HEPs, diário e anotações). USE esses dados imediatamente — NÃO pergunte coisas que já estão no contexto. Cite os dados concretamente ("com base na avaliação de DD/MM, dor X/10 em região Y, hipótese Z, questionário W..."). Se faltar UM detalhe específico para refinar a conduta, faça no máximo 1 pergunta curta e direta sobre esse ponto.`
+  ? `- HÁ PACIENTE VINCULADO. Você JÁ TEM acesso ao prontuário (hipótese clínica preliminar, impressão clínica, métricas de dor, regiões, questionários, testes funcionais, plano, HEPs, diário e anotações). USE esses dados imediatamente — NÃO pergunte coisas que já estão no contexto. Cite os dados concretamente ("com base na avaliação de DD/MM, dor X/10 em região Y, hipótese Z, questionário W..."). Se faltar UM detalhe específico para refinar a conduta, faça no máximo 1 pergunta curta e direta sobre esse ponto.`
   : `- Antes de entregar orientações, condutas, programas ou explanações longas, FAÇA 1 a 3 perguntas pertinentes para refinar o contexto clínico (mecanismo, tempo, irritabilidade, fatores de melhora/piora, objetivo do paciente, exames já feitos, achados de testes, etc.). Uma pergunta de cada vez sempre que possível.`}
 - Só pule a fase de perguntas quando o usuário fizer uma demanda direta e específica (ex.: "gere um HEP para...", "me dê critérios de progressão para...", "qual a evidência sobre X?"). Nesses casos, responda objetivamente já.
 - Quando já tiver contexto suficiente, entregue diretrizes claras e acionáveis (bullets curtos), e ofereça o próximo passo ("quer que eu sugira testes?", "quer um HEP?").
@@ -381,7 +382,7 @@ ${SECURITY_POLICY}
 
 LIMITES:
 - Versão BETA — base de evidências em construção. Se vazia neste nicho, sinalize e siga em STEPS/D.I.F.I.
-- Nunca diagnostique de forma definitiva. Use "hipótese provável", "consistente com".
+- A IA somente sugere hipóteses clínicas preliminares; a decisão clínica é do profissional.
 - Para dor severa (EVA ≥ 7) com sinais sistêmicos, sugira reavaliação médica.${pat}${ev}${mentor}`;
 
 }
@@ -449,7 +450,7 @@ function detectNicheSrv(text: string): string | null {
 const TRACK_MODULES = [
   { level: 1, title: "Conceitos fundamentais", focus: "anatomia funcional, biomecânica básica, capacidade de carga e quadros clínicos comuns" },
   { level: 2, title: "Avaliação clínica", focus: "anamnese direcionada, red flags, irritabilidade, testes clínicos e medidas funcionais" },
-  { level: 3, title: "Raciocínio diagnóstico", focus: "hipóteses diferenciais, padrões de apresentação, decisão sobre exames e integração STEPS/D.I.F.I" },
+  { level: 3, title: "Raciocínio clínico", focus: "hipóteses clínicas preliminares concorrentes, padrões de apresentação, decisão sobre exames e integração STEPS/D.I.F.I" },
   { level: 4, title: "Tratamento baseado em evidência", focus: "educação, exercício terapêutico, progressão de carga, terapia manual quando pertinente e critérios de evolução" },
   { level: 5, title: "Caso clínico aplicado", focus: "mini caso guiado, tomada de decisão, erros comuns e próximos passos de estudo" },
 ];
@@ -1007,7 +1008,7 @@ ${SECURITY_POLICY}`;
     const referenceContext = [userMsg, patientCtx, ...(history || []).map((m: any) =>
       m.role === "user" ? m.parts : null)];
     const systemPrompt = buildSystemPrompt(patientCtx, evidence, !!thread.mentor_mode)
-      + buildRlcaReference(referenceContext) + CIF_REASONING;
+      + buildRlcaReference(referenceContext) + CIF_REASONING + CLINICAL_HYPOTHESIS_POLICY;
 
     const messages = [
       { role: "system", content: systemPrompt },
@@ -1159,7 +1160,7 @@ ${SECURITY_POLICY}`;
                 content:
                   "Você nomeia conversas clínicas de fisioterapia para um histórico de chat. " +
                   "Gere um título curto de 3 a 6 palavras em pt-BR contendo APENAS as palavras-chave " +
-                  "clínicas centrais da conversa: região anatômica, hipótese/diagnóstico, e " +
+                  "clínicas centrais da conversa: região anatômica, hipótese clínica preliminar, e " +
                   "intervenção ou pergunta principal quando houver. " +
                   "Regras estritas: sem aspas, sem ponto final, sem emojis, sem prefixos genéricos " +
                   "('Discussão sobre', 'Caso de', 'Dúvida sobre', 'Conversa', 'Paciente com'). " +

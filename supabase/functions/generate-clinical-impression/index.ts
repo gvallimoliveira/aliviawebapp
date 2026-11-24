@@ -1,4 +1,5 @@
 import { CIF_REASONING } from "../_shared/cif-reasoning.ts";
+import { CLINICAL_HYPOTHESIS_POLICY } from "../_shared/clinical-hypothesis-policy.ts";
 import { isPreventiveAssessment, normalizeAssessmentPurpose, preventiveReasoningContext } from "../_shared/assessment-purpose.ts";
 import { requireUser } from "../_shared/caller-auth.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -17,7 +18,7 @@ const corsHeaders = {
 };
 
 /** Bump when the prompt/data blocks change so cached impressions are regenerated. */
-const PROMPT_VERSION = "ci-v7-clinical-hypothesis";
+const PROMPT_VERSION = "ci-v8-hypothesis-certainty";
 
 const num = (v: unknown): number | null => {
   if (v == null) return null;
@@ -187,7 +188,7 @@ ${preventiveReasoningContext(anamnesisData)}
 - Only comment on data actually provided. Never invent values. If dynamometry or ROM was not recorded, do not speculate about them.
 - Do NOT mention specific exercises, treatment techniques, or therapeutic approaches.
 - Select exactly 2 main therapeutic objectives from this list ONLY: ${preventive ? "exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar" : "controle do quadro álgico, reequilibrar tensões miofasciais, exposição gradativa à carga, mobilidade, controle motor, fortalecimento, estabilização segmentar, modulação da dor"}.
-- TERMINOLOGY: never write "diagnosis", "diagnostic hypothesis", "hipótese diagnóstica", "diagnóstico" or "hipótesis diagnóstica". Use "preliminary clinical hypothesis" / "hipótese clínica preliminar" / "hipótesis clínica preliminar" (or "hipótese fisioterapêutica").
+- TERMINOLOGY: name AI interpretations "preliminary clinical hypothesis" / "hipótese clínica preliminar" / "hipótesis clínica preliminar", never "diagnosis" or "hipótese diagnóstica" as an AI conclusion. Attribute any existing diagnosis explicitly to the clinician/report that documented it; do not overwrite it or claim to confirm it.
 - Respond in ${langLabel}.
 - Use the tool provided to return the structured output.${timelineInstruction}`;
 
@@ -234,7 +235,7 @@ ${preventiveReasoningContext(anamnesisData)}
     push("Nausea", anamnesisData?.hasNausea);
     push("Headache crisis frequency", anamnesisData?.headacheCrisisFrequency);
     push("Preliminary clinical hypothesis", diagnosis?.hypothesis);
-    push("Diagnostic summary", diagnosis?.summary);
+    push("Preliminary clinical hypothesis summary", diagnosis?.summary);
     if (Array.isArray(questionnaireResults) && questionnaireResults.length > 0) {
       lines.push(`- Questionnaire results: ${JSON.stringify(questionnaireResults)}`);
     }
@@ -345,7 +346,7 @@ ${preventiveReasoningContext(anamnesisData)}
 
     const response = await callAiWithFallback(LOVABLE_API_KEY, {
       messages: [
-        { role: "system", content: systemPrompt + buildRlcaReference(userPrompt) + CIF_REASONING },
+        { role: "system", content: systemPrompt + buildRlcaReference(userPrompt) + CIF_REASONING + CLINICAL_HYPOTHESIS_POLICY },
         { role: "user", content: userPrompt },
       ],
       tools,

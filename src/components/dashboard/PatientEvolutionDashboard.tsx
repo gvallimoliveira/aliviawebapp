@@ -1,4 +1,6 @@
 import { careScope } from "@/lib/careScope";
+import { useAuth } from "@/contexts/AuthContext";
+import { demoPatientScope, removeDemoPatient, useDemoPatientRows } from "@/lib/demoPatientRegistration";
 import type { RegistrationSaved } from "@/lib/patientRegistration";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import SessionNotesSection from "./SessionNotesSection";
@@ -194,6 +196,8 @@ const SEVERITY_COLORS: Record<string, string> = {
 };
 
 const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId, lifetimeTreatment, professionalLogoUrl, clinicLogoUrl, clinicName, clinicId, onDownloadPdf, onShareWhatsApp, isDemo, readOnly, canAddPatient, canArchivePatient, allowManualAssessment, allowAssessmentLink, allowQuickNote, onSelectionChange, onAssessmentsDeleted }: PatientEvolutionDashboardProps) => {
+  const { user } = useAuth();
+  const demoPatients = useDemoPatientRows(demoPatientScope(user?.id, professionalId, clinicId), !!isDemo);
   // Normalize legacy snake_case anamnesis keys + test_results object→array shape
   // so older manual assessments are fully readable in the UI.
   // Avaliações excluídas nesta sessão: somem da lista na hora, sem esperar o
@@ -504,6 +508,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
   // Quick note save handler
   const handleQuickNoteSave = async () => {
+    if (isDemo) { toast({ title: t("pro.demo_notice") }); return; }
     if (!quickNotePatient || !quickNoteContent.trim() || !professionalId) return;
     setQuickNoteSaving(true);
     try {
@@ -623,6 +628,14 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
   };
 
   const handleDeletePatient = async (groupKey: string, assessmentIds: string[]) => {
+    if (isDemo) {
+      const recordId = patients.find((p) => p.groupKey === groupKey)?.patientRecord?.id;
+      if (recordId) removeDemoPatient(demoPatientScope(user?.id, professionalId, clinicId), recordId);
+      setLocallyDeletedIds((prev) => [...prev, ...assessmentIds]);
+      setSelectedEmail(null);
+      setDeleteConfirmPatient(null);
+      return;
+    }
     setDeletingPatient(groupKey);
     try {
       // Delete related data for each assessment
@@ -697,6 +710,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
   const handleArchivePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (isDemo) { setHiddenKeys((prev) => new Set([...prev, groupKey])); return; }
     if (archiving || !groupKey) return;
     if (!clinicId && !professionalId) return;
     setArchiving(groupKey);
@@ -720,6 +734,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
   const handleRestorePatient = async (groupKey: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (isDemo) { setHiddenKeys((prev) => { const next = new Set(prev); next.delete(groupKey); return next; }); return; }
     if (archiving || !groupKey) return;
     if (!clinicId && !professionalId) return;
     setArchiving(groupKey);
@@ -1006,7 +1021,20 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     });
 
     // Merge patients from patients table (those without assessments will appear as new entries)
-    patientsTableData.forEach((pt: any) => {
+    const registrationRows = isDemo ? demoPatients : patientsTableData;
+    registrationRows.forEach((pt: any) => {
+      if (isDemo) {
+        const sourceKey = pt.sourceKey || `demo:${pt.id}`;
+        const existing = map.get(sourceKey);
+        if (existing) {
+          existing.name = pt.full_name;
+          existing.email = pt.email || "";
+          existing.patientRecord = pt;
+        } else {
+          map.set(sourceKey, { email: pt.email || "", name: pt.full_name, assessments: [], lastDate: pt.created_at, groupKey: sourceKey, patientRecord: pt });
+        }
+        return;
+      }
       const key = pt.email || pt.full_name || pt.id;
       if (map.has(key)) {
         // Attach patient record data to existing group
@@ -1025,7 +1053,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
     });
 
     // Also try to match by name for patients without email
-    patientsTableData.forEach((pt: any) => {
+    registrationRows.forEach((pt: any) => {
       if (pt.email) return; // already matched by email key
       const nameKey = pt.full_name;
       if (nameKey && map.has(nameKey) && !map.get(nameKey)!.patientRecord) {
@@ -1035,7 +1063,7 @@ const PatientEvolutionDashboard = ({ assessments: rawAssessments, professionalId
 
     map.forEach((g) => g.assessments.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
     return Array.from(map.values()).sort((a, b) => (a.name || "").localeCompare(b.name || "", "pt", { sensitivity: "base" }));
-  }, [assessments, patientsTableData]);
+  }, [assessments, patientsTableData, demoPatients, isDemo]);
 
   // Find selected patient (may be null)
   const patient = selectedEmail ? patients.find((p) => p.email === selectedEmail || (p as any).groupKey === selectedEmail) || null : null;

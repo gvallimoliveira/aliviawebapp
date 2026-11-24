@@ -5,3 +5,5 @@
 - Appointment service selectors display scoped custom catalog names using service_id, while persisting the original service_type for filtering and pricing compatibility.
 
 - Clinic trial entry uses clinicTrialEntry.ts for session-only noncredential drafts and shared CNPJ validation; authenticate before provisioning, resume through /clinica/ativar-teste and clear stale paid checkout intent to prevent accidental billing.
+- Demo patient registrations share an in-memory user/practice-scoped external store; never invoke real writes/events or persist them across reloads, so demo shortcuts and records cannot contaminate live care.
+- Last-assessment labels use patientAssessmentDates over real assessments only; registration dates stay available for existing sorting/filtering but never masquerade as assessments.

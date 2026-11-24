@@ -462,6 +462,14 @@ export default function PatientDetailView(props: any) {
 
   const openRegistrationModal = React.useCallback(async () => {
     if (registrationLoading) return;
+    if (isDemo) {
+      setRegistrationPatient(mapRowToPatient(patient.patientRecord || {
+        id: `demo-registration:${patient.groupKey || patient.name}`,
+        full_name: patient.name, email: patient.email || null,
+      }));
+      setRegistrationModalOpen(true);
+      return;
+    }
     setRegistrationLoading(true);
     try {
       const sb = supabase as any;
@@ -502,7 +510,7 @@ export default function PatientDetailView(props: any) {
     } finally {
       setRegistrationLoading(false);
     }
-  }, [registrationLoading, patient, clinicId, professionalId, toast, language, fetchPatientRow, mapRowToPatient]);
+  }, [registrationLoading, patient, clinicId, professionalId, toast, language, fetchPatientRow, mapRowToPatient, isDemo]);
 
   // Após salvar dentro do modal, sincroniza estado com o banco para refletir imediatamente no próximo open
   const handleRegistrationSaved = React.useCallback(async () => {
@@ -1349,6 +1357,7 @@ export default function PatientDetailView(props: any) {
           onOpenChange={setRegistrationModalOpen}
           professionalId={professionalId || ""}
           clinicId={clinicId || null}
+          demoMode={!!isDemo}
           editPatient={registrationPatient}
           readOnly
           canEdit={canEditRegistration}
