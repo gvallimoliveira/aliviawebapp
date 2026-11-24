@@ -617,6 +617,13 @@
       "when": 1795218809183,
       "tag": "0087_scope_patient_active_exercise_programs",
       "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1795526497381,
+      "tag": "0088_admin_marketplace_visibility",
+      "breakpoints": true
     }
   ]
 }

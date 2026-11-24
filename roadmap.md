@@ -1,5 +1,10 @@
 # Roadmap
 
+## Admin — ocultar profissionais da vitrine
+- [x] Marcador próprio de ocultação (não reaproveita aprovação/assinatura); busca da vitrine ignora ocultos; só admin altera, com trava contra autoedição.
+- [x] Aba Profissionais do Admin: atalho ocultar/exibir por linha, situação na vitrine e filtro com contagem.
+- [ ] Verificação final: testes, fluxo real ocultar → vitrine → recarregar → exibir, e bloqueio para não-admin.
+
 ## Landings — promessas sobre PEDro
 - [x] Acadêmico, PRO, Clínica, seletor de perfil e versões preservadas revisados: removida promessa universal PEDro ≥ 7 e notas sem fonte nos exemplos; mantida nota quando disponível, limitações metodológicas e leitura crítica. Nenhum filtro, dado, regra de curadoria, preço ou acesso alterado.
 - [x] Suporte PRO/Acadêmico e biblioteca no suporte clínico atualizados em pt/en/es; snapshots para buscadores sincronizados e JSON validado.

@@ -4260,6 +4260,8 @@ export type Database = {
           is_student: boolean
           lifetime_treatment: boolean
           logo_url: string | null
+          marketplace_hidden: boolean
+          marketplace_hidden_at: string | null
           monthly_revenue_goal: number | null
           phone: string | null
           premium_granted: boolean
@@ -4302,6 +4304,8 @@ export type Database = {
           is_student?: boolean
           lifetime_treatment?: boolean
           logo_url?: string | null
+          marketplace_hidden?: boolean
+          marketplace_hidden_at?: string | null
           monthly_revenue_goal?: number | null
           phone?: string | null
           premium_granted?: boolean
@@ -4344,6 +4348,8 @@ export type Database = {
           is_student?: boolean
           lifetime_treatment?: boolean
           logo_url?: string | null
+          marketplace_hidden?: boolean
+          marketplace_hidden_at?: string | null
           monthly_revenue_goal?: number | null
           phone?: string | null
           premium_granted?: boolean
@@ -5869,6 +5875,10 @@ export type Database = {
             Args: { _caller?: string; _email?: string; _user_id: string }
             Returns: Json
           }
+      admin_set_professional_marketplace_hidden: {
+        Args: { _hidden: boolean; _professional_id: string }
+        Returns: boolean
+      }
       admin_user_data_inventory:
         | { Args: { _email?: string; _user_id: string }; Returns: Json }
         | {

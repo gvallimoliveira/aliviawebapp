@@ -62,7 +62,7 @@ const ProfessionalSearch = () => {
   const fetchProfessionals = async () => {
     setLoading(true);
     // Vitrine pública: RPC security-definer que retorna apenas profissionais
-    // aprovados, ativos e com acesso PRO válido (assinatura, acesso anual ou
+    // aprovados, ativos, não ocultados pelo admin e com acesso PRO válido (assinatura, acesso anual ou
     // parceiro liberado pelo admin). O modo acadêmico fica fora do marketplace.
     const { data, error } = await (supabase.rpc as any)("search_marketplace_professionals", {
       _state: stateFilter || null,

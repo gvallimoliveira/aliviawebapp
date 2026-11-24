@@ -16,9 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Users, Search, Trash2, GraduationCap, ChevronLeft, ChevronRight, Crown, CreditCard, ShieldCheck, ShieldAlert, Clock, XCircle, Circle, Infinity as InfinityIcon } from "lucide-react";
+import { Loader2, Users, Search, Trash2, GraduationCap, ChevronLeft, ChevronRight, Crown, CreditCard, ShieldCheck, ShieldAlert, Clock, XCircle, Circle, Infinity as InfinityIcon, Eye, EyeOff, Store } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import SubscriptionAdminDialog from "./SubscriptionAdminDialog";
+import { marketplaceStatus, type MarketplaceStatus } from "@/lib/marketplaceVisibility";
 
 
 const PAGE_SIZE = 10;
@@ -74,6 +75,18 @@ const t = (language: string) => {
       stripe_linked: "Stripe vinculado",
       stripe_missing: "Sem ID Stripe",
       since: "Cadastrado em",
+      showcase: "Vitrine",
+      showcase_filter_all: "Vitrine: todos",
+      showcase_visible: "Na vitrine",
+      showcase_hidden: "Oculto por você",
+      showcase_ineligible: "Fora da vitrine",
+      showcase_ineligible_hint: "Não atende às regras da vitrine (aprovação, perfil profissional e acesso PRO válido).",
+      showcase_hide: "Ocultar da vitrine",
+      showcase_show: "Exibir na vitrine",
+      showcase_hidden_ok: "Profissional oculto da vitrine.",
+      showcase_shown_ok: "Profissional voltou a aparecer na vitrine.",
+      showcase_shown_ineligible: "Ocultação removida. Ele só aparece na vitrine quando atender às regras de acesso.",
+      showcase_error: "Não foi possível alterar a vitrine.",
     },
     en: {
       title: "Registered Professionals",
@@ -120,10 +133,29 @@ const t = (language: string) => {
       stripe_linked: "Stripe linked",
       stripe_missing: "No Stripe ID",
       since: "Registered on",
+      showcase: "Showcase",
+      showcase_filter_all: "Showcase: all",
+      showcase_visible: "Listed",
+      showcase_hidden: "Hidden by you",
+      showcase_ineligible: "Not listed",
+      showcase_ineligible_hint: "Does not meet the showcase rules (approval, professional profile and valid PRO access).",
+      showcase_hide: "Hide from showcase",
+      showcase_show: "Show in showcase",
+      showcase_hidden_ok: "Professional hidden from the showcase.",
+      showcase_shown_ok: "Professional is listed in the showcase again.",
+      showcase_shown_ineligible: "Hiding removed. They are listed only once they meet the access rules.",
+      showcase_error: "Could not change showcase visibility.",
     },
   };
   return translations[language] || translations.en;
 };
+
+const SHOWCASE_META: Record<MarketplaceStatus, { labelKey: string; className: string }> = {
+  visible: { labelKey: "showcase_visible", className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" },
+  hidden: { labelKey: "showcase_hidden", className: "border-destructive/40 bg-destructive/10 text-destructive" },
+  ineligible: { labelKey: "showcase_ineligible", className: "border-border bg-muted text-muted-foreground" },
+};
+const SHOWCASE_ORDER: MarketplaceStatus[] = ["visible", "hidden", "ineligible"];
 
 type SortKey = "recent" | "oldest" | "az" | "za";
 
@@ -173,6 +205,8 @@ const ProfessionalManagement = ({ language }: Props) => {
   const [page, setPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState<"all" | ClientType>("all");
   const [manageProf, setManageProf] = useState<any | null>(null);
+  const [showcaseFilter, setShowcaseFilter] = useState<"all" | MarketplaceStatus>("all");
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -199,9 +233,35 @@ const ProfessionalManagement = ({ language }: Props) => {
     }
   };
 
+  const handleToggleShowcase = async (p: any) => {
+    const nextHidden = !p.marketplace_hidden;
+    setTogglingId(p.id);
+    const { data, error } = await (supabase as any).rpc("admin_set_professional_marketplace_hidden", {
+      _professional_id: p.id,
+      _hidden: nextHidden,
+    });
+    setTogglingId(null);
+    if (error) {
+      toast({ title: labels.showcase_error, description: error.message, variant: "destructive" });
+      return;
+    }
+    // Usa o valor confirmado pelo servidor, não o que foi pedido.
+    const saved = data === true;
+    const updated = { ...p, marketplace_hidden: saved };
+    setProfessionals((prev) => prev.map((x) => (x.id === p.id ? { ...x, marketplace_hidden: saved } : x)));
+    toast({
+      description: saved
+        ? labels.showcase_hidden_ok
+        : marketplaceStatus(updated) === "visible"
+          ? labels.showcase_shown_ok
+          : labels.showcase_shown_ineligible,
+    });
+  };
+
   const filtered = useMemo(() => {
     const base = professionals.filter((p) => {
       if (typeFilter !== "all" && classifyClient(p) !== typeFilter) return false;
+      if (showcaseFilter !== "all" && marketplaceStatus(p) !== showcaseFilter) return false;
       if (!query.trim()) return true;
       const q = query.toLowerCase();
       return (
@@ -224,7 +284,13 @@ const ProfessionalManagement = ({ language }: Props) => {
       return sort === "recent" ? tb - ta : ta - tb;
     });
     return sorted;
-  }, [professionals, query, sort, typeFilter]);
+  }, [professionals, query, sort, typeFilter, showcaseFilter]);
+
+  const showcaseCounts = useMemo(() => {
+    const acc: Record<MarketplaceStatus, number> = { visible: 0, hidden: 0, ineligible: 0 };
+    professionals.forEach((p) => { acc[marketplaceStatus(p)] += 1; });
+    return acc;
+  }, [professionals]);
 
   const counts = useMemo(() => {
     const acc: Record<ClientType, number> = { partner: 0, student: 0, trial: 0, active: 0, grace: 0, canceled: 0, basic: 0 };
@@ -235,7 +301,7 @@ const ProfessionalManagement = ({ language }: Props) => {
   // Reset to first page whenever filter/sort changes the result set.
   useEffect(() => {
     setPage(1);
-  }, [query, sort, typeFilter, professionals.length]);
+  }, [query, sort, typeFilter, showcaseFilter, professionals.length]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -298,6 +364,20 @@ const ProfessionalManagement = ({ language }: Props) => {
               ))}
             </SelectContent>
           </Select>
+          <Select value={showcaseFilter} onValueChange={(v) => setShowcaseFilter(v as any)}>
+            <SelectTrigger className="sm:w-[200px]" aria-label={labels.showcase}>
+              <Store className="h-4 w-4 mr-1 shrink-0 text-muted-foreground" />
+              <SelectValue placeholder={labels.showcase} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{labels.showcase_filter_all}</SelectItem>
+              {SHOWCASE_ORDER.map((k) => (
+                <SelectItem key={k} value={k}>
+                  {labels[SHOWCASE_META[k].labelKey]} ({showcaseCounts[k]})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Client-type overview */}
@@ -335,13 +415,14 @@ const ProfessionalManagement = ({ language }: Props) => {
                   <TableRow>
                     <TableHead>{labels.name}</TableHead>
                     <TableHead>{labels.email}</TableHead>
+                    <TableHead>{labels.showcase}</TableHead>
                     <TableHead>{labels.client_type}</TableHead>
                     <TableHead>{labels.subscription}</TableHead>
                     <TableHead>{labels.crefito}</TableHead>
                     <TableHead>{labels.cpf}</TableHead>
                     <TableHead>{labels.location}</TableHead>
                     <TableHead>{labels.specialties}</TableHead>
-                    <TableHead className="w-[90px] text-right">{labels.actions}</TableHead>
+                    <TableHead className="w-[120px] text-right">{labels.actions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -350,6 +431,22 @@ const ProfessionalManagement = ({ language }: Props) => {
                       <TableCell className="font-medium">{p.full_name}</TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={p.email || ""}>
                         {p.email || "—"}
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const status = marketplaceStatus(p);
+                          const meta = SHOWCASE_META[status];
+                          return (
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] whitespace-nowrap ${meta.className}`}
+                              title={status === "ineligible" ? labels.showcase_ineligible_hint : undefined}
+                              data-testid={`showcase-status-${p.id}`}
+                            >
+                              {labels[meta.labelKey]}
+                            </Badge>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         {(() => {
@@ -449,6 +546,24 @@ const ProfessionalManagement = ({ language }: Props) => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleToggleShowcase(p)}
+                            disabled={togglingId === p.id}
+                            className="h-8 w-8 p-0"
+                            title={p.marketplace_hidden ? labels.showcase_show : labels.showcase_hide}
+                            aria-label={p.marketplace_hidden ? labels.showcase_show : labels.showcase_hide}
+                            data-testid={`showcase-toggle-${p.id}`}
+                          >
+                            {togglingId === p.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : p.marketplace_hidden ? (
+                              <EyeOff className="h-4 w-4 text-destructive" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
                           <Button
                             size="sm"
                             variant="ghost"
