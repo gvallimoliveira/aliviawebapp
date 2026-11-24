@@ -3,7 +3,7 @@
 ## Admin — ocultar profissionais da vitrine
 - [x] Marcador próprio de ocultação (não reaproveita aprovação/assinatura); busca da vitrine ignora ocultos; só admin altera, com trava contra autoedição.
 - [x] Aba Profissionais do Admin: atalho ocultar/exibir por linha, situação na vitrine e filtro com contagem.
-- [ ] Verificação final: testes, fluxo real ocultar → vitrine → recarregar → exibir, e bloqueio para não-admin.
+- [x] 15 regressões aprovadas; fluxo real admin → ocultar → vitrine sem o profissional → recarregar → filtrar ocultos → exibir → vitrine com o profissional novamente validado no computador e em 390×844. Campos de cadastro/acesso preservados; conta não-admin bloqueada (403/42501 e painel sem controles); falha de comunicação mantém o estado original e libera o botão. Perfil usado no teste restaurado como visível; nenhuma conta permanece oculta por este teste. Build OK. Publicação e aparelho físico não executados.
 
 ## Landings — promessas sobre PEDro
 - [x] Acadêmico, PRO, Clínica, seletor de perfil e versões preservadas revisados: removida promessa universal PEDro ≥ 7 e notas sem fonte nos exemplos; mantida nota quando disponível, limitações metodológicas e leitura crítica. Nenhum filtro, dado, regra de curadoria, preço ou acesso alterado.

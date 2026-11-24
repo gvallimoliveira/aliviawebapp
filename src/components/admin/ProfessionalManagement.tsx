@@ -151,7 +151,7 @@ const t = (language: string) => {
 };
 
 const SHOWCASE_META: Record<MarketplaceStatus, { labelKey: string; className: string }> = {
-  visible: { labelKey: "showcase_visible", className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" },
+  visible: { labelKey: "showcase_visible", className: "border-primary/40 bg-primary/10 text-primary" },
   hidden: { labelKey: "showcase_hidden", className: "border-destructive/40 bg-destructive/10 text-destructive" },
   ineligible: { labelKey: "showcase_ineligible", className: "border-border bg-muted text-muted-foreground" },
 };
@@ -234,28 +234,32 @@ const ProfessionalManagement = ({ language }: Props) => {
   };
 
   const handleToggleShowcase = async (p: any) => {
+    if (togglingId) return;
     const nextHidden = !p.marketplace_hidden;
     setTogglingId(p.id);
-    const { data, error } = await (supabase as any).rpc("admin_set_professional_marketplace_hidden", {
-      _professional_id: p.id,
-      _hidden: nextHidden,
-    });
-    setTogglingId(null);
-    if (error) {
-      toast({ title: labels.showcase_error, description: error.message, variant: "destructive" });
-      return;
+    try {
+      const { data, error } = await supabase.rpc("admin_set_professional_marketplace_hidden", {
+        _professional_id: p.id,
+        _hidden: nextHidden,
+      });
+      if (error) throw error;
+      if (typeof data !== "boolean") throw new Error(labels.showcase_error);
+      // Usa o valor confirmado pelo servidor, não o que foi pedido.
+      const updated = { ...p, marketplace_hidden: data };
+      setProfessionals((prev) => prev.map((x) => (x.id === p.id ? { ...x, marketplace_hidden: data } : x)));
+      toast({
+        description: data
+          ? labels.showcase_hidden_ok
+          : marketplaceStatus(updated) === "visible"
+            ? labels.showcase_shown_ok
+            : labels.showcase_shown_ineligible,
+      });
+    } catch (error) {
+      const description = error instanceof Error ? error.message : undefined;
+      toast({ title: labels.showcase_error, description, variant: "destructive" });
+    } finally {
+      setTogglingId(null);
     }
-    // Usa o valor confirmado pelo servidor, não o que foi pedido.
-    const saved = data === true;
-    const updated = { ...p, marketplace_hidden: saved };
-    setProfessionals((prev) => prev.map((x) => (x.id === p.id ? { ...x, marketplace_hidden: saved } : x)));
-    toast({
-      description: saved
-        ? labels.showcase_hidden_ok
-        : marketplaceStatus(updated) === "visible"
-          ? labels.showcase_shown_ok
-          : labels.showcase_shown_ineligible,
-    });
   };
 
   const filtered = useMemo(() => {
@@ -414,39 +418,59 @@ const ProfessionalManagement = ({ language }: Props) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{labels.name}</TableHead>
-                    <TableHead>{labels.email}</TableHead>
                     <TableHead>{labels.showcase}</TableHead>
+                    <TableHead>{labels.email}</TableHead>
                     <TableHead>{labels.client_type}</TableHead>
                     <TableHead>{labels.subscription}</TableHead>
                     <TableHead>{labels.crefito}</TableHead>
                     <TableHead>{labels.cpf}</TableHead>
                     <TableHead>{labels.location}</TableHead>
                     <TableHead>{labels.specialties}</TableHead>
-                    <TableHead className="w-[120px] text-right">{labels.actions}</TableHead>
+                    <TableHead className="w-[90px] text-right">{labels.actions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {pageRows.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell className="font-medium">{p.full_name}</TableCell>
+                      <TableCell className="font-medium px-3"><span className="block w-24 sm:w-40 break-words">{p.full_name}</span></TableCell>
+                      <TableCell className="px-2 sm:px-4">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleToggleShowcase(p)}
+                            disabled={togglingId !== null}
+                            className="h-8 w-8 p-0"
+                            title={p.marketplace_hidden ? labels.showcase_show : labels.showcase_hide}
+                            aria-label={p.marketplace_hidden ? labels.showcase_show : labels.showcase_hide}
+                            data-testid={`showcase-toggle-${p.id}`}
+                          >
+                            {togglingId === p.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : p.marketplace_hidden ? (
+                              <EyeOff className="h-4 w-4 text-destructive" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                          {(() => {
+                            const status = marketplaceStatus(p);
+                            const meta = SHOWCASE_META[status];
+                            return (
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] w-20 sm:w-auto justify-center text-center whitespace-normal sm:whitespace-nowrap ${meta.className}`}
+                                title={status === "ineligible" ? labels.showcase_ineligible_hint : undefined}
+                                data-testid={`showcase-status-${p.id}`}
+                              >
+                                {labels[meta.labelKey]}
+                              </Badge>
+                            );
+                          })()}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate" title={p.email || ""}>
                         {p.email || "—"}
-                      </TableCell>
-                      <TableCell>
-                        {(() => {
-                          const status = marketplaceStatus(p);
-                          const meta = SHOWCASE_META[status];
-                          return (
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] whitespace-nowrap ${meta.className}`}
-                              title={status === "ineligible" ? labels.showcase_ineligible_hint : undefined}
-                              data-testid={`showcase-status-${p.id}`}
-                            >
-                              {labels[meta.labelKey]}
-                            </Badge>
-                          );
-                        })()}
                       </TableCell>
                       <TableCell>
                         {(() => {
@@ -546,24 +570,6 @@ const ProfessionalManagement = ({ language }: Props) => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleToggleShowcase(p)}
-                            disabled={togglingId === p.id}
-                            className="h-8 w-8 p-0"
-                            title={p.marketplace_hidden ? labels.showcase_show : labels.showcase_hide}
-                            aria-label={p.marketplace_hidden ? labels.showcase_show : labels.showcase_hide}
-                            data-testid={`showcase-toggle-${p.id}`}
-                          >
-                            {togglingId === p.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : p.marketplace_hidden ? (
-                              <EyeOff className="h-4 w-4 text-destructive" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
                           <Button
                             size="sm"
                             variant="ghost"

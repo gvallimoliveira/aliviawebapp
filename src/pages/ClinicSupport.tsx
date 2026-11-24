@@ -710,6 +710,10 @@ const ClinicSupport = () => {
             Perguntas frequentes
           </h2>
           <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="marketplace-visibility">
+              <AccordionTrigger className="text-left text-base font-medium text-foreground">{t("support.pro.faq.marketplace_visibility.q")}</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground leading-relaxed">{t("support.pro.faq.marketplace_visibility.a")}</AccordionContent>
+            </AccordionItem>
             <AccordionItem value="annual-refund">
               <AccordionTrigger className="text-left text-base font-medium text-foreground">{t("billing.annual_refund.question")}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground leading-relaxed">{t("billing.annual_refund.answer")}</AccordionContent>
